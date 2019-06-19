@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.95 2018/01/08 15:37:38 markus Exp $
+#	$OpenBSD: Makefile,v 1.99 2018/07/25 17:12:35 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -7,14 +7,12 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c sshpty.c sshlogin.c servconf.c \
 	groupaccess.c auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c monitor.c monitor_wrap.c \
 	sftp-server.c sftp-common.c sandbox-pledge.c
-SRCS+=	atomicio.c authfd.c bufaux.c buffer.c compat.c dns.c fatal.c \
-	hostfile.c key.c msg.c readpass.c utf8.c
+SRCS+=	atomicio.c authfd.c compat.c dns.c fatal.c \
+	hostfile.c msg.c readpass.c utf8.c uidswap.c
 SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXS} ${SRCS_KEY} ${SRCS_KEYP} \
 	${SRCS_KRL} ${SRCS_PROT} ${SRCS_PKT} ${SRCS_UTL} ${SRCS_PKCS11}
 
 PROG=	sshd
-BINOWN=	root
-BINMODE=555
 BINDIR=	/usr/sbin
 MAN=	sshd.8 sshd_config.5
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.38 2017/10/03 11:21:52 deraadt Exp $	*/
+/*	$OpenBSD: param.c,v 1.40 2019/04/28 14:51:16 deraadt Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*

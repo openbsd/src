@@ -33,7 +33,7 @@ while (<DATA>) {
          unlink $1 or warn "$0: $1: $!\n";
       } elsif ($extract) {
         defined $fh && close($fh);
-        open($fh, ">$1") or die "$0: '$1': $!\n";
+        open($fh, ">", $1) or die "$0: '$1': $!\n";
         print "Extracting $1\n";
       } elsif ($list) {
         print "$1\n";

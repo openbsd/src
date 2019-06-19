@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsireg.h,v 1.1 2017/01/21 11:22:57 reyk Exp $	*/
+/*	$OpenBSD: vioscsireg.h,v 1.2 2019/03/24 18:21:12 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -28,8 +28,8 @@
 #define VIRTIO_SCSI_CONFIG_MAX_LUN		32 /* 32bit */
 
 /* Feature bits */
-#define VIRTIO_SCSI_F_INOUT			(1<<0)
-#define VIRTIO_SCSI_F_HOTPLUG			(1<<1)
+#define VIRTIO_SCSI_F_INOUT			(1ULL<<0)
+#define VIRTIO_SCSI_F_HOTPLUG			(1ULL<<1)
 
 /* Response status values */
 #define VIRTIO_SCSI_S_OK			0

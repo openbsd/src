@@ -27,7 +27,7 @@ class JITSymbolResolver;
 
 namespace orc {
 
-/// @brief Global mapping layer.
+/// Global mapping layer.
 ///
 ///   This layer overrides the findSymbol method to first search a local symbol
 /// table that the client can define. It can be used to inject new symbol
@@ -38,33 +38,34 @@ template <typename BaseLayerT>
 class GlobalMappingLayer {
 public:
 
-  /// @brief Handle to an added module.
+  /// Handle to an added module.
   using ModuleHandleT = typename BaseLayerT::ModuleHandleT;
 
-  /// @brief Construct an GlobalMappingLayer with the given BaseLayer
+  /// Construct an GlobalMappingLayer with the given BaseLayer
   GlobalMappingLayer(BaseLayerT &BaseLayer) : BaseLayer(BaseLayer) {}
 
-  /// @brief Add the given module to the JIT.
+  /// Add the given module to the JIT.
   /// @return A handle for the added modules.
-  ModuleHandleT addModule(std::shared_ptr<Module> M,
-                          std::shared_ptr<JITSymbolResolver> Resolver) {
+  Expected<ModuleHandleT>
+  addModule(std::shared_ptr<Module> M,
+            std::shared_ptr<JITSymbolResolver> Resolver) {
     return BaseLayer.addModule(std::move(M), std::move(Resolver));
   }
 
-  /// @brief Remove the module set associated with the handle H.
-  void removeModule(ModuleHandleT H) { BaseLayer.removeModule(H); }
+  /// Remove the module set associated with the handle H.
+  Error removeModule(ModuleHandleT H) { return BaseLayer.removeModule(H); }
 
-  /// @brief Manually set the address to return for the given symbol.
+  /// Manually set the address to return for the given symbol.
   void setGlobalMapping(const std::string &Name, JITTargetAddress Addr) {
     SymbolTable[Name] = Addr;
   }
 
-  /// @brief Remove the given symbol from the global mapping.
+  /// Remove the given symbol from the global mapping.
   void eraseGlobalMapping(const std::string &Name) {
     SymbolTable.erase(Name);
   }
 
-  /// @brief Search for the given named symbol.
+  /// Search for the given named symbol.
   ///
   ///          This method will first search the local symbol table, returning
   ///        any symbol found there. If the symbol is not found in the local
@@ -80,7 +81,7 @@ public:
     return BaseLayer.findSymbol(Name, ExportedSymbolsOnly);
   }
 
-  /// @brief Get the address of the given symbol in the context of the of the
+  /// Get the address of the given symbol in the context of the of the
   ///        module represented by the handle H. This call is forwarded to the
   ///        base layer's implementation.
   /// @param H The handle for the module to search in.
@@ -93,11 +94,11 @@ public:
     return BaseLayer.findSymbolIn(H, Name, ExportedSymbolsOnly);
   }
 
-  /// @brief Immediately emit and finalize the module set represented by the
+  /// Immediately emit and finalize the module set represented by the
   ///        given handle.
   /// @param H Handle for module set to emit/finalize.
-  void emitAndFinalize(ModuleHandleT H) {
-    BaseLayer.emitAndFinalize(H);
+  Error emitAndFinalize(ModuleHandleT H) {
+    return BaseLayer.emitAndFinalize(H);
   }
 
 private:

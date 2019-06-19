@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.183 2017/12/30 20:46:59 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.187 2019/04/01 07:00:51 tedu Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -964,6 +964,9 @@ boot(int howto)
 	int i;
 #endif
 
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -1033,6 +1036,7 @@ haltsys:
 		(*platform.powerdown)();
 		printf("WARNING: powerdown failed!\n");
 	}
+doreset:
 	printf("%s\n\n",
 	    (howto & RB_HALT) != 0 ? "halted." : "rebooting...");
 	prom_halt((howto & RB_HALT) != 0);
@@ -1376,19 +1380,11 @@ regdump(framep)
 	printregs(&reg);
 }
 
-#ifdef DEBUG
-int sigdebug = 0;
-pid_t sigpid = 0;
-#define	SDB_FOLLOW	0x01
-#define	SDB_KSTACK	0x02
-#endif
-
 /*
  * Send an interrupt to process.
  */
 void
-sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
-    union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
 	struct sigcontext ksc, *scp;
@@ -1397,7 +1393,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	struct sigacts *psp = p->p_p->ps_sigacts;
 	unsigned long oldsp;
 	int fsize, rndfsize, kscsize;
-	siginfo_t *sip, ksi;
+	siginfo_t *sip;
 
 	oldsp = alpha_pal_rdusp();
 	frame = p->p_md.md_tf;
@@ -1405,7 +1401,7 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	rndfsize = ((fsize + 15) / 16) * 16;
 	kscsize = rndfsize;
 	if (psp->ps_siginfo & sigmask(sig)) {
-		fsize += sizeof ksi;
+		fsize += sizeof *ksip;
 		rndfsize = ((fsize + 15) / 16) * 16;
 	}
 
@@ -1414,8 +1410,9 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	 */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(oldsp) && (psp->ps_sigonstack & sigmask(sig)))
-		scp = (struct sigcontext *)(p->p_sigstk.ss_sp +
-		    p->p_sigstk.ss_size - rndfsize);
+		scp = (struct sigcontext *)
+		    (trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size)
+		    - rndfsize);
 	else
 		scp = (struct sigcontext *)(oldsp - rndfsize);
 
@@ -1446,9 +1443,8 @@ sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
 	memset(ksc.sc_xxx, 0, sizeof ksc.sc_xxx);		/* XXX */
 
 	if (psp->ps_siginfo & sigmask(sig)) {
-		initsiginfo(&ksi, sig, code, type, val);
 		sip = (void *)scp + kscsize;
-		if (copyout((caddr_t)&ksi, (caddr_t)sip, fsize - kscsize) != 0)
+		if (copyout(ksip, (caddr_t)sip, fsize - kscsize) != 0)
 			goto trash;
 	} else
 		sip = NULL;

@@ -12,8 +12,18 @@ DDEESSCCRRIIPPTTIIOONN
 
        closing after plain text
 
+       conditional content  following words with whitespace
+
+       conditional contentfollowing words without whitespace
+
+       preceding words standard multi-line style following words
+
+       preceding words
+
+       non-standard multi-line style following words
+
        still open at the end of the file
 
 
 
-OpenBSD                           2013-06-27                     COND-CLOSE(1)
+OpenBSD                        November 26, 2018                 COND-CLOSE(1)

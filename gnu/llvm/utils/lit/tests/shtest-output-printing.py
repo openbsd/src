@@ -16,13 +16,16 @@
 #
 # CHECK:      Command Output
 # CHECK-NEXT: --
+# CHECK-NEXT: $ ":" "RUN: at line 1"
 # CHECK-NEXT: $ "true"
+# CHECK-NEXT: $ ":" "RUN: at line 2"
 # CHECK-NEXT: $ "echo" "hi"
 # CHECK-NEXT: # command output:
 # CHECK-NEXT: hi
 #
-# CHECK:      $ "wc" "missing-file"
-# CHECK-NEXT: # redirected output from '{{.*}}/basic.txt.tmp.out':
+# CHECK:      $ ":" "RUN: at line 3"
+# CHECK-NEXT: $ "wc" "missing-file"
+# CHECK-NEXT: # redirected output from '{{.*(/|\\\\)}}basic.txt.tmp.out':
 # CHECK-NEXT: missing-file{{.*}} No such file or directory
 # CHECK:      note: command had no output on stdout or stderr
 # CHECK-NEXT: error: command failed with exit status: 1

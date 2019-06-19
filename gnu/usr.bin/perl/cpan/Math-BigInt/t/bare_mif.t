@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 684             # tests in require'd file
+use Test::More tests => 712             # tests in require'd file
                         + 1;            # tests in this file
 
 use lib 't';
@@ -18,7 +18,7 @@ our ($mbi, $mbf);
 $mbi = 'Math::BigInt';
 $mbf = 'Math::BigFloat';
 
-is(Math::BigInt->config()->{lib}, 'Math::BigInt::BareCalc',
-   'Math::BigInt->config()->{lib}');
+is(Math::BigInt->config('lib'), 'Math::BigInt::BareCalc',
+   "Math::BigInt->config('lib')");
 
 require 't/mbimbf.inc';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.36 2017/03/15 15:54:41 deraadt Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.38 2019/01/14 06:49:42 otto Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -376,6 +376,8 @@ setup_query(struct asr_query *as, const char *name, const char *dom,
 	h.id = res_randomid();
 	if (as->as_ctx->ac_options & RES_RECURSE)
 		h.flags |= RD_MASK;
+	if (as->as_ctx->ac_options & RES_USE_CD)
+		h.flags |= CD_MASK;
 	h.qdcount = 1;
 	if (as->as_ctx->ac_options & (RES_USE_EDNS0 | RES_USE_DNSSEC))
 		h.arcount = 1;

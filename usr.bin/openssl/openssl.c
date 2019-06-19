@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.26 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: openssl.c,v 1.29 2019/03/17 17:46:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -241,6 +241,10 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_SHA512
 	{ FUNC_TYPE_MD, "sha512", dgst_main },
 #endif
+#ifndef OPENSSL_NO_SM3
+	{ FUNC_TYPE_MD, "sm3", dgst_main },
+	{ FUNC_TYPE_MD, "sm3WithRSAEncryption", dgst_main },
+#endif
 #ifndef OPENSSL_NO_WHIRLPOOL
 	{ FUNC_TYPE_MD, "whirlpool", dgst_main },
 #endif
@@ -318,6 +322,13 @@ FUNCTION functions[] = {
 	{ FUNC_TYPE_CIPHER, "rc4", enc_main },
 	{ FUNC_TYPE_CIPHER, "rc4-40", enc_main },
 #endif
+#ifndef OPENSSL_NO_SM4
+	{ FUNC_TYPE_CIPHER, "sm4", enc_main },
+	{ FUNC_TYPE_CIPHER, "sm4-ecb", enc_main },
+	{ FUNC_TYPE_CIPHER, "sm4-cbc", enc_main },
+	{ FUNC_TYPE_CIPHER, "sm4-ofb", enc_main },
+	{ FUNC_TYPE_CIPHER, "sm4-cfb", enc_main },
+#endif
 #ifdef ZLIB
 	{ FUNC_TYPE_CIPHER, "zlib", enc_main },
 #endif
@@ -342,56 +353,6 @@ char *default_config_file = NULL;
 
 CONF *config = NULL;
 BIO *bio_err = NULL;
-
-static void
-lock_dbg_cb(int mode, int type, const char *file, int line)
-{
-	static int modes[CRYPTO_NUM_LOCKS];	/* = {0, 0, ... } */
-	const char *errstr = NULL;
-	int rw;
-
-	rw = mode & (CRYPTO_READ | CRYPTO_WRITE);
-	if (!((rw == CRYPTO_READ) || (rw == CRYPTO_WRITE))) {
-		errstr = "invalid mode";
-		goto err;
-	}
-	if (type < 0 || type >= CRYPTO_NUM_LOCKS) {
-		errstr = "type out of bounds";
-		goto err;
-	}
-	if (mode & CRYPTO_LOCK) {
-		if (modes[type]) {
-			errstr = "already locked";
-			/*
-			 * must not happen in a single-threaded program
-			 * (would deadlock)
-			 */
-			goto err;
-		}
-		modes[type] = rw;
-	} else if (mode & CRYPTO_UNLOCK) {
-		if (!modes[type]) {
-			errstr = "not locked";
-			goto err;
-		}
-		if (modes[type] != rw) {
-			errstr = (rw == CRYPTO_READ) ?
-			    "CRYPTO_r_unlock on write lock" :
-			    "CRYPTO_w_unlock on read lock";
-		}
-		modes[type] = 0;
-	} else {
-		errstr = "invalid mode";
-		goto err;
-	}
-
- err:
-	if (errstr) {
-		/* we cannot use bio_err here */
-		fprintf(stderr, "openssl (lock_dbg_cb): %s (mode=%d, type=%d) at %s:%d\n",
-		    errstr, mode, type, file, line);
-	}
-}
 
 static void
 openssl_startup(void)
@@ -450,8 +411,6 @@ main(int argc, char **argv)
 		BIO_printf(bio_err, "BIO_sock_init failed\n");
 		exit(1);
 	}
-
-	CRYPTO_set_locking_callback(lock_dbg_cb);
 
 	openssl_startup();
 

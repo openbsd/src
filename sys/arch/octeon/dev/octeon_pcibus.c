@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.19 2016/10/21 12:36:19 pirofti Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.20 2018/06/13 14:38:42 visa Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -489,7 +489,7 @@ octeon_pcibus_get_resource_extent(pci_chipset_tag_t pc, int io)
 			goto error;
 	}
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DIAGNOSTIC)
 	extent_print(ex);
 #endif
 	return ex;

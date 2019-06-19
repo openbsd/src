@@ -1,0 +1,28 @@
+#! /usr/bin/perl
+
+# $OpenBSD: injectadd,v 1.2 2018/06/18 14:59:15 espie Exp $
+
+use warnings;
+use strict;
+
+# This script injects a specific order in the dependencies key to reproduce
+# the cups bug
+use OpenBSD::PkgAdd;
+use OpenBSD::Dependencies;
+
+package OpenBSD::Dependencies::SolverBase;
+
+{
+no warnings qw(redefine);
+sub dependencies
+{
+	my $self = shift;
+	my @l = keys %{$self->{all_dependencies}};
+	my $v = 'ghostscript-9.07p7';
+	@l = ((grep {$_ ne $v} @l) , (grep {$_ eq $v} @l));
+	return @l;
+}
+}
+
+package main;
+exit (OpenBSD::PkgAdd->parse_and_run('pkg_add'));

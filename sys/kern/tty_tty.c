@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.22 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.24 2018/05/02 02:24:56 visa Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -57,39 +57,37 @@ cttyopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ttyvp == NULL)
 		return (ENXIO);
-	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(ttyvp, flag, NOCRED, p);
-	VOP_UNLOCK(ttyvp, p);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 
 int
 cttyread(dev_t dev, struct uio *uio, int flag)
 {
-	struct proc *p = uio->uio_procp;
 	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
 		return (EIO);
-	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READ(ttyvp, uio, flag, NOCRED);
-	VOP_UNLOCK(ttyvp, p);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 
 int
 cttywrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct proc *p = uio->uio_procp;
 	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
 		return (EIO);
-	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_WRITE(ttyvp, uio, flag, NOCRED);
-	VOP_UNLOCK(ttyvp, p);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 

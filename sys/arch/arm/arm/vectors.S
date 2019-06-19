@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.S,v 1.2 2016/09/21 11:33:05 kettenis Exp $	*/
+/*	$OpenBSD: vectors.S,v 1.3 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: vectors.S,v 1.4 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
  */
 
 #include "assym.h"
+
 #include <machine/asm.h>
 
 /*

@@ -14,6 +14,7 @@ $| = 1;
 
 # Get command line options
 use Getopt::Long;
+require "./Porting/manifest_lib.pl";
 my $outfile;
 my $check_only = 0;
 my $quiet = 0;
@@ -30,13 +31,10 @@ my @manifest = <$IN>;
 close($IN) or die($!);
 chomp(@manifest);
 
-# Sort by dictionary order (ignore-case and
-#   consider whitespace and alphanumeric only)
-my @sorted = sort {
-                      (my $aa = $a) =~ s/[^\s\da-zA-Z]//g;
-                      (my $bb = $b) =~ s/[^\s\da-zA-Z]//g;
-                      uc($aa) cmp uc($bb)
-                  } @manifest;
+my %seen= ( '' => 1 ); # filter out blank lines
+my @sorted = grep { !$seen{$_}++ }
+             sort_manifest(@manifest)
+;
 
 # Check if the file is sorted or not
 my $exit_code = 0;

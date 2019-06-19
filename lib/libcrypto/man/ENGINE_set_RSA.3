@@ -1,0 +1,329 @@
+.\" $OpenBSD: ENGINE_set_RSA.3,v 1.5 2019/06/06 17:41:43 schwarze Exp $
+.\" content checked up to:
+.\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 6 2019 $
+.Dt ENGINE_SET_RSA 3
+.Os
+.Sh NAME
+.Nm ENGINE_set_RSA ,
+.Nm ENGINE_get_RSA ,
+.Nm ENGINE_set_DSA ,
+.Nm ENGINE_get_DSA ,
+.Nm ENGINE_set_ECDH ,
+.Nm ENGINE_get_ECDH ,
+.Nm ENGINE_set_ECDSA ,
+.Nm ENGINE_get_ECDSA ,
+.Nm ENGINE_set_DH ,
+.Nm ENGINE_get_DH ,
+.Nm ENGINE_set_RAND ,
+.Nm ENGINE_get_RAND ,
+.Nm ENGINE_set_STORE ,
+.Nm ENGINE_get_STORE ,
+.Nm ENGINE_set_ciphers ,
+.Nm ENGINE_get_ciphers ,
+.Nm ENGINE_get_cipher ,
+.Nm ENGINE_set_digests ,
+.Nm ENGINE_get_digests ,
+.Nm ENGINE_get_digest
+.Nd install and retrieve function tables of crypto engines
+.Sh SYNOPSIS
+.In openssl/engine.h
+.Ft int
+.Fo ENGINE_set_RSA
+.Fa "ENGINE *e"
+.Fa "const RSA_METHOD *rsa_meth"
+.Fc
+.Ft const RSA_METHOD *
+.Fo ENGINE_get_RSA
+.Fa "const ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_DSA
+.Fa "ENGINE *e"
+.Fa "const DSA_METHOD *dsa_meth"
+.Fc
+.Ft const DSA_METHOD *
+.Fo ENGINE_get_DSA
+.Fa "const ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_ECDH
+.Fa "ENGINE *e"
+.Fa "const ECDH_METHOD *dh_meth"
+.Fc
+.Ft const ECDH_METHOD *
+.Fo ENGINE_get_ECDH
+.Fa "const ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_ECDSA
+.Fa "ENGINE *e"
+.Fa "const ECDSA_METHOD *dh_meth"
+.Fc
+.Ft const ECDSA_METHOD *
+.Fo ENGINE_get_ECDSA
+.Fa "const ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_DH
+.Fa "ENGINE *e"
+.Fa "const DH_METHOD *dh_meth"
+.Fc
+.Ft const DH_METHOD *
+.Fo ENGINE_get_DH
+.Fa "const ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_RAND
+.Fa "ENGINE *e"
+.Fa "const RAND_METHOD *rand_meth"
+.Fc
+.Ft const RAND_METHOD *
+.Fo ENGINE_get_RAND
+.Fa "const ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_STORE
+.Fa "ENGINE *e"
+.Fa "const STORE_METHOD *rand_meth"
+.Fc
+.Ft const STORE_METHOD *
+.Fo ENGINE_get_STORE
+.Fa "const ENGINE *e"
+.Fc
+.Ft typedef int
+.Fo (*ENGINE_CIPHERS_PTR)
+.Fa "ENGINE *e"
+.Fa "const EVP_CIPHER **impl"
+.Fa "const int **nids"
+.Fa "int nid"
+.Fc
+.Ft int
+.Fo ENGINE_set_ciphers
+.Fa "ENGINE *e"
+.Fa "ENGINE_CIPHERS_PTR f"
+.Fc
+.Ft ENGINE_CIPHERS_PTR
+.Fo ENGINE_get_ciphers
+.Fa "const ENGINE *e"
+.Fc
+.Ft const EVP_CIPHER *
+.Fo ENGINE_get_cipher
+.Fa "ENGINE *e"
+.Fa "int nid"
+.Fc
+.Ft typedef int
+.Fo (*ENGINE_DIGESTS_PTR)
+.Fa "ENGINE *e"
+.Fa "const EVP_MD **impl"
+.Fa "const int **nids"
+.Fa "int nid"
+.Fc
+.Ft int
+.Fo ENGINE_set_digests
+.Fa "ENGINE *e"
+.Fa "ENGINE_DIGESTS_PTR f"
+.Fc
+.Ft ENGINE_DIGESTS_PTR
+.Fo ENGINE_get_digests
+.Fa "const ENGINE *e"
+.Fc
+.Ft const EVP_MD *
+.Fo ENGINE_get_digest
+.Fa "ENGINE *e"
+.Fa "int nid"
+.Fc
+.Sh DESCRIPTION
+The
+.Fn ENGINE_set_*
+functions install a table of function pointers
+implementing the respective algorithm in
+.Fa e .
+Partial information about the various method objects is available from
+.Xr RSA_meth_new 3 ,
+.Xr RSA_get_default_method 3 ,
+.Xr DSA_meth_new 3 ,
+.Xr DSA_get_default_method 3 ,
+.Fn ECDH_get_default_method ,
+.Xr ECDSA_get_default_method 3 ,
+.Xr DH_get_default_method 3 ,
+.Xr RAND_get_rand_method 3 ,
+.Xr EVP_get_cipherbynid 3 ,
+and
+.Xr EVP_get_digestbynid 3 .
+.Vt STORE_METHOD
+is an incomplete type, and the pointers to it are not used for anything.
+For complete descriptions of these types,
+refer to the respective header files.
+.Pp
+The functions described in the
+.Xr ENGINE_register_RSA 3
+and
+.Xr ENGINE_set_default 3
+manual pages only have an effect after function pointers
+were installed using the functions described here.
+.Pp
+.Fn ENGINE_set_ciphers
+and
+.Fn ENGINE_set_digests
+are special in so far as the
+.Vt ENGINE
+structure does not provide fields to store function pointers
+implementing ciphers or digests.
+Instead, these two functions only install a callback to
+retrieve implementations.
+Where the pointers to the implementations are stored internally,
+how they get initialized, and how the
+.Vt ENGINE_CIPHERS_PTR
+and
+.Vt ENGINE_DIGESTS_PTR
+callbacks retrieve them
+is up to the implementation of each individual engine.
+.Pp
+If the
+.Vt ENGINE_CIPHERS_PTR
+and
+.Vt ENGINE_DIGESTS_PTR
+callbacks are called with a non-zero
+.Fa nid ,
+they retrieve the implementation of that cipher or digest,
+respectively.
+In this case, a
+.Dv NULL
+pointer can be passed as the
+.Fa nids
+argument.
+.Fn ENGINE_get_cipher
+and
+.Fn ENGINE_get_digest
+call the callbacks installed in
+.Fa e
+in this way.
+.Pp
+If 0 is passed as the
+.Fa nid
+argument, an internal pointer
+to the array of implementations available in
+.Fa e
+is returned in
+.Pf * Fa impl ,
+and an internal pointer
+to the array of corresponding identifiers in
+.Pf * Fa nids .
+The return value of the callback indicates
+the number of implementations returned.
+.Pp
+The
+.Fn ENGINE_get_*
+functions retrieve the previously installed function tables.
+They are used when constructing basic cryptographic objects
+as shown in the following table:
+.Bl -column "ENGINE_get_digestMM"
+.It Accessor: Ta Called by:
+.It Fn ENGINE_get_RSA Ta Xr RSA_new_method 3 , Xr RSA_new 3
+.It Fn ENGINE_get_DSA Ta Xr DSA_new_method 3 , Xr DSA_new 3
+.It Fn ENGINE_get_ECDH Ta Fn ECDH_set_method , Fn ECDH_compute_key
+.It Fn ENGINE_get_ECDSA Ta Xr ECDSA_set_method 3 , Xr ECDSA_sign_setup 3 ,
+.Xr ECDSA_do_sign_ex 3 , Xr ECDSA_do_verify 3
+.It Fn ENGINE_get_DH Ta Xr DH_new_method 3 , Xr DH_new 3
+.It Fn ENGINE_get_RAND Ta unused
+.It Fn ENGINE_get_STORE Ta unused
+.It Fn ENGINE_get_cipher Ta Xr EVP_CipherInit_ex 3
+.It Fn ENGINE_get_digest Ta Xr EVP_DigestInit_ex 3
+.El
+.Sh RETURN VALUES
+The
+.Fn ENGINE_set_*
+functions return 1 on success or 0 on error.
+Currently, they cannot fail.
+.Pp
+The
+.Fn ENGINE_get_*
+functions return a method object for the respective algorithm, or
+.Dv NULL
+if none is installed.
+.Pp
+.Fn ENGINE_get_ciphers
+and
+.Fn ENGINE_get_digests
+return a function pointer to the respective callback, or
+.Dv NULL
+if none is installed.
+.Pp
+.Fn ENGINE_get_cipher
+returns an
+.Vt EVP_CIPHER
+object implementing the cipher
+.Fa nid
+or
+.Dv NULL
+if
+.Fa e
+does not implement that cipher.
+.Pp
+.Fn ENGINE_get_digest
+returns an
+.Vt EVP_MD
+object implementing the digest
+.Fa nid
+or
+.Dv NULL
+if
+.Fa e
+does not implement that digest.
+.Sh SEE ALSO
+.Xr DSA_new 3 ,
+.Xr ENGINE_ctrl 3 ,
+.Xr ENGINE_new 3 ,
+.Xr ENGINE_register_RSA 3 ,
+.Xr ENGINE_set_default 3 ,
+.Xr ENGINE_set_flags 3 ,
+.Xr EVP_DigestInit 3 ,
+.Xr EVP_EncryptInit 3 ,
+.Xr RSA_new 3
+.Sh HISTORY
+.Fn ENGINE_set_RSA ,
+.Fn ENGINE_get_RSA ,
+.Fn ENGINE_set_DSA ,
+.Fn ENGINE_get_DSA ,
+.Fn ENGINE_set_DH ,
+.Fn ENGINE_get_DH ,
+.Fn ENGINE_set_RAND ,
+.Fn ENGINE_get_RAND ,
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 2.9 .
+.Pp
+.Fn ENGINE_set_ciphers ,
+.Fn ENGINE_get_ciphers ,
+.Fn ENGINE_get_cipher ,
+.Fn ENGINE_set_digests ,
+.Fn ENGINE_get_digests ,
+and
+.Fn ENGINE_get_digest
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn ENGINE_set_ECDH ,
+.Fn ENGINE_get_ECDH ,
+.Fn ENGINE_set_ECDSA ,
+.Fn ENGINE_get_ECDSA ,
+.Fn ENGINE_set_STORE ,
+and
+.Fn ENGINE_get_STORE
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .

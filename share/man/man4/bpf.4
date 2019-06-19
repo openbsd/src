@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.38 2016/04/28 19:07:19 natano Exp $
+.\"	$OpenBSD: bpf.4,v 1.41 2019/04/25 18:26:16 anton Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: April 28 2016 $
+.Dd $Mdocdate: April 25 2019 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -391,11 +391,24 @@ This flag is initialized to zero by default.
 .Pp
 .It Dv BIOCSFILDROP Fa "u_int *"
 .It Dv BIOCGFILDROP Fa "u_int *"
-Sets or gets the status of the
+Sets or gets the
 .Dq filter drop
-flag.
-If non-zero, packets matching any filters will be reported to the
-associated interface so that they can be dropped.
+action.
+The supported actions for packets matching the filter are:
+.Pp
+.Bl -tag -width "BPF_FILDROP_CAPTURE" -compact
+.It Dv BPF_FILDROP_PASS
+Accept and capture
+.It Dv BPF_FILDROP_CAPTURE
+Drop and capture
+.It Dv BPF_FILDROP_DROP
+Drop and do not capture
+.El
+.Pp
+Packets matching any filter configured to drop packets will be
+reported to the associated interface so that they can be dropped.
+The default action is
+.Dv BPF_FILDROP_PASS .
 .Pp
 .It Dv BIOCSDIRFILT Fa "u_int *"
 .It Dv BIOCGDIRFILT Fa "u_int *"
@@ -1008,6 +1021,23 @@ struct bpf_insn insns[] = {
 	BPF_STMT(BPF_RET+BPF_K, 0),
 };
 .Ed
+.Sh ERRORS
+If the
+.Xr ioctl 2
+call fails,
+.Xr errno 2
+is set to one of the following values:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The timeout used in a
+.Dv BIOCSRTIMEOUT
+request is negative.
+.It Bq Er EOVERFLOW
+The timeout used in a
+.Dv BIOCSRTIMEOUT
+request is too large to be represented by an
+.Vt int .
+.El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr read 2 ,

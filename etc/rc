@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.525 2018/02/18 18:52:02 rpe Exp $
+#	$OpenBSD: rc,v 1.537 2019/05/10 13:29:21 guenther Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -175,13 +175,11 @@ reorder_libs() {
 
 	# Skip if /usr/lib, /usr/libexec or /usr/share/relink are on nfs mounted
 	# filesystems, otherwise record which ones are mounted read-only.
-	for _d in /usr/{lib,libexec,share/relink}; do
-		_dkdev=$(df $_d | sed '1d;s/ .*//')
-		_mp=$(mount | grep "^$_dkdev")
-		[[ $_mp == *" type nfs "* ]] && return
-		if [[ $_mp == *" type ffs "*"read-only"* &&
-			$_ro_list != *${_mp%% *}* ]]; then
-				_ro_list="$_ro_list ${_mp%% *}"
+	for _dkdev in $(df /usr/{lib,libexec} $_relink |
+	    sed '1d;s/ .*//' | sort -u); do
+		_mp=$(mount -t ffs | grep "^$_dkdev") || return
+		if [[ $_mp == *read-only* ]]; then
+			_ro_list="$_ro_list ${_mp%% *}"
 		fi
 	done
 
@@ -204,7 +202,7 @@ reorder_libs() {
 		_tmpdir=$(mktemp -dq $_relink/_rebuild.XXXXXXXXXXXX) &&
 		(
 		set -o errexit
-		_install='install -F -S -o root -g bin -m 0444'
+		_install='install -F -o root -g bin -m 0444'
 		_lib=${_liba##*/}
 		_lib=${_lib%.a}
 		_lib_dir=${_liba#$_relink}
@@ -212,9 +210,11 @@ reorder_libs() {
 		cd $_tmpdir
 		ar x $_liba
 		if [[ $_lib == ld.so ]]; then
-			ld -g -x -e _dl_start \
+			args="-g -x -e _dl_start \
 			    --version-script=Symbols.map --shared -Bsymbolic \
-			    --no-undefined -o ld.so.test $(ls *.o | sort -R)
+			    --no-undefined"
+			[[ -f ld.script ]] && args="$args -T ld.script"
+			ld $args -o ld.so.test $(ls *.o | sort -R)
 			chmod u+x test-ld.so
 			[[ $(./test-ld.so ok) == './test-ld.so: ok!' ]]
 			$_install /usr/libexec/ld.so /usr/libexec/ld.so.save
@@ -337,6 +337,12 @@ if [[ $1 == shutdown ]]; then
 			echo '.'
 		fi
 
+		if /etc/rc.d/vmd check > /dev/null; then
+			echo -n 'stopping VMs'
+			/etc/rc.d/vmd stop > /dev/null
+			echo '.'
+		fi
+
 		[[ -f /etc/rc.shutdown ]] && sh /etc/rc.shutdown
 	fi
 
@@ -376,7 +382,6 @@ ln -fh /bsd /bsd.booted
 rm -f /fastboot
 
 # Set flags on ttys.
-echo 'setting tty flags'
 ttyflags -a
 
 # Set keyboard encoding.
@@ -469,7 +474,7 @@ dmesg >/var/run/dmesg.boot
 make_keys
 
 echo -n 'starting early daemons:'
-start_daemon syslogd ldattach pflogd nsd rebound unbound ntpd
+start_daemon syslogd ldattach pflogd nsd rebound unwind unbound ntpd
 start_daemon iscsid isakmpd iked sasyncd ldapd npppd
 echo '.'
 
@@ -501,7 +506,7 @@ fi
 
 # Store ACPI tables in /var/db/acpi to be used by sendbug(1).
 if [[ -x /usr/sbin/acpidump ]]; then
-	acpidump -o /var/db/acpi/
+	acpidump -q -o /var/db/acpi/
 fi
 
 if [[ $check_quotas == YES ]]; then
@@ -575,15 +580,8 @@ run_upgrade_script sysmerge
 
 echo -n 'starting network daemons:'
 start_daemon ldomd sshd switchd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
-start_daemon relayd dhcpd dhcrelay mrouted dvmrpd radiusd eigrpd
-
-if ifconfig lo0 inet6 >/dev/null 2>&1; then
-	if (($(sysctl -n net.inet6.ip6.forwarding) == 1)); then
-		start_daemon route6d rtadvd
-	fi
-fi
-
-start_daemon hostapd lpd smtpd slowcgi httpd ftpd
+start_daemon relayd dhcpd dhcrelay mrouted dvmrpd radiusd eigrpd route6d
+start_daemon rad hostapd lpd smtpd slowcgi httpd ftpd
 start_daemon ftpproxy ftpproxy6 tftpd tftpproxy identd inetd rarpd bootparamd
 start_daemon rbootd mopd vmd spamd spamlogd sndiod
 echo '.'

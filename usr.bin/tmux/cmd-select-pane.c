@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.42 2017/11/17 09:52:18 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.50 2019/04/30 06:21:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "tmux.h"
 
@@ -54,6 +55,31 @@ const struct cmd_entry cmd_last_pane_entry = {
 	.exec = cmd_select_pane_exec
 };
 
+static void
+cmd_select_pane_redraw(struct window *w)
+{
+	struct client	*c;
+
+	/*
+	 * Redraw entire window if it is bigger than the client (the
+	 * offset may change), otherwise just draw borders.
+	 */
+
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (c->session == NULL || (c->flags & CLIENT_CONTROL))
+			continue;
+		if (c->session->curw->window == w && tty_window_bigger(&c->tty))
+			server_redraw_client(c);
+		else {
+			if (c->session->curw->window == w)
+				c->flags |= CLIENT_REDRAWBORDERS;
+			if (session_has(c->session, w))
+				c->flags |= CLIENT_REDRAWSTATUS;
+		}
+
+	}
+}
+
 static enum cmd_retval
 cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 {
@@ -64,11 +90,17 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	struct window		*w = wl->window;
 	struct session		*s = item->target.s;
 	struct window_pane	*wp = item->target.wp, *lastwp, *markedwp;
+	struct style		*sy = &wp->style;
 	char			*pane_title;
 	const char		*style;
 
 	if (self->entry == &cmd_last_pane_entry || args_has(args, 'l')) {
 		lastwp = w->last;
+		if (lastwp == NULL && window_count_panes(w) == 2) {
+			lastwp = TAILQ_PREV(w->active, window_panes, entry);
+			if (lastwp == NULL)
+				lastwp = TAILQ_NEXT(w->active, entry);
+		}
 		if (lastwp == NULL) {
 			cmdq_error(item, "no last pane");
 			return (CMD_RETURN_ERROR);
@@ -80,10 +112,9 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 		else {
 			server_unzoom_window(w);
 			window_redraw_active_switch(w, lastwp);
-			if (window_set_active_pane(w, lastwp)) {
+			if (window_set_active_pane(w, lastwp, 1)) {
 				cmd_find_from_winlink(current, wl, 0);
-				server_status_window(w);
-				server_redraw_window_borders(w);
+				cmd_select_pane_redraw(w);
 			}
 		}
 		return (CMD_RETURN_NORMAL);
@@ -112,17 +143,16 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	if (args_has(self->args, 'P') || args_has(self->args, 'g')) {
-		if (args_has(args, 'P')) {
-			style = args_get(args, 'P');
-			if (style_parse(&grid_default_cell, &wp->colgc,
-			    style) == -1) {
+		if ((style = args_get(args, 'P')) != NULL) {
+			style_set(sy, &grid_default_cell);
+			if (style_parse(sy, &grid_default_cell, style) == -1) {
 				cmdq_error(item, "bad style: %s", style);
 				return (CMD_RETURN_ERROR);
 			}
 			wp->flags |= PANE_REDRAW;
 		}
 		if (args_has(self->args, 'g'))
-			cmdq_print(item, "%s", style_tostring(&wp->colgc));
+			cmdq_print(item, "%s", style_tostring(sy));
 		return (CMD_RETURN_NORMAL);
 	}
 
@@ -157,21 +187,17 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 		screen_set_title(&wp->base, pane_title);
 		server_status_window(wp->window);
 		free(pane_title);
+		return (CMD_RETURN_NORMAL);
 	}
 
 	if (wp == w->active)
 		return (CMD_RETURN_NORMAL);
 	server_unzoom_window(wp->window);
-	if (!window_pane_visible(wp)) {
-		cmdq_error(item, "pane not visible");
-		return (CMD_RETURN_ERROR);
-	}
 	window_redraw_active_switch(w, wp);
-	if (window_set_active_pane(w, wp)) {
+	if (window_set_active_pane(w, wp, 1)) {
 		cmd_find_from_winlink_pane(current, wl, wp, 0);
-		hooks_insert(s->hooks, item, current, "after-select-pane");
-		server_status_window(w);
-		server_redraw_window_borders(w);
+		cmdq_insert_hook(s, item, current, "after-select-pane");
+		cmd_select_pane_redraw(w);
 	}
 
 	return (CMD_RETURN_NORMAL);

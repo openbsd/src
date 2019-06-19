@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.26 2017/05/31 03:45:15 jsg Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.27 2018/10/02 02:05:34 kevlo Exp $  */
 
 /*-
  * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -133,6 +133,7 @@ const struct pci_matchid ral_pci_devices[] = {
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3090 },
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3091 },
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3092 },
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3290 },
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3562 },
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3592 },
 	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT3593 },

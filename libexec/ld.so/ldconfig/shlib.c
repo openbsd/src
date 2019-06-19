@@ -1,4 +1,4 @@
-/*	$OpenBSD: shlib.c,v 1.12 2015/12/22 08:15:05 mmcc Exp $	*/
+/*	$OpenBSD: shlib.c,v 1.13 2018/04/26 12:42:50 guenther Exp $	*/
 /*	$NetBSD: shlib.c,v 1.13 1998/04/04 01:00:29 fvdl Exp $	*/
 
 /*
@@ -32,16 +32,8 @@
  *
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/file.h>
-#include <sys/time.h>
-#include <ranlib.h>
 #include <ctype.h>
-#include <dirent.h>
 #include <err.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

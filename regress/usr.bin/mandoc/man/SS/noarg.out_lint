@@ -10,5 +10,5 @@ mandoc: noarg.in:30:2: ERROR: skipping end of block that is not open: RE
 mandoc: noarg.in:32:2: WARNING: line scope broken: UR breaks SS
 mandoc: noarg.in:35:2: WARNING: line scope broken: UE breaks SS
 mandoc: noarg.in:36:2: ERROR: skipping end of block that is not open: UE
-mandoc: noarg.in:42:2: STYLE: fill mode already enabled, skipping: fi
 mandoc: noarg.in:45:1: WARNING: skipping blank line in line scope
+mandoc: noarg.in:42:2: STYLE: fill mode already enabled, skipping: fi

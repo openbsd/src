@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.117 2017/11/27 09:03:37 mpi Exp $
+#	$OpenBSD: RAMDISK,v 1.118 2018/09/22 10:12:42 stsp Exp $
 
 machine		macppc powerpc
 maxusers	4
@@ -156,6 +156,7 @@ ukbd*		at uhidev?		# USB HID Keyboard devices
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
 axen*		at uhub?		# ASIX Electronics AX88179 USB Ethernet
+bwfm*		at uhub?		# Broadcom FullMAC
 cue*		at uhub?		# CATC USB-EL1201A based Ethernet
 kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 smsc*		at uhub?		# SMSC LAN95xx Ethernet

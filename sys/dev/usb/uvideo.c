@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.196 2017/12/30 23:08:29 guenther Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.199 2018/05/01 18:14:46 landry Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2741,7 +2741,7 @@ uvideo_debug_file_open(struct uvideo_softc *sc)
 	}
 
 	sc->sc_vp = nd.ni_vp;
-	VOP_UNLOCK(sc->sc_vp, p);
+	VOP_UNLOCK(sc->sc_vp);
 	if (nd.ni_vp->v_type != VREG) {
 		vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
 		return (EIO);
@@ -2784,8 +2784,7 @@ uvideo_querycap(void *v, struct v4l2_capability *caps)
 
 	bzero(caps, sizeof(*caps));
 	strlcpy(caps->driver, DEVNAME(sc), sizeof(caps->driver));
-	strlcpy(caps->card, "Generic USB video class device",
-	    sizeof(caps->card));
+	strlcpy(caps->card, sc->sc_udev->product, sizeof(caps->card));
 	strlcpy(caps->bus_info, "usb", sizeof(caps->bus_info));
 
 	caps->version = 1;

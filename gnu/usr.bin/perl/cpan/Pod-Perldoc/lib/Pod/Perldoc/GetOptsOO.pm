@@ -2,7 +2,7 @@ package Pod::Perldoc::GetOptsOO;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '3.25';
+$VERSION = '3.28';
 
 BEGIN { # Make a DEBUG constant ASAP
   *DEBUG = defined( &Pod::Perldoc::DEBUG )

@@ -1,3 +1,4 @@
+/*	$OpenBSD: utf8test.c,v 1.4 2018/07/17 17:06:50 tb Exp $	*/
 /*
  * Copyright (c) 2014 Philip Guenther <guenther@openbsd.org>
  *

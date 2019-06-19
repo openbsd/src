@@ -59,7 +59,7 @@ cmp_ok( scalar(@ar), '==', 0, '..nothing pushed' );
 unlike( 'abc', qr/^a(?{push @ar,107})b(?{push @ar,108})$/, 'abc !~ ab$ (push)' );
 cmp_ok( scalar(@ar), '==', 0, '..still nothing pushed' );
 
-use vars '@var';
+our @var;
 
 like( 'ab', qr/^a(?{push @var,109})(?:b(?{push @var,110}))?/, 'ab =~ ab? push to package var' );
 cmp_ok( scalar(@var), '==', 2, '..@var pushed' );

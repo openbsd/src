@@ -8,12 +8,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CallGraph.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/CallSite.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <cassert>
+
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -88,8 +97,8 @@ void CallGraph::print(raw_ostream &OS) const {
   for (const auto &I : *this)
     Nodes.push_back(I.second.get());
 
-  std::sort(Nodes.begin(), Nodes.end(),
-            [](CallGraphNode *LHS, CallGraphNode *RHS) {
+  llvm::sort(Nodes.begin(), Nodes.end(),
+             [](CallGraphNode *LHS, CallGraphNode *RHS) {
     if (Function *LF = LHS->getFunction())
       if (Function *RF = RHS->getFunction())
         return LF->getName() < RF->getName();
@@ -125,7 +134,6 @@ Function *CallGraph::removeFunctionFromModule(CallGraphNode *CGN) {
 /// This does not rescan the body of the function, so it is suitable when
 /// splicing the body of the old function to the new while also updating all
 /// callers from old to new.
-///
 void CallGraph::spliceFunction(const Function *From, const Function *To) {
   assert(FunctionMap.count(From) && "No CallGraphNode for function!");
   assert(!FunctionMap.count(To) &&
@@ -158,7 +166,7 @@ void CallGraphNode::print(raw_ostream &OS) const {
     OS << "Call graph node for function: '" << F->getName() << "'";
   else
     OS << "Call graph node <<null function>>";
-  
+
   OS << "<<" << this << ">>  #uses=" << getNumReferences() << '\n';
 
   for (const auto &I : *this) {
@@ -256,7 +264,7 @@ CallGraphWrapperPass::CallGraphWrapperPass() : ModulePass(ID) {
   initializeCallGraphWrapperPassPass(*PassRegistry::getPassRegistry());
 }
 
-CallGraphWrapperPass::~CallGraphWrapperPass() {}
+CallGraphWrapperPass::~CallGraphWrapperPass() = default;
 
 void CallGraphWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
@@ -291,8 +299,10 @@ void CallGraphWrapperPass::dump() const { print(dbgs(), nullptr); }
 #endif
 
 namespace {
+
 struct CallGraphPrinterLegacyPass : public ModulePass {
   static char ID; // Pass ID, replacement for typeid
+
   CallGraphPrinterLegacyPass() : ModulePass(ID) {
     initializeCallGraphPrinterLegacyPassPass(*PassRegistry::getPassRegistry());
   }
@@ -301,12 +311,14 @@ struct CallGraphPrinterLegacyPass : public ModulePass {
     AU.setPreservesAll();
     AU.addRequiredTransitive<CallGraphWrapperPass>();
   }
+
   bool runOnModule(Module &M) override {
     getAnalysis<CallGraphWrapperPass>().print(errs(), &M);
     return false;
   }
 };
-}
+
+} // end anonymous namespace
 
 char CallGraphPrinterLegacyPass::ID = 0;
 

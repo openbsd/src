@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.24 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.31 2018/11/06 07:02:33 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -526,13 +526,30 @@ EC_GROUP_cmp(const EC_GROUP * a, const EC_GROUP * b, BN_CTX * ctx)
 
 	return r;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	if (ctx_new)
 		BN_CTX_free(ctx);
 	return -1;
 }
 
+/*
+ * Coordinate blinding for EC_POINT.
+ *
+ * The underlying EC_METHOD can optionally implement this function:
+ * underlying implementations should return 0 on errors, or 1 on success.
+ *
+ * This wrapper returns 1 in case the underlying EC_METHOD does not support
+ * coordinate blinding.
+ */
+int
+ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
+{
+	if (group->meth->blind_coordinates == NULL)
+		return 1;
+
+	return group->meth->blind_coordinates(group, p, ctx);
+}
 
 /* this has 'package' visibility */
 int 
@@ -1026,47 +1043,88 @@ EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 }
 
 
-/* Functions for point multiplication.
- *
- * If group->meth->mul is 0, we use the wNAF-based implementations in ec_mult.c;
- * otherwise we dispatch through methods.
- */
-
+/* Functions for point multiplication */
 int 
 EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
 {
-	if (group->meth->mul == 0)
-		/* use default */
-		return ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
-
-	return group->meth->mul(group, r, scalar, num, points, scalars, ctx);
+	/*
+	 * The function pointers must be set, and only support num == 0 and
+	 * num == 1.
+	 */
+	if (group->meth->mul_generator_ct == NULL ||
+	    group->meth->mul_single_ct == NULL ||
+	    group->meth->mul_double_nonct == NULL ||
+	    num > 1) {
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+	}
+	
+	/* Either bP or aG + bP, this is sane. */
+	if (num == 1 && points != NULL && scalars != NULL)
+		return EC_POINT_mul(group, r, scalar, points[0], scalars[0],
+		    ctx);
+	
+	/* aG, this is sane */
+	if (scalar != NULL && points == NULL && scalars == NULL)
+		return EC_POINT_mul(group, r, scalar, NULL, NULL, ctx);
+	
+	/* anything else is an error */
+	ECerror(ERR_R_EC_LIB);
+	return 0;
 }
 
 int 
 EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
     const EC_POINT *point, const BIGNUM *p_scalar, BN_CTX *ctx)
 {
-	/* just a convenient interface to EC_POINTs_mul() */
-
-	const EC_POINT *points[1];
-	const BIGNUM *scalars[1];
-
-	points[0] = point;
-	scalars[0] = p_scalar;
-
-	return EC_POINTs_mul(group, r, g_scalar,
-	    (point != NULL && p_scalar != NULL),
-	    points, scalars, ctx);
+	if (group->meth->mul_generator_ct == NULL ||
+	    group->meth->mul_single_ct == NULL ||
+	    group->meth->mul_double_nonct == NULL) {
+		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+	}
+	if (g_scalar != NULL && point == NULL && p_scalar == NULL) {
+		/*
+		 * In this case we want to compute g_scalar * GeneratorPoint:
+		 * this codepath is reached most prominently by (ephemeral) key
+		 * generation of EC cryptosystems (i.e. ECDSA keygen and sign
+		 * setup, ECDH keygen/first half), where the scalar is always
+		 * secret. This is why we ignore if BN_FLG_CONSTTIME is actually
+		 * set and we always call the constant time version.
+		 */
+		return group->meth->mul_generator_ct(group, r, g_scalar, ctx);
+	}
+	if (g_scalar == NULL && point != NULL && p_scalar != NULL) {
+		/* In this case we want to compute p_scalar * GenericPoint:
+		 * this codepath is reached most prominently by the second half
+		 * of ECDH, where the secret scalar is multiplied by the peer's
+		 * public point. To protect the secret scalar, we ignore if
+		 * BN_FLG_CONSTTIME is actually set and we always call the
+		 * constant time version.
+		 */
+		return group->meth->mul_single_ct(group, r, p_scalar, point,
+		    ctx);
+	}
+	if (g_scalar != NULL && point != NULL && p_scalar != NULL) {
+		/*
+		 * In this case we want to compute
+		 *   g_scalar * GeneratorPoint + p_scalar * GenericPoint:
+		 * this codepath is reached most prominently by ECDSA signature
+		 * verification. So we call the non-ct version.
+		 */
+		return group->meth->mul_double_nonct(group, r, g_scalar,
+		    p_scalar, point, ctx);
+	}
+		
+	/* Anything else is an error. */
+	ECerror(ERR_R_EC_LIB);
+	return 0;
 }
 
 int 
 EC_GROUP_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 {
-	if (group->meth->mul == 0)
-		/* use default */
-		return ec_wNAF_precompute_mult(group, ctx);
-
 	if (group->meth->precompute_mult != 0)
 		return group->meth->precompute_mult(group, ctx);
 	else
@@ -1076,10 +1134,6 @@ EC_GROUP_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 int 
 EC_GROUP_have_precompute_mult(const EC_GROUP * group)
 {
-	if (group->meth->mul == 0)
-		/* use default */
-		return ec_wNAF_have_precompute_mult(group);
-
 	if (group->meth->have_precompute_mult != 0)
 		return group->meth->have_precompute_mult(group);
 	else

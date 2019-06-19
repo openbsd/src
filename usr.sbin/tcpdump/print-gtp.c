@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gtp.c,v 1.9 2015/12/22 21:01:07 mmcc Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.11 2018/10/22 16:12:45 kn Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -304,12 +304,12 @@ gtp_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 	else if (version == GTP_VERSION_1)
 		gtp_v1_print(cp, length, sport, dport);
 	else
-		printf(" GTP (version %i)", version);
+		printf("GTP (version %i)", version);
 
 	return;
 
 trunc:
-	printf(" [|GTP]");
+	printf("[|GTP]");
 }
 
 /*
@@ -423,13 +423,11 @@ gtp_print_user_address(const u_char *cp, u_int len)
 			printf(": %s", ipaddr_string(cp));
 		else
 			printf(": IPv4");
-#ifdef INET6
 	} else if (org == 0x1 && type == 0x57) {
 		if (len == 18)
 			printf(": %s", ip6addr_string(cp));
 		else
 			printf(": IPv6");
-#endif
 	} else
 		printf(" (org 0x%x, type 0x%x)", org, type);
 }
@@ -502,7 +500,7 @@ gtp_v0_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 	cp += sizeof(struct gtp_v0_hdr);
 	len = ntohs(gh->length);
 	bcopy(&gh->tid, &tid, sizeof(tid));
-	printf(" GTPv0 (len %u, seqno %u, flow %u, N-PDU %u, tid 0x%llx) ",
+	printf("GTPv0 (len %u, seqno %u, flow %u, N-PDU %u, tid 0x%llx) ",
 	    ntohs(gh->length), ntohs(gh->seqno), ntohs(gh->flow),
 	    ntohs(gh->npduno), betoh64(tid));
 
@@ -521,10 +519,8 @@ gtp_v0_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 
 		if (version == 4)
 			ip_print(cp, len);
-#ifdef INET6
 		else if (version == 6)
 			ip6_print(cp, len);
-#endif
 		else
 			printf("Unknown IP version %u", version);
 
@@ -549,7 +545,7 @@ gtp_v0_print_prime(const u_char *cp)
 	cp += sizeof(*gph);
 
 	len = ntohs(gph->length);
-	printf(" GTPv0' (len %u, seq %u) ", len, ntohs(gph->seqno));
+	printf("GTPv0' (len %u, seq %u) ", len, ntohs(gph->seqno));
 
 	/* Decode GTP message. */
 	printf("%s", tok2str(gtp_v0_msgtype, "Message Type %u", gph->msgtype));
@@ -807,10 +803,8 @@ gtp_v0_print_tlv(const u_char *cp, u_int value)
 		printf("GSN Address");
 		if (len == 4)
 			printf(": %s", ipaddr_string(cp));
-#ifdef INET6
 		else if (len == 16)
 			printf(": %s", ip6addr_string(cp));
-#endif
 		break;
 
 	case GTPV0_TLV_MS_ISDN:
@@ -854,10 +848,8 @@ gtp_v0_print_tlv(const u_char *cp, u_int value)
 		printf("Recommended Node");
 		if (len == 4)
 			printf(": %s", ipaddr_string(cp));
-#ifdef INET6
 		else if (len == 16)
 			printf(": %s", ip6addr_string(cp));
-#endif
 		break;
 
 	case GTPV0_TLV_PRIVATE_EXTENSION:
@@ -1014,10 +1006,8 @@ gtp_v1_print_user(const u_char *cp, u_int hlen, struct gtp_v1_hdr *gh)
 
 		if (version == 4)
 			ip_print(cp, len);
-#ifdef INET6
 		else if (version == 6)
 			ip6_print(cp, len);
-#endif
 		else
 			printf("Unknown IP version %u", version);
 
@@ -1402,10 +1392,8 @@ gtp_v1_print_tlv(const u_char *cp, u_int value)
 		printf("GSN Address");
 		if (len == 4)
 			printf(": %s", ipaddr_string(cp));
-#ifdef INET6
 		else if (len == 16)
 			printf(": %s", ip6addr_string(cp));
-#endif
 		break;
 
 	case GTPV1_TLV_MSISDN:
@@ -1766,10 +1754,8 @@ gtp_v1_print_tlv(const u_char *cp, u_int value)
 		printf("Charging Gateway");
 		if (len == 4)
 			printf(": %s", ipaddr_string(cp));
-#ifdef INET6
 		else if (len == 16)
 			printf(": %s", ip6addr_string(cp));
-#endif
 		break;
 
 	case GTPV1_TLV_DATA_RECORD_PACKET:
@@ -1797,10 +1783,8 @@ gtp_v1_print_tlv(const u_char *cp, u_int value)
 		printf("Address of Recommended Node");
 		if (len == 4)
 			printf(": %s", ipaddr_string(cp));
-#ifdef INET6
 		else if (len == 16)
 			printf(": %s", ip6addr_string(cp));
-#endif
 		break;
 
 	case GTPV1_TLV_PRIVATE_EXTENSION:

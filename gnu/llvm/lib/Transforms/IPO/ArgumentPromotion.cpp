@@ -1,4 +1,4 @@
-//===-- ArgumentPromotion.cpp - Promote by-reference arguments ------------===//
+//===- ArgumentPromotion.cpp - Promote by-reference arguments -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -31,30 +31,59 @@
 
 #include "llvm/Transforms/IPO/ArgumentPromotion.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/None.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/BasicAliasAnalysis.h"
+#include "llvm/Analysis/CGSCCPassManager.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/Analysis/LazyCallGraph.h"
 #include "llvm/Analysis/Loads.h"
+#include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Use.h"
+#include "llvm/IR/User.h"
+#include "llvm/IR/Value.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/IPO.h"
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <functional>
+#include <iterator>
+#include <map>
 #include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "argpromotion"
@@ -65,7 +94,7 @@ STATISTIC(NumByValArgsPromoted, "Number of byval arguments promoted");
 STATISTIC(NumArgumentsDead, "Number of dead pointer args eliminated");
 
 /// A vector used to hold the indices of a single GEP instruction
-typedef std::vector<uint64_t> IndicesVector;
+using IndicesVector = std::vector<uint64_t>;
 
 /// DoPromotion - This method actually performs the promotion of the specified
 /// arguments, and returns the new function.  At this point, we know that it's
@@ -75,13 +104,12 @@ doPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
             SmallPtrSetImpl<Argument *> &ByValArgsToTransform,
             Optional<function_ref<void(CallSite OldCS, CallSite NewCS)>>
                 ReplaceCallSite) {
-
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but has modified arguments.
   FunctionType *FTy = F->getFunctionType();
   std::vector<Type *> Params;
 
-  typedef std::set<std::pair<Type *, IndicesVector>> ScalarizeTable;
+  using ScalarizeTable = std::set<std::pair<Type *, IndicesVector>>;
 
   // ScalarizedElements - If we are promoting a pointer that has elements
   // accessed out of it, keep track of which elements are accessed so that we
@@ -89,7 +117,6 @@ doPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
   //
   // Arguments that are directly loaded will have a zero element value here, to
   // handle cases where there are both a direct load and GEP accesses.
-  //
   std::map<Argument *, ScalarizeTable> ScalarizedElements;
 
   // OriginalLoads - Keep track of a representative load instruction from the
@@ -193,8 +220,8 @@ doPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
   NF->setSubprogram(F->getSubprogram());
   F->setSubprogram(nullptr);
 
-  DEBUG(dbgs() << "ARG PROMOTION:  Promoting to:" << *NF << "\n"
-               << "From: " << *F);
+  LLVM_DEBUG(dbgs() << "ARG PROMOTION:  Promoting to:" << *NF << "\n"
+                    << "From: " << *F);
 
   // Recompute the parameter attributes list based on the new arguments for
   // the function.
@@ -335,7 +362,6 @@ doPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
 
   // Loop over the argument list, transferring uses of the old arguments over to
   // the new arguments, also transferring over the names as well.
-  //
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(),
                               I2 = NF->arg_begin();
        I != E; ++I) {
@@ -400,8 +426,8 @@ doPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
         I2->setName(I->getName() + ".val");
         LI->replaceAllUsesWith(&*I2);
         LI->eraseFromParent();
-        DEBUG(dbgs() << "*** Promoted load of argument '" << I->getName()
-                     << "' in function '" << F->getName() << "'\n");
+        LLVM_DEBUG(dbgs() << "*** Promoted load of argument '" << I->getName()
+                          << "' in function '" << F->getName() << "'\n");
       } else {
         GetElementPtrInst *GEP = cast<GetElementPtrInst>(I->user_back());
         IndicesVector Operands;
@@ -427,8 +453,8 @@ doPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
         NewName += ".val";
         TheArg->setName(NewName);
 
-        DEBUG(dbgs() << "*** Promoted agg argument '" << TheArg->getName()
-                     << "' of function '" << NF->getName() << "'\n");
+        LLVM_DEBUG(dbgs() << "*** Promoted agg argument '" << TheArg->getName()
+                          << "' of function '" << NF->getName() << "'\n");
 
         // All of the uses must be load instructions.  Replace them all with
         // the argument specified by ArgNo.
@@ -537,7 +563,7 @@ static void markIndicesSafe(const IndicesVector &ToMark,
 /// arguments passed in.
 static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
                                     AAResults &AAR, unsigned MaxElements) {
-  typedef std::set<IndicesVector> GEPIndicesSet;
+  using GEPIndicesSet = std::set<IndicesVector>;
 
   // Quick exit for unused arguments
   if (Arg->use_empty())
@@ -662,11 +688,11 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
     // to do.
     if (ToPromote.find(Operands) == ToPromote.end()) {
       if (MaxElements > 0 && ToPromote.size() == MaxElements) {
-        DEBUG(dbgs() << "argpromotion not promoting argument '"
-                     << Arg->getName()
-                     << "' because it would require adding more "
-                     << "than " << MaxElements
-                     << " arguments to the function.\n");
+        LLVM_DEBUG(dbgs() << "argpromotion not promoting argument '"
+                          << Arg->getName()
+                          << "' because it would require adding more "
+                          << "than " << MaxElements
+                          << " arguments to the function.\n");
         // We limit aggregate promotion to only promoting up to a fixed number
         // of elements of the aggregate.
         return false;
@@ -693,7 +719,7 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
     BasicBlock *BB = Load->getParent();
 
     MemoryLocation Loc = MemoryLocation::get(Load);
-    if (AAR.canInstructionRangeModRef(BB->front(), *Load, Loc, MRI_Mod))
+    if (AAR.canInstructionRangeModRef(BB->front(), *Load, Loc, ModRefInfo::Mod))
       return false; // Pointer is invalidated!
 
     // Now check every path from the entry block to the load for transparency.
@@ -712,9 +738,8 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
   return true;
 }
 
-/// \brief Checks if a type could have padding bytes.
+/// Checks if a type could have padding bytes.
 static bool isDenselyPacked(Type *type, const DataLayout &DL) {
-
   // There is no size information, so be conservative.
   if (!type->isSized())
     return false;
@@ -747,9 +772,8 @@ static bool isDenselyPacked(Type *type, const DataLayout &DL) {
   return true;
 }
 
-/// \brief Checks if the padding bytes of an argument could be accessed.
+/// Checks if the padding bytes of an argument could be accessed.
 static bool canPaddingBeAccessed(Argument *arg) {
-
   assert(arg->hasByValAttr());
 
   // Track all the pointers to the argument to make sure they are not captured.
@@ -788,12 +812,17 @@ static bool canPaddingBeAccessed(Argument *arg) {
 /// are any promotable arguments and if it is safe to promote the function (for
 /// example, all callers are direct).  If safe to promote some arguments, it
 /// calls the DoPromotion method.
-///
 static Function *
 promoteArguments(Function *F, function_ref<AAResults &(Function &F)> AARGetter,
                  unsigned MaxElements,
                  Optional<function_ref<void(CallSite OldCS, CallSite NewCS)>>
                      ReplaceCallSite) {
+  // Don't perform argument promotion for naked functions; otherwise we can end
+  // up removing parameters that are seemingly 'not used' as they are referred
+  // to in the assembly.
+  if(F->hasFnAttribute(Attribute::Naked))
+    return nullptr;
+
   // Make sure that it is local to this module.
   if (!F->hasLocalLinkage())
     return nullptr;
@@ -824,9 +853,19 @@ promoteArguments(Function *F, function_ref<AAResults &(Function &F)> AARGetter,
     if (CS.getInstruction() == nullptr || !CS.isCallee(&U))
       return nullptr;
 
+    // Can't change signature of musttail callee
+    if (CS.isMustTailCall())
+      return nullptr;
+
     if (CS.getInstruction()->getParent()->getParent() == F)
       isSelfRecursive = true;
   }
+
+  // Can't change signature of musttail caller
+  // FIXME: Support promoting whole chain of musttail functions
+  for (BasicBlock &BB : *F)
+    if (BB.getTerminatingMustTailCall())
+      return nullptr;
 
   const DataLayout &DL = F->getParent()->getDataLayout();
 
@@ -862,11 +901,11 @@ promoteArguments(Function *F, function_ref<AAResults &(Function &F)> AARGetter,
     if (isSafeToPromote) {
       if (StructType *STy = dyn_cast<StructType>(AgTy)) {
         if (MaxElements > 0 && STy->getNumElements() > MaxElements) {
-          DEBUG(dbgs() << "argpromotion disable promoting argument '"
-                       << PtrArg->getName()
-                       << "' because it would require adding more"
-                       << " than " << MaxElements
-                       << " arguments to the function.\n");
+          LLVM_DEBUG(dbgs() << "argpromotion disable promoting argument '"
+                            << PtrArg->getName()
+                            << "' because it would require adding more"
+                            << " than " << MaxElements
+                            << " arguments to the function.\n");
           continue;
         }
 
@@ -940,7 +979,7 @@ PreservedAnalyses ArgumentPromotionPass::run(LazyCallGraph::SCC &C,
         return FAM.getResult<AAManager>(F);
       };
 
-      Function *NewF = promoteArguments(&OldF, AARGetter, 3u, None);
+      Function *NewF = promoteArguments(&OldF, AARGetter, MaxElements, None);
       if (!NewF)
         continue;
       LocalChange = true;
@@ -964,9 +1003,17 @@ PreservedAnalyses ArgumentPromotionPass::run(LazyCallGraph::SCC &C,
 }
 
 namespace {
+
 /// ArgPromotion - The 'by reference' to 'by value' argument promotion pass.
-///
 struct ArgPromotion : public CallGraphSCCPass {
+  // Pass identification, replacement for typeid
+  static char ID;
+
+  explicit ArgPromotion(unsigned MaxElements = 3)
+      : CallGraphSCCPass(ID), MaxElements(MaxElements) {
+    initializeArgPromotionPass(*PassRegistry::getPassRegistry());
+  }
+
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<AssumptionCacheTracker>();
     AU.addRequired<TargetLibraryInfoWrapperPass>();
@@ -975,21 +1022,20 @@ struct ArgPromotion : public CallGraphSCCPass {
   }
 
   bool runOnSCC(CallGraphSCC &SCC) override;
-  static char ID; // Pass identification, replacement for typeid
-  explicit ArgPromotion(unsigned MaxElements = 3)
-      : CallGraphSCCPass(ID), MaxElements(MaxElements) {
-    initializeArgPromotionPass(*PassRegistry::getPassRegistry());
-  }
 
 private:
   using llvm::Pass::doInitialization;
+
   bool doInitialization(CallGraph &CG) override;
+
   /// The maximum number of elements to expand, or 0 for unlimited.
   unsigned MaxElements;
 };
-}
+
+} // end anonymous namespace
 
 char ArgPromotion::ID = 0;
+
 INITIALIZE_PASS_BEGIN(ArgPromotion, "argpromotion",
                       "Promote 'by reference' arguments to scalars", false,
                       false)

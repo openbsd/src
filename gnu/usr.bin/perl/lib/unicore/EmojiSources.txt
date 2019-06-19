@@ -1,25 +1,22 @@
-# EmojiSources-8.0.0.txt
-# Date: 2015-01-20, 02:00:00 GMT [MS, KW]
+# EmojiSources-10.0.0.txt
+# Date: 2017-02-04, 00:00:00 GMT [MS, KW]
+# © 2017 Unicode®, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-# Copyright (c) 1991-2015 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
 # For documentation, see http://www.unicode.org/reports/tr44/
 #
-# This file provides mappings between Unicode code points and sequences on one hand
+# This file provides historical mappings between Unicode code points and sequences on one hand
 # and Shift-JIS codes for cell phone carrier symbols on the other hand.
 # Each mapping is symmetric ("round trip"), for equivalent Unicode and carrier
 # symbols or sequences. This file does not include best-fit ("fallback")
 # mappings to similar but not equivalent symbols in either mapping direction.
 #
-# Note: It is possible that future versions of this file will include
-# additional data columns providing mappings for additional vendors.
-#
 # Created for Unicode 6.0 by Markus Scherer.
 # Updated for subsequent versions by Ken Whistler (no changes to mappings).
 #
 # Format: Semicolon-delimited file with a fixed number of fields.
-# The number of fields may increase in the future.
+# Note that the format, including the number of fields, may change in the future.
 #
 # Fields:
 # 0: Unicode code point or sequence
@@ -29,6 +26,15 @@
 #
 # Each field 1..3 contains a code if and only if the vendor character set
 # has a symbol which is equivalent to the Unicode character or sequence.
+
+# ================================================
+
+# Keycap sequences for telephone keypad.
+# The following 11 mappings are historical. The combining character sequences
+# in these mappings do not include variation selectors for emoji presentation.
+# Thus they do not match the named character sequences with keycaps listed in
+# NamedSequences.txt.
+# For modern data used in emoji support, see http://www.unicode.org/Public/emoji/latest/
 
 0023 20E3;F985;F489;F7B0
 0030 20E3;F990;F7C9;F7C5
@@ -41,6 +47,7 @@
 0037 20E3;F98D;F744;F7C2
 0038 20E3;F98E;F745;F7C3
 0039 20E3;F98F;F746;F7C4
+
 00A9;F9D6;F774;F7EE
 00AE;F9DB;F775;F7EF
 2002;;F7AA;

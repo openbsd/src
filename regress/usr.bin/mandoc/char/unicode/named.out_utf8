@@ -15,8 +15,10 @@ DDEESSCCRRIIPPTTIIOONN
        ŒŒ   LATIN CAPITAL LIGATURE OE
        œœ   LATIN SMALL LIGATURE OE
        ƒƒ   LATIN SMALL LETTER F WITH HOOK
+       ȷȷ   LATIN SMALL LETTER DOTLESS J
        ˇˇ   CARON
        ˘˘   BREVE
+       ˙˙   DOT ABOVE
        ˚˚   RING ABOVE
        ˛˛   OGONEK
        ˝˝   DOUBLE ACUTE ACCENT
@@ -93,6 +95,7 @@ DDEESSCCRRIIPPTTIIOONN
        ⁄⁄   FRACTION SLASH
        €€€  EURO SIGN
        ℑℑ   BLACK-LETTER CAPITAL I
+       ℘℘   SCRIPT CAPITAL P
        ℜℜ   BLACK-LETTER CAPITAL R
        ™™   TRADE MARK SIGN
        ℵℵ   ALEF SYMBOL
@@ -119,6 +122,9 @@ DDEESSCCRRIIPPTTIIOONN
        ∈∈   ELEMENT OF
        ∉∉   NOT AN ELEMENT OF
        ∋∋   CONTAINS AS MEMBER
+       ∏∏   N-ARY PRODUCT
+       ∐∐   N-ARY COPRODUCT
+       ∑∑   N-ARY SUMMATION
        −−   MINUS SIGN
        ∓∓   MINUS-OR-PLUS SIGN
        ∗∗   ASTERISK OPERATOR
@@ -143,6 +149,8 @@ DDEESSCCRRIIPPTTIIOONN
        ≥≥   GREATER-THAN OR EQUAL TO
        ⊂⊂   SUBSET OF
        ⊃⊃   SUPERSET OF
+       ⊄⊄   NOT A SUBSET OF
+       ⊅⊅   NOT A SUPERSET OF
        ⊆⊆   SUBSET OF OR EQUAL TO
        ⊇⊇   SUPERSET OF OR EQUAL TO
        ⊕⊕   CIRCLED PLUS
@@ -161,10 +169,14 @@ DDEESSCCRRIIPPTTIIOONN
        ○○   WHITE CIRCLE
        ☜☜   WHITE LEFT POINTING INDEX
        ☞☞   WHITE RIGHT POINTING INDEX
+       ♠♠   BLACK SPADE SUIT
+       ♣♣   BLACK CLUB SUIT
+       ♥♥   BLACK HEART SUIT
+       ♦♦   BLACK DIAMOND SUIT
        ⟨⟨   MATHEMATICAL LEFT ANGLE BRACKET
        ⟩⟩   MATHEMATICAL RIGHT ANGLE BRACKET
        ENDTEST
 
 
 
-OpenBSD                        October 27, 2014          CHAR-UNICODE-NAMED(1)
+OpenBSD                         August 21, 2018          CHAR-UNICODE-NAMED(1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.19 2017/04/19 05:36:12 natano Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.20 2019/03/18 00:00:59 dlg Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -175,6 +175,7 @@ if_register_receive(struct interface_info *info)
 	struct bpf_version v;
 	struct bpf_program p;
 	int flag = 1, sz, cmplt = 0;
+	int fildrop = BPF_FILDROP_CAPTURE;
 
 	/* Open a BPF device and hang it on this interface... */
 	info->rfdesc = if_register_bpf(info);
@@ -195,7 +196,7 @@ if_register_receive(struct interface_info *info)
 	if (ioctl(info->rfdesc, BIOCIMMEDIATE, &flag) == -1)
 		fatal("Can't set immediate mode on bpf device");
 
-	if (ioctl(info->rfdesc, BIOCSFILDROP, &flag) == -1)
+	if (ioctl(info->rfdesc, BIOCSFILDROP, &fildrop) == -1)
 		fatal("Can't set filter-drop mode on bpf device");
 
 	/* make sure kernel fills in the source ethernet address */

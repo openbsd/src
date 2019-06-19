@@ -28,7 +28,7 @@ class TestObjCClassMethod(TestBase):
     def test_with_python_api(self):
         """Test calling functions in class methods."""
         self.build()
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = self.getBuildArtifact("a.out")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
@@ -60,5 +60,9 @@ class TestObjCClassMethod(TestBase):
 
         cmd_value = frame.EvaluateExpression(
             "(int)[Foo doSomethingWithString:@\"Hello\"]")
+        if self.TraceOn():
+            if cmd_value.IsValid():
+                print("cmd_value is valid")
+                print("cmd_value has the value %d" % cmd_value.GetValueAsUnsigned())
         self.assertTrue(cmd_value.IsValid())
         self.assertTrue(cmd_value.GetValueAsUnsigned() == 5)

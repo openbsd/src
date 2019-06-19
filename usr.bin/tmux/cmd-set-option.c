@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.119 2017/12/22 10:18:51 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.125 2019/04/26 11:38:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <fnmatch.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -64,6 +65,19 @@ const struct cmd_entry cmd_set_window_option_entry = {
 	.exec = cmd_set_option_exec
 };
 
+const struct cmd_entry cmd_set_hook_entry = {
+	.name = "set-hook",
+	.alias = NULL,
+
+	.args = { "agRt:u", 1, 2 },
+	.usage = "[-agRu] " CMD_TARGET_SESSION_USAGE " hook [command]",
+
+	.target = { 't', CMD_FIND_SESSION, CMD_FIND_CANFAIL },
+
+	.flags = CMD_AFTERHOOK,
+	.exec = cmd_set_option_exec
+};
+
 static enum cmd_retval
 cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 {
@@ -80,10 +94,16 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 	char				*name, *argument, *value = NULL, *cause;
 	const char			*target;
 	int				 window, idx, already, error, ambiguous;
+	struct style			*sy;
 
 	/* Expand argument. */
 	c = cmd_find_client(item, NULL, 1);
 	argument = format_single(item, args->argv[0], c, s, wl, NULL);
+
+	if (self->entry == &cmd_set_hook_entry && args_has(args, 'R')) {
+		notify_hook(item, argument);
+		return (CMD_RETURN_NORMAL);
+	}
 
 	/* Parse option name and index. */
 	name = options_match(argument, &idx, &ambiguous);
@@ -162,11 +182,9 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 	parent = options_get(oo, name);
 
 	/* Check that array options and indexes match up. */
-	if (idx != -1) {
-		if (*name == '@' || options_array_size(parent, NULL) == -1) {
-			cmdq_error(item, "not an array: %s", argument);
-			goto fail;
-		}
+	if (idx != -1 && (*name == '@' || !options_isarray(parent))) {
+		cmdq_error(item, "not an array: %s", argument);
+		goto fail;
 	}
 
 	/* With -o, check this option is not already set. */
@@ -200,15 +218,18 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 				options_default(oo, options_table_entry(o));
 			else
 				options_remove(o);
-		} else
-			options_array_set(o, idx, NULL, 0);
+		} else if (options_array_set(o, idx, NULL, 0, &cause) != 0) {
+			cmdq_error(item, "%s", cause);
+			free(cause);
+			goto fail;
+		}
 	} else if (*name == '@') {
 		if (value == NULL) {
 			cmdq_error(item, "empty value");
 			goto fail;
 		}
 		options_set_string(oo, name, append, "%s", value);
-	} else if (idx == -1 && options_array_size(parent, NULL) == -1) {
+	} else if (idx == -1 && !options_isarray(parent)) {
 		error = cmd_set_option_set(self, item, oo, parent, value);
 		if (error != 0)
 			goto fail;
@@ -222,9 +243,15 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 		if (idx == -1) {
 			if (!append)
 				options_array_clear(o);
-			options_array_assign(o, value);
-		} else if (options_array_set(o, idx, value, append) != 0) {
-			cmdq_error(item, "invalid index: %s", argument);
+			if (options_array_assign(o, value, &cause) != 0) {
+				cmdq_error(item, "%s", cause);
+				free(cause);
+				goto fail;
+			}
+		} else if (options_array_set(o, idx, value, append,
+		    &cause) != 0) {
+			cmdq_error(item, "%s", cause);
+			free(cause);
 			goto fail;
 		}
 	}
@@ -248,6 +275,16 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 				tty_keys_build(&loop->tty);
 		}
 	}
+	if (strcmp(name, "status-fg") == 0 || strcmp(name, "status-bg") == 0) {
+		sy = options_get_style(oo, "status-style");
+		sy->gc.fg = options_get_number(oo, "status-fg");
+		sy->gc.bg = options_get_number(oo, "status-bg");
+	}
+	if (strcmp(name, "status-style") == 0) {
+		sy = options_get_style(oo, "status-style");
+		options_set_number(oo, "status-fg", sy->gc.fg);
+		options_set_number(oo, "status-bg", sy->gc.bg);
+	}
 	if (strcmp(name, "status") == 0 ||
 	    strcmp(name, "status-interval") == 0)
 		status_timer_start_all();
@@ -260,10 +297,10 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	if (strcmp(name, "pane-border-status") == 0) {
 		RB_FOREACH(w, windows, &windows)
-			layout_fix_panes(w, w->sx, w->sy);
+			layout_fix_panes(w);
 	}
 	RB_FOREACH(s, sessions, &sessions)
-		status_update_saved(s);
+		status_update_cache(s);
 
 	/*
 	 * Update sizes and redraw. May not always be necessary but do it
@@ -297,7 +334,8 @@ cmd_set_option_set(struct cmd *self, struct cmdq_item *item, struct options *oo,
 	int					 append = args_has(args, 'a');
 	struct options_entry			*o;
 	long long				 number;
-	const char				*errstr;
+	const char				*errstr, *new;
+	char					*old;
 	key_code				 key;
 
 	oe = options_table_entry(parent);
@@ -310,7 +348,16 @@ cmd_set_option_set(struct cmd *self, struct cmdq_item *item, struct options *oo,
 
 	switch (oe->type) {
 	case OPTIONS_TABLE_STRING:
+		old = xstrdup(options_get_string(oo, oe->name));
 		options_set_string(oo, oe->name, append, "%s", value);
+		new = options_get_string(oo, oe->name);
+		if (oe->pattern != NULL && fnmatch(oe->pattern, new, 0) != 0) {
+			options_set_string(oo, oe->name, 0, "%s", old);
+			free(old);
+			cmdq_error(item, "value is invalid: %s", value);
+			return (-1);
+		}
+		free(old);
 		return (0);
 	case OPTIONS_TABLE_NUMBER:
 		number = strtonum(value, oe->minimum, oe->maximum, &errstr);
@@ -333,16 +380,7 @@ cmd_set_option_set(struct cmd *self, struct cmdq_item *item, struct options *oo,
 			cmdq_error(item, "bad colour: %s", value);
 			return (-1);
 		}
-		o = options_set_number(oo, oe->name, number);
-		options_style_update_new(oo, o);
-		return (0);
-	case OPTIONS_TABLE_ATTRIBUTES:
-		if ((number = attributes_fromstring(value)) == -1) {
-			cmdq_error(item, "bad attributes: %s", value);
-			return (-1);
-		}
-		o = options_set_number(oo, oe->name, number);
-		options_style_update_new(oo, o);
+		options_set_number(oo, oe->name, number);
 		return (0);
 	case OPTIONS_TABLE_FLAG:
 		return (cmd_set_option_flag(item, oe, oo, value));
@@ -354,9 +392,8 @@ cmd_set_option_set(struct cmd *self, struct cmdq_item *item, struct options *oo,
 			cmdq_error(item, "bad style: %s", value);
 			return (-1);
 		}
-		options_style_update_old(oo, o);
 		return (0);
-	case OPTIONS_TABLE_ARRAY:
+	case OPTIONS_TABLE_COMMAND:
 		break;
 	}
 	return (-1);

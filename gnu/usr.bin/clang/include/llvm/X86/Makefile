@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2018/04/06 14:44:04 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,8 @@ LLVM_SRCS=	${.CURDIR}/../../../../../llvm
 HDRS=	X86GenAsmMatcher.inc X86GenAsmWriter.inc X86GenAsmWriter1.inc \
 	X86GenCallingConv.inc X86GenDAGISel.inc X86GenDisassemblerTables.inc \
 	X86GenEVEX2VEXTables.inc X86GenFastISel.inc X86GenInstrInfo.inc \
-	X86GenRegisterInfo.inc X86GenSubtargetInfo.inc
+	X86GenRegisterInfo.inc X86GenSubtargetInfo.inc X86GenRegisterBank.inc \
+	X86GenGlobalISel.inc
 
 all: ${HDRS}
 
@@ -69,6 +70,16 @@ X86GenSubtargetInfo.inc: ${LLVM_SRCS}/lib/Target/X86/X86.td
 
 X86GenEVEX2VEXTables.inc: ${LLVM_SRCS}/lib/Target/X86/X86.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-x86-EVEX2VEX-tables \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/X86 \
+		-o ${.TARGET} ${.ALLSRC}
+
+X86GenRegisterBank.inc: ${LLVM_SRCS}/lib/Target/X86/X86.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-register-bank \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/X86 \
+		-o ${.TARGET} ${.ALLSRC}
+
+X86GenGlobalISel.inc: ${LLVM_SRCS}/lib/Target/X86/X86.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/X86 \
 		-o ${.TARGET} ${.ALLSRC}
 

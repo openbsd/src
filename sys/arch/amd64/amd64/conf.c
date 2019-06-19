@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.60 2016/09/04 10:51:23 naddy Exp $	*/
+/*	$OpenBSD: conf.c,v 1.63 2018/08/31 04:20:37 visa Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -112,7 +112,6 @@ int	nblkdev = nitems(bdevsw);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
-
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
@@ -169,6 +168,7 @@ cdev_decl(viocon);
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
+#include "kcov.h"
 
 #ifdef USER_PCICONF
 #include "pci.h"
@@ -207,7 +207,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_notdef(),			/* 18: was: concatenated disk driver */
-	cdev_notdef(),			/* 19 */
+	cdev_kcov_init(NKCOV,kcov),	/* 19: kcov */
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
 	cdev_notdef(),			/* 21 */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */

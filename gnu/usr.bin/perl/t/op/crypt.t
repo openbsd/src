@@ -2,21 +2,18 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
-}
-
-BEGIN {
-    use Config;
-
     require "./test.pl";
-
-    if( !$Config{d_crypt} ) {
-        skip_all("crypt unimplemented");
-    }
-    else {
-        plan(tests => 6);
-    }
+    set_up_inc( qw(. ../lib) );
+    use Config;
 }
+
+if ( !$Config{d_crypt} ) {
+    skip_all("crypt unimplemented");
+}
+else {
+    plan(tests => 6);
+}
+
 
 # Can't assume too much about the string returned by crypt(),
 # and about how many bytes of the encrypted (really, hashed)

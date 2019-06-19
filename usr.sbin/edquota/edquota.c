@@ -35,13 +35,13 @@
  */
 #include <sys/param.h>	/* btodb dbtob */
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <sys/wait.h>
 #include <ufs/ufs/quota.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <fstab.h>
 #include <grp.h>
 #include <paths.h>
@@ -191,14 +191,11 @@ main(int argc, char *argv[])
 int
 getentry(char *name, int quotatype, u_int *idp)
 {
-	struct passwd *pw;
-	struct group *gr;
 	u_int id;
 
 	switch(quotatype) {
 	case USRQUOTA:
-		if ((pw = getpwnam(name))) {
-			*idp = pw->pw_uid;
+		if (uid_from_user(name, idp) != -1) {
 			return 0;
 		} else if (alldigits(name)) {
 			if ((id = strtoul(name, NULL, 10)) <= UID_MAX) {
@@ -209,8 +206,7 @@ getentry(char *name, int quotatype, u_int *idp)
 		warnx("%s: no such user", name);
 		break;
 	case GRPQUOTA:
-		if ((gr = getgrnam(name))) {
-			*idp = gr->gr_gid;
+		if (gid_from_group(name, idp) != -1) {
 			return 0;
 		} else if (alldigits(name)) {
 			if ((id = strtoul(name, NULL, 10)) <= GID_MAX) {

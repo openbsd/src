@@ -1524,7 +1524,7 @@ some user education.
 
 This is completely general, but the most computationally expensive
 strategy.  Choose one or the other character set and transform to that
-for every sort comparision.  Here's a complete example that transforms
+for every sort comparison.  Here's a complete example that transforms
 to ASCII sort order:
 
  sub native_to_uni($) {
@@ -1752,7 +1752,7 @@ and vice versa.
 
 Internationalization (I18N) and localization (L10N) are supported at least
 in principle even on EBCDIC platforms.  The details are system-dependent
-and discussed under the L<OS ISSUES> section below.
+and discussed under the L</OS ISSUES> section below.
 
 =head1 MULTI-OCTET CHARACTER SETS
 
@@ -1854,9 +1854,6 @@ only: they don't realize that it is proper to get different results on
 EBCDIC platforms.  And some of the failures are real bugs.  If you
 compile and do a C<make test> on Perl, all tests on the C</cpan>
 directory are skipped.
-
-In particular, the (now deprecated) L<encoding> pragma is not supported
-under EBCDIC.
 
 L<Encode> partially works.
 

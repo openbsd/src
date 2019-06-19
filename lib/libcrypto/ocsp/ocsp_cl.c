@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_cl.c,v 1.15 2018/03/17 14:44:34 jsing Exp $ */
+/* $OpenBSD: ocsp_cl.c,v 1.16 2018/11/25 19:48:43 jmc Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -139,7 +139,7 @@ OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert)
 	return 1;
 }
 
-/* Sign an OCSP request set the requestorName to the subjec
+/* Sign an OCSP request set the requestorName to the subject
  * name of an optional signers certificate and include one
  * or more optional certificates in the request. Behaves
  * like PKCS7_sign().

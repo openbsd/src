@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.32 2016/10/20 05:48:50 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.34 2018/08/08 22:31:43 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -332,7 +332,7 @@ mkopt(char *path, struct dev *d,
 {
 	struct opt *o;
 
-	o = opt_new(path, d, pmin, pmax, rmin, rmax,
+	o = opt_new(d, path, pmin, pmax, rmin, rmax,
 	    MIDI_TO_ADATA(vol), mmc, dup, mode);
 	if (o == NULL)
 		return NULL;
@@ -340,9 +340,26 @@ mkopt(char *path, struct dev *d,
 	return o;
 }
 
+static void
+dounveil(char *name, char *prefix, char *path_prefix)
+{
+	size_t prefix_len;
+	char path[PATH_MAX];
+
+	prefix_len = strlen(prefix);
+
+	if (strncmp(name, prefix, prefix_len) != 0)
+		errx(1, "%s: unsupported device or port format", name);
+	snprintf(path, sizeof(path), "%s%s", path_prefix, name + prefix_len);
+	if (unveil(path, "rw") < 0)
+		err(1, "unveil");
+}
+
 static int
 start_helper(int background)
 {
+	struct dev *d;
+	struct port *p;
 	struct passwd *pw;
 	int s[2];
 	pid_t pid;
@@ -378,6 +395,10 @@ start_helper(int background)
 			    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 				err(1, "cannot drop privileges");
 		}
+		for (d = dev_list; d != NULL; d = d->next)
+			dounveil(d->path, "rsnd/", "/dev/audio");
+		for (p = port_list; p != NULL; p = p->next)
+			dounveil(p->path, "rmidi/", "/dev/rmidi");
 		if (pledge("stdio sendfd rpath wpath", NULL) < 0)
 			err(1, "pledge");
 		while (file_poll())
@@ -531,7 +552,7 @@ main(int argc, char **argv)
 	if (dev_list == NULL)
 		mkdev(DEFAULT_DEV, &par, 0, bufsz, round, rate, hold, autovol);
 	for (d = dev_list; d != NULL; d = d->next) {
-		if (opt_byname("default", d->num))
+		if (opt_byname(d, "default"))
 			continue;
 		if (mkopt("default", d, pmin, pmax, rmin, rmax,
 			mode, vol, mmc, dup) == NULL)
@@ -614,8 +635,6 @@ main(int argc, char **argv)
 		; /* nothing */
 	midi_done();
 
-	while (opt_list != NULL)
-		opt_del(opt_list);
 	while (dev_list)
 		dev_del(dev_list);
 	while (port_list)

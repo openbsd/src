@@ -1,11 +1,13 @@
-# NameAliases-8.0.0.txt
-# Date: 2014-11-19, 01:30:00 GMT [KW, LI]
+# NameAliases-10.0.0.txt
+# Date: 2017-05-06, 18:10:00 GMT [KW, LI]
+# © 2017 Unicode®, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
+#
+# Unicode Character Database
+# For documentation, see http://www.unicode.org/reports/tr44/
 #
 # This file is a normative contributory data file in the
 # Unicode Character Database.
-#
-# Copyright (c) 2005-2014 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # This file defines the formal name aliases for Unicode characters.
 #
@@ -260,6 +262,10 @@
 0EA3;LAO LETTER RO;correction
 0EA5;LAO LETTER LO;correction
 0FD0;TIBETAN MARK BKA- SHOG GI MGO RGYAN;correction
+11EC;HANGUL JONGSEONG YESIEUNG-KIYEOK;correction
+11ED;HANGUL JONGSEONG YESIEUNG-SSANGKIYEOK;correction
+11EE;HANGUL JONGSEONG SSANGYESIEUNG;correction
+11EF;HANGUL JONGSEONG YESIEUNG-KHIEUKH;correction
 180B;FVS1;abbreviation
 180C;FVS2;abbreviation
 180D;FVS3;abbreviation
@@ -287,7 +293,6 @@
 2B7A;LEFTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE VERTICAL STROKE;correction
 2B7C;RIGHTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE VERTICAL STROKE;correction
 A015;YI SYLLABLE ITERATION MARK;correction
-FE18;PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET;correction
 FE00;VS1;abbreviation
 FE01;VS2;abbreviation
 FE02;VS3;abbreviation
@@ -304,11 +309,13 @@ FE0C;VS13;abbreviation
 FE0D;VS14;abbreviation
 FE0E;VS15;abbreviation
 FE0F;VS16;abbreviation
+FE18;PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET;correction
 FEFF;BYTE ORDER MARK;alternate
 FEFF;BOM;abbreviation
 FEFF;ZWNBSP;abbreviation
 122D4;CUNEIFORM SIGN NU11 TENU;correction
 122D5;CUNEIFORM SIGN NU11 OVER NU11 BUR OVER BUR;correction
+1B001;HENTAIGANA LETTER E-1;correction
 1D0C5;BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS;correction
 E0100;VS17;abbreviation
 E0101;VS18;abbreviation

@@ -25,7 +25,7 @@ class HardwareBreakpointMultiThreadTestCase(TestBase):
     @expectedFailureAndroid
     def test_hw_break_set_delete_multi_thread(self):
         self.build()
-        self.setTearDownCleanup() 
+        self.setTearDownCleanup()
         self.break_multi_thread('delete')
 
     # LLDB supports hardware breakpoints for arm and aarch64 architectures.
@@ -33,7 +33,7 @@ class HardwareBreakpointMultiThreadTestCase(TestBase):
     @expectedFailureAndroid
     def test_hw_break_set_disable_multi_thread(self):
         self.build()
-        self.setTearDownCleanup() 
+        self.setTearDownCleanup()
         self.break_multi_thread('disable')
 
     def setUp(self):
@@ -47,12 +47,8 @@ class HardwareBreakpointMultiThreadTestCase(TestBase):
 
     def break_multi_thread(self, removal_type):
         """Test that lldb hardware breakpoints work for multiple threads."""
-        self.runCmd(
-            "file %s" %
-            os.path.join(
-                os.getcwd(),
-                'a.out'),
-            CURRENT_EXECUTABLE_SET)
+        self.runCmd("file " + self.getBuildArtifact("a.out"),
+                    CURRENT_EXECUTABLE_SET)
 
         # Stop in main before creating any threads.
         lldbutil.run_break_set_by_file_and_line(
@@ -78,7 +74,7 @@ class HardwareBreakpointMultiThreadTestCase(TestBase):
         count = 0
 
         while count < 2 :
-         
+
             self.runCmd("process continue")
 
             # We should be stopped in hw_break_function

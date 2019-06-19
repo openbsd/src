@@ -21,7 +21,12 @@ Various spelling corrections
 =item *
 
 Include list of valid licenses from L<Module::Build> 0.2611 rather than
-linking to the module.
+linking to the module, with minor updates to text and links to reflect
+versions at the time of publication.
+
+=item *
+
+Fixed some dead links to point to active resources.
 
 =back
 
@@ -96,21 +101,15 @@ XML or Data::Dumper:
 
 =item *
 
-Module::Build design plans
-
-L<http://nntp.x.perl.org/group/perl.makemaker/406>
+L<Module::Build design plans|http://www.nntp.perl.org/group/perl.makemaker/2002/04/msg407.html>
 
 =item *
 
-Not keen on YAML
-
-L<http://nntp.x.perl.org/group/perl.module-authors/1353>
+L<Not keen on YAML|http://www.nntp.perl.org/group/perl.module-authors/2003/11/msg1353.html>
 
 =item *
 
-META Concerns
-
-L<http://nntp.x.perl.org/group/perl.module-authors/1385>
+L<META Concerns|http://www.nntp.perl.org/group/perl.module-authors/2003/11/msg1385.html>
 
 =back
 
@@ -136,8 +135,8 @@ well (ex. python, ruby).
 
 =head1 VERSION SPECIFICATIONS
 
-Some fields require a version specification (ex. L<"requires">,
-L<"recommends">, L<"build_requires">, etc.).  This section details the
+Some fields require a version specification (ex. L</requires>,
+L</recommends>, L</build_requires>, etc.).  This section details the
 version specifications that are currently supported.
 
 If a single version is listed, then that version is considered to be
@@ -242,28 +241,29 @@ Must be one of the following licenses:
 
 The distribution may be copied and redistributed under the same terms as perl
 itself (this is by far the most common licensing option for modules on CPAN).
-This is a dual license, in which the user may choose between either the GPL or
-the Artistic license.
+This is a dual license, in which the user may choose between either the GPL
+version 1 or the Artistic version 1 license.
 
 =item gpl
 
-The distribution is distributed under the terms of the Gnu General Public
-License (L<http://www.opensource.org/licenses/gpl-license.php>).
+The distribution is distributed under the terms of the GNU General Public
+License version 2 (L<http://opensource.org/licenses/GPL-2.0>).
 
 =item lgpl
 
-The distribution is distributed under the terms of the Gnu Lesser General
-Public License (L<http://www.opensource.org/licenses/lgpl-license.php>).
+The distribution is distributed under the terms of the GNU Lesser General
+Public License version 2 (L<http://opensource.org/licenses/LGPL-2.1>).
 
 =item artistic
 
-The distribution is licensed under the Artistic License, as specified by the
-Artistic file in the standard perl distribution.
+The distribution is licensed under the Artistic License version 1, as specified
+by the Artistic file in the standard perl distribution
+(L<http://opensource.org/licenses/Artistic-Perl-1.0>).
 
 =item bsd
 
-The distribution is licensed under the BSD License
-(L<http://www.opensource.org/licenses/bsd-license.php>).
+The distribution is licensed under the BSD 3-Clause License
+(L<http://opensource.org/licenses/BSD-3-Clause>).
 
 =item open_source
 
@@ -273,7 +273,7 @@ license listed at L<http://www.opensource.org/licenses/>.
 =item unrestricted
 
 The distribution is licensed under a license that is B<not> approved by
-L<www.opensource.org|http://www.opensource.org> but that allows distribution
+L<www.opensource.org|http://www.opensource.org/> but that allows distribution
 without restrictions.
 
 =item restrictive
@@ -341,9 +341,9 @@ Example:
 
 I<(Spec 1.1) [optional] {map} A YAML sequence of names for optional features
 which are made available when its requirements are met. For each
-feature a description is provided along with any of L<"requires">,
-L<"build_requires">, L<"conflicts">, L<"requires_packages">,
-L<"requires_os">, and L<"excludes_os"> which have the same meaning in
+feature a description is provided along with any of L</requires>,
+L</build_requires>, L</conflicts>, C<requires_packages>,
+C<requires_os>, and C<excludes_os> which have the same meaning in
 this subcontext as described elsewhere in this document.>
 
 =head2 build_requires
@@ -394,7 +394,7 @@ If this field is omitted, it defaults to 1 (true).
 =head2 private
 
 I<(Deprecated)> (Spec 1.0) [optional] {map} This field has been renamed to
-L</"no_index">.  See below.
+L</no_index>.  See below.
 
 =head2 provides
 
@@ -416,7 +416,7 @@ cases, is) used by distribution and automation mechanisms like PAUSE,
 CPAN, and search.cpan.org to build indexes saying in which
 distribution various packages can be found.
 
-When using tools like C<Module::Build> that can generate the
+When using tools like L<Module::Build> that can generate the
 C<provides> mapping for your distribution automatically, make sure you
 examine what it generates to make sure it makes sense - indexers will
 usually trust the C<provides> field if it's present, rather than
@@ -536,23 +536,23 @@ tool. RWS]
 
 =head1 SEE ALSO
 
-CPAN, L<http://www.cpan.org/>
+L<CPAN|http://www.cpan.org/>
 
-CPAN.pm, L<http://search.cpan.org/author/ANDK/CPAN/>
+L<CPAN.pm|CPAN>
 
-CPANPLUS, L<http://search.cpan.org/author/KANE/CPANPLUS/>
+L<CPANPLUS>
 
-Data::Dumper, L<http://search.cpan.org/author/ILYAM/Data-Dumper/>
+L<Data::Dumper>
 
-ExtUtils::MakeMaker, L<http://search.cpan.org/author/MSCHWERN/ExtUtils-MakeMaker/>
+L<ExtUtils::MakeMaker>
 
-Module::Build, L<http://search.cpan.org/author/KWILLIAMS/Module-Build/>
+L<Module::Build>
 
-Module::Install, L<http://search.cpan.org/author/KWILLIAMS/Module-Install/>
+L<Module::Install>
 
-XML, L<http://www.w3.org/XML/>
+L<XML|http://www.w3.org/XML/>
 
-YAML, L<http://www.yaml.org/>
+L<YAML|http://www.yaml.org/>
 
 =head1 HISTORY
 
@@ -574,7 +574,7 @@ Created version 1.0 of this document.
 
 =item *
 
-Added the L</"dynamic_config"> field, which was missing from the initial
+Added the L</dynamic_config> field, which was missing from the initial
 version.
 
 =back
@@ -594,12 +594,12 @@ L<http://nntp.x.perl.org/group/> site.
 
 =item *
 
-Added and deprecated the L<"private"> field.
+Added and deprecated the L</private> field.
 
 =item *
 
-Added L<"abstract">, L<"configure">, L<"requires_packages">,
-L<"requires_os">, L<"excludes_os">, and L<"no_index"> fields.
+Added L</abstract>, C<configure>, C<requires_packages>,
+C<requires_os>, C<excludes_os>, and L</no_index> fields.
 
 =item *
 
@@ -613,15 +613,15 @@ Bumped version.
 
 =item *
 
-Added L<"generation">, L<"authored_by"> fields.
+Added C<generation>, C<authored_by> fields.
 
 =item *
 
-Add alternative proposal to the L<"recommends"> field.
+Add alternative proposal to the L</recommends> field.
 
 =item *
 
-Add proposal for a L<"requires_build_tools"> field.
+Add proposal for a C<requires_build_tools> field.
 
 =back
 
@@ -635,7 +635,7 @@ Added link to latest version of this specification on CPAN.
 
 =item *
 
-Added section L<"VERSION SPECIFICATIONS">.
+Added section L</"VERSION SPECIFICATIONS">.
 
 =item *
 
@@ -643,7 +643,7 @@ Chang name from Module::Build::META-spec to CPAN::META::Specification.
 
 =item *
 
-Add proposal for L<"auto_regenerate"> field.
+Add proposal for C<auto_regenerate> field.
 
 =back
 
@@ -653,15 +653,15 @@ Add proposal for L<"auto_regenerate"> field.
 
 =item *
 
-Add L<"index"> field as a compliment to L<"no_index">
+Add C<index> field as a compliment to L</no_index>
 
 =item *
 
-Add L<"keywords"> field as a means to aid searching distributions.
+Add L</keywords> field as a means to aid searching distributions.
 
 =item *
 
-Add L<"TERMINOLOGY"> section to explain certain terms that may be
+Add L</TERMINOLOGY> section to explain certain terms that may be
 ambiguous.
 
 =back
@@ -679,7 +679,7 @@ more like records of brainstorming.
 
 =item *
 
-Changed C<authored_by> to C<author>, since that's always been what
+Changed C<authored_by> to L</author>, since that's always been what
 it's actually called in actual F<META.yml> files.
 
 =item *
@@ -689,12 +689,12 @@ operators.
 
 =item *
 
-Noted that the C<distribution_type> field is basically meaningless,
+Noted that the L</distribution_type> field is basically meaningless,
 and shouldn't really be used.
 
 =item *
 
-Clarified C<dynamic_config> a bit.
+Clarified L</dynamic_config> a bit.
 
 =back
 

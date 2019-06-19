@@ -22,9 +22,10 @@ class LaunchWithShellExpandTestCase(TestBase):
             "linux",
             "freebsd"],
         bugnumber="llvm.org/pr24778 llvm.org/pr22627")
+    @skipIfDarwinEmbedded # iOS etc don't launch the binary via a shell, so arg expansion won't happen
     def test(self):
         self.build()
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = self.getBuildArtifact("a.out")
 
         self.runCmd("target create %s" % exe)
 
@@ -38,7 +39,7 @@ class LaunchWithShellExpandTestCase(TestBase):
 
         self.runCmd(
             "process launch -X true -w %s -- fi*.tx? () > <" %
-            (os.getcwd()))
+            (self.getSourceDir()))
 
         process = self.process()
 
@@ -76,7 +77,7 @@ class LaunchWithShellExpandTestCase(TestBase):
 
         self.runCmd(
             'process launch -X true -w %s -- "foo bar"' %
-            (os.getcwd()))
+            (self.getSourceDir()))
 
         process = self.process()
 
@@ -98,7 +99,8 @@ class LaunchWithShellExpandTestCase(TestBase):
 
         self.runCmd("process kill")
 
-        self.runCmd('process launch -X true -w %s -- foo\ bar' % (os.getcwd()))
+        self.runCmd('process launch -X true -w %s -- foo\ bar'
+                    % (self.getBuildDir()))
 
         process = self.process()
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: key-string.c,v 1.47 2017/06/23 15:36:52 nicm Exp $ */
+/* $OpenBSD: key-string.c,v 1.50 2018/10/18 08:38:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,7 +43,9 @@ static const struct {
 	{ "F11",	KEYC_F11 },
 	{ "F12",	KEYC_F12 },
 	{ "IC",		KEYC_IC },
+	{ "Insert",     KEYC_IC },
 	{ "DC",		KEYC_DC },
+	{ "Delete",     KEYC_DC },
 	{ "Home",	KEYC_HOME },
 	{ "End",	KEYC_END },
 	{ "NPage",	KEYC_NPAGE },
@@ -166,9 +168,11 @@ key_string_lookup_string(const char *string)
 	enum utf8_state		 more;
 	wchar_t			 wc;
 
-	/* Is this no key? */
+	/* Is this no key or any key? */
 	if (strcasecmp(string, "None") == 0)
 		return (KEYC_NONE);
+	if (strcasecmp(string, "Any") == 0)
+		return (KEYC_ANY);
 
 	/* Is this a hexadecimal value? */
 	if (string[0] == '0' && string[1] == 'x') {
@@ -251,6 +255,8 @@ key_string_lookup_key(key_code key)
 	/* Handle special keys. */
 	if (key == KEYC_UNKNOWN)
 		return ("Unknown");
+	if (key == KEYC_ANY)
+		return ("Any");
 	if (key == KEYC_FOCUS_IN)
 		return ("FocusIn");
 	if (key == KEYC_FOCUS_OUT)
@@ -267,6 +273,10 @@ key_string_lookup_key(key_code key)
 		return ("MouseMovePane");
 	if (key == KEYC_MOUSEMOVE_STATUS)
 		return ("MouseMoveStatus");
+	if (key == KEYC_MOUSEMOVE_STATUS_LEFT)
+		return ("MouseMoveStatusLeft");
+	if (key == KEYC_MOUSEMOVE_STATUS_RIGHT)
+		return ("MouseMoveStatusRight");
 	if (key == KEYC_MOUSEMOVE_BORDER)
 		return ("MouseMoveBorder");
 	if (key >= KEYC_USER && key < KEYC_USER + KEYC_NUSER) {

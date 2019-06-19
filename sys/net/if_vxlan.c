@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.67 2018/02/20 01:20:37 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.73 2019/06/10 16:32:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -73,6 +73,7 @@ struct vxlan_softc {
 	int64_t			 sc_vnetid;
 	uint16_t		 sc_df;
 	u_int8_t		 sc_ttl;
+	int			 sc_txhprio;
 
 	struct task		 sc_sendtask;
 
@@ -130,12 +131,12 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	struct vxlan_softc	*sc;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
-	sc->sc_imo.imo_membership = malloc(
-	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
-	    M_WAITOK|M_ZERO);
+	sc->sc_imo.imo_membership = mallocarray(IP_MIN_MEMBERSHIPS,
+	    sizeof(struct in_multi *), M_IPMOPTS, M_WAITOK|M_ZERO);
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	sc->sc_dstport = htons(VXLAN_PORT);
 	sc->sc_vnetid = VXLAN_VNI_UNSET;
+	sc->sc_txhprio = IFQ_TOS2PRIO(IPTOS_PREC_ROUTINE); /* 0 */
 	sc->sc_df = htons(0);
 	task_set(&sc->sc_sendtask, vxlan_send_dispatch, sc);
 
@@ -157,6 +158,7 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -196,7 +198,8 @@ vxlan_clone_destroy(struct ifnet *ifp)
 	if (!task_del(net_tq(ifp->if_index), &sc->sc_sendtask))
 		taskq_barrier(net_tq(ifp->if_index));
 
-	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
+	free(sc->sc_imo.imo_membership, M_IPMOPTS,
+	    sc->sc_imo.imo_max_memberships * sizeof(struct in_multi *));
 	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return (0);
@@ -506,6 +509,21 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_df = sc->sc_df ? 1 : 0;
 		break;
 
+	case SIOCSTXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET)
+			; /* fall through */
+		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
+		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
+			error = EINVAL;
+			break;
+		}
+
+		sc->sc_txhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_txhprio;
+		break;
+
 	case SIOCSVNETID:
 		if (sc->sc_vnetid == ifr->ifr_vnetid)
 			break;
@@ -617,7 +635,6 @@ int
 vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
     struct sockaddr *srcsa, struct sockaddr *dstsa)
 {
-	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
 	struct vxlan_softc	*sc = NULL, *sc_cand = NULL;
 	struct vxlan_header	 v;
 	int			 vni;
@@ -694,7 +711,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 
 #if NBRIDGE > 0
 	/* Store the tunnel src/dst IP and vni for the bridge or switch */
-	if ((ifp->if_bridgeport != NULL || ifp->if_switchport != NULL) &&
+	if ((ifp->if_bridgeidx != 0 || ifp->if_switchport != NULL) &&
 	    srcsa->sa_family != AF_UNSPEC &&
 	    ((brtag = bridge_tunneltag(m)) != NULL)) {
 		memcpy(&brtag->brtag_peer.sa, srcsa, srcsa->sa_len);
@@ -726,8 +743,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 		m = n;
 	}
 
-	ml_enqueue(&ml, m);
-	if_input(ifp, &ml);
+	if_vinput(ifp, m);
 
 	/* success */
 	return (1);
@@ -756,7 +772,8 @@ vxlan_encap4(struct ifnet *ifp, struct mbuf *m,
 	ip->ip_id = htons(ip_randomid());
 	ip->ip_off = sc->sc_df;
 	ip->ip_p = IPPROTO_UDP;
-	ip->ip_tos = IPTOS_LOWDELAY;
+	ip->ip_tos = IFQ_PRIO2TOS(sc->sc_txhprio == IF_HDRPRIO_PACKET ?
+	    m->m_pkthdr.pf.prio : sc->sc_txhprio);
 	ip->ip_len = htons(m->m_pkthdr.len);
 
 	ip->ip_src = satosin(src)->sin_addr;
@@ -778,6 +795,7 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
 	struct ip6_hdr		*ip6;
 	struct in6_addr		*in6a;
+	uint32_t		 flow;
 
 	/*
 	 * Remove multicast and broadcast flags or encapsulated packet
@@ -789,8 +807,11 @@ vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
 	if (m == NULL)
 		return (NULL);
 
+	flow = (uint32_t)IFQ_PRIO2TOS(sc->sc_txhprio == IF_HDRPRIO_PACKET ?
+	    m->m_pkthdr.pf.prio : sc->sc_txhprio) << 20;
+
 	ip6 = mtod(m, struct ip6_hdr *);
-	ip6->ip6_flow = 0;
+	ip6->ip6_flow = htonl(flow);
 	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 	ip6->ip6_vfc |= IPV6_VERSION;
 	ip6->ip6_nxt = IPPROTO_UDP;
@@ -845,8 +866,8 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	uint32_t		 tag;
 	struct mbuf		*m0;
 
-	/* VXLAN header */
-	MGETHDR(m0, M_DONTWAIT, m->m_type);
+	/* VXLAN header, needs new mbuf because of alignment issues */
+	MGET(m0, M_DONTWAIT, m->m_type);
 	if (m0 == NULL) {
 		ifp->if_oerrors++;
 		return (ENOBUFS);
@@ -854,7 +875,7 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	M_MOVE_PKTHDR(m0, m);
 	m0->m_next = m;
 	m = m0;
-	MH_ALIGN(m, sizeof(*vu));
+	m_align(m, sizeof(*vu));
 	m->m_len = sizeof(*vu);
 	m->m_pkthdr.len += sizeof(*vu);
 
@@ -928,9 +949,6 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 	if (brtag != NULL)
 		bridge_tunneluntag(m);
 #endif
-
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
 
 	m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
 

@@ -15,22 +15,11 @@
 #include <cstring> // strcpy, wcsncpy
 #include <cwchar>  // mbstate_t
 
-// Some of these functions aren't standard or if they conform, the name does not.
-
-int asprintf(char **sptr, const char *__restrict format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    int result;
-    result = vasprintf(sptr, format, ap);
-    va_end(ap);
-    return result;
-}
 
 // Like sprintf, but when return value >= 0 it returns
 // a pointer to a malloc'd string in *sptr.
 // If return >= 0, use free to delete *sptr.
-int vasprintf( char **sptr, const char *__restrict format, va_list ap )
+int __libcpp_vasprintf( char **sptr, const char *__restrict format, va_list ap )
 {
     *sptr = NULL;
     // Query the count required.

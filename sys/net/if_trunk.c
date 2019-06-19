@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.136 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.140 2019/05/11 18:10:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
+#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -158,7 +159,6 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	int i, error = 0;
 
 	tr = malloc(sizeof(*tr), M_DEVBUF, M_WAITOK|M_ZERO);
-	tr->tr_unit = unit;
 	tr->tr_proto = TRUNK_PROTO_NONE;
 	for (i = 0; trunk_protos[i].ti_proto != TRUNK_PROTO_NONE; i++) {
 		if (trunk_protos[i].ti_proto == TRUNK_PROTO_DEFAULT) {
@@ -194,6 +194,7 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	 * Attach as an ordinary ethernet device, children will be attached
 	 * as special device IFT_IEEE8023ADLAG.
 	 */
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -604,8 +605,11 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
 	struct trunk_reqall *ra = (struct trunk_reqall *)data;
 	struct trunk_reqport *rp = (struct trunk_reqport *)data, rpbuf;
+	struct trunk_opts *tro = (struct trunk_opts *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct lacp_softc *lsc;
 	struct trunk_port *tp;
+	struct lacp_port *lp;
 	struct ifnet *tpif;
 	int i, error = 0;
 
@@ -670,6 +674,94 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 		}
 		error = EPROTONOSUPPORT;
+		break;
+	case SIOCGTRUNKOPTS:
+		/* Only LACP trunks have options atm */
+		if (tro->to_proto != TRUNK_PROTO_LACP) {
+			error = EPROTONOSUPPORT;
+			break;
+		}
+		lsc = LACP_SOFTC(tr);
+		tro->to_lacpopts.lacp_mode = lsc->lsc_mode;
+		tro->to_lacpopts.lacp_timeout = lsc->lsc_timeout;
+		tro->to_lacpopts.lacp_prio = lsc->lsc_sys_prio;
+		tro->to_lacpopts.lacp_portprio = lsc->lsc_port_prio;
+		tro->to_lacpopts.lacp_ifqprio = lsc->lsc_ifq_prio;
+		break;
+	case SIOCSTRUNKOPTS:
+		if ((error = suser(curproc)) != 0) {
+			error = EPERM;
+			break;
+		}
+		/* Only LACP trunks have options atm */
+		if (tro->to_proto != TRUNK_PROTO_LACP) {
+			error = EPROTONOSUPPORT;
+			break;
+		}
+		lsc = LACP_SOFTC(tr);
+		switch(tro->to_opts) {
+			case TRUNK_OPT_LACP_MODE:
+				/*
+				 * Ensure mode changes occur immediately
+				 * on all ports
+				 */
+				lsc->lsc_mode = tro->to_lacpopts.lacp_mode;
+				if (lsc->lsc_mode == 0) {
+					LIST_FOREACH(lp, &lsc->lsc_ports,
+					    lp_next)
+						lp->lp_state &=
+						    ~LACP_STATE_ACTIVITY;
+				} else {
+					LIST_FOREACH(lp, &lsc->lsc_ports,
+					    lp_next)
+						lp->lp_state |=
+						    LACP_STATE_ACTIVITY;
+				}
+				break;
+			case TRUNK_OPT_LACP_TIMEOUT:
+				/*
+				 * Ensure timeout changes occur immediately
+				 * on all ports
+				 */
+				lsc->lsc_timeout =
+				    tro->to_lacpopts.lacp_timeout;
+				if (lsc->lsc_timeout == 0) {
+					LIST_FOREACH(lp, &lsc->lsc_ports,
+					    lp_next)
+						lp->lp_state &=
+						    ~LACP_STATE_TIMEOUT;
+				} else {
+					LIST_FOREACH(lp, &lsc->lsc_ports,
+					    lp_next)
+						lp->lp_state |=
+						    LACP_STATE_TIMEOUT;
+				}
+				break;
+			case TRUNK_OPT_LACP_SYS_PRIO:
+				if (tro->to_lacpopts.lacp_prio == 0) {
+					error = EINVAL;	
+					break;
+				}
+				lsc->lsc_sys_prio = tro->to_lacpopts.lacp_prio;
+				break;
+			case TRUNK_OPT_LACP_PORT_PRIO:
+				if (tro->to_lacpopts.lacp_portprio == 0) {
+					error = EINVAL;	
+					break;
+				}
+				lsc->lsc_port_prio =
+				    tro->to_lacpopts.lacp_portprio;
+				break;
+			case TRUNK_OPT_LACP_IFQ_PRIO:
+				if (tro->to_lacpopts.lacp_ifqprio >
+				    IFQ_MAXPRIO) {
+					error = EINVAL;	
+					break;
+				}
+				lsc->lsc_ifq_prio =
+				    tro->to_lacpopts.lacp_ifqprio;
+				break;
+		}
 		break;
 	case SIOCGTRUNKPORT:
 		if (rp->rp_portname[0] == '\0' ||
@@ -1027,7 +1119,6 @@ trunk_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	struct trunk_port *tp;
 	struct ifnet *trifp = NULL;
 	struct ether_header *eh;
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 
 	eh = mtod(m, struct ether_header *);
 	if (ETHER_IS_MULTICAST(eh->ether_dhost))
@@ -1071,8 +1162,7 @@ trunk_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	}
 
 
-	ml_enqueue(&ml, m);
-	if_input(trifp, &ml);
+	if_vinput(trifp, m);
 	return (1);
 
  bad:
@@ -1122,6 +1212,7 @@ trunk_port_state(void *arg)
 	if (tr->tr_linkstate != NULL)
 		(*tr->tr_linkstate)(tp);
 	trunk_link_active(tr, tp);
+	rtm_ifchg(&tr->tr_ac.ac_if);
 }
 
 struct trunk_port *

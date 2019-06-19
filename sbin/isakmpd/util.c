@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.70 2017/12/05 20:31:45 jca Exp $	 */
+/* $OpenBSD: util.c,v 1.71 2019/01/22 09:25:29 krw Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -219,7 +219,7 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 		 * it to select a source address.
 		 */
 		if (!strcmp(address, "default")) {
-			fd = socket(PF_ROUTE, SOCK_RAW, af);
+			fd = socket(AF_ROUTE, SOCK_RAW, af);
 
 			bzero(buf, sizeof(buf));
 

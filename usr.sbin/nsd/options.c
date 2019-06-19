@@ -64,7 +64,8 @@ nsd_options_create(region_type* region)
 	opt->logfile = 0;
 	opt->log_time_ascii = 1;
 	opt->round_robin = 0; /* also packet.h::round_robin */
-	opt->minimal_responses = 0; /* also packet.h::minimal_responses */
+	opt->minimal_responses = 1; /* also packet.h::minimal_responses */
+	opt->refuse_any = 1;
 	opt->server_count = 1;
 	opt->tcp_count = 100;
 	opt->tcp_query_count = 0;
@@ -96,6 +97,16 @@ nsd_options_create(region_type* region)
 	opt->rrl_ratelimit = RRL_LIMIT/2;
 	opt->rrl_whitelist_ratelimit = RRL_WLIST_LIMIT/2;
 #  endif
+#endif
+#ifdef USE_DNSTAP
+	opt->dnstap_enable = 0;
+	opt->dnstap_socket_path = DNSTAP_SOCKET_PATH;
+	opt->dnstap_send_identity = 0;
+	opt->dnstap_send_version = 0;
+	opt->dnstap_identity = NULL;
+	opt->dnstap_version = NULL;
+	opt->dnstap_log_auth_query_messages = 0;
+	opt->dnstap_log_auth_response_messages = 0;
 #endif
 	opt->zonefiles_check = 1;
 	if(opt->database == NULL || opt->database[0] == 0)
@@ -2048,4 +2059,16 @@ unsigned getzonestatid(struct nsd_options* opt, struct zone_options* zopt)
 	(void)opt; (void)zopt;
 	return 0;
 #endif /* USE_ZONE_STATS */
+}
+
+/** check if config turns on IP-address interface with certificates or a
+ * named pipe without certificates. */
+int
+options_remote_is_address(struct nsd_options* cfg)
+{
+	if(!cfg->control_enable) return 0;
+	if(!cfg->control_interface) return 1;
+	if(!cfg->control_interface->address) return 1;
+	if(cfg->control_interface->address[0] == 0) return 1;
+	return (cfg->control_interface->address[0] != '/');
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.5 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: gptimer.c,v 1.7 2019/05/06 03:45:58 mlarkin Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -111,7 +111,7 @@ void gptimer_delay(u_int);
 void gptimer_setstatclockrate(int newhz);
 
 bus_space_tag_t gptimer_iot;
-bus_space_handle_t gptimer_ioh0,  gptimer_ioh1; 
+bus_space_handle_t gptimer_ioh0, gptimer_ioh1;
 int gptimer_irq = 0;
 
 u_int gptimer_get_timecount(struct timecounter *);
@@ -177,7 +177,7 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 	    gptimer_setstatclockrate, NULL);
 }
 
-/* 
+/*
  * See comment in arm/xscale/i80321_clock.c
  *
  * counter is count up, but with autoreload timers it is not possible
@@ -291,7 +291,7 @@ gptimer_cpu_initclocks()
 
 	ticks_per_intr = ticks_per_second / hz;
 	ticks_err_cnt = ticks_per_second % hz;
-	ticks_err_sum = 0;; 
+	ticks_err_sum = 0;
 
 	prcm_setclock(1, PRCM_CLK_SPEED_32);
 	prcm_setclock(2, PRCM_CLK_SPEED_32);

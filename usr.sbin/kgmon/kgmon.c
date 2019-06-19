@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.24 2016/08/27 01:50:07 guenther Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.25 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -29,12 +29,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/file.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/gmon.h>
+
 #include <errno.h>
 #include <err.h>
+#include <fcntl.h>
 #include <kvm.h>
 #include <limits.h>
 #include <stdio.h>
@@ -42,7 +44,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <nlist.h>
-#include <ctype.h>
 #include <paths.h>
 
 struct nlist nl[] = {

@@ -25,10 +25,11 @@ class TestObjCStructArgument(TestBase):
 
     @skipUnlessDarwin
     @add_test_categories(['pyapi'])
+    @skipIf(debug_info=no_match(["gmodules"]), oslist=['ios', 'watchos', 'tvos', 'bridgeos'], archs=['armv7', 'arm64'])  # this test program only builds for ios with -gmodules
     def test_with_python_api(self):
         """Test passing structs to Objective-C methods."""
         self.build()
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = self.getBuildArtifact("a.out")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)

@@ -1,0 +1,21 @@
+LI-ARG(1) - General Commands Manual
+
+# NAME
+
+**Li-arg** - escape sequences in arguments of in-line macros
+
+# DESCRIPTION
+
+unquoted unescaped:
+`@`
+
+quoted unescaped:
+`@`
+
+unquoted escaped:
+`@`
+
+quoted escaped:
+`@`
+
+OpenBSD - December 21, 2018

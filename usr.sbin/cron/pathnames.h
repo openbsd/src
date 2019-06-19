@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.22 2015/11/12 21:12:05 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.23 2018/07/11 14:51:01 deraadt Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -28,7 +28,6 @@
 #define	_PATH_CRON_ALLOW	"/var/cron/cron.allow"
 #define	_PATH_CRON_DENY		"/var/cron/cron.deny"
 #define	_PATH_CRON_SOCK		"/var/run/cron.sock"
-#define	_PATH_CRON_SOCK_OLD	"/var/cron/tabs/.sock"
 #define	_PATH_CRON_SPOOL	"/var/cron/tabs"
 #define	_PATH_SYS_CRONTAB	"/etc/crontab"
 

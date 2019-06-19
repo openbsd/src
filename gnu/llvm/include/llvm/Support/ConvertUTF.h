@@ -92,6 +92,7 @@
 
 #include <cstddef>
 #include <string>
+#include <system_error>
 
 // Wrap everything in namespace llvm so that programs can link with llvm and
 // their own version of the unicode libraries.
@@ -242,10 +243,10 @@ bool ConvertCodePointToUTF8(unsigned Source, char *&ResultPtr);
  *
  * \sa ConvertUTF8toUTF32
  */
-static inline ConversionResult convertUTF8Sequence(const UTF8 **source,
-                                                   const UTF8 *sourceEnd,
-                                                   UTF32 *target,
-                                                   ConversionFlags flags) {
+inline ConversionResult convertUTF8Sequence(const UTF8 **source,
+                                            const UTF8 *sourceEnd,
+                                            UTF32 *target,
+                                            ConversionFlags flags) {
   if (*source == sourceEnd)
     return sourceExhausted;
   unsigned size = getNumBytesForUTF8(**source);
@@ -285,6 +286,21 @@ bool convertUTF16ToUTF8String(ArrayRef<UTF16> Src, std::string &Out);
  */
 bool convertUTF8ToUTF16String(StringRef SrcUTF8,
                               SmallVectorImpl<UTF16> &DstUTF16);
+
+#if defined(_WIN32)
+namespace sys {
+namespace windows {
+std::error_code UTF8ToUTF16(StringRef utf8, SmallVectorImpl<wchar_t> &utf16);
+/// Convert to UTF16 from the current code page used in the system
+std::error_code CurCPToUTF16(StringRef utf8, SmallVectorImpl<wchar_t> &utf16);
+std::error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
+                            SmallVectorImpl<char> &utf8);
+/// Convert from UTF16 to the current code page used in the system
+std::error_code UTF16ToCurCP(const wchar_t *utf16, size_t utf16_len,
+                             SmallVectorImpl<char> &utf8);
+} // namespace windows
+} // namespace sys
+#endif
 
 } /* end namespace llvm */
 

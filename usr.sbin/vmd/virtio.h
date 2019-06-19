@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.23 2018/01/15 04:26:58 ccardenas Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.34 2018/12/06 09:20:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -20,6 +20,8 @@
 
 #define VIRTQUEUE_ALIGN(n)	(((n)+(VIRTIO_PAGE_SIZE-1))&    \
 				    ~(VIRTIO_PAGE_SIZE-1))
+#define ALIGNSZ(sz, align)	((sz + align - 1) & ~(align - 1))
+#define MIN(a,b)		(((a)<(b))?(a):(b))
 
 /* Queue sizes must be power of two */
 #define VIORND_QUEUE_SIZE	64
@@ -31,7 +33,7 @@
 #define VIOSCSI_QUEUE_SIZE	128
 #define VIOSCSI_QUEUE_MASK	(VIOSCSI_QUEUE_SIZE - 1)
 
-#define VIONET_QUEUE_SIZE	128
+#define VIONET_QUEUE_SIZE	256
 #define VIONET_QUEUE_MASK	(VIONET_QUEUE_SIZE - 1)
 
 /* VMM Control Interface shutdown timeout (in seconds) */
@@ -59,6 +61,13 @@ struct virtio_io_cfg {
 	uint16_t queue_notify;
 	uint8_t device_status;
 	uint8_t isr_status;
+};
+
+struct virtio_backing {
+	void  *p;
+	ssize_t  (*pread)(void *p, char *buf, size_t len, off_t off);
+	ssize_t  (*pwrite)(void *p, char *buf, size_t len, off_t off);
+	void (*close)(void *p, int);
 };
 
 /*
@@ -139,18 +148,22 @@ struct viornd_dev {
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
 
 	uint8_t pci_id;
+	int irq;
+	uint32_t vm_id;
 };
 
 struct vioblk_dev {
 	struct virtio_io_cfg cfg;
 
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
+	struct virtio_backing file;
 
-	int fd;
 	uint64_t sz;
 	uint32_t max_xfer;
 
 	uint8_t pci_id;
+	int irq;
+	uint32_t vm_id;
 };
 
 /* vioscsi will use at least 3 queues - 5.6.2 Virtqueues
@@ -164,9 +177,10 @@ struct vioscsi_dev {
 
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
 
+	struct virtio_backing file;
+
 	/* is the device locked */
 	int locked;
-	int fd;
 	/* size of iso file in bytes */
 	uint64_t sz;
 	/* last block address read */
@@ -176,6 +190,8 @@ struct vioscsi_dev {
 	uint32_t max_xfer;
 
 	uint8_t pci_id;
+	uint32_t vm_id;
+	int irq;
 };
 
 struct vionet_dev {
@@ -196,6 +212,7 @@ struct vionet_dev {
 	int idx;
 	int lockedmac;
 	int local;
+	int pxeboot;
 
 	uint8_t pci_id;
 };
@@ -235,29 +252,38 @@ struct vmmci_dev {
 };
 
 struct ioinfo {
+	struct virtio_backing *file;
 	uint8_t *buf;
 	ssize_t len;
 	off_t offset;
-	int fd;
 	int error;
 };
 
 /* virtio.c */
-void virtio_init(struct vmd_vm *, int, int *, int *);
+void virtio_init(struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK], int *);
+void virtio_shutdown(struct vmd_vm *);
 int virtio_dump(int);
-int virtio_restore(int, struct vmd_vm *, int, int *, int *);
+int virtio_restore(int, struct vmd_vm *, int,
+    int[][VM_MAX_BASE_PER_DISK], int *);
 uint32_t vring_size(uint32_t);
 
 int virtio_rnd_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 int viornd_dump(int);
-int viornd_restore(int);
+int viornd_restore(int, struct vm_create_params *);
 void viornd_update_qs(void);
 void viornd_update_qa(void);
 int viornd_notifyq(void);
 
+ssize_t virtio_qcow2_get_base(int, char *, size_t, const char *);
+int virtio_qcow2_create(const char *, const char *, long);
+int virtio_qcow2_init(struct virtio_backing *, off_t *, int*, size_t);
+int virtio_raw_create(const char *, long);
+int virtio_raw_init(struct virtio_backing *, off_t *, int*, size_t);
+
 int virtio_blk_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 int vioblk_dump(int);
-int vioblk_restore(int, struct vm_create_params *, int *);
+int vioblk_restore(int, struct vmop_create_params *,
+    int[][VM_MAX_BASE_PER_DISK]);
 void vioblk_update_qs(struct vioblk_dev *);
 void vioblk_update_qa(struct vioblk_dev *);
 int vioblk_notifyq(struct vioblk_dev *);
@@ -269,6 +295,7 @@ void vionet_update_qs(struct vionet_dev *);
 void vionet_update_qa(struct vionet_dev *);
 int vionet_notifyq(struct vionet_dev *);
 void vionet_notify_rx(struct vionet_dev *);
+int vionet_notify_tx(struct vionet_dev *);
 void vionet_process_rx(uint32_t);
 int vionet_enq_rx(struct vionet_dev *, char *, ssize_t, int *);
 

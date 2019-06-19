@@ -2,10 +2,11 @@ toke.c	AOK
 
     we seem to have lost a few ambiguous warnings!!
 
- 
- 		$a = <<;
- 		Use of comma-less variable list is deprecated 
-		(called 3 times via depcom)
+     Prototype after '@' for main::foo
+	sub foo (@$)
+
+     Illegal character in prototype for main::foo
+	sub foo (x)
 
      \1 better written as $1 
  	use warnings 'syntax' ;
@@ -52,6 +53,11 @@ toke.c	AOK
 	print ("")
 	printf ("")
 	sort ("")
+
+     Old package separator used in string
+	"$foo'bar"
+	"@foo'bar"
+	"$#foo'bar"
 
      Ambiguous use of %c{%s%s} resolved to %c%s%s 
 	$a = ${time[2]}
@@ -125,29 +131,74 @@ toke.c	AOK
         *foo *foo
 
 __END__
-# toke.c 
-format STDOUT =
-@<<<  @|||  @>>>  @>>>
-$a    $b    "abc" 'def'
-.
-no warnings 'deprecated' ;
-format STDOUT =
-@<<<  @|||  @>>>  @>>>
-$a    $b    "abc" 'def'
-.
+use utf8;
+use open qw( :utf8 :std );
+use warnings;
+eval "sub fòò (@\$\0) {}";
 EXPECT
-Use of comma-less variable list is deprecated at - line 4.
-Use of comma-less variable list is deprecated at - line 4.
-Use of comma-less variable list is deprecated at - line 4.
+Prototype after '@' for main::fòò : @$\0 at (eval 1) line 1.
+Illegal character in prototype for main::fòò : @$\0 at (eval 1) line 1.
 ########
-# toke.c
-$a = <<;
-
-no warnings 'deprecated' ;
-$a = <<;
-
+use utf8;
+use open qw( :utf8 :std );
+use warnings;
+eval "sub foo (@\0) {}";
+eval "sub foo2 :prototype(@\0) {}";
 EXPECT
-Use of bare << to mean <<"" is deprecated at - line 2.
+Prototype after '@' for main::foo : @\0 at (eval 1) line 1.
+Illegal character in prototype for main::foo : @\0 at (eval 1) line 1.
+Prototype after '@' for main::foo2 : @\x{0} at (eval 2) line 1.
+Illegal character in prototype for main::foo2 : @\x{0} at (eval 2) line 1.
+########
+BEGIN {
+    if (ord('A') == 193) {
+        print "SKIPPED\n# Different results on EBCDIC";
+        exit 0;
+    }
+}
+use utf8;
+use open qw( :utf8 :std );
+use warnings;
+BEGIN { $::{"foo"} = "\@\$\0L\351on" }
+BEGIN { eval "sub foo (@\$\0L\x{c3}\x{a9}on) {}"; }
+EXPECT
+Prototype after '@' for main::foo : @$\x{0}L... at (eval 1) line 1.
+Illegal character in prototype for main::foo : @$\x{0}L... at (eval 1) line 1.
+########
+use utf8;
+use open qw( :utf8 :std );
+use warnings;
+BEGIN { eval "sub foo (@\0) {}"; }
+EXPECT
+Prototype after '@' for main::foo : @\0 at (eval 1) line 1.
+Illegal character in prototype for main::foo : @\0 at (eval 1) line 1.
+########
+use warnings;
+eval "sub foo (@\xAB) {}";
+EXPECT
+Prototype after '@' for main::foo : @\x{ab} at (eval 1) line 1.
+Illegal character in prototype for main::foo : @\x{ab} at (eval 1) line 1.
+########
+use utf8;
+use open qw( :utf8 :std );
+use warnings;
+BEGIN { eval "sub foo (@\x{30cb}) {}"; }
+EXPECT
+Prototype after '@' for main::foo : @\x{30cb} at (eval 1) line 1.
+Illegal character in prototype for main::foo : @\x{30cb} at (eval 1) line 1.
+########
+use warnings;
+sub f ([);
+sub f :prototype([)
+EXPECT
+Missing ']' in prototype for main::f : [ at - line 2.
+Missing ']' in prototype for main::f : [ at - line 3.
+########
+use warnings;
+package bar { sub bar { eval q"sub foo ([)" } }
+bar::bar
+EXPECT
+Missing ']' in prototype for bar::foo : [ at (eval 1) line 1.
 ########
 # toke.c
 $a =~ m/$foo/eq;
@@ -365,6 +416,40 @@ no warnings 'syntax' ;
 sort ("")
 EXPECT
 
+########
+use warnings 'syntax';
+@foo::bar = 1..3;
+() = "$foo'bar";
+() = "@foo'bar";
+() = "$#foo'bar";
+no warnings 'syntax' ;
+() = "$foo'bar";
+() = "@foo'bar";
+() = "$#foo'bar";
+EXPECT
+Old package separator used in string at - line 3.
+	(Did you mean "$foo\'bar" instead?)
+Old package separator used in string at - line 4.
+	(Did you mean "@foo\'bar" instead?)
+Old package separator used in string at - line 5.
+	(Did you mean "$#foo\'bar" instead?)
+########
+use warnings 'syntax'; use utf8;
+@fooл::barл = 1..3;
+() = "$fooл'barл";
+() = "@fooл'barл";
+() = "$#fooл'barл";
+no warnings 'syntax' ;
+() = "$fooл'barл";
+() = "@fooл'barл";
+() = "$#fooл'barл";
+EXPECT
+Old package separator used in string at - line 3.
+	(Did you mean "$fooл\'barл" instead?)
+Old package separator used in string at - line 4.
+	(Did you mean "@fooл\'barл" instead?)
+Old package separator used in string at - line 5.
+	(Did you mean "$#fooл\'barл" instead?)
 ########
 # toke.c
 use warnings 'ambiguous' ;
@@ -666,6 +751,34 @@ _123
 123
 12.34
 12340000000000
+########
+# toke.c
+use warnings 'syntax';
+$a = 1_; print "$a\n";
+$a = 01_; print "$a\n";
+$a = 0_; print "$a\n";
+$a = 0x1_; print "$a\n";
+$a = 0x_; print "$a\n";
+$a = 1.2_; print "$a\n";
+$a = 1._2; print "$a\n";
+$a = 1._; print "$a\n";
+EXPECT
+Misplaced _ in number at - line 3.
+Misplaced _ in number at - line 4.
+Misplaced _ in number at - line 5.
+Misplaced _ in number at - line 6.
+Misplaced _ in number at - line 7.
+Misplaced _ in number at - line 8.
+Misplaced _ in number at - line 9.
+Misplaced _ in number at - line 10.
+1
+1
+0
+1
+0
+1.2
+1.2
+1
 ########
 # toke.c
 use warnings 'bareword' ;
@@ -1069,11 +1182,28 @@ Integer overflow in octal number at - line 11.
 ########
 # toke.c
 BEGIN { $^C = 1; }
+dump;
+CORE::dump;
+EXPECT
+dump() better written as CORE::dump(). dump() will no longer be available in Perl 5.30 at - line 3.
+- syntax OK
+########
+# toke.c
+BEGIN { $^C = 1; }
+no warnings 'deprecated';
+dump;
+CORE::dump;
+EXPECT
+- syntax OK
+########
+# toke.c
+BEGIN { $^C = 1; }
+no warnings 'deprecated';
 use warnings 'misc';
 dump;
 CORE::dump;
 EXPECT
-dump() better written as CORE::dump() at - line 4.
+dump() better written as CORE::dump(). dump() will no longer be available in Perl 5.30 at - line 5.
 - syntax OK
 ########
 # toke.c
@@ -1111,6 +1241,11 @@ no warnings 'ambiguous';
 "@mjd_previously_unused_ぁrrぁy2";        
 EXPECT
 Possible unintended interpolation of @mjd_previously_unused_ぁrrぁy in string at - line 5.
+########
+-w
+# toke.c
+$_ = "@DB::args";        
+EXPECT
 ########
 # toke.c
 # 20020328 mjd-perl-patch+@plover.com at behest of jfriedl@yahoo.com
@@ -1208,27 +1343,7 @@ EXPECT
 !=~ should be !~ at - line 9.
 ########
 # toke.c
-our $foo :unique;
-sub pam :locked;
-sub glipp :locked {
-}
-sub whack_eth ($) : locked {
-}
-no warnings 'deprecated';
-our $bar :unique;
-sub zapeth :locked;
-sub ker_plop :locked {
-}
-sub swa_a_p ($) : locked {
-}
-EXPECT
-Use of :unique is deprecated at - line 2.
-Use of :locked is deprecated at - line 3.
-Use of :locked is deprecated at - line 4.
-Use of :locked is deprecated at - line 6.
-########
-# toke.c
-use warnings "syntax"; use feature 'lexical_subs';
+use warnings "syntax";
 sub proto_after_array(@$);
 sub proto_after_arref(\@$);
 sub proto_after_arref2(\[@$]);
@@ -1238,7 +1353,7 @@ sub proto_after_hashref(\%$);
 sub proto_after_hashref2(\[%$]);
 sub underscore_last_pos($_);
 sub underscore2($_;$);
-sub underscore_fail($_$);
+sub underscore_fail($_$); sub underscore_fail2 : prototype($_$);
 sub underscore_after_at(@_);
 our sub hour (@$);
 my sub migh (@$);
@@ -1256,12 +1371,10 @@ EXPECT
 Prototype after '@' for main::proto_after_array : @$ at - line 3.
 Prototype after '%' for main::proto_after_hash : %$ at - line 7.
 Illegal character after '_' in prototype for main::underscore_fail : $_$ at - line 12.
+Illegal character after '_' in prototype for main::underscore_fail2 : $_$ at - line 12.
 Prototype after '@' for main::underscore_after_at : @_ at - line 13.
-The lexical_subs feature is experimental at - line 14.
 Prototype after '@' for hour : @$ at - line 14.
-The lexical_subs feature is experimental at - line 15.
 Prototype after '@' for migh : @$ at - line 15.
-The lexical_subs feature is experimental at - line 17.
 Prototype after '@' for estate : @$ at - line 17.
 Prototype after '@' for hour : @$ at - line 19.
 Prototype after '@' for migh : @$ at - line 20.
@@ -1509,3 +1622,89 @@ my $v = 𝛃 - 5;
 EXPECT
 OPTION regex
 (Wide character.*\n)?Warning: Use of "𝛃" without parentheses is ambiguous
+########
+# RT #4346 Case 1: Warnings for print (...)
+# TODO RT #4346: Warnings for print(...) are inconsistent
+use warnings;
+print ("((\n");
+print (">>\n");
+EXPECT
+print (...) interpreted as function at - line 3.
+print (...) interpreted as function at - line 4.
+((
+>>
+########
+# RT #4346 Case 2: Warnings for print (...)
+use warnings;
+print ("((\n");
+print (">>\n")
+EXPECT
+print (...) interpreted as function at - line 3.
+print (...) interpreted as function at - line 4.
+((
+>>
+########
+# RT #4346 Case 3: Warnings for print (...)
+# TODO RT #4346: Warnings for print(...) are inconsistent
+use warnings;
+print (">>\n");
+print ("((\n");
+EXPECT
+print (...) interpreted as function at - line 3.
+print (...) interpreted as function at - line 4.
+>>
+((
+########
+# RT #4346 Case 4: Warnings for print (...)
+# TODO RT #4346: Warnings for print(...) are inconsistent
+use warnings;
+print (")\n");
+print ("))\n");
+EXPECT
+print (...) interpreted as function at - line 3.
+print (...) interpreted as function at - line 4.
+)
+))
+########
+# NAME  Non-grapheme delimiters
+BEGIN{
+    if (ord('A') == 193) {
+        print "SKIPPED\n# ebcdic platforms generates different Malformed UTF-8 warnings.";
+        exit 0;
+    }
+}
+use utf8;
+my $a = qr ̂foobar̂;
+EXPECT
+Use of unassigned code point or non-standalone grapheme for a delimiter will be a fatal error starting in Perl 5.30 at - line 8.
+########
+# NAME  [perl #130567] Assertion failure
+BEGIN {
+    if (ord('A') != 65) {
+        print "SKIPPED\n# test is ASCII-specific";
+        exit 0;
+    }
+}
+no warnings "uninitialized";
+$_= "";
+s//\3000/;
+s//"\x{180};;s\221(*$@$`\241\275";/gee;
+s//"s\221\302\302\302\302\302\302\302$@\241\275";/gee;
+EXPECT
+########
+# NAME  [perl #130666] Assertion failure
+no warnings "uninitialized";
+BEGIN{$^H=-1};my $l; s $0[$l]  
+EXPECT
+########
+# NAME  [perl #129036] Assertion failure
+BEGIN{$0="";$^H=hex join""=>A00000}p?
+EXPECT
+OPTION fatal
+syntax error at - line 1, at EOF
+Execution of - aborted due to compilation errors.
+########
+# NAME  [perl #130655]
+use utf8;
+qw∘foo ∞ ♥ bar∘
+EXPECT

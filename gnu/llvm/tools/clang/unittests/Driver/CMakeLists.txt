@@ -1,4 +1,5 @@
 set(LLVM_LINK_COMPONENTS
+  ${LLVM_TARGETS_TO_BUILD}
   Support
   Option
   )
@@ -6,10 +7,12 @@ set(LLVM_LINK_COMPONENTS
 add_clang_unittest(ClangDriverTests
   DistroTest.cpp
   ToolChainTest.cpp
+  ModuleCacheTest.cpp
   MultilibTest.cpp
   )
 
 target_link_libraries(ClangDriverTests
+  PRIVATE
   clangDriver
   clangBasic
   )

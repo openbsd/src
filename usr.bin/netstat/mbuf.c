@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.40 2017/10/28 15:25:20 mikeb Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.41 2019/06/13 20:38:54 bluhm Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ mbpr(void)
 
 	printf("%lu/%lu/%lu Kbytes allocated to network "
 	    "(current/peak/max)\n", totmem / 1024, totpeak / 1024,
-	    (unsigned long)(maxclusters * MCLBYTES) / 1024);
+	    ((unsigned long)maxclusters * MCLBYTES) / 1024);
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
 	printf("%lu requests for memory delayed\n", mbstat.m_wait);
 	printf("%lu calls to protocol drain routines\n", mbstat.m_drain);

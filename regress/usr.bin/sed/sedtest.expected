@@ -1148,10 +1148,31 @@ m1_11
 m1_12
 m1_13
 m1_14
+
+============
+Test 5.9:158
+============
+A
+2
+B
+
+=============
+Test 5.10:159
+=============
+C
+2
+B
+
+=============
+Test 5.11:160
+=============
+A
+2
+B
 Pattern space commands
 
 ============
-Test 6.1:158
+Test 6.1:161
 ============
 changed
 changed
@@ -1169,7 +1190,7 @@ changed
 changed
 
 ============
-Test 6.2:159
+Test 6.2:162
 ============
 l1_1
 l1_2
@@ -1186,7 +1207,7 @@ l1_13
 l1_14
 
 ============
-Test 6.4:160
+Test 6.4:163
 ============
 l1_1
 l1_2
@@ -1210,7 +1231,7 @@ l1_13
 l1_14
 
 ============
-Test 6.5:161
+Test 6.5:164
 ============
 l1_1
 l1_2
@@ -1228,27 +1249,28 @@ l1_13
 l1_14
 
 ============
-Test 6.6:162
+Test 6.6:165
 ============
 Testing print and file routines
 
 ============
-Test 7.1:163
+Test 7.1:166
 ============
 \001\002\003\004\005\006\a\b\t$
-\v\f\r\016\017\020\021\022\023\024\025\026\027\030\031\032\033\034\035\036\037 !\
-"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnop\
-qrstuvwxyz{|}~\177\200\201\202\203\204\205\206\207\210\211\212\213\214\215\216\217\
-\220\221\222\223\224\225\226\227\230\231\232\233\234\235\236\237\240\241\242\243\
-\244\245\246\247\250\251\252\253\254\255\256\257\260\261\262\263\264\265\266\267\
-\270\271\272\273\274\275\276\277\300\301\302\303\304\305\306\307\310\311\312\313\
-\314\315\316\317\320\321\322\323\324\325\326\327\330\331\332\333\334\335\336\337\
-\340\341\342\343\344\345\346\347\350\351\352\353\354\355\356\357\360\361\362\363\
-\364\365\366\367\370\371\372\373\374\375\376\377$
+\v\f\r\016\017\020\021\022\023\024\025\026\027\030\031\032\033\034\035\036\
+\037 !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`ab\
+cdefghijklmnopqrstuvwxyz{|}~\177\200\201\202\203\204\205\206\207\210\211\
+\212\213\214\215\216\217\220\221\222\223\224\225\226\227\230\231\232\233\
+\234\235\236\237\240\241\242\243\244\245\246\247\250\251\252\253\254\255\
+\256\257\260\261\262\263\264\265\266\267\270\271\272\273\274\275\276\277\
+\300\301\302\303\304\305\306\307\310\311\312\313\314\315\316\317\320\321\
+\322\323\324\325\326\327\330\331\332\333\334\335\336\337\340\341\342\343\
+\344\345\346\347\350\351\352\353\354\355\356\357\360\361\362\363\364\365\
+\366\367\370\371\372\373\374\375\376\377$
 $
 
 ============
-Test 7.2:164
+Test 7.2:167
 ============
 l1_1
 l1_2
@@ -1284,7 +1306,7 @@ l2_8
 l2_9
 
 ============
-Test 7.3:165
+Test 7.3:168
 ============
 l1_1
 l1_2
@@ -1313,7 +1335,7 @@ l1_11
 l1_12
 
 ============
-Test 7.4:166
+Test 7.4:169
 ============
 l1_1
 l1_2
@@ -1340,7 +1362,7 @@ l1_13
 l1_14
 
 ============
-Test 7.5:167
+Test 7.5:170
 ============
 l1_1
 l1_2
@@ -1358,7 +1380,7 @@ l1_13
 l1_14
 
 ============
-Test 7.6:168
+Test 7.6:171
 ============
 l1_1
 l1_2
@@ -1376,7 +1398,7 @@ l1_13
 l1_14
 
 ============
-Test 7.7:169
+Test 7.7:172
 ============
 abetmentabetaberuncatoraberroscopeaberrometeraberratoraberrationalaberrationaberrateaberrantaberrancyaberranceAberiaAberdonianaberdevineAberdeenabepithymiaabentericAbencerragesabeltreeAbelonianabelmoskAbelmoschusabeliteAbeliteAbeliceaAbelianAbeliaabeleAbelabeighabedabecedaryabecedariumabecedarianabearanceabearabeamAbeabductorabductionabductabducentabducensabduceabdominovesicalabdominovaginalabdominousabdominothoracicabdominoscopyabdominoscopeabdominoposteriorabdominohysterotomyabdominohysterectomyabdominogenitalabdominocysticabdominocentesisabdominocardiacabdominoanteriorabdominallyabdominalianAbdominalesabdominalabdomenabditoryabditiveAbdielabdicatorabdicativeabdicationabdicateabdicantabdicableabdestAbderiteAbderianabdatabdalabcoulombAbbyabbreviatureabbreviatoryabbreviatorabbreviationabbreviatelyabbreviateabbotshipabbotnulliusabbotcyabbotAbbieabbeystedeabbeyabbessabbaticalabbatialAbbassideabbassiabbasiabbasAbbadideabbacyabbacomesAbbaabbabazeabaxileabaxialabaveabatureAbatuaabattoirabatorabatonabatisedabatisabaterabatementabateabatableabastardizeAbassinabaskabasicabasiaabashmentabashlesslyabashlessabashednessabashedlyabashedabashAbasgiabaserabasementabasednessabasedlyabasedabaseabasabarticulationabarticularabarthrosisAbarisAbaramboabaptistonAbantesAbanicabandonmentabandonerabandoneeabandonedlyabandonedabandonableabandonabampereAbamaabaloneabalienationabalienateabaissedabaiserabaisanceabaftabaffAbaditeabacusabaculusabactorabactionabactinallyabactinalabackabacistabaciscusabacinationabacinateabacayabacateabacaabacAbabuaAbabdehabaAbAaruAaroniticAaroniteAaronicalAaronicAaronaardwolfaardvarkAaniaamaaliiaalaaaAl1_1
 abetmentabetaberuncatoraberroscopeaberrometeraberratoraberrationalaberrationaberrateaberrantaberrancyaberranceAberiaAberdonianaberdevineAberdeenabepithymiaabentericAbencerragesabeltreeAbelonianabelmoskAbelmoschusabeliteAbeliteAbeliceaAbelianAbeliaabeleAbelabeighabedabecedaryabecedariumabecedarianabearanceabearabeamAbeabductorabductionabductabducentabducensabduceabdominovesicalabdominovaginalabdominousabdominothoracicabdominoscopyabdominoscopeabdominoposteriorabdominohysterotomyabdominohysterectomyabdominogenitalabdominocysticabdominocentesisabdominocardiacabdominoanteriorabdominallyabdominalianAbdominalesabdominalabdomenabditoryabditiveAbdielabdicatorabdicativeabdicationabdicateabdicantabdicableabdestAbderiteAbderianabdatabdalabcoulombAbbyabbreviatureabbreviatoryabbreviatorabbreviationabbreviatelyabbreviateabbotshipabbotnulliusabbotcyabbotAbbieabbeystedeabbeyabbessabbaticalabbatialAbbassideabbassiabbasiabbasAbbadideabbacyabbacomesAbbaabbabazeabaxileabaxialabaveabatureAbatuaabattoirabatorabatonabatisedabatisabaterabatementabateabatableabastardizeAbassinabaskabasicabasiaabashmentabashlesslyabashlessabashednessabashedlyabashedabashAbasgiabaserabasementabasednessabasedlyabasedabaseabasabarticulationabarticularabarthrosisAbarisAbaramboabaptistonAbantesAbanicabandonmentabandonerabandoneeabandonedlyabandonedabandonableabandonabampereAbamaabaloneabalienationabalienateabaissedabaiserabaisanceabaftabaffAbaditeabacusabaculusabactorabactionabactinallyabactinalabackabacistabaciscusabacinationabacinateabacayabacateabacaabacAbabuaAbabdehabaAbAaruAaroniticAaroniteAaronicalAaronicAaronaardwolfaardvarkAaniaamaaliiaalaaaAl1_2
@@ -4194,13 +4216,13 @@ abetmentabetaberuncatoraberroscopeaberrometeraberratoraberrationalaberrationaber
 abetmentabetaberuncatoraberroscopeaberrometeraberratoraberrationalaberrationaberrateaberrantaberrancyaberranceAberiaAberdonianaberdevineAberdeenabepithymiaabentericAbencerragesabeltreeAbelonianabelmoskAbelmoschusabeliteAbeliteAbeliceaAbelianAbeliaabeleAbelabeighabedabecedaryabecedariumabecedarianabearanceabearabeamAbeabductorabductionabductabducentabducensabduceabdominovesicalabdominovaginalabdominousabdominothoracicabdominoscopyabdominoscopeabdominoposteriorabdominohysterotomyabdominohysterectomyabdominogenitalabdominocysticabdominocentesisabdominocardiacabdominoanteriorabdominallyabdominalianAbdominalesabdominalabdomenabditoryabditiveAbdielabdicatorabdicativeabdicationabdicateabdicantabdicableabdestAbderiteAbderianabdatabdalabcoulombAbbyabbreviatureabbreviatoryabbreviatorabbreviationabbreviatelyabbreviateabbotshipabbotnulliusabbotcyabbotAbbieabbeystedeabbeyabbessabbaticalabbatialAbbassideabbassiabbasiabbasAbbadideabbacyabbacomesAbbaabbabazeabaxileabaxialabaveabatureAbatuaabattoirabatorabatonabatisedabatisabaterabatementabateabatableabastardizeAbassinabaskabasicabasiaabashmentabashlesslyabashlessabashednessabashedlyabashedabashAbasgiabaserabasementabasednessabasedlyabasedabaseabasabarticulationabarticularabarthrosisAbarisAbaramboabaptistonAbantesAbanicabandonmentabandonerabandoneeabandonedlyabandonedabandonableabandonabampereAbamaabaloneabalienationabalienateabaissedabaiserabaisanceabaftabaffAbaditeabacusabaculusabactorabactionabactinallyabactinalabackabacistabaciscusabacinationabacinateabacayabacateabacaabacAbabuaAbabdehabaAbAaruAaroniticAaroniteAaronicalAaronicAaronaardwolfaardvarkAaniaamaaliiaalaaaAl1_14
 
 ============
-Test 7.8:170
+Test 7.8:173
 ============
 
 Testing substitution commands
 
 ============
-Test 8.1:171
+Test 8.1:174
 ============
 XXXX
 XXXX
@@ -4218,7 +4240,7 @@ XXXXX
 XXXXX
 
 ============
-Test 8.2:172
+Test 8.2:175
 ============
 XXXX
 XXXX
@@ -4236,7 +4258,7 @@ XXXXX
 XXXXX
 
 ============
-Test 8.4:173
+Test 8.4:176
 ============
 l1_1
 l1_2
@@ -4254,7 +4276,7 @@ l1_13
 l1_14
 
 ============
-Test 8.5:174
+Test 8.5:177
 ============
 l1X1
 l1X2
@@ -4272,7 +4294,7 @@ l1X13
 l1X14
 
 ============
-Test 8.6:175
+Test 8.6:178
 ============
 (l)(1)(_)(1)
 (l)(1)(_)(2)
@@ -4290,7 +4312,7 @@ Test 8.6:175
 (l)(1)(_)(1)(4)
 
 ============
-Test 8.7:176
+Test 8.7:179
 ============
 (&)(&)(&)(&)
 (&)(&)(&)(&)
@@ -4308,7 +4330,7 @@ Test 8.7:176
 (&)(&)(&)(&)(&)
 
 ============
-Test 8.8:177
+Test 8.8:180
 ============
 x_x1xl1
 x_x1xl2
@@ -4326,7 +4348,7 @@ x_x1xl13
 x_x1xl14
 
 ============
-Test 8.9:178
+Test 8.9:181
 ============
 l1u0
 u1
@@ -4372,7 +4394,7 @@ u1
 u214
 
 =============
-Test 8.10:179
+Test 8.10:182
 =============
 l1_X
 l1_X
@@ -4390,7 +4412,7 @@ l1_X3
 l1_X4
 
 =============
-Test 8.11:180
+Test 8.11:183
 =============
 lX_1
 lX_2
@@ -4423,7 +4445,7 @@ lX_13
 lX_14
 
 =============
-Test 8.12:181
+Test 8.12:184
 =============
 lX_X
 lX_X
@@ -4441,7 +4463,7 @@ lX_XX
 lX_X4
 
 =============
-Test 8.13:182
+Test 8.13:185
 =============
 l8_8
 l8_7
@@ -4459,7 +4481,7 @@ l8_86
 l8_85
 
 =============
-Test 8.14:183
+Test 8.14:186
 =============
 l8_8
 l8_7
@@ -4477,7 +4499,7 @@ l8_86
 l8_85
 
 =============
-Test 8.15:184
+Test 8.15:187
 =============
 l1_1Xl1_2
 l1_3
@@ -4494,7 +4516,7 @@ l1_13
 l1_14
 
 =============
-Test 8.16:185
+Test 8.16:188
 =============
 eeefff
 Xeefff
@@ -4503,10 +4525,10 @@ XYeYff
 XYeYYf
 XYeYYY
 XYeYYY
-[ as an s delimiter and its escapes
+various special characters as delimiters
 
 =============
-Test 8.17:186
+Test 8.17:189
 =============
 l1X1
 l1X2
@@ -4524,48 +4546,210 @@ l1X13
 l1X14
 
 =============
-Test 8.18:187
+Test 8.18:190
 =============
-X_1
-X_2
-X_3
-X_4
-X_5
-X_6
-X_7
-X_8
-X_9
-X_10
-X_11
-X_12
-X_13
-X_14
+l1_$R
+l1_2
+l1_3
+l1_4
+l1_5
+l1_6
+l1_7
+l1_8
+l1_9
+l1_10
+l1_1$R
+l1_12
+l1_13
+l1_14
 
 =============
-Test 8.19:188
+Test 8.19:191
 =============
-X[_1
-X[_2
-X[_3
-X[_4
-X[_5
-X[_6
-X[_7
-X[_8
-X[_9
-X[_10
-X[_11
-X[_12
-X[_13
-X[_14
+l1_1
+l1_2
+l1_(3)
+l1_4
+l1_(5)
+l1_6
+l1_7
+l1_8
+l1_9
+l1_10
+l1_11
+l1_12
+l1_1(3)
+l1_14
+
+=============
+Test 8.20:192
+=============
+l1*R
+l1*R2
+l1*R3
+l1*R4
+l1*R5
+l1*R6
+l1*R7
+l1*R8
+l1*R9
+l1*R0
+l1*R
+l1*R2
+l1*R3
+l1*R4
+
+=============
+Test 8.21:193
+=============
+l1+R
+l1_2
+l1_3
+l1_4
+l1_5
+l1_6
+l1_7
+l1_8
+l1_9
+l1+R0
+l1+R
+l1+R2
+l1+R3
+l1+R4
+
+=============
+Test 8.22:194
+=============
+lR.1
+lR.2
+lR.3
+lR.4
+lR.5
+lR.6
+lR.7
+lR.8
+lR.9
+lR.R.
+lR.R.
+lR.R.
+lR.R.
+lR.R.
+
+=============
+Test 8.23:195
+=============
+l1R
+l1/2
+l1/3
+l1/4
+l1/5
+l1/6
+l1/7
+l1/8
+l1/9
+l1R0
+l1R1
+l1R2
+l1R3
+l1R4
+
+=============
+Test 8.24:196
+=============
+l1?R
+l1?R2
+l1?R3
+l1?R4
+l1?R5
+l1?R6
+l1?R7
+l1?R8
+l1?R9
+l1?R0
+l1?R1
+l1?R2
+l1?R3
+l1?R4
+
+=============
+Test 8.25:197
+=============
+l1_1
+l1_[R]
+l1_[R]
+l1_[R]
+l1_5
+l1_6
+l1_7
+l1_8
+l1_9
+l1_10
+l1_11
+l1_1[R]
+l1_1[R]
+l1_1[R]
+
+=============
+Test 8.26:198
+=============
+R^1_1
+R^1_2
+R^1_3
+R^1_4
+R^1_5
+R^1_6
+R^1_7
+R^1_8
+R^1_9
+R^1_10
+R^1_11
+R^1_12
+R^1_13
+R^1_14
+
+=============
+Test 8.27:199
+=============
+l1_1
+l1_2
+l1_3
+l1_4
+l1_5
+l1_6
+l1_7
+l1_8
+l1_9
+l1_10
+l1_{R}
+l1_12
+l1_13
+l1_14
+
+=============
+Test 8.28:200
+=============
+l1_1
+l1_|R
+l1_3
+l1_|R
+l1_5
+l1_6
+l1_7
+l1_8
+l1_9
+l1_10
+l1_11
+l1_1|R
+l1_13
+l1_1|R
 \ in y command
 
 =============
-Test 8.20:189
+Test 8.29:201
 =============
 a-b-c
 
 =============
-Test 8.21:190
+Test 8.30:202
 =============
 z

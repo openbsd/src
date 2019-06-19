@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.42 2017/10/13 18:06:28 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.44 2019/04/27 22:08:58 kn Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -69,6 +69,9 @@ __EOT
 	# Create working directories with proper permissions in /tmp.
 	mkdir -m u=rwx,go=rx -p /tmp/{ai,i}
 
+	# try unattended install
+	/autoinstall -x
+
 	# Set timer to automatically start unattended installation or upgrade
 	# if netbooted or if a response file is found in / after a timeout,
 	# but only the very first time around.
@@ -83,7 +86,7 @@ __EOT
 
 		# Set trap handlers to remove timer if the shell is interrupted,
 		# killed or about to exit.
-		trap 'kill $timeout_pid 2>/dev/null' EXIT
+		trap 'kill $timer_pid 2>/dev/null' EXIT
 		trap 'exit 1' INT
 		trap 'timeout=true' TERM
 

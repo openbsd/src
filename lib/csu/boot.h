@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.28 2017/01/29 22:31:09 chl Exp $ */
+/*	$OpenBSD: boot.h,v 1.30 2019/05/10 13:29:21 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -80,6 +80,14 @@ struct boot_dyn {
 	u_long		dt_proc[DT_PROCNUM];
 #endif
 };
+
+static void *relro_addr;
+static size_t relro_size;
+#define RCRT0_RELRO()							\
+	do {								\
+		if (relro_addr != NULL && relro_size != 0)		\
+			mprotect(relro_addr, relro_size, PROT_READ);	\
+	} while (0)
 
 /*
  * Local decls.
@@ -220,8 +228,8 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 			break;
 #endif
 		case PT_GNU_RELRO:
-			mprotect((void *)(phdp->p_vaddr + loff), phdp->p_memsz,
-			    PROT_READ);
+			relro_addr = (void *)(phdp->p_vaddr + loff);
+			relro_size = phdp->p_memsz;
 			/*
 			 * GNU_RELRO (a) covers the GOT, and (b) comes after
 			 * all LOAD sections, so if we found it then we're done
@@ -230,37 +238,5 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 		}
 	}
 }
-
-#ifdef __alpha__
-
-void	_reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase);
-
-void
-_reloc_alpha_got(Elf_Dyn *dynp, Elf_Addr relocbase)
-{
-	const Elf_RelA *rela = 0, *relalim;
-	Elf_Addr relasz = 0;
-	Elf_Addr *where;
-
-	for (; dynp->d_tag != DT_NULL; dynp++) {
-		switch (dynp->d_tag) {
-		case DT_RELA:
-			rela = (const Elf_RelA *)(relocbase + dynp->d_un.d_ptr);
-			break;
-		case DT_RELASZ:
-			relasz = dynp->d_un.d_val;
-			break;
-		}
-	}
-	relalim = (const Elf_RelA *)((caddr_t)rela + relasz);
-	for (; rela < relalim; rela++) {
-		if (ELF64_R_TYPE(rela->r_info) != RELOC_RELATIVE)
-			continue;
-		where = (Elf_Addr *)(relocbase + rela->r_offset);
-		*where += (Elf_Addr)relocbase;
-	}
-}
-
-#endif
 
 #endif /* RCRT0 */

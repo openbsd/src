@@ -148,7 +148,6 @@ if test -f .patch; then
   ccflags="-DPERL_PATCHNUM=`cat .patch` $ccflags"
 fi
 
-    : Can we perhaps use $ansi2knr here
     echo "$CROSSCC -c -DUSE_CROSS_COMPILE -DPERL_CORE $ccflags $stdflags $optimize $warn $extra"
     eval "$also "'"$CROSSCC -DUSE_CROSS_COMPILE -DPERL_CORE -c $ccflags $stdflags $optimize $warn $extra"'
 

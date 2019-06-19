@@ -1,7 +1,7 @@
-/*	$OpenBSD: out.h,v 1.22 2017/06/27 18:23:29 schwarze Exp $ */
+/*	$OpenBSD: out.h,v 1.24 2018/08/18 20:17:58 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,6 +32,7 @@ enum	roffscale {
 
 struct	roffcol {
 	size_t		 width; /* width of cell */
+	size_t		 nwidth; /* max. width of number in cell */
 	size_t		 decimal; /* decimal position in cell */
 	size_t		 spacing; /* spacing after the column */
 	int		 flags; /* layout flags, see tbl_cell */
@@ -53,11 +54,6 @@ struct	rofftbl {
 	struct roffcol	*cols; /* master column specifiers */
 	void		*arg; /* passed to sulen, slen, and len */
 };
-
-#define	SCALE_VS_INIT(p, v) \
-	do { (p)->unit = SCALE_VS; \
-	     (p)->scale = (v); } \
-	while (/* CONSTCOND */ 0)
 
 #define	SCALE_HS_INIT(p, v) \
 	do { (p)->unit = SCALE_EN; \

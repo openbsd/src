@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2016/01/07 16:00:33 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2018/08/09 17:51:22 mestre Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/22 10:59:10 cgd Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ main(int argc, char **argv)
 	int		ac;
 	char		**av;
 
-	if (pledge("stdio rpath wpath cpath", NULL) == -1)
+	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	av = argv;

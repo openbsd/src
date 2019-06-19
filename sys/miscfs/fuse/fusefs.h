@@ -1,4 +1,4 @@
-/* $OpenBSD: fusefs.h,v 1.8 2016/08/21 09:23:33 natano Exp $ */
+/* $OpenBSD: fusefs.h,v 1.13 2018/07/16 13:10:53 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -52,6 +52,7 @@ struct fusefs_mnt {
 	uint32_t undef_op;
 	int max_read;
 	int sess_init;
+	int allow_other;
 	dev_t dev;
 };
 
@@ -66,12 +67,11 @@ struct fusefs_mnt {
 #define UNDEF_RENAME	1<<8
 #define UNDEF_SYMLINK	1<<9
 #define UNDEF_MKNOD	1<<10
+#define UNDEF_FLUSH	1<<11
+#define UNDEF_FSYNC	1<<12
 
 extern struct vops fusefs_vops;
 extern struct pool fusefs_fbuf_pool;
-
-/* fuse helpers */
-#define TSLEEP_TIMEOUT 5
 
 /* files helpers. */
 int fusefs_file_open(struct fusefs_mnt *, struct fusefs_node *, enum fufh_type,
@@ -80,7 +80,7 @@ int fusefs_file_close(struct fusefs_mnt *, struct fusefs_node *,
     enum fufh_type, int, int, struct proc *);
 
 /* device helpers. */
-void fuse_device_cleanup(dev_t, struct fusebuf *);
+void fuse_device_cleanup(dev_t);
 void fuse_device_queue_fbuf(dev_t, struct fusebuf *);
 void fuse_device_set_fmp(struct fusefs_mnt *, int);
 

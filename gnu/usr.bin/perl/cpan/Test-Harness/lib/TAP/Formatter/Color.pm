@@ -12,56 +12,24 @@ my $NO_COLOR;
 BEGIN {
     $NO_COLOR = 0;
 
+    eval 'require Term::ANSIColor';
+    if ($@) {
+        $NO_COLOR = $@;
+    };
     if (IS_WIN32) {
-        eval 'use Win32::Console';
+        eval 'use Win32::Console::ANSI';
         if ($@) {
             $NO_COLOR = $@;
         }
-        else {
-            my $console = Win32::Console->new( STD_OUTPUT_HANDLE() );
-
-            # eval here because we might not know about these variables
-            my $fg = eval '$FG_LIGHTGRAY';
-            my $bg = eval '$BG_BLACK';
-
-            *set_color = sub {
-                my ( $self, $output, $color ) = @_;
-
-                my $var;
-                if ( $color eq 'reset' ) {
-                    $fg = eval '$FG_LIGHTGRAY';
-                    $bg = eval '$BG_BLACK';
-                }
-                elsif ( $color =~ /^on_(.+)$/ ) {
-                    $bg = eval '$BG_' . uc($1);
-                }
-                else {
-                    $fg = eval '$FG_' . uc($color);
-                }
-
-                # In case of colors that aren't defined
-                $self->set_color('reset')
-                  unless defined $bg && defined $fg;
-
-                $console->Attr( $bg | $fg );
-            };
-        }
-    }
-    else {
-        eval 'use Term::ANSIColor';
-        if ($@) {
-            $NO_COLOR = $@;
-        }
-        else {
-            *set_color = sub {
-                my ( $self, $output, $color ) = @_;
-                $output->( color($color) );
-            };
-        }
-    }
+    };
 
     if ($NO_COLOR) {
         *set_color = sub { };
+    } else {
+        *set_color = sub {
+            my ( $self, $output, $color ) = @_;
+            $output->( Term::ANSIColor::color($color) );
+        };
     }
 }
 
@@ -71,11 +39,11 @@ TAP::Formatter::Color - Run Perl test scripts with color
 
 =head1 VERSION
 
-Version 3.36
+Version 3.42
 
 =cut
 
-our $VERSION = '3.36_01';
+our $VERSION = '3.42';
 
 =head1 DESCRIPTION
 
@@ -87,7 +55,7 @@ in color.  Passing tests are printed in green.  Failing tests are in red.
 Skipped tests are blue on a white background and TODO tests are printed in
 white.
 
-If L<Term::ANSIColor> cannot be found (or L<Win32::Console> if running
+If L<Term::ANSIColor> cannot be found (and L<Win32::Console::ANSI> if running
 under Windows) tests will be run without color.
 
 =head1 SYNOPSIS

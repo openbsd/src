@@ -7,18 +7,10 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        BEGINTEST
-       jj LATIN SMALL LETTER DOTLESS J
-       .. DOT ABOVE
        -- OVERLINE
        /h/h/h PLANCK CONSTANT OVER TWO PI
-       PP SCRIPT CAPITAL P
        ^v^v UP DOWN ARROW
        ^=v^=v UP DOWN DOUBLE ARROW
-       <product><product> N-ARY PRODUCT
-       <coproduct><coproduct> N-ARY COPRODUCT
-       <sum><sum> N-ARY SUMMATION
-       <not subset><not subset> NOT A SUBSET OF
-       <not superset><not superset> NOT A SUPERSET OF
        // LEFT PARENTHESIS UPPER HOOK
        || LEFT PARENTHESIS EXTENSION
        \\ LEFT PARENTHESIS LOWER HOOK
@@ -38,13 +30,8 @@ DDEESSCCRRIIPPTTIIOONN
        -.-. RIGHT CURLY BRACKET UPPER HOOK
        }} RIGHT CURLY BRACKET MIDDLE PIECE
        -'-' RIGHT CURLY BRACKET LOWER HOOK
-       <spade><spade> BLACK SPADE SUIT
-       <club><club> BLACK CLUB SUIT
-       <heart><heart> BLACK HEART SUIT
-       <diamond><diamond> BLACK DIAMOND SUIT
-       \/\/ CHECK MARK
        ENDTEST
 
 
 
-OpenBSD                        October 27, 2014       CHAR-UNICODE-NAMEDIFF(1)
+OpenBSD                         August 21, 2018       CHAR-UNICODE-NAMEDIFF(1)

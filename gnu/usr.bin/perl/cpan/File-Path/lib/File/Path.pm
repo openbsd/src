@@ -18,7 +18,7 @@ BEGIN {
 
 use Exporter ();
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION   = '2.13';
+$VERSION   = '2.15';
 $VERSION   = eval $VERSION;
 @ISA       = qw(Exporter);
 @EXPORT    = qw(mkpath rmtree);
@@ -633,7 +633,7 @@ File::Path - Create or remove directory trees
 
 =head1 VERSION
 
-2.13 - released May 31 2017.
+2.15 - released June 07 2017.
 
 =head1 SYNOPSIS
 
@@ -774,12 +774,14 @@ identical to C<make_path()>.
 
 The C<remove_tree> function deletes the given directories and any
 files and subdirectories they might contain, much like the Unix
-command C<rm -rf> or the Windows commands C<rmdir /s> and C<rd /s>. The
-only exception to the function similarity is that C<remove_tree> accepts
-only directories whereas C<rm -rf> also accepts files.
+command C<rm -rf> or the Windows commands C<rmdir /s> and C<rd /s>.
 
-The function accepts a list of directories to be
-removed. Its behaviour may be tuned by an optional hashref
+The function accepts a list of directories to be removed. (In point of fact,
+it will also accept filesystem entries which are not directories, such as
+regular files and symlinks.  But, as its name suggests, its intent is to
+remove trees rather than individual files.)
+
+C<remove_tree()>'s behaviour may be tuned by an optional hashref
 appearing as the last parameter on the call.  If an empty string is
 passed to C<remove_tree>, an error will occur.
 
@@ -1244,7 +1246,7 @@ James (Jim) Keenan <F<jkeenan@cpan.org>>.
 
 =head1 CONTRIBUTORS
 
-Contributors to File::Path, in alphabetical order.
+Contributors to File::Path, in alphabetical order by first name.
 
 =over 1
 
@@ -1257,6 +1259,8 @@ Contributors to File::Path, in alphabetical order.
 =item James E Keenan <F<jkeenan@cpan.org>>
 
 =item John Lightsey <F<john@perlsec.org>>
+
+=item Nigel Horne <F<njh@bandsman.co.uk>>
 
 =item Richard Elberger <F<riche@cpan.org>>
 

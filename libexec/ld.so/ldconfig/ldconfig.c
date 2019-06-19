@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.36 2016/07/04 20:56:50 kettenis Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.38 2018/06/08 19:24:46 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -32,11 +32,8 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/file.h>
-#include <sys/time.h>
 #include <sys/mman.h>
-#include <sys/resource.h>
-#include <ctype.h>
+
 #include <dirent.h>
 #include <err.h>
 #include <errno.h>
@@ -389,7 +386,10 @@ buildhints(void)
 		warn("%s", tmpfilenam);
 		goto out;
 	}
-	fchmod(fd, 0444);
+	if (fchmod(fd, 0444) == -1) {
+		warn("%s: failed to change mode", tmpfilenam);
+		goto out;
+	}
 
 	if (write(fd, &hdr, sizeof(struct hints_header)) !=
 	    sizeof(struct hints_header)) {

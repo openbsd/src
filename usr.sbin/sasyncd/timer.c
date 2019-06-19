@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.6 2016/08/27 01:30:39 guenther Exp $	*/
+/*	$OpenBSD: timer.c,v 1.7 2018/04/10 15:58:21 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -36,6 +36,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "sasyncd.h"
 
@@ -46,7 +47,7 @@
  */
 struct event {
 	TAILQ_ENTRY (event) next;
-	struct timeval	 expire;
+	struct timespec	 expire;
 	char		*name;
 	void		(*fun) (void *);
 	void		*arg;
@@ -66,20 +67,20 @@ timer_init(void)
  * the select() call in the main loop.
  */
 void
-timer_next_event(struct timeval *tv)
+timer_next_event(struct timespec *ts)
 {
-	struct timeval	 now;
+	struct timespec	 now;
 	struct event	*e = TAILQ_FIRST(&events);
 
 	if (e) {
-		gettimeofday(&now, 0);
-		if (timercmp(&now, &e->expire, >=))
-			timerclear(tv);
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		if (timespeccmp(&now, &e->expire, >=))
+			timespecclear(ts);
 		else
-			timersub(&e->expire, &now, tv);
+			timespecsub(&e->expire, &now, ts);
 	} else {
-		tv->tv_sec = 60;	/* "Best guess". */
-		tv->tv_usec = 0;
+		ts->tv_sec = 60;	/* "Best guess". */
+		ts->tv_nsec = 0;
 	}
 }
 
@@ -90,11 +91,11 @@ timer_next_event(struct timeval *tv)
 void
 timer_run(void)
 {
-	struct timeval	 now;
+	struct timespec	 now;
 	struct event	*e;
 
-	gettimeofday(&now, 0);
-	for (e = TAILQ_FIRST(&events); e && timercmp(&now, &e->expire, >=);
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	for (e = TAILQ_FIRST(&events); e && timespeccmp(&now, &e->expire, >=);
 	     e = TAILQ_FIRST(&events)) {
 		TAILQ_REMOVE(&events, e, next);
 		log_msg(2, "timer_run: event \"%s\"",
@@ -110,7 +111,7 @@ timer_run(void)
 int
 timer_add(char *name, u_int32_t when, void (*function)(void *), void *arg)
 {
-	struct timeval	 now, tmp;
+	struct timespec	 now, tmp;
 	struct event	*e, *new;
 
 	new = calloc(1, sizeof *new);
@@ -123,17 +124,17 @@ timer_add(char *name, u_int32_t when, void (*function)(void *), void *arg)
 	new->fun = function;
 	new->arg = arg;
 
-	memset(&tmp, 0, sizeof tmp);
 	tmp.tv_sec = when;
-	gettimeofday(&now, 0);
-	timeradd(&now, &tmp, &new->expire);
+	tmp.tv_nsec = 0;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	timespecadd(&now, &tmp, &new->expire);
 
 	log_msg(2, "timer_add: new event \"%s\" (expiring in %us)",
 	    name ? name : "<unknown>", when);
 
 	/* Insert the new event in the queue so it's always sorted. */
 	for (e = TAILQ_FIRST(&events); e; e = TAILQ_NEXT(e, next)) {
-		if (timercmp(&new->expire, &e->expire, >=))
+		if (timespeccmp(&new->expire, &e->expire, >=))
 			continue;
 		TAILQ_INSERT_BEFORE(e, new, next);
 		return 0;

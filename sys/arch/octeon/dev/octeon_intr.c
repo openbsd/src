@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_intr.c,v 1.22 2017/06/18 13:58:44 visa Exp $	*/
+/*	$OpenBSD: octeon_intr.c,v 1.25 2019/03/17 05:25:06 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -88,7 +88,24 @@ void *
 octeon_intr_establish(int irq, int level,
     int (*ih_fun)(void *), void *ih_arg, const char *ih_what)
 {
-	return octeon_ic->ic_establish(irq, level, ih_fun, ih_arg, ih_what);
+	struct intr_controller *ic = octeon_ic;
+	struct intr_handle *ih;
+	void *handler;
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
+	if (ih == NULL)
+		return NULL;
+
+	handler = ic->ic_establish(irq, level, ih_fun, ih_arg, ih_what);
+	if (handler == NULL) {
+		free(ih, M_DEVBUF, sizeof(*ih));
+		return NULL;
+	}
+
+	ih->ih_ic = ic;
+	ih->ih_ih = handler;
+
+	return ih;
 }
 
 void *
@@ -132,23 +149,33 @@ octeon_intr_establish_fdt_idx(int node, int idx, int level,
 
 	ih->ih_ic = ic;
 	ih->ih_ih = handler;
+
 	return ih;
 }
 
 void
 octeon_intr_disestablish(void *cookie)
 {
-	octeon_ic->ic_disestablish(cookie);
-}
-
-void
-octeon_intr_disestablish_fdt(void *cookie)
-{
 	struct intr_handle *ih = cookie;
 	struct intr_controller *ic = ih->ih_ic;
 
 	ic->ic_disestablish(ih->ih_ih);
 	free(ih, M_DEVBUF, sizeof(*ih));
+}
+
+void
+octeon_intr_disestablish_fdt(void *cookie)
+{
+	octeon_intr_disestablish(cookie);
+}
+
+void
+intr_barrier(void *cookie)
+{
+	struct intr_handle *ih = cookie;
+	struct intr_controller *ic = ih->ih_ic;
+
+	ic->ic_intr_barrier(ih->ih_ih);
 }
 
 #ifdef MULTIPROCESSOR

@@ -15,7 +15,6 @@
 #include "llvm/DebugInfo/CodeView/TypeCollection.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
-#include "llvm/Support/BinaryByteStream.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/ScopedPrinter.h"
 
@@ -371,6 +370,7 @@ Error TypeDumpVisitor::visitKnownRecord(CVType &CVR, PointerRecord &Ptr) {
   W->printNumber("IsConst", Ptr.isConst());
   W->printNumber("IsVolatile", Ptr.isVolatile());
   W->printNumber("IsUnaligned", Ptr.isUnaligned());
+  W->printNumber("IsRestrict", Ptr.isRestrict());
   W->printNumber("SizeOf", Ptr.getSize());
 
   if (Ptr.isPointerToMember()) {
@@ -551,5 +551,20 @@ Error TypeDumpVisitor::visitKnownMember(CVMemberRecord &CVR,
 
 Error TypeDumpVisitor::visitKnownRecord(CVType &CVR, LabelRecord &LR) {
   W->printEnum("Mode", uint16_t(LR.Mode), makeArrayRef(LabelTypeEnum));
+  return Error::success();
+}
+
+Error TypeDumpVisitor::visitKnownRecord(CVType &CVR,
+                                        PrecompRecord &Precomp) {
+  W->printHex("StartIndex", Precomp.getStartTypeIndex());
+  W->printHex("Count", Precomp.getTypesCount());
+  W->printHex("Signature", Precomp.getSignature());
+  W->printString("PrecompFile", Precomp.getPrecompFilePath());
+  return Error::success();
+}
+
+Error TypeDumpVisitor::visitKnownRecord(CVType &CVR,
+                                        EndPrecompRecord &EndPrecomp) {
+  W->printHex("Signature", EndPrecomp.getSignature());
   return Error::success();
 }

@@ -1,0 +1,15 @@
+.\" $OpenBSD: invalid.in,v 1.1 2018/12/15 19:30:20 schwarze Exp $
+.TH SPACE-INVALID 1 "December 15, 2018"
+.SH NAME
+SPACE-INVALID \- invalid whitespace escape sequences
+.SH DESCRIPTION
+.nf
+blank: a\[hy]b\[ hy]c
+percent: a\%b\[%]c
+ampersand: a\&b\[&]c
+colon: a\:b\[:]c
+caret: a\^b\[^]c
+underline: a\_b\[_]c
+pipe: a\|b\[|]c
+tilde: a\~b\[~]c
+digit-width: a\0b\[0]c

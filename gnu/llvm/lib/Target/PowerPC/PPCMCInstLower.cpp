@@ -20,13 +20,13 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
-#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 using namespace llvm;
 
@@ -75,7 +75,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO,
     }
     return Sym;
   }
-  
+
   return Sym;
 }
 
@@ -107,10 +107,20 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
       break;
   }
 
-  if (MO.getTargetFlags() == PPCII::MO_PLT)
+ if (MO.getTargetFlags() == PPCII::MO_PLT)
     RefKind = MCSymbolRefExpr::VK_PLT;
 
+  const MachineFunction *MF = MO.getParent()->getParent()->getParent();
+  const PPCSubtarget *Subtarget = &(MF->getSubtarget<PPCSubtarget>());
+  const TargetMachine &TM = Printer.TM;
   const MCExpr *Expr = MCSymbolRefExpr::create(Symbol, RefKind, Ctx);
+  // -msecure-plt option works only in PIC mode. If secure plt mode
+  // is on add 32768 to symbol.
+  if (Subtarget->isSecurePlt() && TM.isPositionIndependent() &&
+      MO.getTargetFlags() == PPCII::MO_PLT)
+    Expr = MCBinaryExpr::createAdd(Expr,
+                                   MCConstantExpr::create(32768, Ctx),
+                                   Ctx);
 
   if (!MO.isJTI() && MO.getOffset())
     Expr = MCBinaryExpr::createAdd(Expr,
@@ -120,7 +130,7 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
   // Subtract off the PIC base if required.
   if (MO.getTargetFlags() & PPCII::MO_PIC_FLAG) {
     const MachineFunction *MF = MO.getParent()->getParent()->getParent();
-    
+
     const MCExpr *PB = MCSymbolRefExpr::create(MF->getPICBaseSymbol(), Ctx);
     Expr = MCBinaryExpr::createSub(Expr, PB, Ctx);
   }
@@ -141,47 +151,50 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
 void llvm::LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                         AsmPrinter &AP, bool isDarwin) {
   OutMI.setOpcode(MI->getOpcode());
-  
+
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    
     MCOperand MCOp;
-    switch (MO.getType()) {
-    default:
-      MI->print(errs());
-      llvm_unreachable("unknown operand type");
-    case MachineOperand::MO_Register:
-      assert(!MO.getSubReg() && "Subregs should be eliminated!");
-      assert(MO.getReg() > PPC::NoRegister &&
-             MO.getReg() < PPC::NUM_TARGET_REGS &&
-             "Invalid register for this target!");
-      MCOp = MCOperand::createReg(MO.getReg());
-      break;
-    case MachineOperand::MO_Immediate:
-      MCOp = MCOperand::createImm(MO.getImm());
-      break;
-    case MachineOperand::MO_MachineBasicBlock:
-      MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(
-                                      MO.getMBB()->getSymbol(), AP.OutContext));
-      break;
-    case MachineOperand::MO_GlobalAddress:
-    case MachineOperand::MO_ExternalSymbol:
-      MCOp = GetSymbolRef(MO, GetSymbolFromOperand(MO, AP), AP, isDarwin);
-      break;
-    case MachineOperand::MO_JumpTableIndex:
-      MCOp = GetSymbolRef(MO, AP.GetJTISymbol(MO.getIndex()), AP, isDarwin);
-      break;
-    case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = GetSymbolRef(MO, AP.GetCPISymbol(MO.getIndex()), AP, isDarwin);
-      break;
-    case MachineOperand::MO_BlockAddress:
-      MCOp = GetSymbolRef(MO,AP.GetBlockAddressSymbol(MO.getBlockAddress()),AP,
-                          isDarwin);
-      break;
-    case MachineOperand::MO_RegisterMask:
-      continue;
-    }
-    
-    OutMI.addOperand(MCOp);
+    if (LowerPPCMachineOperandToMCOperand(MI->getOperand(i), MCOp, AP,
+                                          isDarwin))
+      OutMI.addOperand(MCOp);
+  }
+}
+
+bool llvm::LowerPPCMachineOperandToMCOperand(const MachineOperand &MO,
+                                             MCOperand &OutMO, AsmPrinter &AP,
+                                             bool isDarwin) {
+  switch (MO.getType()) {
+  default:
+    llvm_unreachable("unknown operand type");
+  case MachineOperand::MO_Register:
+    assert(!MO.getSubReg() && "Subregs should be eliminated!");
+    assert(MO.getReg() > PPC::NoRegister &&
+           MO.getReg() < PPC::NUM_TARGET_REGS &&
+           "Invalid register for this target!");
+    OutMO = MCOperand::createReg(MO.getReg());
+    return true;
+  case MachineOperand::MO_Immediate:
+    OutMO = MCOperand::createImm(MO.getImm());
+    return true;
+  case MachineOperand::MO_MachineBasicBlock:
+    OutMO = MCOperand::createExpr(
+        MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), AP.OutContext));
+    return true;
+  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_ExternalSymbol:
+    OutMO = GetSymbolRef(MO, GetSymbolFromOperand(MO, AP), AP, isDarwin);
+    return true;
+  case MachineOperand::MO_JumpTableIndex:
+    OutMO = GetSymbolRef(MO, AP.GetJTISymbol(MO.getIndex()), AP, isDarwin);
+    return true;
+  case MachineOperand::MO_ConstantPoolIndex:
+    OutMO = GetSymbolRef(MO, AP.GetCPISymbol(MO.getIndex()), AP, isDarwin);
+    return true;
+  case MachineOperand::MO_BlockAddress:
+    OutMO = GetSymbolRef(MO, AP.GetBlockAddressSymbol(MO.getBlockAddress()), AP,
+                         isDarwin);
+    return true;
+  case MachineOperand::MO_RegisterMask:
+    return false;
   }
 }

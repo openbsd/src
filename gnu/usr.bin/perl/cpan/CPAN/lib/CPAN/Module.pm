@@ -7,7 +7,7 @@ use strict;
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5002";
+$VERSION = "5.5003";
 
 BEGIN {
     # alarm() is not implemented in perl 5.6.x and earlier under Windows
@@ -104,7 +104,12 @@ sub color_cmd_tmps {
                                           # so we can break it
     }
     if ($depth>=$CPAN::MAX_RECURSION) {
-        die(CPAN::Exception::RecursiveDependency->new($ancestors));
+        my $e = CPAN::Exception::RecursiveDependency->new($ancestors);
+        if ($e->is_resolvable) {
+            return $self->{incommandcolor}=2;
+        } else {
+            die $e;
+        }
     }
     # warn "color_cmd_tmps $depth $color " . $self->id; # sleep 1;
 

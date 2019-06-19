@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_sqrt.c,v 1.4 2014/09/12 22:04:18 kettenis Exp $	*/
+/*	$OpenBSD: fpu_sqrt.c,v 1.5 2019/03/15 05:42:38 kevlo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,10 +44,6 @@
  *	@(#)fpu_sqrt.c	8.1 (Berkeley) 6/11/93
  *	$NetBSD: fpu_sqrt.c,v 1.2 1994/11/20 20:52:46 deraadt Exp $
  */
-
-#if 0
-__FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_sqrt.c,v 1.3 2002/03/22 21:52:58 obrien Exp $");
-#endif
 
 /*
  * Perform an FPU square root (return sqrt(x)).

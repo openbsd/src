@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.30 2015/07/17 20:15:52 jcs Exp $ */
+/* $OpenBSD: acpiac.c,v 1.31 2018/07/01 19:40:49 mlarkin Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -46,7 +46,10 @@ struct cfdriver acpiac_cd = {
 	NULL, "acpiac", DV_DULL
 };
 
-const char *acpiac_hids[] = { ACPI_DEV_AC, 0 };
+const char *acpiac_hids[] = {
+	ACPI_DEV_AC,
+	NULL
+};
 
 int
 acpiac_match(struct device *parent, void *match, void *aux)

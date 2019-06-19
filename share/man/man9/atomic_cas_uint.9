@@ -1,4 +1,4 @@
-.\" $OpenBSD: atomic_cas_uint.9,v 1.6 2014/07/18 10:40:14 dlg Exp $
+.\" $OpenBSD: atomic_cas_uint.9,v 1.7 2019/02/06 01:35:07 dlg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2014 $
+.Dd $Mdocdate: February 6 2019 $
 .Dt ATOMIC_CAS_UINT 9
 .Os
 .Sh NAME
@@ -26,11 +26,23 @@
 .Sh SYNOPSIS
 .In sys/atomic.h
 .Ft unsigned int
-.Fn atomic_cas_uint "volatile unsigned int *p" "unsigned int expected" "unsigned int new"
+.Fo atomic_cas_uint
+.Fa "volatile unsigned int *p"
+.Fa "unsigned int expected"
+.Fa "unsigned int new"
+.Fc
 .Ft unsigned long
-.Fn atomic_cas_ulong "volatile unsigned long *p" "unsigned long expected" "unsigned long new"
+.Fo atomic_cas_ulong
+.Fa "volatile unsigned long *p"
+.Fa "unsigned long expected"
+.Fa "unsigned long new"
+.Fc
 .Ft void *
-.Fn atomic_cas_ptr "volatile void *p" "void *expected" "void *new"
+.Fo atomic_cas_ptr
+.Fa "volatile void *p"
+.Fa "void *expected"
+.Fa "void *new"
+.Fc
 .Sh DESCRIPTION
 The atomic_cas set of functions provide an interface for atomically
 performing compare-and-swap operations with respect to interrupts
@@ -49,7 +61,8 @@ replaces the value stored at
 .Fn atomic_cas_ulong ,
 and
 .Fn atomic_cas_ptr
-can all be called during autoconf, from process context, or from interrupt context.
+can all be called during autoconf, from process context, or from
+interrupt context.
 .Sh RETURN VALUES
 These functions return the value at
 .Fa p

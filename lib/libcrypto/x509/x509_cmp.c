@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.30 2018/03/17 14:57:23 jsing Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.35 2019/03/13 20:34:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,7 +76,7 @@ X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
 
 	ai = a->cert_info;
 	bi = b->cert_info;
-	i = ASN1_STRING_cmp(ai->serialNumber, bi->serialNumber);
+	i = ASN1_INTEGER_cmp(ai->serialNumber, bi->serialNumber);
 	if (i)
 		return (i);
 	return (X509_NAME_cmp(ai->issuer, bi->issuer));
@@ -145,7 +145,7 @@ X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 #endif
 
 X509_NAME *
-X509_get_issuer_name(X509 *a)
+X509_get_issuer_name(const X509 *a)
 {
 	return (a->cert_info->issuer);
 }
@@ -165,13 +165,19 @@ X509_issuer_name_hash_old(X509 *x)
 #endif
 
 X509_NAME *
-X509_get_subject_name(X509 *a)
+X509_get_subject_name(const X509 *a)
 {
 	return (a->cert_info->subject);
 }
 
 ASN1_INTEGER *
 X509_get_serialNumber(X509 *a)
+{
+	return (a->cert_info->serialNumber);
+}
+
+const ASN1_INTEGER *
+X509_get0_serialNumber(const X509 *a)
 {
 	return (a->cert_info->serialNumber);
 }
@@ -327,7 +333,7 @@ X509_get_pubkey(X509 *x)
 }
 
 EVP_PKEY *
-X509_get0_pubkey(X509 *x)
+X509_get0_pubkey(const X509 *x)
 {
 	if (x == NULL || x->cert_info == NULL)
 		return (NULL);
@@ -343,12 +349,12 @@ X509_get0_pubkey_bitstr(const X509 *x)
 }
 
 int
-X509_check_private_key(X509 *x, EVP_PKEY *k)
+X509_check_private_key(const X509 *x, const EVP_PKEY *k)
 {
-	EVP_PKEY *xk;
+	const EVP_PKEY *xk;
 	int ret;
 
-	xk = X509_get_pubkey(x);
+	xk = X509_get0_pubkey(x);
 
 	if (xk)
 		ret = EVP_PKEY_cmp(xk, k);
@@ -367,7 +373,6 @@ X509_check_private_key(X509 *x, EVP_PKEY *k)
 	case -2:
 		X509error(X509_R_UNKNOWN_KEY_TYPE);
 	}
-	EVP_PKEY_free(xk);
 	if (ret > 0)
 		return 1;
 	return 0;

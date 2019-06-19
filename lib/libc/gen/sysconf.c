@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.25 2017/09/10 18:20:00 guenther Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.26 2018/07/12 01:23:38 cheloha Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -461,7 +461,7 @@ sysconf(int name)
 		break;
 	case _SC_NPROCESSORS_ONLN:
 		mib[0] = CTL_HW;
-		mib[1] = HW_NCPU;
+		mib[1] = HW_NCPUONLINE;
 		break;
 
 	default:

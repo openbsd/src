@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.70 2017/11/08 16:29:20 visa Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.75 2018/09/14 23:40:10 mestre Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -46,6 +46,8 @@
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ipcomp.h>
+
+#include <crypto/cryptodev.h>
 #include <crypto/xform.h>
 
 #ifdef ENCDEBUG
@@ -89,15 +91,15 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	    (tdb->tdb_sproto == IPPROTO_IPCOMP && !ipcomp_enable)) {
 		DPRINTF(("ipsp_process_packet(): IPsec outbound packet "
 		    "dropped due to policy (check your sysctls)\n"));
-		m_freem(m);
-		return EHOSTUNREACH;
+		error = EHOSTUNREACH;
+		goto drop;
 	}
 
 	/* Sanity check. */
 	if (!tdb->tdb_xform) {
 		DPRINTF(("%s: uninitialized TDB\n", __func__));
-		m_freem(m);
-		return EHOSTUNREACH;
+		error = EHOSTUNREACH;
+		goto drop;
 	}
 
 	/* Check if the SPI is invalid. */
@@ -105,8 +107,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 		DPRINTF(("ipsp_process_packet(): attempt to use invalid "
 		    "SA %s/%08x/%u\n", ipsp_address(&tdb->tdb_dst, buf,
 		    sizeof(buf)), ntohl(tdb->tdb_spi), tdb->tdb_sproto));
-		m_freem(m);
-		return ENXIO;
+		error = ENXIO;
+		goto drop;
 	}
 
 	/* Check that the network protocol is supported */
@@ -125,8 +127,8 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi), tdb->tdb_sproto,
 		    tdb->tdb_dst.sa.sa_family));
-		m_freem(m);
-		return ENXIO;
+		error = ENXIO;
+		goto drop;
 	}
 
 	/*
@@ -163,8 +165,10 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 			/* Bring the network header in the first mbuf. */
 			if (m->m_len < hlen) {
-				if ((m = m_pullup(m, hlen)) == NULL)
-					return ENOBUFS;
+				if ((m = m_pullup(m, hlen)) == NULL) {
+					error = ENOBUFS;
+					goto drop;
+				}
 			}
 
 			if (af == AF_INET) {
@@ -201,8 +205,10 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			if (af == AF_INET) {
 				if (m->m_len < sizeof(struct ip))
 					if ((m = m_pullup(m,
-					    sizeof(struct ip))) == NULL)
-						return ENOBUFS;
+					    sizeof(struct ip))) == NULL) {
+						error = ENOBUFS;
+						goto drop;
+					}
 
 				ip = mtod(m, struct ip *);
 				ip->ip_len = htons(m->m_pkthdr.len);
@@ -215,14 +221,16 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			if (af == AF_INET6) {
 				if (m->m_len < sizeof(struct ip6_hdr))
 					if ((m = m_pullup(m,
-					    sizeof(struct ip6_hdr))) == NULL)
-						return ENOBUFS;
+					    sizeof(struct ip6_hdr))) == NULL) {
+						error = ENOBUFS;
+						goto drop;
+					}
 
 				if (m->m_pkthdr.len - sizeof(*ip6) >
 				    IPV6_MAXPACKET) {
 					/* No jumbogram support. */
-					m_freem(m);
-					return ENXIO;	/*?*/
+					error = ENXIO;	/*?*/
+					goto drop;
 				}
 				ip6 = mtod(m, struct ip6_hdr *);
 				ip6->ip6_plen = htons(m->m_pkthdr.len
@@ -234,19 +242,18 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			error = ipip_output(m, tdb, &mp, 0, 0);
 			if ((mp == NULL) && (!error))
 				error = EFAULT;
-			if (error) {
-				m_freem(mp);
-				return error;
-			}
-
 			m = mp;
 			mp = NULL;
+			if (error)
+				goto drop;
 
 			if (tdb->tdb_dst.sa.sa_family == AF_INET && setdf) {
 				if (m->m_len < sizeof(struct ip))
 					if ((m = m_pullup(m,
-					    sizeof(struct ip))) == NULL)
-						return ENOBUFS;
+					    sizeof(struct ip))) == NULL) {
+						error = ENOBUFS;
+						goto drop;
+					}
 
 				ip = mtod(m, struct ip *);
 				ip->ip_off |= htons(IP_DF);
@@ -321,7 +328,10 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 					 */
 					dstopt = 2;
 				}
-
+				if (m->m_pkthdr.len < hlen + sizeof(ip6e)) {
+					error = EINVAL;
+					goto drop;
+				}
 				/* skip this header */
 				m_copydata(m, hlen, sizeof(ip6e),
 				    (caddr_t)&ip6e);
@@ -337,10 +347,21 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 				goto exitip6loop;
 			}
 		} while (hlen < m->m_pkthdr.len);
-	exitip6loop:;
+	exitip6loop:
 		break;
 #endif /* INET6 */
+	default:
+		error = EINVAL;
+		goto drop;
 	}
+
+	if (m->m_pkthdr.len < hlen) {
+		error = EINVAL;
+		goto drop;
+	}
+
+        ipsecstat_add(ipsec_ouncompbytes, m->m_pkthdr.len);
+        tdb->tdb_ouncompbytes += m->m_pkthdr.len;
 
 	/* Non expansion policy for IPCOMP */
 	if (tdb->tdb_sproto == IPPROTO_IPCOMP) {
@@ -353,6 +374,89 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	/* Invoke the IPsec transform. */
 	return (*(tdb->tdb_xform->xf_output))(m, tdb, NULL, hlen, off);
+
+ drop:
+	m_freem(m);
+	return error;
+}
+
+/*
+ * IPsec output callback, called directly by the crypto driver.
+ */
+void
+ipsec_output_cb(struct cryptop *crp)
+{
+	struct tdb_crypto *tc = (struct tdb_crypto *) crp->crp_opaque;
+	struct mbuf *m = (struct mbuf *) crp->crp_buf;
+	struct tdb *tdb = NULL;
+	int error, ilen, olen;
+
+	if (m == NULL) {
+		DPRINTF(("%s: bogus returned buffer from crypto\n", __func__));
+		ipsecstat_inc(ipsec_crypto);
+		goto droponly;
+	}
+
+	NET_LOCK();
+	tdb = gettdb(tc->tc_rdomain, tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+	if (tdb == NULL) {
+		DPRINTF(("%s: TDB is expired while in crypto\n", __func__));
+		ipsecstat_inc(ipsec_notdb);
+		goto baddone;
+	}
+
+	/* Check for crypto errors. */
+	if (crp->crp_etype) {
+		if (crp->crp_etype == EAGAIN) {
+			/* Reset the session ID */
+			if (tdb->tdb_cryptoid != 0)
+				tdb->tdb_cryptoid = crp->crp_sid;
+			NET_UNLOCK();
+			crypto_dispatch(crp);
+			return;
+		}
+		DPRINTF(("%s: crypto error %d\n", __func__, crp->crp_etype));
+		ipsecstat_inc(ipsec_noxform);
+		goto baddone;
+	}
+
+	olen = crp->crp_olen;
+	ilen = crp->crp_ilen;
+
+	/* Release crypto descriptors. */
+	crypto_freereq(crp);
+
+	switch (tdb->tdb_sproto) {
+	case IPPROTO_ESP:
+		error = esp_output_cb(tdb, tc, m, ilen, olen);
+		break;
+	case IPPROTO_AH:
+		error = ah_output_cb(tdb, tc, m, ilen, olen);
+		break;
+	case IPPROTO_IPCOMP:
+		error = ipcomp_output_cb(tdb, tc, m, ilen, olen);
+		break;
+	default:
+		panic("%s: unknown/unsupported security protocol %d",
+		    __func__, tdb->tdb_sproto);
+	}
+
+	NET_UNLOCK();
+	if (error) {
+		ipsecstat_inc(ipsec_odrops);
+		tdb->tdb_odrops++;
+	}
+	return;
+
+ baddone:
+	NET_UNLOCK();
+ droponly:
+ 	if (tdb != NULL)
+		tdb->tdb_odrops++;
+	m_freem(m);
+	free(tc, M_XDATA, 0);
+	crypto_freereq(crp);
+	ipsecstat_inc(ipsec_odrops);
 }
 
 /*
@@ -368,7 +472,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 #endif /* INET6 */
 	struct tdb_ident *tdbi;
 	struct m_tag *mtag;
-	int roff;
+	int roff, error;
 
 	tdb->tdb_last_used = time_second;
 
@@ -378,8 +482,8 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 		int iphlen;
 
 		if (!udpencap_enable || !udpencap_port) {
-			m_freem(m);
-			return ENXIO;
+			error = ENXIO;
+			goto drop;
 		}
 
 		switch (tdb->tdb_dst.sa.sa_family) {
@@ -392,16 +496,16 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 			break;
 #endif /* INET6 */
 		default:
-			m_freem(m);
 			DPRINTF(("ipsp_process_done(): unknown protocol family "
 			    "(%d)\n", tdb->tdb_dst.sa.sa_family));
-			return ENXIO;
+			error = ENXIO;
+			goto drop;
 		}
 
 		mi = m_makespace(m, iphlen, sizeof(struct udphdr), &roff);
 		if (mi == NULL) {
-			m_freem(m);
-			return ENOMEM;
+			error = ENOMEM;
+			goto drop;
 		}
 		uh = (struct udphdr *)(mtod(mi, caddr_t) + roff);
 		uh->uh_sport = uh->uh_dport = htons(udpencap_port);
@@ -430,13 +534,13 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	case AF_INET6:
 		/* Fix the header length, for AH processing. */
 		if (m->m_pkthdr.len < sizeof(*ip6)) {
-			m_freem(m);
-			return ENXIO;
+			error = ENXIO;
+			goto drop;
 		}
 		if (m->m_pkthdr.len - sizeof(*ip6) > IPV6_MAXPACKET) {
 			/* No jumbogram support. */
-			m_freem(m);
-			return ENXIO;
+			error = ENXIO;
+			goto drop;
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
@@ -446,10 +550,10 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 #endif /* INET6 */
 
 	default:
-		m_freem(m);
 		DPRINTF(("ipsp_process_done(): unknown protocol family (%d)\n",
 		    tdb->tdb_dst.sa.sa_family));
-		return ENXIO;
+		error = ENXIO;
+		goto drop;
 	}
 
 	/*
@@ -459,10 +563,10 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	mtag = m_tag_get(PACKET_TAG_IPSEC_OUT_DONE, sizeof(struct tdb_ident),
 	    M_NOWAIT);
 	if (mtag == NULL) {
-		m_freem(m);
 		DPRINTF(("ipsp_process_done(): could not allocate packet "
 		    "tag\n"));
-		return ENOMEM;
+		error = ENOMEM;
+		goto drop;
 	}
 
 	tdbi = (struct tdb_ident *)(mtag + 1);
@@ -472,6 +576,11 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	tdbi->rdomain = tdb->tdb_rdomain;
 
 	m_tag_prepend(m, mtag);
+
+	ipsecstat_inc(ipsec_opackets);
+	ipsecstat_add(ipsec_obytes, m->m_pkthdr.len);
+	tdb->tdb_opackets++;
+	tdb->tdb_obytes += m->m_pkthdr.len;
 
 	/* If there's another (bundled) TDB to apply, do so. */
 	if (tdb->tdb_onext)
@@ -502,7 +611,11 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 		return (ip6_output(m, NULL, NULL, 0, NULL, NULL));
 #endif /* INET6 */
 	}
-	return EINVAL; /* Not reached. */
+	error = EINVAL; /* Not reached. */
+
+ drop:
+	m_freem(m);
+	return error;
 }
 
 ssize_t

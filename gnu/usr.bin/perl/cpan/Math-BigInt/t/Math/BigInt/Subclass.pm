@@ -14,10 +14,10 @@ use Math::BigInt 1.64;
 our $lib;
 our ($accuracy, $precision, $round_mode, $div_scale);
 
-our @ISA = qw(Exporter Math::BigInt);
+our @ISA = qw(Math::BigInt Exporter);
 our @EXPORT_OK = qw(bgcd objectify);
 
-our $VERSION = "0.05";
+our $VERSION = "0.06";
 
 use overload;                   # inherit overload from BigInt
 

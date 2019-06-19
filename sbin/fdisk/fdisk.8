@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.94 2017/03/26 00:22:49 sobrado Exp $
+.\"	$OpenBSD: fdisk.8,v 1.95 2019/04/29 18:54:12 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2017 $
+.Dd $Mdocdate: April 29 2019 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -342,13 +342,15 @@ to enter an interactive command mode.
 The prompt contains information about the state of the edit
 process.
 .Pp
-.Dl fdisk:*1>
+.Dl Ar disk Ns *:1>
 .Pp
+Where
+.Ar disk
+is the name of the disk being edited,
 .Sq *
 means that the in-memory copy of the partition table has been modified, but
-not yet written to disk.
-.Pp
-1 is the disk offset of the currently selected boot block being edited.
+not yet written to disk and
+1 is the number of the boot block being edited.
 This number will be 2 when editing an extended MBR partition,
 3 when editing an extended MBR partition within an extended MBR partition,
 and so on.

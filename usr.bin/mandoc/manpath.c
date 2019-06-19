@@ -1,6 +1,6 @@
-/*	$OpenBSD: manpath.c,v 1.22 2017/07/01 09:47:23 schwarze Exp $ */
+/*	$OpenBSD: manpath.c,v 1.26 2019/05/03 18:38:45 schwarze Exp $ */
 /*
- * Copyright (c) 2011, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -232,15 +232,16 @@ int
 manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 {
 	const char *const toks[] = {
-	    "includes", "man", "paper", "style",
-	    "indent", "width", "fragment", "mdoc", "noval"
+	    "includes", "man", "paper", "style", "indent", "width",
+	    "tag", "fragment", "mdoc", "noval", "toc"
 	};
+	const size_t ntoks = sizeof(toks) / sizeof(toks[0]);
 
 	const char	*errstr;
 	char		*oldval;
 	size_t		 len, tok;
 
-	for (tok = 0; tok < sizeof(toks)/sizeof(toks[0]); tok++) {
+	for (tok = 0; tok < ntoks; tok++) {
 		len = strlen(toks[tok]);
 		if ( ! strncmp(cp, toks[tok], len) &&
 		    strchr(" =	", cp[len]) != NULL) {
@@ -257,7 +258,7 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 		warnx("-O %s=?: Missing argument value", toks[tok]);
 		return -1;
 	}
-	if ((tok == 6 || tok == 7) && *cp != '\0') {
+	if (tok > 6 && tok < ntoks && *cp != '\0') {
 		warnx("-O %s: Does not take a value: %s", toks[tok], cp);
 		return -1;
 	}
@@ -312,17 +313,26 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 		warnx("-O width=%s is %s", cp, errstr);
 		return -1;
 	case 6:
-		conf->fragment = 1;
+		if (conf->tag != NULL) {
+			oldval = mandoc_strdup(conf->tag);
+			break;
+		}
+		conf->tag = mandoc_strdup(cp);
 		return 0;
 	case 7:
-		conf->mdoc = 1;
+		conf->fragment = 1;
 		return 0;
 	case 8:
+		conf->mdoc = 1;
+		return 0;
+	case 9:
 		conf->noval = 1;
 		return 0;
+	case 10:
+		conf->toc = 1;
+		return 0;
 	default:
-		if (fromfile)
-			warnx("-O %s: Bad argument", cp);
+		warnx("-O %s: Bad argument", cp);
 		return -1;
 	}
 	if (fromfile == 0)

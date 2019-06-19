@@ -106,6 +106,7 @@ static void VMX_Fixup (int, int);
 static void REP_Fixup (int, int);
 static void OP_0f38 (int, int);
 static void OP_0f3a (int, int);
+static void OP_data (int, int);
 
 struct dis_private {
   /* Points to first byte not fetched.  */
@@ -222,6 +223,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define Ma OP_E, v_mode
 #define M OP_M, 0		/* lea, lgdt, etc. */
 #define Mp OP_M, f_mode		/* 32 or 48 bit memory operand for LDS, LES etc */
+#define Mq OP_M, q_mode		/* 128 bit memory operand for INV{EPT,VPID,PCID} */
 #define Gb OP_G, b_mode
 #define Gv OP_G, v_mode
 #define Gd OP_G, d_mode
@@ -322,6 +324,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define OP0FAE OP_0fae, v_mode
 #define OP0F38 OP_0f38, 0
 #define OP0F3A OP_0f3a, 0
+#define OPDATA OP_data, 0
 
 /* Used handle "rep" prefix for string instructions.  */
 #define Xbr REP_Fixup, eSI_reg
@@ -1910,9 +1913,9 @@ static const struct dis386 three_byte_table[][256] = {
     { "(bad)",		XX, XX, XX },
     { "(bad)",		XX, XX, XX },
     /* 80 */
-    { "(bad)",		XX, XX, XX },
-    { "(bad)",		XX, XX, XX },
-    { "(bad)",		XX, XX, XX },
+    { "invept",		OPDATA, Gm, Mq },
+    { "invvpid",	OPDATA, Gm, Mq },
+    { "invpcid",	OPDATA, Gm, Mq },
     { "(bad)",		XX, XX, XX },
     { "(bad)",		XX, XX, XX },
     { "(bad)",		XX, XX, XX },
@@ -5532,4 +5535,17 @@ OP_0f38 (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
   /* Consume mandatory prefix */
   used_prefixes |= (prefixes & PREFIX_DATA);
   USED_REX(rex);
+}
+
+/* suppress/require a mandatory 0x66 data size prefix */
+static void
+OP_data (int bytemode ATTRIBUTE_UNUSED, int sizeflag ATTRIBUTE_UNUSED)
+{
+  if (prefixes & PREFIX_DATA)
+    used_prefixes |= PREFIX_DATA;
+  else
+    {
+      BadOp();
+      return;
+    }
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.48 2018/02/06 02:55:48 dlg Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.52 2018/12/09 15:07:06 denis Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -37,6 +37,8 @@ struct rtentry;
 #include <net/if_pflog.h>
 #include <net/pfvar.h>
 
+#include <netmpls/mpls.h>
+
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_radiotap.h>
 
@@ -69,6 +71,7 @@ static pcap_t *bpf_pcap;
 
 /* Hack for updating VLAN offsets. */
 static u_int	orig_linktype = -1, orig_nl = -1, orig_nl_nosnap = -1;
+static u_int	mpls_stack = 0;
 
 /* XXX */
 #ifdef PCAP_FDDIPAD
@@ -275,7 +278,7 @@ int no_optimize;
 
 int
 pcap_compile(pcap_t *p, struct bpf_program *program,
-	     char *buf, int optimize, bpf_u_int32 mask)
+	     const char *buf, int optimize, bpf_u_int32 mask)
 {
 	extern int n_errors;
 	int len;
@@ -322,7 +325,7 @@ pcap_compile(pcap_t *p, struct bpf_program *program,
 int
 pcap_compile_nopcap(int snaplen_arg, int linktype_arg,
 		    struct bpf_program *program,
-	     char *buf, int optimize, bpf_u_int32 mask)
+	     const char *buf, int optimize, bpf_u_int32 mask)
 {
 	extern int n_errors;
 	int len;
@@ -837,11 +840,11 @@ gen_linktype(proto)
 	struct block *b0, *b1;
 
 	/* If we're not using encapsulation and checking for IP, we're done */
-	if (off_linktype == -1 && proto == ETHERTYPE_IP)
+	if ((off_linktype == -1 || mpls_stack > 0) && proto == ETHERTYPE_IP)
 		return gen_true();
 #ifdef INET6
 	/* this isn't the right thing to do, but sometimes necessary */
-	if (off_linktype == -1 && proto == ETHERTYPE_IPV6)
+	if ((off_linktype == -1 || mpls_stack > 0) && proto == ETHERTYPE_IPV6)
 		return gen_true();
 #endif
 
@@ -2244,7 +2247,7 @@ gen_proto(v, proto, dir)
 		bpf_error("'ah proto' is bogus");
 
 	case Q_ESP:
-		bpf_error("'ah proto' is bogus");
+		bpf_error("'esp proto' is bogus");
 
 	default:
 		abort();
@@ -3350,6 +3353,34 @@ gen_acode(eaddr, q)
 	/* NOTREACHED */
 }
 
+struct block *
+gen_mpls(label)
+	int label;
+{
+	struct block	*b0;
+
+	if (label > MPLS_LABEL_MAX)
+		bpf_error("invalid MPLS label : %d", label);
+
+	if (mpls_stack > 0) /* Bottom-Of-Label-Stack bit ? */
+		b0 = gen_mcmp(off_nl-2, BPF_B, (bpf_int32)0, 0x1);
+	else 
+		b0 = gen_linktype(ETHERTYPE_MPLS);
+
+	if (label >= 0) {
+		struct block *b1;
+
+		b1 = gen_mcmp(off_nl, BPF_W, (bpf_int32)(label << 12),
+		    MPLS_LABEL_MASK);
+		gen_and(b0, b1);
+		b0 = b1;
+	}
+	off_nl += 4;
+	off_linktype += 4;
+	mpls_stack++;
+	return (b0);
+}
+
 /*
  * support IEEE 802.1Q VLAN trunk over ethernet
  */
@@ -3361,6 +3392,11 @@ gen_vlan(vlan_num)
 
 	if (variable_nl) {
 		bpf_error("'vlan' not supported for variable DLTs");
+		/*NOTREACHED*/
+	}
+
+	if (vlan_num > 4095) {
+		bpf_error("invalid VLAN number : %d", vlan_num);
 		/*NOTREACHED*/
 	}
 
@@ -3395,7 +3431,7 @@ gen_vlan(vlan_num)
 	if (vlan_num >= 0) {
 		struct block *b1;
 
-		b1 = gen_cmp(orig_nl, BPF_H, (bpf_int32)vlan_num);
+		b1 = gen_mcmp(orig_nl, BPF_H, (bpf_int32)vlan_num, 0x0FFF);
 		gen_and(b0, b1);
 		b0 = b1;
 	}

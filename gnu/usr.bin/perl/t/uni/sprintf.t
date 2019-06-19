@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(../lib .);
     require "./test.pl";
+    set_up_inc(qw(../lib .));
 }
 
 plan tests => 52;
@@ -113,7 +113,7 @@ $c = 0x200;
 }
 
 {
-    # 20010407.008 sprintf removes utf8-ness
+    # 20010407.008 (#6769) sprintf removes utf8-ness
     $a = sprintf "\x{1234}";
     is((sprintf "%x %d", unpack("U*", $a), length($a)),    "1234 1",
        '\x{1234}');

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.23 2016/01/08 20:23:54 mestre Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.24 2018/08/24 11:31:17 mestre Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -81,9 +81,6 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-/*
- * print out info for specified password entry
- */
 void
 printuser(void)
 {

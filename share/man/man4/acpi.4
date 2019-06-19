@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.53 2017/03/30 16:06:55 jcs Exp $
+.\"	$OpenBSD: acpi.4,v 1.58 2019/06/17 18:28:17 patrick Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2017 $
+.Dd $Mdocdate: June 17 2019 $
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -64,6 +64,8 @@ Hyper-V entropy
 ACPI APIC configuration
 .It Xr acpimcfg 4
 ACPI PCI Express configuration space
+.It Xr acpipci 4
+ACPI PCI host bridge
 .It Xr acpiprt 4
 ACPI PCI routing table configuration
 .It Xr acpipwrres 4
@@ -72,6 +74,8 @@ ACPI power resources
 ACPI Smart Battery subsystem
 .It Xr acpisony 4
 Sony ACPI control
+.It Xr acpisurface 4
+Microsoft Surface Book ACPI support
 .It Xr acpithinkpad 4
 IBM/Lenovo ThinkPad ACPI support
 .It Xr acpitimer 4
@@ -86,8 +90,12 @@ ACPI video
 ACPI video output
 .It Xr aibs 4
 ASUSTeK AI Booster ACPI ATK0110 temperature, voltage, and fan sensor
+.It Xr aplgpio 4
+Intel Apollo Lake GPIO controller
 .It Xr bytgpio 4
 Intel Bay Trail GPIO controller
+.It Xr ccp 4
+AMD cryptographic co-processor
 .It Xr chvgpio 4
 Intel Cherry View GPIO controller
 .It Xr dwiic 4

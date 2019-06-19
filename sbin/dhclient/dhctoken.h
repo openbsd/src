@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhctoken.h,v 1.14 2017/11/06 13:27:19 krw Exp $	*/
+/*	$OpenBSD: dhctoken.h,v 1.16 2019/01/26 23:26:20 krw Exp $	*/
 
 /* Tokens for config file lexer and parser. */
 
@@ -74,6 +74,7 @@
 #define TOK_IGNORE		295
 #define TOK_SSID		296
 #define TOK_EPOCH		297
+#define TOK_USELEASE		298
 
 #define is_identifier(x)	((x) >= TOK_FIRST_TOKEN &&	\
     (x) != TOK_STRING &&					\

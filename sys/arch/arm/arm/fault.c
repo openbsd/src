@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.32 2018/01/26 16:22:19 kettenis Exp $	*/
+/*	$OpenBSD: fault.c,v 1.37 2019/06/01 22:42:20 deraadt Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -205,6 +205,14 @@ data_abort_handler(trapframe_t *tf)
 	/* Grab the current pcb */
 	pcb = &p->p_addr->u_pcb;
 
+	if (user) {
+		pcb->pcb_tf = tf;
+		refreshcreds(p);
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			return;
+	}
+
 	/* Invoke the appropriate handler, if necessary */
 	if (__predict_false(data_aborts[ftyp].func != NULL)) {
 		if ((data_aborts[ftyp].func)(tf, fsr, far, p, &sd)) {
@@ -235,11 +243,6 @@ data_abort_handler(trapframe_t *tf)
 	 * These are the main virtual memory-related faults signalled by
 	 * the MMU.
 	 */
-
-	if (user) {
-		p->p_addr->u_pcb.pcb_tf = tf;
-		refreshcreds(p);
-	}
 
 	/*
 	 * Make sure the Program Counter is sane. We could fall foul of
@@ -322,7 +325,9 @@ data_abort_handler(trapframe_t *tf)
 
 	onfault = pcb->pcb_onfault;
 	pcb->pcb_onfault = NULL;
+	KERNEL_LOCK();
 	error = uvm_fault(map, va, 0, ftype);
+	KERNEL_UNLOCK();
 	pcb->pcb_onfault = onfault;
 
 #if 0
@@ -367,7 +372,9 @@ data_abort_handler(trapframe_t *tf)
 	sd.trap = fsr;
 do_trapsignal:
 	sv.sival_int = sd.addr;
+	KERNEL_LOCK();
 	trapsignal(p, sd.signo, sd.trap, sd.code, sv);
+	KERNEL_UNLOCK();
 out:
 	/* If returning to user mode, make sure to invoke userret() */
 	if (user)
@@ -458,8 +465,6 @@ dab_align(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
 	sd->addr = far;
 	sd->trap = fsr;
 
-	p->p_addr->u_pcb.pcb_tf = tf;
-
 	return (1);
 }
 
@@ -490,52 +495,6 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
     struct sigdata *sd)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
-
-#ifdef __XSCALE__
-	if ((fsr & FAULT_IMPRECISE) != 0 &&
-	    (tf->tf_spsr & PSR_MODE) == PSR_ABT32_MODE) {
-		/*
-		 * Oops, an imprecise, double abort fault. We've lost the
-		 * r14_abt/spsr_abt values corresponding to the original
-		 * abort, and the spsr saved in the trapframe indicates
-		 * ABT mode.
-		 */
-		tf->tf_spsr &= ~PSR_MODE;
-
-		/*
-		 * We use a simple heuristic to determine if the double abort
-		 * happened as a result of a kernel or user mode access.
-		 * If the current trapframe is at the top of the kernel stack,
-		 * the fault _must_ have come from user mode.
-		 */
-		if (tf != ((trapframe_t *)pcb->pcb_un.un_32.pcb32_sp) - 1) {
-			/*
-			 * Kernel mode. We're either about to die a
-			 * spectacular death, or pcb_onfault will come
-			 * to our rescue. Either way, the current value
-			 * of tf->tf_pc is irrelevant.
-			 */
-			tf->tf_spsr |= PSR_SVC32_MODE;
-			if (pcb->pcb_onfault == NULL)
-				printf("\nKernel mode double abort!\n");
-		} else {
-			/*
-			 * User mode. We've lost the program counter at the
-			 * time of the fault (not that it was accurate anyway;
-			 * it's not called an imprecise fault for nothing).
-			 * About all we can do is copy r14_usr to tf_pc and
-			 * hope for the best. The process is about to get a
-			 * SIGBUS, so it's probably history anyway.
-			 */
-			tf->tf_spsr |= PSR_USR32_MODE;
-			tf->tf_pc = tf->tf_usr_lr;
-		}
-	}
-
-	/* FAR is invalid for imprecise exceptions */
-	if ((fsr & FAULT_IMPRECISE) != 0)
-		far = 0;
-#endif /* __XSCALE__ */
 
 	if (pcb->pcb_onfault) {
 		KDASSERT(TRAP_USERMODE(tf) == 0);
@@ -598,13 +557,13 @@ prefetch_abort_handler(trapframe_t *tf)
 
 	p = curproc;
 
+	p->p_addr->u_pcb.pcb_tf = tf;
+
 	/* Invoke access fault handler if appropriate */
 	if (FAULT_TYPE_V7(fsr) == FAULT_ACCESS_2) {
 		dab_access(tf, fsr, far, p, NULL);
 		goto out;
 	}
-
-	p->p_addr->u_pcb.pcb_tf = tf;
 
 	/* Ok validate the address, can only execute in USER space */
 	if (__predict_false(far >= VM_MAXUSER_ADDRESS ||
@@ -625,7 +584,9 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 #endif
 
+	KERNEL_LOCK();
 	error = uvm_fault(map, va, 0, PROT_READ | PROT_EXEC);
+	KERNEL_UNLOCK();
 	if (__predict_true(error == 0))
 		goto out;
 
@@ -634,9 +595,14 @@ prefetch_abort_handler(trapframe_t *tf)
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", p->p_p->ps_pid, p->p_p->ps_comm,
 		    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
+		KERNEL_LOCK();
 		trapsignal(p, SIGKILL, 0, SEGV_MAPERR, sv);
-	} else
+		KERNEL_UNLOCK();
+	} else {
+		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, 0, SEGV_MAPERR, sv);
+		KERNEL_UNLOCK();
+	}
 
 out:
 	userret(p);

@@ -16,11 +16,15 @@
 #include "llvm/DebugInfo/PDB/IPDBSourceFile.h"
 #include "llvm/DebugInfo/PDB/Native/NativeBuiltinSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/NativeCompilandSymbol.h"
+#include "llvm/DebugInfo/PDB/Native/NativeEnumSymbol.h"
+#include "llvm/DebugInfo/PDB/Native/NativeEnumTypes.h"
 #include "llvm/DebugInfo/PDB/Native/NativeExeSymbol.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
+#include "llvm/DebugInfo/PDB/Native/TpiStream.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolCompiland.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolTypeEnum.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/BinaryByteStream.h"
 #include "llvm/Support/Error.h"
@@ -28,6 +32,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 
 #include <algorithm>
+#include <cassert>
 #include <memory>
 #include <utility>
 
@@ -63,15 +68,9 @@ NativeSession::NativeSession(std::unique_ptr<PDBFile> PdbFile,
 
 NativeSession::~NativeSession() = default;
 
-Error NativeSession::createFromPdb(StringRef Path,
+Error NativeSession::createFromPdb(std::unique_ptr<MemoryBuffer> Buffer,
                                    std::unique_ptr<IPDBSession> &Session) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> ErrorOrBuffer =
-      MemoryBuffer::getFileOrSTDIN(Path, /*FileSize=*/-1,
-                                   /*RequiresNullTerminator=*/false);
-  if (!ErrorOrBuffer)
-    return make_error<GenericError>(generic_error_code::invalid_path);
-
-  std::unique_ptr<MemoryBuffer> Buffer = std::move(*ErrorOrBuffer);
+  StringRef Path = Buffer->getBufferIdentifier();
   auto Stream = llvm::make_unique<MemoryBufferByteStream>(
       std::move(Buffer), llvm::support::little);
 
@@ -102,6 +101,25 @@ NativeSession::createCompilandSymbol(DbiModuleDescriptor MI) {
       *this, std::unique_ptr<IPDBRawSymbol>(SymbolCache[Id]->clone()));
 }
 
+std::unique_ptr<PDBSymbolTypeEnum>
+NativeSession::createEnumSymbol(codeview::TypeIndex Index) {
+  const auto Id = findSymbolByTypeIndex(Index);
+  return llvm::make_unique<PDBSymbolTypeEnum>(
+      *this, std::unique_ptr<IPDBRawSymbol>(SymbolCache[Id]->clone()));
+}
+
+std::unique_ptr<IPDBEnumSymbols>
+NativeSession::createTypeEnumerator(codeview::TypeLeafKind Kind) {
+  auto Tpi = Pdb->getPDBTpiStream();
+  if (!Tpi) {
+    consumeError(Tpi.takeError());
+    return nullptr;
+  }
+  auto &Types = Tpi->typeCollection();
+  return std::unique_ptr<IPDBEnumSymbols>(
+      new NativeEnumTypes(*this, Types, codeview::LF_ENUM));
+}
+
 SymIndexId NativeSession::findSymbolByTypeIndex(codeview::TypeIndex Index) {
   // First see if it's already in our cache.
   const auto Entry = TypeIndexToSymbolId.find(Index);
@@ -129,14 +147,25 @@ SymIndexId NativeSession::findSymbolByTypeIndex(codeview::TypeIndex Index) {
     return Id;
   }
 
-  // TODO:  Look up PDB type by type index
-
-  return 0;
+  // We need to instantiate and cache the desired type symbol.
+  auto Tpi = Pdb->getPDBTpiStream();
+  if (!Tpi) {
+    consumeError(Tpi.takeError());
+    return 0;
+  }
+  auto &Types = Tpi->typeCollection();
+  const auto &I = Types.getType(Index);
+  const auto Id = static_cast<SymIndexId>(SymbolCache.size());
+  // TODO(amccarth):  Make this handle all types, not just LF_ENUMs.
+  assert(I.kind() == codeview::LF_ENUM);
+  SymbolCache.emplace_back(llvm::make_unique<NativeEnumSymbol>(*this, Id, I));
+  TypeIndexToSymbolId[Index] = Id;
+  return Id;
 }
 
 uint64_t NativeSession::getLoadAddress() const { return 0; }
 
-void NativeSession::setLoadAddress(uint64_t Address) {}
+bool NativeSession::setLoadAddress(uint64_t Address) { return false; }
 
 std::unique_ptr<PDBSymbolExe> NativeSession::getGlobalScope() {
   const auto Id = static_cast<SymIndexId>(SymbolCache.size());
@@ -156,8 +185,29 @@ NativeSession::getSymbolById(uint32_t SymbolId) const {
              : nullptr;
 }
 
+bool NativeSession::addressForVA(uint64_t VA, uint32_t &Section,
+                                 uint32_t &Offset) const {
+  return false;
+}
+
+bool NativeSession::addressForRVA(uint32_t VA, uint32_t &Section,
+                                  uint32_t &Offset) const {
+  return false;
+}
+
 std::unique_ptr<PDBSymbol>
 NativeSession::findSymbolByAddress(uint64_t Address, PDB_SymType Type) const {
+  return nullptr;
+}
+
+std::unique_ptr<PDBSymbol>
+NativeSession::findSymbolByRVA(uint32_t RVA, PDB_SymType Type) const {
+  return nullptr;
+}
+
+std::unique_ptr<PDBSymbol>
+NativeSession::findSymbolBySectOffset(uint32_t Sect, uint32_t Offset,
+                                      PDB_SymType Type) const {
   return nullptr;
 }
 
@@ -170,6 +220,17 @@ NativeSession::findLineNumbers(const PDBSymbolCompiland &Compiland,
 std::unique_ptr<IPDBEnumLineNumbers>
 NativeSession::findLineNumbersByAddress(uint64_t Address,
                                         uint32_t Length) const {
+  return nullptr;
+}
+
+std::unique_ptr<IPDBEnumLineNumbers>
+NativeSession::findLineNumbersByRVA(uint32_t RVA, uint32_t Length) const {
+  return nullptr;
+}
+
+std::unique_ptr<IPDBEnumLineNumbers>
+NativeSession::findLineNumbersBySectOffset(uint32_t Section, uint32_t Offset,
+                                           uint32_t Length) const {
   return nullptr;
 }
 
@@ -214,5 +275,19 @@ NativeSession::getSourceFileById(uint32_t FileId) const {
 }
 
 std::unique_ptr<IPDBEnumDataStreams> NativeSession::getDebugStreams() const {
+  return nullptr;
+}
+
+std::unique_ptr<IPDBEnumTables> NativeSession::getEnumTables() const {
+  return nullptr;
+}
+
+std::unique_ptr<IPDBEnumInjectedSources>
+NativeSession::getInjectedSources() const {
+  return nullptr;
+}
+
+std::unique_ptr<IPDBEnumSectionContribs>
+NativeSession::getSectionContribs() const {
   return nullptr;
 }

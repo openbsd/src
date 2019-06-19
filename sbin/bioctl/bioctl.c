@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.141 2016/12/20 15:38:46 patrick Exp $ */
+/* $OpenBSD: bioctl.c,v 1.142 2019/05/11 20:24:55 krw Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -785,8 +785,6 @@ bio_setblink(char *name, char *arg, int blink)
 	}
 
 	warnx("Disk %s does not exist", arg);
-
-	return;
 }
 
 void
@@ -1386,6 +1384,4 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 
 	/* forget passphrase */
 	explicit_bzero(passphrase, sizeof(passphrase));
-
-	return;
 }

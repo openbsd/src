@@ -1,8 +1,13 @@
-mandoc: line.in:6:2: WARNING: skipping paragraph macro: sp after SH
+mandoc: line.in:18:2: WARNING: skipping paragraph macro: br after br
 mandoc: line.in:24:2: WARNING: skipping paragraph macro: br after PP
 mandoc: line.in:26:2: WARNING: skipping paragraph macro: PP empty
+mandoc: line.in:29:2: WARNING: skipping paragraph macro: br before sp
+mandoc: line.in:33:2: WARNING: skipping paragraph macro: br after sp
 mandoc: line.in:36:2: WARNING: skipping paragraph macro: sp after PP
 mandoc: line.in:39:2: WARNING: skipping paragraph macro: sp after PP
+mandoc: line.in:47:2: WARNING: skipping paragraph macro: br before sp
+mandoc: line.in:51:2: WARNING: skipping paragraph macro: br after sp
 mandoc: line.in:54:1: WARNING: skipping paragraph macro: sp after PP
-mandoc: line.in:82:2: WARNING: skipping paragraph macro: sp after SH
+mandoc: line.in:6:2: WARNING: skipping paragraph macro: sp after SH
 mandoc: line.in:85:2: WARNING: skipping paragraph macro: sp after SS
+mandoc: line.in:82:2: WARNING: skipping paragraph macro: sp after SH

@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.18 2017/07/24 22:15:52 jca Exp $	*/
+/*	$OpenBSD: test.c,v 1.19 2018/04/02 06:47:43 tobias Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -145,6 +146,8 @@ static int aexpr(enum token n);
 static int nexpr(enum token n);
 static int binop(void);
 static int primary(enum token n);
+static const char *getnstr(const char *, int *, size_t *);
+static int intcmp(const char *, const char *);
 static int filstat(char *nm, enum token mode);
 static int getn(const char *s);
 static int newerf(const char *, const char *);
@@ -290,6 +293,70 @@ primary(enum token n)
 	return strlen(*t_wp) > 0;
 }
 
+static const char *
+getnstr(const char *s, int *signum, size_t *len)
+{
+	const char *p, *start;
+
+	/* skip leading whitespaces */
+	p = s;
+	while (isspace((unsigned char)*p))
+		p++;
+
+	/* accept optional sign */
+	if (*p == '-') {
+		*signum = -1;
+		p++;
+	} else {
+		*signum = 1;
+		if (*p == '+')
+			p++;
+	}
+
+	/* skip leading zeros */
+	while (*p == '0' && isdigit((unsigned char)p[1]))
+		p++;
+
+	/* turn 0 always positive */
+	if (*p == '0')
+		*signum = 1;
+
+	start = p;
+	while (isdigit((unsigned char)*p))
+		p++;
+	*len = p - start;
+
+	/* allow trailing whitespaces */
+	while (isspace((unsigned char)*p))
+		p++;
+
+	/* validate number */
+	if (*p != '\0' || *start == '\0')
+		errx(2, "%s: invalid", s);
+
+	return start;
+}
+
+static int
+intcmp(const char *opnd1, const char *opnd2)
+{
+	const char *p1, *p2;
+	size_t len1, len2;
+	int c, sig1, sig2;
+
+	p1 = getnstr(opnd1, &sig1, &len1);
+	p2 = getnstr(opnd2, &sig2, &len2);
+
+	if (sig1 != sig2)
+		c = sig1;
+	else if (len1 != len2)
+		c = (len1 < len2) ? -sig1 : sig1;
+	else
+		c = strncmp(p1, p2, len1) * sig1;
+
+	return c;
+}
+
 static int
 binop(void)
 {
@@ -313,17 +380,17 @@ binop(void)
 	case STRGT:
 		return strcmp(opnd1, opnd2) > 0;
 	case INTEQ:
-		return getn(opnd1) == getn(opnd2);
+		return intcmp(opnd1, opnd2) == 0;
 	case INTNE:
-		return getn(opnd1) != getn(opnd2);
+		return intcmp(opnd1, opnd2) != 0;
 	case INTGE:
-		return getn(opnd1) >= getn(opnd2);
+		return intcmp(opnd1, opnd2) >= 0;
 	case INTGT:
-		return getn(opnd1) > getn(opnd2);
+		return intcmp(opnd1, opnd2) > 0;
 	case INTLE:
-		return getn(opnd1) <= getn(opnd2);
+		return intcmp(opnd1, opnd2) <= 0;
 	case INTLT:
-		return getn(opnd1) < getn(opnd2);
+		return intcmp(opnd1, opnd2) < 0;
 	case FILNT:
 		return newerf(opnd1, opnd2);
 	case FILOT:
@@ -455,22 +522,26 @@ t_lex(char *s)
 static int
 getn(const char *s)
 {
-	char *p;
-	long r;
+	char buf[32];
+	const char *errstr, *p;
+	size_t len;
+	int r, sig;
 
-	errno = 0;
-	r = strtol(s, &p, 10);
+	p = getnstr(s, &sig, &len);
+	if (sig != 1)
+		errstr = "too small";
+	else if (len >= sizeof(buf))
+		errstr = "too large";
+	else {
+		strlcpy(buf, p, sizeof(buf));
+		buf[len] = '\0';
+		r = strtonum(buf, 0, INT_MAX, &errstr);
+	}
 
-	if (errno != 0)
-		errx(2, "%s: out of range", s);
+	if (errstr != NULL)
+		errx(2, "%s: %s", s, errstr);
 
-	while (isspace((unsigned char)*p))
-		p++;
-
-	if (*p)
-		errx(2, "%s: bad number", s);
-
-	return (int) r;
+	return r;
 }
 
 static int

@@ -1,4 +1,4 @@
-.\" $OpenBSD: drm.4,v 1.7 2015/12/24 01:49:34 bentley Exp $
+.\" $OpenBSD: drm.4,v 1.10 2019/05/21 23:57:10 jsg Exp $
 .\"
 .\" Copyright (c) 2008 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: December 24 2015 $
+.Dd $Mdocdate: May 21 2019 $
 .Dt DRM 4
 .Os
 .Sh NAME
@@ -22,8 +22,30 @@
 .Nm radeondrm
 .Nd Direct Rendering Manager device
 .Sh SYNOPSIS
-.Cd "inteldrm* at vga?"
+.Cd "# amd64"
+.Cd "amdgpu* at pci?"
+.Cd "drm0 at amdgpu? primary 1"
+.Cd "drm* at amdgpu?"
+.Cd "wsdisplay0 at amdgpu? primary 1"
+.Cd "wsdisplay* at amdgpu? mux -1"
+.Pp
+.Cd "# amd64, i386"
+.Cd "inteldrm* at pci?"
+.Cd "intagp* at inteldrm?"
+.Cd "agp* at intagp?"
+.Cd "drm0 at inteldrm? primary 1"
 .Cd "drm* at inteldrm?"
+.Cd "wsdisplay0 at inteldrm? primary 1"
+.Cd "wsdisplay* at inteldrm? mux -1"
+.Pp
+.Cd "# amd64, i386"
+.Cd "radeondrm* at pci?"
+.Cd "drm0 at radeondrm? primary 1"
+.Cd "drm* at radeondrm?"
+.Cd "wsdisplay0 at radeondrm? primary 1"
+.Cd "wsdisplay* at radeondrm? mux -1"
+.Pp
+.Cd "# arm64, loongson, macppc, sparc64"
 .Cd "radeondrm* at pci?"
 .Cd "drm* at radeondrm?"
 .Sh DESCRIPTION
@@ -40,15 +62,19 @@ DRI module.
 Support is currently available for the following graphics cards:
 .Pp
 .Bl -tag -width "radeon(4)XXX" -offset indent -compact
+.It Xr amdgpu 4
+AMD Radeon GPUs using the amdgpu kernel driver
 .It Xr intel 4
 Intel integrated graphics chipsets
 .It Xr radeon 4
-ATI RADEON video driver
+ATI/AMD Radeon video driver
 .El
 .Sh FILES
 .Bl -tag -width "/usr/X11R6/lib/modules/dri/X_dri.so" -compact
-.It Pa /dev/drm*
-DRM device special files.
+.It Pa /dev/drm[0-9]*
+DRM primary node files.
+.It Pa /dev/drmR*
+DRM render node files.
 .It Pa /usr/X11R6/lib/modules/dri/*_dri.so
 X DRI modules.
 .El

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.32 2014/11/20 14:10:18 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.33 2019/06/09 12:16:07 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -100,8 +100,7 @@ sub cleanup
 
 	for my $d (sort {$b cmp $a} keys %$h) {
 		$state->progress->show($done, $total);
-		my $realname = $state->{destdir}.$d;
-		if (defined $remaining->{dirs}{$realname}) {
+		if (defined $remaining->{dirs}{$d}) {
 			for my $i (@{$h->{$d}}) {
 				$state->log->set_context('-'.$i->{pkgname});
 				$i->reload($state);

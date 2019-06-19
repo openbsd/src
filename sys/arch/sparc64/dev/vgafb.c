@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.65 2017/08/07 22:19:10 kettenis Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.66 2018/12/27 11:06:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -104,9 +104,7 @@ extern int allowaperture;
 #endif
 
 int
-vgafbmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+vgafbmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	int node;
@@ -141,9 +139,7 @@ vgafbmatch(parent, vcf, aux)
 }
 
 void    
-vgafbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vgafbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vgafb_softc *sc = (struct vgafb_softc *)self;
 	struct pci_attach_args *pa = aux;
@@ -193,12 +189,7 @@ vgafbattach(parent, self, aux)
 }
 
 int
-vgafb_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+vgafb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct vgafb_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -266,9 +257,7 @@ vgafb_ioctl(v, cmd, data, flags, p)
 }
 
 int
-vgafb_getcmap(sc, cm)
-	struct vgafb_softc *sc;
-	struct wsdisplay_cmap *cm;
+vgafb_getcmap(struct vgafb_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
@@ -290,9 +279,7 @@ vgafb_getcmap(sc, cm)
 }
 
 int
-vgafb_putcmap(sc, cm)
-	struct vgafb_softc *sc;
-	struct wsdisplay_cmap *cm;
+vgafb_putcmap(struct vgafb_softc *sc, struct wsdisplay_cmap *cm)
 {
 	u_int index = cm->index;
 	u_int count = cm->count;
@@ -323,10 +310,7 @@ vgafb_putcmap(sc, cm)
 }
 
 void
-vgafb_setcolor(v, index, r, g, b)
-	void *v;
-	u_int index;
-	u_int8_t r, g, b;
+vgafb_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct vgafb_softc *sc = v;
 
@@ -337,10 +321,7 @@ vgafb_setcolor(v, index, r, g, b)
 }
 
 paddr_t
-vgafb_mmap(v, off, prot)
-	void *v;
-	off_t off;
-	int prot;
+vgafb_mmap(void *v, off_t off, int prot)
 {
 	struct vgafb_softc *sc = v;
 
@@ -381,8 +362,7 @@ vgafb_mmap(v, off, prot)
 }
 
 int
-vgafb_is_console(node)
-	int node;
+vgafb_is_console(int node)
 {
 	extern int fbnode;
 
@@ -390,9 +370,7 @@ vgafb_is_console(node)
 }
 
 int
-vgafb_mapregs(sc, pa)
-	struct vgafb_softc *sc;
-	struct pci_attach_args *pa;
+vgafb_mapregs(struct vgafb_softc *sc, struct pci_attach_args *pa)
 {
 	bus_addr_t ba;
 	bus_size_t bs;

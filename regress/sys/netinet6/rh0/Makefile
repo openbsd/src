@@ -1,22 +1,14 @@
-#	$OpenBSD: Makefile,v 1.11 2017/07/07 23:15:27 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.12 2019/05/10 02:22:34 bluhm Exp $
 
 # The following ports must be installed:
 #
 # python-2.7		interpreted object-oriented programming language
-# py-libdnet		python interface to libdnet
 # scapy			powerful interactive packet manipulation in python
 
-.if ! (make(clean) || make(cleandir) || make(obj))
-# Check wether all required python packages are installed.  If some
-# are missing print a warning and skip the tests, but do not fail.
-PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
-.endif
-
-.if ! empty(PYTHON_IMPORT)
+.if ! exists(/usr/local/bin/python2.7) || ! exists(/usr/local/bin/scapy)
 .BEGIN:
 	@true
 regress:
-	@echo '${PYTHON_IMPORT}'
 	@echo Install python and the scapy module for additional tests.
 	@echo SKIPPED
 .endif
@@ -82,18 +74,23 @@ addr.py: Makefile
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
 .if ${.CURDIR} == ${.OBJDIR}
-PYTHON =	python2.7 ./
+PYTHON =	python2.7 -u ./
 .else
-PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
+PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 .endif
 
 stamp-stack:
+	@echo '\n======== $@ ========'
 	rm -f stamp-stack stamp-pf
 	-ssh ${REMOTE_SSH} ${SUDO} pfctl -d
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fr
 	date >$@
 
+# After running the tests, turn on pf on remote machine.
+# This is the expected default configuration.
+REGRESS_CLEANUP +=      stamp-pf
 stamp-pf:
+	@echo '\n======== $@ ========'
 	rm -f stamp-stack stamp-pf
 	echo 'pass proto tcp from port ssh no state\n'\
 	    'pass proto tcp to port ssh no state'|\
@@ -104,16 +101,11 @@ stamp-pf:
 RH0_SCRIPTS !!=		cd ${.CURDIR} && ls -1 rh0*.py
 
 .for s in ${RH0_SCRIPTS}
-run-regress-${s}: addr.py stamp-stack
+REGRESS_TARGETS =	run-${s}
+run-${s}: addr.py stamp-stack
 	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}${s}
 .endfor
-
-REGRESS_TARGETS =	${RH0_SCRIPTS:S/^/run-regress-/}
-
-# After running the tests, turn on pf on remote machine.
-# This is the expected default configuration.
-REGRESS_TARGETS +=      stamp-pf
 
 CLEANFILES +=		addr.py *.pyc *.log stamp-*
 

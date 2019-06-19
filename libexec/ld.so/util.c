@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.45 2018/02/09 22:13:04 mortimer Exp $	*/
+/*	$OpenBSD: util.c,v 1.46 2019/05/08 22:15:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -33,6 +33,7 @@
 #define KEYSTREAM_ONLY
 #include "chacha_private.h"
 
+#ifndef _RET_PROTECTOR
 /*
  * Stack protector dummies.
  * Ideally, a scheme to compile these stubs from libc should be used, but
@@ -41,12 +42,6 @@
 long __guard_local __dso_hidden __attribute__((section(".openbsd.randomdata")));
 
 void __stack_smash_handler(char [], int);
-
-#define KEYSZ 32
-#define IVSZ  8
-#define REKEY_AFTER_BYTES (1 << 31)
-static chacha_ctx chacha;
-static size_t chacha_bytes;
 
 void
 __stack_smash_handler(char func[], int damaged)
@@ -65,6 +60,7 @@ __stack_smash_handler(char func[], int damaged)
 	_dl_sendsyslog(message, _dl_strlen(message), LOG_CONS);
 	_dl_diedie();
 }
+#endif /* _RET_PROTECTOR */
 
 char *
 _dl_strdup(const char *orig)
@@ -78,6 +74,12 @@ _dl_strdup(const char *orig)
 		_dl_strlcpy(newstr, orig, len);
 	return (newstr);
 }
+
+#define KEYSZ 32
+#define IVSZ  8
+#define REKEY_AFTER_BYTES (1 << 31)
+static chacha_ctx chacha;
+static size_t chacha_bytes;
 
 void
 _dl_arc4randombuf(void *buf, size_t buflen)

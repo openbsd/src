@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.37 2015/02/10 13:10:27 deraadt Exp $
+.\"	$OpenBSD: rdate.8,v 1.38 2019/01/06 04:27:34 tedu Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 10 2015 $
+.Dd $Mdocdate: January 6 2019 $
 .Dt RDATE 8
 .Os
 .Sh NAME
@@ -92,19 +92,6 @@ Always show the adjustment.
 .It Pa /var/log/wtmp
 record of date resets and time changes
 .El
-.Sh EXAMPLES
-To get the legal time in Germany, set the
-.Pa /etc/localtime
-symlink to
-.Pa /usr/share/zoneinfo/right/Europe/Berlin
-and issue the following command:
-.Pp
-.D1 Li "# rdate -v ptbtime1.ptb.de"
-.Pp
-The command of course assumes you have a working internet connection
-and DNS set up to connect to the server at
-.Sy Physikalisch-Technische Bundesanstalt
-in Braunschweig, Germany.
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr adjtime 2 ,

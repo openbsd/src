@@ -278,11 +278,14 @@ do_deldomain(namedb_type* db, domain_type* domain)
 void
 domain_table_deldomain(namedb_type* db, domain_type* domain)
 {
+	domain_type* parent;
+
 	while(domain_can_be_deleted(domain)) {
+		parent = domain->parent;
 		/* delete it */
 		do_deldomain(db, domain);
 		/* test parent */
-		domain = domain->parent;
+		domain = parent;
 	}
 }
 

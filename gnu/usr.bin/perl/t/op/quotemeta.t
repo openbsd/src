@@ -2,9 +2,9 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(../lib .);
-    require Config; import Config;
     require "./test.pl";
+    set_up_inc(  qw(../lib .) );
+    require Config; import Config;
     require "./loc_tools.pl";
 }
 

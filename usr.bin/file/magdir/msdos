@@ -1,4 +1,4 @@
-#	$OpenBSD: msdos,v 1.6 2016/01/29 11:50:40 tb Exp $
+#	$OpenBSD: msdos,v 1.7 2018/10/04 16:51:38 ccardenas Exp $
 
 #------------------------------------------------------------------------------
 # msdos:  file(1) magic for MS-DOS files
@@ -641,43 +641,77 @@
 #--------------------------------------------------------------------
 # Qemu Emulator Images
 # Lines written by Friedrich Schwittay (f.schwittay@yousable.de)
-# Made by reading sources and doing trial and error on existing
-# qcow files
-0       string  QFI     Qemu Image, Format: Qcow
+# Updated by Adam Buchbinder (adam.buchbinder@gmail.com)
+# Made by reading sources, reading documentation, and doing trial and error
+# on existing QCOW files
+0	string/b	QFI\xFB	QEMU QCOW Image
 
 # Uncomment the following line to display Magic (only used for debugging
 # this magic number)
-#>0     string  x       , Magic: %s
+#>0	string/b	x	, Magic: %s
 
-# There are currently 2 Versions: "1" and "2"
-# I do not use Version 2 and therefore branch here
-# but can assure: it works (tested on both versions)
-# Also my Qemu 0.9.0 which uses this Version 2 refuses
-# to start in its bios
->0x04   belong  2       , Version: 2
->0x04   belong  1       , Version: 1
+# There are currently 2 Versions: "1" and "2".
+# http://www.gnome.org/~markmc/qcow-image-format-version-1.html
+>4	belong	1	(v1)
 
-# Using the existence of the Backing File Offset to Branch or not
+# Using the existence of the Backing File Offset to determine whether
 # to read Backing File Information
->>0xc    belong  >0      , Backing File( Offset: %lu
->>>(0xc.L)       string >\0     , Path: %s
-
-# Didn't get the trick here how qemu stores the "Size" at this Position
-# There is actually something stored but nothing makes sense
-# The header in the sources talks about it
-#>>>16   lelong  x       , Size: %lu
+>>12	belong	 >0	 \b, has backing file (
+# Note that this isn't a null-terminated string; the length is actually
+# (16.L). Assuming a null-terminated string happens to work usually, but it
+# may spew junk until it reaches a \0 in some cases.
+>>>(12.L)	 string >\0	\bpath %s
 
 # Modification time of the Backing File
 # Really useful if you want to know if your backing
 # file is still usable together with this image
->>>20    bedate x       , Mtime: %s )
+>>>>20	bedate >0	\b, mtime %s)
+>>>>20	default x	\b)
 
-# Don't know how to calculate in Magicfiles
-# Also: this Information is not reliably
-#       stored in image-files
->>24     lelong  x       , Disk Size could be: %d * 256 bytes
+# Size is stored in bytes in a big-endian u64.
+>>24	bequad	x	 \b, %lld bytes
 
-0	string	QEVM		QEMU's suspend to disk image
+# 1 for AES encryption, 0 for none.
+>>36	belong	1	\b, AES-encrypted
+
+# http://www.gnome.org/~markmc/qcow-image-format.html
+>4	belong	2	(v2)
+# Using the existence of the Backing File Offset to determine whether
+# to read Backing File Information
+>>8	bequad  >0	 \b, has backing file
+# Note that this isn't a null-terminated string; the length is actually
+# (16.L). Assuming a null-terminated string happens to work usually, but it
+# may spew junk until it reaches a \0 in some cases. Also, since there's no
+# .Q modifier, we just use the bottom four bytes as an offset. Note that if
+# the file is over 4G, and the backing file path is stored after the first 4G,
+# the wrong filename will be printed. (This should be (8.Q), when that syntax
+# is introduced.)
+>>>(12.L)	 string >\0	(path %s)
+>>24	bequad	x	\b, %lld bytes
+>>32	belong	1	\b, AES-encrypted
+
+>4	belong	3	(v3)
+# Using the existence of the Backing File Offset to determine whether
+# to read Backing File Information
+>>8	bequad  >0	 \b, has backing file
+# Note that this isn't a null-terminated string; the length is actually
+# (16.L). Assuming a null-terminated string happens to work usually, but it
+# may spew junk until it reaches a \0 in some cases. Also, since there's no
+# .Q modifier, we just use the bottom four bytes as an offset. Note that if
+# the file is over 4G, and the backing file path is stored after the first 4G,
+# the wrong filename will be printed. (This should be (8.Q), when that syntax
+# is introduced.)
+>>>(12.L)	 string >\0	(path %s)
+>>24	bequad	x	\b, %lld bytes
+>>32	belong	1	\b, AES-encrypted
+
+>4	default x	(unknown version)
+
+0	string/b	QEVM		QEMU suspend to disk image
+
+# QEMU QED Image
+# http://wiki.qemu.org/Features/QED/Specification
+0	string/b	QED\0		QEMU QED Image
 
 0	string	Bochs\ Virtual\ HD\ Image	Bochs disk image,
 >32	string	x				type %s,

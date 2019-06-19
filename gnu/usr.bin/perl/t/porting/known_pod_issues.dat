@@ -17,7 +17,9 @@ access(2)
 Algorithm::C3
 Algorithm::Permute
 AnyEvent
+Apache::DProf
 Apache::MP3
+Apache::SmallProf
 Archive::Extract
 Array::Base
 atan2(3)
@@ -48,12 +50,14 @@ Class::Tiny
 Class::Tiny::Antlers
 Classic::Perl
 clearerr(3)
+clock(3)
 Clone
 closedir(2)
 connect(2)
 Coro
 cpan2dist(1)
 CPAN::Changes::Spec
+CPAN::Uploader
 cpanp(1)
 CPANPLUS
 crypt(3)
@@ -68,6 +72,7 @@ Data::Float
 Data::Structure::Util
 Data::Types
 Data::Util
+Date::Parse
 Date::Pcalc
 DateTime
 DB_File(3)
@@ -75,6 +80,7 @@ DBI
 DBIx::Profile
 dbm(3)
 dbm_open(3)
+Devel::Apache::Profiler
 Devel::CallParser
 Devel::Callsite
 Devel::Cover
@@ -82,6 +88,7 @@ Devel::DProf
 Devel::DTrace::Provider
 Devel::InnerPackage
 Devel::NYTProf
+Devel::NYTProf::Apache
 Devel::PPPort
 Devel::SawAmpersand
 Devel::Spy
@@ -107,6 +114,7 @@ File::Findgrep
 File::Map
 File::MMagic
 File::ShareDir
+Filter::Encoding
 find(1)
 flock(2)
 flock(3)
@@ -139,6 +147,7 @@ ioctl(2)
 IPC::Run
 IPC::Shareable
 IPC::Signal
+ispunct(2)
 kill(3)
 langinfo(3)
 LaTeX::Encode
@@ -151,8 +160,8 @@ Lingua::ZH::Romanize::Pinyin
 List::Gather
 listen(2)
 local::lib
+localeconv(3)
 lockf(3)
-Log::Agent
 Log::Message
 Log::Message::Config
 Log::Message::Handlers
@@ -160,7 +169,9 @@ Log::Message::Item
 Log::Message::Simple
 lseek(2)
 LWP::ConsoleLogger
+Mail::Mailer
 Mail::Send
+Mail::Sendmail
 Mail::SpamAssassin
 man(5)
 man(7)
@@ -173,6 +184,7 @@ Math::Random::MT::Perl
 Math::Random::Secure
 Math::TrulyRandom
 md5sum(1)
+Method::Signatures
 mmap(2)
 Module::Build
 Module::CPANTS::Analyse
@@ -226,10 +238,10 @@ prctl(2)
 printenv(1)
 printf(3)
 provide
-pstruct
 ptar(1)
 ptargrep(1)
 pwd_mkdb(8)
+querylocale(3)
 RDF::Trine
 read(2)
 Readonly
@@ -267,6 +279,7 @@ SOM
 splain
 sprintf(3)
 stat(2)
+strftime(3)
 strictures
 String::Base
 String::Scanf
@@ -312,19 +325,24 @@ Want
 wget(1)
 Win32::Locale
 write(2)
+WWW::Mechanize
 XML::LibXML
 YAML
 YAML::Syck
 YAML::Tiny
+dist/data-dumper/changes	Verbatim line length including indents exceeds 79 by	1
 dist/data-dumper/dumper.pm	? Should you be using L<...> instead of	1
+dist/devel-ppport/parts/inc/ppphdoc	Unknown directive: =dontwarn	1
+dist/devel-ppport/parts/inc/ppphdoc	Unknown directive: =implementation	1
+dist/devel-ppport/parts/inc/ppphdoc	Unknown directive: =provides	1
+dist/exporter/lib/exporter.pm	Verbatim line length including indents exceeds 79 by	2
+dist/net-ping/lib/net/ping.pm	Apparent broken link	1
 ext/amiga-exec/exec.pm	Verbatim line length including indents exceeds 79 by	1
-ext/devel-peek/peek.pm	? Should you be using L<...> instead of	2
 ext/dynaloader/dynaloader.pm	Verbatim line length including indents exceeds 79 by	1
 ext/hash-util/lib/hash/util.pm	Verbatim line length including indents exceeds 79 by	2
 ext/pod-html/testdir/perlpodspec-copy.pod	Verbatim line length including indents exceeds 79 by	2
 ext/pod-html/testdir/perlvar-copy.pod	? Should you be using L<...> instead of	3
 ext/pod-html/testdir/perlvar-copy.pod	Verbatim line length including indents exceeds 79 by	6
-ext/vms-dclsym/dclsym.pm	? Should you be using L<...> instead of	1
 ext/vms-filespec/lib/vms/filespec.pm	Verbatim line length including indents exceeds 79 by	1
 install	? Should you be using F<...> or maybe L<...> instead of	1
 pod/perl.pod	Verbatim line length including indents exceeds 79 by	8
@@ -334,15 +352,16 @@ pod/perlce.pod	Verbatim line length including indents exceeds 79 by	3
 pod/perldebguts.pod	Verbatim line length including indents exceeds 79 by	27
 pod/perldebtut.pod	Verbatim line length including indents exceeds 79 by	3
 pod/perldtrace.pod	Verbatim line length including indents exceeds 79 by	7
+pod/perlgit.pod	? Should you be using F<...> or maybe L<...> instead of	1
 pod/perlgit.pod	Verbatim line length including indents exceeds 79 by	1
 pod/perlguts.pod	? Should you be using L<...> instead of	1
 pod/perlhack.pod	? Should you be using L<...> instead of	1
+pod/perlhack.pod	Verbatim line length including indents exceeds 79 by	2
 pod/perlhist.pod	Verbatim line length including indents exceeds 79 by	1
 pod/perlhpux.pod	Verbatim line length including indents exceeds 79 by	1
 pod/perlinterp.pod	? Should you be using L<...> instead of	1
 pod/perlirix.pod	Verbatim line length including indents exceeds 79 by	1
 pod/perlmacosx.pod	Verbatim line length including indents exceeds 79 by	3
-pod/perlmodlib.pod	Verbatim line length including indents exceeds 79 by	3
 pod/perlmroapi.pod	? Should you be using L<...> instead of	1
 pod/perlos2.pod	? Should you be using L<...> instead of	2
 pod/perlos2.pod	Verbatim line length including indents exceeds 79 by	5
@@ -354,9 +373,9 @@ pod/perlsolaris.pod	Verbatim line length including indents exceeds 79 by	13
 pod/perltie.pod	Verbatim line length including indents exceeds 79 by	3
 pod/perltru64.pod	Verbatim line length including indents exceeds 79 by	1
 pod/perlwin32.pod	Verbatim line length including indents exceeds 79 by	7
-porting/epigraphs.pod	Verbatim line length including indents exceeds 79 by	16
+porting/epigraphs.pod	Verbatim line length including indents exceeds 79 by	-1
 porting/release_managers_guide.pod	Verbatim line length including indents exceeds 79 by	1
-utils/encguess	There is no NAME	1
+porting/todo.pod	? Should you be using F<...> or maybe L<...> instead of	1
 lib/benchmark.pm	Verbatim line length including indents exceeds 79 by	2
 lib/config.pod	? Should you be using L<...> instead of	-1
 lib/perl5db.pl	? Should you be using L<...> instead of	1

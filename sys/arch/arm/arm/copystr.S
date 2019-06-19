@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.8 2017/01/06 00:06:02 jsg Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.9 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $	*/
 
 /*
@@ -40,9 +40,11 @@
  */
 
 #include "assym.h"
+
+#include <sys/errno.h>
+	
 #include <machine/asm.h>
 #include <arm/sysreg.h>
-#include <sys/errno.h>
 
 	.text
 	.align	2

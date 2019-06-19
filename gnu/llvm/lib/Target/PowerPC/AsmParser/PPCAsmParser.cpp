@@ -83,6 +83,16 @@ static const MCPhysReg FRegs[32] = {
   PPC::F24, PPC::F25, PPC::F26, PPC::F27,
   PPC::F28, PPC::F29, PPC::F30, PPC::F31
 };
+static const MCPhysReg SPERegs[32] = {
+  PPC::S0,  PPC::S1,  PPC::S2,  PPC::S3,
+  PPC::S4,  PPC::S5,  PPC::S6,  PPC::S7,
+  PPC::S8,  PPC::S9,  PPC::S10, PPC::S11,
+  PPC::S12, PPC::S13, PPC::S14, PPC::S15,
+  PPC::S16, PPC::S17, PPC::S18, PPC::S19,
+  PPC::S20, PPC::S21, PPC::S22, PPC::S23,
+  PPC::S24, PPC::S25, PPC::S26, PPC::S27,
+  PPC::S28, PPC::S29, PPC::S30, PPC::S31
+};
 static const MCPhysReg VFRegs[32] = {
   PPC::VF0,  PPC::VF1,  PPC::VF2,  PPC::VF3,
   PPC::VF4,  PPC::VF5,  PPC::VF6,  PPC::VF7,
@@ -251,7 +261,6 @@ namespace {
 struct PPCOperand;
 
 class PPCAsmParser : public MCTargetAsmParser {
-  const MCInstrInfo &MII;
   bool IsPPC64;
   bool IsDarwin;
 
@@ -298,7 +307,7 @@ class PPCAsmParser : public MCTargetAsmParser {
 public:
   PPCAsmParser(const MCSubtargetInfo &STI, MCAsmParser &,
                const MCInstrInfo &MII, const MCTargetOptions &Options)
-    : MCTargetAsmParser(Options, STI), MII(MII) {
+    : MCTargetAsmParser(Options, STI, MII) {
     // Check for 64-bit vs. 32-bit pointer mode.
     const Triple &TheTriple = STI.getTargetTriple();
     IsPPC64 = (TheTriple.getArch() == Triple::ppc64 ||
@@ -393,6 +402,10 @@ public:
 
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const override { return EndLoc; }
+
+  /// getLocRange - Get the range between the first and last token of this
+  /// operand.
+  SMRange getLocRange() const { return SMRange(StartLoc, EndLoc); }
 
   /// isPPC64 - True if this operand is for an instruction in 64-bit mode.
   bool isPPC64() const { return IsPPC64; }
@@ -643,6 +656,16 @@ public:
   void addRegQBRCOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::createReg(QFRegs[getReg()]));
+  }
+
+  void addRegSPE4RCOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::createReg(RRegs[getReg()]));
+  }
+
+  void addRegSPERCOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::createReg(SPERegs[getReg()]));
   }
 
   void addRegCRBITRCOperands(MCInst &Inst, unsigned N) const {
@@ -1138,6 +1161,15 @@ void PPCAsmParser::ProcessInstruction(MCInst &Inst,
     Inst = TmpInst;
     break;
   }
+  case PPC::SUBPCIS: {
+    MCInst TmpInst;
+    int64_t N = Inst.getOperand(1).getImm();
+    TmpInst.setOpcode(PPC::ADDPCIS);
+    TmpInst.addOperand(Inst.getOperand(0));
+    TmpInst.addOperand(MCOperand::createImm(-N));
+    Inst = TmpInst;
+    break;
+  }
   case PPC::SRDI:
   case PPC::SRDIo: {
     MCInst TmpInst;
@@ -1260,6 +1292,9 @@ void PPCAsmParser::ProcessInstruction(MCInst &Inst,
   }
 }
 
+static std::string PPCMnemonicSpellCheck(StringRef S, uint64_t FBS,
+                                         unsigned VariantID = 0);
+
 bool PPCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                            OperandVector &Operands,
                                            MCStreamer &Out, uint64_t &ErrorInfo,
@@ -1275,8 +1310,13 @@ bool PPCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return false;
   case Match_MissingFeature:
     return Error(IDLoc, "instruction use requires an option to be enabled");
-  case Match_MnemonicFail:
-    return Error(IDLoc, "unrecognized instruction mnemonic");
+  case Match_MnemonicFail: {
+    uint64_t FBS = ComputeAvailableFeatures(getSTI().getFeatureBits());
+    std::string Suggestion = PPCMnemonicSpellCheck(
+        ((PPCOperand &)*Operands[0]).getToken(), FBS);
+    return Error(IDLoc, "invalid instruction" + Suggestion,
+                 ((PPCOperand &)*Operands[0]).getLocRange());
+  }
   case Match_InvalidOperand: {
     SMLoc ErrorLoc = IDLoc;
     if (ErrorInfo != ~0ULL) {
@@ -1373,6 +1413,12 @@ ExtractModifierFromExpr(const MCExpr *E,
       break;
     case MCSymbolRefExpr::VK_PPC_HA:
       Variant = PPCMCExpr::VK_PPC_HA;
+      break;
+    case MCSymbolRefExpr::VK_PPC_HIGH:
+      Variant = PPCMCExpr::VK_PPC_HIGH;
+      break;
+    case MCSymbolRefExpr::VK_PPC_HIGHA:
+      Variant = PPCMCExpr::VK_PPC_HIGHA;
       break;
     case MCSymbolRefExpr::VK_PPC_HIGHER:
       Variant = PPCMCExpr::VK_PPC_HIGHER;
@@ -1912,6 +1958,7 @@ extern "C" void LLVMInitializePowerPCAsmParser() {
 
 #define GET_REGISTER_MATCHER
 #define GET_MATCHER_IMPLEMENTATION
+#define GET_MNEMONIC_SPELL_CHECKER
 #include "PPCGenAsmMatcher.inc"
 
 // Define this matcher function after the auto-generated include so we
@@ -1952,6 +1999,10 @@ PPCAsmParser::applyModifierToExpr(const MCExpr *E,
     return PPCMCExpr::create(PPCMCExpr::VK_PPC_HI, E, false, Ctx);
   case MCSymbolRefExpr::VK_PPC_HA:
     return PPCMCExpr::create(PPCMCExpr::VK_PPC_HA, E, false, Ctx);
+  case MCSymbolRefExpr::VK_PPC_HIGH:
+    return PPCMCExpr::create(PPCMCExpr::VK_PPC_HIGH, E, false, Ctx);
+  case MCSymbolRefExpr::VK_PPC_HIGHA:
+    return PPCMCExpr::create(PPCMCExpr::VK_PPC_HIGHA, E, false, Ctx);
   case MCSymbolRefExpr::VK_PPC_HIGHER:
     return PPCMCExpr::create(PPCMCExpr::VK_PPC_HIGHER, E, false, Ctx);
   case MCSymbolRefExpr::VK_PPC_HIGHERA:

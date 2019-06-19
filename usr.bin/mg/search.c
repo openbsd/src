@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.46 2017/08/06 04:39:45 bcallah Exp $	*/
+/*	$OpenBSD: search.c,v 1.47 2018/07/11 12:21:37 krw Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -159,10 +159,11 @@ backisearch(int f, int n)
 /*
  * Incremental Search.
  *	dir is used as the initial direction to search.
+ *	^M	exit from Isearch, set mark
  *	^S	switch direction to forward
  *	^R	switch direction to reverse
  *	^Q	quote next character (allows searching for ^N etc.)
- *	<ESC>	exit from Isearch
+ *	<ESC>	exit from Isearch, set mark
  *	<DEL>	undoes last character typed. (tricky job to do this correctly).
  *	other ^ exit search, don't set mark
  *	else	accumulate into search string
@@ -213,6 +214,8 @@ isearch(int dir)
 			 */
 			if (ttwait(300) == FALSE)
 				ungetkey(c);
+			/* FALLTHRU */
+		case CCHR('M'):
 			srch_lastdir = dir;
 			curwp->w_markp = clp;
 			curwp->w_marko = cbo;
@@ -359,9 +362,6 @@ isearch(int dir)
 		case CCHR('\\'):
 		case CCHR('Q'):
 			c = (char)getkey(FALSE);
-			goto addchar;
-		case CCHR('M'):
-			c = CCHR('J');
 			goto addchar;
 		default:
 			if (ISCTRL(c)) {

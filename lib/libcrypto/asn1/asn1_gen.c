@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.16 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.17 2018/04/25 11:48:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -121,7 +121,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype);
 static int asn1_str2tag(const char *tagstr, int len);
 
 ASN1_TYPE *
-ASN1_generate_nconf(char *str, CONF *nconf)
+ASN1_generate_nconf(const char *str, CONF *nconf)
 {
 	X509V3_CTX cnf;
 
@@ -133,7 +133,7 @@ ASN1_generate_nconf(char *str, CONF *nconf)
 }
 
 ASN1_TYPE *
-ASN1_generate_v3(char *str, X509V3_CTX *cnf)
+ASN1_generate_v3(const char *str, X509V3_CTX *cnf)
 {
 	ASN1_TYPE *ret;
 	tag_exp_arg asn1_tags;

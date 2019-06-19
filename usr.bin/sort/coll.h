@@ -1,4 +1,4 @@
-/*	$OpenBSD: coll.h,v 1.1 2015/03/17 17:45:13 millert Exp $	*/
+/*	$OpenBSD: coll.h,v 1.2 2019/05/13 17:00:12 schwarze Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -122,14 +122,6 @@ typedef int (*listcoll_t)(struct sort_list_item **ss1, struct sort_list_item **s
 
 extern struct key_specs *keys;
 extern size_t keys_num;
-
-/*
- * Main localised symbols. These must be wint_t as they may hold WEOF.
- */
-extern wint_t symbol_decimal_point;
-extern wint_t symbol_thousands_sep;
-extern wint_t symbol_negative_sign;
-extern wint_t symbol_positive_sign;
 
 /* funcs */
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logger.1,v 1.21 2013/06/05 17:35:12 tedu Exp $
+.\"	$OpenBSD: logger.1,v 1.22 2019/06/17 00:23:03 guenther Exp $
 .\"	$NetBSD: logger.1,v 1.4 1994/12/22 06:26:59 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)logger.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: June 17 2019 $
 .Dt LOGGER 1
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nd make entries in the system log
 .Sh SYNOPSIS
 .Nm logger
-.Op Fl is
+.Op Fl cis
 .Op Fl f Ar file
 .Op Fl p Ar pri
 .Op Fl t Ar tag
@@ -52,6 +52,10 @@ system log module.
 .Pp
 The options are as follows:
 .Bl -tag -width "-f file"
+.It Fl c
+If unable to pass the message to
+.Xr syslogd 8 ,
+attempt to write the message to the console.
 .It Fl f Ar file
 Read from the specified
 .Ar file .
@@ -102,5 +106,5 @@ utility is compliant with the
 specification.
 .Pp
 The flags
-.Op Fl ifpst
+.Op Fl cfipst
 are extensions to that specification.

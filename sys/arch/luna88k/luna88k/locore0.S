@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.1 2017/07/23 09:17:17 aoyama Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.2 2018/06/06 12:58:05 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -196,13 +196,19 @@ ASLOCAL(main_init)
 	st	%r4, %r5, %lo16(_C_LABEL(first_addr))
 
 	/*
-	 * Have curcpu() point to the dummy cpuinfo structure,
+	 * Have curcpu() point to a valid cpuinfo structure,
 	 * and initialize cr17.
 	 * This is necessary for early spl*() usage, as well as
 	 * mutex diagnostic code.
 	 */
+#ifdef MULTIPROCESSOR
 	or.u	%r11, %r0,  %hi16(_ASM_LABEL(dummy_cpu))
 	or	%r11, %r11, %lo16(_ASM_LABEL(dummy_cpu))
+#else
+	/* Need to make sure this matches non-MP curcpu() */
+	or.u	%r11, %r0,  %hi16(_C_LABEL(m88k_cpus))
+	or	%r11, %r11, %lo16(_C_LABEL(m88k_cpus))
+#endif
 	stcr	%r11, CPU
 
 	/* Switch to startup stack */
@@ -364,6 +370,7 @@ GLOBAL(proc0paddr)
 ASLOCAL(master_mpu)
 	.word 0
 
+#ifdef MULTIPROCESSOR
 /* Dummy cpuinfo structure, for early bootstrap */
 ASLOCAL(dummy_cpu)
 	.word	3 /* CIF_ALIVE | CIF_PRIMARY */	/* ci_flags */
@@ -371,14 +378,10 @@ ASLOCAL(dummy_cpu)
 	.word	0				/* ci_curpcb */
 	.word	0				/* ci_curpmap */
 	.word	0				/* ci_cpuid */
-#ifdef MULTIPROCESSOR
 	.word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_begin */
 	.word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_end */
-#else
-	.word	0
-	.word	0
-#endif
 	.space	CPU_INFO_SIZEOF - 7 * 4
+#endif
 
 #if defined(DDB) || NKSYMS > 0
 GLOBAL(esym)

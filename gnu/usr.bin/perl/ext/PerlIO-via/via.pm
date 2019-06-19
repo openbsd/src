@@ -1,5 +1,5 @@
 package PerlIO::via;
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 require XSLoader;
 XSLoader::load();
 1;

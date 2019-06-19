@@ -12,12 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/Instruction.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/MDBuilder.h"
-#include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/Type.h"
 using namespace llvm;
@@ -89,6 +88,10 @@ void Instruction::moveBefore(Instruction *MovePos) {
   moveBefore(*MovePos->getParent(), MovePos->getIterator());
 }
 
+void Instruction::moveAfter(Instruction *MovePos) {
+  moveBefore(*MovePos->getParent(), ++MovePos->getIterator());
+}
+
 void Instruction::moveBefore(BasicBlock &BB,
                              SymbolTableList<Instruction>::iterator I) {
   assert(I == BB.end() || I->getParent() == &BB);
@@ -142,9 +145,14 @@ bool Instruction::isExact() const {
   return cast<PossiblyExactOperator>(this)->isExact();
 }
 
-void Instruction::setHasUnsafeAlgebra(bool B) {
+void Instruction::setFast(bool B) {
   assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
-  cast<FPMathOperator>(this)->setHasUnsafeAlgebra(B);
+  cast<FPMathOperator>(this)->setFast(B);
+}
+
+void Instruction::setHasAllowReassoc(bool B) {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  cast<FPMathOperator>(this)->setHasAllowReassoc(B);
 }
 
 void Instruction::setHasNoNaNs(bool B) {
@@ -167,6 +175,11 @@ void Instruction::setHasAllowReciprocal(bool B) {
   cast<FPMathOperator>(this)->setHasAllowReciprocal(B);
 }
 
+void Instruction::setHasApproxFunc(bool B) {
+  assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
+  cast<FPMathOperator>(this)->setHasApproxFunc(B);
+}
+
 void Instruction::setFastMathFlags(FastMathFlags FMF) {
   assert(isa<FPMathOperator>(this) && "setting fast-math flag on invalid op");
   cast<FPMathOperator>(this)->setFastMathFlags(FMF);
@@ -177,9 +190,14 @@ void Instruction::copyFastMathFlags(FastMathFlags FMF) {
   cast<FPMathOperator>(this)->copyFastMathFlags(FMF);
 }
 
-bool Instruction::hasUnsafeAlgebra() const {
+bool Instruction::isFast() const {
   assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
-  return cast<FPMathOperator>(this)->hasUnsafeAlgebra();
+  return cast<FPMathOperator>(this)->isFast();
+}
+
+bool Instruction::hasAllowReassoc() const {
+  assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
+  return cast<FPMathOperator>(this)->hasAllowReassoc();
 }
 
 bool Instruction::hasNoNaNs() const {
@@ -205,6 +223,11 @@ bool Instruction::hasAllowReciprocal() const {
 bool Instruction::hasAllowContract() const {
   assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
   return cast<FPMathOperator>(this)->hasAllowContract();
+}
+
+bool Instruction::hasApproxFunc() const {
+  assert(isa<FPMathOperator>(this) && "getting fast-math flag on invalid op");
+  return cast<FPMathOperator>(this)->hasApproxFunc();
 }
 
 FastMathFlags Instruction::getFastMathFlags() const {
@@ -567,6 +590,18 @@ bool Instruction::mayThrow() const {
   return isa<ResumeInst>(this);
 }
 
+bool Instruction::isSafeToRemove() const {
+  return (!isa<CallInst>(this) || !this->mayHaveSideEffects()) &&
+         !isa<TerminatorInst>(this);
+}
+
+const Instruction *Instruction::getNextNonDebugInstruction() const {
+  for (const Instruction *I = getNextNode(); I; I = I->getNextNode())
+    if (!isa<DbgInfoIntrinsic>(I))
+      return I;
+  return nullptr;
+}
+
 bool Instruction::isAssociative() const {
   unsigned Opcode = getOpcode();
   if (isAssociative(Opcode))
@@ -575,7 +610,8 @@ bool Instruction::isAssociative() const {
   switch (Opcode) {
   case FMul:
   case FAdd:
-    return cast<FPMathOperator>(this)->hasUnsafeAlgebra();
+    return cast<FPMathOperator>(this)->hasAllowReassoc() &&
+           cast<FPMathOperator>(this)->hasNoSignedZeros();
   default:
     return false;
   }
@@ -621,7 +657,6 @@ void Instruction::copyMetadata(const Instruction &SrcInst,
   }
   if (WL.empty() || WLS.count(LLVMContext::MD_dbg))
     setDebugLoc(SrcInst.getDebugLoc());
-  return;
 }
 
 Instruction *Instruction::clone() const {

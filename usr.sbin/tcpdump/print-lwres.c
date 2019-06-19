@@ -323,12 +323,10 @@ lwres_printaddr(lwres_addr_t *ap)
 		printf(" %s", ipaddr_string(p));
 		p += sizeof(struct in_addr);
 		break;
-#ifdef INET6
 	case 2:	/* IPv6 */
 		printf(" %s", ip6addr_string(p));
 		p += sizeof(struct in6_addr);
 		break;
-#endif
 	default:
 		printf(" %lu/", (unsigned long)ntohl(ap->family));
 		for (i = 0; i < l; i++)
@@ -354,7 +352,7 @@ lwres_print(const u_char *bp, u_int length)
 	np = (const struct lwres_lwpacket *)bp;
 	TCHECK(np->authlength);
 
-	printf(" lwres");
+	printf("lwres");
 	v = ntohs(np->version);
 	if (vflag || v != LWRES_LWPACKETVERSION_0)
 		printf(" v%u", v);

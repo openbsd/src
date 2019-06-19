@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.150 2018/02/27 22:46:53 espie Exp $
+# $OpenBSD: Delete.pm,v 1.157 2018/07/07 11:32:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -79,21 +79,13 @@ sub remove_packing_info
 	    $state->fatal("can't finish removing directory #1: #2", $dir, $!);
 }
 
-sub delete_package
+sub delete_handle
 {
-	my ($pkgname, $state) = @_;
+	my ($handle, $state) = @_;
+	my $pkgname = $handle->pkgname;
 	$state->progress->message($state->f("reading list for #1", $pkgname));
-	my $plist = OpenBSD::PackingList->from_installation($pkgname) or
-	    $state->fatal("bad package #1", $pkgname);
-	if (!defined $plist->pkgname) {
-		$state->fatal("package #1 is missing a \@name in plist",
-		    $pkgname);
-	}
-	if ($plist->pkgname ne $pkgname) {
-		$state->fatal("Package real name #1 does not match #2",
-			$plist->pkgname, $pkgname);
-	}
-	if ($plist->has('firmware')) {
+	my $plist = $handle->plist;
+	if ($plist->has('firmware') && !$state->defines('FW_UPDATE')) {
 		if ($state->is_interactive) {
 			if (!$state->confirm_defaults_to_no(
 			    "\nDelete firmware #1", $pkgname)) {
@@ -101,7 +93,8 @@ sub delete_package
 				return;
 			}
 		} else {
-			$state->errsay("NOT deleting #1: use fwupdate -d", $pkgname);
+			$state->errsay("NOT deleting #1: use fw_update -d", 
+			    $pkgname);
 			return;
 		}
 	}
@@ -141,10 +134,12 @@ sub delete_plist
 
 	my $pkgname = $plist->pkgname;
 	$state->{pkgname} = $pkgname;
-	if (!$state->{size_only}) {
-		$plist->register_manpage($state, 'rmman');
-		manpages_unindex($state);
-		$state->progress->visit_with_size($plist, 'delete');
+	if (!$state->defines('stub')) {
+		if (!$state->{size_only}) {
+			$plist->register_manpage($state, 'rmman');
+			manpages_unindex($state);
+			$state->progress->visit_with_size($plist, 'delete');
+		}
 	}
 
 	unregister_dependencies($plist, $state);
@@ -377,6 +372,26 @@ sub should_run
 {
 	my ($self, $state) = @_;
 	return $state->replacing;
+}
+
+package OpenBSD::PackingElement::DefineTag::Atend;
+sub delete
+{
+	my ($self, $state) = @_;
+	if (!$state->replacing) {
+		$state->{tags}{deleted}{$self->name} = 1;
+	}
+}
+
+
+package OpenBSD::PackingElement::Tag;
+sub delete
+{
+	my ($self, $state) = @_;
+
+	for my $d (@{$self->{definition_list}}) {
+		$d->add_tag($self, "delete", $state);
+	}
 }
 
 package OpenBSD::PackingElement::FileBase;

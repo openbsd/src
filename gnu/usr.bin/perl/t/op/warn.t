@@ -7,7 +7,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan 32;
+plan 33;
 
 my @warnings;
 my $wa = []; my $ea = [];
@@ -220,3 +220,22 @@ EOF
 }
 
 1;
+# RT #132602 pp_warn in scalar context was extending the stack then
+# setting SP back to the old, freed stack frame
+
+fresh_perl_is(<<'EOF', "OK\n", {stderr => 1}, "RT #132602");
+$SIG{__WARN__} = sub {};
+
+my (@a, @b);
+for my $i (1..300) {
+    push @a, $i;
+    () = (@a, warn);
+}
+
+# mess with the stack some more for ASan's benefit
+for my $i (1..100) {
+    push @a, $i;
+    @b = @a;
+}
+print "OK\n";
+EOF

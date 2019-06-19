@@ -24,7 +24,7 @@ static int
 constant_11 (pTHX_ const char *name, IV *iv_return) {
   /* When generated this function returned values for the list of names given
      here.  However, subsequent manual editing may have added or removed some.
-     ITIMER_PROF ITIMER_REAL d_getitimer d_nanosleep d_setitimer */
+     ITIMER_PROF ITIMER_REAL d_getitimer d_nanosleep d_setitimer d_utimensat */
   /* Offset 7 gives the best switch position.  */
   switch (name[7]) {
   case 'P':
@@ -83,6 +83,63 @@ constant_11 (pTHX_ const char *name, IV *iv_return) {
 #endif
     }
     break;
+  case 'n':
+    if (memEQ(name, "d_utimensat", 11)) {
+    /*                      ^          */
+#ifdef HAS_UTIMENSAT
+      *iv_return = 1;
+      return PERL_constant_ISIV;
+#else
+      *iv_return = 0;
+      return PERL_constant_ISIV;
+#endif
+    }
+    break;
+  }
+  return PERL_constant_NOTFOUND;
+}
+
+static int
+constant_12 (pTHX_ const char *name, IV *iv_return) {
+  /* When generated this function returned values for the list of names given
+     here.  However, subsequent manual editing may have added or removed some.
+     CLOCK_SECOND CLOCK_UPTIME d_hires_stat */
+  /* Offset 10 gives the best switch position.  */
+  switch (name[10]) {
+  case 'M':
+    if (memEQ(name, "CLOCK_UPTIME", 12)) {
+    /*                         ^        */
+#ifdef CLOCK_UPTIME
+      *iv_return = CLOCK_UPTIME;
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 'N':
+    if (memEQ(name, "CLOCK_SECOND", 12)) {
+    /*                         ^        */
+#ifdef CLOCK_SECOND
+      *iv_return = CLOCK_SECOND;
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 'a':
+    if (memEQ(name, "d_hires_stat", 12)) {
+    /*                         ^        */
+#ifdef TIME_HIRES_STAT
+      *iv_return = 1;
+      return PERL_constant_ISIV;
+#else
+      *iv_return = 0;
+      return PERL_constant_ISIV;
+#endif
+    }
+    break;
   }
   return PERL_constant_NOTFOUND;
 }
@@ -91,12 +148,12 @@ static int
 constant_13 (pTHX_ const char *name, IV *iv_return) {
   /* When generated this function returned values for the list of names given
      here.  However, subsequent manual editing may have added or removed some.
-     CLOCK_HIGHRES TIMER_ABSTIME d_hires_utime */
-  /* Offset 1 gives the best switch position.  */
-  switch (name[1]) {
-  case 'I':
-    if (memEQ(name, "TIMER_ABSTIME", 13)) {
-    /*                ^                  */
+     CLOCK_HIGHRES CLOCK_VIRTUAL TIMER_ABSTIME d_hires_utime */
+  /* Offset 12 gives the best switch position.  */
+  switch (name[12]) {
+  case 'E':
+    if (memEQ(name, "TIMER_ABSTIM", 12)) {
+    /*                           E      */
 #ifdef TIMER_ABSTIME
       *iv_return = TIMER_ABSTIME;
       return PERL_constant_ISIV;
@@ -106,8 +163,19 @@ constant_13 (pTHX_ const char *name, IV *iv_return) {
     }
     break;
   case 'L':
-    if (memEQ(name, "CLOCK_HIGHRES", 13)) {
-    /*                ^                  */
+    if (memEQ(name, "CLOCK_VIRTUA", 12)) {
+    /*                           L      */
+#ifdef CLOCK_VIRTUAL
+      *iv_return = CLOCK_VIRTUAL;
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 'S':
+    if (memEQ(name, "CLOCK_HIGHRE", 12)) {
+    /*                           S      */
 #ifdef CLOCK_HIGHRES
       *iv_return = CLOCK_HIGHRES;
       return PERL_constant_ISIV;
@@ -116,9 +184,9 @@ constant_13 (pTHX_ const char *name, IV *iv_return) {
 #endif
     }
     break;
-  case '_':
-    if (memEQ(name, "d_hires_utime", 13)) {
-    /*                ^                  */
+  case 'e':
+    if (memEQ(name, "d_hires_utim", 12)) {
+    /*                           e      */
 #ifdef TIME_HIRES_UTIME
       *iv_return = 1;
       return PERL_constant_ISIV;
@@ -136,8 +204,8 @@ static int
 constant_14 (pTHX_ const char *name, IV *iv_return) {
   /* When generated this function returned values for the list of names given
      here.  However, subsequent manual editing may have added or removed some.
-     CLOCKS_PER_SEC CLOCK_REALTIME CLOCK_SOFTTIME ITIMER_VIRTUAL d_clock_getres
-     d_gettimeofday */
+     CLOCKS_PER_SEC CLOCK_BOOTTIME CLOCK_REALTIME CLOCK_SOFTTIME ITIMER_VIRTUAL
+     d_clock_getres d_gettimeofday */
   /* Offset 8 gives the best switch position.  */
   switch (name[8]) {
   case 'A':
@@ -178,6 +246,17 @@ constant_14 (pTHX_ const char *name, IV *iv_return) {
     /*                       ^            */
 #ifdef ITIMER_VIRTUAL
       *iv_return = ITIMER_VIRTUAL;
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 'O':
+    if (memEQ(name, "CLOCK_BOOTTIME", 14)) {
+    /*                       ^            */
+#ifdef CLOCK_BOOTTIME
+      *iv_return = CLOCK_BOOTTIME;
       return PERL_constant_ISIV;
 #else
       return PERL_constant_NOTDEF;
@@ -269,6 +348,50 @@ constant_15 (pTHX_ const char *name, IV *iv_return) {
 }
 
 static int
+constant_19 (pTHX_ const char *name, IV *iv_return) {
+  /* When generated this function returned values for the list of names given
+     here.  However, subsequent manual editing may have added or removed some.
+     CLOCK_MONOTONIC_RAW CLOCK_REALTIME_FAST CLOCK_UPTIME_COARSE */
+  /* Offset 9 gives the best switch position.  */
+  switch (name[9]) {
+  case 'I':
+    if (memEQ(name, "CLOCK_UPTIME_COARSE", 19)) {
+    /*                        ^                */
+#ifdef CLOCK_UPTIME_COARSE
+      *iv_return = CLOCK_UPTIME_COARSE;
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 'L':
+    if (memEQ(name, "CLOCK_REALTIME_FAST", 19)) {
+    /*                        ^                */
+#ifdef CLOCK_REALTIME_FAST
+      *iv_return = CLOCK_REALTIME_FAST;
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 'O':
+    if (memEQ(name, "CLOCK_MONOTONIC_RAW", 19)) {
+    /*                        ^                */
+#ifdef CLOCK_MONOTONIC_RAW
+      *iv_return = CLOCK_MONOTONIC_RAW;
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  }
+  return PERL_constant_NOTFOUND;
+}
+
+static int
 constant (pTHX_ const char *name, STRLEN len, IV *iv_return) {
   /* Initially switch on the length of the name.  */
   /* When generated this function returned values for the list of names given
@@ -281,18 +404,25 @@ constant (pTHX_ const char *name, STRLEN len, IV *iv_return) {
      Regenerate these constant functions by feeding this entire source file to
      perl -x
 
-#!perl -w
+#!/opt/local/perl-5.25.6/bin/perl -w
 use ExtUtils::Constant qw (constant_types C_constant XS_constant);
 
 my $types = {map {($_, 1)} qw(IV)};
-my @names = (qw(CLOCKS_PER_SEC CLOCK_HIGHRES CLOCK_MONOTONIC
-	       CLOCK_PROCESS_CPUTIME_ID CLOCK_REALTIME CLOCK_SOFTTIME
-	       CLOCK_THREAD_CPUTIME_ID CLOCK_TIMEOFDAY ITIMER_PROF ITIMER_REAL
+my @names = (qw(CLOCKS_PER_SEC CLOCK_BOOTTIME CLOCK_HIGHRES CLOCK_MONOTONIC
+	       CLOCK_MONOTONIC_COARSE CLOCK_MONOTONIC_FAST
+	       CLOCK_MONOTONIC_PRECISE CLOCK_MONOTONIC_RAW
+	       CLOCK_PROCESS_CPUTIME_ID CLOCK_PROF CLOCK_REALTIME
+	       CLOCK_REALTIME_COARSE CLOCK_REALTIME_FAST CLOCK_REALTIME_PRECISE
+	       CLOCK_REALTIME_RAW CLOCK_SECOND CLOCK_SOFTTIME
+	       CLOCK_THREAD_CPUTIME_ID CLOCK_TIMEOFDAY CLOCK_UPTIME
+	       CLOCK_UPTIME_COARSE CLOCK_UPTIME_FAST CLOCK_UPTIME_PRECISE
+	       CLOCK_UPTIME_RAW CLOCK_VIRTUAL ITIMER_PROF ITIMER_REAL
 	       ITIMER_REALPROF ITIMER_VIRTUAL TIMER_ABSTIME),
             {name=>"d_clock", type=>"IV", macro=>"TIME_HIRES_CLOCK", value=>"1", default=>["IV", "0"]},
             {name=>"d_clock_getres", type=>"IV", macro=>"TIME_HIRES_CLOCK_GETRES", value=>"1", default=>["IV", "0"]},
             {name=>"d_clock_gettime", type=>"IV", macro=>"TIME_HIRES_CLOCK_GETTIME", value=>"1", default=>["IV", "0"]},
             {name=>"d_clock_nanosleep", type=>"IV", macro=>"TIME_HIRES_CLOCK_NANOSLEEP", value=>"1", default=>["IV", "0"]},
+            {name=>"d_futimens", type=>"IV", macro=>"HAS_FUTIMENS", value=>"1", default=>["IV", "0"]},
             {name=>"d_getitimer", type=>"IV", macro=>"HAS_GETITIMER", value=>"1", default=>["IV", "0"]},
             {name=>"d_gettimeofday", type=>"IV", macro=>"HAS_GETTIMEOFDAY", value=>"1", default=>["IV", "0"]},
             {name=>"d_hires_stat", type=>"IV", macro=>"TIME_HIRES_STAT", value=>"1", default=>["IV", "0"]},
@@ -300,7 +430,8 @@ my @names = (qw(CLOCKS_PER_SEC CLOCK_HIGHRES CLOCK_MONOTONIC
             {name=>"d_nanosleep", type=>"IV", macro=>"TIME_HIRES_NANOSLEEP", value=>"1", default=>["IV", "0"]},
             {name=>"d_setitimer", type=>"IV", macro=>"HAS_SETITIMER", value=>"1", default=>["IV", "0"]},
             {name=>"d_ualarm", type=>"IV", macro=>"HAS_UALARM", value=>"1", default=>["IV", "0"]},
-            {name=>"d_usleep", type=>"IV", macro=>"HAS_USLEEP", value=>"1", default=>["IV", "0"]});
+            {name=>"d_usleep", type=>"IV", macro=>"HAS_USLEEP", value=>"1", default=>["IV", "0"]},
+            {name=>"d_utimensat", type=>"IV", macro=>"HAS_UTIMENSAT", value=>"1", default=>["IV", "0"]});
 
 print constant_types(), "\n"; # macro defs
 foreach (C_constant ("Time::HiRes", 'constant', 'IV', $types, undef, 3, @names) ) {
@@ -354,19 +485,41 @@ __END__
       break;
     }
     break;
+  case 10:
+    /* Names all of length 10.  */
+    /* CLOCK_PROF d_futimens */
+    /* Offset 5 gives the best switch position.  */
+    switch (name[5]) {
+    case '_':
+      if (memEQ(name, "CLOCK_PROF", 10)) {
+      /*                    ^           */
+#ifdef CLOCK_PROF
+        *iv_return = CLOCK_PROF;
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'i':
+      if (memEQ(name, "d_futimens", 10)) {
+      /*                    ^           */
+#ifdef HAS_FUTIMENS
+        *iv_return = 1;
+        return PERL_constant_ISIV;
+#else
+        *iv_return = 0;
+        return PERL_constant_ISIV;
+#endif
+      }
+      break;
+    }
+    break;
   case 11:
     return constant_11 (aTHX_ name, iv_return);
     break;
   case 12:
-    if (memEQ(name, "d_hires_stat", 12)) {
-#ifdef TIME_HIRES_STAT
-      *iv_return = 1;
-      return PERL_constant_ISIV;
-#else
-      *iv_return = 0;
-      return PERL_constant_ISIV;
-#endif
-    }
+    return constant_12 (aTHX_ name, iv_return);
     break;
   case 13:
     return constant_13 (aTHX_ name, iv_return);
@@ -377,25 +530,154 @@ __END__
   case 15:
     return constant_15 (aTHX_ name, iv_return);
     break;
-  case 17:
-    if (memEQ(name, "d_clock_nanosleep", 17)) {
-#ifdef TIME_HIRES_CLOCK_NANOSLEEP
-      *iv_return = 1;
-      return PERL_constant_ISIV;
-#else
-      *iv_return = 0;
-      return PERL_constant_ISIV;
-#endif
-    }
-    break;
-  case 23:
-    if (memEQ(name, "CLOCK_THREAD_CPUTIME_ID", 23)) {
-#ifdef CLOCK_THREAD_CPUTIME_ID
-      *iv_return = CLOCK_THREAD_CPUTIME_ID;
+  case 16:
+    if (memEQ(name, "CLOCK_UPTIME_RAW", 16)) {
+#ifdef CLOCK_UPTIME_RAW
+      *iv_return = CLOCK_UPTIME_RAW;
       return PERL_constant_ISIV;
 #else
       return PERL_constant_NOTDEF;
 #endif
+    }
+    break;
+  case 17:
+    /* Names all of length 17.  */
+    /* CLOCK_UPTIME_FAST d_clock_nanosleep */
+    /* Offset 5 gives the best switch position.  */
+    switch (name[5]) {
+    case '_':
+      if (memEQ(name, "CLOCK_UPTIME_FAST", 17)) {
+      /*                    ^                  */
+#ifdef CLOCK_UPTIME_FAST
+        *iv_return = CLOCK_UPTIME_FAST;
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'c':
+      if (memEQ(name, "d_clock_nanosleep", 17)) {
+      /*                    ^                  */
+#ifdef TIME_HIRES_CLOCK_NANOSLEEP
+        *iv_return = 1;
+        return PERL_constant_ISIV;
+#else
+        *iv_return = 0;
+        return PERL_constant_ISIV;
+#endif
+      }
+      break;
+    }
+    break;
+  case 18:
+    if (memEQ(name, "CLOCK_REALTIME_RAW", 18)) {
+#ifdef CLOCK_REALTIME_RAW
+      *iv_return = CLOCK_REALTIME_RAW;
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 19:
+    return constant_19 (aTHX_ name, iv_return);
+    break;
+  case 20:
+    /* Names all of length 20.  */
+    /* CLOCK_MONOTONIC_FAST CLOCK_UPTIME_PRECISE */
+    /* Offset 7 gives the best switch position.  */
+    switch (name[7]) {
+    case 'O':
+      if (memEQ(name, "CLOCK_MONOTONIC_FAST", 20)) {
+      /*                      ^                   */
+#ifdef CLOCK_MONOTONIC_FAST
+        *iv_return = CLOCK_MONOTONIC_FAST;
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'P':
+      if (memEQ(name, "CLOCK_UPTIME_PRECISE", 20)) {
+      /*                      ^                   */
+#ifdef CLOCK_UPTIME_PRECISE
+        *iv_return = CLOCK_UPTIME_PRECISE;
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    }
+    break;
+  case 21:
+    if (memEQ(name, "CLOCK_REALTIME_COARSE", 21)) {
+#ifdef CLOCK_REALTIME_COARSE
+      *iv_return = CLOCK_REALTIME_COARSE;
+      return PERL_constant_ISIV;
+#else
+      return PERL_constant_NOTDEF;
+#endif
+    }
+    break;
+  case 22:
+    /* Names all of length 22.  */
+    /* CLOCK_MONOTONIC_COARSE CLOCK_REALTIME_PRECISE */
+    /* Offset 12 gives the best switch position.  */
+    switch (name[12]) {
+    case 'M':
+      if (memEQ(name, "CLOCK_REALTIME_PRECISE", 22)) {
+      /*                           ^                */
+#ifdef CLOCK_REALTIME_PRECISE
+        *iv_return = CLOCK_REALTIME_PRECISE;
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'N':
+      if (memEQ(name, "CLOCK_MONOTONIC_COARSE", 22)) {
+      /*                           ^                */
+#ifdef CLOCK_MONOTONIC_COARSE
+        *iv_return = CLOCK_MONOTONIC_COARSE;
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    }
+    break;
+  case 23:
+    /* Names all of length 23.  */
+    /* CLOCK_MONOTONIC_PRECISE CLOCK_THREAD_CPUTIME_ID */
+    /* Offset 22 gives the best switch position.  */
+    switch (name[22]) {
+    case 'D':
+      if (memEQ(name, "CLOCK_THREAD_CPUTIME_I", 22)) {
+      /*                                     D      */
+#ifdef CLOCK_THREAD_CPUTIME_ID
+        *iv_return = CLOCK_THREAD_CPUTIME_ID;
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
+    case 'E':
+      if (memEQ(name, "CLOCK_MONOTONIC_PRECIS", 22)) {
+      /*                                     E      */
+#ifdef CLOCK_MONOTONIC_PRECISE
+        *iv_return = CLOCK_MONOTONIC_PRECISE;
+        return PERL_constant_ISIV;
+#else
+        return PERL_constant_NOTDEF;
+#endif
+      }
+      break;
     }
     break;
   case 24:

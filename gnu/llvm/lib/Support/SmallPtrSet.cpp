@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
@@ -31,8 +32,8 @@ void SmallPtrSetImplBase::shrink_and_clear() {
   NumNonEmpty = NumTombstones = 0;
 
   // Install the new array.  Clear all the buckets to empty.
-  CurArray = (const void**)malloc(sizeof(void*) * CurArraySize);
-  assert(CurArray && "Failed to allocate memory?");
+  CurArray = (const void**)safe_malloc(sizeof(void*) * CurArraySize);
+
   memset(CurArray, -1, CurArraySize*sizeof(void*));
 }
 
@@ -58,6 +59,7 @@ SmallPtrSetImplBase::insert_imp_big(const void *Ptr) {
   else
     ++NumNonEmpty; // Track density.
   *Bucket = Ptr;
+  incrementEpoch();
   return std::make_pair(Bucket, true);
 }
 
@@ -96,8 +98,10 @@ void SmallPtrSetImplBase::Grow(unsigned NewSize) {
   bool WasSmall = isSmall();
 
   // Install the new array.  Clear all the buckets to empty.
-  CurArray = (const void**)malloc(sizeof(void*) * NewSize);
-  assert(CurArray && "Failed to allocate memory?");
+  const void **NewBuckets = (const void**) safe_malloc(sizeof(void*) * NewSize);
+
+  // Reset member only if memory was allocated successfully
+  CurArray = NewBuckets;
   CurArraySize = NewSize;
   memset(CurArray, -1, NewSize*sizeof(void*));
 
@@ -124,8 +128,7 @@ SmallPtrSetImplBase::SmallPtrSetImplBase(const void **SmallStorage,
     CurArray = SmallArray;
   // Otherwise, allocate new heap space (unless we were the same size)
   } else {
-    CurArray = (const void**)malloc(sizeof(void*) * that.CurArraySize);
-    assert(CurArray && "Failed to allocate memory?");
+    CurArray = (const void**)safe_malloc(sizeof(void*) * that.CurArraySize);
   }
 
   // Copy over the that array.
@@ -154,15 +157,12 @@ void SmallPtrSetImplBase::CopyFrom(const SmallPtrSetImplBase &RHS) {
   // Otherwise, allocate new heap space (unless we were the same size)
   } else if (CurArraySize != RHS.CurArraySize) {
     if (isSmall())
-      CurArray = (const void**)malloc(sizeof(void*) * RHS.CurArraySize);
+      CurArray = (const void**)safe_malloc(sizeof(void*) * RHS.CurArraySize);
     else {
-      const void **T = (const void**)realloc(CurArray,
+      const void **T = (const void**)safe_realloc(CurArray,
                                              sizeof(void*) * RHS.CurArraySize);
-      if (!T)
-        free(CurArray);
       CurArray = T;
     }
-    assert(CurArray && "Failed to allocate memory?");
   }
 
   CopyHelper(RHS);

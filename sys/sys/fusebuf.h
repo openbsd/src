@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.h,v 1.12 2017/11/30 11:29:03 helg Exp $ */
+/* $OpenBSD: fusebuf.h,v 1.13 2018/06/19 11:27:54 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon
  * Copyright (c) 2013 Martin Pieuchot
@@ -33,6 +33,10 @@ struct fb_hdr {
 	int			fh_type;	/* type of data */
 	ino_t			fh_ino;		/* Inode of this fusebuf */
 	uint64_t		fh_uuid;	/* Uuid to track the answer */
+	pid_t			fh_tid;		/* calling proc thread id */
+	uid_t			fh_uid;		/* calling proc uid */
+	gid_t			fh_gid;		/* calling proc gid */
+	mode_t			fh_umask;	/* calling proc umask */
 };
 
 /* header for fuse file operations (like read/write/mkdir): */
@@ -74,6 +78,10 @@ struct fusebuf {
 #define fb_type		fb_hdr.fh_type
 #define fb_ino		fb_hdr.fh_ino
 #define fb_uuid		fb_hdr.fh_uuid
+#define fb_tid		fb_hdr.fh_tid
+#define fb_uid		fb_hdr.fh_uid
+#define fb_gid		fb_hdr.fh_gid
+#define fb_umask	fb_hdr.fh_umask
 
 #define fb_stat		FD.FD_stat
 #define fb_attr		FD.FD_attr

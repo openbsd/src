@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.h,v 1.20 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: cd9660_node.h,v 1.21 2019/01/20 16:09:41 anton Exp $	*/
 /*	$NetBSD: cd9660_node.h,v 1.15 1997/04/11 21:52:01 kleink Exp $	*/
 
 /*-
@@ -61,7 +61,6 @@ struct iso_node {
 	cdino_t	i_number;	/* the identity of the inode */
 				/* we use the actual starting block of the file */
 	struct	iso_mnt *i_mnt;	/* filesystem associated with this inode */
-	struct	lockf *i_lockf;	/* head of byte-level lock list */
 	doff_t	i_endoff;	/* end of useful stuff in directory */
 	doff_t	i_diroff;	/* offset in dir, where we found last entry */
 	doff_t	i_offset;	/* offset of free space in directory */

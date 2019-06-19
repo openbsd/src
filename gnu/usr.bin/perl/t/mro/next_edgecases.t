@@ -3,7 +3,9 @@
 use strict;
 use warnings;
 
-BEGIN { chdir 't' if -d 't'; require q(./test.pl); @INC = qw "../lib lib" }
+BEGIN { chdir 't' if -d 't'; require q(./test.pl);
+set_up_inc('../lib', 'lib');
+}
 
 plan(tests => 12);
 

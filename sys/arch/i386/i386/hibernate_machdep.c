@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.51 2018/03/20 04:18:40 jmatthew Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.55 2018/07/30 14:19:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -26,19 +26,19 @@
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 
-#include <dev/acpi/acpivar.h>
-
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmemrange.h>
 
+#include <machine/biosvar.h>
 #include <machine/hibernate.h>
-#include <machine/hibernate_var.h>
 #include <machine/kcore.h>
 #include <machine/pmap.h>
 
 #ifdef MULTIPROCESSOR
 #include <machine/mpbiosvar.h>
 #endif /* MULTIPROCESSOR */
+
+#include <dev/acpi/acpivar.h>
 
 #include "acpi.h"
 #include "wd.h"
@@ -52,8 +52,6 @@ void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
 void    hibernate_enter_resume_4k_pde(vaddr_t);
 void    hibernate_enter_resume_4m_pde(vaddr_t, paddr_t);
 
-extern	void hibernate_resume_machdep(void);
-extern	void hibernate_flush(void);
 extern	caddr_t start, end;
 extern	int ndumpmem;
 extern  struct dumpmem dumpmem[];
@@ -389,13 +387,13 @@ hibernate_inflate_skip(union hibernate_info *hib_info, paddr_t dest)
 void
 hibernate_enable_intr_machdep(void)
 {
-	enable_intr();
+	intr_enable();
 }
 
 void
 hibernate_disable_intr_machdep(void)
 {
-	disable_intr();
+	intr_disable();
 }
 
 #ifdef MULTIPROCESSOR

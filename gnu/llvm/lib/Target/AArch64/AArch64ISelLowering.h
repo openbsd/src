@@ -18,9 +18,9 @@
 #include "AArch64.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Instruction.h"
-#include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
 
@@ -290,7 +290,7 @@ public:
 
   /// Return true if the given shuffle mask can be codegen'd directly, or if it
   /// should be stack expanded.
-  bool isShuffleMaskLegal(const SmallVectorImpl<int> &M, EVT VT) const override;
+  bool isShuffleMaskLegal(ArrayRef<int> M, EVT VT) const override;
 
   /// Return the ISD::SETCC ValueType.
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
@@ -306,7 +306,11 @@ public:
                               MachineBasicBlock *MBB) const override;
 
   bool getTgtMemIntrinsic(IntrinsicInfo &Info, const CallInst &I,
+                          MachineFunction &MF,
                           unsigned Intrinsic) const override;
+
+  bool shouldReduceLoadWidth(SDNode *Load, ISD::LoadExtType ExtTy,
+                             EVT NewVT) const override;
 
   bool isTruncateFree(Type *Ty1, Type *Ty2) const override;
   bool isTruncateFree(EVT VT1, EVT VT2) const override;
@@ -331,6 +335,8 @@ public:
   bool isLegalAddImmediate(int64_t) const override;
   bool isLegalICmpImmediate(int64_t) const override;
 
+  bool shouldConsiderGEPOffsetSplit() const override;
+
   EVT getOptimalMemOpType(uint64_t Size, unsigned DstAlign, unsigned SrcAlign,
                           bool IsMemset, bool ZeroMemset, bool MemcpyStrSrc,
                           MachineFunction &MF) const override;
@@ -338,9 +344,10 @@ public:
   /// Return true if the addressing mode represented by AM is legal for this
   /// target, for a load/store of the specified type.
   bool isLegalAddressingMode(const DataLayout &DL, const AddrMode &AM, Type *Ty,
-                             unsigned AS) const override;
+                             unsigned AS,
+                             Instruction *I = nullptr) const override;
 
-  /// \brief Return the cost of the scaling factor used in the addressing
+  /// Return the cost of the scaling factor used in the addressing
   /// mode represented by AM for this target, for a load/store
   /// of the specified type.
   /// If the AM is supported, the return value must be >= 0.
@@ -355,13 +362,18 @@ public:
 
   const MCPhysReg *getScratchRegisters(CallingConv::ID CC) const override;
 
-  /// \brief Returns false if N is a bit extraction pattern of (X >> C) & Mask.
+  /// Returns false if N is a bit extraction pattern of (X >> C) & Mask.
   bool isDesirableToCommuteWithShift(const SDNode *N) const override;
 
-  /// \brief Returns true if it is beneficial to convert a load of a constant
+  /// Returns true if it is beneficial to convert a load of a constant
   /// to just the constant itself.
   bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                          Type *Ty) const override;
+
+  /// Return true if EXTRACT_SUBVECTOR is cheap for this result type
+  /// with this index.
+  bool isExtractSubvectorCheap(EVT ResVT, EVT SrcVT,
+                               unsigned Index) const override;
 
   Value *emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
                         AtomicOrdering Ord) const override;
@@ -413,7 +425,7 @@ public:
     // Do not merge to float value size (128 bytes) if no implicit
     // float attribute is set.
 
-    bool NoFloat = DAG.getMachineFunction().getFunction()->hasFnAttribute(
+    bool NoFloat = DAG.getMachineFunction().getFunction().hasFnAttribute(
         Attribute::NoImplicitFloat);
 
     if (NoFloat)
@@ -431,9 +443,35 @@ public:
 
   bool isMaskAndCmp0FoldingBeneficial(const Instruction &AndI) const override;
 
-  bool hasAndNotCompare(SDValue) const override {
-    // 'bics'
-    return true;
+  bool hasAndNotCompare(SDValue V) const override {
+    // We can use bics for any scalar.
+    return V.getValueType().isScalarInteger();
+  }
+
+  bool hasAndNot(SDValue Y) const override {
+    EVT VT = Y.getValueType();
+
+    if (!VT.isVector())
+      return hasAndNotCompare(Y);
+
+    return VT.getSizeInBits() >= 64; // vector 'bic'
+  }
+
+  bool shouldTransformSignedTruncationCheck(EVT XVT,
+                                            unsigned KeptBits) const override {
+    // For vectors, we don't have a preference..
+    if (XVT.isVector())
+      return false;
+
+    auto VTIsOk = [](EVT VT) -> bool {
+      return VT == MVT::i8 || VT == MVT::i16 || VT == MVT::i32 ||
+             VT == MVT::i64;
+    };
+
+    // We are ok with KeptBitsVT being byte/word/dword, what SXT supports.
+    // XVT will be larger than KeptBitsVT.
+    MVT KeptBitsVT = MVT::getIntegerVT(KeptBits);
+    return VTIsOk(XVT) && VTIsOk(KeptBitsVT);
   }
 
   bool hasBitPreservingFPLogic(EVT VT) const override {
@@ -442,8 +480,8 @@ public:
   }
 
   bool supportSplitCSR(MachineFunction *MF) const override {
-    return MF->getFunction()->getCallingConv() == CallingConv::CXX_FAST_TLS &&
-           MF->getFunction()->hasFnAttribute(Attribute::NoUnwind);
+    return MF->getFunction().getCallingConv() == CallingConv::CXX_FAST_TLS &&
+           MF->getFunction().hasFnAttribute(Attribute::NoUnwind);
   }
   void initializeSplitCSR(MachineBasicBlock *Entry) const override;
   void insertCopiesSplitCSR(
@@ -453,6 +491,9 @@ public:
   bool supportSwiftError() const override {
     return true;
   }
+
+  /// Enable aggressive FMA fusion on targets that want it.
+  bool enableAggressiveFMAFusion(EVT VT) const override;
 
   /// Returns the size of the platform's va_list object.
   unsigned getVaListSizeInBits(const DataLayout &DL) const override;
@@ -470,12 +511,15 @@ public:
 
   MachineMemOperand::Flags getMMOFlags(const Instruction &I) const override;
 
+  bool functionArgumentNeedsConsecutiveRegisters(Type *Ty,
+                                                 CallingConv::ID CallConv,
+                                                 bool isVarArg) const override;
 private:
-  bool isExtFreeImpl(const Instruction *Ext) const override;
-
   /// Keep a pointer to the AArch64Subtarget around so that we can
   /// make the right decision when generating code for different targets.
   const AArch64Subtarget *Subtarget;
+
+  bool isExtFreeImpl(const Instruction *Ext) const override;
 
   void addTypeForNEON(MVT VT, MVT PromotedBitwiseVT);
   void addDRTypeForNEON(MVT VT);
@@ -496,6 +540,8 @@ private:
                           const SDLoc &DL, SelectionDAG &DAG,
                           SmallVectorImpl<SDValue> &InVals, bool isThisReturn,
                           SDValue ThisVal) const;
+
+  SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
 
   SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const;
 
@@ -534,16 +580,20 @@ private:
                         unsigned Flag) const;
   SDValue getTargetNode(BlockAddressSDNode *N, EVT Ty, SelectionDAG &DAG,
                         unsigned Flag) const;
-  template <class NodeTy> SDValue getGOT(NodeTy *N, SelectionDAG &DAG) const;
   template <class NodeTy>
-  SDValue getAddrLarge(NodeTy *N, SelectionDAG &DAG) const;
-  template <class NodeTy> SDValue getAddr(NodeTy *N, SelectionDAG &DAG) const;
+  SDValue getGOT(NodeTy *N, SelectionDAG &DAG, unsigned Flags = 0) const;
+  template <class NodeTy>
+  SDValue getAddrLarge(NodeTy *N, SelectionDAG &DAG, unsigned Flags = 0) const;
+  template <class NodeTy>
+  SDValue getAddr(NodeTy *N, SelectionDAG &DAG, unsigned Flags = 0) const;
+  SDValue LowerADDROFRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerDarwinGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerELFGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerELFTLSDescCallSeq(SDValue SymAddr, const SDLoc &DL,
                                  SelectionDAG &DAG) const;
+  SDValue LowerWindowsGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
@@ -562,6 +612,7 @@ private:
   SDValue LowerVAARG(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerFLT_ROUNDS_(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSCALAR_TO_VECTOR(SDValue Op, SelectionDAG &DAG) const;
@@ -585,9 +636,15 @@ private:
   SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVECREDUCE(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerATOMIC_LOAD_SUB(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerATOMIC_LOAD_AND(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerWindowsDYNAMIC_STACKALLOC(SDValue Op, SDValue Chain,
+                                         SDValue &Size,
+                                         SelectionDAG &DAG) const;
 
   SDValue BuildSDIVPow2(SDNode *N, const APInt &Divisor, SelectionDAG &DAG,
-                        std::vector<SDNode *> *Created) const override;
+                        SmallVectorImpl<SDNode *> &Created) const override;
   SDValue getSqrtEstimate(SDValue Operand, SelectionDAG &DAG, int Enabled,
                           int &ExtraSteps, bool &UseOneConst,
                           bool Reciprocal) const override;
@@ -639,11 +696,9 @@ private:
   void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
                           SelectionDAG &DAG) const override;
 
-  bool functionArgumentNeedsConsecutiveRegisters(Type *Ty,
-                                                 CallingConv::ID CallConv,
-                                                 bool isVarArg) const override;
-
   bool shouldNormalizeToSelectSequence(LLVMContext &, EVT) const override;
+
+  void finalizeLowering(MachineFunction &MF) const override;
 };
 
 namespace AArch64 {

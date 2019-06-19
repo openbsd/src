@@ -60,7 +60,7 @@ with two additions:
 'e' may be specified multiple times. 'replacement' is interpreted
 as a double quoted string unless a single-quote (C<'>) is the delimiter.
 
-C<?pattern?> is like C<m/pattern/> but matches only once. No alternate
+C<m?pattern?> is like C<m/pattern/> but matches only once. No alternate
 delimiters can be used.  Must be reset with reset().
 
 =head2 SYNTAX
@@ -135,7 +135,7 @@ and L<perlunicode> for details.
    \W      A non-word character
    \s      A whitespace character
    \S      A non-whitespace character
-   \h      An horizontal whitespace
+   \h      A horizontal whitespace
    \H      A non horizontal whitespace
    \N      A non newline (when not followed by '{NAME}';;
            not valid in a character class; equivalent to [^\n]; it's
@@ -234,10 +234,15 @@ There is no quantifier C<{,n}>. That's interpreted as a literal string.
    (?:...)           Groups subexpressions without capturing (cluster)
    (?pimsx-imsx:...) Enable/disable option (as per m// modifiers)
    (?=...)           Zero-width positive lookahead assertion
+   (?*pla:...)       Same; avail experimentally starting in 5.28
    (?!...)           Zero-width negative lookahead assertion
+   (?*nla:...)       Same; avail experimentally starting in 5.28
    (?<=...)          Zero-width positive lookbehind assertion
+   (?*plb:...)       Same; avail experimentally starting in 5.28
    (?<!...)          Zero-width negative lookbehind assertion
+   (?*nlb:...)       Same; avail experimentally starting in 5.28
    (?>...)           Grab what we can, prohibit backtracking
+   (?*atomic:...)    Same; avail experimentally starting in 5.28
    (?|...)           Branch reset
    (?<name>...)      Named capture
    (?'name'...)      Named capture
@@ -308,7 +313,7 @@ Captured groups are numbered according to their I<opening> paren.
 
    pos         Return or set current match position
    quotemeta   Quote metacharacters
-   reset       Reset ?pattern? status
+   reset       Reset m?pattern? status
    study       Analyze string for optimizing matching
 
    split       Use a regex to split a string into parts
@@ -393,7 +398,7 @@ for details on regexes and internationalisation.
 =item *
 
 I<Mastering Regular Expressions> by Jeffrey Friedl
-(F<http://oreilly.com/catalog/9780596528126/>) for a thorough grounding and
+(L<http://oreilly.com/catalog/9780596528126/>) for a thorough grounding and
 reference on the topic.
 
 =back

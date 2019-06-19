@@ -13,8 +13,9 @@
 #include "AMDGPUSubtarget.h"
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"
+#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -75,7 +76,7 @@ public:
   MachineRegisterInfo *MRI;
   const SIInstrInfo *TII;
   const SIRegisterInfo *TRI;
-  const SISubtarget *ST;
+  const GCNSubtarget *ST;
 
   void foldOperand(MachineOperand &OpToFold,
                    MachineInstr *UseMI,
@@ -127,14 +128,18 @@ static bool isInlineConstantIfFolded(const SIInstrInfo *TII,
   unsigned Opc = UseMI.getOpcode();
   switch (Opc) {
   case AMDGPU::V_MAC_F32_e64:
-  case AMDGPU::V_MAC_F16_e64: {
+  case AMDGPU::V_MAC_F16_e64:
+  case AMDGPU::V_FMAC_F32_e64: {
     // Special case for mac. Since this is replaced with mad when folded into
     // src2, we need to check the legality for the final instruction.
     int Src2Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src2);
     if (static_cast<int>(OpNo) == Src2Idx) {
+      bool IsFMA = Opc == AMDGPU::V_FMAC_F32_e64;
       bool IsF32 = Opc == AMDGPU::V_MAC_F32_e64;
-      const MCInstrDesc &MadDesc
-        = TII->get(IsF32 ? AMDGPU::V_MAD_F32 : AMDGPU::V_MAD_F16);
+
+      unsigned Opc = IsFMA ?
+        AMDGPU::V_FMA_F32 : (IsF32 ? AMDGPU::V_MAD_F32 : AMDGPU::V_MAD_F16);
+      const MCInstrDesc &MadDesc = TII->get(Opc);
       return TII->isInlineConstant(OpToFold, MadDesc.OpInfo[OpNo].OperandType);
     }
     return false;
@@ -155,6 +160,35 @@ static bool updateOperand(FoldCandidate &Fold,
   assert(Old.isReg());
 
   if (Fold.isImm()) {
+    if (MI->getDesc().TSFlags & SIInstrFlags::IsPacked) {
+      // Set op_sel/op_sel_hi on this operand or bail out if op_sel is
+      // already set.
+      unsigned Opcode = MI->getOpcode();
+      int OpNo = MI->getOperandNo(&Old);
+      int ModIdx = -1;
+      if (OpNo == AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::src0))
+        ModIdx = AMDGPU::OpName::src0_modifiers;
+      else if (OpNo == AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::src1))
+        ModIdx = AMDGPU::OpName::src1_modifiers;
+      else if (OpNo == AMDGPU::getNamedOperandIdx(Opcode, AMDGPU::OpName::src2))
+        ModIdx = AMDGPU::OpName::src2_modifiers;
+      assert(ModIdx != -1);
+      ModIdx = AMDGPU::getNamedOperandIdx(Opcode, ModIdx);
+      MachineOperand &Mod = MI->getOperand(ModIdx);
+      unsigned Val = Mod.getImm();
+      if ((Val & SISrcMods::OP_SEL_0) || !(Val & SISrcMods::OP_SEL_1))
+        return false;
+      // If upper part is all zero we do not need op_sel_hi.
+      if (!isUInt<16>(Fold.ImmToFold)) {
+        if (!(Fold.ImmToFold & 0xffff)) {
+          Mod.setImm(Mod.getImm() | SISrcMods::OP_SEL_0);
+          Mod.setImm(Mod.getImm() & ~SISrcMods::OP_SEL_1);
+          Old.ChangeToImmediate((Fold.ImmToFold >> 16) & 0xffff);
+          return true;
+        }
+        Mod.setImm(Mod.getImm() & ~SISrcMods::OP_SEL_1);
+      }
+    }
     Old.ChangeToImmediate(Fold.ImmToFold);
     return true;
   }
@@ -195,13 +229,17 @@ static bool tryAddToFoldList(SmallVectorImpl<FoldCandidate> &FoldList,
 
     // Special case for v_mac_{f16, f32}_e64 if we are trying to fold into src2
     unsigned Opc = MI->getOpcode();
-    if ((Opc == AMDGPU::V_MAC_F32_e64 || Opc == AMDGPU::V_MAC_F16_e64) &&
+    if ((Opc == AMDGPU::V_MAC_F32_e64 || Opc == AMDGPU::V_MAC_F16_e64 ||
+         Opc == AMDGPU::V_FMAC_F32_e64) &&
         (int)OpNo == AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src2)) {
+      bool IsFMA = Opc == AMDGPU::V_FMAC_F32_e64;
       bool IsF32 = Opc == AMDGPU::V_MAC_F32_e64;
+      unsigned NewOpc = IsFMA ?
+        AMDGPU::V_FMA_F32 : (IsF32 ? AMDGPU::V_MAD_F32 : AMDGPU::V_MAD_F16);
 
       // Check if changing this to a v_mad_{f16, f32} instruction will allow us
       // to fold the operand.
-      MI->setDesc(TII->get(IsF32 ? AMDGPU::V_MAD_F32 : AMDGPU::V_MAD_F16));
+      MI->setDesc(TII->get(NewOpc));
       bool FoldAsMAD = tryAddToFoldList(FoldList, MI, OpNo, OpToFold, TII);
       if (FoldAsMAD) {
         MI->untieRegOperand(OpNo);
@@ -290,11 +328,11 @@ void SIFoldOperands::foldOperand(
     // copy since a subregister use tied to a full register def doesn't really
     // make sense. e.g. don't fold:
     //
-    // %vreg1 = COPY %vreg0:sub1
-    // %vreg2<tied3> = V_MAC_{F16, F32} %vreg3, %vreg4, %vreg1<tied0>
+    // %1 = COPY %0:sub1
+    // %2<tied3> = V_MAC_{F16, F32} %3, %4, %1<tied0>
     //
     //  into
-    // %vreg2<tied3> = V_MAC_{F16, F32} %vreg3, %vreg4, %vreg0:sub1<tied0>
+    // %2<tied3> = V_MAC_{F16, F32} %3, %4, %0:sub1<tied0>
     if (UseOp.isTied() && OpToFold.getSubReg() != AMDGPU::NoSubRegister)
       return;
   }
@@ -345,6 +383,7 @@ void SIFoldOperands::foldOperand(
     // Don't fold into target independent nodes.  Target independent opcodes
     // don't have defined register classes.
     if (UseDesc.isVariadic() ||
+        UseOp.isImplicit() ||
         UseDesc.OpInfo[UseOpIdx].RegClass == -1)
       return;
   }
@@ -470,7 +509,8 @@ static MachineOperand *getImmOrMaterializedImm(MachineRegisterInfo &MRI,
                                                MachineOperand &Op) {
   if (Op.isReg()) {
     // If this has a subregister, it obviously is a register source.
-    if (Op.getSubReg() != AMDGPU::NoSubRegister)
+    if (Op.getSubReg() != AMDGPU::NoSubRegister ||
+        !TargetRegisterInfo::isVirtualRegister(Op.getReg()))
       return &Op;
 
     MachineInstr *Def = MRI.getVRegDef(Op.getReg());
@@ -598,14 +638,14 @@ static bool tryFoldInst(const SIInstrInfo *TII,
     const MachineOperand *Src0 = TII->getNamedOperand(*MI, AMDGPU::OpName::src0);
     const MachineOperand *Src1 = TII->getNamedOperand(*MI, AMDGPU::OpName::src1);
     if (Src1->isIdenticalTo(*Src0)) {
-      DEBUG(dbgs() << "Folded " << *MI << " into ");
+      LLVM_DEBUG(dbgs() << "Folded " << *MI << " into ");
       int Src2Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src2);
       if (Src2Idx != -1)
         MI->RemoveOperand(Src2Idx);
       MI->RemoveOperand(AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src1));
       mutateCopyOp(*MI, TII->get(Src0->isReg() ? (unsigned)AMDGPU::COPY
                                                : getMovOpc(false)));
-      DEBUG(dbgs() << *MI << '\n');
+      LLVM_DEBUG(dbgs() << *MI << '\n');
       return true;
     }
   }
@@ -628,7 +668,7 @@ void SIFoldOperands::foldInstOperand(MachineInstr &MI,
     MachineOperand *NonInlineUse = nullptr;
     int NonInlineUseOpNo = -1;
 
-    MachineRegisterInfo::use_iterator NextUse, NextInstUse;
+    MachineRegisterInfo::use_iterator NextUse;
     for (MachineRegisterInfo::use_iterator
            Use = MRI->use_begin(Dst.getReg()), E = MRI->use_end();
          Use != E; Use = NextUse) {
@@ -646,7 +686,7 @@ void SIFoldOperands::foldInstOperand(MachineInstr &MI,
       // be folded due to multiple uses or operand constraints.
 
       if (OpToFold.isImm() && tryConstantFoldOp(*MRI, TII, UseMI, &OpToFold)) {
-        DEBUG(dbgs() << "Constant folded " << *UseMI <<'\n');
+        LLVM_DEBUG(dbgs() << "Constant folded " << *UseMI << '\n');
 
         // Some constant folding cases change the same immediate's use to a new
         // instruction, e.g. and x, 0 -> 0. Make sure we re-visit the user
@@ -713,8 +753,9 @@ void SIFoldOperands::foldInstOperand(MachineInstr &MI,
         // copies.
         MRI->clearKillFlags(Fold.OpToFold->getReg());
       }
-      DEBUG(dbgs() << "Folded source from " << MI << " into OpNo " <<
-            static_cast<int>(Fold.UseOpNo) << " of " << *Fold.UseMI << '\n');
+      LLVM_DEBUG(dbgs() << "Folded source from " << MI << " into OpNo "
+                        << static_cast<int>(Fold.UseOpNo) << " of "
+                        << *Fold.UseMI << '\n');
       tryFoldInst(TII, Fold.UseMI);
     } else if (Fold.isCommuted()) {
       // Restoring instruction's original operand order if fold has failed.
@@ -723,12 +764,15 @@ void SIFoldOperands::foldInstOperand(MachineInstr &MI,
   }
 }
 
+// Clamp patterns are canonically selected to v_max_* instructions, so only
+// handle them.
 const MachineOperand *SIFoldOperands::isClamp(const MachineInstr &MI) const {
   unsigned Op = MI.getOpcode();
   switch (Op) {
   case AMDGPU::V_MAX_F32_e64:
   case AMDGPU::V_MAX_F16_e64:
-  case AMDGPU::V_MAX_F64: {
+  case AMDGPU::V_MAX_F64:
+  case AMDGPU::V_PK_MAX_F16: {
     if (!TII->getNamedOperand(MI, AMDGPU::OpName::clamp)->getImm())
       return nullptr;
 
@@ -736,14 +780,24 @@ const MachineOperand *SIFoldOperands::isClamp(const MachineInstr &MI) const {
     const MachineOperand *Src0 = TII->getNamedOperand(MI, AMDGPU::OpName::src0);
     const MachineOperand *Src1 = TII->getNamedOperand(MI, AMDGPU::OpName::src1);
     if (!Src0->isReg() || !Src1->isReg() ||
+        Src0->getReg() != Src1->getReg() ||
         Src0->getSubReg() != Src1->getSubReg() ||
         Src0->getSubReg() != AMDGPU::NoSubRegister)
       return nullptr;
 
     // Can't fold up if we have modifiers.
-    if (TII->hasModifiersSet(MI, AMDGPU::OpName::src0_modifiers) ||
-        TII->hasModifiersSet(MI, AMDGPU::OpName::src1_modifiers) ||
-        TII->hasModifiersSet(MI, AMDGPU::OpName::omod))
+    if (TII->hasModifiersSet(MI, AMDGPU::OpName::omod))
+      return nullptr;
+
+    unsigned Src0Mods
+      = TII->getNamedOperand(MI, AMDGPU::OpName::src0_modifiers)->getImm();
+    unsigned Src1Mods
+      = TII->getNamedOperand(MI, AMDGPU::OpName::src1_modifiers)->getImm();
+
+    // Having a 0 op_sel_hi would require swizzling the output in the source
+    // instruction, which we can't do.
+    unsigned UnsetMods = (Op == AMDGPU::V_PK_MAX_F16) ? SISrcMods::OP_SEL_1 : 0;
+    if (Src0Mods != UnsetMods && Src1Mods != UnsetMods)
       return nullptr;
     return Src0;
   }
@@ -765,19 +819,24 @@ static bool hasOneNonDBGUseInst(const MachineRegisterInfo &MRI, unsigned Reg) {
   return true;
 }
 
+// FIXME: Clamp for v_mad_mixhi_f16 handled during isel.
 bool SIFoldOperands::tryFoldClamp(MachineInstr &MI) {
   const MachineOperand *ClampSrc = isClamp(MI);
   if (!ClampSrc || !hasOneNonDBGUseInst(*MRI, ClampSrc->getReg()))
     return false;
 
   MachineInstr *Def = MRI->getVRegDef(ClampSrc->getReg());
-  if (!TII->hasFPClamp(*Def))
+
+  // The type of clamp must be compatible.
+  if (TII->getClampMask(*Def) != TII->getClampMask(MI))
     return false;
+
   MachineOperand *DefClamp = TII->getNamedOperand(*Def, AMDGPU::OpName::clamp);
   if (!DefClamp)
     return false;
 
-  DEBUG(dbgs() << "Folding clamp " << *DefClamp << " into " << *Def << '\n');
+  LLVM_DEBUG(dbgs() << "Folding clamp " << *DefClamp << " into " << *Def
+                    << '\n');
 
   // Clamp is applied after omod, so it is OK if omod is set.
   DefClamp->setImm(1);
@@ -900,7 +959,7 @@ bool SIFoldOperands::tryFoldOMod(MachineInstr &MI) {
   if (TII->hasModifiersSet(*Def, AMDGPU::OpName::clamp))
     return false;
 
-  DEBUG(dbgs() << "Folding omod " << MI << " into " << *Def << '\n');
+  LLVM_DEBUG(dbgs() << "Folding omod " << MI << " into " << *Def << '\n');
 
   DefOMod->setImm(OMod);
   MRI->replaceRegWith(MI.getOperand(0).getReg(), Def->getOperand(0).getReg());
@@ -909,11 +968,11 @@ bool SIFoldOperands::tryFoldOMod(MachineInstr &MI) {
 }
 
 bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
-  if (skipFunction(*MF.getFunction()))
+  if (skipFunction(MF.getFunction()))
     return false;
 
   MRI = &MF.getRegInfo();
-  ST = &MF.getSubtarget<SISubtarget>();
+  ST = &MF.getSubtarget<GCNSubtarget>();
   TII = ST->getInstrInfo();
   TRI = &TII->getRegisterInfo();
 
@@ -954,9 +1013,9 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
       // Prevent folding operands backwards in the function. For example,
       // the COPY opcode must not be replaced by 1 in this example:
       //
-      //    %vreg3<def> = COPY %VGPR0; VGPR_32:%vreg3
+      //    %3 = COPY %vgpr0; VGPR_32:%3
       //    ...
-      //    %VGPR0<def> = V_MOV_B32_e32 1, %EXEC<imp-use>
+      //    %vgpr0 = V_MOV_B32_e32 1, implicit %exec
       MachineOperand &Dst = MI.getOperand(0);
       if (Dst.isReg() &&
           !TargetRegisterInfo::isVirtualRegister(Dst.getReg()))

@@ -1,3 +1,4 @@
+/*	$OpenBSD: poly1305test.c,v 1.3 2018/07/17 17:06:49 tb Exp $	*/
 /*
  * Public Domain poly1305 from Andrew Moon
  * Based on poly1305-donna.c from:

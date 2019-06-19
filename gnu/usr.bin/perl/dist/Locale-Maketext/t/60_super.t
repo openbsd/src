@@ -9,23 +9,20 @@ BEGIN {
 
 {
     package Whunk::L10N;
-    use vars qw(@ISA %Lexicon);
-    @ISA =  'Locale::Maketext';
-    %Lexicon = ('hello' => 'SROBLR!');
+    our @ISA =  'Locale::Maketext';
+    our %Lexicon = ('hello' => 'SROBLR!');
 }
 
 {
     package Whunk::L10N::en;
-    use vars qw(@ISA %Lexicon);
-    @ISA =  'Whunk::L10N';
-    %Lexicon = ('hello' => 'HI AND STUFF!');
+    our @ISA =  'Whunk::L10N';
+    our %Lexicon = ('hello' => 'HI AND STUFF!');
 }
 
 {
     package Whunk::L10N::zh_tw;
-    use vars qw(@ISA %Lexicon);
-    @ISA =  'Whunk::L10N';
-    %Lexicon = ('hello' => 'NIHAU JOE!');
+    our @ISA =  'Whunk::L10N';
+    our %Lexicon = ('hello' => 'NIHAU JOE!');
 }
 
 $ENV{'REQUEST_METHOD'} = 'GET';

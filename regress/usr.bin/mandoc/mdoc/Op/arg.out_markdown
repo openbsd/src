@@ -1,0 +1,21 @@
+OP-ARG(1) - General Commands Manual
+
+# NAME
+
+**Op-arg** - escape sequences in the arguments of partial implicit macros
+
+# DESCRIPTION
+
+unquoted unescaped:
+\[&#64;]
+
+quoted unescaped:
+\[&#64;]
+
+unquoted escaped:
+\[&#64;]
+
+quoted escaped:
+\[&#64;]
+
+OpenBSD - December 21, 2018

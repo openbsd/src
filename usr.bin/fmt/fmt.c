@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.38 2017/02/20 15:48:00 schwarze Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.39 2018/10/18 05:04:52 otto Exp $	*/
 /*
  * This file is a derived work.
  * The changes are covered by the following Copyright and license:
@@ -245,7 +245,7 @@ static void	output_word(size_t, size_t, const char *, int, int, int);
 static void	output_indent(size_t);
 static void	center_stream(FILE *, const char *);
 static char	*get_line(FILE *);
-static void	*xrealloc(void *, size_t);
+static void	*xreallocarray(void *, size_t, size_t);
 void		usage(void);
 
 #define ERRS(x) (x >= 127 ? 127 : ++x)
@@ -680,16 +680,16 @@ get_line(FILE *stream)
 
 	if (buf == NULL) {
 		length = 100;
-		buf = xrealloc(NULL, length);
+		buf = xreallocarray(NULL, length, 1);
 	}
 
 	while ((ch = getc(stream)) != '\n' && ch != EOF) {
 		if ((len == 0) && (ch == '.' && !format_troff))
 			troff = 1;
 		if (troff || ch == '\t' || !iscntrl(ch)) {
-			if (len >= length) {
+			if (len >= length - 1) {
+				buf = xreallocarray(buf, length, 2);
 				length *= 2;
-				buf = xrealloc(buf, length);
 			}
 			buf[len++] = ch;
 		} else if (ch == '\b') {
@@ -706,11 +706,11 @@ get_line(FILE *stream)
 /* (Re)allocate some memory, exiting with an error if we can't.
  */
 static void *
-xrealloc(void *ptr, size_t nbytes)
+xreallocarray(void *ptr, size_t nmemb, size_t size)
 {
 	void *p;
 
-	p  = realloc(ptr, nbytes);
+	p  = reallocarray(ptr, nmemb, size);
 	if (p == NULL)
 		errx(1, "out of memory");
 	return p;

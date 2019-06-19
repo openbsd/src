@@ -1,0 +1,18 @@
+BEGINTEST
+<br/>
+initial reference: <cite class="Rs"><span class="RsA">author name</span>,
+  <i class="RsB">book title</i>.</cite>
+<p class="Pp">in a paragraph: <cite class="Rs"><span class="RsA">another
+    author</span>, <i class="RsB">another book</i>.</cite></p>
+</section>
+<section class="Sh">
+<h1 class="Sh" id="SEE_ALSO"><a class="permalink" href="#SEE_ALSO">SEE
+  ALSO</a></h1>
+initial reference:
+<p class="Pp"><cite class="Rs"><span class="RsA">author name</span>,
+    <i class="RsB">book title</i>.</cite></p>
+<p class="Pp">in a paragraph:</p>
+<p class="Pp"><cite class="Rs"><span class="RsA">another author</span>,
+    <i class="RsB">another book</i>.</cite></p>
+<pre>
+ENDTEST

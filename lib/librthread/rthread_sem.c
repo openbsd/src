@@ -1,6 +1,7 @@
-/*	$OpenBSD: rthread_sem.c,v 1.26 2017/09/05 02:40:54 guenther Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.30 2019/01/29 17:43:23 mpi Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
+ * Copyright (c) 2018 Paul Irofti <pirofti@openbsd.org>
  * All Rights Reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,6 +20,9 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/atomic.h>
+#include <sys/time.h>
+#include <sys/futex.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -33,8 +37,7 @@
 
 #include "rthread.h"
 #include "cancel.h"		/* in libc/include */
-
-#define SHARED_IDENT ((void *)-1)
+#include "synch.h"
 
 /* SHA256_DIGEST_STRING_LENGTH includes nul */
 /* "/tmp/" + sha256 + ".sem" */
@@ -53,58 +56,43 @@
  * Internal implementation of semaphores
  */
 int
-_sem_wait(sem_t sem, int tryonly, const struct timespec *abstime,
+_sem_wait(sem_t sem, int can_eintr, const struct timespec *abstime,
     int *delayed_cancel)
 {
-	void *ident = (void *)&sem->waitcount;
-	int r;
+	unsigned int val;
+	int error = 0;
 
-	if (sem->shared)
-		ident = SHARED_IDENT;
+	atomic_inc_int(&sem->waitcount);
+	for (;;) {
+		while ((val = sem->value) > 0) {
+			if (atomic_cas_uint(&sem->value, val, val - 1) == val) {
+				membar_enter_after_atomic();
+				atomic_dec_int(&sem->waitcount);
+				return (0);
+			}
+		}
+		if (error)
+			break;
 
-	_spinlock(&sem->lock);
-	if (sem->value) {
-		sem->value--;
-		r = 0;
-	} else if (tryonly) {
-		r = EAGAIN;
-	} else {
-		sem->waitcount++;
-		do {
-			r = __thrsleep(ident, CLOCK_REALTIME, abstime,
-			    &sem->lock, delayed_cancel);
-			_spinlock(&sem->lock);
-			/* ignore interruptions other than cancelation */
-			if (r == EINTR && (delayed_cancel == NULL ||
-			    *delayed_cancel == 0))
-				r = 0;
-		} while (r == 0 && sem->value == 0);
-		sem->waitcount--;
-		if (r == 0)
-			sem->value--;
+		error = _twait(&sem->value, 0, CLOCK_REALTIME, abstime);
+		/* ignore interruptions other than cancelation */
+		if ((error == ECANCELED && *delayed_cancel == 0) ||
+		    (error == EINTR && !can_eintr) || error == EAGAIN)
+			error = 0;
 	}
-	_spinunlock(&sem->lock);
-	return (r);
+	atomic_dec_int(&sem->waitcount);
+
+	return (error);
 }
 
 /* always increment count */
 int
 _sem_post(sem_t sem)
 {
-	void *ident = (void *)&sem->waitcount;
-	int rv = 0;
-
-	if (sem->shared)
-		ident = SHARED_IDENT;
-
-	_spinlock(&sem->lock);
-	sem->value++;
-	if (sem->waitcount) {
-		__thrwakeup(ident, 1);
-		rv = 1;
-	}
-	_spinunlock(&sem->lock);
-	return (rv);
+	membar_exit_before_atomic();
+	atomic_inc_int(&sem->value);
+	_wake(&sem->value, 1);
+	return 0;
 }
 
 /*
@@ -160,7 +148,6 @@ sem_init(sem_t *semp, int pshared, unsigned int value)
 		errno = ENOSPC;
 		return (-1);
 	}
-	sem->lock = _SPINLOCK_UNLOCKED;
 	sem->value = value;
 	*semp = sem;
 
@@ -207,9 +194,7 @@ sem_getvalue(sem_t *semp, int *sval)
 		return (-1);
 	}
 
-	_spinlock(&sem->lock);
 	*sval = sem->value;
-	_spinunlock(&sem->lock);
 
 	return (0);
 }
@@ -235,7 +220,7 @@ sem_wait(sem_t *semp)
 	struct tib *tib = TIB_GET();
 	pthread_t self;
 	sem_t sem;
-	int r;
+	int error;
 	PREP_CANCEL_POINT(tib);
 
 	if (!_threads_ready)
@@ -248,11 +233,13 @@ sem_wait(sem_t *semp)
 	}
 
 	ENTER_DELAYED_CANCEL_POINT(tib, self);
-	r = _sem_wait(sem, 0, NULL, &self->delayed_cancel);
-	LEAVE_CANCEL_POINT_INNER(tib, r);
+	error = _sem_wait(sem, 1, NULL, &self->delayed_cancel);
+	LEAVE_CANCEL_POINT_INNER(tib, error);
 
-	if (r) {
-		errno = r;
+	if (error) {
+		errno = error;
+		_rthread_debug(1, "%s: v=%d errno=%d\n", __func__,
+		    sem->value, errno);
 		return (-1);
 	}
 
@@ -265,24 +252,27 @@ sem_timedwait(sem_t *semp, const struct timespec *abstime)
 	struct tib *tib = TIB_GET();
 	pthread_t self;
 	sem_t sem;
-	int r;
+	int error;
 	PREP_CANCEL_POINT(tib);
+
+	if (!semp || !(sem = *semp) || abstime == NULL ||
+	   abstime->tv_nsec < 0 || abstime->tv_nsec >= 1000000000) {
+		errno = EINVAL;
+		return (-1);
+	}
 
 	if (!_threads_ready)
 		_rthread_init();
 	self = tib->tib_thread;
 
-	if (!semp || !(sem = *semp)) {
-		errno = EINVAL;
-		return (-1);
-	}
-
 	ENTER_DELAYED_CANCEL_POINT(tib, self);
-	r = _sem_wait(sem, 0, abstime, &self->delayed_cancel);
-	LEAVE_CANCEL_POINT_INNER(tib, r);
+	error = _sem_wait(sem, 1, abstime, &self->delayed_cancel);
+	LEAVE_CANCEL_POINT_INNER(tib, error);
 
-	if (r) {
-		errno = r == EWOULDBLOCK ? ETIMEDOUT : r;
+	if (error) {
+		errno = (error == EWOULDBLOCK) ? ETIMEDOUT : error;
+		_rthread_debug(1, "%s: v=%d errno=%d\n", __func__,
+		    sem->value, errno);
 		return (-1);
 	}
 
@@ -293,21 +283,23 @@ int
 sem_trywait(sem_t *semp)
 {
 	sem_t sem;
-	int r;
+	unsigned int val;
 
 	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;
 		return (-1);
 	}
 
-	r = _sem_wait(sem, 1, NULL, NULL);
-
-	if (r) {
-		errno = r;
-		return (-1);
+	while ((val = sem->value) > 0) {
+		if (atomic_cas_uint(&sem->value, val, val - 1) == val) {
+			membar_enter_after_atomic();
+			return (0);
+		}
 	}
 
-	return (0);
+	errno = EAGAIN;
+	_rthread_debug(1, "%s: v=%d errno=%d\n", __func__, sem->value, errno);
+	return (-1);
 }
 
 
@@ -398,7 +390,6 @@ sem_open(const char *name, int oflag, ...)
 		return (SEM_FAILED);
 	}
 	if (created) {
-		sem->lock = _SPINLOCK_UNLOCKED;
 		sem->value = value;
 		sem->shared = 1;
 	}

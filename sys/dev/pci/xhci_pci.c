@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.8 2016/06/01 06:19:59 mpi Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.10 2018/11/18 08:46:57 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		goto unmap_ret;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s", intrstr);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = pci_findvendor(pa->pa_id);
@@ -255,6 +255,9 @@ xhci_pci_takecontroller(struct xhci_pci_softc *psc, int silent)
 	int i;
 
 	cparams = XREAD4(&psc->sc, XHCI_HCCPARAMS);
+	if (cparams == 0xffffffff)
+		return;
+
 	eec = -1;
 
 	/* Synchronise with the BIOS if it owns the controller. */
@@ -262,6 +265,8 @@ xhci_pci_takecontroller(struct xhci_pci_softc *psc, int silent)
 	    xecp != 0 && XHCI_XECP_NEXT(eec);
 	    xecp += XHCI_XECP_NEXT(eec) << 2) {
 		eec = XREAD4(&psc->sc, xecp);
+		if (eec == 0xffffffff)
+			return;
 		if (XHCI_XECP_ID(eec) != XHCI_ID_USB_LEGACY)
 			continue;
 		bios_sem = XREAD1(&psc->sc, xecp + XHCI_XECP_BIOS_SEM);

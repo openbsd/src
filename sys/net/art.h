@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.17 2017/02/28 09:50:13 mpi Exp $ */
+/* $OpenBSD: art.h,v 1.18 2019/03/31 14:03:40 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -20,6 +20,7 @@
 #define _NET_ART_H_
 
 #include <sys/rwlock.h>
+#include <sys/srp.h>
 
 #define ART_MAXLVL	32	/* We currently use 32 levels for IPv6. */
 
@@ -35,6 +36,37 @@ struct art_root {
 	uint8_t			 ar_off;	/* Offset of the key in bytes */
 	unsigned int		 ar_rtableid;	/* ID of this routing table */
 };
+
+#define ISLEAF(e)	(((unsigned long)(e) & 1) == 0)
+#define SUBTABLE(e)	((struct art_table *)((unsigned long)(e) & ~1))
+#define ASNODE(t)	((struct art_node *)((unsigned long)(t) | 1))
+
+/*
+ * Allotment Table.
+ */
+struct art_table {
+	struct art_table	*at_parent;	/* Parent table */
+	uint32_t		 at_index;	/* Index in the parent table */
+	uint32_t		 at_minfringe;	/* Index that fringe begins */
+	uint32_t		 at_level;	/* Level of the table */
+	uint8_t			 at_bits;	/* Stride length of the table */
+	uint8_t			 at_offset;	/* Sum of parents' stride len */
+
+	/*
+	 * Items stored in the heap are pointers to nodes, in the leaf
+	 * case, or tables otherwise.  One exception is index 0 which
+	 * is a route counter.
+	 */
+	union {
+		struct srp		 node;
+		unsigned long		 count;
+	} *at_heap;				/* Array of 2^(slen+1) items */
+};
+#define	at_refcnt	at_heap[0].count/* Refcounter (1 per different route) */
+#define	at_default	at_heap[1].node	/* Default route (was in parent heap) */
+
+/* Heap size for an ART table of stride length ``slen''. */
+#define AT_HEAPSIZE(slen)	((1 << ((slen) + 1)) * sizeof(void *))
 
 /*
  * Forward declaration needed for the list of mpath routes

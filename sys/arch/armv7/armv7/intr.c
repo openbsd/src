@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.12 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: intr.c,v 1.14 2018/08/08 11:06:33 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/openfirm.h>
 
 uint32_t arm_intr_get_parent(int);
+uint32_t arm_intr_msi_get_parent(int);
 
 void *arm_intr_prereg_establish_fdt(void *, int *, int, int (*)(void *),
     void *, char *);
@@ -97,6 +98,19 @@ arm_intr_get_parent(int node)
 
 	while (node && !phandle) {
 		phandle = OF_getpropint(node, "interrupt-parent", 0);
+		node = OF_parent(node);
+	}
+
+	return phandle;
+}
+
+uint32_t
+arm_intr_msi_get_parent(int node)
+{
+	uint32_t phandle = 0;
+
+	while (node && !phandle) {
+		phandle = OF_getpropint(node, "msi-parent", 0);
 		node = OF_parent(node);
 	}
 
@@ -209,7 +223,7 @@ arm_intr_register_fdt(struct interrupt_controller *ic)
 
 	ic->ic_cells = OF_getpropint(ic->ic_node, "#interrupt-cells", 0);
 	ic->ic_phandle = OF_getpropint(ic->ic_node, "phandle", 0);
-	if (ic->ic_cells == 0 || ic->ic_phandle == 0)
+	if (ic->ic_phandle == 0)
 		return;
 	KASSERT(ic->ic_cells <= MAX_INTERRUPT_CELLS);
 
@@ -317,6 +331,99 @@ arm_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
 	return ih;
 }
 
+void *
+arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
+    int (*func)(void *), void *cookie, char *name)
+{
+	struct interrupt_controller *ic;
+	struct arm_intr_handle *ih;
+	uint32_t *cell;
+	uint32_t map_mask[4], *map;
+	int i, len, acells, ncells;
+	void *val = NULL;
+
+	if (nreg != sizeof(map_mask))
+		return NULL;
+
+	if (OF_getpropintarray(node, "interrupt-map-mask", map_mask,
+	    sizeof(map_mask)) != sizeof(map_mask))
+		return NULL;
+
+	len = OF_getproplen(node, "interrupt-map");
+	if (len <= 0)
+		return NULL;
+
+	map = malloc(len, M_DEVBUF, M_WAITOK);
+	OF_getpropintarray(node, "interrupt-map", map, len);
+
+	cell = map;
+	ncells = len / sizeof(uint32_t);
+	for (i = 0; ncells > 0; i++) {
+		LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
+			if (ic->ic_phandle == cell[4])
+				break;
+		}
+
+		if (ic == NULL)
+			break;
+
+		acells = OF_getpropint(ic->ic_node, "#address-cells", 0);
+		if (ncells >= (5 + acells + ic->ic_cells) &&
+		    (reg[0] & map_mask[0]) == cell[0] &&
+		    (reg[1] & map_mask[1]) == cell[1] &&
+		    (reg[2] & map_mask[2]) == cell[2] &&
+		    (reg[3] & map_mask[3]) == cell[3] &&
+		    ic->ic_establish) {
+			val = ic->ic_establish(ic->ic_cookie, &cell[5 + acells],
+			    level, func, cookie, name);
+			break;
+		}
+
+		cell += (5 + acells + ic->ic_cells);
+		ncells -= (5 + acells + ic->ic_cells);
+	}
+
+	if (val == NULL) {
+		free(map, M_DEVBUF, len);
+		return NULL;
+	}
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih->ih_ic = ic;
+	ih->ih_ih = val;
+
+	free(map, M_DEVBUF, len);
+	return ih;
+}
+
+void *
+arm_intr_establish_fdt_msi(int node, uint64_t *addr, uint64_t *data,
+    int level, int (*func)(void *), void *cookie, char *name)
+{
+	struct interrupt_controller *ic;
+	struct arm_intr_handle *ih;
+	uint32_t phandle;
+	void *val = NULL;
+
+	phandle = arm_intr_msi_get_parent(node);
+	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
+		if (ic->ic_phandle == phandle)
+			break;
+	}
+
+	if (ic == NULL || ic->ic_establish_msi == NULL)
+		return NULL;
+
+	val = ic->ic_establish_msi(ic->ic_cookie, addr, data,
+	    level, func, cookie, name);
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih->ih_ic = ic;
+	ih->ih_ih = val;
+
+	return ih;
+}
+
 void
 arm_intr_disestablish_fdt(void *cookie)
 {
@@ -325,6 +432,26 @@ arm_intr_disestablish_fdt(void *cookie)
 
 	ic->ic_disestablish(ih->ih_ih);
 	free(ih, M_DEVBUF, sizeof(*ih));
+}
+
+void
+arm_intr_enable(void *cookie)
+{
+	struct arm_intr_handle *ih = cookie;
+	struct interrupt_controller *ic = ih->ih_ic;
+
+	KASSERT(ic->ic_enable != NULL);
+	ic->ic_enable(ih->ih_ih);
+}
+
+void
+arm_intr_disable(void *cookie)
+{
+	struct arm_intr_handle *ih = cookie;
+	struct interrupt_controller *ic = ih->ih_ic;
+
+	KASSERT(ic->ic_disable != NULL);
+	ic->ic_disable(ih->ih_ih);
 }
 
 /*

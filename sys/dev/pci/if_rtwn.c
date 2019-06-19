@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.30 2017/09/03 16:20:46 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.35 2018/10/01 22:36:08 jmatthew Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -19,7 +19,7 @@
  */
 
 /*
- * PCI front-end for Realtek RTL8188CE/RTL8192CE driver.
+ * PCI front-end for Realtek RTL8188CE/RTL8188EE/RTL8192CE/RTL8723AE driver.
  */
 
 #include "bpfilter.h"
@@ -64,6 +64,7 @@
  * Driver definitions.
  */
 
+#define R92C_NPQ_NPAGES		0
 #define R92C_PUBQ_NPAGES	176
 #define R92C_HPQ_NPAGES		41
 #define R92C_LPQ_NPAGES		28
@@ -71,6 +72,27 @@
 #define R92C_TX_PAGE_COUNT	\
 	(R92C_PUBQ_NPAGES + R92C_HPQ_NPAGES + R92C_LPQ_NPAGES)
 #define R92C_TX_PAGE_BOUNDARY	(R92C_TX_PAGE_COUNT + 1)
+#define R92C_MAX_RX_DMA_SIZE	0x2800
+
+#define R88E_NPQ_NPAGES		0
+#define R88E_PUBQ_NPAGES	116
+#define R88E_HPQ_NPAGES		41
+#define R88E_LPQ_NPAGES		13
+#define R88E_TXPKTBUF_COUNT	176
+#define R88E_TX_PAGE_COUNT	\
+	(R88E_PUBQ_NPAGES + R88E_HPQ_NPAGES + R88E_LPQ_NPAGES)
+#define R88E_TX_PAGE_BOUNDARY	(R88E_TX_PAGE_COUNT + 1)
+#define R88E_MAX_RX_DMA_SIZE	0x2600
+
+#define R23A_NPQ_NPAGES		0
+#define R23A_PUBQ_NPAGES	189
+#define R23A_HPQ_NPAGES		28
+#define R23A_LPQ_NPAGES		28
+#define R23A_TXPKTBUF_COUNT	256
+#define R23A_TX_PAGE_COUNT	\
+	(R23A_PUBQ_NPAGES + R23A_HPQ_NPAGES + R23A_LPQ_NPAGES)
+#define R23A_TX_PAGE_BOUNDARY	(R23A_TX_PAGE_COUNT + 1)
+#define R23A_MAX_RX_DMA_SIZE	0x2800
 
 #define RTWN_NTXQUEUES			9
 #define RTWN_RX_LIST_COUNT		256
@@ -201,8 +223,10 @@ extern int rtwn_debug;
 #define	RTWN_PCI_MMBA		0x18	/* memory mapped base */
 
 static const struct pci_matchid rtwn_pci_devices[] = {
-	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RT8188 },
-	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RTL8192CE }
+	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RTL8188CE },
+	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RTL8188EE },
+	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RTL8192CE },
+	{ PCI_VENDOR_REALTEK,	PCI_PRODUCT_REALTEK_RTL8723AE }
 };
 
 int		rtwn_pci_match(struct device *, void *, void *);
@@ -229,12 +253,16 @@ int		rtwn_tx(void *, struct mbuf *, struct ieee80211_node *);
 void		rtwn_tx_done(struct rtwn_pci_softc *, int);
 int		rtwn_alloc_buffers(void *);
 int		rtwn_pci_init(void *);
+void		rtwn_pci_88e_stop(struct rtwn_pci_softc *);
 void		rtwn_pci_stop(void *);
 int		rtwn_intr(void *);
 int		rtwn_is_oactive(void *);
+int		rtwn_92c_power_on(struct rtwn_pci_softc *);
+int		rtwn_88e_power_on(struct rtwn_pci_softc *);
+int		rtwn_23a_power_on(struct rtwn_pci_softc *);
 int		rtwn_power_on(void *);
 int		rtwn_llt_write(struct rtwn_pci_softc *, uint32_t, uint32_t);
-int		rtwn_llt_init(struct rtwn_pci_softc *);
+int		rtwn_llt_init(struct rtwn_pci_softc *, int);
 int		rtwn_dma_init(void *);
 int		rtwn_fw_loadpage(void *, int, uint8_t *, int);
 int		rtwn_pci_load_firmware(void *, u_char **, size_t *);
@@ -373,7 +401,19 @@ rtwn_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sc.sc_ops.cancel_scan = rtwn_cancel_scan;
 	sc->sc_sc.sc_ops.wait_async = rtwn_wait_async;
 
-	sc->sc_sc.chip = RTWN_CHIP_88C | RTWN_CHIP_92C | RTWN_CHIP_PCI;
+	sc->sc_sc.chip = RTWN_CHIP_PCI;
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_REALTEK_RTL8188CE:
+	case PCI_PRODUCT_REALTEK_RTL8192CE:
+		sc->sc_sc.chip |= RTWN_CHIP_88C | RTWN_CHIP_92C;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8188EE:
+		sc->sc_sc.chip |= RTWN_CHIP_88E;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8723AE:
+		sc->sc_sc.chip |= RTWN_CHIP_23A;
+		break;
+	}
 
 	error = rtwn_attach(&sc->sc_dev, &sc->sc_sc);
 	if (error != 0) {
@@ -790,6 +830,30 @@ rtwn_rx_frame(struct rtwn_pci_softc *sc, struct r92c_rx_desc_pci *rx_desc,
 	rxdw0 = letoh32(rx_desc->rxdw0);
 	rxdw3 = letoh32(rx_desc->rxdw3);
 
+	if (sc->sc_sc.chip & RTWN_CHIP_88E) {
+		int ntries, type;
+		struct r88e_tx_rpt_ccx *rxstat;
+
+		type = MS(rxdw3, R88E_RXDW3_RPT);
+		if (type == R88E_RXDW3_RPT_TX1) {
+			uint32_t rptb1, rptb2;
+
+			rxstat = mtod(rx_data->m, struct r88e_tx_rpt_ccx *);
+			rptb1 = letoh32(rxstat->rptb1);
+			rptb2 = letoh32(rxstat->rptb2);
+			ntries = MS(rptb2, R88E_RPTB2_RETRY_CNT);
+			if (rptb1 & R88E_RPTB1_PKT_OK)
+				sc->amn.amn_txcnt++;
+			if (ntries > 0)
+				sc->amn.amn_retrycnt++;
+
+			rtwn_setup_rx_desc(sc, rx_desc,
+			    rx_data->map->dm_segs[0].ds_addr, MCLBYTES,
+			    desc_idx);
+			return;
+		}
+	}
+
 	if (__predict_false(rxdw0 & (R92C_RXDW0_CRCERR | R92C_RXDW0_ICVERR))) {
 		/*
 		 * This should not happen since we setup our Rx filter
@@ -996,11 +1060,20 @@ rtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 			raid = R92C_RAID_11B;
 		else
 			raid = R92C_RAID_11BG;
-		txd->txdw1 |= htole32(
-		    SM(R92C_TXDW1_MACID, R92C_MACID_BSS) |
-		    SM(R92C_TXDW1_QSEL, R92C_TXDW1_QSEL_BE) |
-		    SM(R92C_TXDW1_RAID, raid) |
-		    R92C_TXDW1_AGGBK);
+
+		if (sc->sc_sc.chip & RTWN_CHIP_88E) {
+			txd->txdw1 |= htole32(
+			    SM(R88E_TXDW1_MACID, R92C_MACID_BSS) |
+			    SM(R92C_TXDW1_QSEL, R92C_TXDW1_QSEL_BE) |
+			    SM(R92C_TXDW1_RAID, raid));
+			txd->txdw2 |= htole32(R88E_TXDW2_AGGBK);
+		} else {
+			txd->txdw1 |= htole32(
+			    SM(R92C_TXDW1_MACID, R92C_MACID_BSS) |
+			    SM(R92C_TXDW1_QSEL, R92C_TXDW1_QSEL_BE) |
+			    SM(R92C_TXDW1_RAID, raid) |
+			    R92C_TXDW1_AGGBK);
+		}
 
 		/* Request TX status report for AMRR. */
 		txd->txdw2 |= htole32(R92C_TXDW2_CCX_RPT);
@@ -1044,12 +1117,15 @@ rtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 		txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE, 0));
 	}
 	/* Set sequence number (already little endian). */
-	txd->txdseq = *(uint16_t *)wh->i_seq;
+	txd->txdseq = (*(uint16_t *)wh->i_seq) >> IEEE80211_SEQ_SEQ_SHIFT;
+	if (sc->sc_sc.chip & RTWN_CHIP_23A)
+		txd->txdseq |= htole16(R23A_TXDW3_TXRPTEN);
 
 	if (!hasqos) {
 		/* Use HW sequence numbering for non-QoS frames. */
-		txd->txdw4  |= htole32(R92C_TXDW4_HWSEQ);
-		txd->txdseq |= htole16(0x8000);		/* WTF? */
+		if (!(sc->sc_sc.chip & RTWN_CHIP_23A))
+			txd->txdw4 |= htole32(R92C_TXDW4_HWSEQ);
+		txd->txdseq |= htole16(R92C_TXDW3_HWSEQEN);
 	} else
 		txd->txdw4 |= htole32(R92C_TXDW4_QOS);
 
@@ -1154,7 +1230,8 @@ rtwn_tx_done(struct rtwn_pci_softc *sc, int qid)
 		sc->sc_sc.sc_tx_timer = 0;
 		tx_ring->queued--;
 
-		rtwn_poll_c2h_events(sc);
+		if (!(sc->sc_sc.chip & RTWN_CHIP_23A))
+			rtwn_poll_c2h_events(sc);
 	}
 
 	if (tx_ring->queued < (RTWN_TX_LIST_COUNT - 1))
@@ -1178,23 +1255,30 @@ rtwn_pci_init(void *cookie)
 {
 	struct rtwn_pci_softc *sc = cookie;
 	ieee80211_amrr_node_init(&sc->amrr, &sc->amn);
+
+	/* Enable TX reports for AMRR */
+	if (sc->sc_sc.chip & RTWN_CHIP_88E) {
+		rtwn_pci_write_1(sc, R88E_TX_RPT_CTRL,
+		    (rtwn_pci_read_1(sc, R88E_TX_RPT_CTRL) & ~0) |
+		    R88E_TX_RPT_CTRL_EN);
+		rtwn_pci_write_1(sc, R88E_TX_RPT_CTRL + 1, 0x02);
+
+		rtwn_pci_write_2(sc, R88E_TX_RPT_TIME, 0xcdf0);
+	}
+
 	return (0);
 }
 
 void
-rtwn_pci_stop(void *cookie)
+rtwn_pci_92c_stop(struct rtwn_pci_softc *sc)
 {
-	struct rtwn_pci_softc *sc = cookie;
 	uint16_t reg;
-	int i, s;
-
-	s = splnet();
 
 	/* Disable interrupts. */
 	rtwn_pci_write_4(sc, R92C_HIMR, 0x00000000);
 
 	/* Stop hardware. */
-	rtwn_pci_write_1(sc, R92C_TXPAUSE, 0xff);
+	rtwn_pci_write_1(sc, R92C_TXPAUSE, R92C_TXPAUSE_ALL);
 	rtwn_pci_write_1(sc, R92C_RF_CTRL, 0x00);
 	reg = rtwn_pci_read_1(sc, R92C_SYS_FUNC_EN);
 	reg |= R92C_SYS_FUNC_EN_BB_GLB_RST;
@@ -1213,8 +1297,178 @@ rtwn_pci_stop(void *cookie)
 	rtwn_pci_write_2(sc, R92C_AFE_PLL_CTRL, 0x80); /* linux magic number */
 	rtwn_pci_write_1(sc, R92C_SPS0_CTRL, 0x23); /* ditto */
 	rtwn_pci_write_1(sc, R92C_AFE_XTAL_CTRL, 0x0e); /* differs in btcoex */
-	rtwn_pci_write_1(sc, R92C_RSV_CTRL, 0x0e);
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL, R92C_RSV_CTRL_WLOCK_00 |
+	    R92C_RSV_CTRL_WLOCK_04 | R92C_RSV_CTRL_WLOCK_08);
 	rtwn_pci_write_1(sc, R92C_APS_FSMCO, R92C_APS_FSMCO_PDN_EN);
+}
+
+void
+rtwn_pci_88e_stop(struct rtwn_pci_softc *sc)
+{
+	int i;
+	uint16_t reg;
+
+	/* Disable interrupts. */
+	rtwn_pci_write_4(sc, R88E_HIMR, 0x00000000);
+
+	/* Stop hardware. */
+	rtwn_pci_write_1(sc, R88E_TX_RPT_CTRL,
+	    rtwn_pci_read_1(sc, R88E_TX_RPT_CTRL) &
+	    ~(R88E_TX_RPT_CTRL_EN));
+
+	for (i = 0; i < 100; i++) {
+		if (rtwn_pci_read_1(sc, R88E_RXDMA_CTRL) & 0x02)
+			break;
+		DELAY(10);
+	}
+	if (i == 100)
+		DPRINTF(("rxdma ctrl didn't go off, %x\n", rtwn_pci_read_1(sc, R88E_RXDMA_CTRL)));
+
+	rtwn_pci_write_1(sc, R92C_PCIE_CTRL_REG + 1, 0xff);
+
+	rtwn_pci_write_1(sc, R92C_TXPAUSE, R92C_TXPAUSE_ALL);
+
+	/* ensure transmission has stopped */
+	for (i = 0; i < 100; i++) {
+		if (rtwn_pci_read_4(sc, 0x5f8) == 0)
+			break;
+		DELAY(10);
+	}
+	if (i == 100)
+		DPRINTF(("tx didn't stop\n"));
+
+	rtwn_pci_write_1(sc, R92C_SYS_FUNC_EN,
+	    rtwn_pci_read_1(sc, R92C_SYS_FUNC_EN) &
+	    ~(R92C_SYS_FUNC_EN_BBRSTB));
+	DELAY(1);
+	reg = rtwn_pci_read_2(sc, R92C_CR);
+	reg &= ~(R92C_CR_HCI_TXDMA_EN | R92C_CR_HCI_RXDMA_EN |
+	    R92C_CR_TXDMA_EN | R92C_CR_RXDMA_EN | R92C_CR_PROTOCOL_EN |
+	    R92C_CR_SCHEDULE_EN | R92C_CR_MACTXEN | R92C_CR_MACRXEN |
+	    R92C_CR_ENSEC);
+	rtwn_pci_write_2(sc, R92C_CR, reg);
+	rtwn_pci_write_1(sc, R92C_DUAL_TSF_RST,
+	    rtwn_pci_read_1(sc, R92C_DUAL_TSF_RST) | 0x20);
+
+	rtwn_pci_write_1(sc, R92C_RF_CTRL, 0x00);
+	if (rtwn_pci_read_1(sc, R92C_MCUFWDL) & R92C_MCUFWDL_RAM_DL_SEL)
+		rtwn_fw_reset(&sc->sc_sc);
+
+	rtwn_pci_write_1(sc, R92C_SYS_FUNC_EN + 1,
+	    rtwn_pci_read_1(sc, R92C_SYS_FUNC_EN + 1) & ~0x02);
+	rtwn_pci_write_1(sc, R92C_MCUFWDL, 0);
+
+	rtwn_pci_write_1(sc, R88E_32K_CTRL,
+	    rtwn_pci_read_1(sc, R88E_32K_CTRL) & ~(0x01));
+
+	/* transition to cardemu state */
+	rtwn_pci_write_1(sc, R92C_RF_CTRL, 0);
+	rtwn_pci_write_1(sc, R92C_LPLDO_CTRL,
+	    rtwn_pci_read_1(sc, R92C_LPLDO_CTRL) | 0x10);
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_2(sc, R92C_APS_FSMCO) | R92C_APS_FSMCO_APFM_OFF);
+	for (i = 0; i < 100; i++) {
+		if ((rtwn_pci_read_2(sc, R92C_APS_FSMCO) &
+		    R92C_APS_FSMCO_APFM_OFF) == 0)
+			break;
+		DELAY(10);
+	}
+	if (i == 100)
+		DPRINTF(("apfm off didn't go off\n"));
+
+	/* transition to card disabled state */
+	rtwn_pci_write_1(sc, R92C_AFE_XTAL_CTRL + 2,
+	    rtwn_pci_read_1(sc, R92C_AFE_XTAL_CTRL + 2) | 0x80);
+
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL + 1,
+	    rtwn_pci_read_1(sc, R92C_RSV_CTRL + 1) & ~R92C_RSV_CTRL_WLOCK_08);
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL + 1,
+	    rtwn_pci_read_1(sc, R92C_RSV_CTRL + 1) | R92C_RSV_CTRL_WLOCK_08);
+
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL, R92C_RSV_CTRL_WLOCK_00 |
+	    R92C_RSV_CTRL_WLOCK_04 | R92C_RSV_CTRL_WLOCK_08);
+}
+
+void
+rtwn_pci_23a_stop(struct rtwn_pci_softc *sc)
+{
+	int i;
+
+	/* Disable interrupts. */
+	rtwn_pci_write_4(sc, R92C_HIMR, 0x00000000);
+
+	rtwn_pci_write_1(sc, R92C_PCIE_CTRL_REG + 1, 0xff);
+	rtwn_pci_write_1(sc, R92C_TXPAUSE, R92C_TXPAUSE_ALL);
+
+	/* ensure transmission has stopped */
+	for (i = 0; i < 100; i++) {
+		if (rtwn_pci_read_4(sc, 0x5f8) == 0)
+			break;
+		DELAY(10);
+	}
+	if (i == 100)
+		DPRINTF(("tx didn't stop\n"));
+
+	rtwn_pci_write_1(sc, R92C_SYS_FUNC_EN,
+	    rtwn_pci_read_1(sc, R92C_SYS_FUNC_EN) &
+	    ~(R92C_SYS_FUNC_EN_BBRSTB));
+	DELAY(1);
+	rtwn_pci_write_1(sc, R92C_SYS_FUNC_EN,
+	    rtwn_pci_read_1(sc, R92C_SYS_FUNC_EN) &
+	    ~(R92C_SYS_FUNC_EN_BB_GLB_RST));
+
+	rtwn_pci_write_2(sc, R92C_CR,
+	    rtwn_pci_read_2(sc, R92C_CR) &
+	    ~(R92C_CR_MACTXEN | R92C_CR_MACRXEN | R92C_CR_ENSWBCN));
+
+	rtwn_pci_write_1(sc, R92C_DUAL_TSF_RST,
+	    rtwn_pci_read_1(sc, R92C_DUAL_TSF_RST) | 0x20);
+
+	/* Turn off RF */
+	rtwn_pci_write_1(sc, R92C_RF_CTRL, 0x00);
+	if (rtwn_pci_read_1(sc, R92C_MCUFWDL) & R92C_MCUFWDL_RAM_DL_SEL)
+		rtwn_fw_reset(&sc->sc_sc);
+
+	rtwn_pci_write_1(sc, R92C_SYS_FUNC_EN + 1,
+	    rtwn_pci_read_1(sc, R92C_SYS_FUNC_EN + 1) & ~R92C_SYS_FUNC_EN_DIOE);
+	rtwn_pci_write_1(sc, R92C_MCUFWDL, 0);
+
+	rtwn_pci_write_1(sc, R92C_RF_CTRL, 0x00);
+	rtwn_pci_write_1(sc, R92C_LEDCFG2, rtwn_pci_read_1(sc, R92C_LEDCFG2) & ~(0x80));
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO, rtwn_pci_read_2(sc, R92C_APS_FSMCO) |
+	    R92C_APS_FSMCO_APFM_OFF);
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO, rtwn_pci_read_2(sc, R92C_APS_FSMCO) &
+	    ~(R92C_APS_FSMCO_APFM_OFF));
+
+	rtwn_pci_write_4(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_4(sc, R92C_APS_FSMCO) & ~R92C_APS_FSMCO_RDY_MACON);
+	rtwn_pci_write_4(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_4(sc, R92C_APS_FSMCO) | R92C_APS_FSMCO_APDM_HPDN);
+
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL + 1,
+	    rtwn_pci_read_1(sc, R92C_RSV_CTRL + 1) & ~R92C_RSV_CTRL_WLOCK_08);
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL + 1,
+	    rtwn_pci_read_1(sc, R92C_RSV_CTRL + 1) | R92C_RSV_CTRL_WLOCK_08);
+
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL, R92C_RSV_CTRL_WLOCK_00 |
+	    R92C_RSV_CTRL_WLOCK_04 | R92C_RSV_CTRL_WLOCK_08);
+}
+
+void
+rtwn_pci_stop(void *cookie)
+{
+	struct rtwn_pci_softc *sc = cookie;
+	int i, s;
+
+	s = splnet();
+
+	if (sc->sc_sc.chip & RTWN_CHIP_88E) {
+		rtwn_pci_88e_stop(sc);
+	} else if (sc->sc_sc.chip & RTWN_CHIP_23A) {
+		rtwn_pci_23a_stop(sc);
+	} else {
+		rtwn_pci_92c_stop(sc);
+	}
 
 	for (i = 0; i < RTWN_NTXQUEUES; i++)
 		rtwn_reset_tx_list(sc, i);
@@ -1224,11 +1478,76 @@ rtwn_pci_stop(void *cookie)
 }
 
 int
+rtwn_88e_intr(struct rtwn_pci_softc *sc)
+{
+	u_int32_t status, estatus;
+	int i;
+
+	status = rtwn_pci_read_4(sc, R88E_HISR);
+	if (status == 0 || status == 0xffffffff)
+		return (0);
+
+	estatus = rtwn_pci_read_4(sc, R88E_HISRE);
+
+	status &= RTWN_88E_INT_ENABLE;
+	estatus &= R88E_HIMRE_RXFOVW;
+
+	rtwn_pci_write_4(sc, R88E_HIMR, 0);
+	rtwn_pci_write_4(sc, R88E_HIMRE, 0);
+	rtwn_pci_write_4(sc, R88E_HISR, status);
+	rtwn_pci_write_4(sc, R88E_HISRE, estatus);
+
+	if (status & R88E_HIMR_HIGHDOK)
+		rtwn_tx_done(sc, RTWN_HIGH_QUEUE);
+	if (status & R88E_HIMR_MGNTDOK)
+		rtwn_tx_done(sc, RTWN_MGNT_QUEUE);
+	if (status & R88E_HIMR_BKDOK)
+		rtwn_tx_done(sc, RTWN_BK_QUEUE);
+	if (status & R88E_HIMR_BEDOK)
+		rtwn_tx_done(sc, RTWN_BE_QUEUE);
+	if (status & R88E_HIMR_VIDOK)
+		rtwn_tx_done(sc, RTWN_VI_QUEUE);
+	if (status & R88E_HIMR_VODOK)
+		rtwn_tx_done(sc, RTWN_VO_QUEUE);
+	if ((status & (R88E_HIMR_ROK | R88E_HIMR_RDU)) ||
+	    (estatus & R88E_HIMRE_RXFOVW)) {
+		bus_dmamap_sync(sc->sc_dmat, sc->rx_ring.map, 0,
+		    sizeof(struct r92c_rx_desc_pci) * RTWN_RX_LIST_COUNT,
+		    BUS_DMASYNC_POSTREAD);
+
+		for (i = 0; i < RTWN_RX_LIST_COUNT; i++) {
+			struct r92c_rx_desc_pci *rx_desc = &sc->rx_ring.desc[i];
+			struct rtwn_rx_data *rx_data = &sc->rx_ring.rx_data[i];
+
+			if (letoh32(rx_desc->rxdw0) & R92C_RXDW0_OWN)
+				continue;
+
+			rtwn_rx_frame(sc, rx_desc, rx_data, i);
+		}
+	}
+
+	if (status & R88E_HIMR_HSISR_IND_ON_INT) {
+		rtwn_pci_write_1(sc, R92C_HSISR,
+		    rtwn_pci_read_1(sc, R92C_HSISR) |
+		    R88E_HSIMR_PDN_INT_EN | R88E_HSIMR_RON_INT_EN);
+	}
+
+	/* Enable interrupts. */
+	rtwn_pci_write_4(sc, R88E_HIMR, RTWN_88E_INT_ENABLE);
+	rtwn_pci_write_4(sc, R88E_HIMRE, R88E_HIMRE_RXFOVW);
+
+	return (1);
+}
+
+int
 rtwn_intr(void *xsc)
 {
 	struct rtwn_pci_softc *sc = xsc;
 	u_int32_t status;
 	int i;
+
+	if (sc->sc_sc.chip & RTWN_CHIP_88E)
+		return (rtwn_88e_intr(sc));
 
 	status = rtwn_pci_read_4(sc, R92C_HISR);
 	if (status == 0 || status == 0xffffffff)
@@ -1272,8 +1591,13 @@ rtwn_intr(void *xsc)
 	if (status & R92C_IMR_VODOK)
 		rtwn_tx_done(sc, RTWN_VO_QUEUE);
 
+	if (sc->sc_sc.chip & RTWN_CHIP_23A) {
+		if (status & R92C_IMR_ATIMEND)
+			rtwn_poll_c2h_events(sc);
+	}
+
 	/* Enable interrupts. */
-	rtwn_pci_write_4(sc, R92C_HIMR, RTWN_INT_ENABLE);
+	rtwn_pci_write_4(sc, R92C_HIMR, RTWN_92C_INT_ENABLE);
 
 	return (1);
 }
@@ -1306,12 +1630,19 @@ rtwn_llt_write(struct rtwn_pci_softc *sc, uint32_t addr, uint32_t data)
 }
 
 int
-rtwn_llt_init(struct rtwn_pci_softc *sc)
+rtwn_llt_init(struct rtwn_pci_softc *sc, int page_count)
 {
-	int i, error;
+	int i, error, pktbuf_count;
 
-	/* Reserve pages [0; R92C_TX_PAGE_COUNT]. */
-	for (i = 0; i < R92C_TX_PAGE_COUNT; i++) {
+	if (sc->sc_sc.chip & RTWN_CHIP_88E)
+		pktbuf_count = R88E_TXPKTBUF_COUNT;
+	else if (sc->sc_sc.chip & RTWN_CHIP_23A)
+		pktbuf_count = R23A_TXPKTBUF_COUNT;
+	else
+		pktbuf_count = R92C_TXPKTBUF_COUNT;
+
+	/* Reserve pages [0; page_count]. */
+	for (i = 0; i < page_count; i++) {
 		if ((error = rtwn_llt_write(sc, i, i + 1)) != 0)
 			return (error);
 	}
@@ -1319,22 +1650,21 @@ rtwn_llt_init(struct rtwn_pci_softc *sc)
 	if ((error = rtwn_llt_write(sc, i, 0xff)) != 0)
 		return (error);
 	/*
-	 * Use pages [R92C_TX_PAGE_COUNT + 1; R92C_TXPKTBUF_COUNT - 1]
+	 * Use pages [page_count + 1; pktbuf_count - 1]
 	 * as ring buffer.
 	 */
-	for (++i; i < R92C_TXPKTBUF_COUNT - 1; i++) {
+	for (++i; i < pktbuf_count - 1; i++) {
 		if ((error = rtwn_llt_write(sc, i, i + 1)) != 0)
 			return (error);
 	}
 	/* Make the last page point to the beginning of the ring buffer. */
-	error = rtwn_llt_write(sc, i, R92C_TX_PAGE_COUNT + 1);
+	error = rtwn_llt_write(sc, i, pktbuf_count + 1);
 	return (error);
 }
 
 int
-rtwn_power_on(void *cookie)
+rtwn_92c_power_on(struct rtwn_pci_softc *sc)
 {
-	struct rtwn_pci_softc *sc = cookie;
 	uint32_t reg;
 	int ntries;
 
@@ -1436,7 +1766,6 @@ rtwn_power_on(void *cookie)
 	}
 
 	/* Initialize MAC. */
-	reg = rtwn_pci_read_1(sc, R92C_APSD_CTRL);
 	rtwn_pci_write_1(sc, R92C_APSD_CTRL,
 	    rtwn_pci_read_1(sc, R92C_APSD_CTRL) & ~R92C_APSD_CTRL_OFF);
 	for (ntries = 0; ntries < 200; ntries++) {
@@ -1465,43 +1794,264 @@ rtwn_power_on(void *cookie)
 }
 
 int
+rtwn_88e_power_on(struct rtwn_pci_softc *sc)
+{
+	uint32_t reg;
+	int ntries;
+
+	/* Disable XTAL output for power saving. */
+	rtwn_pci_write_1(sc, R88E_XCK_OUT_CTRL,
+	    rtwn_pci_read_1(sc, R88E_XCK_OUT_CTRL) & ~R88E_XCK_OUT_CTRL_EN);
+
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_2(sc, R92C_APS_FSMCO) & (~R92C_APS_FSMCO_APDM_HPDN));
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL, 0);
+
+	/* Wait for power ready bit. */
+	for (ntries = 0; ntries < 5000; ntries++) {
+		if (rtwn_pci_read_4(sc, R92C_APS_FSMCO) & R92C_APS_FSMCO_SUS_HOST)
+			break;
+		DELAY(10);
+	}
+	if (ntries == 5000) {
+		printf("%s: timeout waiting for chip power up\n",
+		    sc->sc_dev.dv_xname);
+		return (ETIMEDOUT);
+	}
+
+	/* Reset BB. */
+	rtwn_pci_write_1(sc, R92C_SYS_FUNC_EN,
+	    rtwn_pci_read_1(sc, R92C_SYS_FUNC_EN) & ~(R92C_SYS_FUNC_EN_BBRSTB |
+	    R92C_SYS_FUNC_EN_BB_GLB_RST));
+
+	rtwn_pci_write_1(sc, R92C_AFE_XTAL_CTRL + 2,
+	    rtwn_pci_read_1(sc, R92C_AFE_XTAL_CTRL + 2) | 0x80);
+
+	/* Disable HWPDN. */
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_2(sc, R92C_APS_FSMCO) & ~R92C_APS_FSMCO_APDM_HPDN);
+	/* Disable WL suspend. */
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_2(sc, R92C_APS_FSMCO) &
+	    ~(R92C_APS_FSMCO_AFSM_HSUS | R92C_APS_FSMCO_AFSM_PCIE));
+
+	/* Auto enable WLAN. */
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_2(sc, R92C_APS_FSMCO) | R92C_APS_FSMCO_APFM_ONMAC);
+	for (ntries = 0; ntries < 5000; ntries++) {
+		if (!(rtwn_pci_read_2(sc, R92C_APS_FSMCO) &
+		    R92C_APS_FSMCO_APFM_ONMAC))
+			break;
+		DELAY(10);
+	}
+	if (ntries == 5000) {
+		printf("%s: timeout waiting for MAC auto ON\n",
+		    sc->sc_dev.dv_xname);
+		return (ETIMEDOUT);
+	}
+
+	/* Enable LDO normal mode. */
+	rtwn_pci_write_1(sc, R92C_LPLDO_CTRL,
+	    rtwn_pci_read_1(sc, R92C_LPLDO_CTRL) & ~0x10);
+
+	rtwn_pci_write_1(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_1(sc, R92C_APS_FSMCO) | R92C_APS_FSMCO_PDN_EN);
+	rtwn_pci_write_1(sc, R92C_PCIE_CTRL_REG + 2,
+	    rtwn_pci_read_1(sc, R92C_PCIE_CTRL_REG + 2) | 0x04);
+
+	rtwn_pci_write_1(sc, R92C_AFE_XTAL_CTRL_EXT + 1,
+	    rtwn_pci_read_1(sc, R92C_AFE_XTAL_CTRL_EXT + 1) | 0x02);
+
+	rtwn_pci_write_1(sc, R92C_SYS_CLKR,
+	    rtwn_pci_read_1(sc, R92C_SYS_CLKR) | 0x08);
+
+	rtwn_pci_write_2(sc, R92C_GPIO_MUXCFG,
+	    rtwn_pci_read_2(sc, R92C_GPIO_MUXCFG) & ~R92C_GPIO_MUXCFG_ENSIC);
+
+	/* Enable MAC DMA/WMAC/SCHEDULE/SEC blocks. */
+	rtwn_pci_write_2(sc, R92C_CR, 0);
+	reg = rtwn_pci_read_2(sc, R92C_CR);
+	reg |= R92C_CR_HCI_TXDMA_EN | R92C_CR_HCI_RXDMA_EN |
+	    R92C_CR_TXDMA_EN | R92C_CR_RXDMA_EN | R92C_CR_PROTOCOL_EN |
+	    R92C_CR_SCHEDULE_EN | R92C_CR_MACTXEN | R92C_CR_MACRXEN |
+	    R92C_CR_ENSEC | R92C_CR_CALTMR_EN;
+	rtwn_pci_write_2(sc, R92C_CR, reg);
+
+	rtwn_pci_write_1(sc, R92C_MSR, 0);
+	return (0);
+}
+
+int
+rtwn_23a_power_on(struct rtwn_pci_softc *sc)
+{
+	uint32_t reg;
+	int ntries;
+
+	rtwn_pci_write_1(sc, R92C_RSV_CTRL, 0x00);
+
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_2(sc, R92C_APS_FSMCO) &
+	    ~(R92C_APS_FSMCO_AFSM_HSUS | R92C_APS_FSMCO_AFSM_PCIE));
+	rtwn_pci_write_1(sc, R92C_PCIE_CTRL_REG + 1, 0x00);
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_2(sc, R92C_APS_FSMCO) & ~R92C_APS_FSMCO_APFM_RSM);
+
+	/* Wait for power ready bit. */
+	for (ntries = 0; ntries < 5000; ntries++) {
+		if (rtwn_pci_read_4(sc, R92C_APS_FSMCO) & R92C_APS_FSMCO_SUS_HOST)
+			break;
+		DELAY(10);
+	}
+	if (ntries == 5000) {
+		printf("%s: timeout waiting for chip power up\n",
+		    sc->sc_dev.dv_xname);
+		return (ETIMEDOUT);
+	}
+
+	/* Release WLON reset */
+	rtwn_pci_write_4(sc, R92C_APS_FSMCO, rtwn_pci_read_4(sc, R92C_APS_FSMCO) |
+	    R92C_APS_FSMCO_RDY_MACON);
+	/* Disable HWPDN. */
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_2(sc, R92C_APS_FSMCO) & ~R92C_APS_FSMCO_APDM_HPDN);
+	/* Disable WL suspend. */
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_2(sc, R92C_APS_FSMCO) &
+	    ~(R92C_APS_FSMCO_AFSM_HSUS | R92C_APS_FSMCO_AFSM_PCIE));
+
+	/* Auto enable WLAN. */
+	rtwn_pci_write_2(sc, R92C_APS_FSMCO,
+	    rtwn_pci_read_2(sc, R92C_APS_FSMCO) | R92C_APS_FSMCO_APFM_ONMAC);
+	for (ntries = 0; ntries < 5000; ntries++) {
+		if (!(rtwn_pci_read_2(sc, R92C_APS_FSMCO) &
+		    R92C_APS_FSMCO_APFM_ONMAC))
+			break;
+		DELAY(10);
+	}
+	if (ntries == 5000) {
+		printf("%s: timeout waiting for MAC auto ON (%x)\n",
+		    sc->sc_dev.dv_xname, rtwn_pci_read_2(sc, R92C_APS_FSMCO));
+		return (ETIMEDOUT);
+	}
+
+	rtwn_pci_write_1(sc, R92C_PCIE_CTRL_REG + 2,
+	    rtwn_pci_read_1(sc, R92C_PCIE_CTRL_REG + 2) | 0x04);
+
+	/* emac time out */
+	rtwn_pci_write_1(sc, 0x369, rtwn_pci_read_1(sc, 0x369) | 0x80);
+
+	for (ntries = 0; ntries < 100; ntries++) {
+		rtwn_pci_write_2(sc, R92C_MDIO + 4, 0x5e);
+		DELAY(100);
+		rtwn_pci_write_2(sc, R92C_MDIO + 2, 0xc280);
+		rtwn_pci_write_2(sc, R92C_MDIO, 0xc290);
+		rtwn_pci_write_2(sc, R92C_MDIO + 4, 0x3e);
+		DELAY(100);
+		rtwn_pci_write_2(sc, R92C_MDIO + 4, 0x5e);
+		DELAY(100);
+		if (rtwn_pci_read_2(sc, R92C_MDIO + 2) == 0xc290)
+			break;
+	}
+	if (ntries == 100) {
+		printf("%s: timeout configuring ePHY\n", sc->sc_dev.dv_xname);
+		return (ETIMEDOUT);
+	}
+
+	/* Enable MAC DMA/WMAC/SCHEDULE/SEC blocks. */
+	rtwn_pci_write_2(sc, R92C_CR, 0);
+	reg = rtwn_pci_read_2(sc, R92C_CR);
+	reg |= R92C_CR_HCI_TXDMA_EN | R92C_CR_HCI_RXDMA_EN |
+	    R92C_CR_TXDMA_EN | R92C_CR_RXDMA_EN | R92C_CR_PROTOCOL_EN |
+	    R92C_CR_SCHEDULE_EN | R92C_CR_MACTXEN | R92C_CR_MACRXEN |
+	    R92C_CR_ENSEC | R92C_CR_CALTMR_EN;
+	rtwn_pci_write_2(sc, R92C_CR, reg);
+
+	return (0);
+}
+
+int
+rtwn_power_on(void *cookie)
+{
+	struct rtwn_pci_softc *sc = cookie;
+
+	if (sc->sc_sc.chip & RTWN_CHIP_88E)
+		return (rtwn_88e_power_on(sc));
+	else if (sc->sc_sc.chip & RTWN_CHIP_23A)
+		return (rtwn_23a_power_on(sc));
+	else
+		return (rtwn_92c_power_on(sc));
+}
+
+int
 rtwn_dma_init(void *cookie)
 {
 	struct rtwn_pci_softc *sc = cookie;
 	uint32_t reg;
+	uint16_t dmasize;
+	int hqpages, lqpages, nqpages, pagecnt, boundary, trxdma, tcr;
 	int error;
 
+	if (sc->sc_sc.chip & RTWN_CHIP_88E) {
+		nqpages = R88E_NPQ_NPAGES;
+		hqpages = R88E_HPQ_NPAGES;
+		lqpages = R88E_LPQ_NPAGES;
+		pagecnt = R88E_TX_PAGE_COUNT;
+		boundary = R88E_TX_PAGE_BOUNDARY;
+		dmasize = R88E_MAX_RX_DMA_SIZE;
+		tcr = R92C_TCR_CFENDFORM | R92C_TCR_ERRSTEN3;
+		trxdma = 0xe771;
+	} else if (sc->sc_sc.chip & RTWN_CHIP_23A) {
+		nqpages = R23A_NPQ_NPAGES;
+		hqpages = R23A_HPQ_NPAGES;
+		lqpages = R23A_LPQ_NPAGES;
+		pagecnt = R23A_TX_PAGE_COUNT;
+		boundary = R23A_TX_PAGE_BOUNDARY;
+		dmasize = R23A_MAX_RX_DMA_SIZE;
+		tcr = R92C_TCR_CFENDFORM | R92C_TCR_ERRSTEN0 |
+		    R92C_TCR_ERRSTEN1;
+		trxdma = 0xf771;
+	} else {
+		nqpages = R92C_NPQ_NPAGES;
+		hqpages = R92C_HPQ_NPAGES;
+		lqpages = R92C_LPQ_NPAGES;
+		pagecnt = R92C_TX_PAGE_COUNT;
+		boundary = R92C_TX_PAGE_BOUNDARY;
+		dmasize = R92C_MAX_RX_DMA_SIZE;
+		tcr = R92C_TCR_CFENDFORM | R92C_TCR_ERRSTEN0 |
+		    R92C_TCR_ERRSTEN1;
+		trxdma = 0xf771;
+	}
+
 	/* Initialize LLT table. */
-	error = rtwn_llt_init(sc);
+	error = rtwn_llt_init(sc, pagecnt);
 	if (error != 0)
 		return error;
 
 	/* Set number of pages for normal priority queue. */
-	rtwn_pci_write_2(sc, R92C_RQPN_NPQ, 0);
+	rtwn_pci_write_2(sc, R92C_RQPN_NPQ, nqpages);
 	rtwn_pci_write_4(sc, R92C_RQPN,
 	    /* Set number of pages for public queue. */
-	    SM(R92C_RQPN_PUBQ, R92C_PUBQ_NPAGES) |
+	    SM(R92C_RQPN_PUBQ, pagecnt) |
 	    /* Set number of pages for high priority queue. */
-	    SM(R92C_RQPN_HPQ, R92C_HPQ_NPAGES) |
+	    SM(R92C_RQPN_HPQ, hqpages) |
 	    /* Set number of pages for low priority queue. */
-	    SM(R92C_RQPN_LPQ, R92C_LPQ_NPAGES) |
+	    SM(R92C_RQPN_LPQ, lqpages) |
 	    /* Load values. */
 	    R92C_RQPN_LD);
 
-	rtwn_pci_write_1(sc, R92C_TXPKTBUF_BCNQ_BDNY, R92C_TX_PAGE_BOUNDARY);
-	rtwn_pci_write_1(sc, R92C_TXPKTBUF_MGQ_BDNY, R92C_TX_PAGE_BOUNDARY);
+	rtwn_pci_write_1(sc, R92C_TXPKTBUF_BCNQ_BDNY, boundary);
+	rtwn_pci_write_1(sc, R92C_TXPKTBUF_MGQ_BDNY, boundary);
 	rtwn_pci_write_1(sc, R92C_TXPKTBUF_WMAC_LBK_BF_HD,
-	    R92C_TX_PAGE_BOUNDARY);
-	rtwn_pci_write_1(sc, R92C_TRXFF_BNDY, R92C_TX_PAGE_BOUNDARY);
-	rtwn_pci_write_1(sc, R92C_TDECTRL + 1, R92C_TX_PAGE_BOUNDARY);
+	    boundary);
+	rtwn_pci_write_1(sc, R92C_TRXFF_BNDY, boundary);
+	rtwn_pci_write_1(sc, R92C_TDECTRL + 1, boundary);
 
 	reg = rtwn_pci_read_2(sc, R92C_TRXDMA_CTRL);
 	reg &= ~R92C_TRXDMA_CTRL_QMAP_M;
-	reg |= 0xF771; 
+	reg |= trxdma;
 	rtwn_pci_write_2(sc, R92C_TRXDMA_CTRL, reg);
 
-	rtwn_pci_write_4(sc, R92C_TCR,
-	    R92C_TCR_CFENDFORM | (1 << 12) | (1 << 13));
+	rtwn_pci_write_4(sc, R92C_TCR, tcr);
 
 	/* Configure Tx DMA. */
 	rtwn_pci_write_4(sc, R92C_BKQ_DESA,
@@ -1521,9 +2071,10 @@ rtwn_dma_init(void *cookie)
 
 	/* Configure Rx DMA. */
 	rtwn_pci_write_4(sc, R92C_RX_DESA, sc->rx_ring.map->dm_segs[0].ds_addr);
+	rtwn_pci_write_1(sc, R92C_PCIE_CTRL_REG+1, 0);
 
 	/* Set Tx/Rx transfer page boundary. */
-	rtwn_pci_write_2(sc, R92C_TRXFF_BNDY + 2, 0x27ff);
+	rtwn_pci_write_2(sc, R92C_TRXFF_BNDY + 2, dmasize - 1);
 
 	/* Set Tx/Rx transfer page size. */
 	rtwn_pci_write_1(sc, R92C_PBP,
@@ -1570,7 +2121,14 @@ rtwn_pci_load_firmware(void *cookie, u_char **fw, size_t *len)
 	const char *name;
 	int error;
 
-	if ((sc->sc_sc.chip & (RTWN_CHIP_UMC_A_CUT | RTWN_CHIP_92C)) ==
+	if (sc->sc_sc.chip & RTWN_CHIP_88E)
+		name = "rtwn-rtl8188efw";
+	else if (sc->sc_sc.chip & RTWN_CHIP_23A) {
+		if (sc->sc_sc.chip & RTWN_CHIP_UMC_A_CUT)
+			name = "rtwn-rtl8723fw";
+		else
+			name = "rtwn-rtl8723fw_B";
+	} else if ((sc->sc_sc.chip & (RTWN_CHIP_UMC_A_CUT | RTWN_CHIP_92C)) ==
 	    RTWN_CHIP_UMC_A_CUT)
 		name = "rtwn-rtl8192cfwU";
 	else
@@ -1590,9 +2148,25 @@ rtwn_mac_init(void *cookie)
 	int i;
 
 	/* Write MAC initialization values. */
-	for (i = 0; i < nitems(rtl8192ce_mac); i++)
-		rtwn_pci_write_1(sc, rtl8192ce_mac[i].reg,
-		    rtl8192ce_mac[i].val);
+	if (sc->sc_sc.chip & RTWN_CHIP_88E) {
+		for (i = 0; i < nitems(rtl8188eu_mac); i++) {
+			if (rtl8188eu_mac[i].reg == R92C_GPIO_MUXCFG)
+				continue;
+			rtwn_pci_write_1(sc, rtl8188eu_mac[i].reg,
+			    rtl8188eu_mac[i].val);
+		}
+		rtwn_pci_write_1(sc, R92C_MAX_AGGR_NUM, 0x07);
+	} else if (sc->sc_sc.chip & RTWN_CHIP_23A) {
+		for (i = 0; i < nitems(rtl8192cu_mac); i++) {
+			rtwn_pci_write_1(sc, rtl8192cu_mac[i].reg,
+			    rtl8192cu_mac[i].val);
+		}
+		rtwn_pci_write_1(sc, R92C_MAX_AGGR_NUM, 0x0a);
+	} else {
+		for (i = 0; i < nitems(rtl8192ce_mac); i++)
+			rtwn_pci_write_1(sc, rtl8192ce_mac[i].reg,
+			    rtl8192ce_mac[i].val);
+	}
 }
 
 void
@@ -1609,7 +2183,8 @@ rtwn_bb_init(void *cookie)
 	    R92C_SYS_FUNC_EN_BBRSTB | R92C_SYS_FUNC_EN_BB_GLB_RST |
 	    R92C_SYS_FUNC_EN_DIO_RF);
 
-	rtwn_pci_write_2(sc, R92C_AFE_PLL_CTRL, 0xdb83);
+	if (!(sc->sc_sc.chip & RTWN_CHIP_88E))
+		rtwn_pci_write_2(sc, R92C_AFE_PLL_CTRL, 0xdb83);
 
 	rtwn_pci_write_1(sc, R92C_RF_CTRL,
 	    R92C_RF_CTRL_EN | R92C_RF_CTRL_RSTB | R92C_RF_CTRL_SDMRSTB);
@@ -1619,14 +2194,22 @@ rtwn_bb_init(void *cookie)
 	    R92C_SYS_FUNC_EN_PPLL | R92C_SYS_FUNC_EN_BB_GLB_RST |
 	    R92C_SYS_FUNC_EN_BBRSTB);
 
-	rtwn_pci_write_1(sc, R92C_AFE_XTAL_CTRL + 1, 0x80);
+	if (!(sc->sc_sc.chip & RTWN_CHIP_88E)) {
+		rtwn_pci_write_1(sc, R92C_AFE_XTAL_CTRL + 1, 0x80);
+	}
 
 	rtwn_pci_write_4(sc, R92C_LEDCFG0,
 	    rtwn_pci_read_4(sc, R92C_LEDCFG0) | 0x00800000);
 
-	/* Select BB programming. */ 
-	prog = (sc->sc_sc.chip & RTWN_CHIP_92C) ?
-	    &rtl8192ce_bb_prog_2t : &rtl8192ce_bb_prog_1t;
+	/* Select BB programming. */
+	if (sc->sc_sc.chip & RTWN_CHIP_88E)
+		prog = &rtl8188eu_bb_prog;
+	else if (sc->sc_sc.chip & RTWN_CHIP_23A)
+		prog = &rtl8723a_bb_prog;
+	else if (!(sc->sc_sc.chip & RTWN_CHIP_92C))
+		prog = &rtl8192ce_bb_prog_1t;
+	else
+		prog = &rtl8192ce_bb_prog_2t;
 
 	/* Write BB initialization values. */
 	for (i = 0; i < prog->count; i++) {
@@ -1680,8 +2263,7 @@ rtwn_bb_init(void *cookie)
 		DELAY(1);
 	}
 
-	if (rtwn_bb_read(sc, R92C_HSSI_PARAM2(0)) &
-	    R92C_HSSI_PARAM2_CCK_HIPWR)
+	if (rtwn_bb_read(sc, R92C_HSSI_PARAM2(0)) & R92C_HSSI_PARAM2_CCK_HIPWR)
 		sc->sc_sc.sc_flags |= RTWN_FLAG_CCK_HIPWR;
 }
 
@@ -1756,12 +2338,31 @@ rtwn_tx_report(struct rtwn_pci_softc *sc, uint8_t *buf, int len)
 	if (len != sizeof(*rpt))
 		return;
 
-	packets = MS(rpt->rptb6, R92C_RPTB6_RPT_PKT_NUM);
-	tries = MS(rpt->rptb0, R92C_RPTB0_RETRY_CNT);
-	tx_ok = (rpt->rptb7 & R92C_RPTB7_PKT_OK);
-	drop = (rpt->rptb6 & R92C_RPTB6_PKT_DROP);
-	expire = (rpt->rptb6 & R92C_RPTB6_LIFE_EXPIRE);
-	over = (rpt->rptb6 & R92C_RPTB6_RETRY_OVER);
+	if (sc->sc_sc.chip & RTWN_CHIP_23A) {
+		struct r88e_tx_rpt_ccx *rxstat = (struct r88e_tx_rpt_ccx *)buf;
+
+		/*
+		 * we seem to get some garbage reports, so check macid makes
+		 * sense.
+		 */
+		if (MS(rxstat->rptb1, R88E_RPTB1_MACID) != R92C_MACID_BSS) {
+			return;
+		}
+
+		packets = 1;
+		tx_ok = (rxstat->rptb1 & R88E_RPTB1_PKT_OK) ? 1 : 0;
+		tries = MS(rxstat->rptb2, R88E_RPTB2_RETRY_CNT);
+		expire = (rxstat->rptb2 & R88E_RPTB2_LIFE_EXPIRE);
+		over = (rxstat->rptb2 & R88E_RPTB2_RETRY_OVER);
+		drop = 0;
+	} else {
+		packets = MS(rpt->rptb6, R92C_RPTB6_RPT_PKT_NUM);
+		tries = MS(rpt->rptb0, R92C_RPTB0_RETRY_CNT);
+		tx_ok = (rpt->rptb7 & R92C_RPTB7_PKT_OK);
+		drop = (rpt->rptb6 & R92C_RPTB6_PKT_DROP);
+		expire = (rpt->rptb6 & R92C_RPTB6_LIFE_EXPIRE);
+		over = (rpt->rptb6 & R92C_RPTB6_RETRY_OVER);
+	}
 
 	if (packets > 0) {
 		sc->amn.amn_txcnt += packets;

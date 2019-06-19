@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2016/12/28 17:48:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2019/05/16 12:44:17 florian Exp $
 
 CFLAGS+=-DSMALL -DNOSSL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.18 2016/04/27 11:10:48 mpi Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.19 2019/03/23 05:47:23 visa Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -135,8 +135,6 @@ int db_ktrap(int, struct trapframe64 *);
 int db_enter_ddb(void);
 void db_startcpu(struct cpu_info *);
 void db_stopcpu(struct cpu_info *);
-
-extern struct mutex ddb_mp_mutex;
 
 #define DDB_STATE_NOT_RUNNING	0
 #define DDB_STATE_RUNNING	1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.23 2016/10/18 19:46:00 naddy Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.24 2019/01/09 18:11:22 bluhm Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ db_examine(db_addr_t addr, char *fmt, int count)
 				break;
 			case 'x':	/* unsigned hex */
 				value = db_get_value(addr, size, FALSE);
-				db_printf("%-*lx", width, (long)value);
+				db_printf("%*lx", width, (long)value);
 				break;
 			case 'm':	/* hex dump */
 				/*

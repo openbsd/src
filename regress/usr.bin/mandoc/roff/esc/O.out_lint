@@ -1,0 +1,5 @@
+mandoc: O.in:11:6: WARNING: invalid escape sequence: \O5
+mandoc: O.in:12:7: WARNING: invalid escape sequence: \O(52
+mandoc: O.in:13:7: UNSUPP: unsupported escape sequence: \O[5dummy]
+mandoc: O.in:14:6: WARNING: invalid escape sequence: \O6
+mandoc: O.in:15:6: UNSUPP: unsupported escape sequence: \O0

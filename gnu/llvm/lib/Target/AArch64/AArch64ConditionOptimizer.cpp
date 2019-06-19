@@ -60,20 +60,26 @@
 
 #include "AArch64.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
+#include "Utils/AArch64BaseInfo.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
+#include <cassert>
 #include <cstdlib>
 #include <tuple>
 
@@ -84,6 +90,7 @@ using namespace llvm;
 STATISTIC(NumConditionsAdjusted, "Number of conditions adjusted");
 
 namespace {
+
 class AArch64ConditionOptimizer : public MachineFunctionPass {
   const TargetInstrInfo *TII;
   MachineDominatorTree *DomTree;
@@ -92,12 +99,14 @@ class AArch64ConditionOptimizer : public MachineFunctionPass {
 public:
   // Stores immediate, compare instruction opcode and branch condition (in this
   // order) of adjusted comparison.
-  typedef std::tuple<int, unsigned, AArch64CC::CondCode> CmpInfo;
+  using CmpInfo = std::tuple<int, unsigned, AArch64CC::CondCode>;
 
   static char ID;
+
   AArch64ConditionOptimizer() : MachineFunctionPass(ID) {
     initializeAArch64ConditionOptimizerPass(*PassRegistry::getPassRegistry());
   }
+
   void getAnalysisUsage(AnalysisUsage &AU) const override;
   MachineInstr *findSuitableCompare(MachineBasicBlock *MBB);
   CmpInfo adjustCmp(MachineInstr *CmpMI, AArch64CC::CondCode Cmp);
@@ -105,10 +114,12 @@ public:
   bool adjustTo(MachineInstr *CmpMI, AArch64CC::CondCode Cmp, MachineInstr *To,
                 int ToImm);
   bool runOnMachineFunction(MachineFunction &MF) override;
+
   StringRef getPassName() const override {
     return "AArch64 Condition Optimizer";
   }
 };
+
 } // end anonymous namespace
 
 char AArch64ConditionOptimizer::ID = 0;
@@ -162,13 +173,14 @@ MachineInstr *AArch64ConditionOptimizer::findSuitableCompare(
     case AArch64::ADDSXri: {
       unsigned ShiftAmt = AArch64_AM::getShiftValue(I->getOperand(3).getImm());
       if (!I->getOperand(2).isImm()) {
-        DEBUG(dbgs() << "Immediate of cmp is symbolic, " << *I << '\n');
+        LLVM_DEBUG(dbgs() << "Immediate of cmp is symbolic, " << *I << '\n');
         return nullptr;
       } else if (I->getOperand(2).getImm() << ShiftAmt >= 0xfff) {
-        DEBUG(dbgs() << "Immediate of cmp may be out of range, " << *I << '\n');
+        LLVM_DEBUG(dbgs() << "Immediate of cmp may be out of range, " << *I
+                          << '\n');
         return nullptr;
       } else if (!MRI->use_empty(I->getOperand(0).getReg())) {
-        DEBUG(dbgs() << "Destination of cmp is not dead, " << *I << '\n');
+        LLVM_DEBUG(dbgs() << "Destination of cmp is not dead, " << *I << '\n');
         return nullptr;
       }
       return &*I;
@@ -196,7 +208,8 @@ MachineInstr *AArch64ConditionOptimizer::findSuitableCompare(
       return nullptr;
     }
   }
-  DEBUG(dbgs() << "Flags not defined in BB#" << MBB->getNumber() << '\n');
+  LLVM_DEBUG(dbgs() << "Flags not defined in " << printMBBReference(*MBB)
+                    << '\n');
   return nullptr;
 }
 
@@ -314,9 +327,9 @@ bool AArch64ConditionOptimizer::adjustTo(MachineInstr *CmpMI,
 }
 
 bool AArch64ConditionOptimizer::runOnMachineFunction(MachineFunction &MF) {
-  DEBUG(dbgs() << "********** AArch64 Conditional Compares **********\n"
-               << "********** Function: " << MF.getName() << '\n');
-  if (skipFunction(*MF.getFunction()))
+  LLVM_DEBUG(dbgs() << "********** AArch64 Conditional Compares **********\n"
+                    << "********** Function: " << MF.getName() << '\n');
+  if (skipFunction(MF.getFunction()))
     return false;
 
   TII = MF.getSubtarget().getInstrInfo();
@@ -373,15 +386,15 @@ bool AArch64ConditionOptimizer::runOnMachineFunction(MachineFunction &MF) {
     const int HeadImm = (int)HeadCmpMI->getOperand(2).getImm();
     const int TrueImm = (int)TrueCmpMI->getOperand(2).getImm();
 
-    DEBUG(dbgs() << "Head branch:\n");
-    DEBUG(dbgs() << "\tcondition: "
-          << AArch64CC::getCondCodeName(HeadCmp) << '\n');
-    DEBUG(dbgs() << "\timmediate: " << HeadImm << '\n');
+    LLVM_DEBUG(dbgs() << "Head branch:\n");
+    LLVM_DEBUG(dbgs() << "\tcondition: " << AArch64CC::getCondCodeName(HeadCmp)
+                      << '\n');
+    LLVM_DEBUG(dbgs() << "\timmediate: " << HeadImm << '\n');
 
-    DEBUG(dbgs() << "True branch:\n");
-    DEBUG(dbgs() << "\tcondition: "
-          << AArch64CC::getCondCodeName(TrueCmp) << '\n');
-    DEBUG(dbgs() << "\timmediate: " << TrueImm << '\n');
+    LLVM_DEBUG(dbgs() << "True branch:\n");
+    LLVM_DEBUG(dbgs() << "\tcondition: " << AArch64CC::getCondCodeName(TrueCmp)
+                      << '\n');
+    LLVM_DEBUG(dbgs() << "\timmediate: " << TrueImm << '\n');
 
     if (((HeadCmp == AArch64CC::GT && TrueCmp == AArch64CC::LT) ||
          (HeadCmp == AArch64CC::LT && TrueCmp == AArch64CC::GT)) &&

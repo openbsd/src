@@ -3,6 +3,7 @@
 # *** Usual globals initialized at runtime should be added in *var*.h.
 
 PL_No
+PL_Zero
 PL_Yes
 PL_bincompat_options
 PL_bitcount
@@ -19,6 +20,7 @@ PL_hexdigit
 PL_inf
 PL_interp_size
 PL_interp_size_5_18_0
+PL_isa_DOES
 PL_keyword_plugin
 PL_latin1_lc
 PL_magic_data

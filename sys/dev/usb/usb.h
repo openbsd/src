@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.59 2017/09/01 16:38:14 stsp Exp $ */
+/*	$OpenBSD: usb.h,v 1.61 2018/07/19 12:35:14 mpi Exp $ */
 /*	$NetBSD: usb.h,v 1.69 2002/09/22 23:20:50 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -442,18 +442,19 @@ struct usb_port_status {
 #define UPS_PORT_L1			0x0020	/* USB 2.0 only */
 
 /* Super-Speed port link state values. */
-#define UPS_PORT_LS_U0			0x0000
-#define UPS_PORT_LS_U1			0x0020
-#define UPS_PORT_LS_U2			0x0040
-#define UPS_PORT_LS_U3			0x0060
-#define UPS_PORT_LS_SS_DISABLED		0x0080
-#define UPS_PORT_LS_RX_DETECT		0x00a0
-#define UPS_PORT_LS_SS_INACTIVE		0x00c0
-#define UPS_PORT_LS_POLLING		0x00e0
-#define UPS_PORT_LS_RECOVERY		0x0100
-#define UPS_PORT_LS_HOT_RESET		0x0120
-#define UPS_PORT_LS_COMP_MOD		0x0140
-#define UPS_PORT_LS_LOOPBACK		0x0160
+#define UPS_PORT_LS_U0			0x00
+#define UPS_PORT_LS_U1			0x01
+#define UPS_PORT_LS_U2			0x02
+#define UPS_PORT_LS_U3			0x03
+#define UPS_PORT_LS_SS_DISABLED		0x04
+#define UPS_PORT_LS_RX_DETECT		0x05
+#define UPS_PORT_LS_SS_INACTIVE		0x06
+#define UPS_PORT_LS_POLLING		0x07
+#define UPS_PORT_LS_RECOVERY		0x08
+#define UPS_PORT_LS_HOT_RESET		0x09
+#define UPS_PORT_LS_COMP_MOD		0x0a
+#define UPS_PORT_LS_LOOPBACK		0x0b
+#define UPS_PORT_LS_RESUME		0x0f
 #define UPS_PORT_LS_GET(x)		(((x) >> 5) & 0xf)
 #define UPS_PORT_LS_SET(x)		(((x) & 0xf) << 5)
 
@@ -736,14 +737,11 @@ struct usb_device_info {
 #define USB_SPEED_FULL	2
 #define USB_SPEED_HIGH	3
 #define USB_SPEED_SUPER	4
+	u_int8_t	udi_port;
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
-	u_int8_t	udi_ports[16];/* hub only: addresses of devices on ports */
-#define USB_PORT_ENABLED 0xff
-#define USB_PORT_SUSPENDED 0xfe
-#define USB_PORT_POWERED 0xfd
-#define USB_PORT_DISABLED 0xfc
+	u_int32_t	udi_ports[16];	/* hub only: ports status/change */
 	char		udi_serial[USB_MAX_STRING_LEN];
 };
 

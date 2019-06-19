@@ -16,14 +16,17 @@
 
 #include "llvm/Support/DataTypes.h"
 
+#include <memory>
+
 namespace llvm {
 
 class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
 class MCInstrInfo;
-class MCObjectWriter;
+class MCObjectTargetWriter;
 class MCRegisterInfo;
+class MCSubtargetInfo;
 class MCTargetOptions;
 class StringRef;
 class Target;
@@ -32,18 +35,20 @@ class raw_pwrite_stream;
 
 Target &getTheAVRTarget();
 
+MCInstrInfo *createAVRMCInstrInfo();
+
 /// Creates a machine code emitter for AVR.
 MCCodeEmitter *createAVRMCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCRegisterInfo &MRI,
                                       MCContext &Ctx);
 
 /// Creates an assembly backend for AVR.
-MCAsmBackend *createAVRAsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                                  const Triple &TT, StringRef CPU,
+MCAsmBackend *createAVRAsmBackend(const Target &T, const MCSubtargetInfo &STI,
+                                  const MCRegisterInfo &MRI,
                                   const llvm::MCTargetOptions &TO);
 
 /// Creates an ELF object writer for AVR.
-MCObjectWriter *createAVRELFObjectWriter(raw_pwrite_stream &OS, uint8_t OSABI);
+std::unique_ptr<MCObjectTargetWriter> createAVRELFObjectWriter(uint8_t OSABI);
 
 } // end namespace llvm
 

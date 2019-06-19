@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.96 2018/02/09 03:59:15 tb Exp $
+#	$OpenBSD: Makefile.amd64,v 1.115 2019/05/21 22:40:06 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -21,11 +21,25 @@ S!=	cd ../../../..; pwd
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
-INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch
+INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
+		-I$S/dev/pci/drm/include \
+		-I$S/dev/pci/drm/include/uapi \
+		-I$S/dev/pci/drm/amd/include/asic_reg \
+		-I$S/dev/pci/drm/amd/include \
+		-I$S/dev/pci/drm/amd/amdgpu \
+		-I$S/dev/pci/drm/amd/display \
+		-I$S/dev/pci/drm/amd/display/include \
+		-I$S/dev/pci/drm/amd/display/dc \
+		-I$S/dev/pci/drm/amd/display/amdgpu_dm \
+		-I$S/dev/pci/drm/amd/powerplay/inc \
+		-I$S/dev/pci/drm/amd/powerplay/smumgr \
+		-I$S/dev/pci/drm/amd/powerplay/hwmgr \
+		-I$S/dev/pci/drm/amd/display/dc/inc \
+		-I$S/dev/pci/drm/amd/display/dc/inc/hw \
+		-I$S/dev/pci/drm/amd/display/modules/inc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
-		-Wno-address-of-packed-member -Wno-constant-conversion \
 		-Wframe-larger-than=2047
 
 CMACHFLAGS=	-mcmodel=kernel -mno-red-zone -mno-sse2 -mno-sse -mno-3dnow \
@@ -35,14 +49,19 @@ SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
-.if ${IDENT:M-DDDB} && !${COMPILER_VERSION:Mclang}
+.if ${IDENT:M-DDDB}
 CMACHFLAGS+=	-msave-args
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
+COPTS?=		-Oz
+.if ${COMPILER_VERSION:Mclang}
+CMACHFLAGS+=	-mno-retpoline
+.endif
 .endif
 .if ${COMPILER_VERSION:Mclang}
-NO_INTEGR_AS=  -no-integrated-as
+NO_INTEGR_AS=	-no-integrated-as
+CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion
 .endif
 
 DEBUG?=		-g
@@ -91,6 +110,15 @@ SYSTEM_LD_TAIL+=; umask 007; \
 LINKFLAGS+=	-S
 .endif
 
+.if ${SYSTEM_OBJ:Mkcov.o} && ${COMPILER_VERSION:Mclang}
+PROF=		-fsanitize-coverage=trace-pc,trace-cmp
+.endif
+
+.if ${IDENT:M-DKUBSAN} && ${COMPILER_VERSION:Mclang}
+CFLAGS+=	-fsanitize=undefined
+CFLAGS+=	-fno-wrapv
+.endif
+
 %LOAD
 
 # cc's -MD puts the source and output paths in the dependency file;
@@ -118,24 +146,52 @@ mcount.o: $S/lib/libkern/mcount.c Makefile
 ioconf.o: ioconf.c
 	${NORMAL_C}
 
+locore.o: assym.h
+	${NORMAL_S}
+	@[[ -n `objdump -D $@ | grep -A1 doreti_iret | sort | uniq -d` ]] || \
+	 { rm -f $@; echo "ERROR: overlaid iretq instructions don't line up"; \
+	   echo "#GP-on-iretq fault handling would be broken"; exit 1; }
+
 ld.script: ${_machdir}/conf/ld.script
 	cp ${_machdir}/conf/ld.script $@
+
+gapdummy.o:
+	echo '__asm(".section .rodata,\"a\"");' > gapdummy.c
+	${CC} -c ${CFLAGS} ${CPPFLAGS} gapdummy.c -o $@
 
 makegap.sh:
 	cp $S/conf/makegap.sh $@
 
-MAKE_GAP = LD="${LD}" sh makegap.sh 0xcccccccc
+MAKE_GAP = LD="${LD}" sh makegap.sh 0xcccccccc gapdummy.o
 
-gap.o:	Makefile makegap.sh vers.o
+gap.o:	Makefile makegap.sh gapdummy.o vers.o
 	${MAKE_GAP}
 
 vers.o: ${SYSTEM_DEP:Ngap.o}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
+.if ${SYSTEM_OBJ:Mkcov.o} && ${COMPILER_VERSION:Mclang}
+kcov.o: $S/dev/kcov.c
+	${NORMAL_C} -fno-sanitize-coverage=trace-pc,trace-cmp
+.endif
+
+HARDFLOAT_CFLAGS= -msse -msse2
+
+dcn_calcs.o: $S/dev/pci/drm/amd/display/dc/calcs/dcn_calcs.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn_calc_auto.o: $S/dev/pci/drm/amd/display/dc/calcs/dcn_calc_auto.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn_calc_math.o: $S/dev/pci/drm/amd/display/dc/calcs/dcn_calc_math.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml1_display_rq_dlg_calc.o: $S/dev/pci/drm/amd/display/dc/dml/dml1_display_rq_dlg_calc.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml_common_defs.o: $S/dev/pci/drm/amd/display/dc/dml/dml_common_defs.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+
 clean:
 	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* \
-	    gap.link ld.script lorder makegap.sh param.c
+	    gap.link gapdummy.c ld.script lorder makegap.sh param.c
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
@@ -143,7 +199,7 @@ cleandir: clean
 depend obj:
 
 locore0.o: ${_machdir}/${_mach}/locore0.S assym.h
-locore.o mutex.o vector.o copy.o spl.o: assym.h
+mutex.o vector.o copy.o spl.o mds.o: assym.h
 mptramp.o acpi_wakecode.o vmm_support.o: assym.h
 
 hardlink-obsd:

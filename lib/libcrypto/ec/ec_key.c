@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.14 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: ec_key.c,v 1.24 2019/01/19 01:12:48 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -65,29 +65,18 @@
 
 #include <openssl/opensslconf.h>
 
-#include "ec_lcl.h"
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 #include <openssl/err.h>
+
+#include "bn_lcl.h"
+#include "ec_lcl.h"
 
 EC_KEY *
 EC_KEY_new(void)
 {
-	EC_KEY *ret;
-
-	ret = malloc(sizeof(EC_KEY));
-	if (ret == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		return (NULL);
-	}
-	ret->version = 1;
-	ret->flags = 0;
-	ret->group = NULL;
-	ret->pub_key = NULL;
-	ret->priv_key = NULL;
-	ret->enc_flag = 0;
-	ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
-	ret->references = 1;
-	ret->method_data = NULL;
-	return (ret);
+	return EC_KEY_new_method(NULL);
 }
 
 EC_KEY *
@@ -98,6 +87,11 @@ EC_KEY_new_by_curve_name(int nid)
 		return NULL;
 	ret->group = EC_GROUP_new_by_curve_name(nid);
 	if (ret->group == NULL) {
+		EC_KEY_free(ret);
+		return NULL;
+	}
+	if (ret->meth->set_group != NULL &&
+	    ret->meth->set_group(ret, ret->group) == 0) {
 		EC_KEY_free(ret);
 		return NULL;
 	}
@@ -116,6 +110,14 @@ EC_KEY_free(EC_KEY * r)
 	if (i > 0)
 		return;
 
+	if (r->meth != NULL && r->meth->finish != NULL)
+		r->meth->finish(r);
+
+#ifndef OPENSSL_NO_ENGINE
+	ENGINE_finish(r->engine);
+#endif
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, r, &r->ex_data);
+
 	EC_GROUP_free(r->group);
 	EC_POINT_free(r->pub_key);
 	BN_clear_free(r->priv_key);
@@ -133,6 +135,15 @@ EC_KEY_copy(EC_KEY * dest, const EC_KEY * src)
 	if (dest == NULL || src == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
+	}
+	if (src->meth != dest->meth) {
+		if (dest->meth != NULL && dest->meth->finish != NULL)
+			dest->meth->finish(dest);
+#ifndef OPENSSL_NO_ENGINE
+		if (ENGINE_finish(dest->engine) == 0)
+			return 0;
+		dest->engine = NULL;
+#endif
 	}
 	/* copy the parameters */
 	if (src->group) {
@@ -183,14 +194,32 @@ EC_KEY_copy(EC_KEY * dest, const EC_KEY * src)
 	dest->version = src->version;
 	dest->flags = src->flags;
 
+	if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_EC_KEY, &dest->ex_data,
+	    &((EC_KEY *)src)->ex_data))	/* XXX const */
+		return NULL;
+
+	if (src->meth != dest->meth) {
+#ifndef OPENSSL_NO_ENGINE
+		if (src->engine != NULL && ENGINE_init(src->engine) == 0)
+			return 0;
+		dest->engine = src->engine;
+#endif
+		dest->meth = src->meth;
+	}
+
+	if (src->meth != NULL && src->meth->copy != NULL &&
+	    src->meth->copy(dest, src) == 0)
+		return 0;
+
 	return dest;
 }
 
 EC_KEY *
 EC_KEY_dup(const EC_KEY * ec_key)
 {
-	EC_KEY *ret = EC_KEY_new();
-	if (ret == NULL)
+	EC_KEY *ret;
+
+	if ((ret = EC_KEY_new_method(ec_key->engine)) == NULL)
 		return NULL;
 	if (EC_KEY_copy(ret, ec_key) == NULL) {
 		EC_KEY_free(ret);
@@ -206,8 +235,29 @@ EC_KEY_up_ref(EC_KEY * r)
 	return ((i > 1) ? 1 : 0);
 }
 
-int 
-EC_KEY_generate_key(EC_KEY * eckey)
+int
+EC_KEY_set_ex_data(EC_KEY *r, int idx, void *arg)
+{
+	return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
+}
+
+void *
+EC_KEY_get_ex_data(const EC_KEY *r, int idx)
+{
+	return CRYPTO_get_ex_data(&r->ex_data, idx);
+}
+
+int
+EC_KEY_generate_key(EC_KEY *eckey)
+{
+	if (eckey->meth->keygen != NULL)
+		return eckey->meth->keygen(eckey);
+	ECerror(EC_R_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int
+ossl_ec_key_gen(EC_KEY *eckey)
 {
 	int ok = 0;
 	BN_CTX *ctx = NULL;
@@ -218,32 +268,27 @@ EC_KEY_generate_key(EC_KEY * eckey)
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
+
 	if ((order = BN_new()) == NULL)
 		goto err;
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
 
-	if (eckey->priv_key == NULL) {
-		priv_key = BN_new();
-		if (priv_key == NULL)
+	if ((priv_key = eckey->priv_key) == NULL) {
+		if ((priv_key = BN_new()) == NULL)
 			goto err;
-	} else
-		priv_key = eckey->priv_key;
+	}
 
 	if (!EC_GROUP_get_order(eckey->group, order, ctx))
 		goto err;
 
-	do
-		if (!BN_rand_range(priv_key, order))
-			goto err;
-	while (BN_is_zero(priv_key));
+	if (!bn_rand_interval(priv_key, BN_value_one(), order))
+		goto err;
 
-	if (eckey->pub_key == NULL) {
-		pub_key = EC_POINT_new(eckey->group);
-		if (pub_key == NULL)
+	if ((pub_key = eckey->pub_key) == NULL) {
+		if ((pub_key = EC_POINT_new(eckey->group)) == NULL)
 			goto err;
-	} else
-		pub_key = eckey->pub_key;
+	}
 
 	if (!EC_POINT_mul(eckey->group, pub_key, priv_key, NULL, NULL, ctx))
 		goto err;
@@ -253,11 +298,11 @@ EC_KEY_generate_key(EC_KEY * eckey)
 
 	ok = 1;
 
-err:
+ err:
 	BN_free(order);
-	if (pub_key != NULL && eckey->pub_key == NULL)
+	if (eckey->pub_key == NULL)
 		EC_POINT_free(pub_key);
-	if (priv_key != NULL && eckey->priv_key == NULL)
+	if (eckey->priv_key == NULL)
 		BN_free(priv_key);
 	BN_CTX_free(ctx);
 	return (ok);
@@ -324,7 +369,7 @@ EC_KEY_check_key(const EC_KEY * eckey)
 		}
 	}
 	ok = 1;
-err:
+ err:
 	BN_CTX_free(ctx);
 	EC_POINT_free(point);
 	return (ok);
@@ -395,7 +440,7 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 
 	ok = 1;
 
-err:
+ err:
 	BN_CTX_free(ctx);
 	EC_POINT_free(point);
 	return ok;
@@ -411,6 +456,9 @@ EC_KEY_get0_group(const EC_KEY * key)
 int 
 EC_KEY_set_group(EC_KEY * key, const EC_GROUP * group)
 {
+	if (key->meth->set_group != NULL &&
+	    key->meth->set_group(key, group) == 0)
+		return 0;
 	EC_GROUP_free(key->group);
 	key->group = EC_GROUP_dup(group);
 	return (key->group == NULL) ? 0 : 1;
@@ -425,6 +473,9 @@ EC_KEY_get0_private_key(const EC_KEY * key)
 int 
 EC_KEY_set_private_key(EC_KEY * key, const BIGNUM * priv_key)
 {
+	if (key->meth->set_private != NULL &&
+	    key->meth->set_private(key, priv_key) == 0)
+		return 0;
 	BN_clear_free(key->priv_key);
 	key->priv_key = BN_dup(priv_key);
 	return (key->priv_key == NULL) ? 0 : 1;
@@ -439,6 +490,9 @@ EC_KEY_get0_public_key(const EC_KEY * key)
 int 
 EC_KEY_set_public_key(EC_KEY * key, const EC_POINT * pub_key)
 {
+	if (key->meth->set_public != NULL &&
+	    key->meth->set_public(key, pub_key) == 0)
+		return 0;
 	EC_POINT_free(key->pub_key);
 	key->pub_key = EC_POINT_dup(pub_key, key->group);
 	return (key->pub_key == NULL) ? 0 : 1;

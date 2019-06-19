@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_sign.1,v 1.11 2017/10/10 10:04:44 espie Exp $
+.\"	$OpenBSD: pkg_sign.1,v 1.12 2018/07/10 10:37:33 espie Exp $
 .\" Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 10 2017 $
+.Dd $Mdocdate: July 10 2018 $
 .Dt PKG_SIGN 1
 .Os
 .Sh NAME
@@ -49,15 +49,6 @@ Append
 checksums to
 .Pa SHA256
 in the output directory, then sort it.
-.\" .It Fl D Ar resign
-.\" Allows signing over already signed packages.
-.\" Obviously, this checks the existing signature first,
-.\" so the
-.\" .Fl D Ar SIGNER
-.\" and
-.\" .Fl D Ar nosig
-.\" also apply with the same semantics as
-.\" .Xr pkg_add 1 .
 .It Fl i
 Incremental mode.
 Ignore packages that are already in the output repository.
@@ -71,13 +62,6 @@ Specify output directory for signing packages.
 Otherwise, signed packages are created in the current directory.
 .It Fl S Ar source
 Source repository for packages to be signed.
-.\" This can be any url admissible for a
-.\" .Ev PKG_PATH ,
-.\" so that it is possible to sign packages during a transfer, e.g.,
-.\" .Bd -literal -offset indent
-.\" pkg_sign -s signify -s mykey-pkg.sec \e
-.\" 	-o output -S scp://build-machine/packages/
-.\" .Ed
 .It Xo
 .Fl s Cm signify2
 .Fl s Ar privkey

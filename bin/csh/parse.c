@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.12 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: parse.c,v 1.15 2018/10/24 06:01:03 martijn Exp $	*/
 /*	$NetBSD: parse.c,v 1.6 1995/03/21 09:03:10 cgd Exp $	*/
 
 /*-
@@ -530,7 +530,7 @@ again:
     if (n < 0)
 	n = 0;
     t = xcalloc(1, sizeof(*t));
-    av = xcalloc((size_t) (n + 1), sizeof(Char **));
+    av = xcalloc(n + 1, sizeof(*av));
     t->t_dcom = av;
     n = 0;
     if (p2->word[0] == ')')

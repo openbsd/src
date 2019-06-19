@@ -1,4 +1,4 @@
-/*	$OpenBSD: com1.c,v 1.15 2015/12/31 17:51:19 mestre Exp $	*/
+/*	$OpenBSD: com1.c,v 1.16 2019/05/09 20:19:22 tedu Exp $	*/
 /*	$NetBSD: com1.c,v 1.3 1995/03/21 15:06:51 cgd Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ news(void)
 		}
 		rythmn = ourtime - ourtime % CYCLE;
 	}
-	if (!wiz && !tempwiz)
+	if (!tempwiz)
 		if ((TestBit(inven, TALISMAN) || TestBit(wear, TALISMAN)) && (TestBit(inven, MEDALION) || TestBit(wear, MEDALION)) && (TestBit(inven, AMULET) || TestBit(wear, AMULET))) {
 			tempwiz = 1;
 			puts("The three amulets glow and reenforce each other in power.\nYou are now a wizard.");

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.28 2018/03/17 15:43:32 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.30 2018/08/24 19:21:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,7 +65,6 @@
 #include "x509_lcl.h"
 
 static void X509_OBJECT_dec_ref_count(X509_OBJECT *a);
-/* static void X509_OBJECT_up_ref_count(X509_OBJECT *a); */
 
 X509_LOOKUP *
 X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
@@ -154,8 +153,8 @@ X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, int type, X509_NAME *name,
 }
 
 int
-X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type, unsigned char *bytes,
-    int len, X509_OBJECT *ret)
+X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type,
+    const unsigned char *bytes, int len, X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) || (ctx->method->get_by_fingerprint == NULL))
 		return X509_LU_FAIL;
@@ -163,7 +162,7 @@ X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type, unsigned char *bytes,
 }
 
 int
-X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type, char *str, int len,
+X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type, const char *str, int len,
     X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
@@ -445,17 +444,16 @@ X509_OBJECT_dec_ref_count(X509_OBJECT *a)
 	}
 }
 
-/*static*/ void
+int
 X509_OBJECT_up_ref_count(X509_OBJECT *a)
 {
 	switch (a->type) {
 	case X509_LU_X509:
-		CRYPTO_add(&a->data.x509->references, 1, CRYPTO_LOCK_X509);
-		break;
+		return X509_up_ref(a->data.x509);
 	case X509_LU_CRL:
-		CRYPTO_add(&a->data.crl->references, 1, CRYPTO_LOCK_X509_CRL);
-		break;
+		return X509_CRL_up_ref(a->data.crl);
 	}
+	return 1;
 }
 
 int

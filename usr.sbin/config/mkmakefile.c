@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.45 2017/11/05 10:29:24 rpe Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.46 2019/04/01 07:04:38 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -517,8 +517,9 @@ emitload(FILE *fp)
 		    "\t${SYSTEM_LD_HEAD}\n"
 		    "\t${SYSTEM_LD} swap%s.o\n"
 		    "\t${SYSTEM_LD_TAIL}\n"
+		    "\trm -f %s.gdb\n"
 		    "\tmv -f new%s %s\n\n",
-		    swname, nm, nm) < 0)
+		    swname, nm, nm, nm) < 0)
 			return (1);
 
 		if (fprintf(fp, "update-link:\n") < 0)

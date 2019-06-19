@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.30 2016/07/20 09:48:06 mpi Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.31 2019/05/02 20:28:46 kettenis Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
-			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size, 0)) {
+	    &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size, 0)) {
 		printf(": can't map mem space\n");
 		return;
 	}
@@ -154,8 +154,8 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 			/*
 			 * The VT6202 defaults to a 1 usec EHCI sleep time
 			 * which hogs the PCI bus *badly*. Setting bit 5 of
-			 * the register makes that sleep time use the conventional
-			 * 10 usec.
+			 * the register makes that sleep time use the
+			 * conventional 10 usec.
 			 */
 			value = pci_conf_read(sc->sc_pc, sc->sc_tag,
 			    EHCI_VT6202_WORKAROUND_REG);
@@ -232,6 +232,7 @@ disestablish_ret:
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 unmap_ret:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+	sc->sc.sc_size = 0;
 	splx(s);
 }
 
@@ -240,6 +241,9 @@ ehci_pci_activate(struct device *self, int act)
 {
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
 	int rv;
+
+	if (sc->sc.sc_size == 0)
+		return 0;
 
 	switch (act) {
 	case DVACT_RESUME:

@@ -7,10 +7,10 @@ perlmodinstall - Installing CPAN Modules
 You can think of a module as the fundamental unit of reusable Perl
 code; see L<perlmod> for details.  Whenever anyone creates a chunk of
 Perl code that they think will be useful to the world, they register
-as a Perl developer at http://www.cpan.org/modules/04pause.html
+as a Perl developer at L<http://www.cpan.org/modules/04pause.html>
 so that they can then upload their code to the CPAN.  The CPAN is the
 Comprehensive Perl Archive Network and can be accessed at
-http://www.cpan.org/ , and searched at http://search.cpan.org/ .
+L<http://www.cpan.org/> , and searched at L<http://search.cpan.org/> .
 
 This documentation is for people who want to download CPAN modules
 and install them on their own computer.
@@ -68,14 +68,14 @@ directory) and use this approach.
 B<If you're on a Unix or Unix-like system,>
 
 You can use Andreas Koenig's CPAN module
-( http://www.cpan.org/modules/by-module/CPAN )
+( L<http://www.cpan.org/modules/by-module/CPAN> )
 to automate the following steps, from DECOMPRESS through INSTALL.
 
 A. DECOMPRESS
 
 Decompress the file with C<gzip -d yourmodule.tar.gz>
 
-You can get gzip from ftp://prep.ai.mit.edu/pub/gnu/
+You can get gzip from L<ftp://prep.ai.mit.edu/pub/gnu/>
 
 Or, you can combine this step with the next to save disk space:
 
@@ -128,7 +128,7 @@ steps below.
 
    A. DECOMPRESS
 
-You can use the shareware Winzip ( http://www.winzip.com ) to
+You can use the shareware Winzip ( L<http://www.winzip.com> ) to
 decompress and unpack modules.
 
    B. UNPACK
@@ -138,9 +138,9 @@ If you used WinZip, this was already done for you.
    C. BUILD
 
 You'll need the C<nmake> utility, available at
-http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/nmake15.exe
+L<http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/nmake15.exe>
 or dmake, available on CPAN.
-http://search.cpan.org/dist/dmake/
+L<http://search.cpan.org/dist/dmake/>
 
 Does the module require compilation (i.e. does it have files that end
 in .xs, .c, .h, .y, .cc, .cxx, or .C)?  If it does, life is now
@@ -148,7 +148,7 @@ officially tough for you, because you have to compile the module
 yourself (no easy feat on Windows).  You'll need a compiler such as
 Visual C++.  Alternatively, you can download a pre-built PPM package
 from ActiveState.
-http://aspn.activestate.com/ASPN/Downloads/ActivePerl/PPM/
+L<http://aspn.activestate.com/ASPN/Downloads/ActivePerl/PPM/>
 
 Go into the newly-created directory and type:
 
@@ -164,84 +164,11 @@ While still in that directory, type:
 
 =item *
 
-B<If you're using a Macintosh with "Classic" MacOS and MacPerl,>
-
-
-A. DECOMPRESS
-
-First, make sure you have the latest B<cpan-mac> distribution (
-http://www.cpan.org/authors/id/CNANDOR/ ), which has utilities for
-doing all of the steps.  Read the cpan-mac directions carefully and
-install it.  If you choose not to use cpan-mac for some reason, there
-are alternatives listed here.
-
-After installing cpan-mac, drop the module archive on the
-B<untarzipme> droplet, which will decompress and unpack for you.
-
-B<Or>, you can either use the shareware B<StuffIt Expander> program
-( http://my.smithmicro.com/mac/stuffit/ )
-or the freeware B<MacGzip> program (
-http://persephone.cps.unizar.es/general/gente/spd/gzip/gzip.html ).
-
-B. UNPACK
-
-If you're using untarzipme or StuffIt, the archive should be extracted
-now.  B<Or>, you can use the freeware B<suntar> or I<Tar> (
-http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/cmp/ ).
-
-C. BUILD
-
-Check the contents of the distribution.
-Read the module's documentation, looking for
-reasons why you might have trouble using it with MacPerl.  Look for
-F<.xs> and F<.c> files, which normally denote that the distribution
-must be compiled, and you cannot install it "out of the box."
-(See L<"PORTABILITY">.)
-
-D. INSTALL
-
-If you are using cpan-mac, just drop the folder on the
-B<installme> droplet, and use the module.
-
-B<Or>, if you aren't using cpan-mac, do some manual labor.
-
-Make sure the newlines for the modules are in Mac format, not Unix format.
-If they are not then you might have decompressed them incorrectly.  Check
-your decompression and unpacking utilities settings to make sure they are
-translating text files properly.
-
-As a last resort, you can use the perl one-liner:
-
-    perl -i.bak -pe 's/(?:\015)?\012/\015/g' <filenames>
-
-on the source files.
-
-Then move the files (probably just the F<.pm> files, though there
-may be some additional ones, too; check the module documentation)
-to their final destination: This will
-most likely be in C<$ENV{MACPERL}site_lib:> (i.e.,
-C<HD:MacPerl folder:site_lib:>).  You can add new paths to
-the default C<@INC> in the Preferences menu item in the
-MacPerl application (C<$ENV{MACPERL}site_lib:> is added
-automagically).  Create whatever directory structures are required
-(i.e., for C<Some::Module>, create
-C<$ENV{MACPERL}site_lib:Some:> and put
-C<Module.pm> in that directory).
-
-Then run the following script (or something like it):
-
-     #!perl -w
-     use AutoSplit;
-     my $dir = "${MACPERL}site_perl";
-     autosplit("$dir:Some:Module.pm", "$dir:auto", 0, 1, 1);
-
-=item *
-
 B<If you're on the DJGPP port of DOS,>
 
    A. DECOMPRESS
 
-djtarx ( ftp://ftp.delorie.com/pub/djgpp/current/v2/ )
+djtarx ( L<ftp://ftp.delorie.com/pub/djgpp/current/v2/> )
 will both uncompress and unpack.
 
    B. UNPACK
@@ -271,7 +198,7 @@ You will need the packages mentioned in F<README.dos> in the Perl distribution.
 B<If you're on OS/2,>
 
 Get the EMX development suite and gzip/tar, from either Hobbes (
-http://hobbes.nmsu.edu ) or Leo ( http://www.leo.org ), and then follow
+L<http://hobbes.nmsu.edu> ) or Leo ( L<http://www.leo.org> ), and then follow
 the instructions for Unix.
 
 =item *
@@ -319,7 +246,7 @@ Or, if you're fond of VMS command syntax:
 C. BUILD
 
 Make sure you have MMS (from Digital) or the freeware MMK ( available
-from MadGoat at http://www.madgoat.com ).  Then type this to create
+from MadGoat at L<http://www.madgoat.com> ).  Then type this to create
 the DESCRIP.MMS for the module:
 
     perl Makefile.PL
@@ -350,7 +277,7 @@ A. DECOMPRESS
 Decompress the file with C<gzip -d yourmodule.tar.gz>
 
 You can get gzip from
-http://www.s390.ibm.com/products/oe/bpxqp1.html
+L<http://www.s390.ibm.com/products/oe/bpxqp1.html>
 
 B. UNPACK
 
@@ -360,7 +287,7 @@ Unpack the result with
 
 The BUILD and INSTALL steps are identical to those for Unix.  Some
 modules generate Makefiles that work better with GNU make, which is
-available from http://www.mks.com/s390/gnu/
+available from L<http://www.mks.com/s390/gnu/>
 
 =back
 
@@ -415,8 +342,8 @@ If you have any suggested changes for this page, let me know.  Please
 don't send me mail asking for help on how to install your modules.
 There are too many modules, and too few Orwants, for me to be able to
 answer or even acknowledge all your questions.  Contact the module
-author instead, or post to comp.lang.perl.modules, or ask someone
-familiar with Perl on your operating system.
+author instead, ask someone familiar with Perl on your operating
+system, or if all else fails, file a ticket at L<http://rt.cpan.org/>.
 
 =head1 AUTHOR
 

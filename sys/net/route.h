@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.168 2018/02/11 02:26:55 benno Exp $	*/
+/*	$OpenBSD: route.h,v 1.175 2019/04/28 17:59:51 mpi Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -93,12 +93,8 @@ struct rt_metrics {
  */
 
 struct rtentry {
-#if !defined(_KERNEL) && !defined(ART)
-	struct	radix_node rt_nodes[2];	/* tree glue, and other values */
-#else
 	struct sockaddr	*rt_dest;	/* destination */
 	SRPL_ENTRY(rtentry) rt_next;	/* Next multipath entry to our dst. */
-#endif
 	struct sockaddr	*rt_gateway;	/* value */
 	struct ifaddr	*rt_ifa;	/* the answer: interface addr to use */
 	caddr_t		 rt_llinfo;	/* pointer to link level info cache or
@@ -115,9 +111,7 @@ struct rtentry {
 	unsigned int	 rt_ifidx;	/* the answer: interface to use */
 	unsigned int	 rt_flags;	/* up/down?, host/net */
 	int		 rt_refcnt;	/* # held references */
-#if defined(_KERNEL) || defined(ART)
 	int		 rt_plen;	/* prefix length */
-#endif
 	uint16_t	 rt_labelid;	/* route label ID */
 	uint8_t		 rt_priority;	/* routing priority to use */
 };
@@ -231,7 +225,6 @@ struct rt_msghdr {
 #define RTM_LOSING	0x5	/* Kernel Suspects Partitioning */
 #define RTM_REDIRECT	0x6	/* Told to use different route */
 #define RTM_MISS	0x7	/* Lookup failed on this address */
-#define RTM_LOCK	0x8	/* fix specified metrics */
 #define RTM_RESOLVE	0xb	/* req to resolve dst to LL addr */
 #define RTM_NEWADDR	0xc	/* address being added to iface */
 #define RTM_DELADDR	0xd	/* address being removed from iface */
@@ -241,6 +234,8 @@ struct rt_msghdr {
 #define RTM_INVALIDATE	0x11	/* Invalidate cache of L2 route */
 #define RTM_BFD		0x12	/* bidirectional forwarding detection */
 #define RTM_PROPOSAL	0x13	/* proposal for netconfigd */
+#define RTM_CHGADDRATTR	0x14	/* address attribute change */
+#define RTM_80211INFO	0x15	/* 80211 iface change */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -417,17 +412,19 @@ struct mbuf;
 struct socket;
 struct ifnet;
 struct sockaddr_in6;
+struct if_ieee80211_data;
 struct bfd_config;
 
 void	 route_init(void);
 void	 rtm_ifchg(struct ifnet *);
 void	 rtm_ifannounce(struct ifnet *, int);
 void	 rtm_bfd(struct bfd_config *);
+void	 rtm_80211info(struct ifnet *, struct if_ieee80211_data *);
 void	 rt_maskedcopy(struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *);
 struct sockaddr *rt_plen2mask(struct rtentry *, struct sockaddr_in6 *);
 void	 rtm_send(struct rtentry *, int, int, unsigned int);
-void	 rtm_addr(struct rtentry *, int, struct ifaddr *);
+void	 rtm_addr(int, struct ifaddr *);
 void	 rtm_miss(int, struct rt_addrinfo *, int, uint8_t, u_int, int, u_int);
 int	 rt_setgate(struct rtentry *, struct sockaddr *, u_int);
 struct rtentry *rt_getll(struct rtentry *);
@@ -442,6 +439,9 @@ void			 rt_timer_queue_destroy(struct rttimer_queue *);
 unsigned long		 rt_timer_queue_count(struct rttimer_queue *);
 void			 rt_timer_timer(void *);
 
+int	 rt_mpls_set(struct rtentry *, struct sockaddr *, uint8_t);
+void	 rt_mpls_clear(struct rtentry *);
+
 int	 rtisvalid(struct rtentry *);
 int	 rt_hash(struct rtentry *, struct sockaddr *, uint32_t *);
 struct	 rtentry *rtalloc_mpath(struct sockaddr *, uint32_t *, u_int);
@@ -449,8 +449,8 @@ struct	 rtentry *rtalloc(struct sockaddr *, int, unsigned int);
 void	 rtref(struct rtentry *);
 void	 rtfree(struct rtentry *);
 
-int	 rt_ifa_add(struct ifaddr *, int, struct sockaddr *);
-int	 rt_ifa_del(struct ifaddr *, int, struct sockaddr *);
+int	 rt_ifa_add(struct ifaddr *, int, struct sockaddr *, unsigned int);
+int	 rt_ifa_del(struct ifaddr *, int, struct sockaddr *, unsigned int);
 void	 rt_ifa_purge(struct ifaddr *);
 int	 rt_ifa_addlocal(struct ifaddr *);
 int	 rt_ifa_dellocal(struct ifaddr *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.172 2017/12/08 05:25:20 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.182 2019/06/07 16:27:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -37,6 +37,7 @@
 #include <link.h>
 #include <limits.h>			/* NAME_MAX */
 #include <dlfcn.h>
+#include <tib.h>
 
 #include "syscall.h"
 #include "archdep.h"
@@ -48,30 +49,51 @@
 /*
  * Local decls.
  */
-unsigned long _dl_boot(const char **, char **, const long, long *);
+unsigned long _dl_boot(const char **, char **, const long, long *) __boot;
 void _dl_debug_state(void);
-void _dl_setup_env(const char *_argv0, char **_envp);
+void _dl_setup_env(const char *_argv0, char **_envp) __boot;
 void _dl_dtors(void);
-void _dl_fixup_user_env(void);
-void _dl_call_preinit(elf_object_t *);
+void _dl_dopreload(char *_paths) __boot;
+void _dl_fixup_user_env(void) __boot;
+void _dl_call_preinit(elf_object_t *) __boot;
 void _dl_call_init_recurse(elf_object_t *object, int initfirst);
+void _dl_clean_boot(void);
 
-int  _dl_pagesz;
+int _dl_pagesz __relro = 4096;
+int _dl_bindnow __relro = 0;
+int _dl_debug __relro = 0;
+int _dl_trust __relro = 0;
+char **_dl_libpath __relro = NULL;
+const char **_dl_argv __relro = NULL;
+int _dl_argc __relro = 0;
 
-char **_dl_libpath;
+char *_dl_preload __boot_data = NULL;
+char *_dl_tracefmt1 __boot_data = NULL;
+char *_dl_tracefmt2 __boot_data = NULL;
+char *_dl_traceprog __boot_data = NULL;
 
-char *_dl_preload;
-char *_dl_bindnow;
-char *_dl_traceld;
-char *_dl_debug;
-char *_dl_showmap;
-char *_dl_tracefmt1, *_dl_tracefmt2, *_dl_traceprog;
+char **environ = NULL;
+char *__progname = NULL;
 
-int _dl_trust;
-
+int _dl_traceld;
 struct r_debug *_dl_debug_map;
 
-void _dl_dopreload(char *paths);
+static dl_cb_cb _dl_cb_cb;
+const struct dl_cb_0 callbacks_0 = {
+	.dl_allocate_tib	= &_dl_allocate_tib,
+	.dl_free_tib		= &_dl_free_tib,
+#if DO_CLEAN_BOOT
+	.dl_clean_boot		= &_dl_clean_boot,
+#endif
+	.dlopen			= &dlopen,
+	.dlclose		= &dlclose,
+	.dlsym			= &dlsym,
+	.dladdr			= &dladdr,
+	.dlctl			= &dlctl,
+	.dlerror		= &dlerror,
+	.dl_iterate_phdr	= &dl_iterate_phdr,
+};
+
 
 /*
  * Run dtors for a single object.
@@ -182,6 +204,22 @@ _dl_dtors(void)
 	_dl_run_all_dtors();
 }
 
+#if DO_CLEAN_BOOT
+void
+_dl_clean_boot(void)
+{
+	extern char boot_text_start[], boot_text_end[];
+#if 0	/* XXX breaks boehm-gc?!? */
+	extern char boot_data_start[], boot_data_end[];
+#endif
+
+	_dl_munmap(boot_text_start, boot_text_end - boot_text_start);
+#if 0	/* XXX breaks boehm-gc?!? */
+	_dl_munmap(boot_data_start, boot_data_end - boot_data_start);
+#endif
+}
+#endif /* DO_CLEAN_BOOT */
+
 void
 _dl_dopreload(char *paths)
 {
@@ -194,7 +232,7 @@ _dl_dopreload(char *paths)
 
 	while ((cp = _dl_strsep(&dp, ":")) != NULL) {
 		shlib = _dl_load_shlib(cp, _dl_objects, OBJTYPE_LIB,
-		_dl_objects->obj_flags);
+		    _dl_objects->obj_flags);
 		if (shlib == NULL)
 			_dl_die("can't preload library '%s'", cp);
 		_dl_add_object(shlib);
@@ -208,8 +246,6 @@ _dl_dopreload(char *paths)
  * grab interesting environment variables, zap bad env vars if
  * issetugid, and set the exported environ and __progname variables
  */
-char **environ = NULL;
-char *__progname = NULL;
 void
 _dl_setup_env(const char *argv0, char **envp)
 {
@@ -218,11 +254,11 @@ _dl_setup_env(const char *argv0, char **envp)
 	/*
 	 * Get paths to various things we are going to use.
 	 */
-	_dl_debug = _dl_getenv("LD_DEBUG", envp);
+	_dl_debug = _dl_getenv("LD_DEBUG", envp) != NULL;
 	_dl_libpath = _dl_split_path(_dl_getenv("LD_LIBRARY_PATH", envp));
 	_dl_preload = _dl_getenv("LD_PRELOAD", envp);
-	_dl_bindnow = _dl_getenv("LD_BIND_NOW", envp);
-	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp);
+	_dl_bindnow = _dl_getenv("LD_BIND_NOW", envp) != NULL;
+	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp) != NULL;
 	_dl_tracefmt1 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT1", envp);
 	_dl_tracefmt2 = _dl_getenv("LD_TRACE_LOADED_OBJECTS_FMT2", envp);
 	_dl_traceprog = _dl_getenv("LD_TRACE_LOADED_OBJECTS_PROGNAME", envp);
@@ -243,11 +279,11 @@ _dl_setup_env(const char *argv0, char **envp)
 			_dl_unsetenv("LD_PRELOAD", envp);
 		}
 		if (_dl_bindnow) {
-			_dl_bindnow = NULL;
+			_dl_bindnow = 0;
 			_dl_unsetenv("LD_BIND_NOW", envp);
 		}
 		if (_dl_debug) {
-			_dl_debug = NULL;
+			_dl_debug = 0;
 			_dl_unsetenv("LD_DEBUG", envp);
 		}
 	}
@@ -367,6 +403,36 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 }
 
 
+/* do any RWX -> RX fixups for executable PLTs and apply GNU_RELRO */
+static inline void
+_dl_self_relro(long loff)
+{
+	Elf_Ehdr *ehdp;
+	Elf_Phdr *phdp;
+	int i;
+
+	ehdp = (Elf_Ehdr *)loff;
+	phdp = (Elf_Phdr *)(loff + ehdp->e_phoff);
+	for (i = 0; i < ehdp->e_phnum; i++, phdp++) {
+		switch (phdp->p_type) {
+#if defined(__alpha__) || defined(__hppa__) || defined(__powerpc__) || \
+    defined(__sparc64__)
+		case PT_LOAD:
+			if ((phdp->p_flags & (PF_X | PF_W)) != (PF_X | PF_W))
+				break;
+			_dl_mprotect((void *)(phdp->p_vaddr + loff),
+			    phdp->p_memsz, PROT_READ);
+			break;
+#endif
+		case PT_GNU_RELRO:
+			_dl_mprotect((void *)(phdp->p_vaddr + loff),
+			    phdp->p_memsz, PROT_READ);
+			break;
+		}
+	}
+}
+
+
 #define PFLAGS(X) ((((X) & PF_R) ? PROT_READ : 0) | \
 		   (((X) & PF_W) ? PROT_WRITE : 0) | \
 		   (((X) & PF_X) ? PROT_EXEC : 0))
@@ -398,15 +464,24 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 
 	if (dl_data[AUX_pagesz] != 0)
 		_dl_pagesz = dl_data[AUX_pagesz];
-	else
-		_dl_pagesz = 4096;
+	_dl_malloc_init();
+
+	_dl_argv = argv;
+	while (_dl_argv[_dl_argc] != NULL)
+		_dl_argc++;
+	_dl_setup_env(argv[0], envp);
+
+	/*
+	 * Make read-only the GOT and PLT and variables initialized
+	 * during the ld.so setup above.
+	 */
+	_dl_self_relro(dyn_loff);
 
 	align = _dl_pagesz - 1;
 
 #define ROUND_PG(x) (((x) + align) & ~(align))
 #define TRUNC_PG(x) ((x) & ~(align))
 
-	_dl_setup_env(argv[0], envp);
 	if (_dl_bindnow) {
 		/* Lazy binding disabled, so disable kbind */
 		_dl___syscall(SYS_kbind, (void *)NULL, (size_t)0, (long long)0);
@@ -523,8 +598,9 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	 */
 	map_link = NULL;
 #ifdef __mips__
-	map_link = (struct r_debug **)(exe_obj->Dyn.info[DT_MIPS_RLD_MAP -
-	    DT_LOPROC + DT_NUM]);
+	if (exe_obj->Dyn.info[DT_MIPS_RLD_MAP - DT_LOPROC + DT_NUM] != 0)
+		map_link = (struct r_debug **)(exe_obj->Dyn.info[
+		    DT_MIPS_RLD_MAP - DT_LOPROC + DT_NUM] + exe_loff);
 #endif
 	if (map_link == NULL) {
 		for (dynp = exe_obj->load_dyn; dynp->d_tag; dynp++) {
@@ -547,16 +623,18 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 		debug_map->r_ldbase = dyn_loff;
 		_dl_debug_map = debug_map;
 #ifdef __mips__
-		if (dynp->d_tag == DT_DEBUG)
+		Elf_Addr relro_addr = exe_obj->relro_addr;
+		if (dynp->d_tag == DT_DEBUG &&
+		    ((Elf_Addr)map_link + sizeof(*map_link) <= relro_addr ||
+		     (Elf_Addr)map_link >= relro_addr + exe_obj->relro_size)) {
 			_dl_mprotect(map_link, sizeof(*map_link),
 			    PROT_READ|PROT_WRITE);
-#endif
-		*map_link = _dl_debug_map;
-#ifdef __mips__
-		if (dynp->d_tag == DT_DEBUG)
+			*map_link = _dl_debug_map;
 			_dl_mprotect(map_link, sizeof(*map_link),
 			    PROT_READ|PROT_EXEC);
+		} else
 #endif
+			*map_link = _dl_debug_map;
 	}
 
 
@@ -566,7 +644,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	 */
 
 	failed = 0;
-	if (_dl_traceld == NULL)
+	if (!_dl_traceld)
 		failed = _dl_rtld(_dl_objects);
 
 	if (_dl_debug || _dl_traceld) {
@@ -684,7 +762,8 @@ _dl_call_preinit(elf_object_t *object)
 		DL_DEB(("doing preinitarray obj %p @%p: [%s]\n",
 		    object, object->dyn.preinit_array, object->load_name));
 		for (i = 0; i < num; i++)
-			(*object->dyn.preinit_array[i])();
+			(*object->dyn.preinit_array[i])(_dl_argc, _dl_argv,
+			    environ, &_dl_cb_cb);
 	}
 }
 
@@ -695,26 +774,43 @@ _dl_call_init(elf_object_t *object)
 	_dl_call_init_recurse(object, 0);
 }
 
+static void
+_dl_relro(elf_object_t *object)
+{
+	/*
+	 * Handle GNU_RELRO
+	 */
+	if (object->relro_addr != 0 && object->relro_size != 0) {
+		Elf_Addr addr = object->relro_addr;
+
+		DL_DEB(("protect RELRO [0x%lx,0x%lx) in %s\n",
+		    addr, addr + object->relro_size, object->load_name));
+		_dl_mprotect((void *)addr, object->relro_size, PROT_READ);
+	}
+}
+
 void
 _dl_call_init_recurse(elf_object_t *object, int initfirst)
 {
 	struct dep_node *n;
+	int visited_flag = initfirst ? STAT_VISIT_INITFIRST : STAT_VISIT_INIT;
 
-	object->status |= STAT_VISITED;
+	object->status |= visited_flag;
 
 	TAILQ_FOREACH(n, &object->child_list, next_sib) {
-		if (n->data->status & STAT_VISITED)
+		if (n->data->status & visited_flag)
 			continue;
 		_dl_call_init_recurse(n->data, initfirst);
 	}
-
-	object->status &= ~STAT_VISITED;
 
 	if (object->status & STAT_INIT_DONE)
 		return;
 
 	if (initfirst && (object->obj_flags & DF_1_INITFIRST) == 0)
 		return;
+
+	if (!initfirst)
+		_dl_relro(object);
 
 	if (object->dyn.init) {
 		DL_DEB(("doing ctors obj %p @%p: [%s]\n",
@@ -729,8 +825,12 @@ _dl_call_init_recurse(elf_object_t *object, int initfirst)
 		DL_DEB(("doing initarray obj %p @%p: [%s]\n",
 		    object, object->dyn.init_array, object->load_name));
 		for (i = 0; i < num; i++)
-			(*object->dyn.init_array[i])();
+			(*object->dyn.init_array[i])(_dl_argc, _dl_argv,
+			    environ, &_dl_cb_cb);
 	}
+
+	if (initfirst)
+		_dl_relro(object);
 
 	object->status |= STAT_INIT_DONE;
 }
@@ -814,4 +914,13 @@ _dl_fixup_user_env(void)
 		if ((char **)(sym->st_value + ooff) != &__progname)
 			*((char **)(sym->st_value + ooff)) = __progname;
 	}
+}
+
+const void *
+_dl_cb_cb(int version)
+{
+	DL_DEB(("version %d callbacks requested\n", version));
+	if (version == 0)
+		return &callbacks_0;
+	return NULL;
 }

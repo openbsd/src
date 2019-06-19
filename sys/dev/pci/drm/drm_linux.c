@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.20 2018/01/31 03:26:00 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.38 2019/06/09 12:58:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -16,74 +16,150 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <dev/pci/drm/drmP.h>
+#include <drm/drmP.h>
 #include <dev/pci/ppbreg.h>
 #include <sys/event.h>
+#include <sys/filedesc.h>
+#include <sys/stat.h>
+#include <sys/unistd.h>
+#include <linux/dma-buf.h>
+#include <linux/mod_devicetable.h>
+#include <linux/acpi.h>
+#include <linux/pagevec.h>
+#include <linux/dma-fence-array.h>
 
 void
-flush_barrier(void *arg)
+tasklet_run(void *arg)
 {
-	int *barrier = arg;
+	struct tasklet_struct *ts = arg;
 
-	*barrier = 1;
-	wakeup(barrier);
+	clear_bit(TASKLET_STATE_SCHED, &ts->state);
+	if (tasklet_trylock(ts)) {
+		if (!atomic_read(&ts->count))
+			ts->func(ts->data);
+		tasklet_unlock(ts);
+	}
+}
+
+struct mutex sch_mtx = MUTEX_INITIALIZER(IPL_SCHED);
+volatile struct proc *sch_proc;
+volatile void *sch_ident;
+int sch_priority;
+
+void
+set_current_state(int state)
+{
+	if (sch_ident != curproc)
+		mtx_enter(&sch_mtx);
+	MUTEX_ASSERT_LOCKED(&sch_mtx);
+	sch_ident = sch_proc = curproc;
+	sch_priority = state;
+}
+
+void
+__set_current_state(int state)
+{
+	KASSERT(state == TASK_RUNNING);
+	if (sch_ident == curproc) {
+		MUTEX_ASSERT_LOCKED(&sch_mtx);
+		sch_ident = NULL;
+		mtx_leave(&sch_mtx);
+	}
+}
+
+void
+schedule(void)
+{
+	schedule_timeout(MAX_SCHEDULE_TIMEOUT);
+}
+
+long
+schedule_timeout(long timeout)
+{
+	struct sleep_state sls;
+	long deadline;
+	int wait, spl;
+
+	MUTEX_ASSERT_LOCKED(&sch_mtx);
+	KASSERT(!cold);
+
+	sleep_setup(&sls, sch_ident, sch_priority, "schto");
+	if (timeout != MAX_SCHEDULE_TIMEOUT)
+		sleep_setup_timeout(&sls, timeout);
+	sleep_setup_signal(&sls, sch_priority);
+
+	wait = (sch_proc == curproc && timeout > 0);
+
+	spl = MUTEX_OLDIPL(&sch_mtx);
+	MUTEX_OLDIPL(&sch_mtx) = splsched();
+	mtx_leave(&sch_mtx);
+
+	if (timeout != MAX_SCHEDULE_TIMEOUT)
+		deadline = ticks + timeout;
+	sleep_finish_all(&sls, wait);
+	if (timeout != MAX_SCHEDULE_TIMEOUT)
+		timeout = deadline - ticks;
+
+	mtx_enter(&sch_mtx);
+	MUTEX_OLDIPL(&sch_mtx) = spl;
+	sch_ident = curproc;
+
+	return timeout > 0 ? timeout : 0;
+}
+
+int
+wake_up_process(struct proc *p)
+{
+	int s, r = 0;
+
+	SCHED_LOCK(s);
+	atomic_cas_ptr(&sch_proc, p, NULL);
+	if (p->p_wchan) {
+		if (p->p_stat == SSLEEP) {
+			setrunnable(p);
+			r = 1;
+		} else
+			unsleep(p);
+	}
+	SCHED_UNLOCK(s);
+
+	return r;
 }
 
 void
 flush_workqueue(struct workqueue_struct *wq)
 {
-	struct sleep_state sls;
-	struct task task;
-	int barrier = 0;
-
 	if (cold)
 		return;
 
-	task_set(&task, flush_barrier, &barrier);
-	task_add((struct taskq *)wq, &task);
-	while (!barrier) {
-		sleep_setup(&sls, &barrier, PWAIT, "flwqbar");
-		sleep_finish(&sls, !barrier);
-	}
+	taskq_barrier((struct taskq *)wq);
 }
 
-void
+bool
 flush_work(struct work_struct *work)
 {
-	struct sleep_state sls;
-	struct task task;
-	int barrier = 0;
-
 	if (cold)
-		return;
+		return false;
 
-	task_set(&task, flush_barrier, &barrier);
-	task_add(work->tq, &task);
-	while (!barrier) {
-		sleep_setup(&sls, &barrier, PWAIT, "flwkbar");
-		sleep_finish(&sls, !barrier);
-	}
+	taskq_barrier(work->tq);
+	return false;
 }
 
-void
+bool
 flush_delayed_work(struct delayed_work *dwork)
 {
-	struct sleep_state sls;
-	struct task task;
-	int barrier = 0;
+	bool ret = false;
 
 	if (cold)
-		return;
+		return false;
 
-	while (timeout_pending(&dwork->to))
-		tsleep(&barrier, PWAIT, "fldwto", 1);
-
-	task_set(&task, flush_barrier, &barrier);
-	task_add(dwork->tq, &task);
-	while (!barrier) {
-		sleep_setup(&sls, &barrier, PWAIT, "fldwbar");
-		sleep_finish(&sls, !barrier);
+	while (timeout_pending(&dwork->to)) {
+		tsleep(dwork, PWAIT, "fldwto", 1);
+		ret = true;
 	}
+
+	taskq_barrier(dwork->tq ? dwork->tq : (struct taskq *)system_wq);
+	return ret;
 }
 
 struct timespec
@@ -135,6 +211,12 @@ ns_to_timeval(const int64_t nsec)
 	}
 	tv.tv_usec = rem / 1000;
 	return (tv);
+}
+
+int64_t
+timeval_to_ms(const struct timeval *tv)
+{
+	return ((int64_t)tv->tv_sec * 1000) + (tv->tv_usec / 1000);
 }
 
 int64_t
@@ -211,16 +293,19 @@ struct vm_page *
 alloc_pages(unsigned int gfp_mask, unsigned int order)
 {
 	int flags = (gfp_mask & M_NOWAIT) ? UVM_PLA_NOWAIT : UVM_PLA_WAITOK;
+	struct uvm_constraint_range *constraint = &no_constraint;
 	struct pglist mlist;
 
 	if (gfp_mask & M_CANFAIL)
 		flags |= UVM_PLA_FAILOK;
 	if (gfp_mask & M_ZERO)
 		flags |= UVM_PLA_ZERO;
+	if (gfp_mask & __GFP_DMA32)
+		constraint = &dma_constraint;
 
 	TAILQ_INIT(&mlist);
-	if (uvm_pglistalloc(PAGE_SIZE << order, dma_constraint.ucr_low,
-	    dma_constraint.ucr_high, PAGE_SIZE, 0, &mlist, 1, flags))
+	if (uvm_pglistalloc(PAGE_SIZE << order, constraint->ucr_low,
+	    constraint->ucr_high, PAGE_SIZE, 0, &mlist, 1, flags))
 		return NULL;
 	return TAILQ_FIRST(&mlist);
 }
@@ -235,6 +320,19 @@ __free_pages(struct vm_page *page, unsigned int order)
 	for (i = 0; i < (1 << order); i++)
 		TAILQ_INSERT_TAIL(&mlist, &page[i], pageq);
 	uvm_pglistfree(&mlist);
+}
+
+void
+__pagevec_release(struct pagevec *pvec)
+{
+	struct pglist mlist;
+	int i;
+
+	TAILQ_INIT(&mlist);
+	for (i = 0; i < pvec->nr; i++)
+		TAILQ_INSERT_TAIL(&mlist, pvec->pages[i], pageq);
+	uvm_pglistfree(&mlist);
+	pagevec_reinit(pvec);
 }
 
 void *
@@ -444,17 +542,20 @@ idr_replace(struct idr *idr, void *ptr, int id)
 	return old;
 }
 
-void
+void *
 idr_remove(struct idr *idr, int id)
 {
 	struct idr_entry find, *res;
+	void *ptr = NULL;
 
 	find.id = id;
 	res = SPLAY_FIND(idr_tree, &idr->tree, &find);
 	if (res) {
 		SPLAY_REMOVE(idr_tree, &idr->tree, res);
+		ptr = res->ptr;
 		pool_put(&idr_pool, res);
 	}
+	return ptr;
 }
 
 void *
@@ -474,15 +575,14 @@ idr_get_next(struct idr *idr, int *id)
 {
 	struct idr_entry *res;
 
-	res = idr_find(idr, *id);
-	if (res == NULL)
-		res = SPLAY_MIN(idr_tree, &idr->tree);
-	else
-		res = SPLAY_NEXT(idr_tree, &idr->tree, res);
-	if (res == NULL)
-		return NULL;
-	*id = res->id;
-	return res->ptr;
+	SPLAY_FOREACH(res, idr_tree, &idr->tree) {
+		if (res->id >= *id) {
+			*id = res->id;
+			return res->ptr;
+		}
+	}
+
+	return NULL;
 }
 
 int
@@ -538,6 +638,11 @@ ida_simple_get(struct ida *ida, unsigned int start, unsigned int end,
 		return -ENOSPC;
 
 	return ida->counter++;
+}
+
+void
+ida_simple_remove(struct ida *ida, int id)
+{
 }
 
 int
@@ -721,7 +826,7 @@ vga_put(struct pci_dev *pdev, int rsrc)
  * ACPI types and interfaces.
  */
 
-#if defined(__amd64__) || defined(__i386__)
+#ifdef __HAVE_ACPI
 #include "acpi.h"
 #endif
 
@@ -731,18 +836,20 @@ vga_put(struct pci_dev *pdev, int rsrc)
 #include <dev/acpi/acpivar.h>
 
 acpi_status
-acpi_get_table_with_size(const char *sig, int instance,
-    struct acpi_table_header **hdr, acpi_size *size)
+acpi_get_table(const char *sig, int instance,
+    struct acpi_table_header **hdr)
 {
 	struct acpi_softc *sc = acpi_softc;
 	struct acpi_q *entry;
 
 	KASSERT(instance == 1);
 
+	if (sc == NULL)
+		return AE_NOT_FOUND;
+
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
 		if (memcmp(entry->q_table, sig, strlen(sig)) == 0) {
 			*hdr = entry->q_table;
-			*size = (*hdr)->length;
 			return 0;
 		}
 	}
@@ -790,4 +897,572 @@ void
 drm_sysfs_hotplug_event(struct drm_device *dev)
 {
 	KNOTE(&dev->note, NOTE_CHANGE);
+}
+
+unsigned int drm_fence_count;
+
+unsigned int
+dma_fence_context_alloc(unsigned int num)
+{
+	return __sync_add_and_fetch(&drm_fence_count, num) - num;
+}
+
+static void
+dma_fence_default_wait_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
+{
+	wakeup(fence);
+}
+
+long
+dma_fence_default_wait(struct dma_fence *fence, bool intr, signed long timeout)
+{
+	long ret = timeout ? timeout : 1;
+	int err;
+	struct dma_fence_cb cb;
+	bool was_set;
+
+	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		return ret;
+
+	mtx_enter(fence->lock);
+
+	was_set = test_and_set_bit(DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT,
+	    &fence->flags);
+
+	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		goto out;
+
+	if (!was_set && fence->ops->enable_signaling) {
+		if (!fence->ops->enable_signaling(fence)) {
+			dma_fence_signal_locked(fence);
+			goto out;
+		}
+	}
+
+	if (timeout == 0) {
+		ret = 0;
+		goto out;
+	}
+
+	cb.func = dma_fence_default_wait_cb;
+	list_add(&cb.node, &fence->cb_list);
+
+	while (!test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
+		err = msleep(fence, fence->lock, intr ? PCATCH : 0, "dmafence",
+		    timeout);
+		if (err == EINTR || err == ERESTART) {
+			ret = -ERESTARTSYS;
+			break;
+		} else if (err == EWOULDBLOCK) {
+			ret = 0;
+			break;
+		}
+	}
+
+	if (!list_empty(&cb.node))
+		list_del(&cb.node);
+out:
+	mtx_leave(fence->lock);
+	
+	return ret;
+}
+
+static const char *
+dma_fence_array_get_driver_name(struct dma_fence *fence)
+{
+	return "dma_fence_array";
+}
+
+static const char *
+dma_fence_array_get_timeline_name(struct dma_fence *fence)
+{
+	return "unbound";
+}
+
+static void
+irq_dma_fence_array_work(struct irq_work *wrk)
+{
+	struct dma_fence_array *dfa = container_of(wrk, typeof(*dfa), work);
+
+	dma_fence_signal(&dfa->base);
+	dma_fence_put(&dfa->base);
+}
+
+static void
+dma_fence_array_cb_func(struct dma_fence *f, struct dma_fence_cb *cb)
+{
+	struct dma_fence_array_cb *array_cb =
+	    container_of(cb, struct dma_fence_array_cb, cb);
+	struct dma_fence_array *dfa = array_cb->array;
+	
+	if (atomic_dec_and_test(&dfa->num_pending))
+		irq_work_queue(&dfa->work);
+	else
+		dma_fence_put(&dfa->base);
+}
+
+static bool
+dma_fence_array_enable_signaling(struct dma_fence *fence)
+{
+	struct dma_fence_array *dfa = to_dma_fence_array(fence);
+	struct dma_fence_array_cb *cb = (void *)(&dfa[1]);
+	int i;
+
+	for (i = 0; i < dfa->num_fences; ++i) {
+		cb[i].array = dfa;
+		dma_fence_get(&dfa->base);
+		if (dma_fence_add_callback(dfa->fences[i], &cb[i].cb,
+		    dma_fence_array_cb_func)) {
+			dma_fence_put(&dfa->base);
+			if (atomic_dec_and_test(&dfa->num_pending))
+				return false;
+		}
+	}
+	
+	return true;
+}
+
+static bool dma_fence_array_signaled(struct dma_fence *fence)
+{
+	struct dma_fence_array *dfa = to_dma_fence_array(fence);
+
+	return atomic_read(&dfa->num_pending) <= 0;
+}
+
+static void dma_fence_array_release(struct dma_fence *fence)
+{
+	struct dma_fence_array *dfa = to_dma_fence_array(fence);
+	int i;
+
+	for (i = 0; i < dfa->num_fences; ++i)
+		dma_fence_put(dfa->fences[i]);
+
+	free(dfa->fences, M_DRM, 0);
+	dma_fence_free(fence);
+}
+
+struct dma_fence_array *
+dma_fence_array_create(int num_fences, struct dma_fence **fences, u64 context,
+    unsigned seqno, bool signal_on_any)
+{
+	struct dma_fence_array *dfa = malloc(sizeof(*dfa) +
+	    (num_fences * sizeof(struct dma_fence_array_cb)),
+	    M_DRM, M_WAITOK|M_CANFAIL|M_ZERO);
+	if (dfa == NULL)
+		return NULL;
+
+	mtx_init(&dfa->lock, IPL_TTY);
+	dma_fence_init(&dfa->base, &dma_fence_array_ops, &dfa->lock,
+	    context, seqno);
+	init_irq_work(&dfa->work, irq_dma_fence_array_work);
+
+	dfa->num_fences = num_fences;
+	atomic_set(&dfa->num_pending, signal_on_any ? 1 : num_fences);
+	dfa->fences = fences;
+
+	return dfa;
+}
+
+const struct dma_fence_ops dma_fence_array_ops = {
+	.get_driver_name = dma_fence_array_get_driver_name,
+	.get_timeline_name = dma_fence_array_get_timeline_name,
+	.enable_signaling = dma_fence_array_enable_signaling,
+	.signaled = dma_fence_array_signaled,
+	.release = dma_fence_array_release,
+};
+
+int
+dmabuf_read(struct file *fp, struct uio *uio, int fflags)
+{
+	return (ENXIO);
+}
+
+int
+dmabuf_write(struct file *fp, struct uio *uio, int fflags)
+{
+	return (ENXIO);
+}
+
+int
+dmabuf_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
+{
+	return (ENOTTY);
+}
+
+int
+dmabuf_poll(struct file *fp, int events, struct proc *p)
+{
+	return (0);
+}
+
+int
+dmabuf_kqfilter(struct file *fp, struct knote *kn)
+{
+	return (EINVAL);
+}
+
+int
+dmabuf_stat(struct file *fp, struct stat *st, struct proc *p)
+{
+	struct dma_buf *dmabuf = fp->f_data;
+
+	memset(st, 0, sizeof(*st));
+	st->st_size = dmabuf->size;
+	st->st_mode = S_IFIFO;	/* XXX */
+	return (0);
+}
+
+int
+dmabuf_close(struct file *fp, struct proc *p)
+{
+	struct dma_buf *dmabuf = fp->f_data;
+
+	fp->f_data = NULL;
+	KERNEL_LOCK();
+	dmabuf->ops->release(dmabuf);
+	KERNEL_UNLOCK();
+	free(dmabuf, M_DRM, sizeof(struct dma_buf));
+	return (0);
+}
+
+int
+dmabuf_seek(struct file *fp, off_t *offset, int whence, struct proc *p)
+{
+	struct dma_buf *dmabuf = fp->f_data;
+	off_t newoff;
+
+	if (*offset != 0)
+		return (EINVAL);
+
+	switch (whence) {
+	case SEEK_SET:
+		newoff = 0;
+		break;
+	case SEEK_END:
+		newoff = dmabuf->size;
+		break;
+	default:
+		return (EINVAL);
+	}
+	fp->f_offset = *offset = newoff;
+	return (0);
+}
+
+struct fileops dmabufops = {
+	.fo_read	= dmabuf_read,
+	.fo_write	= dmabuf_write,
+	.fo_ioctl	= dmabuf_ioctl,
+	.fo_poll	= dmabuf_poll,
+	.fo_kqfilter	= dmabuf_kqfilter,
+	.fo_stat	= dmabuf_stat,
+	.fo_close	= dmabuf_close,
+	.fo_seek	= dmabuf_seek,
+};
+
+struct dma_buf *
+dma_buf_export(const struct dma_buf_export_info *info)
+{
+	struct proc *p = curproc;
+	struct dma_buf *dmabuf;
+	struct file *fp;
+
+	fp = fnew(p);
+	if (fp == NULL)
+		return ERR_PTR(-ENFILE);
+	fp->f_type = DTYPE_DMABUF;
+	fp->f_ops = &dmabufops;
+	dmabuf = malloc(sizeof(struct dma_buf), M_DRM, M_WAITOK | M_ZERO);
+	dmabuf->priv = info->priv;
+	dmabuf->ops = info->ops;
+	dmabuf->size = info->size;
+	dmabuf->file = fp;
+	fp->f_data = dmabuf;
+	return dmabuf;
+}
+
+struct dma_buf *
+dma_buf_get(int fd)
+{
+	struct proc *p = curproc;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return ERR_PTR(-EBADF);
+
+	if (fp->f_type != DTYPE_DMABUF) {
+		FRELE(fp, p);
+		return ERR_PTR(-EINVAL);
+	}
+
+	return fp->f_data;
+}
+
+void
+dma_buf_put(struct dma_buf *dmabuf)
+{
+	KASSERT(dmabuf);
+	KASSERT(dmabuf->file);
+
+	FRELE(dmabuf->file, curproc);
+}
+
+int
+dma_buf_fd(struct dma_buf *dmabuf, int flags)
+{
+	struct proc *p = curproc;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp = dmabuf->file;
+	int fd, cloexec, error;
+
+	cloexec = (flags & O_CLOEXEC) ? UF_EXCLOSE : 0;
+
+	fdplock(fdp);
+restart:
+	if ((error = fdalloc(p, 0, &fd)) != 0) {
+		if (error == ENOSPC) {
+			fdexpand(p);
+			goto restart;
+		}
+		fdpunlock(fdp);
+		return -error;
+	}
+
+	fdinsert(fdp, fd, cloexec, fp);
+	fdpunlock(fdp);
+
+	return fd;
+}
+
+void
+get_dma_buf(struct dma_buf *dmabuf)
+{
+	FREF(dmabuf->file);
+}
+
+enum pci_bus_speed
+pcie_get_speed_cap(struct pci_dev *pdev)
+{
+	pci_chipset_tag_t	pc = pdev->pc;
+	pcitag_t		tag = pdev->tag;
+	int			pos ;
+	pcireg_t		xcap, lnkcap = 0, lnkcap2 = 0;
+	pcireg_t		id;
+	enum pci_bus_speed	cap = PCI_SPEED_UNKNOWN;
+	int			bus, device, function;
+
+	if (!pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS,
+	    &pos, NULL)) 
+		return PCI_SPEED_UNKNOWN;
+
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	pci_decompose_tag(pc, tag, &bus, &device, &function);
+
+	/* we've been informed via and serverworks don't make the cut */
+	if (PCI_VENDOR(id) == PCI_VENDOR_VIATECH ||
+	    PCI_VENDOR(id) == PCI_VENDOR_RCC)
+		return PCI_SPEED_UNKNOWN;
+
+	lnkcap = pci_conf_read(pc, tag, pos + PCI_PCIE_LCAP);
+	xcap = pci_conf_read(pc, tag, pos + PCI_PCIE_XCAP);
+	if (PCI_PCIE_XCAP_VER(xcap) >= 2)
+		lnkcap2 = pci_conf_read(pc, tag, pos + PCI_PCIE_LCAP2);
+
+	lnkcap &= 0x0f;
+	lnkcap2 &= 0xfe;
+
+	if (lnkcap2) { /* PCIE GEN 3.0 */
+		if (lnkcap2 & 0x02)
+			cap = PCIE_SPEED_2_5GT;
+		if (lnkcap2 & 0x04)
+			cap = PCIE_SPEED_5_0GT;
+		if (lnkcap2 & 0x08)
+			cap = PCIE_SPEED_8_0GT;
+		if (lnkcap2 & 0x10)
+			cap = PCIE_SPEED_16_0GT;
+	} else {
+		if (lnkcap & 0x01)
+			cap = PCIE_SPEED_2_5GT;
+		if (lnkcap & 0x02)
+			cap = PCIE_SPEED_5_0GT;
+	}
+
+	DRM_INFO("probing pcie caps for device %d:%d:%d 0x%04x:0x%04x = %x/%x\n",
+	    bus, device, function, PCI_VENDOR(id), PCI_PRODUCT(id), lnkcap,
+	    lnkcap2);
+	return cap;
+}
+
+enum pcie_link_width
+pcie_get_width_cap(struct pci_dev *pdev)
+{
+	pci_chipset_tag_t	pc = pdev->pc;
+	pcitag_t		tag = pdev->tag;
+	int			pos ;
+	pcireg_t		lnkcap = 0;
+	pcireg_t		id;
+	int			bus, device, function;
+
+	if (!pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS,
+	    &pos, NULL)) 
+		return PCIE_LNK_WIDTH_UNKNOWN;
+
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	pci_decompose_tag(pc, tag, &bus, &device, &function);
+
+	lnkcap = pci_conf_read(pc, tag, pos + PCI_PCIE_LCAP);
+
+	DRM_INFO("probing pcie width for device %d:%d:%d 0x%04x:0x%04x = %x\n",
+	    bus, device, function, PCI_VENDOR(id), PCI_PRODUCT(id), lnkcap);
+
+	if (lnkcap)
+		return (lnkcap & 0x3f0) >> 4;
+	return PCIE_LNK_WIDTH_UNKNOWN;
+}
+
+int
+default_wake_function(struct wait_queue_entry *wqe, unsigned int mode,
+    int sync, void *key)
+{
+	wakeup(wqe);
+	if (wqe->proc)
+		wake_up_process(wqe->proc);
+	return 0;
+}
+
+int
+autoremove_wake_function(struct wait_queue_entry *wqe, unsigned int mode,
+    int sync, void *key)
+{
+	default_wake_function(wqe, mode, sync, key);
+	list_del_init(&wqe->entry);
+	return 0;
+}
+
+struct mutex wait_bit_mtx = MUTEX_INITIALIZER(IPL_TTY);
+
+int
+wait_on_bit(unsigned long *word, int bit, unsigned mode)
+{
+	int err;
+
+	if (!test_bit(bit, word))
+		return 0;
+
+	mtx_enter(&wait_bit_mtx);
+	while (test_bit(bit, word)) {
+		err = msleep(word, &wait_bit_mtx, PWAIT | mode, "wtb", 0);
+		if (err) {
+			mtx_leave(&wait_bit_mtx);
+			return 1;
+		}
+	}
+	mtx_leave(&wait_bit_mtx);
+	return 0;
+}
+
+int
+wait_on_bit_timeout(unsigned long *word, int bit, unsigned mode, int timo)
+{
+	int err;
+
+	if (!test_bit(bit, word))
+		return 0;
+
+	mtx_enter(&wait_bit_mtx);
+	while (test_bit(bit, word)) {
+		err = msleep(word, &wait_bit_mtx, PWAIT | mode, "wtb", timo);
+		if (err) {
+			mtx_leave(&wait_bit_mtx);
+			return 1;
+		}
+	}
+	mtx_leave(&wait_bit_mtx);
+	return 0;
+}
+
+void
+wake_up_bit(void *word, int bit)
+{
+	mtx_enter(&wait_bit_mtx);
+	wakeup(word);
+	mtx_leave(&wait_bit_mtx);
+}
+
+struct workqueue_struct *system_wq;
+struct workqueue_struct *system_unbound_wq;
+struct workqueue_struct *system_long_wq;
+struct taskq *taskletq;
+
+void
+drm_linux_init(void)
+{
+	if (system_wq == NULL) {
+		system_wq = (struct workqueue_struct *)
+		    taskq_create("drmwq", 1, IPL_HIGH, 0);
+	}
+	if (system_unbound_wq == NULL) {
+		system_unbound_wq = (struct workqueue_struct *)
+		    taskq_create("drmubwq", 1, IPL_HIGH, 0);
+	}
+	if (system_long_wq == NULL) {
+		system_long_wq = (struct workqueue_struct *)
+		    taskq_create("drmlwq", 1, IPL_HIGH, 0);
+	}
+
+	if (taskletq == NULL)
+		taskletq = taskq_create("drmtskl", 1, IPL_HIGH, 0);
+}
+
+#define PCIE_ECAP_RESIZE_BAR	0x15
+#define RBCAP0			0x04
+#define RBCTRL0			0x08
+#define RBCTRL_BARINDEX_MASK	0x07
+#define RBCTRL_BARSIZE_MASK	0x1f00
+#define RBCTRL_BARSIZE_SHIFT	8
+
+/* size in MB is 1 << nsize */
+int
+pci_resize_resource(struct pci_dev *pdev, int bar, int nsize)
+{
+	pcireg_t	reg;
+	uint32_t	offset, capid;
+
+	KASSERT(bar == 0);
+
+	offset = PCI_PCIE_ECAP;
+
+	/* search PCI Express Extended Capabilities */
+	do {
+		reg = pci_conf_read(pdev->pc, pdev->tag, offset);
+		capid = PCI_PCIE_ECAP_ID(reg);
+		if (capid == PCIE_ECAP_RESIZE_BAR)
+			break;
+		offset = PCI_PCIE_ECAP_NEXT(reg);
+	} while (capid != 0);
+
+	if (capid == 0) {
+		printf("%s: could not find resize bar cap!\n", __func__);
+		return -ENOTSUP;
+	}
+
+	reg = pci_conf_read(pdev->pc, pdev->tag, offset + RBCAP0);
+
+	if ((reg & (1 << (nsize + 4))) == 0) {
+		printf("%s size not supported\n", __func__);
+		return -ENOTSUP;
+	}
+
+	reg = pci_conf_read(pdev->pc, pdev->tag, offset + RBCTRL0);
+	if ((reg & RBCTRL_BARINDEX_MASK) != 0) {
+		printf("%s BAR index not 0\n", __func__);
+		return -EINVAL;
+	}
+
+	reg &= ~RBCTRL_BARSIZE_MASK;
+	reg |= (nsize << RBCTRL_BARSIZE_SHIFT) & RBCTRL_BARSIZE_MASK;
+
+	pci_conf_write(pdev->pc, pdev->tag, offset + RBCTRL0, reg);
+
+	return 0;
 }

@@ -12,6 +12,7 @@
 #include "lldb/Utility/DataBuffer.h"
 #include "lldb/Utility/Endian.h"
 
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h" // for llvm_unreachable
 #include "llvm/Support/MathExtras.h"
 
@@ -22,36 +23,7 @@
 
 using namespace lldb;
 using namespace lldb_private;
-
-static inline void WriteInt16(unsigned char *ptr, unsigned offset,
-                              uint16_t value) {
-  *(uint16_t *)(ptr + offset) = value;
-}
-
-static inline void WriteInt32(unsigned char *ptr, unsigned offset,
-                              uint32_t value) {
-  *(uint32_t *)(ptr + offset) = value;
-}
-
-static inline void WriteInt64(unsigned char *ptr, unsigned offset,
-                              uint64_t value) {
-  *(uint64_t *)(ptr + offset) = value;
-}
-
-static inline void WriteSwappedInt16(unsigned char *ptr, unsigned offset,
-                                     uint16_t value) {
-  *(uint16_t *)(ptr + offset) = llvm::ByteSwap_16(value);
-}
-
-static inline void WriteSwappedInt32(unsigned char *ptr, unsigned offset,
-                                     uint32_t value) {
-  *(uint32_t *)(ptr + offset) = llvm::ByteSwap_32(value);
-}
-
-static inline void WriteSwappedInt64(unsigned char *ptr, unsigned offset,
-                                     uint64_t value) {
-  *(uint64_t *)(ptr + offset) = llvm::ByteSwap_64(value);
-}
+using namespace llvm::support::endian;
 
 //----------------------------------------------------------------------
 // Default constructor.
@@ -62,8 +34,8 @@ DataEncoder::DataEncoder()
       m_data_sp() {}
 
 //----------------------------------------------------------------------
-// This constructor allows us to use data that is owned by someone else.
-// The data must stay around as long as this object is valid.
+// This constructor allows us to use data that is owned by someone else. The
+// data must stay around as long as this object is valid.
 //----------------------------------------------------------------------
 DataEncoder::DataEncoder(void *data, uint32_t length, ByteOrder endian,
                          uint8_t addr_size)
@@ -71,11 +43,10 @@ DataEncoder::DataEncoder(void *data, uint32_t length, ByteOrder endian,
       m_byte_order(endian), m_addr_size(addr_size), m_data_sp() {}
 
 //----------------------------------------------------------------------
-// Make a shared pointer reference to the shared data in "data_sp" and
-// set the endian swapping setting to "swap", and the address size to
-// "addr_size". The shared data reference will ensure the data lives
-// as long as any DataEncoder objects exist that have a reference to
-// this data.
+// Make a shared pointer reference to the shared data in "data_sp" and set the
+// endian swapping setting to "swap", and the address size to "addr_size". The
+// shared data reference will ensure the data lives as long as any DataEncoder
+// objects exist that have a reference to this data.
 //----------------------------------------------------------------------
 DataEncoder::DataEncoder(const DataBufferSP &data_sp, ByteOrder endian,
                          uint8_t addr_size)
@@ -87,9 +58,8 @@ DataEncoder::DataEncoder(const DataBufferSP &data_sp, ByteOrder endian,
 DataEncoder::~DataEncoder() = default;
 
 //------------------------------------------------------------------
-// Clears the object contents back to a default invalid state, and
-// release any references to shared data that this object may
-// contain.
+// Clears the object contents back to a default invalid state, and release any
+// references to shared data that this object may contain.
 //------------------------------------------------------------------
 void DataEncoder::Clear() {
   m_start = nullptr;
@@ -100,8 +70,8 @@ void DataEncoder::Clear() {
 }
 
 //------------------------------------------------------------------
-// If this object contains shared data, this function returns the
-// offset into that shared data. Else zero is returned.
+// If this object contains shared data, this function returns the offset into
+// that shared data. Else zero is returned.
 //------------------------------------------------------------------
 size_t DataEncoder::GetSharedDataOffset() const {
   if (m_start != nullptr) {
@@ -118,13 +88,12 @@ size_t DataEncoder::GetSharedDataOffset() const {
 }
 
 //----------------------------------------------------------------------
-// Set the data with which this object will extract from to data
-// starting at BYTES and set the length of the data to LENGTH bytes
-// long. The data is externally owned must be around at least as
-// long as this object points to the data. No copy of the data is
-// made, this object just refers to this data and can extract from
-// it. If this object refers to any shared data upon entry, the
-// reference to that data will be released. Is SWAP is set to true,
+// Set the data with which this object will extract from to data starting at
+// BYTES and set the length of the data to LENGTH bytes long. The data is
+// externally owned must be around at least as long as this object points to
+// the data. No copy of the data is made, this object just refers to this data
+// and can extract from it. If this object refers to any shared data upon
+// entry, the reference to that data will be released. Is SWAP is set to true,
 // any data extracted will be endian swapped.
 //----------------------------------------------------------------------
 uint32_t DataEncoder::SetData(void *bytes, uint32_t length, ByteOrder endian) {
@@ -141,18 +110,17 @@ uint32_t DataEncoder::SetData(void *bytes, uint32_t length, ByteOrder endian) {
 }
 
 //----------------------------------------------------------------------
-// Assign the data for this object to be a subrange of the shared
-// data in "data_sp" starting "data_offset" bytes into "data_sp"
-// and ending "data_length" bytes later. If "data_offset" is not
-// a valid offset into "data_sp", then this object will contain no
-// bytes. If "data_offset" is within "data_sp" yet "data_length" is
-// too large, the length will be capped at the number of bytes
-// remaining in "data_sp". A ref counted pointer to the data in
-// "data_sp" will be made in this object IF the number of bytes this
-// object refers to in greater than zero (if at least one byte was
-// available starting at "data_offset") to ensure the data stays
-// around as long as it is needed. The address size and endian swap
-// settings will remain unchanged from their current settings.
+// Assign the data for this object to be a subrange of the shared data in
+// "data_sp" starting "data_offset" bytes into "data_sp" and ending
+// "data_length" bytes later. If "data_offset" is not a valid offset into
+// "data_sp", then this object will contain no bytes. If "data_offset" is
+// within "data_sp" yet "data_length" is too large, the length will be capped
+// at the number of bytes remaining in "data_sp". A ref counted pointer to the
+// data in "data_sp" will be made in this object IF the number of bytes this
+// object refers to in greater than zero (if at least one byte was available
+// starting at "data_offset") to ensure the data stays around as long as it is
+// needed. The address size and endian swap settings will remain unchanged from
+// their current settings.
 //----------------------------------------------------------------------
 uint32_t DataEncoder::SetData(const DataBufferSP &data_sp, uint32_t data_offset,
                               uint32_t data_length) {
@@ -177,8 +145,8 @@ uint32_t DataEncoder::SetData(const DataBufferSP &data_sp, uint32_t data_offset,
 
   uint32_t new_size = GetByteSize();
 
-  // Don't hold a shared pointer to the data buffer if we don't share
-  // any valid bytes in the shared buffer.
+  // Don't hold a shared pointer to the data buffer if we don't share any valid
+  // bytes in the shared buffer.
   if (new_size == 0)
     m_data_sp.reset();
 
@@ -186,8 +154,8 @@ uint32_t DataEncoder::SetData(const DataBufferSP &data_sp, uint32_t data_offset,
 }
 
 //----------------------------------------------------------------------
-// Extract a single unsigned char from the binary data and update
-// the offset pointed to by "offset_ptr".
+// Extract a single unsigned char from the binary data and update the offset
+// pointed to by "offset_ptr".
 //
 // RETURNS the byte that was extracted, or zero on failure.
 //----------------------------------------------------------------------
@@ -202,9 +170,9 @@ uint32_t DataEncoder::PutU8(uint32_t offset, uint8_t value) {
 uint32_t DataEncoder::PutU16(uint32_t offset, uint16_t value) {
   if (ValidOffsetForDataOfSize(offset, sizeof(value))) {
     if (m_byte_order != endian::InlHostByteOrder())
-      WriteSwappedInt16(m_start, offset, value);
+      write16be(m_start + offset, value);
     else
-      WriteInt16(m_start, offset, value);
+      write16le(m_start + offset, value);
 
     return offset + sizeof(value);
   }
@@ -214,9 +182,9 @@ uint32_t DataEncoder::PutU16(uint32_t offset, uint16_t value) {
 uint32_t DataEncoder::PutU32(uint32_t offset, uint32_t value) {
   if (ValidOffsetForDataOfSize(offset, sizeof(value))) {
     if (m_byte_order != endian::InlHostByteOrder())
-      WriteSwappedInt32(m_start, offset, value);
+      write32be(m_start + offset, value);
     else
-      WriteInt32(m_start, offset, value);
+      write32le(m_start + offset, value);
 
     return offset + sizeof(value);
   }
@@ -226,9 +194,9 @@ uint32_t DataEncoder::PutU32(uint32_t offset, uint32_t value) {
 uint32_t DataEncoder::PutU64(uint32_t offset, uint64_t value) {
   if (ValidOffsetForDataOfSize(offset, sizeof(value))) {
     if (m_byte_order != endian::InlHostByteOrder())
-      WriteSwappedInt64(m_start, offset, value);
+      write64be(m_start + offset, value);
     else
-      WriteInt64(m_start, offset, value);
+      write64le(m_start + offset, value);
 
     return offset + sizeof(value);
   }
@@ -236,12 +204,12 @@ uint32_t DataEncoder::PutU64(uint32_t offset, uint64_t value) {
 }
 
 //----------------------------------------------------------------------
-// Extract a single integer value from the data and update the offset
-// pointed to by "offset_ptr". The size of the extracted integer
-// is specified by the "byte_size" argument. "byte_size" should have
-// a value >= 1 and <= 8 since the return value is only 64 bits
-// wide. Any "byte_size" values less than 1 or greater than 8 will
-// result in nothing being extracted, and zero being returned.
+// Extract a single integer value from the data and update the offset pointed
+// to by "offset_ptr". The size of the extracted integer is specified by the
+// "byte_size" argument. "byte_size" should have a value >= 1 and <= 8 since
+// the return value is only 64 bits wide. Any "byte_size" values less than 1 or
+// greater than 8 will result in nothing being extracted, and zero being
+// returned.
 //
 // RETURNS the integer value that was extracted, or zero on failure.
 //----------------------------------------------------------------------

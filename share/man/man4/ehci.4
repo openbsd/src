@@ -1,4 +1,4 @@
-.\" $OpenBSD: ehci.4,v 1.13 2017/10/17 22:47:58 schwarze Exp $
+.\" $OpenBSD: ehci.4,v 1.14 2019/01/05 00:39:19 jsg Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 17 2017 $
+.Dd $Mdocdate: January 5 2019 $
 .Dt EHCI 4
 .Os
 .Sh NAME
@@ -35,6 +35,7 @@
 .Nd USB Enhanced Host Controller Interface
 .Sh SYNOPSIS
 .Cd "ehci* at cardbus?"
+.Cd "ehci* at fdt?"
 .Cd "ehci* at pci?"
 .Cd "usb*  at ehci?"
 .Sh DESCRIPTION

@@ -17,17 +17,17 @@ use autodie::hints;
 sub AUTODIE_HINTS {
     return {
         # Scalar failures always return undef:
-        undef_scalar =>    {  fail => undef  },
+        undef_scalar =>    {  fail => sub { !defined($_[0]) }  },
 
         # Scalar failures return any false value [default behaviour]:
         false_scalar =>    {  fail => sub { return ! $_[0] }  },
 
         # Scalar failures always return zero explicitly:
-        zero_scalar =>     {  fail => '0'  },
+        zero_scalar =>     {  fail => sub { defined($_[0]) && $_[0] eq '0' }  },
 
         # List failures always return empty list:
         # We never want these called in a scalar context
-        empty_list  =>     {  scalar => sub { 1 }, list => []  },
+        empty_list  =>     {  scalar => sub { 1 }, list => sub { !@_ }  },
 
         # List failures return C<()> or C<(undef)> [default expectation]:
         default_list => {  fail => sub { ! @_ || @_ == 1 && !defined $_[0] }  },
@@ -54,8 +54,8 @@ sub undef_n_error_list { return wantarray ? @_  : $_[0] }
 autodie::hints->set_hints_for(
     \&foo,
     {
-	scalar => 0,
-	list   => [0],
+	scalar => sub { defined($_[0]) && $_[0] == 0 },
+	list   => sub { @_ == 1 && defined($_[0]) && $_[0] == 0 },
     }
 );
 
@@ -67,7 +67,7 @@ autodie::hints->set_hints_for(
     \&re_fail,
     {
 	scalar => qr/^ _? FAIL $/xms,
-	list   => [-1],
+	list   => sub { @_ == 1 && $_[0] eq -1 },
     }
 );
 
@@ -77,8 +77,8 @@ sub re_fail { return wantarray ? @_ : $_[0] }
 autodie::hints->set_hints_for(
     \&bar,
     {
-	scalar => 0,
-	list   => [0],
+	scalar => sub { defined($_[0]) && $_[0] == 0 },
+	list   => sub { @_ == 1 && defined($_[0]) && $_[0] == 0 },
     }
 );
 

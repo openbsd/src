@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.29 2017/01/21 08:33:07 krw Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.31 2019/05/16 12:44:17 florian Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*

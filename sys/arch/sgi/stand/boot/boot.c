@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.24 2014/02/22 20:27:21 miod Exp $ */
+/*	$OpenBSD: boot.c,v 1.25 2019/04/10 04:17:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -68,7 +68,7 @@ char   rnddata[BOOTRANDOM_MAX];
 void
 boot_main(int argc, char *argv[])
 {
-	u_long marks[MARK_MAX];
+	uint64_t marks[MARK_MAX];
 	u_int64_t *esym;
 	char line[1024];
 	u_long entry;

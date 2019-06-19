@@ -24,11 +24,13 @@ class LinuxCoreTestCase(TestBase):
     _mips64_n64_pid = 25619
     _mips64_n32_pid = 3670
     _mips_o32_pid = 3532
+    _ppc64le_pid = 28147
 
     _i386_regions = 4
     _x86_64_regions = 5
     _s390x_regions = 2
     _mips_regions = 5
+    _ppc64le_regions = 2
 
     def setUp(self):
         super(LinuxCoreTestCase, self).setUp()
@@ -38,67 +40,90 @@ class LinuxCoreTestCase(TestBase):
         lldb.DBG.SetSelectedPlatform(self._initial_platform)
         super(LinuxCoreTestCase, self).tearDown()
 
-    @skipIf(oslist=['windows'])
+    @expectedFailureAll(bugnumber="llvm.org/pr37371", hostoslist=["windows"])
     @skipIf(triple='^mips')
+    @skipIfLLVMTargetMissing("X86")
     def test_i386(self):
         """Test that lldb can read the process information from an i386 linux core file."""
-        self.do_test("linux-i386", self._i386_pid, self._i386_regions)
+        self.do_test("linux-i386", self._i386_pid, self._i386_regions, "a.out")
 
+    @expectedFailureAll(bugnumber="llvm.org/pr37371", hostoslist=["windows"])
+    @skipIfLLVMTargetMissing("Mips")
     def test_mips_o32(self):
         """Test that lldb can read the process information from an MIPS O32 linux core file."""
-        self.do_test("linux-mipsel-gnuabio32", self._mips_o32_pid, self._mips_regions)
+        self.do_test("linux-mipsel-gnuabio32", self._mips_o32_pid,
+                self._mips_regions, "linux-mipsel-gn")
 
+    @expectedFailureAll(bugnumber="llvm.org/pr37371", hostoslist=["windows"])
+    @skipIfLLVMTargetMissing("Mips")
     def test_mips_n32(self):
         """Test that lldb can read the process information from an MIPS N32 linux core file """
-        self.do_test("linux-mips64el-gnuabin32", self._mips64_n32_pid, self._mips_regions)
+        self.do_test("linux-mips64el-gnuabin32", self._mips64_n32_pid,
+                self._mips_regions, "linux-mips64el-")
 
+    @expectedFailureAll(bugnumber="llvm.org/pr37371", hostoslist=["windows"])
+    @skipIfLLVMTargetMissing("Mips")
     def test_mips_n64(self):
         """Test that lldb can read the process information from an MIPS N64 linux core file """
-        self.do_test("linux-mips64el-gnuabi64", self._mips64_n64_pid, self._mips_regions)
+        self.do_test("linux-mips64el-gnuabi64", self._mips64_n64_pid,
+                self._mips_regions, "linux-mips64el-")
 
-    @skipIf(oslist=['windows'])
+    @expectedFailureAll(bugnumber="llvm.org/pr37371", hostoslist=["windows"])
     @skipIf(triple='^mips')
+    @skipIfLLVMTargetMissing("PowerPC")
+    def test_ppc64le(self):
+        """Test that lldb can read the process information from an ppc64le linux core file."""
+        self.do_test("linux-ppc64le", self._ppc64le_pid, self._ppc64le_regions,
+                "linux-ppc64le.ou")
+
+    @expectedFailureAll(bugnumber="llvm.org/pr37371", hostoslist=["windows"])
+    @skipIf(triple='^mips')
+    @skipIfLLVMTargetMissing("X86")
     def test_x86_64(self):
         """Test that lldb can read the process information from an x86_64 linux core file."""
-        self.do_test("linux-x86_64", self._x86_64_pid, self._x86_64_regions)
+        self.do_test("linux-x86_64", self._x86_64_pid, self._x86_64_regions,
+        "a.out")
 
-    @skipIf(oslist=['windows'])
+    @expectedFailureAll(bugnumber="llvm.org/pr37371", hostoslist=["windows"])
     @skipIf(triple='^mips')
+    @skipIfLLVMTargetMissing("SystemZ")
     def test_s390x(self):
         """Test that lldb can read the process information from an s390x linux core file."""
-        self.do_test("linux-s390x", self._s390x_pid, self._s390x_regions)
+        self.do_test("linux-s390x", self._s390x_pid, self._s390x_regions,
+        "a.out")
 
-    @skipIf(oslist=['windows'])
+    @expectedFailureAll(bugnumber="llvm.org/pr37371", hostoslist=["windows"])
     @skipIf(triple='^mips')
+    @skipIfLLVMTargetMissing("X86")
     def test_same_pid_running(self):
         """Test that we read the information from the core correctly even if we have a running
         process with the same PID around"""
-        try:
-            shutil.copyfile("linux-x86_64.out", "linux-x86_64-pid.out")
-            shutil.copyfile("linux-x86_64.core", "linux-x86_64-pid.core")
-            with open("linux-x86_64-pid.core", "r+b") as f:
-                # These are offsets into the NT_PRSTATUS and NT_PRPSINFO structures in the note
-                # segment of the core file. If you update the file, these offsets may need updating
-                # as well. (Notes can be viewed with readelf --notes.)
-                for pid_offset in [0x1c4, 0x320]:
-                    f.seek(pid_offset)
-                    self.assertEqual(
-                        struct.unpack(
-                            "<I",
-                            f.read(4))[0],
-                        self._x86_64_pid)
+        exe_file = self.getBuildArtifact("linux-x86_64-pid.out")
+        core_file = self.getBuildArtifact("linux-x86_64-pid.core")
+        shutil.copyfile("linux-x86_64.out", exe_file)
+        shutil.copyfile("linux-x86_64.core", core_file)
+        with open(core_file, "r+b") as f:
+            # These are offsets into the NT_PRSTATUS and NT_PRPSINFO structures in the note
+            # segment of the core file. If you update the file, these offsets may need updating
+            # as well. (Notes can be viewed with readelf --notes.)
+            for pid_offset in [0x1c4, 0x320]:
+                f.seek(pid_offset)
+                self.assertEqual(
+                    struct.unpack(
+                        "<I",
+                        f.read(4))[0],
+                    self._x86_64_pid)
 
-                    # We insert our own pid, and make sure the test still
-                    # works.
-                    f.seek(pid_offset)
-                    f.write(struct.pack("<I", os.getpid()))
-            self.do_test("linux-x86_64-pid", os.getpid(), self._x86_64_regions)
-        finally:
-            self.RemoveTempFile("linux-x86_64-pid.out")
-            self.RemoveTempFile("linux-x86_64-pid.core")
+                # We insert our own pid, and make sure the test still
+                # works.
+                f.seek(pid_offset)
+                f.write(struct.pack("<I", os.getpid()))
+        self.do_test(self.getBuildArtifact("linux-x86_64-pid"), os.getpid(),
+                self._x86_64_regions, "a.out")
 
-    @skipIf(oslist=['windows'])
+    @expectedFailureAll(bugnumber="llvm.org/pr37371", hostoslist=["windows"])
     @skipIf(triple='^mips')
+    @skipIfLLVMTargetMissing("X86")
     def test_two_cores_same_pid(self):
         """Test that we handle the situation if we have two core files with the same PID
         around"""
@@ -124,10 +149,12 @@ class LinuxCoreTestCase(TestBase):
 
         # without destroying this process, run the test which opens another core file with the
         # same pid
-        self.do_test("linux-x86_64", self._x86_64_pid, self._x86_64_regions)
+        self.do_test("linux-x86_64", self._x86_64_pid, self._x86_64_regions,
+                "a.out")
 
-    @skipIf(oslist=['windows'])
+    @expectedFailureAll(bugnumber="llvm.org/pr37371", hostoslist=["windows"])
     @skipIf(triple='^mips')
+    @skipIfLLVMTargetMissing("X86")
     def test_FPR_SSE(self):
         # check x86_64 core file
         target = self.dbg.CreateTarget(None)
@@ -137,7 +164,7 @@ class LinuxCoreTestCase(TestBase):
         values = {}
         values["fctrl"] = "0x037f"
         values["fstat"] = "0x0000"
-        values["ftag"] = "0xff"
+        values["ftag"] = "0x00ff"
         values["fop"] = "0x0000"
         values["fiseg"] = "0x00000000"
         values["fioff"] = "0x0040011e"
@@ -244,16 +271,47 @@ class LinuxCoreTestCase(TestBase):
             end_region.GetRegionBase())
         self.assertEqual(end_region.GetRegionEnd(), lldb.LLDB_INVALID_ADDRESS)
 
-    def do_test(self, filename, pid, region_count):
+    def check_state(self, process):
+        with open(os.devnull) as devnul:
+            # sanitize test output
+            self.dbg.SetOutputFileHandle(devnul, False)
+            self.dbg.SetErrorFileHandle(devnul, False)
+
+            self.assertTrue(process.is_stopped)
+
+            # Process.Continue
+            error = process.Continue()
+            self.assertFalse(error.Success())
+            self.assertTrue(process.is_stopped)
+
+            # Thread.StepOut
+            thread = process.GetSelectedThread()
+            thread.StepOut()
+            self.assertTrue(process.is_stopped)
+
+            # command line
+            self.dbg.HandleCommand('s')
+            self.assertTrue(process.is_stopped)
+            self.dbg.HandleCommand('c')
+            self.assertTrue(process.is_stopped)
+
+            # restore file handles
+            self.dbg.SetOutputFileHandle(None, False)
+            self.dbg.SetErrorFileHandle(None, False)
+
+    def do_test(self, filename, pid, region_count, thread_name):
         target = self.dbg.CreateTarget(filename + ".out")
         process = target.LoadCore(filename + ".core")
         self.assertTrue(process, PROCESS_IS_VALID)
         self.assertEqual(process.GetNumThreads(), 1)
         self.assertEqual(process.GetProcessID(), pid)
 
+        self.check_state(process)
+
         thread = process.GetSelectedThread()
         self.assertTrue(thread)
         self.assertEqual(thread.GetThreadID(), pid)
+        self.assertEqual(thread.GetName(), thread_name)
         backtrace = ["bar", "foo", "_start"]
         self.assertEqual(thread.GetNumFrames(), len(backtrace))
         for i in range(len(backtrace)):

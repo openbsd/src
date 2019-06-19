@@ -1,4 +1,4 @@
-/*      $OpenBSD: profile.h,v 1.4 2011/03/23 16:54:36 pirofti Exp $	*/
+/*      $OpenBSD: profile.h,v 1.5 2019/04/19 09:19:22 visa Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,7 @@
 	"sd $1,0($29);"			\
 	"sd $31,8($29);"		\
 	"move $5,$31;"			\
+	".local ___mcount;"		\
 	"jal ___mcount;"		\
 	"move $4,$1;"			\
 	"ld $4,16($29);"		\

@@ -426,7 +426,8 @@ Error TypeRecordMapping::visitKnownMember(CVMemberRecord &CVR,
 
 Error TypeRecordMapping::visitKnownMember(CVMemberRecord &CVR,
                                           OneMethodRecord &Record) {
-  MapOneMethodRecord Mapper(false);
+  const bool IsFromOverloadList = (TypeKind == LF_METHODLIST);
+  MapOneMethodRecord Mapper(IsFromOverloadList);
   return Mapper(IO, Record);
 }
 
@@ -477,5 +478,20 @@ Error TypeRecordMapping::visitKnownMember(CVMemberRecord &CVR,
   error(IO.mapInteger(Padding));
   error(IO.mapInteger(Record.ContinuationIndex));
 
+  return Error::success();
+}
+
+Error TypeRecordMapping::visitKnownRecord(CVType &CVR,
+                                          PrecompRecord &Precomp) {
+  error(IO.mapInteger(Precomp.StartTypeIndex));
+  error(IO.mapInteger(Precomp.TypesCount));
+  error(IO.mapInteger(Precomp.Signature));
+  error(IO.mapStringZ(Precomp.PrecompFilePath));
+  return Error::success();
+}
+
+Error TypeRecordMapping::visitKnownRecord(CVType &CVR,
+                                          EndPrecompRecord &EndPrecomp) {
+  error(IO.mapInteger(EndPrecomp.Signature));
   return Error::success();
 }

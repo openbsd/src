@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.4 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: filter.c,v 1.8 2018/08/27 12:15:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -37,12 +37,15 @@ ldap_filt_eq(struct ber_element *root, struct plan *plan)
 	char			*vs;
 	struct ber_element	*a, *vals, *v;
 
-	if (plan->adesc != NULL)
+	if (plan->undefined)
+		return -1;
+	else if (plan->adesc != NULL)
 		a = ldap_get_attribute(root, plan->adesc);
 	else
 		a = ldap_find_attribute(root, plan->at);
 	if (a == NULL) {
-		log_debug("no attribute [%s] found", plan->adesc ? plan->adesc : ATTR_NAME(plan->at));
+		log_debug("no attribute [%s] found",
+		    plan->adesc ? plan->adesc : ATTR_NAME(plan->at));
 		return -1;
 	}
 
@@ -64,7 +67,7 @@ static int
 ldap_filt_subs_value(struct ber_element *v, struct ber_element *sub)
 {
 	int		 class;
-	unsigned long	 type;
+	unsigned int	 type;
 	const char	*cmpval;
 	char		*vs, *p, *end;
 
@@ -101,7 +104,7 @@ ldap_filt_subs_value(struct ber_element *v, struct ber_element *sub)
 				return 1; /* no match */
 			break;
 		default:
-			log_warnx("invalid subfilter type %d", type);
+			log_warnx("invalid subfilter type %u", type);
 			return -1;
 		}
 	}
@@ -115,12 +118,15 @@ ldap_filt_subs(struct ber_element *root, struct plan *plan)
 	const char		*attr;
 	struct ber_element	*a, *v;
 
-	if (plan->adesc != NULL)
+	if (plan->undefined)
+		return -1;
+	else if (plan->adesc != NULL)
 		a = ldap_get_attribute(root, plan->adesc);
 	else
 		a = ldap_find_attribute(root, plan->at);
 	if (a == NULL) {
-		log_debug("no attribute [%s] found", plan->adesc ? plan->adesc : ATTR_NAME(plan->at));
+		log_debug("no attribute [%s] found",
+		    plan->adesc ? plan->adesc : ATTR_NAME(plan->at));
 		return -1;
 	}
 
@@ -186,12 +192,15 @@ ldap_filt_presence(struct ber_element *root, struct plan *plan)
 {
 	struct ber_element	*a;
 
-	if (plan->adesc != NULL)
+	if (plan->undefined)
+		return -1;
+	else if (plan->adesc != NULL)
 		a = ldap_get_attribute(root, plan->adesc);
 	else
 		a = ldap_find_attribute(root, plan->at);
 	if (a == NULL) {
-		log_debug("no attribute [%s] found", plan->adesc ? plan->adesc : ATTR_NAME(plan->at));
+		log_debug("no attribute [%s] found",
+		    plan->adesc ? plan->adesc : ATTR_NAME(plan->at));
 		return -1;
 	}
 

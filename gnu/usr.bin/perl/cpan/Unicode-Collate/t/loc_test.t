@@ -103,8 +103,8 @@ my $objEsT = Unicode::Collate::Locale->new
 ok($objEsT->getlocale, 'es__traditional');
 
 my $objFr  = Unicode::Collate::Locale->new
-    (normalization => undef, locale => 'FR');
-ok($objFr->getlocale, 'fr');
+    (normalization => undef, locale => 'FR_CA');
+ok($objFr->getlocale, 'fr_CA');
 
 # 16
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_stat.c,v 1.29 2016/05/08 11:52:32 stefan Exp $	 */
+/*	$OpenBSD: uvm_stat.c,v 1.30 2018/06/19 22:35:07 krw Exp $	 */
 /*	$NetBSD: uvm_stat.c,v 1.18 2001/03/09 01:02:13 chs Exp $	 */
 
 /*
@@ -57,8 +57,6 @@ uvmexp_print(int (*pr)(const char *, ...))
 	(*pr)("  min  %d%% (%d) anon, %d%% (%d) vnode, %d%% (%d) vtext\n",
 	    uvmexp.anonminpct, uvmexp.anonmin, uvmexp.vnodeminpct,
 	    uvmexp.vnodemin, uvmexp.vtextminpct, uvmexp.vtextmin);
-	(*pr)("  pages  %d anon, %d vnode, %d vtext\n",
-	    uvmexp.anonpages, uvmexp.vnodepages, uvmexp.vtextpages);
 	(*pr)("  freemin=%d, free-target=%d, inactive-target=%d, "
 	    "wired-max=%d\n", uvmexp.freemin, uvmexp.freetarg, uvmexp.inactarg,
 	    uvmexp.wiredmax);
@@ -89,9 +87,8 @@ uvmexp_print(int (*pr)(const char *, ...))
 	    uvmexp.pdbusy, uvmexp.pdfreed, uvmexp.pdreact, uvmexp.pddeact);
 	(*pr)("    pageouts=%d, pending=%d, nswget=%d\n", uvmexp.pdpageouts,
 	    uvmexp.pdpending, uvmexp.nswget);
-	(*pr)("    nswapdev=%d, nanon=%d, nanonneeded=%d nfreeanon=%d\n",
-	    uvmexp.nswapdev, uvmexp.nanon, uvmexp.nanonneeded,
-	    uvmexp.nfreeanon);
+	(*pr)("    nswapdev=%d\n",
+	    uvmexp.nswapdev);
 	(*pr)("    swpages=%d, swpginuse=%d, swpgonly=%d paging=%d\n",
 	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.paging);
 

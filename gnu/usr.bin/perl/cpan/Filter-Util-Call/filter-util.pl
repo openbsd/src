@@ -30,7 +30,7 @@ sub writeFile
 
 sub ok
 {
-    my($number, $result, $note) = @_ ;
+    my ($number, $result, $note) = @_ ;
  
     $note = "" if ! defined $note ;
     if ($note) {
@@ -40,11 +40,17 @@ sub ok
 
     print "not " if !$result ;
     print "ok ${number}${note}\n";
+    return $result;
+}
+
+sub diag {
+    print STDERR 
+      (map { /^#/ ? "$_\n" : "# $_\n" }
+       map { split /\n/ } @_);
 }
 
 $Inc = '' ;
-foreach (@INC)
- { $Inc .= "\"-I$_\" " }
+foreach (@INC) { $Inc .= "\"-I$_\" " }
 $Inc = "-I::lib" if $^O eq 'MacOS';
 
 $Perl = '' ;

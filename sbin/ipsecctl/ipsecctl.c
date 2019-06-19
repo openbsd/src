@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.83 2017/11/20 10:51:24 mpi Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.84 2018/09/07 12:43:30 kn Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -64,7 +64,7 @@ void		 ipsecctl_show_sas(int);
 int		 ipsecctl_monitor(int);
 void		 usage(void);
 const char	*ipsecctl_lookup_option(char *, const char **);
-static int	 unmask(struct ipsec_addr *, sa_family_t);
+static int	 unmask(struct ipsec_addr *);
 int		 sacompare(const void *, const void *);
 
 const char	*showopt;
@@ -400,7 +400,7 @@ ipsecctl_print_addr(struct ipsec_addr_wrap *ipa)
 	else
 		printf("%s", buf);
 
-	bits = unmask(&ipa->mask, ipa->af);
+	bits = unmask(&ipa->mask);
 	if (bits != (ipa->af == AF_INET ? 32 : 128))
 		printf("/%d", bits);
 }
@@ -902,9 +902,8 @@ main(int argc, char *argv[])
 	exit(error);
 }
 
-/* ARGSUSED1 */
 static int
-unmask(struct ipsec_addr *ipa, sa_family_t af)
+unmask(struct ipsec_addr *ipa)
 {
 	int		i = 31, j = 0, b = 0;
 	u_int32_t	tmp;

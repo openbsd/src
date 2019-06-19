@@ -1,5 +1,6 @@
-.\"	$OpenBSD: BN_bn2bin.3,v 1.11 2018/03/27 17:35:50 schwarze Exp $
-.\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
+.\"	$OpenBSD: BN_bn2bin.3,v 1.13 2019/06/10 14:58:48 schwarze Exp $
+.\" full merge up to: OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
+.\" selective merge up to: OpenSSL 1212818e Sep 11 13:22:14 2018 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
 .\" Copyright (c) 2000, 2002, 2016 The OpenSSL Project.  All rights reserved.
@@ -48,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 10 2019 $
 .Dt BN_BN2BIN 3
 .Os
 .Sh NAME
@@ -181,7 +182,8 @@ If
 .Fa a
 is
 .Dv NULL ,
-it only computes the number's length in hexadecimal digits.
+it only computes the number's length in hexadecimal digits,
+also counting the leading minus sign if there is one.
 A "negative zero" is converted to zero.
 .Fn BN_dec2bn
 is the same using the decimal system.
@@ -268,7 +270,8 @@ on error.
 .Fn BN_hex2bn
 and
 .Fn BN_dec2bn
-return the number's length in hexadecimal or decimal digits
+return the number's length in hexadecimal or decimal digits,
+also counting the leading minus sign if there is one,
 or 0 on error, in which case no new
 .Vt BIGNUM
 is created.
@@ -296,8 +299,7 @@ The error codes can be obtained by
 .Sh SEE ALSO
 .Xr BN_new 3 ,
 .Xr BN_num_bytes 3 ,
-.Xr BN_zero 3 ,
-.Xr ERR_get_error 3
+.Xr BN_zero 3
 .Sh HISTORY
 .Fn BN_bn2bin ,
 .Fn BN_bin2bn ,

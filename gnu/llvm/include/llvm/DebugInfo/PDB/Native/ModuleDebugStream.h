@@ -32,6 +32,7 @@ public:
   ModuleDebugStreamRef(const DbiModuleDescriptor &Module,
                        std::unique_ptr<msf::MappedBlockStream> Stream);
   ModuleDebugStreamRef(ModuleDebugStreamRef &&Other) = default;
+  ModuleDebugStreamRef(const ModuleDebugStreamRef &Other) = default;
   ~ModuleDebugStreamRef();
 
   Error reload();
@@ -48,9 +49,12 @@ public:
   BinarySubstreamRef getC13LinesSubstream() const;
   BinarySubstreamRef getGlobalRefsSubstream() const;
 
-  ModuleDebugStreamRef &operator=(ModuleDebugStreamRef &&Other) = default;
+  ModuleDebugStreamRef &operator=(ModuleDebugStreamRef &&Other) = delete;
 
   iterator_range<DebugSubsectionIterator> subsections() const;
+  codeview::DebugSubsectionArray getSubsectionsArray() const {
+    return Subsections;
+  }
 
   bool hasDebugSubsections() const;
 

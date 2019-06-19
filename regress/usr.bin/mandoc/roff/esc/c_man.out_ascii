@@ -7,12 +7,23 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        No space between "one" and "word": oneword
+
+       The same in no-fill mode:
        oneword
+
        Blank line after \c: one word
        one
        word
+
+       In next-line element scope: oonneewwoorrdd
+
+       In next-line block scope:
+
+       oneword
+              list body
+
        final text
 
 
 
-OpenBSD                        December 2, 2014                   ESC-C_MAN(1)
+OpenBSD                         August 25, 2018                   ESC-C_MAN(1)

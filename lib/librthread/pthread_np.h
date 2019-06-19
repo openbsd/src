@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_np.h,v 1.1 2016/04/02 19:56:53 guenther Exp $	*/
+/*	$OpenBSD: pthread_np.h,v 1.2 2019/02/04 17:18:08 tedu Exp $	*/
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -23,6 +23,7 @@
 PROTO_DEPRECATED(pthread_main_np);
 PROTO_DEPRECATED(pthread_mutexattr_getkind_np);
 PROTO_DEPRECATED(pthread_mutexattr_setkind_np);
+PROTO_DEPRECATED(pthread_get_name_np);
 PROTO_DEPRECATED(pthread_set_name_np);
 PROTO_DEPRECATED(pthread_stackseg_np);
 

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.88 2017/11/28 16:59:10 jsing Exp $
+.\"     $OpenBSD: nc.1,v 1.93 2018/12/27 17:45:36 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 28 2017 $
+.Dd $Mdocdate: December 27 2018 $
 .Dt NC 1
 .Os
 .Sh NAME
@@ -96,27 +96,31 @@ and much, much more
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl 4
-Forces
-.Nm
-to use IPv4 addresses only.
+Use IPv4 addresses only.
 .It Fl 6
-Forces
-.Nm
-to use IPv6 addresses only.
+Use IPv6 addresses only.
 .It Fl C Ar certfile
-Specifies the filename from which the public key part of the TLS
-certificate is loaded, in PEM format.
-May only be used with TLS.
+Load the public key part of the TLS peer certificate from
+.Ar certfile ,
+in PEM format.
+Requires
+.Fl c .
 .It Fl c
-If using a TCP socket to connect or listen, use TLS.
-Illegal if not using TCP sockets.
+Use TLS to connect or listen.
+Cannot be used together with any of the options
+.Fl FuU .
 .It Fl D
 Enable debugging on the socket.
 .It Fl d
 Do not attempt to read from stdin.
 .It Fl e Ar name
-Specify the name that must be present in the peer certificate when using TLS.
-Illegal if not using TLS.
+Only accept the TLS peer certificate if it contains the
+.Ar name .
+Requires
+.Fl c .
+If not specified,
+.Ar destination
+is used.
 .It Fl F
 Pass the first connected socket using
 .Xr sendmsg 2
@@ -132,47 +136,49 @@ using the
 .Xr ssh_config 5
 .Cm ProxyUseFdpass
 option).
+Cannot be used with
+.Fl c
+or
+.Fl U .
 .It Fl H Ar hash
-Specifies the required hash string of the peer certificate when using TLS.
-The string format required is that used by
-.Xr tls_peer_cert_hash 3 .
-Illegal if not using TLS, and may not be used with -T noverify.
+Only accept the TLS peer certificate if its hash returned from
+.Xr tls_peer_cert_hash 3
+matches
+.Ar hash .
+Requires
+.Fl c
+and cannot be used with
+.Fl T Cm noverify .
 .It Fl h
-Prints out
+Print out the
 .Nm
-help.
+help text and exit.
 .It Fl I Ar length
-Specifies the size of the TCP receive buffer.
+Specify the size of the TCP receive buffer.
 .It Fl i Ar interval
-Specifies a delay time interval between lines of text sent and received.
+Sleep for
+.Ar interval
+seconds between lines of text sent and received.
 Also causes a delay time between connections to multiple ports.
 .It Fl K Ar keyfile
-Specifies the filename from which the private key
-is loaded in PEM format.
-May only be used with TLS.
+Load the TLS private key from
+.Ar keyfile ,
+in PEM format.
+Requires
+.Fl c .
 .It Fl k
-Forces
-.Nm
-to stay listening for another connection after its current connection
-is completed.
-It is an error to use this option without the
-.Fl l
-option.
+When a connection is completed, listen for another one.
+Requires
+.Fl l .
 When used together with the
 .Fl u
 option, the server socket is not connected and it can receive UDP datagrams from
 multiple hosts.
 .It Fl l
-Used to specify that
-.Nm
-should listen for an incoming connection rather than initiate a
+Listen for an incoming connection rather than initiating a
 connection to a remote host.
-It is an error to use this option in conjunction with the
-.Fl p ,
-.Fl s ,
-or
-.Fl z
-options.
+Cannot be used together with any of the options
+.Fl psxz .
 Additionally, any timeouts specified with the
 .Fl w
 option are ignored.
@@ -189,97 +195,111 @@ Some servers require this to finish their work.
 Do not do any DNS or service lookups on any specified addresses,
 hostnames or ports.
 .It Fl O Ar length
-Specifies the size of the TCP send buffer.
+Specify the size of the TCP send buffer.
 .It Fl o Ar staplefile
-Specifies the filename from which to load data to be stapled
-during the TLS handshake.
-The file is expected to contain an OCSP response from an OCSP server in
+During the TLS handshake, load data to be stapled from
+.Ar staplefile ,
+which is expected to contain an OCSP response from an OCSP server in
 DER format.
-May only be used with TLS and when a certificate is being used.
+Requires
+.Fl c
+and
+.Fl C .
 .It Fl P Ar proxy_username
 Specifies a username to present to a proxy server that requires authentication.
 If no username is specified then authentication will not be attempted.
 Proxy authentication is only supported for HTTP CONNECT proxies at present.
 .It Fl p Ar source_port
-Specifies the source port
+Specify the source port
 .Nm
 should use, subject to privilege restrictions and availability.
-It is an error to use this option in conjunction with the
-.Fl l
-option.
+Cannot be used together with
+.Fl l .
 .It Fl R Ar CAfile
-Specifies the filename from which the root CA bundle for certificate
-verification is loaded, in PEM format.
-Illegal if not using TLS.
-The default is
+Load the root CA bundle for TLS certificate verification from
+.Ar CAfile ,
+in PEM format, instead of
 .Pa /etc/ssl/cert.pem .
+Requires
+.Fl c .
 .It Fl r
-Specifies that source and/or destination ports should be chosen randomly
+Choose source and/or destination ports randomly
 instead of sequentially within a range or in the order that the system
 assigns them.
 .It Fl S
-Enables the RFC 2385 TCP MD5 signature option.
+Enable the RFC 2385 TCP MD5 signature option.
 .It Fl s Ar source
-Specifies the IP of the interface which is used to send the packets.
+Send packets from the interface with the
+.Ar source
+IP address.
 For
 .Ux Ns -domain
 datagram sockets, specifies the local temporary socket file
 to create and use so that datagrams can be received.
-It is an error to use this option in conjunction with the
+Cannot be used together with
 .Fl l
-option.
+or
+.Fl x .
 .It Fl T Ar keyword
-Change IPv4 TOS value or TLS options.
-For TLS options
+Change the IPv4 TOS/IPv6 traffic class value or the TLS options.
+.Pp
+For TLS options,
 .Ar keyword
 may be one of:
-.Ar noverify ,
+.Cm noverify ,
 which disables certificate verification;
-.Ar noname ,
+.Cm noname ,
 which disables certificate name checking;
-.Ar clientcert ,
+.Cm clientcert ,
 which requires a client certificate on incoming connections; or
-.Ar muststaple ,
+.Cm muststaple ,
 which requires the peer to provide a valid stapled OCSP response
 with the handshake.
-The following TLS options specify a value in the form of a key=value pair:
-.Ar ciphers ,
+The following TLS options specify a value in the form of a
+.Ar key Ns = Ns Ar value
+pair:
+.Cm ciphers ,
 which allows the supported TLS ciphers to be specified (see
 .Xr tls_config_set_ciphers 3
 for further details);
-.Ar protocols ,
+.Cm protocols ,
 which allows the supported TLS protocols to be specified (see
 .Xr tls_config_parse_protocols 3
 for further details).
-It is illegal to specify TLS options if not using TLS.
+Specifying TLS options requires
+.Fl c .
 .Pp
-For IPv4 TOS value
+For the IPv4 TOS/IPv6 traffic class value,
 .Ar keyword
 may be one of
-.Ar critical ,
-.Ar inetcontrol ,
-.Ar lowdelay ,
-.Ar netcontrol ,
-.Ar throughput ,
-.Ar reliability ,
+.Cm critical ,
+.Cm inetcontrol ,
+.Cm lowdelay ,
+.Cm netcontrol ,
+.Cm throughput ,
+.Cm reliability ,
 or one of the DiffServ Code Points:
-.Ar ef ,
-.Ar af11 ... af43 ,
-.Ar cs0 ... cs7 ;
+.Cm ef ,
+.Cm af11 No ... Cm af43 ,
+.Cm cs0 No ... Cm cs7 ;
 or a number in either hex or decimal.
 .It Fl t
-Causes
-.Nm
-to send RFC 854 DON'T and WON'T responses to RFC 854 DO and WILL requests.
+Send RFC 854 DON'T and WON'T responses to RFC 854 DO and WILL requests.
 This makes it possible to use
 .Nm
 to script telnet sessions.
 .It Fl U
-Specifies to use
+Use
 .Ux Ns -domain
 sockets.
+Cannot be used together with any of the options
+.Fl cFx .
 .It Fl u
-Use UDP instead of the default option of TCP.
+Use UDP instead of TCP.
+Cannot be used together with
+.Fl c
+or
+.Fl x .
 For
 .Ux Ns -domain
 sockets, use a datagram socket instead of a stream socket.
@@ -293,9 +313,7 @@ flag is given.
 .It Fl V Ar rtable
 Set the routing table to be used.
 .It Fl v
-Have
-.Nm
-give more verbose output.
+Produce more verbose output.
 .It Fl W Ar recvlimit
 Terminate after receiving
 .Ar recvlimit
@@ -315,22 +333,20 @@ will listen forever for a connection, with or without the
 flag.
 The default is no timeout.
 .It Fl X Ar proxy_protocol
-Requests that
-.Nm
-should use the specified protocol when talking to the proxy server.
+Use
+.Ar proxy_protocol
+when talking to the proxy server.
 Supported protocols are
-.Dq 4
+.Cm 4
 (SOCKS v.4),
-.Dq 5
+.Cm 5
 (SOCKS v.5)
 and
-.Dq connect
+.Cm connect
 (HTTPS proxy).
 If the protocol is not specified, SOCKS version 5 is used.
 .It Fl x Ar proxy_address Ns Op : Ns Ar port
-Requests that
-.Nm
-should connect to
+Connect to
 .Ar destination
 using a proxy at
 .Ar proxy_address
@@ -343,17 +359,18 @@ for SOCKS, 3128 for HTTPS).
 An IPv6 address can be specified unambiguously by enclosing
 .Ar proxy_address
 in square brackets.
+A proxy cannot be used with any of the options
+.Fl lsuU .
 .It Fl Z Ar peercertfile
-Specifies the filename in which the peer supplied certificates will be saved
+Save the peer certificates to
+.Ar peercertfile ,
 in PEM format.
-May only be used with TLS.
+Requires
+.Fl c .
 .It Fl z
-Specifies that
-.Nm
-should just scan for listening daemons, without sending any data to them.
-It is an error to use this option in conjunction with the
-.Fl l
-option.
+Only scan for listening daemons, without sending any data to them.
+Cannot be used together with
+.Fl l .
 .El
 .Pp
 .Ar destination
@@ -374,8 +391,9 @@ sockets, a destination is required and is the socket path to connect to
 option is given).
 .Pp
 .Ar port
-can be a specified as a numeric port number, or as a service name.
-Ports may be specified in a range of the form nn-mm.
+can be specified as a numeric port number or as a service name.
+Port ranges may be specified as numeric port numbers of the form
+.Ar nn Ns - Ns Ar mm .
 In general,
 a destination port must be specified,
 unless the
@@ -548,8 +566,8 @@ if the proxy requires it:
 .Xr cat 1 ,
 .Xr ssh 1
 .Sh AUTHORS
-Original implementation by *Hobbit*
-.Aq Mt hobbit@avian.org .
+Original implementation by
+.An *Hobbit* Aq Mt hobbit@avian.org .
 .br
 Rewritten with IPv6 support by
 .An Eric Jackson Aq Mt ericj@monkey.org .

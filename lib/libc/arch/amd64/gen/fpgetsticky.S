@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetsticky.S,v 1.2 2015/05/29 08:50:12 uebayasi Exp $	*/
+/*	$OpenBSD: fpgetsticky.S,v 1.3 2018/07/03 23:14:05 mortimer Exp $	*/
 /*	$NetBSD: fpgetsticky.S,v 1.3 2002/06/12 19:17:22 fvdl Exp $	*/
 
 /*
@@ -20,11 +20,13 @@ ENTRY(_fpgetsticky)
 #else
 ENTRY(fpgetsticky)
 #endif
+	RETGUARD_SETUP(fpgetsticky, r11)
 	fnstsw	-4(%rsp)
 	stmxcsr	-8(%rsp)
 	movl	-4(%rsp),%eax
 	orl	-8(%rsp),%eax
 	andl	$63,%eax
+	RETGUARD_CHECK(fpgetsticky, r11)
 	ret
 #ifdef WEAK_ALIAS
 END(_fpgetsticky)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_new.3,v 1.5 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: X509_NAME_new.3,v 1.7 2019/06/06 01:06:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt X509_NAME_NEW 3
 .Os
 .Sh NAME
@@ -62,6 +62,11 @@ frees
 and all the
 .Vt X509_NAME_ENTRY
 objects contained in it.
+If
+.Fa name
+is a
+.Dv NULL
+pointer, no action occurs.
 .Sh RETURN VALUES
 .Fn X509_NAME_new
 returns a new
@@ -76,9 +81,11 @@ if an error occurred.
 .Xr SSL_load_client_CA_file 3 ,
 .Xr X509_get_subject_name 3 ,
 .Xr X509_NAME_add_entry_by_txt 3 ,
+.Xr X509_NAME_digest 3 ,
 .Xr X509_NAME_ENTRY_new 3 ,
 .Xr X509_NAME_get_index_by_NID 3 ,
-.Xr X509_NAME_print_ex 3
+.Xr X509_NAME_print_ex 3 ,
+.Xr X509_new 3
 .Sh STANDARDS
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
 Certificate Revocation List (CRL) Profile

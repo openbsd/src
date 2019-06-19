@@ -1,3 +1,192 @@
+2018-02-07 15:08:00 tonyc
+    Version 3.06
+
+        * support large object ids.  The code in theory supported arrays
+        with more than 2**32 elements, but references to the elements
+        emitted at the end of the array with be retrieved as references to
+        the wrong elements.
+        * 32-bit object ids over 2**31-1 weren't correctly handled.
+        * hook object id generation now supports 64-bit ids where needed
+        * writing 64-bit lengths in network order now works
+        * reading 64-bit lengths in network order now reads the components
+        in the correct order.
+        * retrieving large object tags are now only handled on 64-bit
+        platforms, large object tags should only be emitted for objects
+        that are too large for the 32-bit address space, so it was only
+        wasted code.
+        * reading 32-bit lengths for LSCALAR and LUTF8STR as unsigned
+        (perl #131990)
+        * reading flagged large object hashes didn't read the flags
+        * treat the 32-bit size of hook data as unsigned, values over 2GB
+        were treated as large (close to 2**64) parameters to NEWSV().
+        (perl #131999)
+        * added support for hook data over 4GB in size
+        * zero length data receievd from STORABLE_freeze() no longer
+        results in an invalid SV being passed to STORABLE_thaw/_attach()
+        (perl #118551)
+        * where practical, padding is now cleared when emitting a long
+        double (perl #131136)
+        * cache the value of $Storable::DEBUGME (since cperl enabled
+        Storable TRACEME builds for all -DDEBUGGING builds)
+        * no longer discard exceptions thrown by
+        STORABLE_freeze/_thaw/attach() (perl #25933)
+        * fix dependencies used to build Storable.pm from __Storable__.pm
+        * add experimental support for freezing/thawing regular
+        expressions (perl #50608)
+        * re-work recursion limiting to store the limit in a perl variable
+        instead of baked into Storable.$so.  This allows static Storable
+        builds to work, and avoids the kind of circular reference on
+        Storable.$so.
+
+2017-07-24 13:57:13 rurban
+    Version 3.05_13
+
+        * mingw fix: use safe defaults, not segfaulting defaults.
+        mingw fails on the stacksize binary search, leaving it empty.
+
+Wed Apr 19 09:11:07 2017 +0200 Reini Urban <rurban@cpan.org>
+    Version 3.05_12
+
+        * enhance stack reserve from 8 to 16
+        * fix LD_LIBRARY_PATH usage for CORE
+        * fixed some coverity warnings and leaks
+        * added a release make target
+
+Wed Mar 29 21:04:28 2017 +0200 Reini Urban <rurban@cpan.org>
+    Version 3.05_11
+
+        * croak on sizes read > I32_MAX
+        * simplify last_op_in_netorder
+        * protect from empty retrieve_vstring
+        * protect store_other error buf, potential static
+        buffer overflow.
+
+Tue Mar 14 09:52:20 2017 +0100 Reini Urban <rurban@cpan.org>
+    Version 3.05_10
+
+        * CORE-only improvements to stacksize
+
+Thu Mar 9 19:20:19 2017 +0100 Reini Urban <rurban@cpan.org>
+    Version 3.05_09
+
+        * compute the stacksizes, improve cleanup within croak
+        from stack exhaustion.
+        * added stack_depth and stack_depth_hash getters.
+
+Wed Mar  8 21:03:43 CET 2017 Reini Urban <rurban@cpan.org>
+    Version 3.05_08
+
+        * finetune the max stack limit, for C++, DEBUGGING and 32bit.
+        * fix t/blessed.t for cperl5.22
+
+Sun Mar 5 13:36:47 2017 +0100 Reini Urban <rurban@cpan.org>
+    Version 3.05_07
+
+        * Fixed a podchecker issue
+
+Sun Mar 5 11:42:04 2017 +0100 Reini Urban <rurban@cpan.org>
+    Version 3.05_06
+
+        * Fixed wrong recursion depth error with large arrays containing
+        another array.
+	L<[cperl #257]|https://github.com/perl11/cperl/issues/257>
+
+Thu Feb 2 12:40:44 2017 +0100 Reini Urban <rurban@cpanel.net>
+    Version 3.05_05
+
+        * Add leak tests for [cpan #97316], [perl #121928]
+        * Limit the max recursion depth to 1200 on 32bit systems.
+        We have no max_depth option yet, as in JSON::XS.
+
+Thu Feb 2 11:59:21 2017 +0100 Reini Urban <rurban@cpanel.net>
+    Version 3.05_04
+
+        * Fix retrieve_tied_array which fails since 5.16
+        [cpan #84705]
+        * Improve t/blessed.t in the creation of sv_yes/sv_no
+        with threaded perls.
+
+Tue Jan 31 02:55:30 2017 +0100 Reini Urban <rurban@cpanel.net>
+    Version 3.05_03
+
+        * Tune t/recurse.t stack-overflow limit more.
+
+Mon Jan 30 19:50:29 2017 +0100 Reini Urban <rurban@cpanel.net>
+    Version 3.05_02
+
+        * Tune t/recurse.t stack-overflow limit. Small 64bit systems overflow
+        even with depth 3000, where 32bit are ok.
+
+Mon Jan 30 15:13:38 2017 +0100 Reini Urban <rurban@cpanel.net>
+    Version 3.05_01
+
+        * Protect against stack overflows with nested arrays and hashes
+        [cpan #97526]. This imposes a new limit to your nested structures,
+        but JSON::XS has a limit of 512. We use a max_depth of 3000 for the
+        typical stack limit of 8k.
+
+
+Sun Jan 29 11:36:43 2017 +0100 Reini Urban <rurban@cpanel.net>
+    Version 3.05
+
+        * Protect against classname len overflow on the stack
+        and 2x on the heap with retrieve_bless and retrieve_hook.
+        A serious security issue with malcrafted storable files or buffers,
+        but p5p accepts no CVE on Storable attacks. See RT #130635
+        (reported by JD).
+        * Fix NULL ptr SEGVs with retrieve_code and retrieve_other.
+        See RT #130098 (reported and fixed by JD)
+        * Fix wrong huge LOBJECT support, broken since 3.00c.
+        Repro with `export PERL_TEST_MEMORY=8`
+        * Fix the few remaining 2-arg open calls.
+        * Portability and backport fixes back to 5.6.2
+
+Sat Jan 7 09:01:29 2017 +0100 Reini Urban <rurban@cpanel.net>
+    Version 3.04c
+
+        * fix printf types and warnings, esp. for 32bit use64bitint
+        * Change sv_setpvn(…, "…", …) to sv_setpvs(…, "…")
+
+Tue Jul 26 11:49:33 2016 +1000 Tony Cook <tony@develop-help.com>
+    Version 3.03c
+
+        * remove . from @INC when loading optional modules
+
+Sun Nov 20 18:06:45 2016 +0100 Reini Urban <rurban@cpanel.net>
+    Version 3.02c
+
+        * Fix -Wc++11-compat warnings, fix -Wchar-subscripts
+
+Fri Sep 16 01:32:59 2016 +0200 Reini Urban <rurban@cpanel.net>
+    Version 3.01c
+
+        * Added warn_security("Movable-Type CVE-2015-1592 Storable metasploit attack")
+          when detecting the third destructive metasploit vector,
+          thawing bless \"mt-config.cgi", "CGITempFile".
+
+Thu Mar 31 17:10:27 2016 +0200 Reini Urban <rurban@cpanel.net>
+    Version 3.00c
+
+        * Added support for u64 strings, arrays and hashes >2G
+          via a new LOBJECT tag. This is for 32bit systems and lengths
+          between 2GB and 4GB (I32-U32), and 64bit (>I32).
+        * Bumped STORABLE_BIN_MINOR and STORABLE_BIN_WRITE_MINOR from 10 to 11
+        * fix parallel tests, use unique filenames.
+        * fixed 2 instances of 2arg open,
+        * added optional flag arguments to skip tie and bless on retrieve/thaw,
+        * added SECURITY WARNING and Large data support to docs
+        * compute CAN_FLOCK at compile-time
+        * reformat everything consistently
+        * enable DEBUGME tracing and asserts with -DDEBUGGING
+        * fix all 64 bit compiler warnings
+        * added some abstraction methods to avoid code duplication
+
+?????? p5p <perl5-porters@perl.org>
+    Version 2.65
+
+	* Replace multiple 'use vars' by 'our'
+	* remove Config dependency
+
 Wed Jul  2 16:25:25 IST 2014   Abhijit Menon-Sen <ams@toroid.org>
     Version 2.51
 

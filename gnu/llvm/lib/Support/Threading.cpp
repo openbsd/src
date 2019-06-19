@@ -37,7 +37,7 @@ bool llvm::llvm_is_multithreaded() {
 }
 
 #if LLVM_ENABLE_THREADS == 0 ||                                                \
-    (!defined(LLVM_ON_WIN32) && !defined(HAVE_PTHREAD_H))
+    (!defined(_WIN32) && !defined(HAVE_PTHREAD_H))
 // Support for non-Win32, non-pthread implementation.
 void llvm::llvm_execute_on_thread(void (*Fn)(void *), void *UserData,
                                   unsigned RequestedStackSize) {
@@ -46,6 +46,8 @@ void llvm::llvm_execute_on_thread(void (*Fn)(void *), void *UserData,
 }
 
 unsigned llvm::heavyweight_hardware_concurrency() { return 1; }
+
+unsigned llvm::hardware_concurrency() { return 1; }
 
 uint64_t llvm::get_threadid() { return 0; }
 
@@ -71,11 +73,23 @@ unsigned llvm::heavyweight_hardware_concurrency() {
   return NumPhysical;
 }
 
+unsigned llvm::hardware_concurrency() {
+#if defined(HAVE_SCHED_GETAFFINITY) && defined(HAVE_CPU_COUNT)
+  cpu_set_t Set;
+  if (sched_getaffinity(0, sizeof(Set), &Set))
+    return CPU_COUNT(&Set);
+#endif
+  // Guard against std::thread::hardware_concurrency() returning 0.
+  if (unsigned Val = std::thread::hardware_concurrency())
+    return Val;
+  return 1;
+}
+
 // Include the platform-specific parts of this class.
 #ifdef LLVM_ON_UNIX
 #include "Unix/Threading.inc"
 #endif
-#ifdef LLVM_ON_WIN32
+#ifdef _WIN32
 #include "Windows/Threading.inc"
 #endif
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_algs.c,v 1.27 2017/08/12 02:55:22 jsing Exp $ */
+/* $OpenBSD: ssl_algs.c,v 1.28 2019/04/04 16:44:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,8 +119,7 @@ SSL_library_init(void)
 	EVP_add_digest(EVP_streebog256());
 	EVP_add_digest(EVP_streebog512());
 #endif
-	/* initialize cipher/digest methods table */
-	ssl_load_ciphers();
+
 	return (1);
 }
 

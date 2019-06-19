@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.106 2017/12/11 07:27:07 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.115 2019/06/17 11:39:26 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: December 11 2017 $
+.Dd $Mdocdate: June 17 2019 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -405,6 +405,10 @@ Paragraphs are delimited by <NL><NL> or <NL><TAB> or <NL><SPACE>.
 Move cursor backwards by the specified number of words.
 .It beginning-of-buffer
 Move cursor to the top of the buffer.
+If set, keep mark's position, otherwise set at current position.
+A numeric argument
+.Va n
+will move n/10th of the way from the top.
 .It beginning-of-line
 Move cursor to the beginning of the line.
 .It blink-and-insert
@@ -526,6 +530,10 @@ version string.
 Stop defining a keyboard macro.
 .It end-of-buffer
 Move cursor to the end of the buffer.
+If set, keep mark's position, otherwise set at current position.
+A numeric argument
+.Va n
+will move n/10th of the way from the end.
 .It end-of-line
 Move cursor to the end of the line.
 .It enlarge-window
@@ -846,6 +854,9 @@ Currently only affects fill-paragraph.
 Set case-fold searching, causing case not to matter
 in regular expression searches.
 This is the default.
+.It set-case-replace
+Preserve the case of the replaced string.
+This is the default.
 .It set-default-mode
 Append the supplied mode to the list of default modes
 used by subsequent buffer creation.
@@ -881,6 +892,10 @@ Prompt and switch to a new buffer in the current window.
 Switch to buffer in another window.
 .It toggle-read-only
 Toggle the read-only flag on the current buffer.
+.It toggle-read-only-all
+Toggle the read-only flag on all non-ephemeral buffers.
+A simple toggle that switches a global read-only flag either on
+or off.
 .It transpose-chars
 Transpose the two characters in front of and under dot,
 then move forward one character.
@@ -954,7 +969,7 @@ Specific key bindings are available in dired mode.
 dired-unmark-backward
 .It RET, e, f and C-m
 dired-find-file
-.It SPC
+.It SPC, n
 dired-next-line
 .It !
 dired-shell-command
@@ -968,8 +983,6 @@ dired-do-copy
 dired-flag-file-deletion
 .It g
 dired-revert
-.It n
-dired-next-line
 .It o
 dired-find-file-other-window
 .It p
@@ -1020,7 +1033,7 @@ dired buffer in another window.
 .It dired-previous-line
 Move the cursor to the previous line.
 .It dired-revert
-Refresh the dired buffer.
+Refresh the dired buffer while retaining any flags.
 .It dired-scroll-down
 Scroll down the dired buffer.
 .It dired-scroll-up
@@ -1063,9 +1076,9 @@ auto-execute *.c c-mode
 .Ed
 .Pp
 Comments can be added to the startup files by placing
-.Dq \;
+.Sq ;\&
 or
-.Dq #
+.Sq #
 as the first character of a line.
 .Sh FILES
 .Bl -tag -width /usr/share/doc/mg/tutorial -compact

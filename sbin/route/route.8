@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.83 2017/09/06 20:21:22 benno Exp $
+.\"	$OpenBSD: route.8,v 1.90 2019/04/30 16:34:19 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: September 6 2017 $
+.Dd $Mdocdate: April 30 2019 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm route
 .Op Fl dnqtv
-.Op Fl T Ar tableid
+.Op Fl T Ar rtable
 .Ar command
 .Oo
 .Op Ar modifiers
@@ -48,15 +48,6 @@
 .Sh DESCRIPTION
 .Nm
 is a utility used to manually view and manipulate the network routing tables.
-Except for setting up the default route, it normally is not needed to
-manipulate routes, as a
-system routing table management daemon, such as
-.Xr ripd 8 ,
-.Xr ospfd 8 ,
-or
-.Xr bgpd 8 ,
-should tend to this task.
-.Pp
 .Nm
 can be used to modify nearly any aspect of the routing policy,
 except packet forwarding, which can be manipulated through the
@@ -84,7 +75,7 @@ may require correct operation of the network; thus it may be expedient
 to forgo this, especially when attempting to repair networking operations.)
 .It Fl q
 Suppress all output.
-.It Fl T Ar tableid
+.It Fl T Ar rtable
 Select an alternate routing table to modify or query.
 The default is to use the current routing table.
 .It Fl t
@@ -101,18 +92,18 @@ utility provides the following simple commands:
 .Bl -tag -width Fl
 .It Xo
 .Nm route
-.Op Fl T Ar tableid
+.Op Fl T Ar rtable
 .Cm exec
 .Op Ar command ...
 .Xc
 Execute a command forcing the process and its children to use the
 routing table and appropriate routing domain as specified with the
-.Fl T Ar tableid
+.Fl T Ar rtable
 option.
 .It Xo
 .Nm route
 .Op Fl nqv
-.Op Fl T Ar tableid
+.Op Fl T Ar rtable
 .Cm flush
 .Op Ar modifiers
 .Xc
@@ -130,7 +121,7 @@ modifiers.
 .It Xo
 .Nm route
 .Op Fl nv
-.Op Fl T Ar tableid
+.Op Fl T Ar rtable
 .Cm get
 .Op Ar modifiers
 .Ar address
@@ -143,6 +134,7 @@ same address family as the destination are shown.
 .It Xo
 .Nm
 .Op Fl n
+.Op Fl T Ar rtable
 .Cm monitor
 .Op Ar modifiers
 .Xc
@@ -157,18 +149,23 @@ If the
 .Fl iface
 modifier is used only interface specific messages (link state changes)
 are shown.
+If a routing table is supplied with
+.Fl T ,
+only changes in that routing table will be displayed.
 .It Xo
 .Nm route
 .Op Fl nv
-.Op Fl T Ar tableid
+.Op Fl T Ar rtable
 .Cm show
 .Op Ar family
 .Op Fl gateway
 .Op Fl label Ar label
 .Op Fl priority Ar priority
 .Xc
-Print out the route table similar to "netstat -r" (see
-.Xr netstat 1 ) .
+Print out the routing table, in a fashion similar to "netstat -r".
+The output is documented in more detail towards the end of the
+.Xr netstat 1
+manual.
 .Pp
 If
 .Fl gateway
@@ -181,8 +178,15 @@ is specified, only routes with the specified label are shown.
 .Pp
 If
 .Fl priority
-is specified, only routes with the specified (numeric) priority are shown.
-Some well-known priorities can be given by name.
+is specified, only routes with the specified priority are shown.
+It may be specified by number or one of
+.Cm local ,
+.Cm connected ,
+.Cm static ,
+.Cm ospf ,
+.Cm rip ,
+or
+.Cm bgp .
 If the priority is negative, then routes that do not match the numeric
 priority are shown.
 .El
@@ -194,7 +198,7 @@ have the syntax:
 .It Xo
 .Nm route
 .Op Fl dnqtv
-.Op Fl T Ar tableid
+.Op Fl T Ar rtable
 .Cm add
 .Op Ar modifiers
 .Ar destination gateway
@@ -202,7 +206,7 @@ have the syntax:
 .It Xo
 .Nm route
 .Op Fl dnqtv
-.Op Fl T Ar tableid
+.Op Fl T Ar rtable
 .Cm change
 .Op Ar modifiers
 .Ar destination gateway
@@ -210,7 +214,7 @@ have the syntax:
 .It Xo
 .Nm route
 .Op Fl dnqtv
-.Op Fl T Ar tableid
+.Op Fl T Ar rtable
 .Cm del Ns Op Cm ete
 .Op Ar modifiers
 .Ar destination gateway
@@ -454,11 +458,8 @@ All symbolic names specified for a
 .Ar destination
 or
 .Ar gateway
-are looked up first as a network name using
-.Xr getnetbyname 3 .
-If this lookup fails,
-.Xr gethostbyname 3
-is then used to interpret the name as a valid host name.
+are looked up using
+.Xr gethostbyname 3 .
 .Pp
 .Nm
 uses a routing socket (see
@@ -472,13 +473,11 @@ and
 As such, only the superuser may modify
 the routing tables.
 .Sh FILES
-.Bl -tag -width "/etc/networks" -compact
+.Bl -tag -width "/etc/mygate" -compact
 .It Pa /etc/hosts
-host name database
+host and network name database
 .It Pa /etc/mygate
 default gateway address
-.It Pa /etc/networks
-network name database
 .El
 .Sh EXAMPLES
 Add a static
@@ -530,13 +529,11 @@ to create the new entry.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr gethostbyname 3 ,
-.Xr getnetbyname 3 ,
 .Xr netintro 4 ,
 .Xr route 4 ,
 .Xr tcp 4 ,
 .Xr hosts 5 ,
 .Xr mygate 5 ,
-.Xr networks 5 ,
 .Xr bgpd 8 ,
 .Xr ospfd 8 ,
 .Xr ripd 8 ,

@@ -1,31 +1,28 @@
-#	$OpenBSD: Makefile,v 1.3 2017/11/05 13:15:36 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2019/05/10 02:22:34 bluhm Exp $
 
 # The following ports must be installed:
 #
 # python-2.7          interpreted object-oriented programming language
-# py-libdnet          python interface to libdnet
 # scapy               powerful interactive packet manipulation in python
 
 .include <bsd.own.mk>
 
 .if ! (make(clean) || make(cleandir) || make(obj))
-# Check wether all required python packages are installed.  If some
-# are missing print a warning and skip the tests, but do not fail.
-PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
 PF_ENABLED !!=	${SUDO} pfctl -si | grep '^Status: Enabled ' || true
 PF_ANCHOR !!=	${SUDO} pfctl -sr | grep '^anchor "regress" all$$' || true
 .endif
 
-.if ! empty(PYTHON_IMPORT)
+.if ! exists(/usr/local/bin/python2.7) || ! exists(/usr/local/bin/scapy)
 .BEGIN:
 	@true
 regress:
-	@echo '${PYTHON_IMPORT}'
 	@echo Install python and the scapy module for additional tests.
 	@echo SKIPPED
 .endif
 
 .if ! empty (PERL_REQUIRE)
+.BEGIN:
+	@true
 regress:
 	@echo "${PERL_REQUIRE}"
 	@echo install these perl packages for additional tests
@@ -93,6 +90,7 @@ addr.py: Makefile
 	mv $@.tmp $@
 
 # load the pf rules into the kernel of the REMOTE and LOCAL machine
+REGRESS_SETUP +=	stamp-pfctl
 stamp-pfctl:
 .if ! empty(PF_ANCHOR)
 	echo 'pass on ${LOCAL_IF} no state' | ${SUDO} pfctl -a regress -f -
@@ -100,7 +98,7 @@ stamp-pfctl:
 	@date >$@
 
 SCAPYS !=		cd ${.CURDIR} && ls scapy-*.py
-TARGETS =		${SCAPYS}
+TARGETS =
 
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
@@ -113,14 +111,15 @@ SCAPYPATH =	${.CURDIR}/
 .endif
 
 .for s in ${SCAPYS}
-run-regress-$s: $s addr.py stamp-pfctl
+REGRESS_TARGETS +=	run-$s
+run-$s: $s addr.py
 	@echo '\n======== $@ ========'
 	time SUDO=${SUDO} PYTHON="${PYTHON}" perl ${PERLINC} ${PERLPATH}scapy.pl splice ${FAKE_NET_ADDR} ${REMOTE_ADDR} ${REMOTE_SSH} ${SCAPYPATH}$s
 .endfor
 
 .if ! empty(PF_ANCHOR)
-TARGETS +=	cleanup
-run-regress-cleanup:
+REGRESS_CLEANUP +=	cleanup
+cleanup:
 	@echo '\n======== $@ ========'
 	${SUDO} pfctl -a regress -Fr
 	rm -f stamp-pfctl

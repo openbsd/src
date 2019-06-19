@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.80 2016/11/19 12:41:22 otto Exp $
+ * $OpenBSD: calendar.history,v 1.81 2019/01/30 07:24:53 bentley Exp $
  */
 
 #ifndef _calendar_history_
@@ -331,7 +331,7 @@
 08/31	Independent union "Solidarnosc" born, Gdansk, 1980
 09/01	Bobby Fischer defeats Boris Spassky in World Chess Match, 1972
 09/02	Great Britain adopts Gregorian Calendar, 1752
-09/02	Japan signs unconditional surrender on US battleship `Missouri', 1945
+09/02	Japan signs unconditional surrender on US battleship 'Missouri', 1945
 09/03	Anniversary of the Founding of the Republic in San Marino
 09/04	Napoleon III is deposed and the Third Republic is declared, 1870
 09/05	St. Gotthard Tunnel opens in Switzerland, 1980

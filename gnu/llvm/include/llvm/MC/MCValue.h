@@ -23,7 +23,7 @@ namespace llvm {
 class MCAsmInfo;
 class raw_ostream;
 
-/// \brief This represents an "assembler immediate".
+/// This represents an "assembler immediate".
 ///
 ///  In its most general form, this can hold ":Kind:(SymbolA - SymbolB +
 ///  imm64)".  Not all targets supports relocations of this general form, but we
@@ -38,23 +38,24 @@ class raw_ostream;
 /// Note that this class must remain a simple POD value class, because we need
 /// it to live in unions etc.
 class MCValue {
-  const MCSymbolRefExpr *SymA, *SymB;
-  int64_t Cst;
-  uint32_t RefKind;
+  const MCSymbolRefExpr *SymA = nullptr, *SymB = nullptr;
+  int64_t Cst = 0;
+  uint32_t RefKind = 0;
+
 public:
-  MCValue() : SymA(nullptr), SymB(nullptr), Cst(0), RefKind(0) {}
+  MCValue() = default;
   int64_t getConstant() const { return Cst; }
   const MCSymbolRefExpr *getSymA() const { return SymA; }
   const MCSymbolRefExpr *getSymB() const { return SymB; }
   uint32_t getRefKind() const { return RefKind; }
 
-  /// \brief Is this an absolute (as opposed to relocatable) value.
+  /// Is this an absolute (as opposed to relocatable) value.
   bool isAbsolute() const { return !SymA && !SymB; }
 
-  /// \brief Print the value to the stream \p OS.
+  /// Print the value to the stream \p OS.
   void print(raw_ostream &OS) const;
 
-  /// \brief Print the value to stderr.
+  /// Print the value to stderr.
   void dump() const;
 
   MCSymbolRefExpr::VariantKind getAccessVariant() const;

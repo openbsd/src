@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.11 2016/09/30 08:43:23 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.13 2018/11/07 21:22:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <string.h>
 #include "dsp.h"
 #include "utils.h"
 
@@ -403,7 +404,7 @@ void
 resamp_init(struct resamp *p, unsigned int iblksz,
     unsigned int oblksz, int nch)
 {
-	unsigned int i, g;
+	unsigned int g;
 
 	/*
 	 * reduce iblksz/oblksz fraction
@@ -425,8 +426,7 @@ resamp_init(struct resamp *p, unsigned int iblksz,
 	p->diff = 0;
 	p->nch = nch;
 	p->ctx_start = 0;
-	for (i = 0; i < NCHAN_MAX * RESAMP_NCTX; i++)
-		p->ctx[i] = 0;
+	memset(p->ctx, 0, sizeof(p->ctx));
 #ifdef DEBUG
 	if (log_level >= 3) {
 		log_puts("resamp: ");
@@ -660,11 +660,11 @@ f32_to_adata(unsigned int x)
 	 * 31 - (BITS - 1) - (e - 127)
 	 *
 	 * to ensure output is in the 0..(2^BITS)-1 range, the minimum
-	 * shift is 31 - (BITS - 1), and maximum shift is 31
+	 * shift is 31 - (BITS - 1) + 1, and maximum shift is 31
 	 */
 	if (e < 127 - (ADATA_BITS - 1))
 		y = 0;
-	else if (e > 127)
+	else if (e >= 127)
 		y = ADATA_UNIT - 1;
 	else
 		y = m >> (127 + (32 - ADATA_BITS) - e);

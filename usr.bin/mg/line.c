@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.59 2017/09/09 13:10:28 florian Exp $	*/
+/*	$OpenBSD: line.c,v 1.61 2018/08/29 07:50:16 reyk Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -18,6 +18,7 @@
  */
 
 #include <sys/queue.h>
+#include <ctype.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
@@ -25,6 +26,22 @@
 #include <string.h>
 
 #include "def.h"
+
+int	casereplace = TRUE;
+
+/*
+ * Preserve the case of the replaced string.
+ */
+int
+setcasereplace(int f, int n)
+{
+	if (f & FFARG)
+		casereplace = n > 0;
+	else
+		casereplace = !casereplace;
+	ewprintf("Case-replace is %sabled", casereplace ? "en" : "dis");
+	return (TRUE);
+}
 
 /*
  * Allocate a new line of size `used'.  lrealloc() can be called if the line
@@ -511,7 +528,11 @@ int
 lreplace(RSIZE plen, char *st)
 {
 	RSIZE	rlen;	/* replacement length		 */
-	int s;
+	struct line *lp;
+	RSIZE n;
+	int s, doto, is_query_capitalised = 0, is_query_allcaps = 0;
+	int is_replace_alllower = 0;
+	char *repl = NULL;
 
 	if ((s = checkdirty(curbp)) != TRUE)
 		return (s);
@@ -520,16 +541,61 @@ lreplace(RSIZE plen, char *st)
 		ewprintf("Buffer is read only");
 		return (FALSE);
 	}
+
+	if ((repl = strdup(st)) == NULL) {
+		dobeep();
+		ewprintf("out of memory");
+		return (FALSE);
+	}
+	rlen = strlen(repl);
+
 	undo_boundary_enable(FFRAND, 0);
-
 	(void)backchar(FFARG | FFRAND, (int)plen);
-	(void)ldelete(plen, KNONE);
 
-	rlen = strlen(st);
-	region_put_data(st, rlen);
+	if (casereplace != TRUE)
+		goto done;
+
+	lp = curwp->w_dotp;
+	doto = curwp->w_doto;
+	n = plen;
+
+	is_query_capitalised = isupper((unsigned char)lgetc(lp, doto));
+
+	if (is_query_capitalised) {
+		for (n = 0, is_query_allcaps = 1; n < plen && is_query_allcaps;
+		    n++) {
+			is_query_allcaps = !isalpha((unsigned char)lgetc(lp,
+			    doto)) || isupper((unsigned char)lgetc(lp, doto));
+			doto++;
+			if (doto == llength(lp)) {
+				doto = 0;
+				lp = lforw(lp);
+				n++; /* \n is implicit in the buffer */
+			}
+		}
+	}
+
+	for (n = 0, is_replace_alllower = 1; n < rlen && is_replace_alllower;
+	    n++)
+		is_replace_alllower = !isupper((unsigned char)repl[n]);
+
+	if (is_replace_alllower) {
+		if (is_query_allcaps) {
+			for (n = 0; n < rlen; n++)
+				repl[n] = toupper((unsigned char)repl[n]);
+		} else if (is_query_capitalised) {
+			repl[0] = toupper((unsigned char)repl[0]);
+		}
+	}
+
+ done:
+	(void)ldelete(plen, KNONE);
+	region_put_data(repl, rlen);
 	lchange(WFFULL);
 
 	undo_boundary_enable(FFRAND, 1);
+
+	free(repl);
 	return (TRUE);
 }
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.93 2017/01/03 22:19:31 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.96 2018/12/06 17:45:14 tedu Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: January 3 2017 $
+.Dd $Mdocdate: December 6 2018 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -60,7 +60,9 @@ In the absence of an expression,
 is assumed.
 If an expression is given,
 but none of the primaries
+.Ic -delete ,
 .Ic -exec ,
+.Ic -execdir ,
 .Ic -ls ,
 .Ic -ok ,
 .Ic -print ,
@@ -222,6 +224,9 @@ or a plus sign
 If terminated by a semicolon, the
 .Ar utility
 is executed once per path.
+This form of the primary evaluates to true if
+.Ar utility
+exits with a zero exit status.
 If the string
 .Qq {}
 appears anywhere in the utility name or the
@@ -233,6 +238,7 @@ primary is evaluated are aggregated into sets, and
 .Ar utility
 will be invoked once per set, similar to
 .Xr xargs 1 .
+This form of the primary always evaluates to true.
 If any invocation exits with a non-zero exit status, then
 .Nm
 will eventually do so as well, but this does not cause
@@ -518,9 +524,8 @@ This evaluates to true if the parenthesized expression evaluates to
 true.
 .Pp
 .It Cm \&! Ar expression
-This is the unary
-.Tn NOT
-operator.
+.It Cm -not Ar expression
+This is the unary NOT operator.
 It evaluates to true if the expression is false.
 .Pp
 .It Ar expression Cm -a Ar expression
@@ -620,9 +625,10 @@ primaries
 and
 .Ic -print0 ,
 and operators
-.Fl or
-and
 .Fl and ,
+.Fl not ,
+and
+.Fl or ,
 are extensions to that specification.
 .Pp
 Historically, the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.53 2017/12/14 02:42:18 dlg Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.55 2019/04/23 13:35:12 visa Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -32,6 +32,7 @@
 #include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>			/* _Q_INVALIDATE */
+#include <sys/witness.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -131,6 +132,46 @@ struct mutex timeout_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 void softclock_thread(void *);
 void softclock_create_thread(void *);
 
+#ifdef WITNESS
+struct lock_object timeout_sleeplock_obj = {
+	.lo_name = "timeout",
+	.lo_flags = LO_WITNESS | LO_INITIALIZED | LO_SLEEPABLE |
+	    (LO_CLASS_RWLOCK << LO_CLASSSHIFT)
+};
+struct lock_object timeout_spinlock_obj = {
+	.lo_name = "timeout",
+	.lo_flags = LO_WITNESS | LO_INITIALIZED |
+	    (LO_CLASS_MUTEX << LO_CLASSSHIFT)
+};
+struct lock_type timeout_sleeplock_type = {
+	.lt_name = "timeout"
+};
+struct lock_type timeout_spinlock_type = {
+	.lt_name = "timeout"
+};
+#define TIMEOUT_LOCK_OBJ(needsproc) \
+	((needsproc) ? &timeout_sleeplock_obj : &timeout_spinlock_obj)
+#endif
+
+static void
+timeout_sync_order(int needsproc)
+{
+	WITNESS_CHECKORDER(TIMEOUT_LOCK_OBJ(needsproc), LOP_NEWORDER, NULL);
+}
+
+static void
+timeout_sync_enter(int needsproc)
+{
+	timeout_sync_order(needsproc);
+	WITNESS_LOCK(TIMEOUT_LOCK_OBJ(needsproc), 0);
+}
+
+static void
+timeout_sync_leave(int needsproc)
+{
+	WITNESS_UNLOCK(TIMEOUT_LOCK_OBJ(needsproc), 0);
+}
+
 /*
  * Some of the "math" in here is a bit tricky.
  *
@@ -159,6 +200,9 @@ timeout_startup(void)
 void
 timeout_proc_init(void)
 {
+	WITNESS_INIT(&timeout_sleeplock_obj, &timeout_sleeplock_type);
+	WITNESS_INIT(&timeout_spinlock_obj, &timeout_spinlock_type);
+
 	kthread_create_deferred(softclock_create_thread, NULL);
 }
 
@@ -324,12 +368,30 @@ timeout_del(struct timeout *to)
 	return (ret);
 }
 
+int
+timeout_del_barrier(struct timeout *to)
+{
+	int removed;
+
+	timeout_sync_order(ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX));
+
+	removed = timeout_del(to);
+	if (!removed)
+		timeout_barrier(to);
+
+	return (removed);
+}
+
 void	timeout_proc_barrier(void *);
 
 void
 timeout_barrier(struct timeout *to)
 {
-	if (!ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX)) {
+	int needsproc = ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX);
+
+	timeout_sync_order(needsproc);
+
+	if (!needsproc) {
 		KERNEL_LOCK();
 		splx(splsoftclock());
 		KERNEL_UNLOCK();
@@ -389,6 +451,7 @@ timeout_run(struct timeout *to)
 {
 	void (*fn)(void *);
 	void *arg;
+	int needsproc;
 
 	MUTEX_ASSERT_LOCKED(&timeout_mutex);
 
@@ -397,9 +460,12 @@ timeout_run(struct timeout *to)
 
 	fn = to->to_func;
 	arg = to->to_arg;
+	needsproc = ISSET(to->to_flags, TIMEOUT_NEEDPROCCTX);
 
 	mtx_leave(&timeout_mutex);
+	timeout_sync_enter(needsproc);
 	fn(arg);
+	timeout_sync_leave(needsproc);
 	mtx_enter(&timeout_mutex);
 }
 

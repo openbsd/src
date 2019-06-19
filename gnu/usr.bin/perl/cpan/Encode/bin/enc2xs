@@ -11,7 +11,7 @@ use warnings;
 use Getopt::Std;
 use Config;
 my @orig_ARGV = @ARGV;
-our $VERSION  = do { my @r = (q$Revision: 2.18 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION  = do { my @r = (q$Revision: 2.21 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 # These may get re-ordered.
 # RAW is a do_now as inserted by &enter
@@ -123,7 +123,10 @@ my %encode_types = (U => \&encode_U,
                    );
 
 # Win32 does not expand globs on command line
-eval "\@ARGV = map(glob(\$_),\@ARGV)" if ($^O eq 'MSWin32');
+if ($^O eq 'MSWin32' and !$ENV{PERL_CORE}) {
+    eval "\@ARGV = map(glob(\$_),\@ARGV)";
+    @ARGV = @orig_ARGV unless @ARGV;
+}
 
 my %opt;
 # I think these are:
@@ -134,6 +137,8 @@ my %opt;
 # -o <output> to specify the output file name (else it's the first arg)
 # -f <inlist> to give a file with a list of input files (else use the args)
 # -n <name> to name the encoding (else use the basename of the input file.
+#Getopt::Long::Configure("bundling");
+#GetOptions(\%opt, qw(C M=s S Q q O o=s f=s n=s v));
 getopts('CM:SQqOo:f:n:v',\%opt);
 
 $opt{M} and make_makefile_pl($opt{M}, @ARGV);
@@ -196,9 +201,9 @@ sub compiler_info {
 # This really should go first, else the die here causes empty (non-erroneous)
 # output files to be written.
 my @encfiles;
-if (exists $opt{'f'}) {
+if (exists $opt{f}) {
     # -F is followed by name of file containing list of filenames
-    my $flist = $opt{'f'};
+    my $flist = $opt{f};
     open(FLIST,$flist) || die "Cannot open $flist:$!";
     chomp(@encfiles = <FLIST>);
     close(FLIST);
@@ -206,9 +211,15 @@ if (exists $opt{'f'}) {
     @encfiles = @ARGV;
 }
 
-my $cname = (exists $opt{'o'}) ? $opt{'o'} : shift(@ARGV);
+my $cname = $opt{o} ? $opt{o} : shift(@ARGV);
+unless ($cname) { #debuging a win32 nmake error-only. works via cmdline
+    print "\nARGV:";
+    print "$_ " for @ARGV;
+    print "\nopt:";
+    print "  $_ => ",defined $opt{$_}?$opt{$_}:"undef","\n" for keys %opt;
+}
 chmod(0666,$cname) if -f $cname && !-w $cname;
-open(C,">$cname") || die "Cannot open $cname:$!";
+open(C,">", $cname) || die "Cannot open $cname:$!";
 
 my $dname = $cname;
 my $hname = $cname;
@@ -220,10 +231,10 @@ if ($cname =~ /\.(c|xs)$/i) # VMS may have upcased filenames with DECC$ARGV_PARS
   $doC = 1;
   $dname =~ s/(\.[^\.]*)?$/.exh/;
   chmod(0666,$dname) if -f $cname && !-w $dname;
-  open(D,">$dname") || die "Cannot open $dname:$!";
+  open(D,">", $dname) || die "Cannot open $dname:$!";
   $hname =~ s/(\.[^\.]*)?$/.h/;
   chmod(0666,$hname) if -f $cname && !-w $hname;
-  open(H,">$hname") || die "Cannot open $hname:$!";
+  open(H,">", $hname) || die "Cannot open $hname:$!";
 
   foreach my $fh (\*C,\*D,\*H)
   {
@@ -469,7 +480,9 @@ sub compile_ucm
    $erep = $attr{'subchar'}; 
    $erep =~ s/^\s+//; $erep =~ s/\s+$//;
   }
- print "Reading $name ($cs)\n";
+ print "Reading $name ($cs)\n"
+   unless defined $ENV{MAKEFLAGS}
+      and $ENV{MAKEFLAGS} =~ /\b(s|silent|quiet)\b/;
  my $nfb = 0;
  my $hfb = 0;
  while (<$fh>)
@@ -755,9 +768,17 @@ sub addstrings
  if ($a->{'Forward'})
   {
    my ($cpp, $static, $sized) = compiler_info(1);
-   my $var   = $static ? 'static const' : 'extern';
    my $count = $sized ? scalar(@{$a->{'Entries'}}) : '';
-   print $fh "$var encpage_t $name\[$count];\n";
+   if ($static) {
+     # we cannot ask Config for d_plusplus since we can override CC=g++-6 on the cmdline
+     print $fh "#ifdef __cplusplus\n"; # -fpermissive since g++-6
+     print $fh "extern encpage_t $name\[$count];\n";
+     print $fh "#else\n";
+     print $fh "static const encpage_t $name\[$count];\n";
+     print $fh "#endif\n";
+   } else {
+     print $fh "extern encpage_t $name\[$count];\n";
+   }
   }
  $a->{'DoneStrings'} = 1;
  foreach my $b (@{$a->{'Entries'}})
@@ -848,9 +869,16 @@ sub outtable
    outtable($fh,$t,$bigname) unless $t->{'Done'};
   }
  my ($cpp, $static) = compiler_info(0);
- my $var = $static ? 'static const ' : '';
- print $fh "\n${var}encpage_t $name\[",
-   scalar(@{$a->{'Entries'}}), "] = {\n";
+ my $count = scalar(@{$a->{'Entries'}});
+ if ($static) {
+     print $fh "#ifdef __cplusplus\n"; # -fpermissive since g++-6
+     print $fh "encpage_t $name\[$count] = {\n";
+     print $fh "#else\n";
+     print $fh "static const encpage_t $name\[$count] = {\n";
+     print $fh "#endif\n";
+ } else {
+   print $fh "\nencpage_t $name\[$count] = {\n";
+ }
  foreach my $b (@{$a->{'Entries'}})
   {
    my ($sc,$ec,$out,$t,$end,$l,$fb) = @$b;
@@ -1010,8 +1038,7 @@ sub find_e2x{
 
 sub make_makefile_pl
 {
-    eval { require Encode; };
-    $@ and die "You need to install Encode to use enc2xs -M\nerror: $@\n";
+    eval { require Encode } or die "You need to install Encode to use enc2xs -M\nerror: $@\n";
     # our used for variable expansion
     $_Enc2xs = $0;
     $_Version = $VERSION;
@@ -1035,8 +1062,7 @@ use vars qw(
         );
 
 sub make_configlocal_pm {
-    eval { require Encode; };
-    $@ and die "Unable to require Encode: $@\n";
+    eval { require Encode } or die "Unable to require Encode: $@\n";
     eval { require File::Spec; };
 
     # our used for variable expantion
@@ -1056,8 +1082,7 @@ sub make_configlocal_pm {
 	$mod =~ s/.*\bEncode\b/Encode/o;
 	$mod =~ s/\.pm\z//o;
 	$mod =~ s,/,::,og;
-	eval qq{ require $mod; };
-        return if $@;
+	eval qq{ require $mod; } or return;
         warn qq{ require $mod;\n};
 	for my $enc ( Encode->encodings() ) {
 	    no warnings;
@@ -1091,8 +1116,7 @@ sub _mkversion{
 }
 
 sub _print_expand{
-    eval { require File::Basename; };
-    $@ and die "File::Basename needed.  Are you on miniperl?;\nerror: $@\n";
+    eval { require File::Basename } or die "File::Basename needed.  Are you on miniperl?;\nerror: $@\n";
     File::Basename->import();
     my ($src, $dst, $clobber) = @_;
     if (!$clobber and -e $dst){
@@ -1104,7 +1128,7 @@ sub _print_expand{
     if ((my $d = dirname($dst)) ne '.'){
     -d $d or mkdir $d, 0755 or die  "mkdir $d : $!";
     }	   
-    open my $out, ">$dst" or die "$!";
+    open my $out, ">", $dst or die "$!";
     my $asis = 0;
     while (<$in>){ 
     if (/^#### END_OF_HEADER/){

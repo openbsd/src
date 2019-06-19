@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.30 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: a_object.c,v 1.31 2018/04/25 11:48:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,7 +67,7 @@
 #include <openssl/objects.h>
 
 int
-i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
+i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 {
 	unsigned char *p;
 	int objsize;
@@ -213,13 +213,13 @@ err:
 }
 
 int
-i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a)
+i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *a)
 {
 	return OBJ_obj2txt(buf, buf_len, a, 0);
 }
 
 int
-i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
+i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
 {
 	char *tmp = NULL;
 	size_t tlen = 256;

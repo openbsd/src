@@ -1,0 +1,23 @@
+.\" $OpenBSD: basic.in,v 1.1 2018/08/23 14:16:12 schwarze Exp $
+.Dd $Mdocdate: August 23 2018 $
+.Dt RETURN-BASIC 1
+.Os
+.Sh NAME
+.Nm return-basic
+.Nd the return request
+.Sh DESCRIPTION
+return before macro
+.return
+.Pp
+.de mymacro
+text from macro (\\n(.$ argument: "\\$1"),
+.return
+not printed,
+..
+.mymacro myarg
+\n(.$ arguments after return: "\$1",
+.Pp
+return after macro
+.return
+.Pp
+final text

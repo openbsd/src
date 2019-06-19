@@ -57,11 +57,6 @@ extern "C" kern_return_t catch_mach_exception_raise_state_identity(
 extern "C" boolean_t mach_exc_server(mach_msg_header_t *InHeadP,
                                      mach_msg_header_t *OutHeadP);
 
-// Any access to the g_message variable should be done by locking the
-// g_message_mutex first, using the g_message variable, then unlocking
-// the g_message_mutex. See MachException::Message::CatchExceptionRaise()
-// for sample code.
-
 static MachException::Data *g_message = NULL;
 
 extern "C" kern_return_t catch_mach_exception_raise_state(
@@ -97,8 +92,6 @@ extern "C" kern_return_t catch_mach_exception_raise_state_identity(
                 (uint64_t)(exc_data_count > 0 ? exc_data[0] : 0xBADDBADD),
                 (uint64_t)(exc_data_count > 1 ? exc_data[1] : 0xBADDBADD));
   }
-  mach_port_deallocate(mach_task_self(), task_port);
-  mach_port_deallocate(mach_task_self(), thread_port);
 
   return KERN_FAILURE;
 }
@@ -130,33 +123,6 @@ catch_mach_exception_raise(mach_port_t exc_port, mach_port_t thread_port,
   }
   return KERN_FAILURE;
 }
-
-#if 0
-void
-MachException::Message::Dump(Stream &stream) const
-{
-    stream.Printf("exc_msg { bits = 0x%8.8x size = 0x%8.8x remote-port = "
-                  "0x%8.8x local-port = 0x%8.8x reserved = 0x%8.8x "
-                  "id = 0x%8.8x }\n",
-        exc_msg.hdr.msgh_bits,
-        exc_msg.hdr.msgh_size,
-        exc_msg.hdr.msgh_remote_port,
-        exc_msg.hdr.msgh_local_port,
-        exc_msg.hdr.msgh_reserved,
-        exc_msg.hdr.msgh_id);
-
-    stream.Printf("reply_msg { bits = 0x%8.8x size = 0x%8.8x remote-port "
-                  "= 0x%8.8x local-port = 0x%8.8x reserved = 0x%8.8x "
-                  "id = 0x%8.8x }",
-                  reply_msg.hdr.msgh_bits,
-                  reply_msg.hdr.msgh_size,
-                  reply_msg.hdr.msgh_remote_port,
-                  reply_msg.hdr.msgh_local_port,
-                  reply_msg.hdr.msgh_reserved,
-                  reply_msg.hdr.msgh_id);
-    stream.Flush();
-}
-#endif
 
 bool MachException::Data::GetStopInfo(struct ThreadStopInfo *stop_info,
                                       const UnixSignals &signals,
@@ -279,25 +245,21 @@ void MachException::Message::Dump(Stream &stream) const {
 
 bool MachException::Message::CatchExceptionRaise(task_t task) {
   bool success = false;
-  // locker will keep a mutex locked until it goes out of scope
-  //    PThreadMutex::Locker locker(&g_message_mutex);
-  //    DNBLogThreaded("calling  mach_exc_server");
   state.task_port = task;
   g_message = &state;
-  // The exc_server function is the MIG generated server handling function
-  // to handle messages from the kernel relating to the occurrence of an
-  // exception in a thread. Such messages are delivered to the exception port
-  // set via thread_set_exception_ports or task_set_exception_ports. When an
-  // exception occurs in a thread, the thread sends an exception message to
-  // its exception port, blocking in the kernel waiting for the receipt of a
-  // reply. The exc_server function performs all necessary argument handling
-  // for this kernel message and calls catch_exception_raise,
-  // catch_exception_raise_state or catch_exception_raise_state_identity,
-  // which should handle the exception. If the called routine returns
-  // KERN_SUCCESS, a reply message will be sent, allowing the thread to
-  // continue from the point of the exception; otherwise, no reply message
-  // is sent and the called routine must have dealt with the exception
-  // thread directly.
+  // The exc_server function is the MIG generated server handling function to
+  // handle messages from the kernel relating to the occurrence of an exception
+  // in a thread. Such messages are delivered to the exception port set via
+  // thread_set_exception_ports or task_set_exception_ports. When an exception
+  // occurs in a thread, the thread sends an exception message to its exception
+  // port, blocking in the kernel waiting for the receipt of a reply. The
+  // exc_server function performs all necessary argument handling for this
+  // kernel message and calls catch_exception_raise,
+  // catch_exception_raise_state or catch_exception_raise_state_identity, which
+  // should handle the exception. If the called routine returns KERN_SUCCESS, a
+  // reply message will be sent, allowing the thread to continue from the point
+  // of the exception; otherwise, no reply message is sent and the called
+  // routine must have dealt with the exception thread directly.
   if (mach_exc_server(&exc_msg.hdr, &reply_msg.hdr)) {
     success = true;
   } else {
@@ -420,9 +382,9 @@ Status MachException::PortInfo::Save(task_t task) {
     log->Printf("MachException::PortInfo::%s(task = 0x%4.4x)", __FUNCTION__,
                 task);
 
-  // Be careful to be able to have debugserver built on a newer OS than what
-  // it is currently running on by being able to start with all exceptions
-  // and back off to just what is supported on the current system
+  // Be careful to be able to have debugserver built on a newer OS than what it
+  // is currently running on by being able to start with all exceptions and
+  // back off to just what is supported on the current system
   mask = LLDB_EXC_MASK;
 
   count = (sizeof(ports) / sizeof(ports[0]));

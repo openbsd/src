@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.132 2018/02/27 22:46:53 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.155 2019/05/28 23:24:44 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,7 @@ use strict;
 use warnings;
 
 use OpenBSD::AddCreateDelete;
-use OpenBSD::Dependencies;
+use OpenBSD::Dependencies::SolverBase;
 use OpenBSD::SharedLibs;
 use OpenBSD::Signer;
 
@@ -113,11 +113,11 @@ sub handle_options
 		    },
 	};
 	$state->{no_exports} = 1;
-	$state->SUPER::handle_options('p:f:d:M:U:A:B:P:V:w:W:qQS',
+	$state->SUPER::handle_options('p:f:d:M:U:u:A:B:P:V:w:W:qQS',
 	    '[-nQqvSx] [-A arches] [-B pkg-destdir] [-D name[=value]]',
 	    '[-L localbase] [-M displayfile] [-P pkg-dependency]',
-	    '[-U undisplayfile] [-V n] [-W wantedlib] [-w libset]',
-	    '[-d desc -D COMMENT=value -f packinglist -p prefix]',
+	    '[-U undisplayfile] [-u userlist] [-V n] [-W wantedlib]',
+	    '[-w libset] [-d desc -D COMMENT=value -f packinglist -p prefix]',
 	    'pkg-name');
 
 	my $base = '/';
@@ -128,6 +128,49 @@ sub handle_options
 	$state->{base} = $base;
 	$state->{silent} = defined $state->opt('n') && defined $state->opt('n')
 	    || defined $state->opt('S');
+	if (defined $state->opt('u')) {
+		$state->{userlist} = $state->parse_userdb($state->opt('u'));
+	}
+}
+
+sub parse_userdb
+{
+	my ($self, $fname) = @_;
+	my $result = {};
+	open(my $fh, '<', $fname) or 
+		$self->error("Can't open #1: #2", $fname, $!);
+	# skip header
+	my $separator_found = 0;
+	while (<$fh>) {
+		if (m/^\-\-\-\-\-\-\-/) {
+			$separator_found = 1;
+			last;
+		}
+	}
+	if (!$separator_found) {
+		$self->error("File #1 does not appear to be a user.db", $fname);
+		return;
+	}
+	# record ids and error out on duplicates
+	my $known = {};
+	while (<$fh>) {
+		next if m/^\#/;
+		chomp;
+		my @l = split(/\s+/, $_);
+		if (@l < 3 || $l[0] !~ m/^\d+$/ || $l[1] !~ m/^_/) {
+			$self->error("Bad line: #1 at #2 of #3",
+			    $_, $., $fname);
+			next;
+		}
+		if (defined $known->{$l[0]}) {
+			$self->error("Duplicate id: #1 in #2",
+			    $l[0], $fname);
+			next;
+		}
+		$known->{$l[0]} = 1;
+		$result->{$l[1]} = $l[0];
+	}
+	return $result;
 }
 
 package OpenBSD::PkgCreate;
@@ -161,6 +204,7 @@ sub pretend_to_archive
 }
 
 sub record_digest {}
+sub stub_digest {}
 sub archive {}
 sub really_archived { 0 }
 sub comment_create_package {}
@@ -349,6 +393,12 @@ sub record_digest
 	push(@$new, $self);
 }
 
+sub stub_digest
+{
+	my ($self, $ordered) = @_;
+	push(@$ordered, $self);
+}
+
 package OpenBSD::PackingElement::RcScript;
 sub set_destdir
 {
@@ -417,6 +467,12 @@ sub prepare_for_archival
 
 sub forbidden() { 1 }
 
+sub stub_digest
+{
+	my ($self, $ordered) = @_;
+	push(@$ordered, $self);
+}
+
 # override for CONTENTS: we cannot checksum this.
 package OpenBSD::PackingElement::FCONTENTS;
 sub makesum_plist
@@ -439,6 +495,12 @@ sub comment_create_package
 	my ($self, $state) = @_;
 	$self->SUPER::comment_create_package($state);
 	$state->say("GZIP: END OF SIGNATURE CHUNK");
+}
+
+sub stub_digest
+{
+	my ($self, $ordered) = @_;
+	push(@$ordered, $self);
 }
 
 package OpenBSD::PackingElement::Cwd;
@@ -562,31 +624,37 @@ sub grab_manpages
 	push(@{$state->{manpages}}, $filename);
 }
 
-sub makesum_plist
+sub format_source_page
 {
 	my ($self, $state, $plist) = @_;
+
 	if ($state->{subst}->empty("USE_GROFF") || !$self->is_source) {
-		return $self->SUPER::makesum_plist($state, $plist);
+		return 0;
 	}
 	my $dest = $self->source_to_dest;
 	my $fullname = $self->cwd."/".$dest;
 	my $d = dirname($fullname);
 	$state->{mandir} //= OpenBSD::Temp::permanent_dir(
 	    $ENV{TMPDIR} // '/tmp', "manpage");
-	my $tempname = $state->{mandir}."/".$fullname;
+	my $tempname = $state->{mandir}.$fullname;
 	require File::Path;
-	File::Path::make_path($state->{mandir}."/".$d);
-	open my $fh, ">", $tempname or $state->error("can't create #1: #2",
-	    $tempname, $!);
+	File::Path::make_path($state->{mandir}.$d);
+	open my $fh, ">", $tempname;
+	if (!defined $fh) {
+	    $state->error("can't create #1: #2", $tempname, $!);
+	    return 0;
+    	}
 	chmod 0444, $fh;
 	if (-d $state->{base}.$d) {
 		undef $d;
 	}
-	$self->format($state, $tempname, $fh) or return;
+	if (!$self->format($state, $tempname, $fh)) {
+		return 0;
+	}
 	if (-z $tempname) {
 		$state->errsay("groff produced empty result for #1", $dest);
 		$state->errsay("\tkeeping source manpage");
-		return $self->SUPER::makesum_plist($state, $plist);
+		return 0;
 	}
 	if (defined $d && !$state->{known_dirs}->{$d}) {
 		$state->{known_dirs}->{$d} = 1;
@@ -595,7 +663,17 @@ sub makesum_plist
 	my $e = OpenBSD::PackingElement::Manpage->add($plist, $dest);
 	$e->{wtempname} = $tempname;
 	$e->compute_checksum($e, $state, $state->{base});
+	return 1;
 }
+
+sub makesum_plist
+{
+	my ($self, $state, $plist) = @_;
+	if (!$self->format_source_page($state, $plist)) {
+		$self->SUPER::makesum_plist($state, $plist);
+	}
+}
+
 
 package OpenBSD::PackingElement::Depend;
 sub avert_duplicates_and_other_checks
@@ -667,6 +745,39 @@ sub avert_duplicates_and_other_checks
 	$state->{has_no_default_conflict}++;
 }
 
+package OpenBSD::PackingElement::NewAuth;
+sub avert_duplicates_and_other_checks
+{
+	my ($self, $state) = @_;
+	my $userlist = $state->{userlist};
+	if (defined $userlist) {
+		my $entry = $userlist->{$self->{name}};
+		my $id = $self->id;
+		$id =~ s/^!//;
+		if (!defined $entry) {
+			$state->error("#1 #2: not registered in #3",
+			    $self->keyword, $self->{name}, $state->opt('u'));
+		} elsif ($entry != $id) {
+			$state->error(
+			    "#1 #2: id mismatch in #3 (#4 vs #5)",
+			    $self->keyword, $self->{name}, $state->opt('u'),
+			    $entry, $id);
+		}
+	}
+	$self->SUPER::avert_duplicates_and_other_checks($state);
+}
+
+package OpenBSD::PackingElement::NewUser;
+sub id
+{
+	return shift->{uid};
+}
+
+package OpenBSD::PackingElement::NewGroup;
+sub id
+{
+	return shift->{gid};
+}
 
 package OpenBSD::PackingElement::Lib;
 sub check_version
@@ -710,30 +821,13 @@ sub is_forbidden() { 1 }
 package OpenBSD::PackingElement::Version;
 sub is_forbidden() { 1 }
 
-package OpenBSD::PackingElement::Fragment;
-our @ISA=qw(OpenBSD::PackingElement);
-
-sub needs_keyword() { 0 }
-
-sub stringize
-{
-	return '%%'.shift->{name}.'%%';
-}
-
-package OpenBSD::PackingElement::NoFragment;
-our @ISA=qw(OpenBSD::PackingElement::Fragment);
-sub stringize
-{
-	return '!%%'.shift->{name}.'%%';
-}
-
 # put together file and filename, in order to handle fragments simply
 package MyFile;
 sub new
 {
 	my ($class, $filename) = @_;
 
-	open(my $fh, '<', $filename) or die "Missing file $filename";
+	open(my $fh, '<', $filename) or return undef;
 
 	bless { fh => $fh, name => $filename }, (ref($class) || $class);
 }
@@ -758,7 +852,7 @@ sub close
 
 sub deduce_name
 {
-	my ($self, $frag, $not) = @_;
+	my ($self, $frag, $not, $p, $state) = @_;
 
 	my $o = $self->name;
 	my $noto = $o;
@@ -770,7 +864,8 @@ sub deduce_name
 	$noto =~ s/PFRAG\./PFRAG.no-$frag-/o or
 	    $noto =~ s/PLIST/PFRAG.no-$frag/o;
 	unless (-e $o or -e $noto) {
-		die "Missing fragments for $frag: $o and $noto don't exist";
+		$p->missing_fragments($state, $frag, $o, $noto);
+		return;
 	}
 	if ($not) {
 		return $noto if -e $noto;
@@ -788,13 +883,15 @@ our @ISA = qw(OpenBSD::Dependencies::SolverBase);
 sub new
 {
 	my ($class, $plist) = @_;
-	bless { set => OpenBSD::PseudoSet->new($plist), bad => [] }, $class;
+	bless { set => OpenBSD::PseudoSet->new($plist), 
+	    old_dependencies => {}, bad => [] }, $class;
 }
 
 sub solve_all_depends
 {
 	my ($solver, $state) = @_;
 
+	$solver->{tag_finder} = OpenBSD::lookup::tag->new($solver, $state);
 	while (1) {
 		my @todo = $solver->solve_depends($state);
 		if (@todo == 0) {
@@ -813,11 +910,11 @@ sub solve_wantlibs
 
 	my $okay = 1;
 	my $lib_finder = OpenBSD::lookup::library->new($solver);
-	my $h = $solver->{set}->{new}[0];
+	my $h = $solver->{set}{new}[0];
 	for my $lib (@{$h->{plist}{wantlib}}) {
 		$solver->{localbase} = $h->{plist}->localbase;
 		next if $lib_finder->lookup($solver,
-		    $solver->{to_register}->{$h}, $state,
+		    $solver->{to_register}{$h}, $state,
 		    $lib->spec);
 		$okay = 0;
 		OpenBSD::SharedLibs::report_problem($state,
@@ -879,7 +976,7 @@ sub to_cache
 
 sub ask_tree
 {
-	my ($self, $state, $dep, $portsdir, @action) = @_;
+	my ($self, $state, $pkgpath, $portsdir, $data, @action) = @_;
 
 	my $make = OpenBSD::Paths->make;
 	my $pid = open(my $fh, "-|");
@@ -887,20 +984,21 @@ sub ask_tree
 		$state->fatal("cannot fork: $!");
 	}
 	if ($pid == 0) {
+		# make things debuggable because this child doesn't matter
+		$DB::inhibit_exit = 0;
 		chdir $portsdir or exit 2;
 		open STDERR, '>', '/dev/null';
 		$ENV{FULLPATH} = 'Yes';
 		delete $ENV{FLAVOR};
 		delete $ENV{SUBPACKAGE};
-		$ENV{SUBDIR} = $dep->{pkgpath};
+		$ENV{SUBDIR} = $pkgpath;
 		$ENV{ECHO_MSG} = ':';
 		# XXX we're already running as ${BUILD_USER}
 		# so we can't do this again
 		push(@action, 'PORTS_PRIVSEP=No');
 		exec $make ('make', @action);
 	}
-	my $plist = OpenBSD::PackingList->read($fh,
-	    \&OpenBSD::PackingList::PrelinkStuffOnly);
+	my $plist = OpenBSD::PackingList->read($fh, $data);
 	close($fh);
 	return $plist;
 }
@@ -915,7 +1013,8 @@ sub really_solve_from_ports
 	if (defined $diskcache && -f $diskcache) {
 		$plist = OpenBSD::PackingList->fromfile($diskcache);
 	} else {
-		$plist = $self->ask_tree($state, $dep, $portsdir,
+		$plist = $self->ask_tree($state, $dep->{pkgpath}, $portsdir,
+		    \&OpenBSD::PackingList::PrelinkStuffOnly,
 		    'print-plist-libs-with-depends',
 		    'wantlib_args=no-wantlib-args');
 		if ($? != 0 || !defined $plist->pkgname) {
@@ -926,6 +1025,7 @@ sub really_solve_from_ports
 		}
 	}
 	OpenBSD::SharedLibs::add_libs_from_plist($plist, $state);
+	$self->{tag_finder}->find_in_plist($plist, $dep->{pkgpath});
 	$self->add_dep($plist);
 	return $plist->pkgname;
 }
@@ -1053,11 +1153,16 @@ sub handle_fragment
 	} else {
 		return undef unless defined $not;
 	}
-	my $newname = $old->deduce_name($frag, $not);
+	my $newname = $old->deduce_name($frag, $not, $self, $state);
 	if (defined $newname) {
 		$state->set_status("switching to $newname")
 		    unless $state->{silent};
-		return $old->new($newname);
+		my $f = $old->new($newname);
+		if (!defined $f) {
+			$self->cant_read_fragment($state, $newname);
+		} else {
+			return $f;
+		}
 	}
 	return undef;
 }
@@ -1067,13 +1172,25 @@ sub FileClass
 	return "MyFile";
 }
 
+# hook for update-plist, which wants to record fragment positions
+sub record_fragment
+{
+}
+
+# hook for update-plist, which wants to record original file info
+sub annotate
+{
+}
+
 sub read_fragments
 {
 	my ($self, $state, $plist, $filename) = @_;
 
 	my $stack = [];
 	my $subst = $state->{subst};
-	push(@$stack, $self->FileClass->new($filename));
+	my $main = $self->FileClass->new($filename);
+	return undef if !defined $main;
+	push(@$stack, $main);
 	my $fast = $subst->value("LIBS_ONLY");
 
 	return $plist->read($stack,
@@ -1083,10 +1200,14 @@ sub read_fragments
 			while (my $l = $file->readline) {
 				$state->progress->working(2048) 
 				    unless $state->{silent};
+				# add a file name to uncommitted cvs tags so
+				# that the plist is always the same
 				if ($l =~m/^(\@comment\s+\$(?:Open)BSD\$)$/o) {
 					$l = '@comment $'.'OpenBSD: '.basename($file->name).',v$';
 				}
 				if ($l =~ m/^(\!)?\%\%(.*)\%\%$/) {
+					$self->record_fragment($plist, $1, $2, 
+					    $file);
 					if (my $f2 = $self->handle_fragment($state, $file, $1, $2, $l, $cont, $filename)) {
 						push(@$stack, $file);
 						$file = $f2;
@@ -1095,7 +1216,7 @@ sub read_fragments
 				}
 				my $s = $subst->do($l);
 				if ($fast) {
-					next unless $s =~ m/^\@(?:cwd|lib|libset|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
+					next unless $s =~ m/^\@(?:cwd|lib|libset|define-tag|depend|wantlib)\b/o || $s =~ m/lib.*\.a$/o;
 				}
 	# XXX some things, like @comment no checksum, don't produce an object
 				my $o = &$cont($s);
@@ -1106,10 +1227,6 @@ sub read_fragments
 			}
 		}
 	    });
-}
-
-sub annotate
-{
 }
 
 sub add_description
@@ -1180,10 +1297,9 @@ sub add_extra_info
 	    $subst->value('FTP');
 	if (defined $fullpkgpath || defined $cdrom || defined $ftp) {
 		$fullpkgpath //= '';
-		$cdrom //= 'no';
 		$ftp //= 'no';
-		$cdrom = 'yes' if $cdrom =~ m/^yes$/io;
 		$ftp = 'yes' if $ftp =~ m/^yes$/io;
+		$cdrom = 'yes' if defined $cdrom && $cdrom =~ m/^yes$/io;
 
 		OpenBSD::PackingElement::ExtraInfo->add($plist,
 		    $fullpkgpath, $cdrom, $ftp);
@@ -1219,6 +1335,7 @@ sub add_elements
 
 	if (defined $state->opt('L')) {
 		OpenBSD::PackingElement::LocalBase->add($plist, $state->opt('L'));
+		$state->{groff} = $state->opt('L'). '/bin/groff';
 	}
 	$self->add_extra_info($plist, $state);
 	if ($state->{system_version}) {
@@ -1231,6 +1348,13 @@ sub cant_read_fragment
 {
 	my ($self, $state, $frag) = @_;
 	$state->fatal("can't read packing-list #1", $frag);
+}
+
+sub missing_fragments
+{
+	my ($self, $state, $frag, $o, $noto) = @_;
+	$state->fatal("Missing fragments for #1: #2 and #3 don't exist",
+		$frag, $o, $noto);
 }
 
 sub read_all_fragments
@@ -1502,19 +1626,25 @@ sub parse_and_run
 		exit 0;
 	}
 	$plist->discover_directories($state);
-	my $ordered;
+	my $ordered = [];
 	unless (defined $state->opt('q') && defined $state->opt('n')) {
 		$state->set_status("checking dependencies");
 		$self->check_dependencies($plist, $state);
-		$state->set_status("checksumming");
-		if ($regen_package) {
-			$state->progress->visit_with_count($plist, 'verify_checksum');
+		if ($state->defines("stub")) {
+			$plist->stub_digest($ordered);
 		} else {
-			$plist = $self->make_plist_with_sum($state, $plist);
+			$state->set_status("checksumming");
+			if ($regen_package) {
+				$state->progress->visit_with_count($plist, 
+				    'verify_checksum');
+			} else {
+				$plist = $self->make_plist_with_sum($state, 
+				    $plist);
+			}
+			$ordered = $self->save_history($plist, 
+			    $state->defines('HISTORY_DIR'));
+			$self->show_bad_symlinks($state);
 		}
-		$ordered = $self->save_history($plist, 
-		    $state->defines('HISTORY_DIR'));
-		$self->show_bad_symlinks($state);
 		$state->end_status;
 	}
 
@@ -1561,7 +1691,9 @@ sub parse_and_run
 	} else {
 		$self->create_package($state, $plist, $ordered, $wname);
 	}
-	$self->finish_manpages($state, $plist);
+	if (!$state->defines("stub")) {
+		$self->finish_manpages($state, $plist);
+	}
 	}catch {
 		print STDERR "$0: $_\n";
 		return 1;

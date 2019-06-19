@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.5 2017/12/21 00:32:55 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.7 2018/11/16 21:15:47 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -53,7 +53,7 @@ Elf_Addr _dl_bind(elf_object_t *object, int index);
 #define _RF_V		0x02000000		/* ERROR */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	((s) & 0xff)		/* right shift */
-static int reloc_target_flags[] = {
+static const int reloc_target_flags[] = {
 	[ R_AARCH64_NONE ] = 0,
 	[ R_AARCH64_ABS64 ] =
 	  _RF_V|_RF_S|_RF_A|		_RF_SZ(64) | _RF_RS(0),	/* ABS64 */
@@ -79,7 +79,7 @@ static int reloc_target_flags[] = {
 #define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
-static Elf_Addr reloc_target_bitmask[] = {
+static const Elf_Addr reloc_target_bitmask[] = {
 #define _BM(x)  (~(Elf_Addr)0 >> ((8*sizeof(reloc_target_bitmask[0])) - (x)))
 	[ R_AARCH64_NONE ] = 0,
 	[ R_AARCH64_ABS64 ] = _BM(64),
@@ -309,9 +309,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		pltgot[1] = (Elf_Addr)object;
 		pltgot[2] = (Elf_Addr)_dl_bind_start;
 	}
-
-	/* mprotect the GOT */
-	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
 
 	return (fails);
 }

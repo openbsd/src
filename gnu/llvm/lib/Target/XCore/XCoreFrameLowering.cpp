@@ -23,12 +23,12 @@
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
-#include <algorithm>    // std::sort
+#include <algorithm> // std::sort
 
 using namespace llvm;
 
@@ -151,7 +151,7 @@ static void GetSpillList(SmallVectorImpl<StackSlotInfo> &SpillList,
                                       Offset,
                                       FramePtr));
   }
-  std::sort(SpillList.begin(), SpillList.end(), CompareSSIOffset);
+  llvm::sort(SpillList.begin(), SpillList.end(), CompareSSIOffset);
 }
 
 /// Creates an ordered list of EH info register 'spills'.
@@ -170,7 +170,7 @@ static void GetEHSpillList(SmallVectorImpl<StackSlotInfo> &SpillList,
   SpillList.push_back(
       StackSlotInfo(EHSlot[0], MFI.getObjectOffset(EHSlot[1]),
                     TL->getExceptionSelectorRegister(PersonalityFn)));
-  std::sort(SpillList.begin(), SpillList.end(), CompareSSIOffset);
+  llvm::sort(SpillList.begin(), SpillList.end(), CompareSSIOffset);
 }
 
 static MachineMemOperand *getFrameIndexMMO(MachineBasicBlock &MBB,
@@ -238,7 +238,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF,
     report_fatal_error("emitPrologue unsupported alignment: "
                        + Twine(MFI.getMaxAlignment()));
 
-  const AttributeList &PAL = MF.getFunction()->getAttributes();
+  const AttributeList &PAL = MF.getFunction().getAttributes();
   if (PAL.hasAttrSomewhere(Attribute::Nest))
     BuildMI(MBB, MBBI, dl, TII.get(XCore::LDWSP_ru6), XCore::R11).addImm(0);
     // FIX: Needs addMemOperand() but can't use getFixedStack() or getStack().
@@ -324,7 +324,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF,
     if (XFI->hasEHSpillSlot()) {
       // The unwinder requires stack slot & CFI offsets for the exception info.
       // We do not save/spill these registers.
-      const Function *Fn = MF.getFunction();
+      const Function *Fn = &MF.getFunction();
       const Constant *PersonalityFn =
           Fn->hasPersonalityFn() ? Fn->getPersonalityFn() : nullptr;
       SmallVector<StackSlotInfo, 2> SpillList;
@@ -359,7 +359,7 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
   if (RetOpcode == XCore::EH_RETURN) {
     // 'Restore' the exception info the unwinder has placed into the stack
     // slots.
-    const Function *Fn = MF.getFunction();
+    const Function *Fn = &MF.getFunction();
     const Constant *PersonalityFn =
         Fn->hasPersonalityFn() ? Fn->getPersonalityFn() : nullptr;
     SmallVector<StackSlotInfo, 2> SpillList;
@@ -427,7 +427,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   bool emitFrameMoves = XCoreRegisterInfo::needsFrameMoves(*MF);
 
   DebugLoc DL;
-  if (MI != MBB.end() && !MI->isDebugValue())
+  if (MI != MBB.end() && !MI->isDebugInstr())
     DL = MI->getDebugLoc();
 
   for (std::vector<CalleeSavedInfo>::const_iterator it = CSI.begin();
@@ -452,7 +452,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 bool XCoreFrameLowering::
 restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
-                            const std::vector<CalleeSavedInfo> &CSI,
+                            std::vector<CalleeSavedInfo> &CSI,
                             const TargetRegisterInfo *TRI) const{
   MachineFunction *MF = MBB.getParent();
   const TargetInstrInfo &TII = *MF->getSubtarget().getInstrInfo();
@@ -542,7 +542,7 @@ void XCoreFrameLowering::determineCalleeSaves(MachineFunction &MF,
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   bool LRUsed = MRI.isPhysRegModified(XCore::LR);
 
-  if (!LRUsed && !MF.getFunction()->isVarArg() &&
+  if (!LRUsed && !MF.getFunction().isVarArg() &&
       MF.getFrameInfo().estimateStackSize(MF))
     // If we need to extend the stack it is more efficient to use entsp / retsp.
     // We force the LR to be saved so these instructions are used.

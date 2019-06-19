@@ -23,6 +23,7 @@ class CreateAfterAttachTestCase(TestBase):
     # Occasionally hangs on Windows, may be same as other issues.
     @skipIfWindows
     @skipIfiOSSimulator
+    @expectedFailureAll(oslist=['ios', 'watchos', 'tvos', 'bridgeos'], bugnumber="<rdar://problem/34538611>") # old lldb-server has race condition, launching an inferior and then launching debugserver in quick succession sometimes fails
     def test_create_after_attach_with_popen(self):
         """Test thread creation after process attach."""
         self.build(dictionary=self.getBuildFlags(use_cpp11=False))
@@ -33,6 +34,7 @@ class CreateAfterAttachTestCase(TestBase):
     @skipIfRemote
     @skipIfWindows  # Windows doesn't have fork.
     @skipIfiOSSimulator
+    @expectedFailureAll(oslist=['ios', 'watchos', 'tvos', 'bridgeos'], bugnumber="<rdar://problem/34538611>") # old lldb-server has race condition, launching an inferior and then launching debugserver in quick succession sometimes fails
     def test_create_after_attach_with_fork(self):
         """Test thread creation after process attach."""
         self.build(dictionary=self.getBuildFlags(use_cpp11=False))
@@ -49,7 +51,7 @@ class CreateAfterAttachTestCase(TestBase):
     def create_after_attach(self, use_fork):
         """Test thread creation after process attach."""
 
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = self.getBuildArtifact("a.out")
 
         # Spawn a new process
         if use_fork:

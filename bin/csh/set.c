@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.19 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: set.c,v 1.22 2018/10/24 06:01:03 martijn Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -401,7 +401,7 @@ adrof1(Char *name, struct varent *v)
 void
 set(Char *var, Char *val)
 {
-    Char **vec = xreallocarray(NULL, 2, sizeof(Char **));
+    Char **vec = xreallocarray(NULL, 2, sizeof(*vec));
 
     vec[0] = val;
     vec[1] = 0;

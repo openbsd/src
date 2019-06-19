@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..72\n"; }
+BEGIN { $| = 1; print "1..86\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -41,32 +41,44 @@ ok($objAz->getlocale, 'az');
 $objAz->change(level => 1);
 
 ok($objAz->lt("c", "c\x{327}"));
+ok($objAz->lt("cz","c\x{327}"));
 ok($objAz->gt("d", "c\x{327}"));
 ok($objAz->lt("g", "g\x{306}"));
+ok($objAz->lt("gz","g\x{306}"));
 ok($objAz->gt("h", "g\x{306}"));
 ok($objAz->lt("h", "I"));
+ok($objAz->lt("hz","I"));
 ok($objAz->lt("I", "i"));
+ok($objAz->lt("Iz","i"));
 ok($objAz->gt("j", "i"));
 ok($objAz->lt("o", "o\x{308}"));
+ok($objAz->lt("oz","o\x{308}"));
 ok($objAz->gt("p", "o\x{308}"));
 ok($objAz->lt("s", "s\x{327}"));
+ok($objAz->lt("sz","s\x{327}"));
 ok($objAz->gt("t", "s\x{327}"));
 ok($objAz->lt("u", "u\x{308}"));
+ok($objAz->lt("uz","u\x{308}"));
 ok($objAz->gt("v", "u\x{308}"));
 
-# 15
+# 22
 
 ok($objAz->lt("k", "q"));
 ok($objAz->lt("kz","q"));
 ok($objAz->gt("l", "q"));
 ok($objAz->lt("e", "\x{259}"));
+ok($objAz->lt("ez","\x{259}"));
 ok($objAz->gt("f", "\x{259}"));
 ok($objAz->lt("h", "x"));
 ok($objAz->lt("hz","x"));
-ok($objAz->gt("I","x"));
-ok($objAz->gt("i","x"));
+ok($objAz->lt("x", "I"));
+ok($objAz->lt("xz","I"));
+ok($objAz->lt("x", "i"));
+ok($objAz->lt("xz","i"));
+ok($objAz->lt("z", "w"));
+ok($objAz->lt("zz","w"));
 
-# 24
+# 36
 
 $objAz->change(level => 2);
 
@@ -80,8 +92,9 @@ ok($objAz->eq("u\x{308}", "U\x{308}"));
 ok($objAz->eq("q", "Q"));
 ok($objAz->eq("\x{259}", "\x{18F}"));
 ok($objAz->eq("x", "X"));
+ok($objAz->eq("z", "Z"));
 
-# 34
+# 47
 
 $objAz->change(level => 3);
 
@@ -92,11 +105,12 @@ ok($objAz->gt("\x{130}", "i"));
 ok($objAz->lt("o\x{308}", "O\x{308}"));
 ok($objAz->lt("s\x{327}", "S\x{327}"));
 ok($objAz->lt("u\x{308}", "U\x{308}"));
-ok($objAz->lt("k", "K"));
+ok($objAz->lt("q", "Q"));
 ok($objAz->lt("\x{259}", "\x{18F}"));
 ok($objAz->lt("x", "X"));
+ok($objAz->lt("z", "Z"));
 
-# 44
+# 58
 
 ok($objAz->eq("c\x{327}", pack('U', 0xE7)));
 ok($objAz->eq("C\x{327}", pack('U', 0xC7)));
@@ -111,7 +125,7 @@ ok($objAz->eq("I\x{306}", "\x{12C}"));
 ok($objAz->eq("I\x{328}", "\x{12E}"));
 ok($objAz->eq("I\x{307}", "\x{130}"));
 
-# 56
+# 70
 
 ok($objAz->eq("o\x{308}", pack('U', 0xF6)));
 ok($objAz->eq("O\x{308}", pack('U', 0xD6)));
@@ -130,4 +144,4 @@ ok($objAz->eq("U\x{308}\x{304}", "\x{1D5}"));
 ok($objAz->eq("u\x{308}\x{30C}", "\x{1DA}"));
 ok($objAz->eq("U\x{308}\x{30C}", "\x{1D9}"));
 
-# 72
+# 86

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wscanf.3,v 1.2 2011/11/02 22:29:07 schwarze Exp $
+.\"	$OpenBSD: wscanf.3,v 1.4 2019/01/16 12:55:49 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"     @(#)scanf.3	8.2 (Berkeley) 12/11/93
 .\" FreeBSD: src/lib/libc/stdio/scanf.3,v 1.24 2003/06/28 09:03:25 das Exp
 .\"
-.Dd $Mdocdate: November 2 2011 $
+.Dd $Mdocdate: January 16 2019 $
 .Dt WSCANF 3
 .Os
 .Sh NAME
@@ -389,10 +389,6 @@ a conversion, although it can be suppressed with the
 flag.
 .El
 .Pp
-The decimal point
-character is defined in the program's locale (category
-.Dv LC_NUMERIC ) .
-.Pp
 For backwards compatibility, a
 .Dq conversion
 of
@@ -432,6 +428,15 @@ and
 .Fn vswscanf
 conform to
 .St -isoC-99 .
+.Sh CAVEATS
+On systems other than
+.Ox ,
+the
+.Dv LC_NUMERIC
+.Xr locale 1
+category can cause parsing failures; see CAVEATS in
+.Xr setlocale 3
+for details.
 .Sh BUGS
 In addition to the bugs documented in
 .Xr scanf 3 ,

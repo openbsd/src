@@ -17,7 +17,7 @@ found in the top-level directory to which the Perl distribution
 was extracted.  Make sure you read and understand the terms under
 which this software is being distributed.
 
-Also make sure you read L<BUGS AND CAVEATS> below for the
+Also make sure you read L</BUGS AND CAVEATS> below for the
 known limitations of this port.
 
 The INSTALL file in the perl top-level has much information that is
@@ -42,6 +42,7 @@ following compilers on the Intel x86 architecture:
       Microsoft Visual C++    version 6.0 or later
       Intel C++ Compiler      (experimental)
       Gcc by mingw.org        gcc version 3.4.5 or later
+                              with runtime < 3.21
       Gcc by mingw-w64.org    gcc version 4.4.3 or later
 
 Note that the last two of these are actually competing projects both
@@ -63,10 +64,10 @@ that are also supported by perl's makefile.
 =back
 
 The Microsoft Visual C++ compilers are also now being given away free. They are
-available as "Visual C++ Toolkit 2003" or "Visual C++ 2005-2013 Express
-Edition" (and also as part of the ".NET Framework SDK") and are the same
-compilers that ship with "Visual C++ .NET 2003 Professional" or "Visual C++
-2005-2013 Professional" respectively.
+available as "Visual C++ Toolkit 2003" or "Visual C++ 2005-2017 Express [or
+Community, from 2017] Edition" (and also as part of the ".NET Framework SDK")
+and are the same compilers that ship with "Visual C++ .NET 2003 Professional"
+or "Visual C++ 2005-2017 Professional" respectively.
 
 This port can also be built on IA64/AMD64 using:
 
@@ -87,7 +88,7 @@ Also, the trimmed down compiler only passes tests when USE_ITHREADS *= define
 This port fully supports MakeMaker (the set of modules that
 is used to build extensions to perl).  Therefore, you should be
 able to build and install most extensions found in the CPAN sites.
-See L<Usage Hints for Perl on Windows> below for general hints about this.
+See L</Usage Hints for Perl on Windows> below for general hints about this.
 
 =head2 Setting Up Perl on Windows
 
@@ -139,9 +140,9 @@ console already set up for your target architecture (x86-32 or x86-64 or IA64).
 With the newer compilers, you may also use the older batch files if you choose
 so.
 
-=item Microsoft Visual C++ 2008-2013 Express Edition
+=item Microsoft Visual C++ 2008-2017 Express/Community Edition
 
-These free versions of Visual C++ 2008-2013 Professional contain the same
+These free versions of Visual C++ 2008-2017 Professional contain the same
 compilers and linkers that ship with the full versions, and also contain
 everything necessary to build Perl, rather than requiring a separate download
 of the Windows SDK like previous versions did.
@@ -151,14 +152,15 @@ L<http://www.microsoft.com/downloads/search.aspx?displaylang=en>.  (Providing ex
 links to these packages has proven a pointless task because the links keep on
 changing so often.)
 
-Install Visual C++ 2008-2013 Express, then setup your environment using, e.g.
+Install Visual C++ 2008-2017 Express/Community, then setup your environment
+using, e.g.
 
  C:\Program Files\Microsoft Visual Studio 12.0\Common7\Tools\vsvars32.bat
 
 (assuming the default installation location was chosen).
 
 Perl should now build using the win32/Makefile.  You will need to edit that
-file to set CCTYPE to one of MSVC90FREE-MSVC120FREE first.
+file to set CCTYPE to one of MSVC90-MSVC141 first.
 
 =item Microsoft Visual C++ 2005 Express Edition
 
@@ -200,7 +202,7 @@ while the latest versions install into version-specific locations such as
 Perl should now build using the win32/Makefile.  You will need to edit that
 file to set
 
- CCTYPE = MSVC80FREE
+ CCTYPE = MSVC80
 
 and to set CCHOME, CCINCDIR and CCLIBDIR as per the environment setup above.
 
@@ -311,14 +313,21 @@ The nmake that comes with the Platform SDK will suffice for building
 Perl.  Make sure you are building within one of the "Build Environment"
 shells available after you install the Platform SDK from the Start Menu.
 
-=item MinGW release 3 with gcc
+=item GCC
 
-Perl can be compiled with gcc from MinGW release 3 and later (using gcc 3.4.5
-and later).  It can be downloaded here:
+Perl can be compiled with gcc from MinGW (version 3.4.5 or later) or from
+MinGW64 (version 4.4.3 or later).  It can be downloaded here:
 
 L<http://www.mingw.org/>
+L<http://www.mingw-w64.org/>
 
 You also need dmake.  See L</"Make"> above on how to get it.
+
+Note that the MinGW build currently requires a MinGW runtime version earlier
+than 3.21 (check __MINGW32_MAJOR_VERSION and __MINGW32_MINOR_VERSION).
+
+Note also that the C++ mode build currently fails with MinGW 3.4.5 and 4.7.2
+or later, and with MinGW64 64-bit 6.3.0 or later.
 
 =item Intel C++ Compiler
 
@@ -393,7 +402,7 @@ Be sure to read the instructions near the top of the makefiles carefully.
 Type "dmake" (or "nmake" if you are using that make).
 
 This should build everything.  Specifically, it will create perl.exe,
-perl524.dll at the perl toplevel, and various other extension dll's
+perl528.dll at the perl toplevel, and various other extension dll's
 under the lib\auto directory.  If the build fails for any reason, make
 sure you have done the previous steps correctly.
 
@@ -421,8 +430,8 @@ There should be no test failures.
 If you build with Visual C++ 2013 then three tests currently may fail with
 Daylight Saving Time related problems: F<t/io/fs.t>,
 F<cpan/HTTP-Tiny/t/110_mirror.t> and F<lib/File/Copy.t>. The failures are
-caused by bugs in the CRT in VC++ 2013 which will be fixed in future releases
-of VC++, as explained by Microsoft here:
+caused by bugs in the CRT in VC++ 2013 which are fixed in VC++2015 and
+later, as explained by Microsoft here:
 L<https://connect.microsoft.com/VisualStudio/feedback/details/811534/utime-sometimes-fails-to-set-the-correct-file-times-in-visual-c-2013>. In the meantime,
 if you need fixed C<stat> and C<utime> functions then have a look at the
 CPAN distribution Win32::UTCFileTime.
@@ -444,7 +453,7 @@ include some tools (C<type> for instance) which override the Windows
 ones and makes tests fail. Remove them from your path while testing to
 avoid these errors.
 
-Please report any other failures as described under L<BUGS AND CAVEATS>.
+Please report any other failures as described under L</BUGS AND CAVEATS>.
 
 =head2 Installation of Perl on Windows
 
@@ -950,6 +959,6 @@ Win9x support was added in 5.6 (Benjamin Stuhl).
 
 Support for 64-bit Windows added in 5.8 (ActiveState Corp).
 
-Last updated: 07 October 2014
+Last updated: 23 May 2018
 
 =cut

@@ -16,11 +16,11 @@ TAP::Parser::IteratorFactory - Figures out which SourceHandler objects to use fo
 
 =head1 VERSION
 
-Version 3.36
+Version 3.42
 
 =cut
 
-our $VERSION = '3.36_01';
+our $VERSION = '3.42';
 
 =head1 SYNOPSIS
 
@@ -243,19 +243,14 @@ sub detect_source {
     confess('no raw source ref defined!') unless defined $source->raw;
 
     # find a list of handlers that can handle this source:
-    my %handlers;
-    for my $dclass ( @{ $self->handlers } ) {
-        my $confidence = $dclass->can_handle($source);
-
-        # warn "handler: $dclass: $confidence\n";
-        $handlers{$dclass} = $confidence if $confidence;
+    my %confidence_for;
+    for my $handler ( @{ $self->handlers } ) {
+        my $confidence = $handler->can_handle($source);
+        # warn "handler: $handler: $confidence\n";
+        $confidence_for{$handler} = $confidence if $confidence;
     }
 
-    if ( !%handlers ) {
-
-        # use Data::Dump qw( pp );
-        # warn pp( $meta );
-
+    if ( !%confidence_for ) {
         # error: can't detect source
         my $raw_source_short = substr( ${ $source->raw }, 0, 50 );
         confess("Cannot detect source of '$raw_source_short'!");
@@ -263,23 +258,30 @@ sub detect_source {
     }
 
     # if multiple handlers can handle it, choose the most confident one
-    my @handlers = (
-        map    {$_}
-          sort { $handlers{$a} cmp $handlers{$b} }
-          keys %handlers
-    );
+    my @handlers =
+          sort { $confidence_for{$b} <=> $confidence_for{$a} }
+          keys %confidence_for;
+
+    # Check for a tie.
+    if( @handlers > 1 &&
+        $confidence_for{$handlers[0]} == $confidence_for{$handlers[1]}
+    ) {
+        my $filename = $source->meta->{file}{basename};
+        die("There is a tie between $handlers[0] and $handlers[1].\n".
+            "Both voted $confidence_for{$handlers[0]} on $filename.\n");
+    }
 
     # this is really useful for debugging handlers:
     if ( $ENV{TAP_HARNESS_SOURCE_FACTORY_VOTES} ) {
         warn(
             "votes: ",
-            join( ', ', map {"$_: $handlers{$_}"} @handlers ),
+            join( ', ', map {"$_: $confidence_for{$_}"} @handlers ),
             "\n"
         );
     }
 
     # return 1st
-    return pop @handlers;
+    return $handlers[0];
 }
 
 1;

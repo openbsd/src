@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_arm.c,v 1.9 2015/12/19 18:40:30 mmcc Exp $	*/
+/*	$OpenBSD: kvm_arm.c,v 1.10 2018/05/15 10:04:44 otto Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -107,7 +107,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		return (int)(kd->nbpg - (va & (kd->nbpg - 1)));
 	}
 
-	_kvm_err(kd, 0, "kvm_vatop: va %x unreachable", va);
+	_kvm_err(kd, 0, "kvm_vatop: va %lx unreachable", va);
 	return (0);
 }
 
@@ -126,6 +126,6 @@ _kvm_pa2off(kvm_t *kd, paddr_t pa)
 		off += (off_t)mp->size;
 	}
 
-	_kvm_err(kd, 0, "not a physical address: %x", pa);
+	_kvm_err(kd, 0, "not a physical address: %lx", pa);
 	return (-1);
 }

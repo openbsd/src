@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_file.c,v 1.32 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bss_file.c,v 1.33 2018/05/30 00:23:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,7 +98,7 @@ static long file_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int file_new(BIO *h);
 static int file_free(BIO *data);
 
-static BIO_METHOD methods_filep = {
+static const BIO_METHOD methods_filep = {
 	.type = BIO_TYPE_FILE,
 	.name = "FILE pointer",
 	.bwrite = file_write,
@@ -148,7 +148,7 @@ BIO_new_fp(FILE *stream, int close_flag)
 	return (ret);
 }
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_s_file(void)
 {
 	return (&methods_filep);

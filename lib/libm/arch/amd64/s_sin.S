@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_sin.S,v 1.3 2016/09/12 19:47:01 guenther Exp $ */
+/*	$OpenBSD: s_sin.S,v 1.4 2018/07/03 22:43:34 mortimer Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -9,6 +9,7 @@
 #include "abi.h"
 
 ENTRY(sin)
+	RETGUARD_SETUP(sin, r11)
 	XMM_ONE_ARG_DOUBLE_PROLOGUE
 	fldl	ARG_DOUBLE_ONE
 	fsin
@@ -16,6 +17,7 @@ ENTRY(sin)
 	andw	$0x400,%ax
 	jnz	1f
 	XMM_DOUBLE_EPILOGUE
+	RETGUARD_CHECK(sin, r11)
 	ret
 1:	fldpi
 	fadd	%st(0)
@@ -27,5 +29,6 @@ ENTRY(sin)
 	fstp	%st(1)
 	fsin
 	XMM_DOUBLE_EPILOGUE
+	RETGUARD_CHECK(sin, r11)
 	ret
 END_STD(sin)

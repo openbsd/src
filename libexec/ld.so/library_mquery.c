@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.58 2017/12/08 05:25:20 deraadt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.59 2019/01/25 18:13:13 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -235,8 +235,6 @@ retry:
 		void *res;
 
 		flags = MAP_PRIVATE;
-		if (LOFF + ld->moff != 0)
-			flags |= MAP_FIXED | __MAP_NOREPLACE;
 
 		if (ld->foff < 0) {
 			fd = -1;
@@ -247,42 +245,33 @@ retry:
 			foff = ld->foff;
 		}
 
-		res = _dl_mmap((void *)(LOFF + ld->moff), ROUND_PG(ld->size),
-		    ld->prot, flags, fd, foff);
-		if (_dl_mmap_error(res)) {
+		if (ld == lowld) {
 			/*
-			 * The mapping we wanted isn't free, so we do an
-			 * mquery without MAP_FIXED to get the next free
-			 * mapping, adjust the base mapping address to match
-			 * this free mapping and restart the process again.
-			 *
-			 * XXX - we need some kind of boundary condition
-			 * here, or fix mquery to not run into the stack
+			 * Add PROT_EXEC to force the first allocation in
+			 * EXEC region unless it is writable.
 			 */
+			int exec = (ld->prot & PROT_WRITE) ? 0 : PROT_EXEC;
 			res = _dl_mquery((void *)(LOFF + ld->moff),
-			    ROUND_PG(ld->size), ld->prot,
-			    flags & ~(MAP_FIXED | __MAP_NOREPLACE), fd, foff);
-
-			/*
-			 * If ld == lowld, then ld->start is just a hint and
-			 * thus shouldn't be unmapped.
-			 */
-			ld->start = NULL;
-
-			/* Unmap any mappings that we did get in. */
-			for (ld = lowld; ld != NULL; ld = ld->next) {
-				if (ld->start == NULL)
-					break;
-				_dl_munmap(ld->start, ROUND_PG(ld->size));
-				ld->start = NULL;
-			}
-
-			/* if the mquery failed, give up */
+			    ROUND_PG(ld->size), ld->prot | exec, flags,
+			    fd, foff);
 			if (_dl_mmap_error(res))
 				goto fail;
+			lowld->start = res;
+		}
 
-			/* otherwise, reset the start of the base mapping */
-			lowld->start = res - ld->moff + lowld->moff;
+		res = _dl_mmap((void *)(LOFF + ld->moff), ROUND_PG(ld->size),
+		    ld->prot, flags | MAP_FIXED | __MAP_NOREPLACE, fd, foff);
+
+		if (_dl_mmap_error(res)) {
+			struct load_list *ll;
+
+			/* Unmap any mappings that we did get in. */
+			for (ll = lowld; ll != NULL && ll != ld;
+			     ll = ll->next) {
+				_dl_munmap(ll->start, ROUND_PG(ll->size));
+			}
+
+			lowld->start += ROUND_PG(ld->size);
 			goto retry;
 		}
 

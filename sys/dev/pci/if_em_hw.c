@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.97 2018/03/16 06:30:50 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.102 2018/04/29 08:47:10 sf Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -945,7 +945,9 @@ em_reset_hw(struct em_hw *hw)
 		}
 		em_get_software_flag(hw);
 		E1000_WRITE_REG(hw, CTRL, (ctrl | E1000_CTRL_RST));
-		msec_delay(5);
+		/* HW reset releases software_flag */
+		hw->sw_flag = 0;
+		msec_delay(20);
 
 		/* Ungate automatic PHY configuration on non-managed 82579 */
 		if (hw->mac_type == em_pch2lan && !hw->phy_reset_disable &&
@@ -1491,6 +1493,8 @@ em_init_hw(struct em_hw *hw)
 	/* Set the media type and TBI compatibility */
 	em_set_media_type(hw);
 
+	/* Magic delay that improves problems with i219LM on HP Elitebook */
+	msec_delay(1);
 	/* Must be called after em_set_media_type because media_type is used */
 	em_initialize_hardware_bits(hw);
 
@@ -9539,9 +9543,18 @@ em_check_phy_reset_block(struct em_hw *hw)
 	DEBUGFUNC("em_check_phy_reset_block\n");
 
 	if (IS_ICH8(hw->mac_type)) {
-		fwsm = E1000_READ_REG(hw, FWSM);
-		return (fwsm & E1000_FWSM_RSPCIPHY) ? E1000_SUCCESS :
-		    E1000_BLK_PHY_RESET;
+		int i = 0;
+		int blocked = 0;
+		do {
+			fwsm = E1000_READ_REG(hw, FWSM);
+			if (!(fwsm & E1000_FWSM_RSPCIPHY)) {
+				blocked = 1;
+				msec_delay(10);
+				continue;
+			}
+			blocked = 0;
+		} while (blocked && (i++ < 30));
+		return blocked ? E1000_BLK_PHY_RESET : E1000_SUCCESS;
 	}
 	if (hw->mac_type > em_82547_rev_2)
 		manc = E1000_READ_REG(hw, MANC);
@@ -9602,11 +9615,27 @@ em_get_software_flag(struct em_hw *hw)
 	DEBUGFUNC("em_get_software_flag");
 
 	if (IS_ICH8(hw->mac_type)) {
+		if (hw->sw_flag) {
+			hw->sw_flag++;
+			return E1000_SUCCESS;
+		}
 		while (timeout) {
 			extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
-			extcnf_ctrl |= E1000_EXTCNF_CTRL_SWFLAG;
-			E1000_WRITE_REG(hw, EXTCNF_CTRL, extcnf_ctrl);
+			if (!(extcnf_ctrl & E1000_EXTCNF_CTRL_SWFLAG))
+				break;
+			msec_delay_irq(1);
+			timeout--;
+		}
+		if (!timeout) {
+			printf("%s: SW has already locked the resource?\n",
+			    __func__);
+			return -E1000_ERR_CONFIG;
+		}
+		timeout = SW_FLAG_TIMEOUT;
+		extcnf_ctrl |= E1000_EXTCNF_CTRL_SWFLAG;
+		E1000_WRITE_REG(hw, EXTCNF_CTRL, extcnf_ctrl);
 
+		while (timeout) {
 			extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
 			if (extcnf_ctrl & E1000_EXTCNF_CTRL_SWFLAG)
 				break;
@@ -9615,10 +9644,15 @@ em_get_software_flag(struct em_hw *hw)
 		}
 
 		if (!timeout) {
-			DEBUGOUT("FW or HW locks the resource too long.\n");
+			printf("Failed to acquire the semaphore, FW or HW "
+			    "has it: FWSM=0x%8.8x EXTCNF_CTRL=0x%8.8x)\n",
+			    E1000_READ_REG(hw, FWSM), extcnf_ctrl);
+			extcnf_ctrl &= ~E1000_EXTCNF_CTRL_SWFLAG;
+			E1000_WRITE_REG(hw, EXTCNF_CTRL, extcnf_ctrl);
 			return -E1000_ERR_CONFIG;
 		}
 	}
+	hw->sw_flag++;
 	return E1000_SUCCESS;
 }
 
@@ -9638,6 +9672,9 @@ em_release_software_flag(struct em_hw *hw)
 	DEBUGFUNC("em_release_software_flag");
 
 	if (IS_ICH8(hw->mac_type)) {
+		KASSERT(hw->sw_flag > 0);
+		if (--hw->sw_flag > 0)
+			return;
 		extcnf_ctrl = E1000_READ_REG(hw, EXTCNF_CTRL);
 		extcnf_ctrl &= ~E1000_EXTCNF_CTRL_SWFLAG;
 		E1000_WRITE_REG(hw, EXTCNF_CTRL, extcnf_ctrl);

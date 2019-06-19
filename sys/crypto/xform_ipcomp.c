@@ -1,4 +1,4 @@
-/* $OpenBSD: xform_ipcomp.c,v 1.7 2015/03/16 20:26:24 miod Exp $ */
+/* $OpenBSD: xform_ipcomp.c,v 1.8 2019/01/09 12:11:38 mpi Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -141,13 +141,13 @@ deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
 		if (count > buf[j].size) {
 			bcopy(buf[j].out, *out, buf[j].size);
 			*out += buf[j].size;
-			free(buf[j].out, M_CRYPTO_DATA, 0);
+			free(buf[j].out, M_CRYPTO_DATA, buf[j].size);
 			count -= buf[j].size;
 		} else {
 			/* it should be the last buffer */
 			bcopy(buf[j].out, *out, count);
 			*out += count;
-			free(buf[j].out, M_CRYPTO_DATA, 0);
+			free(buf[j].out, M_CRYPTO_DATA, buf[j].size);
 			count = 0;
 		}
 	}
@@ -157,7 +157,7 @@ deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out)
 bad:
 	*out = NULL;
 	for (j = 0; buf[j].flag != 0; j++)
-		free(buf[j].out, M_CRYPTO_DATA, 0);
+		free(buf[j].out, M_CRYPTO_DATA, buf[j].size);
 	if (decomp)
 		inflateEnd(&zbuf);
 	else

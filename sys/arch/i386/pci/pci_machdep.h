@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.28 2016/05/04 14:30:00 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.30 2018/08/19 08:23:47 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -75,9 +75,6 @@ struct {
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 extern int pci_mode;
-extern bus_addr_t pci_mcfg_addr;
-extern int pci_mcfg_min_bus, pci_mcfg_max_bus;
-
 int		pci_mode_detect(void);
 
 extern struct extent *pciio_ex;
@@ -113,6 +110,9 @@ void 		pci_dev_postattach(struct device *, struct pci_attach_args *);
 
 pcireg_t	pci_min_powerstate(pci_chipset_tag_t, pcitag_t);
 void		pci_set_powerstate_md(pci_chipset_tag_t, pcitag_t, int, int);
+
+void		pci_mcfg_init(bus_space_tag_t, bus_addr_t, int, int, int);
+pci_chipset_tag_t pci_lookup_segment(int);
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PIC Specification,

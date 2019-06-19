@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsleep.9,v 1.11 2016/09/13 08:32:44 mpi Exp $
+.\"	$OpenBSD: tsleep.9,v 1.12 2018/05/28 18:51:27 cheloha Exp $
 .\"	$NetBSD: sleep.9,v 1.11 1999/03/24 06:15:12 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 13 2016 $
+.Dd $Mdocdate: May 28 2018 $
 .Dt TSLEEP 9
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@
 .Ft int
 .Fn msleep "void *ident" "struct mutex *mtx" "int priority" "const char *wmesg" "int timo"
 .Ft int
-.Fn rwsleep "void *ident" "struct rwlock *wl" "int priority" "const char *wmesg" "int timo"
+.Fn rwsleep "void *ident" "struct rwlock *rwl" "int priority" "const char *wmesg" "int timo"
 .Ft void
 .Fn wakeup "void *ident"
 .Ft void
@@ -155,10 +155,10 @@ function behaves just like
 .Fn tsleep ,
 but takes an additional argument:
 .Bl -tag -width priority
-.It Fa wl
-A write lock that will be unlocked when the process is safely
+.It Fa rwl
+A read- or write-lock that will be unlocked when the process is safely
 on the sleep queue.
-The write lock will be relocked at the end of rwsleep unless the
+The lock will be relocked at the end of rwsleep unless the
 .Dv PNORELOCK
 flag is set in the
 .Fa priority

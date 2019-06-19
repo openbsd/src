@@ -68,7 +68,7 @@ is($$cloned{''}[0], \$$cloned{a});
 $$cloned{a} = "blah";
 is($$cloned{''}[0], \$$cloned{a});
 
-# [ID 20020221.007] SEGV in Storable with empty string scalar object
+# [ID 20020221.007 (#8624)] SEGV in Storable with empty string scalar object
 package TestString;
 sub new {
     my ($type, $string) = @_;

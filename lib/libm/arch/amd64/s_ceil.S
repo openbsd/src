@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_ceil.S,v 1.4 2016/09/12 19:47:01 guenther Exp $ */
+/*	$OpenBSD: s_ceil.S,v 1.5 2018/07/03 22:43:34 mortimer Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -9,6 +9,7 @@
 #include "abi.h"
 
 ENTRY(ceil)
+	RETGUARD_SETUP(ceil, r11)
 	fstcw	-12(%rsp)
 	movw	-12(%rsp),%dx
 	orw	$0x0800,%dx
@@ -21,5 +22,6 @@ ENTRY(ceil)
 	fldcw	-12(%rsp)
 	fstpl	-8(%rsp)
 	movsd	-8(%rsp),%xmm0
+	RETGUARD_CHECK(ceil, r11)
 	ret
 END_STD(ceil)

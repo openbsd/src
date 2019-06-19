@@ -1,10 +1,6 @@
-#	$OpenBSD: Makefile,v 1.16 2014/09/21 13:44:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.21 2019/04/30 21:15:00 deraadt Exp $
 
-TOP=	${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
-
-CDROM=		install${REV}.iso
+CDROM=		install${OSrev}.iso
 RELXDIR?=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
 
@@ -18,8 +14,8 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 all: ${CDROM}
 
 ${CDROM}: ${BASE} ${XBASE}
-	-rm -rf ${.OBJDIR}/cd-dir
-	-mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	rm -rf ${.OBJDIR}/cd-dir/
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
@@ -43,16 +39,20 @@ ${CDROM}: ${BASE} ${XBASE}
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/${MACHINE} ${OSREV} Install CD" \
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
-	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
-	disklabel -w vnd0 fakecdrom "OpenBSD${REV}${MACHINE}"
-	vnconfig -u vnd0
-	mksuncd f ${.OBJDIR}/${CDROM} ${.OBJDIR}/../miniroot/miniroot${REV}.fs
+	vnconfig -v ${.OBJDIR}/${CDROM} > vnd
+	disklabel -w `cat vnd` fakecdrom "OpenBSD${OSrev}${MACHINE}"
+	vnconfig -u `cat vnd`
+	rm -f vnd
+	mksuncd f ${.OBJDIR}/${CDROM} ${.OBJDIR}/../miniroot/miniroot${OSrev}.fs
+
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 install:
 	cp ${CDROM} ${RELDIR}/
 
 clean cleandir:
-	/bin/rm -rf ${CDROM} ${.OBJDIR}/cd-dir
+	rm -rf ${CDROM} ${.OBJDIR}/cd-dir
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

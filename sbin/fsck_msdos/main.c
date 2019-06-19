@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 2016/05/28 18:00:42 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 2018/09/24 21:26:02 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -56,6 +56,8 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
+
+	checkroot();
 
 	while ((ch = getopt(argc, argv, "pynf")) != -1) {
 		switch (ch) {

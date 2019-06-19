@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.22 2017/04/27 05:49:32 stsp Exp $
+.\" $OpenBSD: iwm.4,v 1.26 2019/03/29 17:16:35 jmc Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2017 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -26,10 +26,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for
-.Tn Intel
-Wireless 7260, 7265, 3160, 3165, 3168, 8260, and 8265 PCIe Mini Card
-network adapters.
+driver provides support for Intel Wireless
+7260, 7265, 3160, 3165, 3168, 8260, and 8265
+PCIe Mini Card network adapters.
 .Pp
 These are the modes the
 .Nm
@@ -40,13 +39,13 @@ Also known as
 .Em infrastructure
 mode, this is used when associating with an access point, through
 which all traffic passes.
-.\" This mode is the default.
-.\" .It monitor mode
-.\" In this mode the driver is able to receive packets without
-.\" associating with an access point.
-.\" This disables the internal receive filter and enables the card to
-.\" capture packets from networks which it wouldn't normally have access to,
-.\" or to scan for access points.
+This mode is the default.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
 .El
 .Pp
 The
@@ -75,6 +74,7 @@ which are loaded when an interface is brought up:
 .It Pa /etc/firmware/iwm-3168-22
 .It Pa /etc/firmware/iwm-7260-16
 .It Pa /etc/firmware/iwm-7265-16
+.It Pa /etc/firmware/iwm-7265D-16
 .It Pa /etc/firmware/iwm-8000C-16
 .It Pa /etc/firmware/iwm-8265-22
 .El
@@ -101,8 +101,7 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid
-wpakey mywpakey
+nwid mynwid wpakey mywpakey
 dhcp
 .Ed
 .Sh DIAGNOSTICS
@@ -151,3 +150,5 @@ Support for 802.11n 40MHz channels and Tx aggregation is not yet implemented.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
+.Pp
+This driver does not support powersave mode.

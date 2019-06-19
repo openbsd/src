@@ -1,4 +1,4 @@
-#	$OpenBSD: Notes,v 1.4 2017/07/13 02:05:14 bentley Exp $
+#	$OpenBSD: Notes,v 1.5 2018/09/15 09:44:19 bentley Exp $
 #	$NetBSD: Notes,v 1.2 1995/03/23 08:28:26 cgd Exp $
 #	@(#)Notes	8.1 (Berkeley) 5/31/93
 
@@ -108,7 +108,7 @@ Limericks are indented as follows, all lines capitalized:
 	If the input was short of exact.
 
 Underlining is done on a word-by-word basis, with the underlines
-preceding the word, e.g., "__^H^Hhi ____^H^H^H^Hthere".
+preceding the word, e.g., "__^H^Hhi _____^H^H^H^H^Hthere".
 
 No fortune should run beyond 72 characters on a single line without good
 justification (er, no pun intended).  And no right margin justification,

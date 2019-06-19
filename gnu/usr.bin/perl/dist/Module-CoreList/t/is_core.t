@@ -1,7 +1,7 @@
 #!perl -w
 use strict;
 use Module::CoreList;
-use Test::More tests => 43;
+use Test::More tests => 44;
 
 BEGIN { require_ok('Module::CoreList'); }
 
@@ -82,3 +82,6 @@ ok(! Module::CoreList->is_core("CGI", undef, 5.021001), "CGI not in 5.021001");
 
 ok(  Module::CoreList::is_core("Config", 0, "5.020"), "Config v0+ is in core in 5.020");
 ok(  Module::CoreList::is_core("Config", undef, "5.020"), "Config v(undef) is in core in 5.020");
+
+eval { Module::CoreList::is_core('Config', 'invalid', '5.020'); };
+like( $@, qr/^Invalid version 'invalid' specified\b/, 'invalid version throws');

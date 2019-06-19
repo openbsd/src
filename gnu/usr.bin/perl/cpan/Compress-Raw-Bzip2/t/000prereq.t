@@ -19,7 +19,7 @@ BEGIN
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
 
-    my $VERSION = '2.069';
+    my $VERSION = '2.074';
     my @NAMES = qw(
 			
 			);

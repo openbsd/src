@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-defines.h,v 1.7 2016/08/31 10:18:08 gilles Exp $	*/
+/*	$OpenBSD: smtpd-defines.h,v 1.10 2018/12/27 15:41:50 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -30,6 +30,7 @@
 
 /* buffer size for virtual username (can be email addresses) */
 #define	SMTPD_VUSERNAME_SIZE	 (255 + 1)
+#define	SMTPD_SUBADDRESS_SIZE	 (255 + 1)
 
 #define SMTPD_USER		"_smtpd"
 #define PATH_CHROOT		"/var/empty"

@@ -9,6 +9,7 @@
 
 #include <random>
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/Analysis/IteratedDominanceFrontier.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Dominators.h"
@@ -21,19 +22,17 @@
 
 using namespace llvm;
 
-struct PostDomTree : PostDomTreeBase<BasicBlock> {
-  PostDomTree(Function &F) { recalculate(F); }
-};
 
 /// Build the dominator tree for the function and run the Test.
 static void runWithDomTree(
     Module &M, StringRef FuncName,
-    function_ref<void(Function &F, DominatorTree *DT, PostDomTree *PDT)> Test) {
+    function_ref<void(Function &F, DominatorTree *DT, PostDominatorTree *PDT)>
+        Test) {
   auto *F = M.getFunction(FuncName);
   ASSERT_NE(F, nullptr) << "Could not find " << FuncName;
   // Compute the dominator tree for the function.
   DominatorTree DT(*F);
-  PostDomTree PDT(*F);
+  PostDominatorTree PDT(*F);
   Test(*F, &DT, &PDT);
 }
 
@@ -75,7 +74,7 @@ TEST(DominatorTree, Unreachable) {
   std::unique_ptr<Module> M = makeLLVMModule(Context, ModuleString);
 
   runWithDomTree(
-      *M, "f", [&](Function &F, DominatorTree *DT, PostDomTree *PDT) {
+      *M, "f", [&](Function &F, DominatorTree *DT, PostDominatorTree *PDT) {
         Function::iterator FI = F.begin();
 
         BasicBlock *BB0 = &*FI++;
@@ -264,14 +263,14 @@ TEST(DominatorTree, Unreachable) {
         EXPECT_EQ(DT->getNode(BB4)->getLevel(), 1U);
 
         // Change root node
-        DT->verifyDomTree();
+        EXPECT_TRUE(DT->verify());
         BasicBlock *NewEntry =
             BasicBlock::Create(F.getContext(), "new_entry", &F, BB0);
         BranchInst::Create(BB0, NewEntry);
         EXPECT_EQ(F.begin()->getName(), NewEntry->getName());
         EXPECT_TRUE(&F.getEntryBlock() == NewEntry);
         DT->setNewRoot(NewEntry);
-        DT->verifyDomTree();
+        EXPECT_TRUE(DT->verify());
       });
 }
 
@@ -295,7 +294,7 @@ TEST(DominatorTree, NonUniqueEdges) {
   std::unique_ptr<Module> M = makeLLVMModule(Context, ModuleString);
 
   runWithDomTree(
-      *M, "f", [&](Function &F, DominatorTree *DT, PostDomTree *PDT) {
+      *M, "f", [&](Function &F, DominatorTree *DT, PostDominatorTree *PDT) {
         Function::iterator FI = F.begin();
 
         BasicBlock *BB0 = &*FI++;
@@ -326,6 +325,347 @@ TEST(DominatorTree, NonUniqueEdges) {
       });
 }
 
+// Verify that the PDT is correctly updated in case an edge removal results
+// in a new unreachable CFG node. Also make sure that the updated PDT is the
+// same as a freshly recalculated one.
+//
+// For the following input code and initial PDT:
+//
+//          CFG                   PDT
+//
+//           A                    Exit
+//           |                     |
+//          _B                     D
+//         / | \                   |
+//        ^  v  \                  B
+//        \ /    D                / \
+//         C      \              C   A
+//                v
+//                Exit
+//
+// we verify that CFG' and PDT-updated is obtained after removal of edge C -> B.
+//
+//          CFG'               PDT-updated
+//
+//           A                    Exit
+//           |                   / | \
+//           B                  C  B  D
+//           | \                   |
+//           v  \                  A
+//          /    D
+//         C      \
+//         |       \
+// unreachable    Exit
+//
+// Both the blocks that end with ret and with unreachable become trivial
+// PostDominatorTree roots, as they have no successors.
+//
+TEST(DominatorTree, DeletingEdgesIntroducesUnreachables) {
+  StringRef ModuleString =
+      "define void @f() {\n"
+      "A:\n"
+      "  br label %B\n"
+      "B:\n"
+      "  br i1 undef, label %D, label %C\n"
+      "C:\n"
+      "  br label %B\n"
+      "D:\n"
+      "  ret void\n"
+      "}\n";
+
+  // Parse the module.
+  LLVMContext Context;
+  std::unique_ptr<Module> M = makeLLVMModule(Context, ModuleString);
+
+  runWithDomTree(
+      *M, "f", [&](Function &F, DominatorTree *DT, PostDominatorTree *PDT) {
+        Function::iterator FI = F.begin();
+
+        FI++;
+        BasicBlock *B = &*FI++;
+        BasicBlock *C = &*FI++;
+        BasicBlock *D = &*FI++;
+
+        ASSERT_TRUE(PDT->dominates(PDT->getNode(D), PDT->getNode(B)));
+        EXPECT_TRUE(DT->verify());
+        EXPECT_TRUE(PDT->verify());
+
+        C->getTerminator()->eraseFromParent();
+        new UnreachableInst(C->getContext(), C);
+
+        DT->deleteEdge(C, B);
+        PDT->deleteEdge(C, B);
+
+        EXPECT_TRUE(DT->verify());
+        EXPECT_TRUE(PDT->verify());
+
+        EXPECT_FALSE(PDT->dominates(PDT->getNode(D), PDT->getNode(B)));
+        EXPECT_NE(PDT->getNode(C), nullptr);
+
+        DominatorTree NDT(F);
+        EXPECT_EQ(DT->compare(NDT), 0);
+
+        PostDominatorTree NPDT(F);
+        EXPECT_EQ(PDT->compare(NPDT), 0);
+      });
+}
+
+// Verify that the PDT is correctly updated in case an edge removal results
+// in an infinite loop. Also make sure that the updated PDT is the
+// same as a freshly recalculated one.
+//
+// Test case:
+//
+//          CFG                   PDT
+//
+//           A                    Exit
+//           |                     |
+//          _B                     D
+//         / | \                   |
+//        ^  v  \                  B
+//        \ /    D                / \
+//         C      \              C   A
+//        / \      v
+//       ^  v      Exit
+//        \_/
+//
+// After deleting the edge C->B, C is part of an infinite reverse-unreachable
+// loop:
+//
+//          CFG'                  PDT'
+//
+//           A                    Exit
+//           |                   / | \
+//           B                  C  B  D
+//           | \                   |
+//           v  \                  A
+//          /    D
+//         C      \
+//        / \      v
+//       ^  v      Exit
+//        \_/
+//
+// As C now becomes reverse-unreachable, it forms a new non-trivial root and
+// gets connected to the virtual exit.
+// D does not postdominate B anymore, because there are two forward paths from
+// B to the virtual exit:
+//  - B -> C -> VirtualExit
+//  - B -> D -> VirtualExit.
+//
+TEST(DominatorTree, DeletingEdgesIntroducesInfiniteLoop) {
+  StringRef ModuleString =
+      "define void @f() {\n"
+      "A:\n"
+      "  br label %B\n"
+      "B:\n"
+      "  br i1 undef, label %D, label %C\n"
+      "C:\n"
+      "  switch i32 undef, label %C [\n"
+      "    i32 0, label %B\n"
+      "  ]\n"
+      "D:\n"
+      "  ret void\n"
+      "}\n";
+
+  // Parse the module.
+  LLVMContext Context;
+  std::unique_ptr<Module> M = makeLLVMModule(Context, ModuleString);
+
+  runWithDomTree(
+      *M, "f", [&](Function &F, DominatorTree *DT, PostDominatorTree *PDT) {
+        Function::iterator FI = F.begin();
+
+        FI++;
+        BasicBlock *B = &*FI++;
+        BasicBlock *C = &*FI++;
+        BasicBlock *D = &*FI++;
+
+        ASSERT_TRUE(PDT->dominates(PDT->getNode(D), PDT->getNode(B)));
+        EXPECT_TRUE(DT->verify());
+        EXPECT_TRUE(PDT->verify());
+
+        auto SwitchC = cast<SwitchInst>(C->getTerminator());
+        SwitchC->removeCase(SwitchC->case_begin());
+        DT->deleteEdge(C, B);
+        EXPECT_TRUE(DT->verify());
+        PDT->deleteEdge(C, B);
+        EXPECT_TRUE(PDT->verify());
+
+        EXPECT_FALSE(PDT->dominates(PDT->getNode(D), PDT->getNode(B)));
+        EXPECT_NE(PDT->getNode(C), nullptr);
+
+        DominatorTree NDT(F);
+        EXPECT_EQ(DT->compare(NDT), 0);
+
+        PostDominatorTree NPDT(F);
+        EXPECT_EQ(PDT->compare(NPDT), 0);
+      });
+}
+
+// Verify that the PDT is correctly updated in case an edge removal results
+// in an infinite loop.
+//
+// Test case:
+//
+//          CFG                   PDT
+//
+//           A                    Exit
+//           |                   / | \
+//           B--               C2  B  D
+//           |  \              /   |
+//           v   \            C    A
+//          /     D
+//         C--C2   \
+//        / \  \    v
+//       ^  v  --Exit
+//        \_/
+//
+// After deleting the edge C->E, C is part of an infinite reverse-unreachable
+// loop:
+//
+//          CFG'                  PDT'
+//
+//           A                    Exit
+//           |                   / | \
+//           B                  C  B  D
+//           | \                   |
+//           v  \                  A
+//          /    D
+//         C      \
+//        / \      v
+//       ^  v      Exit
+//        \_/
+//
+// In PDT, D does not post-dominate B. After the edge C -> C2 is removed,
+// C becomes a new nontrivial PDT root.
+//
+TEST(DominatorTree, DeletingEdgesIntroducesInfiniteLoop2) {
+  StringRef ModuleString =
+      "define void @f() {\n"
+      "A:\n"
+      "  br label %B\n"
+      "B:\n"
+      "  br i1 undef, label %D, label %C\n"
+      "C:\n"
+      "  switch i32 undef, label %C [\n"
+      "    i32 0, label %C2\n"
+      "  ]\n"
+      "C2:\n"
+      "  ret void\n"
+      "D:\n"
+      "  ret void\n"
+      "}\n";
+
+  // Parse the module.
+  LLVMContext Context;
+  std::unique_ptr<Module> M = makeLLVMModule(Context, ModuleString);
+
+  runWithDomTree(
+      *M, "f", [&](Function &F, DominatorTree *DT, PostDominatorTree *PDT) {
+        Function::iterator FI = F.begin();
+
+        FI++;
+        BasicBlock *B = &*FI++;
+        BasicBlock *C = &*FI++;
+        BasicBlock *C2 = &*FI++;
+        BasicBlock *D = &*FI++;
+
+        EXPECT_TRUE(DT->verify());
+        EXPECT_TRUE(PDT->verify());
+
+        auto SwitchC = cast<SwitchInst>(C->getTerminator());
+        SwitchC->removeCase(SwitchC->case_begin());
+        DT->deleteEdge(C, C2);
+        PDT->deleteEdge(C, C2);
+        C2->removeFromParent();
+
+        EXPECT_EQ(DT->getNode(C2), nullptr);
+        PDT->eraseNode(C2);
+        delete C2;
+
+        EXPECT_TRUE(DT->verify());
+        EXPECT_TRUE(PDT->verify());
+
+        EXPECT_FALSE(PDT->dominates(PDT->getNode(D), PDT->getNode(B)));
+        EXPECT_NE(PDT->getNode(C), nullptr);
+
+        DominatorTree NDT(F);
+        EXPECT_EQ(DT->compare(NDT), 0);
+
+        PostDominatorTree NPDT(F);
+        EXPECT_EQ(PDT->compare(NPDT), 0);
+      });
+}
+
+// Verify that the IDF returns blocks in a deterministic way.
+//
+// Test case:
+//
+//          CFG
+//
+//          (A)
+//          / \
+//         /   \
+//       (B)   (C)
+//        |\   /|
+//        |  X  |
+//        |/   \|
+//       (D)   (E)
+//
+// IDF for block B is {D, E}, and the order of blocks in this list is defined by
+// their 1) level in dom-tree and 2) DFSIn number if the level is the same.
+//
+TEST(DominatorTree, IDFDeterminismTest) {
+  StringRef ModuleString =
+      "define void @f() {\n"
+      "A:\n"
+      "  br i1 undef, label %B, label %C\n"
+      "B:\n"
+      "  br i1 undef, label %D, label %E\n"
+      "C:\n"
+      "  br i1 undef, label %D, label %E\n"
+      "D:\n"
+      "  ret void\n"
+      "E:\n"
+      "  ret void\n"
+      "}\n";
+
+  // Parse the module.
+  LLVMContext Context;
+  std::unique_ptr<Module> M = makeLLVMModule(Context, ModuleString);
+
+  runWithDomTree(
+      *M, "f", [&](Function &F, DominatorTree *DT, PostDominatorTree *PDT) {
+        Function::iterator FI = F.begin();
+
+        BasicBlock *A = &*FI++;
+        BasicBlock *B = &*FI++;
+        BasicBlock *C = &*FI++;
+        BasicBlock *D = &*FI++;
+        BasicBlock *E = &*FI++;
+        (void)C;
+
+        DT->updateDFSNumbers();
+        ForwardIDFCalculator IDF(*DT);
+        SmallPtrSet<BasicBlock *, 1> DefBlocks;
+        DefBlocks.insert(B);
+        IDF.setDefiningBlocks(DefBlocks);
+
+        SmallVector<BasicBlock *, 32> IDFBlocks;
+        SmallPtrSet<BasicBlock *, 32> LiveInBlocks;
+        IDF.resetLiveInBlocks();
+        IDF.calculate(IDFBlocks);
+
+
+        EXPECT_EQ(IDFBlocks.size(), 2UL);
+        EXPECT_EQ(DT->getNode(A)->getDFSNumIn(), 0UL);
+        EXPECT_EQ(IDFBlocks[0], D);
+        EXPECT_EQ(IDFBlocks[1], E);
+        EXPECT_TRUE(DT->getNode(IDFBlocks[0])->getDFSNumIn() <
+                    DT->getNode(IDFBlocks[1])->getDFSNumIn());
+      });
+}
+
 namespace {
 const auto Insert = CFGBuilder::ActionKind::Insert;
 const auto Delete = CFGBuilder::ActionKind::Delete;
@@ -349,7 +689,7 @@ TEST(DominatorTree, InsertReachable) {
   CFGBuilder B(Holder.F, Arcs, Updates);
   DominatorTree DT(*Holder.F);
   EXPECT_TRUE(DT.verify());
-  PostDomTree PDT(*Holder.F);
+  PostDominatorTree PDT(*Holder.F);
   EXPECT_TRUE(PDT.verify());
 
   Optional<CFGBuilder::Update> LastUpdate;
@@ -375,7 +715,7 @@ TEST(DominatorTree, InsertReachable2) {
   CFGBuilder B(Holder.F, Arcs, Updates);
   DominatorTree DT(*Holder.F);
   EXPECT_TRUE(DT.verify());
-  PostDomTree PDT(*Holder.F);
+  PostDominatorTree PDT(*Holder.F);
   EXPECT_TRUE(PDT.verify());
 
   Optional<CFGBuilder::Update> LastUpdate = B.applyUpdate();
@@ -403,7 +743,7 @@ TEST(DominatorTree, InsertUnreachable) {
   CFGBuilder B(Holder.F, Arcs, Updates);
   DominatorTree DT(*Holder.F);
   EXPECT_TRUE(DT.verify());
-  PostDomTree PDT(*Holder.F);
+  PostDominatorTree PDT(*Holder.F);
   EXPECT_TRUE(PDT.verify());
 
   Optional<CFGBuilder::Update> LastUpdate;
@@ -416,6 +756,29 @@ TEST(DominatorTree, InsertUnreachable) {
     PDT.insertEdge(From, To);
     EXPECT_TRUE(PDT.verify());
   }
+}
+
+TEST(DominatorTree, InsertFromUnreachable) {
+  CFGHolder Holder;
+  std::vector<CFGBuilder::Arc> Arcs = {{"1", "2"}, {"2", "3"}, {"3", "4"}};
+
+  std::vector<CFGBuilder::Update> Updates = {{Insert, {"3", "5"}}};
+  CFGBuilder B(Holder.F, Arcs, Updates);
+  PostDominatorTree PDT(*Holder.F);
+  EXPECT_TRUE(PDT.verify());
+
+  Optional<CFGBuilder::Update> LastUpdate = B.applyUpdate();
+  EXPECT_TRUE(LastUpdate);
+
+  EXPECT_EQ(LastUpdate->Action, Insert);
+  BasicBlock *From = B.getOrAddBlock(LastUpdate->Edge.From);
+  BasicBlock *To = B.getOrAddBlock(LastUpdate->Edge.To);
+  PDT.insertEdge(From, To);
+  EXPECT_TRUE(PDT.verify());
+  EXPECT_TRUE(PDT.getRoots().size() == 2);
+  // Make sure we can use a const pointer with getNode.
+  const BasicBlock *BB5 = B.getOrAddBlock("5");
+  EXPECT_NE(PDT.getNode(BB5), nullptr);
 }
 
 TEST(DominatorTree, InsertMixed) {
@@ -431,7 +794,7 @@ TEST(DominatorTree, InsertMixed) {
   CFGBuilder B(Holder.F, Arcs, Updates);
   DominatorTree DT(*Holder.F);
   EXPECT_TRUE(DT.verify());
-  PostDomTree PDT(*Holder.F);
+  PostDominatorTree PDT(*Holder.F);
   EXPECT_TRUE(PDT.verify());
 
   Optional<CFGBuilder::Update> LastUpdate;
@@ -461,7 +824,7 @@ TEST(DominatorTree, InsertPermut) {
     CFGBuilder B(Holder.F, Arcs, Updates);
     DominatorTree DT(*Holder.F);
     EXPECT_TRUE(DT.verify());
-    PostDomTree PDT(*Holder.F);
+    PostDominatorTree PDT(*Holder.F);
     EXPECT_TRUE(PDT.verify());
 
     Optional<CFGBuilder::Update> LastUpdate;
@@ -488,7 +851,7 @@ TEST(DominatorTree, DeleteReachable) {
   CFGBuilder B(Holder.F, Arcs, Updates);
   DominatorTree DT(*Holder.F);
   EXPECT_TRUE(DT.verify());
-  PostDomTree PDT(*Holder.F);
+  PostDominatorTree PDT(*Holder.F);
   EXPECT_TRUE(PDT.verify());
 
   Optional<CFGBuilder::Update> LastUpdate;
@@ -514,7 +877,7 @@ TEST(DominatorTree, DeleteUnreachable) {
   CFGBuilder B(Holder.F, Arcs, Updates);
   DominatorTree DT(*Holder.F);
   EXPECT_TRUE(DT.verify());
-  PostDomTree PDT(*Holder.F);
+  PostDominatorTree PDT(*Holder.F);
   EXPECT_TRUE(PDT.verify());
 
   Optional<CFGBuilder::Update> LastUpdate;
@@ -544,7 +907,7 @@ TEST(DominatorTree, InsertDelete) {
   CFGBuilder B(Holder.F, Arcs, Updates);
   DominatorTree DT(*Holder.F);
   EXPECT_TRUE(DT.verify());
-  PostDomTree PDT(*Holder.F);
+  PostDominatorTree PDT(*Holder.F);
   EXPECT_TRUE(PDT.verify());
 
   Optional<CFGBuilder::Update> LastUpdate;
@@ -582,7 +945,7 @@ TEST(DominatorTree, InsertDeleteExhaustive) {
     CFGBuilder B(Holder.F, Arcs, Updates);
     DominatorTree DT(*Holder.F);
     EXPECT_TRUE(DT.verify());
-    PostDomTree PDT(*Holder.F);
+    PostDominatorTree PDT(*Holder.F);
     EXPECT_TRUE(PDT.verify());
 
     Optional<CFGBuilder::Update> LastUpdate;
@@ -602,3 +965,28 @@ TEST(DominatorTree, InsertDeleteExhaustive) {
     }
   }
 }
+
+TEST(DominatorTree, InsertIntoIrreducible) {
+  std::vector<CFGBuilder::Arc> Arcs = {
+      {"0", "1"},
+      {"1", "27"}, {"1", "7"},
+      {"10", "18"},
+      {"13", "10"},
+      {"18", "13"}, {"18", "23"},
+      {"23", "13"}, {"23", "24"},
+      {"24", "1"}, {"24", "18"},
+      {"27", "24"}};
+
+  CFGHolder Holder;
+  CFGBuilder B(Holder.F, Arcs, {{Insert, {"7", "23"}}});
+  DominatorTree DT(*Holder.F);
+  EXPECT_TRUE(DT.verify());
+
+  B.applyUpdate();
+  BasicBlock *From = B.getOrAddBlock("7");
+  BasicBlock *To = B.getOrAddBlock("23");
+  DT.insertEdge(From, To);
+
+  EXPECT_TRUE(DT.verify());
+}
+

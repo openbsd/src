@@ -1,0 +1,20 @@
+.\" $OpenBSD: into.in,v 1.1 2018/08/24 22:56:37 schwarze Exp $
+.Dd $Mdocdate: August 24 2018 $
+.Dt WHILE-INTO 1
+.Os
+.Sh NAME
+.Nm while-into
+.Nd while request extending into a macro
+.Sh DESCRIPTION
+.nr cnt 10
+.de closeloop
+.nr cnt -1
+.\}
+..
+initial text
+.while \n[cnt] \{\
+\n[cnt]
+.closeloop
+after macro
+.\}
+final text

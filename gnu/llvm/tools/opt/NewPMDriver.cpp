@@ -13,11 +13,14 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "Debugify.h"
 #include "NewPMDriver.h"
+#include "PassPrinters.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CGSCCPassManager.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
@@ -25,6 +28,7 @@
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ToolOutputFile.h"
@@ -38,6 +42,10 @@ using namespace opt_tool;
 static cl::opt<bool>
     DebugPM("debug-pass-manager", cl::Hidden,
             cl::desc("Print pass management debugging information"));
+
+static cl::list<std::string>
+    PassPlugins("load-pass-plugin",
+                cl::desc("Load passes from plugin library"));
 
 // This flag specifies a textual description of the alias analysis pipeline to
 // use when querying for aliasing information. It only works in concert with
@@ -81,6 +89,27 @@ static cl::opt<std::string> VectorizerStartEPPipeline(
     cl::desc("A textual description of the function pass pipeline inserted at "
              "the VectorizerStart extension point into default pipelines"),
     cl::Hidden);
+static cl::opt<std::string> PipelineStartEPPipeline(
+    "passes-ep-pipeline-start",
+    cl::desc("A textual description of the function pass pipeline inserted at "
+             "the PipelineStart extension point into default pipelines"),
+    cl::Hidden);
+enum PGOKind { NoPGO, InstrGen, InstrUse, SampleUse };
+static cl::opt<PGOKind> PGOKindFlag(
+    "pgo-kind", cl::init(NoPGO), cl::Hidden,
+    cl::desc("The kind of profile guided optimization"),
+    cl::values(clEnumValN(NoPGO, "nopgo", "Do not use PGO."),
+               clEnumValN(InstrGen, "new-pm-pgo-instr-gen-pipeline",
+                          "Instrument the IR to generate profile."),
+               clEnumValN(InstrUse, "new-pm-pgo-instr-use-pipeline",
+                          "Use instrumented profile to guide PGO."),
+               clEnumValN(SampleUse, "new-pm-pgo-sample-use-pipeline",
+                          "Use sampled profile to guide PGO.")));
+static cl::opt<std::string> ProfileFile(
+    "profile-file", cl::desc("Path to the profile."), cl::Hidden);
+static cl::opt<bool> DebugInfoForProfiling(
+    "new-pm-debug-info-for-profiling", cl::init(false), cl::Hidden,
+    cl::desc("Emit special debug info to enable PGO profile generation."));
 /// @}}
 
 template <typename PassManagerT>
@@ -142,19 +171,80 @@ static void registerEPCallbacks(PassBuilder &PB, bool VerifyEachPass,
       PB.parsePassPipeline(PM, VectorizerStartEPPipeline, VerifyEachPass,
                            DebugLogging);
     });
+  if (tryParsePipelineText<ModulePassManager>(PB, PipelineStartEPPipeline))
+    PB.registerPipelineStartEPCallback(
+        [&PB, VerifyEachPass, DebugLogging](ModulePassManager &PM) {
+          PB.parsePassPipeline(PM, PipelineStartEPPipeline, VerifyEachPass,
+                               DebugLogging);
+        });
 }
 
+#ifdef LINK_POLLY_INTO_TOOLS
+namespace polly {
+void RegisterPollyPasses(PassBuilder &);
+}
+#endif
+
 bool llvm::runPassPipeline(StringRef Arg0, Module &M, TargetMachine *TM,
-                           tool_output_file *Out,
-                           tool_output_file *ThinLTOLinkOut,
+                           ToolOutputFile *Out, ToolOutputFile *ThinLTOLinkOut,
+                           ToolOutputFile *OptRemarkFile,
                            StringRef PassPipeline, OutputKind OK,
                            VerifierKind VK,
                            bool ShouldPreserveAssemblyUseListOrder,
                            bool ShouldPreserveBitcodeUseListOrder,
-                           bool EmitSummaryIndex, bool EmitModuleHash) {
+                           bool EmitSummaryIndex, bool EmitModuleHash,
+                           bool EnableDebugify) {
   bool VerifyEachPass = VK == VK_VerifyEachPass;
-  PassBuilder PB(TM);
+
+  Optional<PGOOptions> P;
+  switch (PGOKindFlag) {
+    case InstrGen:
+      P = PGOOptions(ProfileFile, "", "", true);
+      break;
+    case InstrUse:
+      P = PGOOptions("", ProfileFile, "", false);
+      break;
+    case SampleUse:
+      P = PGOOptions("", "", ProfileFile, false);
+      break;
+    case NoPGO:
+      if (DebugInfoForProfiling)
+        P = PGOOptions("", "", "", false, true);
+      else
+        P = None;
+  }
+  PassBuilder PB(TM, P);
   registerEPCallbacks(PB, VerifyEachPass, DebugPM);
+
+  // Load requested pass plugins and let them register pass builder callbacks
+  for (auto &PluginFN : PassPlugins) {
+    auto PassPlugin = PassPlugin::Load(PluginFN);
+    if (!PassPlugin) {
+      errs() << "Failed to load passes from '" << PluginFN
+             << "'. Request ignored.\n";
+      continue;
+    }
+
+    PassPlugin->registerPassBuilderCallbacks(PB);
+  }
+
+  // Register a callback that creates the debugify passes as needed.
+  PB.registerPipelineParsingCallback(
+      [](StringRef Name, ModulePassManager &MPM,
+         ArrayRef<PassBuilder::PipelineElement>) {
+        if (Name == "debugify") {
+          MPM.addPass(NewPMDebugifyPass());
+          return true;
+        } else if (Name == "check-debugify") {
+          MPM.addPass(NewPMCheckDebugifyPass());
+          return true;
+        }
+        return false;
+      });
+
+#ifdef LINK_POLLY_INTO_TOOLS
+  polly::RegisterPollyPasses(PB);
+#endif
 
   // Specially handle the alias analysis manager so that we can register
   // a custom pipeline of AA passes with it.
@@ -182,6 +272,8 @@ bool llvm::runPassPipeline(StringRef Arg0, Module &M, TargetMachine *TM,
   ModulePassManager MPM(DebugPM);
   if (VK > VK_NoVerifier)
     MPM.addPass(VerifierPass());
+  if (EnableDebugify)
+    MPM.addPass(NewPMDebugifyPass());
 
   if (!PB.parsePassPipeline(MPM, PassPipeline, VerifyEachPass, DebugPM)) {
     errs() << Arg0 << ": unable to parse pass pipeline description.\n";
@@ -190,6 +282,8 @@ bool llvm::runPassPipeline(StringRef Arg0, Module &M, TargetMachine *TM,
 
   if (VK > VK_NoVerifier)
     MPM.addPass(VerifierPass());
+  if (EnableDebugify)
+    MPM.addPass(NewPMCheckDebugifyPass());
 
   // Add any relevant output pass at the end of the pipeline.
   switch (OK) {
@@ -221,5 +315,9 @@ bool llvm::runPassPipeline(StringRef Arg0, Module &M, TargetMachine *TM,
     if (OK == OK_OutputThinLTOBitcode && ThinLTOLinkOut)
       ThinLTOLinkOut->keep();
   }
+
+  if (OptRemarkFile)
+    OptRemarkFile->keep();
+
   return true;
 }

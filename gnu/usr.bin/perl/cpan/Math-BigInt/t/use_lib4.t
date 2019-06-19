@@ -13,8 +13,8 @@ use Test::More tests => 2;
 use Math::BigInt lib => 'BareCalc';
 use Math::BigFloat lib => 'Calc';
 
-is(Math::BigInt->config()->{lib}, 'Math::BigInt::Calc',
-   'Math::BigInt->config()->{lib}');
+is(Math::BigInt->config('lib'), 'Math::BigInt::Calc',
+   "Math::BigInt->config('lib')");
 
 is(Math::BigFloat->new(123)->badd(123), 246,
    'Math::BigFloat->new(123)->badd(123)');

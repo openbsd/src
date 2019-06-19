@@ -23,17 +23,11 @@ class MCCodeEmitter;
 class MCContext;
 class MCSubtargetInfo;
 
-class AMDGPUELFStreamer : public MCELFStreamer {
-public:
-  AMDGPUELFStreamer(MCContext &Context, MCAsmBackend &MAB, raw_pwrite_stream &OS,
-                  MCCodeEmitter *Emitter)
-      : MCELFStreamer(Context, MAB, OS, Emitter) { }
-
-};
-
-MCELFStreamer *createAMDGPUELFStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                     raw_pwrite_stream &OS,
-                                     MCCodeEmitter *Emitter, bool RelaxAll);
+MCELFStreamer *createAMDGPUELFStreamer(const Triple &T, MCContext &Context,
+                                       std::unique_ptr<MCAsmBackend> MAB,
+                                       std::unique_ptr<MCObjectWriter> OW,
+                                       std::unique_ptr<MCCodeEmitter> Emitter,
+                                       bool RelaxAll);
 } // namespace llvm.
 
 #endif

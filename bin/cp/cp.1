@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.39 2017/06/28 06:24:38 jmc Exp $
+.\"	$OpenBSD: cp.1,v 1.40 2019/01/28 18:58:42 jca Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)cp.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: June 28 2017 $
+.Dd $Mdocdate: January 28 2019 $
 .Dt CP 1
 .Os
 .Sh NAME
@@ -41,14 +41,14 @@
 .Nd copy files
 .Sh SYNOPSIS
 .Nm cp
-.Op Fl fipv
+.Op Fl afipv
 .Oo
 .Fl R
 .Op Fl H | L | P
 .Oc
 .Ar source target
 .Nm cp
-.Op Fl fipv
+.Op Fl afipv
 .Oo
 .Fl R
 .Op Fl H | L | P
@@ -74,6 +74,10 @@ detects an attempt to copy a file to itself, the copy will fail.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a
+Archive mode.
+Same as
+.Fl RpP .
 .It Fl f
 For each existing destination pathname, remove it and
 create a new file, without prompting for confirmation,
@@ -237,9 +241,9 @@ utility is compliant with the
 .St -p1003.1-2008
 specification.
 .Pp
-The flag
-.Op Fl v
-is an extension to that specification.
+The flags
+.Op Fl av
+are extensions to that specification.
 .Pp
 Historic versions of the
 .Nm

@@ -6,7 +6,7 @@ require 5.006 ;
 use strict ;
 use warnings;
 
-use IO::Compress::Base::Common 2.069 ;
+use IO::Compress::Base::Common 2.074 ;
 
 use IO::File (); ;
 use Scalar::Util ();
@@ -18,9 +18,9 @@ use Symbol();
 #use bytes;
 
 our (@ISA, $VERSION);
-@ISA    = qw(Exporter IO::File);
+@ISA    = qw(IO::File Exporter);
 
-$VERSION = '2.069_001';
+$VERSION = '2.074';
 
 #Can't locate object method "SWASHNEW" via package "utf8" (perhaps you forgot to load "utf8"?) at .../ext/Compress-Zlib/Gzip/blib/lib/Compress/Zlib/Common.pm line 16.
 
@@ -1033,7 +1033,7 @@ L<IO::Zlib|IO::Zlib>
 
 =head1 AUTHOR
 
-This module was written by Paul Marquess, F<pmqs@cpan.org>. 
+This module was written by Paul Marquess, C<pmqs@cpan.org>. 
 
 =head1 MODIFICATION HISTORY
 
@@ -1041,7 +1041,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2015 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2017 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

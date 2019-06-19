@@ -4,8 +4,9 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    require './charset_tools.pl';
+    set_up_inc('../lib');
 }   
 
 # We'll run 12 extra tests (see below) if $Q is false.
@@ -295,14 +296,6 @@ for my $i (1, 3, 5, 10) {
        "width & precision interplay with utf8 strings, length=$i");
 }
 
-# Used to mangle PL_sv_undef
-fresh_perl_like(
-    'print sprintf "xxx%n\n"; print undef',
-    qr/Modification of a read-only value attempted at - line 1\./,
-    { switches => [ '-w' ] },
-    q(%n should not be able to modify read-only constants),
-);
-
 # check overflows
 for (int(~0/2+1), ~0, "9999999999999999999") {
     is(eval {sprintf "%${_}d", 0}, undef, "no sprintf result expected %${_}d");
@@ -323,10 +316,16 @@ for (int(~0/2+1), ~0, "9999999999999999999") {
 	}
     };
 
-    my $fmt = join('', map("%$_\$s%" . ((1 << 31)-$_) . '$s', 1..20));
-    my $result = sprintf $fmt, qw(a b c d);
-    is($result, "abcd", "only four valid values in $fmt");
-    is($warn, 36, "expected warnings");
+    for my $i (1..20) {
+        my @args = qw(a b c d);
+        my $result = sprintf "%$i\$s", @args;
+        is $result, $args[$i-1]//"", "%NNN\$s where NNN=$i";
+        my $j = ~$i;
+        $result = eval { sprintf "%$j\$s", @args; };
+        like $@, qr/Integer overflow/ , "%NNN\$s where NNN=~$i";
+    }
+
+    is($warn, 16, "expected warnings");
     is($bad,   0, "unexpected warnings");
 }
 
@@ -470,7 +469,9 @@ for (int(~0/2+1), ~0, "9999999999999999999") {
     foreach my $ord (0 .. 255) {
 	my $bad = 0;
 	local $SIG{__WARN__} = sub {
-	    if ($_[0] !~ /^Invalid conversion in sprintf/) {
+	    if (  $_[0] !~ /^Invalid conversion in sprintf/
+               && $_[0] !~ /^Missing argument in sprintf/ )
+            {
 		warn $_[0];
 		$bad++;
 	    }
@@ -528,10 +529,13 @@ for my $num (0, -1, 1) {
     }
 }
 
-# test that %f doesn't panic with +Inf, -Inf, NaN [perl #45383]
-foreach my $n (2**1e100, -2**1e100, 2**1e100/2**1e100) { # +Inf, -Inf, NaN
-    eval { my $f = sprintf("%f", $n); };
-    is $@, "", "sprintf(\"%f\", $n)";
+SKIP: {
+    unless ($Config{d_double_has_inf} && $Config{d_double_has_nan}) { skip "no Inf or NaN in doublekind $Config{doublekind}", 3 }
+    # test that %f doesn't panic with +Inf, -Inf, NaN [perl #45383]
+    foreach my $n ('2**1e100', '-2**1e100', '2**1e100/2**1e100') { # +Inf, -Inf, NaN
+        eval { my $f = sprintf("%f", eval $n); };
+        is $@, "", "sprintf(\"%f\", $n)";
+    }
 }
 
 # test %ll formats with and without HAS_QUAD
@@ -556,7 +560,6 @@ for my $t (@tests) {
     } else {
       is($sprintf_got, $fmt, "quad unsupported: $fmt -> $fmt");
       like($w, qr/Invalid conversion in sprintf: "$fmt"/, "got warning about invalid conversion from fmt : $fmt");
-      like($w, qr/Redundant argument in sprintf/, "got warning about redundant argument in sprintf from fmt : $fmt");
     }
   }
 }
@@ -593,6 +596,9 @@ $o::count = 0;
 () = sprintf "%d", $o;
 is $o::count,    0, 'sprintf %d string overload count is 0';
 is $o::numcount, 1, 'sprintf %d number overload count is 1';
+
+SKIP: {  # hexfp
+    unless ($Config{d_double_style_ieee}) { skip "no IEEE, no hexfp", scalar @hexfloat }
 
 my $ppc_linux = $Config{archname} =~ /^(?:ppc|power(?:pc)?)(?:64)?-linux/;
 my $irix_ld   = $Config{archname} =~ /^IP\d+-irix-ld$/;
@@ -681,13 +687,14 @@ for my $t (@hexfloat) {
     ok($ok, "'$format' '$arg' -> '$result' cf '$expected'");
 }
 
+} # SKIP: # hexfp
+
 # double-double long double %a special testing.
 SKIP: {
     skip("uselongdouble=" . ($Config{uselongdouble} ? 'define' : 'undef')
          . " longdblkind=$Config{longdblkind} os=$^O", 6)
         unless ($Config{uselongdouble} &&
-                ($Config{longdblkind} == 5 ||
-                 $Config{longdblkind} == 6)
+                ($Config{long_double_style_ieee_doubledouble})
                 # Gating on 'linux' (ppc) here is due to the differing
                 # double-double implementations: other (also big-endian)
                 # double-double platforms (e.g. AIX on ppc or IRIX on mips)
@@ -695,17 +702,17 @@ SKIP: {
                 && $^O eq 'linux'
                 );
     # [rt.perl.org 125633]
-    like(sprintf("%La\n", (2**1020) + (2**-1072)),
+    like(sprintf("%La\n", eval '(2**1020) + (2**-1072)'),
          qr/^0x1.0{522}1p\+1020$/);
-    like(sprintf("%La\n", (2**1021) + (2**-1072)),
+    like(sprintf("%La\n", eval '(2**1021) + (2**-1072)'),
          qr/^0x1.0{523}8p\+1021$/);
-    like(sprintf("%La\n", (2**1022) + (2**-1072)),
+    like(sprintf("%La\n", eval '(2**1022) + (2**-1072)'),
          qr/^0x1.0{523}4p\+1022$/);
-    like(sprintf("%La\n", (2**1023) + (2**-1072)),
+    like(sprintf("%La\n", eval '(2**1023) + (2**-1072)'),
          qr/^0x1.0{523}2p\+1023$/);
-    like(sprintf("%La\n", (2**1023) + (2**-1073)),
+    like(sprintf("%La\n", eval '(2**1023) + (2**-1073)'),
          qr/^0x1.0{523}1p\+1023$/);
-    like(sprintf("%La\n", (2**1023) + (2**-1074)),
+    like(sprintf("%La\n", eval '(2**1023) + (2**-1074)'),
          qr/^0x1.0{524}8p\+1023$/);
 }
 
@@ -788,16 +795,30 @@ my @subnormals = (
 
 SKIP: {
     # [rt.perl.org #128843]
-    skip("non-IEEE-754-non-64-bit", scalar @subnormals + 34)
+    my $skip_count = scalar @subnormals + 34;
+    skip("non-IEEE-754-non-64-bit", $skip_count)
         unless ($Config{nvsize} == 8 &&
 		$Config{nv_preserves_uv_bits} == 53 &&
 		($Config{doublekind} == 3 ||
 		 $Config{doublekind} == 4));
+    if ($^O eq 'dec_osf') {
+        skip("$^O subnormals", $skip_count);
+    }
 
     for my $t (@subnormals) {
 	# Note that "0x1p+2" is not considered numeric,
 	# since neither is "0x12", hence the eval.
-        my $s = sprintf($t->[1], eval $t->[0]);
+        my $f = eval $t->[0];
+        # XXX under g++ -ansi, pow(2.0, -1074) returns 0 rather
+        # than the smallest denorm number. Which means that very small
+        # string literals on a perl compiled under g++ may be seen as 0.
+        # This is either a bug in the g++ math library or scan_num() in
+        # toke.c; but in either case, its not a bug in sprintf(), so
+        # skip the test.
+        local $::TODO = "denorm literals treated as zero"
+            if $f == 0.0 && $t->[2] ne '0x0p+0';
+
+        my $s = sprintf($t->[1], $f);
         is($s, $t->[2], "subnormal @$t got $s");
     }
 
@@ -852,8 +873,7 @@ SKIP: {
     skip("non-80-bit-long-double", 17)
         unless ($Config{uselongdouble} &&
 		($Config{nvsize} == 16 || $Config{nvsize} == 12) &&
-		($Config{longdblkind} == 3 ||
-		 $Config{longdblkind} == 4));
+		($Config{long_double_style_ieee_extended}));
 
     {
         # The last normal for this format.
@@ -902,6 +922,223 @@ SKIP: {
     is(sprintf("%a", eval '0x1p-16493'), '0x1p-16493'); # last denormal
 
     is(sprintf("%a", eval '0x1p-16494'), '0x1p-16494'); # underflow
+}
+
+# check all calls to croak_memory_wrap()
+# RT #131260
+# (these now fail earlier with "Integer overflow" rather than
+# "memory wrap" - DAPM)
+
+{
+    my $s = 8 * $Config{sizesize};
+    my $i = 1;
+    my $max;
+    while ($s--) { $max |= $i; $i <<= 1; }
+
+    my @tests = (
+                  # format, arg
+                  ["%.${max}a",        1.1 ],
+                  ["%.${max}i",          1 ],
+                  ["%.${max}i",         -1 ],
+    );
+
+    for my $test (@tests) {
+        my ($fmt, $arg) = @$test;
+        eval { my $s = sprintf $fmt, $arg; };
+        like("$@", qr/Integer overflow in format string/,
+                    qq{Integer overflow: "$fmt", "$arg"});
+    }
+}
+
+{
+    # handle utf8 correctly when skipping invalid format
+    my $w_red   = 0;
+    my $w_inv   = 0;
+    my $w_other = 0;
+    local $SIG{__WARN__} = sub {
+        if ($_[0] =~ /^Invalid conversion/) {
+            $w_inv++;
+        }
+        elsif ($_[0] =~ /^Redundant argument/) {
+            $w_red++;
+        }
+        else {
+            $w_other++;
+        }
+    };
+
+    use warnings;
+    my $cap_A_macron_utf8 = byte_utf8a_to_utf8n("\xc4\x80");
+    my $small_a_breve_utf8 = byte_utf8a_to_utf8n("\xc4\x83");
+    my $s = sprintf "%s%$cap_A_macron_utf8%s",
+                    "\x{102}",
+                    $small_a_breve_utf8;
+    is($s, "\x{102}%$cap_A_macron_utf8$small_a_breve_utf8",
+       "utf8 for invalid format");
+    is($w_inv,   1, "utf8 for invalid format: invalid warnings");
+    is($w_red,   0, "utf8 for invalid format: redundant warnings");
+    is($w_other, 0, "utf8 for invalid format: other warnings");
+}
+
+# it used to upgrade the result to utf8 if the 1st arg happened to be utf8
+
+{
+    my $precis = "9";
+    utf8::upgrade($precis);
+    my $s = sprintf "%.*f\n", $precis, 1.1;
+    ok(!utf8::is_utf8($s), "first arg not special utf8-wise");
+}
+
+# sprintf("%n") used to croak "Modification of a read-only value"
+# as it tried to set &PL_sv_no
+
+{
+    eval { my $s = sprintf("%n"); };
+    like $@, qr/Missing argument for %n in sprintf/, "%n";
+}
+
+# %p of an Inf or Nan address should still print its address, not
+# 'Inf' etc.
+
+like sprintf("%p", 0+'Inf'), qr/^[0-9a-f]+$/, "%p and Inf";
+like sprintf("%p", 0+'NaN'), qr/^[0-9a-f]+$/, "%p and NaN";
+
+# when the width or precision is specified by an argument, handle overflows
+# ditto for literal precisions.
+
+{
+    for my $i (
+               (~0     ) - 0, # UV_MAX
+               (~0     ) - 1,
+               (~0     ) - 2,
+
+               (~0 >> 1) + 2,
+               (~0 >> 1) + 1,
+               (~0 >> 1) - 0, # IV_MAX
+               (~0 >> 1) - 1,
+               (~0 >> 1) - 2,
+
+               (~0 >> 2) + 2,
+               (~0 >> 2) + 1,
+
+               -1 - (~0 >> 1),# -(IV_MAX+1)
+                0 - (~0 >> 1),
+                1 - (~0 >> 1),
+
+               -2 - (~0 >> 2),
+               -1 - (~0 >> 2),
+            )
+    {
+        my $hex = sprintf "0x%x", $i;
+        eval { my $s = sprintf '%*s', $i, "abc"; };
+        like $@, qr/Integer overflow/, "overflow: %*s $hex, $i";
+
+        eval { my $s = sprintf '%*2$s', "abc", $i; };
+        like $@, qr/Integer overflow/, 'overflow: %*2$s';
+
+        eval { my $s = sprintf '%.*s', $i, "abc"; };
+        like $@, qr/Integer overflow/, 'overflow: %.*s';
+
+        eval { my $s = sprintf '%.*2$s', "abc", $i; };
+        like $@, qr/Integer overflow/, 'overflow: %.*2$s';
+
+        next if $i < 0;
+
+        eval { my $s = sprintf "%.${i}f", 1.234 };
+        like $@, qr/Integer overflow/, 'overflow: %.NNNf';
+    }
+}
+
+# multiconcat: only one scalar assign at most should be optimised away
+
+{
+    local our $x1 = '';
+    local our $x2 = '';
+    my ($a, $b) = qw(abcd wxyz);
+    $x1 = ($x2 = sprintf("%s%s", $a, $b));
+    is $x1, "abcdwxyz", "\$x1 = \$x2 = sprintf(): x1";
+    is $x2, "abcdwxyz", "\$x1 = \$x2 = sprintf(): x2";
+
+    my $y1 = '';
+    my $y2 = '';
+    $y1 = ($y2 = sprintf("%s%s", $a, $b));
+    is $y1, "abcdwxyz", "\$y1 = \$y2 = sprintf(): y1";
+    is $y2, "abcdwxyz", "\$y1 = \$y2 = sprintf(): y2";
+}
+
+# multiconcat: mutator optimisation
+
+{
+    my $lex = 'abc';
+    my $a1 = 'pqr';
+    my $a2 = 'xyz';
+    $lex .= sprintf "(%s,%s)", $a1, $a2;
+    is $lex, "abc(pqr,xyz)", "\$lex .= sprintf ...";
+
+    local our $pkg = "def";
+    $pkg .= sprintf "(%s,%s)", $a1, $a2;
+    is $pkg, "def(pqr,xyz)", "\$pkg .= sprintf ...";
+
+    my @ary;
+    $ary[3] = "ghi";
+    $ary[3] .= sprintf "(%s,%s)", $a1, $a2;
+    is $ary[3], "ghi(pqr,xyz)", "\$ary[3] .= sprintf ...";
+}
+
+# multiconcat: strings with 0x80..0xff chars and/or utf8 chars
+
+{
+    my $plain  = "abc";
+    my $s80    = "d\x{80}e";
+    my $s81    = "h\x{81}i";
+    my $utf8   = "f\x{100}g";
+    my $res;
+
+    $res = sprintf "-%s-%s-\x{90}-%s-\x{91}-%s-\x{92}",
+                        $plain, $s80, $utf8, $s81;
+    is $res, "-abc-d\x{80}e-\x{90}-f\x{100}g-\x{91}-h\x{81}i-\x{92}",
+                "multiconcat 80.ff handling";
+
+    $res = sprintf "%s \x{101} %s", $plain, $plain;
+    is $res, "abc \x{101} abc", "multiconcat p u p";
+
+    $res = sprintf "%s \x{101} %s", $plain, $utf8;
+    is $res, "abc \x{101} f\x{100}g", "multiconcat p u u";
+}
+
+# check /INTRO flag set correctly on multiconcat
+
+{
+    my $a = "a";
+    my $b = "b";
+    my $x;
+    {
+        $x = sprintf "-%s-%s-", $a, $b;
+    }
+    is $x, "-a-b-", "no INTRO flag on non-my";
+    for (1,2) {
+        my $y;
+        is $y, undef, "INTRO flag on my: $_";
+        $y = sprintf "-%s-%s-", $b, $a;
+        is $y, "-b-a-", "INTRO flag on my - result: $_";
+    }
+}
+
+# variant chars in constant format (not utf8, but change if upgraded)
+
+{
+    my $x = "\x{100}";
+    my $y = sprintf "%sa\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80", $x;
+    is $y, "\x{100}a\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80",
+        "\\x80 in format";
+}
+
+foreach(
+    0.0, -0.0,
+    4503599627370501, -4503599627370501,
+    4503599627370503, -4503599627370503,
+) {
+    is sprintf("%.0f", $_), sprintf("%-.0f", $_), "special-case %.0f on $_";
 }
 
 done_testing();

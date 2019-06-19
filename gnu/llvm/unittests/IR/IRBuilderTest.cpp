@@ -48,6 +48,27 @@ protected:
   GlobalVariable *GV;
 };
 
+TEST_F(IRBuilderTest, Intrinsics) {
+  IRBuilder<> Builder(BB);
+  Value *V;
+  CallInst *Call;
+  IntrinsicInst *II;
+
+  V = Builder.CreateLoad(GV);
+
+  Call = Builder.CreateMinNum(V, V);
+  II = cast<IntrinsicInst>(Call);
+  EXPECT_EQ(II->getIntrinsicID(), Intrinsic::minnum);
+
+  Call = Builder.CreateMaxNum(V, V);
+  II = cast<IntrinsicInst>(Call);
+  EXPECT_EQ(II->getIntrinsicID(), Intrinsic::maxnum);
+
+  Call = Builder.CreateIntrinsic(Intrinsic::readcyclecounter);
+  II = cast<IntrinsicInst>(Call);
+  EXPECT_EQ(II->getIntrinsicID(), Intrinsic::readcyclecounter);
+}
+
 TEST_F(IRBuilderTest, Lifetime) {
   IRBuilder<> Builder(BB);
   AllocaInst *Var1 = Builder.CreateAlloca(Builder.getInt8Ty());
@@ -144,17 +165,40 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   FastMathFlags FMF;
   Builder.setFastMathFlags(FMF);
 
+  // By default, no flags are set.
   F = Builder.CreateFAdd(F, F);
   EXPECT_FALSE(Builder.getFastMathFlags().any());
+  ASSERT_TRUE(isa<Instruction>(F));
+  FAdd = cast<Instruction>(F);
+  EXPECT_FALSE(FAdd->hasNoNaNs());
+  EXPECT_FALSE(FAdd->hasNoInfs());
+  EXPECT_FALSE(FAdd->hasNoSignedZeros());
+  EXPECT_FALSE(FAdd->hasAllowReciprocal());
+  EXPECT_FALSE(FAdd->hasAllowContract());
+  EXPECT_FALSE(FAdd->hasAllowReassoc());
+  EXPECT_FALSE(FAdd->hasApproxFunc());
 
-  FMF.setUnsafeAlgebra();
+  // Set all flags in the instruction.
+  FAdd->setFast(true);
+  EXPECT_TRUE(FAdd->hasNoNaNs());
+  EXPECT_TRUE(FAdd->hasNoInfs());
+  EXPECT_TRUE(FAdd->hasNoSignedZeros());
+  EXPECT_TRUE(FAdd->hasAllowReciprocal());
+  EXPECT_TRUE(FAdd->hasAllowContract());
+  EXPECT_TRUE(FAdd->hasAllowReassoc());
+  EXPECT_TRUE(FAdd->hasApproxFunc());
+
+  // All flags are set in the builder.
+  FMF.setFast();
   Builder.setFastMathFlags(FMF);
 
   F = Builder.CreateFAdd(F, F);
   EXPECT_TRUE(Builder.getFastMathFlags().any());
+  EXPECT_TRUE(Builder.getFastMathFlags().all());
   ASSERT_TRUE(isa<Instruction>(F));
   FAdd = cast<Instruction>(F);
   EXPECT_TRUE(FAdd->hasNoNaNs());
+  EXPECT_TRUE(FAdd->isFast());
 
   // Now, try it with CreateBinOp
   F = Builder.CreateBinOp(Instruction::FAdd, F, F);
@@ -162,21 +206,23 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   ASSERT_TRUE(isa<Instruction>(F));
   FAdd = cast<Instruction>(F);
   EXPECT_TRUE(FAdd->hasNoNaNs());
+  EXPECT_TRUE(FAdd->isFast());
 
   F = Builder.CreateFDiv(F, F);
-  EXPECT_TRUE(Builder.getFastMathFlags().any());
-  EXPECT_TRUE(Builder.getFastMathFlags().UnsafeAlgebra);
+  EXPECT_TRUE(Builder.getFastMathFlags().all());
   ASSERT_TRUE(isa<Instruction>(F));
   FDiv = cast<Instruction>(F);
   EXPECT_TRUE(FDiv->hasAllowReciprocal());
 
+  // Clear all FMF in the builder.
   Builder.clearFastMathFlags();
 
   F = Builder.CreateFDiv(F, F);
   ASSERT_TRUE(isa<Instruction>(F));
   FDiv = cast<Instruction>(F);
   EXPECT_FALSE(FDiv->hasAllowReciprocal());
-
+ 
+  // Try individual flags.
   FMF.clear();
   FMF.setAllowReciprocal();
   Builder.setFastMathFlags(FMF);
@@ -225,7 +271,25 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   FAdd = cast<Instruction>(FC);
   EXPECT_TRUE(FAdd->hasAllowContract());
 
+  FMF.setApproxFunc();
   Builder.clearFastMathFlags();
+  Builder.setFastMathFlags(FMF);
+  // Now 'aml' and 'contract' are set.
+  F = Builder.CreateFMul(F, F);
+  FAdd = cast<Instruction>(F);
+  EXPECT_TRUE(FAdd->hasApproxFunc());
+  EXPECT_TRUE(FAdd->hasAllowContract());
+  EXPECT_FALSE(FAdd->hasAllowReassoc());
+  
+  FMF.setAllowReassoc();
+  Builder.clearFastMathFlags();
+  Builder.setFastMathFlags(FMF);
+  // Now 'aml' and 'contract' and 'reassoc' are set.
+  F = Builder.CreateFMul(F, F);
+  FAdd = cast<Instruction>(F);
+  EXPECT_TRUE(FAdd->hasApproxFunc());
+  EXPECT_TRUE(FAdd->hasAllowContract());
+  EXPECT_TRUE(FAdd->hasAllowReassoc());
 
   // Test a call with FMF.
   auto CalleeTy = FunctionType::get(Type::getFloatTy(Ctx),
@@ -393,6 +457,62 @@ TEST_F(IRBuilderTest, DIBuilder) {
   I->setDebugLoc(DebugLoc::get(2, 0, BadScope));
   DIB.finalize();
   EXPECT_TRUE(verifyModule(*M));
+}
+
+TEST_F(IRBuilderTest, createArtificialSubprogram) {
+  IRBuilder<> Builder(BB);
+  DIBuilder DIB(*M);
+  auto File = DIB.createFile("main.c", "/");
+  auto CU = DIB.createCompileUnit(dwarf::DW_LANG_C, File, "clang",
+                                  /*isOptimized=*/true, /*Flags=*/"",
+                                  /*Runtime Version=*/0);
+  auto Type = DIB.createSubroutineType(DIB.getOrCreateTypeArray(None));
+  auto SP = DIB.createFunction(CU, "foo", /*LinkageName=*/"", File,
+                               /*LineNo=*/1, Type, /*isLocalToUnit=*/false,
+                               /*isDefinition=*/true, /*ScopeLine=*/2,
+                               DINode::FlagZero, /*isOptimized=*/true);
+  EXPECT_TRUE(SP->isDistinct());
+
+  F->setSubprogram(SP);
+  AllocaInst *I = Builder.CreateAlloca(Builder.getInt8Ty());
+  ReturnInst *R = Builder.CreateRetVoid();
+  I->setDebugLoc(DebugLoc::get(3, 2, SP));
+  R->setDebugLoc(DebugLoc::get(4, 2, SP));
+  DIB.finalize();
+  EXPECT_FALSE(verifyModule(*M));
+
+  Function *G = Function::Create(F->getFunctionType(),
+                                 Function::ExternalLinkage, "", M.get());
+  BasicBlock *GBB = BasicBlock::Create(Ctx, "", G);
+  Builder.SetInsertPoint(GBB);
+  I->removeFromParent();
+  Builder.Insert(I);
+  Builder.CreateRetVoid();
+  EXPECT_FALSE(verifyModule(*M));
+
+  DISubprogram *GSP = DIBuilder::createArtificialSubprogram(F->getSubprogram());
+  EXPECT_EQ(SP->getFile(), GSP->getFile());
+  EXPECT_EQ(SP->getType(), GSP->getType());
+  EXPECT_EQ(SP->getLine(), GSP->getLine());
+  EXPECT_EQ(SP->getScopeLine(), GSP->getScopeLine());
+  EXPECT_TRUE(GSP->isDistinct());
+
+  G->setSubprogram(GSP);
+  EXPECT_TRUE(verifyModule(*M));
+
+  auto *InlinedAtNode =
+      DILocation::getDistinct(Ctx, GSP->getScopeLine(), 0, GSP);
+  DebugLoc DL = I->getDebugLoc();
+  DenseMap<const MDNode *, MDNode *> IANodes;
+  auto IA = DebugLoc::appendInlinedAt(DL, InlinedAtNode, Ctx, IANodes);
+  auto NewDL = DebugLoc::get(DL.getLine(), DL.getCol(), DL.getScope(), IA);
+  I->setDebugLoc(NewDL);
+  EXPECT_FALSE(verifyModule(*M));
+
+  EXPECT_EQ("foo", SP->getName());
+  EXPECT_EQ("foo", GSP->getName());
+  EXPECT_FALSE(SP->isArtificial());
+  EXPECT_TRUE(GSP->isArtificial());
 }
 
 TEST_F(IRBuilderTest, InsertExtractElement) {

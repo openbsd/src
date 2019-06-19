@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.63 2014/07/20 19:33:54 tobias Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.64 2019/04/08 13:55:46 florian Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -523,3 +523,12 @@ Xreboot(void)
 	return 0; /* just in case */
 }
 
+int
+upgrade(void)
+{
+	struct stat sb;
+
+	if (stat(qualify(("/bsd.upgrade")), &sb) < 0)
+		return 0;
+	return 1;
+}

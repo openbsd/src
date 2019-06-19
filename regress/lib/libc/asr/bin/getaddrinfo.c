@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.2 2013/03/28 09:36:03 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.3 2018/12/15 15:16:12 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -48,7 +48,7 @@ main(int argc, char *argv[])
 
 	memset(&hints, 0, sizeof hints);
 
-	while((ch = getopt(argc, argv, "CFHPSef:p:s:t:")) !=  -1) {
+	while((ch = getopt(argc, argv, "CFHPR:Sef:p:s:t:")) !=  -1) {
 		switch(ch) {
 		case 'C':
 			hints.ai_flags |= AI_CANONNAME;
@@ -61,6 +61,9 @@ main(int argc, char *argv[])
 			break;
 		case 'P':
 			hints.ai_flags |= AI_PASSIVE;
+			break;
+		case 'R':
+			parseresopt(optarg);
 			break;
 		case 'S':
 			hints.ai_flags |= AI_NUMERICSERV;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.67 2018/02/24 11:42:31 visa Exp $ */
+/*	$OpenBSD: macebus.c,v 1.69 2018/12/03 13:50:02 visa Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -161,7 +161,7 @@ struct machine_bus_dma_tag mace_bus_dma_tag = {
 };
 
 /*
- * CRIME/MACE interrupt handling declarations: 32 CRIME sources, 32 MACE
+ * CRIME/MACE interrupt handling declarations: 32 CRIME sources, 16 MACE
  * sources (multiplexed by CRIME); 1 level.
  * We define another level for periodic tasks as well.
  */
@@ -468,13 +468,9 @@ macebus_pa_to_device(paddr_t pa, int flags)
  * Establish an interrupt handler called from the dispatcher.
  * The interrupt function established should return zero if there was nothing
  * to serve (no int) and non-zero when an interrupt was serviced.
- *
- * Interrupts are numbered from 1 and up where 1 maps to HW int 0.
- * XXX There is no reason to keep this... except for hardcoded interrupts
- * XXX in kernel configuration files...
  */
 void *
-macebus_intr_establish(int irq, uint32_t mace_irqmask, int type, int level,
+macebus_intr_establish(int irq, uint32_t mace_irqmask, int level,
     int (*ih_fun)(void *), void *ih_arg, const char *ih_what)
 {
 	struct crime_intrhand **p, *q, *ih;
@@ -569,7 +565,7 @@ do { \
 		    MACE_ISA_INT_MASK); \
 	} else \
 		mace_isr = mace_imr = 0; \
-	bit = 63; \
+	bit = CRIME_NINTS - 1; \
 } while (0)
 #define	INTR_MASKPENDING \
 	bus_space_write_8(&crimebus_tag, crime_h, CRIME_INT_MASK, imr & ~isr)

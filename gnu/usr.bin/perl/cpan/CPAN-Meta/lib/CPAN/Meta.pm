@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package CPAN::Meta;
 
-our $VERSION = '2.150005';
+our $VERSION = '2.150010';
 
 #pod =head1 SYNOPSIS
 #pod
@@ -650,7 +650,7 @@ CPAN::Meta - the distribution metadata for a CPAN dist
 
 =head1 VERSION
 
-version 2.150005
+version 2.150010
 
 =head1 SYNOPSIS
 
@@ -1031,11 +1031,15 @@ David Golden <dagolden@cpan.org>
 
 Ricardo Signes <rjbs@cpan.org>
 
+=item *
+
+Adam Kennedy <adamk@cpan.org>
+
 =back
 
 =head1 CONTRIBUTORS
 
-=for stopwords Ansgar Burchardt Avar Arnfjord Bjarmason Christopher J. Madsen Chuck Adams Cory G Watson Damyan Ivanov Eric Wilhelm Graham Knop Gregor Hermann Karen Etheridge Kenichi Ishigaki Ken Williams Lars Dieckow Leon Timmermans majensen Mark Fowler Matt S Trout Michael G. Schwern mohawk2 moznion Niko Tyni Olaf Alders Olivier Mengué Randy Sims Tomohiro Hosaka
+=for stopwords Ansgar Burchardt Avar Arnfjord Bjarmason Benjamin Noggle Christopher J. Madsen Chuck Adams Cory G Watson Damyan Ivanov David Golden Eric Wilhelm Graham Knop Gregor Hermann Karen Etheridge Kenichi Ishigaki Kent Fredric Ken Williams Lars Dieckow Leon Timmermans majensen Mark Fowler Matt S Trout Michael G. Schwern Mohammad Anwar mohawk2 moznion Niko Tyni Olaf Alders Olivier Mengué Randy Sims Tomohiro Hosaka
 
 =over 4
 
@@ -1046,6 +1050,10 @@ Ansgar Burchardt <ansgar@cpan.org>
 =item *
 
 Avar Arnfjord Bjarmason <avar@cpan.org>
+
+=item *
+
+Benjamin Noggle <agwind@users.noreply.github.com>
 
 =item *
 
@@ -1062,6 +1070,10 @@ Cory G Watson <gphat@cpan.org>
 =item *
 
 Damyan Ivanov <dam@cpan.org>
+
+=item *
+
+David Golden <xdg@xdg.me>
 
 =item *
 
@@ -1082,6 +1094,10 @@ Karen Etheridge <ether@cpan.org>
 =item *
 
 Kenichi Ishigaki <ishigaki@cpan.org>
+
+=item *
+
+Kent Fredric <kentfredric@gmail.com>
 
 =item *
 
@@ -1110,6 +1126,10 @@ Matt S Trout <mst@shadowcat.co.uk>
 =item *
 
 Michael G. Schwern <mschwern@cpan.org>
+
+=item *
+
+Mohammad S Anwar <mohammad.anwar@yahoo.com>
 
 =item *
 
@@ -1143,7 +1163,7 @@ Tomohiro Hosaka <bokutin@bokut.in>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2010 by David Golden and Ricardo Signes.
+This software is copyright (c) 2010 by David Golden, Ricardo Signes, Adam Kennedy and Contributors.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

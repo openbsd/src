@@ -2,12 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(../lib);
+    require "./test.pl";
+    set_up_inc( qw(../lib) );
 }
 
-BEGIN { require "./test.pl"; }
-
-plan( tests => 52 );
+plan( tests => 55 );
 
 # Used to segfault (bug #15479)
 fresh_perl_like(
@@ -35,11 +34,6 @@ SKIP: {
     q(Defining an XSUB over an existing sub with no stash under warnings),
   );
 }
-
-package tyrone::slothrop;
-$bongo::shaftsbury::scalar = 1;
-
-package main;
 
 # Used to warn
 # Unbalanced string table refcount: (1) for "A::" during global destruction.
@@ -185,7 +179,7 @@ SKIP: {
 	package FOO3;
 	sub named {};
 	my $anon = sub {};
-	my $named = eval q[\&named];
+	my $named = eval q[*named{CODE}]; # not \&named; we want a real GV
 	package main;
 	delete $FOO3::{named}; # make named anonymous
 
@@ -341,3 +335,24 @@ is runperl(
    ),
    "ok\n",
    '[perl #128086] no crash from assigning hash to *:::::: & deleting it';
+
+is runperl(
+    prog => 'BEGIN { %: = 0; $^W=1}; print qq|ok\n|',
+    stderr => 1,
+   ),
+   "ok\n",
+   "[perl #128238] don't treat %: as a stash (needs 2 colons)";
+
+is runperl(
+    prog => 'BEGIN { $::{q|foo::|}=*ENV; $^W=1}; print qq|ok\n|',
+    stderr => 1,
+   ),
+   "ok\n",
+   "[perl #128238] non-stashes in stashes";
+
+is runperl(
+    prog => '%:: = (); print *{q|::|}, qq|\n|',
+    stderr => 1,
+   ),
+   "*main::main::\n",
+   "[perl #129869] lookup %:: by name after clearing %::";

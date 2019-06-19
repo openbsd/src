@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.88 2018/02/08 00:17:31 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.90 2019/01/23 08:43:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -128,6 +128,7 @@ enum imsg_type {
 	IMSG_RECONF_L2VPN,
 	IMSG_RECONF_L2VPN_IF,
 	IMSG_RECONF_L2VPN_PW,
+	IMSG_RECONF_CONF_AUTH,
 	IMSG_RECONF_END
 };
 
@@ -300,11 +301,6 @@ struct tnbr {
 #define F_TNBR_CONFIGURED	 0x01
 #define F_TNBR_DYNAMIC		 0x02
 
-enum auth_method {
-	AUTH_NONE,
-	AUTH_MD5SIG
-};
-
 /* neighbor specific parameters */
 struct nbr_params {
 	LIST_ENTRY(nbr_params)	 entry;
@@ -312,11 +308,6 @@ struct nbr_params {
 	uint16_t		 keepalive;
 	int			 gtsm_enabled;
 	uint8_t			 gtsm_hops;
-	struct {
-		enum auth_method	 method;
-		char			 md5key[TCP_MD5_KEY_LEN];
-		uint8_t			 md5key_len;
-	} auth;
 	uint8_t			 flags;
 };
 #define F_NBRP_KEEPALIVE	 0x01
@@ -403,6 +394,16 @@ struct ldpd_af_conf {
 #define	F_LDPD_AF_EXPNULL	0x0004
 #define	F_LDPD_AF_NO_GTSM	0x0008
 
+struct ldp_auth {
+	LIST_ENTRY(ldp_auth)	 entry;
+	char			 md5key[TCP_MD5_KEY_LEN];
+	unsigned int		 md5key_len;
+	struct in_addr		 id;
+	int			 idlen;
+};
+
+#define LDP_AUTH_REQUIRED(_a)	 ((_a)->md5key_len != 0)
+
 struct ldpd_conf {
 	struct in_addr		 rtr_id;
 	unsigned int		 rdomain;
@@ -412,6 +413,7 @@ struct ldpd_conf {
 	LIST_HEAD(, tnbr)	 tnbr_list;
 	LIST_HEAD(, nbr_params)	 nbrp_list;
 	LIST_HEAD(, l2vpn)	 l2vpn_list;
+	LIST_HEAD(, ldp_auth)	 auth_list;
 	uint16_t		 trans_pref;
 	int			 flags;
 };
@@ -567,6 +569,7 @@ struct kif	*kif_findname(char *);
 void		 kif_clear(void);
 int		 kmpw_set(struct kpw *);
 int		 kmpw_unset(struct kpw *);
+int		 kmpw_find(const char *);
 
 /* util.c */
 uint8_t		 mask2prefixlen(in_addr_t);

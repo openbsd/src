@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.77 2018/01/02 06:38:45 guenther Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.87 2018/11/13 13:02:20 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -52,8 +52,8 @@
 /*
  * interfaces to the outside world
  */
-int	pipe_read(struct file *, off_t *, struct uio *, struct ucred *);
-int	pipe_write(struct file *, off_t *, struct uio *, struct ucred *);
+int	pipe_read(struct file *, struct uio *, int);
+int	pipe_write(struct file *, struct uio *, int);
 int	pipe_close(struct file *, struct proc *);
 int	pipe_poll(struct file *, int events, struct proc *);
 int	pipe_kqfilter(struct file *fp, struct knote *kn);
@@ -61,8 +61,13 @@ int	pipe_ioctl(struct file *, u_long, caddr_t, struct proc *);
 int	pipe_stat(struct file *fp, struct stat *ub, struct proc *p);
 
 static struct fileops pipeops = {
-	pipe_read, pipe_write, pipe_ioctl, pipe_poll, pipe_kqfilter,
-	pipe_stat, pipe_close 
+	.fo_read	= pipe_read,
+	.fo_write	= pipe_write,
+	.fo_ioctl	= pipe_ioctl,
+	.fo_poll	= pipe_poll,
+	.fo_kqfilter	= pipe_kqfilter,
+	.fo_stat	= pipe_stat,
+	.fo_close	= pipe_close
 };
 
 void	filt_pipedetach(struct knote *kn);
@@ -86,8 +91,8 @@ struct filterops pipe_wfiltops =
  * Limit the number of "big" pipes
  */
 #define LIMITBIGPIPES	32
-int nbigpipe;
-static int amountpipekva;
+unsigned int nbigpipe;
+static unsigned int amountpipekva;
 
 struct pool pipe_pool;
 
@@ -149,7 +154,7 @@ dopipe(struct proc *p, int *ufds, int flags)
 
 	fdplock(fdp);
 
-	error = falloc(p, cloexec, &rf, &fds[0]);
+	error = falloc(p, &rf, &fds[0]);
 	if (error != 0)
 		goto free2;
 	rf->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
@@ -157,7 +162,7 @@ dopipe(struct proc *p, int *ufds, int flags)
 	rf->f_data = rpipe;
 	rf->f_ops = &pipeops;
 
-	error = falloc(p, cloexec, &wf, &fds[1]);
+	error = falloc(p, &wf, &fds[1]);
 	if (error != 0)
 		goto free3;
 	wf->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
@@ -168,8 +173,8 @@ dopipe(struct proc *p, int *ufds, int flags)
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;
 
-	FILE_SET_MATURE(rf, p);
-	FILE_SET_MATURE(wf, p);
+	fdinsert(fdp, fds[0], cloexec, rf);
+	fdinsert(fdp, fds[1], cloexec, wf);
 
 	error = copyout(fds, ufds, sizeof(fds));
 	if (error != 0) {
@@ -181,6 +186,9 @@ dopipe(struct proc *p, int *ufds, int flags)
 		ktrfds(p, fds, 2);
 #endif
 	fdpunlock(fdp);
+
+	FRELE(rf, p);
+	FRELE(wf, p);
 	return (error);
 
 free3:
@@ -206,7 +214,9 @@ pipespace(struct pipe *cpipe, u_int size)
 {
 	caddr_t buffer;
 
+	KERNEL_LOCK();
 	buffer = km_alloc(size, &kv_any, &kp_pageable, &kd_waitok);
+	KERNEL_UNLOCK();
 	if (buffer == NULL) {
 		return (ENOMEM);
 	}
@@ -219,7 +229,7 @@ pipespace(struct pipe *cpipe, u_int size)
 	cpipe->pipe_buffer.out = 0;
 	cpipe->pipe_buffer.cnt = 0;
 
-	amountpipekva += cpipe->pipe_buffer.size;
+	atomic_add_int(&amountpipekva, cpipe->pipe_buffer.size);
 
 	return (0);
 }
@@ -242,6 +252,7 @@ pipe_create(struct pipe *cpipe)
 	cpipe->pipe_state = 0;
 	cpipe->pipe_peer = NULL;
 	cpipe->pipe_busy = 0;
+	sigio_init(&cpipe->pipe_sigio);
 
 	error = pipespace(cpipe, PIPE_SIZE);
 	if (error != 0)
@@ -250,7 +261,6 @@ pipe_create(struct pipe *cpipe)
 	getnanotime(&cpipe->pipe_ctime);
 	cpipe->pipe_atime = cpipe->pipe_ctime;
 	cpipe->pipe_mtime = cpipe->pipe_ctime;
-	cpipe->pipe_pgid = NO_PID;
 
 	return (0);
 }
@@ -293,12 +303,12 @@ pipeselwakeup(struct pipe *cpipe)
 		selwakeup(&cpipe->pipe_sel);
 	} else
 		KNOTE(&cpipe->pipe_sel.si_note, 0);
-	if ((cpipe->pipe_state & PIPE_ASYNC) && cpipe->pipe_pgid != NO_PID)
-		gsignal(cpipe->pipe_pgid, SIGIO);
+	if (cpipe->pipe_state & PIPE_ASYNC)
+		pgsigio(&cpipe->pipe_sigio, SIGIO, 0);
 }
 
 int
-pipe_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+pipe_read(struct file *fp, struct uio *uio, int fflags)
 {
 	struct pipe *rpipe = fp->f_data;
 	int error;
@@ -414,7 +424,7 @@ unlocked_error:
 }
 
 int
-pipe_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
+pipe_write(struct file *fp, struct uio *uio, int fflags)
 {
 	int error = 0;
 	size_t orig_resid;
@@ -436,15 +446,18 @@ pipe_write(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 	 * so.
 	 */
 	if ((uio->uio_resid > PIPE_SIZE) &&
-	    (nbigpipe < LIMITBIGPIPES) &&
 	    (wpipe->pipe_buffer.size <= PIPE_SIZE) &&
 	    (wpipe->pipe_buffer.cnt == 0)) {
+	    	unsigned int npipe;
 
-		if ((error = pipelock(wpipe)) == 0) {
-			if (pipespace(wpipe, BIG_PIPE_SIZE) == 0)
-				nbigpipe++;
+		npipe = atomic_inc_int_nv(&nbigpipe);
+		if ((npipe <= LIMITBIGPIPES) &&
+		    (error = pipelock(wpipe)) == 0) {
+			if (pipespace(wpipe, BIG_PIPE_SIZE) != 0)
+				atomic_dec_int(&nbigpipe);
 			pipeunlock(wpipe);
-		}
+		} else
+			atomic_dec_int(&nbigpipe);
 	}
 
 	/*
@@ -657,12 +670,17 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		*(int *)data = mpipe->pipe_buffer.cnt;
 		return (0);
 
+	case TIOCSPGRP:
+		/* FALLTHROUGH */
 	case SIOCSPGRP:
-		mpipe->pipe_pgid = *(int *)data;
-		return (0);
+		return (sigio_setown(&mpipe->pipe_sigio, *(int *)data));
 
 	case SIOCGPGRP:
-		*(int *)data = mpipe->pipe_pgid;
+		*(int *)data = sigio_getown(&mpipe->pipe_sigio);
+		return (0);
+
+	case TIOCGPGRP:
+		*(int *)data = -sigio_getown(&mpipe->pipe_sigio);
 		return (0);
 
 	}
@@ -738,20 +756,25 @@ pipe_close(struct file *fp, struct proc *p)
 
 	fp->f_ops = NULL;
 	fp->f_data = NULL;
+	KERNEL_LOCK();
 	pipeclose(cpipe);
+	KERNEL_UNLOCK();
 	return (0);
 }
 
 void
 pipe_free_kmem(struct pipe *cpipe)
 {
+	u_int size = cpipe->pipe_buffer.size;
+
 	if (cpipe->pipe_buffer.buffer != NULL) {
-		if (cpipe->pipe_buffer.size > PIPE_SIZE)
-			--nbigpipe;
-		amountpipekva -= cpipe->pipe_buffer.size;
-		km_free(cpipe->pipe_buffer.buffer, cpipe->pipe_buffer.size,
-		    &kv_any, &kp_pageable);
+		KERNEL_LOCK();
+		km_free(cpipe->pipe_buffer.buffer, size, &kv_any, &kp_pageable);
+		KERNEL_UNLOCK();
+		atomic_sub_int(&amountpipekva, size);
 		cpipe->pipe_buffer.buffer = NULL;
+		if (size > PIPE_SIZE)
+			atomic_dec_int(&nbigpipe);
 	}
 }
 
@@ -763,8 +786,8 @@ pipeclose(struct pipe *cpipe)
 {
 	struct pipe *ppipe;
 	if (cpipe) {
-		
 		pipeselwakeup(cpipe);
+		sigio_free(&cpipe->pipe_sigio);
 
 		/*
 		 * If the other side is blocked, wake it up saying that
@@ -875,7 +898,7 @@ filt_pipewrite(struct knote *kn, long hint)
 void
 pipe_init(void)
 {
-	pool_init(&pipe_pool, sizeof(struct pipe), 0, IPL_NONE, PR_WAITOK,
+	pool_init(&pipe_pool, sizeof(struct pipe), 0, IPL_MPFLOOR, PR_WAITOK,
 	    "pipepl", NULL);
 }
 

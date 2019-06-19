@@ -70,7 +70,7 @@ sub convert_n_test {
     }
 
 	# result
-	open my $in, $outfile or die "cannot open $outfile: $!";
+	open my $in, '<', $outfile or die "cannot open $outfile: $!";
 	$result = <$in>;
 	close $in;
     }
@@ -88,7 +88,7 @@ sub convert_n_test {
 	  open my $tmpfile, ">", $expectfile or die $!;
 	  print $tmpfile $expect;
 	  close $tmpfile;
-	  open my $diff_fh, "$diff $diffopt $expectfile $outfile |" or die $!;
+	  open my $diff_fh, "-|", "$diff $diffopt $expectfile $outfile" or die $!;
 	  print STDERR "# $_" while <$diff_fh>;
 	  close $diff_fh;
 	  unlink $expectfile;

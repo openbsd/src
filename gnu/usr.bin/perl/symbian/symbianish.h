@@ -128,7 +128,7 @@
 
 #define BIT_BUCKET "NUL:"
 
-#define dXSUB_SYS
+#define dXSUB_SYS dNOOP
 
 #define NO_ENVIRON_ARRAY
 

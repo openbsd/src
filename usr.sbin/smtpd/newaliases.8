@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newaliases.8,v 1.11 2015/12/22 17:52:21 jmc Exp $
+.\"	$OpenBSD: newaliases.8,v 1.12 2018/07/20 15:35:33 millert Exp $
 .\"
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@openbsd.org>
 .\" Copyright (c) 2008-2009 Gilles Chehade <gilles@poolp.org>
@@ -15,26 +15,27 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2015 $
+.Dd $Mdocdate: July 20 2018 $
 .Dt NEWALIASES 8
 .Os
 .Sh NAME
 .Nm newaliases
-.Nd rebuild the database for the mail aliases file
+.Nd rebuild mail aliases
 .Sh SYNOPSIS
 .Nm newaliases
 .Op Fl f Ar file
 .Sh DESCRIPTION
+The
 .Nm
-rebuilds the random access database for the mail aliases file,
-the location of which is defined in
-.Xr smtpd.conf 5 ,
-and which by default is
-.Pa /etc/mail/aliases .
-If using database (db) files
-this utility must be run every time the
+utility makes changes to the mail aliases file visible to
+.Xr smtpd 8 .
+It should be run every time the
 .Xr aliases 5
 file is changed.
+The location of the alias file is defined in
+.Xr smtpd.conf 5 ,
+and defaults to
+.Pa /etc/mail/aliases .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -46,11 +47,22 @@ instead of the default
 .Pa /etc/mail/smtpd.conf .
 .El
 .Pp
-Note: this utility is provided for sendmail compatibility.
-The preferred way of rebuilding the database is with
-.Xr makemap 8 :
+If using database (db) files,
+.Nm
+is equivalent to running
+.Xr makemap 8
+as follows:
 .Bd -literal -offset indent
 # makemap -t aliases /etc/mail/aliases
+.Ed
+.Pp
+If using plain text files,
+.Nm
+is equivalent to running
+.Xr smtpctl 8
+as follows:
+.Bd -literal -offset indent
+# smtpctl update table aliases
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/mail/aliasesXXX" -compact
@@ -63,7 +75,9 @@ List of virtual host aliases.
 .Ex -std newaliases
 .Sh SEE ALSO
 .Xr smtpd.conf 5 ,
-.Xr makemap 8
+.Xr makemap 8 ,
+.Xr smtpctl 8 ,
+.Xr smtpd 8
 .Sh HISTORY
 The
 .Nm

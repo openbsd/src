@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.6 2017/03/08 22:53:35 schwarze Exp $
+# $OpenBSD: Makefile,v 1.7 2018/12/21 16:58:49 schwarze Exp $
 
-REGRESS_TARGETS = punct font
+REGRESS_TARGETS = arg punct font
 LINT_TARGETS	= punct
 
 .include <bsd.regress.mk>

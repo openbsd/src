@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.235 2018/03/27 21:11:17 kettenis Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.239 2018/08/03 01:50:15 kevlo Exp $
 
 machine		i386
 maxusers	4
@@ -28,6 +28,8 @@ option		CRYPTO
 config		bsd root on rd0a swap on rd0b and wd0b and sd0b
 
 mainbus0	at root
+
+pvbus0		at mainbus0	# Paravirtual device bus
 
 acpi0		at bios?
 #acpitimer*	at acpi?
@@ -98,6 +100,7 @@ smsc*		at uhub?		# SMSC LAN95xx Ethernet
 cdce*		at uhub?		# CDC Ethernet
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
+mue*		at uhub?		# Microchip LAN75xx/LAN78xx Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
@@ -327,6 +330,7 @@ vioblk*		at virtio?			# Virtio block device
 vio*		at virtio?			# Virtio network device
 viornd*		at virtio?			# Virtio entropy device
 vioscsi*	at virtio?			# Virtio SCSI device
+vmmci*		at virtio?			# VMM control interface
 
 pseudo-device	loop 1
 pseudo-device	vlan

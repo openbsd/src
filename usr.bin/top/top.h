@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.h,v 1.15 2013/09/21 14:15:19 espie Exp $	*/
+/*	$OpenBSD: top.h,v 1.18 2018/09/22 16:50:35 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -76,7 +76,3 @@ extern char *renice_procs(char *);
 
 /* top.c */
 extern void quit(int);
-
-/* username.c */
-extern char *username(uid_t);
-extern uid_t userid(char *);

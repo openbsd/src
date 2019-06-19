@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcreg.h,v 1.8 2018/03/19 21:40:32 kettenis Exp $	*/
+/*	$OpenBSD: sdhcreg.h,v 1.9 2018/09/06 10:15:17 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -83,7 +83,8 @@
 #define  SDHC_8BIT_MODE			(1<<5)
 #define  SDHC_DMA_SELECT		(3<<3)
 #define  SDHC_DMA_SELECT_SDMA		(0<<3)
-#define  SDHC_DMA_SELECT_ADMA2		(2<<3)
+#define  SDHC_DMA_SELECT_ADMA32		(2<<3)
+#define  SDHC_DMA_SELECT_ADMA64		(3<<3)
 #define  SDHC_HIGH_SPEED		(1<<2)
 #define  SDHC_4BIT_MODE			(1<<1)
 #define  SDHC_LED_ON			(1<<0)
@@ -155,6 +156,7 @@
 #define  SDHC_UHS_MODE_SELECT_SDR104	3
 #define  SDHC_UHS_MODE_SELECT_DDR50	4
 #define SDHC_CAPABILITIES		0x40
+#define  SDHC_64BIT_DMA_SUPP		(1<<28)
 #define  SDHC_VOLTAGE_SUPP_1_8V		(1<<26)
 #define  SDHC_VOLTAGE_SUPP_3_0V		(1<<25)
 #define  SDHC_VOLTAGE_SUPP_3_3V		(1<<24)
@@ -255,6 +257,13 @@ struct sdhc_adma2_descriptor32 {
 	uint16_t	attribute;
 	uint16_t	length;
 	uint32_t	address;
+} __packed;
+
+struct sdhc_adma2_descriptor64 {
+	uint16_t	attribute;
+	uint16_t	length;
+	uint32_t	address_lo;
+	uint32_t	address_hi;
 } __packed;
 
 #endif

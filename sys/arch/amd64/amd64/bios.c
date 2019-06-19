@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.35 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.37 2018/10/23 17:51:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -108,7 +108,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 	if (hdr != NULL) {
 		pa = trunc_page(hdr->addr);
 		end = round_page(hdr->addr + hdr->size);
-		va = uvm_km_valloc(kernel_map, end-pa);
+		va = (vaddr_t)km_alloc(end - pa, &kv_any, &kp_none, &kd_nowait);
 		if (va == 0)
 			goto out;
 
@@ -437,7 +437,7 @@ smbios_info(char * str)
 	if (sminfop) {
 		infolen = strlen(sminfop) + 1;
 		for (i = 0; i < infolen - 1; i++)
-			add_timer_randomness(sminfop[i]);
+			enqueue_randomness(sminfop[i]);
 		hw_serial = malloc(infolen, M_DEVBUF, M_NOWAIT);
 		if (hw_serial)
 			strlcpy(hw_serial, sminfop, infolen);
@@ -462,7 +462,7 @@ smbios_info(char * str)
 			hw_uuid = "Not Set";
 		else {
 			for (i = 0; i < sizeof(sys->uuid); i++)
-				add_timer_randomness(sys->uuid[i]);
+				enqueue_randomness(sys->uuid[i]);
 			hw_uuid = malloc(SMBIOS_UUID_REPLEN, M_DEVBUF,
 			    M_NOWAIT);
 			if (hw_uuid) {

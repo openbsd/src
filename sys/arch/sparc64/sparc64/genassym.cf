@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.37 2017/12/03 10:55:50 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.38 2019/06/11 15:23:41 mpi Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -109,7 +109,6 @@ member	p_cpu
 member	P_FPSTATE	p_md.md_fpstate
 member	P_MD_ASTPENDING	p_md.md_astpending
 
-export	SRUN
 export	SONPROC
 
 # user structure fields

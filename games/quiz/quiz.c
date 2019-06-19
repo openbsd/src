@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.29 2016/03/07 12:07:56 mestre Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.30 2018/08/24 11:14:49 mestre Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -93,6 +93,10 @@ main(int argc, char *argv[])
 			err(1, "pledge");
 		get_file(indexfile);
 		get_cats(argv[0], argv[1]);
+
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+
 		quiz();
 		break;
 	default:

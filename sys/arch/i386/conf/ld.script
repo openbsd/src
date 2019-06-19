@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.8 2017/10/24 20:06:54 guenther Exp $	*/
+/*	$OpenBSD: ld.script,v 1.10 2018/10/26 15:00:54 naddy Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -41,9 +41,7 @@ __ALIGN_SIZE = 0x1000;
 __kernel_base_virt = 0xd0200000 + SIZEOF_HEADERS;
 __kernel_base_phys = __kernel_base_virt & 0xfffffff;
 
-/* We use physical address to jump to kernel */
-start_phys = LOADADDR(.text) + (start - __kernel_base_virt);
-ENTRY(start_phys)
+ENTRY(start)
 SECTIONS
 {
 	__kernel_text_virt = __kernel_base_virt;
@@ -56,6 +54,16 @@ SECTIONS
 		locore0.o(.text)
 		*(.text .text.*)
 	} :text =0xcccccccc
+
+	. = ALIGN(__ALIGN_SIZE);
+	__kernel_kutext_phys = . & 0xfffffff;
+	.kutext : AT (__kernel_kutext_phys)
+	{
+		__kutext_start = ABSOLUTE(.);
+		*(.kutext)
+		__kutext_end = ABSOLUTE(.);
+	} :text =0xcccccccc
+
 	PROVIDE (__etext = .);
 	PROVIDE (etext = .);
 	_etext = .;
@@ -94,6 +102,16 @@ SECTIONS
 		__data_load = LOADADDR(.data);
 		*(.data .data.*)
 	} :data =0xcccccccc
+
+	. = ALIGN(__ALIGN_SIZE);
+	__kernel_kudata_phys = . & 0xfffffff;
+	.kudata : AT (__kernel_kudata_phys)
+	{
+		__kudata_start = ABSOLUTE(.);
+		*(.kudata)
+		__kudata_end = ABSOLUTE(.);
+	}
+
 	. = ALIGN(0x1000);
 	PROVIDE (edata = .);
 	_edata = .;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.67 2018/01/03 19:39:07 denis Exp $ */
+/*	$OpenBSD: kroute.c,v 1.69 2019/01/23 08:43:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -141,6 +141,12 @@ kif_init(void)
 	if (fetchifs() == -1)
 		return (-1);
 
+	if ((kr_state.ioctl_fd = socket(AF_INET,
+	    SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1) {
+		log_warn("%s: ioctl socket", __func__);
+		return (-1);
+	}
+
 	return (0);
 }
 
@@ -171,7 +177,7 @@ kr_init(int fs, unsigned int rdomain)
 	    ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
 	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_IFANNOUNCE);
 
-	if (setsockopt(kr_state.fd, PF_ROUTE, ROUTE_MSGFILTER,
+	if (setsockopt(kr_state.fd, AF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		log_warn("%s: setsockopt(ROUTE_MSGFILTER)", __func__);
 
@@ -197,12 +203,6 @@ kr_init(int fs, unsigned int rdomain)
 	event_set(&kr_state.ev, kr_state.fd, EV_READ | EV_PERSIST,
 	    kr_dispatch_msg, NULL);
 	event_add(&kr_state.ev, NULL);
-
-	if ((kr_state.ioctl_fd = socket(AF_INET,
-	    SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1) {
-		log_warn("%s: ioctl socket", __func__);
-		return (-1);
-	}
 
 	return (0);
 }
@@ -1857,6 +1857,29 @@ kmpw_uninstall(const char *ifname)
 		log_warn("ioctl SIOCSETMPWCFG");
 		return (-1);
 	}
+
+	return (0);
+}
+
+int
+kmpw_find(const char *ifname)
+{
+	struct ifreq		 ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
+	if (strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)) >=
+	    sizeof(ifr.ifr_name)) {
+		errno = ENAMETOOLONG;
+		return (-1);
+	}
+
+	if (ioctl(kr_state.ioctl_fd, SIOCGPWE3, &ifr) == -1)
+		return (-1);
+
+	if (ifr.ifr_pwe3 != IF_PWE3_ETHERNET) {
+		errno = EPFNOSUPPORT;
+ 		return (-1);
+ 	}
 
 	return (0);
 }

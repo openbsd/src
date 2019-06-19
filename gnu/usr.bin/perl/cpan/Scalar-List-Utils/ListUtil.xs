@@ -7,22 +7,76 @@
 #include <perl.h>
 #include <XSUB.h>
 
-#define NEED_sv_2pv_flags 1
-#include "ppport.h"
+#ifdef USE_PPPORT_H
+#  define NEED_sv_2pv_flags 1
+#  define NEED_newSVpvn_flags 1
+#  define NEED_sv_catpvn_flags
+#  include "ppport.h"
+#endif
 
-#if PERL_BCDVERSION >= 0x5006000
+#ifndef PERL_VERSION_DECIMAL
+#  define PERL_VERSION_DECIMAL(r,v,s) (r*1000000 + v*1000 + s)
+#endif
+#ifndef PERL_DECIMAL_VERSION
+#  define PERL_DECIMAL_VERSION \
+	  PERL_VERSION_DECIMAL(PERL_REVISION,PERL_VERSION,PERL_SUBVERSION)
+#endif
+#ifndef PERL_VERSION_GE
+#  define PERL_VERSION_GE(r,v,s) \
+	  (PERL_DECIMAL_VERSION >= PERL_VERSION_DECIMAL(r,v,s))
+#endif
+#ifndef PERL_VERSION_LE
+#  define PERL_VERSION_LE(r,v,s) \
+	  (PERL_DECIMAL_VERSION <= PERL_VERSION_DECIMAL(r,v,s))
+#endif
+
+#if PERL_VERSION_GE(5,6,0)
 #  include "multicall.h"
+#endif
+
+#if !PERL_VERSION_GE(5,23,8)
+#  define UNUSED_VAR_newsp PERL_UNUSED_VAR(newsp)
+#else
+#  define UNUSED_VAR_newsp NOOP
 #endif
 
 #ifndef CvISXSUB
 #  define CvISXSUB(cv) CvXSUB(cv)
 #endif
 
+#ifndef HvNAMELEN_get
+#define HvNAMELEN_get(stash) strlen(HvNAME(stash))
+#endif
+
+#ifndef HvNAMEUTF8
+#define HvNAMEUTF8(stash) 0
+#endif
+
+#ifndef GvNAMEUTF8
+#ifdef GvNAME_HEK
+#define GvNAMEUTF8(gv) HEK_UTF8(GvNAME_HEK(gv))
+#else
+#define GvNAMEUTF8(gv) 0
+#endif
+#endif
+
+#ifndef SV_CATUTF8
+#define SV_CATUTF8 0
+#endif
+
+#ifndef SV_CATBYTES
+#define SV_CATBYTES 0
+#endif
+
+#ifndef sv_catpvn_flags
+#define sv_catpvn_flags(b,n,l,f) sv_catpvn(b,n,l)
+#endif
+
 /* Some platforms have strict exports. And before 5.7.3 cxinc (or Perl_cxinc)
    was not exported. Therefore platforms like win32, VMS etc have problems
    so we redefine it here -- GMB
 */
-#if PERL_BCDVERSION < 0x5007000
+#if !PERL_VERSION_GE(5,7,0)
 /* Not in 5.6.1. */
 #  ifdef cxinc
 #    undef cxinc
@@ -66,6 +120,10 @@ my_sv_copypv(pTHX_ SV *const dsv, SV *const ssv)
 #  define croak_no_modify() croak("%s", PL_no_modify)
 #endif
 
+#ifndef SvNV_nomg
+#  define SvNV_nomg SvNV
+#endif
+
 enum slu_accum {
     ACC_IV,
     ACC_NV,
@@ -96,7 +154,7 @@ ALIAS:
 CODE:
 {
     int index;
-    NV retval;
+    NV retval = 0.0; /* avoid 'uninit var' warning */
     SV *retsv;
     int magic;
 
@@ -104,6 +162,7 @@ CODE:
         XSRETURN_UNDEF;
 
     retsv = ST(0);
+    SvGETMAGIC(retsv);
     magic = SvAMAGIC(retsv);
     if(!magic)
       retval = slu_sv_value(retsv);
@@ -111,6 +170,7 @@ CODE:
     for(index = 1 ; index < items ; index++) {
         SV *stacksv = ST(index);
         SV *tmpsv;
+        SvGETMAGIC(stacksv);
         if((magic || SvAMAGIC(stacksv)) && (tmpsv = amagic_call(retsv, stacksv, gt_amg, 0))) {
              if(SvTRUE(tmpsv) ? !ix : ix) {
                   retsv = stacksv;
@@ -159,11 +219,12 @@ CODE:
     if(!items)
         switch(ix) {
             case 0: XSRETURN_UNDEF;
-            case 1: ST(0) = newSViv(0); XSRETURN(1);
-            case 2: ST(0) = newSViv(1); XSRETURN(1);
+            case 1: ST(0) = sv_2mortal(newSViv(0)); XSRETURN(1);
+            case 2: ST(0) = sv_2mortal(newSViv(1)); XSRETURN(1);
         }
 
     sv    = ST(0);
+    SvGETMAGIC(sv);
     switch((accum = accum_type(sv))) {
     case ACC_SV:
         retsv = TARG;
@@ -179,6 +240,7 @@ CODE:
 
     for(index = 1 ; index < items ; index++) {
         sv = ST(index);
+        SvGETMAGIC(sv);
         if(accum < ACC_SV && SvAMAGIC(sv)){
             if(!retsv)
                 retsv = TARG;
@@ -212,17 +274,72 @@ CODE:
             break;
         case ACC_IV:
             if(is_product) {
-              if(retiv == 0 ||
-                 (!SvNOK(sv) && SvIOK(sv) && (SvIV(sv) < IV_MAX / retiv))) {
-                    retiv *= SvIV(sv);
-                    break;
+                /* TODO: Consider if product() should shortcircuit the moment its
+                 *   accumulator becomes zero
+                 */
+                /* XXX testing flags before running get_magic may
+                 * cause some valid tied values to fallback to the NV path
+                 * - DAPM */
+                if(!SvNOK(sv) && SvIOK(sv)) {
+                    IV i = SvIV(sv);
+                    if (retiv == 0) /* avoid later division by zero */
+                        break;
+                    if (retiv < 0) {
+                        if (i < 0) {
+                            if (i >= IV_MAX / retiv) {
+                                retiv *= i;
+                                break;
+                            }
+                        }
+                        else {
+                            if (i <= IV_MIN / retiv) {
+                                retiv *= i;
+                                break;
+                            }
+                        }
+                    }
+                    else {
+                        if (i < 0) {
+                            if (i >= IV_MIN / retiv) {
+                                retiv *= i;
+                                break;
+                            }
+                        }
+                        else {
+                            if (i <= IV_MAX / retiv) {
+                                retiv *= i;
+                                break;
+                            }
+                        }
+                    }
                 }
                 /* else fallthrough */
             }
             else {
-                if(!SvNOK(sv) && SvIOK(sv) && (SvIV(sv) < IV_MAX - retiv)) {
-                    retiv += SvIV(sv);
-                    break;
+                /* XXX testing flags before running get_magic may
+                 * cause some valid tied values to fallback to the NV path
+                 * - DAPM */
+                if(!SvNOK(sv) && SvIOK(sv)) {
+                    IV i = SvIV(sv);
+                    if (retiv >= 0 && i >= 0) {
+                        if (retiv <= IV_MAX - i) {
+                            retiv += i;
+                            break;
+                        }
+                        /* else fallthrough */
+                    }
+                    else if (retiv < 0 && i < 0) {
+                        if (retiv >= IV_MIN - i) {
+                            retiv += i;
+                            break;
+                        }
+                        /* else fallthrough */
+                    }
+                    else {
+                        /* mixed signs can't overflow */
+                        retiv += i;
+                        break;
+                    }
                 }
                 /* else fallthrough */
             }
@@ -324,10 +441,12 @@ CODE:
     GvSV(agv) = ret;
     SvSetMagicSV(ret, args[1]);
 #ifdef dMULTICALL
+    assert(cv);
     if(!CvISXSUB(cv)) {
         dMULTICALL;
         I32 gimme = G_SCALAR;
 
+        UNUSED_VAR_newsp;
         PUSH_MULTICALL(cv);
         for(index = 2 ; index < items ; index++) {
             GvSV(bgv) = args[index];
@@ -378,13 +497,19 @@ CODE:
 
     SAVESPTR(GvSV(PL_defgv));
 #ifdef dMULTICALL
+    assert(cv);
     if(!CvISXSUB(cv)) {
         dMULTICALL;
         I32 gimme = G_SCALAR;
+
+        UNUSED_VAR_newsp;
         PUSH_MULTICALL(cv);
 
         for(index = 1 ; index < items ; index++) {
-            GvSV(PL_defgv) = args[index];
+            SV *def_sv = GvSV(PL_defgv) = args[index];
+#  ifdef SvTEMP_off
+            SvTEMP_off(def_sv);
+#  endif
             MULTICALL;
             if(SvTRUEx(*PL_stack_sp)) {
 #  ifdef PERL_HAS_BAD_MULTICALL_REFCOUNT
@@ -444,14 +569,19 @@ PPCODE:
 
     SAVESPTR(GvSV(PL_defgv));
 #ifdef dMULTICALL
+    assert(cv);
     if(!CvISXSUB(cv)) {
         dMULTICALL;
         I32 gimme = G_SCALAR;
         int index;
 
+        UNUSED_VAR_newsp;
         PUSH_MULTICALL(cv);
         for(index = 1; index < items; index++) {
-            GvSV(PL_defgv) = args[index];
+            SV *def_sv = GvSV(PL_defgv) = args[index];
+#  ifdef SvTEMP_off
+            SvTEMP_off(def_sv);
+#  endif
 
             MULTICALL;
             if(SvTRUEx(*PL_stack_sp) ^ invert) {
@@ -481,6 +611,56 @@ PPCODE:
 
     ST(0) = ret_true ? &PL_sv_yes : &PL_sv_no;
     XSRETURN(1);
+}
+
+void
+head(size,...)
+PROTOTYPE: $@
+ALIAS:
+    head = 0
+    tail = 1
+PPCODE:
+{
+    int size = 0;
+    int start = 0;
+    int end = 0;
+    int i = 0;
+
+    size = SvIV( ST(0) );
+
+    if ( ix == 0 ) {
+        start = 1;
+        end = start + size;
+        if ( size < 0 ) {
+            end += items - 1;
+        }
+        if ( end > items ) {
+            end = items;
+        }
+    }
+    else {
+        end = items;
+        if ( size < 0 ) {
+            start = -size + 1;
+        }
+        else {
+            start = end - size;
+        }
+        if ( start < 1 ) {
+            start = 1;
+        }
+    }
+
+    if ( end < start ) {
+        XSRETURN(0);
+    }
+    else {
+        EXTEND( SP, end - start );
+        for ( i = start; i <= end; i++ ) {
+            PUSHs( sv_2mortal( newSVsv( ST(i) ) ) );
+        }
+        XSRETURN( end - start );
+    }
 }
 
 void
@@ -535,11 +715,11 @@ PPCODE:
         SvGETMAGIC(pair);
 
         if(SvTYPE(pair) != SVt_RV)
-            croak("Not a reference at List::Util::unpack() argument %d", i);
+            croak("Not a reference at List::Util::unpairs() argument %d", i);
         if(SvTYPE(SvRV(pair)) != SVt_PVAV)
-            croak("Not an ARRAY reference at List::Util::unpack() argument %d", i);
+            croak("Not an ARRAY reference at List::Util::unpairs() argument %d", i);
 
-        // TODO: assert pair is an ARRAY ref
+        /* TODO: assert pair is an ARRAY ref */
         pairav = (AV *)SvRV(pair);
 
         EXTEND(SP, 2);
@@ -622,6 +802,7 @@ PPCODE:
     SAVESPTR(GvSV(agv));
     SAVESPTR(GvSV(bgv));
 #ifdef dMULTICALL
+    assert(cv);
     if(!CvISXSUB(cv)) {
         /* Since MULTICALL is about to move it */
         SV **stack = PL_stack_base + ax;
@@ -629,6 +810,7 @@ PPCODE:
         dMULTICALL;
         I32 gimme = G_SCALAR;
 
+        UNUSED_VAR_newsp;
         PUSH_MULTICALL(cv);
         for(; argi < items; argi += 2) {
             SV *a = GvSV(agv) = stack[argi];
@@ -705,6 +887,7 @@ PPCODE:
     SAVESPTR(GvSV(agv));
     SAVESPTR(GvSV(bgv));
 #ifdef dMULTICALL
+    assert(cv);
     if(!CvISXSUB(cv)) {
         /* Since MULTICALL is about to move it */
         SV **stack = PL_stack_base + ax;
@@ -713,6 +896,7 @@ PPCODE:
         dMULTICALL;
         I32 gimme = G_SCALAR;
 
+        UNUSED_VAR_newsp;
         PUSH_MULTICALL(cv);
         for(; argi < items; argi += 2) {
             SV *a = GvSV(agv) = stack[argi];
@@ -793,66 +977,94 @@ PPCODE:
 /* This MULTICALL-based code appears to fail on perl 5.10.0 and 5.8.9
  * Skip it on those versions (RT#87857)
  */
-#if defined(dMULTICALL) && (PERL_BCDVERSION > 0x5010000 || PERL_BCDVERSION < 0x5008009)
+#if defined(dMULTICALL) && (PERL_VERSION_GE(5,10,1) || PERL_VERSION_LE(5,8,8))
+    assert(cv);
     if(!CvISXSUB(cv)) {
         /* Since MULTICALL is about to move it */
         SV **stack = PL_stack_base + ax;
         I32 ret_gimme = GIMME_V;
         int i;
+        AV *spill = NULL; /* accumulates results if too big for stack */
 
         dMULTICALL;
         I32 gimme = G_ARRAY;
 
+        UNUSED_VAR_newsp;
         PUSH_MULTICALL(cv);
         for(; argi < items; argi += 2) {
-            SV *a = GvSV(agv) = args_copy ? args_copy[argi] : stack[argi];
-            SV *b = GvSV(bgv) = argi < items-1 ? 
-                (args_copy ? args_copy[argi+1] : stack[argi+1]) :
-                &PL_sv_undef;
             int count;
+
+            GvSV(agv) = stack[argi];
+            GvSV(bgv) = argi < items-1 ? stack[argi+1]: &PL_sv_undef;
 
             MULTICALL;
             count = PL_stack_sp - PL_stack_base;
 
-            if(count > 2 && !args_copy) {
+            if (count > 2 || spill) {
                 /* We can't return more than 2 results for a given input pair
-                 * without trashing the remaining argmuents on the stack still
-                 * to be processed. So, we'll copy them out to a temporary
-                 * buffer and work from there instead.
+                 * without trashing the remaining arguments on the stack still
+                 * to be processed, or possibly overrunning the stack end.
+                 * So, we'll accumulate the results in a temporary buffer
+                 * instead.
                  * We didn't do this initially because in the common case, most
                  * code blocks will return only 1 or 2 items so it won't be
                  * necessary
                  */
-                int n_args = items - argi;
-                Newx(args_copy, n_args, SV *);
-                SAVEFREEPV(args_copy);
+                int fill;
 
-                Copy(stack + argi, args_copy, n_args, SV *);
+                if (!spill) {
+                    spill = newAV();
+                    AvREAL_off(spill); /* don't ref count its contents */
+                    /* can't mortalize here as every nextstate in the code
+                     * block frees temps */
+                    SAVEFREESV(spill);
+                }
 
-                argi = 0;
-                items = n_args;
+                fill = (int)AvFILL(spill);
+                av_extend(spill, fill + count);
+                for(i = 0; i < count; i++)
+                    (void)av_store(spill, ++fill,
+                                    newSVsv(PL_stack_base[i + 1]));
             }
-
-            for(i = 0; i < count; i++)
-                stack[reti++] = newSVsv(PL_stack_sp[i - count + 1]);
+            else
+                for(i = 0; i < count; i++)
+                    stack[reti++] = newSVsv(PL_stack_base[i + 1]);
         }
+
+        if (spill)
+            /* the POP_MULTICALL will trigger the SAVEFREESV above;
+             * keep it alive  it on the temps stack instead */
+            SvREFCNT_inc_simple_void_NN(spill);
+            sv_2mortal((SV*)spill);
+
         POP_MULTICALL;
+
+        if (spill) {
+            int n = (int)AvFILL(spill) + 1;
+            SP = &ST(reti - 1);
+            EXTEND(SP, n);
+            for (i = 0; i < n; i++)
+                *++SP = *av_fetch(spill, i, FALSE);
+            reti += n;
+            av_clear(spill);
+        }
 
         if(ret_gimme == G_ARRAY)
             for(i = 0; i < reti; i++)
-                sv_2mortal(stack[i]);
+                sv_2mortal(ST(i));
     }
     else
 #endif
     {
         for(; argi < items; argi += 2) {
             dSP;
-            SV *a = GvSV(agv) = args_copy ? args_copy[argi] : ST(argi);
-            SV *b = GvSV(bgv) = argi < items-1 ? 
-                (args_copy ? args_copy[argi+1] : ST(argi+1)) :
-                &PL_sv_undef;
             int count;
             int i;
+
+            GvSV(agv) = args_copy ? args_copy[argi] : ST(argi);
+            GvSV(bgv) = argi < items-1 ?
+                (args_copy ? args_copy[argi+1] : ST(argi+1)) :
+                &PL_sv_undef;
 
             PUSHMARK(SP);
             count = call_sv((SV*)cv, G_ARRAY);
@@ -926,6 +1138,120 @@ CODE:
     XSRETURN(items);
 }
 
+
+void
+uniq(...)
+PROTOTYPE: @
+ALIAS:
+    uniqnum = 0
+    uniqstr = 1
+    uniq    = 2
+CODE:
+{
+    int retcount = 0;
+    int index;
+    SV **args = &PL_stack_base[ax];
+    HV *seen;
+
+    if(items == 0 || (items == 1 && !SvGAMAGIC(args[0]) && SvOK(args[0]))) {
+        /* Optimise for the case of the empty list or a defined nonmagic
+         * singleton. Leave a singleton magical||undef for the regular case */
+        retcount = items;
+        goto finish;
+    }
+
+    sv_2mortal((SV *)(seen = newHV()));
+
+    if(ix == 0) {
+        /* uniqnum */
+        /* A temporary buffer for number stringification */
+        SV *keysv = sv_newmortal();
+
+        for(index = 0 ; index < items ; index++) {
+            SV *arg = args[index];
+#ifdef HV_FETCH_EMPTY_HE
+            HE* he;
+#endif
+
+            if(SvGAMAGIC(arg))
+                /* clone the value so we don't invoke magic again */
+                arg = sv_mortalcopy(arg);
+
+            if(SvUOK(arg))
+                sv_setpvf(keysv, "%" UVuf, SvUV(arg));
+            else if(SvIOK(arg))
+                sv_setpvf(keysv, "%" IVdf, SvIV(arg));
+            else
+                sv_setpvf(keysv, "%" NVgf, SvNV(arg));
+#ifdef HV_FETCH_EMPTY_HE
+            he = (HE*) hv_common(seen, NULL, SvPVX(keysv), SvCUR(keysv), 0, HV_FETCH_LVALUE | HV_FETCH_EMPTY_HE, NULL, 0);
+            if (HeVAL(he))
+                continue;
+
+            HeVAL(he) = &PL_sv_undef;
+#else
+            if(hv_exists(seen, SvPVX(keysv), SvCUR(keysv)))
+                continue;
+
+            hv_store(seen, SvPVX(keysv), SvCUR(keysv), &PL_sv_yes, 0);
+#endif
+
+            if(GIMME_V == G_ARRAY)
+                ST(retcount) = SvOK(arg) ? arg : sv_2mortal(newSViv(0));
+            retcount++;
+        }
+    }
+    else {
+        /* uniqstr or uniq */
+        int seen_undef = 0;
+
+        for(index = 0 ; index < items ; index++) {
+            SV *arg = args[index];
+#ifdef HV_FETCH_EMPTY_HE
+            HE *he;
+#endif
+
+            if(SvGAMAGIC(arg))
+                /* clone the value so we don't invoke magic again */
+                arg = sv_mortalcopy(arg);
+
+            if(ix == 2 && !SvOK(arg)) {
+                /* special handling of undef for uniq() */
+                if(seen_undef)
+                    continue;
+
+                seen_undef++;
+
+                if(GIMME_V == G_ARRAY)
+                    ST(retcount) = arg;
+                retcount++;
+                continue;
+            }
+#ifdef HV_FETCH_EMPTY_HE
+            he = (HE*) hv_common(seen, arg, NULL, 0, 0, HV_FETCH_LVALUE | HV_FETCH_EMPTY_HE, NULL, 0);
+            if (HeVAL(he))
+                continue;
+
+            HeVAL(he) = &PL_sv_undef;
+#else
+            if (hv_exists_ent(seen, arg, 0))
+                continue;
+
+            hv_store_ent(seen, arg, &PL_sv_yes, 0);
+#endif
+
+            if(GIMME_V == G_ARRAY)
+                ST(retcount) = SvOK(arg) ? arg : sv_2mortal(newSVpvn("", 0));
+            retcount++;
+        }
+    }
+
+  finish:
+    if(GIMME_V == G_ARRAY)
+        XSRETURN(retcount);
+    else
+        ST(0) = sv_2mortal(newSViv(retcount));
+}
 
 MODULE=List::Util       PACKAGE=Scalar::Util
 
@@ -1040,7 +1366,10 @@ PROTOTYPE: $
 INIT:
     SV *tsv;
 CODE:
-#ifdef SvWEAKREF
+#if defined(sv_rvunweaken)
+    PERL_UNUSED_VAR(tsv);
+    sv_rvunweaken(sv);
+#elif defined(SvWEAKREF)
     /* This code stolen from core's sv_rvweaken() and modified */
     if (!SvOK(sv))
         return;
@@ -1125,7 +1454,7 @@ CODE:
     if(SvAMAGIC(sv) && (tempsv = AMG_CALLun(sv, numer))) {
         sv = tempsv;
     }
-#if PERL_BCDVERSION < 0x5008005
+#if !PERL_VERSION_GE(5,8,5)
     if(SvPOK(sv) || SvPOKp(sv)) {
         RETVAL = looks_like_number(sv) ? &PL_sv_yes : &PL_sv_no;
     }
@@ -1198,14 +1527,19 @@ PPCODE:
 
 void
 set_subname(name, sub)
-    char *name
+    SV *name
     SV *sub
 PREINIT:
     CV *cv = NULL;
     GV *gv;
     HV *stash = CopSTASH(PL_curcop);
-    char *s, *end = NULL;
+    const char *s, *end = NULL, *begin = NULL;
     MAGIC *mg;
+    STRLEN namelen;
+    const char* nameptr = SvPV(name, namelen);
+    int utf8flag = SvUTF8(name);
+    int quotes_seen = 0;
+    bool need_subst = FALSE;
 PPCODE:
     if (!SvROK(sub) && SvGMAGICAL(sub))
         mg_get(sub);
@@ -1218,63 +1552,77 @@ PPCODE:
     else if (PL_op->op_private & HINT_STRICT_REFS)
         croak("Can't use string (\"%.32s\") as %s ref while \"strict refs\" in use",
               SvPV_nolen(sub), "a subroutine");
-    else if ((gv = gv_fetchpv(SvPV_nolen(sub), FALSE, SVt_PVCV)))
+    else if ((gv = gv_fetchsv(sub, FALSE, SVt_PVCV)))
         cv = GvCVu(gv);
     if (!cv)
         croak("Undefined subroutine %s", SvPV_nolen(sub));
     if (SvTYPE(cv) != SVt_PVCV && SvTYPE(cv) != SVt_PVFM)
         croak("Not a subroutine reference");
-    for (s = name; *s++; ) {
-        if (*s == ':' && s[-1] == ':')
-            end = ++s;
-        else if (*s && s[-1] == '\'')
-            end = s;
+    for (s = nameptr; s <= nameptr + namelen; s++) {
+        if (s > nameptr && *s == ':' && s[-1] == ':') {
+            end = s - 1;
+            begin = ++s;
+            if (quotes_seen)
+                need_subst = TRUE;
+        }
+        else if (s > nameptr && *s != '\0' && s[-1] == '\'') {
+            end = s - 1;
+            begin = s;
+            if (quotes_seen++)
+                need_subst = TRUE;
+        }
     }
     s--;
     if (end) {
-        char *namepv = savepvn(name, end - name);
-        stash = GvHV(gv_fetchpv(namepv, TRUE, SVt_PVHV));
-        Safefree(namepv);
-        name = end;
+        SV* tmp;
+        if (need_subst) {
+            STRLEN length = end - nameptr + quotes_seen - (*end == '\'' ? 1 : 0);
+            char* left;
+            int i, j;
+            tmp = sv_2mortal(newSV(length));
+            left = SvPVX(tmp);
+            for (i = 0, j = 0; j < end - nameptr; ++i, ++j) {
+                if (nameptr[j] == '\'') {
+                    left[i] = ':';
+                    left[++i] = ':';
+                }
+                else {
+                    left[i] = nameptr[j];
+                }
+            }
+            stash = gv_stashpvn(left, length, GV_ADD | utf8flag);
+        }
+        else
+            stash = gv_stashpvn(nameptr, end - nameptr, GV_ADD | utf8flag);
+        nameptr = begin;
+        namelen -= begin - nameptr;
     }
 
     /* under debugger, provide information about sub location */
     if (PL_DBsub && CvGV(cv)) {
-        HV *hv = GvHV(PL_DBsub);
+        HV* DBsub = GvHV(PL_DBsub);
+        HE* old_data;
 
-        char *new_pkg = HvNAME(stash);
+        GV* oldgv = CvGV(cv);
+        HV* oldhv = GvSTASH(oldgv);
+        SV* old_full_name = sv_2mortal(newSVpvn_flags(HvNAME(oldhv), HvNAMELEN_get(oldhv), HvNAMEUTF8(oldhv) ? SVf_UTF8 : 0));
+        sv_catpvn(old_full_name, "::", 2);
+        sv_catpvn_flags(old_full_name, GvNAME(oldgv), GvNAMELEN(oldgv), GvNAMEUTF8(oldgv) ? SV_CATUTF8 : SV_CATBYTES);
 
-        char *old_name = GvNAME( CvGV(cv) );
-        char *old_pkg = HvNAME( GvSTASH(CvGV(cv)) );
+        old_data = hv_fetch_ent(DBsub, old_full_name, 0, 0);
 
-        int old_len = strlen(old_name) + strlen(old_pkg);
-        int new_len = strlen(name) + strlen(new_pkg);
-
-        SV **old_data;
-        char *full_name;
-
-        Newxz(full_name, (old_len > new_len ? old_len : new_len) + 3, char);
-
-        strcat(full_name, old_pkg);
-        strcat(full_name, "::");
-        strcat(full_name, old_name);
-
-        old_data = hv_fetch(hv, full_name, strlen(full_name), 0);
-
-        if (old_data) {
-            strcpy(full_name, new_pkg);
-            strcat(full_name, "::");
-            strcat(full_name, name);
-
-            SvREFCNT_inc(*old_data);
-            if (!hv_store(hv, full_name, strlen(full_name), *old_data, 0))
-                SvREFCNT_dec(*old_data);
+        if (old_data && HeVAL(old_data)) {
+            SV* new_full_name = sv_2mortal(newSVpvn_flags(HvNAME(stash), HvNAMELEN_get(stash), HvNAMEUTF8(stash) ? SVf_UTF8 : 0));
+            sv_catpvn(new_full_name, "::", 2);
+            sv_catpvn_flags(new_full_name, nameptr, s - nameptr, utf8flag ? SV_CATUTF8 : SV_CATBYTES);
+            SvREFCNT_inc(HeVAL(old_data));
+            if (hv_store_ent(DBsub, new_full_name, HeVAL(old_data), 0) != NULL)
+                SvREFCNT_inc(HeVAL(old_data));
         }
-        Safefree(full_name);
     }
 
     gv = (GV *) newSV(0);
-    gv_init(gv, stash, name, s - name, TRUE);
+    gv_init_pvn(gv, stash, nameptr, s - nameptr, GV_ADDMULTI | utf8flag);
 
     /*
      * set_subname needs to create a GV to store the name. The CvGV field of a

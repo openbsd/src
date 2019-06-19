@@ -1,4 +1,4 @@
-/* $OpenBSD: mvmbusvar.h,v 1.1 2016/10/21 20:11:36 patrick Exp $ */
+/* $OpenBSD: mvmbusvar.h,v 1.2 2018/07/09 09:24:22 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -15,6 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define MVMBUS_NO_REMAP			0xffffffff
+
 struct mbus_dram_info {
 	uint8_t			 targetid;
 	int			 numcs;
@@ -27,3 +29,8 @@ struct mbus_dram_info {
 };
 
 extern struct mbus_dram_info *mvmbus_dram_info;
+extern uint32_t mvmbus_pcie_mem_aperture[2];
+extern uint32_t mvmbus_pcie_io_aperture[2];
+
+void mvmbus_add_window(paddr_t, size_t, paddr_t, uint8_t, uint8_t);
+void mvmbus_del_window(paddr_t, size_t);

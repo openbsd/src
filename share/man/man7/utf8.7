@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utf8.7,v 1.6 2017/05/31 17:58:56 schwarze Exp $
+.\"	$OpenBSD: utf8.7,v 1.7 2018/05/17 16:44:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2017 $
+.Dd $Mdocdate: May 17 2018 $
 .Dt UTF8 7
 .Os
 .Sh NAME
@@ -29,7 +29,7 @@ Unicode codepoints are encoded as follows:
 .It U+0000 \(en U+007F:
 One byte: 0....... (compatible with ASCII)
 .It U+0080 \(en U+07FF:
-Two bytes: 110..... 10.......
+Two bytes: 110..... 10......
 .It U+0800 \(en U+D7FF and U+E000 \(en U+FFFF:
 Three bytes: 1110.... 10...... 10......
 .It U+10000 \(en U+10FFFF:

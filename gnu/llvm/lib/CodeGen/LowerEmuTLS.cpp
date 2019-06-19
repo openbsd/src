@@ -16,11 +16,11 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Target/TargetLowering.h"
 
 using namespace llvm;
 
@@ -68,7 +68,7 @@ bool LowerEmuTLS::runOnModule(Module &M) {
     return false;
 
   auto &TM = TPC->getTM<TargetMachine>();
-  if (!TM.Options.EmulatedTLS)
+  if (!TM.useEmulatedTLS())
     return false;
 
   bool Changed = false;

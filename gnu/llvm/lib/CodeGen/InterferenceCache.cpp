@@ -1,4 +1,4 @@
-//===-- InterferenceCache.cpp - Caching per-block interference ---------*--===//
+//===- InterferenceCache.cpp - Caching per-block interference -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,9 +12,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "InterferenceCache.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/CodeGen/LiveIntervalUnion.h"
+#include "llvm/CodeGen/LiveIntervals.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/CodeGen/SlotIndexes.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
+#include <tuple>
 
 using namespace llvm;
 
@@ -36,8 +48,8 @@ void InterferenceCache::reinitPhysRegEntries() {
   if (PhysRegEntriesCount == TRI->getNumRegs()) return;
   free(PhysRegEntries);
   PhysRegEntriesCount = TRI->getNumRegs();
-  PhysRegEntries = (unsigned char*)
-    calloc(PhysRegEntriesCount, sizeof(unsigned char));
+  PhysRegEntries = static_cast<unsigned char*>(
+      safe_calloc(PhysRegEntriesCount, sizeof(unsigned char)));
 }
 
 void InterferenceCache::init(MachineFunction *mf,
@@ -149,7 +161,7 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
   BlockInterference *BI = &Blocks[MBBNum];
   ArrayRef<SlotIndex> RegMaskSlots;
   ArrayRef<const uint32_t*> RegMaskBits;
-  for (;;) {
+  while (true) {
     BI->Tag = Tag;
     BI->First = BI->Last = SlotIndex();
 

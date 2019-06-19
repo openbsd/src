@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.22 2014/02/08 22:20:15 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.23 2018/12/13 16:35:07 visa Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -50,6 +50,7 @@
 #include <dev/ic/comvar.h>
 
 extern char *hw_prod;
+extern int tlb_set_wired_get_random(int);	/* tlbhandler.S */
 
 void crime_configure_memory(void);
 
@@ -181,34 +182,28 @@ ip32_setup()
 		 * If they are disabled, they are nevertheless
 		 * writable, but random TLB insert operations
 		 * will never use any of them. This can be
-		 * checked by inserting dummy entries and check
-		 * if any of the last 16 entries have been used.
-		 *
-		 * Of course, due to the way the random replacement
-		 * works (hashing various parts of the TLB data,
-		 * such as address bits and ASID), not all the
-		 * available TLB will be used; we simply check
-		 * the highest valid TLB entry we can find and
-		 * see if it is in the upper 16 entries or not.
+		 * checked by writing to the wired register, which
+		 * sets the random register to the number of available
+		 * TLB entries.
+		 * As its value decreases with every instruction
+		 * executed, we use a combined write-then-read routine
+		 * which will return a number close enough to the
+		 * number of entries, so that any value larger than 48
+		 * means that there are 64 entries available
+		 * (in the current state of that code, the value will
+		 * be the number of entries, minus 2).
 		 */
 		bootcpu_hwinfo.tlbsize = 48;
-		if (((bootcpu_hwinfo.c0prid >> 4) & 0x0f) >= 2) {
-			struct tlb_entry te;
-			int e, lastvalid;
-
-			tlb_set_wired(0);
+		if ((bootcpu_hwinfo.c0prid & 0xf0) >= 0x20) {
+			/*
+			 * The whole 64 entries exist, although the last
+			 * 16 may not be used by the random placement
+			 * operations, as we are about to check; but we
+			 * need to make them invalid anyway.
+			 */
+			tlb_set_wired(48);
 			tlb_flush(64);
-			for (e = 0; e < 64 * 8; e++)
-				tlb_update(XKSSEG_BASE + ptoa(2 * e),
-				    pfn_to_pad(0) | PG_ROPAGE);
-			lastvalid = 0;
-			for (e = 0; e < 64; e++) {
-				tlb_read(e, &te);
-				if ((te.tlb_lo0 & PG_V) != 0)
-					lastvalid = e;
-			}
-			tlb_flush(64);
-			if (lastvalid >= 48)
+			if (tlb_set_wired_get_random(0) > 48)
 				bootcpu_hwinfo.tlbsize = 64;
 		}
 		break;

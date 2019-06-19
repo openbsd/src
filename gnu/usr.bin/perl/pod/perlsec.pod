@@ -370,7 +370,7 @@ abusing perl bugs to make the host interpreter crash or behave in
 unpredictable ways.  In any case it's better avoided completely if you're
 really concerned about security.
 
-=head2 Security Bugs
+=head2 Shebang Race Condition
 
 Beyond the obvious problems that stem from giving special privileges to
 systems as flexible as scripts, on many versions of Unix, set-id scripts
@@ -380,30 +380,7 @@ see which interpreter to run and when the (now-set-id) interpreter turns
 around and reopens the file to interpret it, the file in question may have
 changed, especially if you have symbolic links on your system.
 
-Fortunately, sometimes this kernel "feature" can be disabled.
-Unfortunately, there are two ways to disable it.  The system can simply
-outlaw scripts with any set-id bit set, which doesn't help much.
-Alternately, it can simply ignore the set-id bits on scripts.
-
-However, if the kernel set-id script feature isn't disabled, Perl will
-complain loudly that your set-id script is insecure.  You'll need to
-either disable the kernel set-id script feature, or put a C wrapper around
-the script.  A C wrapper is just a compiled program that does nothing
-except call your Perl program.   Compiled programs are not subject to the
-kernel bug that plagues set-id scripts.  Here's a simple wrapper, written
-in C:
-
-    #define REAL_PATH "/path/to/script"
-    main(ac, av)
-	char **av;
-    {
-	execv(REAL_PATH, av);
-    }
-
-Compile this wrapper into a binary executable and then make I<it> rather
-than your script setuid or setgid.
-
-In recent years, vendors have begun to supply systems free of this
+Some Unixes, especially more recent ones, are free of this
 inherent security bug.  On such systems, when the kernel passes the name
 of the set-id script to open to the interpreter, rather than using a
 pathname subject to meddling, it instead passes I</dev/fd/3>.  This is a
@@ -413,6 +390,50 @@ compiled with C<-DSETUID_SCRIPTS_ARE_SECURE_NOW>.  The F<Configure>
 program that builds Perl tries to figure this out for itself, so you
 should never have to specify this yourself.  Most modern releases of
 SysVr4 and BSD 4.4 use this approach to avoid the kernel race condition.
+
+If you don't have the safe version of set-id scripts, all is not lost.
+Sometimes this kernel "feature" can be disabled, so that the kernel
+either doesn't run set-id scripts with the set-id or doesn't run them
+at all.  Either way avoids the exploitability of the race condition,
+but doesn't help in actually running scripts set-id.
+
+If the kernel set-id script feature isn't disabled, then any set-id
+script provides an exploitable vulnerability.  Perl can't avoid being
+exploitable, but will point out vulnerable scripts where it can.  If Perl
+detects that it is being applied to a set-id script then it will complain
+loudly that your set-id script is insecure, and won't run it.  When Perl
+complains, you need to remove the set-id bit from the script to eliminate
+the vulnerability.  Refusing to run the script doesn't in itself close
+the vulnerability; it is just Perl's way of encouraging you to do this.
+
+To actually run a script set-id, if you don't have the safe version of
+set-id scripts, you'll need to put a C wrapper around
+the script.  A C wrapper is just a compiled program that does nothing
+except call your Perl program.   Compiled programs are not subject to the
+kernel bug that plagues set-id scripts.  Here's a simple wrapper, written
+in C:
+
+    #include <unistd.h>
+    #include <stdio.h>
+    #include <string.h>
+    #include <errno.h>
+
+    #define REAL_PATH "/path/to/script"
+
+    int main(int argc, char **argv)
+    {
+        execv(REAL_PATH, argv);
+        fprintf(stderr, "%s: %s: %s\n",
+                        argv[0], REAL_PATH, strerror(errno));
+        return 127;
+    }
+
+Compile this wrapper into a binary executable and then make I<it> rather
+than your script setuid or setgid.  Note that this wrapper isn't doing
+anything to sanitise the execution environment other than ensuring
+that a safe path to the script is used.  It only avoids the shebang
+race condition.  It relies on Perl's own features, and on the script
+itself being careful, to make it safe enough to run the script set-id.
 
 =head2 Protecting Your Programs
 
@@ -566,15 +587,37 @@ Perl running out of memory.
 =item *
 
 Sorting - the quicksort algorithm used in Perls before 5.8.0 to
-implement the sort() function is very easy to trick into misbehaving
+implement the sort() function was very easy to trick into misbehaving
 so that it consumes a lot of time.  Starting from Perl 5.8.0 a different
 sorting algorithm, mergesort, is used by default.  Mergesort cannot
 misbehave on any input.
 
 =back
 
-See L<http://www.cs.rice.edu/~scrosby/hash/> for more information,
+See L<https://www.usenix.org/legacy/events/sec03/tech/full_papers/crosby/crosby.pdf> for more information,
 and any computer science textbook on algorithmic complexity.
+
+=head2 Using Sudo
+
+The popular tool C<sudo> provides a controlled way for users to be able
+to run programs as other users.  It sanitises the execution environment
+to some extent, and will avoid the L<shebang race condition|/"Shebang
+Race Condition">.  If you don't have the safe version of set-id scripts,
+then C<sudo> may be a more convenient way of executing a script as
+another user than writing a C wrapper would be.
+
+However, C<sudo> sets the real user or group ID to that of the target
+identity, not just the effective ID as set-id bits do.  As a result, Perl
+can't detect that it is running under C<sudo>, and so won't automatically
+take its own security precautions such as turning on taint mode.  Where
+C<sudo> configuration dictates exactly which command can be run, the
+approved command may include a C<-T> option to perl to enable taint mode.
+
+In general, it is necessary to evaluate the suitaility of a script to
+run under C<sudo> specifically with that kind of execution environment
+in mind.  It is neither necessary nor sufficient for the same script to
+be suitable to run in a traditional set-id arrangement, though many of
+the issues overlap.
 
 =head1 SEE ALSO
 

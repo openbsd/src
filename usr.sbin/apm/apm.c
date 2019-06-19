@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.33 2017/07/23 12:51:20 anton Exp $	*/
+/*	$OpenBSD: apm.c,v 1.35 2019/03/01 17:21:48 tedu Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -242,11 +242,15 @@ main(int argc, char *argv[])
 				usage();
 		}
 	}
+	argc -= optind;
+	argv += optind;
+	if (argc)
+		usage();
 
 	fd = open_socket(sockname);
 
 	if (fd != -1) {
-		if (pledge("stdio rpath wpath cpath", NULL) == -1)
+		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
 	}
 
@@ -287,8 +291,12 @@ main(int argc, char *argv[])
 			/* open the device directly and get status */
 			fd = open(_PATH_APM_NORMAL, O_RDONLY);
 			if (ioctl(fd, APM_IOC_GETPOWER,
-			    &reply.batterystate) == 0)
+			    &reply.batterystate) == 0) {
+				if (pledge("stdio", NULL) == -1)
+					err(1, "pledge");
+
 				goto printval;
+			}
 		}
 		/* FALLTHROUGH */
 balony:

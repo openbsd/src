@@ -1,4 +1,3 @@
-/*	$OpenBSD: drm_hashtab.c,v 1.3 2015/09/23 23:12:11 kettenis Exp $	*/
 /**************************************************************************
  *
  * Copyright 2006 Tungsten Graphics, Inc., Bismarck, ND. USA.
@@ -33,8 +32,11 @@
  * Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
-#include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/drm_hashtab.h>
+#include <drm/drmP.h>
+#include <drm/drm_hashtab.h>
+#include <linux/hash.h>
+#include <linux/slab.h>
+#include <linux/export.h>
 
 struct hlist_node *
 	 drm_ht_find_key(struct drm_open_hash *, unsigned long);

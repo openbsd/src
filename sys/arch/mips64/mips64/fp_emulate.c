@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.19 2017/09/16 05:04:34 visa Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.22 2019/01/14 15:02:57 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -123,6 +123,32 @@ fpu_fn3	fpu_trunc_w;
 #define	ONE_F32	(float32)(SNG_EXP_BIAS << SNG_FRACBITS)
 #define	ONE_F64	(float64)((uint64_t)DBL_EXP_BIAS << DBL_FRACBITS)
 
+static inline uint32_t
+getfsr(void)
+{
+	uint32_t fsr;
+
+	__asm__ volatile (
+	"	.set	push\n"
+	"	.set	hardfloat\n"
+	"	cfc1	%0, $31\n"	/* stall until FPU done */
+	"	cfc1	%0, $31\n"	/* now get status */
+	"	.set	pop\n"
+	: "=r" (fsr));
+	return fsr;
+}
+
+static inline void
+setfsr(uint32_t fsr)
+{
+	__asm__ volatile (
+	"	.set	push\n"
+	"	.set	hardfloat\n"
+	"	ctc1	%0, $31\n"
+	"	.set	pop\n"
+	: : "r" (fsr));
+}
+
 /*
  * Handle a floating-point exception.
  */
@@ -157,9 +183,7 @@ MipsFPTrap(struct trapframe *tf)
 
 		sr = getsr();
 		setsr(sr | SR_COP_1_BIT);
-
-		__asm__ volatile ("cfc1 %0, $31" : "=r" (fsr));
-		__asm__ volatile ("cfc1 %0, $31" : "=r" (fsr));
+		fsr = getfsr();
 
 		/*
 		 * If this is not an unimplemented operation, but a genuine
@@ -399,7 +423,7 @@ deliver:
 		tf->fsr = fsr;
 
 	if (CPU_HAS_FPU(ci)) {
-		__asm__ volatile ("ctc1 %0, $31" :: "r" (fsr));
+		setfsr(fsr);
 		/* disable fpu before returning to trap() */
 		setsr(sr);
 	}
@@ -579,7 +603,7 @@ fpu_emulate_cop1(struct proc *p, struct trapframe *tf, uint32_t insn)
 
 	/*
 	 * Check for valid format.  FRType assumes bit 25 is always set,
-	 * so we need to check for it explicitely.
+	 * so we need to check for it explicitly.
 	 */
 
 	if ((insn & (1 << 25)) == 0)
@@ -935,12 +959,12 @@ fpu_c(struct proc *p, struct trapframe *tf, uint fmt, uint ft, uint fs,
 			/* comparison result intentionaly not written */
 			goto skip;
 		}
-	} else {
-		if ((uo | eq | lt) & op)
-			tf->fsr |= FPCSR_CONDVAL(cc);
-		else
-			tf->fsr &= ~FPCSR_CONDVAL(cc);
 	}
+
+	if ((uo | eq | lt) & op)
+		tf->fsr |= FPCSR_CONDVAL(cc);
+	else
+		tf->fsr &= ~FPCSR_CONDVAL(cc);
 skip:
 
 	return 0;

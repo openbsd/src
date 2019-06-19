@@ -4,19 +4,19 @@ use strict;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common 2.069 ();
+use IO::Compress::Base::Common 2.074 ();
 
-use IO::Uncompress::Base 2.069 ;
+use IO::Uncompress::Base 2.074 ;
 
 
 require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $AnyUncompressError);
 
-$VERSION = '2.069_001';
+$VERSION = '2.074';
 $AnyUncompressError = '';
 
-@ISA = qw( Exporter IO::Uncompress::Base );
+@ISA = qw(IO::Uncompress::Base Exporter);
 @EXPORT_OK = qw( $AnyUncompressError anyuncompress ) ;
 %EXPORT_TAGS = %IO::Uncompress::Base::DEFLATE_CONSTANTS ;
 push @{ $EXPORT_TAGS{all} }, @EXPORT_OK ;
@@ -29,22 +29,22 @@ BEGIN
 {
    local @INC = @INC;
    pop @INC if $INC[-1] eq '.';
-   eval ' use IO::Uncompress::Adapter::Inflate 2.069 ;';
-   eval ' use IO::Uncompress::Adapter::Bunzip2 2.069 ;';
-   eval ' use IO::Uncompress::Adapter::LZO 2.069 ;';
-   eval ' use IO::Uncompress::Adapter::Lzf 2.069 ;';
-   eval ' use IO::Uncompress::Adapter::UnLzma 2.069 ;';
-   eval ' use IO::Uncompress::Adapter::UnXz 2.069 ;';
+   eval ' use IO::Uncompress::Adapter::Inflate 2.074 ;';
+   eval ' use IO::Uncompress::Adapter::Bunzip2 2.074 ;';
+   eval ' use IO::Uncompress::Adapter::LZO 2.074 ;';
+   eval ' use IO::Uncompress::Adapter::Lzf 2.074 ;';
+   eval ' use IO::Uncompress::Adapter::UnLzma 2.074 ;';
+   eval ' use IO::Uncompress::Adapter::UnXz 2.074 ;';
 
-   eval ' use IO::Uncompress::Bunzip2 2.069 ;';
-   eval ' use IO::Uncompress::UnLzop 2.069 ;';
-   eval ' use IO::Uncompress::Gunzip 2.069 ;';
-   eval ' use IO::Uncompress::Inflate 2.069 ;';
-   eval ' use IO::Uncompress::RawInflate 2.069 ;';
-   eval ' use IO::Uncompress::Unzip 2.069 ;';
-   eval ' use IO::Uncompress::UnLzf 2.069 ;';
-   eval ' use IO::Uncompress::UnLzma 2.069 ;';
-   eval ' use IO::Uncompress::UnXz 2.069 ;';
+   eval ' use IO::Uncompress::Bunzip2 2.074 ;';
+   eval ' use IO::Uncompress::UnLzop 2.074 ;';
+   eval ' use IO::Uncompress::Gunzip 2.074 ;';
+   eval ' use IO::Uncompress::Inflate 2.074 ;';
+   eval ' use IO::Uncompress::RawInflate 2.074 ;';
+   eval ' use IO::Uncompress::Unzip 2.074 ;';
+   eval ' use IO::Uncompress::UnLzf 2.074 ;';
+   eval ' use IO::Uncompress::UnLzma 2.074 ;';
+   eval ' use IO::Uncompress::UnXz 2.074 ;';
 }
 
 sub new
@@ -1019,7 +1019,7 @@ L<IO::Zlib|IO::Zlib>
 
 =head1 AUTHOR
 
-This module was written by Paul Marquess, F<pmqs@cpan.org>. 
+This module was written by Paul Marquess, C<pmqs@cpan.org>. 
 
 =head1 MODIFICATION HISTORY
 
@@ -1027,7 +1027,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2015 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2017 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

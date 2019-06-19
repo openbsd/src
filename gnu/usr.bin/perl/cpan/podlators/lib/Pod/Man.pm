@@ -14,7 +14,7 @@
 # Written by Russ Allbery <rra@cpan.org>
 # Substantial contributions by Sean Burke <sburke@cpan.org>
 # Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009,
-#     2010, 2012, 2013, 2014, 2015, 2016 Russ Allbery <rra@cpan.org>
+#     2010, 2012, 2013, 2014, 2015, 2016, 2017 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -43,7 +43,7 @@ BEGIN {
 
 @ISA = qw(Pod::Simple);
 
-$VERSION = '4.07';
+$VERSION = '4.10';
 
 # Set the debugging level.  If someone has inserted a debug function into this
 # class already, use that.  Otherwise, use any Pod::Simple debug function
@@ -216,12 +216,13 @@ sub init_fonts {
 }
 
 # Initialize the quotes that we'll be using for C<> text.  This requires some
-# special handling, both to parse the user parameter if given and to make sure
-# that the quotes will be safe against *roff.  Sets the internal hash keys
-# LQUOTE and RQUOTE.
+# special handling, both to parse the user parameters if given and to make
+# sure that the quotes will be safe against *roff.  Sets the internal hash
+# keys LQUOTE and RQUOTE.
 sub init_quotes {
     my ($self) = (@_);
 
+    # Handle the quotes option first, which sets both quotes at once.
     $$self{quotes} ||= '"';
     if ($$self{quotes} eq 'none') {
         $$self{LQUOTE} = $$self{RQUOTE} = '';
@@ -233,6 +234,14 @@ sub init_quotes {
         $$self{RQUOTE} = substr ($$self{quotes}, $length);
     } else {
         croak(qq(Invalid quote specification "$$self{quotes}"))
+    }
+
+    # Now handle the lquote and rquote options.
+    if (defined $$self{lquote}) {
+        $$self{LQUOTE} = $$self{lquote} eq 'none' ? q{} : $$self{lquote};
+    }
+    if (defined $$self{rquote}) {
+        $$self{RQUOTE} = $$self{rquote} eq 'none' ? q{} : $$self{rquote};
     }
 
     # Double the first quote; note that this should not be s///g as two double
@@ -514,9 +523,9 @@ sub guesswork {
     # entire warranty disclaimers in man page output into small caps.
     if ($$self{MAGIC_SMALLCAPS}) {
         s{
-            ( ^ | [\s\(\"\'\`\[\{<>] | \\[ ]  )                     # (1)
-            ( [A-Z] [A-Z] (?: [/A-Z+:\d_\$&] | \\- | [.,\"\s] )* )  # (2)
-            (?= [\s>\}\]\(\)\'\".?!,;] | \\*\(-- | \\[ ] | $ )      # (3)
+            ( ^ | [\s\(\"\'\`\[\{<>] | \\[ ]  )                           # (1)
+            ( [A-Z] [A-Z] (?: \s? [/A-Z+:\d_\$&] | \\- | \s? [.,\"] )* )  # (2)
+            (?= [\s>\}\]\(\)\'\".?!,;] | \\*\(-- | \\[ ] | $ )            # (3)
         } {
             $1 . '\s-1' . $2 . '\s0'
         }egx;
@@ -526,8 +535,8 @@ sub guesswork {
     # strings inserted around things that we've made small-caps if later
     # transforms should work on those strings.
 
-    # Italicize functions in the form func(), including functions that are in
-    # all capitals, but don't italize if there's anything between the parens.
+    # Embolden functions in the form func(), including functions that are in
+    # all capitals, but don't embolden if there's anything between the parens.
     # The function must start with an alphabetic character or underscore and
     # then consist of word characters or colons.
     if ($$self{MAGIC_FUNC}) {
@@ -535,11 +544,11 @@ sub guesswork {
             ( \b | \\s-1 )
             ( [A-Za-z_] ([:\w] | \\s-?[01])+ \(\) )
         } {
-            $1 . '\f(IS' . $2 . '\f(IE'
+            $1 . '\f(BS' . $2 . '\f(BE'
         }egx;
     }
 
-    # Change references to manual pages to put the page name in italics but
+    # Change references to manual pages to put the page name in bold but
     # the number in the regular font, with a thin space between the name and
     # the number.  Only recognize func(n) where func starts with an alphabetic
     # character or underscore and contains only word characters, periods (for
@@ -549,10 +558,11 @@ sub guesswork {
     if ($$self{MAGIC_MANREF}) {
         s{
             ( \b | \\s-1 )
+            (?<! \\ )                                   # rule out \s0(1)
             ( [A-Za-z_] (?:[.:\w] | \\- | \\s-?[01])+ )
             ( \( \d [a-z]* \) )
         } {
-            $1 . '\f(IS' . $2 . '\f(IE\|' . $3
+            $1 . '\f(BS' . $2 . '\f(BE\|' . $3
         }egx;
     }
 
@@ -790,13 +800,16 @@ sub start_document {
     # has a PerlIO encoding layer set.  If it does not, we'll need to encode
     # our output before printing it (handled in the output() sub).  Wrap the
     # check in an eval to handle versions of Perl without PerlIO.
+    #
+    # PerlIO::get_layers still requires its argument be a glob, so coerce the
+    # file handle to a glob.
     $$self{ENCODE} = 0;
     if ($$self{utf8}) {
         $$self{ENCODE} = 1;
         eval {
             my @options = (output => 1, details => 1);
-            my $flag = (PerlIO::get_layers ($$self{output_fh}, @options))[-1];
-            if ($flag & PerlIO::F_UTF8 ()) {
+            my @layers = PerlIO::get_layers (*{$$self{output_fh}}, @options);
+            if ($layers[-1] & PerlIO::F_UTF8 ()) {
                 $$self{ENCODE} = 0;
             }
         }
@@ -854,12 +867,16 @@ sub devise_title {
 
     # If Pod::Parser gave us an IO::File reference as the source file name,
     # convert that to the empty string as well.  Then, if we don't have a
-    # valid name, emit a warning and convert it to STDIN.
+    # valid name, convert it to STDIN.
+    #
+    # In podlators 4.00 through 4.07, this also produced a warning, but that
+    # was surprising to a lot of programs that had expected to be able to pipe
+    # POD through pod2man without specifying the name.  In the name of
+    # backward compatibility, just quietly set STDIN as the page title.
     if ($name =~ /^IO::File(?:=\w+)\(0x[\da-f]+\)$/i) {
         $name = '';
     }
     if ($name eq '') {
-        $self->whine (1, 'No name given for document');
         $name = 'STDIN';
     }
 
@@ -922,7 +939,7 @@ sub devise_title {
 #
 # If POD_MAN_DATE is set, that overrides anything else.  This can be used for
 # reproducible generation of the same file even if the input file timestamps
-# are unpredictable or the POD coms from standard input.
+# are unpredictable or the POD comes from standard input.
 #
 # Otherwise, if SOURCE_DATE_EPOCH is set and can be parsed as seconds since
 # the UNIX epoch, base the timestamp on that.  See
@@ -1380,7 +1397,7 @@ sub parse_from_file {
     my $self = shift;
     $self->reinit;
 
-    # Fake the old cutting option to Pod::Parser.  This fiddings with internal
+    # Fake the old cutting option to Pod::Parser.  This fiddles with internal
     # Pod::Simple state and is quite ugly; we need a better approach.
     if (ref ($_[0]) eq 'HASH') {
         my $opts = shift @_;
@@ -1541,16 +1558,20 @@ sub preamble_template {
 .\" Avoid warning from groff about undefined register 'F'.
 .de IX
 ..
-.if !\nF .nr F 0
-.if \nF>0 \{\
-.    de IX
-.    tm Index:\\$1\t\\n%\t"\\$2"
+.nr rF 0
+.if \n(.g .if rF .nr rF 1
+.if (\n(rF:(\n(.g==0)) \{\
+.    if \nF \{\
+.        de IX
+.        tm Index:\\$1\t\\n%\t"\\$2"
 ..
-.    if !\nF==2 \{\
-.        nr % 0
-.        nr F 2
+.        if !\nF==2 \{\
+.            nr % 0
+.            nr F 2
+.        \}
 .    \}
 .\}
+.rr rF
 ----END OF PREAMBLE----
 #'# for cperl-mode
 
@@ -1634,7 +1655,7 @@ __END__
 =for stopwords
 en em ALLCAPS teeny fixedbold fixeditalic fixedbolditalic stderr utf8
 UTF-8 Allbery Sean Burke Ossanna Solaris formatters troff uppercased
-Christiansen nourls parsers Kernighan
+Christiansen nourls parsers Kernighan lquote rquote
 
 =head1 NAME
 
@@ -1745,6 +1766,20 @@ Pod::Man doesn't assume you have this, and defaults to C<CB>.  Some
 systems (such as Solaris) have this font available as C<CX>.  Only matters
 for B<troff> output.
 
+=item lquote
+
+=item rquote
+
+Sets the quote marks used to surround CE<lt>> text.  C<lquote> sets the
+left quote mark and C<rquote> sets the right quote mark.  Either may also
+be set to the special value C<none>, in which case no quote mark is added
+on that side of CE<lt>> text (but the font is still changed for troff
+output).
+
+Also see the C<quotes> option, which can be used to set both quotes at once.
+If both C<quotes> and one of the other options is set, C<lquote> or C<rquote>
+overrides C<quotes>.
+
 =item name
 
 Set the name of the manual page for the C<.TH> macro.  Without this
@@ -1754,9 +1789,9 @@ parsed to see if it is a Perl module path.  If it is, a path like
 C<.../lib/Pod/Man.pm> is converted into a name like C<Pod::Man>.  This
 option, if given, overrides any automatic determination of the name.
 
-If generating a manual page from standard input, this option is required,
-since there's otherwise no way for Pod::Man to know what to use for the
-manual page name.
+If generating a manual page from standard input, the name will be set to
+C<STDIN> if this option is not provided.  Providing this option is strongly
+recommended to set a meaningful manual page name.
 
 =item nourls
 
@@ -1784,6 +1819,10 @@ quote and the second is used as the right quote.
 This may also be set to the special value C<none>, in which case no quote
 marks are added around CE<lt>> text (but the font is still changed for troff
 output).
+
+Also see the C<lquote> and C<rquote> options, which can be used to set the
+left and right quotes independently.  If both C<quotes> and one of the other
+options is set, C<lquote> or C<rquote> overrides C<quotes>.
 
 =item release
 
@@ -1986,7 +2025,7 @@ mine).
 =head1 COPYRIGHT AND LICENSE
 
 Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-2009, 2010, 2012, 2013, 2014, 2015, 2016 Russ Allbery <rra@cpan.org>
+2009, 2010, 2012, 2013, 2014, 2015, 2016, 2017 Russ Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.
@@ -1999,8 +2038,7 @@ L<man(1)>, L<man(7)>
 Ossanna, Joseph F., and Brian W. Kernighan.  "Troff User's Manual,"
 Computing Science Technical Report No. 54, AT&T Bell Laboratories.  This is
 the best documentation of standard B<nroff> and B<troff>.  At the time of
-this writing, it's available at
-L<http://www.cs.bell-labs.com/cm/cs/cstr.html>.
+this writing, it's available at L<http://www.troff.org/54.pdf>.
 
 The man page documenting the man macro set may be L<man(5)> instead of
 L<man(7)> on your system.  Also, please see L<pod2man(1)> for extensive

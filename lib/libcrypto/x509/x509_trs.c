@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.22 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.23 2018/05/18 18:40:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -187,7 +187,7 @@ X509_TRUST_set(int *t, int trust)
 
 int
 X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
-    char *name, int arg1, void *arg2)
+    const char *name, int arg1, void *arg2)
 {
 	int idx;
 	X509_TRUST *trtmp;
@@ -274,19 +274,19 @@ X509_TRUST_cleanup(void)
 }
 
 int
-X509_TRUST_get_flags(X509_TRUST *xp)
+X509_TRUST_get_flags(const X509_TRUST *xp)
 {
 	return xp->flags;
 }
 
 char *
-X509_TRUST_get0_name(X509_TRUST *xp)
+X509_TRUST_get0_name(const X509_TRUST *xp)
 {
 	return xp->name;
 }
 
 int
-X509_TRUST_get_trust(X509_TRUST *xp)
+X509_TRUST_get_trust(const X509_TRUST *xp)
 {
 	return xp->trust;
 }

@@ -17,8 +17,8 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
 
@@ -156,7 +156,7 @@ bool Filler::findDelayInstr(MachineBasicBlock &MBB,
   for (MachineBasicBlock::reverse_instr_iterator I = ++Slot.getReverse();
        I != MBB.instr_rend(); ++I) {
     // skip debug value
-    if (I->isDebugValue())
+    if (I->isDebugInstr())
       continue;
 
     // Convert to forward iterator.

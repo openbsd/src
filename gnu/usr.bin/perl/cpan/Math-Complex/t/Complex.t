@@ -8,6 +8,9 @@
 
 use Math::Complex 1.54;
 
+our $vax_float = (pack("d",1) =~ /^[\x80\x10]\x40/);
+our $has_inf   = !$vax_float;
+
 my ($args, $op, $target, $test, $test_set, $try, $val, $zvalue, @set, @val);
 
 $test = 0;
@@ -115,8 +118,13 @@ my $pii  = cplx(0, pi);
 my $pip2 = cplx(pi/2, 0);
 my $pip4 = cplx(pi/4, 0);
 my $zero = cplx(0, 0);
-my $inf  = 9**9**9;
 ';
+
+if ($has_inf) {
+    $constants .= <<'EOF';
+my $inf  = 9**9**9;
+EOF
+}
 
 push(@script, $constants);
 

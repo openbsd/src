@@ -30,7 +30,7 @@ public:
   BodyIndexer(IndexingContext &indexCtx,
               const NamedDecl *Parent, const DeclContext *DC)
     : IndexCtx(indexCtx), Parent(Parent), ParentDC(DC) { }
-  
+
   bool shouldWalkTypesOfTypeLocs() const { return false; }
 
   bool dataTraverseStmtPre(Stmt *S) {
@@ -322,7 +322,7 @@ public:
     }
     return true;
   }
-  
+
   bool VisitObjCDictionaryLiteral(ObjCDictionaryLiteral *E) {
     if (ObjCMethodDecl *MD = E->getDictWithObjectsMethod()) {
       return passObjCLiteralMethodCall(MD, E);
@@ -425,6 +425,17 @@ public:
       return visitForm(SyntaxForm);
     }
 
+    return true;
+  }
+
+  bool VisitOffsetOfExpr(OffsetOfExpr *S) {
+    for (unsigned I = 0, E = S->getNumComponents(); I != E; ++I) {
+      const OffsetOfNode &Component = S->getComponent(I);
+      if (Component.getKind() == OffsetOfNode::Field)
+        IndexCtx.handleReference(Component.getField(), Component.getLocEnd(),
+                                 Parent, ParentDC, SymbolRoleSet(), {});
+      // FIXME: Try to resolve dependent field references.
+    }
     return true;
   }
 };

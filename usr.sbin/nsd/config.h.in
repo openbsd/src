@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* apply the noreturn attribute to a function that exits the program */
+#undef ATTR_NORETURN
+
 /* Define this to enable BIND8 like NSTATS & XSTATS. */
 #undef BIND8_STATS
 
@@ -19,11 +22,17 @@
 /* Pathname to the NSD database */
 #undef DBFILE
 
+/* default dnstap socket path */
+#undef DNSTAP_SOCKET_PATH
+
 /* Define to the default maximum message length with EDNS. */
 #undef EDNS_MAX_MESSAGE_LEN
 
 /* Define to the default facility for syslog. */
 #undef FACILITY
+
+/* Define to 1 if you have the `accept4' function. */
+#undef HAVE_ACCEPT4
 
 /* Define to 1 if you have the `alarm' function. */
 #undef HAVE_ALARM
@@ -39,6 +48,9 @@
 
 /* Whether the C compiler accepts the "format" attribute */
 #undef HAVE_ATTR_FORMAT
+
+/* Whether the C compiler accepts the "noreturn" attribute */
+#undef HAVE_ATTR_NORETURN
 
 /* Whether the C compiler accepts the "unused" attribute */
 #undef HAVE_ATTR_UNUSED
@@ -165,6 +177,9 @@
 
 /* Define to 1 if you have the `localtime_r' function. */
 #undef HAVE_LOCALTIME_R
+
+/* Define to 1 if you have the <login_cap.h> header file. */
+#undef HAVE_LOGIN_CAP_H
 
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
@@ -314,6 +329,9 @@
 /* Define to 1 if you have the `strtol' function. */
 #undef HAVE_STRTOL
 
+/* Define to 1 if `sun_len' is a member of `struct sockaddr_un'. */
+#undef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
+
 /* Define to 1 if `st_mtimensec' is a member of `struct stat'. */
 #undef HAVE_STRUCT_STAT_ST_MTIMENSEC
 
@@ -346,6 +364,9 @@
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/un.h> header file. */
+#undef HAVE_SYS_UN_H
 
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
@@ -391,6 +412,9 @@
 
 /* Define to the maximum message length to pass to syslog. */
 #undef MAXSYSLOGMSGLEN
+
+/* Define this to cleanup memory at exit (eg. for valgrind, etc.) */
+#undef MEMCLEAN
 
 /* Define if memcmp() does not compare unsigned bytes */
 #undef MEMCMP_IS_BROKEN
@@ -491,6 +515,9 @@
 
 /* the user name to drop privileges to */
 #undef USER
+
+/* Define to 1 to enable dnstap support */
+#undef USE_DNSTAP
 
 /* Define if you want to use internal select based events */
 #undef USE_MINI_EVENT

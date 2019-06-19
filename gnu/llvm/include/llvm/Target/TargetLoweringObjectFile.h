@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
-#define LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
+#ifndef LLVM_CODEGEN_TARGETLOWERINGOBJECTFILE_H
+#define LLVM_CODEGEN_TARGETLOWERINGOBJECTFILE_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
@@ -47,10 +47,10 @@ protected:
   bool SupportGOTPCRelWithOffset = true;
 
   /// This section contains the static constructor pointer list.
-  MCSection *StaticCtorSection;
+  MCSection *StaticCtorSection = nullptr;
 
   /// This section contains the static destructor pointer list.
-  MCSection *StaticDtorSection;
+  MCSection *StaticDtorSection = nullptr;
 
 public:
   TargetLoweringObjectFile() = default;
@@ -71,8 +71,7 @@ public:
                                     const MCSymbol *Sym) const;
 
   /// Emit the module-level metadata that the platform cares about.
-  virtual void emitModuleMetadata(MCStreamer &Streamer, Module &M,
-                                  const TargetMachine &TM) const {}
+  virtual void emitModuleMetadata(MCStreamer &Streamer, Module &M) const {}
 
   /// Given a constant with the SectionKind, return a section that it should be
   /// placed in.
@@ -149,7 +148,7 @@ public:
     return StaticDtorSection;
   }
 
-  /// \brief Create a symbol reference to describe the given TLS variable when
+  /// Create a symbol reference to describe the given TLS variable when
   /// emitting the address in debug info.
   virtual const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const;
 
@@ -159,19 +158,19 @@ public:
     return nullptr;
   }
 
-  /// \brief Target supports replacing a data "PC"-relative access to a symbol
+  /// Target supports replacing a data "PC"-relative access to a symbol
   /// through another symbol, by accessing the later via a GOT entry instead?
   bool supportIndirectSymViaGOTPCRel() const {
     return SupportIndirectSymViaGOTPCRel;
   }
 
-  /// \brief Target GOT "PC"-relative relocation supports encoding an additional
+  /// Target GOT "PC"-relative relocation supports encoding an additional
   /// binary expression with an offset?
   bool supportGOTPCRelWithOffset() const {
     return SupportGOTPCRelWithOffset;
   }
 
-  /// \brief Get the target specific PC relative GOT entry relocation
+  /// Get the target specific PC relative GOT entry relocation
   virtual const MCExpr *getIndirectSymViaGOTPCRel(const MCSymbol *Sym,
                                                   const MCValue &MV,
                                                   int64_t Offset,
@@ -183,6 +182,9 @@ public:
   virtual void emitLinkerFlagsForGlobal(raw_ostream &OS,
                                         const GlobalValue *GV) const {}
 
+  virtual void emitLinkerFlagsForUsed(raw_ostream &OS,
+                                      const GlobalValue *GV) const {}
+
 protected:
   virtual MCSection *SelectSectionForGlobal(const GlobalObject *GO,
                                             SectionKind Kind,
@@ -191,4 +193,4 @@ protected:
 
 } // end namespace llvm
 
-#endif // LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
+#endif // LLVM_CODEGEN_TARGETLOWERINGOBJECTFILE_H

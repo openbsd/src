@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.7 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ech_key.c,v 1.9 2019/01/19 01:12:48 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -78,6 +78,7 @@
 #include <openssl/sha.h>
 
 #include "ech_locl.h"
+#include "ec_lcl.h"
 
 static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key,
     EC_KEY *ecdh,
@@ -125,6 +126,10 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	}
 
 	group = EC_KEY_get0_group(ecdh);
+
+	if (!EC_POINT_is_on_curve(group, pub_key, ctx))
+		goto err;
+
 	if ((tmp = EC_POINT_new(group)) == NULL) {
 		ECDHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -211,13 +216,26 @@ ECDH_OpenSSL(void)
 	return &openssl_ecdh_meth;
 }
 
+/* replace w/ ecdh_compute_key() when ECDH_METHOD gets removed */
+int
+ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+    EC_KEY *eckey,
+    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
+{
+	ECDH_DATA *ecdh;
+
+	if ((ecdh = ecdh_check(eckey)) == NULL)
+		return 0;
+	return ecdh->meth->compute_key(out, outlen, pub_key, eckey, KDF);
+}
+
 int
 ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     EC_KEY *eckey,
     void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
 {
-	ECDH_DATA *ecdh = ecdh_check(eckey);
-	if (ecdh == NULL)
-		return 0;
-	return ecdh->meth->compute_key(out, outlen, pub_key, eckey, KDF);
+	if (eckey->meth->compute_key != NULL)
+		return eckey->meth->compute_key(out, outlen, pub_key, eckey, KDF);
+	ECerror(EC_R_NOT_IMPLEMENTED);
+	return 0;
 }

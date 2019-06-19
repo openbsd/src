@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.36 2017/01/24 07:48:37 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.37 2018/11/16 21:15:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -427,10 +427,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			}
 		}
 	}
-
-	/* mprotect the GOT */
-	_dl_protect_segment(object, 0, "__got_start", "__got_end",
-	    PROT_READ|PROT_EXEC);
 
 	return (fails);
 }

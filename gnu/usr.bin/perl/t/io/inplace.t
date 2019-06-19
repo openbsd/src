@@ -5,7 +5,7 @@ require './test.pl';
 
 $^I = $^O eq 'VMS' ? '_bak' : '.bak';
 
-plan( tests => 6 );
+plan( tests => 8 );
 
 my @tfiles     = (tempfile(), tempfile(), tempfile());
 my @tfiles_bak = map "$_$^I", @tfiles;
@@ -90,4 +90,30 @@ SKIP:
     }
     
     END { unlink_all(@ifiles); }
+}
+
+{
+    my @tests =
+      ( # opts, code, result, name, $TODO
+       [ "-n", "die", "bar\n", "die shouldn't touch file" ],
+       [ "-n", "last", "", "last should update file" ],
+      );
+    our $file = tempfile() ;
+
+    for my $test (@tests) {
+        (my ($opts, $code, $result, $name), our $TODO) = @$test;
+        open my $fh, ">", $file or die;
+        print $fh "bar\n";
+        close $fh;
+
+        runperl( prog => $code,
+                 switches => [ grep length, "-i", $opts ],
+                 args => [ $file ],
+                 stderr => 1, # discarded
+               );
+        open $fh, "<", $file or die;
+        my $data = do { local $/; <$fh>; };
+        close $fh;
+        is($data, $result, $name);
+    }
 }

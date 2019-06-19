@@ -1,0 +1,40 @@
+.\"	$OpenBSD: ukspan.4,v 1.2 2019/06/07 20:52:13 jmc Exp $
+.\" Copyright (c) 2019 Cody Cutler <ccutler@csail.mit.edu>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 7 2019 $
+.Dt UKSPAN 4
+.Os
+.Sh NAME
+.Nm ukspan
+.Nd Keyspan USB serial adapter
+.Sh SYNOPSIS
+.Cd "ukspan* at uhub?"
+.Cd "ucom*   at ukspan?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports the TrippLite Keyspan USA-19HS serial adapter, which is made
+accessible through
+.Xr ucom 4 .
+.Sh SEE ALSO
+.Xr tty 4 ,
+.Xr ucom 4 ,
+.Xr uhub 4 ,
+.Xr usb 4
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Cody Cutler Aq Mt ccutler@csail.mit.edu .

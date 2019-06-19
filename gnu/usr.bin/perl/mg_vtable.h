@@ -52,6 +52,7 @@
 #define PERL_MAGIC_vec            'v' /* vec() lvalue */
 #define PERL_MAGIC_utf8           'w' /* Cached UTF-8 information */
 #define PERL_MAGIC_substr         'x' /* substr() lvalue */
+#define PERL_MAGIC_nonelem        'Y' /* Array element that does not exist */
 #define PERL_MAGIC_defelem        'y' /* Shadow "foreach" iterator variable /
                                          smart parameter vivification */
 #define PERL_MAGIC_lvref          '\\' /* Lvalue reference constructor */
@@ -76,6 +77,7 @@ enum {		/* pass one of these to get_vtbl */
     want_vtbl_lvref,
     want_vtbl_mglob,
     want_vtbl_nkeys,
+    want_vtbl_nonelem,
     want_vtbl_ovrld,
     want_vtbl_pack,
     want_vtbl_packelem,
@@ -112,6 +114,7 @@ EXTCONST char * const PL_magic_vtable_names[magic_vtable_max] = {
     "lvref",
     "mglob",
     "nkeys",
+    "nonelem",
     "ovrld",
     "pack",
     "packelem",
@@ -171,6 +174,7 @@ EXT_MGVTBL PL_magic_vtables[magic_vtable_max] = {
   { 0, Perl_magic_setlvref, 0, 0, 0, 0, 0, 0 },
   { 0, Perl_magic_setmglob, 0, 0, 0, 0, 0, 0 },
   { Perl_magic_getnkeys, Perl_magic_setnkeys, 0, 0, 0, 0, 0, 0 },
+  { 0, Perl_magic_setnonelem, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 0, Perl_magic_freeovrld, 0, 0, 0 },
   { 0, 0, Perl_magic_sizepack, Perl_magic_wipepack, 0, 0, 0, 0 },
   { Perl_magic_getpack, Perl_magic_setpack, 0, Perl_magic_clearpack, 0, 0, 0, 0 },
@@ -216,6 +220,7 @@ EXT_MGVTBL PL_magic_vtables[magic_vtable_max];
 #define PL_vtbl_lvref PL_magic_vtables[want_vtbl_lvref]
 #define PL_vtbl_mglob PL_magic_vtables[want_vtbl_mglob]
 #define PL_vtbl_nkeys PL_magic_vtables[want_vtbl_nkeys]
+#define PL_vtbl_nonelem PL_magic_vtables[want_vtbl_nonelem]
 #define PL_vtbl_ovrld PL_magic_vtables[want_vtbl_ovrld]
 #define PL_vtbl_pack PL_magic_vtables[want_vtbl_pack]
 #define PL_vtbl_packelem PL_magic_vtables[want_vtbl_packelem]

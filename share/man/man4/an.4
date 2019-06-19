@@ -1,4 +1,4 @@
-.\"	$OpenBSD: an.4,v 1.42 2015/02/28 05:47:36 mlarkin Exp $
+.\"	$OpenBSD: an.4,v 1.44 2019/03/29 07:07:05 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/an.4,v 1.5 2000/03/02 14:53:45 sheldonh Exp $
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt AN 4
 .Os
 .Sh NAME
@@ -114,6 +114,11 @@ not be used as the sole mechanism
 to secure wireless communication,
 due to serious weaknesses in it.
 .Pp
+In BSS mode,
+the driver supports powersave mode,
+which can be enabled via
+.Xr ifconfig 8 .
+.Pp
 The
 .Nm
 driver can be configured at runtime with
@@ -129,8 +134,7 @@ using WEP key
 .Dq mywepkey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid
-nwkey mywepkey
+nwid mynwid nwkey mywepkey
 dhcp
 .Ed
 .Sh DIAGNOSTICS

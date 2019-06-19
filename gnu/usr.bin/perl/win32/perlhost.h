@@ -836,15 +836,15 @@ PerlStdIOFdupopen(struct IPerlStdIO* piPerl, FILE* pf)
     int fileno = win32_dup(win32_fileno(pf));
 
     /* open the file in the same mode */
-    if((pf)->_flag & _IOREAD) {
+    if (PERLIO_FILE_flag(pf) & PERLIO_FILE_flag_RD) {
 	mode[0] = 'r';
 	mode[1] = 0;
     }
-    else if((pf)->_flag & _IOWRT) {
+    else if (PERLIO_FILE_flag(pf) & PERLIO_FILE_flag_WR) {
 	mode[0] = 'a';
 	mode[1] = 0;
     }
-    else if((pf)->_flag & _IORW) {
+    else if (PERLIO_FILE_flag(pf) & PERLIO_FILE_flag_RW) {
 	mode[0] = 'r';
 	mode[1] = '+';
 	mode[2] = 0;

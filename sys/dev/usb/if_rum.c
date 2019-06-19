@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.123 2017/10/26 15:00:28 mpi Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.124 2019/04/25 01:52:14 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -591,9 +591,9 @@ rum_media_change(struct ifnet *ifp)
 		return error;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
-		rum_init(ifp);
+		error = rum_init(ifp);
 
-	return 0;
+	return error;
 }
 
 /*

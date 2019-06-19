@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.31 2011/09/19 11:19:32 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.33 2018/09/07 10:59:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -39,6 +39,7 @@
  * length field. Which is accounted in the length field.
  */
 #define MRT_HEADER_SIZE		12
+#define MRT_ET_HEADER_SIZE	16
 
 struct mrt_hdr {
 	u_int32_t	timestamp;
@@ -87,11 +88,15 @@ enum MRT_BGP4MP_SUBTYPES {
 };
 
 /* size of the BGP4MP headers without payload */
-#define MRT_BGP4MP_IPv4_HEADER_SIZE	16
-#define MRT_BGP4MP_IPv6_HEADER_SIZE	40
+#define MRT_BGP4MP_IPv4_HEADER_SIZE		16
+#define MRT_BGP4MP_IPv6_HEADER_SIZE		40
+#define MRT_BGP4MP_ET_IPv4_HEADER_SIZE		20
+#define MRT_BGP4MP_ET_IPv6_HEADER_SIZE		44
 /* 4-byte AS variants of the previous */
-#define MRT_BGP4MP_AS4_IPv4_HEADER_SIZE	20
-#define MRT_BGP4MP_AS4_IPv6_HEADER_SIZE	44
+#define MRT_BGP4MP_AS4_IPv4_HEADER_SIZE		20
+#define MRT_BGP4MP_AS4_IPv6_HEADER_SIZE		44
+#define MRT_BGP4MP_ET_AS4_IPv4_HEADER_SIZE	24
+#define MRT_BGP4MP_ET_AS4_IPv6_HEADER_SIZE	48
 
 /* If the type is PROTOCOL_BGP4MP and the subtype is either BGP4MP_STATE_CHANGE
  * or BGP4MP_MESSAGE the message consists of a common header plus the payload.
@@ -195,7 +200,7 @@ enum MRT_DUMP_V2_SUBTYPES {
  * The format of a peer_entry is the following:
  *
  * +--------+
- * |  type  |    
+ * |  type  |
  * +--------+--------+--------+--------+
  * |            peer_bgp_id            |
  * +--------+--------+--------+--------+
@@ -214,7 +219,7 @@ enum MRT_DUMP_V2_SUBTYPES {
 
 /*
  * AFI/SAFI specific RIB Subtypes are special to save a few bytes.
- * 
+ *
  * +--------+--------+--------+--------+
  * |              seq_num              |
  * +--------+--------+--------+--------+

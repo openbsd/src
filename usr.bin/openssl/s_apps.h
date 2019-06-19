@@ -1,4 +1,4 @@
-/* $OpenBSD: s_apps.h,v 1.4 2016/12/30 17:25:48 jsing Exp $ */
+/* $OpenBSD: s_apps.h,v 1.5 2018/04/25 07:12:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,5 +147,5 @@ void tlsext_cb(SSL *s, int client_server, int type, unsigned char *data,
 
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     unsigned int *cookie_len);
-int verify_cookie_callback(SSL *ssl, unsigned char *cookie,
+int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
     unsigned int cookie_len);

@@ -1,0 +1,9 @@
+#!/bin/ksh
+#
+# $OpenBSD: rad,v 1.1 2018/07/12 08:20:36 florian Exp $
+
+daemon="/usr/sbin/rad"
+
+. /etc/rc.d/rc.subr
+
+rc_cmd $1

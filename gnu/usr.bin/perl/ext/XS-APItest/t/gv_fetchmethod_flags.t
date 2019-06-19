@@ -49,3 +49,8 @@ is XS::APItest::gv_fetchmethod_flags_type(\%::, "method\0not quite!", 2, 0), "*m
         }
     }
 }
+
+# [perl #129267] Buffer overrun when argument name ends with colon and
+#                there is a colon past the end.  This used to segv.
+XS::APItest::gv_fetchmethod_flags_type(\%::, "method:::::", 4, 7);
+                                             # With type 4, 7 is the length

@@ -4,7 +4,7 @@
 # used for building XSUB of Unicode::Collate.
 #
 # Usage:
-#    <do 'mkheader'> in perl, or <perl mkheader> in command line
+#    <do './mkheader'> in perl, or <perl mkheader> in command line
 #
 # Input file:
 #    Collate/allkeys.txt

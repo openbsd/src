@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.53 2017/02/09 19:02:34 bluhm Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.57 2018/06/04 19:42:54 kn Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -128,9 +128,7 @@ cache_zap(struct namecache *ncp)
 }
 
 /*
- * Look for a name in the cache. We don't do this if the segment name is
- * long, simply so the cache can avoid holding long names (which would
- * either waste space, or add greatly to the complexity).
+ * Look for a name in the cache.
  * dvp points to the directory to search. The componentname cnp holds
  * the information on the entry being sought, such as its length
  * and its name. If the lookup succeeds, vpp is set to point to the vnode
@@ -145,7 +143,6 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 	struct namecache *ncp;
 	struct namecache n;
 	struct vnode *vp;
-	struct proc *p = curproc;
 	u_long vpid;
 	int error;
 
@@ -209,28 +206,28 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 		vref(dvp);
 		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {
-		VOP_UNLOCK(dvp, p);
+		VOP_UNLOCK(dvp);
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = vget(vp, LK_EXCLUSIVE, p);
+		error = vget(vp, LK_EXCLUSIVE);
 		/*
 		 * If the above vget() succeeded and both LOCKPARENT and
 		 * ISLASTCN is set, lock the directory vnode as well.
 		 */
 		if (!error && (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) == 0) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE, p)) != 0) {
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0) {
 				vput(vp);
 				return (error);
 			}
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 	} else {
-		error = vget(vp, LK_EXCLUSIVE, p);
+		error = vget(vp, LK_EXCLUSIVE);
 		/*
 		 * If the above vget() failed or either of LOCKPARENT or
 		 * ISLASTCN is set, unlock the directory vnode.
 		 */
 		if (error || (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
-			VOP_UNLOCK(dvp, p);
+			VOP_UNLOCK(dvp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 	}
@@ -252,7 +249,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp,
 		 */
 		if (vp == dvp || error ||
 		    (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
-			if ((error = vn_lock(dvp, LK_EXCLUSIVE, p)) != 0)
+			if ((error = vn_lock(dvp, LK_EXCLUSIVE)) != 0)
 				return (error);
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}

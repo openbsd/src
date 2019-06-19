@@ -1,13 +1,19 @@
-.\" $OpenBSD: args.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
-.TH MT-ARGS 1 "June 25, 2017"
+.\" $OpenBSD: args.in,v 1.3 2018/08/14 01:26:12 schwarze Exp $
+.TH MT-ARGS 1 "August 13, 2018"
 .SH NAME
 MT-args \- argument handling of the man-ext mailto macro
 .SH DESCRIPTION
+argument, text, and tail:
+.MT test@example.com
+text
+.ME tail args
+.PP
 argument plus text:
 .MT test@example.com
 invalid
 address
 .ME
+next line
 .PP
 argument but no text:
 .MT test@example.com

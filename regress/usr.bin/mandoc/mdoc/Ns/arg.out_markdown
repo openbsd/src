@@ -1,0 +1,14 @@
+NS-ARG(1) - General Commands Manual
+
+# NAME
+
+**Ns-arg** - escape sequences in the arguments of in-line macros with an argument limit
+
+# DESCRIPTION
+
+unquoted unescaped&#64;
+quoted unescaped&#64;
+unquoted escaped&#64;
+quoted escaped&#64;
+
+OpenBSD - December 21, 2018

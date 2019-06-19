@@ -11,6 +11,7 @@
 #include "MCTargetDesc/HexagonFixupKinds.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCELFObjectWriter.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -297,9 +298,7 @@ unsigned HexagonELFObjectWriter::getRelocType(MCContext &Ctx,
   }
 }
 
-MCObjectWriter *llvm::createHexagonELFObjectWriter(raw_pwrite_stream &OS,
-                                                   uint8_t OSABI,
-                                                   StringRef CPU) {
-  MCELFObjectTargetWriter *MOTW = new HexagonELFObjectWriter(OSABI, CPU);
-  return createELFObjectWriter(MOTW, OS, /*IsLittleEndian*/ true);
+std::unique_ptr<MCObjectTargetWriter>
+llvm::createHexagonELFObjectWriter(uint8_t OSABI, StringRef CPU) {
+  return llvm::make_unique<HexagonELFObjectWriter>(OSABI, CPU);
 }

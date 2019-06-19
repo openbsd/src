@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.61 2018/03/27 08:32:29 mpi Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.70 2019/06/04 15:41:02 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -27,11 +27,6 @@
 
 #include <ddb/db_output.h>
 
-#if defined(MULTIPROCESSOR) || defined(WITNESS)
-#include <sys/mplock.h>
-struct __mp_lock kernel_lock;
-#endif
-
 #ifdef MP_LOCKDEBUG
 #ifndef DDB
 #error "MP_LOCKDEBUG requires DDB"
@@ -42,6 +37,9 @@ int __mp_lock_spinout = 200000000;
 #endif /* MP_LOCKDEBUG */
 
 #ifdef MULTIPROCESSOR
+
+#include <sys/mplock.h>
+struct __mp_lock kernel_lock;
 
 /*
  * Functions for manipulating the kernel_lock.  We put them here
@@ -60,14 +58,10 @@ _kernel_lock_init(void)
  */
 
 void
-_kernel_lock(const char *file, int line)
+_kernel_lock(void)
 {
 	SCHED_ASSERT_UNLOCKED();
-#ifdef WITNESS
-	___mp_lock(&kernel_lock, file, line);
-#else
 	__mp_lock(&kernel_lock);
-#endif
 }
 
 void
@@ -91,7 +85,7 @@ _kernel_lock_held(void)
 #include <machine/cpu.h>
 
 void
-___mp_lock_init(struct __mp_lock *mpl, struct lock_type *type)
+___mp_lock_init(struct __mp_lock *mpl, const struct lock_type *type)
 {
 	memset(mpl->mpl_cpus, 0, sizeof(mpl->mpl_cpus));
 	mpl->mpl_users = 0;
@@ -113,26 +107,28 @@ ___mp_lock_init(struct __mp_lock *mpl, struct lock_type *type)
 static __inline void
 __mp_lock_spin(struct __mp_lock *mpl, u_int me)
 {
-#ifndef MP_LOCKDEBUG
-	while (mpl->mpl_ticket != me)
-		CPU_BUSY_CYCLE();
-#else
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+#ifdef MP_LOCKDEBUG
 	int nticks = __mp_lock_spinout;
+#endif
 
+	spc->spc_spinning++;
 	while (mpl->mpl_ticket != me) {
 		CPU_BUSY_CYCLE();
 
+#ifdef MP_LOCKDEBUG
 		if (--nticks <= 0) {
-			db_printf("__mp_lock(%p): lock spun out", mpl);
+			db_printf("%s: %p lock spun out", __func__, mpl);
 			db_enter();
 			nticks = __mp_lock_spinout;
 		}
-	}
 #endif
+	}
+	spc->spc_spinning--;
 }
 
 void
-___mp_lock(struct __mp_lock *mpl LOCK_FL_VARS)
+__mp_lock(struct __mp_lock *mpl)
 {
 	struct __mp_lock_cpu *cpu = &mpl->mpl_cpus[cpu_number()];
 	unsigned long s;
@@ -140,7 +136,7 @@ ___mp_lock(struct __mp_lock *mpl LOCK_FL_VARS)
 #ifdef WITNESS
 	if (!__mp_lock_held(mpl, curcpu()))
 		WITNESS_CHECKORDER(&mpl->mpl_lock_obj,
-		    LOP_EXCLUSIVE | LOP_NEWORDER, file, line, NULL);
+		    LOP_EXCLUSIVE | LOP_NEWORDER, NULL);
 #endif
 
 	s = intr_disable();
@@ -151,11 +147,11 @@ ___mp_lock(struct __mp_lock *mpl LOCK_FL_VARS)
 	__mp_lock_spin(mpl, cpu->mplc_ticket);
 	membar_enter_after_atomic();
 
-	WITNESS_LOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE, file, line);
+	WITNESS_LOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE);
 }
 
 void
-___mp_unlock(struct __mp_lock *mpl LOCK_FL_VARS)
+__mp_unlock(struct __mp_lock *mpl)
 {
 	struct __mp_lock_cpu *cpu = &mpl->mpl_cpus[cpu_number()];
 	unsigned long s;
@@ -167,7 +163,7 @@ ___mp_unlock(struct __mp_lock *mpl LOCK_FL_VARS)
 	}
 #endif
 
-	WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE, file, line);
+	WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE);
 
 	s = intr_disable();
 	if (--cpu->mplc_depth == 0) {
@@ -178,7 +174,7 @@ ___mp_unlock(struct __mp_lock *mpl LOCK_FL_VARS)
 }
 
 int
-___mp_release_all(struct __mp_lock *mpl LOCK_FL_VARS)
+__mp_release_all(struct __mp_lock *mpl)
 {
 	struct __mp_lock_cpu *cpu = &mpl->mpl_cpus[cpu_number()];
 	unsigned long s;
@@ -191,7 +187,7 @@ ___mp_release_all(struct __mp_lock *mpl LOCK_FL_VARS)
 	rv = cpu->mplc_depth;
 #ifdef WITNESS
 	for (i = 0; i < rv; i++)
-		WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE, file, line);
+		WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE);
 #endif
 	cpu->mplc_depth = 0;
 	membar_exit();
@@ -202,7 +198,7 @@ ___mp_release_all(struct __mp_lock *mpl LOCK_FL_VARS)
 }
 
 int
-___mp_release_all_but_one(struct __mp_lock *mpl LOCK_FL_VARS)
+__mp_release_all_but_one(struct __mp_lock *mpl)
 {
 	struct __mp_lock_cpu *cpu = &mpl->mpl_cpus[cpu_number()];
 	int rv = cpu->mplc_depth - 1;
@@ -210,7 +206,7 @@ ___mp_release_all_but_one(struct __mp_lock *mpl LOCK_FL_VARS)
 	int i;
 
 	for (i = 0; i < rv; i++)
-		WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE, file, line);
+		WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE);
 #endif
 
 #ifdef MP_LOCKDEBUG
@@ -226,10 +222,10 @@ ___mp_release_all_but_one(struct __mp_lock *mpl LOCK_FL_VARS)
 }
 
 void
-___mp_acquire_count(struct __mp_lock *mpl, int count LOCK_FL_VARS)
+__mp_acquire_count(struct __mp_lock *mpl, int count)
 {
 	while (count--)
-		___mp_lock(mpl LOCK_FL_ARGS);
+		__mp_lock(mpl);
 }
 
 int
@@ -256,17 +252,18 @@ __mtx_init(struct mutex *mtx, int wantipl)
 
 #ifdef MULTIPROCESSOR
 void
-__mtx_enter(struct mutex *mtx)
+mtx_enter(struct mutex *mtx)
 {
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 #ifdef MP_LOCKDEBUG
 	int nticks = __mp_lock_spinout;
 #endif
 
-	/* Avoid deadlocks after panic or in DDB */
-	if (panicstr || db_active)
-		return;
+	WITNESS_CHECKORDER(MUTEX_LOCK_OBJECT(mtx),
+	    LOP_EXCLUSIVE | LOP_NEWORDER, NULL);
 
-	while (__mtx_enter_try(mtx) == 0) {
+	spc->spc_spinning++;
+	while (mtx_enter_try(mtx) == 0) {
 		CPU_BUSY_CYCLE();
 
 #ifdef MP_LOCKDEBUG
@@ -277,13 +274,18 @@ __mtx_enter(struct mutex *mtx)
 		}
 #endif
 	}
+	spc->spc_spinning--;
 }
 
 int
-__mtx_enter_try(struct mutex *mtx)
+mtx_enter_try(struct mutex *mtx)
 {
 	struct cpu_info *owner, *ci = curcpu();
 	int s;
+
+	/* Avoid deadlocks after panic or in DDB */
+	if (panicstr || db_active)
+		return (1);
 
 	if (mtx->mtx_wantipl != IPL_NONE)
 		s = splraise(mtx->mtx_wantipl);
@@ -300,6 +302,7 @@ __mtx_enter_try(struct mutex *mtx)
 #ifdef DIAGNOSTIC
 		ci->ci_mutex_level++;
 #endif
+		WITNESS_LOCK(MUTEX_LOCK_OBJECT(mtx), LOP_EXCLUSIVE);
 		return (1);
 	}
 
@@ -310,13 +313,16 @@ __mtx_enter_try(struct mutex *mtx)
 }
 #else
 void
-__mtx_enter(struct mutex *mtx)
+mtx_enter(struct mutex *mtx)
 {
 	struct cpu_info *ci = curcpu();
 
 	/* Avoid deadlocks after panic or in DDB */
 	if (panicstr || db_active)
 		return;
+
+	WITNESS_CHECKORDER(MUTEX_LOCK_OBJECT(mtx),
+	    LOP_EXCLUSIVE | LOP_NEWORDER, NULL);
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(mtx->mtx_owner == ci))
@@ -331,18 +337,19 @@ __mtx_enter(struct mutex *mtx)
 #ifdef DIAGNOSTIC
 	ci->ci_mutex_level++;
 #endif
+	WITNESS_LOCK(MUTEX_LOCK_OBJECT(mtx), LOP_EXCLUSIVE);
 }
 
 int
-__mtx_enter_try(struct mutex *mtx)
+mtx_enter_try(struct mutex *mtx)
 {
-	__mtx_enter(mtx);
+	mtx_enter(mtx);
 	return (1);
 }
 #endif
 
 void
-__mtx_leave(struct mutex *mtx)
+mtx_leave(struct mutex *mtx)
 {
 	int s;
 
@@ -351,6 +358,7 @@ __mtx_leave(struct mutex *mtx)
 		return;
 
 	MUTEX_ASSERT_LOCKED(mtx);
+	WITNESS_UNLOCK(MUTEX_LOCK_OBJECT(mtx), LOP_EXCLUSIVE);
 
 #ifdef DIAGNOSTIC
 	curcpu()->ci_mutex_level--;
@@ -358,18 +366,70 @@ __mtx_leave(struct mutex *mtx)
 
 	s = mtx->mtx_oldipl;
 #ifdef MULTIPROCESSOR
-	membar_exit_before_atomic();
+	membar_exit();
 #endif
 	mtx->mtx_owner = NULL;
 	if (mtx->mtx_wantipl != IPL_NONE)
 		splx(s);
 }
+
+#ifdef DDB
+void
+db_mtx_enter(struct db_mutex *mtx)
+{
+	struct cpu_info *ci = curcpu(), *owner;
+	unsigned long s;
+
+#ifdef DIAGNOSTIC
+	if (__predict_false(mtx->mtx_owner == ci))
+		panic("%s: mtx %p: locking against myself", __func__, mtx);
+#endif
+
+	s = intr_disable();
+
+	for (;;) {
+		owner = atomic_cas_ptr(&mtx->mtx_owner, NULL, ci);
+		if (owner == NULL)
+			break;
+		CPU_BUSY_CYCLE();
+	}
+	membar_enter_after_atomic();
+
+	mtx->mtx_intr_state = s;
+
+#ifdef DIAGNOSTIC
+	ci->ci_mutex_level++;
+#endif
+}
+
+void
+db_mtx_leave(struct db_mutex *mtx)
+{
+#ifdef DIAGNOSTIC
+	struct cpu_info *ci = curcpu();
+#endif
+	unsigned long s;
+
+#ifdef DIAGNOSTIC
+	if (__predict_false(mtx->mtx_owner != ci))
+		panic("%s: mtx %p: not owned by this CPU", __func__, mtx);
+	ci->ci_mutex_level--;
+#endif
+
+	s = mtx->mtx_intr_state;
+#ifdef MULTIPROCESSOR
+	membar_exit();
+#endif
+	mtx->mtx_owner = NULL;
+	intr_restore(s);
+}
+#endif /* DDB */
 #endif /* __USE_MI_MUTEX */
 
 #ifdef WITNESS
 void
 _mtx_init_flags(struct mutex *m, int ipl, const char *name, int flags,
-    struct lock_type *type)
+    const struct lock_type *type)
 {
 	struct lock_object *lo = MUTEX_LOCK_OBJECT(m);
 
@@ -381,36 +441,5 @@ _mtx_init_flags(struct mutex *m, int ipl, const char *name, int flags,
 	WITNESS_INIT(lo, type);
 
 	_mtx_init(m, ipl);
-}
-
-void
-_mtx_enter(struct mutex *m, const char *file, int line)
-{
-	struct lock_object *lo = MUTEX_LOCK_OBJECT(m);
-
-	WITNESS_CHECKORDER(lo, LOP_EXCLUSIVE | LOP_NEWORDER, file, line, NULL);
-	__mtx_enter(m);
-	WITNESS_LOCK(lo, LOP_EXCLUSIVE, file, line);
-}
-
-int
-_mtx_enter_try(struct mutex *m, const char *file, int line)
-{
-	struct lock_object *lo = MUTEX_LOCK_OBJECT(m);
-
-	if (__mtx_enter_try(m)) {
-		WITNESS_LOCK(lo, LOP_EXCLUSIVE, file, line);
-		return 1;
-	}
-	return 0;
-}
-
-void
-_mtx_leave(struct mutex *m, const char *file, int line)
-{
-	struct lock_object *lo = MUTEX_LOCK_OBJECT(m);
-
-	WITNESS_UNLOCK(lo, LOP_EXCLUSIVE, file, line);
-	__mtx_leave(m);
 }
 #endif /* WITNESS */

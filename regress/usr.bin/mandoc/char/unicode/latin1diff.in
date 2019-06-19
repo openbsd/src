@@ -1,16 +1,10 @@
-.\" $OpenBSD: latin1diff.in,v 1.3 2017/08/23 10:59:53 schwarze Exp $
-.TH CHAR-UNICODE-LATIN1DIFF 1 "October 27, 2014"
+.\" $OpenBSD: latin1diff.in,v 1.4 2018/08/21 16:01:38 schwarze Exp $
+.TH CHAR-UNICODE-LATIN1DIFF 1 "August 21, 2018"
 .SH NAME
 char-unicode-latin1diff \- Unicode characters in the ISO-8859-1 range
 .SH DESCRIPTION
 .nf
 BEGINTEST
-\[u00A1]\(r!	INVERTED EXCLAMATION MARK
-\[u00A3]\(Po	POUND SIGN
 \[u00AF]\(a-	MACRON
-\[u00BF]\(r?	INVERTED QUESTION MARK
-\[u00DE]\(TP	LATIN CAPITAL LETTER THORN
-\[u00DF]\(ss	LATIN SMALL LETTER SHARP S
-\[u00FE]\(Tp	LATIN SMALL LETTER THORN
 ENDTEST
 .fi

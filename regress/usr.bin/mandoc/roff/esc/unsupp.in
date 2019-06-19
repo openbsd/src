@@ -1,0 +1,8 @@
+.\" $OpenBSD: unsupp.in,v 1.1 2018/12/15 19:30:20 schwarze Exp $
+.TH ESC-UNSUPP 1 "December 15, 2018"
+.SH NAME
+esc-unsupp \- unsupported escape sequences
+.SH DESCRIPTION
+.nf
+exclamation mark: a\!b\[!]c
+question mark: a\?\&\?b\[?]c

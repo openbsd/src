@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.10 2017/11/27 01:58:52 florian Exp $ */
+/*	$Id: json.c,v 1.14 2019/06/18 18:50:07 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -230,6 +230,15 @@ json_getarrayobj(struct jsmnn *n)
 }
 
 /*
+ * Get a string element from an array
+ */
+static char *
+json_getarraystr(struct jsmnn *n)
+{
+	return n->type != JSMN_STRING ? NULL : n->d.str;
+}
+
+/*
  * Extract an array from the returned JSON object, making sure that it's
  * the correct type.
  * Returns NULL on failure.
@@ -256,6 +265,7 @@ json_getarray(struct jsmnn *n, const char *name)
 	return n->d.obj[i].rhs;
 }
 
+#ifdef notyet
 /*
  * Extract subtree from the returned JSON object, making sure that it's
  * the correct type.
@@ -282,6 +292,7 @@ json_getobj(struct jsmnn *n, const char *name)
 		return NULL;
 	return n->d.obj[i].rhs;
 }
+#endif /* notyet */
 
 /*
  * Extract a single string from the returned JSON object, making sure
@@ -332,23 +343,25 @@ json_free_challenge(struct chng *p)
  * Parse the response from the ACME server when we're waiting to see
  * whether the challenge has been ok.
  */
-int
+enum chngstatus
 json_parse_response(struct jsmnn *n)
 {
 	char		*resp;
-	int		 rc;
+	enum chngstatus	 rc;
 
 	if (n == NULL)
-		return -1;
+		return CHNG_INVALID;
 	if ((resp = json_getstr(n, "status")) == NULL)
-		return -1;
+		return CHNG_INVALID;
 
 	if (strcmp(resp, "valid") == 0)
-		rc = 1;
+		rc = CHNG_VALID;
 	else if (strcmp(resp, "pending") == 0)
-		rc = 0;
+		rc = CHNG_PENDING;
+	else if (strcmp(resp, "processing") == 0)
+		rc = CHNG_PROCESSING;
 	else
-		rc = -1;
+		rc = CHNG_INVALID;
 
 	free(resp);
 	return rc;
@@ -385,12 +398,116 @@ json_parse_challenge(struct jsmnn *n, struct chng *p)
 		free(type);
 		if (rc)
 			continue;
-		p->uri = json_getstr(obj, "uri");
+		p->uri = json_getstr(obj, "url");
 		p->token = json_getstr(obj, "token");
+		p->status = json_parse_response(obj);
 		return p->uri != NULL && p->token != NULL;
 	}
 
 	return 0;
+}
+
+static enum orderstatus
+json_parse_order_status(struct jsmnn *n)
+{
+	char	*status;
+
+	if (n == NULL)
+		return ORDER_INVALID;
+
+	if ((status = json_getstr(n, "status")) == NULL)
+		return ORDER_INVALID;
+
+	if (strcmp(status, "pending") == 0)
+		return ORDER_PENDING;
+	else if (strcmp(status, "ready") == 0)
+		return ORDER_READY;
+	else if (strcmp(status, "processing") == 0)
+		return ORDER_PROCESSING;
+	else if (strcmp(status, "valid") == 0)
+		return ORDER_VALID;
+	else if (strcmp(status, "invalid") == 0)
+		return ORDER_INVALID;
+	else
+		return ORDER_INVALID;
+}
+
+/*
+ * Parse the response from a newOrder, which consists of a status
+ * a list of authorization urls and a finalize url into a struct.
+ */
+int
+json_parse_order(struct jsmnn *n, struct order *order)
+{
+	struct jsmnn	*array;
+	size_t		 i;
+	char		*finalize, *str;
+
+	order->status = json_parse_order_status(n);
+
+	if (n == NULL)
+		return 0;
+
+	if ((finalize = json_getstr(n, "finalize")) == NULL) {
+		warnx("no finalize field in order response");
+		return 0;
+	}
+
+	if ((order->finalize = strdup(finalize)) == NULL)
+		goto err;
+
+	if ((array = json_getarray(n, "authorizations")) == NULL)
+		goto err;
+
+	if ((order->authsz = array->fields) > 0) {
+		order->auths = calloc(sizeof(*order->auths), order->authsz);
+		if (order->auths == NULL) {
+			warn("malloc");
+			goto err;
+		}
+	}
+
+	for (i = 0; i < array->fields; i++) {
+		str = json_getarraystr(array->d.array[i]);
+		if (str == NULL)
+			continue;
+		if ((order->auths[i] = strdup(str)) == NULL) {
+			warn("strdup");
+			goto err;
+		}
+	}
+	return 1;
+err:
+	json_free_order(order);	
+	return 0;
+}
+
+int
+json_parse_upd_order(struct jsmnn *n, struct order *order)
+{
+	char	*certificate;
+	order->status = json_parse_order_status(n);
+	if ((certificate = json_getstr(n, "certificate")) != NULL) {
+		if ((order->certificate = strdup(certificate)) == NULL)
+			return 0;
+	}
+	return 1;
+}
+
+void
+json_free_order(struct order *order)
+{
+	size_t i;
+
+	free(order->finalize);
+	order->finalize = NULL;
+	for(i = 0; i < order->authsz; i++)
+		free(order->auths[i]);
+	free(order->auths);
+	
+	order->finalize = NULL;
+	order->auths = NULL;
+	order->authsz = 0;
 }
 
 /*
@@ -400,24 +517,16 @@ json_parse_challenge(struct jsmnn *n, struct chng *p)
 int
 json_parse_capaths(struct jsmnn *n, struct capaths *p)
 {
-	struct jsmnn	*meta;
-
 	if (n == NULL)
 		return 0;
 
-	meta = json_getobj(n, "meta");
+	p->newaccount = json_getstr(n, "newAccount");
+	p->newnonce = json_getstr(n, "newNonce");
+	p->neworder = json_getstr(n, "newOrder");
+	p->revokecert = json_getstr(n, "revokeCert");
 
-	if (meta == NULL)
-		return 0;
-
-	p->newauthz = json_getstr(n, "new-authz");
-	p->newcert = json_getstr(n, "new-cert");
-	p->newreg = json_getstr(n, "new-reg");
-	p->revokecert = json_getstr(n, "revoke-cert");
-	p->agreement = json_getstr(meta, "terms-of-service");
-
-	return p->newauthz != NULL && p->newcert != NULL &&
-	    p->newreg != NULL && p->revokecert != NULL && p->agreement != NULL;
+	return p->newaccount != NULL && p->newnonce != NULL &&
+	    p->neworder != NULL && p->revokecert != NULL;
 }
 
 /*
@@ -427,11 +536,10 @@ void
 json_free_capaths(struct capaths *p)
 {
 
-	free(p->newauthz);
-	free(p->newcert);
-	free(p->newreg);
+	free(p->newaccount);
+	free(p->newnonce);
+	free(p->neworder);
 	free(p->revokecert);
-	free(p->agreement);
 	memset(p, 0, sizeof(struct capaths));
 }
 
@@ -444,27 +552,31 @@ json_parse(const char *buf, size_t sz)
 {
 	struct jsmnn	*n;
 	jsmn_parser	 p;
-	jsmntok_t	*tok;
+	jsmntok_t	*tok, *ntok;
 	int		 r;
 	size_t		 tokcount;
 
 	jsmn_init(&p);
 	tokcount = 128;
 
-	/* Do this until we don't need any more tokens. */
-again:
-	tok = calloc(tokcount, sizeof(jsmntok_t));
-	if (tok == NULL) {
+	if ((tok = calloc(tokcount, sizeof(jsmntok_t))) == NULL) {
 		warn("calloc");
 		return NULL;
 	}
 
+	/* Do this until we don't need any more tokens. */
+again:
 	/* Actually try to parse the JSON into the tokens. */
-
 	r = jsmn_parse(&p, buf, sz, tok, tokcount);
 	if (r < 0 && r == JSMN_ERROR_NOMEM) {
+		if ((ntok = recallocarray(tok, tokcount, tokcount * 2,
+		    sizeof(jsmntok_t))) == NULL) {
+			warn("calloc");
+			free(tok);
+			return NULL;
+		}
+		tok = ntok;
 		tokcount *= 2;
-		free(tok);
 		goto again;
 	} else if (r < 0) {
 		warnx("jsmn_parse: %d", r);
@@ -480,19 +592,18 @@ again:
 }
 
 /*
- * Format the "new-reg" resource request.
+ * Format the "newAccount" resource request to check if the account exist.
  */
 char *
-json_fmt_newreg(const char *license)
+json_fmt_chkacc(void)
 {
 	int	 c;
 	char	*p;
 
 	c = asprintf(&p, "{"
-	    "\"resource\": \"new-reg\", "
-	    "\"agreement\": \"%s\""
-	    "}",
-	    license);
+	    "\"termsOfServiceAgreed\": true, "
+	    "\"onlyReturnExisting\": true"
+	    "}");
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;
@@ -501,20 +612,17 @@ json_fmt_newreg(const char *license)
 }
 
 /*
- * Format the "new-authz" resource request.
+ * Format the "newAccount" resource request.
  */
 char *
-json_fmt_newauthz(const char *domain)
+json_fmt_newacc(void)
 {
 	int	 c;
 	char	*p;
 
 	c = asprintf(&p, "{"
-	    "\"resource\": \"new-authz\", "
-	    "\"identifier\": "
-	    "{\"type\": \"dns\", \"value\": \"%s\"}"
-	    "}",
-	    domain);
+	    "\"termsOfServiceAgreed\": true"
+	    "}");
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;
@@ -523,28 +631,45 @@ json_fmt_newauthz(const char *domain)
 }
 
 /*
- * Format the "challenge" resource request.
+ * Format the "newOrder" resource request
  */
 char *
-json_fmt_challenge(const char *token, const char *thumb)
+json_fmt_neworder(const char *const *alts, size_t altsz)
 {
+	size_t	 i;
 	int	 c;
-	char	*p;
+	char	*p, *t;
 
-	c = asprintf(&p, "{"
-	    "\"resource\": \"challenge\", "
-	    "\"keyAuthorization\": \"%s.%s\""
-	    "}",
-	    token, thumb);
+	if ((p = strdup("{ \"identifiers\": [")) == NULL)
+		goto err;
+
+	t = p;
+	for (i = 0; i < altsz; i++) {
+		c = asprintf(&p,
+		    "%s { \"type\": \"dns\", \"value\": \"%s\" }%s",
+		    t, alts[i], i + 1 == altsz ? "" : ",");
+		free(t);
+		if (c == -1) {
+			warn("asprintf");
+			p = NULL;
+			goto err;
+		}
+		t = p;
+	}
+	c = asprintf(&p, "%s ] }", t);
+	free(t);
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;
 	}
 	return p;
+err:
+	free(p);
+	return NULL;
 }
 
 /*
- * Format the "new-cert" resource request.
+ * Format the revoke resource request.
  */
 char *
 json_fmt_revokecert(const char *cert)
@@ -553,7 +678,6 @@ json_fmt_revokecert(const char *cert)
 	char	*p;
 
 	c = asprintf(&p, "{"
-	    "\"resource\": \"revoke-cert\", "
 	    "\"certificate\": \"%s\""
 	    "}",
 	    cert);
@@ -574,7 +698,6 @@ json_fmt_newcert(const char *cert)
 	char	*p;
 
 	c = asprintf(&p, "{"
-	    "\"resource\": \"new-cert\", "
 	    "\"csr\": \"%s\""
 	    "}",
 	    cert);
@@ -586,10 +709,11 @@ json_fmt_newcert(const char *cert)
 }
 
 /*
- * Header component of json_fmt_signed().
+ * Protected component of json_fmt_signed().
  */
 char *
-json_fmt_header_rsa(const char *exp, const char *mod)
+json_fmt_protected_rsa(const char *exp, const char *mod, const char *nce,
+    const char *url)
 {
 	int	 c;
 	char	*p;
@@ -597,9 +721,11 @@ json_fmt_header_rsa(const char *exp, const char *mod)
 	c = asprintf(&p, "{"
 	    "\"alg\": \"RS256\", "
 	    "\"jwk\": "
-	    "{\"e\": \"%s\", \"kty\": \"RSA\", \"n\": \"%s\"}"
+	    "{\"e\": \"%s\", \"kty\": \"RSA\", \"n\": \"%s\"}, "
+	    "\"nonce\": \"%s\", "
+	    "\"url\": \"%s\""
 	    "}",
-	    exp, mod);
+	    exp, mod, nce, url);
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;
@@ -611,18 +737,43 @@ json_fmt_header_rsa(const char *exp, const char *mod)
  * Protected component of json_fmt_signed().
  */
 char *
-json_fmt_protected_rsa(const char *exp, const char *mod, const char *nce)
+json_fmt_protected_ec(const char *x, const char *y, const char *nce,
+    const char *url)
 {
 	int	 c;
 	char	*p;
 
 	c = asprintf(&p, "{"
-	    "\"alg\": \"RS256\", "
+	    "\"alg\": \"ES384\", "
 	    "\"jwk\": "
-	    "{\"e\": \"%s\", \"kty\": \"RSA\", \"n\": \"%s\"}, "
-	    "\"nonce\": \"%s\""
+	    "{\"crv\": \"P-384\", \"kty\": \"EC\", \"x\": \"%s\", "
+	    "\"y\": \"%s\"}, \"nonce\": \"%s\", \"url\": \"%s\""
 	    "}",
-	    exp, mod, nce);
+	    x, y, nce, url);
+	if (c == -1) {
+		warn("asprintf");
+		p = NULL;
+	}
+	return p;
+}
+
+/*
+ * Protected component of json_fmt_signed().
+ */
+char *
+json_fmt_protected_kid(const char *alg, const char *kid, const char *nce,
+    const char *url)
+{
+	int	 c;
+	char	*p;
+
+	c = asprintf(&p, "{"
+	    "\"alg\": \"%s\", "
+	    "\"kid\": \"%s\", "
+	    "\"nonce\": \"%s\", "
+	    "\"url\": \"%s\""
+	    "}",
+	    alg, kid, nce, url);
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;
@@ -634,19 +785,17 @@ json_fmt_protected_rsa(const char *exp, const char *mod, const char *nce)
  * Signed message contents for the CA server.
  */
 char *
-json_fmt_signed(const char *header, const char *protected,
-    const char *payload, const char *digest)
+json_fmt_signed(const char *protected, const char *payload, const char *digest)
 {
 	int	 c;
 	char	*p;
 
 	c = asprintf(&p, "{"
-	    "\"header\": %s, "
 	    "\"protected\": \"%s\", "
 	    "\"payload\": \"%s\", "
 	    "\"signature\": \"%s\""
 	    "}",
-	    header, protected, payload, digest);
+	    protected, payload, digest);
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;
@@ -670,6 +819,30 @@ json_fmt_thumb_rsa(const char *exp, const char *mod)
 
 	c = asprintf(&p, "{\"e\":\"%s\",\"kty\":\"RSA\",\"n\":\"%s\"}",
 	    exp, mod);
+	if (c == -1) {
+		warn("asprintf");
+		p = NULL;
+	}
+	return p;
+}
+
+/*
+ * Produce thumbprint input.
+ * This isn't technically a JSON string--it's the input we'll use for
+ * hashing and digesting.
+ * However, it's in the form of a JSON string, so do it here.
+ */
+char *
+json_fmt_thumb_ec(const char *x, const char *y)
+{
+	int	 c;
+	char	*p;
+
+	/*NOTE: WHITESPACE IS IMPORTANT. */
+
+	c = asprintf(&p, "{\"crv\":\"P-384\",\"kty\":\"EC\",\"x\":\"%s\","
+	    "\"y\":\"%s\"}",
+	    x, y);
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;

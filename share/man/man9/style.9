@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.71 2017/07/10 21:39:38 tedu Exp $
+.\"	$OpenBSD: style.9,v 1.73 2018/12/05 15:34:52 schwarze Exp $
 .\"
-.Dd $Mdocdate: July 10 2017 $
+.Dd $Mdocdate: December 5 2018 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -227,16 +227,7 @@ is both possible and beneficial when using an ordinary struct tag.
 When convention requires a typedef, make its name match the struct tag.
 Avoid typedefs ending in
 .Dq Li \&_t ,
-except as specified in Standard C or by
-.Tn POSIX .
-Don't use the same name for a struct tag and a typedef, as this makes
-the code unusable from C++.
-.Bd -literal -offset indent
-/* Make the structure name match the typedef. */
-typedef struct _bar {
-	int	level;
-} BAR;
-.Ed
+except as specified in Standard C or by POSIX.
 .Bd -literal -offset indent
 /*
  * All major routines should have a comment briefly describing what
@@ -624,7 +615,7 @@ Example license for new code.
 .Xr mdoc 7
 .Sh HISTORY
 This man page is largely based on the src/admin/style/style file from the
-.Bx 4.4-Lite2
+.Bx 4.4 Lite2
 release, with updates to reflect the current practice and
 desire of the
 .Ox

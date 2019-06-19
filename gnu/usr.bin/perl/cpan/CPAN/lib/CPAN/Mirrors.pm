@@ -34,7 +34,7 @@ CPAN::Mirrors - Get CPAN mirror information and select a fast one
 package CPAN::Mirrors;
 use strict;
 use vars qw($VERSION $urllist $silent);
-$VERSION = "1.9601";
+$VERSION = "2.12";
 
 use Carp;
 use FileHandle;
@@ -82,7 +82,7 @@ Return a list of continents based on those defined in F<MIRRORED.BY>.
 
 sub continents {
     my ($self) = @_;
-    return keys %{$self->{geography}};
+    return sort keys %{$self->{geography}};
 }
 
 =item countries( [CONTINENTS] )
@@ -99,7 +99,7 @@ sub countries {
     @continents = $self->continents unless @continents;
     my @countries;
     for my $c (@continents) {
-        push @countries, keys %{ $self->{geography}{$c} };
+        push @countries, sort keys %{ $self->{geography}{$c} };
     }
     return @countries;
 }

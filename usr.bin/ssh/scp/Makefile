@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2018/01/08 15:37:22 markus Exp $
+#	$OpenBSD: Makefile,v 1.21 2018/07/25 17:12:35 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -7,9 +7,6 @@ SRCS+=	atomicio.c cleanup.c fatal.c progressmeter.c utf8.c
 SRCS+=	${SRCS_BASE}
 
 PROG=	scp
-BINOWN=	root
-
-BINMODE?=555
 
 BINDIR=	/usr/bin
 

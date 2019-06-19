@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.64 2018/01/05 09:33:47 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.65 2018/09/24 21:26:02 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -102,11 +102,15 @@ setup(char *dev, int isfsdb)
 		strlcpy(rdevname, realdev, sizeof(rdevname));
 		setcdevname(rdevname, dev, preen);
 
-		if (isfsdb || !hotroot())
+		if (isfsdb || !hotroot()) {
+			if (unveil("/dev", "rw") == -1)
+				err(1, "unveil");
 			if (pledge("stdio rpath wpath getpw tty disklabel",
 			    NULL) == -1)
 				err(1, "pledge");
+		}
 	}
+
 	if (fstat(fsreadfd, &statb) < 0) {
 		printf("Can't stat %s: %s\n", realdev, strerror(errno));
 		close(fsreadfd);

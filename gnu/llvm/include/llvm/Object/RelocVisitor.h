@@ -23,16 +23,16 @@
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/Wasm.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ErrorOr.h"
 #include <cstdint>
 #include <system_error>
 
 namespace llvm {
 namespace object {
 
-/// @brief Base class for object file relocation visitors.
+/// Base class for object file relocation visitors.
 class RelocVisitor {
 public:
   explicit RelocVisitor(const ObjectFile &Obj) : ObjToVisit(Obj) {}
@@ -47,6 +47,8 @@ public:
       return visitCOFF(Rel, R, Value);
     if (isa<MachOObjectFile>(ObjToVisit))
       return visitMachO(Rel, R, Value);
+    if (isa<WasmObjectFile>(ObjToVisit))
+      return visitWasm(Rel, R, Value);
 
     HasError = true;
     return 0;
@@ -115,9 +117,10 @@ private:
   }
 
   int64_t getELFAddend(RelocationRef R) {
-    ErrorOr<int64_t> AddendOrErr = ELFRelocationRef(R).getAddend();
-    if (std::error_code EC = AddendOrErr.getError())
-      report_fatal_error(EC.message());
+    Expected<int64_t> AddendOrErr = ELFRelocationRef(R).getAddend();
+    handleAllErrors(AddendOrErr.takeError(), [](const ErrorInfoBase &EI) {
+      report_fatal_error(EI.message());
+    });
     return *AddendOrErr;
   }
 
@@ -169,6 +172,8 @@ private:
       return (Value + getELFAddend(R)) & 0xFFFFFFFF;
     case ELF::R_MIPS_64:
       return Value + getELFAddend(R);
+    case ELF::R_MIPS_TLS_DTPREL64:
+      return Value + getELFAddend(R) - 0x8000;
     }
     HasError = true;
     return 0;
@@ -260,7 +265,10 @@ private:
   }
 
   uint64_t visitMips32(uint32_t Rel, RelocationRef R, uint64_t Value) {
+    // FIXME: Take in account implicit addends to get correct results.
     if (Rel == ELF::R_MIPS_32)
+      return Value & 0xFFFFFFFF;
+    if (Rel == ELF::R_MIPS_TLS_DTPREL32)
       return Value & 0xFFFFFFFF;
     HasError = true;
     return 0;
@@ -297,6 +305,8 @@ private:
         return Value;
       }
       break;
+    default:
+      break;
     }
     HasError = true;
     return 0;
@@ -306,6 +316,27 @@ private:
     if (ObjToVisit.getArch() == Triple::x86_64 &&
         Rel == MachO::X86_64_RELOC_UNSIGNED)
       return Value;
+    HasError = true;
+    return 0;
+  }
+
+  uint64_t visitWasm(uint32_t Rel, RelocationRef R, uint64_t Value) {
+    if (ObjToVisit.getArch() == Triple::wasm32) {
+      switch (Rel) {
+      case wasm::R_WEBASSEMBLY_FUNCTION_INDEX_LEB:
+      case wasm::R_WEBASSEMBLY_TABLE_INDEX_SLEB:
+      case wasm::R_WEBASSEMBLY_TABLE_INDEX_I32:
+      case wasm::R_WEBASSEMBLY_MEMORY_ADDR_LEB:
+      case wasm::R_WEBASSEMBLY_MEMORY_ADDR_SLEB:
+      case wasm::R_WEBASSEMBLY_MEMORY_ADDR_I32:
+      case wasm::R_WEBASSEMBLY_TYPE_INDEX_LEB:
+      case wasm::R_WEBASSEMBLY_GLOBAL_INDEX_LEB:
+      case wasm::R_WEBASSEMBLY_FUNCTION_OFFSET_I32:
+      case wasm::R_WEBASSEMBLY_SECTION_OFFSET_I32:
+        // For wasm section, its offset at 0 -- ignoring Value
+        return 0;
+      }
+    }
     HasError = true;
     return 0;
   }

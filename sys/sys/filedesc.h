@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.34 2017/02/11 19:51:06 guenther Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.41 2018/07/02 14:36:33 visa Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  *	@(#)filedesc.h	8.1 (Berkeley) 6/2/93
  */
 
+#include <sys/mutex.h>
 #include <sys/rwlock.h>
 /*
  * This structure is used for the management of descriptors.  It may be
@@ -72,11 +73,8 @@ struct filedesc {
 	struct rwlock fd_lock;		/* lock for the file descs; must be */
 					/* held when writing to fd_ofiles, */
 					/* fd_ofileflags, or fd_{hi,lo}map */
-
-	int	fd_knlistsize;		/* size of knlist */
-	struct	klist *fd_knlist;	/* list of attached knotes */
-	u_long	fd_knhashmask;		/* size of knhash */
-	struct	klist *fd_knhash;	/* hash table for attached knotes */
+	struct mutex fd_fplock;		/* lock for reading fd_ofiles without
+					 * fd_lock */
 
 	int fd_flags;			/* flags on the file descriptor table */
 };
@@ -125,14 +123,17 @@ void	filedesc_init(void);
 int	dupfdopen(struct proc *, int, int);
 int	fdalloc(struct proc *p, int want, int *result);
 void	fdexpand(struct proc *);
-int	falloc(struct proc *_p, int _flags, struct file **_rfp, int *_rfd);
+struct	file *fnew(struct proc *_p);
+int	falloc(struct proc *_p, struct file **_rfp, int *_rfd);
 struct	filedesc *fdinit(void);
 struct	filedesc *fdshare(struct process *);
 struct	filedesc *fdcopy(struct process *);
 void	fdfree(struct proc *p);
 int	fdrelease(struct proc *p, int);
+void	fdinsert(struct filedesc *, int, int, struct file *);
 void	fdremove(struct filedesc *, int);
 void	fdcloseexec(struct proc *);
+struct file *fd_iterfile(struct file *, struct proc *);
 struct file *fd_getfile(struct filedesc *, int);
 struct file *fd_getfile_mode(struct filedesc *, int, int);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.6 2016/08/07 02:02:57 guenther Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.7 2018/06/22 15:18:50 kettenis Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ ENTRY(setjmp)
 	SYSTRAP(sigprocmask)
 
 	/* Store signal mask */
-	str	r0, [r2, #(25 * 4)]
+	str	r0, [r2, #(29 * 4)]
 
 	ldr	r1, .Lsetjmp_magic
 	str	r1, [r2], #4
@@ -69,14 +69,14 @@ ENTRY(setjmp)
 	eor	r3, lr, r3			/* r3 = lr ^ __jmpxor[1] */
 
 #ifdef SOFTFLOAT
-	add	r2, r2, #52
+	add	r2, r2, #68
 #else
+	/* Store fpcsr */
+	vmrs	r1, fpscr
+	str	r1, [r2], #4
 	/* Store fp registers */
-	sfm	f4, 4, [r2], #48
-	/* Store fpsr */
-	rfs	r1
-	str	r1, [r2], #0x0004
-#endif	/*SOFTFLOAT*/
+	vstmia	r2!, {d8-d15}
+#endif	/* SOFTFLOAT */
 	/* Store integer registers */
 	stmia	r2, {r3-r12}
 
@@ -101,19 +101,19 @@ ENTRY(longjmp)
 	/* Fetch signal mask and call sigprocmask */
 	mov	r3, r0				/* r3 = jmpbuf */
 	mov	r2, r1				/* r2 = retvalue */
-	ldr	r1, [r0, #(25 * 4)]
+	ldr	r1, [r0, #(29 * 4)]
 	mov	r0, #0x00000003			/* SIG_SETMASK */
 	SYSTRAP(sigprocmask)
 
 	add	r3, r3, #4
 #ifdef SOFTFLOAT
-	add	r3, r3, #52
+	add	r3, r3, #68
 #else
+	/* Restore fpcsr */
+	ldr	r4, [r3], #4
+	vmsr	fpscr, r4
 	/* Restore fp registers */
-	lfm	f4, 4, [r3], #48
-	/* Restore FPSR */
-	ldr	r4, [r3], #0x0004
-	wfs	r4
+	vldmia	r3!, {d8-d15}
 #endif	/* SOFTFLOAT */
 	/* Restore integer registers */
 	ldmia	r3, {r3-r12}

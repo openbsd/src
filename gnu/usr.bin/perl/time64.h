@@ -1,8 +1,8 @@
 #include <time.h>
 #include "time64_config.h"
 
-#ifndef TIME64_H
-#    define TIME64_H
+#ifndef PERL_TIME64_H_
+#    define PERL_TIME64_H_
 
 
 /* Set our custom types */
@@ -32,7 +32,8 @@ struct TM64 {
  * Otherwise, if we are on android, use const but
  * not with g++.
  */
-#  if defined(__GLIBC__) || (defined(__ANDROID__) && !defined(__cplusplus)) || defined(__QNX__)
+#  if defined(__GLIBC__) || (defined(__ANDROID__) && !defined(__cplusplus)) \
+    || defined(__QNX__) || defined(__CYGWIN__)
         const
 #  endif
         char    *tm_zone;

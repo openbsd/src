@@ -76,8 +76,7 @@ RegisterContext::UpdateDynamicRegisterSize(const lldb_private::ArchSpec &arch,
   ExecutionContext exe_ctx(CalculateThread());
 
   // In MIPS, the floating point registers size is depends on FR bit of SR
-  // register.
-  // if SR.FR  == 1 then all floating point registers are 64 bits.
+  // register. if SR.FR  == 1 then all floating point registers are 64 bits.
   // else they are all 32 bits.
 
   int expr_result;
@@ -93,10 +92,9 @@ RegisterContext::UpdateDynamicRegisterSize(const lldb_private::ArchSpec &arch,
   Value result;
   Status error;
   const lldb::offset_t offset = 0;
-  if (dwarf_expr.Evaluate(&exe_ctx, nullptr, nullptr, this, opcode_ctx,
-                          dwarf_data, nullptr, offset, dwarf_opcode_len,
-                          eRegisterKindDWARF, nullptr, nullptr, result,
-                          &error)) {
+  if (dwarf_expr.Evaluate(&exe_ctx, this, opcode_ctx, dwarf_data, nullptr,
+                          offset, dwarf_opcode_len, eRegisterKindDWARF, nullptr,
+                          nullptr, result, &error)) {
     expr_result = result.GetScalar().SInt(-1);
     switch (expr_result) {
     case 0:
@@ -137,7 +135,7 @@ uint64_t RegisterContext::GetPC(uint64_t fail_value) {
     if (target_sp) {
       Target *target = target_sp.get();
       if (target)
-        pc = target->GetOpcodeLoadAddress(pc, eAddressClassCode);
+        pc = target->GetOpcodeLoadAddress(pc, AddressClass::eCode);
     }
   }
 
@@ -263,8 +261,7 @@ bool RegisterContext::CopyFromRegisterContext(lldb::RegisterContextSP context) {
       RegisterValue reg_value;
 
       // If we can reconstruct the register from the frame we are copying from,
-      // then do so, otherwise
-      // use the value from frame 0.
+      // then do so, otherwise use the value from frame 0.
       if (context->ReadRegister(reg_info, reg_value)) {
         WriteRegister(reg_info, reg_value);
       } else if (frame_zero_context->ReadRegister(reg_info, reg_value)) {
@@ -356,12 +353,11 @@ Status RegisterContext::ReadRegisterValueFromMemory(
       return error;
     }
 
-    // We now have a memory buffer that contains the part or all of the register
-    // value. Set the register value using this memory data.
+    // We now have a memory buffer that contains the part or all of the
+    // register value. Set the register value using this memory data.
     // TODO: we might need to add a parameter to this function in case the byte
     // order of the memory data doesn't match the process. For now we are
-    // assuming
-    // they are the same.
+    // assuming they are the same.
     reg_value.SetFromMemoryData(reg_info, src, src_len,
                                 process_sp->GetByteOrder(), error);
   } else
@@ -382,8 +378,7 @@ Status RegisterContext::WriteRegisterValueToMemory(
 
     // TODO: we might need to add a parameter to this function in case the byte
     // order of the memory data doesn't match the process. For now we are
-    // assuming
-    // they are the same.
+    // assuming they are the same.
 
     const uint32_t bytes_copied = reg_value.GetAsMemoryData(
         reg_info, dst, dst_len, process_sp->GetByteOrder(), error);
@@ -432,9 +427,9 @@ ThreadSP RegisterContext::CalculateThread() {
 }
 
 StackFrameSP RegisterContext::CalculateStackFrame() {
-  // Register contexts might belong to many frames if we have inlined
-  // functions inside a frame since all inlined functions share the
-  // same registers, so we can't definitively say which frame we come from...
+  // Register contexts might belong to many frames if we have inlined functions
+  // inside a frame since all inlined functions share the same registers, so we
+  // can't definitively say which frame we come from...
   return StackFrameSP();
 }
 
@@ -457,132 +452,3 @@ bool RegisterContext::ConvertBetweenRegisterKinds(lldb::RegisterKind source_rk,
   }
   return false;
 }
-
-// bool
-// RegisterContext::ReadRegisterValue (uint32_t reg, Scalar &value)
-//{
-//    DataExtractor data;
-//    if (!ReadRegisterBytes (reg, data))
-//        return false;
-//
-//    const RegisterInfo *reg_info = GetRegisterInfoAtIndex (reg);
-//    uint32_t offset = 0;
-//    switch (reg_info->encoding)
-//    {
-//    case eEncodingInvalid:
-//    case eEncodingVector:
-//        break;
-//
-//    case eEncodingUint:
-//        switch (reg_info->byte_size)
-//        {
-//        case 1:
-//            {
-//                value = data.GetU8 (&offset);
-//                return true;
-//            }
-//        case 2:
-//            {
-//                value = data.GetU16 (&offset);
-//                return true;
-//            }
-//        case 4:
-//            {
-//                value = data.GetU32 (&offset);
-//                return true;
-//            }
-//        case 8:
-//            {
-//                value = data.GetU64 (&offset);
-//                return true;
-//            }
-//        }
-//        break;
-//    case eEncodingSint:
-//        switch (reg_info->byte_size)
-//        {
-//        case 1:
-//            {
-//                int8_t v;
-//                if (data.ExtractBytes (0, sizeof (int8_t),
-//                endian::InlHostByteOrder(), &v) != sizeof (int8_t))
-//                    return false;
-//                value = v;
-//                return true;
-//            }
-//        case 2:
-//            {
-//                int16_t v;
-//                if (data.ExtractBytes (0, sizeof (int16_t),
-//                endian::InlHostByteOrder(), &v) != sizeof (int16_t))
-//                    return false;
-//                value = v;
-//                return true;
-//            }
-//        case 4:
-//            {
-//                int32_t v;
-//                if (data.ExtractBytes (0, sizeof (int32_t),
-//                endian::InlHostByteOrder(), &v) != sizeof (int32_t))
-//                    return false;
-//                value = v;
-//                return true;
-//            }
-//        case 8:
-//            {
-//                int64_t v;
-//                if (data.ExtractBytes (0, sizeof (int64_t),
-//                endian::InlHostByteOrder(), &v) != sizeof (int64_t))
-//                    return false;
-//                value = v;
-//                return true;
-//            }
-//        }
-//        break;
-//    case eEncodingIEEE754:
-//        switch (reg_info->byte_size)
-//        {
-//        case sizeof (float):
-//            {
-//                float v;
-//                if (data.ExtractBytes (0, sizeof (float),
-//                endian::InlHostByteOrder(), &v) != sizeof (float))
-//                    return false;
-//                value = v;
-//                return true;
-//            }
-//        case sizeof (double):
-//            {
-//                double v;
-//                if (data.ExtractBytes (0, sizeof (double),
-//                endian::InlHostByteOrder(), &v) != sizeof (double))
-//                    return false;
-//                value = v;
-//                return true;
-//            }
-//        case sizeof (long double):
-//            {
-//                double v;
-//                if (data.ExtractBytes (0, sizeof (long double),
-//                endian::InlHostByteOrder(), &v) != sizeof (long double))
-//                    return false;
-//                value = v;
-//                return true;
-//            }
-//        }
-//        break;
-//    }
-//    return false;
-//}
-//
-// bool
-// RegisterContext::WriteRegisterValue (uint32_t reg, const Scalar &value)
-//{
-//    DataExtractor data;
-//    if (!value.IsValid())
-//        return false;
-//    if (!value.GetData (data))
-//        return false;
-//
-//    return WriteRegisterBytes (reg, data);
-//}

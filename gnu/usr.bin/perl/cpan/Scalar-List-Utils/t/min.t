@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 10;
+use Test::More tests => 22;
 use List::Util qw(min);
 
 my $v;
@@ -62,3 +62,21 @@ is($v, 1, 'bigint and normal int');
 $v = min(1, 2, $v1, 3);
 is($v, 1, 'bigint and normal int');
 
+{
+    # test that min/max and sum call GETMAGIC properly
+    # note, in my tests how this fails depends on exactly
+    # which List::Util subs are called and in what order.
+    my @list;
+    for my $size (10, 20, 10, 30) {
+        @list = ( 1 ) x $size;
+
+        my $sum= List::Util::sum( 0, $#list );
+        ok( $sum == $size-1, "sum(\$#list, 0) == $size-1");
+
+        my $min= List::Util::min( 15, $#list );
+        ok( $min <= 15, "min(15,$size)" );
+
+        my $max= List::Util::max( 0, $#list );
+        ok( $max == $size-1, "max(\$#list, 0) == $size-1");
+    }
+}

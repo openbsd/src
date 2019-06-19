@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2016/12/21 20:55:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2019/05/16 12:44:17 florian Exp $
 
 CFLAGS+=-DSMALL
 

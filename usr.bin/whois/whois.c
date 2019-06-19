@@ -1,4 +1,4 @@
-/*      $OpenBSD: whois.c,v 1.56 2017/07/26 15:48:38 sthen Exp $   */
+/*      $OpenBSD: whois.c,v 1.58 2018/06/19 11:28:11 jca Exp $   */
 
 /*
  * Copyright (c) 1980, 1993
@@ -196,13 +196,13 @@ whois(const char *query, const char *server, const char *port, int flags)
 		}
 		break;	/*okay*/
 	}
+	freeaddrinfo(res);
 	if (s == -1) {
 		if (reason) {
 			errno = error;
 			warn("%s: %s", server, reason);
 		} else
 			warn("unknown error in connection attempt");
-		freeaddrinfo(res);
 		return (1);
 	}
 
@@ -269,7 +269,7 @@ whois(const char *query, const char *server, const char *port, int flags)
 		error = whois(query, nhost, port, 0);
 		free(nhost);
 	}
-	freeaddrinfo(res);
+
 	return (error);
 }
 
@@ -278,7 +278,8 @@ whois(const char *query, const char *server, const char *port, int flags)
  * If the TLD is a number, query ARIN, otherwise, use TLD.whois-server.net.
  * If the domain does not contain '.', check to see if it is an NSI handle
  * (starts with '!') or a CORE handle (COCO-[0-9]+ or COHO-[0-9]+) or an
- * ASN (starts with AS). Fall back to NICHOST for the non-handle case.
+ * ASN (starts with AS) or IPv6 address (contains ':'). Fall back to
+ * NICHOST for the non-handle and non-IPv6 case.
  */
 char *
 choose_server(const char *name, const char *country, char **tofree)
@@ -286,7 +287,7 @@ choose_server(const char *name, const char *country, char **tofree)
 	char *server;
 	const char *qhead;
 	char *ep;
-	struct addrinfo hints, *res;
+	struct addrinfo hints, *res = NULL;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = 0;
@@ -305,6 +306,8 @@ choose_server(const char *name, const char *country, char **tofree)
 		else if ((strncasecmp(name, "AS", 2) == 0) &&
 		    strtol(name + 2, &ep, 10) > 0 && *ep == '\0')
 			return (MNICHOST);
+		else if (strchr(name, ':') != NULL) /* IPv6 address */
+			return (ANICHOST);
 		else
 			return (NICHOST);
 	} else if (isdigit((unsigned char)*(++qhead)))
@@ -336,6 +339,8 @@ choose_server(const char *name, const char *country, char **tofree)
 		if (asprintf(&server, "%s%s", qhead, QNICHOST_TAIL) == -1)
 			err(1, NULL);
 	}
+	if (res != NULL)
+		freeaddrinfo(res);
 
 	*tofree = server;
 	return (server);

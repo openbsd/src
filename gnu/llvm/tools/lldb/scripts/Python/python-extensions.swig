@@ -71,6 +71,21 @@
         }
 }
 
+%extend lldb::SBBreakpointName {
+        PyObject *lldb::SBBreakpointName::__str__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description);
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return lldb_private::PythonString(llvm::StringRef(desc, desc_len)).release();
+                else
+                    return lldb_private::PythonString("").release();
+        }
+}
+
 %extend lldb::SBBroadcaster {
     %pythoncode %{ 
         def __eq__(self, rhs):
@@ -824,29 +839,18 @@
 
 %pythoncode %{
 
-def command(*args, **kwargs):
+def command(command_name=None, doc=None):
     import lldb
-    import inspect
     """A decorator function that registers an LLDB command line
         command that is bound to the function it is attached to."""
-    class obj(object):
-        """The object that tracks adding the command to LLDB one time and handles
-            calling the function on subsequent calls."""
-        def __init__(self, function, command_name, doc = None):
-            if doc:
-                function.__doc__ = doc
-            command = "command script add -f %s.%s %s" % (function.__module__, function.__name__, command_name)
-            lldb.debugger.HandleCommand(command)
-            self.function = function
-        def __call__(self, debugger, command, exe_ctx, result, dict):
-            if len(inspect.getargspec(self.function).args) == 5:
-                self.function(debugger, command, exe_ctx, result, dict)
-            else:
-                self.function(debugger, command, result, dict)
     def callable(function):
-        """Creates a callable object that gets used."""
-        f = obj(function, *args, **kwargs)
-        return f.__call__
+        """Registers an lldb command for the decorated function."""
+        command = "command script add -f %s.%s %s" % (function.__module__, function.__name__, command_name or function.__name__)
+        lldb.debugger.HandleCommand(command)
+        if doc:
+            function.__doc__ = doc
+        return function
+
     return callable
 
 class declaration(object):

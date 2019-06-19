@@ -1,0 +1,3 @@
+mandoc: basic.in:10:2: ERROR: ignoring request outside macro: return
+mandoc: basic.in:18:32: ERROR: using macro argument outside macro: \$1
+mandoc: basic.in:21:2: ERROR: ignoring request outside macro: return

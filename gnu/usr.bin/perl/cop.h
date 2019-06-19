@@ -35,9 +35,23 @@ struct jmpenv {
     int			je_ret;		/* last exception thrown */
     bool		je_mustcatch;	/* need to call longjmp()? */
     U16                 je_old_delaymagic; /* saved PL_delaymagic */
+    SSize_t             je_old_stack_hwm;
 };
 
 typedef struct jmpenv JMPENV;
+
+#if defined DEBUGGING && !defined DEBUGGING_RE_ONLY
+#  define JE_OLD_STACK_HWM_zero      PL_start_env.je_old_stack_hwm = 0
+#  define JE_OLD_STACK_HWM_save(je)  \
+        (je).je_old_stack_hwm = PL_curstackinfo->si_stack_hwm
+#  define JE_OLD_STACK_HWM_restore(je)  \
+        if (PL_curstackinfo->si_stack_hwm < (je).je_old_stack_hwm) \
+            PL_curstackinfo->si_stack_hwm = (je).je_old_stack_hwm
+#else
+#  define JE_OLD_STACK_HWM_zero        NOOP
+#  define JE_OLD_STACK_HWM_save(je)    NOOP
+#  define JE_OLD_STACK_HWM_restore(je) NOOP
+#endif
 
 /*
  * How to build the first jmpenv.
@@ -57,6 +71,7 @@ typedef struct jmpenv JMPENV;
 	PL_start_env.je_ret = -1;		\
 	PL_start_env.je_mustcatch = TRUE;	\
 	PL_start_env.je_old_delaymagic = 0;	\
+        JE_OLD_STACK_HWM_zero;                  \
     } STMT_END
 
 /*
@@ -102,7 +117,9 @@ typedef struct jmpenv JMPENV;
 	    Perl_deb(aTHX_ "JUMPENV_PUSH level=%d at %s:%d\n",		\
 		         i,  __FILE__, __LINE__);})			\
 	cur_env.je_prev = PL_top_env;					\
+        JE_OLD_STACK_HWM_save(cur_env);                                 \
 	cur_env.je_ret = PerlProc_setjmp(cur_env.je_buf, SCOPE_SAVES_SIGNAL_MASK);		\
+        JE_OLD_STACK_HWM_restore(cur_env);                              \
 	PL_top_env = &cur_env;						\
 	cur_env.je_mustcatch = FALSE;					\
 	cur_env.je_old_delaymagic = PL_delaymagic;			\
@@ -173,9 +190,9 @@ associated with the key.
     Perl_refcounted_he_fetch_pvn(aTHX_ cophh, keypv, keylen, hash, flags)
 
 /*
-=for apidoc Amx|SV *|cophh_fetch_pvs|const COPHH *cophh|const char *key|U32 flags
+=for apidoc Amx|SV *|cophh_fetch_pvs|const COPHH *cophh|"literal string" key|U32 flags
 
-Like L</cophh_fetch_pvn>, but takes a C<NUL>-terminated literal string instead
+Like L</cophh_fetch_pvn>, but takes a literal string instead
 of a string/length pair, and no precomputed hash.
 
 =cut
@@ -279,9 +296,9 @@ be stored with referential integrity, but will be coerced to strings.
     Perl_refcounted_he_new_pvn(aTHX_ cophh, keypv, keylen, hash, value, flags)
 
 /*
-=for apidoc Amx|COPHH *|cophh_store_pvs|const COPHH *cophh|const char *key|SV *value|U32 flags
+=for apidoc Amx|COPHH *|cophh_store_pvs|const COPHH *cophh|"literal string" key|SV *value|U32 flags
 
-Like L</cophh_store_pvn>, but takes a C<NUL>-terminated literal string instead
+Like L</cophh_store_pvn>, but takes a literal string instead
 of a string/length pair, and no precomputed hash.
 
 =cut
@@ -336,9 +353,9 @@ hash of the key string, or zero if it has not been precomputed.
 	(SV *)NULL, flags)
 
 /*
-=for apidoc Amx|COPHH *|cophh_delete_pvs|const COPHH *cophh|const char *key|U32 flags
+=for apidoc Amx|COPHH *|cophh_delete_pvs|const COPHH *cophh|"literal string" key|U32 flags
 
-Like L</cophh_delete_pvn>, but takes a C<NUL>-terminated literal string instead
+Like L</cophh_delete_pvn>, but takes a literal string instead
 of a string/length pair, and no precomputed hash.
 
 =cut
@@ -476,9 +493,9 @@ associated with the key.
     cophh_fetch_pvn(CopHINTHASH_get(cop), keypv, keylen, hash, flags)
 
 /*
-=for apidoc Am|SV *|cop_hints_fetch_pvs|const COP *cop|const char *key|U32 flags
+=for apidoc Am|SV *|cop_hints_fetch_pvs|const COP *cop|"literal string" key|U32 flags
 
-Like L</cop_hints_fetch_pvn>, but takes a C<NUL>-terminated literal string
+Like L</cop_hints_fetch_pvn>, but takes a literal string
 instead of a string/length pair, and no precomputed hash.
 
 =cut
@@ -609,10 +626,10 @@ struct block_format {
 /* Restore old @_ */
 #define CX_POP_SAVEARRAY(cx)						\
     STMT_START {							\
-        AV *av = GvAV(PL_defgv);                                        \
+        AV *cx_pop_savearray_av = GvAV(PL_defgv);                       \
 	GvAV(PL_defgv) = cx->blk_sub.savearray;				\
         cx->blk_sub.savearray = NULL;                                   \
-        SvREFCNT_dec(av);	        				\
+        SvREFCNT_dec(cx_pop_savearray_av);	 			\
     } STMT_END
 
 /* junk in @_ spells trouble when cloning CVs and in pp_caller(), so don't
@@ -640,8 +657,11 @@ struct block_eval {
    blku_gimme is actually also only 2 bits, so could be merged with something.
 */
 
-#define CxOLD_IN_EVAL(cx)	(((cx)->blk_u16) & 0x7F)
-#define CxOLD_OP_TYPE(cx)	(((cx)->blk_u16) >> 7)
+/* blk_u16 bit usage for eval contexts: */
+
+#define CxOLD_IN_EVAL(cx)	(((cx)->blk_u16) & 0x3F) /* saved PL in_eval */
+#define CxEVAL_TXT_REFCNTED(cx)	(((cx)->blk_u16) & 0x40) /* cur_text rc++ */
+#define CxOLD_OP_TYPE(cx)	(((cx)->blk_u16) >> 7)   /* type of eval op */
 
 /* loop context */
 struct block_loop {
@@ -961,6 +981,7 @@ L<perlcall>.
 #define EVAL_KEEPERR	4	/* set by Perl_call_sv if G_KEEPERR */
 #define EVAL_INREQUIRE	8	/* The code is being required. */
 #define EVAL_RE_REPARSING 0x10	/* eval_sv() called with G_RE_REPARSING */
+/* if adding extra bits, make sure they can fit in CxOLD_OP_TYPE() */
 
 /* Support for switching (stack and block) contexts.
  * This ensures magic doesn't invalidate local stack and cx pointers.
@@ -990,6 +1011,12 @@ struct stackinfo {
     I32			si_markoff;	/* offset where markstack begins for us.
 					 * currently used only with DEBUGGING,
 					 * but not #ifdef-ed for bincompat */
+#if defined DEBUGGING && !defined DEBUGGING_RE_ONLY
+/* high water mark: for checking if the stack was correctly extended /
+ * tested for extension by each pp function */
+    SSize_t             si_stack_hwm;
+#endif
+
 };
 
 typedef struct stackinfo PERL_SI;
@@ -1003,6 +1030,12 @@ typedef struct stackinfo PERL_SI;
     PL_curstackinfo->si_markoff = PL_markstack_ptr - PL_markstack
 #else
 #  define	SET_MARK_OFFSET NOOP
+#endif
+
+#if defined DEBUGGING && !defined DEBUGGING_RE_ONLY
+#  define PUSHSTACK_INIT_HWM(si) ((si)->si_stack_hwm = 0)
+#else
+#  define PUSHSTACK_INIT_HWM(si) NOOP
 #endif
 
 #define PUSHSTACKi(type) \
@@ -1020,6 +1053,7 @@ typedef struct stackinfo PERL_SI;
 	}								\
 	next->si_type = type;						\
 	next->si_cxix = -1;						\
+        PUSHSTACK_INIT_HWM(next);                                       \
 	AvFILLp(next->si_stack) = 0;					\
 	SWITCHSTACK(PL_curstack,next->si_stack);			\
 	PL_curstackinfo = next;						\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-pty.c,v 1.8 2016/09/21 15:26:54 bluhm Exp $	*/
+/*	$OpenBSD: kqueue-pty.c,v 1.10 2019/03/04 19:35:28 anton Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003, Public Domain	*/
 
@@ -55,8 +55,8 @@ pty_check(int kq, struct kevent *ev, int n, int rm, int rs, int wm, int ws)
 	return (0);
 }
 
-int
-do_pty(void)
+static int
+pty_rdrw(void)
 {
 	struct kevent ev[4];
 	struct termios tt;
@@ -114,4 +114,47 @@ do_pty(void)
 	ASSX(pty_check(kq, ev, 4, -massa, -slave, massa, slave) == 0);
 
 	return (0);
+}
+
+static int
+pty_close(void)
+{
+	struct kevent ev[1];
+	struct timespec ts;
+	int kq, massa, n, slave;
+
+	if (openpty(&massa, &slave, NULL, NULL, NULL) == -1)
+		err(1, "openpty");
+
+	kq = kqueue();
+	if (kq == -1)
+		err(1, "kqueue");
+
+	EV_SET(&ev[0], massa, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, NULL);
+	if (kevent(kq, ev, 1, NULL, 0, NULL) == -1)
+		err(1, "kevent: add");
+
+	close(slave);
+
+	ts.tv_sec = 5;
+	ts.tv_nsec = 0;
+	n = kevent(kq, NULL, 0, ev, 1, &ts);
+	ASSX(n == 1);
+	ASSX(ev[0].filter == EVFILT_READ);
+	ASSX(ev[0].flags & EV_EOF);
+
+	return 0;
+}
+
+int
+do_pty(int n)
+{
+	switch (n) {
+	case 1:
+		return pty_rdrw();
+	case 2:
+		return pty_close();
+	default:
+		errx(1, "unknown pty test number %d", n);
+	}
 }

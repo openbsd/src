@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.26 2018/02/10 10:00:32 dlg Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.28 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -20,8 +20,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifdef INET6
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -224,19 +222,10 @@ ip6_print(const u_char *bp, u_int length)
  end:
 
 	flow = ntohl(ip6->ip6_flow);
-#if 0
-	/* rfc1883 */
-	if (flow & 0x0f000000)
-		(void)printf(" [pri 0x%x]", (flow & 0x0f000000) >> 24);
-	if (flow & 0x00ffffff)
-		(void)printf(" [flowlabel 0x%x]", flow & 0x00ffffff);
-#else
-	/* RFC 2460 */
 	if (flow & 0x0ff00000)
 		(void)printf(" [class 0x%x]", (flow & 0x0ff00000) >> 20);
 	if (flow & 0x000fffff)
 		(void)printf(" [flowlabel 0x%x]", flow & 0x000fffff);
-#endif
 
 	if (ip6->ip6_hlim <= 1)
 		(void)printf(" [hlim %d]", (int)ip6->ip6_hlim);
@@ -253,5 +242,3 @@ ip6_print(const u_char *bp, u_int length)
 	packetp = pktp;
 	snapend = send;
 }
-
-#endif /* INET6 */

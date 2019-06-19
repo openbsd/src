@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.27 2015/01/22 17:42:09 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.28 2018/05/11 20:33:54 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -81,21 +81,18 @@ static const struct token t_show[] = {
 };
 
 static const struct token t_rdr[] = {
-	{NOTOKEN,	"",		NONE,		NULL},
 	{KEYWORD,	"disable",	RDR_DISABLE,	t_rdr_id},
 	{KEYWORD,	"enable",	RDR_ENABLE,	t_rdr_id},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_table[] = {
-	{NOTOKEN,	"",		NONE,		NULL},
 	{KEYWORD,	"disable",	TABLE_DISABLE,	t_table_id},
 	{KEYWORD,	"enable",	TABLE_ENABLE,	t_table_id},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_host[] = {
-	{NOTOKEN,	"",		NONE,		NULL},
 	{KEYWORD,	"disable",	HOST_DISABLE,	t_host_id},
 	{KEYWORD,	"enable",	HOST_ENABLE,	t_host_id},
 	{ENDTOKEN,	"",		NONE,		NULL}

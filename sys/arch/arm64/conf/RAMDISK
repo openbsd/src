@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.44 2018/02/24 13:46:57 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.88 2019/06/07 04:03:04 jmatthew Exp $
 #
 # GENERIC machine description file
 #
@@ -30,7 +30,7 @@ option		NO_PROPOLICE
 option		BOOT_CONFIG
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=15360
+option		MINIROOTSIZE=16384
 
 option		FFS
 option		FFS2
@@ -38,6 +38,7 @@ option		MSDOSFS
 option		INET6
 option		EXT2FS
 option		NFSCLIENT
+option		CRYPTO
 
 makeoptions	KERNEL_BASE_PHYS="0x00200000"
 makeoptions	KERNEL_BASE_VIRT="0xffffff8000200000"
@@ -46,8 +47,19 @@ config		bsd	root on rd0a swap on rd0b
 
 # The main bus device
 mainbus0	at root
+softraid0	at root
 cpu0		at mainbus?
 efi0		at mainbus?
+acpi0		at mainbus?
+acpiec*		at acpi?
+acpimcfg*	at acpi?
+acpipci*	at acpi?
+pci*		at acpipci?
+ahci*		at acpi?
+ccp*		at acpi?		# AMD Cryptographic Co-processor
+com*		at acpi?
+pluart*		at acpi?
+xhci*		at acpi?
 simplebus*	at fdt?
 
 scsibus*	at scsi?
@@ -59,23 +71,31 @@ uk*		at scsibus?
 
 ampintc*	at fdt? early 1
 ampintcmsi*	at fdt? early 1
-agintc*		at fdt?
+agintc*		at fdt? early 1
+agintcmsi*	at fdt? early 1
 agtimer*	at fdt?
 ahci*		at fdt?
 dwge*		at fdt?
+dwpcie*		at fdt?
+pci*		at dwpcie?
+ohci*		at fdt?
 ehci*		at fdt?
 pciecam*	at fdt?
 pci*		at pciecam?
 sdhc*		at fdt?
 sdmmc*		at sdhc?
+bwfm*		at sdmmc?	# Broadcom FullMAC
 xhci*		at fdt?
+ccp*		at fdt?		# AMD Cryptographic Co-processor
 
 # NS16550 compatible serial ports
 com*		at fdt?
 
-# Virt on-chip devices
-pluart*		at fdt?		# onboard uarts
+# Generic devices
+pinctrl*	at fdt? early 1
+plgpio*		at fdt? early 1
 plrtc*		at fdt?
+pluart*		at fdt?
 psci*		at fdt? early 1
 syscon*		at fdt? early 1
 
@@ -90,6 +110,20 @@ vioscsi*	at virtio?
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
 
+# iMX
+imxccm*		at fdt? early 1
+imxiomuxc*	at fdt? early 1
+imxanatop*	at fdt? early 1
+imxgpc*		at fdt?
+imxgpio*	at fdt?
+fec*		at fdt?
+imxuart*	at fdt?
+imxiic*		at fdt?
+iic*		at imxiic?
+imxesdhc*	at fdt?
+sdmmc*		at imxesdhc?
+imxsrc*		at fdt?
+
 # Raspberry Pi 3
 bcmaux*		at fdt?
 bcmintc*	at fdt?
@@ -97,6 +131,23 @@ bcmdog*		at fdt?
 bcmrng*		at fdt?
 dwctwo*		at fdt?
 usb*		at dwctwo?
+
+# HiSilicon SoCs
+hiclock*	at fdt? early 1
+hidwusb*	at fdt?
+hireset*	at fdt? early 1
+
+# Marvell SoCs
+mvclock*	at fdt? early 1
+mvgicp*		at fdt? early 1
+mvicu*		at fdt? early 1
+mvpinctrl*	at fdt? early 1
+mvgpio*		at fdt?
+mvmdio*		at fdt?
+mvneta*		at fdt?
+mvrng*		at fdt?
+mvrtc*		at fdt?
+mvuart*		at fdt?
 
 # Rockchip SoCs
 rkclock*	at fdt? early 1
@@ -128,8 +179,10 @@ ppb*		at pci?			# PCI-PCI bridges
 pci*		at ppb?
 
 # PCI Ethernet
+bnxt*		at pci?			# Broadcom BCM573xx, BCM574xx
 em*		at pci?			# Intel Pro/1000 Ethernet
 ix*		at pci?			# Intel 82598EB 10Gb Ethernet
+mcx*		at pci?			# Mellanox ConnectX-4/5 Ethernet
 mskc*		at pci?			# Marvell Yukon-2
 msk*		at mskc?		#  each port of above
 re*		at pci?			# Realtek 8169/8169S/8110S
@@ -171,6 +224,7 @@ upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
+mue*		at uhub?		# Microchip LAN75xx/LAN78xx Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
@@ -202,8 +256,14 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 # I2C devices
+abcrtc*		at iic?			# Abracon x80x RTC
+islrtc*		at iic?			# ISL1208 RTC
 rkpmic*		at iic?			# RK808 PMIC
+fusbtc*		at iic?			# USB Type-C controller
 
 pseudo-device	loop 1
+pseudo-device	vlan
+pseudo-device	trunk
 pseudo-device	bpfilter 1
 pseudo-device	rd 1
+pseudo-device	bio 1

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_oct.c,v 1.8 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ec2_oct.c,v 1.11 2018/07/15 16:27:39 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -157,7 +157,7 @@ ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -272,7 +272,7 @@ ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	BN_CTX_free(new_ctx);
 	return ret;
 
-err:
+ err:
 	if (used_ctx)
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
@@ -374,7 +374,7 @@ ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 	}
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;

@@ -1,9 +1,9 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.90 2017/08/26 09:03:51 jsg Exp $
+# $OpenBSD: pkg-config,v 1.92 2019/02/04 20:18:11 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
-# Copyright (c) 2011 Jasper Lievisse Adriaanse <jasper@openbsd.org>
+# Copyright (c) 2011,2019 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -46,7 +46,7 @@ my $allow_uninstalled =
 	defined $ENV{PKG_CONFIG_DISABLE_UNINSTALLED} ? 0 : 1;
 my $found_uninstalled = 0;
 
-my $version = '0.27.1'; # pretend to be this version of pkgconfig
+my $version = '0.29.1'; # pretend to be this version of pkgconfig
 
 my %configs = ();
 setup_self();
@@ -99,6 +99,7 @@ GetOptions(	'debug' 		=> \$mode{debug},
 		'libs-only-L' 		=> sub { $mode{libs} |= 2},
 		'libs-only-other' 	=> sub { $mode{libs} |= 4},
 		'exists' 		=> sub { $mode{exists} = 1} ,
+		'validate'		=> sub { $mode{validate} = 1},
 		'static' 		=> sub { $mode{static} = 1},
 		'uninstalled' 		=> sub { $mode{uninstalled} = 1},
 		'atleast-version=s' 	=> \$mode{minversion},
@@ -125,7 +126,8 @@ if (!defined $mode{printerr}) {
 	if (defined $mode{libs}
 	    or defined $mode{cflags}
 	    or defined $mode{version}
-	    or defined $mode{list}) {
+	    or defined $mode{list}
+	    or defined $mode{validate}) {
 		$mode{printerr} = 1;
 	} else {
 		$mode{printerr} = 0;
@@ -194,7 +196,7 @@ while (@ARGV){
 	push(@$top_config, $p);
 }
 
-if ($mode{exists}) {
+if ($mode{exists} || $mode{validate}) {
 	exit $rc;
 }
 
@@ -287,6 +289,21 @@ sub handle_config
 
 	my $get_props = sub {
 		my $property = shift;
+		my $pkg;
+
+		# See if there's anyting in the environment that we need to take into account.
+		($pkg = $p) =~ s/(^.*\/)?(.*?)\.pc$/$2/g;
+		$pkg = uc($pkg);
+
+		if (grep {/PKG_CONFIG_${pkg}.*/} keys %ENV) {
+			# Now that we know we have something to look for, do the inefficient
+			# iteration.
+			while (my ($k, $v) = each %ENV) {
+				if ($k =~ /^PKG_CONFIG_${pkg}_(\w+)/) {
+					$variables->{lc($1)} = $v;
+				}
+			}
+		}
 
 		my $deps = $cfg->get_property($property, $variables);
 		if (defined $deps) {
@@ -307,7 +324,10 @@ sub handle_config
     	    or $mode{exists}) {
 		&$get_props("Requires.private");
 	}
-	&$get_props("Requires");
+
+	unless (defined $mode{validate}) {
+		&$get_props("Requires");
+	}
 
 }
 
@@ -380,7 +400,7 @@ sub validate_config
 	foreach (@required_elems) {
 		my $e = $cfg->get_property($_, $variables);
 		if (!defined $e) {
-			$f =~ s/(^.*\/)(.*?)\.pc$/$2/g;
+			$f =~ s/(^.*\/)?(.*?)\.pc$/$2/g;
 			say_error("Package '$f' has no $_: field");
 			return undef;
 		}
@@ -614,6 +634,7 @@ Usage: $0 [options]
 --libs-only-L - only output -Llibpath flags
 --libs-only-other - only output flags that are not -l or -L
 --exists package [versionspec] [package [versionspec]]
+--validate package
 --uninstalled - allow for uninstalled versions to be used
 --static - adjust output for static linking
 --atleast-version [version] - require a certain version of a package

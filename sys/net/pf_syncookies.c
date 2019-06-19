@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_syncookies.c,v 1.5 2018/02/08 09:15:46 henning Exp $ */
+/*	$OpenBSD: pf_syncookies.c,v 1.7 2018/09/10 15:54:28 henning Exp $ */
 
 /* Copyright (c) 2016,2017 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2016 Alexandr Nedvedicky <sashan@openbsd.org>
@@ -222,8 +222,12 @@ pf_syncookie_validate(struct pf_pdesc *pd)
 	seq = ntohl(pd->hdr.tcp.th_seq) - 1;
 	ack = ntohl(pd->hdr.tcp.th_ack) - 1;
 	cookie.cookie = (ack & 0xff) ^ (ack >> 24);
-	hash = pf_syncookie_mac(pd, cookie, seq);
 
+	/* we don't know oddeven before setting the cookie (union) */
+	if (pf_status.syncookies_inflight[cookie.flags.oddeven] == 0)
+		return (0);
+
+	hash = pf_syncookie_mac(pd, cookie, seq);
 	if ((ack & ~0xff) != (hash & ~0xff))
 		return (0);
 
@@ -384,40 +388,4 @@ pf_syncookie_recreate_syn(struct pf_pdesc *pd)
 	return (pf_build_tcp(NULL, pd->af, pd->src, pd->dst, *pd->sport,
 	    *pd->dport, seq, 0, TH_SYN, wscale, mss, pd->ttl, 0,
 	    PF_TAG_SYNCOOKIE_RECREATED, cookie.flags.sack_ok, pd->rdomain));
-}
-
-#define	PF_TCPOPTLEN_SACKPERMITTED	2
-
-int
-pf_check_sack(struct pf_pdesc *pd)
-{
-	struct tcphdr	*th = &pd->hdr.tcp;
-	int		 hlen = (th->th_off << 2) - sizeof(*th);
-	uint8_t		 opts[MAX_TCPOPTLEN], *opt = opts;
-	int		 olen;
-
-	if (hlen < PF_TCPOPTLEN_SACKPERMITTED || hlen > MAX_TCPOPTLEN ||
-	    !pf_pull_hdr(pd->m, pd->off + sizeof(*th), opts, hlen, NULL, NULL,
-	    pd->af))
-		return (0);
-
-	while (hlen >= PF_TCPOPTLEN_SACKPERMITTED) {
-		olen = opt[1];
-		switch (*opt) {
-		case TCPOPT_EOL:	/* FALLTHROUGH */
-		case TCPOPT_NOP:
-			opt++;
-			hlen--;
-			break;
-		case TCPOPT_SACK_PERMITTED:
-			return (1);
-		default:
-			if (olen < 2)
-				olen = 2;
-			hlen -= olen;
-			opt += olen;
-		}
-	}
-
-	return (0);
 }

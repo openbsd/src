@@ -14,15 +14,19 @@
 #ifndef LLVM_LIB_TARGET_AARCH64_AARCH64FRAMELOWERING_H
 #define LLVM_LIB_TARGET_AARCH64_AARCH64FRAMELOWERING_H
 
-#include "llvm/Target/TargetFrameLowering.h"
+#include "AArch64ReturnProtectorLowering.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
 
 namespace llvm {
 
 class AArch64FrameLowering : public TargetFrameLowering {
 public:
+
+  const AArch64ReturnProtectorLowering RPL;
+
   explicit AArch64FrameLowering()
       : TargetFrameLowering(StackGrowsDown, 16, 0, 16,
-                            true /*StackRealignable*/) {}
+                            true /*StackRealignable*/), RPL() {}
 
   void emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MBBI) const;
@@ -35,6 +39,8 @@ public:
   /// the function.
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
+
+  const ReturnProtectorLowering *getReturnProtector() const override;
 
   bool canUseAsPrologue(const MachineBasicBlock &MBB) const override;
 
@@ -50,10 +56,10 @@ public:
 
   bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator MI,
-                                  const std::vector<CalleeSavedInfo> &CSI,
+                                  std::vector<CalleeSavedInfo> &CSI,
                                   const TargetRegisterInfo *TRI) const override;
 
-  /// \brief Can this function use the red zone for local allocations.
+  /// Can this function use the red zone for local allocations.
   bool canUseRedZone(const MachineFunction &MF) const;
 
   bool hasFP(const MachineFunction &MF) const override;

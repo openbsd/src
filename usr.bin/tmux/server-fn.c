@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.113 2018/02/28 08:55:44 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.121 2019/05/03 20:44:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -35,13 +35,13 @@ static void		 server_destroy_session_group(struct session *);
 void
 server_redraw_client(struct client *c)
 {
-	c->flags |= CLIENT_REDRAW;
+	c->flags |= CLIENT_ALLREDRAWFLAGS;
 }
 
 void
 server_status_client(struct client *c)
 {
-	c->flags |= CLIENT_STATUS;
+	c->flags |= CLIENT_REDRAWSTATUS;
 }
 
 void
@@ -110,7 +110,7 @@ server_redraw_window_borders(struct window *w)
 
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (c->session != NULL && c->session->curw->window == w)
-			c->flags |= CLIENT_BORDERS;
+			c->flags |= CLIENT_REDRAWBORDERS;
 	}
 }
 
@@ -175,6 +175,22 @@ server_lock_client(struct client *c)
 
 	c->flags |= CLIENT_SUSPENDED;
 	proc_send(c->peer, MSG_LOCK, -1, cmd, strlen(cmd) + 1);
+}
+
+void
+server_kill_pane(struct window_pane *wp)
+{
+	struct window	*w = wp->window;
+
+	if (window_count_panes(w) == 1) {
+		server_kill_window(w);
+		recalculate_sizes();
+	} else {
+		server_unzoom_window(w);
+		layout_close_pane(wp);
+		window_remove_pane(w, wp);
+		server_redraw_window(w);
+	}
 }
 
 void
@@ -286,6 +302,7 @@ server_destroy_pane(struct window_pane *wp, int notify)
 
 	if (wp->fd != -1) {
 		bufferevent_free(wp->event);
+		wp->event = NULL;
 		close(wp->fd);
 		wp->fd = -1;
 	}
@@ -303,7 +320,7 @@ server_destroy_pane(struct window_pane *wp, int notify)
 
 		screen_write_start(&ctx, wp, &wp->base);
 		screen_write_scrollregion(&ctx, 0, screen_size_y(ctx.s) - 1);
-		screen_write_cursormove(&ctx, 0, screen_size_y(ctx.s) - 1);
+		screen_write_cursormove(&ctx, 0, screen_size_y(ctx.s) - 1, 0);
 		screen_write_linefeed(&ctx, 1, 8);
 		memcpy(&gc, &grid_default_cell, sizeof gc);
 
@@ -351,7 +368,7 @@ server_destroy_session_group(struct session *s)
 	else {
 		TAILQ_FOREACH_SAFE(s, &sg->sessions, gentry, s1) {
 			server_destroy_session(s);
-			session_destroy(s, __func__);
+			session_destroy(s, 1, __func__);
 		}
 	}
 }
@@ -393,6 +410,7 @@ server_destroy_session(struct session *s)
 			c->last_session = NULL;
 			c->session = s_new;
 			server_client_set_key_table(c, NULL);
+			tty_update_client_offset(c);
 			status_timer_start(c);
 			notify_client("client-session-changed", c);
 			session_update_activity(s_new, NULL);
@@ -414,14 +432,13 @@ server_check_unattached(void)
 	 * set, collect them.
 	 */
 	RB_FOREACH(s, sessions, &sessions) {
-		if (!(s->flags & SESSION_UNATTACHED))
+		if (s->attached != 0)
 			continue;
 		if (options_get_number (s->options, "destroy-unattached"))
-			session_destroy(s, __func__);
+			session_destroy(s, 1, __func__);
 	}
 }
 
-/* Set stdin callback. */
 int
 server_set_stdin_callback(struct client *c, void (*cb)(struct client *, int,
     void *), void *cb_data, char **cause)
@@ -435,7 +452,7 @@ server_set_stdin_callback(struct client *c, void (*cb)(struct client *, int,
 		return (-1);
 	}
 	if (c->stdin_callback != NULL) {
-		*cause = xstrdup("stdin in use");
+		*cause = xstrdup("stdin is in use");
 		return (-1);
 	}
 

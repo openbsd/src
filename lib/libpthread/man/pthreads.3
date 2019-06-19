@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthreads.3,v 1.41 2013/07/16 15:21:11 schwarze Exp $
+.\" $OpenBSD: pthreads.3,v 1.43 2019/02/04 18:06:32 jmc Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: February 4 2019 $
 .Dt PTHREADS 3
 .Os
 .Sh NAME
@@ -169,6 +169,8 @@ The functions available are as follows:
 Identify the main thread.
 .It Fn pthread_set_name_np
 Set the name of a thread.
+.It Fn pthread_get_name_np
+Get the name of a thread.
 .It Fn pthread_stackseg_np
 Return stack size and location.
 .It Fn pthread_yield
@@ -421,6 +423,7 @@ with larger numbers generating more verbose output.
 .Xr pthread_detach 3 ,
 .Xr pthread_equal 3 ,
 .Xr pthread_exit 3 ,
+.Xr pthread_get_name_np 3 ,
 .Xr pthread_getcpuclockid 3 ,
 .Xr pthread_getspecific 3 ,
 .Xr pthread_join 3 ,

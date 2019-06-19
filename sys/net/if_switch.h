@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.h,v 1.10 2016/11/20 12:45:26 reyk Exp $	*/
+/*	$OpenBSD: if_switch.h,v 1.11 2019/05/10 15:13:38 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -174,6 +174,7 @@ struct switch_port {
 	struct timespec			 swpo_appended;
 	struct switch_softc		*swpo_switch;
 	uint32_t			 swpo_flags;
+	uint32_t			 swpo_protected;
 	void				*swpo_dhcookie;
 	void				(*swop_bk_start)(struct ifnet *);
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvreg.h,v 1.4 2015/12/12 12:33:49 reyk Exp $	*/
+/*	$OpenBSD: pvreg.h,v 1.6 2019/05/13 15:40:34 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -42,6 +42,29 @@
 
 #define	KVM_MSR_EOI_EN				0x4b564d04
 #define KVM_PV_EOI_BIT				0
+
+#define KVM_MSR_WALL_CLOCK			0x4b564d00
+#define KVM_MSR_SYSTEM_TIME			0x4b564d01
+
+struct pvclock_wall_clock {
+	uint32_t		 wc_version;
+	uint32_t		 wc_sec;
+	uint32_t		 wc_nsec;
+} __packed;
+
+struct pvclock_time_info {
+	uint32_t		 ti_version;
+	uint32_t		 ti_pad0;
+	uint64_t		 ti_tsc_timestamp;
+	uint64_t		 ti_system_time;
+	uint32_t		 ti_tsc_to_system_mul;
+	int8_t			 ti_tsc_shift;
+	uint8_t			 ti_flags;
+	uint8_t			 ti_pad[2];
+} __packed;
+
+#define PVCLOCK_FLAG_TSC_STABLE			0x01
+#define PVCLOCK_SYSTEM_TIME_ENABLE		0x01
 
 /*
  * Hyper-V

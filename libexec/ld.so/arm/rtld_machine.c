@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.26 2017/11/15 22:08:04 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.28 2018/11/16 21:15:47 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -53,7 +53,7 @@ Elf_Addr _dl_bind(elf_object_t *object, int reloff);
 #define _RF_E		0x02000000		/* ERROR */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	((s) & 0xff)		/* right shift */
-static int reloc_target_flags[] = {
+static const int reloc_target_flags[] = {
 	0,						/*  0 NONE */
 	_RF_S|_RF_P|_RF_A|	_RF_SZ(32) | _RF_RS(0),	/*  1 PC24 */
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),	/*  2 ABS32 */
@@ -107,7 +107,7 @@ static int reloc_target_flags[] = {
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
 
-static long reloc_target_bitmask[] = {
+static const long reloc_target_bitmask[] = {
 #define _BM(x)  (~(-(1ULL << (x))))
 	_BM(0),		/*  0 NONE */
 	_BM(24),	/*  1 PC24 */
@@ -372,9 +372,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		pltgot[1] = (Elf_Addr)object;
 		pltgot[2] = (Elf_Addr)_dl_bind_start;
 	}
-
-	/* mprotect the GOT */
-	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
 
 	return (fails);
 }

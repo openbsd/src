@@ -1,3 +1,4 @@
+/* $OpenBSD: fuse-opt-parse.c,v 1.4 2018/07/20 12:05:08 helg Exp $ */
 /*
  * Copyright (c) 2017 Helg Bredow <helg@openbsd.org>
  *

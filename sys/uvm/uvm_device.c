@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.54 2017/05/21 13:00:53 visa Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.55 2018/08/20 10:00:04 kettenis Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -41,9 +41,9 @@
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
 
-#if defined(__amd64__) || defined(__i386__) || \
-    defined(__loongson__) || defined(__macppc__) || \
-    defined(__sparc64__)
+#if defined(__amd64__) || defined(__arm64__) || \
+    defined(__i386__) || defined(__loongson__) || \
+    defined(__macppc__) || defined(__sparc64__)
 #include "drm.h"
 #endif
 

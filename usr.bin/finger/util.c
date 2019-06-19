@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.32 2015/12/26 20:51:35 guenther Exp $	*/
+/*	$OpenBSD: util.c,v 1.34 2018/06/17 15:00:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -104,7 +104,7 @@ userinfo(PERSON *pn, struct passwd *pw)
 	if (!(p = strsep(&bp, ",")))
 		return;
 	expandusername(p, pw->pw_name, name, sizeof(name));
-	if (stravis(&pn->realname, p, VIS_SAFE|VIS_NOSLASH) == -1)
+	if (stravis(&pn->realname, name, VIS_SAFE|VIS_NOSLASH) == -1)
 		err(1, "stravis");
 	if ((p = strsep(&bp, ",")) && *p) {
 		if (stravis(&pn->office, p, VIS_SAFE|VIS_NOSLASH) == -1)
@@ -153,7 +153,7 @@ match(struct passwd *pw, char *user)
 
 /* inspired by usr.sbin/sendmail/util.c::buildfname */
 void
-expandusername(char *gecos, char *login, char *buf, int buflen)
+expandusername(char *gecos, char *login, char *buf, size_t buflen)
 {
 	char *p, *bp;
 

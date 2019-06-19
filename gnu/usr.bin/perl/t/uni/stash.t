@@ -170,7 +170,7 @@ plan( tests => 49 );
             package ＦŌŌ３;
             sub 남えㄉ {};
             my $anon = sub {};
-            my $남えㄉ = eval q[\&남えㄉ];
+            my $남えㄉ = eval q[*남えㄉ{CODE}]; # not \&남えㄉ; need a real GV
             package main;
             delete $ＦŌŌ３::{남えㄉ}; # make named anonymous
     

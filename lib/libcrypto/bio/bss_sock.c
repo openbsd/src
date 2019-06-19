@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_sock.c,v 1.23 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: bss_sock.c,v 1.24 2018/05/01 13:29:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,7 +73,7 @@ static int sock_new(BIO *h);
 static int sock_free(BIO *data);
 int BIO_sock_should_retry(int s);
 
-static BIO_METHOD methods_sockp = {
+static const BIO_METHOD methods_sockp = {
 	.type = BIO_TYPE_SOCKET,
 	.name = "socket",
 	.bwrite = sock_write,
@@ -84,7 +84,7 @@ static BIO_METHOD methods_sockp = {
 	.destroy = sock_free
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_s_socket(void)
 {
 	return (&methods_sockp);

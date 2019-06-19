@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_subr.c,v 1.11 2016/09/07 17:53:35 natano Exp $ */
+/* $OpenBSD: fuse_subr.c,v 1.12 2018/05/21 11:47:46 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -57,6 +57,7 @@ alloc_vn(struct fuse *f, const char *path, ino_t ino, ino_t pino)
 	if (ino == (ino_t)-1) {
 		f->max_ino++;
 		vn->ino = f->max_ino;
+		DPRINTF("New Inode: %llu\t", (unsigned long long)vn->ino);
 	}
 
 	return (vn);
@@ -85,11 +86,6 @@ set_vn(struct fuse *f, struct fuse_vnode *v)
 {
 	struct fuse_vn_head *vn_head;
 	struct fuse_vnode *vn;
-
-	DPRINTF("%s: create or update vnode %llu@%llu = %s\n", __func__,
-	    (unsigned long long)v->ino,
-	    v->parent ? (unsigned long long)v->parent->ino : 0,
-	    v->path);
 
 	if (tree_set(&f->vnode_tree, v->ino, v) == NULL)
 		return (0);
@@ -207,8 +203,8 @@ build_realname(struct fuse *f, ino_t ino)
 	}
 
 	if (ino == (ino_t)0)
-		DPRINTF("%s: NULL ino\n", __func__);
+		DPRINTF("%s: NULL ino\t", __func__);
 
-	DPRINTF("realname %s\n", name);
+	DPRINTF("%s", name);
 	return (name);
 }

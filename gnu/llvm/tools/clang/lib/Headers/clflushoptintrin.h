@@ -1,4 +1,4 @@
-/*===---- clflushoptintrin.h - CLFLUSHOPT intrinsic ------------------------------------===
+/*===---- clflushoptintrin.h - CLFLUSHOPT intrinsic ------------------------===
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,7 @@
 #define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__,  __target__("clflushopt")))
 
 static __inline__ void __DEFAULT_FN_ATTRS
-_mm_clflushopt(char * __m) {
+_mm_clflushopt(void const * __m) {
   __builtin_ia32_clflushopt(__m);
 }
 

@@ -237,7 +237,7 @@ try(42000,     0,     0);  # old=0        , new=0        ; old = new
 
 sub try {
   my ($pos, $len, $newlen) = @_;
-  open F, "> $file" or die "Couldn't open file $file: $!";
+  open F, '>', $file or die "Couldn't open file $file: $!";
   binmode F;
 
   # The record has exactly 17 characters.  This will help ensure that
@@ -279,6 +279,11 @@ sub try {
       print "# Timeout\n";
       print "not ok $N\n"; $N++;
       print "not ok $N\n"; $N++;
+      if (defined $len) {
+        # Fail the tests in the recursive call as well
+        print "not ok $N\n"; $N++;
+        print "not ok $N\n"; $N++;
+      }
       return;
     } else {
       $@ = $err;
@@ -286,7 +291,7 @@ sub try {
     }
   }
 
-  open F, "< $file" or die "Couldn't open file $file: $!";
+  open F, '<', $file or die "Couldn't open file $file: $!";
   binmode F;
   my $actual;
   { local $/;
@@ -318,7 +323,7 @@ sub check_contents {
   my $x = join $:, @c, '';
   local *FH = $o->{fh};
   seek FH, 0, SEEK_SET;
-#  my $open = open FH, "< $file";
+#  my $open = open FH, '<', $file;
   my $a;
   { local $/; $a = <FH> }
   $a = "" unless defined $a;

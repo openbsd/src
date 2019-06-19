@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.41 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.43 2018/08/21 13:10:13 bluhm Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -65,20 +65,15 @@ void
 cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
+	struct cpu_info *ci = curcpu();
 	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct pcb *pcb1 = &p1->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
 
-	/*
-	 * If fpuproc != p1, then the fpu h/w state is irrelevant and the
-	 * state had better already be in the pcb.  This is true for forks
-	 * but not for dumps.
-	 *
-	 * If fpuproc == p1, then we have to save the fpu h/w state to
-	 * p1's pcb so that we can copy it.
-	 */
-	if (p1->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p1, 1);
+	/* Save the fpu h/w state to p1's pcb so that we can copy it. */
+	if (p1 != &proc0 && (ci->ci_flags & CPUF_USERXSTATE))
+		fpusave(&pcb1->pcb_savefpu);
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
@@ -86,7 +81,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
-	*pcb = p1->p_addr->u_pcb;
+	*pcb = *pcb1;
 
 	/*
 	 * Activate the address space.
@@ -130,11 +125,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 void
 cpu_exit(struct proc *p)
 {
-
-	/* If we were using the FPU, forget about it. */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 0);
-
 	pmap_deactivate(p);
 	sched_exit(p);
 }

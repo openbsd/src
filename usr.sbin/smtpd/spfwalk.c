@@ -14,11 +14,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/tree.h>
 
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <netinet/in.h>
 #include <netdb.h>
 
 #include <asr.h>
@@ -138,6 +140,7 @@ dispatch_record(struct asr_result *ar, void *arg)
 void
 dispatch_txt(struct dns_rr *rr)
 {
+	struct in6_addr ina;
         char buf[4096];
         char buf2[512];
         char *in = buf;
@@ -167,28 +170,29 @@ dispatch_txt(struct dns_rr *rr)
 		if (dict_set(&seen, *ap, &seen))
 			continue;
 
+		if (**ap == '-' || **ap == '~')
+			continue;
+
+		if (**ap == '+' || **ap == '?')
+			(*ap)++;
+
 		if (strncasecmp("ip4:", *ap, 4) == 0) {
-			if (ip_v4 == 1 || ip_both == 1)
+			if ((ip_v4 == 1 || ip_both == 1) &&
+			    inet_net_pton(AF_INET, *(ap) + 4,
+			    &ina, sizeof(ina)) != -1)
 				printf("%s\n", *(ap) + 4);
 			continue;
 		}
 		if (strncasecmp("ip6:", *ap, 4) == 0) {
-			if (ip_v6 == 1 || ip_both == 1)
+			if ((ip_v6 == 1 || ip_both == 1) &&
+			    inet_net_pton(AF_INET6, *(ap) + 4,
+			    &ina, sizeof(ina)) != -1)
 				printf("%s\n", *(ap) + 4);
-			continue;
-		}
-		if (strncasecmp("+ip4:", *ap, 5) == 0) {
-			if (ip_v4 == 1 || ip_both == 1)
-				printf("%s\n", *(ap) + 5);
-			continue;
-		}
-		if (strncasecmp("+ip6:", *ap, 5) == 0) {
-			if (ip_v6 == 1 || ip_both == 1)
-				printf("%s\n", *(ap) + 5);
 			continue;
 		}
 		if (strncasecmp("a:", *ap, 2) == 0) {
 			lookup_record(T_A, *(ap) + 2, dispatch_a);
+			lookup_record(T_AAAA, *(ap) + 2, dispatch_aaaa);
 			continue;
 		}
 		if (strncasecmp("exists:", *ap, 7) == 0) {

@@ -5,8 +5,8 @@
  */
 
 
-#ifndef H_EBCDIC_TABLES   /* Guard against nested #includes */
-#define H_EBCDIC_TABLES   1
+#ifndef PERL_EBCDIC_TABLES_H_   /* Guard against nested #includes */
+#define PERL_EBCDIC_TABLES_H_   1
 
 /* This file contains definitions for various tables used in EBCDIC handling.
  * More info is in utfebcdic.h */
@@ -437,6 +437,6 @@ EXTCONST U8 PL_fold_latin1[] = {
 
 #endif	/* EBCDIC 037 */
 
-#endif /* H_EBCDIC_TABLES */
+#endif /* PERL_EBCDIC_TABLES_H_ */
 
 /* ex: set ro: */

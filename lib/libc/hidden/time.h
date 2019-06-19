@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.5 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: time.h,v 1.6 2018/10/30 16:28:42 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -47,6 +47,7 @@ PROTO_NORMAL(time);
 PROTO_DEPRECATED(timegm);
 PROTO_DEPRECATED(timelocal);
 PROTO_DEPRECATED(timeoff);
+PROTO_STD_DEPRECATED(timespec_get);
 PROTO_NORMAL(tzset);
 PROTO_DEPRECATED(tzsetwall);
 

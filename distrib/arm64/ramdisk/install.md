@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.9 2018/03/23 05:02:27 deraadt Exp $
+#	$OpenBSD: install.md,v 1.11 2018/10/12 18:37:22 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,9 +61,9 @@ md_installboot() {
 		cp $_mdec/{bootcode.bin,start.elf,fixup.dat,*.dtb} /mnt/mnt/
 		cp $_mdec/u-boot.bin /mnt/mnt/
 		cat > /mnt/mnt/config.txt<<-__EOT
-			arm_control=0x200
+			arm_64bit=1
 			enable_uart=1
-			device_tree_address=0x100
+			device_tree_address=0x02600000
 			kernel=u-boot.bin
 		__EOT
 		;;
@@ -150,4 +150,12 @@ md_congrats() {
 }
 
 md_consoleinfo() {
+	CTTY=console
+	DEFCONS=y
+	case $CSPEED in
+	9600|19200|38400|57600|115200|1500000)
+		;;
+	*)
+		CSPEED=115200;;
+	esac
 }

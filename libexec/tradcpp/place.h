@@ -27,7 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdbool.h>
+#ifndef PLACE_H
+#define PLACE_H
+
+#include "bool.h"
 
 enum places {
 	P_NOWHERE,
@@ -50,7 +53,14 @@ void place_setbuiltin(struct place *p, unsigned num);
 void place_setcommandline(struct place *p, unsigned word, unsigned column);
 void place_setfilestart(struct place *p, const struct placefile *pf);
 
+const char *place_getname(const struct place *);
 const char *place_getparsedir(const struct place *incplace);
+bool place_eq(const struct place *, const struct place *);
+bool place_samefile(const struct place *, const struct place *);
+
+void place_changefile(struct place *p, const char *name);
 
 const struct placefile *place_addfile(const struct place *incplace,
 				      const char *name, bool fromsystemdir);
+
+#endif /* PLACE_H */

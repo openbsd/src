@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2018/01/21 21:35:34 patrick Exp $
+#	$OpenBSD: Makefile,v 1.7 2019/01/31 14:35:06 patrick Exp $
 
 NOMAN=		#
 
@@ -8,8 +8,9 @@ PROG=		BOOTAA64.EFI
 OBJFMT=		binary
 INSTALL_STRIP=
 BINDIR=		/usr/mdec
-SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efidev.c efipxe.c
-SRCS+=		fdt.c
+SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efiacpi.c
+SRCS+=		efidev.c efipxe.c efirng.c fdt.c dt_blob.S
+SRCS+=		softraid_arm64.c
 
 S=		${.CURDIR}/../../../..
 EFIDIR=		${S}/stand/efi
@@ -30,6 +31,9 @@ SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \
 	lseek.c open.c read.c readdir.c stat.c
 SRCS+=	loadfile.c
 SRCS+=	ufs.c
+SRCS+=	arp.c ether.c globals.c in_cksum.c net.c netif.c netudp.c tftp.c
+SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
+	pkcs5_pbkdf2.c rijndael.c sha1.c sha2.c softraid.c
 
 .PATH:	${S}/lib/libkern/arch/arm64 ${S}/lib/libkern
 SRCS+=	divdi3.c moddi3.c qdivrem.c strlcpy.c strlen.c
@@ -42,7 +46,7 @@ CPPFLAGS+=	-I${S} -I. -I${.CURDIR}
 CPPFLAGS+=	-I${EFIDIR}/include -I${EFIDIR}/include/arm64
 CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-DSMALL -DSLOW -DNOBYFOUR -D__INTERNAL_LIBSA_CREAD
-CPPFLAGS+=	-DNEEDS_HEAP_H
+CPPFLAGS+=	-DNEEDS_HEAP_H -DFWRANDOM
 COPTS+=		-Wno-attributes -Wno-format
 COPTS+=		-ffreestanding -fno-stack-protector
 COPTS+=		-fshort-wchar -fPIC -fno-builtin
@@ -77,3 +81,8 @@ CLEANFILES+=	machine
 NOPROG=yes
 .include <bsd.prog.mk>
 .endif
+
+DTC=	dtc
+DTCOPTS= -p 4096 -H epapr
+update-blob:
+	${DTC} ${DTCOPTS} -O asm -o ${.CURDIR}/dt_blob.S ${.CURDIR}/acpi.dts

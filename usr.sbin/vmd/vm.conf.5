@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.27 2018/01/03 05:39:56 ccardenas Exp $
+.\" $OpenBSD: vm.conf.5,v 1.44 2019/05/14 12:47:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 3 2018 $
+.Dd $Mdocdate: May 14 2019 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -29,9 +29,9 @@ A VMM manages virtual machines (VMs) on a
 .Ar host .
 The VMM subsystem is responsible for creating, destroying, and
 executing VMs.
-.Sh SECTIONS
+.Pp
 .Nm
-is divided into four main sections:
+is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -100,6 +100,25 @@ in the
 section below.
 The default is
 .Ar 100.64.0.0/10 .
+.It Ic local inet6 Op Ic prefix Ar address Ns Li / Ns Ar prefix
+Enable IPv6 on local interfaces and allocate routable subnets.
+If the prefix is not specified,
+a random prefix from the
+.Dq unique local
+network range
+.Ar fd00::/8
+will be generated on startup.
+The specified prefix length must be /64 or smaller.
+.It Cm socket owner Ar user Ns Op : Ns Ar group
+Set the control socket owner to the specified user or group.
+Users with access to the control socket will be allowed to use
+.Nm vmctl
+for restricted access to
+.Nm vmd .
+The default is
+.Ar root:wheel .
+.It Cm socket owner Pf : Ar group
+Set the control socket owner to the specified group.
 .El
 .Sh VM CONFIGURATION
 Each
@@ -108,17 +127,54 @@ section starts with a declaration of the virtual machine
 .Ar name :
 .Bl -tag -width Ds
 .It Ic vm Ar name Brq ...
-The name can be any alphanumeric string along with '.', '-', and '_' characters.
-However, it cannot start with '.', '-', or '_'.
-Typically the name is a hostname.
+The
+.Ar name
+can only consist of alphanumeric characters, as well as '.', '-', and '_',
+and must start with a letter.
+Typically this is a hostname.
 .El
 .Pp
 Followed by a block of parameters that is enclosed in curly brackets:
 .Bl -tag -width Ds
+.It Cm allow instance Op Brq ...
+Set the permissions to create VM instances.
+See
+.Sx VM INSTANCES .
 .It Cm boot Ar path
 Kernel or BIOS image to load when booting the VM.
 If not specified, the default is to boot using the BIOS image in
 .Pa /etc/firmware/vmm-bios .
+.It Cm boot device Ar device
+Force VM to boot from
+.Ar device .
+Valid values are:
+.Bl -tag -width "cdrom"
+.It Ar cdrom
+Boot the ISO image file specified using the
+.Ic cdrom
+parameter.
+.It Ar disk
+Boot from the disk image file specified using the
+.Ic disk
+parameter.
+.It Ar net
+Boot the kernel specified using the
+.Ic boot
+parameter as if the VM was network booted.
+In addition, the DHCP lease will advertise
+.Dq auto_install
+in the bootfile option making it suitable for use with
+.Xr autoinstall 8 .
+Note, this is not to be confused with
+.Xr pxeboot 8
+but rather a simulated network boot.
+.El
+.Pp
+Currently
+.Ar disk
+and
+.Ar cdrom
+only work with VMs booted using BIOS.
 .It Cm cdrom Ar path
 ISO image file.
 .It Cm enable
@@ -130,8 +186,15 @@ nor
 is specified.
 .It Cm disable
 Do not start this VM.
-.It Cm disk Ar path
+.It Cm disk Ar path Op Cm format Ar fmt
 Disk image file (may be specified multiple times to add multiple disk images).
+The format may be specified as either
+.Ar qcow2
+or
+.Ar raw .
+If left unspecified, the format defaults to
+.Pa raw
+if it cannot be derived automatically.
 .It Oo Cm local Oc Cm interface Oo name Oc Op Brq ...
 Network interface to add to the VM.
 The optional
@@ -154,7 +217,9 @@ For example, this can be used to write
 rules for several VM interfaces in the same group.
 The
 .Ar group-name
-must not end with a digit.
+must not be longer than 15 characters or end with a digit,
+as described in
+.Xr ifconfig 8 .
 .It Oo Cm locked Oc Cm lladdr Op Ar etheraddr
 Change the link layer address (MAC address) of the interface on the
 VM guest side.
@@ -194,6 +259,19 @@ interface will auto-generate an IPv4 subnet for the interface,
 configure a gateway address on the VM host side,
 and run a simple DHCP/BOOTP server for the VM.
 This option can be used for layer 3 mode without configuring a switch.
+.Pp
+If the global
+.Cm local inet6
+option is enabled, a routable IPv6 gateway address will be generated
+on the host side.
+Unlike the IPv4 option,
+.Nm vmd
+does not respond to DHCPv6 or router solicitation messages itself.
+Use
+.Xr rad 8
+listening on the interface group, e.g.\&
+.Ar interface tap
+for auto-configuring the VMs accordingly.
 .It Cm interfaces Ar count
 Optional minimum number of network interfaces to add to the VM.
 If the
@@ -206,7 +284,69 @@ Memory size of the VM, in bytes, rounded to megabytes.
 The default is 512M.
 .It Cm owner Ar user Ns Op : Ns Ar group
 Set the owner of the VM to the specified user or group.
-The owner will be allowed to start or stop the VM and open the VM's console.
+The owner will be allowed to start or stop the VM, pause or unpause the VM,
+and open the VM's console.
+.It Cm owner Pf : Ar group
+Set the owner to the specified group.
+.El
+.Sh VM INSTANCES
+It is possible to use configured or running VMs as a template for
+additional instances of the VM.
+An instance is just like a normal
+.Ic vm
+and is configured with the following declaration of the virtual machine
+.Ar name :
+.Bl -tag -width Ds
+.It Ic vm Ar parent Ic instance Ar name Brq ...
+A virtual machine can be created as an instance of any other configured VM.
+.El
+.Pp
+The new instance will inherit settings from the VM
+.Ar parent ,
+except for exclusive options such as
+.Ic disk ,
+.Ic interface lladdr ,
+or
+.Ic interface name .
+The configuration options are identical to the
+.Sx VM CONFIGURATION ,
+but restricted to the allowed instance options.
+.Pp
+The allowed instance options are configured in the
+.Ar parent
+VM:
+.Bl -tag -width Ds
+.It Cm allow instance Op Brq ...
+Allow users to use this VM as a template for VM instances.
+By default, the root user can always create instances without
+restrictions and users or non-root owners cannot create instances.
+An instance will inherit the configuration from the VM and the user,
+if permitted, will be allowed to configure individual VM options.
+.El
+.Pp
+Valid options are:
+.Bl -tag -width Ds
+.It Cm boot
+Allow user to configure the kernel or BIOS image.
+The user needs read access to the image.
+.It Cm cdrom
+Allow user to configure the ISO file.
+The user needs read access to the file.
+.It Cm disk
+Allow user to configure the disk images.
+The user needs read and write access to image and instances are not
+allowed to reuse disks from the parent VM.
+.It Cm instance
+Allow user to create additional instances from the instances.
+.It Cm interface
+Allow user to change network interface settings.
+.It Cm memory
+Allow user to configure the memory size.
+.It Cm owner Ar user Ns Op : Ns Ar group
+Allow the specified user or group to create the instances.
+The owner will be allowed to create VM instances, start or stop the
+instances, pause or unpause the instances, and open the instances'
+consoles.
 .It Cm owner Pf : Ar group
 Set the owner to the specified group.
 .El
@@ -222,11 +362,7 @@ is pre-configured using
 .Xr hostname.if 5
 or
 .Xr ifconfig 8
-(see the
-.Sx BRIDGE
-and
-.Sx SWITCH
-sections in
+(see the BRIDGE and SWITCH sections in
 .Xr ifconfig 8
 accordingly).
 When a VM is started, virtual network interfaces which are assigned to a
@@ -271,7 +407,9 @@ For example, this can be used to write
 rules for several VM interfaces in the same group.
 The
 .Ar group-name
-must not end with a digit.
+must not be longer than 15 characters or end with a digit,
+as described in
+.Xr ifconfig 8 .
 .It Cm interface Ar name
 Set the
 .Xr switch 4
@@ -303,6 +441,14 @@ vm "vm2.example.com" {
 	disk "/home/joe/vm2-disk.img"
 	interface { switch "uplink" }
 	owner joe
+}
+.Ed
+.Pp
+Create a new VM as an instance from
+.Sq vm2.example.com :
+.Bd -literal -offset indent
+vm "vm2.example.com" instance "vm3.example.com" {
+	disk "/home/joe/vm3-disk.img"
 }
 .Ed
 .Pp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cookie.c,v 1.7 2017/01/21 08:33:07 krw Exp $	*/
+/*	$OpenBSD: cookie.c,v 1.9 2019/05/16 12:44:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2007 Pierre-Yves Ritschard <pyr@openbsd.org>

@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.45 2017/08/05 14:13:39 jsg Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.54 2019/05/27 07:03:11 jsg Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -14,8 +14,8 @@
             ..
             xinit
             ..
-	    xsm
-	    ..
+            xsm
+            ..
         ..
         fonts
             conf.avail
@@ -45,8 +45,6 @@
                 ..
                 X11
                     ICE
-                    ..
-                    PM
                     ..
                     SM
                     ..
@@ -89,6 +87,8 @@
                 ..
                 pixman-1
                 ..
+                vulkan
+                ..
                 xcb
                 ..
                 xorg
@@ -122,8 +122,6 @@
                     ..
                     fvwm
                     ..
-                    proxymngr
-                    ..
                     x11perfcomp
                     ..
                     xedit
@@ -133,8 +131,8 @@
                         ..
                     ..
                 ..
-		locate
-		..
+                locate
+                ..
                 modules
                     dri
                     ..
@@ -142,13 +140,7 @@
                     ..
                     extensions
                     ..
-                    fonts
-                    ..
                     input
-                    ..
-                    linux
-                    ..
-                    multimedia
                     ..
                 ..
                 pkgconfig
@@ -170,8 +162,8 @@
             ..
             share
                 X11
-		    app-defaults
-		    ..
+                    app-defaults
+                    ..
                     locale
                         C
                         ..
@@ -179,8 +171,8 @@
                         ..
                         armscii-8
                         ..
-			cs_CZ.UTF-8
-			..
+                        cs_CZ.UTF-8
+                        ..
                         el_GR.UTF-8
                         ..
                         en_US.UTF-8
@@ -231,11 +223,7 @@
                         ..
                         ja.JIS
                         ..
-                        ja.S90
-                        ..
                         ja.SJIS
-                        ..
-                        ja.U90
                         ..
                         ja_JP.UTF-8
                         ..
@@ -344,33 +332,15 @@
                         types
                         ..
                     ..
-		    xorg.conf.d
-		    ..
+                    xorg.conf.d
+                    ..
                 ..
                 aclocal
                 ..
                 doc
-                    bigreqsproto
-                    ..
-                    compositeproto
-                    ..
-                    damageproto
-                    ..
-                    dri2proto
-                    ..
-                    fixesproto
-                    ..
                     fontconfig
                         fontconfig-devel
                         ..
-                    ..
-                    fontsproto
-                    ..
-                    inputproto
-                    ..
-                    kbproto
-                    ..
-                    libFS
                     ..
                     libICE
                     ..
@@ -396,23 +366,17 @@
                     ..
                     libXvMC
                     ..
-                    randrproto
-                    ..
-                    recordproto
-                    ..
-                    renderproto
-                    ..
-                    resproto
-                    ..
-                    scrnsaverproto
-                    ..
-                    x11proto
+                    xorgproto
+                        inputproto
+                        ..
+                        kbproto
+                        ..
+                        x11proto
+                        ..
                         SIAddresses
                         ..
-                    ..
-                    xcmiscproto
-                    ..
-                    xextproto
+                        xextproto
+                        ..
                     ..
                     xorg-docs
                     ..
@@ -423,8 +387,12 @@
                 ..
                 mk
                 ..
-		util-macros
-		..
+                util-macros
+                ..
+                vulkan
+                    icd.d
+                    ..
+                ..
                 xcb
                 ..
             ..

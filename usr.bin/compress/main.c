@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.94 2016/09/03 13:26:50 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.95 2019/05/27 15:11:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -657,7 +657,7 @@ dodecompress(const char *in, char *out, struct stat *sb)
 		return -1;
 	}
 
-	/* XXX - open constrains outfile to MAXPATHLEN so this is safe */
+	/* XXX - open constrains outfile to PATH_MAX so this is safe */
 	oldname[0] = '\0';
 	if ((cookie = method->ropen(ifd, oldname, 1)) == NULL) {
 		if (verbose >= 0)
@@ -666,12 +666,13 @@ dodecompress(const char *in, char *out, struct stat *sb)
 		return (FAILURE);
 	}
 	if (storename && oldname[0] != '\0') {
+		char *oldbase = basename(oldname);
 		char *cp = strrchr(out, '/');
 		if (cp != NULL) {
 			*(cp + 1) = '\0';
-			strlcat(out, oldname, PATH_MAX);
+			strlcat(out, oldbase, PATH_MAX);
 		} else
-			strlcpy(out, oldname, PATH_MAX);
+			strlcpy(out, oldbase, PATH_MAX);
 		cat = 0;			/* XXX should -c override? */
 	}
 

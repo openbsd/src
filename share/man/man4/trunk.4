@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.29 2015/03/13 19:58:41 jmc Exp $
+.\"	$OpenBSD: trunk.4,v 1.30 2018/08/12 23:50:31 ccardenas Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: August 12 2018 $
 .Dt TRUNK 4
 .Os
 .Sh NAME
@@ -68,12 +68,16 @@ the next active port is used.
 The first interface added is the master port;
 any interfaces added after that are used as failover devices.
 .It Ic lacp
-Uses the IEEE 802.3ad Link Aggregation Control Protocol (LACP)
+Uses the IEEE 802.3ad (renamed to 802.1AX in 2014)
+Link Aggregation Control Protocol (LACP)
 and the Marker Protocol
 to increase link speed and provide redundancy.
 LACP trunk groups are composed of ports of the same speed,
 set to full-duplex operation.
 This protocol requires a switch which supports LACP.
+By default, the LACP implementation uses active-mode LACP,
+slow timeout, and 0x8000 (medium) priority as system and port
+priorities.
 .It Ic loadbalance
 Distributes outgoing traffic through all active ports
 and accepts incoming traffic from any active port.
@@ -143,11 +147,6 @@ such as
 .Xr inet6 4
 duplicate address detection (DAD)
 cannot properly deal with duplicate packets.
-.Pp
-There is no way to configure LACP administrative variables, including
-system and port priorities.
-The current implementation always performs active-mode LACP and uses
-0x8000 as system and port priorities.
 .Pp
 The
 .Nm

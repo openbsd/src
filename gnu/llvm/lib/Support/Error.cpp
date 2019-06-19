@@ -91,6 +91,18 @@ std::error_code errorToErrorCode(Error Err) {
   return EC;
 }
 
+#if LLVM_ENABLE_ABI_BREAKING_CHECKS
+void Error::fatalUncheckedError() const {
+  dbgs() << "Program aborted due to an unhandled Error:\n";
+  if (getPtr())
+    getPtr()->log(dbgs());
+  else
+    dbgs() << "Error value was Success. (Note: Success values must still be "
+              "checked prior to being destroyed).\n";
+  abort();
+}
+#endif
+
 StringError::StringError(const Twine &S, std::error_code EC)
     : Msg(S.str()), EC(EC) {}
 
@@ -98,6 +110,10 @@ void StringError::log(raw_ostream &OS) const { OS << Msg; }
 
 std::error_code StringError::convertToErrorCode() const {
   return EC;
+}
+
+Error createStringError(std::error_code EC, char const *Msg) {
+  return make_error<StringError>(Msg, EC);
 }
 
 void report_fatal_error(Error Err, bool GenCrashDiag) {

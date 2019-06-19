@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.46 2017/10/30 09:53:27 patrick Exp $	*/
+/*	$OpenBSD: ca.c,v 1.47 2019/02/27 06:33:56 sthen Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -808,7 +808,7 @@ ca_subjectpubkey_digest(X509 *x509, uint8_t *md, unsigned int *size)
 	 * Generate a SHA-1 digest of the Subject Public Key Info
 	 * element in the X.509 certificate, an ASN.1 sequence
 	 * that includes the public key type (eg. RSA) and the
-	 * public key value (see 3.7 of RFC4306).
+	 * public key value (see 3.7 of RFC7296).
 	 */
 	if ((pkey = X509_get_pubkey(x509)) == NULL)
 		return (-1);

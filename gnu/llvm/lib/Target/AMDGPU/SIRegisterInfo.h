@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 /// \file
-/// \brief Interface definition for SIRegisterInfo
+/// Interface definition for SIRegisterInfo
 //
 //===----------------------------------------------------------------------===//
 
@@ -16,14 +16,14 @@
 #define LLVM_LIB_TARGET_AMDGPU_SIREGISTERINFO_H
 
 #include "AMDGPURegisterInfo.h"
-#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "SIDefines.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
 namespace llvm {
 
+class GCNSubtarget;
+class LiveIntervals;
 class MachineRegisterInfo;
-class SISubtarget;
 class SIMachineFunctionInfo;
 
 class SIRegisterInfo final : public AMDGPURegisterInfo {
@@ -35,11 +35,10 @@ private:
   bool SpillSGPRToVGPR;
   bool SpillSGPRToSMEM;
 
-  void reserveRegisterTuples(BitVector &, unsigned Reg) const;
   void classifyPressureSet(unsigned PSetID, unsigned Reg,
                            BitVector &PressureSets) const;
 public:
-  SIRegisterInfo(const SISubtarget &ST);
+  SIRegisterInfo(const GCNSubtarget &ST);
 
   bool spillSGPRToVGPR() const {
     return SpillSGPRToVGPR;
@@ -63,6 +62,7 @@ public:
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 
   const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
+  const MCPhysReg *getCalleeSavedRegsViaCopy(const MachineFunction *MF) const;
   const uint32_t *getCallPreservedMask(const MachineFunction &MF,
                                        CallingConv::ID) const override;
 
@@ -124,7 +124,7 @@ public:
     return getEncodingValue(Reg) & 0xff;
   }
 
-  /// \brief Return the 'base' register class for this register.
+  /// Return the 'base' register class for this register.
   /// e.g. SGPR0 => SReg_32, VGPR => VGPR_32 SGPR0_SGPR1 -> SReg_32, etc.
   const TargetRegisterClass *getPhysRegClass(unsigned Reg) const;
 
@@ -185,31 +185,6 @@ public:
            OpType <= AMDGPU::OPERAND_SRC_LAST;
   }
 
-  enum PreloadedValue {
-    // SGPRS:
-    PRIVATE_SEGMENT_BUFFER = 0,
-    DISPATCH_PTR        =  1,
-    QUEUE_PTR           =  2,
-    KERNARG_SEGMENT_PTR =  3,
-    DISPATCH_ID         =  4,
-    FLAT_SCRATCH_INIT   =  5,
-    WORKGROUP_ID_X      = 10,
-    WORKGROUP_ID_Y      = 11,
-    WORKGROUP_ID_Z      = 12,
-    PRIVATE_SEGMENT_WAVE_BYTE_OFFSET = 14,
-    IMPLICIT_BUFFER_PTR = 15,
-
-    // VGPRS:
-    FIRST_VGPR_VALUE    = 16,
-    WORKITEM_ID_X       = FIRST_VGPR_VALUE,
-    WORKITEM_ID_Y       = 17,
-    WORKITEM_ID_Z       = 18
-  };
-
-  /// \brief Returns the physical register that \p Value is stored in.
-  unsigned getPreloadedValue(const MachineFunction &MF,
-                             enum PreloadedValue Value) const;
-
   unsigned findUnusedRegister(const MachineRegisterInfo &MRI,
                               const TargetRegisterClass *RC,
                               const MachineFunction &MF) const;
@@ -236,7 +211,8 @@ public:
                       unsigned SubReg,
                       const TargetRegisterClass *DstRC,
                       unsigned DstSubReg,
-                      const TargetRegisterClass *NewRC) const override;
+                      const TargetRegisterClass *NewRC,
+                      LiveIntervals &LIS) const override;
 
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const override;
@@ -246,10 +222,11 @@ public:
 
   const int *getRegUnitPressureSets(unsigned RegUnit) const override;
 
-  unsigned getReturnAddressReg(const MachineFunction &MF) const {
-    // Not a callee saved register.
-    return AMDGPU::SGPR30_SGPR31;
-  }
+  unsigned getReturnAddressReg(const MachineFunction &MF) const;
+
+  const TargetRegisterClass *
+  getConstrainedRegClassForOperand(const MachineOperand &MO,
+                                 const MachineRegisterInfo &MRI) const override;
 
 private:
   void buildSpillLoadStore(MachineBasicBlock::iterator MI,

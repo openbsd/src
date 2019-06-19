@@ -1,17 +1,10 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:39 jsg Exp $
 
 LIB=	LLVMARMInfo
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/ARM -I${LLVM_SRCS}/lib/Target/ARM
 
-.include <bsd.own.mk>
-SRCS=	ARMTargetInfo.cpp
+SRCS+=	ARMTargetInfo.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/ARM/TargetInfo
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>

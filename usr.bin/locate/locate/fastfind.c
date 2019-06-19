@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.14 2017/12/08 17:26:42 millert Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.16 2019/01/17 06:15:44 tedu Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -31,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: fastfind.c,v 1.14 2017/12/08 17:26:42 millert Exp $
  */
 
 #ifndef _LOCATE_STATISTIC_
@@ -126,10 +124,8 @@ fastfind_mmap
 	u_char bigram1[NBG], bigram2[NBG], path[PATH_MAX];
 
 #ifdef FF_ICASE
-	/* use a lookup table for case insensitive search */
-	u_char table[UCHAR_MAX + 1];
-
-	tolower_word(pathpart);
+	for (p = pathpart; *p != '\0'; p++)
+		*p = tolower(*p);
 #endif /* FF_ICASE*/
 
 	/* init bigram table */
@@ -156,11 +152,8 @@ fastfind_mmap
 	p = pathpart;
 	patend = patprep(p);
 	cc = *patend;
-
 #ifdef FF_ICASE
-	/* set patend char to true */
-	table[TOLOWER(*patend)] = 1;
-	table[toupper(*patend)] = 1;
+	cc = tolower(cc);
 #endif /* FF_ICASE */
 
 
@@ -173,10 +166,11 @@ fastfind_mmap
 
 		/* go forward or backward */
 		if (c == SWITCH) { /* big step, an integer */
-			if (len < INTSIZE)
+			if (len < sizeof(int))
 				break;
 			count += getwm(paddr) - OFFSET;
-			len -= INTSIZE; paddr += INTSIZE;
+			len -= sizeof(int);
+			paddr += sizeof(int);
 		} else {	   /* slow step, =< 14 chars */
 			count += c - OFFSET;
 		}
@@ -207,7 +201,7 @@ fastfind_mmap
 						break; /* SWITCH */
 				}
 #ifdef FF_ICASE
-				if (table[c])
+				if (tolower(c) == cc)
 #else
 				if (c == cc)
 #endif /* FF_ICASE */
@@ -215,17 +209,15 @@ fastfind_mmap
 				*p++ = c;
 			} else {
 				/* bigrams are parity-marked */
-				TO7BIT(c);
-
-#ifndef FF_ICASE
+				c &= ASCII_MAX;
+#ifdef FF_ICASE
+				if (tolower(bigram1[c]) == cc ||
+				    tolower(bigram2[c]) == cc)
+#else
 				if (bigram1[c] == cc ||
 				    bigram2[c] == cc)
-#else
-
-					if (table[bigram1[c]] ||
-					    table[bigram2[c]])
 #endif /* FF_ICASE */
-						foundchar = p + 1;
+					foundchar = p + 1;
 
 				*p++ = bigram1[c];
 				*p++ = bigram2[c];
@@ -246,14 +238,14 @@ fastfind_mmap
 		for (s = foundchar; s >= cutoff; s--) {
 			if (*s == cc
 #ifdef FF_ICASE
-			    || TOLOWER(*s) == cc
+			    || tolower(*s) == cc
 #endif /* FF_ICASE */
 			    ) {	/* fast first char check */
 				for (p = patend - 1, q = s - 1; *p != '\0';
 				    p--, q--)
 					if (*q != *p
 #ifdef FF_ICASE
-					    && TOLOWER(*q) != *p
+					    && tolower(*q) != *p
 #endif /* FF_ICASE */
 					    )
 						break;
@@ -281,7 +273,7 @@ fastfind_mmap
 							if (f_limit >= counter)
 								(void)puts(path);
 							else  {
-								(void)fprintf(stderr, "[show only %d lines]\n", counter - 1);
+								fprintf(stderr, "[show only %u lines]\n", counter - 1);
 								exit(0);
 							}
 						} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.26 2018/03/29 08:12:58 stsp Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.27 2018/12/31 11:44:57 claudio Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <netinet/in.h>
 #endif
 
+#include <lib/libkern/funcs.h>
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
@@ -50,11 +51,16 @@
 #ifdef SOFTRAID
 #include <sys/queue.h>
 #include <dev/softraidvar.h>
+#include "softraid_sparc64.h"
 #include "disk.h"
 #endif
 
 #include <dev/sun/disklabel.h>
+#include "openfirm.h"
 #include "ofdev.h"
+
+/* needed for DISKLABELV1_FFS_FRAGBLOCK */
+int	 ffs(int);
 
 extern char bootdev[];
 
@@ -687,7 +693,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		of->f_devdata = &ofdev;
 		bcopy(&file_system_nfs, file_system, sizeof file_system[0]);
 		nfsys = 1;
-		if (error = net_open(&ofdev))
+		if ((error = net_open(&ofdev)))
 			goto bad;
 		return 0;
 	}

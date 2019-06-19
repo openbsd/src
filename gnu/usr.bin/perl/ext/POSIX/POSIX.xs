@@ -1,4 +1,5 @@
 #define PERL_EXT_POSIX
+#define PERL_EXT
 
 #ifdef NETWARE
 	#define _POSIX_
@@ -17,6 +18,9 @@
 #define PERLIO_NOT_STDIO 1
 #include "perl.h"
 #include "XSUB.h"
+
+static int not_here(const char *s);
+
 #if defined(PERL_IMPLICIT_SYS)
 #  undef signal
 #  undef open
@@ -31,15 +35,13 @@
 #ifdef WIN32
 #include <sys/errno2.h>
 #endif
-#ifdef I_FLOAT
 #include <float.h>
-#endif
 #ifdef I_FENV
+#if !(defined(__vax__) && defined(__NetBSD__))
 #include <fenv.h>
 #endif
-#ifdef I_LIMITS
-#include <limits.h>
 #endif
+#include <limits.h>
 #include <locale.h>
 #include <math.h>
 #ifdef I_PWD
@@ -48,13 +50,18 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <stdarg.h>
-
-#ifdef I_STDDEF
 #include <stddef.h>
-#endif
 
 #ifdef I_UNISTD
 #include <unistd.h>
+#endif
+
+#ifdef I_SYS_TIME
+# include <sys/time.h>
+#endif
+
+#ifdef I_SYS_RESOURCE
+# include <sys/resource.h>
 #endif
 
 #if defined(USE_QUADMATH) && defined(I_QUADMATH)
@@ -704,7 +711,11 @@ static NV my_expm1(NV x)
 #ifndef c99_fdim
 static NV my_fdim(NV x, NV y)
 {
+#ifdef NV_NAN
   return (Perl_isnan(x) || Perl_isnan(y)) ? NV_NAN : (x > y ? x - y : 0);
+#else
+  return (x > y ? x - y : 0);
+#endif
 }
 #  define c99_fdim my_fdim
 #endif
@@ -720,11 +731,13 @@ static NV my_fma(NV x, NV y, NV z)
 #ifndef c99_fmax
 static NV my_fmax(NV x, NV y)
 {
+#ifdef NV_NAN
   if (Perl_isnan(x)) {
     return Perl_isnan(y) ? NV_NAN : y;
   } else if (Perl_isnan(y)) {
     return x;
   }
+#endif
   return x > y ? x : y;
 }
 #  define c99_fmax my_fmax
@@ -733,11 +746,13 @@ static NV my_fmax(NV x, NV y)
 #ifndef c99_fmin
 static NV my_fmin(NV x, NV y)
 {
+#ifdef NV_NAN
   if (Perl_isnan(x)) {
     return Perl_isnan(y) ? NV_NAN : y;
   } else if (Perl_isnan(y)) {
     return x;
   }
+#endif
   return x < y ? x : y;
 }
 #  define c99_fmin my_fmin
@@ -768,8 +783,10 @@ static NV my_hypot(NV x, NV y)
   x = PERL_ABS(x); /* Take absolute values. */
   if (y == 0)
     return x;
+#ifdef NV_INF
   if (Perl_isnan(y))
     return NV_INF;
+#endif
   y = PERL_ABS(y);
   if (x < y) { /* Swap so that y is less. */
     t = x;
@@ -816,10 +833,18 @@ static NV my_lgamma(NV x);
 static NV my_tgamma(NV x)
 {
   const NV gamma = 0.577215664901532860606512090; /* Euler's gamma constant. */
+#ifdef NV_NAN
   if (Perl_isnan(x) || x < 0.0)
     return NV_NAN;
+#endif
+#ifdef NV_INF
   if (x == 0.0 || x == NV_INF)
+#ifdef DOUBLE_IS_IEEE_FORMAT
     return x == -0.0 ? -NV_INF : NV_INF;
+#else
+    return NV_INF;
+#endif
+#endif
 
   /* The function domain is split into three intervals:
    * (0, 0.001), [0.001, 12), and (12, infinity) */
@@ -891,6 +916,7 @@ static NV my_tgamma(NV x)
     return result;
   }
 
+#ifdef NV_INF
   /* Third interval: [12, +Inf) */
 #if LDBL_MANT_DIG == 113 /* IEEE quad prec */
   if (x > 1755.548) {
@@ -901,6 +927,7 @@ static NV my_tgamma(NV x)
     return NV_INF;
   }
 #endif
+#endif
 
   return Perl_exp(c99_lgamma(x));
 }
@@ -909,10 +936,14 @@ static NV my_tgamma(NV x)
 #ifdef USE_MY_LGAMMA
 static NV my_lgamma(NV x)
 {
+#ifdef NV_NAN
   if (Perl_isnan(x))
     return NV_NAN;
+#endif
+#ifdef NV_INF
   if (x <= 0 || x == NV_INF)
     return NV_INF;
+#endif
   if (x == 1.0 || x == 2.0)
     return 0;
   if (x < 12.0)
@@ -953,10 +984,14 @@ static NV my_log1p(NV x)
 {
   /* http://www.johndcook.com/cpp_log_one_plus_x.html -- public domain.
    * Taylor series, the first four terms (the last term quartic). */
+#ifdef NV_NAN
   if (x < -1.0)
     return NV_NAN;
+#endif
+#ifdef NV_INF
   if (x == -1.0)
     return -NV_INF;
+#endif
   if (PERL_ABS(x) > 1e-4)
     return Perl_log(1.0 + x);
   else
@@ -1032,7 +1067,7 @@ static NV my_rint(NV x)
   case FE_TOWARDZERO: return MY_ROUND_TRUNC(x);
   case FE_DOWNWARD:   return MY_ROUND_DOWN(x);
   case FE_UPWARD:     return MY_ROUND_UP(x);
-  default: return NV_NAN;
+  default: break;
   }
 #elif defined(HAS_FPGETROUND)
   switch (fpgetround()) {
@@ -1040,11 +1075,10 @@ static NV my_rint(NV x)
   case FP_RZ: return MY_ROUND_TRUNC(x);
   case FP_RM: return MY_ROUND_DOWN(x);
   case FE_RP: return MY_ROUND_UP(x);
-  default: return NV_NAN;
+  default: break;
   }
-#else
-  return NV_NAN;
 #endif
+  not_here("rint");
 }
 #endif
 
@@ -1118,6 +1152,8 @@ static NV my_trunc(NV x)
 #  define c99_trunc my_trunc
 #endif
 
+#ifdef NV_NAN
+
 #undef NV_PAYLOAD_DEBUG
 
 /* NOTE: the NaN payload API implementation is hand-rolled, since the
@@ -1154,9 +1190,11 @@ static NV my_trunc(NV x)
 #endif
 
 #if defined(USE_LONG_DOUBLE) && defined(LONGDOUBLE_DOUBLEDOUBLE)
-#  define NV_PAYLOAD_SIZEOF_ASSERT(a) assert(sizeof(a) == NVSIZE / 2)
+#  define NV_PAYLOAD_SIZEOF_ASSERT(a) \
+    STATIC_ASSERT_STMT(sizeof(a) == NVSIZE / 2)
 #else
-#  define NV_PAYLOAD_SIZEOF_ASSERT(a) assert(sizeof(a) == NVSIZE)
+#  define NV_PAYLOAD_SIZEOF_ASSERT(a) \
+    STATIC_ASSERT_STMT(sizeof(a) == NVSIZE)
 #endif
 
 static void S_setpayload(NV* nvp, NV_PAYLOAD_TYPE payload, bool signaling)
@@ -1178,7 +1216,7 @@ static void S_setpayload(NV* nvp, NV_PAYLOAD_TYPE payload, bool signaling)
   {
     NV t1 = c99_trunc(payload); /* towards zero (drop fractional) */
 #ifdef NV_PAYLOAD_DEBUG
-    Perl_warn(aTHX_ "t1 = %"NVgf" (payload %"NVgf")\n", t1, payload);
+    Perl_warn(aTHX_ "t1 = %" NVgf " (payload %" NVgf ")\n", t1, payload);
 #endif
     if (t1 <= UV_MAX) {
       a[0] = (UV)t1;  /* Fast path, also avoids rounding errors (right?) */
@@ -1208,7 +1246,7 @@ static void S_setpayload(NV* nvp, NV_PAYLOAD_TYPE payload, bool signaling)
 #endif
 #ifdef NV_PAYLOAD_DEBUG
   for (i = 0; i < (int)C_ARRAY_LENGTH(a); i++) {
-    Perl_warn(aTHX_ "a[%d] = 0x%"UVxf"\n", i, a[i]);
+    Perl_warn(aTHX_ "a[%d] = 0x%" UVxf "\n", i, a[i]);
   }
 #endif
   for (i = 0; i < (int)sizeof(p); i++) {
@@ -1219,7 +1257,9 @@ static void S_setpayload(NV* nvp, NV_PAYLOAD_TYPE payload, bool signaling)
       ((U8 *)(nvp))[i] &= ~m[i]; /* For NaNs with non-zero payload bits. */
       ((U8 *)(nvp))[i] |= b;
 #ifdef NV_PAYLOAD_DEBUG
-      Perl_warn(aTHX_ "set p[%2d] = %02x (i = %d, m = %02x, s = %2d, b = %02x, u = %08"UVxf")\n", i, ((U8 *)(nvp))[i], i, m[i], s, b, u);
+      Perl_warn(aTHX_
+                "set p[%2d] = %02x (i = %d, m = %02x, s = %2d, b = %02x, u = %08"
+                UVxf ")\n", i, ((U8 *)(nvp))[i], i, m[i], s, b, u);
 #endif
       a[p[i] / UVSIZE] &= ~u;
     }
@@ -1236,7 +1276,7 @@ static void S_setpayload(NV* nvp, NV_PAYLOAD_TYPE payload, bool signaling)
 #endif
   for (i = 0; i < (int)C_ARRAY_LENGTH(a); i++) {
     if (a[i]) {
-      Perl_warn(aTHX_ "payload lost bits (%"UVxf")", a[i]);
+      Perl_warn(aTHX_ "payload lost bits (%" UVxf ")", a[i]);
       break;
     }
   }
@@ -1267,7 +1307,7 @@ static NV_PAYLOAD_TYPE S_getpayload(NV nv)
   }
   for (i = (int)C_ARRAY_LENGTH(a) - 1; i >= 0; i--) {
 #ifdef NV_PAYLOAD_DEBUG
-    Perl_warn(aTHX_ "a[%d] = %"UVxf"\n", i, a[i]);
+    Perl_warn(aTHX_ "a[%d] = %" UVxf "\n", i, a[i]);
 #endif
     payload *= UV_MAX;
     payload += a[i];
@@ -1281,6 +1321,8 @@ static NV_PAYLOAD_TYPE S_getpayload(NV nv)
   return payload;
 }
 
+#endif  /* #ifdef NV_NAN */
+
 /* XXX This comment is just to make I_TERMIO and I_SGTTY visible to
    metaconfig for future extension writers.  We don't use them in POSIX.
    (This is really sneaky :-)  --AD
@@ -1288,9 +1330,7 @@ static NV_PAYLOAD_TYPE S_getpayload(NV nv)
 #if defined(I_TERMIOS)
 #include <termios.h>
 #endif
-#ifdef I_STDLIB
 #include <stdlib.h>
-#endif
 #ifndef __ultrix__
 #include <string.h>
 #endif
@@ -1558,8 +1598,8 @@ static const struct lconv_offset lconv_strings[] = {
 
 /* The Linux man pages say these are the field names for the structure
  * components that are LC_NUMERIC; the rest being LC_MONETARY */
-#   define isLC_NUMERIC_STRING(name) (strEQ(name, "decimal_point")     \
-                                      || strEQ(name, "thousands_sep")  \
+#   define isLC_NUMERIC_STRING(name) (   strEQ(name, "decimal_point")   \
+                                      || strEQ(name, "thousands_sep")   \
                                                                         \
                                       /* There should be no harm done   \
                                        * checking for this, even if     \
@@ -1663,6 +1703,11 @@ allocate_struct(pTHX_ SV *rv, const STRLEN size, const char *packname) {
     SV *const t = newSVrv(rv, packname);
     void *const p = sv_grow(t, size + 1);
 
+    /* Ensure at least one use of not_here() to avoid "defined but not
+     * used" warning.  This is not at all related to allocate_struct(); I
+     * just needed somewhere to dump it - DAPM */
+    if (0) { not_here(""); }
+
     SvCUR_set(t, size);
     SvPOK_on(t);
     return p;
@@ -1747,7 +1792,7 @@ fix_win32_tzenv(void)
         perl_tz_env = "";
     if (crt_tz_env == NULL)
         crt_tz_env = "";
-    if (strcmp(perl_tz_env, crt_tz_env) != 0) {
+    if (strNE(perl_tz_env, crt_tz_env)) {
         newenv = (char*)malloc((strlen(perl_tz_env) + 4) * sizeof(char));
         if (newenv != NULL) {
             sprintf(newenv, "TZ=%s", perl_tz_env);
@@ -1852,8 +1897,9 @@ getattr(termios_ref, fd = 0)
     OUTPUT:
 	RETVAL
 
-# If we define TCSANOW here then both a found and not found constant sub
-# are created causing a Constant subroutine TCSANOW redefined warning
+    # If we define TCSANOW here then both a found and not found constant sub
+    # are created causing a Constant subroutine TCSANOW redefined warning
+
 #ifndef TCSANOW
 #  define DEF_SETATTR_ACTION 0
 #else
@@ -2079,15 +2125,67 @@ localeconv()
 	localeconv(); /* A stub to call not_here(). */
 #else
 	struct lconv *lcbuf;
+#  if defined(USE_ITHREADS)                                             \
+   && defined(HAS_POSIX_2008_LOCALE)                                    \
+   && defined(HAS_LOCALECONV_L) /* Prefer this thread-safe version */
+        bool do_free = FALSE;
+        locale_t cur = NULL;
+#  elif defined(TS_W32_BROKEN_LOCALECONV)
+        const char * save_global;
+        const char * save_thread;
+#  endif
+        DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
 
         /* localeconv() deals with both LC_NUMERIC and LC_MONETARY, but
          * LC_MONETARY is already in the correct locale */
-        DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
+#  ifdef USE_LOCALE_MONETARY
+
+        const bool is_monetary_utf8 = _is_cur_LC_category_utf8(LC_MONETARY);
+#  endif
+#  ifdef USE_LOCALE_NUMERIC
+
+        bool is_numeric_utf8;
+
         STORE_LC_NUMERIC_FORCE_TO_UNDERLYING();
+
+        is_numeric_utf8 = _is_cur_LC_category_utf8(LC_NUMERIC);
+#  endif
 
 	RETVAL = newHV();
 	sv_2mortal((SV*)RETVAL);
-	if ((lcbuf = localeconv())) {
+#  if defined(USE_ITHREADS)                         \
+   && defined(HAS_POSIX_2008_LOCALE)                \
+   && defined(HAS_LOCALECONV_L)                     \
+   && defined(HAS_DUPLOCALE)
+
+        cur = uselocale((locale_t) 0);
+        if (cur == LC_GLOBAL_LOCALE) {
+            cur = duplocale(LC_GLOBAL_LOCALE);
+            do_free = TRUE;
+        }
+
+        lcbuf = localeconv_l(cur);
+#  else
+        LOCALE_LOCK_V;  /* Prevent interference with other threads using
+                           localeconv() */
+#    ifdef TS_W32_BROKEN_LOCALECONV
+        /* This is a workaround for a Windows bug prior to VS 15, in which
+         * localeconv only looks at the global locale.  We toggle to the global
+         * locale; populate the return; then toggle back.  We have to use
+         * LC_ALL instead of the individual ones because of another bug in
+         * Windows */
+
+        save_thread  = savepv(Perl_setlocale(LC_NUMERIC, NULL));
+
+        _configthreadlocale(_DISABLE_PER_THREAD_LOCALE);
+
+        save_global  = savepv(Perl_setlocale(LC_ALL, NULL));
+
+        Perl_setlocale(LC_ALL,  save_thread);
+#    endif
+        lcbuf = localeconv();
+#  endif
+	if (lcbuf) {
 	    const struct lconv_offset *strings = lconv_strings;
 	    const struct lconv_offset *integers = lconv_integers;
 	    const char *ptr = (const char *) lcbuf;
@@ -2095,35 +2193,36 @@ localeconv()
 	    while (strings->name) {
                 /* This string may be controlled by either LC_NUMERIC, or
                  * LC_MONETARY */
-                bool is_utf8_locale
-#if defined(USE_LOCALE_NUMERIC) && defined(USE_LOCALE_MONETARY)
-                 = _is_cur_LC_category_utf8((isLC_NUMERIC_STRING(strings->name))
-                                             ? LC_NUMERIC
-                                             : LC_MONETARY);
-#elif defined(USE_LOCALE_NUMERIC)
-                 = _is_cur_LC_category_utf8(LC_NUMERIC);
-#elif defined(USE_LOCALE_MONETARY)
-                 = _is_cur_LC_category_utf8(LC_MONETARY);
-#else
-                 = FALSE;
-#endif
+                const bool is_utf8_locale =
+#  if defined(USE_LOCALE_NUMERIC) && defined(USE_LOCALE_MONETARY)
+                                        (isLC_NUMERIC_STRING(strings->name))
+                                        ? is_numeric_utf8
+                                        : is_monetary_utf8;
+#  elif defined(USE_LOCALE_NUMERIC)
+                                        is_numeric_utf8;
+#  elif defined(USE_LOCALE_MONETARY)
+                                        is_monetary_utf8;
+#  else
+                                        FALSE;
+#  endif
 
 		const char *value = *((const char **)(ptr + strings->offset));
 
 		if (value && *value) {
-		    (void) hv_store(RETVAL,
-                        strings->name,
-                        strlen(strings->name),
-                        newSVpvn_utf8(value,
-                                      strlen(value),
+                    const STRLEN value_len = strlen(value);
 
-                                      /* We mark it as UTF-8 if a utf8 locale
-                                       * and is valid and variant under UTF-8 */
-                                      is_utf8_locale
-                                        && ! is_invariant_string((U8 *) value, 0)
-                                        && is_utf8_string((U8 *) value, 0)),
-                        0);
-                }
+                    /* We mark it as UTF-8 if a utf8 locale and is valid and
+                     * variant under UTF-8 */
+                    const bool is_utf8 = is_utf8_locale
+                                     &&  is_utf8_non_invariant_string(
+                                                                (U8*) value,
+                                                                value_len);
+		    (void) hv_store(RETVAL,
+                                    strings->name,
+                                    strlen(strings->name),
+                                    newSVpvn_utf8(value, value_len, is_utf8),
+                                    0);
+            }
                 strings++;
 	    }
 
@@ -2136,7 +2235,26 @@ localeconv()
                 integers++;
             }
 	}
-        RESTORE_LC_NUMERIC_STANDARD();
+#  if defined(USE_ITHREADS)                         \
+   && defined(HAS_POSIX_2008_LOCALE)                \
+   && defined(HAS_LOCALECONV_L)
+        if (do_free) {
+            freelocale(cur);
+        }
+#  else
+#    ifdef TS_W32_BROKEN_LOCALECONV
+        Perl_setlocale(LC_ALL, save_global);
+
+        _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+
+        Perl_setlocale(LC_ALL, save_thread);
+
+        Safefree(save_global);
+        Safefree(save_thread);
+#    endif
+        LOCALE_UNLOCK_V;
+#  endif
+        RESTORE_LC_NUMERIC();
 #endif  /* HAS_LOCALECONV */
     OUTPUT:
 	RETVAL
@@ -2148,116 +2266,12 @@ setlocale(category, locale = 0)
     PREINIT:
 	char *		retval;
     CODE:
-#ifdef USE_LOCALE_NUMERIC
-        /* A 0 (or NULL) locale means only query what the current one is.  We
-         * have the LC_NUMERIC name saved, because we are normally switched
-         * into the C locale for it.  Switch back so an LC_ALL query will yield
-         * the correct results; all other categories don't require special
-         * handling */
-        if (locale == 0) {
-            if (category == LC_NUMERIC) {
-                XSRETURN_PV(PL_numeric_name);
-            }
-#   ifdef LC_ALL
-            else if (category == LC_ALL) {
-                SET_NUMERIC_UNDERLYING();
-            }
-#   endif
-        }
-#endif
-#ifdef WIN32    /* Use wrapper on Windows */
-	retval = Perl_my_setlocale(aTHX_ category, locale);
-#else
-	retval = setlocale(category, locale);
-#endif
-        DEBUG_L(PerlIO_printf(Perl_debug_log,
-            "%s:%d: %s\n", __FILE__, __LINE__,
-                _setlocale_debug_string(category, locale, retval)));
-	if (! retval) {
-            /* Should never happen that a query would return an error, but be
-             * sure and reset to C locale */
-            if (locale == 0) {
-                SET_NUMERIC_STANDARD();
-            }
+	retval = (char *) Perl_setlocale(category, locale);
+        if (! retval) {
             XSRETURN_UNDEF;
         }
 
-        /* Save retval since subsequent setlocale() calls may overwrite it. */
-        retval = savepv(retval);
-        SAVEFREEPV(retval);
-
-        /* For locale == 0, we may have switched to NUMERIC_UNDERLYING.  Switch
-         * back */
-        if (locale == 0) {
-            SET_NUMERIC_STANDARD();
-            XSRETURN_PV(retval);
-        }
-        else {
-	    RETVAL = retval;
-#ifdef USE_LOCALE_CTYPE
-	    if (category == LC_CTYPE
-#ifdef LC_ALL
-		|| category == LC_ALL
-#endif
-		)
-	    {
-		char *newctype;
-#ifdef LC_ALL
-		if (category == LC_ALL) {
-		    newctype = setlocale(LC_CTYPE, NULL);
-                    DEBUG_Lv(PerlIO_printf(Perl_debug_log,
-                        "%s:%d: %s\n", __FILE__, __LINE__,
-                        _setlocale_debug_string(LC_CTYPE, NULL, newctype)));
-                }
-		else
-#endif
-		    newctype = RETVAL;
-		new_ctype(newctype);
-	    }
-#endif /* USE_LOCALE_CTYPE */
-#ifdef USE_LOCALE_COLLATE
-	    if (category == LC_COLLATE
-#ifdef LC_ALL
-		|| category == LC_ALL
-#endif
-		)
-	    {
-		char *newcoll;
-#ifdef LC_ALL
-		if (category == LC_ALL) {
-		    newcoll = setlocale(LC_COLLATE, NULL);
-                    DEBUG_Lv(PerlIO_printf(Perl_debug_log,
-                        "%s:%d: %s\n", __FILE__, __LINE__,
-                        _setlocale_debug_string(LC_COLLATE, NULL, newcoll)));
-                }
-		else
-#endif
-		    newcoll = RETVAL;
-		new_collate(newcoll);
-	    }
-#endif /* USE_LOCALE_COLLATE */
-#ifdef USE_LOCALE_NUMERIC
-	    if (category == LC_NUMERIC
-#ifdef LC_ALL
-		|| category == LC_ALL
-#endif
-		)
-	    {
-		char *newnum;
-#ifdef LC_ALL
-		if (category == LC_ALL) {
-		    newnum = setlocale(LC_NUMERIC, NULL);
-                    DEBUG_Lv(PerlIO_printf(Perl_debug_log,
-                        "%s:%d: %s\n", __FILE__, __LINE__,
-                        _setlocale_debug_string(LC_NUMERIC, NULL, newnum)));
-                }
-		else
-#endif
-		    newnum = RETVAL;
-		new_numeric(newnum);
-	    }
-#endif /* USE_LOCALE_NUMERIC */
-	}
+        RETVAL = retval;
     OUTPUT:
 	RETVAL
 
@@ -2297,7 +2311,11 @@ acos(x)
 	y1 = 30
     CODE:
 	PERL_UNUSED_VAR(x);
+#ifdef NV_NAN
 	RETVAL = NV_NAN;
+#else
+	RETVAL = 0;
+#endif
 	switch (ix) {
 	case 0:
 	    RETVAL = Perl_acos(x); /* C89 math */
@@ -2592,7 +2610,12 @@ fpclassify(x)
 #ifdef Perl_signbit
 	    RETVAL = Perl_signbit(x);
 #else
-	    RETVAL = (x < 0) || (x == -0.0);
+	    RETVAL = (x < 0);
+#ifdef DOUBLE_IS_IEEE_FORMAT
+            if (x == -0.0) {
+              RETVAL = TRUE;
+            }
+#endif
 #endif
 	    break;
 	}
@@ -2603,7 +2626,13 @@ NV
 getpayload(nv)
 	NV nv
     CODE:
+#ifdef DOUBLE_HAS_NAN
 	RETVAL = S_getpayload(nv);
+#else
+        PERL_UNUSED_VAR(nv);
+        RETVAL = 0.0;
+	not_here("getpayload");
+#endif
     OUTPUT:
 	RETVAL
 
@@ -2612,7 +2641,13 @@ setpayload(nv, payload)
 	NV nv
 	NV payload
     CODE:
+#ifdef DOUBLE_HAS_NAN
 	S_setpayload(&nv, payload, FALSE);
+#else
+        PERL_UNUSED_VAR(nv);
+        PERL_UNUSED_VAR(payload);
+	not_here("setpayload");
+#endif
     OUTPUT:
 	nv
 
@@ -2621,8 +2656,14 @@ setpayloadsig(nv, payload)
 	NV nv
 	NV payload
     CODE:
+#ifdef DOUBLE_HAS_NAN
 	nv = NV_NAN;
 	S_setpayload(&nv, payload, TRUE);
+#else
+        PERL_UNUSED_VAR(nv);
+        PERL_UNUSED_VAR(payload);
+	not_here("setpayloadsig");
+#endif
     OUTPUT:
 	nv
 
@@ -2630,7 +2671,13 @@ int
 issignaling(nv)
 	NV nv
     CODE:
+#ifdef DOUBLE_HAS_NAN
 	RETVAL = Perl_isnan(nv) && NV_NAN_IS_SIGNALING(&nv);
+#else
+        PERL_UNUSED_VAR(nv);
+        RETVAL = 0.0;
+	not_here("issignaling");
+#endif
     OUTPUT:
 	RETVAL
 
@@ -2656,7 +2703,11 @@ copysign(x,y)
     CODE:
         PERL_UNUSED_VAR(x);
         PERL_UNUSED_VAR(y);
+#ifdef NV_NAN
 	RETVAL = NV_NAN;
+#else
+	RETVAL = 0;
+#endif
 	switch (ix) {
 	case 0:
 #ifdef c99_copysign
@@ -2850,9 +2901,14 @@ nan(payload = 0)
         }
 #elif defined(c99_nan)
 	{
-	  STRLEN elen = my_snprintf(PL_efloatbuf, PL_efloatsize, "%g", nv);
+	  STRLEN elen = my_snprintf(PL_efloatbuf, PL_efloatsize, "%g", payload);
           if ((IV)elen == -1) {
+#ifdef NV_NAN
 	    RETVAL = NV_NAN;
+#else            
+            RETVAL = 0.0;
+            not_here("nan");
+#endif
           } else {
             RETVAL = c99_nan(PL_efloatbuf);
           }
@@ -2870,7 +2926,11 @@ jn(x,y)
     ALIAS:
 	yn = 1
     CODE:
+#ifdef NV_NAN
 	RETVAL = NV_NAN;
+#else
+	RETVAL = 0;
+#endif
         switch (ix) {
 	case 0:
 #ifdef bessel_jn
@@ -2928,7 +2988,7 @@ sigaction(sig, optaction, oldaction = 0)
 	        const char *s = SvPVX_const(ST(0));
 		int i = whichsig(s);
 
-	        if (i < 0 && memEQ(s, "SIG", 3))
+	        if (i < 0 && memBEGINs(s, SvCUR(ST(0)), "SIG"))
 		    i = whichsig(s + 3);
 	        if (i < 0) {
 	            if (ckWARN(WARN_SIGNAL))
@@ -3241,39 +3301,30 @@ write(fd, buffer, nbytes)
 	char *		buffer
 	size_t		nbytes
 
-SV *
-tmpnam()
-    PREINIT:
-	STRLEN i;
-	int len;
-    CODE:
-	RETVAL = newSVpvs("");
-	SvGROW(RETVAL, L_tmpnam);
-	/* Yes, we know tmpnam() is bad.  So bad that some compilers
-	 * and linkers warn against using it.  But it is here for
-	 * completeness.  POSIX.pod warns against using it.
-	 *
-	 * Then again, maybe this should be removed at some point.
-	 * No point in enabling dangerous interfaces. */
-        if (ckWARN_d(WARN_DEPRECATED)) {
-	    HV *warned = get_hv("POSIX::_warned", GV_ADD | GV_ADDMULTI);
-            if (! hv_exists(warned, (const char *)&PL_op, sizeof(PL_op))) {
-                Perl_warner(aTHX_ packWARN(WARN_DEPRECATED), "Calling POSIX::tmpnam() is deprecated");
-                (void)hv_store(warned, (const char *)&PL_op, sizeof(PL_op), &PL_sv_yes, 0);
-            }
-        }
-	len = strlen(tmpnam(SvPV(RETVAL, i)));
-	SvCUR_set(RETVAL, len);
-    OUTPUT:
-	RETVAL
-
 void
 abort()
+
+#ifdef I_WCHAR
+#  include <wchar.h>
+#endif
 
 int
 mblen(s, n)
 	char *		s
 	size_t		n
+    PREINIT:
+#if defined(USE_ITHREADS) && defined(HAS_MBRLEN)
+        mbstate_t ps;
+#endif
+    CODE:
+#if defined(USE_ITHREADS) && defined(HAS_MBRLEN)
+        PERL_UNUSED_RESULT(mbrlen(NULL, 0, &ps));   /* Initialize state */
+        RETVAL = mbrlen(s, n, &ps); /* Prefer reentrant version */
+#else
+        RETVAL = mblen(s, n);
+#endif
+    OUTPUT:
+        RETVAL
 
 size_t
 mbstowcs(s, pwcs, n)
@@ -3286,6 +3337,21 @@ mbtowc(pwc, s, n)
 	wchar_t *	pwc
 	char *		s
 	size_t		n
+    PREINIT:
+#if defined(USE_ITHREADS) && defined(HAS_MBRTOWC)
+        mbstate_t ps;
+#endif
+    CODE:
+#if defined(USE_ITHREADS) && defined(HAS_MBRTOWC)
+        memset(&ps, 0, sizeof(ps));;
+        PERL_UNUSED_RESULT(mbrtowc(pwc, NULL, 0, &ps));/* Reset any shift state */
+        errno = 0;
+        RETVAL = mbrtowc(pwc, s, n, &ps);   /* Prefer reentrant version */
+#else
+        RETVAL = mbtowc(pwc, s, n);
+#endif
+    OUTPUT:
+        RETVAL
 
 int
 wcstombs(s, pwcs, n)
@@ -3313,6 +3379,7 @@ strtod(str)
         DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
         STORE_LC_NUMERIC_FORCE_TO_UNDERLYING();
 	num = strtod(str, &unparsed);
+        RESTORE_LC_NUMERIC();
 	PUSHs(sv_2mortal(newSVnv(num)));
 	if (GIMME_V == G_ARRAY) {
 	    EXTEND(SP, 1);
@@ -3321,7 +3388,6 @@ strtod(str)
 	    else
 		PUSHs(&PL_sv_undef);
 	}
-        RESTORE_LC_NUMERIC_STANDARD();
 
 #ifdef HAS_STRTOLD
 
@@ -3335,6 +3401,7 @@ strtold(str)
         DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
         STORE_LC_NUMERIC_FORCE_TO_UNDERLYING();
 	num = strtold(str, &unparsed);
+        RESTORE_LC_NUMERIC();
 	PUSHs(sv_2mortal(newSVnv(num)));
 	if (GIMME_V == G_ARRAY) {
 	    EXTEND(SP, 1);
@@ -3343,7 +3410,6 @@ strtold(str)
 	    else
 		PUSHs(&PL_sv_undef);
 	}
-        RESTORE_LC_NUMERIC_STANDARD();
 
 #endif
 
@@ -3385,7 +3451,7 @@ strtoul(str, base = 0)
 	int		base
     PREINIT:
 	unsigned long num;
-	char *unparsed;
+	char *unparsed = NULL;
     PPCODE:
 	PERL_UNUSED_VAR(str);
 	PERL_UNUSED_VAR(base);
@@ -3520,7 +3586,7 @@ asctime(sec, min, hour, mday, mon, year, wday = 0, yday = 0, isdst = -1)
 		if (result == (time_t)-1)
 		    SvOK_off(TARG);
 		else if (result == 0)
-		    sv_setpvn(TARG, "0 but true", 10);
+		    sv_setpvs(TARG, "0 but true");
 		else
 		    sv_setiv(TARG, (IV)result);
 	    } else {
@@ -3578,18 +3644,22 @@ strftime(fmt, sec, min, hour, mday, mon, year, wday = -1, yday = -1, isdst = -1)
             /* allowing user-supplied (rather than literal) formats
              * is normally frowned upon as a potential security risk;
              * but this is part of the API so we have to allow it */
-            GCC_DIAG_IGNORE(-Wformat-nonliteral);
+            GCC_DIAG_IGNORE_STMT(-Wformat-nonliteral);
 	    buf = my_strftime(SvPV_nolen(fmt), sec, min, hour, mday, mon, year, wday, yday, isdst);
-            GCC_DIAG_RESTORE;
+            GCC_DIAG_RESTORE_STMT;
             sv = sv_newmortal();
 	    if (buf) {
                 STRLEN len = strlen(buf);
 		sv_usepvn_flags(sv, buf, len, SV_HAS_TRAILING_NUL);
-		if (SvUTF8(fmt)
-                    || (! is_invariant_string((U8*) buf, len)
-                        && is_utf8_string((U8*) buf, len)
+		if (       SvUTF8(fmt)
+                    || (   is_utf8_non_invariant_string((U8*) buf, len)
 #ifdef USE_LOCALE_TIME
                         && _is_cur_LC_category_utf8(LC_TIME)
+#else   /* If can't check directly, at least can see if script is consistent,
+           under UTF-8, which gives us an extra measure of confidence. */
+
+                        && isSCRIPT_RUN((const U8 *) buf, buf + len,
+                                        TRUE) /* Means assume UTF-8 */
 #endif
                 )) {
 		    SvUTF8_on(sv);

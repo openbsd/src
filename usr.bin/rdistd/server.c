@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.43 2017/08/30 07:43:52 otto Exp $	*/
+/*	$OpenBSD: server.c,v 1.45 2018/09/21 19:13:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -177,7 +177,6 @@ setfilemode(char *file, int fd, int mode, int islink)
 static int
 fchog(int fd, char *file, char *owner, char *group, int mode)
 {
-	static struct group *gr = NULL;
 	int i;
 	struct stat st;
 	uid_t uid;
@@ -188,8 +187,8 @@ fchog(int fd, char *file, char *owner, char *group, int mode)
 	if (userid == 0) {	/* running as root; take anything */
 		if (*owner == ':') {
 			uid = (uid_t) atoi(owner + 1);
-		} else if (pw == NULL || strcmp(owner, pw->pw_name) != 0) {
-			if ((pw = getpwnam(owner)) == NULL) {
+		} else if (strcmp(owner, locuser) != 0) {
+			if (uid_from_user(owner, &uid) == -1) {
 				if (mode != -1 && IS_ON(mode, S_ISUID)) {
 					message(MT_NOTICE,
 			      "%s: unknown login name \"%s\", clearing setuid",
@@ -200,19 +199,16 @@ fchog(int fd, char *file, char *owner, char *group, int mode)
 					message(MT_NOTICE,
 					"%s: unknown login name \"%s\"",
 						target, owner);
-			} else
-				uid = pw->pw_uid;
+			}
 		} else {
-			uid = pw->pw_uid;
-			primegid = pw->pw_gid;
+			uid = userid;
+			primegid = groupid;
 		}
 		if (*group == ':') {
 			gid = (gid_t)atoi(group + 1);
 			goto ok;
 		}
 	} else {	/* not root, setuid only if user==owner */
-		struct passwd *lupw;
-
 		if (mode != -1) {
 			if (IS_ON(mode, S_ISUID) && 
 			    strcmp(locuser, owner) != 0)
@@ -220,35 +216,29 @@ fchog(int fd, char *file, char *owner, char *group, int mode)
 			if (mode)
 				mode &= ~S_ISVTX; /* and strip sticky too */
 		}
-
-		if ((lupw = getpwnam(locuser)) != NULL)
-			primegid = lupw->pw_gid;
+		primegid = groupid;
 	}
 
 	gid = (gid_t)-1;
-	if (gr == NULL || strcmp(group, gr->gr_name) != 0) {
-		if ((*group == ':' && 
-		     (getgrgid(gid = atoi(group + 1)) == NULL))
-		    || ((gr = (struct group *)getgrnam(group)) == NULL)) {
-			if (mode != -1 && IS_ON(mode, S_ISGID)) {
-				message(MT_NOTICE, 
-				"%s: unknown group \"%s\", clearing setgid",
-					target, group);
-				mode &= ~S_ISGID;
-			} else
-				message(MT_NOTICE, 
-					"%s: unknown group \"%s\"",
-					target, group);
+	if (*group == ':') {
+		gid = (gid_t) atoi(group + 1);
+	} else if (gid_from_group(group, &gid) == -1) {
+		if (mode != -1 && IS_ON(mode, S_ISGID)) {
+			message(MT_NOTICE, 
+			"%s: unknown group \"%s\", clearing setgid",
+				target, group);
+			mode &= ~S_ISGID;
 		} else
-			gid = gr->gr_gid;
-	} else
-		gid = gr->gr_gid;
+			message(MT_NOTICE, 
+				"%s: unknown group \"%s\"",
+				target, group);
+	}
 
 	if (userid && gid != (gid_t)-1 && gid != primegid) {
-		if (gr)
-			for (i = 0; gr->gr_mem[i] != NULL; i++)
-				if (strcmp(locuser, gr->gr_mem[i]) == 0)
-					goto ok;
+		for (i = 0; i < gidsetlen; i++) {
+			if (gid == gidset[i])
+				goto ok;
+		}
 		if (mode != -1 && IS_ON(mode, S_ISGID)) {
 			message(MT_NOTICE, 
 				"%s: user %s not in group %s, clearing setgid",

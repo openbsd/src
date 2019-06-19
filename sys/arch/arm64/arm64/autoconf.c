@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2018/02/06 20:35:21 naddy Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2019/01/09 13:18:50 yasuoka Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/disklabel.h>
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/hibernate.h>
@@ -68,7 +69,8 @@ diskconf(void)
 {
 	size_t	len;
 	char	*p;
-	dev_t	tmpdev;
+	dev_t	tmpdev = NODEV;
+	int	part = 0;
 	extern uint8_t *bootmac;
 
 	if (*boot_file != '\0')
@@ -82,6 +84,8 @@ diskconf(void)
 		else
 			len = strlen(boot_file);
 		bootdv = parsedisk(boot_file, len, 0, &tmpdev);
+		if (tmpdev != NODEV)
+			part = DISKPART(tmpdev);
 	}
 
 #if defined(NFSCLIENT)
@@ -105,7 +109,7 @@ diskconf(void)
 	else
 		printf("boot device: lookup %s failed \n", boot_file);
 
-	setroot(bootdv, 0, RB_USERREQ);
+	setroot(bootdv, part, RB_USERREQ);
 	dumpconf();
 
 #ifdef HIBERNATE

@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.6 2017/11/07 14:15:38 jca Exp $
+.\"   $OpenBSD: tftpd.8,v 1.8 2019/03/04 01:06:03 dlg Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,12 +29,12 @@
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
 .\"
-.Dd $Mdocdate: November 7 2017 $
+.Dd $Mdocdate: March 4 2019 $
 .Dt TFTPD 8
 .Os
 .Sh NAME
 .Nm tftpd
-.Nd DARPA Trivial File Transfer Protocol daemon
+.Nd Trivial File Transfer Protocol daemon
 .Sh SYNOPSIS
 .Nm tftpd
 .Op Fl 46cdiv
@@ -45,7 +45,6 @@
 .Sh DESCRIPTION
 .Nm
 is a server which implements the
-.Tn DARPA
 Trivial File Transfer Protocol.
 .Pp
 The use of
@@ -152,6 +151,68 @@ as part of the file name to transfer.
 .Xr pxeboot 8 ,
 .Xr syslogd 8 ,
 .Xr tftp-proxy 8
+.Sh STANDARDS
+.\" .Rs
+.\" .%A K. R. Sollins
+.\" .%D June 1981
+.\" .%R RFC 783
+.\" .%T The TFTP Protocol (Revision 2)
+.\" .Re
+.\" .Pp
+.Rs
+.%A K. Sollins
+.%D July 1992
+.%R RFC 1350
+.%T The TFTP Protocol (Revision 2)
+.Re
+.Pp
+.\" .Rs
+.\" .%A G. Malkin
+.\" .%A A. Harkin
+.\" .%D March 1995
+.\" .%R RFC 1782
+.\" .%T TFTP Option Extension
+.\" .Re
+.\" .Pp
+.\" .Rs
+.\" .%A G. Malkin
+.\" .%A A. Harkin
+.\" .%D March 1995
+.\" .%R RFC 1783
+.\" .%T TFTP Blocksize Option
+.\" .Re
+.\" .Pp
+.\" .Rs
+.\" .%A G. Malkin
+.\" .%A A. Harkin
+.\" .%D March 1995
+.\" .%R RFC 1784
+.\" .%T TFTP Timeout Interval and Transfer Size Options
+.\" .Re
+.\" .Pp
+.Rs
+.%A G. Malkin
+.%A A. Harkin
+.%D May 1998
+.%R RFC 2347
+.%T TFTP Option Extension
+.Re
+.Pp
+.Rs
+.%A G. Malkin
+.%A A. Harkin
+.%D May 1998
+.%R RFC 2348
+.%T TFTP Blocksize Option
+.Re
+.Pp
+.Rs
+.%A G. Malkin
+.%A A. Harkin
+.%D March 1998
+.%R RFC 2349
+.%T TFTP Timeout Interval and Transfer Size Options
+.Re
 .Sh HISTORY
 The
 .Nm

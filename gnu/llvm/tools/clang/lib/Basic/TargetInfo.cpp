@@ -14,14 +14,16 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/AddressSpaces.h"
 #include "clang/Basic/CharInfo.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/TargetParser.h"
 #include <cstdlib>
 using namespace clang;
 
-static const LangAS::Map DefaultAddrSpaceMap = { 0 };
+static const LangASMap DefaultAddrSpaceMap = {0};
 
 // TargetInfo Constructor.
 TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
@@ -29,20 +31,40 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   // SPARC.  These should be overridden by concrete targets as needed.
   BigEndian = !T.isLittleEndian();
   TLSSupported = true;
+  VLASupported = true;
   NoAsmVariants = false;
+  HasLegalHalfType = false;
   HasFloat128 = false;
   PointerWidth = PointerAlign = 32;
   BoolWidth = BoolAlign = 8;
   IntWidth = IntAlign = 32;
   LongWidth = LongAlign = 32;
   LongLongWidth = LongLongAlign = 64;
+
+  // Fixed point default bit widths
+  ShortAccumWidth = ShortAccumAlign = 16;
+  AccumWidth = AccumAlign = 32;
+  LongAccumWidth = LongAccumAlign = 64;
+  ShortFractWidth = ShortFractAlign = 8;
+  FractWidth = FractAlign = 16;
+  LongFractWidth = LongFractAlign = 32;
+
+  // Fixed point default integral and fractional bit sizes
+  // We give the _Accum 1 fewer fractional bits than their corresponding _Fract
+  // types by default to have the same number of fractional bits between _Accum
+  // and _Fract types.
+  PaddingOnUnsignedFixedPoint = false;
+  ShortAccumScale = 7;
+  AccumScale = 15;
+  LongAccumScale = 31;
+
   SuitableAlign = 64;
   DefaultAlignForAttributeAligned = 128;
   MinGlobalAlign = 0;
   // From the glibc documentation, on GNU systems, malloc guarantees 16-byte
   // alignment on 64-bit systems and 8-byte alignment on 32-bit systems. See
   // https://www.gnu.org/software/libc/manual/html_node/Malloc-Examples.html
-  if (T.isGNUEnvironment())
+  if (T.isGNUEnvironment() || T.isWindowsMSVCEnvironment())
     NewAlign = Triple.isArch64Bit() ? 128 : Triple.isArch32Bit() ? 64 : 0;
   else
     NewAlign = 0; // Infer from basic type alignment.
@@ -111,6 +133,18 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
 
 // Out of line virtual dtor for TargetInfo.
 TargetInfo::~TargetInfo() {}
+
+bool
+TargetInfo::checkCFProtectionBranchSupported(DiagnosticsEngine &Diags) const {
+  Diags.Report(diag::err_opt_not_valid_on_target) << "cf-protection=branch";
+  return false;
+}
+
+bool
+TargetInfo::checkCFProtectionReturnSupported(DiagnosticsEngine &Diags) const {
+  Diags.Report(diag::err_opt_not_valid_on_target) << "cf-protection=return";
+  return false;
+}
 
 /// getTypeName - Return the user string for the specified integer type enum.
 /// For example, SignedShort -> "short".
@@ -289,8 +323,15 @@ bool TargetInfo::isTypeSigned(IntType T) {
 void TargetInfo::adjust(LangOptions &Opts) {
   if (Opts.NoBitFieldTypeAlign)
     UseBitFieldTypeAlignment = false;
-  if (Opts.ShortWChar)
-    WCharType = UnsignedShort;
+
+  switch (Opts.WCharSize) {
+  default: llvm_unreachable("invalid wchar_t width");
+  case 0: break;
+  case 1: WCharType = Opts.WCharIsSigned ? SignedChar : UnsignedChar; break;
+  case 2: WCharType = Opts.WCharIsSigned ? SignedShort : UnsignedShort; break;
+  case 4: WCharType = Opts.WCharIsSigned ? SignedInt : UnsignedInt; break;
+  }
+
   if (Opts.AlignDouble) {
     DoubleAlign = LongLongAlign = 64;
     LongDoubleAlign = 64;
@@ -333,6 +374,11 @@ void TargetInfo::adjust(LangOptions &Opts) {
 
   if (Opts.NewAlignOverride)
     NewAlign = Opts.NewAlignOverride * getCharWidth();
+
+  // Each unsigned fixed point type has the same number of fractional bits as
+  // its corresponding signed type.
+  PaddingOnUnsignedFixedPoint |= Opts.PaddingOnUnsignedFixedPoint;
+  CheckFixedPointBits();
 }
 
 bool TargetInfo::initFeatureMap(
@@ -345,6 +391,28 @@ bool TargetInfo::initFeatureMap(
     setFeatureEnabled(Features, Name.substr(1), Enabled);
   }
   return true;
+}
+
+TargetInfo::CallingConvKind
+TargetInfo::getCallingConvKind(bool ClangABICompat4) const {
+  if (getCXXABI() != TargetCXXABI::Microsoft &&
+      (ClangABICompat4 || getTriple().getOS() == llvm::Triple::PS4))
+    return CCK_ClangABI4OrPS4;
+  return CCK_Default;
+}
+
+LangAS TargetInfo::getOpenCLTypeAddrSpace(OpenCLTypeKind TK) const {
+  switch (TK) {
+  case OCLTK_Image:
+  case OCLTK_Pipe:
+    return LangAS::opencl_global;
+
+  case OCLTK_Sampler:
+    return LangAS::opencl_constant;
+
+  default:
+    return LangAS::Default;
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -664,4 +732,64 @@ bool TargetInfo::validateInputConstraint(
   }
 
   return true;
+}
+
+void TargetInfo::CheckFixedPointBits() const {
+  // Check that the number of fractional and integral bits (and maybe sign) can
+  // fit into the bits given for a fixed point type.
+  assert(ShortAccumScale + getShortAccumIBits() + 1 <= ShortAccumWidth);
+  assert(AccumScale + getAccumIBits() + 1 <= AccumWidth);
+  assert(LongAccumScale + getLongAccumIBits() + 1 <= LongAccumWidth);
+  assert(getUnsignedShortAccumScale() + getUnsignedShortAccumIBits() <=
+         ShortAccumWidth);
+  assert(getUnsignedAccumScale() + getUnsignedAccumIBits() <= AccumWidth);
+  assert(getUnsignedLongAccumScale() + getUnsignedLongAccumIBits() <=
+         LongAccumWidth);
+
+  assert(getShortFractScale() + 1 <= ShortFractWidth);
+  assert(getFractScale() + 1 <= FractWidth);
+  assert(getLongFractScale() + 1 <= LongFractWidth);
+  assert(getUnsignedShortFractScale() <= ShortFractWidth);
+  assert(getUnsignedFractScale() <= FractWidth);
+  assert(getUnsignedLongFractScale() <= LongFractWidth);
+
+  // Each unsigned fract type has either the same number of fractional bits
+  // as, or one more fractional bit than, its corresponding signed fract type.
+  assert(getShortFractScale() == getUnsignedShortFractScale() ||
+         getShortFractScale() == getUnsignedShortFractScale() - 1);
+  assert(getFractScale() == getUnsignedFractScale() ||
+         getFractScale() == getUnsignedFractScale() - 1);
+  assert(getLongFractScale() == getUnsignedLongFractScale() ||
+         getLongFractScale() == getUnsignedLongFractScale() - 1);
+
+  // When arranged in order of increasing rank (see 6.3.1.3a), the number of
+  // fractional bits is nondecreasing for each of the following sets of
+  // fixed-point types:
+  // - signed fract types
+  // - unsigned fract types
+  // - signed accum types
+  // - unsigned accum types.
+  assert(getLongFractScale() >= getFractScale() &&
+         getFractScale() >= getShortFractScale());
+  assert(getUnsignedLongFractScale() >= getUnsignedFractScale() &&
+         getUnsignedFractScale() >= getUnsignedShortFractScale());
+  assert(LongAccumScale >= AccumScale && AccumScale >= ShortAccumScale);
+  assert(getUnsignedLongAccumScale() >= getUnsignedAccumScale() &&
+         getUnsignedAccumScale() >= getUnsignedShortAccumScale());
+
+  // When arranged in order of increasing rank (see 6.3.1.3a), the number of
+  // integral bits is nondecreasing for each of the following sets of
+  // fixed-point types:
+  // - signed accum types
+  // - unsigned accum types
+  assert(getLongAccumIBits() >= getAccumIBits() &&
+         getAccumIBits() >= getShortAccumIBits());
+  assert(getUnsignedLongAccumIBits() >= getUnsignedAccumIBits() &&
+         getUnsignedAccumIBits() >= getUnsignedShortAccumIBits());
+
+  // Each signed accum type has at least as many integral bits as its
+  // corresponding unsigned accum type.
+  assert(getShortAccumIBits() >= getUnsignedShortAccumIBits());
+  assert(getAccumIBits() >= getUnsignedAccumIBits());
+  assert(getLongAccumIBits() >= getUnsignedLongAccumIBits());
 }

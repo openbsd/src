@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Error.h"
 #include "InputFiles.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Target.h"
+#include "lld/Common/ErrorHandler.h"
 #include "llvm/Support/Endian.h"
 
 using namespace llvm;
@@ -24,11 +24,11 @@ namespace {
 class SPARCV9 final : public TargetInfo {
 public:
   SPARCV9();
-  RelExpr getRelExpr(uint32_t Type, const SymbolBody &S,
+  RelExpr getRelExpr(RelType Type, const Symbol &S,
                      const uint8_t *Loc) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
-  void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
+  void relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const override;
 };
 } // namespace
 
@@ -46,7 +46,7 @@ SPARCV9::SPARCV9() {
   DefaultImageBase = 0x100000;
 }
 
-RelExpr SPARCV9::getRelExpr(uint32_t Type, const SymbolBody &S,
+RelExpr SPARCV9::getRelExpr(RelType Type, const Symbol &S,
                             const uint8_t *Loc) const {
   switch (Type) {
   case R_SPARC_32:
@@ -68,33 +68,32 @@ RelExpr SPARCV9::getRelExpr(uint32_t Type, const SymbolBody &S,
   case R_SPARC_NONE:
     return R_NONE;
   default:
-    error(toString(S.File) + ": unknown relocation type: " + toString(Type));
-    return R_HINT;
+    return R_INVALID;
   }
 }
 
-void SPARCV9::relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const {
+void SPARCV9::relocateOne(uint8_t *Loc, RelType Type, uint64_t Val) const {
   switch (Type) {
   case R_SPARC_32:
   case R_SPARC_UA32:
     // V-word32
-    checkUInt<32>(Loc, Val, Type);
+    checkUInt(Loc, Val, 32, Type);
     write32be(Loc, Val);
     break;
   case R_SPARC_DISP32:
     // V-disp32
-    checkInt<32>(Loc, Val, Type);
+    checkInt(Loc, Val, 32, Type);
     write32be(Loc, Val);
     break;
   case R_SPARC_WDISP30:
   case R_SPARC_WPLT30:
     // V-disp30
-    checkInt<32>(Loc, Val, Type);
+    checkInt(Loc, Val, 32, Type);
     write32be(Loc, (read32be(Loc) & ~0x3fffffff) | ((Val >> 2) & 0x3fffffff));
     break;
   case R_SPARC_22:
     // V-imm22
-    checkUInt<22>(Loc, Val, Type);
+    checkUInt(Loc, Val, 22, Type);
     write32be(Loc, (read32be(Loc) & ~0x003fffff) | (Val & 0x003fffff));
     break;
   case R_SPARC_GOT22:
@@ -104,7 +103,7 @@ void SPARCV9::relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const {
     break;
   case R_SPARC_WDISP19:
     // V-disp19
-    checkInt<21>(Loc, Val, Type);
+    checkInt(Loc, Val, 21, Type);
     write32be(Loc, (read32be(Loc) & ~0x0007ffff) | ((Val >> 2) & 0x0007ffff));
     break;
   case R_SPARC_GOT10:
@@ -138,7 +137,7 @@ void SPARCV9::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   };
   memcpy(Buf, PltData, sizeof(PltData));
 
-  uint64_t Off = PltHeaderSize + Index * PltEntrySize;
+  uint64_t Off = getPltEntryOffset(Index);
   relocateOne(Buf, R_SPARC_22, Off);
   relocateOne(Buf + 4, R_SPARC_WDISP19, -(Off + 4 - PltEntrySize));
 }

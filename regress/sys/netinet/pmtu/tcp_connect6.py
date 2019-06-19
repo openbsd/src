@@ -1,8 +1,23 @@
 #!/usr/local/bin/python2.7
 
 import os
+import threading
 from addr import *
 from scapy.all import *
+
+class Sniff1(threading.Thread):
+	filter = None
+	captured = None
+	packet = None
+	def __init__(self):
+		# clear packets buffered by scapy bpf
+		sniff(iface=LOCAL_IF, timeout=1)
+		super(Sniff1, self).__init__()
+	def run(self):
+		self.captured = sniff(iface=LOCAL_IF, filter=self.filter,
+		    count=1, timeout=3)
+		if self.captured:
+			self.packet = self.captured[0]
 
 e=Ether(src=LOCAL_MAC, dst=REMOTE_MAC)
 ip6=IPv6(src=FAKE_NET_ADDR6, dst=REMOTE_ADDR6)
@@ -28,18 +43,21 @@ if data is None:
 print "Fill our receive buffer."
 time.sleep(1)
 
+# srp1 cannot be used, TCP data will not match outgoing ICMP6 packet
+sniffer = Sniff1()
+sniffer.filter = \
+    "ip6 and src %s and tcp port %u and dst %s and tcp port %u" % \
+    (ip6.dst, syn.dport, ip6.src, syn.sport)
+sniffer.start()
+time.sleep(1)
+
 print "Send ICMP6 packet too big packet with MTU 1300."
 icmp6=ICMPv6PacketTooBig(mtu=1300)/data.payload
-# srp1 cannot be used, TCP data will not match outgoing ICMP6 packet
-if os.fork() == 0:
-	time.sleep(1)
-	sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/icmp6, iface=LOCAL_IF)
-	os._exit(0)
+sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/icmp6, iface=LOCAL_IF)
 
 print "Path MTU discovery will resend first data with length 1300."
-ans=sniff(iface=LOCAL_IF, timeout=3, count=1, filter=
-    "ip6 and src %s and tcp port %u and dst %s and tcp port %u" %
-    (ip6.dst, syn.dport, ip6.src, syn.sport))
+sniffer.join(timeout=5)
+ans = sniffer.packet
 
 if len(ans) == 0:
 	print "ERROR: no data retransmit from chargen server received"

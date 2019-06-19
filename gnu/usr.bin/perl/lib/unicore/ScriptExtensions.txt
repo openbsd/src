@@ -1,10 +1,11 @@
-# ScriptExtensions-8.0.0.txt
-# Date: 2015-05-14, 22:31:55 GMT [MD]
+# ScriptExtensions-10.0.0.txt
+# Date: 2017-05-31, 01:07:00 GMT [RP]
+# © 2017 Unicode®, Inc.
+# Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-# Copyright (c) 1991-2015 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see http://www.unicode.org/reports/tr44/
+#   For documentation, see http://www.unicode.org/reports/tr44/
 #
 # The Script_Extensions property indicates which characters are commonly used
 # with more than one script, but with a limited number of scripts.
@@ -35,6 +36,14 @@
 # ================================================
 
 # Property:	Script_Extensions
+
+# ================================================
+
+# Script_Extensions=Beng
+
+1CF7          ; Beng # Mc       VEDIC SIGN ATIKRAMA
+
+# Total code points: 1
 
 # ================================================
 
@@ -76,9 +85,24 @@
 
 # Script_Extensions=Hani
 
+3006          ; Hani # Lo       IDEOGRAPHIC CLOSING MARK
+303E..303F    ; Hani # So   [2] IDEOGRAPHIC VARIATION INDICATOR..IDEOGRAPHIC HALF FILL SPACE
+3190..3191    ; Hani # So   [2] IDEOGRAPHIC ANNOTATION LINKING MARK..IDEOGRAPHIC ANNOTATION REVERSE MARK
+3192..3195    ; Hani # No   [4] IDEOGRAPHIC ANNOTATION ONE MARK..IDEOGRAPHIC ANNOTATION FOUR MARK
+3196..319F    ; Hani # So  [10] IDEOGRAPHIC ANNOTATION TOP MARK..IDEOGRAPHIC ANNOTATION MAN MARK
+31C0..31E3    ; Hani # So  [36] CJK STROKE T..CJK STROKE Q
+3220..3229    ; Hani # No  [10] PARENTHESIZED IDEOGRAPH ONE..PARENTHESIZED IDEOGRAPH TEN
+322A..3247    ; Hani # So  [30] PARENTHESIZED IDEOGRAPH MOON..CIRCLED IDEOGRAPH KOTO
+3280..3289    ; Hani # No  [10] CIRCLED IDEOGRAPH ONE..CIRCLED IDEOGRAPH TEN
+328A..32B0    ; Hani # So  [39] CIRCLED IDEOGRAPH MOON..CIRCLED IDEOGRAPH NIGHT
+32C0..32CB    ; Hani # So  [12] IDEOGRAPHIC TELEGRAPH SYMBOL FOR JANUARY..IDEOGRAPHIC TELEGRAPH SYMBOL FOR DECEMBER
+3358..3370    ; Hani # So  [25] IDEOGRAPHIC TELEGRAPH SYMBOL FOR HOUR ZERO..IDEOGRAPHIC TELEGRAPH SYMBOL FOR HOUR TWENTY-FOUR
+337B..337F    ; Hani # So   [5] SQUARE ERA NAME HEISEI..SQUARE CORPORATION
+33E0..33FE    ; Hani # So  [31] IDEOGRAPHIC TELEGRAPH SYMBOL FOR DAY ONE..IDEOGRAPHIC TELEGRAPH SYMBOL FOR DAY THIRTY-ONE
 1D360..1D371  ; Hani # No  [18] COUNTING ROD UNIT DIGIT ONE..COUNTING ROD TENS DIGIT NINE
+1F250..1F251  ; Hani # So   [2] CIRCLED IDEOGRAPH ADVANTAGE..CIRCLED IDEOGRAPH ACCEPT
 
-# Total code points: 18
+# Total code points: 237
 
 # ================================================
 
@@ -126,6 +150,14 @@ FDFD          ; Arab Thaa # So       ARABIC LIGATURE BISMILLAH AR-RAHMAN AR-RAHE
 
 # ================================================
 
+# Script_Extensions=Beng Deva
+
+A8F1          ; Beng Deva # Mn       COMBINING DEVANAGARI SIGN AVAGRAHA
+
+# Total code points: 1
+
+# ================================================
+
 # Script_Extensions=Bopo Hani
 
 302A..302D    ; Bopo Hani # Mn   [4] IDEOGRAPHIC LEVEL TONE MARK..IDEOGRAPHIC ENTERING TONE MARK
@@ -145,19 +177,20 @@ A9CF          ; Bugi Java # Lm       JAVANESE PANGRANGKEP
 # Script_Extensions=Cprt Linb
 
 10100..10102  ; Cprt Linb # Po   [3] AEGEAN WORD SEPARATOR LINE..AEGEAN CHECK MARK
-10107..10133  ; Cprt Linb # No  [45] AEGEAN NUMBER ONE..AEGEAN NUMBER NINETY THOUSAND
 10137..1013F  ; Cprt Linb # So   [9] AEGEAN WEIGHT BASE UNIT..AEGEAN MEASURE THIRD SUBUNIT
 
-# Total code points: 57
+# Total code points: 12
 
 # ================================================
 
 # Script_Extensions=Cyrl Glag
 
+0484          ; Cyrl Glag # Mn       COMBINING CYRILLIC PALATALIZATION
 0487          ; Cyrl Glag # Mn       COMBINING CYRILLIC POKRYTIE
+2E43          ; Cyrl Glag # Po       DASH WITH LEFT UPTURN
 A66F          ; Cyrl Glag # Mn       COMBINING CYRILLIC VZMET
 
-# Total code points: 2
+# Total code points: 4
 
 # ================================================
 
@@ -217,14 +250,26 @@ A8F3          ; Deva Taml # Lo       DEVANAGARI SIGN CANDRABINDU VIRAMA
 
 # ================================================
 
+# Script_Extensions=Geor Latn
+
+10FB          ; Geor Latn # Po       GEORGIAN PARAGRAPH SEPARATOR
+
+# Total code points: 1
+
+# ================================================
+
 # Script_Extensions=Gran Taml
 
 0BAA          ; Gran Taml # Lo       TAMIL LETTER PA
 0BB5          ; Gran Taml # Lo       TAMIL LETTER VA
 0BE6..0BEF    ; Gran Taml # Nd  [10] TAMIL DIGIT ZERO..TAMIL DIGIT NINE
 0BF0..0BF2    ; Gran Taml # No   [3] TAMIL NUMBER TEN..TAMIL NUMBER ONE THOUSAND
+11301         ; Gran Taml # Mn       GRANTHA SIGN CANDRABINDU
+11303         ; Gran Taml # Mc       GRANTHA SIGN VISARGA
+1133C         ; Gran Taml # Mn       GRANTHA SIGN NUKTA
 
-# Total code points: 15
+
+# Total code points: 18
 
 # ================================================
 
@@ -271,9 +316,10 @@ FF9E..FF9F    ; Hira Kana # Lm   [2] HALFWIDTH KATAKANA VOICED SOUND MARK..HALFW
 
 060C          ; Arab Syrc Thaa # Po       ARABIC COMMA
 061B          ; Arab Syrc Thaa # Po       ARABIC SEMICOLON
+061C          ; Arab Syrc Thaa # Cf       ARABIC LETTER MARK
 061F          ; Arab Syrc Thaa # Po       ARABIC QUESTION MARK
 
-# Total code points: 3
+# Total code points: 4
 
 # ================================================
 
@@ -290,6 +336,14 @@ FF9E..FF9F    ; Hira Kana # Lm   [2] HALFWIDTH KATAKANA VOICED SOUND MARK..HALFW
 1040..1049    ; Cakm Mymr Tale # Nd  [10] MYANMAR DIGIT ZERO..MYANMAR DIGIT NINE
 
 # Total code points: 10
+
+# ================================================
+
+# Script_Extensions=Cprt Lina Linb
+
+10107..10133  ; Cprt Lina Linb # No  [45] AEGEAN NUMBER ONE..AEGEAN NUMBER NINETY THOUSAND
+
+# Total code points: 45
 
 # ================================================
 
@@ -311,14 +365,10 @@ FF9E..FF9F    ; Hira Kana # Lm   [2] HALFWIDTH KATAKANA VOICED SOUND MARK..HALFW
 
 # Script_Extensions=Hani Hira Kana
 
-3006          ; Hani Hira Kana # Lo       IDEOGRAPHIC CLOSING MARK
 303C          ; Hani Hira Kana # Lo       MASU MARK
 303D          ; Hani Hira Kana # Po       PART ALTERNATION MARK
-3190..3191    ; Hani Hira Kana # So   [2] IDEOGRAPHIC ANNOTATION LINKING MARK..IDEOGRAPHIC ANNOTATION REVERSE MARK
-3192..3195    ; Hani Hira Kana # No   [4] IDEOGRAPHIC ANNOTATION ONE MARK..IDEOGRAPHIC ANNOTATION FOUR MARK
-3196..319F    ; Hani Hira Kana # So  [10] IDEOGRAPHIC ANNOTATION TOP MARK..IDEOGRAPHIC ANNOTATION MAN MARK
 
-# Total code points: 19
+# Total code points: 2
 
 # ================================================
 
@@ -338,14 +388,6 @@ A92E          ; Kali Latn Mymr # Po       KAYAH LI SIGN CWI
 
 # ================================================
 
-# Script_Extensions=Arab Mand Mani Phlp Syrc
-
-0640          ; Arab Mand Mani Phlp Syrc # Lm       ARABIC TATWEEL
-
-# Total code points: 1
-
-# ================================================
-
 # Script_Extensions=Bopo Hang Hani Hira Kana
 
 3003          ; Bopo Hang Hani Hira Kana # Po       DITTO MARK
@@ -355,25 +397,23 @@ A92E          ; Kali Latn Mymr # Po       KAYAH LI SIGN CWI
 301E..301F    ; Bopo Hang Hani Hira Kana # Pe   [2] DOUBLE PRIME QUOTATION MARK..LOW DOUBLE PRIME QUOTATION MARK
 3030          ; Bopo Hang Hani Hira Kana # Pd       WAVY DASH
 3037          ; Bopo Hang Hani Hira Kana # So       IDEOGRAPHIC TELEGRAPH LINE FEED SEPARATOR SYMBOL
-303E..303F    ; Bopo Hang Hani Hira Kana # So   [2] IDEOGRAPHIC VARIATION INDICATOR..IDEOGRAPHIC HALF FILL SPACE
-31C0..31E3    ; Bopo Hang Hani Hira Kana # So  [36] CJK STROKE T..CJK STROKE Q
-3220..3229    ; Bopo Hang Hani Hira Kana # No  [10] PARENTHESIZED IDEOGRAPH ONE..PARENTHESIZED IDEOGRAPH TEN
-322A..3243    ; Bopo Hang Hani Hira Kana # So  [26] PARENTHESIZED IDEOGRAPH MOON..PARENTHESIZED IDEOGRAPH REACH
-3280..3289    ; Bopo Hang Hani Hira Kana # No  [10] CIRCLED IDEOGRAPH ONE..CIRCLED IDEOGRAPH TEN
-328A..32B0    ; Bopo Hang Hani Hira Kana # So  [39] CIRCLED IDEOGRAPH MOON..CIRCLED IDEOGRAPH NIGHT
-32C0..32CB    ; Bopo Hang Hani Hira Kana # So  [12] IDEOGRAPHIC TELEGRAPH SYMBOL FOR JANUARY..IDEOGRAPHIC TELEGRAPH SYMBOL FOR DECEMBER
-3358..3370    ; Bopo Hang Hani Hira Kana # So  [25] IDEOGRAPHIC TELEGRAPH SYMBOL FOR HOUR ZERO..IDEOGRAPHIC TELEGRAPH SYMBOL FOR HOUR TWENTY-FOUR
-337B..337F    ; Bopo Hang Hani Hira Kana # So   [5] SQUARE ERA NAME HEISEI..SQUARE CORPORATION
-33E0..33FE    ; Bopo Hang Hani Hira Kana # So  [31] IDEOGRAPHIC TELEGRAPH SYMBOL FOR DAY ONE..IDEOGRAPHIC TELEGRAPH SYMBOL FOR DAY THIRTY-ONE
 FE45..FE46    ; Bopo Hang Hani Hira Kana # Po   [2] SESAME DOT..WHITE SESAME DOT
 
-# Total code points: 206
+# Total code points: 10
 
 # ================================================
 
 # Script_Extensions=Deva Knda Mlym Taml Telu
 
 1CDA          ; Deva Knda Mlym Taml Telu # Mn       VEDIC TONE DOUBLE SVARITA
+
+# Total code points: 1
+
+# ================================================
+
+# Script_Extensions=Adlm Arab Mand Mani Phlp Syrc
+
+0640          ; Adlm Arab Mand Mani Phlp Syrc # Lm       ARABIC TATWEEL
 
 # Total code points: 1
 
@@ -412,12 +452,19 @@ FF64..FF65    ; Bopo Hang Hani Hira Kana Yiii # Po   [2] HALFWIDTH IDEOGRAPHIC C
 
 # Script_Extensions=Deva Gujr Guru Kthi Mahj Modi Sind Takr Tirh
 
-A830..A835    ; Deva Gujr Guru Kthi Mahj Modi Sind Takr Tirh # No   [6] NORTH INDIC FRACTION ONE QUARTER..NORTH INDIC FRACTION THREE SIXTEENTHS
 A836..A837    ; Deva Gujr Guru Kthi Mahj Modi Sind Takr Tirh # So   [2] NORTH INDIC QUARTER MARK..NORTH INDIC PLACEHOLDER MARK
 A838          ; Deva Gujr Guru Kthi Mahj Modi Sind Takr Tirh # Sc       NORTH INDIC RUPEE MARK
 A839          ; Deva Gujr Guru Kthi Mahj Modi Sind Takr Tirh # So       NORTH INDIC QUANTITY MARK
 
-# Total code points: 10
+# Total code points: 4
+
+# ================================================
+
+# Script_Extensions=Deva Gujr Guru Knda Kthi Mahj Modi Sind Takr Tirh
+
+A830..A835    ; Deva Gujr Guru Knda Kthi Mahj Modi Sind Takr Tirh # No   [6] NORTH INDIC FRACTION ONE QUARTER..NORTH INDIC FRACTION THREE SIXTEENTHS
+
+# Total code points: 6
 
 # ================================================
 

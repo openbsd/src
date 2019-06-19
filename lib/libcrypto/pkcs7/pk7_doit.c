@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.42 2017/05/02 03:59:45 deraadt Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.43 2019/03/13 20:34:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -410,7 +410,7 @@ pkcs7_cmp_ri(PKCS7_RECIP_INFO *ri, X509 *pcert)
 	    pcert->cert_info->issuer);
 	if (ret)
 		return ret;
-	return ASN1_STRING_cmp(pcert->cert_info->serialNumber,
+	return ASN1_INTEGER_cmp(pcert->cert_info->serialNumber,
 	    ri->issuer_and_serial->serial);
 }
 

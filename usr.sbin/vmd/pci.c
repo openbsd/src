@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.23 2018/02/15 05:35:36 mlarkin Exp $	*/
+/*	$OpenBSD: pci.c,v 1.27 2018/07/12 10:15:44 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -28,6 +28,7 @@
 #include "vmd.h"
 #include "pci.h"
 #include "vmm.h"
+#include "i8259.h"
 #include "atomicio.h"
 
 struct pci pci;
@@ -94,7 +95,7 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 		pci.pci_next_io_bar += VMM_PCI_IO_BAR_SIZE;
 		pci.pci_devices[id].pd_barfunc[bar_ct] = barfn;
 		pci.pci_devices[id].pd_bar_cookie[bar_ct] = cookie;
-		dprintf("%s: adding pci bar cookie for dev %d bar %d = %p",
+		DPRINTF("%s: adding pci bar cookie for dev %d bar %d = %p",
 		    __progname, id, bar_ct, cookie);
 		pci.pci_devices[id].pd_bartype[bar_ct] = PCI_BAR_TYPE_IO;
 		pci.pci_devices[id].pd_barsize[bar_ct] = VMM_PCI_IO_BAR_SIZE;
@@ -191,8 +192,9 @@ pci_add_device(uint8_t *id, uint16_t vid, uint16_t pid, uint8_t class,
 		    pci_pic_irqs[pci.pci_next_pic_irq];
 		pci.pci_devices[*id].pd_int = 1;
 		pci.pci_next_pic_irq++;
-		dprintf("assigned irq %d to pci dev %d",
+		DPRINTF("assigned irq %d to pci dev %d",
 		    pci.pci_devices[*id].pd_irq, *id);
+		pic_set_elcr(pci.pci_devices[*id].pd_irq, 1);
 	}
 
 	pci.pci_dev_ct ++;
@@ -226,7 +228,7 @@ pci_init(void)
 void
 pci_handle_address_reg(struct vm_run_params *vrp)
 {
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
@@ -251,7 +253,7 @@ pci_handle_io(struct vm_run_params *vrp)
 	int i, j, k, l;
 	uint16_t reg, b_hi, b_lo;
 	pci_iobar_fn_t fn;
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 	uint8_t intr, dir;
 
 	k = -1;
@@ -301,7 +303,7 @@ pci_handle_io(struct vm_run_params *vrp)
 void
 pci_handle_data_reg(struct vm_run_params *vrp)
 {
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 	uint8_t b, d, f, o, baridx, ofs, sz;
 	int ret;
 	pci_cs_fn_t csfunc;
@@ -392,19 +394,20 @@ pci_handle_data_reg(struct vm_run_params *vrp)
 		else {
 			switch (sz) {
 			case 4:
-				set_return_data(vei, pci.pci_devices[d].pd_cfg_space[o / 4]);
+				set_return_data(vei,
+				    pci.pci_devices[d].pd_cfg_space[o / 4]);
 				break;
 			case 2:
 				if (ofs == 0)
-					set_return_data(vei,
-					    pci.pci_devices[d].pd_cfg_space[o / 4]);
+					set_return_data(vei, pci.pci_devices[d].
+					    pd_cfg_space[o / 4]);
 				else
-					set_return_data(vei,
-					    pci.pci_devices[d].pd_cfg_space[o / 4] >> 16);
+					set_return_data(vei, pci.pci_devices[d].
+					    pd_cfg_space[o / 4] >> 16);
 				break;
 			case 1:
-				set_return_data(vei,
-				    pci.pci_devices[d].pd_cfg_space[o / 4] >> (ofs * 8));
+				set_return_data(vei, pci.pci_devices[d].
+				    pd_cfg_space[o / 4] >> (ofs * 8));
 				break;
 			}
 		}

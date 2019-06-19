@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285.c,v 1.27 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: ar9285.c,v 1.28 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -104,7 +104,6 @@ ar9285_attach(struct athn_softc *sc)
 {
 	sc->eep_base = AR9285_EEP_START_LOC;
 	sc->eep_size = sizeof(struct ar9285_eeprom);
-	sc->def_nf = AR9285_PHY_CCA_MAX_GOOD_VALUE;
 	sc->ngpiopins = (sc->flags & ATHN_FLAG_USB) ? 16 : 12;
 	sc->led_pin = (sc->flags & ATHN_FLAG_USB) ? 15 : 1;
 	sc->workaround = AR9285_WA_DEFAULT;
@@ -115,6 +114,16 @@ ar9285_attach(struct athn_softc *sc)
 	sc->ops.set_synth = ar9280_set_synth;
 	sc->ops.spur_mitigate = ar9280_spur_mitigate;
 	sc->ops.get_spur_chans = ar9285_get_spur_chans;
+#if NATHN_USB > 0
+	if (AR_SREV_9271(sc)) {
+		sc->cca_min_2g = AR9271_PHY_CCA_MIN_GOOD_VAL_2GHZ;
+		sc->cca_max_2g = AR9271_PHY_CCA_MAX_GOOD_VAL_2GHZ;
+	} else
+#endif
+	{
+		sc->cca_min_2g = AR9285_PHY_CCA_MIN_GOOD_VAL_2GHZ;
+		sc->cca_max_2g = AR9285_PHY_CCA_MAX_GOOD_VAL_2GHZ;
+	}
 #if NATHN_USB > 0
 	if (AR_SREV_9271(sc))
 		sc->ini = &ar9271_ini;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.61 2017/08/30 16:14:52 rob Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.63 2019/01/22 09:25:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -31,6 +31,7 @@
 #include <net/route.h>
 #include <netinet/in.h>
 
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -147,19 +148,23 @@ main(int argc, char *argv[])
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(opts & IFSD_OPT_VERBOSE);
 
-	if ((rt_fd = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
+	if ((rt_fd = socket(AF_ROUTE, SOCK_RAW, 0)) < 0)
 		fatal("no routing socket");
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_IFANNOUNCE);
-	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_MSGFILTER,
+	if (setsockopt(rt_fd, AF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)	/* not fatal */
 		log_warn("%s: setsockopt msgfilter", __func__);
 
 	rtfilter = RTABLE_ANY;
-	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_TABLEFILTER,
+	if (setsockopt(rt_fd, AF_ROUTE, ROUTE_TABLEFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)	/* not fatal */
 		log_warn("%s: setsockopt tablefilter", __func__);
 
+	if (unveil(configfile, "r") == -1)
+		fatal("unveil");
+	if (unveil(_PATH_BSHELL, "x") == -1)
+		fatal("unveil");
 	if (pledge("stdio rpath route proc exec", NULL) == -1)
 		fatal("pledge");
 
@@ -326,7 +331,7 @@ external_exec(struct ifsd_external *external, int async)
 	if (pid < 0) {
 		log_warn("fork error");
 	} else if (pid == 0) {
-		execv("/bin/sh", argp);
+		execv(_PATH_BSHELL, argp);
 		_exit(1);
 		/* NOTREACHED */
 	} else {

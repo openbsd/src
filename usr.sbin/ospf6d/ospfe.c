@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.51 2017/08/12 16:27:50 benno Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.56 2019/06/11 05:00:09 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -74,7 +74,6 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 {
 	struct area	*area;
 	struct iface	*iface;
-	struct redistribute *r;
 	struct passwd	*pw;
 	struct event	 ev_sigint, ev_sigterm;
 	pid_t		 pid;
@@ -87,10 +86,6 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	default:
 		return (pid);
 	}
-
-	/* create ospfd control socket outside chroot */
-	if (control_init(xconf->csock) == -1)
-		fatalx("control socket setup failed");
 
 	/* create the raw ip socket */
 	if ((xconf->ospf_socket = socket(AF_INET6,
@@ -132,6 +127,9 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
+
+	if (pledge("stdio inet mcast recvfd", NULL) == -1)
+		fatal("pledge");
 
 	event_init();
 	nbr_init(NBR_HASHSIZE);
@@ -175,10 +173,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	event_add(&oeconf->ev, NULL);
 
 	/* remove unneeded config stuff */
-	while ((r = SIMPLEQ_FIRST(&oeconf->redist_list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&oeconf->redist_list, entry);
-		free(r);
-	}
+	conf_clear_redist_list(&oeconf->redist_list);
 
 	/* listen on ospfd control socket */
 	TAILQ_INIT(&ctl_conns);
@@ -260,7 +255,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 {
 	static struct area	*narea;
 	struct area		*area;
-	struct iface		*iface, *ifp;
+	struct iface		*iface, *ifp, *i;
 	struct ifaddrchange	*ifc;
 	struct iface_addr	*ia, *nia;
 	struct imsg		 imsg;
@@ -295,6 +290,24 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 				fatalx("IFINFO imsg with wrong len");
 			ifp = imsg.data;
 
+			LIST_FOREACH(area, &oeconf->area_list, entry) {
+				LIST_FOREACH(i, &area->iface_list, entry) {
+					if (strcmp(i->dependon,
+					    ifp->name) == 0) {
+						log_warnx("interface %s"
+						    " changed state, %s"
+						    " depends on it",
+						    ifp->name, i->name);
+						i->depend_ok =
+						    ifstate_is_up(ifp);
+						if (ifstate_is_up(i))
+							orig_rtr_lsa(i);
+					}
+				}
+			}
+
+			if (!(ifp->cflags & F_IFACE_CONFIGURED))
+				break;
 			iface = if_find(ifp->ifindex);
 			if (iface == NULL)
 				fatalx("interface lost in ospfe");
@@ -303,7 +316,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			    LINK_STATE_IS_UP(iface->linkstate);
 
 			if_update(iface, ifp->mtu, ifp->flags, ifp->if_type,
-			    ifp->linkstate, ifp->baudrate);
+			    ifp->linkstate, ifp->baudrate, ifp->rdomain);
 
 			isvalid = (iface->flags & IFF_UP) &&
 			    LINK_STATE_IS_UP(iface->linkstate);
@@ -423,6 +436,17 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);
+			break;
+		case IMSG_CONTROLFD:
+			if ((fd = imsg.fd) == -1)
+				fatalx("%s: expected to receive imsg control"
+				    "fd but didn't receive any", __func__);
+			control_state.fd = fd;
+			/* Listen on control socket. */
+			TAILQ_INIT(&ctl_conns);
+			control_listen();
+			if (pledge("stdio inet mcast", NULL) == -1)
+				fatal("pledge");
 			break;
 		default:
 			log_debug("ospfe_dispatch_main: error handling imsg %d",
@@ -834,7 +858,11 @@ orig_rtr_lsa_area(struct area *area)
 				log_debug("orig_rtr_lsa: point-to-point, "
 				    "interface %s", iface->name);
 				rtr_link.type = LINK_TYPE_POINTTOPOINT;
-				rtr_link.metric = htons(iface->metric);
+				if (iface->dependon[0] != '\0' &&
+				    iface->depend_ok == 0)
+					rtr_link.metric = MAX_METRIC;
+				else
+					rtr_link.metric = htons(iface->metric);
 				rtr_link.iface_id = htonl(iface->ifindex);
 				rtr_link.nbr_iface_id = htonl(nbr->iface_id);
 				rtr_link.nbr_rtr_id = nbr->id.s_addr;
@@ -859,7 +887,12 @@ orig_rtr_lsa_area(struct area *area)
 					    "interface %s", iface->name);
 
 					rtr_link.type = LINK_TYPE_TRANSIT_NET;
-					rtr_link.metric = htons(iface->metric);
+					if (iface->dependon[0] != '\0' &&
+					    iface->depend_ok == 0)
+						rtr_link.metric = MAX_METRIC;
+					else
+						rtr_link.metric =
+						    htons(iface->metric);
 					rtr_link.iface_id = htonl(iface->ifindex);
 					rtr_link.nbr_iface_id = htonl(iface->dr->iface_id);
 					rtr_link.nbr_rtr_id = iface->dr->id.s_addr;
@@ -919,7 +952,10 @@ orig_rtr_lsa_area(struct area *area)
 					/* RFC 3137: stub router support */
 					if (oe_nofib || oeconf->flags &
 					    OSPFD_FLAG_STUB_ROUTER)
-						rtr_link.metric = 0xffff;
+						rtr_link.metric = MAX_METRIC;
+					else if (iface->dependon[0] != '\0' &&
+						 iface->dependon_ok == 0)
+						rtr_link.metric = MAX_METRIC;
 					else
 						rtr_link.metric =
 						    htons(iface->metric);

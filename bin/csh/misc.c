@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.20 2017/06/20 16:44:06 anton Exp $	*/
+/*	$OpenBSD: misc.c,v 1.25 2018/10/24 06:01:03 martijn Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/03/21 09:03:09 cgd Exp $	*/
 
 /*-
@@ -50,22 +50,6 @@ any(char *s, int c)
 	if (*s++ == c)
 	    return (1);
     return (0);
-}
-
-char   *
-strsave(char *s)
-{
-    char   *n;
-    char *p;
-
-    if (s == NULL)
-	s = "";
-    for (p = s; *p++;)
-	continue;
-    n = p = xreallocarray(NULL, (p - s), sizeof(char));
-    while ((*p++ = *s++) != '\0')
-	continue;
-    return (n);
 }
 
 Char  **
@@ -132,7 +116,7 @@ blkfree(Char **av0)
 Char  **
 saveblk(Char **v)
 {
-    Char **newv = xcalloc((size_t) (blklen(v) + 1), sizeof(Char **));
+    Char **newv = xcalloc(blklen(v) + 1, sizeof(*newv));
     Char  **onewv = newv;
 
     while (*v)
@@ -143,8 +127,7 @@ saveblk(Char **v)
 Char  **
 blkspl(Char **up, Char **vp)
 {
-    Char **wp = xcalloc((size_t) (blklen(up) + blklen(vp) + 1),
-		      sizeof(Char **));
+    Char **wp = xcalloc(blklen(up) + blklen(vp) + 1, sizeof(*wp));
 
     (void) blkcpy(wp, up);
     return (blkcat(wp, vp));
@@ -306,7 +289,7 @@ number(Char *cp)
 Char  **
 copyblk(Char **v)
 {
-    Char  **nv = xcalloc((size_t) (blklen(v) + 1), sizeof(Char **));
+    Char  **nv = xcalloc(blklen(v) + 1, sizeof(*nv));
 
     return (blkcpy(nv, v));
 }

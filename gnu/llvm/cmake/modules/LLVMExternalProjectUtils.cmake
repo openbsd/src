@@ -46,7 +46,7 @@ function(llvm_ExternalProject_Add name source_dir)
   if(NOT ARG_TOOLCHAIN_TOOLS)
     set(ARG_TOOLCHAIN_TOOLS clang lld)
     if(NOT APPLE AND NOT WIN32)
-      list(APPEND ARG_TOOLCHAIN_TOOLS llvm-ar llvm-ranlib)
+      list(APPEND ARG_TOOLCHAIN_TOOLS llvm-ar llvm-ranlib llvm-nm llvm-objcopy llvm-objdump llvm-strip)
     endif()
   endif()
   foreach(tool ${ARG_TOOLCHAIN_TOOLS})
@@ -95,23 +95,38 @@ function(llvm_ExternalProject_Add name source_dir)
   foreach(prefix ${ARG_PASSTHROUGH_PREFIXES})
     foreach(variableName ${variableNames})
       if(variableName MATCHES "^${prefix}")
-        string(REPLACE ";" "\;" value "${${variableName}}")
+        string(REPLACE ";" "|" value "${${variableName}}")
         list(APPEND PASSTHROUGH_VARIABLES
           -D${variableName}=${value})
       endif()
     endforeach()
   endforeach()
 
-  if(ARG_USE_TOOLCHAIN)
+  if(ARG_USE_TOOLCHAIN AND NOT CMAKE_CROSSCOMPILING)
     if(CLANG_IN_TOOLCHAIN)
       set(compiler_args -DCMAKE_C_COMPILER=${LLVM_RUNTIME_OUTPUT_INTDIR}/clang
                         -DCMAKE_CXX_COMPILER=${LLVM_RUNTIME_OUTPUT_INTDIR}/clang++)
+    endif()
+    if(lld IN_LIST TOOLCHAIN_TOOLS)
+      list(APPEND compiler_args -DCMAKE_LINKER=${LLVM_RUNTIME_OUTPUT_INTDIR}/ld.lld)
     endif()
     if(llvm-ar IN_LIST TOOLCHAIN_TOOLS)
       list(APPEND compiler_args -DCMAKE_AR=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ar)
     endif()
     if(llvm-ranlib IN_LIST TOOLCHAIN_TOOLS)
       list(APPEND compiler_args -DCMAKE_RANLIB=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-ranlib)
+    endif()
+    if(llvm-nm IN_LIST TOOLCHAIN_TOOLS)
+      list(APPEND compiler_args -DCMAKE_NM=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-nm)
+    endif()
+    if(llvm-objdump IN_LIST TOOLCHAIN_TOOLS)
+      list(APPEND compiler_args -DCMAKE_OBJDUMP=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-objdump)
+    endif()
+    if(llvm-objcopy IN_LIST TOOLCHAIN_TOOLS)
+      list(APPEND compiler_args -DCMAKE_OBJCOPY=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-objcopy)
+    endif()
+    if(llvm-strip IN_LIST TOOLCHAIN_TOOLS)
+      list(APPEND compiler_args -DCMAKE_STRIP=${LLVM_RUNTIME_OUTPUT_INTDIR}/llvm-strip)
     endif()
     list(APPEND ARG_DEPENDS ${TOOLCHAIN_TOOLS})
   endif()
@@ -132,6 +147,25 @@ function(llvm_ExternalProject_Add name source_dir)
     set(exclude EXCLUDE_FROM_ALL 1)
   endif()
 
+  if(CMAKE_SYSROOT)
+    set(sysroot_arg -DCMAKE_SYSROOT=${CMAKE_SYSROOT})
+  endif()
+
+  if(CMAKE_CROSSCOMPILING)
+    set(compiler_args -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+                      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                      -DCMAKE_LINKER=${CMAKE_LINKER}
+                      -DCMAKE_AR=${CMAKE_AR}
+                      -DCMAKE_RANLIB=${CMAKE_RANLIB}
+                      -DCMAKE_NM=${CMAKE_NM}
+                      -DCMAKE_OBJCOPY=${CMAKE_OBJCOPY}
+                      -DCMAKE_OBJDUMP=${CMAKE_OBJDUMP}
+                      -DCMAKE_STRIP=${CMAKE_STRIP})
+    set(llvm_config_path ${LLVM_CONFIG_PATH})
+  else()
+    set(llvm_config_path "$<TARGET_FILE:llvm-config>")
+  endif()
+
   ExternalProject_Add(${name}
     DEPENDS ${ARG_DEPENDS} llvm-config
     ${name}-clobber
@@ -143,12 +177,16 @@ function(llvm_ExternalProject_Add name source_dir)
     CMAKE_ARGS ${${nameCanon}_CMAKE_ARGS}
                ${compiler_args}
                -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+               ${sysroot_arg}
                -DLLVM_BINARY_DIR=${PROJECT_BINARY_DIR}
-               -DLLVM_CONFIG_PATH=$<TARGET_FILE:llvm-config>
+               -DLLVM_CONFIG_PATH=${llvm_config_path}
                -DLLVM_ENABLE_WERROR=${LLVM_ENABLE_WERROR}
+               -DLLVM_HOST_TRIPLE=${LLVM_HOST_TRIPLE}
+               -DLLVM_HAVE_LINK_VERSION_SCRIPT=${LLVM_HAVE_LINK_VERSION_SCRIPT}
                -DPACKAGE_VERSION=${PACKAGE_VERSION}
                -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}
+               -DCMAKE_EXPORT_COMPILE_COMMANDS=1
                ${ARG_CMAKE_ARGS}
                ${PASSTHROUGH_VARIABLES}
     INSTALL_COMMAND ""
@@ -157,6 +195,7 @@ function(llvm_ExternalProject_Add name source_dir)
     USES_TERMINAL_CONFIGURE 1
     USES_TERMINAL_BUILD 1
     USES_TERMINAL_INSTALL 1
+    LIST_SEPARATOR |
     )
 
   if(ARG_USE_TOOLCHAIN)
@@ -182,29 +221,23 @@ function(llvm_ExternalProject_Add name source_dir)
   endif()
 
   if(NOT ARG_NO_INSTALL)
-    install(CODE "execute_process\(COMMAND \${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=\${CMAKE_INSTALL_PREFIX} -P ${BINARY_DIR}/cmake_install.cmake \)"
+    install(CODE "execute_process\(COMMAND \${CMAKE_COMMAND} -DCMAKE_INSTALL_PREFIX=\${CMAKE_INSTALL_PREFIX} -DCMAKE_INSTALL_DO_STRIP=\${CMAKE_INSTALL_DO_STRIP} -P ${BINARY_DIR}/cmake_install.cmake\)"
       COMPONENT ${name})
 
-    add_custom_target(install-${name}
-                      DEPENDS ${name}
-                      COMMAND "${CMAKE_COMMAND}"
-                               -DCMAKE_INSTALL_COMPONENT=${name}
-                               -P "${CMAKE_BINARY_DIR}/cmake_install.cmake"
-                      USES_TERMINAL)
+    add_llvm_install_targets(install-${name}
+                             DEPENDS ${name}
+                             COMPONENT ${name})
   endif()
 
   # Add top-level targets
   foreach(target ${ARG_EXTRA_TARGETS})
-    string(REPLACE ":" ";" target_list ${target})
-    list(GET target_list 0 target)
-    list(LENGTH target_list target_list_len)
-    if(${target_list_len} GREATER 1)
-      list(GET target_list 1 target_name)
+    if(DEFINED ${target})
+      set(external_target "${${target}}")
     else()
-      set(target_name "${target}")
+      set(external_target "${target}")
     endif()
-    llvm_ExternalProject_BuildCmd(build_runtime_cmd ${target} ${BINARY_DIR})
-    add_custom_target(${target_name}
+    llvm_ExternalProject_BuildCmd(build_runtime_cmd ${external_target} ${BINARY_DIR})
+    add_custom_target(${target}
       COMMAND ${build_runtime_cmd}
       DEPENDS ${name}-configure
       WORKING_DIRECTORY ${BINARY_DIR}

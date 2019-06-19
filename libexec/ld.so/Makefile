@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.72 2018/01/30 20:15:25 otto Exp $
+#	$OpenBSD: Makefile,v 1.74 2019/05/10 13:29:21 guenther Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -25,10 +25,11 @@ syscall=__syscall close exit fstat __getcwd getdents getentropy getthrid \
 	issetugid mprotect munmap open pledge read readlink sendsyslog \
 	__set_tcb sysctl thrkill utrace write
 
+GEN_PREFIX=\t.file "${@:R}.c"\n\#include "SYS.h"
 .for _i in ${syscall}
 OBJS+=dl_${_i}.o
 dl_${_i}.o: SYS.h
-	printf '#include "SYS.h"\nDL_SYSCALL(${_i})\n' | \
+	printf '${GEN_PREFIX}\nDL_SYSCALL(${_i})\n' | \
 	    ${CC} ${DEBUG} -c -fPIC ${CFLAGS:M-[ID]*} ${CFLAGS:M-pipe} ${AINC} -P \
 	    -x assembler-with-cpp - ${DFLAGS} -MF ${.TARGET:R}.d -o ${.TARGET}
 .endfor
@@ -41,6 +42,11 @@ SRCS+=	library.c
 
 .include "${.CURDIR}/${MACHINE_CPU}/Makefile.inc"
 .PATH:	${.CURDIR}/${MACHINE_CPU}
+
+.ifdef LD_SCRIPT
+ ELF_LDFLAGS+=-T ${LD_SCRIPT}
+ CFLAGS	+= -DDO_CLEAN_BOOT
+.endif
 
 DEBUG?=	-g
 CFLAGS += -fno-builtin
@@ -59,12 +65,19 @@ candidate=	$(PROG).test
 CLEANFILES+=	${candidate}
 
 $(test_prog):
-	printf '#include <stdio.h>\nint main(int argc, char **argv){ printf("%%s: ", argv[0]); printf("%%s!\\n", argv[1] ? argv[1] : "foo"); }\n' | \
-	$(CC) -x c - -Wl,-dynamic-linker,./$(candidate) -o $@
+	printf '#include <stdio.h>\n#include <pthread.h>\nint main(int argc, char **argv){ pthread_attr_t attr; printf("%%s: ", argv[0]); pthread_attr_init(&attr); printf("%%s!\\n", argv[1] ? argv[1] : "foo"); }\n' | \
+	$(CC) -P -x c - -Wl,-dynamic-linker,./$(candidate) -o $@ -lpthread
 
-$(PROG): $(test_prog) ${VERSION_SCRIPT} $(OBJS)
-	$(LD) ${DEBUG} -x -e _dl_start $(ELF_LDFLAGS) -o $(candidate) \
+$(PROG): $(test_prog) ${VERSION_SCRIPT} $(OBJS) ${LD_SCRIPT}
+.if defined(SYSPATCH_PATH)
+	$(LD) ${DEBUG} -e _dl_start $(ELF_LDFLAGS) -o $(candidate) \
+            `readelf -Ws ${SYSPATCH_PATH}/usr/libexec/${.TARGET} | \
+            awk '/ FILE/{sub(".*/", "", $$NF); gsub(/\..*/, ".o", $$NF); print $$NF}' | \
+            awk '!x[$$0]++'`
+.else
+	$(LD) ${DEBUG} -e _dl_start $(ELF_LDFLAGS) -o $(candidate) \
 	    `echo ${OBJS} | tr " " "\n" | sort -R`
+.endif
 .ifndef CROSSDIR
 	ulimit -c 0; [ "`${.OBJDIR}/$(test_prog) ok`" = "${.OBJDIR}/$(test_prog): ok!" ]
 .endif
@@ -80,7 +93,7 @@ CLEANFILES+=	ld.so.a
 
 all: ld.so.a
 
-ld.so.a: ${OBJS} ${.CURDIR}/Symbols.map ${test_prog}
+ld.so.a: ${OBJS} ${.CURDIR}/Symbols.map ${test_prog} ${LD_SCRIPT}
 	ar cqD $@ $?
 
 afterinstall: ld.so.a

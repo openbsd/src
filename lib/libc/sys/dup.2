@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dup.2,v 1.18 2014/12/10 19:46:48 schwarze Exp $
+.\"	$OpenBSD: dup.2,v 1.20 2018/06/25 16:06:27 visa Exp $
 .\"	$NetBSD: dup.2,v 1.4 1995/02/27 12:32:21 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)dup.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: June 25 2018 $
 .Dt DUP 2
 .Os
 .Sh NAME
@@ -157,6 +157,12 @@ is not a valid active descriptor or
 is negative or greater than or equal to the process's
 .Dv RLIMIT_NOFILE
 limit.
+.It Bq Er EBUSY
+A race condition with
+.Xr accept 2
+or
+.Xr open 2
+has been detected.
 .It Bq Er EINTR
 An interrupt was received.
 .It Bq Er EIO

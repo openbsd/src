@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.47 2017/12/04 09:38:20 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.53 2019/06/01 14:11:17 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <uvm/uvm_extern.h>
 #include <sys/sched.h>
 #include <sys/timeout.h>
+#include <sys/smr.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -218,6 +219,13 @@ schedcpu(void *arg)
 
 	LIST_FOREACH(p, &allproc, p_list) {
 		/*
+		 * Idle threads are never placed on the runqueue,
+		 * therefore computing their priority is pointless.
+		 */
+		if (p->p_cpu != NULL &&
+		    p->p_cpu->ci_schedstate.spc_idleproc == p)
+			continue;
+		/*
 		 * Increment sleep time (if sleeping). We ignore overflow.
 		 */
 		if (p->p_stat == SSLEEP || p->p_stat == SSTOP)
@@ -336,8 +344,6 @@ mi_switch(void)
 	struct proc *p = curproc;
 	struct proc *nextproc;
 	struct process *pr = p->p_p;
-	struct rlimit *rlim;
-	rlim_t secs;
 	struct timespec ts;
 #ifdef MULTIPROCESSOR
 	int hold_count;
@@ -382,22 +388,6 @@ mi_switch(void)
 	tuagg_unlocked(pr, p);
 
 	/*
-	 * Check if the process exceeds its cpu resource allocation.
-	 * If over max, kill it.
-	 */
-	rlim = &pr->ps_limit->pl_rlimit[RLIMIT_CPU];
-	secs = pr->ps_tu.tu_runtime.tv_sec;
-	if (secs >= rlim->rlim_cur) {
-		if (secs >= rlim->rlim_max) {
-			psignal(p, SIGKILL);
-		} else {
-			psignal(p, SIGXCPU);
-			if (rlim->rlim_cur < rlim->rlim_max)
-				rlim->rlim_cur += 5;
-		}
-	}
-
-	/*
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
@@ -427,6 +417,8 @@ mi_switch(void)
 #endif
 
 	SCHED_ASSERT_UNLOCKED();
+
+	smr_idle();
 
 	/*
 	 * We're running again; record our new start time.  We might
@@ -546,7 +538,12 @@ resetpriority(struct proc *p)
 void
 schedclock(struct proc *p)
 {
+	struct cpu_info *ci = curcpu();
+	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	int s;
+
+	if (p == spc->spc_idleproc || spc->spc_spinning)
+		return;
 
 	SCHED_LOCK(s);
 	p->p_estcpu = ESTCPULIM(p->p_estcpu + 1);

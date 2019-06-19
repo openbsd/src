@@ -622,54 +622,121 @@ VER_NV:
 	    goto VER_PV;
 	}
 #endif
-
 #ifdef USE_LOCALE_NUMERIC
-	{
-	    const char * const cur_numeric = setlocale(LC_NUMERIC, NULL);
-	    assert(cur_numeric);
 
-	    /* XS code can set the locale without us knowing.  To protect the
-	     * version number parsing, which requires the radix character to be a
-	     * dot, update our records as to what the locale is, so that our
-	     * existing macro mechanism can correctly change it to a dot and back
-	     * if necessary.  This code is extremely unlikely to be in a loop, so
-	     * the extra work will have a negligible performance impact.  See [perl
-	     * #121930].
-	     *
-	     * If the current locale is a standard one, but we are expecting it to
-	     * be a different, underlying locale, update our records to make the
-	     * underlying locale this (standard) one.  If the current locale is not
-	     * a standard one, we should be expecting a non-standard one, the same
-	     * one that we have recorded as the underlying locale.  If not, update
-	     * our records. */
-	    if (strEQ(cur_numeric, "C") || strEQ(cur_numeric, "POSIX")) {
-		if (! PL_numeric_standard) {
-		    new_numeric(cur_numeric);
-		}
-	    }
-	    else if (PL_numeric_standard
-		     || ! PL_numeric_name
-		     || strNE(PL_numeric_name, cur_numeric))
-	    {
-		new_numeric(cur_numeric);
+	{
+            /* This may or may not be called from code that has switched
+             * locales without letting perl know, therefore we have to find it
+             * from first principals.  See [perl #121930]. */
+
+            /* In windows, or not threaded, or not thread-safe, if it isn't C,
+             * set it to C. */
+
+#  ifndef USE_POSIX_2008_LOCALE
+
+            const char * locale_name_on_entry;
+
+            LC_NUMERIC_LOCK(0);    /* Start critical section */
+
+            locale_name_on_entry = setlocale(LC_NUMERIC, NULL);
+            if (   strNE(locale_name_on_entry, "C")
+                && strNE(locale_name_on_entry, "POSIX"))
+            {
+                setlocale(LC_NUMERIC, "C");
+            }
+            else {  /* This value indicates to the restore code that we didn't
+                       change the locale */
+                locale_name_on_entry = NULL;
+            }
+
+# else
+
+            const locale_t locale_obj_on_entry = uselocale((locale_t) 0);
+            const char * locale_name_on_entry = NULL;
+            DECLARATION_FOR_LC_NUMERIC_MANIPULATION;
+
+            if (locale_obj_on_entry == LC_GLOBAL_LOCALE) {
+
+                /* in the global locale, we can call system setlocale and if it
+                 * isn't C, set it to C. */
+                LC_NUMERIC_LOCK(0);
+
+                locale_name_on_entry = setlocale(LC_NUMERIC, NULL);
+                if (   strNE(locale_name_on_entry, "C")
+                    && strNE(locale_name_on_entry, "POSIX"))
+                {
+                    setlocale(LC_NUMERIC, "C");
+                }
+                else {  /* This value indicates to the restore code that we
+                           didn't change the locale */
+                    locale_name_on_entry = NULL;
 	    }
 	}
+            else if (locale_obj_on_entry == PL_underlying_numeric_obj) {
+                /* Here, the locale appears to have been changed to use the
+                 * program's underlying locale.  Just use our mechanisms to
+                 * switch back to C.   It might be possible for this pointer to
+                 * actually refer to something else if it got released and
+                 * reused somehow.  But it doesn't matter, our mechanisms will
+                 * work even so */
+                STORE_LC_NUMERIC_SET_STANDARD();
+            }
+            else if (locale_obj_on_entry != PL_C_locale_obj) {
+                /* The C object should be unchanged during a program's
+                 * execution, so it should be safe to assume it means what it
+                 * says, so if we are in it, no locale change is required.
+                 * Otherwise, simply use the thread-safe operation. */
+                uselocale(PL_C_locale_obj);
+            }
+
+# endif
+
+            /* Prevent recursed calls from trying to change back */
+            LOCK_LC_NUMERIC_STANDARD();
+
 #endif
-        { /* Braces needed because macro just below declares a variable */
-        STORE_NUMERIC_LOCAL_SET_STANDARD();
-        LOCK_NUMERIC_STANDARD();
+
 	if (sv) {
-	    Perl_sv_catpvf(aTHX_ sv, "%.9"NVff, SvNVX(ver));
+                Perl_sv_catpvf(aTHX_ sv, "%.9" NVff, SvNVX(ver));
 	    len = SvCUR(sv);
 	    buf = SvPVX(sv);
 	}
 	else {
-	    len = my_snprintf(tbuf, sizeof(tbuf), "%.9"NVff, SvNVX(ver));
+                len = my_snprintf(tbuf, sizeof(tbuf), "%.9" NVff, SvNVX(ver));
 	    buf = tbuf;
 	}
-        UNLOCK_NUMERIC_STANDARD();
-        RESTORE_NUMERIC_LOCAL();
+
+#ifdef USE_LOCALE_NUMERIC
+
+            UNLOCK_LC_NUMERIC_STANDARD();
+
+#  ifndef USE_POSIX_2008_LOCALE
+
+            if (locale_name_on_entry) {
+                setlocale(LC_NUMERIC, locale_name_on_entry);
+            }
+
+            LC_NUMERIC_UNLOCK;  /* End critical section */
+
+#  else
+
+            if (locale_name_on_entry) {
+                setlocale(LC_NUMERIC, locale_name_on_entry);
+                LC_NUMERIC_UNLOCK;
+            }
+            else if (locale_obj_on_entry == PL_underlying_numeric_obj) {
+                RESTORE_LC_NUMERIC();
+            }
+            else if (locale_obj_on_entry != PL_C_locale_obj) {
+                uselocale(locale_obj_on_entry);
         }
+
+#  endif
+
+        }
+
+#endif  /* USE_LOCALE_NUMERIC */
+
 	while (buf[len-1] == '0' && len > 0) len--;
 	if ( buf[len-1] == '.' ) len--; /* eat the trailing decimal */
 	version = savepvn(buf, len);
@@ -926,11 +993,11 @@ Perl_vnormal(pTHX_ SV *vs)
 	SV * tsv = *av_fetch(av, 0, 0);
 	digit = SvIV(tsv);
     }
-    sv = Perl_newSVpvf(aTHX_ "v%"IVdf, (IV)digit);
+    sv = Perl_newSVpvf(aTHX_ "v%" IVdf, (IV)digit);
     for ( i = 1 ; i <= len ; i++ ) {
 	SV * tsv = *av_fetch(av, i, 0);
 	digit = SvIV(tsv);
-	Perl_sv_catpvf(aTHX_ sv, ".%"IVdf, (IV)digit);
+	Perl_sv_catpvf(aTHX_ sv, ".%" IVdf, (IV)digit);
     }
 
     if ( len <= 2 ) { /* short version, must be at least three */
@@ -972,7 +1039,11 @@ Perl_vstringify(pTHX_ SV *vs)
     if (svp) {
 	SV *pv;
 	pv = *svp;
-	if ( SvPOK(pv) )
+	if ( SvPOK(pv)
+#if PERL_VERSION_LT(5,17,2)
+	    || SvPOKp(pv)
+#endif
+	)
 	    return newSVsv(pv);
 	else
 	    return &PL_sv_undef;

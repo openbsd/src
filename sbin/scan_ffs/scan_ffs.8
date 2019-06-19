@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scan_ffs.8,v 1.16 2008/03/23 23:28:46 krw Exp $
+.\"	$OpenBSD: scan_ffs.8,v 1.19 2019/02/10 18:30:11 jca Exp $
 .\"
 .\" Copyright (c) 1997 Niklas Hallqvist, Tobias Weingartner
 .\" All rights reserved.
@@ -23,8 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" .TH scan_ffs 8
-.Dd $Mdocdate: March 23 2008 $
+.Dd $Mdocdate: February 10 2019 $
 .Dt SCAN_FFS 8
 .Os
 .Sh NAME
@@ -47,6 +46,10 @@ create) that covers the whole disk, and finds all probable UFS/FFS partitions
 on the disk.
 It has various options to make it go faster, and to print out
 information to help in the reconstruction of the disklabel.
+.Pp
+.Nm
+works only on FFS file systems,
+not FFS2 file systems.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -135,7 +138,3 @@ If you can't have backups, at least have funky tools to help
 you out of a jam when they happen.
 .Sh SEE ALSO
 .Xr disklabel 8
-.Sh BUGS
-It is not perfect, and could do a lot more things with date/time information
-in the superblocks it finds, but this program has saved more than one butt,
-more than once.

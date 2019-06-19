@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.13 2018/02/02 09:32:11 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.15 2018/12/07 21:33:28 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -160,8 +160,8 @@ struct intrhand {
 
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
-	int iq_irq;			/* IRQ to mask while handling */
-	int iq_levels;			/* IPL_*'s this IRQ has */
+	int iq_irq_max;			/* IRQ to mask while handling */
+	int iq_irq_min;			/* lowest IRQ when shared */
 	int iq_ist;			/* share type */
 };
 
@@ -175,8 +175,6 @@ int		 ampintc_splraise(int);
 void		 ampintc_setipl(int);
 void		 ampintc_calc_mask(void);
 void		*ampintc_intr_establish(int, int, int, int (*)(void *),
-		    void *, char *);
-void		*ampintc_intr_establish_ext(int, int, int, int (*)(void *),
 		    void *, char *);
 void		*ampintc_intr_establish_fdt(void *, int *, int,
 		    int (*)(void *), void *, char *);
@@ -471,13 +469,15 @@ ampintc_calc_mask(void)
 				min = ih->ih_ipl;
 		}
 
-		if (sc->sc_handler[irq].iq_irq == max) {
-			continue;
-		}
-		sc->sc_handler[irq].iq_irq = max;
-
 		if (max == IPL_NONE)
 			min = IPL_NONE;
+
+		if (sc->sc_handler[irq].iq_irq_max == max &&
+		    sc->sc_handler[irq].iq_irq_min == min)
+			continue;
+
+		sc->sc_handler[irq].iq_irq_max = max;
+		sc->sc_handler[irq].iq_irq_min = min;
 
 		/* Enable interrupts at lower levels, clear -> enable */
 		/* Set interrupt priority/enable */
@@ -606,7 +606,7 @@ ampintc_route_irq(void *v, int enable, struct cpu_info *ci)
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICRn(ih->ih_irq), 0);
 	if (enable) {
 		ampintc_set_priority(ih->ih_irq,
-		    sc->sc_handler[ih->ih_irq].iq_irq);
+		    sc->sc_handler[ih->ih_irq].iq_irq_min);
 		ampintc_intr_enable(ih->ih_irq);
 	}
 
@@ -648,7 +648,7 @@ ampintc_irq_handler(void *frame)
 	if (irq >= sc->sc_nintr)
 		return;
 
-	pri = sc->sc_handler[irq].iq_irq;
+	pri = sc->sc_handler[irq].iq_irq_max;
 	s = ampintc_splraise(pri);
 	TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
 #ifdef MULTIPROCESSOR
@@ -682,13 +682,6 @@ ampintc_irq_handler(void *frame)
 	ampintc_eoi(iack_val);
 
 	ampintc_splx(s);
-}
-
-void *
-ampintc_intr_establish_ext(int irqno, int type, int level, int (*func)(void *),
-    void *arg, char *name)
-{
-	return ampintc_intr_establish(irqno+32, type, level, func, arg, name);
 }
 
 void *
@@ -892,13 +885,13 @@ ampintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
 		if (sc->sc_spi[i] != NULL)
 			continue;
 
-		cookie = ampintc_intr_establish_ext(sc->sc_bspi + i,
+		cookie = ampintc_intr_establish(sc->sc_bspi + i,
 		    IST_EDGE_RISING, level, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 
 		*addr = sc->sc_addr + GICV2M_SETSPI_NS;
-		*data = sc->sc_bspi + i + 32;
+		*data = sc->sc_bspi + i;
 		sc->sc_spi[i] = cookie;
 		return &sc->sc_spi[i];
 	}

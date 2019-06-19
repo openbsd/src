@@ -130,7 +130,7 @@ SKIP: {
   skip "File::Path not available", 1
     unless eval { require File::Path };
   my $name = "phooo$$";
-  File::Path::make_path("$name/auto/Foo/Bar");
+  File::Path::mkpath("$name/auto/Foo/Bar");
   open my $fh,
     ">$name/auto/Foo/Bar/Bar.$Config::Config{'dlext'}";
   close $fh;
@@ -148,5 +148,5 @@ END
  the_test:
   ok $fell_back,
     'XSLoader will not load relative paths based on (caller)[1]';
-  File::Path::remove_tree($name);
+  File::Path::rmtree($name);
 }

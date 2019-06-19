@@ -129,7 +129,7 @@
 
 void		vfp_init(void);
 void		vfp_discard(struct proc *);
-void		vfp_save(void);
+uint32_t	vfp_save(void);
 void		vfp_enable(void);
 
 #endif /* _KERNEL */

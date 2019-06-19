@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.82 2016/12/18 23:36:32 krw Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.90 2019/01/20 03:53:03 tedu Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -57,15 +57,18 @@
 #include "dkstats.h"
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
+#define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 static struct Info {
-	long	time[CPUSTATES];
+	struct	cpustats cpustats;
 	struct	uvmexp uvmexp;
 	struct	vmtotal Total;
 	struct	nchstats nchstats;
 	long	nchcount;
 	uint64_t *intrcnt;
 } s, s1, s2, s3, z;
+
+static int ncpu;
 
 extern struct _disk	cur;
 
@@ -94,12 +97,11 @@ int select_vm(void);
 int vm_keyboard_callback(int);
 
 static	time_t t;
-static	double etime;
 static	float hertz;
 static	int nintr;
 static	long *intrloc;
 static	char **intrname;
-static	int nextintsrow;
+static	int ipktsrow;
 
 WINDOW *
 openkre(void)
@@ -171,6 +173,12 @@ initvmstat(void)
 	if (!dkinit(1))
 		return(0);
 
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	size = sizeof(ncpu);
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) < 0)
+		return (-1);
+
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_INTRCNT;
 	mib[2] = KERN_INTRCNT_NUM;
@@ -180,6 +188,8 @@ initvmstat(void)
 
 	intrloc = calloc(nintr, sizeof(long));
 	intrname = calloc(nintr, sizeof(char *));
+	if (intrloc == NULL || intrname == NULL)
+		err(2, NULL);
 
 	for (i = 0; i < nintr; i++) {
 		char name[128];
@@ -197,7 +207,6 @@ initvmstat(void)
 			return (-1);
 	}
 
-	nextintsrow = INTSROW + 2;
 	allocinfo(&s);
 	allocinfo(&s1);
 	allocinfo(&s2);
@@ -237,8 +246,19 @@ labelkre(void)
 	mvprintw(INTSROW, INTSCOL + 3, " Interrupts");
 	mvprintw(INTSROW + 1, INTSCOL + 9, "total");
 
-	mvprintw(LINES - 3, INTSCOL + 9, "IPKTS");
-	mvprintw(LINES - 2, INTSCOL + 9, "OPKTS");
+	j = INTSROW + 2;
+	for (i = 0; i < nintr; i++) {
+		intrloc[i] = 0;
+		if (s.intrcnt[i] == 0 || ipktsrow == LINES)
+			continue;
+		intrloc[i] = j++;
+		mvprintw(intrloc[i], INTSCOL + 9, "%-8.8s", intrname[i]);
+	}
+	ipktsrow = MAXIMUM(j, MINIMUM(LINES - 3, VMSTATROW + 17));
+	if (LINES - 1 > ipktsrow)
+		mvprintw(ipktsrow, INTSCOL + 9, "IPKTS");
+	if (LINES - 1 > ipktsrow + 1)
+		mvprintw(ipktsrow + 1, INTSCOL + 9, "OPKTS");
 
 	mvprintw(VMSTATROW + 0, VMSTATCOL + 10, "forks");
 	mvprintw(VMSTATROW + 1, VMSTATCOL + 10, "fkppw");
@@ -259,14 +279,14 @@ labelkre(void)
 	if (LINES - 1 > VMSTATROW + 16)
 		mvprintw(VMSTATROW + 16, VMSTATCOL + 10, "pdscn");
 	if (LINES - 1 > VMSTATROW + 17)
-		mvprintw(VMSTATROW + 17, VMSTATCOL + 10, "pzidle");
+		mvprintw(VMSTATROW + 17, VMSTATCOL + 10, "pzidl");
 	if (LINES - 1 > VMSTATROW + 18)
-		mvprintw(VMSTATROW + 18, VMSTATCOL + 10, "kmapent");
+		mvprintw(VMSTATROW + 18, VMSTATCOL + 10, "kmape");
 
 	mvprintw(GENSTATROW, GENSTATCOL, "   Csw   Trp   Sys   Int   Sof  Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
-	    "    . %%Int    . %%Sys    . %%Usr    . %%Nic    . %%Idle");
+	    "    . %%Int    . %%Spn    . %%Sys    . %%Usr    . %%Idle");
 	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
 	mvprintw(GRAPHROW + 1, GRAPHCOL,
 	    "|    |    |    |    |    |    |    |    |    |    |");
@@ -304,8 +324,8 @@ labelkre(void)
 	} while (0)
 #define MAXFAIL 5
 
-static	char cpuchar[CPUSTATES] = { '|', '=', '>', '-', ' ' };
-static	char cpuorder[CPUSTATES] = { CP_INTR, CP_SYS, CP_USER, CP_NICE, CP_IDLE };
+static	char cpuchar[] = { '|', '@', '=', '>', ' ' };
+static	char cpuorder[] = { CP_INTR, CP_SPIN, CP_SYS, CP_USER, CP_IDLE };
 
 void
 showkre(void)
@@ -315,6 +335,7 @@ showkre(void)
 	u_int64_t inttotal, intcnt;
 	int i, l, c;
 	static int failcnt = 0, first_run = 0;
+	double etime;
 
 	if (state == TIME) {
 		if (!first_run) {
@@ -324,8 +345,8 @@ showkre(void)
 	}
 	etime = 0;
 	for (i = 0; i < CPUSTATES; i++) {
-		X(time);
-		etime += s.time[i];
+		X(cpustats.cs_time);
+		etime += s.cpustats.cs_time[i];
 	}
 	if (etime < 5.0) {	/* < 5 ticks - ignore this trash */
 		if (failcnt++ >= MAXFAIL) {
@@ -338,20 +359,12 @@ showkre(void)
 	etime /= hertz;
 	inttotal = 0;
 	for (i = 0; i < nintr; i++) {
-		if (s.intrcnt[i] == 0)
-			continue;
-		if (intrloc[i] == 0) {
-			if (nextintsrow == LINES)
-				continue;
-			intrloc[i] = nextintsrow++;
-			mvprintw(intrloc[i], INTSCOL + 9, "%-8.8s",
-			    intrname[i]);
-		}
 		t = intcnt = s.intrcnt[i];
 		s.intrcnt[i] -= s1.intrcnt[i];
 		intcnt = (u_int64_t)((float)s.intrcnt[i]/etime + 0.5);
 		inttotal += intcnt;
-		putuint64(intcnt, intrloc[i], INTSCOL, 8);
+		if (intrloc[i] != 0)
+			putuint64(intcnt, intrloc[i], INTSCOL, 8);
 	}
 	putuint64(inttotal, INTSROW + 1, INTSCOL, 8);
 	Z(ncs_goodhits); Z(ncs_badhits); Z(ncs_miss);
@@ -359,15 +372,19 @@ showkre(void)
 	s.nchcount = nchtotal.ncs_goodhits + nchtotal.ncs_badhits +
 	    nchtotal.ncs_miss + nchtotal.ncs_long;
 
-	putint(sum.ifc_ip, LINES - 3, INTSCOL, 8);
-	putint(sum.ifc_op, LINES - 2, INTSCOL, 8);
+	if (LINES - 1 > ipktsrow)
+		putint(sum.ifc_ip, ipktsrow, INTSCOL, 8);
+	if (LINES - 1 > ipktsrow + 1)
+		putint(sum.ifc_op, ipktsrow + 1, INTSCOL, 8);
 
 	psiz = 0;
 	f2 = 0.0;
 
-	for (c = 0; c < CPUSTATES; c++) {
+	for (c = 0; c < nitems(cpuorder); c++) {
 		i = cpuorder[c];
 		f1 = cputime(i);
+		if (i == CP_USER)
+			f1 += cputime(CP_NICE);
 		f2 += f1;
 		l = (int) ((f2 + 1.0) / 2.0) - psiz;
 		putfloat(f1, GRAPHROW, GRAPHCOL + 1 + (10 * c), 5, 1, 0);
@@ -488,11 +505,11 @@ cputime(int indx)
 	int i;
 
 	tm = 0;
-	for (i = 0; i < CPUSTATES; i++)
-		tm += s.time[i];
+	for (i = 0; i < nitems(s.cpustats.cs_time); i++)
+		tm += s.cpustats.cs_time[i];
 	if (tm == 0.0)
 		tm = 1.0;
-	return (s.time[indx] * 100.0 / tm);
+	return (s.cpustats.cs_time[indx] * 100.0 / tm);
 }
 
 void
@@ -583,11 +600,12 @@ putfloat(double f, int l, int c, int w, int d, int nz)
 static void
 getinfo(struct Info *si)
 {
-	static int cp_time_mib[] = { CTL_KERN, KERN_CPTIME };
+	static int cpustats_mib[3] = { CTL_KERN, KERN_CPUSTATS, 0 };
 	static int nchstats_mib[2] = { CTL_KERN, KERN_NCHSTATS };
 	static int uvmexp_mib[2] = { CTL_VM, VM_UVMEXP };
 	static int vmtotal_mib[2] = { CTL_VM, VM_METER };
-	int mib[4], i;
+	struct cpustats cs;
+	int mib[4], i, j;
 	size_t size;
 
 	dkreadstats();
@@ -603,10 +621,18 @@ getinfo(struct Info *si)
 		}
 	}
 
-	size = sizeof(si->time);
-	if (sysctl(cp_time_mib, 2, &si->time, &size, NULL, 0) < 0) {
-		error("Can't get KERN_CPTIME: %s\n", strerror(errno));
-		memset(&si->time, 0, sizeof(si->time));
+	memset(&si->cpustats.cs_time, 0, sizeof(si->cpustats.cs_time));
+	for (i = 0; i < ncpu; i++) {
+		cpustats_mib[2] = i;
+		size = sizeof(cs);
+		if (sysctl(cpustats_mib, 3, &cs, &size, NULL, 0) < 0) {
+			error("Can't get KERN_CPUSTATS: %s\n", strerror(errno));
+			memset(&si->cpustats, 0, sizeof(si->cpustats));
+		}
+		if ((cs.cs_flags & CPUSTATS_ONLINE) == 0)
+			continue;	/* omit totals for offline CPUs */
+		for (j = 0; j < nitems(cs.cs_time); j++)
+			si->cpustats.cs_time[j] += cs.cs_time[j];
 	}
 
 	size = sizeof(si->nchstats);
@@ -634,7 +660,7 @@ allocinfo(struct Info *si)
 	memset(si, 0, sizeof(*si));
 	si->intrcnt = calloc(nintr, sizeof(*si->intrcnt));
 	if (si->intrcnt == NULL)
-		errx(2, "out of memory");
+		err(2, NULL);
 }
 
 static void
@@ -650,7 +676,9 @@ copyinfo(struct Info *from, struct Info *to)
 static void
 dinfo(int dn, int c)
 {
-	double words, atime;
+	double words, atime, etime;
+
+	etime = naptime;
 
 	c += DISKCOL;
 

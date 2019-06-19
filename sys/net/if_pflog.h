@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.27 2017/05/16 11:36:16 mpi Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.28 2018/04/06 10:39:15 bluhm Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -66,10 +66,5 @@ struct pflog_softc {
 	int			sc_unit;
 };
 
-#if NPFLOG > 0
-#define	PFLOG_PACKET(a,b,c,d,e,f) pflog_packet(a,b,c,d,e,f)
-#else
-#define	PFLOG_PACKET(a,b,c,d,e,f) ((void)0)
-#endif /* NPFLOG > 0 */
 #endif /* _KERNEL */
 #endif /* _NET_IF_PFLOG_H_ */

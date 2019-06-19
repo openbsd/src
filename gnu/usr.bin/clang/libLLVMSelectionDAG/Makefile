@@ -1,11 +1,9 @@
-# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2019/03/05 09:44:41 jsg Exp $
 
 LIB=	LLVMSelectionDAG
-NOPIC=
 NOPROFILE=
 
-.include <bsd.own.mk>
-SRCS=	DAGCombiner.cpp \
+SRCS+=	DAGCombiner.cpp \
 	FastISel.cpp \
 	FunctionLoweringInfo.cpp \
 	InstrEmitter.cpp \
@@ -32,8 +30,3 @@ SRCS=	DAGCombiner.cpp \
 	TargetLowering.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/CodeGen/SelectionDAG
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.40 2018/02/10 19:49:50 cheloha Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.41 2018/09/05 09:35:49 yasuoka Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ header(void)
 				printf(" %16.16s ", cur.dk_name[i]);
 
 	if (ISSET(todo, SHOW_CPU))
-		printf("            cpu");
+		printf("               cpu");
 	printf("\n");
 
 	/* Sub-Headers. */
@@ -254,7 +254,7 @@ header(void)
 				printf("     KB  xfr time ");
 
 	if (ISSET(todo, SHOW_CPU))
-		printf(" us ni sy in id");
+		printf(" us ni sy sp in id");
 	printf("\n");
 }
 

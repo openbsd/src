@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 2016/09/01 09:48:20 tedu Exp $
+/*	$OpenBSD: util.c,v 1.16 2019/01/17 06:15:44 tedu Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -30,8 +30,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: util.c,v 1.14 2016/09/01 09:48:20 tedu Exp $
  */
 
 
@@ -45,8 +43,6 @@
 
 char 	**colon(char **, char*, char*);
 char 	*patprep(char *);
-void print_matches(u_int);
-u_char 	*tolower_word(u_char *);
 int 	getwm(caddr_t);
 int 	getwf(FILE *);
 int	check_bigram_char(int);
@@ -136,13 +132,6 @@ colon(dbv, path, dot)
 	return (dbv);
 }
 
-void
-print_matches(counter)
-	u_int counter;
-{
-	(void)printf("%d\n", counter);
-}
-
 
 /*
  * extract last glob-free subpattern in name for fast pre-match; prepend
@@ -203,19 +192,6 @@ patprep(name)
 	return(--subp);
 }
 
-/* tolower word */
-u_char *
-tolower_word(word)
-	u_char *word;
-{
-	u_char *p;
-
-	for (p = word; *p != '\0'; p++)
-		*p = TOLOWER(*p);
-
-	return(word);
-}
-
 
 /*
  * Read integer from mmap pointer.
@@ -230,12 +206,12 @@ getwm(p)
 	caddr_t p;
 {
 	union {
-		char buf[INTSIZE];
+		char buf[sizeof(int)];
 		int i;
 	} u;
 	int i;
 
-	for (i = 0; i < INTSIZE; i++)
+	for (i = 0; i < sizeof(int); i++)
 		u.buf[i] = *p++;
 
 	i = u.i;

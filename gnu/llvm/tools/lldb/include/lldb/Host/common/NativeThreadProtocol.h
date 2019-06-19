@@ -20,8 +20,7 @@ namespace lldb_private {
 //------------------------------------------------------------------
 // NativeThreadProtocol
 //------------------------------------------------------------------
-class NativeThreadProtocol
-    : public std::enable_shared_from_this<NativeThreadProtocol> {
+class NativeThreadProtocol {
 public:
   NativeThreadProtocol(NativeProcessProtocol &process, lldb::tid_t tid);
 
@@ -31,15 +30,7 @@ public:
 
   virtual lldb::StateType GetState() = 0;
 
-  virtual NativeRegisterContextSP GetRegisterContext() = 0;
-
-  virtual Status ReadRegister(uint32_t reg, RegisterValue &reg_value);
-
-  virtual Status WriteRegister(uint32_t reg, const RegisterValue &reg_value);
-
-  virtual Status SaveAllRegisters(lldb::DataBufferSP &data_sp);
-
-  virtual Status RestoreAllRegisters(lldb::DataBufferSP &data_sp);
+  virtual NativeRegisterContext &GetRegisterContext() = 0;
 
   virtual bool GetStopReason(ThreadStopInfo &stop_info,
                              std::string &description) = 0;

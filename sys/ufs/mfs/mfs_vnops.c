@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.49 2016/11/07 00:26:33 guenther Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.51 2018/04/28 03:13:05 visa Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -225,7 +225,7 @@ mfs_inactive(void *v)
 	if (mfsp->mfs_shutdown && bufq_peek(&mfsp->mfs_bufq))
 		panic("mfs_inactive: not inactive");
 #endif
-	VOP_UNLOCK(ap->a_vp, ap->a_p);
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 
@@ -238,7 +238,7 @@ mfs_reclaim(void *v)
 	struct vop_reclaim_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	free(vp->v_data, M_MFSNODE, 0);
+	free(vp->v_data, M_MFSNODE, sizeof(struct mfsnode));
 	vp->v_data = NULL;
 	return (0);
 }

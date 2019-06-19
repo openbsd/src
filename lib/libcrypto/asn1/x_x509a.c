@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509a.c,v 1.14 2015/02/14 15:28:39 miod Exp $ */
+/* $OpenBSD: x_x509a.c,v 1.15 2018/05/01 19:01:27 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -154,7 +154,7 @@ aux_get(X509 *x)
 }
 
 int
-X509_alias_set1(X509 *x, unsigned char *name, int len)
+X509_alias_set1(X509 *x, const unsigned char *name, int len)
 {
 	X509_CERT_AUX *aux;
 	if (!name) {
@@ -172,7 +172,7 @@ X509_alias_set1(X509 *x, unsigned char *name, int len)
 }
 
 int
-X509_keyid_set1(X509 *x, unsigned char *id, int len)
+X509_keyid_set1(X509 *x, const unsigned char *id, int len)
 {
 	X509_CERT_AUX *aux;
 	if (!id) {
@@ -210,7 +210,7 @@ X509_keyid_get0(X509 *x, int *len)
 }
 
 int
-X509_add1_trust_object(X509 *x, ASN1_OBJECT *obj)
+X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj)
 {
 	X509_CERT_AUX *aux;
 	ASN1_OBJECT *objtmp;
@@ -232,7 +232,7 @@ err:
 }
 
 int
-X509_add1_reject_object(X509 *x, ASN1_OBJECT *obj)
+X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
 {
 	X509_CERT_AUX *aux;
 	ASN1_OBJECT *objtmp;

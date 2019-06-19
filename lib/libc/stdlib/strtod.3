@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtod.3,v 1.21 2016/06/02 15:07:34 millert Exp $
+.\"	$OpenBSD: strtod.3,v 1.22 2019/01/16 12:55:49 schwarze Exp $
 .\"
-.Dd $Mdocdate: June 2 2016 $
+.Dd $Mdocdate: January 16 2019 $
 .Dt STRTOD 3
 .Os
 .Sh NAME
@@ -165,3 +165,12 @@ and
 .Fn strtold
 functions conform to
 .St -isoC-99 .
+.Sh CAVEATS
+On systems other than
+.Ox ,
+the
+.Dv LC_NUMERIC
+.Xr locale 1
+category can cause parsing failures; see CAVEATS in
+.Xr setlocale 3
+for details.

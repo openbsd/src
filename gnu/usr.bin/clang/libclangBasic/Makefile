@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:10 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2019/01/27 16:59:42 patrick Exp $
 
 LIB=	clangBasic
 NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	${CLANG_INCLUDES}
+CPPFLAGS+=	-I${LLVM_SRCS}/tools/clang/lib/Basic
 
 .include <bsd.own.mk>
 SRCS=	Attributes.cpp \
@@ -24,6 +25,7 @@ SRCS=	Attributes.cpp \
 	OpenMPKinds.cpp \
 	OperatorPrecedence.cpp \
 	SanitizerBlacklist.cpp \
+	SanitizerSpecialCaseList.cpp \
 	Sanitizers.cpp \
 	SourceLocation.cpp \
 	SourceManager.cpp \
@@ -31,9 +33,9 @@ SRCS=	Attributes.cpp \
 	Targets.cpp \
 	TokenKinds.cpp \
 	Version.cpp \
-	VersionTuple.cpp \
 	VirtualFileSystem.cpp \
 	Warnings.cpp \
+	XRayInstr.cpp \
 	XRayLists.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Basic

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.47 2017/11/05 16:56:02 jca Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.50 2019/05/26 09:27:09 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -90,13 +90,16 @@ main(int argc, char *argv[])
 	struct parse_result	*res;
 	struct imsg		 imsg;
 	unsigned int		 ifidx = 0;
-	int			 ctl_sock;
+	int			 ctl_sock, r;
 	int			 done = 0, verbose = 0;
 	int			 n;
 	int			 ch;
 	char			*sockname;
 
-	sockname = OSPF6D_SOCKET;
+	r = getrtable();
+	if (asprintf(&sockname, "%s.%d", OSPF6D_SOCKET, r) == -1)
+		err(1, "asprintf");
+
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch (ch) {
 		case 's':
@@ -167,7 +170,7 @@ main(int argc, char *argv[])
 		break;
 	case SHOW_DBBYAREA:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DATABASE, 0, 0, -1,
-		    &res->addr, sizeof(res->addr));
+		    &res->area, sizeof(res->area));
 		break;
 	case SHOW_DBEXT:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_EXT, 0, 0, -1, NULL, 0);
@@ -944,9 +947,10 @@ show_db_msg_detail(struct imsg *imsg)
 			bcopy(prefix + 1, &ia6,
 			    LSA_PREFIXSIZE(prefix->prefixlen));
 
-			printf("    Prefix: %s/%d%s\n", log_in6addr(&ia6),
-			    prefix->prefixlen,
-			    print_prefix_opt(prefix->options));
+			printf("    Prefix: %s/%d%s Metric: %d\n",
+			    log_in6addr(&ia6), prefix->prefixlen,
+			    print_prefix_opt(prefix->options),
+			    ntohs(prefix->metric));
 
 			off += sizeof(struct lsa_prefix)
 			    + LSA_PREFIXSIZE(prefix->prefixlen);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofpclient.c,v 1.6 2017/01/09 16:42:14 reyk Exp $	*/
+/*	$OpenBSD: ofpclient.c,v 1.7 2018/10/21 21:10:24 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -57,6 +57,7 @@ ofpclient(struct parse_result *res, struct passwd *pw)
 	struct switch_connection con;
 	struct switchd		 sc;
 	int			 s, timeout;
+	struct sockaddr_un	*un;
 
 	memset(&sc, 0, sizeof(sc));
 	sc.sc_tap = -1;
@@ -91,6 +92,17 @@ ofpclient(struct parse_result *res, struct passwd *pw)
 		    con.con_peer.ss_len) == -1)
 			fatal("connect");
 
+		con.con_fd = s;
+		break;
+	case SWITCH_CONN_LOCAL:
+		un = (struct sockaddr_un *)&res->uri.swa_addr;
+
+		if (strncmp(un->sun_path, "/dev/switch",
+		    strlen("/dev/switch")) != 0)
+			fatalx("device path not supported");
+
+		if ((s = open(un->sun_path, O_RDWR | O_NONBLOCK)) == -1)
+			fatalx("failed to open %s", un->sun_path);
 		con.con_fd = s;
 		break;
 	default:
@@ -205,6 +217,12 @@ ofpclient_read(struct switch_connection *con, int timeout)
 	if (ofp_validate(con->con_sc,
 	    &con->con_peer, &con->con_local, oh, ibuf, oh->oh_version) != 0)
 		fatal("ofp_validate");
+
+	if (con->con_state == OFP_STATE_CLOSED) {
+		con->con_version = oh->oh_version;
+		ofp_recv_hello(con->con_sc, con, oh, ibuf);
+		con->con_state = OFP_STATE_ESTABLISHED;
+	}
 
 	ibuf_free(ibuf);
 }

@@ -776,7 +776,7 @@ admin_fileproc (callerdat, finfo)
 		if (delta->other_delta == NULL)
     		    delta->other_delta = getlist();
 
-		if (n = findnode (delta->other_delta, "commitid"))
+		if ((n = findnode (delta->other_delta, "commitid")))
 		{
 		    error (0, 0, "%s: revision %s already has commitid %s",
 		        rcs->path, rev, n->data);

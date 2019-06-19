@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.32 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.33 2018/04/28 15:44:59 jasper Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -344,7 +344,7 @@ amdpm_rnd_callout(void *v)
 	if ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_RNGSTAT) &
 	    AMDPM_RNGDONE) != 0) {
 		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, AMDPM_RNGDATA);
-		add_true_randomness(reg);
+		enqueue_randomness(reg);
 	}
 	timeout_add(&sc->sc_rnd_ch, 1);
 }

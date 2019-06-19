@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_wrlock.3,v 1.10 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_rwlock_wrlock.3,v 1.11 2019/02/13 23:54:10 mpi Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\" $FreeBSD: pthread_rwlock_wrlock.3,v 1.2 1999/08/28 00:03:10 peter Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: February 13 2019 $
 .Dt PTHREAD_RWLOCK_WRLOCK 3
 .Os
 .Sh NAME
@@ -62,8 +62,6 @@ but does not block if the lock cannot be immediately obtained.
 .Pp
 The results are undefined if the calling thread already holds the
 lock at the time the call is made.
-.Sh IMPLEMENTATION NOTES
-To prevent writer starvation, writers are favored over readers.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_rwlock_wrlock ,

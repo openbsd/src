@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.29 2017/09/01 07:31:45 tom Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.30 2018/05/15 15:15:50 cheloha Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 #include <vis.h>
 

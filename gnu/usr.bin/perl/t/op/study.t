@@ -2,19 +2,18 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 watchdog(10);
 plan(tests => 43);
 use strict;
-use vars '$x';
 
 use Config;
 my $have_alarm = $Config{d_alarm};
 
-$x = "abc\ndef\n";
+our $x = "abc\ndef\n";
 study($x);
 
 ok($x =~ /^abc/);
@@ -82,8 +81,8 @@ TODO: {
 
     $_ = 'FGF';
     study;
-    ok(!/G.F$/, 'bug 20010618.006');
-    ok(!/[F]F$/, 'bug 20010618.006');
+    ok(!/G.F$/, 'bug 20010618.006 (#7126)');
+    ok(!/[F]F$/, 'bug 20010618.006 (#7126)');
 }
 
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.69 2017/09/20 18:28:14 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.75 2019/03/18 00:00:59 dlg Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -178,14 +178,15 @@ struct bpf_insn dhcp_bpf_wfilter[] = {
 int dhcp_bpf_wfilter_len = sizeof(dhcp_bpf_wfilter) / sizeof(struct bpf_insn);
 
 int
-configure_bpf_sock(int bfdesc)
+configure_bpf_sock(int bpffd)
 {
 	struct bpf_version	 v;
 	struct bpf_program	 p;
 	int			 flag = 1, sz;
+	int			 fildrop = BPF_FILDROP_CAPTURE;
 
 	/* Make sure the BPF version is in range. */
-	if (ioctl(bfdesc, BIOCVERSION, &v) == -1)
+	if (ioctl(bpffd, BIOCVERSION, &v) == -1)
 		fatal("BIOCVERSION");
 
 	if (v.bv_major != BPF_MAJOR_VERSION ||
@@ -198,14 +199,14 @@ configure_bpf_sock(int bfdesc)
 	 * comes in, rather than waiting for the input buffer to fill
 	 * with packets.
 	 */
-	if (ioctl(bfdesc, BIOCIMMEDIATE, &flag) == -1)
+	if (ioctl(bpffd, BIOCIMMEDIATE, &flag) == -1)
 		fatal("BIOCIMMEDIATE");
 
-	if (ioctl(bfdesc, BIOCSFILDROP, &flag) == -1)
+	if (ioctl(bpffd, BIOCSFILDROP, &fildrop) == -1)
 		fatal("BIOCSFILDROP");
 
 	/* Get the required BPF buffer length from the kernel. */
-	if (ioctl(bfdesc, BIOCGBLEN, &sz) == -1)
+	if (ioctl(bpffd, BIOCGBLEN, &sz) == -1)
 		fatal("BIOCGBLEN");
 
 	/* Set up the bpf filter program structure. */
@@ -219,7 +220,7 @@ configure_bpf_sock(int bfdesc)
 	 */
 	dhcp_bpf_filter[8].k = LOCAL_PORT;
 
-	if (ioctl(bfdesc, BIOCSETF, &p) == -1)
+	if (ioctl(bpffd, BIOCSETF, &p) == -1)
 		fatal("BIOCSETF");
 
 	/* Set up the bpf write filter program structure. */
@@ -229,10 +230,10 @@ configure_bpf_sock(int bfdesc)
 	if (dhcp_bpf_wfilter[7].k == 0x1fff)
 		dhcp_bpf_wfilter[7].k = htons(IP_MF|IP_OFFMASK);
 
-	if (ioctl(bfdesc, BIOCSETWF, &p) == -1)
+	if (ioctl(bpffd, BIOCSETWF, &p) == -1)
 		fatal("BIOCSETWF");
 
-	if (ioctl(bfdesc, BIOCLOCK, NULL) == -1)
+	if (ioctl(bpffd, BIOCLOCK, NULL) == -1)
 		fatal("BIOCLOCK");
 
 	return sz;
@@ -249,8 +250,8 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
 	struct udphdr		 udp;
 	struct msghdr		 msg;
 	struct dhcp_packet	*packet = &ifi->sent_packet;
-	ssize_t			 result;
-	unsigned int		 iovcnt = 0, i, total;
+	ssize_t			 result, total;
+	unsigned int		 iovcnt = 0, i;
 	int			 len = ifi->sent_packet_length;
 
 	memset(&dest, 0, sizeof(dest));
@@ -303,13 +304,13 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
 		total += iov[i].iov_len;
 
 	if (to.s_addr == INADDR_BROADCAST) {
-		result = writev(ifi->bfdesc, iov, iovcnt);
+		result = writev(ifi->bpffd, iov, iovcnt);
 		if (result == -1)
 			log_warn("%s: writev(%s)", log_procname, desc);
 		else if (result < total) {
-			result = -1;
-			log_warnx("%s, writev(%s): %zd of %u bytes",
+			log_warnx("%s, writev(%s): %zd of %zd bytes",
 			    log_procname, desc, result, total);
+			result = -1;
 		}
 	} else {
 		memset(&msg, 0, sizeof(msg));
@@ -317,12 +318,12 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
 		msg.msg_namelen = sizeof(dest);
 		msg.msg_iov = iov;
 		msg.msg_iovlen = iovcnt;
-		result = sendmsg(ifi->ufdesc, &msg, 0);
+		result = sendmsg(ifi->udpfd, &msg, 0);
 		if (result == -1)
 			log_warn("%s: sendmsg(%s)", log_procname, desc);
 		else if (result < total) {
 			result = -1;
-			log_warnx("%s, sendmsg(%s): %zd of %u bytes",
+			log_warnx("%s, sendmsg(%s): %zd of %zd bytes",
 			    log_procname, desc, result, total);
 		}
 	}
@@ -330,123 +331,71 @@ send_packet(struct interface_info *ifi, struct in_addr from, struct in_addr to,
 	return result;
 }
 
+/*
+ * Extract a DHCP packet from a bpf capture buffer.
+ *
+ * Each captured packet is
+ *
+ *	<BPF header>
+ *	<padding to BPF_WORDALIGN>
+ *	<captured DHCP packet>
+ *	<padding to BPF_WORDALIGN>
+ *
+ * Return the number of bytes processed or 0 if there is
+ * no valid DHCP packet in the buffer.
+ */
 ssize_t
-receive_packet(struct interface_info *ifi, struct sockaddr_in *from,
-    struct ether_addr *hfrom)
+receive_packet(unsigned char *buf, unsigned char *lim,
+    struct sockaddr_in *from, struct ether_addr *hfrom,
+    struct dhcp_packet *packet)
 {
-	struct bpf_hdr		 hdr;
-	struct dhcp_packet	*packet = &ifi->recv_packet;
-	ssize_t			 length = 0;
-	int			 offset = 0;
+	struct bpf_hdr		 bh;
+	struct ether_header	 eh;
+	unsigned char		*pktlim, *data, *next;
+	size_t			 datalen;
+	int			 len;
 
-	/*
-	 * All this complexity is because BPF doesn't guarantee that
-	 * only one packet will be returned at a time.  We're getting
-	 * what we deserve, though - this is a terrible abuse of the BPF
-	 * interface.  Sigh.
-	 */
+	for (next = buf; next < lim; next = pktlim) {
+		/* No bpf header means no more packets. */
+		if (lim < next + sizeof(bh))
+			return 0;
 
-	/* Process packets until we get one we can return or until we've
-	 * done a read and gotten nothing we can return.
-	 */
-	do {
-		/* If the buffer is empty, fill it. */
-		if (ifi->rbuf_offset >= ifi->rbuf_len) {
-			length = read(ifi->bfdesc, ifi->rbuf, ifi->rbuf_max);
-			if (length == -1) {
-				log_warn("%s: read(bfdesc)", log_procname);
-				return length;
-			} else if (length == 0)
-				return length;
-			ifi->rbuf_offset = 0;
-			ifi->rbuf_len = length;
-		}
+		memcpy(&bh, next, sizeof(bh));
+		pktlim = next + BPF_WORDALIGN(bh.bh_hdrlen + bh.bh_caplen);
+
+		/* Truncated bpf packet means no more packets. */
+		if (lim < next + bh.bh_hdrlen + bh.bh_caplen)
+			return 0;
+
+		/* Drop incompletely captured DHCP packets. */
+		if (bh.bh_caplen != bh.bh_datalen)
+			continue;
 
 		/*
-		 * If there isn't room for a whole bpf header, something
-		 * went wrong, but we'll ignore it and hope it goes
-		 * away. XXX
+		 * Drop packets with invalid ethernet/ip/udp headers.
 		 */
-		if (ifi->rbuf_len - ifi->rbuf_offset < sizeof(hdr)) {
-			ifi->rbuf_offset = ifi->rbuf_len;
+		if (pktlim < next + bh.bh_hdrlen + sizeof(eh))
 			continue;
-		}
+		memcpy(&eh, next + bh.bh_hdrlen, sizeof(eh));
+		memcpy(hfrom->ether_addr_octet, eh.ether_shost, ETHER_ADDR_LEN);
 
-		/* Copy out a bpf header. */
-		memcpy(&hdr, &ifi->rbuf[ifi->rbuf_offset], sizeof(hdr));
-
-		/*
-		 * If the bpf header plus data doesn't fit in what's
-		 * left of the buffer, stick head in sand yet again.
-		 */
-		if (ifi->rbuf_offset + hdr.bh_hdrlen + hdr.bh_caplen >
-		    ifi->rbuf_len) {
-			ifi->rbuf_offset = ifi->rbuf_len;
+		len = decode_udp_ip_header(next + bh.bh_hdrlen + sizeof(eh),
+		    bh.bh_caplen - sizeof(eh), from);
+		if (len < 0)
 			continue;
-		}
 
-		/*
-		 * If the captured data wasn't the whole packet, or if
-		 * the packet won't fit in the input buffer, all we can
-		 * do is drop it.
-		 */
-		if (hdr.bh_caplen != hdr.bh_datalen) {
-			ifi->rbuf_offset = BPF_WORDALIGN(
-			    ifi->rbuf_offset + hdr.bh_hdrlen +
-			    hdr.bh_caplen);
+		/* Drop packets larger than sizeof(struct dhcp_packet). */
+		datalen = bh.bh_caplen - (sizeof(eh) + len);
+		if (datalen > sizeof(*packet))
 			continue;
-		}
 
-		/* Skip over the BPF header. */
-		ifi->rbuf_offset += hdr.bh_hdrlen;
-
-		/* Decode the physical header. */
-		offset = decode_hw_header(ifi->rbuf + ifi->rbuf_offset,
-		    hdr.bh_caplen, hfrom);
-
-		/*
-		 * If a physical layer checksum failed (dunno of any
-		 * physical layer that supports this, but WTH), skip
-		 * this packet.
-		 */
-		if (offset < 0) {
-			ifi->rbuf_offset = BPF_WORDALIGN(
-			    ifi->rbuf_offset + hdr.bh_caplen);
-			continue;
-		}
-		ifi->rbuf_offset += offset;
-		hdr.bh_caplen -= offset;
-
-		/* Decode the IP and UDP headers. */
-		offset = decode_udp_ip_header(ifi->rbuf + ifi->rbuf_offset,
-		    hdr.bh_caplen, from);
-
-		/* If the IP or UDP checksum was bad, skip the packet. */
-		if (offset < 0) {
-			ifi->rbuf_offset = BPF_WORDALIGN(
-			    ifi->rbuf_offset + hdr.bh_caplen);
-			continue;
-		}
-		ifi->rbuf_offset += offset;
-		hdr.bh_caplen -= offset;
-
-		/*
-		 * If there's not enough room to stash the packet data,
-		 * we have to skip it (this shouldn't happen in real
-		 * life, though).
-		 */
-		if (hdr.bh_caplen > sizeof(*packet)) {
-			ifi->rbuf_offset = BPF_WORDALIGN(
-			    ifi->rbuf_offset + hdr.bh_caplen);
-			continue;
-		}
-
-		/* Copy out the data in the packet. */
+		/* Extract the DHCP packet for further processing. */
+		data = next + bh.bh_hdrlen + sizeof(eh) + len;
 		memset(packet, DHO_END, sizeof(*packet));
-		memcpy(packet, ifi->rbuf + ifi->rbuf_offset, hdr.bh_caplen);
-		ifi->rbuf_offset = BPF_WORDALIGN(ifi->rbuf_offset +
-		    hdr.bh_caplen);
-		return hdr.bh_caplen;
-	} while (length == 0);
-	return  0 ;
+		memcpy(packet, data, datalen);
+
+		return (pktlim - buf);
+	}
+
+	return 0;
 }

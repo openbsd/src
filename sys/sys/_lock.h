@@ -1,4 +1,4 @@
-/*	$OpenBSD: _lock.h,v 1.1 2017/04/20 12:59:36 visa Exp $	*/
+/*	$OpenBSD: _lock.h,v 1.4 2019/04/23 13:35:12 visa Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -57,24 +57,14 @@ enum lock_class_index {
 };
 
 struct lock_object {
-	struct lock_type	*lo_type;
+	const struct lock_type	*lo_type;
 	const char		*lo_name;	/* Individual lock name. */
 	struct witness		*lo_witness;	/* Data for witness. */
-	uint32_t		 lo_flags;
+	unsigned int		 lo_flags;
 };
 
 struct lock_type {
 	const char		*lt_name;
 };
-
-#ifdef WITNESS
-#define	LOCK_FL_VARS	, const char *file, int line
-#define	LOCK_FL_ARGS	, file, line
-#define	LOCK_FILE_LINE	, __FILE__, __LINE__
-#else
-#define	LOCK_FL_VARS
-#define	LOCK_FL_ARGS
-#define	LOCK_FILE_LINE
-#endif
 
 #endif /* !_SYS__LOCK_H_ */

@@ -8,8 +8,8 @@ BEGIN {
 use TestInit qw(T A); # T is chdir to the top level, A makes paths absolute
 use strict;
 
-require 'regen/regen_lib.pl';
-require 't/test.pl';
+require './regen/regen_lib.pl';
+require './t/test.pl';
 $::NO_ENDING = $::NO_ENDING = 1;
 
 if ( $^O eq "VMS" ) {
@@ -26,7 +26,7 @@ if ( $Config{usecrosscompile} ) {
   skip_all( "Not all files are available during cross-compilation" );
 }
 
-my $tests = 26; # I can't see a clean way to calculate this automatically.
+my $tests = 27; # I can't see a clean way to calculate this automatically.
 
 my %skip = ("regen_perly.pl"    => [qw(perly.act perly.h perly.tab)],
             "regen/keywords.pl" => [qw(keywords.c keywords.h)],
@@ -34,6 +34,19 @@ my %skip = ("regen_perly.pl"    => [qw(perly.act perly.h perly.tab)],
             "regen/mk_invlists.pl" => [qw(charclass_invlists.h)],
             "regen/regcharclass.pl" => [qw(regcharclass.h)],
            );
+
+my %other_requirement = (
+    "regen_perly.pl"        => "requires bison",
+    "regen/keywords.pl"     => "requires Devel::Tokenizer::C",
+    "regen/mk_invlists.pl"  => "needs the Perl you've just built",
+    "regen/regcharclass.pl" => "needs the Perl you've just built",
+);
+
+my %skippable_script_for_target;
+for my $script (keys %other_requirement) {
+    $skippable_script_for_target{$_} = $script
+        for @{ $skip{$script} };
+}
 
 my @files = map {@$_} sort values %skip;
 
@@ -49,6 +62,7 @@ die "Can't find __END__ in regen.pl"
 foreach (qw(embed_lib.pl regen_lib.pl uconfig_h.pl
             regcharclass_multi_char_folds.pl
             charset_translations.pl
+            mph.pl
             ),
          map {chomp $_; $_} <$fh>) {
     ++$skip{"regen/$_"};
@@ -83,10 +97,15 @@ OUTER: foreach my $file (@files) {
 	push @bad, $2 unless $digest eq $1;
     }
     is("@bad", '', "generated $file is up to date");
+    if (@bad && (my $skippable_script = $skippable_script_for_target{$file})) {
+        my $reason = delete $other_requirement{$skippable_script};
+        diag("Note: $skippable_script must be run manually, because it $reason")
+            if $reason;
+    }
 }
 
 foreach (@progs) {
-    my $command = "$^X $_ --tap";
+    my $command = "$^X -I. $_ --tap";
     system $command
         and die "Failed to run $command: $?";
 }

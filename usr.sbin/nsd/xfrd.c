@@ -30,6 +30,13 @@
 #include "ipc.h"
 #include "remote.h"
 #include "rrl.h"
+#ifdef USE_DNSTAP
+#include "dnstap/dnstap_collector.h"
+#endif
+
+#ifdef HAVE_SYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
 
 #define XFRD_UDP_TIMEOUT 10 /* seconds, before a udp request times out */
 #define XFRD_NO_IXFR_CACHE 172800 /* 48h before retrying ixfr's after notimpl */
@@ -222,6 +229,9 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	xfrd_sigsetup(SIGINT);
 
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd startup"));
+#ifdef HAVE_SYSTEMD
+	sd_notify(0, "READY=1");
+#endif
 	xfrd_main();
 }
 
@@ -324,6 +334,9 @@ xfrd_shutdown()
 	xfrd_zone_type* zone;
 
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown"));
+#ifdef HAVE_SYSTEMD
+	sd_notify(0, "STOPPING=1");
+#endif
 	event_del(&xfrd->ipc_handler);
 	close(xfrd->ipc_handler.ev_fd); /* notifies parent we stop */
 	zone_list_close(nsd.options);
@@ -388,6 +401,9 @@ xfrd_shutdown()
 #ifdef HAVE_SSL
 	daemon_remote_delete(xfrd->nsd->rc); /* ssl-delete secret keys */
 #endif
+#ifdef USE_DNSTAP
+	dt_collector_close(nsd.dt_collector, &nsd);
+#endif
 
 	/* process-exit cleans up memory used by xfrd process */
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown complete"));
@@ -419,6 +435,9 @@ xfrd_shutdown()
 	}
 #ifdef RATELIMIT
 	rrl_mmap_deinit();
+#endif
+#ifdef USE_DNSTAP
+	dt_collector_destroy(nsd.dt_collector, &nsd);
 #endif
 	udb_base_free(nsd.task[0]);
 	udb_base_free(nsd.task[1]);
@@ -2503,10 +2522,16 @@ void xfrd_process_task_result(xfrd_state_type* xfrd, struct udb_base* taskudb)
 	 * reload, this happens when the reload signal is sent, and thus
 	 * the taskudbs are swapped */
 	task_clear(taskudb);
+#ifdef HAVE_SYSTEMD
+	sd_notify(0, "READY=1");
+#endif
 }
 
 void xfrd_set_reload_now(xfrd_state_type* xfrd)
 {
+#ifdef HAVE_SYSTEMD
+	sd_notify(0, "RELOADING=1");
+#endif
 	xfrd->need_to_send_reload = 1;
 	if(!(xfrd->ipc_handler_flags&EV_WRITE)) {
 		ipc_xfrd_set_listening(xfrd, EV_PERSIST|EV_READ|EV_WRITE);

@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.29 2017/11/29 02:46:10 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.35 2019/05/16 21:16:04 claudio Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,31 +100,29 @@
 #include <machine/vmmvar.h>
 #include <machine/biosvar.h>
 #include <machine/segments.h>
+#include <machine/specialreg.h>
 #include <machine/pte.h>
 
 #include "loadfile.h"
 #include "vmd.h"
+
+#define LOADADDR(a)            ((((u_long)(a)) + offset)&0xfffffff)
 
 union {
 	Elf32_Ehdr elf32;
 	Elf64_Ehdr elf64;
 } hdr;
 
-#ifdef __i386__
-typedef uint32_t pt_entry_t;
-static void setsegment(struct segment_descriptor *, uint32_t,
-    size_t, int, int, int, int);
-#else
 static void setsegment(struct mem_segment_descriptor *, uint32_t,
     size_t, int, int, int, int);
-#endif
 static int elf32_exec(FILE *, Elf32_Ehdr *, u_long *, int);
 static int elf64_exec(FILE *, Elf64_Ehdr *, u_long *, int);
 static size_t create_bios_memmap(struct vm_create_params *, bios_memmap_t *);
-static uint32_t push_bootargs(bios_memmap_t *, size_t);
+static uint32_t push_bootargs(bios_memmap_t *, size_t, bios_bootmac_t *);
 static size_t push_stack(uint32_t, uint32_t, uint32_t, uint32_t);
 static void push_gdt(void);
-static void push_pt(void);
+static void push_pt_32(void);
+static void push_pt_64(void);
 static void marc4random_buf(paddr_t, int);
 static void mbzero(paddr_t, int);
 static void mbcopy(void *, paddr_t, int);
@@ -150,15 +148,9 @@ extern int vm_id;
  *  def32: default 16/32 bit size of the segment
  *  gran: granularity of the segment (byte/page)
  */
-#ifdef __i386__
-static void
-setsegment(struct segment_descriptor *sd, uint32_t base, size_t limit,
-    int type, int dpl, int def32, int gran)
-#else
 static void
 setsegment(struct mem_segment_descriptor *sd, uint32_t base, size_t limit,
     int type, int dpl, int def32, int gran)
-#endif
 {
 	sd->sd_lolimit = (int)limit;
 	sd->sd_lobase = (int)base;
@@ -166,12 +158,8 @@ setsegment(struct mem_segment_descriptor *sd, uint32_t base, size_t limit,
 	sd->sd_dpl = dpl;
 	sd->sd_p = 1;
 	sd->sd_hilimit = (int)limit >> 16;
-#ifdef __i386__
-	sd->sd_xx = 0;
-#else
 	sd->sd_avl = 0;
 	sd->sd_long = 0;
-#endif
 	sd->sd_def32 = def32;
 	sd->sd_gran = gran;
 	sd->sd_hibase = (int)base >> 24;
@@ -189,19 +177,11 @@ static void
 push_gdt(void)
 {
 	uint8_t gdtpage[PAGE_SIZE];
-#ifdef __i386__
-	struct segment_descriptor *sd;
-#else
 	struct mem_segment_descriptor *sd;
-#endif
 
 	memset(&gdtpage, 0, sizeof(gdtpage));
 
-#ifdef __i386__
-	sd = (struct segment_descriptor *)&gdtpage;
-#else
 	sd = (struct mem_segment_descriptor *)&gdtpage;
-#endif
 
 	/*
 	 * Create three segment descriptors:
@@ -217,16 +197,35 @@ push_gdt(void)
 }
 
 /*
- * push_pt
+ * push_pt_32
  *
  * Create an identity-mapped page directory hierarchy mapping the first
- * 1GB of physical memory. This is used during bootstrapping VMs on
+ * 4GB of physical memory. This is used during bootstrapping i386 VMs on
  * CPUs without unrestricted guest capability.
  */
 static void
-push_pt(void)
+push_pt_32(void)
 {
-	uint64_t ptes[NPTE_PG], i;
+	uint32_t ptes[1024], i;
+
+	memset(ptes, 0, sizeof(ptes));
+	for (i = 0 ; i < 1024; i++) {
+		ptes[i] = PG_V | PG_RW | PG_u | PG_PS | ((4096 * 1024) * i);
+	}
+	write_mem(PML3_PAGE, ptes, PAGE_SIZE);
+}
+
+/*
+ * push_pt_64
+ *
+ * Create an identity-mapped page directory hierarchy mapping the first
+ * 1GB of physical memory. This is used during bootstrapping 64 bit VMs on
+ * CPUs without unrestricted guest capability.
+ */
+static void
+push_pt_64(void)
+{
+	uint64_t ptes[512], i;
 
 	/* PDPDE0 - first 1GB */
 	memset(ptes, 0, sizeof(ptes));
@@ -240,7 +239,7 @@ push_pt(void)
 
 	/* First 1GB (in 2MB pages) */
 	memset(ptes, 0, sizeof(ptes));
-	for (i = 0 ; i < NPTE_PG; i++) {
+	for (i = 0 ; i < 512; i++) {
 		ptes[i] = PG_V | PG_RW | PG_u | PG_PS | ((2048 * 1024) * i);
 	}
 	write_mem(PML2_PAGE, ptes, PAGE_SIZE);
@@ -265,13 +264,15 @@ push_pt(void)
  */
 int
 loadfile_elf(FILE *fp, struct vm_create_params *vcp,
-    struct vcpu_reg_state *vrs, uint32_t bootdev, uint32_t howto)
+    struct vcpu_reg_state *vrs, uint32_t bootdev, uint32_t howto,
+    unsigned int bootdevice)
 {
-	int r;
+	int r, is_i386 = 0;
 	uint32_t bootargsz;
 	size_t n, stacksize;
 	u_long marks[MARK_MAX];
 	bios_memmap_t memmap[VMM_MAX_MEM_RANGES + 1];
+	bios_bootmac_t bm, *bootmac = NULL;
 
 	if ((r = fread(&hdr, 1, sizeof(hdr), fp)) != sizeof(hdr))
 		return 1;
@@ -280,6 +281,7 @@ loadfile_elf(FILE *fp, struct vm_create_params *vcp,
 	if (memcmp(hdr.elf32.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf32.e_ident[EI_CLASS] == ELFCLASS32) {
 		r = elf32_exec(fp, &hdr.elf32, marks, LOAD_ALL);
+		is_i386 = 1;
 	} else if (memcmp(hdr.elf64.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf64.e_ident[EI_CLASS] == ELFCLASS64) {
 		r = elf64_exec(fp, &hdr.elf64, marks, LOAD_ALL);
@@ -290,18 +292,27 @@ loadfile_elf(FILE *fp, struct vm_create_params *vcp,
 		return (r);
 
 	push_gdt();
-	push_pt();
+
+	if (is_i386) {
+		push_pt_32();
+		/* Reconfigure the default flat-64 register set for 32 bit */
+		vrs->vrs_crs[VCPU_REGS_CR3] = PML3_PAGE;
+		vrs->vrs_crs[VCPU_REGS_CR4] = CR4_PSE;
+		vrs->vrs_msrs[VCPU_REGS_EFER] = 0ULL;
+	}
+	else
+		push_pt_64();
+
+	if (bootdevice & VMBOOTDEV_NET) {
+		bootmac = &bm;
+		memcpy(bootmac, vcp->vcp_macs[0], ETHER_ADDR_LEN);
+	}
 	n = create_bios_memmap(vcp, memmap);
-	bootargsz = push_bootargs(memmap, n);
+	bootargsz = push_bootargs(memmap, n, bootmac);
 	stacksize = push_stack(bootargsz, marks[MARK_END], bootdev, howto);
 
-#ifdef __i386__
-	vrs->vrs_gprs[VCPU_REGS_EIP] = (uint32_t)marks[MARK_ENTRY];
-	vrs->vrs_gprs[VCPU_REGS_ESP] = (uint32_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
-#else
 	vrs->vrs_gprs[VCPU_REGS_RIP] = (uint64_t)marks[MARK_ENTRY];
 	vrs->vrs_gprs[VCPU_REGS_RSP] = (uint64_t)(STACK_PAGE + PAGE_SIZE) - stacksize;
-#endif
 	vrs->vrs_gdtr.vsi_base = GDT_PAGE;
 
 	log_debug("%s: loaded ELF kernel", __func__);
@@ -377,9 +388,9 @@ create_bios_memmap(struct vm_create_params *vcp, bios_memmap_t *memmap)
  *  The size of the bootargs
  */
 static uint32_t
-push_bootargs(bios_memmap_t *memmap, size_t n)
+push_bootargs(bios_memmap_t *memmap, size_t n, bios_bootmac_t *bootmac)
 {
-	uint32_t memmap_sz, consdev_sz, i;
+	uint32_t memmap_sz, consdev_sz, bootmac_sz, i;
 	bios_consdev_t consdev;
 	uint32_t ba[1024];
 
@@ -392,7 +403,7 @@ push_bootargs(bios_memmap_t *memmap, size_t n)
 
 	/* Serial console device, COM1 @ 0x3f8 */
 	consdev.consdev = makedev(8, 0);	/* com1 @ 0x3f8 */
-	consdev.conspeed = 9600;
+	consdev.conspeed = 115200;
 	consdev.consaddr = 0x3f8;
 	consdev.consfreq = 0;
 
@@ -401,13 +412,22 @@ push_bootargs(bios_memmap_t *memmap, size_t n)
 	ba[i + 1] = consdev_sz;
 	ba[i + 2] = consdev_sz;
 	memcpy(&ba[i + 3], &consdev, sizeof(bios_consdev_t));
-	i = i + 3 + (sizeof(bios_consdev_t) / 4);
+	i += consdev_sz / sizeof(int);
 
-	ba[i] = 0xFFFFFFFF; /* BOOTARG_END */
+	if (bootmac) {
+		bootmac_sz = 3 * sizeof(int) + (sizeof(bios_bootmac_t) + 3) & ~3;
+		ba[i] = 0x7;   /* bootmac */
+		ba[i + 1] = bootmac_sz;
+		ba[i + 2] = bootmac_sz;
+		memcpy(&ba[i + 3], bootmac, sizeof(bios_bootmac_t));
+		i += bootmac_sz / sizeof(int);
+	} 
+
+	ba[i++] = 0xFFFFFFFF; /* BOOTARG_END */
 
 	write_mem(BOOTARGS_PAGE, ba, PAGE_SIZE);
 
-	return (memmap_sz + consdev_sz);
+	return (i * sizeof(int));
 }
 
 /*
@@ -601,33 +621,8 @@ marc4random_buf(paddr_t addr, int sz)
 static void
 mbzero(paddr_t addr, int sz)
 {
-	int i, ct;
-	char buf[PAGE_SIZE];
-
-	/*
-	 * break up the 'sz' bytes into PAGE_SIZE chunks for use with
-	 * write_mem
-	 */
-	ct = 0;
-	memset(buf, 0, sizeof(buf));
-	if (addr % PAGE_SIZE != 0) {
-		ct = PAGE_SIZE - (addr % PAGE_SIZE);
-
-		if (write_mem(addr, buf, ct))
-			return;
-
-		addr += ct;
-	}
-
-	for (i = 0; i < sz; i+= PAGE_SIZE, addr += PAGE_SIZE) {
-		if (i + PAGE_SIZE > sz)
-			ct = sz - i;
-		else
-			ct = PAGE_SIZE;
-
-		if (write_mem(addr, buf, ct))
-			return;
-	}
+	if (write_mem(addr, NULL, sz))
+		return;
 }
 
 /*
@@ -776,7 +771,7 @@ elf64_exec(FILE *fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 
 	if (flags & (LOAD_SYM | COUNT_SYM)) {
 		if (fseeko(fp, (off_t)elf->e_shoff, SEEK_SET) == -1)  {
-			WARN(("lseek section headers"));
+			warn("lseek section headers");
 			return 1;
 		}
 		sz = elf->e_shnum * sizeof(Elf64_Shdr);
@@ -998,7 +993,7 @@ elf32_exec(FILE *fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 
 	if (flags & (LOAD_SYM | COUNT_SYM)) {
 		if (fseeko(fp, (off_t)elf->e_shoff, SEEK_SET) == -1)  {
-			WARN(("lseek section headers"));
+			warn("lseek section headers");
 			return 1;
 		}
 		sz = elf->e_shnum * sizeof(Elf32_Shdr);

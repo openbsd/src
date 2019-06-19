@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.67 2017/07/27 18:48:30 sunil Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.72 2018/12/28 11:40:29 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <limits.h>
 #include <util.h>
@@ -52,8 +53,7 @@ static int	 make_aliases(DBT *, char *);
 static char	*conf_aliases(char *);
 static int	 dump_db(const char *, DBTYPE);
 
-struct smtpd	 smtpd;
-struct smtpd	*env = &smtpd;
+struct smtpd	*env;
 char		*source;
 static int	 mode;
 
@@ -66,12 +66,6 @@ enum output_type {
 /*
  * Stub functions so that makemap compiles using minimum object files.
  */
-void
-purge_config(uint8_t what)
-{
-	memset(env, 0, sizeof(struct smtpd));
-}
-
 int
 fork_proc_backend(const char *backend, const char *conf, const char *procname)
 {
@@ -90,6 +84,9 @@ makemap(int prog_mode, int argc, char *argv[])
 	DBTYPE		 dbtype = DB_HASH;
 	char		*p;
 	int		 fd = -1;
+
+	if ((env = config_default()) == NULL)
+		err(1, NULL);
 
 	log_init(1, LOG_MAIL);
 
@@ -399,7 +396,7 @@ parse_setentry(DB *db, int *dbputs, char *line, size_t len, size_t lineno)
 static int
 make_plain(DBT *val, char *text)
 {
-	val->data = xstrdup(text, "make_plain");
+	val->data = xstrdup(text);
 	val->size = strlen(text) + 1;
 
 	return (val->size);
@@ -415,7 +412,7 @@ make_aliases(DBT *val, char *text)
 	val->data = NULL;
 	val->size = 0;
 
-	origtext = xstrdup(text, "make_aliases");
+	origtext = xstrdup(text);
 
 	while ((subrcpt = strsep(&text, ",")) != NULL) {
 		/* subrcpt: strip initial and trailing whitespace. */
@@ -447,11 +444,11 @@ conf_aliases(char *cfgpath)
 	if (parse_config(env, cfgpath, 0))
 		exit(1);
 
-	table = table_find("aliases", NULL);
+	table = table_find(env, "aliases");
 	if (table == NULL)
 		return (PATH_ALIASES);
 
-	path = xstrdup(table->t_config, "conf_aliases");
+	path = xstrdup(table->t_config);
 	p = strstr(path, ".db");
 	if (p == NULL || strcmp(p, ".db") != 0) {
 		return (path);

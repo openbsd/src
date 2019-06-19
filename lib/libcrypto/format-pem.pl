@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: format-pem.pl,v 1.2 2018/03/21 15:23:53 sthen Exp $
+# $OpenBSD: format-pem.pl,v 1.5 2019/04/02 12:30:20 sthen Exp $
 #
 # Copyright (c) 2016 Stuart Henderson <sthen@openbsd.org>
 #
@@ -14,6 +14,14 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+# To update cert.pem from Mozilla NSS:
+# - perl format-pem.pl < cert.pem > /dev/null 2> calist.old
+# - cd /usr/ports/net/curl; make NO_DEPENDS=Yes patch; curldir=`make show=WRKSRC`; cd -
+# - pkg_add curl; perl $curldir/lib/mk-ca-bundle.pl
+# - perl format-pem.pl < ca-bundle.crt > certnew.pem 2> calist.new
+# Summarize additions/removals for review:
+# - diff calist.old calist.new
 
 use strict;
 use warnings;
@@ -46,14 +54,23 @@ while(<>) {
 		my $subj = `openssl x509 -in $t -noout -subject`;
 		$subj =~ s/^subject= (.*)\n/$1/;
 
-		print STDERR "'$subj' not self-signed"
-			if ($issuer ne $subj);
-
 		my $o = `openssl x509 -in $t -noout -nameopt sep_multiline,use_quote,esc_msb -subject`;
 		if ($o =~ /O=/) {
 			$o =~ s/.*O=([^\n]*).*/$1/sm;
 		} else {
 			$o = $subj;
+		}
+
+		if (defined $ca{$o}{$subj}) {
+			print STDERR "ERROR: '$subj': duplicate\n";
+			$ca{$o}{$subj}{'valid'} = 0;
+		}
+
+		$ca{$o}{$subj}{'valid'} = 1;
+
+		if ($issuer ne $subj) {
+			print STDERR "ERROR: '$subj' not self-signed";
+			$ca{$o}{$subj}{'valid'} = 0;
 		}
 
 		if (eval {require Date::Parse;1;}) {
@@ -65,12 +82,14 @@ while(<>) {
 			my $endtime = str2time($enddate);
 
 			if ($starttime > time) {
-				print STDERR "'$subj' not valid yet\n"
+				print STDERR "ERROR: '$subj' not valid yet\n";
+				$ca{$o}{$subj}{'valid'} = 0;
 			}
 			if ($endtime < time) {
-				print STDERR "'$subj' expired on $startdate\n"
+				print STDERR "ERROR: '$subj' expired on $startdate\n";
+				$ca{$o}{$subj}{'valid'} = 0;
 			} elsif ($endtime < time + 86400 * 365 * 2) {
-				print STDERR "'$subj' expires on $enddate\n"
+				print STDERR "WARNING: '$subj' expires on $enddate\n";
 			}
 		}
 
@@ -78,8 +97,10 @@ while(<>) {
 		$info .= qx/openssl x509 -in $t -fingerprint -sha256 -noout/;
 		my $cert = qx/openssl x509 -in $t/;
 
-		if (defined $ca{$o}{$subj}) {
-			print STDERR "'$subj': duplicate\n";
+		my $verify = qx/openssl verify -CAfile $t $t 2>&1/;
+		if (not $verify =~ /^$t: OK$/) {
+			print STDERR "ERROR: '$subj' cannot be verified with libressl\n---\n$verify---\n";
+			$ca{$o}{$subj}{'valid'} = 0;
 		}
 
 		$ca{$o}{$subj}{'subj'} = $subj;
@@ -92,13 +113,16 @@ while(<>) {
 }
 
 close $tmp;
+chomp $rcsid;
 print $rcsid;
 foreach my $o (sort{lc($a) cmp lc($b)} keys %ca) {
 	print "\n### $o\n\n";
 	foreach my $subj (sort{lc($a) cmp lc($b)} keys %{ $ca{$o} }) {
-		print "=== $subj\n";
-		print $ca{$o}{$subj}{'info'};
-		print $ca{$o}{$subj}{'cert'};
+		if ($ca{$o}{$subj}{'valid'} == 1) {
+			print "=== $subj\n";
+			print $ca{$o}{$subj}{'info'};
+			print $ca{$o}{$subj}{'cert'};
+		}
 	}
 }
 

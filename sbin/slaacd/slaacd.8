@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slaacd.8,v 1.4 2017/09/14 12:56:36 sthen Exp $
+.\"	$OpenBSD: slaacd.8,v 1.10 2018/07/23 11:51:38 florian Exp $
 .\"
 .\" Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2017 $
+.Dd $Mdocdate: July 23 2018 $
 .Dt SLAACD 8
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@
 is a stateless address autoconfiguration (SLAAC) daemon for clients.
 It listens for IPv6 router advertisement messages,
 for example those sent by
-.Xr rtadvd 8 ,
+.Xr rad 8 ,
 on interfaces with the
 .Sy AUTOCONF6
 flag set.
@@ -80,9 +80,25 @@ socket used for communication with
 .Sh SEE ALSO
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
-.Xr rtadvd 8 ,
+.Xr rad 8 ,
 .Xr slaacctl 8
 .Sh STANDARDS
+.Rs
+.%A R. Draves
+.%A D. Thaler
+.%D November 2005
+.%R RFC 4191
+.%T Default Router Preferences and More-Specific Routes
+.Re
+.Pp
+.Rs
+.%A R. Hinden
+.%A S. Deering
+.%D February 2006
+.%R RFC 4291
+.%T IP Version 6 Addressing Architecture
+.Re
+.Pp
 .Rs
 .%A T. Narten
 .%A E. Nordmark
@@ -94,21 +110,47 @@ socket used for communication with
 .Re
 .Pp
 .Rs
+.%A T. Narten
+.%A R. Draves
+.%A S. Krishnan
+.%D September 2007
+.%R RFC 4941
+.%T Privacy Extensions for Stateless Address Autoconfiguration in IPv6
+.Re
+.Pp
+.Rs
+.%A F. Gont
+.%D April 2014
+.%R RFC 7217
+.%T A Method for Generating Semantically Opaque Interface Identifiers with IPv6 Stateless Address Autoconfiguration (SLAAC)
+.Re
+.Pp
+.Rs
+.%A A. Yourtchenko
+.%A L. Colitti
+.%D February 2016
+.%R RFC 7772
+.%T Reducing Energy Consumption of Router Advertisements
+.Re
+.Pp
+.Rs
+.%A F. Gont
+.%A A. Cooper
+.%A D. Thaler
+.%A W. Liu
+.%D February 2017
+.%R RFC 8064
+.%T Recommendation on Stable IPv6 Interface Identifiers
+.Re
+.Pp
+.Rs
 .%A J. Jeong
 .%A S. Park
 .%A L. Beloeil
 .%A S. Madanapalli
-.%D November 2010
-.%R RFC 6106
+.%D March 2017
+.%R RFC 8106
 .%T IPv6 Router Advertisement Options for DNS Configuration
-.Re
-.Pp
-.Rs
-.%A R. Draves
-.%A D. Thaler
-.%D November 2005
-.%R RFC 4191
-.%T Default Router Preferences and More-Specific Routes
 .Re
 .Sh HISTORY
 The

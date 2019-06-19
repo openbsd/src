@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_rng.c,v 1.1 2018/02/24 13:46:22 kettenis Exp $	*/
+/*	$OpenBSD: bcm2835_rng.c,v 1.2 2018/04/28 15:44:59 jasper Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -107,7 +107,7 @@ bcmrng_rnd(void *arg)
 	count = MIN(4, RNG_STATUS_COUNT(status));
 	for (i = 0; i < count; i++) {
 		data = HREAD4(sc, RNG_DATA);
-		add_true_randomness(data);
+		enqueue_randomness(data);
 	}
 
 	timeout_add_sec(&sc->sc_to, 1);

@@ -276,7 +276,7 @@ eval {
 };
 not_hash($@);
 
-# Check hash slices (BUG ID 20010423.002)
+# Check hash slices (BUG ID 20010423.002 (#6879))
 $avhv = [{foo=>1, bar=>2}];
 eval {
     @$avhv{"foo", "bar"} = (42, 53);

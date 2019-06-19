@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-window.c,v 1.36 2017/07/21 09:17:19 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-window.c,v 1.39 2019/04/28 20:05:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -19,7 +19,7 @@
 #include <sys/types.h>
 
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 
 #include "tmux.h"
 
@@ -34,9 +34,9 @@ const struct cmd_entry cmd_respawn_window_entry = {
 	.name = "respawn-window",
 	.alias = "respawnw",
 
-	.args = { "c:kt:", 0, -1 },
-	.usage = "[-c start-directory] [-k] " CMD_TARGET_WINDOW_USAGE
-	         " [command]",
+	.args = { "c:e:kt:", 0, -1 },
+	.usage = "[-k] [-c start-directory] [-e environment] "
+		 CMD_TARGET_WINDOW_USAGE " [command]",
 
 	.target = { 't', CMD_FIND_WINDOW, 0 },
 
@@ -48,64 +48,44 @@ static enum cmd_retval
 cmd_respawn_window_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
+	struct spawn_context	 sc;
 	struct session		*s = item->target.s;
 	struct winlink		*wl = item->target.wl;
-	struct window		*w = wl->window;
-	struct window_pane	*wp;
-	struct client           *c = cmd_find_client(item, NULL, 1);
-	struct environ		*env;
-	const char		*path = NULL, *cp;
-	char		 	*cause, *cwd = NULL;
-	struct environ_entry	*envent;
+	char			*cause = NULL;
+	const char		*add;
+	struct args_value	*value;
 
-	if (!args_has(self->args, 'k')) {
-		TAILQ_FOREACH(wp, &w->panes, entry) {
-			if (wp->fd == -1)
-				continue;
-			cmdq_error(item, "window still active: %s:%d", s->name,
-			    wl->idx);
-			return (CMD_RETURN_ERROR);
-		}
+	memset(&sc, 0, sizeof sc);
+	sc.item = item;
+	sc.s = s;
+	sc.wl = wl;
+
+	sc.name = NULL;
+	sc.argc = args->argc;
+	sc.argv = args->argv;
+	sc.environ = environ_create();
+
+	add = args_first_value(args, 'e', &value);
+	while (add != NULL) {
+		environ_put(sc.environ, add);
+		add = args_next_value(&value);
 	}
 
-	wp = TAILQ_FIRST(&w->panes);
-	TAILQ_REMOVE(&w->panes, wp, entry);
-	layout_free(w);
-	window_destroy_panes(w);
-	TAILQ_INSERT_HEAD(&w->panes, wp, entry);
-	window_pane_resize(wp, w->sx, w->sy);
+	sc.idx = -1;
+	sc.cwd = args_get(args, 'c');
 
-	if (item->client != NULL && item->client->session == NULL)
-		envent = environ_find(item->client->environ, "PATH");
-	else
-		envent = environ_find(s->environ, "PATH");
-	if (envent != NULL)
-		path = envent->value;
+	sc.flags = SPAWN_RESPAWN;
+	if (args_has(args, 'k'))
+		sc.flags |= SPAWN_KILL;
 
-	if ((cp = args_get(args, 'c')) != NULL)
-		cwd = format_single(item, cp, c, s, NULL, NULL);
-
-	env = environ_for_session(s, 0);
-	if (window_pane_spawn(wp, args->argc, args->argv, path, NULL, cwd, env,
-	    s->tio, &cause) != 0) {
+	if (spawn_window(&sc, &cause) == NULL) {
 		cmdq_error(item, "respawn window failed: %s", cause);
 		free(cause);
-		environ_free(env);
-		free(cwd);
-		server_destroy_pane(wp, 0);
 		return (CMD_RETURN_ERROR);
 	}
-	environ_free(env);
-	free(cwd);
 
-	layout_init(w, wp);
-	window_pane_reset_mode(wp);
-	screen_reinit(&wp->base);
-	input_init(wp);
-	window_set_active_pane(w, wp);
+	server_redraw_window(wl->window);
 
-	recalculate_sizes();
-	server_redraw_window(w);
-
+	environ_free(sc.environ);
 	return (CMD_RETURN_NORMAL);
 }

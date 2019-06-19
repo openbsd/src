@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_attr_setstack.3,v 1.4 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_attr_setstack.3,v 1.5 2018/04/12 17:13:34 deraadt Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: April 12 2018 $
 .Dt PTHREAD_ATTR_SETSTACK 3
 .Os
 .Sh NAME
@@ -39,6 +39,18 @@ and the size of the storage shall be
 bytes.
 The stacksize shall be at least
 .Dv PTHREAD_STACK_MIN .
+.Pp
+On
+.Ox
+the provided stack must be page-aligned.
+It will be replaced (meaning zeroed) with a new
+.Ar MAP_ANON | Ar MAP_STACK
+mapping.
+It is recommended that the initial mapping be allocated using
+an allocator which has a matching deallocator that discards whole
+pages, to clear the
+.Ar MAP_STACK
+attribute afterwards.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn pthread_attr_setstack

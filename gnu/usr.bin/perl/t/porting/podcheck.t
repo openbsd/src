@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+package main;
+
 BEGIN {
     chdir 't';
     @INC = "../lib";
@@ -26,6 +28,10 @@ BEGIN {
     if ($^O eq 'dec_osf') {
         print "1..0 # $^O cannot handle this test\n";
         exit(0);
+    }
+    if ( $ENV{'PERL_BUILD_PACKAGING'} ) {
+        print "1..0 # This distro may have modified some files in cpan/. Skipping validation. \n";
+        exit 0;
     }
     require '../regen/regen_lib.pl';
 }
@@ -56,8 +62,7 @@ pods in the distribution workspace, except certain known special ones
 (specified below).  It does additional checking beyond that done by
 Pod::Checker, and keeps a database of known potential problems, and will
 fail a pod only if the number of such problems differs from that given in the
-database.  It also suppresses the C<(section) deprecated> message from
-Pod::Checker, since specifying the man page section number is quite proper to do.
+database.
 
 The additional checks it always makes are:
 
@@ -92,10 +97,10 @@ missing from the C<LE<lt>E<gt>> pod command.
 A pod can't be linked to unless it has a unique name.
 And a NAME should have a dash and short description after it.
 
-=item =encoding statement issues
+=item Occurrences of the Unicode replacement character
 
-This indicates if an C<=encoding> statement should be present, or moved to the
-front of the pod.
+L<Pod::Simple> replaces bytes that aren't valid according to the document's
+encoding (declared or auto-detected) with C<\N{REPLACEMENT CHARACTER}>.
 
 =back
 
@@ -363,10 +368,9 @@ my $broken_link = "Apparent broken link";
 my $broken_internal_link = "Apparent internal link is missing its forward slash";
 my $multiple_targets = "There is more than one target";
 my $duplicate_name = "Pod NAME already used";
-my $need_encoding = "Should have =encoding statement because have non-ASCII";
-my $encoding_first = "=encoding must be first command (if present)";
 my $no_name = "There is no NAME";
 my $missing_name_description = "The NAME should have a dash and short description after it";
+my $replacement_character = "Unicode replacement character found";
 # the pedantic warnings messages
 my $line_length = "Verbatim line length including indents exceeds $MAX_LINE_LENGTH by";
 my $C_not_linked = "? Should you be using L<...> instead of";
@@ -385,9 +389,6 @@ my $dl_ext  = $Config{'dlext'};   $dl_ext  =~ tr/.//d;
 my %excluded_files = (
                         canonicalize("lib/unicore/mktables") => 1,
                         canonicalize("Porting/make-rmg-checklist") => 1,
-                        # this one is a POD, but unfinished, so skip
-                        # it for now
-                        canonicalize("Porting/perl5200delta.pod") => 1,
                         canonicalize("Porting/perldelta_template.pod") => 1,
                         canonicalize("regen/feature.pl") => 1,
                         canonicalize("regen/warnings.pl") => 1,
@@ -431,13 +432,38 @@ my $non_pods = qr/ (?: \.
                            | $dl_ext  # dynamic libraries
                            | gif      # GIF images (example files from CGI.pm)
                            | eg       # examples from libnet
+                           | core .*
                        )
                        $
                     ) | ~$ | \ \(Autosaved\)\.txt$ # Other editor droppings
                            | ^cxx\$demangler_db\.$ # VMS name mangler database
                            | ^typemap\.?$          # typemap files
                            | ^(?i:Makefile\.PL)$
+                           | ^core (?: $ | \. .* )
                 /x;
+
+# Matches something that looks like a file name, but is enclosed in C<...>
+my $C_path_re = qr{ ^
+                        # exclude various things that have slashes
+                        # in them but aren't paths
+                        (?!
+                            (?: (?: s | qr | m | tr | y ) / ) # regexes
+                            | \d+/\d+ \b       # probable fractions
+                            | (?: [LF] < )+
+                            | OS/2 \b
+                            | Perl/Tk \b
+                            | origin/blead \b
+                            | origin/maint \b
+
+                        )
+                        /?  # Optional initial slash
+                        \w+ # First component of path, doesn't begin with
+                            # a minus
+                        (?: / [-\w]+ )+ # Subsequent path components
+                        (?: \. \w+ )?   # Optional trailing dot and suffix
+                        >*  # Any enclosed L< F< have matching closing >
+                        $
+                    }x;
 
 # '.PL' files should be excluded, as they aren't final pods, but often contain
 # material used in generating pods, and so can look like a pod.  We can't use
@@ -464,20 +490,19 @@ close $manifest_fh, or die "Can't close $MANIFEST";
 
 # Pod::Checker messages to suppress
 my @suppressed_messages = (
-    "(section) in",                         # Checker is wrong to flag this
-    "multiple occurrence of link target",   # We catch independently the ones
-                                            # that are real problems.
-    "unescaped <>",
-    "Entity number out of range",   # Checker outputs this for anything above
-                                    # 255, but in fact all Unicode is valid
-    "No items in =over",            # ie a blockquote
+    # We catch independently the ones that are real problems.
+    qr/multiple occurrences \(\d+\) of link target/,
+
+    "unescaped <>",                 # Not every '<' or '>' need be escaped
+    qr/No items in =over/,          # i.e., a blockquote, which we consider legal
 );
 
 sub suppressed {
     # Returns bool as to if input message is one that is to be suppressed
 
     my $message = shift;
-    return grep { $message =~ /^\Q$_/i } @suppressed_messages;
+
+    return grep { $message =~ /^$_/i } @suppressed_messages;
 }
 
 {   # Closure to contain a simple subset of test.pl.  This is to get rid of the
@@ -518,15 +543,19 @@ sub suppressed {
         last SKIP;
     }
 
-    sub note {
-        my $message = shift;
+    sub _note {
+        my ($andle, $message) = @_;
 
         chomp $message;
 
-        print $message =~ s/^/# /mgr;
-        print "\n";
+        print $andle $message =~ s/^/# /mgr;
+        print $andle "\n";
         return;
     }
+
+    sub note { unshift @_, \*STDOUT; goto &_note }
+
+    sub diag { unshift @_, \*STDERR; goto &_note }
 
     END {
         if ($planned && $planned != $current_test) {
@@ -627,37 +656,54 @@ package My::Pod::Checker {      # Extend Pod::Checker
 
     # Uses inside out hash to protect from typos
     # For new fields, remember to add to destructor DESTROY()
-    my %indents;            # Stack of indents from =over's in effect for
-                            # current line
+    my %CFL_text;           # The text comprising the current C<>, F<>, or L<>
+    my %C_text;             # If defined, are in a C<> section, and includes
+                            # the accumulated text from that
     my %current_indent;     # Current line's indent
     my %filename;           # The pod is store in this file
-    my %skip;               # is SKIP set for this pod
+    my %in_CFL;             # count of stacked C<>, F<>, L<> directives
+    my %indents;            # Stack of indents from =over's in effect for
+                            # current line
+    my %in_for;             # true if in a =for or =begin
     my %in_NAME;            # true if within NAME section
     my %in_begin;           # true if within =begin section
+    my %in_X;               # true if in a X<>
     my %linkable_item;      # Bool: if the latest =item is linkable.  It isn't
                             # for bullet and number lists
     my %linkable_nodes;     # Pod::Checker adds all =items to its node list,
                             # but not all =items are linkable to
-    my %seen_encoding_cmd;  # true if have =encoding earlier
+    my %running_CFL_text;   # The current text that is being accumulated until
+                            # an end_FOO is found, and this includes any C<>,
+                            # F<>, or L<> directives.
+    my %running_simple_text; # The currentt text that is being accumulated
+                            # until an end_FOO is found, and all directives
+                            # have been expanded into plain text
     my %command_count;      # Number of commands seen
     my %seen_pod_cmd;       # true if have =pod earlier
-    my %warned_encoding;    # true if already have warned about =encoding
-                            # problems
+    my %skip;               # is SKIP set for this pod
+    my %start_line;         # the first input line number in the the thing
+                            # currently being worked on
 
     sub DESTROY {
         my $addr = Scalar::Util::refaddr $_[0];
+        delete $CFL_text{$addr};
+        delete $C_text{$addr};
         delete $command_count{$addr};
         delete $current_indent{$addr};
         delete $filename{$addr};
         delete $in_begin{$addr};
+        delete $in_CFL{$addr};
         delete $indents{$addr};
+        delete $in_for{$addr};
         delete $in_NAME{$addr};
+        delete $in_X{$addr};
         delete $linkable_item{$addr};
         delete $linkable_nodes{$addr};
-        delete $seen_encoding_cmd{$addr};
+        delete $running_CFL_text{$addr};
+        delete $running_simple_text{$addr};
         delete $seen_pod_cmd{$addr};
         delete $skip{$addr};
-        delete $warned_encoding{$addr};
+        delete $start_line{$addr};
         return;
     }
 
@@ -672,11 +718,11 @@ package My::Pod::Checker {      # Extend Pod::Checker
         $current_indent{$addr} = 0;
         $filename{$addr} = $filename;
         $in_begin{$addr} = 0;
+        $in_X{$addr} = 0;
+        $in_CFL{$addr} = 0;
         $in_NAME{$addr} = 0;
         $linkable_item{$addr} = 0;
-        $seen_encoding_cmd{$addr} = 0;
         $seen_pod_cmd{$addr} = 0;
-        $warned_encoding{$addr} = 0;
         return $self;
     }
 
@@ -778,105 +824,173 @@ package My::Pod::Checker {      # Extend Pod::Checker
         #push @{$problems{$self->get_filename}{$message}}, $opts;
     }
 
-    sub check_encoding {    # Does it need an =encoding statement?
-        my ($self, $paragraph, $line_num, $pod_para) = @_;
+    # In the next subroutines, we keep track of the text of the current
+    # innermost thing, like F<fooC<bar>baz>.  The things we care about raising
+    # messages about in this program all come from a single sequence of
+    # characters uninterrupted by other pod commands.  Therefore we don't have
+    # to worry about recursion, and we can just set the string we care about
+    # to empty on entrance to each command.
 
-        # Do nothing if there is an =encoding in the file, or if the line
-        # doesn't require an =encoding, or have already warned.
-        my $addr = Scalar::Util::refaddr $self;
-        return if $seen_encoding_cmd{$addr}
-                    || $warned_encoding{$addr}
-                    || $paragraph !~ /\P{ASCII}/;
+    sub handle_text {
+        # This is called by the parent class to deal with any straight text.
+        # We mostly just append this to the running current value which will
+        # be dealt with upon the end of the current construct, like a
+        # paragraph.  But certain things don't contribute to checking the pod
+        # and are ignored.  We also have set flags to indicate this text is
+        # going towards constructing certain constructs, and handle those
+        # specially.
 
-        $warned_encoding{$addr} = 1;
-        my ($file, $line) = $pod_para->file_line;
-        $self->poderror({ -line => $line, -file => $file,
-                          -msg => $need_encoding
-                        });
-        return;
-    }
-
-    sub verbatim {
-        my ($self, $paragraph, $line_num, $pod_para) = @_;
-        $self->check_encoding($paragraph, $line_num, $pod_para);
-
-        $self->SUPER::verbatim($paragraph, $line_num, $pod_para);
-
+        my $self = shift;
         my $addr = Scalar::Util::refaddr $self;
 
-        # Pick up the name, since the parent class doesn't in verbatim
-        # NAMEs; so treat as non-verbatim.  The parent class only allows one
-        # paragraph in a NAME section, so if there is an extra blank line, it
-        # will trigger a message, but such a blank line is harmless, so skip
-        # in that case.
-        if ($in_NAME{$addr} && $paragraph =~ /\S/) {
-            $self->textblock($paragraph, $line_num, $pod_para);
+        my $return = $self->SUPER::handle_text(@_);
+
+        if ($in_X{$addr} || $in_for{$addr}) { # ignore
+            return $return;
         }
 
-        my @lines = split /^/, $paragraph;
-        for my $i (0 .. @lines - 1) {
-            if ( my $encoding = $seen_encoding_cmd{$addr} ) {
-              require Encode;
-              $lines[$i] = Encode::decode($encoding, $lines[$i]);
-            }
-            $lines[$i] =~ s/\s+$//;
-            my $indent = $self->get_current_indent;
+        my $text = join "\n", @_;
+        $running_simple_text{$addr} .= $text;
 
-            if ($pedantic) { # TODO: this check should be moved higher
-                                 # to avoid more unnecessary work
-                my $exceeds = length(Text::Tabs::expand($lines[$i]))
-                    + $indent - $MAX_LINE_LENGTH;
-                next unless $exceeds > 0;
-                my ($file, $line) = $pod_para->file_line;
-                $self->poderror({ -line => $line + $i, -file => $file,
-                    -msg => $line_length,
-                    parameter => "+$exceeds (including " . ($indent - $INDENT) . " from =over's)",
+        # Keep separate tabs on C<>, F<>, and L<> directives, and one
+        # especially for C<> ones.
+        if ($in_CFL{$addr}) {
+            $CFL_text{$addr} .= $text;
+            $C_text{$addr} .= $text if defined $C_text{$addr};
+        }
+        else {
+            # This variable is updated instead in the corresponding C, F, or L
+            # handler.
+            $running_CFL_text{$addr} .= $text;
+        }
+
+        # do this line-by-line so we can get the right line number
+        my @lines = split /^/, $running_simple_text{$addr};
+        for my $i (0..$#lines) {
+            if ($lines[$i] =~ m/\N{REPLACEMENT CHARACTER}/) {
+                $self->poderror({ -line => $start_line{$addr} + $i,
+                    -msg => $replacement_character,
+                    parameter => "possibly invalid ". $self->encoding . " input at character " . pos $lines[$i],
                 });
             }
         }
+        return $return;
     }
 
-    sub textblock {
-        my ($self, $paragraph, $line_num, $pod_para) = @_;
-        $self->check_encoding($paragraph, $line_num, $pod_para);
+    # The start_FOO routines check that somehow a C<> construct hasn't escaped
+    # without being checked, and initialize things, and call the parent
+    # class's equivalent routine.
 
-        $self->SUPER::textblock($paragraph, $line_num, $pod_para);
+    # The end_FOO routines close things off, and check the text that has been
+    # accumulated for FOO, then call the parent's corresponding routine.
 
-        my ($file, $line) = $pod_para->file_line;
+    sub start_Para {
+        my $self = shift;
+        check_see_but_not_link($self);
+
         my $addr = Scalar::Util::refaddr $self;
-        if ($in_NAME{$addr}) {
-            if (! $self->name) {
-                my $text = $self->interpolate($paragraph, $line_num);
-                if ($text =~ /^\s*(\S+?)\s*$/) {
-                    $self->name($1);
-                    $self->poderror({ -line => $line, -file => $file,
-                        -msg => $missing_name_description,
-                        parameter => $1});
-                }
-            }
+        $start_line{$addr} = $_[0]->{start_line};
+        $running_CFL_text{$addr} = "";
+        $running_simple_text{$addr} = "";
+        return $self->SUPER::start_Para(@_);
+    }
+
+    sub start_item_text {
+        my $self = shift;
+        check_see_but_not_link($self);
+
+        my $addr = Scalar::Util::refaddr $self;
+        $start_line{$addr} = $_[0]->{start_line};
+        $running_CFL_text{$addr} = "";
+        $running_simple_text{$addr} = "";
+
+        # This is the only =item that is linkable
+        $linkable_item{$addr} = 1;
+
+        return $self->SUPER::start_item_text(@_);
+    }
+
+    sub start_item_number {
+        my $self = shift;
+        check_see_but_not_link($self);
+
+        my $addr = Scalar::Util::refaddr $self;
+        $start_line{$addr} = $_[0]->{start_line};
+        $running_CFL_text{$addr} = "";
+        $running_simple_text{$addr} = "";
+
+        return $self->SUPER::start_item_number(@_);
+    }
+
+    sub start_item_bullet {
+        my $self = shift;
+        check_see_but_not_link($self);
+
+        my $addr = Scalar::Util::refaddr $self;
+        $start_line{$addr} = $_[0]->{start_line};
+        $running_CFL_text{$addr} = "";
+        $running_simple_text{$addr} = "";
+
+        return $self->SUPER::start_item_bullet(@_);
+    }
+
+    sub end_item {  # No difference in =item types endings
+        my $self = shift;
+        check_see_but_not_link($self);
+        return $self->SUPER::end_item(@_);
+    }
+
+    sub start_over {
+        my $self = shift;
+        check_see_but_not_link($self);
+
+        my $addr = Scalar::Util::refaddr $self;
+        $start_line{$addr} = $_[0]->{start_line};
+        $running_CFL_text{$addr} = "";
+        $running_simple_text{$addr} = "";
+
+        # Save this indent on a stack, and keep track of total indent
+        my $indent =  $_[0]{'indent'};
+        push @{$indents{$addr}}, $indent;
+        $current_indent{$addr} += $indent;
+
+        return $self->SUPER::start_over(@_);
+    }
+
+    sub end_over_bullet { shift->end_over(@_) }
+    sub end_over_number { shift->end_over(@_) }
+    sub end_over_text   { shift->end_over(@_) }
+    sub end_over_block  { shift->end_over(@_) }
+    sub end_over_empty  { shift->end_over(@_) }
+    sub end_over {
+        my $self = shift;
+        check_see_but_not_link($self);
+
+        my $addr = Scalar::Util::refaddr $self;
+
+        # Pop current indent
+        if (@{$indents{$addr}}) {
+            $current_indent{$addr} -= pop @{$indents{$addr}};
         }
-        $paragraph = join " ", split /^/, $paragraph;
+        else {
+            # =back without corresponding =over, but should have
+            # warned already
+            $current_indent{$addr} = 0;
+        }
+    }
 
-        # Matches something that looks like a file name, but is enclosed in
-        # C<...>
-        my $C_path_re = qr{ \b ( C<
-                                # exclude various things that have slashes
-                                # in them but aren't paths
-                                (?!
-                                    (?: (?: s | qr | m) / ) # regexes
-                                    | \d+/\d+>       # probable fractions
-                                    | OS/2>
-                                    | Perl/Tk>
-                                    | origin/blead>
-                                    | origin/maint
-                                    | -    # File names don't begin with "-"
-                                 )
-                                 [-\w]+ (?: / [-\w]+ )+ (?: \. \w+ )? > )
-                          }x;
+    sub check_see_but_not_link {
 
-        # If looks like a reference to other documentation by containing the
-        # word 'See' and then a likely pod directive, warn.
-        while ($paragraph =~ m{
+        # Looks through accumulated text for current element that includes the
+        # C<>, F<>, and L<> directives for ones that look like they are
+        # C<link> instead of L<link>.
+
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        return unless defined $running_CFL_text{$addr};
+
+        while ($running_CFL_text{$addr} =~ m{
                                 ( (?: \w+ \s+ )* )  # The phrase before, if any
                                 \b [Ss]ee \s+
                                 ( ( [^L] )
@@ -885,7 +999,8 @@ package My::Pod::Checker {      # Extend Pod::Checker
                                   >
                                 )
                                 ( \s+ (?: under | in ) \s+ L< )?
-                            }xg) {
+                            }xg)
+        {
             my $prefix = $1 // "";
             my $construct = $2;     # The whole thing, like C<...>
             my $type = $3;
@@ -902,25 +1017,13 @@ package My::Pod::Checker {      # Extend Pod::Checker
                 # construct would be if it actually has L<> syntax.  If it
                 # doesn't have that syntax, will set the module to the entire
                 # interior.
-                $interior =~ m/ ^
-                                (?: [^|]+ \| )? # Optional arbitrary text ending
-                                                # in "|"
-                                ( .+? )         # module, etc. name
-                                (?: \/ .+ )?    # target within module
-                                $
-                            /xs;
-                my $module = $1;
                 if (! defined $trailing # not referring to something in another
                                         # section
                     && $interior !~ /$non_pods/
 
-                    # C<> that look like files have their own message below, so
-                    # exclude them
-                    && $construct !~ /$C_path_re/g
-
                     # There can't be spaces (I think) in module names or man
                     # pages
-                    && $module !~ / \s /x
+                    && $interior !~ / \s /x
 
                     # F<> that end in eg \.pl are almost certainly ok, as are
                     # those that look like a path with multiple "/" chars
@@ -931,139 +1034,266 @@ package My::Pod::Checker {      # Extend Pod::Checker
                     )
                 ) {
                     # TODO: move the checking of $pedantic higher up
-                    $self->poderror({ -line => $line, -file => $file,
+                    $self->poderror({ -line => $start_line{$addr},
                         -msg => $C_not_linked,
                         parameter => $construct
-                    }) if $pedantic;
+                    });
                 }
             }
         }
-        while ($paragraph =~ m/$C_path_re/g) {
-            my $construct = $1;
-            # TODO: move the checking of $pedantic higher up
-            $self->poderror({ -line => $line, -file => $file,
-                -msg => $C_with_slash,
-                parameter => $construct
-            }) if $pedantic;
-        }
-        return;
+
+        undef $running_CFL_text{$addr};
     }
 
-    sub command {
-        my ($self, $cmd, $paragraph, $line_num, $pod_para) = @_;
+    sub end_Para {
+        my $self = shift;
+        check_see_but_not_link($self);
+
         my $addr = Scalar::Util::refaddr $self;
-        if ($cmd eq "pod") {
-            $seen_pod_cmd{$addr}++;
-        }
-        elsif ($cmd eq "encoding") {
-            my ($file, $line) = $pod_para->file_line;
-            $seen_encoding_cmd{$addr} = $paragraph; # for later decoding
-            if ($command_count{$addr} != 1 && $seen_pod_cmd{$addr}) {
-                $self->poderror({ -line => $line, -file => $file,
-                                  -msg => $encoding_first
-                                });
+        if ($in_NAME{$addr}) {
+            if ($running_simple_text{$addr} =~ /^\s*(\S+?)\s*$/) {
+                $self->poderror({ -line => $start_line{$addr},
+                    -msg => $missing_name_description,
+                    parameter => $1});
             }
+            $in_NAME{$addr} = 0;
         }
-        $self->check_encoding($paragraph, $line_num, $pod_para);
+        $self->SUPER::end_Para(@_);
+    }
 
-        # Pod::Check treats all =items as linkable, but the bullet and
-        # numbered lists really aren't.  So keep our own list.  This has to be
-        # processed before SUPER is called so that the list is started before
-        # the rest of it gets parsed.
-        if ($cmd eq 'item') { # Not linkable if item begins with * or a digit
-            $linkable_item{$addr} = ($paragraph !~ / ^ \s*
-                                                   (?: [*]
-                                                   | \d+ \.? (?: \$ | \s+ )
-                                                   )/x)
-                                  ? 1
-                                  : 0;
+    sub start_head1 {
+        my $self = shift;
+        check_see_but_not_link($self);
 
+        my $addr = Scalar::Util::refaddr $self;
+        $start_line{$addr} = $_[0]->{start_line};
+        $running_CFL_text{$addr} = "";
+        $running_simple_text{$addr} = "";
+
+        return $self->SUPER::start_head1(@_);
+    }
+
+    sub end_head1 {  # This is called at the end of the =head line.
+        my $self = shift;
+        check_see_but_not_link($self);
+
+        my $addr = Scalar::Util::refaddr $self;
+
+        $in_NAME{$addr} = 1 if $running_simple_text{$addr} eq 'NAME';
+        return $self->SUPER::end_head(@_);
+    }
+
+    sub start_Verbatim {
+        my $self = shift;
+        check_see_but_not_link($self);
+
+        my $addr = Scalar::Util::refaddr $self;
+        $running_simple_text{$addr} = "";
+        $start_line{$addr} = $_[0]->{start_line};
+        return $self->SUPER::start_Verbatim(@_);
+    }
+
+    sub end_Verbatim {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        # Pick up the name if it looks like one, since the parent class
+        # doesn't handle verbatim NAMEs
+        if ($in_NAME{$addr}
+            && $running_simple_text{$addr} =~ /^\s*(\S+?)\s*[,-]/)
+        {
+            $self->name($1);
         }
-        $self->SUPER::command($cmd, $paragraph, $line_num, $pod_para);
 
-        $command_count{$addr}++;
+        my $indent = $self->get_current_indent;
 
-        $in_NAME{$addr} = 0;    # Will change to 1 below if necessary
-        $in_begin{$addr} = 0;   # ibid
-        if ($cmd eq 'over') {
-            my $text = $self->interpolate($paragraph, $line_num);
-            my $indent = 4; # default
-            $indent = $1 if $text && $text =~ /^\s*(\d+)\s*$/;
-            push @{$indents{$addr}}, $indent;
-            $current_indent{$addr} += $indent;
+        # Look at each line to verify it is short enough
+        my @lines = split /^/, $running_simple_text{$addr};
+        for my $i (0 .. @lines - 1) {
+            $lines[$i] =~ s/\s+$//;
+            my $exceeds = length(Text::Tabs::expand($lines[$i]))
+                        + $indent - $MAX_LINE_LENGTH;
+            next unless $exceeds > 0;
+
+            $self->poderror({ -line => $start_line{$addr} + $i,
+                -msg => $line_length,
+                parameter => "+$exceeds (including " . ($indent - $INDENT) . " from =over's)",
+            });
         }
-        elsif ($cmd eq 'back') {
-            if (@{$indents{$addr}}) {
-                $current_indent{$addr} -= pop @{$indents{$addr}};
+
+        undef $running_simple_text{$addr};
+
+        # Parent class didn't bother to define this
+        #return $self->SUPER::SUPER::end_Verbatim(@_);
+    }
+
+    sub start_C {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        $C_text{$addr} = "";
+
+        # If not in a stacked set of C<>, F<> and L<>, initialize the text for
+        # them.
+        $CFL_text{$addr} = "" if ! $in_CFL{$addr};
+        $in_CFL{$addr}++;
+
+        return $self->SUPER::start_C(@_);
+    }
+
+    sub start_F {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        $CFL_text{$addr} = "" if ! $in_CFL{$addr};
+        $in_CFL{$addr}++;
+        return $self->SUPER::start_F(@_);
+    }
+
+    sub start_L {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        $CFL_text{$addr} = "" if ! $in_CFL{$addr};
+        $in_CFL{$addr}++;
+        return $self->SUPER::start_L(@_);
+    }
+
+    sub end_C {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        # Warn if looks like a file or link enclosed instead by this C<>
+        if ($C_text{$addr} =~ qr/^ $C_path_re $/x) {
+            # Here it does look like it could be be a file path or a link.
+            # But some varieties of regex patterns could also fit with what we
+            # have so far.  Weed those out as best we can.  '/foo/' is almost
+            # certainly meant to be a pattern, as is '/foo/g'.
+            my $is_pattern;
+            if ($C_text{$addr} !~ qr| ^ / [^/]* / ( [msixpodualngcr]* ) $ |x) {
+                $is_pattern = 0;
             }
             else {
-                 # =back without corresponding =over, but should have
-                 # warned already
-                $current_indent{$addr} = 0;
+
+                # Here, it looks like a pattern potentially followed by some
+                # modifiers.  To make doubly sure, don't count as patterns
+                # those constructs which have more occurrences (generally 1)
+                # of a modifier than is legal.
+                my %counts;
+                map { $counts{$_}++ } split "", $1;
+                foreach my $modifier (keys %counts) {
+                    if ($counts{$modifier} > (($modifier eq 'a')
+                                              ? 2
+                                              : 1))
+                    {
+                        $is_pattern = 0;
+                        last;
+                    }
+                }
+                $is_pattern = 1 unless defined $is_pattern;
+            }
+
+            unless ($is_pattern) {
+                $self->poderror({ -line => $start_line{$addr},
+                    -msg => $C_with_slash,
+                    parameter => "C<$C_text{$addr}>"
+                });
             }
         }
-        elsif ($cmd =~ /^head/) {
-            if (! $in_begin{$addr}) {
+        undef $C_text{$addr};
 
-                # If a particular formatter, then this command doesn't really
-                # apply
-                $current_indent{$addr} = 0;
-                undef @{$indents{$addr}};
-            }
+        # Add the current text to the running total.  This was not done in
+        # handle_text(), because it just sees the plain text of the innermost
+        # stacked directive.  We want to keep all the directive names
+        # enclosing the text.  Otherwise the fact that C<L<foobar>> is to a
+        # link would be lost, as the L<> would be gone.
+        $CFL_text{$addr} = "C<$CFL_text{$addr}>";
 
-            my $text = $self->interpolate($paragraph, $line_num);
-            $in_NAME{$addr} = 1 if $cmd eq 'head1'
-                                   && $text && $text =~ /^NAME\b/;
-        }
-        elsif ($cmd eq 'begin') {
-            $in_begin{$addr} = 1;
-        }
+        # Add this text to the the whole running total only if popping this
+        # directive off the stack leaves it empty.  As long as something is on
+        # the stack, it gets added to $CFL_text (just above).  It is only
+        # entirely constructed when the stack is empty.
+        $in_CFL{$addr}--;
+        $running_CFL_text{$addr} .= $CFL_text{$addr} if ! $in_CFL{$addr};
 
-        return;
+        return $self->SUPER::end_C(@_);
+    }
+
+    sub end_F {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        $CFL_text{$addr} = "F<$CFL_text{$addr}>";
+        $in_CFL{$addr}--;
+        $running_CFL_text{$addr} .= $CFL_text{$addr} if ! $in_CFL{$addr};
+        return $self->SUPER::end_F(@_);
+    }
+
+    sub end_L {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        $CFL_text{$addr} = "L<$CFL_text{$addr}>";
+        $in_CFL{$addr}--;
+        $running_CFL_text{$addr} .= $CFL_text{$addr} if ! $in_CFL{$addr};
+        return $self->SUPER::end_L(@_);
+    }
+
+    sub start_X {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        $in_X{$addr} = 1;
+        return $self->SUPER::start_X(@_);
+    }
+
+    sub end_X {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        $in_X{$addr} = 0;
+        return $self->SUPER::end_X(@_);
+    }
+
+    sub start_for {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        $in_for{$addr} = 1;
+        return $self->SUPER::start_for(@_);
+    }
+
+    sub end_for {
+        my $self = shift;
+        my $addr = Scalar::Util::refaddr $self;
+
+        $in_for{$addr} = 0;
+        return $self->SUPER::end_for(@_);
     }
 
     sub hyperlink {
-        my $self = shift;
+        my ($self, $link) = @_;
 
-        my $page;
-        if ($_[0] && ($page = $_[0][1]{'-page'})) {
-            my $node = $_[0][1]{'-node'};
+        if ($link && $link->type eq 'pod') {
+            my $page = $link->page;
+            my $node = $link->node;
 
-            if ($node) {
-                $_[0][1]{'-node'} = $node = do {
-                    my $expand_seq = sub {
-                        my (undef, $seq) = @_;
-                        my $arg = join '', $seq->parse_tree->children;
-                        if ($seq->name eq 'E') {
-                            $arg =
-                                $arg eq 'sol'    ? '/' :
-                                $arg eq 'verbar' ? '|' :
-                                $arg eq 'lt'     ? '<' :
-                                $arg eq 'gt'     ? '>' :
-                                die "Not implemented: E<$arg>";
-                        }
-                        return $arg;
-                    };
-                    my $ptree = $self->parse_text({ -expand_seq => $expand_seq }, $node, $_[0][0]);
-                    join '', $ptree->children
-                };
-
-                # If the hyperlink is to an interior node of another page, save it
-                # so that we can see if we need to parse normally skipped files.
-                $has_referred_to_node{$page} = 1;
-            }
+            # If the hyperlink is to an interior node of another page, save it
+            # so that we can see if we need to parse normally skipped files.
+            $has_referred_to_node{$page} = 1 if $node;
 
             # Ignore certain placeholder links in perldelta.  Check if the
             # link is page-level, and also check if to a node within the page
-            if ($self->name && $self->name eq "perldelta"
-                && ((grep { $page eq $_ } @perldelta_ignore_links)
-                    || ($node
+            if (   $self->name && $self->name eq "perldelta"
+                && ((  grep { $page eq $_ } @perldelta_ignore_links)
+                    || (   $node
                         && (grep { "$page/$node" eq $_ } @perldelta_ignore_links)
             ))) {
                 return;
             }
         }
-        return $self->SUPER::hyperlink($_[0]);
+
+        return $self->SUPER::hyperlink($link);
     }
 
     sub node {
@@ -1117,7 +1347,7 @@ package My::Pod::Checker {      # Extend Pod::Checker
         # ignores 2nd param, which is output file.  Always uses undef
 
         if (open my $in_fh, '<:bytes', $filename) {
-            $self->SUPER::parse_from_filehandle($in_fh, undef);
+            $self->SUPER::parse_from_file($in_fh, undef);
             close $in_fh;
             return 1;
         }
@@ -1323,6 +1553,7 @@ sub my_safer_print {    # print, with error checking for outputting to db
 sub extract_pod {   # Extracts just the pod from a file; returns undef if file
                     # doesn't exist
     my $filename = shift;
+    use Pod::Parser;
 
     my @pod;
 
@@ -1764,21 +1995,24 @@ foreach my $filename (@files) {
 if (! $has_input_files) {
     foreach my $filename (@files) {
         next if $filename_to_checker{$filename}->get_skip;
+
         my $checker = $filename_to_checker{$filename};
-        foreach my $link ($checker->hyperlink) {
-            my $linked_to_page = $link->[1]->page;
+        foreach my $link ($checker->hyperlinks()) {
+            my $linked_to_page = $link->page;
             next unless $linked_to_page;   # intra-file checks are handled by std
                                            # Pod::Checker
+            # Currently, we assume all external links are valid
+            next if $link->type eq 'url';
 
             # Initialize the potential message.
             my %problem = ( -msg => $broken_link,
-                            -line => $link->[0],
+                            -line => $link->line,
                             parameter => "to \"$linked_to_page\"",
                         );
 
             # See if we have found the linked-to_file in our parse
             if (exists $nodes{$linked_to_page}) {
-                my $node = $link->[1]->node;
+                my $node = $link->node;
 
                 # If link is only to the page-level, already have it
                 next if ! $node;
@@ -1802,7 +2036,7 @@ if (! $has_input_files) {
                 }
 
             } # Linked-to-file not in parse; maybe is in exception list
-            elsif (! exists $valid_modules{$link->[1]->page}) {
+            elsif (! exists $valid_modules{$link->page}) {
 
                 # Here, is a link to a target that we can't find.  Check if
                 # there is an internal link on the page with the target name.
@@ -1887,7 +2121,8 @@ foreach my $filename (@files) {
                     $diagnostic .= " " if $problem_count == 1;
                     $diagnostic .= "\n$indent$indent";
                     $diagnostic .= "$problem->{parameter}" if $problem->{parameter};
-                    $diagnostic .= " near line $problem->{-line}";
+                    $diagnostic .= " near line $problem->{-line} of "
+                                   . $filename;
                     $diagnostic .= " $problem->{comment}" if $problem->{comment};
                 }
                 $diagnostic .= "\n";
@@ -1925,7 +2160,7 @@ foreach my $filename (@files) {
         }
         ok(@diagnostics == $thankful_diagnostics, $output);
         if (@diagnostics) {
-            note(join "", @diagnostics,
+            diag(join "", @diagnostics,
             "See end of this test output for your options on silencing this");
         }
 
@@ -1957,7 +2192,7 @@ if (%files_with_unknown_issues) {
                         : "were $were_count_files files";
     my $message = <<EOF;
 
-HOW TO GET THIS .t TO PASS
+HOW TO GET ${\__FILE__} TO PASS
 
 There $were_count_files that had new potential problems identified.
 Some of them may be real, and some of them may be false positives because
@@ -1996,9 +2231,9 @@ EOF
    and change the count of known potential problems to -1.
 EOF
 
-    note($message);
+    diag($message);
 } elsif (%files_with_fixes) {
-    note(<<EOF
+    diag(<<EOF
 To teach this test script that the potential problems have been fixed,
 $how_to
 EOF
@@ -2009,3 +2244,5 @@ if ($regen) {
     chdir $original_dir || die "Can't change directories to $original_dir";
     close_and_rename($copy_fh);
 }
+
+1;

@@ -1,4 +1,4 @@
-/* 	$OpenBSD: kern_compat.h,v 1.8 2018/01/14 09:32:09 mpi Exp $ */
+/*	$OpenBSD: kern_compat.h,v 1.9 2019/05/08 14:59:31 bluhm Exp $	*/
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -60,8 +60,8 @@ struct pool {
 #ifndef IPL_NONE
 #define IPL_NONE 0
 #endif
-#define __mtx_enter(_mtx)	/* nothing */
-#define __mtx_leave(_mtx)	/* nothing */
+#define mtx_enter(_mtx)		/* nothing */
+#define mtx_leave(_mtx)		/* nothing */
 
 #define task_add(_tq, _t)	((_t)->t_func((_t)->t_arg))
 

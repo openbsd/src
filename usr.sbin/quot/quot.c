@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.30 2017/09/07 03:24:09 tedu Exp $	*/
+/*	$OpenBSD: quot.c,v 1.32 2018/09/18 03:09:55 millert Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -227,8 +227,8 @@ static struct user *
 user(uid_t uid)
 {
 	int i;
-	struct passwd *pwd;
 	struct user *usr;
+	const char *name;
 
 	while (1) {
 		for (usr = users + (uid&(nusers - 1)), i = nusers;
@@ -237,10 +237,10 @@ user(uid_t uid)
 			if (!usr->name) {
 				usr->uid = uid;
 
-				if (!(pwd = getpwuid(uid)))
+				if ((name = user_from_uid(uid, 1)) == NULL)
 					asprintf(&usr->name, "#%u", uid);
 				else
-					usr->name = strdup(pwd->pw_name);
+					usr->name = strdup(name);
 				if (!usr->name)
 					err(1, "allocate users");
 				return usr;
@@ -368,6 +368,8 @@ douser(int fd, struct fs *super, char *name)
 	struct user *usr, *usrs;
 	union dinode *dp;
 	int n;
+
+	setpassent(1);
 
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 	for (inode = 0; inode < maxino; inode++) {
@@ -572,6 +574,10 @@ main(int argc, char *argv[])
 			}
 		}
 	}
+
+	if (pledge("stdio rpath getpw", NULL) == -1)
+		err(1, "pledge");
+
 	cnt = getmntinfo(&mp, MNT_NOWAIT);
 	if (all) {
 		for (; --cnt >= 0; mp++) {

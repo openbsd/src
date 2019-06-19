@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.7 2018/01/26 16:22:19 kettenis Exp $	*/
+/*	$OpenBSD: exception.S,v 1.9 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: exception.S,v 1.13 2003/10/31 16:30:15 scw Exp $	*/
 
 /*
@@ -46,10 +46,11 @@
  * Based on kate/display/abort.s
  */
 
-#include <machine/asm.h>
-#include <machine/cpu.h>
-#include <machine/frame.h>
 #include "assym.h"
+
+#include <machine/asm.h>
+#include <machine/frame.h>
+#include <arm/armreg.h>
 
 	.text	
 	.align	2
@@ -99,10 +100,6 @@ ASENTRY_NP(swi_entry)
  *	Handler for the Prefetch Abort exception.
  */
 ASENTRY_NP(prefetch_abort_entry)
-#ifdef __XSCALE__
-	nop				/* Make absolutely sure any pending */
-	nop				/* imprecise aborts have occurred. */
-#endif
         sub     lr, lr, #0x00000004     /* Adjust the lr */
 
 	PUSHFRAMEINSVC
@@ -136,10 +133,6 @@ abortprefetchmsg:
  *	Handler for the Data Abort exception.
  */
 ASENTRY_NP(data_abort_entry)
-#ifdef __XSCALE__
-	nop				/* Make absolutely sure any pending */
-	nop				/* imprecise aborts have occurred. */
-#endif
         sub     lr, lr, #0x00000008     /* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push trap frame and switch */

@@ -30,7 +30,7 @@ while (<DATA>) {
     my $f = $1;
     my $file = catfile(curdir(),$inlib,$f);
     push @cleanup, $file;
-    open FH, ">$file" or die $!;
+    open FH, '>', $file or die $!;
   } else {
     print FH;
   }
@@ -40,14 +40,14 @@ close FH;
 {
   my $file = "A-$$";
   push @cleanup, $file;
-  open FH, ">$file" or die $!;
+  open FH, '>', $file or die $!;
   select FH;
   Devel::SelfStubber->stub('xChild', $inlib);
   select STDOUT;
   print "ok 1\n";
   close FH or die $!;
 
-  open FH, $file or die $!;
+  open FH, '<', $file or die $!;
   my @A = <FH>;
 
   if (@A == 1 && $A[0] =~ /^\s*sub\s+xChild::foo\s*;\s*$/) {
@@ -61,14 +61,14 @@ close FH;
 {
   my $file = "B-$$";
   push @cleanup, $file;
-  open FH, ">$file" or die $!;
+  open FH, '>', $file or die $!;
   select FH;
   Devel::SelfStubber->stub('Proto', $inlib);
   select STDOUT;
   print "ok 3\n"; # Checking that we did not die horribly.
   close FH or die $!;
 
-  open FH, $file or die $!;
+  open FH, '<', $file or die $!;
   my @B = <FH>;
 
   if (@B == 1 && $B[0] =~ /^\s*sub\s+Proto::bar\s*\(\$\$\);\s*$/) {
@@ -84,14 +84,14 @@ close FH;
 {
   my $file = "C-$$";
   push @cleanup, $file;
-  open FH, ">$file" or die $!;
+  open FH, '>', $file or die $!;
   select FH;
   Devel::SelfStubber->stub('Attribs', $inlib);
   select STDOUT;
   print "ok 5\n"; # Checking that we did not die horribly.
   close FH or die $!;
 
-  open FH, $file or die $!;
+  open FH, '<', $file or die $!;
   my @C = <FH>;
 
   if (@C == 2 && $C[0] =~ /^\s*sub\s+Attribs::baz\s+:\s*locked\s*;\s*$/
@@ -137,7 +137,7 @@ sub faildump {
 foreach my $module (@module) {
   my $file = "$module--$$";
   push @cleanup, $file;
-  open FH, ">$file" or die $!;
+  open FH, '>', $file or die $!;
   print FH "use $module;
 print ${module}->foo;
 ";
@@ -168,11 +168,11 @@ undef $/;
 foreach my $module (@module, 'Data', 'End') {
   my $file = catfile(curdir(),$lib,"$module.pm");
   my $fileo = catfile(curdir(),$inlib,"$module.pm");
-  open FH, $fileo or die "Can't open $fileo: $!";
+  open FH, '<', $fileo or die "Can't open $fileo: $!";
   my $contents = <FH>;
   close FH or die $!;
   push @cleanup, $file;
-  open FH, ">$file" or die $!;
+  open FH, '>', $file or die $!;
   select FH;
   if ($contents =~ /__DATA__/) {
     # This will die for any module with no  __DATA__
@@ -208,7 +208,7 @@ system "$runperl -w \"-I$lib\" \"-MData\" -e \"Data::ok\"";
 system "$runperl -w \"-I$lib\" \"-MEnd\" -e \"End::lime\"";
 
 # But check that the documentation after the __END__ survived.
-open FH, catfile(curdir(),$lib,"End.pm") or die $!;
+open FH, '<', catfile(curdir(),$lib,"End.pm") or die $!;
 $_ = <FH>;
 close FH or die $!;
 

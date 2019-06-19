@@ -3464,8 +3464,8 @@ output_insn ()
 	      goto check_prefix;
 	    }
 	}
-      else if (i.tm.base_opcode == 0x660f3880 || i.tm.base_opcode == 0x660f3881) {
-        /* invept and invvpid are 3 byte instructions with a
+      else if ((i.tm.base_opcode & ~3) == 0x660f3880) {
+        /* INVEPT, INVVPID, and INVPCID are 3 byte instructions with a
            mandatory prefix. */
         prefix = (i.tm.base_opcode >> 24) & 0xff;
         add_prefix (prefix);
@@ -3508,8 +3508,7 @@ check_prefix:
 	      p = frag_more (3);
 	      *p++ = (i.tm.base_opcode >> 16) & 0xff;
 	    }
-          else if (i.tm.base_opcode == 0x660f3880 ||
-                   i.tm.base_opcode == 0x660f3881)
+          else if ((i.tm.base_opcode & ~3) == 0x660f3880)
 	    {
 	      p = frag_more (3);
 	      *p++ = (i.tm.base_opcode >> 16) & 0xff;

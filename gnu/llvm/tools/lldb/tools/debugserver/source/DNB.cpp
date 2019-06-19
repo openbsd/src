@@ -368,7 +368,7 @@ nub_process_t DNBProcessLaunch(
       if (launch_err.Fail()) {
         const char *launch_err_str = launch_err.AsString();
         if (launch_err_str) {
-          strncpy(err_str, launch_err_str, err_len - 1);
+          strlcpy(err_str, launch_err_str, err_len - 1);
           err_str[err_len - 1] =
               '\0'; // Make sure the error string is terminated
         }
@@ -1426,6 +1426,21 @@ nub_bool_t DNBProcessSharedLibrariesUpdated(nub_process_t pid) {
   return false;
 }
 
+const char *DNBGetDeploymentInfo(nub_process_t pid,
+                                 const struct load_command& lc,
+                                 uint64_t load_command_address,
+                                 uint32_t& major_version,
+                                 uint32_t& minor_version,
+                                 uint32_t& patch_version) {
+  MachProcessSP procSP;
+  if (GetProcessSP(pid, procSP))
+    return procSP->GetDeploymentInfo(lc, load_command_address,
+                                     major_version, minor_version,
+                                     patch_version);
+  return nullptr;
+}
+
+
 //----------------------------------------------------------------------
 // Get the current shared library information for a process. Only return
 // the shared libraries that have changed since the last shared library
@@ -1698,7 +1713,7 @@ nub_bool_t DNBResolveExecutablePath(const char *path, char *resolved_path,
 
   if (realpath(path, max_path)) {
     // Found the path relatively...
-    ::strncpy(resolved_path, max_path, resolved_path_size);
+    ::strlcpy(resolved_path, max_path, resolved_path_size);
     return strlen(resolved_path) + 1 < resolved_path_size;
   } else {
     // Not a relative path, check the PATH environment variable if the
@@ -1722,7 +1737,7 @@ nub_bool_t DNBResolveExecutablePath(const char *path, char *resolved_path,
         result += path;
         struct stat s;
         if (stat(result.c_str(), &s) == 0) {
-          ::strncpy(resolved_path, result.c_str(), resolved_path_size);
+          ::strlcpy(resolved_path, result.c_str(), resolved_path_size);
           return result.size() + 1 < resolved_path_size;
         }
       }

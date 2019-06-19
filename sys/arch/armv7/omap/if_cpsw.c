@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.43 2017/04/30 16:45:45 mpi Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.44 2018/12/24 08:45:57 jsg Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -1285,7 +1285,7 @@ cpsw_get_port_config(struct cpsw_port_config *conf, int pnode)
 {
 	char mode[32];
 	uint32_t phy_id[2];
-	int node;
+	int node, phy_handle, phy_node;
 	int port = 0;
 
 	for (node = OF_child(pnode); node; node = OF_peer(node)) {
@@ -1298,6 +1298,13 @@ cpsw_get_port_config(struct cpsw_port_config *conf, int pnode)
 		if (OF_getpropintarray(node, "phy_id", phy_id,
 		    sizeof(phy_id)) == sizeof(phy_id))
 			conf[port].phy_id = phy_id[1];
+		else if ((phy_handle =
+		    OF_getpropint(node, "phy-handle", 0)) != 0) {
+			phy_node = OF_getnodebyphandle(phy_handle);
+			if (phy_node)
+				conf[port].phy_id = OF_getpropint(phy_node,
+				    "reg", MII_PHY_ANY);
+		}
 
 		if (OF_getprop(node, "phy-mode", mode, sizeof(mode)) > 0 &&
 		    !strcmp(mode, "rgmii"))

@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.180 2018/03/08 08:09:10 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.186 2019/06/07 20:09:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -44,7 +44,7 @@
 struct clients		 clients;
 
 struct tmuxproc		*server_proc;
-static int		 server_fd;
+static int		 server_fd = -1;
 static int		 server_exit;
 static struct event	 server_ev_accept;
 
@@ -144,25 +144,12 @@ fail:
 	return (-1);
 }
 
-/* Server error callback. */
-static enum cmd_retval
-server_start_error(struct cmdq_item *item, void *data)
-{
-	char	*error = data;
-
-	cmdq_error(item, "%s", error);
-	free(error);
-
-	return (CMD_RETURN_NORMAL);
-}
-
 /* Fork new server. */
 int
 server_start(struct tmuxproc *client, struct event_base *base, int lockfd,
     char *lockfile)
 {
 	int		 pair[2];
-	struct job	*job;
 	sigset_t	 set, oldset;
 	struct client	*c;
 	char		*cause = NULL;
@@ -202,7 +189,6 @@ server_start(struct tmuxproc *client, struct event_base *base, int lockfd,
 	RB_INIT(&all_window_panes);
 	TAILQ_INIT(&clients);
 	RB_INIT(&sessions);
-	RB_INIT(&session_groups);
 	key_bindings_init();
 
 	gettimeofday(&start_time, NULL);
@@ -219,22 +205,18 @@ server_start(struct tmuxproc *client, struct event_base *base, int lockfd,
 	}
 
 	if (cause != NULL) {
-		cmdq_append(c, cmdq_get_callback(server_start_error, cause));
+		cmdq_append(c, cmdq_get_error(cause));
+		free(cause);
 		c->flags |= CLIENT_EXIT;
-	}
-
-	start_cfg();
+	} else
+		start_cfg();
 
 	server_add_accept(0);
-
 	proc_loop(server_proc, server_loop);
 
-	LIST_FOREACH(job, &all_jobs, entry) {
-		if (job->pid != -1)
-			kill(job->pid, SIGTERM);
-	}
-
+	job_kill_all();
 	status_prompt_save_history();
+
 	exit(0);
 }
 
@@ -244,7 +226,6 @@ server_loop(void)
 {
 	struct client	*c;
 	u_int		 items;
-	struct job	*job;
 
 	do {
 		items = cmdq_next(NULL);
@@ -277,10 +258,8 @@ server_loop(void)
 	if (!TAILQ_EMPTY(&clients))
 		return (0);
 
-	LIST_FOREACH(job, &all_jobs, entry) {
-		if ((~job->flags & JOB_NOWAIT) && job->state == JOB_RUNNING)
-			return (0);
-	}
+	if (job_still_running())
+		return (0);
 
 	return (1);
 }
@@ -306,7 +285,7 @@ server_send_exit(void)
 	}
 
 	RB_FOREACH_SAFE(s, sessions, &sessions, s1)
-		session_destroy(s, __func__);
+		session_destroy(s, 1, __func__);
 }
 
 /* Update socket execute permissions based on whether sessions are attached. */
@@ -320,7 +299,7 @@ server_update_socket(void)
 
 	n = 0;
 	RB_FOREACH(s, sessions, &sessions) {
-		if (!(s->flags & SESSION_UNATTACHED)) {
+		if (s->attached != 0) {
 			n++;
 			break;
 		}
@@ -383,6 +362,9 @@ void
 server_add_accept(int timeout)
 {
 	struct timeval tv = { timeout, 0 };
+
+	if (server_fd == -1)
+		return;
 
 	if (event_initialized(&server_ev_accept))
 		event_del(&server_ev_accept);
@@ -458,7 +440,6 @@ server_child_exited(pid_t pid, int status)
 {
 	struct window		*w, *w1;
 	struct window_pane	*wp;
-	struct job		*job;
 
 	RB_FOREACH_SAFE(w, windows, &windows, w1) {
 		TAILQ_FOREACH(wp, &w->panes, entry) {
@@ -475,13 +456,7 @@ server_child_exited(pid_t pid, int status)
 			}
 		}
 	}
-
-	LIST_FOREACH(job, &all_jobs, entry) {
-		if (pid == job->pid) {
-			job_died(job, status);	/* might free job */
-			break;
-		}
-	}
+	job_check_died(pid, status);
 }
 
 /* Handle stopped children. */

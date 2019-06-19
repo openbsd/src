@@ -61,8 +61,10 @@ if (!defined $jobs &&
         while (<$fh>) {
             ++$cpus if /^processor\s+:\s+\d+$/;
         }
-    } elsif (-x '/sbin/sysctl') {
-        $cpus =  $1 if `/sbin/sysctl hw.ncpu` =~ /^hw\.ncpu: (\d+)$/;
+    } elsif (-x '/sbin/sysctl' || -x '/usr/sbin/sysctl') {
+        my $sysctl =  '/sbin/sysctl';
+        $sysctl =  "/usr$sysctl" unless -x $sysctl;
+        $cpus =  $1 if `$sysctl hw.ncpu` =~ /^hw\.ncpu: (\d+)$/;
     } elsif (-x '/usr/bin/getconf') {
         $cpus = $1 if `/usr/bin/getconf _NPROCESSORS_ONLN` =~ /^(\d+)$/;
     }

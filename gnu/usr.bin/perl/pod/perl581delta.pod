@@ -120,7 +120,7 @@ by anyone, it has been repurposed.  The behavior that this switch
 enabled in 5.6.x releases may be supported in a transparent,
 data-dependent fashion in a future release.
 
-For the new life of this switch, see L<"UTF-8 no longer default under
+For the new life of this switch, see L</"UTF-8 no longer default under
 UTF-8 locales">, and L<perlrun/-C>.
 
 =head2 (Win32) The /d Switch Of cmd.exe
@@ -559,7 +559,7 @@ to build a Perl for PASE is to use an AIX host as a cross-compilation
 environment.  See README.os400.
 
 Yet another cross-compilation option has been added: now Perl builds
-on OpenZaurus, an Linux distribution based on Mandrake + Embedix for
+on OpenZaurus, a Linux distribution based on Mandrake + Embedix for
 the Sharp Zaurus PDA.  See the Cross/README file.
 
 Tru64 when using gcc 3 drops the optimisation for F<toke.c> to C<-O2>

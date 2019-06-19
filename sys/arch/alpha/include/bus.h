@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.31 2017/05/08 00:27:45 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.32 2019/05/13 21:27:59 mpi Exp $	*/
 /*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
 
 /*
@@ -648,6 +648,7 @@ struct alpha_bus_dmamap {
 	 * Private cookie to be used by the DMA back-end.
 	 */
 	void		*_dm_cookie;
+	size_t		_dm_cookiesize;	/* size allocated for _dm_cookie */
 
 	/*
 	 * The DMA window that we ended up being mapped in.

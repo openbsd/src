@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.46 2016/10/17 02:54:40 lteo Exp $
+.\"	$OpenBSD: pcap.3,v 1.50 2018/12/13 06:47:36 jmc Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: October 17 2016 $
+.Dd $Mdocdate: December 13 2018 $
 .Dt PCAP_OPEN_LIVE 3
 .Os
 .Sh NAME
@@ -78,6 +78,7 @@
 .Nm pcap_set_rfmon ,
 .Nm pcap_set_timeout ,
 .Nm pcap_set_buffer_size ,
+.Nm pcap_set_immediate_mode ,
 .Nm pcap_activate ,
 .Nm pcap_statustostr ,
 .Nm pcap_offline_filter
@@ -107,7 +108,7 @@
 .Ft int
 .Fn pcap_sendpacket "pcap_t *p" "const u_char *buf" "int size"
 .Ft int
-.Fn pcap_compile "pcap_t *p" "struct bpf_program *program" "char *buf" "int optimize" "bpf_u_int32 netmask"
+.Fn pcap_compile "pcap_t *p" "struct bpf_program *program" "const char *buf" "int optimize" "bpf_u_int32 netmask"
 .Ft int
 .Fn pcap_setfilter "pcap_t *p" "struct bpf_program *fp"
 .Ft void
@@ -137,10 +138,10 @@
 .Ft int
 .Fn pcap_get_selectable_fd "pcap_t *p"
 .Ft void
-.Fn pcap_perror "pcap_t *p" "char *prefix"
+.Fn pcap_perror "pcap_t *p" "const char *prefix"
 .Ft "char *"
 .Fn pcap_geterr "pcap_t *p"
-.Ft "char *"
+.Ft "const char *"
 .Fn pcap_strerror "int errnum"
 .Ft void
 .Fn pcap_close "pcap_t *p"
@@ -194,6 +195,8 @@
 .Fn pcap_set_timeout "pcap_t *p" "int timeout_ms"
 .Ft int
 .Fn pcap_set_buffer_size "pcap_t *p" "int buffer_size"
+.Ft int
+.Fn pcap_set_immediate_mode "pcap_t *p" "int immediate"
 .Ft int
 .Fn pcap_activate "pcap_t *p"
 .Ft const char *
@@ -350,9 +353,17 @@ or
 may be used to display the error text.
 .Pp
 .Fn pcap_dump
-outputs a packet to the savefile opened with
-.Fn pcap_dump_open .
-Note that its calling arguments are suitable for use with
+outputs a packet to a save file previously opened using
+.Fn pcap_dump_open
+or
+.Fn pcap_dump_fopen .
+Note that the
+.Fa user
+argument contains the handle to the save file and should be of type
+.Ft "pcap_dumper_t *" .
+This makes
+.Fn pcap_dump
+a suitable callback function for use as an argument to
 .Fn pcap_dispatch .
 .Pp
 .Fn pcap_inject
@@ -532,6 +543,15 @@ datalink types.
 .Fn pcap_setdirection
 is used to limit the direction that packets must be flowing in order
 to be captured.
+The direction is either
+.Dv PCAP_D_INOUT ,
+.Dv PCAP_D_IN
+or
+.Dv PCAP_D_OUT .
+Direction is only relevant to live captures.
+When reading from a dump file,
+.Fn pcap_setdirection
+has no effect.
 .Pp
 .Fn pcap_list_datalinks
 returns an array of the supported datalink types for an opened live capture
@@ -613,6 +633,13 @@ sets the buffer size that will be used on a capture handle when the
 handle is activated to
 .Fa buffer_size ,
 which is in units of bytes.
+.Pp
+.Fn pcap_set_immediate_mode
+sets whether immediate mode should be set on a capture handle when
+the handle is activated.
+If
+.Fa immediate
+is non-zero, immediate mode will be set, otherwise it will not be set.
 .Pp
 .Fn pcap_activate
 is used to activate a packet capture handle to look at

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.37 2017/05/09 09:36:04 mpi Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.38 2018/11/06 07:49:38 otto Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -139,6 +139,8 @@ uvm_loadav(struct loadavg *avg)
 	}
 }
 
+char malloc_conf[16];
+
 /*
  * uvm_sysctl: sysctl hook into UVM system.
  */
@@ -231,6 +233,9 @@ uvm_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case VM_USPACE:
 		return (sysctl_rdint(oldp, oldlenp, newp, USPACE));
 
+	case VM_MALLOC_CONF:
+		return (sysctl_string(oldp, oldlenp, newp, newlen,
+		    malloc_conf, sizeof(malloc_conf)));
 	default:
 		return (EOPNOTSUPP);
 	}

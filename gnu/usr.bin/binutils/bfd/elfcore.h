@@ -176,6 +176,31 @@ elf_core_file_p (bfd *abfd)
   if (i_ehdrp->e_phoff == 0 || i_ehdrp->e_type != ET_CORE)
     goto wrong;
 
+  if (i_ehdrp->e_phnum == PN_XNUM)
+    {
+      Elf_External_Shdr x_shdr;	/* Section header table entry, external form */
+      Elf_Internal_Shdr i_shdr;	/* Section header table, internal form */
+      bfd_signed_vma where = i_ehdrp->e_shoff;
+
+      if (i_ehdrp->e_shoff == 0 || i_ehdrp->e_shnum < 1
+	  || i_ehdrp->e_shentsize != sizeof (x_shdr)
+	  || where != (file_ptr) where)
+	    goto wrong;
+
+      /* Seek to the section header table in the file.  */
+      if (bfd_seek (abfd, (file_ptr) where, SEEK_SET) != 0)
+        goto wrong;
+
+      /* Read the first section header at index 0, and convert to internal
+         form.  */
+      if (bfd_bread (&x_shdr, sizeof x_shdr, abfd) != sizeof (x_shdr))
+        goto wrong;
+      elf_swap_shdr_in (abfd, &x_shdr, &i_shdr);
+      i_ehdrp->e_phnum = i_shdr.sh_info;
+      if (i_ehdrp->e_phnum != i_shdr.sh_info)
+        goto wrong;
+    }
+
   /* Does BFD's idea of the phdr size match the size
      recorded in the file? */
   if (i_ehdrp->e_phentsize != sizeof (Elf_External_Phdr))

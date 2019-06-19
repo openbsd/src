@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.111 2018/02/11 00:27:10 dlg Exp $
+.\"     $OpenBSD: mbuf.9,v 1.118 2018/12/07 08:37:24 claudio Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 11 2018 $
+.Dd $Mdocdate: December 7 2018 $
 .Dt MGET 9
 .Os
 .Sh NAME
@@ -35,7 +35,9 @@
 .Nm MGET ,
 .Nm m_getclr ,
 .Nm m_gethdr ,
+.Nm m_removehdr ,
 .Nm m_resethdr ,
+.Nm m_calchdrlen ,
 .Nm MGETHDR ,
 .Nm m_prepend ,
 .Nm M_PREPEND ,
@@ -58,11 +60,10 @@
 .Nm MCLGET ,
 .Nm MCLGETI ,
 .Nm MEXTADD ,
-.Nm M_ALIGN ,
-.Nm MH_ALIGN ,
+.Nm m_align ,
 .Nm M_READONLY ,
-.Nm M_LEADINGSPACE ,
-.Nm M_TRAILINGSPACE ,
+.Nm m_leadingspace ,
+.Nm m_trailingspace ,
 .Nm mtod ,
 .Nm m_dup_pkt ,
 .Nm m_dup_pkthdr
@@ -79,7 +80,11 @@
 .Ft struct mbuf *
 .Fn m_getclr "int how" "int type"
 .Ft void
+.Fn m_removehdr "struct mbuf *m"
+.Ft void
 .Fn m_resethdr "struct mbuf *m"
+.Ft void
+.Fn m_calchdrlen "struct mbuf *m"
 .Ft struct mbuf *
 .Fn m_gethdr "int how" "int type"
 .Fn MGETHDR "struct mbuf *m" "int how" "int type"
@@ -124,11 +129,13 @@
 .Fn MCLGETI "struct mbuf *m" "int how" "struct ifnet *ifp" "int len"
 .Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int flags" \
 "void (*free)(caddr_t, u_int, void *)" "void *arg"
-.Fn M_ALIGN "struct mbuf *m" "int len"
-.Fn MH_ALIGN "struct mbuf *m" "int len"
+.Ft void
+.Fn m_align "struct mbuf *m" "int len"
 .Fn M_READONLY "struct mbuf *m"
-.Fn M_LEADINGSPACE "struct mbuf *m"
-.Fn M_TRAILINGSPACE "struct mbuf *m"
+.Ft int
+.Fn m_leadingspace "struct mbuf *m"
+.Ft int
+.Fn m_trailingspace "struct mbuf *m"
 .Ft struct mbuf *
 .Fn m_dup_pkt "struct mbuf *m" "u_int adj" "int how"
 .Ft int
@@ -486,11 +493,22 @@ See
 .Fn m_get
 for a description of
 .Fa how .
-.It Fn m_resethdr "struct mbuf *m"
-Deletes all
+.It Fn m_removehdr "struct mbuf *m"
+Convert an mbuf with packet header to one without.
+Delete all
 .Xr pf 4
-data and all tags attached to a
+data and all tags attached to an
 .Fa mbuf .
+Keep the data and mbuf chain, clear the packet header.
+.It Fn m_resethdr "struct mbuf *m"
+Delete all
+.Xr pf 4
+data and all tags attached to an
+.Fa mbuf .
+Keep the data and mbuf chain, initialize the packet header.
+.It Fn m_calchdrlen "struct mbuf *m"
+Set the packet header length to the sum of all length values in the
+mbuf chain.
 .It Fn m_gethdr "int how" "int type"
 Return a pointer to an mbuf of the type specified after initializing
 it to contain a packet header.
@@ -506,7 +524,11 @@ See
 for a description of
 .Fa how .
 .It Fn m_prepend "struct mbuf *m" "int len" "int how"
-Allocate a new mbuf and prepend it to the mbuf chain pointed to by
+Prepend space of size
+.Fa plen
+to the mbuf pointed to by
+.Fa m .
+If necessary allocate a new mbuf and prepend it to the mbuf chain pointed to by
 .Fa m .
 If
 .Fa m
@@ -520,12 +542,6 @@ See
 .Fn m_get
 for a description of
 .Fa how .
-.Pp
-.Fn m_prepend
-should never be called directly.
-Use
-.Fn M_PREPEND
-instead.
 .It Fn M_PREPEND "struct mbuf *m" "int plen" "int how"
 Prepend space of size
 .Fa plen
@@ -729,39 +745,34 @@ Add pre-allocated storage to the mbuf pointed to by
 .Fa m .
 On success, the flag M_EXT is set in the mbuf, and M_EXTWR is specified in
 .Fa flags .
-.It Fn M_ALIGN "struct mbuf *m" "int len"
+.It Fn m_align "struct mbuf *m" "int len"
 Set the
 .Fa m_data
-pointer of the newly allocated mbuf with
-.Fn m_get
-or
-.Fn MGET
-pointed to by
+pointer of the newly allocated mbuf
 .Fa m
 to an object of the specified size
 .Fa len
-at the end of the mbuf, longword aligned.
-.It Fn MH_ALIGN "m" "len"
-Same as
-.Fn M_ALIGN
-except it is for an mbuf allocated with
-.Fn m_gethdr
-or
-.Fn MGETHDR .
+at the end of this mbuf data area, longword aligned.
 .It Fn M_READONLY "struct mbuf *m"
 Check if the data of the mbuf pointed to by
 .Fa m
 is read-only.
 This is true for non-cluster external storage and for clusters that
 are being referenced by more than one mbuf.
-.It Fn M_LEADINGSPACE "struct mbuf *m"
+.It Fn m_leadingspace "struct mbuf *m"
 Compute the amount of space available before the current start of data
 in the mbuf pointed to by
 .Fa m .
-.It Fn M_TRAILINGSPACE "struct mbuf *m"
+If the data of the mbuf pointed to by
+.Fa m
+is read-only then 0 is returned.
+.It Fn m_trailingspace "struct mbuf *m"
 Compute the amount of space available after the end of data in the
 mbuf pointed to by
 .Fa m .
+If the data of the mbuf pointed to by
+.Fa m
+is read-only then 0 is returned.
 .It Fn m_dup_pkt "struct mbuf *m" "u_int adj" "int how"
 Allocate a new mbuf and storage and copy the packet data and header,
 including mbuf tags, from

@@ -1,0 +1,17 @@
+ESC-BS_MDOC(1)              General Commands Manual             ESC-BS_MDOC(1)
+
+NNAAMMEE
+     eesscc--bbss__mmddoocc - escaped backslashes in mdoc(7) code
+
+DDEESSCCRRIIPPTTIIOONN
+     on a text line: prefix\suffix
+
+     in a macro definition: prefix(initial)suffix prefix(later)suffix
+
+     in a string definition: prefix(initial)middle(later)suffix
+
+     in a high-level macro argument: pprreeffiixx((llaatteerr))ssuuffffiixx
+
+     in a user-defined macro argument: {prefix(later)suffix}
+
+OpenBSD                        January 17, 2019                        OpenBSD

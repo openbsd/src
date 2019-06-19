@@ -47,7 +47,7 @@ use vars qw(
              "CPAN/Tarzip.pm",
              "CPAN/Version.pm",
             );
-$VERSION = "5.5005";
+$VERSION = "5.5007";
 # record the initial timestamp for reload.
 $reload = { map {$INC{$_} ? ($_,(stat $INC{$_})[9]) : ()} @relo };
 @CPAN::Shell::ISA = qw(CPAN::Debug);
@@ -174,8 +174,8 @@ Download, Test, Make, Install...
  test     make test (implies make)     readme   display these README files
  install  make install (implies test)  perldoc  display POD documentation
 
-Upgrade
- r        WORDs or /REGEXP/ or NONE    report updates for some/matching/all modules
+Upgrade installed modules
+ r        WORDs or /REGEXP/ or NONE    report updates for some/matching/all
  upgrade  WORDs or /REGEXP/ or NONE    upgrade some/matching/all modules
 
 Pragmas
@@ -517,14 +517,14 @@ sub hosts {
         $s->{dltime} += $dltime;
     }
     my $res;
-    for my $url (keys %{$S{ok}}) {
+    for my $url (sort keys %{$S{ok}}) {
         next if $S{ok}{$url}{dltime} == 0; # div by zero
         push @{$res->{ok}}, [@{$S{ok}{$url}}{qw(n dlsize dltime)},
                              $S{ok}{$url}{dlsize}/$S{ok}{$url}{dltime},
                              $url,
                             ];
     }
-    for my $url (keys %{$S{no}}) {
+    for my $url (sort keys %{$S{no}}) {
         push @{$res->{no}}, [$S{no}{$url},
                              $url,
                             ];
@@ -637,6 +637,10 @@ sub _reload_this {
         }
         CPAN->debug(sprintf("reload file[%s] content[%s...]",$file,substr($content,0,128)))
             if $CPAN::DEBUG;
+        my $includefile;
+        if ($includefile = $INC{$f} and -e $includefile) {
+            $f = $includefile;
+        }
         delete $INC{$f};
         local @INC = @inc;
         eval "require '$f'";
@@ -1019,7 +1023,7 @@ CPAN_VERSION: %s %s
         $need{$module->id}++;
     }
     unless (%need) {
-        if ($what eq "u") {
+        if (!@expand || $what eq "u") {
             $CPAN::Frontend->myprint("No modules found for @args\n");
         } elsif ($what eq "r") {
             $CPAN::Frontend->myprint("All modules are up to date for @args\n");
@@ -1107,7 +1111,7 @@ sub failed {
 sub find_failed {
     my($self,$only_id) = @_;
     my @failed;
-  DIST: for my $d ($CPAN::META->all_objects("CPAN::Distribution")) {
+  DIST: for my $d (sort { $a->id cmp $b->id } $CPAN::META->all_objects("CPAN::Distribution")) {
         my $failed = "";
       NAY: for my $nosayer ( # order matters!
                             "unwrapped",

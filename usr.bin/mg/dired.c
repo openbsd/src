@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.83 2016/10/07 00:17:20 jsg Exp $	*/
+/*	$OpenBSD: dired.c,v 1.84 2018/12/30 23:09:58 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -16,7 +16,6 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <libgen.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdarg.h>

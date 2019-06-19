@@ -1,15 +1,16 @@
-# $Id: encoding.pm,v 2.17 2015/09/15 13:53:27 dankogai Exp dankogai $
+# $Id: encoding.pm,v 2.22 2018/02/11 05:32:03 dankogai Exp $
 package encoding;
-our $VERSION = sprintf "%d.%02d", q$Revision: 2.17 $ =~ /(\d+)/g;
+our $VERSION = sprintf "%d.%02d", q$Revision: 2.22 $ =~ /(\d+)/g;
 
 use Encode;
 use strict;
 use warnings;
+use Config;
 
 use constant {
     DEBUG => !!$ENV{PERL_ENCODE_DEBUG},
     HAS_PERLIO => eval { require PerlIO::encoding; PerlIO::encoding->VERSION(0.02) },
-    PERL_5_21_7 => $^V && $^V ge v5.21.7,
+    PERL_5_21_7 => $^V && $^V ge v5.21.7, # lexically scoped
 };
 
 sub _exception {
@@ -114,10 +115,10 @@ sub import {
         Carp::croak("encoding: pragma does not support EBCDIC platforms");
     }
 
-    if ($] >= 5.017) {
-	warnings::warnif("deprecated",
-			 "Use of the encoding pragma is deprecated")
-    }
+    my $deprecate =
+        ($] >= 5.017 and !$Config{usecperl})
+        ? "Use of the encoding pragma is deprecated" : 0;
+
     my $class = shift;
     my $name  = shift;
     if (!$name){
@@ -133,6 +134,7 @@ sub import {
         return;
     }
     $name = _get_locale_encoding() if $name eq ':locale';
+    BEGIN { strict->unimport('hashpairs') if $] >= 5.027 and $^V =~ /c$/; }
     my %arg = @_;
     $name = $ENV{PERL_ENCODING} unless defined $name;
     my $enc = find_encoding($name);
@@ -142,6 +144,12 @@ sub import {
     }
     $name = $enc->name;    # canonize
     unless ( $arg{Filter} ) {
+        if ($] >= 5.025003 and !$Config{usecperl}) {
+            require Carp;
+            Carp::croak("The encoding pragma is no longer supported. Check cperl");
+        }
+        warnings::warnif("deprecated",$deprecate) if $deprecate;
+
         DEBUG and warn "_exception($name) = ", _exception($name);
         if (! _exception($name)) {
             if (!PERL_5_21_7) {
@@ -155,16 +163,20 @@ sub import {
                 ${^E_NCODING} = $enc;
             }
         }
-        HAS_PERLIO or return 1;
+        if (! HAS_PERLIO ) {
+            return 1;
+        }
     }
     else {
+        warnings::warnif("deprecated",$deprecate) if $deprecate;
+
         defined( ${^ENCODING} ) and undef ${^ENCODING};
         undef ${^E_NCODING} if PERL_5_21_7;
 
         # implicitly 'use utf8'
         require utf8;      # to fetch $utf8::hint_bits;
         $^H |= $utf8::hint_bits;
-        eval {
+
             require Filter::Util::Call;
             Filter::Util::Call->import;
             filter_add(
@@ -177,8 +189,6 @@ sub import {
                     $status;
                 }
             );
-        };
-        $@ eq '' and DEBUG and warn "Filter installed";
     }
     defined ${^UNICODE} and ${^UNICODE} != 0 and return 1;
     for my $h (qw(STDIN STDOUT)) {
@@ -188,19 +198,13 @@ sub import {
                 Carp::croak(
                     "encoding: Unknown encoding for $h, '$arg{$h}'");
             }
-            eval { binmode( $h, ":raw :encoding($arg{$h})" ) };
+            binmode( $h, ":raw :encoding($arg{$h})" );
         }
         else {
             unless ( exists $arg{$h} ) {
-                eval {
                     no warnings 'uninitialized';
                     binmode( $h, ":raw :encoding($name)" );
-                };
             }
-        }
-        if ($@) {
-            require Carp;
-            Carp::croak($@);
         }
     }
     return 1;    # I doubt if we need it, though
@@ -280,6 +284,10 @@ Old code should be converted to UTF-8, via something like the recipe in the
 L</SYNOPSIS> (though this simple approach may require manual adjustments
 afterwards).
 
+If UTF-8 is not an option, it is recommended that one use a simple source
+filter, such as that provided by L<Filter::Encoding> on CPAN or this
+pragma's own C<Filter> option (see below).
+
 The only legitimate use of this pragma is almost certainly just one per file,
 near the top, with file scope, as the file is likely going to only be written
 in one encoding.  Further restrictions apply in Perls before v5.22 (see
@@ -290,6 +298,9 @@ There are two basic modes of operation (plus turning if off):
 =over 4
 
 =item C<use encoding ['I<ENCNAME>'] ;>
+
+Please note: This mode of operation is no longer supported as of Perl
+v5.26.
 
 This is the normal operation.  It translates various literals encountered in
 the Perl source file from the encoding I<ENCNAME> into UTF-8, and similarly
@@ -352,7 +363,7 @@ Note that C<STDERR> WILL NOT be changed, regardless.
 Also note that non-STD file handles remain unaffected.  Use C<use
 open> or C<binmode> to change the layers of those.
 
-=item C<use encoding I<ENCNAME> Filter=E<gt>1;>
+=item C<use encoding I<ENCNAME>, Filter=E<gt>1;>
 
 This operates as above, but the C<Filter> argument with a non-zero
 value causes the entire script, and not just literals, to be translated from

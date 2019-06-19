@@ -4,7 +4,6 @@ use strict;
 
 use POSIX ':math_h_c99';
 use POSIX ':nan_payload';
-use POSIX 'lround';
 use Test::More;
 
 use Config;
@@ -60,8 +59,14 @@ SKIP: {
     skip "no fpclassify", 4 unless $Config{d_fpclassify};
     is(fpclassify(1), FP_NORMAL, "fpclassify 1");
     is(fpclassify(0), FP_ZERO, "fpclassify 0");
-    is(fpclassify(INFINITY), FP_INFINITE, "fpclassify INFINITY");
-    is(fpclassify(NAN), FP_NAN, "fpclassify NAN");
+    SKIP: {
+        skip("no inf", 1) unless $Config{d_double_has_inf};
+        is(fpclassify(INFINITY), FP_INFINITE, "fpclassify INFINITY");
+    }
+    SKIP: {
+        skip("no nan", 1) unless $Config{d_double_has_nan};
+        is(fpclassify(NAN), FP_NAN, "fpclassify NAN");
+    }
 }
 
 sub near {
@@ -97,30 +102,42 @@ SKIP: {
     is(ilogb(255), 7, "ilogb 255");
     is(ilogb(256), 8, "ilogb 256");
     ok(isfinite(1), "isfinite 1");
-    ok(!isfinite(Inf), "isfinite Inf");
-    ok(!isfinite(NaN), "isfinite NaN");
-    ok(isinf(INFINITY), "isinf INFINITY");
-    ok(isinf(Inf), "isinf Inf");
-    ok(!isinf(NaN), "isinf NaN");
     ok(!isinf(42), "isinf 42");
-    ok(isnan(NAN), "isnan NAN");
-    ok(isnan(NaN), "isnan NaN");
-    ok(!isnan(Inf), "isnan Inf");
     ok(!isnan(42), "isnan Inf");
-    cmp_ok(nan(), '!=', nan(), 'nan');
+  SKIP: {
+      skip("no inf", 4) unless $Config{d_double_has_inf};
+      ok(!isfinite(Inf), "isfinite Inf");
+      ok(isinf(INFINITY), "isinf INFINITY");
+      ok(isinf(Inf), "isinf Inf");
+      ok(!isnan(Inf), "isnan Inf");
+    }
+  SKIP: {
+      skip("no nan", 5) unless $Config{d_double_has_nan};
+      ok(!isfinite(NaN), "isfinite NaN");
+      ok(!isinf(NaN), "isinf NaN");
+      ok(isnan(NAN), "isnan NAN");
+      ok(isnan(NaN), "isnan NaN");
+      cmp_ok(nan(), '!=', nan(), 'nan');
+    }
     near(log1p(2), 1.09861228866811, "log1p", 1e-9);
     near(log1p(1e-6), 9.99999500000333e-07, "log1p", 1e-9);
     near(log2(8), 3, "log2", 1e-9);
     is(signbit(2), 0, "signbit 2"); # zero
     ok(signbit(-2), "signbit -2"); # non-zero
+    is(signbit(0), 0, "signbit 0"); # zero
+    is(signbit(0.5), 0, "signbit 0.5"); # zero
+    ok(signbit(-0.5), "signbit -0.5"); # non-zero
     is(round(2.25), 2, "round 2.25");
     is(round(-2.25), -2, "round -2.25");
     is(round(2.5), 3, "round 2.5");
     is(round(-2.5), -3, "round -2.5");
     is(round(2.75), 3, "round 2.75");
     is(round(-2.75), -3, "round 2.75");
-    is(lround(-2.75), -3, "lround -0.25");
-    is(signbit(lround(-0.25)), 0, "lround -0.25 -> +0"); # unlike round()
+    is(lround(-2.75), -3, "lround -2.75");
+    is(lround(-0.25), 0, "lround -0.25");
+    is(lround(-0.50), -1, "lround -0.50");
+    is(signbit(lround(-0.25)), 0, "signbit lround -0.25 zero");
+    ok(signbit(lround(-0.50)), "signbit lround -0.50 non-zero"); # non-zero
     is(trunc(2.25), 2, "trunc 2.25");
     is(trunc(-2.25), -2, "trunc -2.25");
     is(trunc(2.5), 2, "trunc 2.5");
@@ -130,10 +147,14 @@ SKIP: {
     ok(isless(1, 2), "isless 1 2");
     ok(!isless(2, 1), "isless 2 1");
     ok(!isless(1, 1), "isless 1 1");
-    ok(!isless(1, NaN), "isless 1 NaN");
     ok(isgreater(2, 1), "isgreater 2 1");
     ok(islessequal(1, 1), "islessequal 1 1");
-    ok(isunordered(1, NaN), "isunordered 1 NaN");
+
+  SKIP: {
+      skip("no nan", 2) unless $Config{d_double_has_nan};
+      ok(!isless(1, NaN), "isless 1 NaN");
+      ok(isunordered(1, NaN), "isunordered 1 NaN");
+    }
 
     near(erf(0.5), 0.520499877813047, "erf 0.5", 1.5e-7);
     near(erf(1), 0.842700792949715, "erf 1", 1.5e-7);
@@ -151,66 +172,70 @@ SKIP: {
     near(lgamma(5.5), 3.95781396761872, "lgamma 5.5", 1.5e-7);
     near(lgamma(9), 10.6046029027452, "lgamma 9", 1.5e-7);
 
-    # These don't work on old mips/hppa platforms because == Inf (or == -Inf).
-    # ok(isnan(setpayload(0)), "setpayload zero");
-    # is(getpayload(setpayload(0)), 0, "setpayload + getpayload (zero)");
-    #
-    # These don't work on most platforms because == Inf (or == -Inf).
-    # ok(isnan(setpayloadsig(0)), "setpayload zero");
-    # is(getpayload(setpayloadsig(0)), 0, "setpayload + getpayload (zero)");
-
-    # Verify that the payload set be setpayload()
-    # (1) still is a nan
-    # (2) but the payload can be retrieved
-    # (3) but is not signaling
-    my $x = 0;
-    setpayload($x, 0x12345);
-    ok(isnan($x), "setpayload + isnan");
-    is(getpayload($x), 0x12345, "setpayload + getpayload");
-    ok(!issignaling($x), "setpayload + issignaling");
-
-    # Verify that the signaling payload set be setpayloadsig()
-    # (1) still is a nan
-    # (2) but the payload can be retrieved
-    # (3) and is signaling
-    setpayloadsig($x, 0x12345);
-    ok(isnan($x), "setpayloadsig + isnan");
-    is(getpayload($x), 0x12345, "setpayloadsig + getpayload");
   SKIP: {
-      # https://rt.perl.org/Ticket/Display.html?id=125710
-      # In the 32-bit x86 ABI cannot preserve the signaling bit
-      # (the x87 simply does not preserve that).  But using the
-      # 80-bit extended format aka long double, the bit is preserved.
-      # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57484
-      my $could_be_x86_32 =
-          # This is a really weak test: there are other 32-bit
-          # little-endian platforms than just Intel (some embedded
-          # processors, for example), but we use this just for not
-          # bothering with the test if things look iffy.
-          # We could, say, $Config{ccsymbols} =~ /\b__[xi][3-7]86=1\b/,
-          # but that feels quite shaky.
-          $Config{byteorder} =~ /1234/ &&
-          $Config{longdblkind} == 3 &&
-          $Config{ptrsize} == 4;
-      skip($^O, 1) if $could_be_x86_32 && !$Config{uselongdouble};
-      ok(issignaling($x), "setpayloadsig + issignaling");
-    }
+      skip("no inf/nan", 19) unless $Config{d_double_has_inf} && $Config{d_double_has_nan};
 
-    # Try a payload more than one byte.
-    is(getpayload(nan(0x12345)), 0x12345, "nan + getpayload");
+      # These don't work on old mips/hppa platforms
+      # because nan with payload zero == Inf (or == -Inf).
+      # ok(isnan(setpayload(0)), "setpayload zero");
+      # is(getpayload(setpayload(0)), 0, "setpayload + getpayload (zero)");
+      #
+      # These don't work on most platforms because == Inf (or == -Inf).
+      # ok(isnan(setpayloadsig(0)), "setpayload zero");
+      # is(getpayload(setpayloadsig(0)), 0, "setpayload + getpayload (zero)");
 
-    # Try payloads of 2^k, most importantly at and beyond 2^32.  These
-    # tests will fail if NV is just 32-bit float, but that Should Not
-    # Happen (tm).
-    is(getpayload(nan(2**31)), 2**31, "nan + getpayload 2**31");
-    is(getpayload(nan(2**32)), 2**32, "nan + getpayload 2**32");
-    is(getpayload(nan(2**33)), 2**33, "nan + getpayload 2**33");
+      # Verify that the payload set be setpayload()
+      # (1) still is a nan
+      # (2) but the payload can be retrieved
+      # (3) but is not signaling
+      my $x = 0;
+      setpayload($x, 0x12345);
+      ok(isnan($x), "setpayload + isnan");
+      is(getpayload($x), 0x12345, "setpayload + getpayload");
+      ok(!issignaling($x), "setpayload + issignaling");
 
-    # Payloads just lower than 2^k.
-    is(getpayload(nan(2**31-1)), 2**31-1, "nan + getpayload 2**31-1");
-    is(getpayload(nan(2**32-1)), 2**32-1, "nan + getpayload 2**32-1");
+      # Verify that the signaling payload set be setpayloadsig()
+      # (1) still is a nan
+      # (2) but the payload can be retrieved
+      # (3) and is signaling
+      setpayloadsig($x, 0x12345);
+      ok(isnan($x), "setpayloadsig + isnan");
+      is(getpayload($x), 0x12345, "setpayloadsig + getpayload");
+    SKIP: {
+        # https://rt.perl.org/Ticket/Display.html?id=125710
+        # In the 32-bit x86 ABI cannot preserve the signaling bit
+        # (the x87 simply does not preserve that).  But using the
+        # 80-bit extended format aka long double, the bit is preserved.
+        # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57484
+        my $could_be_x86_32 =
+            # This is a really weak test: there are other 32-bit
+            # little-endian platforms than just Intel (some embedded
+            # processors, for example), but we use this just for not
+            # bothering with the test if things look iffy.
+            # We could, say, $Config{ccsymbols} =~ /\b__[xi][3-7]86=1\b/,
+            # but that feels quite shaky.
+            $Config{byteorder} =~ /1234/ &&
+            $Config{longdblkind} == 3 &&
+            $Config{ptrsize} == 4;
+        skip($^O, 1) if $could_be_x86_32 && !$Config{uselongdouble};
+        ok(issignaling($x), "setpayloadsig + issignaling");
+      }
 
-    # Payloads not divisible by two (and larger than 2**32).
+      # Try a payload more than one byte.
+      is(getpayload(nan(0x12345)), 0x12345, "nan + getpayload");
+
+      # Try payloads of 2^k, most importantly at and beyond 2^32.  These
+      # tests will fail if NV is just 32-bit float, but that Should Not
+      # Happen (tm).
+      is(getpayload(nan(2**31)), 2**31, "nan + getpayload 2**31");
+      is(getpayload(nan(2**32)), 2**32, "nan + getpayload 2**32");
+      is(getpayload(nan(2**33)), 2**33, "nan + getpayload 2**33");
+
+      # Payloads just lower than 2^k.
+      is(getpayload(nan(2**31-1)), 2**31-1, "nan + getpayload 2**31-1");
+      is(getpayload(nan(2**32-1)), 2**32-1, "nan + getpayload 2**32-1");
+
+      # Payloads not divisible by two (and larger than 2**32).
 
     SKIP: {
         # solaris gets 10460353202 from getpayload() when it should
@@ -231,17 +256,18 @@ SKIP: {
         # probably just by blind luck.
         skip($^O, 1) if $^O eq 'solaris';
         is(getpayload(nan(3**21)), 3**21, "nan + getpayload 3**21");
+      }
+      is(getpayload(nan(4294967311)), 4294967311, "nan + getpayload prime");
+
+      # Truncates towards zero.
+      is(getpayload(nan(1234.567)), 1234, "nan (trunc) + getpayload");
+
+      # Not signaling.
+      ok(!issignaling(0), "issignaling zero");
+      ok(!issignaling(+Inf), "issignaling +Inf");
+      ok(!issignaling(-Inf), "issignaling -Inf");
+      ok(!issignaling(NaN), "issignaling NaN");
     }
-    is(getpayload(nan(4294967311)), 4294967311, "nan + getpayload prime");
-
-    # Truncates towards zero.
-    is(getpayload(nan(1234.567)), 1234, "nan (trunc) + getpayload");
-
-    # Not signaling.
-    ok(!issignaling(0), "issignaling zero");
-    ok(!issignaling(+Inf), "issignaling +Inf");
-    ok(!issignaling(-Inf), "issignaling -Inf");
-    ok(!issignaling(NaN), "issignaling NaN");
 } # SKIP
 
 done_testing();

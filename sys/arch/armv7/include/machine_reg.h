@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine_reg.h,v 1.2 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: machine_reg.h,v 1.3 2019/05/06 03:34:43 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of Genetec Corporation may not be used to endorse or 
+ * 3. The name of Genetec Corporation may not be used to endorse or
  *    promote products derived from this software without specific prior
  *    written permission.
  *

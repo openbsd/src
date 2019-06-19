@@ -19,7 +19,7 @@ my $N = 1;
 use Tie::File;
 print "ok $N\n"; $N++;
 
-open F, "> $file" or die $!;
+open F, '>', $file or die $!;
 binmode F;
 print F $data;
 close F;
@@ -89,7 +89,7 @@ check_contents(join $:, "r0".."r2", "", "r4".."r6", "");
 # 
 undef $o;  untie @a;
 $data = join "$:", map("record$_", 0..7), "";  # records are 8 or 9 bytes long
-open F, "> $file" or die $!;
+open F, '>', $file or die $!;
 binmode F;
 print F $data;
 close F;
@@ -221,7 +221,7 @@ check_contents(join("$:", qw(recordF recordB recordC
 undef $o;
 untie @a;
 # (79) We can't use check_contents any more, because the object is dead
-open F, "< $file" or die;
+open F, '<', $file or die;
 binmode F;
 { local $/ ; $z = <F> }
 close F;

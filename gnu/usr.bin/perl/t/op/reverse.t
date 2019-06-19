@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan tests => 23;
+plan tests => 24;
 
 is(reverse("abc"), "cba", 'simple reverse');
 
@@ -91,3 +91,8 @@ use Tie::Array;
     my $c = scalar reverse($b);
     is($a, $c, 'Unicode string double reversal matches original');
 }
+
+# [perl #132544] stack pointer used to go wild when nullary reverse
+# required extending the stack
+for(0..1000){()=(0..$_,scalar reverse )}
+pass "extending the stack without crashing";

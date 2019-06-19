@@ -1,4 +1,4 @@
-#	$OpenBSD: ksh.kshrc,v 1.31 2018/02/18 21:48:00 kn Exp $
+#	$OpenBSD: ksh.kshrc,v 1.32 2018/05/16 14:01:41 mpf Exp $
 #
 # NAME:
 #	ksh.kshrc - global initialization for ksh
@@ -57,7 +57,7 @@ case "$-" in
 
 	set -o emacs
 
-	alias ls='ls -CF'
+	alias ls='ls -F'
 	alias h='fc -l | more'
 
 	case "$TERM" in

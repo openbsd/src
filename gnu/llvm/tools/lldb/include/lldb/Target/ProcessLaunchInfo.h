@@ -107,17 +107,22 @@ public:
     return m_monitor_callback;
   }
 
+  /// A Monitor callback which does not take any action on process events. Use
+  /// this if you don't need to take any particular action when the process
+  /// terminates, but you still need to reap it.
+  static bool NoOpMonitorCallback(lldb::pid_t pid, bool exited, int signal,
+                                  int status);
+
   bool GetMonitorSignals() const { return m_monitor_signals; }
 
   // If the LaunchInfo has a monitor callback, then arrange to monitor the
-  // process.
-  // Return true if the LaunchInfo has taken care of monitoring the process, and
-  // false if the
-  // caller might want to monitor the process themselves.
+  // process. Return true if the LaunchInfo has taken care of monitoring the
+  // process, and false if the caller might want to monitor the process
+  // themselves.
 
   bool MonitorProcess() const;
 
-  lldb_utility::PseudoTerminal &GetPTY() { return *m_pty; }
+  PseudoTerminal &GetPTY() { return *m_pty; }
 
   // Get and set the actual listener that will be used for the process events
   lldb::ListenerSP GetListener() const { return m_listener_sp; }
@@ -150,7 +155,7 @@ protected:
   FileSpec m_shell;
   Flags m_flags; // Bitwise OR of bits from lldb::LaunchFlags
   std::vector<FileAction> m_file_actions; // File actions for any other files
-  std::shared_ptr<lldb_utility::PseudoTerminal> m_pty;
+  std::shared_ptr<PseudoTerminal> m_pty;
   uint32_t m_resume_count; // How many times do we resume after launching
   Host::MonitorChildProcessCallback m_monitor_callback;
   void *m_monitor_callback_baton;

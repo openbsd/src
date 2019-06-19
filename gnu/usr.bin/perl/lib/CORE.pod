@@ -49,10 +49,8 @@ ampersand syntax and through references does not work for the following
 functions, as they have special syntax that cannot always be translated
 into a simple list (e.g., C<eof> vs C<eof()>):
 
-C<chdir>, C<chomp>, C<chop>, C<defined>, C<delete>, C<each>,
-C<eof>, C<exec>, C<exists>, C<keys>, C<lstat>, C<pop>, C<push>,
-C<shift>, C<splice>, C<split>, C<stat>, C<system>, C<truncate>,
-C<unlink>, C<unshift>, C<values>
+C<chdir>, C<chomp>, C<chop>, C<defined>, C<delete>, C<eof>, C<exec>,
+C<exists>, C<lstat>, C<split>, C<stat>, C<system>, C<truncate>, C<unlink>
 
 =head1 OVERRIDING CORE FUNCTIONS
 

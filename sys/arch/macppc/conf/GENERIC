@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.264 2018/02/14 23:51:49 jsg Exp $g
+#	$OpenBSD: GENERIC,v 1.268 2019/05/08 23:54:39 kettenis Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -223,6 +223,10 @@ umct*	at uhub?		# MCT USB-RS232 serial adapter
 ucom*	at umct?
 uslcom*	at uhub?		# Silicon Laboratories CP210x serial
 ucom*	at uslcom?
+uscom*	at uhub?		# Simple USB serial adapters
+ucom*	at uscom?
+ucrcom*	at uhub?		# Chromebook serial
+ucom*	at ucrcom?
 uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
 moscom*	at uhub?		# MosChip MCS7703 serial
@@ -262,6 +266,7 @@ aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 axen*	at uhub?		# ASIX Electronics AX88179 USB Ethernet
+bwfm*	at uhub?		# Broadcom FullMAC
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 smsc*	at uhub?		# SMSC LAN95xx Ethernet
@@ -290,7 +295,7 @@ zyd*	at uhub?		# Zydas ZD1211
 upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 urtw*	at uhub?		# Realtek 8187
 udcf*	at uhub?		# Gude Expert mouseCLOCK
-umbg*	at uhub?		# Meinberg Funkuhren USB5131
+umbg*	at uhub?		# Meinberg Funkuhren USB5131/DCF600USB
 uthum*	at uhidev?		# TEMPerHUM sensor
 ugold*	at uhidev?		# gold TEMPer sensor
 utrh*	at uhidev?		# USBRH sensor

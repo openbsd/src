@@ -5,7 +5,7 @@
 #
 
 SRCDIR     = ..
-PV         = 524
+PV         = 528
 
 # INSTALL_ROOT specifies a path where this perl will be installed on CE device
 INSTALL_ROOT=/netzwerk/sprache/perl
@@ -35,6 +35,12 @@ CCLIBDIR	= $(CCHOME)\lib
 
 # cecopy program. Make shure it is in your path, as well as cemkdir, cedel
 CECOPY     = cecopy
+
+#
+# comment this out if you want the legacy default behavior of including '.' at
+# the end of @INC.
+#
+DEFAULT_INC_EXCLUDES_DOT = define
 
 #
 # set this if you wish to use perl's malloc
@@ -438,6 +444,10 @@ CRYPT_FLAG	= -DHAVE_DES_FCRYPT
 PERL_MALLOC	= undef
 !ENDIF
 
+!IF "$(DEFAULT_INC_EXCLUDES_DOT)" == ""
+DEFAULT_INC_EXCLUDES_DOT = undef
+!ENDIF
+
 !IF "$(USE_MULTI)" == ""
 USE_MULTI	= undef
 !ENDIF
@@ -754,6 +764,7 @@ CFG_VARS = \
  "usemultiplicity=$(USE_MULTI)" \
  "use64bitint=undef" \
  "uselargefiles=undef" \
+ "default_inc_excludes_dot=$(DEFAULT_INC_EXCLUDES_DOT)" \
  "LINK_FLAGS=$(LDLIBPATH) $(LINK_FLAGS) $(SUBSYS)" \
  "optimize=$(OPTIMIZE)" \
  "WIN64=$(WIN64)"
@@ -769,7 +780,7 @@ XSUBPP		= $(HPERL) -I..\..\lib ..\$(EXTUTILSDIR)\xsubpp \
 # Top targets
 #
 
-all: hostminiperl force_config_h ..\lib\buildcustomize.pl .\config.h ..\git_version.h $(CONFIGPM) $(UNIDATAFILES) $(PERLEXE) MakePPPort Extensions
+all: hostminiperl force_config_h ..\lib\buildcustomize.pl .\config.h ..\git_version.h $(CONFIGPM) $(UNIDATAFILES) $(PERLEXE) MakePPPort Extensions PostExt
 
 $(DYNALOADER)$(o) : $(DYNALOADER).c config.h $(EXTDIR)\DynaLoader\dlutils.c
 
@@ -845,6 +856,14 @@ Extensions_nonxs: ..\make_ext.pl ..\lib\buildcustomize.pl $(CONFIGPM) ..\pod\per
 
 Extensions_clean:
 	-if exist $(HPERL) $(HPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR)  --all --target=clean 
+
+PostExt: rebuild_storable
+
+rebuild_storable: $(PERLEXE)
+	$(PERLEXE) -I..\lib -I. ..\dist\Storable\stacksize --core
+	cd ..\dist\Storable
+	$(MAKE) PERL_CORE=1
+	cd ..\..\win32
 
 #----------------------------------------------------------------------------------
 

@@ -13,7 +13,7 @@ use warnings;                   # enable optional warnings
 
 use Test::More tests => 4 * 2;
 
-use Math::BigFloat;
+use Math::BigFloat only => 'Calc';
 use Math::BigInt;
 
 my $mbf = "Math::BigFloat";

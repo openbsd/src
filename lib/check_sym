@@ -1,5 +1,5 @@
 #!/bin/ksh
-#  $OpenBSD: check_sym,v 1.5 2017/08/11 17:58:21 guenther Exp $
+#  $OpenBSD: check_sym,v 1.6 2019/04/21 04:21:44 guenther Exp $
 #
 # Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
 #
@@ -35,9 +35,9 @@
 #
 #	The shared libraries to compare can be specified on the
 #	command-line.  Otherwise, check_sym expects to be run from the
-#	source directory of a library, with a shlib_version file specifying
+#	source directory of a library with a shlib_version file specifying
 #	the version being built and the new library in the obj subdirectory.
-#	If the old library to compare against, wasn't specified either then
+#	If the old library to compare against wasn't specified either then
 #	check_sym will take the highest version of that library in the
 #	*current* directory, or the highest version of that library in
 #	/usr/lib if it wasn't present in the current directory.

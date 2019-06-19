@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.36 2015/12/29 19:04:46 gsoares Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.37 2018/09/28 18:21:52 mestre Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -163,9 +163,7 @@ main(int argc, char **argv)
 	const char *outfile = NULL;
 	char **diffargv, *diffprog = "diff", *filename1, *filename2,
 	    *tmp1, *tmp2, *s1, *s2;
-
-	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
-		err(2, "pledge");
+	unsigned int Fflag = 0;
 
 	/*
 	 * Process diff flags.
@@ -206,6 +204,7 @@ main(int argc, char **argv)
 			break;
 		case 'F':
 			diffargv[0] = diffprog = optarg;
+			Fflag = 1;
 			break;
 		case 'H':
 			diffargv[diffargc++] = "-H";
@@ -261,6 +260,21 @@ main(int argc, char **argv)
 
 	filename1 = argv[0];
 	filename2 = argv[1];
+
+	if (!Fflag) {
+		if (unveil(filename1, "r") == -1)
+			err(2, "unveil");
+		if (unveil(filename2, "r") == -1)
+			err(2, "unveil");
+		if (unveil(tmpdir, "rwc") == -1)
+			err(2, "unveil");
+		if (unveil("/usr/bin/diff", "x") == -1)
+			err(2, "unveil");
+		if (unveil(_PATH_BSHELL, "x") == -1)
+			err(2, "unveil");
+	}
+	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1)
+		err(2, "pledge");
 
 	/*
 	 * Create temporary files for diff and sdiff to share if file1

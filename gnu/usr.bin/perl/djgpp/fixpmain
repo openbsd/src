@@ -5,8 +5,8 @@
 
 use Config;
 
-open (PERLM,"<perlmain.c") or die "Can't load perlmain.c: $!";
-open (MAKEFILE,"<makefile.pl") or die "Can't load makefile.pl: $!";
+open (PERLM, '<', 'perlmain.c') or die "Can't load perlmain.c: $!";
+open (MAKEFILE, '<', 'makefile.pl') or die "Can't load makefile.pl: $!";
 undef $/;
 $perlmain=<PERLM>;
 $makefile=<MAKEFILE>;
@@ -29,5 +29,5 @@ for $realname (@exts)
 #DynaLoader is special
 $perlmain =~ s/(DynaLoader:\:boot)strap/$1_DynaLoader/gm;
 
-open (PERLM,">perlmain.c") or die "Can't write perlmain.c: $!";
+open (PERLM, '>', 'perlmain.c') or die "Can't write perlmain.c: $!";
 print PERLM $perlmain;

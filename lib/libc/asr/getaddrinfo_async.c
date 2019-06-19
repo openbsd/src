@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.54 2017/02/27 10:44:46 jca Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.56 2018/11/03 09:13:24 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -60,7 +60,7 @@ static const struct match matches[] = {
 
 #define MATCH_FAMILY(a, b) ((a) == matches[(b)].family || (a) == PF_UNSPEC)
 #define MATCH_PROTO(a, b) ((a) == matches[(b)].protocol || (a) == 0 || matches[(b)].protocol == 0)
-/* Do not match SOCK_RAW unless explicitely specified */
+/* Do not match SOCK_RAW unless explicitly specified */
 #define MATCH_SOCKTYPE(a, b) ((a) == matches[(b)].socktype || ((a) == 0 && \
 				matches[(b)].socktype != SOCK_RAW))
 
@@ -467,7 +467,7 @@ get_port(const char *servname, const char *proto, int numonly)
 {
 	struct servent		se;
 	struct servent_data	sed;
-	int			port, r;
+	int			port;
 	const char		*e;
 
 	if (servname == NULL)
@@ -482,13 +482,11 @@ get_port(const char *servname, const char *proto, int numonly)
 	if (numonly)
 		return (-2);
 
+	port = -1;
 	memset(&sed, 0, sizeof(sed));
-	r = getservbyname_r(servname, proto, &se, &sed);
-	port = ntohs(se.s_port);
+	if (getservbyname_r(servname, proto, &se, &sed) != -1)
+		port = ntohs(se.s_port);
 	endservent_r(&sed);
-
-	if (r == -1)
-		return (-1); /* not found */
 
 	return (port);
 }

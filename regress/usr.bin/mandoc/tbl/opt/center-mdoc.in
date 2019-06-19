@@ -1,0 +1,15 @@
+.\" $OpenBSD: center-mdoc.in,v 1.1 2019/01/31 16:28:38 schwarze Exp $
+.Dd $Mdocdate: January 31 2019 $
+.Dt TBL-CENTER-MDOC 1
+.Os
+.Sh NAME
+.Nm tbl-center-mdoc
+.Nd center a table as a whole
+.Sh DESCRIPTION
+normal text
+.TS
+center box tab(:);
+l r.
+northwest:northeast
+southwest:southeast
+.TE

@@ -364,7 +364,7 @@ install-data-local:
 	    echo "  && cd $(DESTDIR)$(bindir) && $(LN_S) $(contribscriptdir)/`echo $$p|sed '$(transform)'` ."; \
 	    (test ! -e $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'` \
 	        && cd $(DESTDIR)$(bindir) && $(LN_S) $(contribscriptdir)/`echo $$p|sed '$(transform)'` . \
-	        && chown root:bin `echo $$p|sed '$(transform)'`) \
+	        && chown -h root:bin `echo $$p|sed '$(transform)'`) \
 	      || (echo "Link creation failed" && if test -f $$p; then \
 	           echo " $(INSTALL_SCRIPT) $$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`"; \
 	           $(INSTALL_SCRIPT) $$p $(DESTDIR)$(bindir)/`echo $$p|sed '$(transform)'`; \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_wep.c,v 1.16 2017/06/03 11:58:10 tb Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_wep.c,v 1.17 2018/11/09 14:14:31 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -168,7 +168,7 @@ ieee80211_wep_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	}
 
 	/* reserve trailing space for WEP ICV */
-	if (M_TRAILINGSPACE(n) < IEEE80211_WEP_CRCLEN) {
+	if (m_trailingspace(n) < IEEE80211_WEP_CRCLEN) {
 		MGET(n->m_next, M_DONTWAIT, n->m_type);
 		if (n->m_next == NULL)
 			goto nospace;

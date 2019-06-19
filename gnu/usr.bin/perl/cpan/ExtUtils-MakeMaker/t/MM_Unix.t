@@ -12,7 +12,7 @@ BEGIN {
         plan skip_all => 'Non-Unix platform';
     }
     else {
-        plan tests => 110;
+        plan tests => 113;
     }
 }
 
@@ -98,7 +98,6 @@ foreach ( qw /
   ppd
   prefixify
   processPL
-  quote_paren
   realclean
   static
   static_lib
@@ -151,6 +150,9 @@ is ($t->has_link_code(),1); is ($t->{HAS_LINK_CODE},1);
 ###############################################################################
 # libscan
 
+is ($t->libscan('Readme.pod'),      '', 'libscan excludes base Readme.pod');
+is ($t->libscan('README.pod'),      '', 'libscan excludes base README.pod');
+is ($t->libscan('lib/Foo/README.pod'),      'lib/Foo/README.pod', 'libscan accepts README.pod in a subdirectory');
 is ($t->libscan('foo/RCS/bar'),     '', 'libscan on RCS');
 is ($t->libscan('CVS/bar/car'),     '', 'libscan on CVS');
 is ($t->libscan('SCCS'),            '', 'libscan on SCCS');
@@ -223,3 +225,10 @@ foreach (qw/ EXPORT_LIST PERL_ARCHIVE PERL_ARCHIVE_AFTER /)
     like( $t->{CCFLAGS}, qr/\-DMY_THING/,    'cflags retains CCFLAGS' );
 }
 
+{
+    my @targv = ("var=don't forget about spaces and single quotes");
+    local @ARGV = @targv;
+    my $t = bless { NAME => "Foo", FULLPERL => $0, DIR => [] }, $class;
+    $t->makeaperl( TARGET => "Tgt" );
+    is_deeply( \@ARGV, \@targv, 'ARGV is not polluted by makeaperl' );
+}

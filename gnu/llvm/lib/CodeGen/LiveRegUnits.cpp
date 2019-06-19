@@ -19,8 +19,8 @@
 #include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
 
@@ -46,7 +46,7 @@ void LiveRegUnits::stepBackward(const MachineInstr &MI) {
   // Remove defined registers and regmask kills from the set.
   for (ConstMIBundleOperands O(MI); O.isValid(); ++O) {
     if (O->isReg()) {
-      if (!O->isDef())
+      if (!O->isDef() || O->isDebug())
         continue;
       unsigned Reg = O->getReg();
       if (!TargetRegisterInfo::isPhysicalRegister(Reg))
@@ -58,7 +58,7 @@ void LiveRegUnits::stepBackward(const MachineInstr &MI) {
 
   // Add uses to the set.
   for (ConstMIBundleOperands O(MI); O.isValid(); ++O) {
-    if (!O->isReg() || !O->readsReg())
+    if (!O->isReg() || !O->readsReg() || O->isDebug())
       continue;
     unsigned Reg = O->getReg();
     if (!TargetRegisterInfo::isPhysicalRegister(Reg))
@@ -97,23 +97,37 @@ static void addCalleeSavedRegs(LiveRegUnits &LiveUnits,
     LiveUnits.addReg(*CSR);
 }
 
-/// Adds pristine registers to the given \p LiveUnits. Pristine registers are
-/// callee saved registers that are unused in the function.
-static void addPristines(LiveRegUnits &LiveUnits, const MachineFunction &MF) {
+void LiveRegUnits::addPristines(const MachineFunction &MF) {
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   if (!MFI.isCalleeSavedInfoValid())
     return;
+  /// This function will usually be called on an empty object, handle this
+  /// as a special case.
+  if (empty()) {
+    /// Add all callee saved regs, then remove the ones that are saved and
+    /// restored.
+    addCalleeSavedRegs(*this, MF);
+    /// Remove the ones that are not saved/restored; they are pristine.
+    for (const CalleeSavedInfo &Info : MFI.getCalleeSavedInfo())
+      removeReg(Info.getReg());
+    return;
+  }
+  /// If a callee-saved register that is not pristine is already present
+  /// in the set, we should make sure that it stays in it. Precompute the
+  /// set of pristine registers in a separate object.
   /// Add all callee saved regs, then remove the ones that are saved+restored.
-  addCalleeSavedRegs(LiveUnits, MF);
+  LiveRegUnits Pristine(*TRI);
+  addCalleeSavedRegs(Pristine, MF);
   /// Remove the ones that are not saved/restored; they are pristine.
   for (const CalleeSavedInfo &Info : MFI.getCalleeSavedInfo())
-    LiveUnits.removeReg(Info.getReg());
+    Pristine.removeReg(Info.getReg());
+  addUnits(Pristine.getBitVector());
 }
 
 void LiveRegUnits::addLiveOuts(const MachineBasicBlock &MBB) {
   const MachineFunction &MF = *MBB.getParent();
   if (!MBB.succ_empty()) {
-    addPristines(*this, MF);
+    addPristines(MF);
     // To get the live-outs we simply merge the live-ins of all successors.
     for (const MachineBasicBlock *Succ : MBB.successors())
       addBlockLiveIns(*this, *Succ);
@@ -127,6 +141,6 @@ void LiveRegUnits::addLiveOuts(const MachineBasicBlock &MBB) {
 
 void LiveRegUnits::addLiveIns(const MachineBasicBlock &MBB) {
   const MachineFunction &MF = *MBB.getParent();
-  addPristines(*this, MF);
+  addPristines(MF);
   addBlockLiveIns(*this, MBB);
 }

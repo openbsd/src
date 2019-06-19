@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.29 2016/07/18 09:36:50 guenther Exp $
+.\"	$OpenBSD: ktrace.1,v 1.30 2019/05/15 15:36:59 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 18 2016 $
+.Dd $Mdocdate: May 15 2019 $
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -110,11 +110,11 @@ Enable (disable) tracing on the indicated process ID (only one
 .Fl p
 flag is permitted).
 .It Fl t Ar trstr
-The string argument represents the kernel trace points, one per letter.
+Select which information to put into the dump file.
+The argument can contain one or more of the following letters.
 By default all trace points except for
 .Cm X
 are enabled.
-The following table equates the letters with the trace points:
 .Pp
 .Bl -tag -width flag -offset indent -compact
 .It Cm c

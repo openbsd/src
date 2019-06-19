@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.10 2017/01/21 04:14:19 guenther Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.14 2019/05/10 13:29:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -49,6 +49,9 @@ static void		___start(MD_START_ARGS) __used;
 #ifndef	MD_EPROL_LABEL
 #define	MD_EPROL_LABEL	__asm("  .text\n_eprol:")
 #endif
+#ifndef RCRT0_RELRO
+#define RCRT0_RELRO()	do {} while (0)
+#endif
 
 char	***_csu_finish(char **_argv, char **_envp, void (*_cleanup)(void));
 
@@ -67,15 +70,36 @@ MD_CRT0_START;
 #endif
 #endif
 
-void
+extern __dso_hidden initarray_f __preinit_array_start[],
+	__preinit_array_end[], __init_array_start[], __init_array_end[];
+
+extern char __csu_do_fini_array __dso_hidden;
+
+static void
 ___start(MD_START_ARGS)
 {
+	size_t size, i;
 	char ***environp;
 #ifdef MD_START_SETUP
 	MD_START_SETUP
 #endif
 
 	environp = _csu_finish(argv, envp, cleanup);
+
+#ifndef RCRT0
+	if (cleanup == NULL) {
+#endif
+		size = __preinit_array_end - __preinit_array_start;
+		for (i = 0; i < size; i++)
+			__preinit_array_start[i](argc, argv, envp, NULL);
+		RCRT0_RELRO();
+		size = __init_array_end - __init_array_start;
+		for (i = 0; i < size; i++)
+			__init_array_start[i](argc, argv, envp, NULL);
+		__csu_do_fini_array = 1;
+#ifndef RCRT0
+	}
+#endif
 
 #ifdef MCRT0
 	atexit(_mcleanup);

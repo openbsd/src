@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_sessions.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_sessions.3,v 1.5 2018/04/25 14:19:39 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: April 25 2018 $
 .Dt SSL_CTX_SESSIONS 3
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@
 .Nd access internal session cache
 .Sh SYNOPSIS
 .In openssl/ssl.h
-.Ft struct lhash_st *
+.Ft LHASH_OF(SSL_SESSION) *
 .Fn SSL_CTX_sessions "SSL_CTX *ctx"
 .Sh DESCRIPTION
 .Fn SSL_CTX_sessions

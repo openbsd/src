@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.54 2017/07/24 12:08:15 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.56 2019/05/21 17:10:49 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -121,14 +121,6 @@ drop_silently(const char *s)
 bool
 node_find_valid_commands(GNode *gn)
 {
-	/* Alter our type to tell if errors should be ignored or things
-	 * should not be printed so setup_and_run_command knows what to do.
-	 */
-	if (Targ_Ignore(gn))
-		gn->type |= OP_IGNORE;
-	if (Targ_Silent(gn))
-		gn->type |= OP_SILENT;
-
 	if (DEBUG(DOUBLE) && (gn->type & OP_DOUBLE))
 		fprintf(stderr, "Warning: target %s had >1 lists of "
 		    "shell commands (ignoring later ones)\n", gn->name);
@@ -258,7 +250,7 @@ Job_Touch(GNode *gn)
 		return;
 	}
 
-	if (!(gn->type & OP_SILENT)) {
+	if (!Targ_Silent(gn)) {
 		(void)fprintf(stdout, "touch %s\n", gn->name);
 		(void)fflush(stdout);
 	}
@@ -560,6 +552,9 @@ recheck_command_for_shell(char **av)
 	if (strcmp(av[0], "exec") == 0)
 		av++;
 
+	if (!av[0])
+		return NULL;
+
 	for (p = runsh; *p; p++)
 		if (strcmp(av[0], *p) == 0)
 			return NULL;
@@ -742,8 +737,8 @@ do_run_command(Job *job, const char *pre)
 	pid_t cpid; 	/* Child pid */
 
 	const char *cmd = job->cmd;
-	silent = job->node->type & OP_SILENT;
-	errCheck = !(job->node->type & OP_IGNORE);
+	silent = Targ_Silent(job->node);
+	errCheck = !Targ_Ignore(job->node);
 	if (job->node->type & OP_MAKE)
 		doExecute = true;
 	else

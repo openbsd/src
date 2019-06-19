@@ -3,7 +3,7 @@ Locale::Codes::Country_Retired;
 
 # This file was automatically generated.  Any changes to this file will
 # be lost the next time 'deprecate_codes' is run.
-#    Generated on: Tue Dec  1 14:45:28 EST 2015
+#    Generated on: Fri Feb 23 12:58:17 EST 2018
 
 use strict;
 require 5.006;
@@ -11,7 +11,7 @@ use warnings;
 use utf8;
 
 our($VERSION);
-$VERSION='3.37';
+$VERSION='3.56';
 
 $Locale::Codes::Retired{'country'}{'alpha-2'}{'code'} = {
    q(an) => q(Netherlands Antilles),
@@ -308,6 +308,15 @@ $Locale::Codes::Retired{'country'}{'dom'}{'code'} = {
    q(uk) => q(United Kingdom),
 };
 
+$Locale::Codes::Retired{'country'}{'genc-alpha-2'}{'code'} = {
+};
+
+$Locale::Codes::Retired{'country'}{'genc-alpha-3'}{'code'} = {
+};
+
+$Locale::Codes::Retired{'country'}{'genc-numeric'}{'code'} = {
+};
+
 $Locale::Codes::Retired{'country'}{'numeric'}{'code'} = {
    q(010) => q(Antarctica),
    q(074) => q(Bouvet Island),
@@ -327,6 +336,13 @@ $Locale::Codes::Retired{'country'}{'numeric'}{'code'} = {
    q(891) => q(Serbia and Montenegro),
 };
 
+$Locale::Codes::Retired{'country'}{'un-alpha-3'}{'code'} = {
+};
+
+$Locale::Codes::Retired{'country'}{'un-numeric'}{'code'} = {
+   q(830) => q(Channel Islands),
+};
+
 $Locale::Codes::Retired{'country'}{'alpha-2'}{'name'} = {
    q(bolivia) => [ q(bo), q(Bolivia) ],
    q(bolivia, plurinational state of) => [ q(bo), q(Bolivia, Plurinational State of) ],
@@ -334,6 +350,7 @@ $Locale::Codes::Retired{'country'}{'alpha-2'}{'name'} = {
    q(bosnia and herzegowina) => [ q(ba), q(Bosnia and Herzegowina) ],
    q(cape verde) => [ q(cv), q(Cape Verde) ],
    q(congo, the democratic republic of the) => [ q(cd), q(Congo, The Democratic Republic of the) ],
+   q(czech republic) => [ q(cz), q(Czech Republic) ],
    q(east timor) => [ q(tl), q(East Timor) ],
    q(falkland islands (malvinas)) => [ q(fk), q(Falkland Islands (Malvinas)) ],
    q(france, metropolitan) => [ q(fx), q(France, Metropolitan) ],
@@ -392,6 +409,7 @@ $Locale::Codes::Retired{'country'}{'alpha-3'}{'name'} = {
    q(christmas island) => [ q(cxr), q(Christmas Island) ],
    q(cocos (keeling) islands) => [ q(cck), q(Cocos (Keeling) Islands) ],
    q(congo, the democratic republic of the) => [ q(cod), q(Congo, The Democratic Republic of the) ],
+   q(czech republic) => [ q(cze), q(Czech Republic) ],
    q(democratic people's republic of korea) => [ q(prk), q(Democratic People's Republic of Korea) ],
    q(democratic republic of the congo) => [ q(cod), q(Democratic Republic of the Congo) ],
    q(east timor) => [ q(tls), q(East Timor) ],
@@ -465,6 +483,7 @@ $Locale::Codes::Retired{'country'}{'dom'}{'name'} = {
    q(bonaire, sint eustatius and saba) => [ q(BQ), q(Bonaire, Sint Eustatius and Saba) ],
    q(cape verde) => [ q(cv), q(Cape Verde) ],
    q(congo, the democratic republic of the) => [ q(cd), q(Congo, The Democratic Republic of the) ],
+   q(czech republic) => [ q(cz), q(Czech Republic) ],
    q(east timor) => [ q(tp), q(East Timor) ],
    q(european union) => [ q(eu), q(European Union) ],
    q(falkland islands (malvinas)) => [ q(fk), q(Falkland Islands (Malvinas)) ],
@@ -498,6 +517,18 @@ $Locale::Codes::Retired{'country'}{'dom'}{'name'} = {
    q(yugoslavia ) => [ q(YU), q(Yugoslavia ) ],
 };
 
+$Locale::Codes::Retired{'country'}{'genc-alpha-2'}{'name'} = {
+   q(czech republic) => [ q(CZ), q(Czech Republic) ],
+};
+
+$Locale::Codes::Retired{'country'}{'genc-alpha-3'}{'name'} = {
+   q(czech republic) => [ q(CZE), q(Czech Republic) ],
+};
+
+$Locale::Codes::Retired{'country'}{'genc-numeric'}{'name'} = {
+   q(czech republic) => [ q(203), q(Czech Republic) ],
+};
+
 $Locale::Codes::Retired{'country'}{'numeric'}{'name'} = {
    q(antarctica) => [ q(010), q(Antarctica) ],
    q(bolivia) => [ q(068), q(Bolivia) ],
@@ -515,6 +546,7 @@ $Locale::Codes::Retired{'country'}{'numeric'}{'name'} = {
    q(christmas island) => [ q(162), q(Christmas Island) ],
    q(cocos (keeling) islands) => [ q(166), q(Cocos (Keeling) Islands) ],
    q(congo, the democratic republic of the) => [ q(180), q(Congo, The Democratic Republic of the) ],
+   q(czech republic) => [ q(203), q(Czech Republic) ],
    q(democratic people's republic of korea) => [ q(408), q(Democratic People's Republic of Korea) ],
    q(democratic republic of the congo) => [ q(180), q(Democratic Republic of the Congo) ],
    q(east timor) => [ q(626), q(East Timor) ],
@@ -580,6 +612,17 @@ $Locale::Codes::Retired{'country'}{'numeric'}{'name'} = {
    q(wallis and futuna islands) => [ q(876), q(Wallis and Futuna Islands) ],
    q(yugoslavia) => [ q(891), q(Yugoslavia) ],
    q(zaire) => [ q(180), q(Zaire) ],
+};
+
+$Locale::Codes::Retired{'country'}{'un-alpha-3'}{'name'} = {
+   q(czech republic) => [ q(CZE), q(Czech Republic) ],
+   q(korea, the democratic people's republic of) => [ q(PRK), q(Korea, The Democratic People's Republic of) ],
+};
+
+$Locale::Codes::Retired{'country'}{'un-numeric'}{'name'} = {
+   q(channel islands) => [ q(830), q(Channel Islands) ],
+   q(czech republic) => [ q(203), q(Czech Republic) ],
+   q(korea, the democratic people's republic of) => [ q(408), q(Korea, The Democratic People's Republic of) ],
 };
 
 

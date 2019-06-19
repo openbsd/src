@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.28 2016/05/30 12:33:44 mpi Exp $	*/
+/*	$OpenBSD: to.c,v 1.35 2018/12/30 23:09:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -36,7 +36,6 @@
 #include <imsg.h>
 #include <limits.h>
 #include <inttypes.h>
-#include <libgen.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -50,7 +49,6 @@
 #include "log.h"
 
 static const char *in6addr_to_text(const struct in6_addr *);
-static int alias_is_maildir(struct expandnode *, const char *, size_t);
 static int alias_is_filter(struct expandnode *, const char *, size_t);
 static int alias_is_username(struct expandnode *, const char *, size_t);
 static int alias_is_address(struct expandnode *, const char *, size_t);
@@ -305,23 +303,18 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 {
 	static const struct schema {
 		const char	*name;
-		uint16_t       	 flags;
+		int		 tls;
+		uint16_t	 flags;
 	} schemas [] = {
 		/*
 		 * new schemas should be *appended* otherwise the default
 		 * schema index needs to be updated later in this function.
 		 */
-		{ "smtp://",		0				},
-		{ "lmtp://",		F_LMTP				},
-		{ "smtp+tls://",       	F_TLS_OPTIONAL 			},
-		{ "smtps://",		F_SMTPS				},
-		{ "tls://",		F_STARTTLS			},
-		{ "smtps+auth://",	F_SMTPS|F_AUTH			},
-		{ "tls+auth://",	F_STARTTLS|F_AUTH		},
-		{ "secure://",		F_SMTPS|F_STARTTLS		},
-		{ "secure+auth://",	F_SMTPS|F_STARTTLS|F_AUTH	},
-		{ "backup://",		F_BACKUP       			},
-		{ "tls+backup://",	F_BACKUP|F_STARTTLS    		}
+		{ "smtp://",		RELAY_TLS_OPPORTUNISTIC, 0		},
+		{ "smtp+tls://",       	RELAY_TLS_STARTTLS,	 0		},
+		{ "smtp+notls://",      RELAY_TLS_NO,		 0		},
+		{ "lmtp://",		RELAY_TLS_NO,		 RELAY_LMTP	},
+		{ "smtps://",		RELAY_TLS_SMTPS, 	 0		}
 	};
 	const char     *errstr = NULL;
 	char	       *p, *q;
@@ -344,17 +337,18 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 		if (strstr(buffer, "://"))
 			return 0;
 
-		/* no schema, default to smtp+tls:// */
-		i = 2;
+		/* no schema, default to smtp:// */
+		i = 0;
 		p = buffer;
 	}
 	else
 		p = buffer + strlen(schemas[i].name);
 
+	relay->tls = schemas[i].tls;
 	relay->flags = schemas[i].flags;
 
 	/* need to specify an explicit port for LMTP */
-	if (relay->flags & F_LMTP)
+	if (relay->flags & RELAY_LMTP)
 		relay->port = 0;
 
 	/* first, we extract the label if any */
@@ -398,69 +392,17 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 
 	if (!valid_domainpart(relay->hostname))
 		return 0;
-	if ((relay->flags & F_LMTP) && (relay->port == 0))
+	if ((relay->flags & RELAY_LMTP) && (relay->port == 0))
 		return 0;
-	if (relay->authlabel[0] == '\0' && relay->flags & F_AUTH)
-		return 0;
-	if (relay->authlabel[0] != '\0' && !(relay->flags & F_AUTH))
-		return 0;
-	return 1;
-}
-
-const char *
-relayhost_to_text(const struct relayhost *relay)
-{
-	static char	buf[4096];
-	char		port[4096];
-	uint16_t	mask = F_SMTPS|F_STARTTLS|F_AUTH|F_TLS_OPTIONAL|F_LMTP|F_BACKUP;
-
-	memset(buf, 0, sizeof buf);
-	switch (relay->flags & mask) {
-	case F_SMTPS|F_STARTTLS|F_AUTH:
-		(void)strlcat(buf, "secure+auth://", sizeof buf);
-		break;
-	case F_SMTPS|F_STARTTLS:
-		(void)strlcat(buf, "secure://", sizeof buf);
-		break;
-	case F_STARTTLS|F_AUTH:
-		(void)strlcat(buf, "tls+auth://", sizeof buf);
-		break;
-	case F_SMTPS|F_AUTH:
-		(void)strlcat(buf, "smtps+auth://", sizeof buf);
-		break;
-	case F_STARTTLS:
-		(void)strlcat(buf, "tls://", sizeof buf);
-		break;
-	case F_SMTPS:
-		(void)strlcat(buf, "smtps://", sizeof buf);
-		break;
-	case F_BACKUP|F_STARTTLS:
-		(void)strlcat(buf, "tls+backup://", sizeof buf);
-		break;
-	case F_BACKUP:
-		(void)strlcat(buf, "backup://", sizeof buf);
-		break;
-	case F_TLS_OPTIONAL:
-		(void)strlcat(buf, "smtp+tls://", sizeof buf);
-		break;
-	case F_LMTP:
-		(void)strlcat(buf, "lmtp://", sizeof buf);
-		break;
-	default:
-		(void)strlcat(buf, "smtp://", sizeof buf);
-		break;
-	}
 	if (relay->authlabel[0]) {
-		(void)strlcat(buf, relay->authlabel, sizeof buf);
-		(void)strlcat(buf, "@", sizeof buf);
+		/* disallow auth on non-tls scheme. */
+		if (relay->tls != RELAY_TLS_STARTTLS &&
+		    relay->tls != RELAY_TLS_SMTPS)
+			return 0;
+		relay->flags |= RELAY_AUTH;
 	}
-	(void)strlcat(buf, relay->hostname, sizeof buf);
-	if (relay->port) {
-		(void)strlcat(buf, ":", sizeof buf);
-		(void)snprintf(port, sizeof port, "%d", relay->port);
-		(void)strlcat(buf, port, sizeof buf);
-	}
-	return buf;
+
+	return 1;
 }
 
 uint64_t
@@ -505,84 +447,91 @@ rule_to_text(struct rule *r)
 	static char buf[4096];
 
 	memset(buf, 0, sizeof buf);
-	(void)strlcpy(buf, r->r_decision == R_ACCEPT  ? "accept" : "reject", sizeof buf);
-	if (r->r_tag[0]) {
-		(void)strlcat(buf, " tagged ", sizeof buf);
-		if (r->r_nottag)
-			(void)strlcat(buf, "! ", sizeof buf);
-		(void)strlcat(buf, r->r_tag, sizeof buf);
-	}
-	(void)strlcat(buf, " from ", sizeof buf);
-	if (r->r_notsources)
-		(void)strlcat(buf, "! ", sizeof buf);
-	(void)strlcat(buf, r->r_sources->t_name, sizeof buf);
-
-	(void)strlcat(buf, " for ", sizeof buf);
-	if (r->r_notdestination)
-		(void)strlcat(buf, "! ", sizeof buf);
-	switch (r->r_desttype) {
-	case DEST_DOM:
-		if (r->r_destination == NULL) {
-			(void)strlcat(buf, " any", sizeof buf);
-			break;
-		}
-		(void)strlcat(buf, " domain ", sizeof buf);
-		(void)strlcat(buf, r->r_destination->t_name, sizeof buf);
-		if (r->r_mapping) {
-			(void)strlcat(buf, " alias ", sizeof buf);
-			(void)strlcat(buf, r->r_mapping->t_name, sizeof buf);
-		}
-		break;
-	case DEST_VDOM:
-		if (r->r_destination == NULL) {
-			(void)strlcat(buf, " any virtual ", sizeof buf);
-			(void)strlcat(buf, r->r_mapping->t_name, sizeof buf);
-			break;
-		}
-		(void)strlcat(buf, " domain ", sizeof buf);
-		(void)strlcat(buf, r->r_destination->t_name, sizeof buf);
-		(void)strlcat(buf, " virtual ", sizeof buf);
-		(void)strlcat(buf, r->r_mapping->t_name, sizeof buf);
-		break;
+	(void)strlcpy(buf, "match ", sizeof buf);
+	if (r->flag_tag) {
+		if (r->flag_tag < 0)
+			(void)strlcat(buf, "!", sizeof buf);
+		(void)strlcat(buf, "tag ", sizeof buf);
+		(void)strlcat(buf, r->table_tag, sizeof buf);
+		(void)strlcat(buf, " ", sizeof buf);
 	}
 
-	switch (r->r_action) {
-	case A_RELAY:
-		(void)strlcat(buf, " relay", sizeof buf);
-		break;
-	case A_RELAYVIA:
-		(void)strlcat(buf, " relay via ", sizeof buf);
-		(void)strlcat(buf, relayhost_to_text(&r->r_value.relayhost), sizeof buf);
-		break;
-	case A_MAILDIR:
-		(void)strlcat(buf, " deliver to maildir \"", sizeof buf);
-		(void)strlcat(buf, r->r_value.buffer, sizeof buf);
-		(void)strlcat(buf, "\"", sizeof buf);
-		break;
-	case A_MBOX:
-		(void)strlcat(buf, " deliver to mbox", sizeof buf);
-		break;
-	case A_FILENAME:
-		(void)strlcat(buf, " deliver to filename \"", sizeof buf);
-		(void)strlcat(buf, r->r_value.buffer, sizeof buf);
-		(void)strlcat(buf, "\"", sizeof buf);
-		break;
-	case A_MDA:
-		(void)strlcat(buf, " deliver to mda \"", sizeof buf);
-		(void)strlcat(buf, r->r_value.buffer, sizeof buf);
-		(void)strlcat(buf, "\"", sizeof buf);
-		break;
-	case A_LMTP:
-		(void)strlcat(buf, " deliver to lmtp \"", sizeof buf);
-		(void)strlcat(buf, r->r_value.buffer, sizeof buf);
-		(void)strlcat(buf, "\"", sizeof buf);
-		break;
-	case A_NONE:
-		break;
+	if (r->flag_from) {
+		if (r->flag_from < 0)
+			(void)strlcat(buf, "!", sizeof buf);
+		if (strcmp(r->table_from, "<anyhost>") == 0)
+			(void)strlcat(buf, "from any ", sizeof buf);
+		else if (strcmp(r->table_from, "<localhost>") == 0)
+			(void)strlcat(buf, "from local", sizeof buf);
+		else {
+			(void)strlcat(buf, "from src ", sizeof buf);
+			(void)strlcat(buf, r->table_from, sizeof buf);
+			(void)strlcat(buf, " ", sizeof buf);
+		}
 	}
 
+	if (r->flag_for) {
+		if (r->flag_for < 0)
+			(void)strlcat(buf, "!", sizeof buf);
+		if (strcmp(r->table_for, "<anydestination>") == 0)
+			(void)strlcat(buf, "for any ", sizeof buf);
+		else if (strcmp(r->table_for, "<localnames>") == 0)
+			(void)strlcat(buf, "for local ", sizeof buf);
+		else {
+			(void)strlcat(buf, "for domain ", sizeof buf);
+			(void)strlcat(buf, r->table_for, sizeof buf);
+			(void)strlcat(buf, " ", sizeof buf);
+		}
+	}
+
+	if (r->flag_smtp_helo) {
+		if (r->flag_smtp_helo < 0)
+			(void)strlcat(buf, "!", sizeof buf);
+		(void)strlcat(buf, "helo ", sizeof buf);
+		(void)strlcat(buf, r->table_smtp_helo, sizeof buf);
+		(void)strlcat(buf, " ", sizeof buf);
+	}
+
+	if (r->flag_smtp_auth) {
+		if (r->flag_smtp_auth < 0)
+			(void)strlcat(buf, "!", sizeof buf);
+		(void)strlcat(buf, "auth ", sizeof buf);
+		if (r->table_smtp_auth) {
+			(void)strlcat(buf, r->table_smtp_auth, sizeof buf);
+			(void)strlcat(buf, " ", sizeof buf);
+		}
+	}
+
+	if (r->flag_smtp_starttls) {
+		if (r->flag_smtp_starttls < 0)
+			(void)strlcat(buf, "!", sizeof buf);
+		(void)strlcat(buf, "tls ", sizeof buf);
+		(void)strlcat(buf, " ", sizeof buf);
+	}
+
+	if (r->flag_smtp_mail_from) {
+		if (r->flag_smtp_mail_from < 0)
+			(void)strlcat(buf, "!", sizeof buf);
+		(void)strlcat(buf, "mail-from ", sizeof buf);
+		(void)strlcat(buf, r->table_smtp_mail_from, sizeof buf);
+		(void)strlcat(buf, " ", sizeof buf);
+	}
+
+	if (r->flag_smtp_rcpt_to) {
+		if (r->flag_smtp_rcpt_to < 0)
+			(void)strlcat(buf, "!", sizeof buf);
+		(void)strlcat(buf, "rcpt-to ", sizeof buf);
+		(void)strlcat(buf, r->table_smtp_rcpt_to, sizeof buf);
+		(void)strlcat(buf, " ", sizeof buf);
+	}
+	(void)strlcat(buf, "=> ", sizeof buf);
+	if (r->reject)
+		(void)strlcat(buf, "reject", sizeof buf);
+	else
+		(void)strlcat(buf, r->dispatcher, sizeof buf);
 	return buf;
 }
+
 
 int
 text_to_userinfo(struct userinfo *userinfo, const char *s)
@@ -677,7 +626,6 @@ text_to_expandnode(struct expandnode *expandnode, const char *s)
 	    alias_is_filter(expandnode, s, l) ||
 	    alias_is_filename(expandnode, s, l) ||
 	    alias_is_address(expandnode, s, l) ||
-	    alias_is_maildir(expandnode, s, l) ||
 	    alias_is_username(expandnode, s, l))
 		return (1);
 
@@ -692,8 +640,6 @@ expandnode_to_text(struct expandnode *expandnode)
 	case EXPAND_FILENAME:
 	case EXPAND_INCLUDE:
 	case EXPAND_ERROR:
-	case EXPAND_MAILDIR:
-		return expandnode->u.buffer;
 	case EXPAND_USERNAME:
 		return expandnode->u.user;
 	case EXPAND_ADDRESS:
@@ -703,22 +649,6 @@ expandnode_to_text(struct expandnode *expandnode)
 	}
 
 	return NULL;
-}
-
-static int
-alias_is_maildir(struct expandnode *alias, const char *line, size_t len)
-{
-	if (strncasecmp("maildir:", line, 8) != 0)
-		return (0);
-
-	line += 8;
-	memset(alias, 0, sizeof *alias);
-	alias->type = EXPAND_MAILDIR;
-	if (strlcpy(alias->u.buffer, line,
-	    sizeof(alias->u.buffer)) >= sizeof(alias->u.buffer))
-		return (0);
-
-	return (1);
 }
 
 /******/

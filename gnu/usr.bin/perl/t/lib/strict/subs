@@ -337,7 +337,7 @@ Execution of - aborted due to compilation errors.
 
 ########
 
-# ID 20020703.002
+# ID 20020703.002 (#10021)
 use strict;
 use warnings;
 my $abc = XYZ ? 1 : 0;
@@ -466,4 +466,12 @@ use strict 'subs';
 my $v2 = $h->{+CONST_TYPO};
 EXPECT
 Bareword "CONST_TYPO" not allowed while "strict subs" in use at - line 5.
+Execution of - aborted due to compilation errors.
+########
+# NAME constant-folded barewords still trigger stricture
+my $x = !BARE1;
+use strict 'subs';
+my $y = !BARE2;
+EXPECT
+Bareword "BARE2" not allowed while "strict subs" in use at - line 3.
 Execution of - aborted due to compilation errors.

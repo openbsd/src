@@ -20,8 +20,7 @@ to do that first.
 
 =head1 COMMON PROBLEMS
 
-Perl source plays by ANSI C89 rules: no C99 (or C++) extensions.  In
-some cases we have to take pre-ANSI requirements into consideration.
+Perl source plays by ANSI C89 rules: no C99 (or C++) extensions.
 You don't care about some particular platform having broken Perl? I
 hear there is still a strong demand for J2EE programmers.
 
@@ -134,7 +133,7 @@ Use the Configure C<-Dgccansipedantic> flag to enable the gcc C<-ansi
 -pedantic> flags which enforce stricter ANSI rules.
 
 If using the C<gcc -Wall> note that not all the possible warnings (like
-C<-Wunitialized>) are given unless you also compile with C<-O>.
+C<-Wuninitialized>) are given unless you also compile with C<-O>.
 
 Note that if using gcc, starting from Perl 5.9.5 the Perl core source
 code files (the ones at the top level of the source code distribution,
@@ -516,6 +515,9 @@ Or you can try casting to a "wide enough" type:
 
    printf("i = %"IVdf"\n", (IV)something_very_small_and_signed);
 
+See L<perlguts/Formatted Printing of Size_t and SSize_t> for how to
+print those.
+
 Also remember that the C<%p> format really does require a void pointer:
 
    U8* p = ...;
@@ -733,28 +735,39 @@ happened, or how did we end up having wrong or unexpected results.
 To really poke around with Perl, you'll probably want to build Perl for
 debugging, like this:
 
-    ./Configure -d -D optimize=-g
+    ./Configure -d -DDEBUGGING
     make
 
-C<-g> is a flag to the C compiler to have it produce debugging
-information which will allow us to step through a running program, and
-to see in which C function we are at (without the debugging information
-we might see only the numerical addresses of the functions, which is
-not very helpful).
-
-F<Configure> will also turn on the C<DEBUGGING> compilation symbol
-which enables all the internal debugging code in Perl.  There are a
-whole bunch of things you can debug with this: L<perlrun> lists them
-all, and the best way to find out about them is to play about with
-them.  The most useful options are probably
+C<-DDEBUGGING> turns on the C compiler's C<-g> flag to have it produce
+debugging information which will allow us to step through a running
+program, and to see in which C function we are at (without the debugging
+information we might see only the numerical addresses of the functions,
+which is not very helpful). It will also turn on the C<DEBUGGING>
+compilation symbol which enables all the internal debugging code in Perl.
+There are a whole bunch of things you can debug with this: L<perlrun>
+lists them all, and the best way to find out about them is to play about
+with them.  The most useful options are probably
 
     l  Context (loop) stack processing
+    s  Stack snapshots (with v, displays all stacks)
     t  Trace execution
     o  Method and overloading resolution
     c  String/numeric conversions
 
-Some of the functionality of the debugging code can be achieved using
-XS modules.
+For example
+
+    $ perl -Dst -e '$a + 1'
+    ....
+    (-e:1)	gvsv(main::a)
+        =>  UNDEF
+    (-e:1)	const(IV(1))
+        =>  UNDEF  IV(1)
+    (-e:1)	add
+        =>  NV(1)
+
+
+Some of the functionality of the debugging code can be achieved with a
+non-debugging perl by using XS modules:
 
     -Dr => use re 'debug'
     -Dx => use O 'Debug'
@@ -1023,23 +1036,19 @@ and looking at the resulting graph, what does it tell about the
 execution and data flows.  As a matter of fact, this is exactly how C
 compilers know to give warnings about dubious code.
 
-=head2 lint, splint
+=head2 lint
 
 The good old C code quality inspector, C<lint>, is available in several
 platforms, but please be aware that there are several different
 implementations of it by different vendors, which means that the flags
 are not identical across different platforms.
 
-There is a lint variant called C<splint> (Secure Programming Lint)
-available from http://www.splint.org/ that should compile on any
-Unix-like platform.
-
-There are C<lint> and <splint> targets in Makefile, but you may have to
+There is a C<lint> target in Makefile, but you may have to
 diddle with the flags (see above).
 
 =head2 Coverity
 
-Coverity (http://www.coverity.com/) is a product similar to lint and as
+Coverity (L<http://www.coverity.com/>) is a product similar to lint and as
 a testbed for their product they periodically check several open source
 projects, and they give out accounts to open source developers to the
 defect databases.
@@ -1062,8 +1071,8 @@ cut-and-pasted code changes, all the other spots should probably be
 changed, too.  Therefore such code should probably be turned into a
 subroutine or a macro.
 
-cpd (http://pmd.sourceforge.net/cpd.html) is part of the pmd project
-(http://pmd.sourceforge.net/).  pmd was originally written for static
+cpd (L<http://pmd.sourceforge.net/cpd.html>) is part of the pmd project
+(L<http://pmd.sourceforge.net/>).  pmd was originally written for static
 analysis of Java code, but later the cpd part of it was extended to
 parse also C and C++.
 
@@ -1096,7 +1105,7 @@ being a prime example).  If Configure C<-Dgccansipedantic> is used, the
 C<cflags> frontend selects C<-ansi -pedantic> for the platforms where
 they are known to be safe.
 
-Starting from Perl 5.9.4 the following extra flags are added:
+The following extra flags are added:
 
 =over 4
 
@@ -1110,7 +1119,19 @@ C<-Wextra>
 
 =item *
 
-C<-Wdeclaration-after-statement>
+C<-Wc++-compat>
+
+=item *
+
+C<-Wwrite-strings>
+
+=item *
+
+C<-Werror=declaration-after-statement>
+
+=item *
+
+C<-Werror=pointer-arith>
 
 =back
 
@@ -1118,10 +1139,6 @@ The following flags would be nice to have but they would first need
 their own Augean stablemaster:
 
 =over 4
-
-=item *
-
-C<-Wpointer-arith>
 
 =item *
 
@@ -1419,7 +1436,8 @@ documentation for more information.  Also, spawned threads do the
 equivalent of setting this variable to the value 1.)
 
 If, at the end of a run you get the message I<N scalars leaked>, you
-can recompile with C<-DDEBUG_LEAKING_SCALARS>, which will cause the
+can recompile with C<-DDEBUG_LEAKING_SCALARS>,
+(C<Configure -Accflags=-DDEBUG_LEAKING_SCALARS>), which will cause the
 addresses of all those leaked SVs to be dumped along with details as to
 where each SV was originally allocated.  This information is also
 displayed by Devel::Peek.  Note that the extra details recorded with
@@ -1617,8 +1635,10 @@ bugs in the past.
 =head2 When is a bool not a bool?
 
 On pre-C99 compilers, C<bool> is defined as equivalent to C<char>.
-Consequently assignment of any larger type to a C<bool> is unsafe and may
-be truncated.  The C<cBOOL> macro exists to cast it correctly.
+Consequently assignment of any larger type to a C<bool> is unsafe and may be
+truncated.  The C<cBOOL> macro exists to cast it correctly; you may also find
+that using it is shorter and clearer than writing out the equivalent
+conditional expression longhand.
 
 On those platforms and compilers where C<bool> really is a boolean (C++,
 C99), it is easy to forget the cast.  You can force C<bool> to be a C<char>
@@ -1629,6 +1649,10 @@ run C<Configure> with something like
 
 or your compiler's equivalent to make it easier to spot any unsafe truncations
 that show up.
+
+The C<TRUE> and C<FALSE> macros are available for situations where using them
+would clarify intent. (But they always just mean the same as the integers 1 and
+0 regardless, so using them isn't compulsory.)
 
 =head2 The .i Targets
 

@@ -92,7 +92,7 @@ print qw[a b c][2], "\n";
 use feature ":5.16";
 print qw[a b c][2], "\n";
 EXPECT
-Use of assignment to $[ is deprecated at - line 4.
+Use of assignment to $[ is deprecated, and will be fatal in Perl 5.30 at - line 4.
 b
 b
 c
@@ -104,7 +104,7 @@ no feature; # resets to :default, thus turns array_base on
 $[ = 1;
 print qw[a b c][2], "\n";
 EXPECT
-Use of assignment to $[ is deprecated at - line 4.
+Use of assignment to $[ is deprecated, and will be fatal in Perl 5.30 at - line 4.
 b
 ########
 # "no feature 'all"
@@ -114,7 +114,7 @@ no feature ':all'; # turns array_base (and everything else) off
 $[ = 1;
 print qw[a b c][2], "\n";
 EXPECT
-Use of assignment to $[ is deprecated at - line 2.
+Use of assignment to $[ is deprecated, and will be fatal in Perl 5.30 at - line 2.
 Assigning non-zero to $[ is no longer possible at - line 5.
 b
 ########

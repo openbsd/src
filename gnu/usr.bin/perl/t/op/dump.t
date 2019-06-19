@@ -4,9 +4,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
     require './test.pl';
-
+    set_up_inc( qw(. ../lib) );
     skip_all_if_miniperl();
 }
 
@@ -24,7 +23,7 @@ skip_all("only tested on devel builds")
 # fork() and waitpid().
 
 skip_all("no point in dumping on $^O")
-  unless $^O =~ /^(linux|.*bsd|solaris)$/;
+  unless $^O =~ /^(linux|.*bsd|solaris|darwin)$/;
 
 skip_all("avoid coredump under ASan")
   if  $Config{ccflags} =~ /-fsanitize=/;
@@ -64,7 +63,13 @@ plan(2);
 # By do the dump in a child, the parent perl process exits back to sh with
 # a normal exit value, so sh won't complain.
 
+# An unqualified dump() will give a deprecation warning. Usually, we'd
+# do a "no warnings 'deprecated'" to shut this off, but since we have
+# chdirred to /tmp, a 'no' won't find the pragma. Hence the fiddling with
+# $SIG{__WARN__}.
+
 fresh_perl_like(<<'PROG', qr/\AA(?!B\z)/, {}, "plain dump quits");
+BEGIN {$SIG {__WARN__} = sub {1;}}
 ++$|;
 my $pid = fork;
 die "fork: $!\n" unless defined $pid;
@@ -81,6 +86,7 @@ else {
 PROG
 
 fresh_perl_like(<<'PROG', qr/A(?!B\z)/, {}, "dump with label quits");
+BEGIN {$SIG {__WARN__} = sub {1;}}
 ++$|;
 my $pid = fork;
 die "fork: $!\n" unless defined $pid;

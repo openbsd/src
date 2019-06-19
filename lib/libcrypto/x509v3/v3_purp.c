@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_purp.c,v 1.30 2017/06/22 17:28:00 jsing Exp $ */
+/* $OpenBSD: v3_purp.c,v 1.31 2018/05/18 18:30:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -172,7 +172,7 @@ X509_PURPOSE_get0(int idx)
 }
 
 int
-X509_PURPOSE_get_by_sname(char *sname)
+X509_PURPOSE_get_by_sname(const char *sname)
 {
 	int i;
 	X509_PURPOSE *xptmp;
@@ -204,8 +204,8 @@ X509_PURPOSE_get_by_id(int purpose)
 
 int
 X509_PURPOSE_add(int id, int trust, int flags,
-    int (*ck)(const X509_PURPOSE *, const X509 *, int), char *name,
-    char *sname, void *arg)
+    int (*ck)(const X509_PURPOSE *, const X509 *, int), const char *name,
+    const char *sname, void *arg)
 {
 	int idx;
 	X509_PURPOSE *ptmp;
@@ -302,25 +302,25 @@ X509_PURPOSE_cleanup(void)
 }
 
 int
-X509_PURPOSE_get_id(X509_PURPOSE *xp)
+X509_PURPOSE_get_id(const X509_PURPOSE *xp)
 {
 	return xp->purpose;
 }
 
 char *
-X509_PURPOSE_get0_name(X509_PURPOSE *xp)
+X509_PURPOSE_get0_name(const X509_PURPOSE *xp)
 {
 	return xp->name;
 }
 
 char *
-X509_PURPOSE_get0_sname(X509_PURPOSE *xp)
+X509_PURPOSE_get0_sname(const X509_PURPOSE *xp)
 {
 	return xp->sname;
 }
 
 int
-X509_PURPOSE_get_trust(X509_PURPOSE *xp)
+X509_PURPOSE_get_trust(const X509_PURPOSE *xp)
 {
 	return xp->trust;
 }

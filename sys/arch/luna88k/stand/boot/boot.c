@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.5 2017/03/16 18:08:58 miod Exp $	*/
+/*	$OpenBSD: boot.c,v 1.7 2019/04/10 22:02:03 aoyama Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ bootunix(char *line)
 #if 0
 	int dev, unit, part;
 #endif
-	u_long marks[MARK_MAX];
+	uint64_t marks[MARK_MAX];
 	char *lparen, *rparen;
 	char rndpath[MAXPATHLEN];
 	static int rnd_loaded = 0;
@@ -209,8 +209,9 @@ bootunix(char *line)
 #endif
 
 		cpu_bootarg1 = BOOT_MAGIC;
-		cpu_bootarg2 = marks[MARK_END];
-		cpu_boot = (void (*)(uint32_t, uint32_t))marks[MARK_ENTRY];
+		cpu_bootarg2 = (uint32_t)marks[MARK_END];
+		cpu_boot = (void (*)(uint32_t, uint32_t))
+		    (uint32_t)marks[MARK_ENTRY];
 		(*cpu_boot)(cpu_bootarg1, cpu_bootarg2);
 	}
 	printf("Booting kernel failed. (%s)\n", strerror(errno));

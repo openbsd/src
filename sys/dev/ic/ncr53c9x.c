@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.64 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.65 2019/05/07 14:22:06 cheloha Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -2713,16 +2713,16 @@ shortcut:
 	{
 		struct timeval wait, cur;
 
-		microtime(&wait);
+		microuptime(&wait);
 		wait.tv_usec += 50/sc->sc_freq;
-		if (wait.tv_usec > 1000000) {
+		if (wait.tv_usec >= 1000000) {
 			wait.tv_sec++;
 			wait.tv_usec -= 1000000;
 		}
 		do {
 			if (NCRDMA_ISINTR(sc))
 				goto again;
-			microtime(&cur);
+			microuptime(&cur);
 		} while (timercmp(&cur, &wait, <=));
 	}
 	goto out;

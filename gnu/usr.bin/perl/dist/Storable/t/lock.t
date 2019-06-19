@@ -33,14 +33,14 @@ plan(tests => 5);
 # We're just ensuring things work, we're not validating locking.
 #
 
-isnt(lock_store(\@a, 'store'), undef);
+isnt(lock_store(\@a, "store$$"), undef);
 my $dumped = &dump(\@a);
 isnt($dumped, undef);
 
-$root = lock_retrieve('store');
+$root = lock_retrieve("store$$");
 is(ref $root, 'ARRAY');
 is(scalar @a, scalar @$root);
 is(&dump($root), $dumped);
 
-unlink 't/store';
+END { 1 while unlink "store$$" }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.21 2016/03/15 05:03:11 mmcc Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.24 2019/01/03 08:22:33 martijn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -317,11 +317,34 @@ struct be {
 #define BE_UNS64	10
 };
 
+
+/*
+ * SNMP components
+ */
+static int snmp3_print_usmparams(const u_char *, u_int);
+
+enum snmp_version {
+	SNMP_V1 = 0,
+	SNMP_V2C = 1,
+	SNMP_V3 = 3
+};
+#define SNMP3_AUTH(f) (f & 0x01)
+#define SNMP3_PRIV(f) (f & 0x02)
+#define SNMP3_REPORT(f) (f & 0x04)
+
+struct snmp3_sm {
+	int id;
+	char *name;
+	int (*parse_params)(const u_char *, u_int);
+} snmp3_securitymodel[] = {
+	{3, "USM", snmp3_print_usmparams},
+	{0, NULL, NULL}
+};
+	
 /*
  * Defaults for SNMP PDU components
  */
 #define DEF_COMMUNITY "public"
-#define DEF_VERSION 1
 
 /*
  * constants for ASN.1 decoding
@@ -390,13 +413,13 @@ asn1_parse(const u_char *p, u_int len, struct be *elem)
 	elem->form = form;
 	elem->class = class;
 	elem->id = id;
-	if (vflag)
+	if (vflag > 1)
 		printf("|%.2x", *p);
 	p++; len--; hdr = 1;
 	/* extended tag field */
 	if (id == ASN_ID_EXT) {
 		for (id = 0; *p & ASN_BIT8 && len > 0; len--, hdr++, p++) {
-			if (vflag)
+			if (vflag > 1)
 				printf("|%.2x", *p);
 			id = (id << 7) | (*p & ~ASN_BIT8);
 		}
@@ -420,7 +443,7 @@ asn1_parse(const u_char *p, u_int len, struct be *elem)
 		return -1;
 	}
 	elem->asnlen = *p;
-	if (vflag)
+	if (vflag > 1)
 		printf("|%.2x", *p);
 	p++; len--; hdr++;
 	if (elem->asnlen & ASN_BIT8) {
@@ -434,7 +457,7 @@ asn1_parse(const u_char *p, u_int len, struct be *elem)
 			return -1;
 		}
 		for (; noct-- > 0; len--, hdr++) {
-			if (vflag)
+			if (vflag > 1)
 				printf("|%.2x", *p);
 			elem->asnlen = (elem->asnlen << ASN_SHIFT8) | *p++;
 		}
@@ -611,15 +634,12 @@ asn1_print(struct be *elem)
 	int i;
 
 	switch (elem->type) {
-
 	case BE_OCTET:
 		for (i = asnlen; i-- > 0; p++)
 			printf("_%.2x", *p);
 		break;
-
 	case BE_NULL:
 		break;
-
 	case BE_OID: {
 	int o = 0, first = -1, i = asnlen;
 
@@ -659,19 +679,15 @@ asn1_print(struct be *elem)
 		}
 		break;
 	}
-
 	case BE_INT:
 		printf("%d", elem->data.integer);
 		break;
-
 	case BE_UNS:
 		printf("%d", elem->data.uns);
 		break;
-
 	case BE_UNS64:
 		printf("%lld", elem->data.uns64);
 		break;
-
 	case BE_STR: {
 		int printable = 1, first = 1;
 		const u_char *p = elem->data.str;
@@ -689,11 +705,9 @@ asn1_print(struct be *elem)
 			}
 		break;
 	}
-
 	case BE_SEQ:
 		printf("Seq(%u)", elem->asnlen);
 		break;
-
 	case BE_INETADDR: {
 		char sep;
 		if (asnlen != ASNLEN_INETADDR)
@@ -706,16 +720,13 @@ asn1_print(struct be *elem)
 		putchar(']');
 		break;
 	}
-
 	case BE_PDU:
 		printf("%s(%u)",
 			Class[CONTEXT].Id[elem->id], elem->asnlen);
 		break;
-
 	case BE_ANY:
 		fputs("[BE_ANY!?]", stdout);
 		break;
-
 	default:
 		fputs("[be!?]", stdout);
 		break;
@@ -815,9 +826,7 @@ varbind_print(u_char pduid, const u_char *np, u_int length, int error)
 		const u_char *vbend;
 		u_int vblength;
 
-		if (!error || ind == error)
-			fputs(" ", stdout);
-
+		putchar(' ');
 		/* Sequence */
 		if ((count = asn1_parse(np, length, &elem)) < 0)
 			return;
@@ -856,11 +865,12 @@ varbind_print(u_char pduid, const u_char *np, u_int length, int error)
 				fputs("[objVal!=NULL]", stdout);
 				asn1_print(&elem);
 			}
-		} else
+		} else {
 			if (error && ind == error && elem.type != BE_NULL)
 				fputs("[err objVal!=NULL]", stdout);
 			if (!error || ind == error)
 				asn1_print(&elem);
+		}
 
 		length = vblength;
 		np = vbend;
@@ -884,7 +894,8 @@ snmppdu_print(u_char pduid, const u_char *np, u_int length)
 		asn1_print(&elem);
 		return;
 	}
-	/* ignore the reqId */
+	if (vflag)
+		printf(" reqId=%d", elem.data.integer);
 	length -= count;
 	np += count;
 
@@ -1034,10 +1045,366 @@ trap_print(const u_char *np, u_int length)
 /*
  * Decode SNMP header and pass on to PDU printing routines
  */
+static void
+snmp12_print(const u_char *np, u_int length)
+{
+	struct be elem;
+	int count;
+
+	/* Community (String) */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return;
+	if (elem.type != BE_STR) {
+		fputs("[comm!=STR]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	/* default community */
+	if (strncmp((char *)elem.data.str, DEF_COMMUNITY,
+	    sizeof(DEF_COMMUNITY) - 1))
+		/* ! "public" */
+		printf("C=%.*s ", (int)elem.asnlen, elem.data.str);
+	length -= count;
+	np += count;
+
+	/* PDU (Context) */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return;
+	if (elem.type != BE_PDU) {
+		fputs("[no PDU]", stdout);
+		return;
+	}
+	if (count < length)
+		printf("[%d extra after PDU]", length - count);
+	asn1_print(&elem);
+	/* descend into PDU */
+	length = elem.asnlen;
+	np = (u_char *)elem.data.raw;
+
+	switch (elem.id) {
+	case TRAP:
+		trap_print(np, length);
+		break;
+	case GETREQ:
+	case GETNEXTREQ:
+	case GETRESP:
+	case SETREQ:
+	case GETBULKREQ:
+	case INFORMREQ:
+	case TRAPV2:
+	case REPORT:
+		snmppdu_print(elem.id, np, length);
+		break;
+	}
+	return;
+}
+
+static int
+snmp3_print_usmparams(const u_char *np, u_int length)
+{
+	struct be elem;
+	int count;
+	int i;
+
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return -1;
+	if (elem.type != BE_SEQ) {
+		fputs("[!usmSM SEQ]", stdout);
+		asn1_print(&elem);
+		return -1;
+	}
+	if (count < length) {
+		printf("[%d extra after usmSM]", length - count);
+		return -1;
+	}
+	/* descend */
+	length = elem.asnlen;
+	np = (u_char *)elem.data.raw;
+
+	/* msgAuthoritativeEngineID */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return -1;
+	if (elem.type != BE_STR) {
+		fputs("[umsEID!=STR]", stdout);
+		asn1_print(&elem);
+		return -1;
+	}
+	if (vflag && elem.asnlen > 0) {
+		fputs("umsEID=0x", stdout);
+		for (i = 0; i < elem.asnlen; i++)
+			printf("%02hhX", elem.data.str[i]);
+		putchar(' ');
+	}
+	length -= count;
+	np += count;
+
+	/* msgAuthoritativeEngineBoots */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return -1;
+	if (elem.type != BE_INT) {
+		fputs("[EBoots!=INT]", stdout);
+		asn1_print(&elem);
+		return -1;
+	}
+	if (vflag)
+		printf("EBoots=%d ", elem.data.integer);
+	length -= count;
+	np += count;
+
+	/* msgAuthoritativeEngineTime */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return -1;
+	if (elem.type != BE_INT) {
+		fputs("[ETime!=INT]", stdout);
+		asn1_print(&elem);
+		return -1;
+	}
+	if (vflag)
+		printf("ETime=%d ", elem.data.integer);
+	length -= count;
+	np += count;
+
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return -1;
+	if (elem.type != BE_STR) {
+		fputs("[User!=STR]", stdout);
+		asn1_print(&elem);
+		return -1;
+	}
+	if (elem.asnlen > 0) {
+		fputs("User=", stdout);
+		asn1_print(&elem);
+		putchar(' ');
+	}
+	length -= count;
+	np += count;
+
+	/* msgAuthenticationParameters */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return -1;
+	if (elem.type != BE_STR) {
+		fputs("[AuthParam!=STR]", stdout);
+		asn1_print(&elem);
+		return -1;
+	}
+	/* Can't validate msgAuthenticationParameters without pass */
+	length -= count;
+	np += count;
+
+	/* msgPrivacyParameters */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return -1;
+	if (elem.type != BE_STR) {
+		fputs("[PrivParam!=STR]", stdout);
+		asn1_print(&elem);
+		return -1;
+	}
+	/* Salt is not useful if we can't decrypt */
+	if (length - count != 0) {
+		printf("[%d extra after usmSM]", length - count);
+		return -1;
+	}
+	return 0;
+}
+
+static void
+snmp3_print(const u_char *np, u_int length)
+{
+	struct be elem;
+	struct snmp3_sm *sm = NULL;
+	int count;
+	int sublen;
+	int i;
+	int authpriv;
+	u_char *subnp;
+
+	/* Header sequence */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return;
+	if (elem.type != BE_SEQ) {
+		fputs("[!header SEQ]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	np += count;
+	length -= count;
+	/* descend */
+	/* msgID */
+	sublen = elem.asnlen;
+	subnp = (u_char *)elem.data.raw;
+	if ((count = asn1_parse(subnp, sublen, &elem)) < 0)
+		return;
+	if (elem.type != BE_INT) {
+		fputs("[msgID!=INT]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	if (vflag)
+		printf("msgID=%d ", elem.data.integer);
+	sublen -= count;
+	subnp += count;
+
+	/* msgMaxSize */
+	if ((count = asn1_parse(subnp, sublen, &elem)) < 0)
+		return;
+	if (elem.type != BE_INT) {
+		fputs("[msgMS!=INT]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	if (vflag)
+		printf("msgMS=%d ", elem.data.integer);
+	sublen -= count;
+	subnp += count;
+
+	/* msgFlags */
+	if ((count = asn1_parse(subnp, sublen, &elem)) < 0)
+		return;
+	if (elem.type != BE_STR) {
+		fputs("[msgFl!=STR]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	if (elem.asnlen != 1)
+		printf("[%d extra after msgFl]", elem.asnlen - 1);
+	authpriv = *elem.data.str & 0x3;
+	if (vflag && (*elem.data.str & 0x7) != 0) {
+		printf("(%suth%sPriv%s) ",
+		    SNMP3_AUTH(*elem.data.str) ? "a" : "noA",
+		    SNMP3_PRIV(*elem.data.str) ? "" : "No",
+		    SNMP3_REPORT(*elem.data.str) ? "|Reportable" : ""
+		);
+	}
+	sublen -= count;
+	subnp += count;
+
+	/* msgSecurityModel */
+	if ((count = asn1_parse(subnp, sublen, &elem)) < 0)
+		return;
+	if (elem.type != BE_INT) {
+		fputs("[msgSM!=INT]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	for (i = 0; snmp3_securitymodel[i].id != 0; i++) {
+		if (snmp3_securitymodel[i].id == elem.data.integer) {
+			sm = &(snmp3_securitymodel[i]);
+			break;
+		}
+	}
+	if (vflag) {
+		if (sm != NULL && nflag == 0)
+			printf("msgSM=%s ", sm->name);
+		else
+			printf("msgSM=%d ", elem.data.integer);
+	}
+	if (sublen - count != 0) {
+		printf("[%d extra after header]", sublen - count);
+		return;
+	}
+
+	/* ascend */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return;
+	if (elem.type != BE_STR) {
+		fputs("msgSP!=STR]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	if (sm != NULL && sm->parse_params != NULL) {
+		if (sm->parse_params(elem.data.raw, elem.asnlen) == -1)
+			return;
+	}
+	length -= count;
+	np += count;
+	
+	if (SNMP3_PRIV(authpriv) != 0) {
+		fputs("[encrypted PDU]", stdout);
+		return;
+	}
+
+	/* msgData */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return;
+	if (elem.type != BE_SEQ) {
+		fputs("[ScPDU!=SEQ]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	if (count < length)
+		printf("[%d extra after ScPDU]", length - count);
+	/* descend */
+	length = elem.asnlen;
+	np = (u_char *)elem.data.raw;
+
+	/* contextEngineID */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return;
+	if (elem.type != BE_STR) {
+		fputs("ctxEID!=STR]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	if (vflag && elem.asnlen > 0) {
+		fputs("ctxEID=0x", stdout);
+		for (i = 0; i < elem.asnlen; i++)
+			printf("%02hhX", elem.data.str[i]);
+		putchar(' ');
+	}
+	length -= count;
+	np += count;
+
+	/* contextName */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return;
+	if (elem.type != BE_STR) {
+		fputs("[ctxEName!=STR]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	if (vflag && elem.asnlen > 0) {
+		fputs("ctxName=", stdout);
+		asn1_print(&elem);
+		putchar(' ');
+	}
+	length -= count;
+	np += count;
+
+	/* Data */
+	if ((count = asn1_parse(np, length, &elem)) < 0)
+		return;
+	if (elem.type != BE_PDU) {
+		fputs("[data!=PDU]", stdout);
+		asn1_print(&elem);
+		return;
+	}
+	if (count < length)
+		printf("[%d extra after PDU]", length - count);
+	asn1_print(&elem);
+	/* descend into PDU */
+	length = elem.asnlen;
+	np = (u_char *)elem.data.raw;
+	switch (elem.id) {
+	case TRAP:
+		trap_print(np, length);
+		break;
+	case GETREQ:
+	case GETNEXTREQ:
+	case GETRESP:
+	case SETREQ:
+	case GETBULKREQ:
+	case INFORMREQ:
+	case TRAPV2:
+	case REPORT:
+		snmppdu_print(elem.id, np, length);
+		break;
+	}
+}
+
 void
 snmp_print(const u_char *np, u_int length)
 {
-	struct be elem, pdu;
+	struct be elem;
 	int count = 0;
 
 	truncated = 0;
@@ -1047,8 +1414,6 @@ snmp_print(const u_char *np, u_int length)
 		truncated = 1;
 		length = snapend - np;
 	}
-
-	putchar(' ');
 
 	/* initial Sequence */
 	if ((count = asn1_parse(np, length, &elem)) < 0)
@@ -1071,58 +1436,23 @@ snmp_print(const u_char *np, u_int length)
 		asn1_print(&elem);
 		return;
 	}
-	/* only handle version 1 and 2 */
-	if (elem.data.integer > DEF_VERSION) {
-		printf("[version(%d)>%d]", elem.data.integer, DEF_VERSION);
-		return;
-	}
 	length -= count;
 	np += count;
-
-	/* Community (String) */
-	if ((count = asn1_parse(np, length, &elem)) < 0)
+	switch (elem.data.integer) {
+	case SNMP_V1:
+	case SNMP_V2C:
+		if (vflag)
+			printf("SNMPv%s ", elem.data.integer == SNMP_V1 ?
+			    "1" : "2c");
+		snmp12_print(np, length);
 		return;
-	if (elem.type != BE_STR) {
-		fputs("[comm!=STR]", stdout);
-		asn1_print(&elem);
+	case SNMP_V3:
+		if (vflag)
+			fputs("SNMPv3 ", stdout);
+		snmp3_print(np, length);
 		return;
-	}
-	/* default community */
-	if (strncmp((char *)elem.data.str, DEF_COMMUNITY,
-	    sizeof(DEF_COMMUNITY) - 1))
-		/* ! "public" */
-		printf("C=%.*s ", (int)elem.asnlen, elem.data.str);
-	length -= count;
-	np += count;
-
-	/* PDU (Context) */
-	if ((count = asn1_parse(np, length, &pdu)) < 0)
-		return;
-	if (pdu.type != BE_PDU) {
-		fputs("[no PDU]", stdout);
+	default:
+		printf("[snmp version(%d)]", elem.data.integer);
 		return;
 	}
-	if (count < length)
-		printf("[%d extra after PDU]", length - count);
-	asn1_print(&pdu);
-	/* descend into PDU */
-	length = pdu.asnlen;
-	np = (u_char *)pdu.data.raw;
-
-	switch (pdu.id) {
-	case TRAP:
-		trap_print(np, length);
-		break;
-	case GETREQ:
-	case GETNEXTREQ:
-	case GETRESP:
-	case SETREQ:
-	case GETBULKREQ:
-	case INFORMREQ:
-	case TRAPV2:
-	case REPORT:
-		snmppdu_print(pdu.id, np, length);
-		break;
-	}
-	return;
 }

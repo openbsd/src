@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.131 2018/02/19 08:59:52 mpi Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.132 2019/05/04 11:34:48 kettenis Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -529,7 +529,18 @@ wsdisplay_emul_match(struct device *parent, void *match, void *aux)
 			return (0);
 	}
 
-	/* If console-ness unspecified, it wins. */
+	if (cf->wsemuldisplaydevcf_primary != WSEMULDISPLAYDEVCF_PRIMARY_UNK) {
+		/*
+		 * If primary-ness of device specified, either match
+		 * exactly (at high priority), or fail.
+		 */
+		if (cf->wsemuldisplaydevcf_primary != 0 && ap->primary != 0)
+			return (10);
+		else
+			return (0);
+	}
+
+	/* If console-ness and primary-ness unspecified, it wins. */
 	return (1);
 }
 

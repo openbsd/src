@@ -7,17 +7,16 @@ use warnings;
 
 BEGIN { chdir 't' if -d 't'; require './test.pl'; }
 
-plan(tests => 26);
+plan(tests => 36);
 
 {
-    no warnings 'deprecated';
-    print <<;   # Yow!
+    print <<'';   # Yow!
 ok 1
 
     # previous line intentionally left blank.
 
     my $yow = "ok 2";
-    print <<;   # Yow!
+    print <<"";   # Yow!
 $yow
 
     # previous line intentionally left blank.
@@ -216,3 +215,75 @@ fresh_perl_is(
    { stderr => 1 },
   's;@{<<a; [perl #123995]'
 );
+
+fresh_perl_is(
+  '$_ = q-strict.pm-; 1 ? require : die;'
+ .' print qq-ok\n- if $INC{q-strict.pm-}',
+  "ok\n",
+  {},
+  'foo ? require : bar [perl #128307]'
+);
+
+like runperl(prog => 'sub ub(){0} ub ub', stderr=>1), qr/Bareword found/,
+ '[perl #126482] Assert failure when mentioning a constant twice in a row';
+
+fresh_perl_is(
+    "do\0"."000000",
+    "",
+    {},
+    '[perl #129069] - no output and valgrind clean'
+);
+
+fresh_perl_is(
+    "00my sub\0",
+    "Missing name in \"my sub\" at - line 1.\n",
+    {},
+    '[perl #129069] - "Missing name" warning and valgrind clean'
+);
+
+fresh_perl_like(
+    "#!perl -i u\nprint 'OK'",
+    qr/OK/,
+    {},
+    '[perl #129336] - #!perl -i argument handling'
+);
+SKIP:
+{
+    ord("A") == 65
+      or skip "These tests won't work on EBCIDIC", 3;
+    fresh_perl_is(
+        "BEGIN{\$^H=hex ~0}\xF3",
+        "Integer overflow in hexadecimal number at - line 1.\n"
+      . "Malformed UTF-8 character: \\xf3 (too short; 1 byte available, need 4) at - line 1.\n"
+      . "Malformed UTF-8 character (fatal) at - line 1.",
+        {},
+        '[perl #128996] - use of PL_op after op is freed'
+    );
+    fresh_perl_like(
+        qq(BEGIN{\$0="";\$^H=-hex join""=>1}""\xFF),
+        qr/Malformed UTF-8 character: \\xff \(too short; 1 byte available, need 13\) at - line 1\./,
+        {},
+        '[perl #128997] - buffer read overflow'
+    );
+    fresh_perl_like(
+        qq(BEGIN{\$^H=0x800000}\n   0m 0\xB5\xB500\xB5\0),
+        qr/Malformed UTF-8 character: \\xb5 \(unexpected continuation byte 0xb5, with no preceding start byte\)/,
+        {},
+        '[perl #129000] read before buffer'
+    );
+}
+# probably only failed under ASAN
+fresh_perl_is(
+    "stat\tt\$#0",
+    <<'EOM',
+$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 1.
+Number found where operator expected at - line 1, near "$#0"
+	(Missing operator before 0?)
+Can't call method "t" on an undefined value at - line 1.
+EOM
+    {},
+    "[perl #129273] heap use after free or overflow"
+);
+
+fresh_perl_like('flock  _$', qr/Not enough arguments for flock/, {stderr => 1},
+                "[perl #129190] intuit_method() invalidates PL_bufptr");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.8 2017/07/20 08:30:34 mpi Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.

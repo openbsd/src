@@ -1,4 +1,4 @@
-package t::Util;
+package Util;
 
 use strict;
 use warnings;
@@ -151,9 +151,10 @@ sub sort_headers {
         *HTTP::Tiny::Handle::can_read = sub {1};
         *HTTP::Tiny::Handle::can_write = sub {1};
         *HTTP::Tiny::Handle::connect = sub {
-            my ($self, $scheme, $host, $port) = @_;
+            my ($self, $scheme, $host, $port, $peer) = @_;
             $self->{host}   = $monkey_host = $host;
             $self->{port}   = $monkey_port = $port;
+            $self->{peer}   = $peer;
             $self->{scheme} = $scheme;
             $self->{fh} = shift @req_fh;
             $self->{pid} = $$;

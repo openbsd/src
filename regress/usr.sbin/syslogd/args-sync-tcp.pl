@@ -51,7 +51,7 @@ our %args = (
 	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 30)
 		or die ref($self), " syslogd did not receive third log";
 	    shutdown(\*STDOUT, 1)
-		or die "shutdown write failed: $!";
+		or die ref($self), " shutdown write failed: $!";
 	})},
 	loggrep => {
 	    qr/Accepted/ => 2,

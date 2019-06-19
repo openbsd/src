@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_sign.c,v 1.6 2015/02/08 13:35:07 jsing Exp $ */
+/* $OpenBSD: ecs_sign.c,v 1.7 2019/01/19 01:07:00 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -55,10 +55,12 @@
 
 #include <openssl/opensslconf.h>
 
-#include "ecs_locl.h"
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
+#include "ecs_locl.h"
+#include "ec_lcl.h"
 
 ECDSA_SIG *
 ECDSA_do_sign(const unsigned char *dgst, int dlen, EC_KEY *eckey)
@@ -70,11 +72,10 @@ ECDSA_SIG *
 ECDSA_do_sign_ex(const unsigned char *dgst, int dlen, const BIGNUM *kinv,
     const BIGNUM *rp, EC_KEY *eckey)
 {
-	ECDSA_DATA *ecdsa = ecdsa_check(eckey);
-
-	if (ecdsa == NULL)
-		return NULL;
-	return ecdsa->meth->ecdsa_do_sign(dgst, dlen, kinv, rp, eckey);
+	if (eckey->meth->sign_sig != NULL)
+		return eckey->meth->sign_sig(dgst, dlen, kinv, rp, eckey);
+	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+	return 0;
 }
 
 int
@@ -88,24 +89,17 @@ int
 ECDSA_sign_ex(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
     unsigned int *siglen, const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey)
 {
-	ECDSA_SIG *s;
-
-	s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey);
-	if (s == NULL) {
-		*siglen = 0;
-		return 0;
-	}
-	*siglen = i2d_ECDSA_SIG(s, &sig);
-	ECDSA_SIG_free(s);
-	return 1;
+	if (eckey->meth->sign != NULL)
+		return eckey->meth->sign(type, dgst, dlen, sig, siglen, kinv, r, eckey);
+	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+	return 0;
 }
 
 int
 ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 {
-	ECDSA_DATA *ecdsa = ecdsa_check(eckey);
-
-	if (ecdsa == NULL)
-		return 0;
-	return ecdsa->meth->ecdsa_sign_setup(eckey, ctx_in, kinvp, rp);
+	if (eckey->meth->sign_setup != NULL)
+		return eckey->meth->sign_setup(eckey, ctx_in, kinvp, rp);
+	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+	return 0;
 }

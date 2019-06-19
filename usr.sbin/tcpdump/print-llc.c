@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.20 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.21 2019/04/05 00:57:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -100,7 +100,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 
 		/* Cisco Discovery Protocol  - SNAP & ether type 0x2000 */
 		if (llc.ethertype[0] == 0x20 && llc.ethertype[1] == 0x00) {
-			cdp_print(p, length, caplen, esrc, edst);
+			cdp_print(p, length, caplen, 8);
 			return (1);
 		}
 		/* Shared Spanning Tree Protocol - SNAP & ether type 0x010b */

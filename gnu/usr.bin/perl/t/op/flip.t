@@ -36,7 +36,7 @@ $x = 3.14;
 ok(($x...$x) eq "1");
 
 {
-    # coredump reported in bug 20001018.008
+    # coredump reported in bug 20001018.008 (#4474)
     readline(UNKNOWN);
     $. = 1;
     $x = 1..10;

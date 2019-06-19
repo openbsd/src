@@ -1,0 +1,19 @@
+.\" $OpenBSD: esc.in,v 1.1 2018/12/21 16:58:49 schwarze Exp $
+.Dd $Mdocdate: December 21 2018 $
+.Dt BL-ESC 1
+.Os
+.Sh NAME
+.Nm Bl-esc
+.Nd escape sequences in full block macro heads
+.Sh DESCRIPTION
+.ds a \(at
+.Bl -tag -width 2n
+.It \*a
+unquoted unescaped
+.It "\*a"
+quoted unescaped
+.It \\*a
+unquoted escaped
+.It "\\*a"
+quoted escaped
+.El

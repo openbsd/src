@@ -1,17 +1,15 @@
-# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2019/03/05 09:44:40 jsg Exp $
 
 LIB=	LLVMAnalysis
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Analysis
 
-.include <bsd.own.mk>
-SRCS=	AliasAnalysis.cpp \
+SRCS+=	AliasAnalysis.cpp \
 	AliasAnalysisEvaluator.cpp \
 	AliasAnalysisSummary.cpp \
 	AliasSetTracker.cpp \
-	Analysis.cpp \
+	AnalysisAnalysis.cpp \
 	AssumptionCache.cpp \
 	BasicAliasAnalysis.cpp \
 	BlockFrequencyInfo.cpp \
@@ -26,6 +24,7 @@ SRCS=	AliasAnalysis.cpp \
 	CallGraphSCCPass.cpp \
 	CallPrinter.cpp \
 	CaptureTracking.cpp \
+	CmpInstAnalysis.cpp \
 	CostModel.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
@@ -65,12 +64,14 @@ SRCS=	AliasAnalysis.cpp \
 	MemorySSAUpdater.cpp \
 	ModuleDebugInfoPrinter.cpp \
 	ModuleSummaryAnalysis.cpp \
+	MustExecute.cpp \
 	ObjCARCAliasAnalysis.cpp \
 	ObjCARCAnalysisUtils.cpp \
 	ObjCARCInstKind.cpp \
-	OptimizationDiagnosticInfo.cpp \
+	OptimizationRemarkEmitter.cpp \
 	OrderedBasicBlock.cpp \
 	PHITransAddr.cpp \
+	PhiValues.cpp \
 	PostDominators.cpp \
 	ProfileSummaryInfo.cpp \
 	PtrUseVisitor.cpp \
@@ -81,19 +82,21 @@ SRCS=	AliasAnalysis.cpp \
 	ScalarEvolutionAliasAnalysis.cpp \
 	ScalarEvolutionExpander.cpp \
 	ScalarEvolutionNormalization.cpp \
-	SparsePropagation.cpp \
+	SyntheticCountsUtils.cpp \
 	TargetLibraryInfo.cpp \
 	TargetTransformInfo.cpp \
 	Trace.cpp \
 	TypeBasedAliasAnalysis.cpp \
 	TypeMetadataUtils.cpp \
 	ScopedNoAliasAA.cpp \
+	ValueLattice.cpp \
+	ValueLatticeUtils.cpp \
 	ValueTracking.cpp \
 	VectorUtils.cpp
 
+AnalysisAnalysis.cpp:
+	ln -s ${LLVM_SRCS}/lib/Analysis/Analysis.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/lib/Analysis
 
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>
+CLEANFILES+= AnalysisAnalysis.cpp

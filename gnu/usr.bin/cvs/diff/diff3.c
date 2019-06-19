@@ -1502,7 +1502,7 @@ output_diff3 (diff, mapping, rev_mapping)
 	      line = 0;
 	      do
 		{
-		  printf_output (line_prefix);
+		  printf_output ("%s", line_prefix);
 		  cp = D_RELNUM (ptr, realfile, line);
 		  length = D_RELLEN (ptr, realfile, line);
 		  write_output (cp, length);
@@ -1554,11 +1554,12 @@ undotlines (leading_dot, start, num)
      int leading_dot, start, num;
 {
   write_output (".\n", 2);
-  if (leading_dot)
+  if (leading_dot) {
     if (num == 1)
       printf_output ("%ds/^\\.//\n", start);
     else
       printf_output ("%d,%ds/^\\.//\n", start, start + num - 1);
+  }
 }
 
 /*
@@ -1749,11 +1750,12 @@ output_diff3_merge (infile, diff, mapping, rev_mapping,
 	do
 	  {
 	    c = getc (infile);
-	    if (c == EOF)
+	    if (c == EOF) {
 	      if (ferror (infile))
 		diff3_perror_with_exit ("input file");
 	      else if (feof (infile))
 		diff3_fatal ("input file shrank");
+	    }
 	    cc = c;
 	    write_output (&cc, 1);
 	  }
@@ -1803,7 +1805,7 @@ output_diff3_merge (infile, diff, mapping, rev_mapping,
       linesread += i;
       while (0 <= --i)
 	while ((c = getc (infile)) != '\n')
-	  if (c == EOF)
+	  if (c == EOF) {
 	    if (ferror (infile))
 	      diff3_perror_with_exit ("input file");
 	    else if (feof (infile))
@@ -1812,6 +1814,7 @@ output_diff3_merge (infile, diff, mapping, rev_mapping,
 		  diff3_fatal ("input file shrank");
 		return conflicts_found;
 	      }
+	  }
     }
   /* Copy rest of common file.  */
   while ((c = getc (infile)) != EOF || !(ferror (infile) | feof (infile)))

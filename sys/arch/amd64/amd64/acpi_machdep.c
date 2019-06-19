@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.80 2018/01/11 22:31:09 patrick Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.86 2018/10/23 17:51:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -32,11 +32,12 @@
 
 #include <machine/cpuvar.h>
 
-#include <dev/isa/isareg.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
+#include <dev/isa/isareg.h>
+#include <dev/pci/pcivar.h>
 
 #include "isa.h"
 #include "ioapic.h"
@@ -64,12 +65,49 @@ extern int acpi_savecpu(void) __returns_twice;
 
 u_int8_t	*acpi_scan(struct acpi_mem_map *, paddr_t, size_t);
 
+int	acpi_match(struct device *, void *, void *);
+void	acpi_attach(struct device *, struct device *, void *);
+
+struct cfattach acpi_ca = {
+	sizeof(struct acpi_softc), acpi_match, acpi_attach
+};
+
+int
+acpi_match(struct device *parent, void *match, void *aux)
+{
+	struct bios_attach_args	*ba = aux;
+	struct cfdata		*cf = match;
+
+	/* sanity */
+	if (strcmp(ba->ba_name, cf->cf_driver->cd_name))
+		return (0);
+
+	if (!acpi_probe(parent, cf, ba))
+		return (0);
+
+	return (1);
+}
+
+void
+acpi_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct acpi_softc *sc = (struct acpi_softc *)self;
+	struct bios_attach_args *ba = aux;
+
+	sc->sc_iot = ba->ba_iot;
+	sc->sc_memt = ba->ba_memt;
+	sc->sc_dmat = &pci_bus_dma_tag;
+
+	acpi_attach_common(sc, ba->ba_acpipbase);
+}
+
 int
 acpi_map(paddr_t pa, size_t len, struct acpi_mem_map *handle)
 {
 	paddr_t pgpa = trunc_page(pa);
 	paddr_t endpa = round_page(pa + len);
-	vaddr_t va = uvm_km_valloc(kernel_map, endpa - pgpa);
+	vaddr_t va = (vaddr_t)km_alloc(endpa - pgpa, &kv_any, &kp_none,
+	    &kd_nowait);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -92,7 +130,21 @@ void
 acpi_unmap(struct acpi_mem_map *handle)
 {
 	pmap_kremove(handle->baseva, handle->vsize);
-	uvm_km_free(kernel_map, handle->baseva, handle->vsize);
+	km_free((void *)handle->baseva, handle->vsize, &kv_any, &kp_none);
+}
+
+int
+acpi_bus_space_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
+    int flags, bus_space_handle_t *bshp)
+{
+	return _bus_space_map(t, addr, size, flags, bshp);
+}
+
+void
+acpi_bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t size)
+{
+	_bus_space_unmap(t, bsh, size, NULL);
 }
 
 void *
@@ -384,7 +436,7 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	 */
 	if (acpi_savecpu()) {
 		/* Suspend path */
-		fpusave_cpu(curcpu(), 1);
+		KASSERT((curcpu()->ci_flags & CPUF_USERXSTATE) == 0);
 		wbinvd();
 
 #ifdef HIBERNATE
@@ -411,6 +463,7 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 		return (ECANCELED);
 	}
 	/* Resume path */
+	fpureset();
 
 	/* Reset the vectors */
 	sc->sc_facs->wakeup_vector = 0;

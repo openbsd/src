@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.4 2017/11/05 20:01:09 reyk Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.8 2018/12/27 19:51:30 anton Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -24,6 +24,7 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 
+#include <resolv.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
@@ -44,8 +45,10 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	struct packet_ctx	 pc;
 	struct dhcp_packet	 req, resp;
 	struct in_addr		 server_addr, mask, client_addr, requested_addr;
-	size_t			 resplen, o;
+	size_t			 len, resplen, o;
 	uint32_t		 ltime;
+	struct vmd_vm		*vm;
+	const char		*hostname = NULL;
 
 	if (buflen < (ssize_t)(BOOTP_MIN_LEN + sizeof(struct ether_header)))
 		return (-1);
@@ -108,8 +111,15 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	resp.hlen = req.hlen;
 	resp.xid = req.xid;
 
+	if (dev->pxeboot) {
+		strlcpy(resp.file, "auto_install", sizeof resp.file);
+		vm = vm_getbyvmid(dev->vm_vmid);
+		if (vm && res_hnok(vm->vm_params.vmc_params.vcp_name))
+			hostname = vm->vm_params.vmc_params.vcp_name;
+	}
+
 	if ((client_addr.s_addr =
-	    vm_priv_addr(&env->vmd_cfg.cfg_localprefix,
+	    vm_priv_addr(&env->vmd_cfg,
 	    dev->vm_vmid, dev->idx, 1)) == 0)
 		return (-1);
 	memcpy(&resp.yiaddr, &client_addr,
@@ -118,12 +128,10 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	    sizeof(client_addr));
 	ss2sin(&pc.pc_dst)->sin_port = htons(CLIENT_PORT);
 
-	if ((server_addr.s_addr =
-	    vm_priv_addr(&env->vmd_cfg.cfg_localprefix,
-	    dev->vm_vmid, dev->idx, 0)) == 0)
+	if ((server_addr.s_addr = vm_priv_addr(&env->vmd_cfg, dev->vm_vmid,
+	    dev->idx, 0)) == 0)
 		return (-1);
-	memcpy(&resp.siaddr, &server_addr,
-	    sizeof(server_addr));
+	memcpy(&resp.siaddr, &server_addr, sizeof(server_addr));
 	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &server_addr,
 	    sizeof(server_addr));
 	ss2sin(&pc.pc_src)->sin_port = htons(SERVER_PORT);
@@ -189,11 +197,6 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 		o += sizeof(server_addr);
 	}
 
-	resp.options[o++] = DHO_DOMAIN_NAME_SERVERS;
-	resp.options[o++] = sizeof(server_addr);
-	memcpy(&resp.options[o], &server_addr, sizeof(server_addr));
-	o += sizeof(server_addr);
-
 	resp.options[o++] = DHO_SUBNET_MASK;
 	resp.options[o++] = sizeof(mask);
 	mask.s_addr = htonl(0xfffffffe);
@@ -209,6 +212,14 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	resp.options[o++] = sizeof(server_addr);
 	memcpy(&resp.options[o], &server_addr, sizeof(server_addr));
 	o += sizeof(server_addr);
+
+	if (hostname != NULL) {
+		len = strlen(hostname);
+		resp.options[o++] = DHO_HOST_NAME;
+		resp.options[o++] = len;
+		memcpy(&resp.options[o], hostname, len);
+		o += len;
+	}
 
 	resp.options[o++] = DHO_END;
 

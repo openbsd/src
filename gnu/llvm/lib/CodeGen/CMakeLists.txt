@@ -4,15 +4,15 @@ add_llvm_library(LLVMCodeGen
   Analysis.cpp
   AtomicExpandPass.cpp
   BasicTargetTransformInfo.cpp
-  BranchCoalescing.cpp
   BranchFolding.cpp
   BranchRelaxation.cpp
+  BreakFalseDeps.cpp
   BuiltinGCs.cpp
   CalcSpillWeights.cpp
   CallingConvLower.cpp
+  CFIInstrInserter.cpp
   CodeGen.cpp
   CodeGenPrepare.cpp
-  CountingFunctionInserter.cpp
   CriticalAntiDepBreaker.cpp
   DeadMachineInstructionElim.cpp
   DetectDeadLanes.cpp
@@ -20,8 +20,9 @@ add_llvm_library(LLVMCodeGen
   DwarfEHPrepare.cpp
   EarlyIfConversion.cpp
   EdgeBundles.cpp
-  ExecutionDepsFix.cpp
+  ExecutionDomainFix.cpp
   ExpandISelPseudos.cpp
+  ExpandMemCmp.cpp
   ExpandPostRAPseudos.cpp
   ExpandReductions.cpp
   FaultMaps.cpp
@@ -34,6 +35,7 @@ add_llvm_library(LLVMCodeGen
   GlobalMerge.cpp
   IfConversion.cpp
   ImplicitNullChecks.cpp
+  IndirectBrExpandPass.cpp
   InlineSpiller.cpp
   InterferenceCache.cpp
   InterleavedAccessPass.cpp
@@ -43,7 +45,7 @@ add_llvm_library(LLVMCodeGen
   LexicalScopes.cpp
   LiveDebugValues.cpp
   LiveDebugVariables.cpp
-  LiveIntervalAnalysis.cpp
+  LiveIntervals.cpp
   LiveInterval.cpp
   LiveIntervalUnion.cpp
   LivePhysRegs.cpp
@@ -52,10 +54,11 @@ add_llvm_library(LLVMCodeGen
   LiveRangeShrink.cpp
   LiveRegMatrix.cpp
   LiveRegUnits.cpp
-  LiveStackAnalysis.cpp
+  LiveStacks.cpp
   LiveVariables.cpp
   LLVMTargetMachine.cpp
   LocalStackSlotAllocation.cpp
+  LoopTraversal.cpp
   LowLevelType.cpp
   LowerEmuTLS.cpp
   MachineBasicBlock.cpp
@@ -77,6 +80,7 @@ add_llvm_library(LLVMCodeGen
   MachineLoopInfo.cpp
   MachineModuleInfo.cpp
   MachineModuleInfoImpls.cpp
+  MachineOperand.cpp
   MachineOptimizationRemarkEmitter.cpp
   MachineOutliner.cpp
   MachinePassRegistry.cpp
@@ -104,6 +108,7 @@ add_llvm_library(LLVMCodeGen
   ProcessImplicitDefs.cpp
   PrologEpilogInserter.cpp
   PseudoSourceValue.cpp
+  ReachingDefAnalysis.cpp
   RegAllocBase.cpp
   RegAllocBasic.cpp
   RegAllocFast.cpp
@@ -114,10 +119,12 @@ add_llvm_library(LLVMCodeGen
   RegisterPressure.cpp
   RegisterScavenging.cpp
   RenameIndependentSubregs.cpp
+  MIRCanonicalizerPass.cpp
   RegisterUsageInfo.cpp
   RegUsageInfoCollector.cpp
   RegUsageInfoPropagate.cpp
   ResetMachineFunctionPass.cpp
+  ReturnProtectorPass.cpp
   SafeStack.cpp
   SafeStackColoring.cpp
   SafeStackLayout.cpp
@@ -150,7 +157,9 @@ add_llvm_library(LLVMCodeGen
   TargetSubtargetInfo.cpp
   TwoAddressInstructionPass.cpp
   UnreachableBlockElim.cpp
+  ValueTypes.cpp
   VirtRegMap.cpp
+  WasmEHPrepare.cpp
   WinEHPrepare.cpp
   XRayInstrumentation.cpp
 

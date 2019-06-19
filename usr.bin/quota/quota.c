@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.c,v 1.38 2016/03/16 15:41:11 krw Exp $	*/
+/*	$OpenBSD: quota.c,v 1.39 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -37,8 +37,6 @@
  */
 #include <sys/param.h>	/* DEV_BSIZE dbtob */
 #include <sys/types.h>
-#include <sys/file.h>
-#include <sys/stat.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 
@@ -46,6 +44,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <fstab.h>
 #include <grp.h>
 #include <netdb.h>

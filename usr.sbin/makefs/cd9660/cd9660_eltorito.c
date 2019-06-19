@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_eltorito.c,v 1.13 2017/11/07 00:22:40 yasuoka Exp $	*/
+/*	$OpenBSD: cd9660_eltorito.c,v 1.14 2018/11/20 01:13:15 yasuoka Exp $	*/
 /*	$NetBSD: cd9660_eltorito.c,v 1.20 2013/01/28 21:03:28 christos Exp $	*/
 
 /*
@@ -119,6 +119,8 @@ cd9660_add_boot_disk(iso9660_disk *diskStructure, const char *boot_info)
 
 	free(temp);
 
+	if (unveil(new_image->filename, "r") == -1)
+		err(1, "unveil");
 	/* Get information about the file */
 	if (lstat(new_image->filename, &stbuf) == -1)
 		err(1, "%s: lstat(\"%s\")", __func__, new_image->filename);

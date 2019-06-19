@@ -14,11 +14,25 @@ use lib 't/lib';
 
 plan skip_all => ".pmc are only available with 5.6 and later" if $] < 5.006;
 
-my $no_pmc = defined &Config::non_bincompat_options
-    ? (grep $_ eq 'PERL_DISABLE_PMC', Config::non_bincompat_options())
-    : ($Config::Config{ccflags} =~ /-DPERL_DISABLE_PMC\b/);
-plan skip_all => ".pmc are disabled in this perl"
-    if $no_pmc;
+# Skip this test if perl is compiled with PERL_DISABLE_PMC
+#
+my $pmc = 1;
+if (Config->can('non_bincompat_options')) { # $] ge '5.014'
+    $pmc = 0
+        if grep { $_ eq 'PERL_DISABLE_PMC' } Config::non_bincompat_options();
+} elsif (eval {
+    require Config::Perl::V;
+    Config::Perl::V->VERSION('0.10');
+}) {
+    $pmc = 0
+        if Config::Perl::V::myconfig()->{options}{PERL_DISABLE_PMC};
+} else {
+    $pmc = 0
+        if $Config::Config{ccflags} =~ /(?:^|\s)-DPERL_DISABLE_PMC\b/;
+}
+
+plan skip_all => 'Perl is built with PERL_DISABLE_PMC' unless $pmc;
+
 plan tests => 3;
 
 use vars qw($got_here);

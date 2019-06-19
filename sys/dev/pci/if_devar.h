@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.38 2016/08/14 04:51:29 dlg Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.39 2018/11/25 19:52:08 jmc Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -292,11 +292,11 @@ typedef struct {
  * out for special merit or scorn).
  */
 typedef enum {
-    TULIP_21040_GENERIC,		/* Generic 21040 (works with most any board) */
-    TULIP_21140_ISV,			/* Digital Semicondutor 21140 ISV SROM Format */
-    TULIP_21142_ISV,			/* Digital Semicondutor 21142 ISV SROM Format */
-    TULIP_21143_ISV,			/* Digital Semicondutor 21143 ISV SROM Format */
-    TULIP_21140_DEC_EB,			/* Digital Semicondutor 21140 Evaluation Board */
+    TULIP_21040_GENERIC,		/* Generic 21040 (works with most boards) */
+    TULIP_21140_ISV,			/* Digital Semiconductor 21140 ISV SROM Format */
+    TULIP_21142_ISV,			/* Digital Semiconductor 21142 ISV SROM Format */
+    TULIP_21143_ISV,			/* Digital Semiconductor 21143 ISV SROM Format */
+    TULIP_21140_DEC_EB,			/* Digital Semiconductor 21140 Evaluation Board */
     TULIP_21140_MII,			/* 21140[A] with MII */
     TULIP_21140_DEC_DE500,		/* Digital DE500-?? 10/100 */
     TULIP_21140_SMC_9332,		/* SMC 9332 */

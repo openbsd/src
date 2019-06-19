@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.160 2017/09/07 13:08:39 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.164 2018/09/28 18:21:31 ratchov Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 7 2017 $
+.Dd $Mdocdate: September 28 2018 $
 .Dt AFTERBOOT 8
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -152,7 +152,7 @@ if it needs to be changed.
 You will also need to edit the
 .Pa /etc/myname
 file to have it stick around for the next reboot.
-.Ss Verify network interface configuration
+.Ss Verify network interface configuration and routing tables
 The first thing to do is an
 .Ic ifconfig -a
 to see if the network interfaces are properly configured.
@@ -171,65 +171,17 @@ Read the
 man page for more information on the format of
 .Pa /etc/hostname. Ns Ar interface
 files.
-The loopback interface will look something like:
-.Bd -literal -offset indent
-lo0: flags=8009<UP,LOOPBACK,MULTICAST> mtu 32972
-	inet6 fe80::1%lo0 prefixlen 64 scopeid 0x3
-	inet6 ::1 prefixlen 128
-	inet 127.0.0.1 netmask 0xff000000
-.Ed
-.Pp
-an Ethernet interface something like:
-.Bd -literal -offset indent
-em0: flags=9863<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST>
-	inet 192.168.4.52 netmask 0xffffff00 broadcast 192.168.4.255
-	inet6 fe80::5ef0:f0f0%em0 prefixlen 64 scopeid 0x1
-.Ed
-.Pp
-and a PPP interface something like:
-.Bd -literal -offset indent
-ppp0: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST>
-        inet 203.3.131.108 --> 198.181.0.253 netmask 0xffff0000
-.Ed
 .Pp
 See
-.Xr netstart 8
+.Xr multicast 4
 for instructions on configuring multicast routing.
-.Pp
 See
 .Xr hostname.if 5
 for instructions on configuring interfaces with DHCP.
-.Ss Check routing tables
-Issue a
+.Pp
+Routing tables can be viewed by issuing a
 .Ic netstat -rn
 command.
-The output will look something like:
-.Bd -literal -offset indent
-Routing tables
-
-Internet:
-Destination    Gateway           Flags  Refs     Use  Mtu  Interface
-default        192.168.4.254     UGS      0 11098028    -  em0
-127            127.0.0.1         UGRS     0        0    -  lo0
-127.0.0.1      127.0.0.1         UH       3       24    -  lo0
-192.168.4      link#1            UC       0        0    -  em0
-192.168.4.52   8:0:20:73:b8:4a   UHL      1     6707    -  em0
-192.168.4.254  0:60:3e:99:67:ea  UHL      1        0    -  em0
-
-Internet6:
-Destination        Gateway       Flags  Refs  Use     Mtu  Interface
-::/96              ::1           UGRS     0     0   32972  lo0 =>
-::1                ::1           UH       4     0   32972  lo0
-::ffff:0.0.0.0/96  ::1           UGRS     0     0   32972  lo0
-fc80::/10          ::1           UGRS     0     0   32972  lo0
-fe80::/10          ::1           UGRS     0     0   32972  lo0
-fe80::%em0/64      link#1        UC       0     0    1500  em0
-fe80::%lo0/64      fe80::1%lo0   U        0     0   32972  lo0
-ff01::/32          ::1           U        0     0   32972  lo0
-ff02::%em0/32      link#1        UC       0     0    1500  em0
-ff02::%lo0/32      fe80::1%lo0   UC       0     0   32972  lo0
-.Ed
-.Pp
 The default gateway address is stored in the
 .Pa /etc/mygate
 file.
@@ -450,6 +402,14 @@ Consult
 and
 .Xr printcap 5
 if needed.
+.Ss Audio recording
+The
+.Xr audio 4
+driver by default records only silence.
+Normal audio recording can be enabled by adding the following directive to
+.Xr sysctl.conf 5 :
+.Pp
+.Dl kern.audio.record=1
 .Ss Mail aliases
 Edit
 .Pa /etc/mail/aliases
@@ -483,7 +443,7 @@ This makes it possible to send mail locally, but not receive mail from remote
 servers, which is ideal if you have one central incoming mail machine and
 several clients.
 To cause smtpd to accept external network connections, modify the
-.Va listen
+.Ic listen on
 directive in
 .Pa /etc/mail/smtpd.conf
 to include the interfaces to listen on.
@@ -592,6 +552,7 @@ is contained within
 .Xr pkg_add 1 ,
 .Xr ps 1 ,
 .Xr vi 1 ,
+.Xr multicast 4 ,
 .Xr hier 7 ,
 .Xr config 8 ,
 .Xr dmesg 8 ,

@@ -210,7 +210,7 @@ foreach my $handle (qw (DUMMY STDIN STDOUT STDERR)) {
     my $out = IO::Handle->new();
     my $pid = eval {
 	local $SIG{__WARN__} = sub {
-	    open my $fh, '>/dev/tty';
+	    open my $fh, '>', '/dev/tty';
 	    return if "@_" =~ m!^Use of uninitialized value \$fd.*IO/Handle\.pm!;
 	    print $fh "@_";
 	    die @_

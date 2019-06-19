@@ -1,4 +1,4 @@
-//===---- LoopVectorize.h ---------------------------------------*- C++ -*-===//
+//===- LoopVectorize.h ------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,6 +26,14 @@
 //    of vectorization. It decides on the optimal vector width, which
 //    can be one, if vectorization is not profitable.
 //
+// There is a development effort going on to migrate loop vectorizer to the
+// VPlan infrastructure and to introduce outer loop vectorization support (see
+// docs/Proposal/VectorizationPlan.rst and
+// http://lists.llvm.org/pipermail/llvm-dev/2017-December/119523.html). For this
+// purpose, we temporarily introduced the VPlan-native vectorization path: an
+// alternative vectorization path that is natively implemented on top of the
+// VPlan infrastructure. See EnableVPlanNativePath for enabling.
+//
 //===----------------------------------------------------------------------===//
 //
 // The reduction-variable vectorization is based on the paper:
@@ -49,27 +57,29 @@
 #ifndef LLVM_TRANSFORMS_VECTORIZE_LOOPVECTORIZE_H
 #define LLVM_TRANSFORMS_VECTORIZE_LOOPVECTORIZE_H
 
-#include "llvm/ADT/MapVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/AssumptionCache.h"
-#include "llvm/Analysis/BasicAliasAnalysis.h"
-#include "llvm/Analysis/BlockFrequencyInfo.h"
-#include "llvm/Analysis/DemandedBits.h"
-#include "llvm/Analysis/LoopAccessAnalysis.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/OptimizationDiagnosticInfo.h"
-#include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/Analysis/TargetTransformInfo.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Transforms/Scalar/LoopPassManager.h"
 #include <functional>
 
 namespace llvm {
 
+class AssumptionCache;
+class BlockFrequencyInfo;
+class DemandedBits;
+class DominatorTree;
+class Function;
+class Loop;
+class LoopAccessInfo;
+class LoopInfo;
+class OptimizationRemarkEmitter;
+class ScalarEvolution;
+class TargetLibraryInfo;
+class TargetTransformInfo;
+
 /// The LoopVectorize Pass.
 struct LoopVectorizePass : public PassInfoMixin<LoopVectorizePass> {
   bool DisableUnrolling = false;
+
   /// If true, consider all loops for vectorization.
   /// If false, only loops that explicitly request vectorization are
   /// considered.
@@ -99,6 +109,7 @@ struct LoopVectorizePass : public PassInfoMixin<LoopVectorizePass> {
 
   bool processLoop(Loop *L);
 };
-}
+
+} // end namespace llvm
 
 #endif // LLVM_TRANSFORMS_VECTORIZE_LOOPVECTORIZE_H

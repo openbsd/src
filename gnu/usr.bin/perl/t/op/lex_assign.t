@@ -5,8 +5,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 $| = 1;
@@ -102,12 +102,13 @@ EOE
 {				# Check calling STORE
   note('Tied variables, calling STORE');
   my $sc = 0;
-  sub B::TIESCALAR {bless [11], 'B'}
-  sub B::FETCH { -(shift->[0]) }
-  sub B::STORE { $sc++; my $o = shift; $o->[0] = 17 + shift }
+  # do not use B:: namespace
+  sub BB::TIESCALAR {bless [11], 'BB'}
+  sub BB::FETCH { -(shift->[0]) }
+  sub BB::STORE { $sc++; my $o = shift; $o->[0] = 17 + shift }
 
   my $m;
-  tie $m, 'B';
+  tie $m, 'BB';
   $m = 100;
 
   is( $sc, 1, 'STORE called when assigning scalar to tied variable' );
@@ -214,6 +215,18 @@ is($@, '', 'ex-PVBM assert'.$@);
     }
 }
 
+# time() can't be tested using the standard framework since two successive
+# calls may return differing values.
+
+{
+    my $a;
+    $a = time;
+    $b = time;
+    my $diff = $b - $a;
+    cmp_ok($diff, '>=', 0,  "time is monotically increasing");
+    cmp_ok($diff, '<',  2,  "time delta is small");
+}
+
 
 done_testing();
 
@@ -222,7 +235,7 @@ ref $xref			# ref
 ref $cstr			# ref nonref
 `$runme -e "print qq[1\\n]"`				# backtick skip(MSWin32)
 `$undefed`			# backtick undef skip(MSWin32)
-<*>				# glob
+'???'				# glob  (not currently OA_TARGLEX)
 <OP>				# readline
 'faked'				# rcatline
 (@z = (1 .. 3))			# aassign
@@ -355,7 +368,7 @@ getpgrp				# getpgrp
 setpgrp				# setpgrp
 getpriority $$, $$		# getpriority
 '???'				# setpriority
-time				# time
+'???'				# time
 localtime $^T			# localtime
 gmtime $^T			# gmtime
 '???'				# sleep: can randomly fail

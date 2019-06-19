@@ -122,7 +122,7 @@ print_half_line (line, indent, out_bound)
 	  break;
 
 	case '\b':
-	  if (in_position != 0 && --in_position < out_bound)
+	  if (in_position != 0 && --in_position < out_bound) {
 	    if (out_position <= in_position)
 	      /* Add spaces to make up for suppressed tab past out_bound.  */
 	      for (;  out_position < in_position;  out_position++)
@@ -133,6 +133,7 @@ print_half_line (line, indent, out_bound)
 		cc = c;
 		write_output (&cc, 1);
 	      }
+	  }
 	  break;
 
 	case '\f':

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.51 2016/12/26 17:38:14 jca Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.52 2018/09/03 05:37:32 miko Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -206,7 +206,6 @@ int	cs4280_mixer_get_port(void *, mixer_ctrl_t *);
 int	cs4280_query_devinfo(void *addr, mixer_devinfo_t *dip);
 void   *cs4280_malloc(void *, int, size_t, int, int);
 void	cs4280_free(void *, void *, int);
-size_t	cs4280_round_buffersize(void *, int, size_t);
 int	cs4280_get_props(void *);
 int	cs4280_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
@@ -253,7 +252,7 @@ struct audio_hw_if cs4280_hw_if = {
 	cs4280_query_devinfo,
 	cs4280_malloc,
 	cs4280_free,
-	cs4280_round_buffersize,
+	NULL,
 	cs4280_get_props,
 	cs4280_trigger_output,
 	cs4280_trigger_input
@@ -1058,16 +1057,6 @@ int
 cs4280_round_blocksize(void *hdl, int blk)
 {
 	return (blk < CS4280_ICHUNK ? CS4280_ICHUNK : blk & -CS4280_ICHUNK);
-}
-
-size_t
-cs4280_round_buffersize(void *addr, int direction, size_t size)
-{
-	/* although real dma buffer size is 4KB, 
-	 * let the audio.c driver use a larger buffer.
-	 * ( suggested by Lennart Augustsson. )
-	 */
-	return (size);
 }
 
 int

@@ -17,11 +17,12 @@ add_llvm_library(LLVMCore
   DebugInfo.cpp
   DebugInfoMetadata.cpp
   DebugLoc.cpp
+  DiagnosticHandler.cpp
   DiagnosticInfo.cpp
   DiagnosticPrinter.cpp
   Dominators.cpp
+  DomTreeUpdater.cpp
   Function.cpp
-  GCOV.cpp
   GVMaterializer.cpp
   Globals.cpp
   IRBuilder.cpp
@@ -52,7 +53,6 @@ add_llvm_library(LLVMCore
   User.cpp
   Value.cpp
   ValueSymbolTable.cpp
-  ValueTypes.cpp
   Verifier.cpp
 
   ADDITIONAL_HEADER_DIRS

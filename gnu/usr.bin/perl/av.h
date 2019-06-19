@@ -47,7 +47,7 @@ Null AV pointer.
 =head1 Array Manipulation Functions
 
 =for apidoc Am|int|AvFILL|AV* av
-Same as C<av_top_index()>.  Deprecated, use C<av_top_index()> instead.
+Same as C<av_top_index()> or C<av_tindex()>.
 
 =for apidoc Am|int|av_tindex|AV* av
 Same as C<av_top_index()>.
@@ -81,14 +81,12 @@ Same as C<av_top_index()>.
 			 ? mg_size(MUTABLE_SV(av)) : AvFILLp(av))
 #define av_tindex(av)   av_top_index(av)
 
-#if defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_REGEXEC_C) || defined(PERL_IN_UTF8_C)
 /* Note that it doesn't make sense to do this:
  *      SvGETMAGIC(av); IV x = av_tindex_nomg(av);
- * This name is controversial, and so is restricted by the #ifdef to the places
- * it already occurs
  */
-#   define av_tindex_nomg(av)  (__ASSERT_(SvTYPE(av) == SVt_PVAV) AvFILLp(av))
-#endif
+#   define av_top_index_skip_len_mg(av)                                     \
+                            (__ASSERT_(SvTYPE(av) == SVt_PVAV) AvFILLp(av))
+#   define av_tindex_skip_len_mg(av)  av_top_index_skip_len_mg(av)
 
 #define NEGATIVE_INDICES_VAR "NEGATIVE_INDICES"
 

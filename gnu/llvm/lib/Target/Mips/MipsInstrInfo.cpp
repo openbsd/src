@@ -1,4 +1,4 @@
-//===-- MipsInstrInfo.cpp - Mips Instruction Information ------------------===//
+//===- MipsInstrInfo.cpp - Mips Instruction Information -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,14 +12,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsInstrInfo.h"
-#include "InstPrinter/MipsInstPrinter.h"
-#include "MipsMachineFunction.h"
+#include "MCTargetDesc/MipsBaseInfo.h"
+#include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "MipsSubtarget.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
+#include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/IR/DebugLoc.h"
+#include "llvm/MC/MCInstrDesc.h"
+#include "llvm/Target/TargetMachine.h"
+#include <cassert>
 
 using namespace llvm;
 
@@ -35,9 +43,9 @@ MipsInstrInfo::MipsInstrInfo(const MipsSubtarget &STI, unsigned UncondBr)
 
 const MipsInstrInfo *MipsInstrInfo::create(MipsSubtarget &STI) {
   if (STI.inMips16Mode())
-    return llvm::createMips16InstrInfo(STI);
+    return createMips16InstrInfo(STI);
 
-  return llvm::createMipsSEInstrInfo(STI);
+  return createMipsSEInstrInfo(STI);
 }
 
 bool MipsInstrInfo::isZeroImm(const MachineOperand &op) const {
@@ -80,7 +88,7 @@ void MipsInstrInfo::AnalyzeCondBr(const MachineInstr *Inst, unsigned Opc,
   BB = Inst->getOperand(NumOp-1).getMBB();
   Cond.push_back(MachineOperand::CreateImm(Opc));
 
-  for (int i=0; i<NumOp-1; i++)
+  for (int i = 0; i < NumOp-1; i++)
     Cond.push_back(Inst->getOperand(i));
 }
 
@@ -149,24 +157,23 @@ unsigned MipsInstrInfo::removeBranch(MachineBasicBlock &MBB,
   assert(!BytesRemoved && "code size not handled");
 
   MachineBasicBlock::reverse_iterator I = MBB.rbegin(), REnd = MBB.rend();
-  unsigned removed;
-
-  // Skip all the debug instructions.
-  while (I != REnd && I->isDebugValue())
-    ++I;
-
-  if (I == REnd)
-    return 0;
-
-  MachineBasicBlock::iterator FirstBr = ++I.getReverse();
+  unsigned removed = 0;
 
   // Up to 2 branches are removed.
   // Note that indirect branches are not removed.
-  for (removed = 0; I != REnd && removed < 2; ++I, ++removed)
+  while (I != REnd && removed < 2) {
+    // Skip past debug instructions.
+    if (I->isDebugInstr()) {
+      ++I;
+      continue;
+    }
     if (!getAnalyzableBrOpc(I->getOpcode()))
       break;
-
-  MBB.erase((--I).getReverse(), FirstBr);
+    // Remove the branch.
+    I->eraseFromParent();
+    I = MBB.rbegin();
+    ++removed;
+  }
 
   return removed;
 }
@@ -185,11 +192,10 @@ MipsInstrInfo::BranchType MipsInstrInfo::analyzeBranch(
     MachineBasicBlock &MBB, MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,
     SmallVectorImpl<MachineOperand> &Cond, bool AllowModify,
     SmallVectorImpl<MachineInstr *> &BranchInstrs) const {
-
   MachineBasicBlock::reverse_iterator I = MBB.rbegin(), REnd = MBB.rend();
 
   // Skip all the debug instructions.
-  while (I != REnd && I->isDebugValue())
+  while (I != REnd && I->isDebugInstr())
     ++I;
 
   if (I == REnd || !isUnpredicatedTerminator(*I)) {
@@ -211,7 +217,13 @@ MipsInstrInfo::BranchType MipsInstrInfo::analyzeBranch(
   unsigned SecondLastOpc = 0;
   MachineInstr *SecondLastInst = nullptr;
 
-  if (++I != REnd) {
+  // Skip past any debug instruction to see if the second last actual
+  // is a branch.
+  ++I;
+  while (I != REnd && I->isDebugInstr())
+    ++I;
+
+  if (I != REnd) {
     SecondLastInst = &*I;
     SecondLastOpc = getAnalyzableBrOpc(SecondLastInst->getOpcode());
 
@@ -264,6 +276,163 @@ MipsInstrInfo::BranchType MipsInstrInfo::analyzeBranch(
   return BT_CondUncond;
 }
 
+bool MipsInstrInfo::isBranchOffsetInRange(unsigned BranchOpc, int64_t BrOffset) const {
+  switch (BranchOpc) {
+  case Mips::B:
+  case Mips::BAL:
+  case Mips::BC1F:
+  case Mips::BC1FL:
+  case Mips::BC1T:
+  case Mips::BC1TL:
+  case Mips::BEQ:     case Mips::BEQ64:
+  case Mips::BEQL:
+  case Mips::BGEZ:    case Mips::BGEZ64:
+  case Mips::BGEZL:
+  case Mips::BGEZAL:
+  case Mips::BGEZALL:
+  case Mips::BGTZ:    case Mips::BGTZ64:
+  case Mips::BGTZL:
+  case Mips::BLEZ:    case Mips::BLEZ64:
+  case Mips::BLEZL:
+  case Mips::BLTZ:    case Mips::BLTZ64:
+  case Mips::BLTZL:
+  case Mips::BLTZAL:
+  case Mips::BLTZALL:
+  case Mips::BNE:     case Mips::BNE64:
+  case Mips::BNEL:
+    return isInt<18>(BrOffset);
+
+  // microMIPSr3 branches
+  case Mips::B_MM:
+  case Mips::BC1F_MM:
+  case Mips::BC1T_MM:
+  case Mips::BEQ_MM:
+  case Mips::BGEZ_MM:
+  case Mips::BGEZAL_MM:
+  case Mips::BGTZ_MM:
+  case Mips::BLEZ_MM:
+  case Mips::BLTZ_MM:
+  case Mips::BLTZAL_MM:
+  case Mips::BNE_MM:
+  case Mips::BEQZC_MM:
+  case Mips::BNEZC_MM:
+    return isInt<17>(BrOffset);
+
+  // microMIPSR3 short branches.
+  case Mips::B16_MM:
+    return isInt<11>(BrOffset);
+
+  case Mips::BEQZ16_MM:
+  case Mips::BNEZ16_MM:
+    return isInt<8>(BrOffset);
+
+  // MIPSR6 branches.
+  case Mips::BALC:
+  case Mips::BC:
+    return isInt<28>(BrOffset);
+
+  case Mips::BC1EQZ:
+  case Mips::BC1NEZ:
+  case Mips::BC2EQZ:
+  case Mips::BC2NEZ:
+  case Mips::BEQC:   case Mips::BEQC64:
+  case Mips::BNEC:   case Mips::BNEC64:
+  case Mips::BGEC:   case Mips::BGEC64:
+  case Mips::BGEUC:  case Mips::BGEUC64:
+  case Mips::BGEZC:  case Mips::BGEZC64:
+  case Mips::BGTZC:  case Mips::BGTZC64:
+  case Mips::BLEZC:  case Mips::BLEZC64:
+  case Mips::BLTC:   case Mips::BLTC64:
+  case Mips::BLTUC:  case Mips::BLTUC64:
+  case Mips::BLTZC:  case Mips::BLTZC64:
+  case Mips::BNVC:
+  case Mips::BOVC:
+  case Mips::BGEZALC:
+  case Mips::BEQZALC:
+  case Mips::BGTZALC:
+  case Mips::BLEZALC:
+  case Mips::BLTZALC:
+  case Mips::BNEZALC:
+    return isInt<18>(BrOffset);
+
+  case Mips::BEQZC:  case Mips::BEQZC64:
+  case Mips::BNEZC:  case Mips::BNEZC64:
+    return isInt<23>(BrOffset);
+
+  // microMIPSR6 branches
+  case Mips::BC16_MMR6:
+    return isInt<11>(BrOffset);
+
+  case Mips::BEQZC16_MMR6:
+  case Mips::BNEZC16_MMR6:
+    return isInt<8>(BrOffset);
+
+  case Mips::BALC_MMR6:
+  case Mips::BC_MMR6:
+    return isInt<27>(BrOffset);
+
+  case Mips::BC1EQZC_MMR6:
+  case Mips::BC1NEZC_MMR6:
+  case Mips::BC2EQZC_MMR6:
+  case Mips::BC2NEZC_MMR6:
+  case Mips::BGEZALC_MMR6:
+  case Mips::BEQZALC_MMR6:
+  case Mips::BGTZALC_MMR6:
+  case Mips::BLEZALC_MMR6:
+  case Mips::BLTZALC_MMR6:
+  case Mips::BNEZALC_MMR6:
+  case Mips::BNVC_MMR6:
+  case Mips::BOVC_MMR6:
+    return isInt<17>(BrOffset);
+
+  case Mips::BEQC_MMR6:
+  case Mips::BNEC_MMR6:
+  case Mips::BGEC_MMR6:
+  case Mips::BGEUC_MMR6:
+  case Mips::BGEZC_MMR6:
+  case Mips::BGTZC_MMR6:
+  case Mips::BLEZC_MMR6:
+  case Mips::BLTC_MMR6:
+  case Mips::BLTUC_MMR6:
+  case Mips::BLTZC_MMR6:
+    return isInt<18>(BrOffset);
+
+  case Mips::BEQZC_MMR6:
+  case Mips::BNEZC_MMR6:
+    return isInt<23>(BrOffset);
+
+  // DSP branches.
+  case Mips::BPOSGE32:
+    return isInt<18>(BrOffset);
+  case Mips::BPOSGE32_MM:
+  case Mips::BPOSGE32C_MMR3:
+    return isInt<17>(BrOffset);
+
+  // cnMIPS branches.
+  case Mips::BBIT0:
+  case Mips::BBIT032:
+  case Mips::BBIT1:
+  case Mips::BBIT132:
+    return isInt<18>(BrOffset);
+
+  // MSA branches.
+  case Mips::BZ_B:
+  case Mips::BZ_H:
+  case Mips::BZ_W:
+  case Mips::BZ_D:
+  case Mips::BZ_V:
+  case Mips::BNZ_B:
+  case Mips::BNZ_H:
+  case Mips::BNZ_W:
+  case Mips::BNZ_D:
+  case Mips::BNZ_V:
+    return isInt<18>(BrOffset);
+  }
+
+  llvm_unreachable("Unknown branch instruction!");
+}
+
+
 /// Return the corresponding compact (no delay slot) form of a branch.
 unsigned MipsInstrInfo::getEquivalentCompactForm(
     const MachineBasicBlock::iterator I) const {
@@ -286,7 +455,6 @@ unsigned MipsInstrInfo::getEquivalentCompactForm(
     case Mips::JR:
     case Mips::PseudoReturn:
     case Mips::PseudoIndirectBranch:
-    case Mips::TAILCALLREG:
       canUseShortMicroMipsCTI = true;
       break;
     }
@@ -365,18 +533,18 @@ unsigned MipsInstrInfo::getEquivalentCompactForm(
     // For MIPSR6, the instruction 'jic' can be used for these cases. Some
     // tools will accept 'jrc reg' as an alias for 'jic 0, $reg'.
     case Mips::JR:
+    case Mips::PseudoIndirectBranchR6:
     case Mips::PseudoReturn:
-    case Mips::PseudoIndirectBranch:
-    case Mips::TAILCALLREG:
+    case Mips::TAILCALLR6REG:
       if (canUseShortMicroMipsCTI)
         return Mips::JRC16_MM;
       return Mips::JIC;
     case Mips::JALRPseudo:
       return Mips::JIALC;
     case Mips::JR64:
+    case Mips::PseudoIndirectBranch64R6:
     case Mips::PseudoReturn64:
-    case Mips::PseudoIndirectBranch64:
-    case Mips::TAILCALLREG64:
+    case Mips::TAILCALL64R6REG:
       return Mips::JIC64;
     case Mips::JALR64Pseudo:
       return Mips::JIALC64;
@@ -396,7 +564,6 @@ bool MipsInstrInfo::SafeInForbiddenSlot(const MachineInstr &MI) const {
     return false;
 
   return (MI.getDesc().TSFlags & MipsII::IsCTI) == 0;
-
 }
 
 /// Predicate for distingushing instructions that have forbidden slots.
@@ -469,7 +636,7 @@ MipsInstrInfo::genInstrWithNewOpc(unsigned NewOpc,
   MIB = BuildMI(*I->getParent(), I, I->getDebugLoc(), get(NewOpc));
 
   // For MIPSR6 JI*C requires an immediate 0 as an operand, JIALC(64) an
-  // immediate 0 as an operand and requires the removal of it's %RA<imp-def>
+  // immediate 0 as an operand and requires the removal of it's implicit-def %ra
   // implicit operand as copying the implicit operations of the instructio we're
   // looking at will give us the correct flags.
   if (NewOpc == Mips::JIC || NewOpc == Mips::JIALC || NewOpc == Mips::JIC64 ||
@@ -514,7 +681,7 @@ bool MipsInstrInfo::findCommutedOpIndices(MachineInstr &MI, unsigned &SrcOpIdx1,
   case Mips::DPADD_U_D:
   case Mips::DPADD_S_H:
   case Mips::DPADD_S_W:
-  case Mips::DPADD_S_D: {
+  case Mips::DPADD_S_D:
     // The first operand is both input and output, so it should not commute
     if (!fixCommutedOpIndices(SrcOpIdx1, SrcOpIdx2, 2, 3))
       return false;
@@ -523,6 +690,141 @@ bool MipsInstrInfo::findCommutedOpIndices(MachineInstr &MI, unsigned &SrcOpIdx1,
       return false;
     return true;
   }
-  }
   return TargetInstrInfo::findCommutedOpIndices(MI, SrcOpIdx1, SrcOpIdx2);
+}
+
+// ins, ext, dext*, dins have the following constraints:
+// X <= pos      <  Y
+// X <  size     <= Y
+// X <  pos+size <= Y
+//
+// dinsm and dinsu have the following constraints:
+// X <= pos      <  Y
+// X <= size     <= Y
+// X <  pos+size <= Y
+//
+// The callee of verifyInsExtInstruction however gives the bounds of
+// dins[um] like the other (d)ins (d)ext(um) instructions, so that this
+// function doesn't have to vary it's behaviour based on the instruction
+// being checked.
+static bool verifyInsExtInstruction(const MachineInstr &MI, StringRef &ErrInfo,
+                                    const int64_t PosLow, const int64_t PosHigh,
+                                    const int64_t SizeLow,
+                                    const int64_t SizeHigh,
+                                    const int64_t BothLow,
+                                    const int64_t BothHigh) {
+  MachineOperand MOPos = MI.getOperand(2);
+  if (!MOPos.isImm()) {
+    ErrInfo = "Position is not an immediate!";
+    return false;
+  }
+  int64_t Pos = MOPos.getImm();
+  if (!((PosLow <= Pos) && (Pos < PosHigh))) {
+    ErrInfo = "Position operand is out of range!";
+    return false;
+  }
+
+  MachineOperand MOSize = MI.getOperand(3);
+  if (!MOSize.isImm()) {
+    ErrInfo = "Size operand is not an immediate!";
+    return false;
+  }
+  int64_t Size = MOSize.getImm();
+  if (!((SizeLow < Size) && (Size <= SizeHigh))) {
+    ErrInfo = "Size operand is out of range!";
+    return false;
+  }
+
+  if (!((BothLow < (Pos + Size)) && ((Pos + Size) <= BothHigh))) {
+    ErrInfo = "Position + Size is out of range!";
+    return false;
+  }
+
+  return true;
+}
+
+//  Perform target specific instruction verification.
+bool MipsInstrInfo::verifyInstruction(const MachineInstr &MI,
+                                      StringRef &ErrInfo) const {
+  // Verify that ins and ext instructions are well formed.
+  switch (MI.getOpcode()) {
+    case Mips::EXT:
+    case Mips::EXT_MM:
+    case Mips::INS:
+    case Mips::INS_MM:
+    case Mips::DINS:
+      return verifyInsExtInstruction(MI, ErrInfo, 0, 32, 0, 32, 0, 32);
+    case Mips::DINSM:
+      // The ISA spec has a subtle difference between dinsm and dextm
+      // in that it says:
+      // 2 <= size <= 64 for 'dinsm' but 'dextm' has 32 < size <= 64.
+      // To make the bounds checks similar, the range 1 < size <= 64 is checked
+      // for 'dinsm'.
+      return verifyInsExtInstruction(MI, ErrInfo, 0, 32, 1, 64, 32, 64);
+    case Mips::DINSU:
+      // The ISA spec has a subtle difference between dinsu and dextu in that
+      // the size range of dinsu is specified as 1 <= size <= 32 whereas size
+      // for dextu is 0 < size <= 32. The range checked for dinsu here is
+      // 0 < size <= 32, which is equivalent and similar to dextu.
+      return verifyInsExtInstruction(MI, ErrInfo, 32, 64, 0, 32, 32, 64);
+    case Mips::DEXT:
+      return verifyInsExtInstruction(MI, ErrInfo, 0, 32, 0, 32, 0, 63);
+    case Mips::DEXTM:
+      return verifyInsExtInstruction(MI, ErrInfo, 0, 32, 32, 64, 32, 64);
+    case Mips::DEXTU:
+      return verifyInsExtInstruction(MI, ErrInfo, 32, 64, 0, 32, 32, 64);
+    case Mips::TAILCALLREG:
+    case Mips::PseudoIndirectBranch:
+    case Mips::JR:
+    case Mips::JR64:
+    case Mips::JALR:
+    case Mips::JALR64:
+    case Mips::JALRPseudo:
+      if (!Subtarget.useIndirectJumpsHazard())
+        return true;
+
+      ErrInfo = "invalid instruction when using jump guards!";
+      return false;
+    default:
+      return true;
+  }
+
+  return true;
+}
+
+std::pair<unsigned, unsigned>
+MipsInstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
+  return std::make_pair(TF, 0u);
+}
+
+ArrayRef<std::pair<unsigned, const char*>>
+MipsInstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
+ using namespace MipsII;
+
+ static const std::pair<unsigned, const char*> Flags[] = {
+    {MO_GOT,          "mips-got"},
+    {MO_GOT_CALL,     "mips-got-call"},
+    {MO_GPREL,        "mips-gprel"},
+    {MO_ABS_HI,       "mips-abs-hi"},
+    {MO_ABS_LO,       "mips-abs-lo"},
+    {MO_TLSGD,        "mips-tlsgd"},
+    {MO_TLSLDM,       "mips-tlsldm"},
+    {MO_DTPREL_HI,    "mips-dtprel-hi"},
+    {MO_DTPREL_LO,    "mips-dtprel-lo"},
+    {MO_GOTTPREL,     "mips-gottprel"},
+    {MO_TPREL_HI,     "mips-tprel-hi"},
+    {MO_TPREL_LO,     "mips-tprel-lo"},
+    {MO_GPOFF_HI,     "mips-gpoff-hi"},
+    {MO_GPOFF_LO,     "mips-gpoff-lo"},
+    {MO_GOT_DISP,     "mips-got-disp"},
+    {MO_GOT_PAGE,     "mips-got-page"},
+    {MO_GOT_OFST,     "mips-got-ofst"},
+    {MO_HIGHER,       "mips-higher"},
+    {MO_HIGHEST,      "mips-highest"},
+    {MO_GOT_HI16,     "mips-got-hi16"},
+    {MO_GOT_LO16,     "mips-got-lo16"},
+    {MO_CALL_HI16,    "mips-call-hi16"},
+    {MO_CALL_LO16,    "mips-call-lo16"}
+  };
+  return makeArrayRef(Flags);
 }

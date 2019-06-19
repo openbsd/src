@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.32 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.34 2018/05/27 06:02:14 visa Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -101,7 +101,6 @@ cd9660_ihashget(dev, inum)
 	dev_t dev;
 	cdino_t inum;
 {
-	struct proc *p = curproc;               /* XXX */
 	struct iso_node *ip;
 	struct vnode *vp;
 
@@ -111,7 +110,7 @@ loop:
                if (inum == ip->i_number && dev == ip->i_dev) {
                        vp = ITOV(ip);
 			/* XXX locking unlock hash list? */
-                       if (vget(vp, LK_EXCLUSIVE, p))
+                       if (vget(vp, LK_EXCLUSIVE))
                                goto loop;
                        return (vp);
 	       }
@@ -193,7 +192,7 @@ cd9660_inactive(v)
 #endif
 	
 	ip->i_flag = 0;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.

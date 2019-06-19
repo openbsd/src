@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.30 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.31 2018/06/29 17:39:18 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -42,7 +42,7 @@ extern void aml_disasm(struct aml_scope *scope, int lvl,
 const char		*db_aml_objtype(struct aml_value *);
 const char		*db_opregion(int);
 int			db_parse_name(void);
-void			db_aml_dump(int, u_int8_t *);
+void			db_aml_dump(int, uint8_t *);
 void			db_aml_showvalue(struct aml_value *);
 void			db_aml_walktree(struct aml_node *);
 void			db_disprint(void *, const char *, ...);
@@ -78,7 +78,7 @@ db_opregion(int id)
 	return "";
 }
 void
-db_aml_dump(int len, u_int8_t *buf)
+db_aml_dump(int len, uint8_t *buf)
 {
 	int		idx;
 

@@ -105,6 +105,14 @@ def ARMSmlaldx       : SDNode<"ARMISD::SMLALDX", SDT_LongMac>;
 def ARMSmlsld        : SDNode<"ARMISD::SMLSLD", SDT_LongMac>;
 def ARMSmlsldx       : SDNode<"ARMISD::SMLSLDX", SDT_LongMac>;
 
+def SDT_MulHSR       : SDTypeProfile<1, 3, [SDTCisVT<0,i32>,
+                                            SDTCisSameAs<0, 1>,
+                                            SDTCisSameAs<0, 2>,
+                                            SDTCisSameAs<0, 3>]>;
+
+def ARMsmmlar      : SDNode<"ARMISD::SMMLAR", SDT_MulHSR>;
+def ARMsmmlsr      : SDNode<"ARMISD::SMMLSR", SDT_MulHSR>;
+
 // Node definitions.
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
 def ARMWrapperPIC    : SDNode<"ARMISD::WrapperPIC",  SDTIntUnaryOp>;
@@ -138,6 +146,8 @@ def ARMcmov          : SDNode<"ARMISD::CMOV", SDT_ARMCMov,
                               [SDNPInGlue]>;
 
 def ARMssatnoshift   : SDNode<"ARMISD::SSAT", SDTIntSatNoShOp, []>;
+
+def ARMusatnoshift   : SDNode<"ARMISD::USAT", SDTIntSatNoShOp, []>;
 
 def ARMbrcond        : SDNode<"ARMISD::BRCOND", SDT_ARMBrcond,
                               [SDNPHasChain, SDNPInGlue, SDNPOutGlue]>;
@@ -241,6 +251,10 @@ def HasV8_1a         : Predicate<"Subtarget->hasV8_1aOps()">,
                                  AssemblerPredicate<"HasV8_1aOps", "armv8.1a">;
 def HasV8_2a         : Predicate<"Subtarget->hasV8_2aOps()">,
                                  AssemblerPredicate<"HasV8_2aOps", "armv8.2a">;
+def HasV8_3a         : Predicate<"Subtarget->hasV8_3aOps()">,
+                                 AssemblerPredicate<"HasV8_3aOps", "armv8.3a">;
+def HasV8_4a         : Predicate<"Subtarget->hasV8_4aOps()">,
+                                 AssemblerPredicate<"HasV8_4aOps", "armv8.4a">;
 def NoVFP            : Predicate<"!Subtarget->hasVFP2()">;
 def HasVFP2          : Predicate<"Subtarget->hasVFP2()">,
                                  AssemblerPredicate<"FeatureVFP2", "VFP2">;
@@ -255,8 +269,14 @@ def HasFPARMv8       : Predicate<"Subtarget->hasFPARMv8()">,
                                  AssemblerPredicate<"FeatureFPARMv8", "FPARMv8">;
 def HasNEON          : Predicate<"Subtarget->hasNEON()">,
                                  AssemblerPredicate<"FeatureNEON", "NEON">;
+def HasSHA2          : Predicate<"Subtarget->hasSHA2()">,
+                                 AssemblerPredicate<"FeatureSHA2", "sha2">;
+def HasAES           : Predicate<"Subtarget->hasAES()">,
+                                 AssemblerPredicate<"FeatureAES", "aes">;
 def HasCrypto        : Predicate<"Subtarget->hasCrypto()">,
                                  AssemblerPredicate<"FeatureCrypto", "crypto">;
+def HasDotProd       : Predicate<"Subtarget->hasDotProd()">,
+                                 AssemblerPredicate<"FeatureDotProd", "dotprod">;
 def HasCRC           : Predicate<"Subtarget->hasCRC()">,
                                  AssemblerPredicate<"FeatureCRC", "crc">;
 def HasRAS           : Predicate<"Subtarget->hasRAS()">,
@@ -274,6 +294,9 @@ def HasDSP           : Predicate<"Subtarget->hasDSP()">,
 def HasDB            : Predicate<"Subtarget->hasDataBarrier()">,
                                  AssemblerPredicate<"FeatureDB",
                                                     "data-barriers">;
+def HasDFB           : Predicate<"Subtarget->hasFullDataBarrier()">,
+                                 AssemblerPredicate<"FeatureDFB",
+                                                    "full-data-barrier">;
 def HasV7Clrex  : Predicate<"Subtarget->hasV7Clrex()">,
                             AssemblerPredicate<"FeatureV7Clrex",
                                                "v7 clrex">;
@@ -313,6 +336,8 @@ def IsNotMachO       : Predicate<"!Subtarget->isTargetMachO()">;
 def IsNaCl           : Predicate<"Subtarget->isTargetNaCl()">;
 def IsWindows        : Predicate<"Subtarget->isTargetWindows()">;
 def IsNotWindows     : Predicate<"!Subtarget->isTargetWindows()">;
+def IsReadTPHard     : Predicate<"Subtarget->isReadTPHard()">;
+def IsReadTPSoft     : Predicate<"!Subtarget->isReadTPHard()">;
 def UseNaClTrap      : Predicate<"Subtarget->useNaClTrap()">,
                                  AssemblerPredicate<"FeatureNaClTrap", "NaCl">;
 def DontUseNaClTrap  : Predicate<"!Subtarget->useNaClTrap()">;
@@ -326,6 +351,8 @@ def UseNegativeImmediates :
 let RecomputePerFunction = 1 in {
   def UseMovt          : Predicate<"Subtarget->useMovt(*MF)">;
   def DontUseMovt      : Predicate<"!Subtarget->useMovt(*MF)">;
+  def UseMovtInPic          : Predicate<"Subtarget->useMovt(*MF) && Subtarget->allowPositionIndependentMovt()">;
+  def DontUseMovtInPic      : Predicate<"!Subtarget->useMovt(*MF) || !Subtarget->allowPositionIndependentMovt()">;
 }
 def UseFPVMLx        : Predicate<"Subtarget->useFPVMLx()">;
 def UseMulOps        : Predicate<"Subtarget->useMulOps()">;
@@ -454,12 +481,13 @@ def fsub_mlx : PatFrag<(ops node:$lhs, node:$rhs),(fsub node:$lhs, node:$rhs),[{
 class ImmAsmOperand<int Low, int High> : AsmOperandClass {
   let RenderMethod = "addImmOperands";
   let PredicateMethod = "isImmediate<" # Low # "," # High # ">";
-  let DiagnosticType = "ImmRange" # Low # "_" # High;
+  let DiagnosticString = "operand must be an immediate in the range [" # Low # "," # High # "]";
 }
 
 class ImmAsmOperandMinusOne<int Low, int High> : AsmOperandClass {
   let PredicateMethod = "isImmediate<" # Low # "," # High # ">";
   let DiagnosticType = "ImmRange" # Low # "_" # High;
+  let DiagnosticString = "operand must be an immediate in the range [" # Low # "," # High # "]";
 }
 
 // Operands that are part of a memory addressing mode.
@@ -517,7 +545,10 @@ def reglist : Operand<i32> {
 
 def GPRPairOp : RegisterOperand<GPRPair, "printGPRPairOperand">;
 
-def DPRRegListAsmOperand : AsmOperandClass { let Name = "DPRRegList"; }
+def DPRRegListAsmOperand : AsmOperandClass {
+  let Name = "DPRRegList";
+  let DiagnosticType = "DPR_RegList";
+}
 def dpr_reglist : Operand<i32> {
   let EncoderMethod = "getRegisterListOpValue";
   let ParserMatchClass = DPRRegListAsmOperand;
@@ -525,7 +556,10 @@ def dpr_reglist : Operand<i32> {
   let DecoderMethod = "DecodeDPRRegListOperand";
 }
 
-def SPRRegListAsmOperand : AsmOperandClass { let Name = "SPRRegList"; }
+def SPRRegListAsmOperand : AsmOperandClass {
+  let Name = "SPRRegList";
+  let DiagnosticString = "operand must be a list of registers in range [s0, s31]";
+}
 def spr_reglist : Operand<i32> {
   let EncoderMethod = "getRegisterListOpValue";
   let ParserMatchClass = SPRRegListAsmOperand;
@@ -748,7 +782,6 @@ def imm1_31 : Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm < 32; }]> {
 /// imm0_15 predicate - Immediate in the range [0,15].
 def Imm0_15AsmOperand: ImmAsmOperand<0,15> {
   let Name = "Imm0_15";
-  let DiagnosticType = "ImmRange0_15";
 }
 def imm0_15 : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm < 16;
@@ -783,7 +816,6 @@ def imm0_63 : Operand<i32>, ImmLeaf<i32, [{
 /// imm0_239 predicate - Immediate in the range [0,239].
 def Imm0_239AsmOperand : ImmAsmOperand<0,239> {
   let Name = "Imm0_239";
-  let DiagnosticType = "ImmRange0_239";
 }
 def imm0_239 : Operand<i32>, ImmLeaf<i32, [{ return Imm >= 0 && Imm < 240; }]> {
   let ParserMatchClass = Imm0_239AsmOperand;
@@ -817,6 +849,7 @@ def imm0_65535_neg : Operand<i32>, ImmLeaf<i32, [{
 def Imm0_65535ExprAsmOperand: AsmOperandClass {
   let Name = "Imm0_65535Expr";
   let RenderMethod = "addImmOperands";
+  let DiagnosticString = "operand must be an immediate in the range [0,0xffff] or a relocatable expression";
 }
 
 def imm0_65535_expr : Operand<i32> {
@@ -830,7 +863,10 @@ def imm256_65535_expr : Operand<i32> {
 }
 
 /// imm24b - True if the 32-bit immediate is encodable in 24 bits.
-def Imm24bitAsmOperand: ImmAsmOperand<0,0xffffff> { let Name = "Imm24bit"; }
+def Imm24bitAsmOperand: ImmAsmOperand<0,0xffffff> {
+  let Name = "Imm24bit";
+  let DiagnosticString = "operand must be an immediate in the range [0,0xffffff]";
+}
 def imm24b : Operand<i32>, ImmLeaf<i32, [{
   return Imm >= 0 && Imm <= 0xffffff;
 }]> {
@@ -853,6 +889,16 @@ def bf_inv_mask_imm : Operand<i32>,
   let PrintMethod = "printBitfieldInvMaskImmOperand";
   let DecoderMethod = "DecodeBitfieldMaskOperand";
   let ParserMatchClass = BitfieldAsmOperand;
+  let GISelPredicateCode = [{
+    // There's better methods of implementing this check. IntImmLeaf<> would be
+    // equivalent and have less boilerplate but we need a test for C++
+    // predicates and this one causes new rules to be imported into GlobalISel
+    // without requiring additional features first.
+    const auto &MO = MI.getOperand(1);
+    if (!MO.isCImm())
+      return false;
+    return ARM::isBitFieldInvertedMask(MO.getCImm()->getZExtValue());
+  }];
 }
 
 def imm1_32_XFORM: SDNodeXForm<imm, [{
@@ -958,21 +1004,6 @@ def postidx_reg : MemOperand {
   let PrintMethod = "printPostIdxRegOperand";
   let ParserMatchClass = PostIdxRegAsmOperand;
   let MIOperandInfo = (ops GPRnopc, i32imm);
-}
-
-
-// addrmode2 := reg +/- imm12
-//           := reg +/- reg shop imm
-//
-// FIXME: addrmode2 should be refactored the rest of the way to always
-// use explicit imm vs. reg versions above (addrmode_imm12 and ldst_so_reg).
-def AddrMode2AsmOperand : AsmOperandClass { let Name = "AddrMode2"; }
-def addrmode2 : MemOperand,
-                ComplexPattern<i32, 3, "SelectAddrMode2", []> {
-  let EncoderMethod = "getAddrMode2OpValue";
-  let PrintMethod = "printAddrMode2Operand";
-  let ParserMatchClass = AddrMode2AsmOperand;
-  let MIOperandInfo = (ops GPR:$base, GPR:$offsreg, i32imm:$offsimm);
 }
 
 def PostIdxRegShiftedAsmOperand : AsmOperandClass {
@@ -1123,7 +1154,7 @@ class AddrMode6Align : MemOperand,
 // VLD/VST instructions and checking the alignment is not specified.
 def AddrMode6AlignNoneAsmOperand : AsmOperandClass {
   let Name = "AlignedMemoryNone";
-  let DiagnosticType = "AlignedMemoryRequiresNone";
+  let DiagnosticString = "alignment must be omitted";
 }
 def addrmode6alignNone : AddrMode6Align {
   // The alignment specifier can only be omitted.
@@ -1134,7 +1165,7 @@ def addrmode6alignNone : AddrMode6Align {
 // VLD/VST instructions and checking the alignment value.
 def AddrMode6Align16AsmOperand : AsmOperandClass {
   let Name = "AlignedMemory16";
-  let DiagnosticType = "AlignedMemoryRequires16";
+  let DiagnosticString = "alignment must be 16 or omitted";
 }
 def addrmode6align16 : AddrMode6Align {
   // The alignment specifier can only be 16 or omitted.
@@ -1145,7 +1176,7 @@ def addrmode6align16 : AddrMode6Align {
 // VLD/VST instructions and checking the alignment value.
 def AddrMode6Align32AsmOperand : AsmOperandClass {
   let Name = "AlignedMemory32";
-  let DiagnosticType = "AlignedMemoryRequires32";
+  let DiagnosticString = "alignment must be 32 or omitted";
 }
 def addrmode6align32 : AddrMode6Align {
   // The alignment specifier can only be 32 or omitted.
@@ -1156,7 +1187,7 @@ def addrmode6align32 : AddrMode6Align {
 // VLD/VST instructions and checking the alignment value.
 def AddrMode6Align64AsmOperand : AsmOperandClass {
   let Name = "AlignedMemory64";
-  let DiagnosticType = "AlignedMemoryRequires64";
+  let DiagnosticString = "alignment must be 64 or omitted";
 }
 def addrmode6align64 : AddrMode6Align {
   // The alignment specifier can only be 64 or omitted.
@@ -1167,7 +1198,7 @@ def addrmode6align64 : AddrMode6Align {
 // for VLD/VST instructions and checking the alignment value.
 def AddrMode6Align64or128AsmOperand : AsmOperandClass {
   let Name = "AlignedMemory64or128";
-  let DiagnosticType = "AlignedMemoryRequires64or128";
+  let DiagnosticString = "alignment must be 64, 128 or omitted";
 }
 def addrmode6align64or128 : AddrMode6Align {
   // The alignment specifier can only be 64, 128 or omitted.
@@ -1178,7 +1209,7 @@ def addrmode6align64or128 : AddrMode6Align {
 // encoding for VLD/VST instructions and checking the alignment value.
 def AddrMode6Align64or128or256AsmOperand : AsmOperandClass {
   let Name = "AlignedMemory64or128or256";
-  let DiagnosticType = "AlignedMemoryRequires64or128or256";
+  let DiagnosticString = "alignment must be 64, 128, 256 or omitted";
 }
 def addrmode6align64or128or256 : AddrMode6Align {
   // The alignment specifier can only be 64, 128, 256 or omitted.
@@ -1209,7 +1240,7 @@ class AddrMode6DupAlign : MemOperand,
 // VLD-dup instruction and checking the alignment is not specified.
 def AddrMode6dupAlignNoneAsmOperand : AsmOperandClass {
   let Name = "DupAlignedMemoryNone";
-  let DiagnosticType = "DupAlignedMemoryRequiresNone";
+  let DiagnosticString = "alignment must be omitted";
 }
 def addrmode6dupalignNone : AddrMode6DupAlign {
   // The alignment specifier can only be omitted.
@@ -1220,7 +1251,7 @@ def addrmode6dupalignNone : AddrMode6DupAlign {
 // instruction and checking the alignment value.
 def AddrMode6dupAlign16AsmOperand : AsmOperandClass {
   let Name = "DupAlignedMemory16";
-  let DiagnosticType = "DupAlignedMemoryRequires16";
+  let DiagnosticString = "alignment must be 16 or omitted";
 }
 def addrmode6dupalign16 : AddrMode6DupAlign {
   // The alignment specifier can only be 16 or omitted.
@@ -1231,7 +1262,7 @@ def addrmode6dupalign16 : AddrMode6DupAlign {
 // instruction and checking the alignment value.
 def AddrMode6dupAlign32AsmOperand : AsmOperandClass {
   let Name = "DupAlignedMemory32";
-  let DiagnosticType = "DupAlignedMemoryRequires32";
+  let DiagnosticString = "alignment must be 32 or omitted";
 }
 def addrmode6dupalign32 : AddrMode6DupAlign {
   // The alignment specifier can only be 32 or omitted.
@@ -1242,7 +1273,7 @@ def addrmode6dupalign32 : AddrMode6DupAlign {
 // instructions and checking the alignment value.
 def AddrMode6dupAlign64AsmOperand : AsmOperandClass {
   let Name = "DupAlignedMemory64";
-  let DiagnosticType = "DupAlignedMemoryRequires64";
+  let DiagnosticString = "alignment must be 64 or omitted";
 }
 def addrmode6dupalign64 : AddrMode6DupAlign {
   // The alignment specifier can only be 64 or omitted.
@@ -1253,7 +1284,7 @@ def addrmode6dupalign64 : AddrMode6DupAlign {
 // for VLD instructions and checking the alignment value.
 def AddrMode6dupAlign64or128AsmOperand : AsmOperandClass {
   let Name = "DupAlignedMemory64or128";
-  let DiagnosticType = "DupAlignedMemoryRequires64or128";
+  let DiagnosticString = "alignment must be 64, 128 or omitted";
 }
 def addrmode6dupalign64or128 : AddrMode6DupAlign {
   // The alignment specifier can only be 64, 128 or omitted.
@@ -1989,6 +2020,7 @@ def : InstAlias<"wfi$p", (HINT 3, pred:$p)>, Requires<[IsARM, HasV6K]>;
 def : InstAlias<"sev$p", (HINT 4, pred:$p)>, Requires<[IsARM, HasV6K]>;
 def : InstAlias<"sevl$p", (HINT 5, pred:$p)>, Requires<[IsARM, HasV8]>;
 def : InstAlias<"esb$p", (HINT 16, pred:$p)>, Requires<[IsARM, HasRAS]>;
+def : InstAlias<"csdb$p", (HINT 20, pred:$p)>, Requires<[IsARM, HasV6K]>;
 
 def SEL : AI<(outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), DPFrm, NoItinerary, "sel",
              "\t$Rd, $Rn, $Rm",
@@ -2369,12 +2401,15 @@ let isBranch = 1, isTerminator = 1 in {
                       0, IIC_Br,
                       [(ARMbrjt GPR:$target, tjumptable:$jt)]>,
                       Sched<[WriteBr]>;
-    // FIXME: This shouldn't use the generic "addrmode2," but rather be split
-    // into i12 and rs suffixed versions.
-    def BR_JTm : ARMPseudoInst<(outs),
-                     (ins addrmode2:$target, i32imm:$jt),
+    def BR_JTm_i12 : ARMPseudoInst<(outs),
+                     (ins addrmode_imm12:$target, i32imm:$jt),
                      0, IIC_Br,
-                     [(ARMbrjt (i32 (load addrmode2:$target)),
+                     [(ARMbrjt (i32 (load addrmode_imm12:$target)),
+                               tjumptable:$jt)]>, Sched<[WriteBrTbl]>;
+    def BR_JTm_rs : ARMPseudoInst<(outs),
+                     (ins ldst_so_reg:$target, i32imm:$jt),
+                     0, IIC_Br,
+                     [(ARMbrjt (i32 (load ldst_so_reg:$target)),
                                tjumptable:$jt)]>, Sched<[WriteBrTbl]>;
     def BR_JTadd : ARMPseudoInst<(outs),
                    (ins GPR:$target, GPR:$idx, i32imm:$jt),
@@ -3321,7 +3356,7 @@ defm sysSTM : arm_ldst_mult<"stm", " ^", 0, 1, LdStMulFrm, IIC_iStore_m,
 //  Move Instructions.
 //
 
-let hasSideEffects = 0 in
+let hasSideEffects = 0, isMoveReg = 1 in
 def MOVr : AsI1<0b1101, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMOVr,
                 "mov", "\t$Rd, $Rm", []>, UnaryDP, Sched<[WriteALU]> {
   bits<4> Rd;
@@ -3827,6 +3862,8 @@ def : ARMV6Pat<(int_arm_usat GPRnopc:$a, imm0_31:$pos),
                (USAT imm0_31:$pos, GPRnopc:$a, 0)>;
 def : ARMPat<(ARMssatnoshift GPRnopc:$Rn, imm0_31:$imm),
              (SSAT imm0_31:$imm, GPRnopc:$Rn, 0)>;
+def : ARMPat<(ARMusatnoshift GPRnopc:$Rn, imm0_31:$imm),
+             (USAT imm0_31:$imm, GPRnopc:$Rn, 0)>;
 def : ARMV6Pat<(int_arm_ssat16 GPRnopc:$a, imm1_16:$pos),
                (SSAT16 imm1_16:$pos, GPRnopc:$a)>;
 def : ARMV6Pat<(int_arm_usat16 GPRnopc:$a, imm0_15:$pos),
@@ -3892,6 +3929,8 @@ def  MVNr  : AsI1<0b1111, (outs GPR:$Rd), (ins GPR:$Rm), DPFrm, IIC_iMVNr,
   let Inst{11-4} = 0b00000000;
   let Inst{15-12} = Rd;
   let Inst{3-0} = Rm;
+
+  let Unpredictable{19-16} = 0b1111;
 }
 def  MVNsi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_imm:$shift),
                   DPSoRegImmFrm, IIC_iMVNsr, "mvn", "\t$Rd, $shift",
@@ -3905,10 +3944,12 @@ def  MVNsi  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_imm:$shift),
   let Inst{11-5} = shift{11-5};
   let Inst{4} = 0;
   let Inst{3-0} = shift{3-0};
+
+  let Unpredictable{19-16} = 0b1111;
 }
-def  MVNsr  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_reg:$shift),
+def  MVNsr  : AsI1<0b1111, (outs GPRnopc:$Rd), (ins so_reg_reg:$shift),
                   DPSoRegRegFrm, IIC_iMVNsr, "mvn", "\t$Rd, $shift",
-                  [(set GPR:$Rd, (not so_reg_reg:$shift))]>, UnaryDP,
+                  [(set GPRnopc:$Rd, (not so_reg_reg:$shift))]>, UnaryDP,
                   Sched<[WriteALU]> {
   bits<4> Rd;
   bits<12> shift;
@@ -3920,6 +3961,8 @@ def  MVNsr  : AsI1<0b1111, (outs GPR:$Rd), (ins so_reg_reg:$shift),
   let Inst{6-5} = shift{6-5};
   let Inst{4} = 1;
   let Inst{3-0} = shift{3-0};
+
+  let Unpredictable{19-16} = 0b1111;
 }
 let isReMaterializable = 1, isAsCheapAsAMove = 1, isMoveImm = 1 in
 def  MVNi  : AsI1<0b1111, (outs GPR:$Rd), (ins mod_imm:$imm), DPFrm,
@@ -4131,7 +4174,8 @@ def SMMUL : AMul2I <0b0111010, 0b0001, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
 }
 
 def SMMULR : AMul2I <0b0111010, 0b0011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm),
-               IIC_iMUL32, "smmulr", "\t$Rd, $Rn, $Rm", []>,
+               IIC_iMUL32, "smmulr", "\t$Rd, $Rn, $Rm",
+               [(set GPR:$Rd, (ARMsmmlar GPR:$Rn, GPR:$Rm, (i32 0)))]>,
             Requires<[IsARM, HasV6]>,
              Sched<[WriteMUL32, ReadMUL, ReadMUL]>  {
   let Inst{15-12} = 0b1111;
@@ -4146,7 +4190,8 @@ def SMMLA : AMul2Ia <0b0111010, 0b0001, (outs GPR:$Rd),
 
 def SMMLAR : AMul2Ia <0b0111010, 0b0011, (outs GPR:$Rd),
                (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
-               IIC_iMAC32, "smmlar", "\t$Rd, $Rn, $Rm, $Ra", []>,
+               IIC_iMAC32, "smmlar", "\t$Rd, $Rn, $Rm, $Ra",
+               [(set GPR:$Rd, (ARMsmmlar GPR:$Rn, GPR:$Rm, GPR:$Ra))]>,
             Requires<[IsARM, HasV6]>,
              Sched<[WriteMAC32, ReadMUL, ReadMUL, ReadMAC]>;
 
@@ -4158,7 +4203,8 @@ def SMMLS : AMul2Ia <0b0111010, 0b1101, (outs GPR:$Rd),
 
 def SMMLSR : AMul2Ia <0b0111010, 0b1111, (outs GPR:$Rd),
                (ins GPR:$Rn, GPR:$Rm, GPR:$Ra),
-               IIC_iMAC32, "smmlsr", "\t$Rd, $Rn, $Rm, $Ra", []>,
+               IIC_iMAC32, "smmlsr", "\t$Rd, $Rn, $Rm, $Ra",
+               [(set GPR:$Rd, (ARMsmmlsr GPR:$Rn, GPR:$Rm, GPR:$Ra))]>,
             Requires<[IsARM, HasV6]>,
              Sched<[WriteMAC32, ReadMUL, ReadMUL, ReadMAC]>;
 
@@ -4773,6 +4819,15 @@ def instsyncb_opt : Operand<i32> {
   let DecoderMethod = "DecodeInstSyncBarrierOption";
 }
 
+def TraceSyncBarrierOptOperand : AsmOperandClass {
+  let Name = "TraceSyncBarrierOpt";
+  let ParserMethod = "parseTraceSyncBarrierOptOperand";
+}
+def tsb_opt : Operand<i32> {
+  let PrintMethod = "printTraceSyncBOption";
+  let ParserMatchClass = TraceSyncBarrierOptOperand;
+}
+
 // Memory barriers protect the atomic sequences
 let hasSideEffects = 1 in {
 def DMB : AInoP<(outs), (ins memb_opt:$opt), MiscFrm, NoItinerary,
@@ -4799,6 +4854,13 @@ def ISB : AInoP<(outs), (ins instsyncb_opt:$opt), MiscFrm, NoItinerary,
   let Inst{31-4} = 0xf57ff06;
   let Inst{3-0} = opt;
 }
+
+let hasNoSchedulingInfo = 1 in
+def TSB : AInoP<(outs), (ins tsb_opt:$opt), MiscFrm, NoItinerary,
+                "tsb", "\t$opt", []>, Requires<[IsARM, HasV8_4a]> {
+  let Inst{31-0} = 0xe320f012;
+}
+
 }
 
 let usesCustomInserter = 1, Defs = [CPSR] in {
@@ -5033,6 +5095,8 @@ def CDP : ABI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
   let Inst{15-12} = CRd;
   let Inst{19-16} = CRn;
   let Inst{23-20} = opc1;
+
+  let DecoderNamespace = "CoProc";
 }
 
 def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
@@ -5056,6 +5120,8 @@ def CDP2 : ABXI<0b1110, (outs), (ins p_imm:$cop, imm0_15:$opc1,
   let Inst{15-12} = CRd;
   let Inst{19-16} = CRn;
   let Inst{23-20} = opc1;
+
+  let DecoderNamespace = "CoProc";
 }
 
 class ACI<dag oops, dag iops, string opc, string asm,
@@ -5071,6 +5137,8 @@ class ACInoP<dag oops, dag iops, string opc, string asm,
   let Inst{31-28} = 0b1111;
   let Inst{27-25} = 0b110;
 }
+
+let DecoderNamespace = "CoProc" in {
 multiclass LdStCop<bit load, bit Dbit, string asm, list<dag> pattern> {
   def _OFFSET : ACI<(outs), (ins p_imm:$cop, c_imm:$CRd, addrmode5:$addr),
                     asm, "\t$cop, $CRd, $addr", pattern> {
@@ -5224,6 +5292,8 @@ defm STCL  : LdStCop <0, 1, "stcl", [(int_arm_stcl imm:$cop, imm:$CRd, addrmode5
 defm STC2  : LdSt2Cop<0, 0, "stc2", [(int_arm_stc2 imm:$cop, imm:$CRd, addrmode5:$addr)]>, Requires<[IsARM,PreV8]>;
 defm STC2L : LdSt2Cop<0, 1, "stc2l", [(int_arm_stc2l imm:$cop, imm:$CRd, addrmode5:$addr)]>, Requires<[IsARM,PreV8]>;
 
+} // DecoderNamespace = "CoProc"
+
 //===----------------------------------------------------------------------===//
 // Move between coprocessor and ARM core register.
 //
@@ -5248,6 +5318,8 @@ class MovRCopro<string opc, bit direction, dag oops, dag iops,
   let Inst{7-5}   = opc2;
   let Inst{3-0}   = CRm;
   let Inst{19-16} = CRn;
+
+  let DecoderNamespace = "CoProc";
 }
 
 def MCR : MovRCopro<"mcr", 0 /* from ARM core register to coprocessor */,
@@ -5292,6 +5364,8 @@ class MovRCopro2<string opc, bit direction, dag oops, dag iops,
   let Inst{7-5}   = opc2;
   let Inst{3-0}   = CRm;
   let Inst{19-16} = CRn;
+
+  let DecoderNamespace = "CoProc";
 }
 
 def MCR2 : MovRCopro2<"mcr2", 0 /* from ARM core register to coprocessor */,
@@ -5519,8 +5593,13 @@ let usesCustomInserter = 1, Defs = [CPSR] in
 let isCall = 1,
   Defs = [R0, R12, LR, CPSR], Uses = [SP] in {
   def TPsoft : ARMPseudoInst<(outs), (ins), 4, IIC_Br,
-               [(set R0, ARMthread_pointer)]>, Sched<[WriteBr]>;
+               [(set R0, ARMthread_pointer)]>, Sched<[WriteBr]>,
+               Requires<[IsARM, IsReadTPSoft]>;
 }
+
+// Reading thread pointer from coprocessor register
+def : ARMPat<(ARMthread_pointer), (MRC 15, 0, 13, 0, 3)>,
+      Requires<[IsARM, IsReadTPHard]>;
 
 //===----------------------------------------------------------------------===//
 // SJLJ Exception handling intrinsics
@@ -5618,26 +5697,26 @@ let isReMaterializable = 1 in {
 def MOV_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
                               IIC_iMOVix2addpc,
                         [(set GPR:$dst, (ARMWrapperPIC tglobaladdr:$addr))]>,
-                        Requires<[IsARM, UseMovt]>;
+                        Requires<[IsARM, UseMovtInPic]>;
 
 def LDRLIT_ga_pcrel : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
                                  IIC_iLoadiALU,
                                  [(set GPR:$dst,
                                        (ARMWrapperPIC tglobaladdr:$addr))]>,
-                      Requires<[IsARM, DontUseMovt]>;
+                      Requires<[IsARM, DontUseMovtInPic]>;
 
 let AddedComplexity = 10 in
 def LDRLIT_ga_pcrel_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
                               NoItinerary,
                               [(set GPR:$dst,
                                     (load (ARMWrapperPIC tglobaladdr:$addr)))]>,
-                          Requires<[IsARM, DontUseMovt]>;
+                          Requires<[IsARM, DontUseMovtInPic]>;
 
 let AddedComplexity = 10 in
 def MOV_ga_pcrel_ldr : PseudoInst<(outs GPR:$dst), (ins i32imm:$addr),
                                 IIC_iMOVix2ld,
                     [(set GPR:$dst, (load (ARMWrapperPIC tglobaladdr:$addr)))]>,
-                    Requires<[IsARM, UseMovt]>;
+                    Requires<[IsARM, UseMovtInPic]>;
 } // isReMaterializable
 
 // The many different faces of TLS access.
@@ -5650,15 +5729,15 @@ def : Pat<(ARMWrapper tglobaltlsaddr:$src),
       Requires<[IsARM, DontUseMovt]>;
 
 def : Pat<(ARMWrapperPIC tglobaltlsaddr:$addr),
-          (MOV_ga_pcrel tglobaltlsaddr:$addr)>, Requires<[IsARM, UseMovt]>;
+          (MOV_ga_pcrel tglobaltlsaddr:$addr)>, Requires<[IsARM, UseMovtInPic]>;
 
 def : Pat<(ARMWrapperPIC tglobaltlsaddr:$addr),
           (LDRLIT_ga_pcrel tglobaltlsaddr:$addr)>,
-      Requires<[IsARM, DontUseMovt]>;
+      Requires<[IsARM, DontUseMovtInPic]>;
 let AddedComplexity = 10 in
 def : Pat<(load (ARMWrapperPIC tglobaltlsaddr:$addr)),
           (MOV_ga_pcrel_ldr tglobaltlsaddr:$addr)>,
-      Requires<[IsARM, UseMovt]>;
+      Requires<[IsARM, UseMovtInPic]>;
 
 
 // ConstantPool, GlobalAddress, and JumpTable
@@ -5824,6 +5903,8 @@ include "ARMInstrNEON.td"
 def : InstAlias<"dmb", (DMB 0xf), 0>, Requires<[IsARM, HasDB]>;
 def : InstAlias<"dsb", (DSB 0xf), 0>, Requires<[IsARM, HasDB]>;
 def : InstAlias<"isb", (ISB 0xf), 0>, Requires<[IsARM, HasDB]>;
+// Armv8-R 'Data Full Barrier'
+def : InstAlias<"dfb", (DSB 0xc), 1>, Requires<[IsARM, HasDFB]>;
 
 // System instructions
 def : MnemonicAlias<"swi", "svc">;

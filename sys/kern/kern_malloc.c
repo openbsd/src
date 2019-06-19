@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.133 2018/01/18 18:08:51 bluhm Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.139 2019/05/15 21:25:50 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -44,6 +44,11 @@
 #include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
+
+#if defined(DDB)
+#include <machine/db_machdep.h>
+#include <ddb/db_output.h>
+#endif
 
 static
 #ifndef SMALL_KERNEL
@@ -250,7 +255,6 @@ malloc(size_t size, int type, int flags)
 			if (wake)
 				wakeup(ksp);
 #endif
-			
 			return (NULL);
 		}
 		mtx_enter(&malloc_mtx);
@@ -281,7 +285,8 @@ malloc(size_t size, int type, int flags)
 			poison_mem(cp, allocsize);
 			freep->kf_type = M_FREE;
 #endif /* DIAGNOSTIC */
-			XSIMPLEQ_INSERT_HEAD(&kbp->kb_freelist, freep, kf_flist);
+			XSIMPLEQ_INSERT_HEAD(&kbp->kb_freelist, freep,
+			    kf_flist);
 			if (cp <= va)
 				break;
 			cp -= allocsize;
@@ -309,7 +314,7 @@ malloc(size_t size, int type, int flags)
 		if (!rv)  {
 			printf("%s %zd of object %p size 0x%lx %s %s"
 			    " (invalid addr %p)\n",
-			    "Data modified on freelist: word", 
+			    "Data modified on freelist: word",
 			    (int32_t *)&addr - (int32_t *)kbp, va, size,
 			    "previous type", savedtype, (void *)addr);
 		}
@@ -373,6 +378,7 @@ free(void *addr, int type, size_t freedsize)
 #endif
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
+	int wake;
 #endif
 
 	if (addr == NULL)
@@ -384,12 +390,24 @@ free(void *addr, int type, size_t freedsize)
 		    memname[type]);
 #endif
 
+	mtx_enter(&malloc_mtx);
 	kup = btokup(addr);
 	size = 1 << kup->ku_indx;
 	kbp = &bucket[kup->ku_indx];
 	if (size > MAXALLOCSAVE)
 		size = kup->ku_pagecnt << PAGE_SHIFT;
 #ifdef DIAGNOSTIC
+#if 0
+	if (freedsize == 0) {
+		static int zerowarnings;
+		if (zerowarnings < 5) {
+			zerowarnings++;
+			printf("free with zero size: (%d)\n", type);
+#ifdef DDB
+			db_stack_dump();
+#endif
+	}
+#endif
 	if (freedsize != 0 && freedsize > size)
 		panic("free: size too large %zu > %ld (%p) type %s",
 		    freedsize, size, addr, memname[type]);
@@ -409,25 +427,28 @@ free(void *addr, int type, size_t freedsize)
 			addr, size, memname[type], alloc);
 #endif /* DIAGNOSTIC */
 	if (size > MAXALLOCSAVE) {
+		u_short pagecnt = kup->ku_pagecnt;
+
+		kup->ku_indx = 0;
+		kup->ku_pagecnt = 0;
+		mtx_leave(&malloc_mtx);
 		s = splvm();
-		uvm_km_free(kmem_map, (vaddr_t)addr, ptoa(kup->ku_pagecnt));
+		uvm_km_free(kmem_map, (vaddr_t)addr, ptoa(pagecnt));
 		splx(s);
 #ifdef KMEMSTATS
 		mtx_enter(&malloc_mtx);
 		ksp->ks_memuse -= size;
-		kup->ku_indx = 0;
-		kup->ku_pagecnt = 0;
-		if (ksp->ks_memuse + size >= ksp->ks_limit &&
-		    ksp->ks_memuse < ksp->ks_limit)
-			wakeup(ksp);
+		wake = ksp->ks_memuse + size >= ksp->ks_limit &&
+		    ksp->ks_memuse < ksp->ks_limit;
 		ksp->ks_inuse--;
 		kbp->kb_total -= 1;
 		mtx_leave(&malloc_mtx);
+		if (wake)
+			wakeup(ksp);
 #endif
 		return;
 	}
 	freep = (struct kmem_freelist *)addr;
-	mtx_enter(&malloc_mtx);
 #ifdef DIAGNOSTIC
 	/*
 	 * Check for multiple frees. Use a quick check to see if
@@ -463,13 +484,16 @@ free(void *addr, int type, size_t freedsize)
 	}
 	kbp->kb_totalfree++;
 	ksp->ks_memuse -= size;
-	if (ksp->ks_memuse + size >= ksp->ks_limit &&
-	    ksp->ks_memuse < ksp->ks_limit)
-		wakeup(ksp);
+	wake = ksp->ks_memuse + size >= ksp->ks_limit &&
+	    ksp->ks_memuse < ksp->ks_limit;
 	ksp->ks_inuse--;
 #endif
 	XSIMPLEQ_INSERT_TAIL(&kbp->kb_freelist, freep, kf_flist);
 	mtx_leave(&malloc_mtx);
+#ifdef KMEMSTATS
+	if (wake)
+		wakeup(ksp);
+#endif
 }
 
 /*
@@ -640,7 +664,7 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			memall = malloc(totlen + M_LAST, M_SYSCTL,
 			    M_WAITOK|M_ZERO);
 			for (siz = 0, i = 0; i < M_LAST; i++) {
-				snprintf(memall + siz, 
+				snprintf(memall + siz,
 				    totlen + M_LAST - siz,
 				    "%s,", memname[i] ? memname[i] : "");
 				siz += strlen(memall + siz);
@@ -678,8 +702,6 @@ malloc_roundup(size_t sz)
 }
 
 #if defined(DDB)
-#include <machine/db_machdep.h>
-#include <ddb/db_output.h>
 
 void
 malloc_printit(
@@ -698,7 +720,7 @@ malloc_printit(
 
 		(*pr)("%15s %5ld %6ldK %7ldK %6ldK %9ld %8d %8d\n",
 		    memname[i], km->ks_inuse, km->ks_memuse / 1024,
-		    km->ks_maxused / 1024, km->ks_limit / 1024, 
+		    km->ks_maxused / 1024, km->ks_limit / 1024,
 		    km->ks_calls, km->ks_limblocks, km->ks_mapblocks);
 	}
 #else

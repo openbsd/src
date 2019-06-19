@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.57 2017/12/10 09:17:24 jmc Exp $	*/
+/*	$OpenBSD: grep.c,v 1.59 2019/01/31 01:30:46 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -63,9 +63,7 @@ int	 Fflag;		/* -F: interpret pattern as list of fixed strings */
 int	 Hflag;		/* -H: always print filename header */
 int	 Lflag;		/* -L: only show names of files with no matches */
 int	 Rflag;		/* -R: recursively search directory trees */
-#ifndef NOZ
 int	 Zflag;		/* -Z: decompress input before processing */
-#endif
 int	 bflag;		/* -b: show block numbers for each match */
 int	 cflag;		/* -c: only show a count of matching lines */
 int	 hflag;		/* -h: don't print filename headers */
@@ -224,15 +222,19 @@ read_patterns(const char *fn)
 {
 	FILE *f;
 	char *line;
-	size_t len;
+	ssize_t len;
+	size_t linesize;
 
 	if ((f = fopen(fn, "r")) == NULL)
 		err(2, "%s", fn);
-	while ((line = fgetln(f, &len)) != NULL)
+	line = NULL;
+	linesize = 0;
+	while ((len = getline(&line, &linesize, f)) != -1)
 		add_pattern(line, *line == '\n' ? 0 : len);
 	if (ferror(f))
 		err(2, "%s", fn);
 	fclose(f);
+	free(line);
 }
 
 int

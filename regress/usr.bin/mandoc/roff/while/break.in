@@ -1,0 +1,16 @@
+.\" $OpenBSD: break.in,v 1.1 2019/04/21 22:43:00 schwarze Exp $
+.Dd $Mdocdate: April 21 2019 $
+.Dt WHILE-BREAK 1
+.Os
+.Sh NAME
+.Nm while-break
+.Nd break request inside a while loop
+.Sh DESCRIPTION
+initial text
+.nr cnt 11 1
+.while n \{\
+\n-[cnt]
+.if !\n[cnt] .break
+\(en
+.\}
+final text

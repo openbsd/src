@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.12 2017/01/06 00:06:02 jsg Exp $	*/
+/*	$OpenBSD: frame.h,v 1.13 2018/06/30 15:23:37 deraadt Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
 
 /*
@@ -295,5 +295,3 @@ struct frame {
 #endif /* _LOCORE */
 
 #endif /* _ARM_FRAME_H_ */
-
-/* End of frame.h */

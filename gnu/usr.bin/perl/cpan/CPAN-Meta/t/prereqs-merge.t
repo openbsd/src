@@ -4,7 +4,10 @@ use Test::More 0.88;
 
 use CPAN::Meta::Prereqs;
 
-delete $ENV{$_} for qw/PERL_JSON_BACKEND PERL_YAML_BACKEND/; # use defaults
+delete $ENV{PERL_YAML_BACKEND};
+delete $ENV{PERL_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_DECODER};
 
 my $prereq_struct_1 = {
   runtime => {
@@ -22,7 +25,15 @@ my $prereq_struct_1 = {
     requires => {
       'Test' => 0,
     },
-  }
+    x_type => {
+      'Config' => 1,
+    },
+  },
+  x_phase => {
+    x_type => {
+      'POSIX' => '1.23',
+    },
+  },
 };
 
 my $prereq_1 = CPAN::Meta::Prereqs->new($prereq_struct_1);
@@ -50,7 +61,12 @@ my $prereq_struct_2 = {
     suggests => {
       'Module::Build::Bob' => '20100101',
     },
-  }
+  },
+  x_phase => {
+    requires => {
+      'JSON::PP' => '2.34',
+    },
+  },
 };
 
 my $prereq_2 = CPAN::Meta::Prereqs->new($prereq_struct_2);
@@ -87,6 +103,17 @@ my $want = {
     },
     suggests => {
       'Module::Build::Bob' => '20100101',
+    },
+    x_type => {
+      'Config' => 1,
+    },
+  },
+  x_phase => {
+    requires => {
+      'JSON::PP' => '2.34',
+    },
+    x_type => {
+      'POSIX' => '1.23',
     },
   },
 };

@@ -253,7 +253,7 @@ array_add(struct array *a, void *val, unsigned *index_ret)
 #define DEFARRAY(T, INLINE) DEFARRAY_BYTYPE(T##array, struct T, INLINE)
 
 #define DESTROYALL_ARRAY(T, INLINE) \
-	void T##array_destroyall(struct T##array *arr);	\
+	INLINE void T##array_destroyall(struct T##array *arr);	\
 							\
 	INLINE void					\
 	T##array_destroyall(struct T##array *arr)	\

@@ -40,7 +40,7 @@ struct Config {
   TargetOptions Options;
   std::vector<std::string> MAttrs;
   Optional<Reloc::Model> RelocModel = Reloc::PIC_;
-  CodeModel::Model CodeModel = CodeModel::Default;
+  Optional<CodeModel::Model> CodeModel = None;
   CodeGenOpt::Level CGOptLevel = CodeGenOpt::Default;
   TargetMachine::CodeGenFileType CGFileType = TargetMachine::CGFT_ObjectFile;
   unsigned OptLevel = 2;
@@ -73,11 +73,25 @@ struct Config {
   /// Sample PGO profile path.
   std::string SampleProfile;
 
+  /// The directory to store .dwo files.
+  std::string DwoDir;
+
+  /// The path to write a .dwo file to. This should generally only be used when
+  /// running an individual backend directly via thinBackend(), as otherwise
+  /// all .dwo files will be written to the same path.
+  std::string DwoPath;
+
   /// Optimization remarks file path.
   std::string RemarksFilename = "";
 
   /// Whether to emit optimization remarks with hotness informations.
   bool RemarksWithHotness = false;
+
+  /// Whether to emit the pass manager debuggging informations.
+  bool DebugPassManager = false;
+
+  /// Statistics output file path.
+  std::string StatsFile;
 
   bool ShouldDiscardValueNames = true;
   DiagnosticHandlerFunction DiagHandler;
@@ -168,20 +182,27 @@ struct Config {
                      bool UseInputModulePath = false);
 };
 
+struct LTOLLVMDiagnosticHandler : public DiagnosticHandler {
+  DiagnosticHandlerFunction *Fn;
+  LTOLLVMDiagnosticHandler(DiagnosticHandlerFunction *DiagHandlerFn)
+      : Fn(DiagHandlerFn) {}
+  bool handleDiagnostics(const DiagnosticInfo &DI) override {
+    (*Fn)(DI);
+    return true;
+  }
+};
 /// A derived class of LLVMContext that initializes itself according to a given
 /// Config object. The purpose of this class is to tie ownership of the
 /// diagnostic handler to the context, as opposed to the Config object (which
 /// may be ephemeral).
+// FIXME: This should not be required as diagnostic handler is not callback.
 struct LTOLLVMContext : LLVMContext {
-  static void funcDiagHandler(const DiagnosticInfo &DI, void *Context) {
-    auto *Fn = static_cast<DiagnosticHandlerFunction *>(Context);
-    (*Fn)(DI);
-  }
 
   LTOLLVMContext(const Config &C) : DiagHandler(C.DiagHandler) {
     setDiscardValueNames(C.ShouldDiscardValueNames);
     enableDebugTypeODRUniquing();
-    setDiagnosticHandler(funcDiagHandler, &DiagHandler, true);
+    setDiagnosticHandler(
+        llvm::make_unique<LTOLLVMDiagnosticHandler>(&DiagHandler), true);
   }
   DiagnosticHandlerFunction DiagHandler;
 };

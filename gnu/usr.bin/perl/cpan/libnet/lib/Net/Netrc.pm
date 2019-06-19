@@ -1,9 +1,7 @@
 # Net::Netrc.pm
 #
-# Versions up to 2.13 Copyright (c) 1995-1998 Graham Barr <gbarr@pobox.com>.
-# All rights reserved.
-# Changes in Version 2.13_01 onwards Copyright (C) 2013-2014 Steve Hay.  All
-# rights reserved.
+# Copyright (C) 1995-1998 Graham Barr.  All rights reserved.
+# Copyright (C) 2013-2014 Steve Hay.  All rights reserved.
 # This module is free software; you can redistribute it and/or modify it under
 # the same terms as Perl itself, i.e. under the terms of either the GNU General
 # Public License or the Artistic License, as specified in the F<LICENCE> file.
@@ -18,7 +16,7 @@ use warnings;
 use Carp;
 use FileHandle;
 
-our $VERSION = "3.08_01";
+our $VERSION = "3.11";
 
 our $TESTING;
 
@@ -324,10 +322,10 @@ Return a list of login, password and account information for the netrc entry
 
 =head1 AUTHOR
 
-Graham Barr E<lt>F<gbarr@pobox.com>E<gt>
+Graham Barr E<lt>F<gbarr@pobox.com>E<gt>.
 
 Steve Hay E<lt>F<shay@cpan.org>E<gt> is now maintaining libnet as of version
-1.22_02
+1.22_02.
 
 =head1 SEE ALSO
 
@@ -336,9 +334,11 @@ L<Net::Cmd>
 
 =head1 COPYRIGHT
 
-Versions up to 2.13 Copyright (c) 1995-1998 Graham Barr. All rights reserved.
-Changes in Version 2.13_01 onwards Copyright (C) 2013-2014 Steve Hay.  All
-rights reserved.
+Copyright (C) 1995-1998 Graham Barr.  All rights reserved.
+
+Copyright (C) 2013-2014 Steve Hay.  All rights reserved.
+
+=head1 LICENCE
 
 This module is free software; you can redistribute it and/or modify it under the
 same terms as Perl itself, i.e. under the terms of either the GNU General Public

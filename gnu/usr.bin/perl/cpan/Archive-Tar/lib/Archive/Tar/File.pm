@@ -13,7 +13,7 @@ use Archive::Tar::Constant;
 
 use vars qw[@ISA $VERSION];
 #@ISA        = qw[Archive::Tar];
-$VERSION    = '2.04_01';
+$VERSION    = '2.30';
 
 ### set value to 1 to oct() it during the unpack ###
 
@@ -396,12 +396,7 @@ sub _prefix_and_file {
     my $path = shift;
 
     my ($vol, $dirs, $file) = File::Spec->splitpath( $path, $self->is_dir );
-    my @dirs = File::Spec->splitdir( $dirs );
-
-    ### so sometimes the last element is '' -- probably when trailing
-    ### dir slashes are encountered... this is of course pointless,
-    ### so remove it
-    pop @dirs while @dirs and not length $dirs[-1];
+    my @dirs = File::Spec->splitdir( File::Spec->canonpath($dirs) );
 
     ### if it's a directory, then $file might be empty
     $file = pop @dirs if $self->is_dir and not length $file;
@@ -409,9 +404,7 @@ sub _prefix_and_file {
     ### splitting ../ gives you the relative path in native syntax
     map { $_ = '..' if $_  eq '-' } @dirs if ON_VMS;
 
-    my $prefix = File::Spec::Unix->catdir(
-                        grep { length } $vol, @dirs
-                    );
+    my $prefix = File::Spec::Unix->catdir(@dirs);
     return( $prefix, $file );
 }
 

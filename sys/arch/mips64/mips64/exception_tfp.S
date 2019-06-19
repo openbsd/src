@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception_tfp.S,v 1.6 2016/12/22 15:33:36 visa Exp $	*/
+/*	$OpenBSD: exception_tfp.S,v 1.7 2018/05/09 15:03:04 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -278,6 +278,8 @@ k_exception_table:
 
 	.align	5
 NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
+	.globl	u_intr				# for trap.c peace of mind
+u_intr:
 	.set	noat
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 

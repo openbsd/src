@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.2 2017/04/16 13:35:14 kettenis Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.3 2018/10/01 22:49:50 mortimer Exp $	*/
 /*-
  * Copyright (c) 2014 Andrew Turner
  * Copyright (c) 2014 The FreeBSD Foundation
@@ -34,6 +34,7 @@
 #include <machine/setjmp.h>
 
 ENTRY(_setjmp)
+	RETGUARD_SETUP(_setjmp, x15)
 	/* Store the magic value and stack pointer */
 	ldr	x8, .Lmagic
 	mov	x9, sp
@@ -57,6 +58,7 @@ ENTRY(_setjmp)
 
 	/* Return value */
 	mov	x0, #0
+	RETGUARD_CHECK(_setjmp, x15)
 	ret
 	.align	3
 .Lmagic:
@@ -64,6 +66,8 @@ ENTRY(_setjmp)
 END_STRONG(_setjmp)
 
 ENTRY(_longjmp)
+	RETGUARD_SYMBOL(_longjmp)
+	RETGUARD_LOAD_RANDOM(_longjmp, x15)
 	/* Check the magic value */
 	ldr	x8, [x0], #8
 	ldr	x9, .Lmagic
@@ -81,6 +85,7 @@ ENTRY(_longjmp)
 	ldp	x25, x26, [x0], #16
 	ldp	x27, x28, [x0], #16
 	ldp	x29, x30, [x0], #16
+	RETGUARD_CALC_COOKIE(x15)
 
 #ifndef _STANDALONE
 	/* Restore the vfp registers */
@@ -93,6 +98,7 @@ ENTRY(_longjmp)
 	/* Load the return value */
 	cmp	w1, #0
 	csinc	w0, w1, wzr, ne
+	RETGUARD_CHECK(_longjmp, x15)
 	ret
 
 botch:

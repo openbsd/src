@@ -18,10 +18,11 @@ namespace {
 
 class DummyCallbackManager : public orc::JITCompileCallbackManager {
 public:
-  DummyCallbackManager() : JITCompileCallbackManager(0) {}
+  DummyCallbackManager(ExecutionSession &ES)
+      : JITCompileCallbackManager(ES, 0) {}
 
 public:
-  void grow() override { llvm_unreachable("not implemented"); }
+  Error grow() override { llvm_unreachable("not implemented"); }
 };
 
 class DummyStubsManager : public orc::IndirectStubsManager {
@@ -35,11 +36,11 @@ public:
     llvm_unreachable("Not implemented");
   }
 
-  JITSymbol findStub(StringRef Name, bool ExportedStubsOnly) override {
+  JITEvaluatedSymbol findStub(StringRef Name, bool ExportedStubsOnly) override {
     llvm_unreachable("Not implemented");
   }
 
-  JITSymbol findPointer(StringRef Name) override {
+  JITEvaluatedSymbol findPointer(StringRef Name) override {
     llvm_unreachable("Not implemented");
   }
 
@@ -49,22 +50,31 @@ public:
 };
 
 TEST(CompileOnDemandLayerTest, FindSymbol) {
-  auto MockBaseLayer = createMockBaseLayer<int>(
-      DoNothingAndReturn<int>(0),
-      [](int Handle) { return Error::success(); },
-      [](const std::string &Name, bool) {
-        if (Name == "foo")
-          return JITSymbol(1, JITSymbolFlags::Exported);
-        return JITSymbol(nullptr);
-      },
-      ReturnNullJITSymbol());
+  MockBaseLayer<int, std::shared_ptr<Module>> TestBaseLayer;
+  TestBaseLayer.findSymbolImpl =
+    [](const std::string &Name, bool) {
+      if (Name == "foo")
+        return JITSymbol(1, JITSymbolFlags::Exported);
+      return JITSymbol(nullptr);
+    };
 
-  typedef decltype(MockBaseLayer) MockBaseLayerT;
-  DummyCallbackManager CallbackMgr;
 
-  llvm::orc::CompileOnDemandLayer<MockBaseLayerT> COD(
-      MockBaseLayer, [](Function &F) { return std::set<Function *>{&F}; },
-      CallbackMgr, [] { return llvm::make_unique<DummyStubsManager>(); }, true);
+  ExecutionSession ES(std::make_shared<SymbolStringPool>());
+  DummyCallbackManager CallbackMgr(ES);
+
+  auto GetResolver =
+      [](orc::VModuleKey) -> std::shared_ptr<llvm::orc::SymbolResolver> {
+    llvm_unreachable("Should never be called");
+  };
+
+  auto SetResolver = [](orc::VModuleKey, std::shared_ptr<orc::SymbolResolver>) {
+    llvm_unreachable("Should never be called");
+  };
+
+  llvm::orc::CompileOnDemandLayer<decltype(TestBaseLayer)> COD(
+      ES, TestBaseLayer, GetResolver, SetResolver,
+      [](Function &F) { return std::set<Function *>{&F}; }, CallbackMgr,
+      [] { return llvm::make_unique<DummyStubsManager>(); }, true);
 
   auto Sym = COD.findSymbol("foo", true);
 

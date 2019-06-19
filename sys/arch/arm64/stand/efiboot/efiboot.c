@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.16 2018/03/02 03:11:23 jsg Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.23 2019/04/25 20:19:30 naddy Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -19,6 +19,7 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <dev/cons.h>
 #include <sys/disklabel.h>
 
@@ -27,14 +28,21 @@
 #include <efiprot.h>
 #include <eficonsctl.h>
 
+#include <dev/biovar.h>
+#include <dev/softraidvar.h>
+
 #include <lib/libkern/libkern.h>
+#include <lib/libsa/softraid.h>
 #include <stand/boot/cmd.h>
 
+#include "libsa.h"
 #include "disk.h"
+#include "softraid_arm64.h"
+
+#include "efidev.h"
 #include "efiboot.h"
 #include "eficall.h"
 #include "fdt.h"
-#include "libsa.h"
 
 EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
@@ -72,6 +80,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 
 	ST = systab;
 	BS = ST->BootServices;
+	RS = ST->RuntimeServices;
 	IH = image;
 
 	/* disable reset by watchdog after 5 minutes */
@@ -127,7 +136,7 @@ efi_cons_getc(dev_t dev)
 	}
 
 	status = conin->ReadKeyStroke(conin, &key);
-	while (status == EFI_NOT_READY) {
+	while (status == EFI_NOT_READY || key.UnicodeChar == 0) {
 		if (dev & 0x80)
 			return (0);
 		/*
@@ -171,18 +180,22 @@ efi_heap_init(void)
 		panic("BS->AllocatePages()");
 }
 
-EFI_BLOCK_IO	*disk;
+struct disklist_lh disklist;
+struct diskinfo *bootdev_dip;
 
 void
 efi_diskprobe(void)
 {
-	int			 i, depth = -1;
+	int			 i, bootdev = 0, depth = -1;
 	UINTN			 sz;
 	EFI_STATUS		 status;
 	EFI_HANDLE		*handles = NULL;
 	EFI_BLOCK_IO		*blkio;
 	EFI_BLOCK_IO_MEDIA	*media;
+	struct diskinfo		*di;
 	EFI_DEVICE_PATH		*dp;
+
+	TAILQ_INIT(&disklist);
 
 	sz = 0;
 	status = EFI_CALL(BS->LocateHandle, ByProtocol, &blkio_guid, 0, &sz, 0);
@@ -215,20 +228,36 @@ efi_diskprobe(void)
 		media = blkio->Media;
 		if (media->LogicalPartition || !media->MediaPresent)
 			continue;
+		di = alloc(sizeof(struct diskinfo));
+		efid_init(di, blkio);
 
-		if (efi_bootdp == NULL || depth == -1)
-			continue;
+		if (efi_bootdp == NULL || depth == -1 || bootdev != 0)
+			goto next;
 		status = EFI_CALL(BS->HandleProtocol, handles[i], &devp_guid,
 		    (void **)&dp);
 		if (EFI_ERROR(status))
-			continue;
+			goto next;
 		if (efi_device_path_ncmp(efi_bootdp, dp, depth) == 0) {
-			disk = blkio;
-			break;
+			TAILQ_INSERT_HEAD(&disklist, di, list);
+			bootdev_dip = di;
+			bootdev = 1;
+			continue;
 		}
+next:
+		TAILQ_INSERT_TAIL(&disklist, di, list);
 	}
 
 	free(handles, sz);
+
+	/* Print available disks and probe for softraid. */
+	i = 0;
+	printf("disks:");
+	TAILQ_FOREACH(di, &disklist, list) {
+		printf(" sd%d%s", i, di == bootdev_dip ? "*" : "");
+		i++;
+	}
+	srprobe();
+	printf("\n");
 }
 
 /*
@@ -358,6 +387,8 @@ efi_framebuffer(void)
 	    "simple-framebuffer", strlen("simple-framebuffer") + 1);
 }
 
+int acpi = 0;
+void *fdt = NULL;
 char *bootmac = NULL;
 static EFI_GUID fdt_guid = FDT_TABLE_GUID;
 
@@ -366,7 +397,7 @@ static EFI_GUID fdt_guid = FDT_TABLE_GUID;
 void *
 efi_makebootargs(char *bootargs)
 {
-	void *fdt = NULL;
+	struct sr_boot_volume *bv;
 	u_char bootduid[8];
 	u_char zero[8] = { 0 };
 	uint64_t uefi_system_table = htobe64((uintptr_t)ST);
@@ -374,11 +405,16 @@ efi_makebootargs(char *bootargs)
 	size_t len;
 	int i;
 
-	for (i = 0; i < ST->NumberOfTableEntries; i++) {
-		if (efi_guidcmp(&fdt_guid,
-		    &ST->ConfigurationTable[i].VendorGuid) == 0)
-			fdt = ST->ConfigurationTable[i].VendorTable;
+	if (fdt == NULL) {
+		for (i = 0; i < ST->NumberOfTableEntries; i++) {
+			if (efi_guidcmp(&fdt_guid,
+			    &ST->ConfigurationTable[i].VendorGuid) == 0)
+				fdt = ST->ConfigurationTable[i].VendorTable;
+		}
 	}
+
+	if (fdt == NULL || acpi)
+		fdt = efi_acpi();
 
 	if (!fdt_init(fdt))
 		return NULL;
@@ -391,11 +427,26 @@ efi_makebootargs(char *bootargs)
 	fdt_node_add_property(node, "bootargs", bootargs, len);
 
 	/* Pass DUID of the boot disk. */
-	memcpy(&bootduid, diskinfo.disklabel.d_uid, sizeof(bootduid));
-	if (memcmp(bootduid, zero, sizeof(bootduid)) != 0) {
-		fdt_node_add_property(node, "openbsd,bootduid", bootduid,
+	if (bootdev_dip) {
+		memcpy(&bootduid, bootdev_dip->disklabel.d_uid,
 		    sizeof(bootduid));
+		if (memcmp(bootduid, zero, sizeof(bootduid)) != 0) {
+			fdt_node_add_property(node, "openbsd,bootduid",
+			    bootduid, sizeof(bootduid));
+		}
+
+		if (bootdev_dip->sr_vol != NULL) {
+			bv = bootdev_dip->sr_vol;
+			fdt_node_add_property(node, "openbsd,sr-bootuuid",
+			    &bv->sbv_uuid, sizeof(bv->sbv_uuid));
+			if (bv->sbv_maskkey != NULL)
+				fdt_node_add_property(node,
+				    "openbsd,sr-bootkey", bv->sbv_maskkey,
+				    SR_CRYPTO_MAXKEYBYTES);
+		}
 	}
+
+	sr_clear_keys();
 
 	/* Pass netboot interface address. */
 	if (bootmac)
@@ -550,10 +601,51 @@ getsecs(void)
 void
 devboot(dev_t dev, char *p)
 {
-	if (disk)
-		strlcpy(p, "sd0a", 5);
-	else
+	struct sr_boot_volume *bv;
+	struct sr_boot_chunk *bc;
+	struct diskinfo *dip;
+	int sd_boot_vol = 0;
+	int sr_boot_vol = -1;
+	int part_type = FS_UNUSED;
+
+	if (bootdev_dip == NULL) {
 		strlcpy(p, "tftp0a", 7);
+		return;
+	}
+
+	TAILQ_FOREACH(dip, &disklist, list) {
+		if (bootdev_dip == dip)
+			break;
+		sd_boot_vol++;
+	}
+
+	/*
+	 * Determine the partition type for the 'a' partition of the
+	 * boot device.
+	 */
+	if ((bootdev_dip->flags & DISKINFO_FLAG_GOODLABEL) != 0)
+		part_type = bootdev_dip->disklabel.d_partitions[0].p_fstype;
+
+	/*
+	 * See if we booted from a disk that is a member of a bootable
+	 * softraid volume.
+	 */
+	SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
+		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
+			if (bc->sbc_diskinfo == bootdev_dip)
+				sr_boot_vol = bv->sbv_unit;
+		if (sr_boot_vol != -1)
+			break;
+	}
+
+	if (sr_boot_vol != -1 && part_type != FS_BSDFFS) {
+		strlcpy(p, "sr0a", 5);
+		p[2] = '0' + sr_boot_vol;
+		return;
+	}
+
+	strlcpy(p, "sd0a", 5);
+	p[2] = '0' + sd_boot_vol;
 }
 
 int
@@ -657,6 +749,14 @@ devopen(struct open_file *f, const char *fname, char **file)
 	dp = &devsw[dev];
 	f->f_dev = dp;
 
+	if (strcmp("tftp", dp->dv_name) != 0) {
+		/*
+		 * Clear bootmac, to signal that we loaded this file from a
+		 * non-network device.
+		 */
+		bootmac = NULL;
+	}
+
 	return (*dp->dv_open)(f, unit, part);
 }
 
@@ -736,14 +836,59 @@ efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
  * Commands
  */
 
+int Xacpi_efi(void);
+int Xdtb_efi(void);
 int Xexit_efi(void);
 int Xpoweroff_efi(void);
 
 const struct cmd_table cmd_machine[] = {
+	{ "acpi",	CMDT_CMD, Xacpi_efi },
+	{ "dtb",	CMDT_CMD, Xdtb_efi },
 	{ "exit",	CMDT_CMD, Xexit_efi },
 	{ "poweroff",	CMDT_CMD, Xpoweroff_efi },
 	{ NULL, 0 }
 };
+
+int
+Xacpi_efi(void)
+{
+	acpi = 1;
+	return (0);
+}
+
+int
+Xdtb_efi(void)
+{
+	EFI_PHYSICAL_ADDRESS addr;
+	char path[MAXPATHLEN];
+	struct stat sb;
+	int fd;
+
+#define O_RDONLY	0
+
+	if (cmd.argc != 2)
+		return (1);
+
+	snprintf(path, sizeof(path), "%s:%s", cmd.bootdev, cmd.argv[1]);
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0 || fstat(fd, &sb) == -1) {
+		printf("cannot open %s\n", path);
+		return (1);
+	}
+	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(sb.st_size),
+	    0x1000, &addr) != EFI_SUCCESS) {
+		printf("cannot allocate memory for %s\n", path);
+		return (1);
+	}
+	if (read(fd, (void *)addr, sb.st_size) != sb.st_size) {
+		printf("cannot read from %s\n", path);
+		return (1);
+	}
+
+	fdt = (void *)addr;
+	return (0);
+}
 
 int
 Xexit_efi(void)

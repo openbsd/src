@@ -59,21 +59,21 @@ Unmatched [ in regex; marked by <-- HERE in m/abc[ <-- HERE ﬁ[.00./ at - line 
 qr/(?[[[:word]]])/;
 EXPECT
 Assuming NOT a POSIX class since there is no terminating ':' in regex; marked by <-- HERE in m/(?[[[:word <-- HERE ]]])/ at - line 2.
-syntax error in (?[...]) in regex m/(?[[[:word]]])/ at - line 2.
+Unexpected ']' with no following ')' in (?[... in regex; marked by <-- HERE in m/(?[[[:word]] <-- HERE ])/ at - line 2.
 ########
 # NAME qr/(?[ [[:digit: ])/
 # OPTION fatal
 qr/(?[[[:digit: ])/;
 EXPECT
 Assuming NOT a POSIX class since no blanks are allowed in one in regex; marked by <-- HERE in m/(?[[[:digit: ] <-- HERE )/ at - line 2.
-syntax error in (?[...]) in regex m/(?[[[:digit: ])/ at - line 2.
+syntax error in (?[...]) in regex; marked by <-- HERE in m/(?[[[:digit: ]) <-- HERE / at - line 2.
 ########
 # NAME qr/(?[ [:digit: ])/
 # OPTION fatal
 qr/(?[[:digit: ])/
 EXPECT
 Assuming NOT a POSIX class since no blanks are allowed in one in regex; marked by <-- HERE in m/(?[[:digit: ] <-- HERE )/ at - line 2.
-syntax error in (?[...]) in regex m/(?[[:digit: ])/ at - line 2.
+syntax error in (?[...]) in regex; marked by <-- HERE in m/(?[[:digit: ]) <-- HERE / at - line 2.
 ########
 # NAME [perl #126141]
 # OPTION fatal
@@ -83,38 +83,27 @@ EXPECT
 ]]]]][\ ==> Unmatched [ in regex; marked by <-- HERE in m/]]]]][\ <-- HERE / at - line 2.
 ########
 # NAME [perl #123417]
-use warnings 'regexp';
+# OPTION fatal
 qr/[\N{}]/;
-qr/\N{}/;
-no warnings 'regexp';
-qr/[\N{}]/;
-qr/\N{}/;
-no warnings 'deprecated';
-qr/[\N{}]/;
-qr/\N{}/;
 EXPECT
-Unknown charname '' is deprecated at - line 2.
-Ignoring zero length \N{} in character class in regex; marked by <-- HERE in m/[\N{} <-- HERE ]/ at - line 2.
-Unknown charname '' is deprecated at - line 3.
-Unknown charname '' is deprecated at - line 5.
-Unknown charname '' is deprecated at - line 6.
+Unknown charname '' at - line 2, within pattern
+Execution of - aborted due to compilation errors.
 ########
 # NAME [perl #123417]
 # OPTION fatal
-use warnings 'regexp';
-no warnings 'experimental::re_strict';
-use re 'strict';
-qr/[\N{}]/;
-EXPECT
-Unknown charname '' is deprecated at - line 5.
-Zero length \N{} in regex; marked by <-- HERE in m/[\N{} <-- HERE ]/ at - line 5.
-########
-# NAME [perl #123417]
-# OPTION fatal
-use warnings 'regexp';
-no warnings 'experimental::re_strict';
-use re 'strict';
 qr/\N{}/;
 EXPECT
-Unknown charname '' is deprecated at - line 5.
-Zero length \N{} in regex; marked by <-- HERE in m/\N{} <-- HERE / at - line 5.
+Unknown charname '' at - line 2, within pattern
+Execution of - aborted due to compilation errors.
+########
+# NAME [perl #131868]
+use warnings;
+my $qr = qr {
+    (?(DEFINE)
+      (?<digit>   [0-9])
+      (?<digits>  (?&digit){4})
+    )
+    ^(?&digits)$
+}x;
+EXPECT
+########

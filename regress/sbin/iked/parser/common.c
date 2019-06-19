@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.1 2017/05/29 20:59:28 markus Exp $ */
+/*	$OpenBSD: common.c,v 1.2 2019/05/11 16:30:23 patrick Exp $ */
 /*
  * A bunch of stub functions so we can compile and link ikev2_pld.c
  * in a standalone program for testing purposes.
@@ -164,6 +164,11 @@ struct iked_proposal *
 config_add_proposal(struct iked_proposals *head, u_int id, u_int proto)
 {
 	return (NULL);
+}
+
+void config_free_fragments(struct iked_frag *frag)
+{
+	return;
 }
 
 int

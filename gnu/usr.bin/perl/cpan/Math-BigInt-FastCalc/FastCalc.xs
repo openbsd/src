@@ -152,7 +152,7 @@ __strip_zeros(x)
     elems = av_len(a);			/* number of elems in array */
     ST(0) = x;				/* we return x */
     if (elems == -1)
-      { 
+      {
       av_push (a, newSViv(0));		/* correct empty arrays */
       XSRETURN(1);
       }
@@ -210,13 +210,13 @@ _dec(class,x)
         }
       sv_setnv (temp, MAX);		/* overflow, so set this to $MAX */
       index++;
-      } 
+      }
     /* do have more than one element? */
     /* (more than one because [0] should be kept as single-element) */
     if (elems > 0)
       {
       temp = *av_fetch(a, elems, 0);	/* fetch last element */
-      if (SvIV(temp) == 0)		/* did last elem overflow? */ 
+      if (SvIV(temp) == 0)		/* did last elem overflow? */
         {
         av_pop(a);			/* yes, so shrink array */
         				/* aka remove leading zeros */
@@ -254,7 +254,7 @@ _inc(class,x)
         }
       sv_setiv (temp, 0);		/* overflow, so set this elem to 0 */
       index++;
-      } 
+      }
     temp = *av_fetch(a, elems, 0);	/* fetch last element */
     if (SvIV(temp) == 0)		/* did last elem overflow? */
       {
@@ -394,10 +394,10 @@ _acmp(class, cx, cy);
       diff_nv = SvNV(tempx) - SvNV(tempy);
       if (diff_nv != 0)
         {
-        break; 
+        break;
         }
       elemsx--;
-      } 
+      }
     if (diff_nv > 0)
       {
       RETURN_MORTAL_INT(1);
@@ -407,4 +407,3 @@ _acmp(class, cx, cy);
       RETURN_MORTAL_INT(-1);
       }
     ST(0) = sv_2mortal(newSViv(0));		/* X and Y are equal */
-

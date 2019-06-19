@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/BinaryFormat/ELF.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdint>
@@ -50,19 +51,23 @@ struct ELFRelocationEntry {
   void dump() const { print(errs()); }
 };
 
-class MCELFObjectTargetWriter {
+class MCELFObjectTargetWriter : public MCObjectTargetWriter {
   const uint8_t OSABI;
   const uint16_t EMachine;
   const unsigned HasRelocationAddend : 1;
   const unsigned Is64Bit : 1;
-  const unsigned IsN64 : 1;
 
 protected:
   MCELFObjectTargetWriter(bool Is64Bit_, uint8_t OSABI_, uint16_t EMachine_,
-                          bool HasRelocationAddend, bool IsN64 = false);
+                          bool HasRelocationAddend);
 
 public:
   virtual ~MCELFObjectTargetWriter() = default;
+
+  virtual Triple::ObjectFormatType getFormat() const { return Triple::ELF; }
+  static bool classof(const MCObjectTargetWriter *W) {
+    return W->getFormat() == Triple::ELF;
+  }
 
   static uint8_t getOSABI(Triple::OSType OSType) {
     switch (OSType) {
@@ -91,7 +96,6 @@ public:
   uint16_t getEMachine() const { return EMachine; }
   bool hasRelocationAddend() const { return HasRelocationAddend; }
   bool is64Bit() const { return Is64Bit; }
-  bool isN64() const { return IsN64; }
   /// @}
 
   // Instead of changing everyone's API we pack the N64 Type fields
@@ -134,14 +138,19 @@ public:
   }
 };
 
-/// \brief Construct a new ELF writer instance.
+/// Construct a new ELF writer instance.
 ///
 /// \param MOTW - The target specific ELF writer subclass.
 /// \param OS - The stream to write to.
 /// \returns The constructed object writer.
-MCObjectWriter *createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
-                                      raw_pwrite_stream &OS,
-                                      bool IsLittleEndian);
+std::unique_ptr<MCObjectWriter>
+createELFObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
+                      raw_pwrite_stream &OS, bool IsLittleEndian);
+
+std::unique_ptr<MCObjectWriter>
+createELFDwoObjectWriter(std::unique_ptr<MCELFObjectTargetWriter> MOTW,
+                         raw_pwrite_stream &OS, raw_pwrite_stream &DwoOS,
+                         bool IsLittleEndian);
 
 } // end namespace llvm
 

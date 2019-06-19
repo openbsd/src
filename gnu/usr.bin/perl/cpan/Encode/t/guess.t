@@ -18,11 +18,7 @@ use Encode qw(decode encode find_encoding _utf8_off);
 
 #use Test::More qw(no_plan);
 use Test::More tests => 32;
-use_ok("Encode::Guess");
-{
-    no warnings;
-    $Encode::Guess::DEBUG = shift || 0;
-}
+BEGIN { use_ok("Encode::Guess") }
 
 my $ascii  = join('' => map {chr($_)}(0x21..0x7e));
 my $latin1 = join('' => map {chr($_)}(0xa1..0xfe));

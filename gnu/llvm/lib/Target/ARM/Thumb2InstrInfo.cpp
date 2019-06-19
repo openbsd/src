@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Thumb2InstrInfo.h"
 #include "ARMMachineFunctionInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
-#include "Thumb2InstrInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -22,6 +22,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -29,7 +30,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include <cassert>
 
 using namespace llvm;
@@ -82,7 +82,7 @@ Thumb2InstrInfo::ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
     MachineBasicBlock::iterator E = MBB->begin();
     unsigned Count = 4; // At most 4 instructions in an IT block.
     while (Count && MBBI != E) {
-      if (MBBI->isDebugValue()) {
+      if (MBBI->isDebugInstr()) {
         --MBBI;
         continue;
       }
@@ -109,7 +109,7 @@ Thumb2InstrInfo::ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
 bool
 Thumb2InstrInfo::isLegalToSplitMBBAt(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MBBI) const {
-  while (MBBI->isDebugValue()) {
+  while (MBBI->isDebugInstr()) {
     ++MBBI;
     if (MBBI == MBB.end())
       return false;
@@ -489,7 +489,8 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
     Offset += MI.getOperand(FrameRegIdx+1).getImm();
 
     unsigned PredReg;
-    if (Offset == 0 && getInstrPredicate(MI, PredReg) == ARMCC::AL) {
+    if (Offset == 0 && getInstrPredicate(MI, PredReg) == ARMCC::AL &&
+        !MI.definesRegister(ARM::CPSR)) {
       // Turn it into a move.
       MI.setDesc(TII.get(ARM::tMOVr));
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
@@ -600,11 +601,30 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
         Offset = -Offset;
         isSub = true;
       }
+    } else if (AddrMode == ARMII::AddrMode5FP16) {
+      // VFP address mode.
+      const MachineOperand &OffOp = MI.getOperand(FrameRegIdx+1);
+      int InstrOffs = ARM_AM::getAM5FP16Offset(OffOp.getImm());
+      if (ARM_AM::getAM5FP16Op(OffOp.getImm()) == ARM_AM::sub)
+        InstrOffs *= -1;
+      NumBits = 8;
+      Scale = 2;
+      Offset += InstrOffs * 2;
+      assert((Offset & (Scale-1)) == 0 && "Can't encode this offset!");
+      if (Offset < 0) {
+        Offset = -Offset;
+        isSub = true;
+      }
     } else if (AddrMode == ARMII::AddrModeT2_i8s4) {
       Offset += MI.getOperand(FrameRegIdx + 1).getImm() * 4;
       NumBits = 10; // 8 bits scaled by 4
       // MCInst operand expects already scaled value.
       Scale = 1;
+      assert((Offset & 3) == 0 && "Can't encode this offset!");
+    } else if (AddrMode == ARMII::AddrModeT2_ldrex) {
+      Offset += MI.getOperand(FrameRegIdx + 1).getImm() * 4;
+      NumBits = 8; // 8 bits scaled by 4
+      Scale = 4;
       assert((Offset & 3) == 0 && "Can't encode this offset!");
     } else {
       llvm_unreachable("Unsupported addressing mode!");

@@ -13,7 +13,7 @@
 
 #include "llvm/Support/Program.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #include <system_error>
 using namespace llvm;
 using namespace sys;
@@ -23,20 +23,23 @@ using namespace sys;
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
-static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
-                    const char **env, const StringRef **Redirects,
-                    unsigned memoryLimit, std::string *ErrMsg);
+static bool Execute(ProcessInfo &PI, StringRef Program,
+                    ArrayRef<StringRef> Args, Optional<ArrayRef<StringRef>> Env,
+                    ArrayRef<Optional<StringRef>> Redirects,
+                    unsigned MemoryLimit, std::string *ErrMsg);
 
-int sys::ExecuteAndWait(StringRef Program, const char **args, const char **envp,
-                        const StringRef **redirects, unsigned secondsToWait,
-                        unsigned memoryLimit, std::string *ErrMsg,
-                        bool *ExecutionFailed) {
+int sys::ExecuteAndWait(StringRef Program, ArrayRef<StringRef> Args,
+                        Optional<ArrayRef<StringRef>> Env,
+                        ArrayRef<Optional<StringRef>> Redirects,
+                        unsigned SecondsToWait, unsigned MemoryLimit,
+                        std::string *ErrMsg, bool *ExecutionFailed) {
+  assert(Redirects.empty() || Redirects.size() == 3);
   ProcessInfo PI;
-  if (Execute(PI, Program, args, envp, redirects, memoryLimit, ErrMsg)) {
+  if (Execute(PI, Program, Args, Env, Redirects, MemoryLimit, ErrMsg)) {
     if (ExecutionFailed)
       *ExecutionFailed = false;
     ProcessInfo Result = Wait(
-        PI, secondsToWait, /*WaitUntilTerminates=*/secondsToWait == 0, ErrMsg);
+        PI, SecondsToWait, /*WaitUntilTerminates=*/SecondsToWait == 0, ErrMsg);
     return Result.ReturnCode;
   }
 
@@ -46,24 +49,35 @@ int sys::ExecuteAndWait(StringRef Program, const char **args, const char **envp,
   return -1;
 }
 
-ProcessInfo sys::ExecuteNoWait(StringRef Program, const char **args,
-                               const char **envp, const StringRef **redirects,
-                               unsigned memoryLimit, std::string *ErrMsg,
+ProcessInfo sys::ExecuteNoWait(StringRef Program, ArrayRef<StringRef> Args,
+                               Optional<ArrayRef<StringRef>> Env,
+                               ArrayRef<Optional<StringRef>> Redirects,
+                               unsigned MemoryLimit, std::string *ErrMsg,
                                bool *ExecutionFailed) {
+  assert(Redirects.empty() || Redirects.size() == 3);
   ProcessInfo PI;
   if (ExecutionFailed)
     *ExecutionFailed = false;
-  if (!Execute(PI, Program, args, envp, redirects, memoryLimit, ErrMsg))
+  if (!Execute(PI, Program, Args, Env, Redirects, MemoryLimit, ErrMsg))
     if (ExecutionFailed)
       *ExecutionFailed = true;
 
   return PI;
 }
 
+bool sys::commandLineFitsWithinSystemLimits(StringRef Program,
+                                            ArrayRef<const char *> Args) {
+  SmallVector<StringRef, 8> StringRefArgs;
+  StringRefArgs.reserve(Args.size());
+  for (const char *A : Args)
+    StringRefArgs.emplace_back(A);
+  return commandLineFitsWithinSystemLimits(Program, StringRefArgs);
+}
+
 // Include the platform-specific parts of this class.
 #ifdef LLVM_ON_UNIX
 #include "Unix/Program.inc"
 #endif
-#ifdef LLVM_ON_WIN32
+#ifdef _WIN32
 #include "Windows/Program.inc"
 #endif

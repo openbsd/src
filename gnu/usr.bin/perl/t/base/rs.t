@@ -1,7 +1,7 @@
 #!./perl
 # Test $/
 
-print "1..39\n";
+print "1..41\n";
 
 $test_count = 1;
 $teststring = "1\n12\n123\n1234\n1234\n12345\n\n123456\n1234567\n";
@@ -237,17 +237,31 @@ sub test_record {
   if ($bar ne "78") {print "not ";}
   print "ok $test_count # \$/ = \\\$foo (\$foo = \"2\")\n";
   $test_count++;
-
-  # Naughty straight number - should get the rest of the file
-  # no warnings 'deprecated'; # but not in t/base/*
-  { local $SIG{__WARN__} = sub {}; $/ = \0 }
-  $bar = <FH>;
-  if ($bar ne "90123456789012345678901234567890") {print "not ";}
-  print "ok $test_count # \$/ = \\0\n";
-  $test_count++;
 }
 
 sub test_bad_setting {
+  if (eval {$/ = \0; 1}) {
+    print "not ok ",$test_count++," # \$/ = \\0; should die\n";
+    print "not ok ",$test_count++," # \$/ = \\0; produced expected error message\n";
+  } else {
+    my $msg= $@ || "Zombie Error";
+    print "ok ",$test_count++," # \$/ = \\0; should die\n";
+    if ($msg!~m!Setting \$\/ to a reference to zero is forbidden!) {
+      print "not ";
+    }
+    print "ok ",$test_count++," # \$/ = \\0; produced expected error message\n";
+  }
+  if (eval {$/ = \-1; 1}) {
+    print "not ok ",$test_count++," # \$/ = \\-1; should die\n";
+    print "not ok ",$test_count++," # \$/ = \\-1; produced expected error message\n";
+  } else {
+    my $msg= $@ || "Zombie Error";
+    print "ok ",$test_count++," # \$/ = \\-1; should die\n";
+    if ($msg!~m!Setting \$\/ to a reference to a negative integer is forbidden!) {
+      print "not ";
+    }
+    print "ok ",$test_count++," # \$/ = \\-1; produced expected error message\n";
+  }
   if (eval {$/ = []; 1}) {
     print "not ok ",$test_count++," # \$/ = []; should die\n";
     print "not ok ",$test_count++," # \$/ = []; produced expected error message\n";

@@ -1,10 +1,11 @@
-# DerivedJoiningGroup-8.0.0.txt
-# Date: 2015-02-13, 13:47:12 GMT [MD]
+# DerivedJoiningGroup-10.0.0.txt
+# Date: 2017-02-17, 04:46:04 GMT
+# © 2017 Unicode®, Inc.
+# Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-# Copyright (c) 1991-2015 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see http://www.unicode.org/reports/tr44/
+#   For documentation, see http://www.unicode.org/reports/tr44/
 
 # ================================================
 
@@ -50,8 +51,9 @@
 0679..0680    ; Beh # Lo   [8] ARABIC LETTER TTEH..ARABIC LETTER BEHEH
 0750..0756    ; Beh # Lo   [7] ARABIC LETTER BEH WITH THREE DOTS HORIZONTALLY BELOW..ARABIC LETTER BEH WITH SMALL V
 08A0..08A1    ; Beh # Lo   [2] ARABIC LETTER BEH WITH SMALL V BELOW..ARABIC LETTER BEH WITH HAMZA ABOVE
+08B6..08B8    ; Beh # Lo   [3] ARABIC LETTER BEH WITH SMALL MEEM ABOVE..ARABIC LETTER TEH WITH SMALL TEH ABOVE
 
-# Total code points: 21
+# Total code points: 24
 
 # ================================================
 
@@ -256,8 +258,9 @@
 0771          ; Reh # Lo       ARABIC LETTER REH WITH SMALL ARABIC LETTER TAH AND TWO DOTS
 08AA          ; Reh # Lo       ARABIC LETTER REH WITH LOOP
 08B2          ; Reh # Lo       ARABIC LETTER ZAIN WITH INVERTED V ABOVE
+08B9          ; Reh # Lo       ARABIC LETTER REH WITH SMALL NOON ABOVE
 
-# Total code points: 18
+# Total code points: 19
 
 # ================================================
 
@@ -365,8 +368,9 @@
 06D0..06D1    ; Yeh # Lo   [2] ARABIC LETTER E..ARABIC LETTER YEH WITH THREE DOTS BELOW
 0777          ; Yeh # Lo       ARABIC LETTER FARSI YEH WITH EXTENDED ARABIC-INDIC DIGIT FOUR BELOW
 08A8..08A9    ; Yeh # Lo   [2] ARABIC LETTER YEH WITH TWO DOTS BELOW AND HAMZA ABOVE..ARABIC LETTER YEH WITH TWO DOTS BELOW AND DOT ABOVE
+08BA          ; Yeh # Lo       ARABIC LETTER YEH WITH TWO DOTS BELOW AND SMALL NOON ABOVE
 
-# Total code points: 10
+# Total code points: 11
 
 # ================================================
 
@@ -610,5 +614,89 @@
 10AC9..10ACA  ; Manichaean_Zayin # Lo   [2] MANICHAEAN LETTER ZAYIN..MANICHAEAN LETTER ZHAYIN
 
 # Total code points: 2
+
+# ================================================
+
+08BB          ; African_Feh # Lo       ARABIC LETTER AFRICAN FEH
+
+# Total code points: 1
+
+# ================================================
+
+08BC          ; African_Qaf # Lo       ARABIC LETTER AFRICAN QAF
+
+# Total code points: 1
+
+# ================================================
+
+08BD          ; African_Noon # Lo       ARABIC LETTER AFRICAN NOON
+
+# Total code points: 1
+
+# ================================================
+
+0860          ; Malayalam_Nga # Lo       SYRIAC LETTER MALAYALAM NGA
+
+# Total code points: 1
+
+# ================================================
+
+0861          ; Malayalam_Ja # Lo       SYRIAC LETTER MALAYALAM JA
+
+# Total code points: 1
+
+# ================================================
+
+0862          ; Malayalam_Nya # Lo       SYRIAC LETTER MALAYALAM NYA
+
+# Total code points: 1
+
+# ================================================
+
+0863          ; Malayalam_Tta # Lo       SYRIAC LETTER MALAYALAM TTA
+
+# Total code points: 1
+
+# ================================================
+
+0864          ; Malayalam_Nna # Lo       SYRIAC LETTER MALAYALAM NNA
+
+# Total code points: 1
+
+# ================================================
+
+0865          ; Malayalam_Nnna # Lo       SYRIAC LETTER MALAYALAM NNNA
+
+# Total code points: 1
+
+# ================================================
+
+0866          ; Malayalam_Bha # Lo       SYRIAC LETTER MALAYALAM BHA
+
+# Total code points: 1
+
+# ================================================
+
+0867          ; Malayalam_Ra # Lo       SYRIAC LETTER MALAYALAM RA
+
+# Total code points: 1
+
+# ================================================
+
+0868          ; Malayalam_Lla # Lo       SYRIAC LETTER MALAYALAM LLA
+
+# Total code points: 1
+
+# ================================================
+
+0869          ; Malayalam_Llla # Lo       SYRIAC LETTER MALAYALAM LLLA
+
+# Total code points: 1
+
+# ================================================
+
+086A          ; Malayalam_Ssa # Lo       SYRIAC LETTER MALAYALAM SSA
+
+# Total code points: 1
 
 # EOF

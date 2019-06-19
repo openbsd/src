@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.11 2018/01/26 16:22:19 kettenis Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.13 2019/03/13 09:28:21 patrick Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
 #include <machine/trap.h>
 
 
-static int gdb_trapper(u_int, u_int, struct trapframe *, int);
+static int gdb_trapper(u_int, u_int, struct trapframe *, int, uint32_t);
 
 LIST_HEAD(, undefined_handler) undefined_handlers[MAX_COPROCS];
 
@@ -104,7 +104,7 @@ remove_coproc_handler(void *cookie)
 
 
 static int
-gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
+gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code, uint32_t fpexc)
 {
 	union sigval sv;
 	struct proc *p;
@@ -113,7 +113,9 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 	if (insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) {
 		if (code == FAULT_USER) {
 			sv.sival_int = addr;
+			KERNEL_LOCK();
 			trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
+			KERNEL_UNLOCK();
 			return 0;
 		}
 	}
@@ -146,13 +148,14 @@ undefinedinstruction(trapframe_t *frame)
 	int fault_code;
 	int coprocessor;
 	struct undefined_handler *uh;
+	uint32_t fpexc;
 #ifdef VERBOSE_ARM32
 	int s;
 #endif
 	union sigval sv;
 
 	/* Before enabling interrupts, save FPU state */
-	vfp_save();
+	fpexc = vfp_save();
 
 	/* Enable interrupts if they were enabled before the exception. */
 	if (!(frame->tf_spsr & PSR_I))
@@ -171,7 +174,9 @@ undefinedinstruction(trapframe_t *frame)
 	if (__predict_false((fault_pc & 3) != 0)) {
 		/* Give the user an illegal instruction signal. */
 		sv.sival_int = (u_int32_t) fault_pc;
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		KERNEL_UNLOCK();
 		userret(p);
 		return;
 	}
@@ -220,7 +225,7 @@ undefinedinstruction(trapframe_t *frame)
 	/* OK this is were we do something about the instruction. */
 	LIST_FOREACH(uh, &undefined_handlers[coprocessor], uh_link)
 	    if (uh->uh_handler(fault_pc, fault_instruction, frame,
-			       fault_code) == 0)
+			       fault_code, fpexc) == 0)
 		    break;
 
 	if (uh == NULL) {
@@ -255,7 +260,9 @@ undefinedinstruction(trapframe_t *frame)
 		}
 
 		sv.sival_int = frame->tf_pc;
+		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		KERNEL_UNLOCK();
 	}
 
 	if ((fault_code & FAULT_USER) == 0)

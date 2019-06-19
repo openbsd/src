@@ -1,8 +1,8 @@
-.\" $OpenBSD: DH_get0_pqg.3,v 1.4 2018/03/23 23:18:17 schwarze Exp $
-.\" selective merge up to: OpenSSL 7966101e Sep 18 11:58:24 2017 -0400
+.\" $OpenBSD: DH_get0_pqg.3,v 1.5 2018/12/21 21:54:48 schwarze Exp $
+.\" selective merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
-.\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2016, 2018 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: December 21 2018 $
 .Dt DH_GET0_PQG 3
 .Os
 .Sh NAME
@@ -143,6 +143,14 @@ are set to
 .Dv NULL .
 Otherwise, they are set to pointers to the internal representations
 of the values that should not be freed by the application.
+Any of the out parameters
+.Fa p ,
+.Fa q ,
+and
+.Fa g
+can be
+.Dv NULL ,
+in which case no value is returned for that parameter.
 .Pp
 The
 .Fa p ,
@@ -170,6 +178,13 @@ Either may be
 .Dv NULL
 if it has not yet been set.
 If the private key has been set, then the public key must be.
+Any of the out parameters
+.Fa pub_key
+and
+.Fa priv_key
+can be
+.Dv NULL ,
+in which case no value is returned for that parameter.
 .Pp
 The public and private key values can be set using
 .Fn DH_set0_key .

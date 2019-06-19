@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.2 2017/03/09 07:56:38 eric Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.3 2018/12/15 15:16:12 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -72,8 +72,11 @@ main(int argc, char *argv[])
 	dflag = 0;
 	qflag = 0;
 
-	while((ch = getopt(argc, argv, "deqt:")) !=  -1) {
+	while((ch = getopt(argc, argv, "R:deqt:")) !=  -1) {
 		switch(ch) {
+		case 'R':
+			parseresopt(optarg);
+			break;
 		case 'd':
 			dflag = 1;
 			break;

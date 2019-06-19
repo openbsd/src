@@ -1,4 +1,4 @@
-//======- CFLGraph.h - Abstract stratified sets implementation. --------======//
+//===- CFLGraph.h - Abstract stratified sets implementation. -----*- C++-*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,24 +6,47 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
 /// \file
 /// This file defines CFLGraph, an auxiliary data structure used by CFL-based
 /// alias analysis.
-///
+//
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_CFLGRAPH_H
-#define LLVM_ANALYSIS_CFLGRAPH_H
+#ifndef LLVM_LIB_ANALYSIS_CFLGRAPH_H
+#define LLVM_LIB_ANALYSIS_CFLGRAPH_H
 
 #include "AliasAnalysisSummary.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/CallSite.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/InstVisitor.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/Operator.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Value.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/ErrorHandling.h"
+#include <cassert>
+#include <cstdint>
+#include <vector>
 
 namespace llvm {
 namespace cflaa {
 
-/// \brief The Program Expression Graph (PEG) of CFL analysis
+/// The Program Expression Graph (PEG) of CFL analysis
 /// CFLGraph is auxiliary data structure used by CFL-based alias analysis to
 /// describe flow-insensitive pointer-related behaviors. Given an LLVM function,
 /// the main purpose of this graph is to abstract away unrelated facts and
@@ -35,14 +58,14 @@ namespace cflaa {
 /// I+1) and a reference edge to (X, I-1).
 class CFLGraph {
 public:
-  typedef InstantiatedValue Node;
+  using Node = InstantiatedValue;
 
   struct Edge {
     Node Other;
     int64_t Offset;
   };
 
-  typedef std::vector<Edge> EdgeList;
+  using EdgeList = std::vector<Edge>;
 
   struct NodeInfo {
     EdgeList Edges, ReverseEdges;
@@ -74,7 +97,8 @@ public:
   };
 
 private:
-  typedef DenseMap<Value *, ValueInfo> ValueMap;
+  using ValueMap = DenseMap<Value *, ValueInfo>;
+
   ValueMap ValueImpls;
 
   NodeInfo *getNode(Node N) {
@@ -85,7 +109,7 @@ private:
   }
 
 public:
-  typedef ValueMap::const_iterator const_value_iterator;
+  using const_value_iterator = ValueMap::const_iterator;
 
   bool addNode(Node N, AliasAttrs Attr = AliasAttrs()) {
     assert(N.Val != nullptr);
@@ -130,7 +154,7 @@ public:
   }
 };
 
-///\brief A builder class used to create CFLGraph instance from a given function
+///A builder class used to create CFLGraph instance from a given function
 /// The CFL-AA that uses this builder must provide its own type as a template
 /// argument. This is necessary for interprocedural processing: CFLGraphBuilder
 /// needs a way of obtaining the summary of other functions when callinsts are
@@ -399,17 +423,15 @@ template <typename CFLAA> class CFLGraphBuilder {
         addNode(Inst);
 
       // Check if Inst is a call to a library function that
-      // allocates/deallocates
-      // on the heap. Those kinds of functions do not introduce any aliases.
+      // allocates/deallocates on the heap. Those kinds of functions do not
+      // introduce any aliases.
       // TODO: address other common library functions such as realloc(),
-      // strdup(),
-      // etc.
+      // strdup(), etc.
       if (isMallocOrCallocLikeFn(Inst, &TLI) || isFreeCall(Inst, &TLI))
         return;
 
       // TODO: Add support for noalias args/all the other fun function
-      // attributes
-      // that we can tack on.
+      // attributes that we can tack on.
       SmallVector<Function *, 4> Targets;
       if (getPossibleTargets(CS, Targets))
         if (tryInterproceduralAnalysis(CS, Targets))
@@ -491,15 +513,17 @@ template <typename CFLAA> class CFLGraphBuilder {
         visitGEP(*GEPOp);
         break;
       }
+
       case Instruction::PtrToInt: {
-        auto *Ptr = CE->getOperand(0);
-        addNode(Ptr, getAttrEscaped());
+        addNode(CE->getOperand(0), getAttrEscaped());
         break;
       }
+
       case Instruction::IntToPtr: {
         addNode(CE, getAttrUnknown());
         break;
       }
+
       case Instruction::BitCast:
       case Instruction::AddrSpaceCast:
       case Instruction::Trunc:
@@ -511,48 +535,29 @@ template <typename CFLAA> class CFLGraphBuilder {
       case Instruction::SIToFP:
       case Instruction::FPToUI:
       case Instruction::FPToSI: {
-        auto *Src = CE->getOperand(0);
-        addAssignEdge(Src, CE);
+        addAssignEdge(CE->getOperand(0), CE);
         break;
       }
+
       case Instruction::Select: {
-        auto *TrueVal = CE->getOperand(0);
-        auto *FalseVal = CE->getOperand(1);
-        addAssignEdge(TrueVal, CE);
-        addAssignEdge(FalseVal, CE);
+        addAssignEdge(CE->getOperand(1), CE);
+        addAssignEdge(CE->getOperand(2), CE);
         break;
       }
-      case Instruction::InsertElement: {
-        auto *Vec = CE->getOperand(0);
-        auto *Val = CE->getOperand(1);
-        addAssignEdge(Vec, CE);
-        addStoreEdge(Val, CE);
-        break;
-      }
-      case Instruction::ExtractElement: {
-        auto *Ptr = CE->getOperand(0);
-        addLoadEdge(Ptr, CE);
-        break;
-      }
+
+      case Instruction::InsertElement:
       case Instruction::InsertValue: {
-        auto *Agg = CE->getOperand(0);
-        auto *Val = CE->getOperand(1);
-        addAssignEdge(Agg, CE);
-        addStoreEdge(Val, CE);
+        addAssignEdge(CE->getOperand(0), CE);
+        addStoreEdge(CE->getOperand(1), CE);
         break;
       }
+
+      case Instruction::ExtractElement:
       case Instruction::ExtractValue: {
-        auto *Ptr = CE->getOperand(0);
-        addLoadEdge(Ptr, CE);
+        addLoadEdge(CE->getOperand(0), CE);
         break;
       }
-      case Instruction::ShuffleVector: {
-        auto *From1 = CE->getOperand(0);
-        auto *From2 = CE->getOperand(1);
-        addAssignEdge(From1, CE);
-        addAssignEdge(From2, CE);
-        break;
-      }
+
       case Instruction::Add:
       case Instruction::Sub:
       case Instruction::FSub:
@@ -571,11 +576,13 @@ template <typename CFLAA> class CFLGraphBuilder {
       case Instruction::LShr:
       case Instruction::AShr:
       case Instruction::ICmp:
-      case Instruction::FCmp: {
+      case Instruction::FCmp:
+      case Instruction::ShuffleVector: {
         addAssignEdge(CE->getOperand(0), CE);
         addAssignEdge(CE->getOperand(1), CE);
         break;
       }
+
       default:
         llvm_unreachable("Unknown instruction type encountered!");
       }
@@ -640,7 +647,8 @@ public:
     return ReturnedValues;
   }
 };
-}
-}
 
-#endif
+} // end namespace cflaa
+} // end namespace llvm
+
+#endif // LLVM_LIB_ANALYSIS_CFLGRAPH_H

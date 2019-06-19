@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makemap.8,v 1.29 2016/02/13 08:53:18 gilles Exp $
+.\"	$OpenBSD: makemap.8,v 1.30 2018/11/25 14:41:16 gilles Exp $
 .\"
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@openbsd.org>
 .\" Copyright (c) 2008-2009 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 13 2016 $
+.Dd $Mdocdate: November 25 2018 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
@@ -105,8 +105,11 @@ In addition to adding an entry to the primary domain map,
 one must add a filter rule that accepts mail for the domain
 map, for example:
 .Bd -literal -offset indent
-table domains "/etc/mail/domains"
-accept for domain <domains> deliver to mbox
+table domains db:/etc/mail/domains.db
+
+action "local" mbox
+
+match for domain <domains> action "local"
 .Ed
 .Sh VIRTUAL DOMAINS
 Virtual domains may also be kept in tables.
@@ -140,11 +143,13 @@ In addition to adding an entry to the virtual map,
 one must add a filter rule that accepts mail for virtual domains,
 for example:
 .Bd -literal -offset indent
-table vdomains "/etc/mail/vdomains"
-table vusers "/etc/mail/users"
+table vdomains db:/etc/mail/vdomains.db
+table vusers db:/etc/mail/users.db
 
-accept for domain <vdomains> virtual <vusers> deliver to mbox
-accept for domain example.org virtual <vusers> deliver to mbox
+action "local" mbox virtual <vusers>
+
+match for domain <vdomains> action "local"
+match for domain "example.org" action "local"
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/mail/aliasesXXX" -compact

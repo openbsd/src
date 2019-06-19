@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_ocsp_process_response.3,v 1.4 2017/01/29 18:00:21 beck Exp $
+.\" $OpenBSD: tls_ocsp_process_response.3,v 1.6 2018/07/24 02:01:34 tb Exp $
 .\"
 .\" Copyright (c) 2016 Bob Beck <beck@openbsd.org>
 .\"
@@ -14,19 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2017 $
+.Dd $Mdocdate: July 24 2018 $
 .Dt TLS_OCSP_PROCESS_RESPONSE 3
 .Os
 .Sh NAME
 .Nm tls_ocsp_process_response ,
+.Nm tls_peer_ocsp_url ,
+.Nm tls_peer_ocsp_response_status ,
 .Nm tls_peer_ocsp_cert_status ,
 .Nm tls_peer_ocsp_crl_reason ,
-.Nm tls_peer_ocsp_next_update ,
-.Nm tls_peer_ocsp_response_status ,
-.Nm tls_peer_ocsp_result_msg ,
+.Nm tls_peer_ocsp_result ,
 .Nm tls_peer_ocsp_revocation_time ,
 .Nm tls_peer_ocsp_this_update ,
-.Nm tls_peer_ocsp_url
+.Nm tls_peer_ocsp_next_update
 .Nd inspect an OCSP response
 .Sh SYNOPSIS
 .In tls.h
@@ -36,22 +36,22 @@
 .Fa "const unsigned char *response"
 .Fa "size_t size"
 .Fc
+.Ft const char *
+.Fn tls_peer_ocsp_url "struct tls *ctx"
+.Ft int
+.Fn tls_peer_ocsp_response_status "struct tls *ctx"
 .Ft int
 .Fn tls_peer_ocsp_cert_status "struct tls *ctx"
 .Ft int
 .Fn tls_peer_ocsp_crl_reason "struct tls *ctx"
-.Ft time_t
-.Fn tls_peer_ocsp_next_update "struct tls *ctx"
-.Ft int
-.Fn tls_peer_ocsp_response_status "struct tls *ctx"
 .Ft const char *
-.Fn tls_peer_ocsp_result_msg "struct tls *ctx"
+.Fn tls_peer_ocsp_result "struct tls *ctx"
 .Ft time_t
 .Fn tls_peer_ocsp_revocation_time "struct tls *ctx"
 .Ft time_t
 .Fn tls_peer_ocsp_this_update "struct tls *ctx"
-.Ft const char *
-.Fn tls_peer_ocsp_url "struct tls *ctx"
+.Ft time_t
+.Fn tls_peer_ocsp_next_update "struct tls *ctx"
 .Sh DESCRIPTION
 .Fn tls_ocsp_process_response
 processes a raw OCSP response in
@@ -73,6 +73,9 @@ that was obtained by validating a stapled OCSP response during the handshake,
 or via a previous call to
 .Fn tls_ocsp_process_response .
 .Pp
+.Fn tls_peer_ocsp_response_status
+returns the OCSP response status as per RFC 6960 section 2.3.
+.Pp
 .Fn tls_peer_ocsp_cert_status
 returns the OCSP certificate status code as per RFC 6960 section 2.2.
 .Pp
@@ -80,21 +83,32 @@ returns the OCSP certificate status code as per RFC 6960 section 2.2.
 returns the OCSP certificate revocation reason status code as per RFC 5280
 section 5.3.1.
 .Pp
-.Fn tls_peer_ocsp_next_update
-returns the OCSP next update time.
+.Fn tls_peer_ocsp_result
+returns a textual representation of the OCSP status code
+returned by one of the previous three functions.
+If the OCSP response was valid and the certificate was not
+revoked, the string indicates the OCSP certificate status.
+Otherwise, the string indicates
+the OCSP certificate revocation reason or the OCSP error.
 .Pp
-.Fn tls_peer_ocsp_response_status
-returns the OCSP response status as per RFC 6960 section 2.3.
-.Pp
-.\" XXX Fn tls_peer_ocsp_result_msg does what?
 .Fn tls_peer_ocsp_revocation_time
 returns the OCSP revocation time.
 .Pp
 .Fn tls_peer_ocsp_this_update
 returns the OCSP this update time.
+.Pp
+.Fn tls_peer_ocsp_next_update
+returns the OCSP next update time.
 .Sh RETURN VALUES
 .Fn tls_ocsp_process_response
 returns 0 on success or -1 on error.
+.Pp
+.Fn tls_peer_ocsp_url
+and
+.Fn tls_peer_ocsp_result
+return
+.Dv NULL
+on error or an out of memory condition.
 .Pp
 The
 .Fn tls_peer_ocsp_response_status
@@ -133,18 +147,11 @@ or
 .Dv  TLS_CRL_REASON_AA_COMPROMISE
 on success or -1 on error.
 .Pp
-.Fn tls_peer_ocsp_next_update ,
 .Fn tls_peer_ocsp_revocation_time ,
+.Fn tls_peer_ocsp_this_update ,
 and
-.Fn tls_peer_ocsp_this_update
+.Fn tls_peer_ocsp_next_update
 return a time in epoch-seconds on success or -1 on error.
-.Pp
-.Fn tls_peer_ocsp_result_msg
-and
-.Fn tls_peer_ocsp_url
-return
-.Dv NULL
-on error or an out of memory condition.
 .Sh SEE ALSO
 .Xr tls_client 3 ,
 .Xr tls_config_ocsp_require_stapling 3 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.37 2016/08/31 11:05:48 jca Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.38 2019/05/11 14:19:16 abieber Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -746,6 +746,7 @@
 #define KB_IOPENER		0x00000040 /* f1-f12 -> ESC,f1-f11 */
 #define KB_MACHDEP		0x00000080 /* machine dependent */
 #define KB_APPLE		0x00010000 /* Apple specific layout */
+#define KB_COLEMAK		0x02000000 /* Colemak layout */
 #define KB_DEFAULT		0x80000000 /* (attach-only) default layout */
 
 #define KB_ENCTAB \
@@ -788,6 +789,7 @@
 	{ KB_METAESC,	"metaesc" }, \
 	{ KB_IOPENER,	"iopener" }, \
 	{ KB_MACHDEP,	"machdep" }, \
-	{ KB_APPLE,	"apple" }
+	{ KB_APPLE,	"apple" }, \
+	{ KB_COLEMAK,	"colemak" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */

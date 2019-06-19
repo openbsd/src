@@ -1,4 +1,4 @@
-/*	$OpenBSD: net80211.c,v 1.17 2016/08/27 04:13:43 guenther Exp $	*/
+/*	$OpenBSD: net80211.c,v 1.18 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -17,10 +17,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/time.h>
-#include <sys/select.h>
+#include <sys/select.h>		/* howmany() NBBY */
 #include <sys/socket.h>
-#include <sys/file.h>
 #include <sys/ioctl.h>
 
 #include <net/if.h>

@@ -1,6 +1,7 @@
-/*	$OpenBSD: ikev2.h,v 1.27 2017/12/03 21:02:44 patrick Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.30 2019/05/11 16:30:23 patrick Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -78,6 +79,11 @@ struct ikev2_payload {
 	uint16_t	 pld_length;		/* Payload length with header */
 } __packed;
 
+struct ikev2_frag_payload {
+	uint16_t	 frag_num;		/* current fragment message number */
+	uint16_t	 frag_total;		/* total number of fragment messages */
+} __packed;
+
 #define IKEV2_CRITICAL_PAYLOAD	0x01	/* First bit in the reserved field */
 
 /* IKEv2 payload types */
@@ -99,6 +105,7 @@ struct ikev2_payload {
 #define IKEV2_PAYLOAD_CP	47	/* Configuration Payload */
 #define IKEV2_PAYLOAD_EAP	48	/* Extensible Authentication */
 #define IKEV2_PAYLOAD_GSPM	49	/* RFC6467 Generic Secure Password */
+#define IKEV2_PAYLOAD_SKF	53	/* RFC7383 Encrypted Fragment Payload */
 
 extern struct iked_constmap ikev2_payload_map[];
 
@@ -184,7 +191,7 @@ extern struct iked_constmap ikev2_xformtype_map[];
 
 extern struct iked_constmap ikev2_xformencr_map[];
 
-#define IKEV2_IPCOMP_OUI		1	/* RFC5996 */
+#define IKEV2_IPCOMP_OUI		1	/* UNSPECIFIED */
 #define IKEV2_IPCOMP_DEFLATE		2	/* RFC2394 */
 #define IKEV2_IPCOMP_LZS		3	/* RFC2395 */
 #define IKEV2_IPCOMP_LZJH		4	/* RFC3051 */
@@ -231,18 +238,23 @@ extern struct iked_constmap ikev2_xformauth_map[];
 #define IKEV2_XFORMDH_MODP_4096		16	/* DH Group 16 */
 #define IKEV2_XFORMDH_MODP_6144		17	/* DH Group 17 */
 #define IKEV2_XFORMDH_MODP_8192		18	/* DH Group 18 */
-#define IKEV2_XFORMDH_ECP_256		19	/* DH Group 19 */
-#define IKEV2_XFORMDH_ECP_384		20	/* DH Group 20 */
-#define IKEV2_XFORMDH_ECP_521		21	/* DH Group 21 */
-#define IKEV2_XFORMDH_ECP_192		25	/* DH Group 25 */
-#define IKEV2_XFORMDH_ECP_224		26	/* DH Group 26 */
-#define IKEV2_XFORMDH_BRAINPOOL_P224R1	27	/* DH Group 27 */
-#define IKEV2_XFORMDH_BRAINPOOL_P256R1	28	/* DH Group 28 */
-#define IKEV2_XFORMDH_BRAINPOOL_P384R1	29	/* DH Group 29 */
-#define IKEV2_XFORMDH_BRAINPOOL_P512R1	30	/* DH Group 30 */
-#define IKEV2_XFORMDH_X_CURVE25519	1034	/* draft-ietf-ipsecme-safecurves-00 */
+#define IKEV2_XFORMDH_ECP_256		19	/* RFC5114 */
+#define IKEV2_XFORMDH_ECP_384		20	/* RFC5114 */
+#define IKEV2_XFORMDH_ECP_521		21	/* RFC5114 */
+#define IKEV2_XFORMDH_ECP_192		25	/* RFC5114 */
+#define IKEV2_XFORMDH_ECP_224		26	/* RFC5114 */
+#define IKEV2_XFORMDH_BRAINPOOL_P224R1	27	/* RFC6954 */
+#define IKEV2_XFORMDH_BRAINPOOL_P256R1	28	/* RFC6954 */
+#define IKEV2_XFORMDH_BRAINPOOL_P384R1	29	/* RFC6954 */
+#define IKEV2_XFORMDH_BRAINPOOL_P512R1	30	/* RFC6954 */
+#define IKEV2_XFORMDH_CURVE25519	31	/* RFC8031 */
 
 extern struct iked_constmap ikev2_xformdh_map[];
+
+#define IKEV2_IPV4_OVERHEAD		(20 + 8 + 28) /* IPv4 + UDP + IKE_HDR*/
+#define IKEV2_MAXLEN_IPV4_FRAG		(576 - IKEV2_IPV4_OVERHEAD)
+#define IKEV2_IPV6_OVERHEAD		(40 + 8 + 28) /* IPv6 + UDP + IKE_HDR*/
+#define IKEV2_MAXLEN_IPV6_FRAG		(1280 - IKEV2_IPV6_OVERHEAD)
 
 #define IKEV2_XFORMESN_NONE		0	/* No ESN */
 #define IKEV2_XFORMESN_ESN		1	/* ESN */
@@ -283,38 +295,38 @@ struct ikev2_notify {
 	/* Followed by variable length notification data */
 } __packed;
 
-#define IKEV2_N_UNSUPPORTED_CRITICAL_PAYLOAD	1	/* RFC4306 */
-#define IKEV2_N_INVALID_IKE_SPI			4	/* RFC4306 */
-#define IKEV2_N_INVALID_MAJOR_VERSION		5	/* RFC4306 */
-#define IKEV2_N_INVALID_SYNTAX			7	/* RFC4306 */
-#define IKEV2_N_INVALID_MESSAGE_ID		9	/* RFC4306 */
-#define IKEV2_N_INVALID_SPI			11	/* RFC4306 */
-#define IKEV2_N_NO_PROPOSAL_CHOSEN		14	/* RFC4306 */
-#define IKEV2_N_INVALID_KE_PAYLOAD		17	/* RFC4306 */
-#define IKEV2_N_AUTHENTICATION_FAILED		24	/* RFC4306 */
-#define IKEV2_N_SINGLE_PAIR_REQUIRED		34	/* RFC4306 */
-#define IKEV2_N_NO_ADDITIONAL_SAS		35	/* RFC4306 */
-#define IKEV2_N_INTERNAL_ADDRESS_FAILURE	36	/* RFC4306 */
-#define IKEV2_N_FAILED_CP_REQUIRED		37	/* RFC4306 */
-#define IKEV2_N_TS_UNACCEPTABLE			38	/* RFC4306 */
-#define IKEV2_N_INVALID_SELECTORS		39	/* RFC4306 */
+#define IKEV2_N_UNSUPPORTED_CRITICAL_PAYLOAD	1	/* RFC7296 */
+#define IKEV2_N_INVALID_IKE_SPI			4	/* RFC7296 */
+#define IKEV2_N_INVALID_MAJOR_VERSION		5	/* RFC7296 */
+#define IKEV2_N_INVALID_SYNTAX			7	/* RFC7296 */
+#define IKEV2_N_INVALID_MESSAGE_ID		9	/* RFC7296 */
+#define IKEV2_N_INVALID_SPI			11	/* RFC7296 */
+#define IKEV2_N_NO_PROPOSAL_CHOSEN		14	/* RFC7296 */
+#define IKEV2_N_INVALID_KE_PAYLOAD		17	/* RFC7296 */
+#define IKEV2_N_AUTHENTICATION_FAILED		24	/* RFC7296 */
+#define IKEV2_N_SINGLE_PAIR_REQUIRED		34	/* RFC7296 */
+#define IKEV2_N_NO_ADDITIONAL_SAS		35	/* RFC7296 */
+#define IKEV2_N_INTERNAL_ADDRESS_FAILURE	36	/* RFC7296 */
+#define IKEV2_N_FAILED_CP_REQUIRED		37	/* RFC7296 */
+#define IKEV2_N_TS_UNACCEPTABLE			38	/* RFC7296 */
+#define IKEV2_N_INVALID_SELECTORS		39	/* RFC7296 */
 #define IKEV2_N_UNACCEPTABLE_ADDRESSES		40	/* RFC4555 */
 #define IKEV2_N_UNEXPECTED_NAT_DETECTED		41	/* RFC4555 */
 #define IKEV2_N_USE_ASSIGNED_HoA		42	/* RFC5026 */
-#define IKEV2_N_TEMPORARY_FAILURE		43	/* RFC5996 */
-#define IKEV2_N_CHILD_SA_NOT_FOUND		44	/* RFC5996 */
-#define IKEV2_N_INITIAL_CONTACT			16384	/* RFC4306 */
-#define IKEV2_N_SET_WINDOW_SIZE			16385	/* RFC4306 */
-#define IKEV2_N_ADDITIONAL_TS_POSSIBLE		16386	/* RFC4306 */
-#define IKEV2_N_IPCOMP_SUPPORTED		16387	/* RFC4306 */
-#define IKEV2_N_NAT_DETECTION_SOURCE_IP		16388	/* RFC4306 */
-#define IKEV2_N_NAT_DETECTION_DESTINATION_IP	16389	/* RFC4306 */
-#define IKEV2_N_COOKIE				16390	/* RFC4306 */
-#define IKEV2_N_USE_TRANSPORT_MODE		16391	/* RFC4306 */
-#define IKEV2_N_HTTP_CERT_LOOKUP_SUPPORTED	16392	/* RFC4306 */
-#define IKEV2_N_REKEY_SA			16393	/* RFC4306 */
-#define IKEV2_N_ESP_TFC_PADDING_NOT_SUPPORTED	16394	/* RFC4306 */
-#define IKEV2_N_NON_FIRST_FRAGMENTS_ALSO	16395	/* RFC4306 */
+#define IKEV2_N_TEMPORARY_FAILURE		43	/* RFC7296 */
+#define IKEV2_N_CHILD_SA_NOT_FOUND		44	/* RFC7296 */
+#define IKEV2_N_INITIAL_CONTACT			16384	/* RFC7296 */
+#define IKEV2_N_SET_WINDOW_SIZE			16385	/* RFC7296 */
+#define IKEV2_N_ADDITIONAL_TS_POSSIBLE		16386	/* RFC7296 */
+#define IKEV2_N_IPCOMP_SUPPORTED		16387	/* RFC7296 */
+#define IKEV2_N_NAT_DETECTION_SOURCE_IP		16388	/* RFC7296 */
+#define IKEV2_N_NAT_DETECTION_DESTINATION_IP	16389	/* RFC7296 */
+#define IKEV2_N_COOKIE				16390	/* RFC7296 */
+#define IKEV2_N_USE_TRANSPORT_MODE		16391	/* RFC7296 */
+#define IKEV2_N_HTTP_CERT_LOOKUP_SUPPORTED	16392	/* RFC7296 */
+#define IKEV2_N_REKEY_SA			16393	/* RFC7296 */
+#define IKEV2_N_ESP_TFC_PADDING_NOT_SUPPORTED	16394	/* RFC7296 */
+#define IKEV2_N_NON_FIRST_FRAGMENTS_ALSO	16395	/* RFC7296 */
 #define IKEV2_N_MOBIKE_SUPPORTED		16396	/* RFC4555 */
 #define IKEV2_N_ADDITIONAL_IP4_ADDRESS		16397	/* RFC4555 */
 #define IKEV2_N_ADDITIONAL_IP6_ADDRESS		16398	/* RFC4555 */
@@ -334,8 +346,8 @@ struct ikev2_notify {
 #define IKEV2_N_TICKET_NACK			16412	/* RFC5723 */
 #define IKEV2_N_TICKET_OPAQUE			16413	/* RFC5723 */
 #define IKEV2_N_LINK_ID				16414	/* RFC5739 */
-#define IKEV2_N_USE_WESP_MODE			16415	/* RFC-ietf-ipsecme-traffic-visibility-12.txt */
-#define IKEV2_N_ROHC_SUPPORTED			16416	/* RFC-ietf-rohc-ikev2-extensions-hcoipsec-12.txt */
+#define IKEV2_N_USE_WESP_MODE			16415	/* RFC5415 */
+#define IKEV2_N_ROHC_SUPPORTED			16416	/* RFC5857 */
 #define IKEV2_N_EAP_ONLY_AUTHENTICATION		16417	/* RFC5998 */
 #define IKEV2_N_CHILDLESS_IKEV2_SUPPORTED	16418	/* RFC6023 */
 #define IKEV2_N_QUICK_CRASH_DETECTION		16419	/* RFC6290 */
@@ -375,13 +387,13 @@ struct ikev2_id {
 } __packed;
 
 #define IKEV2_ID_NONE		0	/* No ID */
-#define IKEV2_ID_IPV4		1	/* RFC4306 (ID_IPV4_ADDR) */
-#define IKEV2_ID_FQDN		2	/* RFC4306 */
-#define IKEV2_ID_UFQDN		3	/* RFC4306 (ID_RFC822_ADDR) */
-#define IKEV2_ID_IPV6		5	/* RFC4306 (ID_IPV6_ADDR) */
-#define IKEV2_ID_ASN1_DN	9	/* RFC4306 */
-#define IKEV2_ID_ASN1_GN	10	/* RFC4306 */
-#define IKEV2_ID_KEY_ID		11	/* RFC4306 */
+#define IKEV2_ID_IPV4		1	/* RFC7296 (ID_IPV4_ADDR) */
+#define IKEV2_ID_FQDN		2	/* RFC7296 */
+#define IKEV2_ID_UFQDN		3	/* RFC7296 (ID_RFC822_ADDR) */
+#define IKEV2_ID_IPV6		5	/* RFC7296 (ID_IPV6_ADDR) */
+#define IKEV2_ID_ASN1_DN	9	/* RFC7296 */
+#define IKEV2_ID_ASN1_GN	10	/* RFC7296 */
+#define IKEV2_ID_KEY_ID		11	/* RFC7296 */
 #define IKEV2_ID_FC_NAME	12	/* RFC4595 */
 
 extern struct iked_constmap ikev2_id_map[];
@@ -396,18 +408,18 @@ struct ikev2_cert {
 } __packed;
 
 #define IKEV2_CERT_NONE			0	/* None */
-#define IKEV2_CERT_X509_PKCS7		1	/* RFC4306 */
-#define IKEV2_CERT_PGP			2	/* RFC4306 */
-#define IKEV2_CERT_DNS_SIGNED_KEY	3	/* RFC4306 */
-#define IKEV2_CERT_X509_CERT		4	/* RFC4306 */
-#define IKEV2_CERT_KERBEROS_TOKEN	6	/* RFC4306 */
-#define IKEV2_CERT_CRL			7	/* RFC4306 */
-#define IKEV2_CERT_ARL			8	/* RFC4306 */
-#define IKEV2_CERT_SPKI			9	/* RFC4306 */
-#define IKEV2_CERT_X509_ATTR		10	/* RFC4306 */
-#define IKEV2_CERT_RSA_KEY		11	/* RFC4306 */
-#define IKEV2_CERT_HASHURL_X509		12	/* RFC4306 */
-#define IKEV2_CERT_HASHURL_X509_BUNDLE	13	/* RFC4306 */
+#define IKEV2_CERT_X509_PKCS7		1	/* UNSPECIFIED */
+#define IKEV2_CERT_PGP			2	/* UNSPECIFIED */
+#define IKEV2_CERT_DNS_SIGNED_KEY	3	/* UNSPECIFIED */
+#define IKEV2_CERT_X509_CERT		4	/* RFC7296 */
+#define IKEV2_CERT_KERBEROS_TOKEN	6	/* UNSPECIFIED */
+#define IKEV2_CERT_CRL			7	/* RFC7296 */
+#define IKEV2_CERT_ARL			8	/* UNSPECIFIED */
+#define IKEV2_CERT_SPKI			9	/* UNSPECIFIED */
+#define IKEV2_CERT_X509_ATTR		10	/* UNSPECIFIED */
+#define IKEV2_CERT_RSA_KEY		11	/* RFC7296 */
+#define IKEV2_CERT_HASHURL_X509		12	/* RFC7296 */
+#define IKEV2_CERT_HASHURL_X509_BUNDLE	13	/* RFC7296 */
 #define IKEV2_CERT_OCSP			14	/* RFC4806 */
 /*
  * As of November 2014, work was still in progress to add a more generic
@@ -436,8 +448,8 @@ struct ikev2_ts {
 	uint16_t	ts_endport;		/* End port */
 } __packed;
 
-#define IKEV2_TS_IPV4_ADDR_RANGE	7	/* RFC4306 */
-#define IKEV2_TS_IPV6_ADDR_RANGE	8	/* RFC4306 */
+#define IKEV2_TS_IPV4_ADDR_RANGE	7	/* RFC7296 */
+#define IKEV2_TS_IPV6_ADDR_RANGE	8	/* RFC7296 */
 #define IKEV2_TS_FC_ADDR_RANGE		9	/* RFC4595 */
 
 extern struct iked_constmap ikev2_ts_map[];
@@ -453,9 +465,9 @@ struct ikev2_auth {
 } __packed;
 
 #define IKEV2_AUTH_NONE			0	/* None */
-#define IKEV2_AUTH_RSA_SIG		1	/* RFC4306 */
-#define IKEV2_AUTH_SHARED_KEY_MIC	2	/* RFC4306 */
-#define IKEV2_AUTH_DSS_SIG		3	/* RFC4306 */
+#define IKEV2_AUTH_RSA_SIG		1	/* RFC7296 */
+#define IKEV2_AUTH_SHARED_KEY_MIC	2	/* RFC7296 */
+#define IKEV2_AUTH_DSS_SIG		3	/* RFC7296 */
 #define IKEV2_AUTH_ECDSA_256		9	/* RFC4754 */
 #define IKEV2_AUTH_ECDSA_384		10	/* RFC4754 */
 #define IKEV2_AUTH_ECDSA_521		11	/* RFC4754 */
@@ -504,20 +516,20 @@ struct ikev2_cfg {
 	/* Followed by variable-length data */
 } __packed;
 
-#define IKEV2_CFG_INTERNAL_IP4_ADDRESS		1	/* RFC5996 */
-#define IKEV2_CFG_INTERNAL_IP4_NETMASK		2	/* RFC5996 */
-#define IKEV2_CFG_INTERNAL_IP4_DNS		3	/* RFC5996 */
-#define IKEV2_CFG_INTERNAL_IP4_NBNS		4	/* RFC5996 */
+#define IKEV2_CFG_INTERNAL_IP4_ADDRESS		1	/* RFC7296 */
+#define IKEV2_CFG_INTERNAL_IP4_NETMASK		2	/* RFC7296 */
+#define IKEV2_CFG_INTERNAL_IP4_DNS		3	/* RFC7296 */
+#define IKEV2_CFG_INTERNAL_IP4_NBNS		4	/* RFC7296 */
 #define IKEV2_CFG_INTERNAL_ADDRESS_EXPIRY	5	/* RFC4306 */
-#define IKEV2_CFG_INTERNAL_IP4_DHCP		6	/* RFC5996 */
-#define IKEV2_CFG_APPLICATION_VERSION		7	/* RFC5996 */
-#define IKEV2_CFG_INTERNAL_IP6_ADDRESS		8	/* RFC5996 */
-#define IKEV2_CFG_INTERNAL_IP6_DNS		10	/* RFC5996 */
+#define IKEV2_CFG_INTERNAL_IP4_DHCP		6	/* RFC7296 */
+#define IKEV2_CFG_APPLICATION_VERSION		7	/* RFC7296 */
+#define IKEV2_CFG_INTERNAL_IP6_ADDRESS		8	/* RFC7296 */
+#define IKEV2_CFG_INTERNAL_IP6_DNS		10	/* RFC7296 */
 #define IKEV2_CFG_INTERNAL_IP6_NBNS		11	/* RFC4306 */
-#define IKEV2_CFG_INTERNAL_IP6_DHCP		12	/* RFC5996 */
-#define IKEV2_CFG_INTERNAL_IP4_SUBNET		13	/* RFC5996 */
-#define IKEV2_CFG_SUPPORTED_ATTRIBUTES		14	/* RFC5996 */
-#define IKEV2_CFG_INTERNAL_IP6_SUBNET		15	/* RFC5996 */
+#define IKEV2_CFG_INTERNAL_IP6_DHCP		12	/* RFC7296 */
+#define IKEV2_CFG_INTERNAL_IP4_SUBNET		13	/* RFC7296 */
+#define IKEV2_CFG_SUPPORTED_ATTRIBUTES		14	/* RFC7296 */
+#define IKEV2_CFG_INTERNAL_IP6_SUBNET		15	/* RFC7296 */
 #define IKEV2_CFG_MIP6_HOME_PREFIX		16	/* RFC5026 */
 #define IKEV2_CFG_INTERNAL_IP6_LINK		17	/* RFC5739 */
 #define IKEV2_CFG_INTERNAL_IP6_PREFIX		18	/* RFC5739 */

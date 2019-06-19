@@ -277,7 +277,7 @@ is($r, 1);
 }
 
 {
-    # [ID 20020713.001] chomp($data=<tied_fh>)
+    # [ID 20020713.001 (#10048)] chomp($data=<tied_fh>)
     local *TEST;
     tie *TEST, 'CHOMP';
     my $data;

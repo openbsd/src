@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.20 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.21 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -112,7 +112,6 @@ ar5416_attach(struct athn_softc *sc)
 {
 	sc->eep_base = AR5416_EEP_START_LOC;
 	sc->eep_size = sizeof(struct ar5416_eeprom);
-	sc->def_nf = AR5416_PHY_CCA_MAX_GOOD_VALUE;
 	sc->ngpiopins = 14;
 	sc->led_pin = 1;
 	sc->workaround = AR5416_WA_DEFAULT;
@@ -123,6 +122,10 @@ ar5416_attach(struct athn_softc *sc)
 	sc->ops.set_synth = ar5416_set_synth;
 	sc->ops.spur_mitigate = ar5416_spur_mitigate;
 	sc->ops.get_spur_chans = ar5416_get_spur_chans;
+	sc->cca_min_2g = AR5416_PHY_CCA_MIN_GOOD_VAL_2GHZ;
+	sc->cca_max_2g = AR5416_PHY_CCA_MAX_GOOD_VAL_2GHZ;
+	sc->cca_min_5g = AR5416_PHY_CCA_MIN_GOOD_VAL_5GHZ;
+	sc->cca_max_5g = AR5416_PHY_CCA_MAX_GOOD_VAL_5GHZ;
 	if (AR_SREV_9160_10_OR_LATER(sc))
 		sc->ini = &ar9160_ini;
 	else

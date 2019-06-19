@@ -271,15 +271,22 @@ the configuration (without a prefix: ``Auto``).
     int b = 2; // comment  b                int b = 2; // comment about b
 
 **AllowAllParametersOfDeclarationOnNextLine** (``bool``)
-  Allow putting all parameters of a function declaration onto
+  If the function declaration doesn't fit on a line,
+  allow putting all parameters of a function declaration onto
   the next line even if ``BinPackParameters`` is ``false``.
 
   .. code-block:: c++
 
-    true:                                   false:
-    myFunction(foo,                 vs.     myFunction(foo, bar, plop);
-               bar,
-               plop);
+    true:
+    void myFunction(
+        int a, int b, int c, int d, int e);
+
+    false:
+    void myFunction(int a,
+                    int b,
+                    int c,
+                    int d,
+                    int e);
 
 **AllowShortBlocksOnASingleLine** (``bool``)
   Allows contracting simple braced statements to a single line.
@@ -483,15 +490,50 @@ the configuration (without a prefix: ``Auto``).
          "bbbb"                                    "cccc";
          "cccc";
 
-**AlwaysBreakTemplateDeclarations** (``bool``)
-  If ``true``, always break after the ``template<...>`` of a template
-  declaration.
+**AlwaysBreakTemplateDeclarations** (``BreakTemplateDeclarationsStyle``)
+  The template declaration breaking style to use.
 
-  .. code-block:: c++
+  Possible values:
 
-     true:                                  false:
-     template <typename T>          vs.     template <typename T> class C {};
-     class C {};
+  * ``BTDS_No`` (in configuration: ``No``)
+    Do not force break before declaration.
+    ``PenaltyBreakTemplateDeclaration`` is taken into account.
+
+    .. code-block:: c++
+
+       template <typename T> T foo() {
+       }
+       template <typename T> T foo(int aaaaaaaaaaaaaaaaaaaaa,
+                                   int bbbbbbbbbbbbbbbbbbbbb) {
+       }
+
+  * ``BTDS_MultiLine`` (in configuration: ``MultiLine``)
+    Force break after template declaration only when the following
+    declaration spans multiple lines.
+
+    .. code-block:: c++
+
+       template <typename T> T foo() {
+       }
+       template <typename T>
+       T foo(int aaaaaaaaaaaaaaaaaaaaa,
+             int bbbbbbbbbbbbbbbbbbbbb) {
+       }
+
+  * ``BTDS_Yes`` (in configuration: ``Yes``)
+    Always break after template declaration.
+
+    .. code-block:: c++
+
+       template <typename T>
+       T foo() {
+       }
+       template <typename T>
+       T foo(int aaaaaaaaaaaaaaaaaaaaa,
+             int bbbbbbbbbbbbbbbbbbbbb) {
+       }
+
+
 
 **BinPackArguments** (``bool``)
   If ``false``, a function call's arguments will either be all on the
@@ -532,6 +574,15 @@ the configuration (without a prefix: ``Auto``).
 
   If ``BreakBeforeBraces`` is set to ``BS_Custom``, use this to specify how
   each individual brace case should be handled. Otherwise, this is ignored.
+
+  .. code-block:: yaml
+
+    # Example of usage:
+    BreakBeforeBraces: Custom
+    BraceWrapping:
+      AfterEnum: true
+      AfterStruct: false
+      SplitEmptyFunction: false
 
   Nested configuration flags:
 
@@ -613,7 +664,9 @@ the configuration (without a prefix: ``Auto``).
       int bar();
       }
 
-  * ``bool AfterObjCDeclaration`` Wrap ObjC definitions (``@autoreleasepool``, interfaces, ..).
+  * ``bool AfterObjCDeclaration`` Wrap ObjC definitions (interfaces, implementations...).
+    @autoreleasepool and @synchronized blocks are wrapped
+    according to `AfterControlStatement` flag.
 
   * ``bool AfterStruct`` Wrap struct definitions.
 
@@ -643,6 +696,21 @@ the configuration (without a prefix: ``Auto``).
       false:
       union foo {
         int x;
+      }
+
+  * ``bool AfterExternBlock`` Wrap extern blocks.
+
+    .. code-block:: c++
+
+      true:
+      extern "C"
+      {
+        int foo();
+      }
+
+      false:
+      extern "C" {
+      int foo();
       }
 
   * ``bool BeforeCatch`` Wrap before ``catch``.
@@ -679,7 +747,7 @@ the configuration (without a prefix: ``Auto``).
 
   * ``bool IndentBraces`` Indent the wrapped braces themselves.
 
-  * ``bool SplitEmptyFunctionBody`` If ``false``, empty function body can be put on a single line.
+  * ``bool SplitEmptyFunction`` If ``false``, empty function body can be put on a single line.
     This option is used only if the opening brace of the function has
     already been wrapped, i.e. the `AfterFunction` brace wrapping mode is
     set, and the function could/should not be put on a single line (as per
@@ -690,6 +758,28 @@ the configuration (without a prefix: ``Auto``).
       int f()   vs.   inf f()
       {}              {
                       }
+
+  * ``bool SplitEmptyRecord`` If ``false``, empty record (e.g. class, struct or union) body
+    can be put on a single line. This option is used only if the opening
+    brace of the record has already been wrapped, i.e. the `AfterClass`
+    (for classes) brace wrapping mode is set.
+
+    .. code-block:: c++
+
+      class Foo   vs.  class Foo
+      {}               {
+                       }
+
+  * ``bool SplitEmptyNamespace`` If ``false``, empty namespace body can be put on a single line.
+    This option is used only if the opening brace of the namespace has
+    already been wrapped, i.e. the `AfterNamespace` brace wrapping mode is
+    set.
+
+    .. code-block:: c++
+
+      namespace Foo   vs.  namespace Foo
+      {}                   {
+                           }
 
 
 **BreakAfterJavaFieldAnnotations** (``bool``)
@@ -904,18 +994,6 @@ the configuration (without a prefix: ``Auto``).
 
 
 
-**BreakBeforeInheritanceComma** (``bool``)
-  If ``true``, in the class inheritance expression clang-format will
-  break before ``:`` and ``,`` if there is multiple inheritance.
-
-  .. code-block:: c++
-
-     true:                                  false:
-     class MyClass                  vs.     class MyClass : public X, public Y {
-         : public X                         };
-         , public Y {
-     };
-
 **BreakBeforeTernaryOperators** (``bool``)
   If ``true``, ternary operators will be placed after line breaks.
 
@@ -941,9 +1019,9 @@ the configuration (without a prefix: ``Auto``).
 
     .. code-block:: c++
 
-    Constructor()
-        : initializer1(),
-          initializer2()
+       Constructor()
+           : initializer1(),
+             initializer2()
 
   * ``BCIS_BeforeComma`` (in configuration: ``BeforeComma``)
     Break constructor initializers before the colon and commas, and align
@@ -951,18 +1029,56 @@ the configuration (without a prefix: ``Auto``).
 
     .. code-block:: c++
 
-    Constructor()
-        : initializer1()
-        , initializer2()
+       Constructor()
+           : initializer1()
+           , initializer2()
 
   * ``BCIS_AfterColon`` (in configuration: ``AfterColon``)
     Break constructor initializers after the colon and commas.
 
     .. code-block:: c++
 
-    Constructor() :
-        initializer1(),
-        initializer2()
+       Constructor() :
+           initializer1(),
+           initializer2()
+
+
+
+**BreakInheritanceList** (``BreakInheritanceListStyle``)
+  The inheritance list style to use.
+
+  Possible values:
+
+  * ``BILS_BeforeColon`` (in configuration: ``BeforeColon``)
+    Break inheritance list before the colon and after the commas.
+
+    .. code-block:: c++
+
+       class Foo
+           : Base1,
+             Base2
+       {};
+
+  * ``BILS_BeforeComma`` (in configuration: ``BeforeComma``)
+    Break inheritance list before the colon and commas, and align
+    the commas with the colon.
+
+    .. code-block:: c++
+
+       class Foo
+           : Base1
+           , Base2
+       {};
+
+  * ``BILS_AfterColon`` (in configuration: ``AfterColon``)
+    Break inheritance list after the colon and commas.
+
+    .. code-block:: c++
+
+       class Foo :
+           Base1,
+           Base2
+       {};
 
 
 
@@ -1018,21 +1134,25 @@ the configuration (without a prefix: ``Auto``).
   .. code-block:: c++
 
     true:
-    SomeClass::Constructor()
-        : aaaaaaaa(aaaaaaaa), aaaaaaaa(aaaaaaaa), aaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaa) {
-      return 0;
-    }
+    FitsOnOneLine::Constructor()
+        : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}
+
+    DoesntFit::Constructor()
+        : aaaaaaaaaaaaa(aaaaaaaaaaaaaa),
+          aaaaaaaaaaaaa(aaaaaaaaaaaaaa),
+          aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}
 
     false:
-    SomeClass::Constructor()
-        : aaaaaaaa(aaaaaaaa), aaaaaaaa(aaaaaaaa),
-          aaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaa) {
-      return 0;
-    }
+    FitsOnOneLine::Constructor()
+        : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}
+
+    DoesntFit::Constructor()
+        : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaa(aaaaaaaaaaaaaa),
+          aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}
 
 **ConstructorInitializerIndentWidth** (``unsigned``)
   The number of characters to use for indentation of constructor
-  initializer lists.
+  initializer lists as well as inheritance lists.
 
 **ContinuationIndentWidth** (``unsigned``)
   Indent width for line continuations.
@@ -1120,9 +1240,53 @@ the configuration (without a prefix: ``Auto``).
 
   For example: BOOST_FOREACH.
 
+**IncludeBlocks** (``IncludeBlocksStyle``)
+  Dependent on the value, multiple ``#include`` blocks can be sorted
+  as one and divided based on category.
+
+  Possible values:
+
+  * ``IBS_Preserve`` (in configuration: ``Preserve``)
+    Sort each ``#include`` block separately.
+
+    .. code-block:: c++
+
+       #include "b.h"               into      #include "b.h"
+
+       #include <lib/main.h>                  #include "a.h"
+       #include "a.h"                         #include <lib/main.h>
+
+  * ``IBS_Merge`` (in configuration: ``Merge``)
+    Merge multiple ``#include`` blocks together and sort as one.
+
+    .. code-block:: c++
+
+       #include "b.h"               into      #include "a.h"
+                                              #include "b.h"
+       #include <lib/main.h>                  #include <lib/main.h>
+       #include "a.h"
+
+  * ``IBS_Regroup`` (in configuration: ``Regroup``)
+    Merge multiple ``#include`` blocks together and sort as one.
+    Then split into groups based on category priority. See
+    ``IncludeCategories``.
+
+    .. code-block:: c++
+
+       #include "b.h"               into      #include "a.h"
+                                              #include "b.h"
+       #include <lib/main.h>
+       #include "a.h"                         #include <lib/main.h>
+
+
+
 **IncludeCategories** (``std::vector<IncludeCategory>``)
   Regular expressions denoting the different ``#include`` categories
   used for ordering ``#includes``.
+
+  `POSIX extended
+  <http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap09.html>`_
+  regular expressions are supported.
 
   These regular expressions are matched against the filename of an include
   (including the <> or "") in order. The value belonging to the first
@@ -1144,8 +1308,10 @@ the configuration (without a prefix: ``Auto``).
     IncludeCategories:
       - Regex:           '^"(llvm|llvm-c|clang|clang-c)/'
         Priority:        2
-      - Regex:           '^(<|"(gtest|isl|json)/)'
+      - Regex:           '^(<|"(gtest|gmock|isl|json)/)'
         Priority:        3
+      - Regex:           '<[[:alnum:].]+>'
+        Priority:        4
       - Regex:           '.*'
         Priority:        1
 
@@ -1178,6 +1344,35 @@ the configuration (without a prefix: ``Auto``).
      default:                                 default:
        plop();                                  plop();
      }                                      }
+
+**IndentPPDirectives** (``PPDirectiveIndentStyle``)
+  The preprocessor directive indenting style to use.
+
+  Possible values:
+
+  * ``PPDIS_None`` (in configuration: ``None``)
+    Does not indent any directives.
+
+    .. code-block:: c++
+
+       #if FOO
+       #if BAR
+       #include <foo>
+       #endif
+       #endif
+
+  * ``PPDIS_AfterHash`` (in configuration: ``AfterHash``)
+    Indents directives after the hash.
+
+    .. code-block:: c++
+
+       #if FOO
+       #  if BAR
+       #    include <foo>
+       #  endif
+       #endif
+
+
 
 **IndentWidth** (``unsigned``)
   The number of columns to use for indentation.
@@ -1291,6 +1486,10 @@ the configuration (without a prefix: ``Auto``).
   * ``LK_TableGen`` (in configuration: ``TableGen``)
     Should be used for TableGen code.
 
+  * ``LK_TextProto`` (in configuration: ``TextProto``)
+    Should be used for Protocol Buffer messages in text format
+    (https://developers.google.com/protocol-buffers/).
+
 
 
 **MacroBlockBegin** (``std::string``)
@@ -1382,6 +1581,52 @@ the configuration (without a prefix: ``Auto``).
 
 
 
+**ObjCBinPackProtocolList** (``BinPackStyle``)
+  Controls bin-packing Objective-C protocol conformance list
+  items into as few lines as possible when they go over ``ColumnLimit``.
+
+  If ``Auto`` (the default), delegates to the value in
+  ``BinPackParameters``. If that is ``true``, bin-packs Objective-C
+  protocol conformance list items into as few lines as possible
+  whenever they go over ``ColumnLimit``.
+
+  If ``Always``, always bin-packs Objective-C protocol conformance
+  list items into as few lines as possible whenever they go over
+  ``ColumnLimit``.
+
+  If ``Never``, lays out Objective-C protocol conformance list items
+  onto individual lines whenever they go over ``ColumnLimit``.
+
+
+  .. code-block:: objc
+
+     Always (or Auto, if BinPackParameters=true):
+     @interface ccccccccccccc () <
+         ccccccccccccc, ccccccccccccc,
+         ccccccccccccc, ccccccccccccc> {
+     }
+
+     Never (or Auto, if BinPackParameters=false):
+     @interface ddddddddddddd () <
+         ddddddddddddd,
+         ddddddddddddd,
+         ddddddddddddd,
+         ddddddddddddd> {
+     }
+
+  Possible values:
+
+  * ``BPS_Auto`` (in configuration: ``Auto``)
+    Automatically determine parameter bin-packing behavior.
+
+  * ``BPS_Always`` (in configuration: ``Always``)
+    Always bin-pack parameters.
+
+  * ``BPS_Never`` (in configuration: ``Never``)
+    Never bin-pack parameters.
+
+
+
 **ObjCBlockIndentWidth** (``unsigned``)
   The number of characters to use for indentation of ObjC blocks.
 
@@ -1415,6 +1660,9 @@ the configuration (without a prefix: ``Auto``).
 
 **PenaltyBreakString** (``unsigned``)
   The penalty for each line break introduced inside a string literal.
+
+**PenaltyBreakTemplateDeclaration** (``unsigned``)
+  The penalty for breaking after template declaration.
 
 **PenaltyExcessCharacter** (``unsigned``)
   The penalty for each character outside of the column limit.
@@ -1451,6 +1699,44 @@ the configuration (without a prefix: ``Auto``).
 
 
 
+**RawStringFormats** (``std::vector<RawStringFormat>``)
+  Defines hints for detecting supported languages code blocks in raw
+  strings.
+
+  A raw string with a matching delimiter or a matching enclosing function
+  name will be reformatted assuming the specified language based on the
+  style for that language defined in the .clang-format file. If no style has
+  been defined in the .clang-format file for the specific language, a
+  predefined style given by 'BasedOnStyle' is used. If 'BasedOnStyle' is not
+  found, the formatting is based on llvm style. A matching delimiter takes
+  precedence over a matching enclosing function name for determining the
+  language of the raw string contents.
+
+  If a canonical delimiter is specified, occurrences of other delimiters for
+  the same language will be updated to the canonical if possible.
+
+  There should be at most one specification per language and each delimiter
+  and enclosing function should not occur in multiple specifications.
+
+  To configure this in the .clang-format file, use:
+
+  .. code-block:: yaml
+
+    RawStringFormats:
+      - Language: TextProto
+          Delimiters:
+            - 'pb'
+            - 'proto'
+          EnclosingFunctions:
+            - 'PARSE_TEXT_PROTO'
+          BasedOnStyle: google
+      - Language: Cpp
+          Delimiters:
+            - 'cc'
+            - 'cpp'
+          BasedOnStyle: llvm
+          CanonicalDelimiter: 'cc'
+
 **ReflowComments** (``bool``)
   If ``true``, clang-format will attempt to re-flow comments.
 
@@ -1478,6 +1764,14 @@ the configuration (without a prefix: ``Auto``).
 **SortUsingDeclarations** (``bool``)
   If ``true``, clang-format will sort using declarations.
 
+  The order of using declarations is defined as follows:
+  Split the strings by "::" and discard any initial empty strings. The last
+  element of each list is a non-namespace name; all others are namespace
+  names. Sort the lists of names lexicographically, where the sort order of
+  individual names is that all non-namespace names come before all namespace
+  names, and within those groups, names are in case-insensitive
+  lexicographic order.
+
   .. code-block:: c++
 
      false:                                 true:
@@ -1490,7 +1784,7 @@ the configuration (without a prefix: ``Auto``).
   .. code-block:: c++
 
      true:                                  false:
-     (int)i;                        vs.     (int) i;
+     (int) i;                       vs.     (int)i;
 
 **SpaceAfterTemplateKeyword** (``bool``)
   If ``true``, a space will be inserted after the 'template' keyword.
@@ -1508,6 +1802,35 @@ the configuration (without a prefix: ``Auto``).
      true:                                  false:
      int a = 5;                     vs.     int a=5;
      a += 42                                a+=42;
+
+**SpaceBeforeCpp11BracedList** (``bool``)
+  If ``true``, a space will be inserted before a C++11 braced list
+  used to initialize an object (after the preceding identifier or type).
+
+  .. code-block:: c++
+
+     true:                                  false:
+     Foo foo { bar };               vs.     Foo foo{ bar };
+     Foo {};                                Foo{};
+     vector<int> { 1, 2, 3 };               vector<int>{ 1, 2, 3 };
+     new int[3] { 1, 2, 3 };                new int[3]{ 1, 2, 3 };
+
+**SpaceBeforeCtorInitializerColon** (``bool``)
+  If ``false``, spaces will be removed before constructor initializer
+  colon.
+
+  .. code-block:: c++
+
+     true:                                  false:
+     Foo::Foo() : a(a) {}                   Foo::Foo(): a(a) {}
+
+**SpaceBeforeInheritanceColon** (``bool``)
+  If ``false``, spaces will be removed before inheritance colon.
+
+  .. code-block:: c++
+
+     true:                                  false:
+     class Foo : Bar {}             vs.     class Foo: Bar {}
 
 **SpaceBeforeParens** (``SpaceBeforeParensOptions``)
   Defines in which cases to put a space before opening parentheses.
@@ -1552,6 +1875,15 @@ the configuration (without a prefix: ``Auto``).
        }
 
 
+
+**SpaceBeforeRangeBasedForLoopColon** (``bool``)
+  If ``false``, spaces will be removed before range-based for loop
+  colon.
+
+  .. code-block:: c++
+
+     true:                                  false:
+     for (auto v : values) {}       vs.     for(auto v: values) {}
 
 **SpaceInEmptyParentheses** (``bool``)
   If ``true``, spaces may be inserted into ``()``.

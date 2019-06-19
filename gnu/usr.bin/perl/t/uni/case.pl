@@ -1,5 +1,5 @@
 BEGIN {
-    require "test.pl";
+    require "./test.pl";
     set_up_inc(qw(../lib .));
     skip_all_without_unicode_tables();
 }

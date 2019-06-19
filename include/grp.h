@@ -1,4 +1,4 @@
-/*	$OpenBSD: grp.h,v 1.12 2014/08/31 04:04:38 guenther Exp $	*/
+/*	$OpenBSD: grp.h,v 1.13 2018/09/13 12:31:15 millert Exp $	*/
 /*	$NetBSD: grp.h,v 1.7 1995/04/29 05:30:40 cgd Exp $	*/
 
 /*-
@@ -70,7 +70,8 @@ int		 getgrnam_r(const char *, struct group *, char *,
 #endif
 #if __BSD_VISIBLE
 int		 setgroupent(int);
-char		*group_from_gid(gid_t, int);
+int		 gid_from_group(const char *, gid_t *);
+const char	*group_from_gid(gid_t, int);
 #endif
 __END_DECLS
 

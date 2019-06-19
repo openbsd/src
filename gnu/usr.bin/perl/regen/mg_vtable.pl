@@ -20,7 +20,7 @@ require 5.004;
 
 BEGIN {
     # Get function prototypes
-    require 'regen/regen_lib.pl';
+    require './regen/regen_lib.pl';
 }
 
 my %mg =
@@ -92,6 +92,8 @@ my %mg =
 		 desc => 'substr() lvalue' },
      defelem => { char => 'y', vtable => 'defelem', value_magic => 1,
 		  desc => "Shadow \"foreach\" iterator variable /\nsmart parameter vivification" },
+     nonelem => { char => 'Y', vtable => 'nonelem', value_magic => 1,
+		  desc => "Array element that does not exist" },
      arylen => { char => '#', vtable => 'arylen', value_magic => 1,
 		 desc => 'Array length ($#ary)' },
      pos => { char => '.', vtable => 'pos', value_magic => 1,
@@ -137,6 +139,7 @@ my %sig =
      'pos' => {get => 'getpos', set => 'setpos'},
      'uvar' => {get => 'getuvar', set => 'setuvar'},
      'defelem' => {get => 'getdefelem', set => 'setdefelem'},
+     'nonelem' => {set => 'setnonelem'},
      'regexp' => {set => 'setregexp', alias => [qw(bm fm)]},
      'regdata' => {len => 'regdata_cnt'},
      'regdatum' => {get => 'regdatum_get', set => 'regdatum_set'},

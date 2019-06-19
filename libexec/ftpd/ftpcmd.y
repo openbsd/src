@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.66 2017/04/27 13:30:54 mikeb Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.67 2019/05/08 23:56:48 tedu Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ cmd
 	| RETR check_login SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
-				retrieve(NULL, $4);
+				retrieve(RET_FILE, $4);
 			if ($4 != NULL)
 				free($4);
 		}
@@ -374,12 +374,12 @@ cmd
 	| LIST check_login CRLF
 		{
 			if ($2)
-				retrieve("/bin/ls -lgA", "");
+				retrieve(RET_LIST, NULL);
 		}
 	| LIST check_login SP pathname CRLF
 		{
 			if ($2 && $4 != NULL)
-				retrieve("/bin/ls -lgA %s", $4);
+				retrieve(RET_LIST, $4);
 			if ($4 != NULL)
 				free($4);
 		}

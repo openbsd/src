@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.57 2017/07/26 09:05:46 job Exp $
+.\" $OpenBSD: bgpd.8,v 1.60 2018/12/04 14:13:40 claudio Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 26 2017 $
+.Dd $Mdocdate: December 4 2018 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -112,10 +112,6 @@ If it is not present then a length of 0 is used in the comparison.
 .It
 The path coming from the peer with the lowest IP address is selected.
 IPv4 sessions will be preferred over IPv6 ones.
-.It
-In case of locally announced prefixes
-.Nm
-will prefer statically set prefixes over dynamically inserted ones.
 .El
 .Pp
 Attributes set by filters can be used to tip the decision process to prefer
@@ -413,6 +409,26 @@ control socket
 .%D July 2017
 .%R RFC 8203
 .%T BGP Administrative Shutdown Communication
+.Re
+.Pp
+.Rs
+.%A J. Mauch
+.%A J. Snijders
+.%A G. Hankins
+.%D July 2017
+.%R RFC 8212
+.%T Default External BGP (EBGP) Route Propagation Behavior without Policies
+.Re
+.Pp
+.Rs
+.%A P. Francois
+.%A B. Decraene
+.%A C. Pelsser
+.%A K. Patel
+.%A C. Filsfils
+.%D March 2018
+.%R RFC 8326
+.%T Graceful BGP Session Shutdown
 .Re
 .Sh HISTORY
 The

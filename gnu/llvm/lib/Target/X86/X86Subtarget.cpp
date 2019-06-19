@@ -13,21 +13,15 @@
 
 #include "X86.h"
 
-#ifdef LLVM_BUILD_GLOBAL_ISEL
 #include "X86CallLowering.h"
 #include "X86LegalizerInfo.h"
 #include "X86RegisterBankInfo.h"
-#endif
 #include "X86Subtarget.h"
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/Triple.h"
-#ifdef LLVM_BUILD_GLOBAL_ISEL
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
-#include "llvm/CodeGen/GlobalISel/Legalizer.h"
-#include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
-#endif
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/ConstantRange.h"
 #include "llvm/IR/Function.h"
@@ -39,8 +33,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
-#include <cassert>
-#include <string>
 
 #if defined(_MSC_VER)
 #include <intrin.h>
@@ -76,14 +68,36 @@ X86Subtarget::classifyGlobalReference(const GlobalValue *GV) const {
 
 unsigned char
 X86Subtarget::classifyLocalReference(const GlobalValue *GV) const {
-  // 64 bits can use %rip addressing for anything local.
-  if (is64Bit())
-    return X86II::MO_NO_FLAG;
-
-  // If this is for a position dependent executable, the static linker can
-  // figure it out.
+  // If we're not PIC, it's not very interesting.
   if (!isPositionIndependent())
     return X86II::MO_NO_FLAG;
+
+  if (is64Bit()) {
+    // 64-bit ELF PIC local references may use GOTOFF relocations.
+    if (isTargetELF()) {
+      switch (TM.getCodeModel()) {
+      // 64-bit small code model is simple: All rip-relative.
+      case CodeModel::Small:
+      case CodeModel::Kernel:
+        return X86II::MO_NO_FLAG;
+
+      // The large PIC code model uses GOTOFF.
+      case CodeModel::Large:
+        return X86II::MO_GOTOFF;
+
+      // Medium is a hybrid: RIP-rel for code, GOTOFF for DSO local data.
+      case CodeModel::Medium:
+        if (isa<Function>(GV))
+          return X86II::MO_NO_FLAG; // All code is RIP-relative
+        return X86II::MO_GOTOFF;    // Local symbols use GOTOFF.
+      }
+      llvm_unreachable("invalid code model");
+    }
+
+    // Otherwise, this is either a RIP-relative reference or a 64-bit movabsq,
+    // both of which use MO_NO_FLAG.
+    return X86II::MO_NO_FLAG;
+  }
 
   // The COFF dynamic linker just patches the executable sections.
   if (isTargetCOFF())
@@ -105,8 +119,8 @@ X86Subtarget::classifyLocalReference(const GlobalValue *GV) const {
 
 unsigned char X86Subtarget::classifyGlobalReference(const GlobalValue *GV,
                                                     const Module &M) const {
-  // Large model never uses stubs.
-  if (TM.getCodeModel() == CodeModel::Large)
+  // The static large model never uses stubs.
+  if (TM.getCodeModel() == CodeModel::Large && !isPositionIndependent())
     return X86II::MO_NO_FLAG;
 
   // Absolute symbols can be referenced directly.
@@ -128,8 +142,14 @@ unsigned char X86Subtarget::classifyGlobalReference(const GlobalValue *GV,
   if (isTargetCOFF())
     return X86II::MO_DLLIMPORT;
 
-  if (is64Bit())
+  if (is64Bit()) {
+    // ELF supports a large, truly PIC code model with non-PC relative GOT
+    // references. Other object file formats do not. Use the no-flag, 64-bit
+    // reference for them.
+    if (TM.getCodeModel() == CodeModel::Large)
+      return isTargetELF() ? X86II::MO_GOT : X86II::MO_NO_FLAG;
     return X86II::MO_GOTPCREL;
+  }
 
   if (isTargetDarwin()) {
     if (!isPositionIndependent())
@@ -151,7 +171,12 @@ X86Subtarget::classifyGlobalFunctionReference(const GlobalValue *GV,
   if (TM.shouldAssumeDSOLocal(M, GV))
     return X86II::MO_NO_FLAG;
 
-  assert(!isTargetCOFF());
+  if (isTargetCOFF()) {
+    assert(GV->hasDLLImportStorageClass() &&
+           "shouldAssumeDSOLocal gave inconsistent answer");
+    return X86II::MO_DLLIMPORT;
+  }
+
   const Function *F = dyn_cast_or_null<Function>(GV);
 
   if (isTargetELF()) {
@@ -160,6 +185,11 @@ X86Subtarget::classifyGlobalFunctionReference(const GlobalValue *GV,
       // In Regcall calling convention those registers are used for passing
       // parameters. Thus we need to prevent lazy binding in Regcall.
       return X86II::MO_GOTPCREL;
+    // If PLT must be avoided then the call should be via GOTPCREL.
+    if (((F && F->hasFnAttribute(Attribute::NonLazyBind)) ||
+         (!F && M.getRtLibUseGOT())) &&
+        is64Bit())
+       return X86II::MO_GOTPCREL;
     return X86II::MO_PLT;
   }
 
@@ -173,25 +203,6 @@ X86Subtarget::classifyGlobalFunctionReference(const GlobalValue *GV,
   }
 
   return X86II::MO_NO_FLAG;
-}
-
-/// This function returns the name of a function which has an interface like
-/// the non-standard bzero function, if such a function exists on the
-/// current subtarget and it is considered preferable over memset with zero
-/// passed as the second argument. Otherwise it returns null.
-const char *X86Subtarget::getBZeroEntry() const {
-  // Darwin 10 has a __bzero entry point for this purpose.
-  if (getTargetTriple().isMacOSX() &&
-      !getTargetTriple().isMacOSXVersionLT(10, 6))
-    return "__bzero";
-
-  return nullptr;
-}
-
-bool X86Subtarget::hasSinCos() const {
-  return getTargetTriple().isMacOSX() &&
-    !getTargetTriple().isMacOSXVersionLT(10, 9) &&
-    is64Bit();
 }
 
 /// Return true if the subtarget allows calls to immediate address.
@@ -227,6 +238,14 @@ void X86Subtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
       FullFS = "+sahf";
   }
 
+  // OpenBSD/amd64 defaults to -mretpoline
+  if (isTargetOpenBSD() && In64BitMode) {
+    if (!FullFS.empty())
+      FullFS = "+retpoline," + FullFS;
+    else
+      FullFS = "+retpoline";
+  }
+
   // Parse features string and set the CPU.
   ParseSubtargetFeatures(CPUName, FullFS);
 
@@ -236,8 +255,6 @@ void X86Subtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   // micro-architectures respectively.
   if (hasSSE42() || hasSSE4A())
     IsUAMem16Slow = false;
-  
-  InstrItins = getInstrItineraryForCPU(CPUName);
 
   // It's important to keep the MCSubtargetInfo feature bits in sync with
   // target data structure which is shared with MC code emitter, etc.
@@ -250,9 +267,9 @@ void X86Subtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   else
     llvm_unreachable("Not 16-bit, 32-bit or 64-bit mode!");
 
-  DEBUG(dbgs() << "Subtarget features: SSELevel " << X86SSELevel
-               << ", 3DNowLevel " << X863DNowLevel
-               << ", 64bit " << HasX86_64 << "\n");
+  LLVM_DEBUG(dbgs() << "Subtarget features: SSELevel " << X86SSELevel
+                    << ", 3DNowLevel " << X863DNowLevel << ", 64bit "
+                    << HasX86_64 << "\n");
   assert((!In64BitMode || HasX86_64) &&
          "64-bit code requested on a subtarget that doesn't support it!");
 
@@ -263,127 +280,41 @@ void X86Subtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
   else if (isTargetDarwin() || isTargetLinux() || isTargetSolaris() ||
            isTargetKFreeBSD() || In64BitMode)
     stackAlignment = 16;
-}
 
-void X86Subtarget::initializeEnvironment() {
-  X86SSELevel = NoSSE;
-  X863DNowLevel = NoThreeDNow;
-  HasX87 = false;
-  HasCMov = false;
-  HasX86_64 = false;
-  HasPOPCNT = false;
-  HasSSE4A = false;
-  HasAES = false;
-  HasFXSR = false;
-  HasXSAVE = false;
-  HasXSAVEOPT = false;
-  HasXSAVEC = false;
-  HasXSAVES = false;
-  HasPCLMUL = false;
-  HasFMA = false;
-  HasFMA4 = false;
-  HasXOP = false;
-  HasTBM = false;
-  HasLWP = false;
-  HasMOVBE = false;
-  HasRDRAND = false;
-  HasF16C = false;
-  HasFSGSBase = false;
-  HasLZCNT = false;
-  HasBMI = false;
-  HasBMI2 = false;
-  HasVBMI = false;
-  HasIFMA = false;
-  HasRTM = false;
-  HasERI = false;
-  HasCDI = false;
-  HasPFI = false;
-  HasDQI = false;
-  HasVPOPCNTDQ = false;
-  HasBWI = false;
-  HasVLX = false;
-  HasADX = false;
-  HasPKU = false;
-  HasSHA = false;
-  HasPRFCHW = false;
-  HasRDSEED = false;
-  HasLAHFSAHF = false;
-  HasMWAITX = false;
-  HasCLZERO = false;
-  HasMPX = false;
-  HasSGX = false;
-  HasCLFLUSHOPT = false;
-  HasCLWB = false;
-  IsBTMemSlow = false;
-  IsPMULLDSlow = false;
-  IsSHLDSlow = false;
-  IsUAMem16Slow = false;
-  IsUAMem32Slow = false;
-  HasSSEUnalignedMem = false;
-  HasCmpxchg16b = false;
-  UseLeaForSP = false;
-  HasFastPartialYMMorZMMWrite = false;
-  HasFastScalarFSQRT = false;
-  HasFastVectorFSQRT = false;
-  HasFastLZCNT = false;
-  HasFastSHLDRotate = false;
-  HasERMSB = false;
-  HasSlowDivide32 = false;
-  HasSlowDivide64 = false;
-  PadShortFunctions = false;
-  CallRegIndirect = false;
-  LEAUsesAG = false;
-  SlowLEA = false;
-  Slow3OpsLEA = false;
-  SlowIncDec = false;
-  stackAlignment = 4;
-  // FIXME: this is a known good value for Yonah. How about others?
-  MaxInlineSizeThreshold = 128;
-  UseSoftFloat = false;
+  // Some CPUs have more overhead for gather. The specified overhead is relative
+  // to the Load operation. "2" is the number provided by Intel architects. This
+  // parameter is used for cost estimation of Gather Op and comparison with
+  // other alternatives.
+  // TODO: Remove the explicit hasAVX512()?, That would mean we would only
+  // enable gather with a -march.
+  if (hasAVX512() || (hasAVX2() && hasFastGather()))
+    GatherOverhead = 2;
+  if (hasAVX512())
+    ScatterOverhead = 2;
+
+  // Consume the vector width attribute or apply any target specific limit.
+  if (PreferVectorWidthOverride)
+    PreferVectorWidth = PreferVectorWidthOverride;
+  else if (Prefer256Bit)
+    PreferVectorWidth = 256;
 }
 
 X86Subtarget &X86Subtarget::initializeSubtargetDependencies(StringRef CPU,
                                                             StringRef FS) {
-  initializeEnvironment();
   initSubtargetFeatures(CPU, FS);
   return *this;
 }
 
-#ifdef LLVM_BUILD_GLOBAL_ISEL
-namespace {
-
-struct X86GISelActualAccessor : public GISelAccessor {
-  std::unique_ptr<CallLowering> CallLoweringInfo;
-  std::unique_ptr<LegalizerInfo> Legalizer;
-  std::unique_ptr<RegisterBankInfo> RegBankInfo;
-  std::unique_ptr<InstructionSelector> InstSelector;
-
-  const CallLowering *getCallLowering() const override {
-    return CallLoweringInfo.get();
-  }
-
-  const InstructionSelector *getInstructionSelector() const override {
-    return InstSelector.get();
-  }
-
-  const LegalizerInfo *getLegalizerInfo() const override {
-    return Legalizer.get();
-  }
-
-  const RegisterBankInfo *getRegBankInfo() const override {
-    return RegBankInfo.get();
-  }
-};
-
-} // end anonymous namespace
-#endif
-
 X86Subtarget::X86Subtarget(const Triple &TT, StringRef CPU, StringRef FS,
                            const X86TargetMachine &TM,
-                           unsigned StackAlignOverride)
-    : X86GenSubtargetInfo(TT, CPU, FS), X86ProcFamily(Others),
+                           unsigned StackAlignOverride,
+                           unsigned PreferVectorWidthOverride,
+                           unsigned RequiredVectorWidth)
+    : X86GenSubtargetInfo(TT, CPU, FS),
       PICStyle(PICStyles::None), TM(TM), TargetTriple(TT),
       StackAlignOverride(StackAlignOverride),
+      PreferVectorWidthOverride(PreferVectorWidthOverride),
+      RequiredVectorWidth(RequiredVectorWidth),
       In64BitMode(TargetTriple.getArch() == Triple::x86_64),
       In32BitMode(TargetTriple.getArch() == Triple::x86 &&
                   TargetTriple.getEnvironment() != Triple::CODE16),
@@ -402,39 +333,29 @@ X86Subtarget::X86Subtarget(const Triple &TT, StringRef CPU, StringRef FS,
     setPICStyle(PICStyles::StubPIC);
   else if (isTargetELF())
     setPICStyle(PICStyles::GOT);
-#ifndef LLVM_BUILD_GLOBAL_ISEL
-  GISelAccessor *GISel = new GISelAccessor();
-#else
-  X86GISelActualAccessor *GISel = new X86GISelActualAccessor();
 
-  GISel->CallLoweringInfo.reset(new X86CallLowering(*getTargetLowering()));
-  GISel->Legalizer.reset(new X86LegalizerInfo(*this, TM));
+  CallLoweringInfo.reset(new X86CallLowering(*getTargetLowering()));
+  Legalizer.reset(new X86LegalizerInfo(*this, TM));
 
   auto *RBI = new X86RegisterBankInfo(*getRegisterInfo());
-  GISel->RegBankInfo.reset(RBI);
-  GISel->InstSelector.reset(createX86InstructionSelector(TM, *this, *RBI));
-#endif
-  setGISelAccessor(*GISel);
+  RegBankInfo.reset(RBI);
+  InstSelector.reset(createX86InstructionSelector(TM, *this, *RBI));
 }
 
 const CallLowering *X86Subtarget::getCallLowering() const {
-  assert(GISel && "Access to GlobalISel APIs not set");
-  return GISel->getCallLowering();
+  return CallLoweringInfo.get();
 }
 
 const InstructionSelector *X86Subtarget::getInstructionSelector() const {
-  assert(GISel && "Access to GlobalISel APIs not set");
-  return GISel->getInstructionSelector();
+  return InstSelector.get();
 }
 
 const LegalizerInfo *X86Subtarget::getLegalizerInfo() const {
-  assert(GISel && "Access to GlobalISel APIs not set");
-  return GISel->getLegalizerInfo();
+  return Legalizer.get();
 }
 
 const RegisterBankInfo *X86Subtarget::getRegBankInfo() const {
-  assert(GISel && "Access to GlobalISel APIs not set");
-  return GISel->getRegBankInfo();
+  return RegBankInfo.get();
 }
 
 bool X86Subtarget::enableEarlyIfConversion() const {

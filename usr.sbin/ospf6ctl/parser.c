@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.13 2014/11/17 21:53:55 tobias Exp $ */
+/*	$OpenBSD: parser.c,v 1.14 2019/05/26 09:27:09 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -40,7 +40,8 @@ enum token_type {
 	ADDRESS,
 	FLAG,
 	PREFIX,
-	IFNAME
+	IFNAME,
+	AREA
 };
 
 struct token {
@@ -108,7 +109,7 @@ static const struct token t_show_db[] = {
 };
 
 static const struct token t_show_area[] = {
-	{ADDRESS,	"",		NONE,		NULL},
+	{AREA,		"",		NONE,		NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -218,6 +219,14 @@ match_token(const char *word, const struct token *table,
 					res->action = t->value;
 			}
 			break;
+		case AREA:
+			if (parse_area(word, &res->area)) {
+				match++;
+				t = &table[i];
+				if (t->value)
+					res->action = t->value;
+			}
+			break;
 		case PREFIX:
 			if (parse_prefix(word, &res->addr, &res->prefixlen)) {
 				match++;
@@ -274,6 +283,9 @@ show_valid_args(const struct token *table)
 		case ADDRESS:
 			fprintf(stderr, "  <address>\n");
 			break;
+		case AREA:
+			fprintf(stderr, "  <area>\n");
+			break;
 		case PREFIX:
 			fprintf(stderr, "  <address>[/<len>]\n");
 			break;
@@ -305,6 +317,31 @@ parse_addr(const char *word, struct in6_addr *addr)
 		/* XXX address scope !!! */
 		/* ((struct sockaddr_in6 *)r->ai_addr)->sin6_scope_id */
 		freeaddrinfo(r);
+		return (1);
+	}
+	return (0);
+}
+
+int
+parse_area(const char *word, struct in_addr *addr)
+{
+	struct in_addr	 ina;
+	const char	*errstr;
+
+	if (word == NULL)
+		return (0);
+
+	bzero(addr, sizeof(struct in_addr));
+	bzero(&ina, sizeof(ina));
+
+	if (inet_pton(AF_INET, word, &ina)) {
+		addr->s_addr = ina.s_addr;
+		return (1);
+	}
+
+	ina.s_addr = htonl(strtonum(word, 0, 0xffffffff, &errstr));
+	if (errstr == NULL) {
+		addr->s_addr = ina.s_addr;
 		return (1);
 	}
 	return (0);

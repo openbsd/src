@@ -12,7 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LegacyPassManagers.h"
@@ -28,7 +30,6 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <map>
 #include <unordered_set>
 using namespace llvm;
 using namespace llvm::legacy;
@@ -75,21 +76,25 @@ PrintAfter("print-after",
            llvm::cl::desc("Print IR after specified passes"),
            cl::Hidden);
 
+static cl::opt<bool> PrintBeforeAll("print-before-all",
+                                    llvm::cl::desc("Print IR before each pass"),
+                                    cl::init(false), cl::Hidden);
+static cl::opt<bool> PrintAfterAll("print-after-all",
+                                   llvm::cl::desc("Print IR after each pass"),
+                                   cl::init(false), cl::Hidden);
+
 static cl::opt<bool>
-PrintBeforeAll("print-before-all",
-               llvm::cl::desc("Print IR before each pass"),
-               cl::init(false));
-static cl::opt<bool>
-PrintAfterAll("print-after-all",
-              llvm::cl::desc("Print IR after each pass"),
-              cl::init(false));
+    PrintModuleScope("print-module-scope",
+                     cl::desc("When printing IR for print-[before|after]{-all} "
+                              "always print a module IR"),
+                     cl::init(false), cl::Hidden);
 
 static cl::list<std::string>
     PrintFuncsList("filter-print-funcs", cl::value_desc("function names"),
                    cl::desc("Only print IR for functions whose name "
                             "match this for all print-[before|after][-all] "
                             "options"),
-                   cl::CommaSeparated);
+                   cl::CommaSeparated, cl::Hidden);
 
 /// This is a helper to determine whether to print IR before or
 /// after a pass.
@@ -117,6 +122,8 @@ static bool ShouldPrintAfterPass(const PassInfo *PI) {
   return PrintAfterAll || ShouldPrintBeforeOrAfterPass(PI, PrintAfter);
 }
 
+bool llvm::forcePrintModuleIR() { return PrintModuleScope; }
+
 bool llvm::isFunctionInPrintList(StringRef FunctionName) {
   static std::unordered_set<std::string> PrintFuncNames(PrintFuncsList.begin(),
                                                         PrintFuncsList.end());
@@ -128,8 +135,60 @@ bool PMDataManager::isPassDebuggingExecutionsOrMore() const {
   return PassDebugging >= Executions;
 }
 
+unsigned PMDataManager::initSizeRemarkInfo(Module &M) {
+  // Only calculate getInstructionCount if the size-info remark is requested.
+  return M.getInstructionCount();
+}
 
+void PMDataManager::emitInstrCountChangedRemark(Pass *P, Module &M,
+                                                unsigned CountBefore) {
+  // We need a function containing at least one basic block in order to output
+  // remarks. Since it's possible that the first function in the module doesn't
+  // actually contain a basic block, we have to go and find one that's suitable
+  // for emitting remarks.
+  auto It = std::find_if(M.begin(), M.end(),
+                         [](const Function &Fn) { return !Fn.empty(); });
 
+  // Didn't find a function. Quit.
+  if (It == M.end())
+    return;
+
+  // We found a function containing at least one basic block.
+  Function *F = &*It;
+
+  // How many instructions are in the module now?
+  unsigned CountAfter = M.getInstructionCount();
+
+  // If there was no change, don't emit a remark.
+  if (CountBefore == CountAfter)
+    return;
+
+  // If it's a pass manager, don't emit a remark. (This hinges on the assumption
+  // that the only passes that return non-null with getAsPMDataManager are pass
+  // managers.) The reason we have to do this is to avoid emitting remarks for
+  // CGSCC passes.
+  if (P->getAsPMDataManager())
+    return;
+
+  // Compute a possibly negative delta between the instruction count before
+  // running P, and after running P.
+  int64_t Delta =
+      static_cast<int64_t>(CountAfter) - static_cast<int64_t>(CountBefore);
+
+  BasicBlock &BB = *F->begin();
+  OptimizationRemarkAnalysis R("size-info", "IRSizeChange",
+                               DiagnosticLocation(), &BB);
+  // FIXME: Move ore namespace to DiagnosticInfo so that we can use it. This
+  // would let us use NV instead of DiagnosticInfoOptimizationBase::Argument.
+  R << DiagnosticInfoOptimizationBase::Argument("Pass", P->getPassName())
+    << ": IR instruction count changed from "
+    << DiagnosticInfoOptimizationBase::Argument("IRInstrsBefore", CountBefore)
+    << " to "
+    << DiagnosticInfoOptimizationBase::Argument("IRInstrsAfter", CountAfter)
+    << "; Delta: "
+    << DiagnosticInfoOptimizationBase::Argument("DeltaInstrCount", Delta);
+  F->getContext().diagnose(R); // Not using ORE for layering reasons.
+}
 
 void PassManagerPrettyStackEntry::print(raw_ostream &OS) const {
   if (!V && !M)
@@ -349,8 +408,8 @@ public:
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       ModulePass *MP = getContainedPass(Index);
       MP->dumpPassStructure(Offset + 1);
-      std::map<Pass *, FunctionPassManagerImpl *>::const_iterator I =
-        OnTheFlyManagers.find(MP);
+      MapVector<Pass *, FunctionPassManagerImpl *>::const_iterator I =
+          OnTheFlyManagers.find(MP);
       if (I != OnTheFlyManagers.end())
         I->second->dumpPassStructure(Offset + 2);
       dumpLastUses(MP, Offset+1);
@@ -369,7 +428,7 @@ public:
  private:
   /// Collection of on the fly FPPassManagers. These managers manage
   /// function passes that are required by module passes.
-  std::map<Pass *, FunctionPassManagerImpl *> OnTheFlyManagers;
+   MapVector<Pass *, FunctionPassManagerImpl *> OnTheFlyManagers;
 };
 
 char MPPassManager::ID = 0;
@@ -480,7 +539,11 @@ public:
     Timer *&T = TimingData[P];
     if (!T) {
       StringRef PassName = P->getPassName();
-      T = new Timer(PassName, PassName, TG);
+      StringRef PassArgument;
+      if (const PassInfo *PI = Pass::lookupPassInfo(P->getPassID()))
+        PassArgument = PI->getPassArgument();
+      T = new Timer(PassArgument.empty() ? PassName : PassArgument, PassName,
+                    TG);
     }
     return T;
   }
@@ -579,7 +642,7 @@ AnalysisUsage *PMTopLevelManager::findAnalysisUsage(Pass *P) {
     // of dependencies.
     AnalysisUsage AU;
     P->getAnalysisUsage(AU);
-    
+
     AUFoldingSetNode* Node = nullptr;
     FoldingSetNodeID ID;
     AUFoldingSetNode::Profile(ID, AU);
@@ -1278,7 +1341,10 @@ bool BBPassManager::runOnFunction(Function &F) {
     return false;
 
   bool Changed = doInitialization(F);
+  Module &M = *F.getParent();
 
+  unsigned InstrCount = 0;
+  bool EmitICRemark = M.shouldEmitInstrCountChangedRemark();
   for (BasicBlock &BB : F)
     for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
       BasicBlockPass *BP = getContainedPass(Index);
@@ -1293,8 +1359,11 @@ bool BBPassManager::runOnFunction(Function &F) {
         // If the pass crashes, remember this.
         PassManagerPrettyStackEntry X(BP, BB);
         TimeRegion PassTimer(getPassTimer(BP));
-
+        if (EmitICRemark)
+          InstrCount = initSizeRemarkInfo(M);
         LocalChanged |= BP->runOnBasicBlock(BB);
+        if (EmitICRemark)
+          emitInstrCountChangedRemark(BP, M, InstrCount);
       }
 
       Changed |= LocalChanged;
@@ -1494,10 +1563,12 @@ bool FPPassManager::runOnFunction(Function &F) {
     return false;
 
   bool Changed = false;
-
+  Module &M = *F.getParent();
   // Collect inherited analysis from Module level pass manager.
   populateInheritedAnalysis(TPM->activeStack);
 
+  unsigned InstrCount = 0;
+  bool EmitICRemark = M.shouldEmitInstrCountChangedRemark();
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     FunctionPass *FP = getContainedPass(Index);
     bool LocalChanged = false;
@@ -1510,8 +1581,11 @@ bool FPPassManager::runOnFunction(Function &F) {
     {
       PassManagerPrettyStackEntry X(FP, F);
       TimeRegion PassTimer(getPassTimer(FP));
-
+      if (EmitICRemark)
+        InstrCount = initSizeRemarkInfo(M);
       LocalChanged |= FP->runOnFunction(F);
+      if (EmitICRemark)
+        emitInstrCountChangedRemark(FP, M, InstrCount);
     }
 
     Changed |= LocalChanged;
@@ -1575,6 +1649,8 @@ MPPassManager::runOnModule(Module &M) {
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index)
     Changed |= getContainedPass(Index)->doInitialization(M);
 
+  unsigned InstrCount = 0;
+  bool EmitICRemark = M.shouldEmitInstrCountChangedRemark();
   for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
     ModulePass *MP = getContainedPass(Index);
     bool LocalChanged = false;
@@ -1588,7 +1664,11 @@ MPPassManager::runOnModule(Module &M) {
       PassManagerPrettyStackEntry X(MP, M);
       TimeRegion PassTimer(getPassTimer(MP));
 
+      if (EmitICRemark)
+        InstrCount = initSizeRemarkInfo(M);
       LocalChanged |= MP->runOnModule(M);
+      if (EmitICRemark)
+        emitInstrCountChangedRemark(MP, M, InstrCount);
     }
 
     Changed |= LocalChanged;
@@ -1729,9 +1809,9 @@ bool PassManager::run(Module &M) {
 // TimingInfo implementation
 
 bool llvm::TimePassesIsEnabled = false;
-static cl::opt<bool,true>
-EnableTiming("time-passes", cl::location(TimePassesIsEnabled),
-            cl::desc("Time each pass, printing elapsed time for each on exit"));
+static cl::opt<bool, true> EnableTiming(
+    "time-passes", cl::location(TimePassesIsEnabled), cl::Hidden,
+    cl::desc("Time each pass, printing elapsed time for each on exit"));
 
 // createTheTimeInfo - This method either initializes the TheTimeInfo pointer to
 // a non-null value (if the -time-passes option is enabled) or it leaves it

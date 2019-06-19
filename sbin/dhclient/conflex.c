@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.48 2017/11/06 13:27:19 krw Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.50 2019/01/26 23:26:20 krw Exp $	*/
 
 /* Lexical scanner for dhclient config file. */
 
@@ -381,7 +381,8 @@ static const struct keywords {
 	{ "server-name",			TOK_SERVER_NAME },
 	{ "ssid",				TOK_SSID },
 	{ "supersede",				TOK_SUPERSEDE },
-	{ "timeout",				TOK_TIMEOUT }
+	{ "timeout",				TOK_TIMEOUT },
+	{ "uselease",				TOK_USELEASE }
 };
 
 int	kw_cmp(const void *k, const void *e);

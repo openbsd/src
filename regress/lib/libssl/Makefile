@@ -1,15 +1,21 @@
-#	$OpenBSD: Makefile,v 1.26 2017/07/16 18:18:10 jsing Exp $
+#	$OpenBSD: Makefile,v 1.35 2019/01/20 06:50:26 tb Exp $
 
-SUBDIR= \
-	asn1 \
-	bytestring \
-	ciphers \
-	client \
-	pqueue \
-	server \
-	ssl \
-	tlsext \
-	unit
+SUBDIR += asn1
+SUBDIR += buffer
+SUBDIR += bytestring
+SUBDIR += ciphers
+SUBDIR += client
+SUBDIR += handshake
+SUBDIR += pqueue
+SUBDIR += record
+SUBDIR += server
+SUBDIR += ssl
+SUBDIR += tlsext
+SUBDIR += key_schedule
+SUBDIR += unit
+
+# Things that take a long time should go below here. 
+SUBDIR += interop
 
 install:
 

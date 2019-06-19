@@ -1,4 +1,4 @@
-//=- llvm/Analysis/PostDominators.h - Post Dominator Calculation-*- C++ -*-===//
+//=- llvm/Analysis/PostDominators.h - Post Dominator Calculation --*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,49 +14,59 @@
 #ifndef LLVM_ANALYSIS_POSTDOMINATORS_H
 #define LLVM_ANALYSIS_POSTDOMINATORS_H
 
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/Pass.h"
 
 namespace llvm {
 
+class Function;
+class raw_ostream;
+
 /// PostDominatorTree Class - Concrete subclass of DominatorTree that is used to
 /// compute the post-dominator tree.
-///
-struct PostDominatorTree : public PostDomTreeBase<BasicBlock> {
-  typedef PostDomTreeBase<BasicBlock> Base;
+class PostDominatorTree : public PostDomTreeBase<BasicBlock> {
+public:
+  using Base = PostDomTreeBase<BasicBlock>;
 
+  PostDominatorTree() = default;
+  explicit PostDominatorTree(Function &F) { recalculate(F); }
   /// Handle invalidation explicitly.
   bool invalidate(Function &F, const PreservedAnalyses &PA,
                   FunctionAnalysisManager::Invalidator &);
 };
 
-/// \brief Analysis pass which computes a \c PostDominatorTree.
+/// Analysis pass which computes a \c PostDominatorTree.
 class PostDominatorTreeAnalysis
     : public AnalysisInfoMixin<PostDominatorTreeAnalysis> {
   friend AnalysisInfoMixin<PostDominatorTreeAnalysis>;
+
   static AnalysisKey Key;
 
 public:
-  /// \brief Provide the result typedef for this analysis pass.
-  typedef PostDominatorTree Result;
+  /// Provide the result type for this analysis pass.
+  using Result = PostDominatorTree;
 
-  /// \brief Run the analysis pass over a function and produce a post dominator
+  /// Run the analysis pass over a function and produce a post dominator
   ///        tree.
   PostDominatorTree run(Function &F, FunctionAnalysisManager &);
 };
 
-/// \brief Printer pass for the \c PostDominatorTree.
+/// Printer pass for the \c PostDominatorTree.
 class PostDominatorTreePrinterPass
     : public PassInfoMixin<PostDominatorTreePrinterPass> {
   raw_ostream &OS;
 
 public:
   explicit PostDominatorTreePrinterPass(raw_ostream &OS);
+
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };
 
 struct PostDominatorTreeWrapperPass : public FunctionPass {
   static char ID; // Pass identification, replacement for typeid
+
   PostDominatorTree DT;
 
   PostDominatorTreeWrapperPass() : FunctionPass(ID) {
@@ -67,6 +77,8 @@ struct PostDominatorTreeWrapperPass : public FunctionPass {
   const PostDominatorTree &getPostDomTree() const { return DT; }
 
   bool runOnFunction(Function &F) override;
+
+  void verifyAnalysis() const override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
@@ -99,6 +111,6 @@ template <> struct GraphTraits<PostDominatorTree*>
   }
 };
 
-} // End llvm namespace
+} // end namespace llvm
 
-#endif
+#endif // LLVM_ANALYSIS_POSTDOMINATORS_H

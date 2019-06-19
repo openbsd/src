@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.14 2017/02/25 20:09:20 jcs Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.15 2018/06/29 17:39:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -85,15 +85,15 @@ struct aibs_softc {
 
 /* Command buffer used for GITM and SITM methods */
 struct aibs_cmd_buffer {
-	u_int32_t	id;
-	u_int32_t	param1;
-	u_int32_t	param2;
+	uint32_t	id;
+	uint32_t	param1;
+	uint32_t	param2;
 };
 
 /* Return buffer used by the GITM and SITM mehtods */
 struct aibs_ret_buffer {
-	u_int32_t	flags;
-	u_int32_t	value;
+	uint32_t	flags;
+	uint32_t	value;
 	/* there is more stuff that is unknown */
 };
 

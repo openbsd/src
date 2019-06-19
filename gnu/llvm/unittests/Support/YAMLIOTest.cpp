@@ -7,11 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/YAMLTraits.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 using llvm::yaml::Input;
@@ -24,6 +26,7 @@ using llvm::yaml::Hex8;
 using llvm::yaml::Hex16;
 using llvm::yaml::Hex32;
 using llvm::yaml::Hex64;
+using ::testing::StartsWith;
 
 
 
@@ -248,6 +251,72 @@ TEST(YAMLIO, TestGivenFilename) {
   EXPECT_TRUE(!!yin.error());
 }
 
+struct WithStringField {
+  std::string str1;
+  std::string str2;
+  std::string str3;
+};
+
+namespace llvm {
+namespace yaml {
+template <> struct MappingTraits<WithStringField> {
+  static void mapping(IO &io, WithStringField &fb) {
+    io.mapRequired("str1", fb.str1);
+    io.mapRequired("str2", fb.str2);
+    io.mapRequired("str3", fb.str3);
+  }
+};
+} // namespace yaml
+} // namespace llvm
+
+TEST(YAMLIO, MultilineStrings) {
+  WithStringField Original;
+  Original.str1 = "a multiline string\nfoobarbaz";
+  Original.str2 = "another one\rfoobarbaz";
+  Original.str3 = "a one-line string";
+
+  std::string Serialized;
+  {
+    llvm::raw_string_ostream OS(Serialized);
+    Output YOut(OS);
+    YOut << Original;
+  }
+  auto Expected = "---\n"
+                  "str1:            'a multiline string\n"
+                  "foobarbaz'\n"
+                  "str2:            'another one\r"
+                  "foobarbaz'\n"
+                  "str3:            a one-line string\n"
+                  "...\n";
+  ASSERT_EQ(Serialized, Expected);
+
+  // Also check it parses back without the errors.
+  WithStringField Deserialized;
+  {
+    Input YIn(Serialized);
+    YIn >> Deserialized;
+    ASSERT_FALSE(YIn.error())
+        << "Parsing error occurred during deserialization. Serialized string:\n"
+        << Serialized;
+  }
+  EXPECT_EQ(Original.str1, Deserialized.str1);
+  EXPECT_EQ(Original.str2, Deserialized.str2);
+  EXPECT_EQ(Original.str3, Deserialized.str3);
+}
+
+TEST(YAMLIO, NoQuotesForTab) {
+  WithStringField WithTab;
+  WithTab.str1 = "aba\tcaba";
+  std::string Serialized;
+  {
+    llvm::raw_string_ostream OS(Serialized);
+    Output YOut(OS);
+    YOut << WithTab;
+  }
+  auto ExpectedPrefix = "---\n"
+                        "str1:            aba\tcaba\n";
+  EXPECT_THAT(Serialized, StartsWith(ExpectedPrefix));
+}
 
 //===----------------------------------------------------------------------===//
 //  Test built-in types
@@ -532,6 +601,7 @@ struct StringTypes {
   std::string stdstr9;
   std::string stdstr10;
   std::string stdstr11;
+  std::string stdstr12;
 };
 
 namespace llvm {
@@ -561,6 +631,7 @@ namespace yaml {
       io.mapRequired("stdstr9",   st.stdstr9);
       io.mapRequired("stdstr10",  st.stdstr10);
       io.mapRequired("stdstr11",  st.stdstr11);
+      io.mapRequired("stdstr12",  st.stdstr12);
     }
   };
 }
@@ -592,6 +663,7 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
     map.stdstr9 = "~";
     map.stdstr10 = "0.2e20";
     map.stdstr11 = "0x30";
+    map.stdstr12 = "- match";
 
     llvm::raw_string_ostream ostr(intermediate);
     Output yout(ostr);
@@ -610,6 +682,7 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("'~'\n"));
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("'0.2e20'\n"));
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("'0x30'\n"));
+  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'- match'\n"));
   EXPECT_NE(std::string::npos, flowOut.find("'''eee"));
   EXPECT_NE(std::string::npos, flowOut.find("'\"fff'"));
   EXPECT_NE(std::string::npos, flowOut.find("'`ggg'"));
@@ -860,7 +933,7 @@ namespace yaml {
           return "malformed by";
       }
     }
-    static bool mustQuote(StringRef) { return true; }
+    static QuotingType mustQuote(StringRef) { return QuotingType::Single; }
   };
 }
 }
@@ -1064,7 +1137,7 @@ namespace yaml {
       return StringRef();
     }
 
-    static bool mustQuote(StringRef) { return false; }
+    static QuotingType mustQuote(StringRef) { return QuotingType::None; }
   };
 
   template <> struct ScalarTraits<MyString> {
@@ -1075,7 +1148,9 @@ namespace yaml {
     static StringRef input(StringRef S, void *Ctx, MyString &V) {
       return Impl::input(S, Ctx, V.value);
     }
-    static bool mustQuote(StringRef S) { return Impl::mustQuote(S); }
+    static QuotingType mustQuote(StringRef S) {
+      return Impl::mustQuote(S);
+    }
   };
 }
 }
@@ -2232,7 +2307,7 @@ struct ScalarTraits<FlowSeq> {
     return "";
   }
 
-  static bool mustQuote(StringRef S) { return false; }
+  static QuotingType mustQuote(StringRef S) { return QuotingType::None; }
 };
 }
 }
@@ -2448,10 +2523,49 @@ TEST(YAMLIO, TestCustomMappingStruct) {
   EXPECT_EQ(4, y["bar"].bar);
 }
 
-TEST(YAMLIO, InvalidInput) {
-  // polluting 1 value in the sequence
-  Input yin("---\n- foo:  3\n  bar:  5\n1\n- foo:  3\n  bar:  5\n...\n");
-  std::vector<FooBar> Data;
-  yin >> Data;
-  EXPECT_TRUE((bool)yin.error());
+static void TestEscaped(llvm::StringRef Input, llvm::StringRef Expected) {
+  std::string out;
+  llvm::raw_string_ostream ostr(out);
+  Output xout(ostr, nullptr, 0);
+
+  llvm::yaml::EmptyContext Ctx;
+  yamlize(xout, Input, true, Ctx);
+
+  ostr.flush();
+
+  // Make a separate StringRef so we get nice byte-by-byte output.
+  llvm::StringRef Got(out);
+  EXPECT_EQ(Expected, Got);
+}
+
+TEST(YAMLIO, TestEscaped) {
+  // Single quote
+  TestEscaped("@abc@", "'@abc@'");
+  // No quote
+  TestEscaped("abc/", "abc/");
+  // Double quote non-printable
+  TestEscaped("\01@abc@", "\"\\x01@abc@\"");
+  // Double quote inside single quote
+  TestEscaped("abc\"fdf", "'abc\"fdf'");
+  // Double quote inside double quote
+  TestEscaped("\01bc\"fdf", "\"\\x01bc\\\"fdf\"");
+  // Single quote inside single quote
+  TestEscaped("abc'fdf", "'abc''fdf'");
+  // UTF8
+  TestEscaped("/*параметр*/", "\"/*параметр*/\"");
+  // UTF8 with single quote inside double quote
+  TestEscaped("parameter 'параметр' is unused",
+              "\"parameter 'параметр' is unused\"");
+
+  // String with embedded non-printable multibyte UTF-8 sequence (U+200B
+  // zero-width space). The thing to test here is that we emit a
+  // unicode-scalar level escape like \uNNNN (at the YAML level), and don't
+  // just pass the UTF-8 byte sequence through as with quoted printables.
+  {
+    const unsigned char foobar[10] = {'f', 'o', 'o',
+                                      0xE2, 0x80, 0x8B, // UTF-8 of U+200B
+                                      'b', 'a', 'r',
+                                      0x0};
+    TestEscaped((char const *)foobar, "\"foo\\u200Bbar\"");
+  }
 }

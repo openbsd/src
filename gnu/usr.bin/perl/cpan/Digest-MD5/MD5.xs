@@ -103,7 +103,7 @@ STATIC int dup_md5_ctx(pTHX_ MAGIC *mg, CLONE_PARAMS *params)
 #endif
 
 #if defined(MGf_DUP) && defined(USE_ITHREADS)
-const STATIC MGVTBL vtbl_md5 = {
+STATIC const MGVTBL vtbl_md5 = {
     NULL, /* get */
     NULL, /* set */
     NULL, /* len */
@@ -115,7 +115,7 @@ const STATIC MGVTBL vtbl_md5 = {
 };
 #else
 /* declare as 5 member, not normal 8 to save image space*/
-const STATIC struct {
+STATIC const struct {
 	int (*svt_get)(SV* sv, MAGIC* mg);
 	int (*svt_set)(SV* sv, MAGIC* mg);
 	U32 (*svt_len)(SV* sv, MAGIC* mg);
@@ -417,7 +417,7 @@ md5(...)
     PPCODE:
 	MD5Init(&ctx);
 
-	if (PL_dowarn & G_WARN_ON) {
+	if ((PL_dowarn & G_WARN_ON) || ckWARN(WARN_SYNTAX)) {
             const char *msg = 0;
 	    if (items == 1) {
 		if (SvROK(ST(0))) {

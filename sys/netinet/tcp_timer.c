@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.64 2018/02/07 00:31:10 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.67 2018/06/11 07:40:26 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <netinet/tcp_fsm.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_debug.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp_seq.h>
 
@@ -71,6 +72,7 @@ void	tcp_timer_persist(void *);
 void	tcp_timer_keep(void *);
 void	tcp_timer_2msl(void *);
 void	tcp_timer_reaper(void *);
+void	tcp_timer_delack(void *);
 
 const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
 	tcp_timer_rexmt,
@@ -78,6 +80,7 @@ const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
 	tcp_timer_keep,
 	tcp_timer_2msl,
 	tcp_timer_reaper,
+	tcp_timer_delack,
 };
 
 /*
@@ -104,9 +107,10 @@ tcp_timer_init(void)
  * Callout to process delayed ACKs for a TCPCB.
  */
 void
-tcp_delack(void *arg)
+tcp_timer_delack(void *arg)
 {
-	struct tcpcb *tp = arg;
+	struct tcpcb *otp = NULL, *tp = arg;
+	short ostate;
 
 	/*
 	 * If tcp_output() wasn't able to transmit the ACK
@@ -114,10 +118,20 @@ tcp_delack(void *arg)
 	 * ACK callout.
 	 */
 	NET_LOCK();
-	if (tp->t_flags & TF_DEAD)
+	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
+	if (!ISSET((tp)->t_flags, TF_TMR_DELACK) ||
+	    timeout_pending(&tp->t_timer[TCPT_DELACK]))
 		goto out;
+	CLR((tp)->t_flags, TF_TMR_DELACK);
+
+	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
+	if (otp)
+		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_DELACK, 0);
  out:
 	NET_UNLOCK();
 }
@@ -181,8 +195,9 @@ tcp_timer_freesack(struct tcpcb *tp)
 void
 tcp_timer_rexmt(void *arg)
 {
-	struct tcpcb *tp = arg;
+	struct tcpcb *otp = NULL, *tp = arg;
 	uint32_t rto;
+	short ostate;
 
 	NET_LOCK();
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
@@ -226,6 +241,10 @@ tcp_timer_rexmt(void *arg)
 		tp = tcp_drop(tp, tp->t_softerror ?
 		    tp->t_softerror : ETIMEDOUT);
 		goto out;
+	}
+	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
 	}
 	tcpstat_inc(tcps_rexmttimeo);
 	rto = TCP_REXMTVAL(tp);
@@ -361,7 +380,8 @@ tcp_timer_rexmt(void *arg)
 #endif
 	}
 	(void) tcp_output(tp);
-
+	if (otp)
+		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_REXMT, 0);
  out:
 	NET_UNLOCK();
 }
@@ -369,8 +389,9 @@ tcp_timer_rexmt(void *arg)
 void
 tcp_timer_persist(void *arg)
 {
-	struct tcpcb *tp = arg;
+	struct tcpcb *otp = NULL, *tp = arg;
 	uint32_t rto;
+	short ostate;
 
 	NET_LOCK();
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
@@ -381,6 +402,11 @@ tcp_timer_persist(void *arg)
 
 	if (TCP_TIMER_ISARMED(tp, TCPT_REXMT))
 		goto out;
+
+	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
 	tcpstat_inc(tcps_persisttimeo);
 	/*
 	 * Hack: if the peer is dead/unreachable, we do not
@@ -403,6 +429,8 @@ tcp_timer_persist(void *arg)
 	tp->t_force = 1;
 	(void) tcp_output(tp);
 	tp->t_force = 0;
+	if (otp)
+		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_PERSIST, 0);
  out:
 	NET_UNLOCK();
 }
@@ -410,7 +438,8 @@ tcp_timer_persist(void *arg)
 void
 tcp_timer_keep(void *arg)
 {
-	struct tcpcb *tp = arg;
+	struct tcpcb *otp = NULL, *tp = arg;
+	short ostate;
 
 	NET_LOCK();
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
@@ -419,6 +448,10 @@ tcp_timer_keep(void *arg)
 		goto out;
 	CLR((tp)->t_flags, TF_TMR_KEEP);
 
+	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
 	tcpstat_inc(tcps_keeptimeo);
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		goto dropit;
@@ -446,6 +479,8 @@ tcp_timer_keep(void *arg)
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
+	if (otp)
+		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_KEEP, 0);
  out:
 	NET_UNLOCK();
 	return;
@@ -459,7 +494,8 @@ tcp_timer_keep(void *arg)
 void
 tcp_timer_2msl(void *arg)
 {
-	struct tcpcb *tp = arg;
+	struct tcpcb *otp = NULL, *tp = arg;
+	short ostate;
 
 	NET_LOCK();
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
@@ -468,6 +504,10 @@ tcp_timer_2msl(void *arg)
 		goto out;
 	CLR((tp)->t_flags, TF_TMR_2MSL);
 
+	if (tp->t_inpcb->inp_socket->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
 	tcp_timer_freesack(tp);
 
 	if (tp->t_state != TCPS_TIME_WAIT &&
@@ -475,7 +515,8 @@ tcp_timer_2msl(void *arg)
 		TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_keepintvl);
 	else
 		tp = tcp_close(tp);
-
+	if (otp)
+		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_2MSL, 0);
  out:
 	NET_UNLOCK();
 }

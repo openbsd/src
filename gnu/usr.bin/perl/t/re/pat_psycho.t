@@ -19,11 +19,15 @@ $| = 1;
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = ('../lib','.');
     require './test.pl';
+    set_up_inc('../lib', '.');
     if ($^O eq 'dec_osf') {
         skip_all("$^O cannot handle this test");
     }
+    my $time_out_factor = $ENV{PERL_TEST_TIME_OUT_FACTOR} || 1;
+    $time_out_factor = 1 if $time_out_factor < 1;
+
+    watchdog(5 * 60 * $time_out_factor);
 }
 
 

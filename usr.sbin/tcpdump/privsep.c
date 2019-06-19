@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.47 2017/09/08 19:30:13 brynet Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.53 2019/03/18 00:09:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -73,12 +73,13 @@ static const int allowed_max[] = {
 	/* INIT */	ALLOW(PRIV_OPEN_BPF) | ALLOW(PRIV_OPEN_DUMP) |
 			ALLOW(PRIV_SETFILTER),
 	/* BPF */	ALLOW(PRIV_SETFILTER),
-	/* FILTER */	ALLOW(PRIV_OPEN_OUTPUT) | ALLOW(PRIV_GETSERVENTRIES) |
+	/* FILTER */	ALLOW(PRIV_OPEN_PFOSFP) | ALLOW(PRIV_OPEN_OUTPUT) |
+			ALLOW(PRIV_GETSERVENTRIES) |
 			ALLOW(PRIV_GETPROTOENTRIES) |
 			ALLOW(PRIV_ETHER_NTOHOST) | ALLOW(PRIV_INIT_DONE),
 	/* RUN */	ALLOW(PRIV_GETHOSTBYADDR) | ALLOW(PRIV_ETHER_NTOHOST) |
-			ALLOW(PRIV_GETRPCBYNUMBER) | ALLOW(PRIV_GETLINES) |
-			ALLOW(PRIV_LOCALTIME) | ALLOW(PRIV_PCAP_STATS),
+			ALLOW(PRIV_GETRPCBYNUMBER) | ALLOW(PRIV_LOCALTIME) |
+			ALLOW(PRIV_PCAP_STATS),
 	/* EXIT */	0
 };
 
@@ -90,20 +91,9 @@ static int allowed_ext[] = {
 	/* INIT */	ALLOW(PRIV_SETFILTER),
 	/* BPF */	ALLOW(PRIV_SETFILTER),
 	/* FILTER */	ALLOW(PRIV_GETSERVENTRIES),
-	/* RUN */	ALLOW(PRIV_GETLINES) | ALLOW(PRIV_LOCALTIME) |
-			ALLOW(PRIV_PCAP_STATS),
+	/* RUN */	ALLOW(PRIV_LOCALTIME) | ALLOW(PRIV_PCAP_STATS),
 	/* EXIT */	0
 };
-
-struct ftab {
-	char *name;
-	int max;
-	int count;
-};
-
-static struct ftab file_table[] = {{PF_OSFP_FILE, 1, 0}};
-
-#define NUM_FILETAB (sizeof(file_table) / sizeof(struct ftab))
 
 int		debug_level = LOG_INFO;
 int		priv_fd = -1;
@@ -112,8 +102,11 @@ static volatile	sig_atomic_t cur_state = STATE_INIT;
 
 extern void	set_slave_signals(void);
 
+static void	drop_privs(int);
+
 static void	impl_open_bpf(int, int *);
 static void	impl_open_dump(int, const char *);
+static void	impl_open_pfosfp(int);
 static void	impl_open_output(int, const char *);
 static void	impl_setfilter(int, char *, int *);
 static void	impl_init_done(int, int *);
@@ -123,17 +116,47 @@ static void	impl_getrpcbynumber(int);
 static void	impl_getserventries(int);
 static void	impl_getprotoentries(int);
 static void	impl_localtime(int fd);
-static void	impl_getlines(int);
 static void	impl_pcap_stats(int, int *);
 
 static void	test_state(int, int);
 static void	logmsg(int, const char *, ...);
 
+static void
+drop_privs(int nochroot)
+{
+	struct passwd *pw;
+
+	/*
+	 * If run as regular user, then tcpdump will rely on
+	 * pledge(2). If we are root, we want to chroot also..
+	 */
+	if (getuid() != 0)
+		return;
+
+	pw = getpwnam("_tcpdump");
+	if (pw == NULL)
+		errx(1, "unknown user _tcpdump");
+
+	if (!nochroot) {
+		if (chroot(pw->pw_dir) == -1)
+			err(1, "unable to chroot");
+		if (chdir("/") == -1)
+			err(1, "unable to chdir");
+	}
+
+	/* drop to _tcpdump */
+	if (setgroups(1, &pw->pw_gid) == -1)
+		err(1, "setgroups() failed");
+	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
+		err(1, "setresgid() failed");
+	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+		err(1, "setresuid() failed");
+}
+
 int
 priv_init(int argc, char **argv)
 {
 	int i, nargc, socks[2];
-	struct passwd *pw;
 	sigset_t allsigs, oset;
 	char **privargv;
 
@@ -159,29 +182,7 @@ priv_init(int argc, char **argv)
 		set_slave_signals();
 		sigprocmask(SIG_SETMASK, &oset, NULL);
 
-		/*
-		 * If run as regular user, packet parser will rely on
-		 * pledge(2). If we are root, we want to chroot also..
-		 */
-		if (getuid() != 0)
-			return (0);
-
-		pw = getpwnam("_tcpdump");
-		if (pw == NULL)
-			errx(1, "unknown user _tcpdump");
-
-		if (chroot(pw->pw_dir) == -1)
-			err(1, "unable to chroot");
-		if (chdir("/") == -1)
-			err(1, "unable to chdir");
-
-		/* drop to _tcpdump */
-		if (setgroups(1, &pw->pw_gid) == -1)
-			err(1, "setgroups() failed");
-		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
-			err(1, "setresgid() failed");
-		if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
-			err(1, "setresuid() failed");
+		drop_privs(0);
 
 		return (0);
 	}
@@ -207,7 +208,7 @@ __dead void
 priv_exec(int argc, char *argv[])
 {
 	int bpfd = -1;
-	int i, sock, cmd, nflag = 0, Pflag = 0;
+	int i, sock, cmd, nflag = 0, oflag = 0, Pflag = 0;
 	char *cmdbuf, *infile = NULL;
 	char *RFileName = NULL;
 	char *WFileName = NULL;
@@ -223,10 +224,14 @@ priv_exec(int argc, char *argv[])
 	/* parse the arguments for required options */
 	opterr = 0;
 	while ((i = getopt(argc, argv,
-	    "ac:D:deE:fF:i:lLnNOopPqr:s:StT:vw:xXy:Y")) != -1) {
+	    "aB:c:D:deE:fF:i:lLnNOopPqr:s:StT:vw:xXy:Y")) != -1) {
 		switch (i) {
 		case 'n':
 			nflag++;
+			break;
+
+		case 'o':
+			oflag = 1;
 			break;
 
 		case 'r':
@@ -262,10 +267,8 @@ priv_exec(int argc, char *argv[])
 	if (WFileName != NULL) {
 		if (strcmp(WFileName, "-") != 0)
 			allowed_ext[STATE_FILTER] |= ALLOW(PRIV_OPEN_OUTPUT);
-		else
-			allowed_ext[STATE_FILTER] |= ALLOW(PRIV_INIT_DONE);
-	} else
-		allowed_ext[STATE_FILTER] |= ALLOW(PRIV_INIT_DONE);
+	}
+	allowed_ext[STATE_FILTER] |= ALLOW(PRIV_INIT_DONE);
 	if (!nflag) {
 		allowed_ext[STATE_RUN] |= ALLOW(PRIV_GETHOSTBYADDR);
 		allowed_ext[STATE_FILTER] |= ALLOW(PRIV_ETHER_NTOHOST);
@@ -273,6 +276,8 @@ priv_exec(int argc, char *argv[])
 		allowed_ext[STATE_RUN] |= ALLOW(PRIV_GETRPCBYNUMBER);
 		allowed_ext[STATE_FILTER] |= ALLOW(PRIV_GETPROTOENTRIES);
 	}
+	if (oflag)
+		allowed_ext[STATE_FILTER] |= ALLOW(PRIV_OPEN_PFOSFP);
 
 	if (infile)
 		cmdbuf = read_infile(infile);
@@ -293,8 +298,12 @@ priv_exec(int argc, char *argv[])
 			test_state(cmd, STATE_BPF);
 			impl_open_dump(sock, RFileName);
 			break;
+		case PRIV_OPEN_PFOSFP:
+			test_state(cmd, STATE_FILTER);
+			impl_open_pfosfp(sock);
+			break;
 		case PRIV_OPEN_OUTPUT:
-			test_state(cmd, STATE_RUN);
+			test_state(cmd, STATE_FILTER);
 			impl_open_output(sock, WFileName);
 			break;
 		case PRIV_SETFILTER:
@@ -305,7 +314,12 @@ priv_exec(int argc, char *argv[])
 			test_state(cmd, STATE_RUN);
 			impl_init_done(sock, &bpfd);
 
-			if (pledge("stdio rpath inet unix dns recvfd bpf", NULL) == -1)
+			drop_privs(1);
+			if (unveil("/etc/ethers", "r") == -1)
+				err(1, "unveil");
+			if (unveil("/etc/rpc", "r") == -1)
+				err(1, "unveil");
+			if (pledge("stdio rpath dns bpf", NULL) == -1)
 				err(1, "pledge");
 
 			break;
@@ -333,10 +347,6 @@ priv_exec(int argc, char *argv[])
 			test_state(cmd, STATE_RUN);
 			impl_localtime(sock);
 			break;
-		case PRIV_GETLINES:
-			test_state(cmd, STATE_RUN);
-			impl_getlines(sock);
-			break;
 		case PRIV_PCAP_STATS:
 			test_state(cmd, STATE_RUN);
 			impl_pcap_stats(sock, &bpfd);
@@ -356,7 +366,7 @@ static void
 impl_open_bpf(int fd, int *bpfd)
 {
 	int snaplen, promisc, err;
-	u_int dlt, dirfilt;
+	u_int dlt, dirfilt, fildrop;
 	char device[IFNAMSIZ];
 	size_t iflen;
 
@@ -366,10 +376,11 @@ impl_open_bpf(int fd, int *bpfd)
 	must_read(fd, &promisc, sizeof(int));
 	must_read(fd, &dlt, sizeof(u_int));
 	must_read(fd, &dirfilt, sizeof(u_int));
+	must_read(fd, &fildrop, sizeof(fildrop));
 	iflen = read_string(fd, device, sizeof(device), __func__);
 	if (iflen == 0)
 		errx(1, "Invalid interface size specified");
-	*bpfd = pcap_live(device, snaplen, promisc, dlt, dirfilt);
+	*bpfd = pcap_live(device, snaplen, promisc, dlt, dirfilt, fildrop);
 	err = errno;
 	if (*bpfd < 0)
 		logmsg(LOG_DEBUG,
@@ -397,6 +408,24 @@ impl_open_dump(int fd, const char *RFileName)
 			logmsg(LOG_DEBUG, "[priv]: failed to open %s: %s",
 			    RFileName, strerror(errno));
 	}
+	send_fd(fd, file);
+	must_write(fd, &err, sizeof(int));
+	if (file >= 0)
+		close(file);
+}
+
+static void
+impl_open_pfosfp(int fd)
+{
+	int file, err = 0;
+
+	logmsg(LOG_DEBUG, "[priv]: msg PRIV_OPEN_PFOSFP received");
+
+	file = open(PF_OSFP_FILE, O_RDONLY, 0);
+	err = errno;
+	if (file < 0)
+		logmsg(LOG_DEBUG, "[priv]: failed to open %s: %s",
+		    PF_OSFP_FILE, strerror(errno));
 	send_fd(fd, file);
 	must_write(fd, &err, sizeof(int));
 	if (file >= 0)
@@ -565,55 +594,6 @@ impl_localtime(int fd)
 }
 
 static void
-impl_getlines(int fd)
-{
-	FILE *fp;
-	char *buf, *lbuf, *file;
-	size_t len, fid;
-
-	logmsg(LOG_DEBUG, "[priv]: msg PRIV_GETLINES received");
-
-	must_read(fd, &fid, sizeof(size_t));
-	if (fid >= NUM_FILETAB)
-		errx(1, "invalid file id");
-
-	file = file_table[fid].name;
-
-	if (file == NULL)
-		errx(1, "invalid file referenced");
-
-	if (file_table[fid].count >= file_table[fid].max)
-		errx(1, "maximum open count exceeded for %s", file);
-
-	file_table[fid].count++;
-
-	if ((fp = fopen(file, "r")) == NULL) {
-		write_zero(fd);
-		return;
-	}
-
-	lbuf = NULL;
-	while ((buf = fgetln(fp, &len))) {
-		if (buf[len - 1] == '\n')
-			buf[len - 1] = '\0';
-		else {
-			if ((lbuf = malloc(len + 1)) == NULL)
-				err(1, NULL);
-			memcpy(lbuf, buf, len);
-			lbuf[len] = '\0';
-			buf = lbuf;
-		}
-
-		write_string(fd, buf);
-
-		free(lbuf);
-		lbuf = NULL;
-	}
-	write_zero(fd);
-	fclose(fp);
-}
-
-static void
 impl_pcap_stats(int fd, int *bpfd)
 {
 	struct pcap_stat stats;
@@ -774,17 +754,6 @@ priv_localtime(const time_t *t)
 	return &lt;
 }
 
-/* start getting lines from a file */
-void
-priv_getlines(size_t sz)
-{
-	if (priv_fd < 0)
-		errx(1, "%s called from privileged portion", __func__);
-
-	write_command(priv_fd, PRIV_GETLINES);
-	must_write(priv_fd, &sz, sizeof(size_t));
-}
-
 int
 priv_pcap_stats(struct pcap_stat *ps)
 {
@@ -796,16 +765,20 @@ priv_pcap_stats(struct pcap_stat *ps)
 	return (0);
 }
 
-/* retrieve a line from a file, should be called repeatedly after calling
-   priv_getlines(), until it returns zero. */
-size_t
-priv_getline(char *line, size_t line_len)
+int
+priv_open_pfosfp(void)
 {
-	if (priv_fd < 0)
-		errx(1, "%s called from privileged portion", __func__);
+	int fd, err = 0;
+	write_command(priv_fd, PRIV_OPEN_PFOSFP);
 
-	/* read the line */
-	return (read_string(priv_fd, line, line_len, __func__));
+	fd = receive_fd(priv_fd);
+	must_read(priv_fd, &err, sizeof(int));
+	if (fd < 0) {
+		warnc(err, "%s", PF_OSFP_FILE);
+		return (-1);
+	}
+
+	return (fd);
 }
 
 /* Read all data or return 1 for error. */

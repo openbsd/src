@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.89 2017/05/17 14:00:06 deraadt Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.93 2019/06/05 06:40:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -39,6 +39,7 @@
 #include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
+#include <openssl/ecdsa.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 
@@ -183,7 +184,7 @@ ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *
 	EVP_PKEY	*key = NULL;
 	BIO		*bio = NULL;
 	long		 size;
-	char		*data, *buf = NULL;
+	char		*data, *buf, *filebuf;
 	struct stat	 st;
 	char		 mode[12];
 	char		 prompt[2048];
@@ -196,6 +197,9 @@ ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *
 	 */
 	if ((fp = fopen(name, "r")) == NULL)
 		return (NULL);
+	if ((filebuf = malloc_conceal(BUFSIZ)) == NULL)
+		goto fail;
+	setvbuf(fp, filebuf, _IOFBF, BUFSIZ);
 
 	if (fstat(fileno(fp), &st) != 0)
 		goto fail;
@@ -216,6 +220,8 @@ ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *
 	key = PEM_read_PrivateKey(fp, NULL, ssl_password_cb, prompt);
 	fclose(fp);
 	fp = NULL;
+	freezero(filebuf, BUFSIZ);
+	filebuf = NULL;
 	if (key == NULL)
 		goto fail;
 	/*
@@ -227,7 +233,7 @@ ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *
 		goto fail;
 	if ((size = BIO_get_mem_data(bio, &data)) <= 0)
 		goto fail;
-	if ((buf = calloc(1, size + 1)) == NULL)
+	if ((buf = calloc_conceal(1, size + 1)) == NULL)
 		goto fail;
 	memcpy(buf, data, size);
 
@@ -239,11 +245,11 @@ ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *
 
 fail:
 	ssl_error("ssl_load_key");
-	free(buf);
 	BIO_free_all(bio);
 	EVP_PKEY_free(key);
 	if (fp)
 		fclose(fp);
+	freezero(filebuf, BUFSIZ);
 	return (NULL);
 }
 
@@ -328,7 +334,7 @@ ssl_to_text(const SSL *ssl)
 {
 	static char buf[256];
 
-	(void)snprintf(buf, sizeof buf, "version=%s, cipher=%s, bits=%d",
+	(void)snprintf(buf, sizeof buf, "%s:%s:%d",
 	    SSL_get_version(ssl),
 	    SSL_get_cipher_name(ssl),
 	    SSL_get_cipher_bits(ssl, NULL));
@@ -356,6 +362,7 @@ ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
 	X509		*x509 = NULL;
 	EVP_PKEY	*pkey = NULL;
 	RSA		*rsa = NULL;
+	EC_KEY		*eckey = NULL;
 	void		*exdata = NULL;
 
 	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
@@ -378,15 +385,20 @@ ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
 	in = NULL;
 
 	if (data != NULL && datalen) {
-		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL ||
+		if (((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL &&
+			(eckey = EVP_PKEY_get1_EC_KEY(pkey)) == NULL) ||
 		    (exdata = malloc(datalen)) == NULL) {
 			SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_EVP_LIB);
 			goto fail;
 		}
 
 		memcpy(exdata, data, datalen);
-		RSA_set_ex_data(rsa, 0, exdata);
+		if (rsa)
+			RSA_set_ex_data(rsa, 0, exdata);
+		if (eckey)
+			ECDSA_set_ex_data(eckey, 0, exdata);
 		RSA_free(rsa); /* dereference, will be cleaned up with pkey */
+		EC_KEY_free(eckey); /* dereference, will be cleaned up with pkey */
 	}
 
 	*x509ptr = x509;
@@ -396,6 +408,7 @@ ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
 
  fail:
 	RSA_free(rsa);
+	EC_KEY_free(eckey);
 	BIO_free(in);
 	EVP_PKEY_free(pkey);
 	X509_free(x509);
@@ -423,7 +436,7 @@ ssl_ctx_fake_private_key(SSL_CTX *ctx, const void *data, size_t datalen,
 	 */
 	ret = SSL_CTX_use_PrivateKey(ctx, pkey);
 	if (!ret)
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_SSL_LIB);
+		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_LIB_SSL);
 
 	if (pkeyptr != NULL)
 		*pkeyptr = pkey;

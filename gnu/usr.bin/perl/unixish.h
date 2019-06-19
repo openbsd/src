@@ -138,9 +138,10 @@ int afstat(int fd, struct stat *statb);
 #if defined(__amigaos4__)
 #  define PERL_SYS_INIT_BODY(c,v)					\
 	MALLOC_CHECK_TAINT2(*c,*v) PERL_FPU_INIT; PERLIO_INIT; MALLOC_INIT; amigaos4_init_fork_array(); amigaos4_init_environ_sema();
-#  define PERL_SYS_TERM_BODY()                              \
-    HINTS_REFCNT_TERM; OP_CHECK_MUTEX_TERM;                 \
-    OP_REFCNT_TERM; PERLIO_TERM; MALLOC_TERM; LOCALE_TERM;  \
+#  define PERL_SYS_TERM_BODY()                         \
+    HINTS_REFCNT_TERM; KEYWORD_PLUGIN_MUTEX_TERM;      \
+    OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM; PERLIO_TERM;  \
+    MALLOC_TERM; LOCALE_TERM;                          \
     amigaos4_dispose_fork_array();
 #endif
 
@@ -150,16 +151,16 @@ int afstat(int fd, struct stat *statb);
 #endif
 
 #ifndef PERL_SYS_TERM_BODY
-#  define PERL_SYS_TERM_BODY()                      \
-    HINTS_REFCNT_TERM; OP_CHECK_MUTEX_TERM;         \
-    OP_REFCNT_TERM; PERLIO_TERM; MALLOC_TERM;       \
-    LOCALE_TERM;
+#  define PERL_SYS_TERM_BODY()                         \
+    HINTS_REFCNT_TERM; KEYWORD_PLUGIN_MUTEX_TERM;      \
+    OP_CHECK_MUTEX_TERM; OP_REFCNT_TERM; PERLIO_TERM;  \
+    MALLOC_TERM; LOCALE_TERM;
 
 #endif
 
 #define BIT_BUCKET "/dev/null"
 
-#define dXSUB_SYS
+#define dXSUB_SYS dNOOP
 
 #ifndef NO_ENVIRON_ARRAY
 #define USE_ENVIRON_ARRAY

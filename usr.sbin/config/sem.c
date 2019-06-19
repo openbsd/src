@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.36 2015/12/14 05:59:56 mmcc Exp $	*/
+/*	$OpenBSD: sem.c,v 1.37 2019/02/05 02:17:32 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -550,10 +550,10 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 			if (dev->d_major == maj)
 				break;
 		if (dev == NULL)
-			(void)snprintf(buf, sizeof buf, "<%d/%d>",
+			(void)snprintf(buf, sizeof buf, "<%u/%u>",
 			    maj, min);
 		else
-			(void)snprintf(buf, sizeof buf, "%s%d%c",
+			(void)snprintf(buf, sizeof buf, "%s%u%c",
 			    dev->d_name, min / maxpartitions,
 			    (min % maxpartitions) + 'a');
 		nv->nv_str = intern(buf);

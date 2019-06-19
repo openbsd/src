@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2017/10/17 19:31:56 naddy Exp $
+#	$OpenBSD: Makefile,v 1.32 2019/04/20 22:59:03 deraadt Exp $
 
 MAN=	cdboot.8
 
@@ -27,7 +27,7 @@ SRCS+=	softraid_i386.c
 SRCS+=	bootarg.c cmd.c vars.c
 
 .PATH:	${S}/lib/libsa
-SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.c memcpy.c memset.c printf.c \
+SRCS+=	alloc.c ctime.c exit.c getchar.c memcmp.c memcpy.c memmove.c memset.c printf.c \
 	putchar.c snprintf.c strcmp.c strerror.c strlen.c strncmp.c strncpy.c \
 	strtol.c strtoll.c
 SRCS+=	close.c closeall.c cons.c cread.c dev.c disklabel.c dkcksum.c fstat.c \

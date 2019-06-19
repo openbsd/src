@@ -257,14 +257,14 @@ ok($objSe->eq("A\x{308}\x{304}", "\x{1DE}"));
 
 ok($objSe->eq("o\x{308}\x{304}", "\x{22B}"));
 ok($objSe->eq("O\x{308}\x{304}", "\x{22A}"));
-ok($objSe->eq("o\x{303}\x{301}","\x{1E4D}"));
-ok($objSe->eq("O\x{303}\x{301}","\x{1E4C}"));
+ok($objSe->eq("o\x{303}\x{301}", "\x{1E4D}"));
+ok($objSe->eq("O\x{303}\x{301}", "\x{1E4C}"));
 ok($objSe->eq("o\x{303}\x{304}", "\x{22D}"));
 ok($objSe->eq("O\x{303}\x{304}", "\x{22C}"));
-ok($objSe->eq("o\x{303}\x{308}","\x{1E4F}"));
-ok($objSe->eq("O\x{303}\x{308}","\x{1E4E}"));
-ok($objSe->eq("o\x{303}\x{31B}","\x{1EE1}"));
-ok($objSe->eq("O\x{303}\x{31B}","\x{1EE0}"));
+ok($objSe->eq("o\x{303}\x{308}", "\x{1E4F}"));
+ok($objSe->eq("O\x{303}\x{308}", "\x{1E4E}"));
+ok($objSe->eq("o\x{303}\x{31B}", "\x{1EE1}"));
+ok($objSe->eq("O\x{303}\x{31B}", "\x{1EE0}"));
 
 ok($objSe->eq("o\x{302}\x{300}", "\x{1ED3}"));
 ok($objSe->eq("O\x{302}\x{300}", "\x{1ED2}"));

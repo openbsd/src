@@ -18,6 +18,9 @@ sub BEGIN {
 }
 
 use Storable qw(freeze thaw);
+
+$Storable::flags = Storable::FLAGS_COMPAT;
+
 use Test::More tests => 28;
 
 ($scalar_fetch, $array_fetch, $hash_fetch) = (0, 0, 0);

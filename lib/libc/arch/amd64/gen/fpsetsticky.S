@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetsticky.S,v 1.3 2015/05/29 08:50:12 uebayasi Exp $	*/
+/*	$OpenBSD: fpsetsticky.S,v 1.4 2018/07/03 23:14:05 mortimer Exp $	*/
 /*	$NetBSD: fpsetsticky.S,v 1.5 2004/03/09 17:16:13 drochner Exp $	*/
 
 /*
@@ -22,6 +22,7 @@ ENTRY(_fpsetsticky)
 #else
 ENTRY(fpsetsticky)
 #endif
+	RETGUARD_SETUP(fpsetsticky, r11)
 	fnstenv	-28(%rsp)
 	stmxcsr	-32(%rsp)
 
@@ -43,6 +44,7 @@ ENTRY(fpsetsticky)
 
 	ldmxcsr	-32(%rsp)
 	fldenv	-28(%rsp)
+	RETGUARD_CHECK(fpsetsticky, r11)
 	ret
 #ifdef WEAK_ALIAS
 END(_fpsetsticky)

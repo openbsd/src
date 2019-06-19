@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.3 2016/11/04 18:12:14 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.4 2019/05/11 13:05:25 tb Exp $
 
 # sparc64-specific libcrypto build rules
 
@@ -27,8 +27,6 @@ CFLAGS+= -DGHASH_ASM
 SSLASM+= modes ghash-sparcv9 ghash-sparcv9
 # rc4
 SRCS+= rc4_enc.c rc4_skey.c
-## rc5
-#SRCS+= rc5_enc.c 
 # sha
 SSLASM+= sha sha1-sparcv9 sha1-sparcv9
 CFLAGS+= -DSHA1_ASM

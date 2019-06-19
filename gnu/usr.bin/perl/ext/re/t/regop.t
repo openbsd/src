@@ -23,7 +23,7 @@ shift @tests
 plan( @tests + 2 + ( @strs - grep { !$_ or /^---/ } @strs ));
 
 is( scalar @tests, $NUM_SECTS,
-    "Expecting output for $NUM_SECTS patterns" );
+    "Expecting output for $NUM_SECTS patterns, got ". scalar(@tests) );
 ok( defined $out, 'regop.pl returned something defined' );
 
 $out ||= "";

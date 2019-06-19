@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 plan tests => 59;
@@ -60,20 +60,26 @@ is ($i, 30, "each count");
 @keys = ('blurfl', keys(%h), 'dyick');
 is ($#keys, 31, "added a key");
 
-$size = ((split('/',scalar %h))[1]);
-keys %h = $size * 5;
-$newsize = ((split('/',scalar %h))[1]);
-is ($newsize, $size * 8, "resize");
-keys %h = 1;
-$size = ((split('/',scalar %h))[1]);
-is ($size, $newsize, "same size");
-%h = (1,1);
-$size = ((split('/',scalar %h))[1]);
-is ($size, $newsize, "still same size");
-undef %h;
-%h = (1,1);
-$size = ((split('/',scalar %h))[1]);
-is ($size, 8, "size 8");
+SKIP: {
+    skip "no Hash::Util on miniperl", 4, if is_miniperl;
+    require Hash::Util;
+    sub Hash::Util::num_buckets (\%);
+
+    $size = Hash::Util::num_buckets(%h);
+    keys %h = $size * 5;
+    $newsize = Hash::Util::num_buckets(%h);
+    is ($newsize, $size * 8, "resize");
+    keys %h = 1;
+    $size = Hash::Util::num_buckets(%h);
+    is ($size, $newsize, "same size");
+    %h = (1,1);
+    $size = Hash::Util::num_buckets(%h);
+    is ($size, $newsize, "still same size");
+    undef %h;
+    %h = (1,1);
+    $size = Hash::Util::num_buckets(%h);
+    is ($size, 8, "size 8");
+}
 
 # test scalar each
 %hash = 1..20;
@@ -98,13 +104,20 @@ $total = 0;
 $total += $key while $key = each %hash;
 is ($total, 100, "test values keys resets iterator");
 
-$size = (split('/', scalar %hash))[1];
-keys(%hash) = $size / 2;
-is ($size, (split('/', scalar %hash))[1]);
-keys(%hash) = $size + 100;
-isnt ($size, (split('/', scalar %hash))[1]);
+SKIP: {
+    skip "no Hash::Util on miniperl", 3, if is_miniperl;
+    require Hash::Util;
+    sub Hash::Util::num_buckets (\%);
 
-is (keys(%hash), 10, "keys (%hash)");
+    $size = Hash::Util::num_buckets(%hash);
+    keys(%hash) = $size / 2;
+    is ($size, Hash::Util::num_buckets(%hash),
+	"assign to keys does not shrink hash bucket array");
+    keys(%hash) = $size + 100;
+    isnt ($size, Hash::Util::num_buckets(%hash),
+	  "assignment to keys of a number not large enough does not change size");
+    is (keys(%hash), 10, "keys (%hash)");
+}
 
 @tests = (&next_test, &next_test, &next_test);
 {
@@ -191,14 +204,14 @@ for my $k (qw(each keys values)) {
     my ($k2,$v2)=each(%foo);
     my $rest=0;
     while (each(%foo)) {$rest++};
-    is($yes,1,"if(%foo) was true");
-    isnt($k1,$k2,"if(%foo) didnt mess with each (key)");
-    isnt($v1,$v2,"if(%foo) didnt mess with each (value)");
-    is($rest,3,"Got the expect number of keys");
+    is($yes,1,"if(%foo) was true - my");
+    isnt($k1,$k2,"if(%foo) didnt mess with each (key) - my");
+    isnt($v1,$v2,"if(%foo) didnt mess with each (value) - my");
+    is($rest,3,"Got the expected number of keys - my");
     my $hsv=1 && %foo;
-    like($hsv,qr[/],"Got bucket stats from %foo in scalar assignment context");
+    is($hsv,$count,"Got the count of keys from %foo in scalar assignment context - my");
     my @arr=%foo&&%foo;
-    is(@arr,10,"Got expected number of elements in list context");
+    is(@arr,10,"Got expected number of elements in list context - my");
 }    
 {
     our %foo=(1..10);
@@ -210,14 +223,14 @@ for my $k (qw(each keys values)) {
     my ($k2,$v2)=each(%foo);
     my $rest=0;
     while (each(%foo)) {$rest++};
-    is($yes,1,"if(%foo) was true");
-    isnt($k1,$k2,"if(%foo) didnt mess with each (key)");
-    isnt($v1,$v2,"if(%foo) didnt mess with each (value)");
-    is($rest,3,"Got the expect number of keys");
+    is($yes,1,"if(%foo) was true - our");
+    isnt($k1,$k2,"if(%foo) didnt mess with each (key) - our");
+    isnt($v1,$v2,"if(%foo) didnt mess with each (value) - our");
+    is($rest,3,"Got the expected number of keys - our");
     my $hsv=1 && %foo;
-    like($hsv,qr[/],"Got bucket stats from %foo in scalar assignment context");
+    is($hsv,$count,"Got the count of keys from %foo in scalar assignment context - our");
     my @arr=%foo&&%foo;
-    is(@arr,10,"Got expected number of elements in list context");
+    is(@arr,10,"Got expected number of elements in list context - our");
 }    
 {
     # make sure a deleted active iterator gets freed timely, even if the

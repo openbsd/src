@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.8 2016/05/04 14:30:01 kettenis Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.10 2018/06/18 13:54:03 visa Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,23 +38,24 @@ struct pci_attach_args;
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 struct mips_pci_chipset {
-    void	*pc_conf_v;
-    void	(*pc_attach_hook)(struct device *,
-		    struct device *, struct pcibus_attach_args *);
-    int		(*pc_bus_maxdevs)(void *, int);
-    pcitag_t	(*pc_make_tag)(void *, int, int, int);
-    void	(*pc_decompose_tag)(void *, pcitag_t, int *,
-		    int *, int *);
-    int		(*pc_conf_size)(void *, pcitag_t);
-    pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
-    void	(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
+	void		*pc_conf_v;
+	void		(*pc_attach_hook)(struct device *,
+			    struct device *, struct pcibus_attach_args *);
+	int		(*pc_bus_maxdevs)(void *, int);
+	pcitag_t	(*pc_make_tag)(void *, int, int, int);
+	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
+			    int *, int *);
+	int		(*pc_conf_size)(void *, pcitag_t);
+	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
+	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
 
-    void	*pc_intr_v;
-    int		(*pc_intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
-    const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
-    void	*(*pc_intr_establish)(void *, pci_intr_handle_t,
-		    int, int (*)(void *), void *, char *);
-    void	(*pc_intr_disestablish)(void *, void *);
+	void		*pc_intr_v;
+	int		(*pc_intr_map)(struct pci_attach_args *,
+			    pci_intr_handle_t *);
+	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
+	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
+			    int, int (*)(void *), void *, char *);
+	void		(*pc_intr_disestablish)(void *, void *);
 };
 
 /*
@@ -73,28 +74,37 @@ struct mips_pci_chipset {
 
 #define	pci_conf_size(c, t)						\
     (*(c)->pc_conf_size)((c)->pc_conf_v, (t))
+
 #ifdef DEBUG_PCI_CONF
-static inline pcireg_t pci_conf_read_db(void * c, pcitag_t t, int r,
-				     char* f,char* func,int l)
+static inline pcireg_t
+pci_conf_read_db(void *cookie, pcitag_t tag, int reg,
+    const char *file, const char *func, int line)
 {
-  pcireg_t v;
-  struct mips_pci_chipset *pc = c;
-  v = (*(pc)->pc_conf_read)(pc->pc_conf_v, t, r);
-  printf("%s:%s:%d:pci_conf_read(%x,%x) = %x\n",f,func,l,t,r,v);
-  return v;
+	struct mips_pci_chipset *pc = cookie;
+	pcireg_t val;
+
+	val = (*(pc)->pc_conf_read)(pc->pc_conf_v, tag, reg);
+	printf("%s:%s:%d:pci_conf_read(%lx,%x) = %x\n", file, func, line,
+	    tag, reg, val);
+	return val;
 }
 
-static inline void pci_conf_write_db(void * c, pcitag_t t, int r, pcireg_t v,
-				     char* f,char* func,int l)
+static inline void
+pci_conf_write_db(void *cookie, pcitag_t tag, int reg, pcireg_t val,
+    const char *file, const char *func, int line)
 {
-  struct mips_pci_chipset *pc = c;
-  printf("%s:%s:%d:pci_conf_write(%x,%x,%x)\n",f,func,l,t,r,v);
-  (*(pc)->pc_conf_write)(pc->pc_conf_v, t, r, v);
+	struct mips_pci_chipset *pc = cookie;
+
+	printf("%s:%s:%d:pci_conf_write(%lx,%x,%x)\n", file, func, line,
+	    tag, reg, val);
+	(*(pc)->pc_conf_write)(pc->pc_conf_v, tag, reg, val);
 }
 
 
-#define	pci_conf_read(c, t, r) pci_conf_read_db(c, t, r,__FILE__,__FUNCTION__,__LINE__)
-#define	pci_conf_write(c, t, r, v) pci_conf_write_db(c, t, r, v,__FILE__,__FUNCTION__,__LINE__)
+#define	pci_conf_read(c, t, r)						\
+    pci_conf_read_db(c, t, r, __FILE__, __FUNCTION__, __LINE__)
+#define	pci_conf_write(c, t, r, v)					\
+    pci_conf_write_db(c, t, r, v, __FILE__, __FUNCTION__, __LINE__)
 #else
 #define	pci_conf_read(c, t, r)						\
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))

@@ -28,7 +28,7 @@ unshift(@INC,'lib');  # In case someone didn't define Perl_Root
                       # before the build
 
 if ($ARGV[0] eq '-f') {
-  open(ARGS,$ARGV[1]) or die "Can't read data from $ARGV[1]: $!\n";
+  open(ARGS,'<',$ARGV[1]) or die "Can't read data from $ARGV[1]: $!\n";
   @ARGV = ();
   while (<ARGS>) {
     push(@ARGV,split(/\|/,$_));
@@ -47,8 +47,8 @@ Can't find config.h to read!
 EndOfGasp
 }
 $outdir = '';
-open(IN,"$infile") || die "Can't open $infile: $!\n";
-open(OUT,">${outdir}config.sh") || die "Can't open ${outdir}config.sh: $!\n";
+open(IN,'<',$infile) || die "Can't open $infile: $!\n";
+open(OUT,'>',"${outdir}config.sh") || die "Can't open ${outdir}config.sh: $!\n";
 
 $time = localtime;
 $cf_by = $ENV{'user'};
@@ -174,7 +174,7 @@ print OUT "myuname='Plan9 $myname $osvers $p9p_objtype'\n";
 
 # Before we read the C header file, find out what config.sh constants are
 # equivalent to the C preprocessor macros
-if (open(SH,"${outdir}config_h.SH")) {
+if (open(SH,'<',"${outdir}config_h.SH")) {
   while (<SH>) {
     next unless m%^#(?!if).*\$%;
     s/^#//; s!(.*?)\s*/\*.*!$1!;
@@ -267,7 +267,7 @@ foreach (sort keys %val_vars) {
 # print OUT "libs='",join(' ',@libs),"'\n";
 # print OUT "libc='",join(' ',@crtls),"'\n";
 
-if (open(PL,"${outdir}patchlevel.h")) {
+if (open(PL,'<',"${outdir}patchlevel.h")) {
   while (<PL>) {
     if    (/^#define PERL_VERSION\s+(\S+)/) {
       print OUT "PERL_VERSION='$1'\n";

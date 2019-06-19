@@ -1,4 +1,4 @@
-/*	$OpenBSD: futex.h,v 1.1 2017/04/28 13:50:55 mpi Exp $ */
+/*	$OpenBSD: futex.h,v 1.2 2018/06/03 15:09:26 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot
@@ -31,5 +31,11 @@ __END_DECLS
 #define	FUTEX_WAIT		1
 #define	FUTEX_WAKE		2
 #define	FUTEX_REQUEUE		3
+
+#define	FUTEX_PRIVATE_FLAG	128
+
+#define	FUTEX_WAIT_PRIVATE	(FUTEX_WAIT | FUTEX_PRIVATE_FLAG)
+#define	FUTEX_WAKE_PRIVATE	(FUTEX_WAKE | FUTEX_PRIVATE_FLAG)
+#define	FUTEX_REQUEUE_PRIVATE	(FUTEX_REQUEUE | FUTEX_PRIVATE_FLAG)
 
 #endif	/* _SYS_FUTEX_H_ */

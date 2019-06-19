@@ -55,8 +55,7 @@
 #include "util/config_file.h"
 #include "util/data/msgreply.h"
 #include "sldns/sbuffer.h"
-
-#define ECS_MAX_TREESIZE 100
+#include "iterator/iter_utils.h"
 
 /** externally called */
 void 
@@ -93,6 +92,7 @@ subnet_new_qstate(struct module_qstate *qstate, int id)
 		return 0;
 	qstate->minfo[id] = sq;
 	memset(sq, 0, sizeof(*sq));
+	sq->started_no_cache_store = qstate->no_cache_store;
 	return 1;
 }
 
@@ -150,7 +150,9 @@ int ecs_whitelist_check(struct query_info* qinfo,
 
 	/* Cache by default, might be disabled after parsing EDNS option
 	 * received from nameserver. */
-	qstate->no_cache_store = 0;
+	if(!iter_stub_fwd_no_cache(qstate, &qstate->qinfo)) {
+		qstate->no_cache_store = 0;
+	}
 
 	if(sq->ecs_server_out.subnet_validdata && ((sq->subnet_downstream &&
 		qstate->env->cfg->client_subnet_always_forward) ||
@@ -177,6 +179,14 @@ int ecs_whitelist_check(struct query_info* qinfo,
 }
 
 
+void
+subnet_markdel(void* key)
+{
+	struct msgreply_entry *e = (struct msgreply_entry*)key;
+	e->key.qtype = 0;
+	e->key.qclass = 0;
+}
+
 int
 subnetmod_init(struct module_env *env, int id)
 {
@@ -193,6 +203,7 @@ subnetmod_init(struct module_env *env, int id)
 		HASH_DEFAULT_STARTARRAY, env->cfg->msg_cache_size,
 		msg_cache_sizefunc, query_info_compare, query_entry_delete,
 		subnet_data_delete, NULL);
+	slabhash_setmarkdel(sn_env->subnet_msg_cache, &subnet_markdel);
 	if(!sn_env->subnet_msg_cache) {
 		log_err("subnet: could not create cache");
 		free(sn_env);
@@ -291,13 +302,13 @@ get_tree(struct subnet_msg_cache_data *data, struct ecs_data *edns,
 		if (!data->tree4)
 			data->tree4 = addrtree_create(
 				cfg->max_client_subnet_ipv4, &delfunc,
-				&sizefunc, env, ECS_MAX_TREESIZE);
+				&sizefunc, env, cfg->max_ecs_tree_size_ipv4);
 		tree = data->tree4;
 	} else {
 		if (!data->tree6)
 			data->tree6 = addrtree_create(
 				cfg->max_client_subnet_ipv6, &delfunc,
-				&sizefunc, env, ECS_MAX_TREESIZE);
+				&sizefunc, env, cfg->max_ecs_tree_size_ipv6);
 		tree = data->tree6;
 	}
 	return tree;
@@ -339,6 +350,7 @@ update_cache(struct module_qstate *qstate, int id)
 			return;
 		}
 		lru_entry = &mrep_entry->entry;
+		lock_rw_wrlock(&lru_entry->lock);
 		lru_entry->data = calloc(1,
 			sizeof(struct subnet_msg_cache_data));
 		if (!lru_entry->data) {
@@ -352,7 +364,9 @@ update_cache(struct module_qstate *qstate, int id)
 		log_err("Subnet cache insertion failed");
 		return;
 	}
+	lock_quick_lock(&sne->alloc.lock);
 	rep = reply_info_copy(qstate->return_msg->rep, &sne->alloc, NULL);
+	lock_quick_unlock(&sne->alloc.lock);
 	if (!rep) {
 		if (acquired_lock) lock_rw_unlock(&lru_entry->lock);
 		log_err("Subnet cache insertion failed");
@@ -374,6 +388,7 @@ update_cache(struct module_qstate *qstate, int id)
 	if (acquired_lock) {
 		lock_rw_unlock(&lru_entry->lock);
 	} else {
+		lock_rw_unlock(&lru_entry->lock);
 		slabhash_insert(subnet_msg_cache, h, lru_entry, lru_entry->data,
 			NULL);
 	}
@@ -460,7 +475,12 @@ eval_response(struct module_qstate *qstate, int id, struct subnet_qstate *sq)
 
 	memset(c_out, 0, sizeof(*c_out));
 
-	if (!qstate->return_msg) return module_error;
+	if (!qstate->return_msg) {
+		/* already an answer and its not a message, but retain
+		 * the actual rcode, instead of module_error, so send
+		 * module_finished */
+		return module_finished;
+	}
 	
 	/* We have not asked for subnet data */
 	if (!sq->subnet_sent) {
@@ -478,9 +498,11 @@ eval_response(struct module_qstate *qstate, int id, struct subnet_qstate *sq)
 		 * is still usefull to put it in the edns subnet cache for
 		 * when a client explicitly asks for subnet specific answer. */
 		verbose(VERB_QUERY, "subnet: Authority indicates no support");
-		lock_rw_wrlock(&sne->biglock);
-		update_cache(qstate, id);
-		lock_rw_unlock(&sne->biglock);
+		if(!sq->started_no_cache_store) {
+			lock_rw_wrlock(&sne->biglock);
+			update_cache(qstate, id);
+			lock_rw_unlock(&sne->biglock);
+		}
 		if (sq->subnet_downstream)
 			cp_edns_bad_response(c_out, c_in);
 		return module_finished;
@@ -506,7 +528,10 @@ eval_response(struct module_qstate *qstate, int id, struct subnet_qstate *sq)
 	}
 
 	lock_rw_wrlock(&sne->biglock);
-	update_cache(qstate, id);
+	if(!sq->started_no_cache_store) {
+		update_cache(qstate, id);
+	}
+	sne->num_msg_nocache++;
 	lock_rw_unlock(&sne->biglock);
 	
 	if (sq->subnet_downstream) {
@@ -516,6 +541,19 @@ eval_response(struct module_qstate *qstate, int id, struct subnet_qstate *sq)
 		c_out->subnet_source_mask = c_in->subnet_source_mask;
 		memcpy(&c_out->subnet_addr, &c_in->subnet_addr, INET6_SIZE);
 		c_out->subnet_scope_mask = s_in->subnet_scope_mask;
+		/* Limit scope returned to client to scope used for caching. */
+		if(c_out->subnet_addr_fam == EDNSSUBNET_ADDRFAM_IP4) {
+			if(c_out->subnet_scope_mask >
+				qstate->env->cfg->max_client_subnet_ipv4) {
+				c_out->subnet_scope_mask =
+					qstate->env->cfg->max_client_subnet_ipv4;
+			}
+		}
+		else if(c_out->subnet_scope_mask >
+				qstate->env->cfg->max_client_subnet_ipv6) {
+				c_out->subnet_scope_mask =
+					qstate->env->cfg->max_client_subnet_ipv6;
+		}
 		c_out->subnet_validdata = 1;
 	}
 	return module_finished;
@@ -687,8 +725,20 @@ subnetmod_operate(struct module_qstate *qstate, enum module_ev event,
 			return;
 		}
 
+		/* Limit to minimum allowed source mask */
+		if(sq->ecs_client_in.subnet_source_mask != 0 && (
+			(sq->ecs_client_in.subnet_addr_fam == EDNSSUBNET_ADDRFAM_IP4 &&
+			 sq->ecs_client_in.subnet_source_mask < qstate->env->cfg->min_client_subnet_ipv4) ||
+			(sq->ecs_client_in.subnet_addr_fam == EDNSSUBNET_ADDRFAM_IP6 &&
+			 sq->ecs_client_in.subnet_source_mask < qstate->env->cfg->min_client_subnet_ipv6))) {
+				qstate->return_rcode = LDNS_RCODE_REFUSED;
+				qstate->ext_state[id] = module_finished;
+				return;
+		}
+
 		lock_rw_wrlock(&sne->biglock);
 		if (lookup_and_reply(qstate, id, sq)) {
+			sne->num_msg_cache++;
 			lock_rw_unlock(&sne->biglock);
 			verbose(VERB_QUERY, "subnet: answered from cache");
 			qstate->ext_state[id] = module_finished;
@@ -737,10 +787,12 @@ subnetmod_operate(struct module_qstate *qstate, enum module_ev event,
 	/* Query handed back by next module, we have a 'final' answer */
 	if(sq && event == module_event_moddone) {
 		qstate->ext_state[id] = eval_response(qstate, id, sq);
-		if(qstate->ext_state[id] == module_finished) {
+		if(qstate->ext_state[id] == module_finished &&
+			qstate->return_msg) {
 			ecs_opt_list_append(&sq->ecs_client_out,
 				&qstate->edns_opts_front_out, qstate);
 		}
+		qstate->no_cache_store = sq->started_no_cache_store;
 		return;
 	}
 	if(sq && outbound) {

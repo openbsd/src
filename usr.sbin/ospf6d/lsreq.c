@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.8 2013/03/22 14:26:35 sthen Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.9 2019/05/10 13:50:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/ip6.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 
@@ -39,7 +40,7 @@ send_ls_req(struct nbr *nbr)
 	struct ibuf		*buf;
 	int			 ret;
 
-	if ((buf = ibuf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
+	if ((buf = ibuf_open(nbr->iface->mtu - sizeof(struct ip6_hdr))) == NULL)
 		fatal("send_ls_req");
 
 	switch (nbr->iface->type) {

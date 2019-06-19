@@ -1,4 +1,4 @@
-/* $OpenBSD: ccm128.c,v 1.4 2015/02/10 09:46:30 miod Exp $ */
+/* $OpenBSD: ccm128.c,v 1.5 2019/05/08 14:18:25 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -435,7 +435,7 @@ size_t CRYPTO_ccm128_tag(CCM128_CONTEXT *ctx,unsigned char *tag,size_t len)
 {	unsigned int M = (ctx->nonce.c[0]>>3)&7;	/* the M parameter */
 
 	M *= 2; M += 2;
-	if (len<M)	return 0;
+	if (len != M)	return 0;
 	memcpy(tag,ctx->cmac.c,M);
 	return M;
 }

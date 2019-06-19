@@ -126,13 +126,6 @@ around - the F<.ph> file should be created by running F<h2ph> on the
 corresponding F<.h> file. See the F<h2ph> documentation for more on how
 to convert a whole bunch of header files at once.
 
-=item L<c2ph|c2ph> and L<pstruct|pstruct>
-
-F<c2ph> and F<pstruct>, which are actually the same program but behave
-differently depending on how they are called, provide another way of
-getting at C with Perl - they'll convert C structures and union declarations
-to Perl code. This is deprecated in favour of F<h2xs> these days.
-
 =item L<h2xs|h2xs>
 
 F<h2xs> converts C header files into XS modules, and will try and write
@@ -238,7 +231,7 @@ L<perldoc|perldoc>, L<pod2man|pod2man>, L<perlpod>,
 L<pod2html|pod2html>, L<pod2usage|pod2usage>, L<podselect|podselect>,
 L<podchecker|podchecker>, L<splain|splain>, L<perldiag>,
 C<roffitall|roffitall>, L<File::Find|File::Find>, L<pl2pm|pl2pm>,
-L<perlbug|perlbug>, L<h2ph|h2ph>, L<c2ph|c2ph>, L<h2xs|h2xs>, L<enc2xs>,
+L<perlbug|perlbug>, L<h2ph|h2ph>, L<h2xs|h2xs>, L<enc2xs>,
 L<xsubpp>, L<cpan>, L<instmodsh>, L<piconv>, L<prove>, L<corelist>, L<ptar>,
 L<ptardiff>, L<shasum>, L<zipdetails>
 

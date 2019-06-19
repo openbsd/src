@@ -1,9 +1,7 @@
-# $OpenBSD: Makefile,v 1.5 2013/12/26 16:22:55 kettenis Exp $
+# $OpenBSD: Makefile,v 1.6 2019/05/14 16:43:26 bluhm Exp $
 
 PROG=	stdarg
 
 CFLAGS+= -I${.CURDIR}/../include
-
-REGRESS_MAXTIME=10
 
 .include <bsd.regress.mk>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.17 2016/09/26 19:58:26 kettenis Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.23 2019/05/11 19:17:56 lteo Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -30,7 +30,6 @@
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
-#include <machine/biosvar.h>
 
 #include <assert.h>
 #include <err.h>
@@ -41,6 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <paths.h>
 
 
 #define vm_page_size sysconf(_SC_PAGESIZE)
@@ -58,8 +58,13 @@ struct ACPIrsdp {
 	u_char		signature[8];
 	u_char		sum;
 	u_char		oem[6];
-	u_char		res;
+	u_char		rev;
 	u_int32_t	addr;
+#define SIZEOF_RSDP_REV_0	20
+	u_int32_t	len;
+	u_int64_t	xaddr;
+	u_char		xsum;
+	u_char		xres[3];
 } __packed;
 
 struct ACPIsdt {
@@ -169,11 +174,13 @@ int		acpi_mem_fd = -1;
 char		*aml_dumpfile;
 int		aml_dumpdir;
 FILE		*fhdr;
+int		quiet;
 
 int	acpi_checksum(void *_p, size_t _length);
 struct acpi_user_mapping *acpi_user_find_mapping(vm_offset_t _pa, size_t _size);
 void	*acpi_map_physical(vm_offset_t _pa, size_t _size);
 void	acpi_user_init(void);
+struct ACPIrsdp *acpi_check_rsd_ptr(vm_offset_t _pa);
 struct ACPIrsdp *acpi_find_rsd_ptr(void);
 void	acpi_print_string(char *_s, size_t _length);
 void	acpi_print_rsd_ptr(struct ACPIrsdp *_rp);
@@ -181,14 +188,16 @@ struct ACPIsdt *acpi_map_sdt(vm_offset_t _pa);
 void	aml_dump(struct ACPIsdt *_hdr);
 void	acpi_print_sdt(struct ACPIsdt *_sdp);
 void	acpi_print_rsdt(struct ACPIsdt *_rsdp);
+void	acpi_print_xsdt(struct ACPIsdt *_rsdp);
 void	acpi_print_facp(struct FACPbody *_facp);
 void	acpi_print_dsdt(struct ACPIsdt *_dsdp);
 void	acpi_handle_dsdt(struct ACPIsdt *_dsdp);
 void	acpi_handle_facp(struct FACPbody *_facp);
 void	acpi_handle_rsdt(struct ACPIsdt *_rsdp);
+void	acpi_handle_xsdt(struct ACPIsdt *_rsdp);
 void	asl_dump_from_devmem(void);
 void	usage(void);
-u_long	bios_acpi_addr(void);
+u_long	efi_acpi_addr(void);
 
 
 struct ACPIsdt	dsdt_header = {
@@ -264,41 +273,47 @@ acpi_user_init(void)
 }
 
 struct ACPIrsdp *
+acpi_check_rsd_ptr(vm_offset_t pa)
+{
+	struct ACPIrsdp rp;
+		
+	lseek(acpi_mem_fd, pa, SEEK_SET);
+	read(acpi_mem_fd, &rp, SIZEOF_RSDP_REV_0);
+	if (memcmp(rp.signature, "RSD PTR ", 8) != 0)
+		return NULL;
+
+	if (rp.rev >= 2) {
+		read(acpi_mem_fd, &(rp.len),
+		    sizeof(struct ACPIrsdp) - SIZEOF_RSDP_REV_0);
+		if (acpi_checksum(&rp, sizeof(struct ACPIrsdp)) == 0)
+			return acpi_map_physical(pa, sizeof(struct ACPIrsdp));
+	}
+
+	if (acpi_checksum(&rp, SIZEOF_RSDP_REV_0) == 0)
+		return (acpi_map_physical(pa, SIZEOF_RSDP_REV_0));
+
+	return NULL;
+}
+
+struct ACPIrsdp *
 acpi_find_rsd_ptr(void)
 {
-	int		i;
-	u_int8_t	buf[sizeof(struct ACPIrsdp)];
+	struct ACPIrsdp *rp;
 	u_long		addr;
 
-	if ((addr = bios_acpi_addr()) != 0) {
-		lseek(acpi_mem_fd, addr, SEEK_SET);
-		read(acpi_mem_fd, buf, 16);
-		if (!memcmp(buf, "RSD PTR ", 8)) {
-			read(acpi_mem_fd, buf + 16,
-			    sizeof(struct ACPIrsdp) - 16);
-			if (!acpi_checksum(buf, sizeof(struct ACPIrsdp)))
-				return (acpi_map_physical(addr,
-				    sizeof(struct ACPIrsdp)));
-		}
-		lseek(acpi_mem_fd, 0, SEEK_SET);
-	}
-	for (i = 0; i < 1024 * 1024; i += 16) {
-		lseek(acpi_mem_fd, i, SEEK_SET);
-		read(acpi_mem_fd, buf, 16);
-		if (!memcmp(buf, "RSD PTR ", 8)) {
-			/* Read the rest of the structure */
-			read(acpi_mem_fd, buf + 16,
-			    sizeof(struct ACPIrsdp) - 16);
-
-			/* Verify checksum before accepting it. */
-			if (acpi_checksum(buf, sizeof(struct ACPIrsdp)))
-				continue;
-
-			return (acpi_map_physical(i, sizeof(struct ACPIrsdp)));
-		}
+	if ((addr = efi_acpi_addr()) != 0) {
+		if ((rp = acpi_check_rsd_ptr(addr)))
+			return rp;
 	}
 
-	return (0);
+#if defined(__amd64__) || defined (__i386__)
+	for (addr = 0; addr < 1024 * 1024; addr += 16) {
+		if ((rp = acpi_check_rsd_ptr(addr)))
+			return rp;
+	}
+#endif
+
+	return NULL;
 }
 
 void
@@ -322,7 +337,13 @@ acpi_print_rsd_ptr(struct ACPIrsdp *rp)
 	fprintf(fhdr, "\n");
 	fprintf(fhdr, "RSD PTR: Checksum=%d, OEMID=", rp->sum);
 	acpi_print_string(rp->oem, 6);
+	fprintf(fhdr, ", Revision=%d", rp->rev);
 	fprintf(fhdr, ", RsdtAddress=0x%08x\n", rp->addr);
+	if (rp->rev >= 2) {
+		fprintf(fhdr, "\tLength=%d", rp->len);
+		fprintf(fhdr, ", XsdtAddress=0x%016llx", rp->xaddr);
+		fprintf(fhdr, ", Extended Checksum=%d\n", rp->xsum);
+	}
 	fprintf(fhdr, "\n");
 }
 
@@ -393,6 +414,25 @@ acpi_print_rsdt(struct ACPIsdt *rsdp)
 		if (i > 0)
 			fprintf(fhdr, ", ");
 		fprintf(fhdr, "0x%08x", rsdp->body[i]);
+	}
+	fprintf(fhdr, " }\n");
+	fprintf(fhdr, "\n");
+}
+
+void
+acpi_print_xsdt(struct ACPIsdt *rsdp)
+{
+	int		i, entries;
+	u_int64_t	*body = (u_int64_t *) rsdp->body;
+
+	acpi_print_sdt(rsdp);
+	entries = (rsdp->len - SIZEOF_SDT_HDR) / sizeof(u_int64_t);
+	fprintf(fhdr, "\n");
+	fprintf(fhdr, "\tEntries={ ");
+	for (i = 0; i < entries; i++) {
+		if (i > 0)
+			fprintf(fhdr, ", ");
+		fprintf(fhdr, "0x%016llx", body[i]);
 	}
 	fprintf(fhdr, " }\n");
 	fprintf(fhdr, "\n");
@@ -494,7 +534,10 @@ acpi_handle_facp(struct FACPbody *facp)
 	struct ACPIsdt	*dsdp;
 
 	acpi_print_facp(facp);
-	dsdp = (struct ACPIsdt *) acpi_map_sdt(facp->dsdt_ptr);
+	if (facp->dsdt_ptr == 0)
+		dsdp = (struct ACPIsdt *) acpi_map_sdt(facp->x_dsdt);
+	else
+		dsdp = (struct ACPIsdt *) acpi_map_sdt(facp->dsdt_ptr);
 	if (acpi_checksum(dsdp, dsdp->len))
 		errx(1, "DSDT is corrupt");
 	acpi_handle_dsdt(dsdp);
@@ -525,6 +568,30 @@ acpi_handle_rsdt(struct ACPIsdt *rsdp)
 }
 
 void
+acpi_handle_xsdt(struct ACPIsdt *rsdp)
+{
+	int		i;
+	int		entries;
+	struct ACPIsdt	*sdp;
+	u_int64_t	*body = (u_int64_t *) rsdp->body;
+
+	aml_dump(rsdp);
+	entries = (rsdp->len - SIZEOF_SDT_HDR) / sizeof(u_int64_t);
+	acpi_print_xsdt(rsdp);
+	for (i = 0; i < entries; i++) {
+		sdp = (struct ACPIsdt *) acpi_map_sdt(body[i]);
+		if (acpi_checksum(sdp, sdp->len))
+			errx(1, "XSDT entry %d is corrupt", i);
+		aml_dump(sdp);
+		if (!memcmp(sdp->signature, "FACP", 4)) {
+			acpi_handle_facp((struct FACPbody *) sdp->body);
+		} else {
+			acpi_print_sdt(sdp);
+		}
+	}
+}
+
+void
 asl_dump_from_devmem(void)
 {
 	struct ACPIrsdp	*rp;
@@ -536,24 +603,60 @@ asl_dump_from_devmem(void)
 
 	acpi_user_init();
 
+	/* Can only unveil if being dumped to a dir */
+	if (aml_dumpdir) {
+		if (unveil(aml_dumpfile, "wc") == -1)
+			err(1, "unveil");
+	} else if (aml_dumpfile[0] == '/') {	/* admittedly pretty shitty */
+		if (unveil("/", "wc") == -1)
+			err(1, "unveil");
+	} else {
+		if (unveil(".", "wc") == -1)
+			err(1, "unveil");
+	}
+
+	if (unveil(_PATH_MEM, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_KMEM, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_KVMDB, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_KSYMS, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_UNIX, "r") == -1)
+		err(1, "unveil");
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		err(1, "pledge");
 
 	rp = acpi_find_rsd_ptr();
-	if (!rp)
-		errx(1, "Can't find ACPI information");
+	if (!rp) {
+		if (!quiet)
+			warnx("Can't find ACPI information");
+		exit(1);
+	}
 
 	fhdr = fopen(name, "w");
 	if (fhdr == NULL)
 		err(1, "asl_dump_from_devmem");
 
 	acpi_print_rsd_ptr(rp);
-	rsdp = (struct ACPIsdt *) acpi_map_sdt(rp->addr);
-	if (memcmp(rsdp->signature, "RSDT", 4) ||
-	    acpi_checksum(rsdp, rsdp->len))
-		errx(1, "RSDT is corrupted");
 
-	acpi_handle_rsdt(rsdp);
+	if (rp->rev == 2 && rp->xaddr) {
+		rsdp = (struct ACPIsdt *) acpi_map_sdt(rp->xaddr);
+		if (memcmp(rsdp->signature, "XSDT", 4) ||
+		    acpi_checksum(rsdp, rsdp->len))
+			errx(1, "XSDT is corrupted");
+
+		acpi_handle_xsdt(rsdp);
+	} else if (rp->addr) {
+		rsdp = (struct ACPIsdt *) acpi_map_sdt(rp->addr);
+		if (memcmp(rsdp->signature, "RSDT", 4) ||
+		    acpi_checksum(rsdp, rsdp->len))
+			errx(1, "RSDT is corrupted");
+
+		acpi_handle_rsdt(rsdp);
+	} else
+		errx(1, "XSDT or RSDT not found");
 
 	fclose(fhdr);
 }
@@ -571,12 +674,15 @@ int
 main(int argc, char *argv[])
 {
 	struct stat	st;
-	char		c;
+	int		c;
 
-	while ((c = getopt(argc, argv, "o:")) != -1) {
+	while ((c = getopt(argc, argv, "o:q")) != -1) {
 		switch (c) {
 		case 'o':
 			aml_dumpfile = optarg;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		default:
 			usage();
@@ -595,8 +701,40 @@ main(int argc, char *argv[])
 	return (0);
 }
 
+#ifdef __aarch64__
+
 u_long
-bios_acpi_addr(void)
+efi_acpi_addr(void)
+{
+	kvm_t		*kd;
+	struct nlist	 nl[2];
+	uint64_t	 table;
+
+	memset(&nl, 0, sizeof(nl));
+	kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, NULL);
+	if (kd == NULL)
+		goto on_error;
+	nl[0].n_name = "efi_acpi_table";
+	if (kvm_nlist(kd, nl) == -1)
+		goto on_error;
+	if (kvm_read(kd, nl[0].n_value, &table, sizeof(table)) == -1)
+		goto on_error;
+
+	kvm_close(kd);
+	return table;
+
+on_error:
+	if (kd != NULL)
+		kvm_close(kd);
+	return (0);
+}
+
+#else
+
+#include <machine/biosvar.h>
+
+u_long
+efi_acpi_addr(void)
 {
 	kvm_t		*kd;
 	struct nlist	 nl[2];
@@ -623,3 +761,5 @@ on_error:
 		kvm_close(kd);
 	return (0);
 }
+
+#endif

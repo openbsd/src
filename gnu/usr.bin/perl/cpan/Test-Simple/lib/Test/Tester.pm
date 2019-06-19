@@ -6,7 +6,7 @@ BEGIN
 {
 	if (*Test::Builder::new{CODE})
 	{
-		warn "You should load Test::Tester before Test::Builder (or anything that loads Test::Builder)" 
+		warn "You should load Test::Tester before Test::Builder (or anything that loads Test::Builder)"
 	}
 }
 
@@ -16,9 +16,10 @@ use Test::Tester::Delegate;
 
 require Exporter;
 
-use vars qw( @ISA @EXPORT $VERSION );
+use vars qw( @ISA @EXPORT );
 
-$VERSION = "0.114";
+our $VERSION = '1.302133';
+
 @EXPORT = qw( run_tests check_tests check_test cmp_results show_space );
 @ISA = qw( Exporter );
 
@@ -39,10 +40,11 @@ sub show_space
 my $colour = '';
 my $reset = '';
 
-if (my $want_colour = $ENV{TESTTESTERCOLOUR} || $ENV{TESTTESTERCOLOUR})
+if (my $want_colour = $ENV{TESTTESTERCOLOUR} || $ENV{TESTTESTERCOLOR})
 {
-	if (eval "require Term::ANSIColor")
+	if (eval { require Term::ANSIColor; 1 })
 	{
+		eval { require Win32::Console::ANSI } if 'MSWin32' eq $^O;  # support color on windows platforms
 		my ($f, $b) = split(",", $want_colour);
 		$colour = Term::ANSIColor::color($f).Term::ANSIColor::color("on_$b");
 		$reset = Term::ANSIColor::color("reset");
@@ -171,40 +173,54 @@ sub cmp_result
 
 	if (defined(my $exp = $expect->{diag}))
 	{
-		# if there actually is some diag then put a \n on the end if it's not
-		# there already
 
-		$exp .= "\n" if (length($exp) and $exp !~ /\n$/);
-		if (not $Test->ok($result->{diag} eq $exp,
-			"subtest '$sub_name' of '$name' compare diag")
-		)
-		{
-			my $got = $result->{diag};
-			my $glen = length($got);
-			my $elen = length($exp);
-			for ($got, $exp)
-			{
-				my @lines = split("\n", $_);
-	 			$_ = join("\n", map {
-					if ($want_space)
-					{
-						$_ = $colour.escape($_).$reset;
-					}
-					else
-					{
-						"'$colour$_$reset'"
-					}
-				} @lines);
-			}
+        my $got = '';
+        if (ref $exp eq 'Regexp') {
 
-			$Test->diag(<<EOM);
+            if (not $Test->like($result->{diag}, $exp,
+                "subtest '$sub_name' of '$name' compare diag"))
+            {
+                $got = $result->{diag};
+            }
+
+        } else {
+
+            # if there actually is some diag then put a \n on the end if it's not
+            # there already
+            $exp .= "\n" if (length($exp) and $exp !~ /\n$/);
+
+            if (not $Test->ok($result->{diag} eq $exp,
+    			"subtest '$sub_name' of '$name' compare diag"))
+            {
+                $got = $result->{diag};
+            }
+        }
+
+        if ($got) {
+    		my $glen = length($got);
+    		my $elen = length($exp);
+    		for ($got, $exp)
+    		{
+    			my @lines = split("\n", $_);
+     			$_ = join("\n", map {
+    				if ($want_space)
+    				{
+    					$_ = $colour.escape($_).$reset;
+    				}
+    				else
+    				{
+    					"'$colour$_$reset'"
+    				}
+    			} @lines);
+    		}
+
+        	$Test->diag(<<EOM);
 Got diag ($glen bytes):
 $got
 Expected diag ($elen bytes):
 $exp
 EOM
-
-		}
+        }
 	}
 }
 
@@ -313,6 +329,23 @@ Test::Tester - Ease testing test modules built with Test::Builder
 
 or
 
+  use Test::Tester tests => 6;
+
+  use Test::MyStyle;
+
+  check_test(
+    sub {
+      is_mystyle_qr("this", "that", "not matching");
+    },
+    {
+      ok => 0, # expect this to fail
+      name => "not matching",
+      diag => qr/Expected: 'this'\s+Got: 'that'/,
+    }
+  );
+
+or
+
   use Test::Tester;
 
   use Test::More tests => 3;
@@ -376,6 +409,16 @@ you can get direct access to the test results:
 
   like($result[0]->{diag}, "/^Database ping took \\d+ seconds$"/, "diag");
 
+or
+
+  check_test(
+    sub { is_mystyle_qr("this", "that", "not matching") },
+    {
+      ok => 0, # we expect the test to fail
+      name => "not matching",
+      diag => qr/Expected: 'this'\s+Got: 'that'/,
+    }
+  );
 
 We cannot predict how long the database ping will take so we use
 Test::More's like() test to check that the diagnostic string is of the right
@@ -446,7 +489,7 @@ diagnostics output B<after> the test result is declared.
 
 Note that Test::Builder ensures that any diagnostics end in a \n and
 it in earlier versions of Test::Tester it was essential that you have
-the final \n in your expected diagnostics. From version 0.10 onwards,
+the final \n in your expected diagnostics. From version 0.10 onward,
 Test::Tester will add the \n if you forgot it. It will not add a \n if
 you are expecting no diagnostics. See below for help tracking down
 hard to find space and tab related problems.
@@ -495,7 +538,7 @@ are scratching your head trying to work out why Test::Tester is saying that
 your diagnostics are wrong when they look perfectly right then the answer is
 probably whitespace. From version 0.10 on, Test::Tester surrounds the
 expected and got diag values with single quotes to make it easier to spot
-trailing whitesapce. So in this example
+trailing whitespace. So in this example
 
   # Got diag (5 bytes):
   # 'abcd '
@@ -513,7 +556,7 @@ switch Test::Tester into a mode whereby all "tricky" characters are shown as
 \{xx}. Tricky characters are those with ASCII code less than 33 or higher
 than 126. This makes the output more difficult to read but much easier to
 find subtle differences between strings. To turn on this mode either call
-show_space() in your test script or set the TESTTESTERSPACE environment
+C<show_space()> in your test script or set the C<TESTTESTERSPACE> environment
 variable to be a true value. The example above would then look like
 
   # Got diag (5 bytes):
@@ -524,13 +567,13 @@ variable to be a true value. The example above would then look like
 =head1 COLOUR
 
 If you prefer to use colour as a means of finding tricky whitespace
-characters then you can set the TESTTESTCOLOUR environment variable to a
+characters then you can set the C<TESTTESTCOLOUR> environment variable to a
 comma separated pair of colours, the first for the foreground, the second
 for the background. For example "white,red" will print white text on a red
 background. This requires the Term::ANSIColor module. You can specify any
 colour that would be acceptable to the Term::ANSIColor::color function.
 
-If you spell colour differently, that's no problem. The TESTTESTERCOLOR
+If you spell colour differently, that's no problem. The C<TESTTESTERCOLOR>
 variable also works (if both are set then the British spelling wins out).
 
 =head1 EXPORTED FUNCTIONS

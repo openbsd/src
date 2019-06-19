@@ -1,4 +1,4 @@
-/*	$OpenBSD: vbus.c,v 1.10 2017/12/22 15:52:36 kettenis Exp $	*/
+/*	$OpenBSD: vbus.c,v 1.11 2018/06/27 11:38:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -190,6 +190,34 @@ vbus_intr_map(int node, int ino, uint64_t *sysino)
 	return (-1);
 }
 
+int
+vbus_intr_setstate(bus_space_tag_t t, uint64_t sysino, uint64_t state)
+{
+	struct vbus_softc *sc = t->cookie;
+	uint64_t devhandle = sc->sc_devhandle;
+	int err;
+
+	err = sun4v_intr_setstate(devhandle, sysino, state);
+	if (err != H_EOK)
+		return (-1);
+
+	return (0);
+}
+
+int
+vbus_intr_setenabled(bus_space_tag_t t, uint64_t sysino, uint64_t enabled)
+{
+	struct vbus_softc *sc = t->cookie;
+	uint64_t devhandle = sc->sc_devhandle;
+	int err;
+
+	err = sun4v_intr_setenabled(devhandle, sysino, enabled);
+	if (err != H_EOK)
+		return (-1);
+
+	return (0);
+}
+
 void *
 vbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
     int level, int flags, int (*handler)(void *), void *arg, const char *what)
@@ -208,6 +236,10 @@ vbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	if (flags & BUS_INTR_ESTABLISH_MPSAFE)
 		ih->ih_mpsafe = 1;
 
+	err = sun4v_intr_setenabled(devhandle, sysino, INTR_DISABLED);
+	if (err != H_EOK)
+		return (NULL);
+
 	err = sun4v_intr_setcookie(devhandle, sysino, (vaddr_t)ih);
 	if (err != H_EOK)
 		return (NULL);
@@ -224,22 +256,13 @@ vbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	if (err != H_EOK)
 		return (NULL);
 
-	err = sun4v_intr_setenabled(devhandle, sysino, INTR_ENABLED);
-	if (err != H_EOK)
-		return (NULL);
-
 	return (ih);
 }
 
 void
 vbus_intr_ack(struct intrhand *ih)
 {
-	bus_space_tag_t t = ih->ih_bus;
-	struct vbus_softc *sc = t->cookie;
-	uint64_t devhandle = sc->sc_devhandle;
-	uint64_t sysino = INTVEC(ih->ih_number);
-
-	sun4v_intr_setstate(devhandle, sysino, INTR_IDLE);
+	/* Drivers explicitly ack interrupts. */
 }
 
 bus_space_tag_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebusvar.h,v 1.1 2009/10/26 18:01:40 miod Exp $	*/
+/*	$OpenBSD: macebusvar.h,v 1.2 2018/12/03 13:46:30 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -45,7 +45,7 @@ struct macebus_attach_args {
 	uint32_t	 maa_mace_intr;		/* narrowing mace intr mask */
 };
 
-void   *macebus_intr_establish(int, uint32_t, int, int, int (*)(void *),
+void   *macebus_intr_establish(int, uint32_t, int, int (*)(void *),
 	    void *, const char *);
 void	macebus_intr_disestablish(void *);
 

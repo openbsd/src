@@ -1,4 +1,4 @@
-//===--- CompilationDatabase.cpp - ----------------------------------------===//
+//===- CompilationDatabase.cpp --------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,11 +10,16 @@
 //  This file contains implementations of the CompilationDatabase base class
 //  and the FixedCompilationDatabase.
 //
+//  FIXME: Various functions that take a string &ErrorMessage should be upgraded
+//  to Expected.
+//
 //===----------------------------------------------------------------------===//
 
 #include "clang/Tooling/CompilationDatabase.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/DiagnosticOptions.h"
+#include "clang/Basic/LLVM.h"
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
@@ -23,19 +28,38 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Tooling/CompilationDatabasePluginRegistry.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Option/Arg.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/LineIterator.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <cassert>
+#include <cstring>
+#include <iterator>
+#include <memory>
 #include <sstream>
+#include <string>
 #include <system_error>
+#include <utility>
+#include <vector>
+
 using namespace clang;
 using namespace tooling;
 
 LLVM_INSTANTIATE_REGISTRY(CompilationDatabasePluginRegistry)
 
-CompilationDatabase::~CompilationDatabase() {}
+CompilationDatabase::~CompilationDatabase() = default;
 
 std::unique_ptr<CompilationDatabase>
 CompilationDatabase::loadFromDirectory(StringRef BuildDirectory,
@@ -108,20 +132,29 @@ CompilationDatabase::autoDetectFromDirectory(StringRef SourceDir,
   return DB;
 }
 
-CompilationDatabasePlugin::~CompilationDatabasePlugin() {}
+std::vector<CompileCommand> CompilationDatabase::getAllCompileCommands() const {
+  std::vector<CompileCommand> Result;
+  for (const auto &File : getAllFiles()) {
+    auto C = getCompileCommands(File);
+    std::move(C.begin(), C.end(), std::back_inserter(Result));
+  }
+  return Result;
+}
+
+CompilationDatabasePlugin::~CompilationDatabasePlugin() = default;
 
 namespace {
+
 // Helper for recursively searching through a chain of actions and collecting
 // all inputs, direct and indirect, of compile jobs.
 struct CompileJobAnalyzer {
+  SmallVector<std::string, 2> Inputs;
+
   void run(const driver::Action *A) {
     runImpl(A, false);
   }
 
-  SmallVector<std::string, 2> Inputs;
-
 private:
-
   void runImpl(const driver::Action *A, bool Collect) {
     bool CollectChildren = Collect;
     switch (A->getKind()) {
@@ -129,16 +162,16 @@ private:
       CollectChildren = true;
       break;
 
-    case driver::Action::InputClass: {
+    case driver::Action::InputClass:
       if (Collect) {
-        const driver::InputAction *IA = cast<driver::InputAction>(A);
+        const auto *IA = cast<driver::InputAction>(A);
         Inputs.push_back(IA->getInputArg().getSpelling());
       }
-    } break;
+      break;
 
     default:
       // Don't care about others
-      ;
+      break;
     }
 
     for (const driver::Action *AI : A->inputs())
@@ -155,7 +188,7 @@ public:
 
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
                         const Diagnostic &Info) override {
-    if (Info.getID() == clang::diag::warn_drv_input_file_unused) {
+    if (Info.getID() == diag::warn_drv_input_file_unused) {
       // Arg 1 for this diagnostic is the option that didn't get used.
       UnusedInputs.push_back(Info.getArgStdStr(0));
     } else if (DiagLevel >= DiagnosticsEngine::Error) {
@@ -173,18 +206,21 @@ public:
 // S2 in Arr where S1 == S2?"
 struct MatchesAny {
   MatchesAny(ArrayRef<std::string> Arr) : Arr(Arr) {}
+
   bool operator() (StringRef S) {
     for (const std::string *I = Arr.begin(), *E = Arr.end(); I != E; ++I)
       if (*I == S)
         return true;
     return false;
   }
+
 private:
   ArrayRef<std::string> Arr;
 };
+
 } // namespace
 
-/// \brief Strips any positional args and possible argv[0] from a command-line
+/// Strips any positional args and possible argv[0] from a command-line
 /// provided by the user to construct a FixedCompilationDatabase.
 ///
 /// FixedCompilationDatabase requires a command line to be in this format as it
@@ -211,7 +247,7 @@ static bool stripPositionalArgs(std::vector<const char *> Args,
   TextDiagnosticPrinter DiagnosticPrinter(Output, &*DiagOpts);
   UnusedInputDiagConsumer DiagClient(DiagnosticPrinter);
   DiagnosticsEngine Diagnostics(
-      IntrusiveRefCntPtr<clang::DiagnosticIDs>(new DiagnosticIDs()),
+      IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
       &*DiagOpts, &DiagClient, false);
 
   // The clang executable path isn't required since the jobs the driver builds
@@ -302,8 +338,22 @@ FixedCompilationDatabase::loadFromCommandLine(int &Argc,
   std::vector<std::string> StrippedArgs;
   if (!stripPositionalArgs(CommandLine, StrippedArgs, ErrorMsg))
     return nullptr;
-  return std::unique_ptr<FixedCompilationDatabase>(
-      new FixedCompilationDatabase(Directory, StrippedArgs));
+  return llvm::make_unique<FixedCompilationDatabase>(Directory, StrippedArgs);
+}
+
+std::unique_ptr<FixedCompilationDatabase>
+FixedCompilationDatabase::loadFromFile(StringRef Path, std::string &ErrorMsg) {
+  ErrorMsg.clear();
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> File =
+      llvm::MemoryBuffer::getFile(Path);
+  if (std::error_code Result = File.getError()) {
+    ErrorMsg = "Error while opening fixed database: " + Result.message();
+    return nullptr;
+  }
+  std::vector<std::string> Args{llvm::line_iterator(**File),
+                                llvm::line_iterator()};
+  return llvm::make_unique<FixedCompilationDatabase>(
+      llvm::sys::path::parent_path(Path), std::move(Args));
 }
 
 FixedCompilationDatabase::
@@ -324,15 +374,21 @@ FixedCompilationDatabase::getCompileCommands(StringRef FilePath) const {
   return Result;
 }
 
-std::vector<std::string>
-FixedCompilationDatabase::getAllFiles() const {
-  return std::vector<std::string>();
-}
+namespace {
 
-std::vector<CompileCommand>
-FixedCompilationDatabase::getAllCompileCommands() const {
-  return std::vector<CompileCommand>();
-}
+class FixedCompilationDatabasePlugin : public CompilationDatabasePlugin {
+  std::unique_ptr<CompilationDatabase>
+  loadFromDirectory(StringRef Directory, std::string &ErrorMessage) override {
+    SmallString<1024> DatabasePath(Directory);
+    llvm::sys::path::append(DatabasePath, "compile_flags.txt");
+    return FixedCompilationDatabase::loadFromFile(DatabasePath, ErrorMessage);
+  }
+};
+
+} // namespace
+
+static CompilationDatabasePluginRegistry::Add<FixedCompilationDatabasePlugin>
+X("fixed-compilation-database", "Reads plain-text flags file");
 
 namespace clang {
 namespace tooling {
@@ -342,5 +398,5 @@ namespace tooling {
 extern volatile int JSONAnchorSource;
 static int LLVM_ATTRIBUTE_UNUSED JSONAnchorDest = JSONAnchorSource;
 
-} // end namespace tooling
-} // end namespace clang
+} // namespace tooling
+} // namespace clang

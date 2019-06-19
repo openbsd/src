@@ -50,7 +50,7 @@ for my $k (keys %{$limits{$opt{std}}}) {
 find(sub {
   /\.([ch]|xs)$/ or return;
 
-  my $fh = IO::File->new($_) or die "$_: $!\n";
+  my $fh = IO::File->new($_, 'r') or die "$_: $!\n";
   my $ll = '';
 
   while (defined(my $line = <$fh>)) {

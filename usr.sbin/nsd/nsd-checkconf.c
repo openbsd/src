@@ -20,6 +20,7 @@
 
 extern char *optarg;
 extern int optind;
+static void usage(void) ATTR_NORETURN;
 
 #define ZONE_GET_ACL(NAME, VAR, PATTERN) 		\
 	if (strcasecmp(#NAME, (VAR)) == 0) { 	\
@@ -369,6 +370,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_BIN(log_time_ascii, o);
 		SERV_GET_BIN(round_robin, o);
 		SERV_GET_BIN(minimal_responses, o);
+		SERV_GET_BIN(refuse_any, o);
 		/* str */
 		SERV_GET_PATH(final, database, o);
 		SERV_GET_STR(identity, o);
@@ -402,6 +404,16 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_INT(rrl_ipv4_prefix_length, o);
 		SERV_GET_INT(rrl_ipv6_prefix_length, o);
 		SERV_GET_INT(rrl_whitelist_ratelimit, o);
+#endif
+#ifdef USE_DNSTAP
+		SERV_GET_BIN(dnstap_enable, o);
+		SERV_GET_STR(dnstap_socket_path, o);
+		SERV_GET_BIN(dnstap_send_identity, o);
+		SERV_GET_BIN(dnstap_send_version, o);
+		SERV_GET_STR(dnstap_identity, o);
+		SERV_GET_STR(dnstap_version, o);
+		SERV_GET_BIN(dnstap_log_auth_query_messages, o);
+		SERV_GET_BIN(dnstap_log_auth_response_messages, o);
 #endif
 		SERV_GET_INT(zonefiles_write, o);
 		/* remote control */
@@ -508,6 +520,7 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\tlog-time-ascii: %s\n", opt->log_time_ascii?"yes":"no");
 	printf("\tround-robin: %s\n", opt->round_robin?"yes":"no");
 	printf("\tminimal-responses: %s\n", opt->minimal_responses?"yes":"no");
+	printf("\trefuse-any: %s\n", opt->refuse_any?"yes":"no");
 	printf("\tverbosity: %d\n", opt->verbosity);
 	for(ip = opt->ip_addresses; ip; ip=ip->next)
 	{
@@ -523,6 +536,18 @@ config_test_print_server(nsd_options_type* opt)
 #endif
 	printf("\tzonefiles-check: %s\n", opt->zonefiles_check?"yes":"no");
 	printf("\tzonefiles-write: %d\n", opt->zonefiles_write);
+
+#ifdef USE_DNSTAP
+	printf("\ndnstap:\n");
+	printf("\tdnstap-enable: %s\n", opt->dnstap_enable?"yes":"no");
+	print_string_var("dnstap-socket-path:", opt->dnstap_socket_path);
+	printf("\tdnstap-send-identity: %s\n", opt->dnstap_send_identity?"yes":"no");
+	printf("\tdnstap-send-version: %s\n", opt->dnstap_send_version?"yes":"no");
+	print_string_var("dnstap-identity:", opt->dnstap_identity);
+	print_string_var("dnstap-version:", opt->dnstap_version);
+	printf("\tdnstap-log-auth-query-messages: %s\n", opt->dnstap_log_auth_query_messages?"yes":"no");
+	printf("\tdnstap-log-auth-response-messages: %s\n", opt->dnstap_log_auth_response_messages?"yes":"no");
+#endif
 
 	printf("\nremote-control:\n");
 	printf("\tcontrol-enable: %s\n", opt->control_enable?"yes":"no");
@@ -559,26 +584,6 @@ config_test_print_server(nsd_options_type* opt)
 
 }
 
-static void
-append_trailing_slash(const char** dirname, region_type* region)
-{
-	int l = strlen(*dirname);
-	if (l>0 && (*dirname)[l-1] != '/' && l < 0xffffff) {
-		char *dirname_slash = region_alloc(region, l+2);
-		memcpy(dirname_slash, *dirname, l+1);
-		strlcat(dirname_slash, "/", l+2);
-		*dirname = dirname_slash;
-	}
-}
-
-static int
-file_inside_chroot(const char* fname, const char* chr)
-{
-	/* true if filename starts with chroot or is not absolute */
-	return ((fname && fname[0] && strncmp(fname, chr, strlen(chr)) == 0) ||
-		(fname && fname[0] != '/'));
-}
-
 static int
 additional_checks(nsd_options_type* opt, const char* filename)
 {
@@ -591,6 +596,7 @@ additional_checks(nsd_options_type* opt, const char* filename)
 		if(!dname) {
 			fprintf(stderr, "%s: cannot parse zone name syntax for zone %s.\n", filename, zone->name);
 			errors ++;
+			continue;
 		}
 #ifndef ROOT_SERVER
 		/* Is it a root zone? Are we a root server then? Idiot proof. */
@@ -751,9 +757,9 @@ main(int argc, char* argv[])
 			usage();
 		};
 	}
-        argc -= optind;
-        argv += optind;
-        if (argc == 0 || argc>=2) {
+	argc -= optind;
+	argv += optind;
+	if (argc == 0 || argc>=2) {
 		usage();
 	}
 	configfile = argv[0];

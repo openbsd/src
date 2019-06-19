@@ -39,7 +39,7 @@ if ($^O eq 'os2') {	# Can't create sockets with relative path...
 }
 
 # Test if we can create the file within the tmp directory
-if (-e $PATH or not open(TEST, ">$PATH") and $^O ne 'os2') {
+if (-e $PATH or not open(TEST, '>', $PATH) and $^O ne 'os2') {
     print "1..0 # Skip: cannot open '$PATH' for write\n";
     exit 0;
 }

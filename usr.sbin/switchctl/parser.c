@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.8 2017/08/01 13:11:11 deraadt Exp $	*/
+/*	$OpenBSD: parser.c,v 1.10 2018/10/21 21:10:24 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -273,10 +273,6 @@ parse_addr(const char *word, struct sockaddr_storage *ss)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(word, "0", &hints, &ai) == 0) {
-		if (ai->ai_addrlen > sizeof(*ss)) {
-			warnx("invalid address length");
-			return (-1);
-		}
 		memcpy(ss, ai->ai_addr, ai->ai_addrlen);
 		ss->ss_len = ai->ai_addrlen;
 		freeaddrinfo(ai);
@@ -290,10 +286,6 @@ parse_addr(const char *word, struct sockaddr_storage *ss)
 	hints.ai_flags = AI_ADDRCONFIG;
 	if (getaddrinfo(word, "0", &hints, &ai) == 0) {
 		/* Pick first name only */
-		if (ai->ai_addrlen > sizeof(*ss)) {
-			warnx("invalid address length");
-			return (-1);
-		}
 		memcpy(ss, ai->ai_addr, ai->ai_addrlen);
 		ss->ss_len = ai->ai_addrlen;
 		freeaddrinfo(ai);
@@ -452,7 +444,13 @@ match_token(char *word, const struct token table[], int level)
 					res.uri.swa_type = SWITCH_CONN_TCP;
 				else if (strncmp(word, "tls:", len) == 0)
 					res.uri.swa_type = SWITCH_CONN_TLS;
-				else {
+				else if (strncmp(word, "/dev", len) == 0) {
+					res.uri.swa_type = SWITCH_CONN_LOCAL;
+					parse_addr(word, &res.uri.swa_addr);
+					match++;
+					t = &table[i];
+					break;
+				} else {
 					/* set the default */
 					res.uri.swa_type = SWITCH_CONN_TCP;
 					len = 0;

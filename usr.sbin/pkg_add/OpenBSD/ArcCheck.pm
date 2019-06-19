@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.34 2016/05/14 21:12:40 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.35 2019/05/26 15:47:49 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -165,7 +165,7 @@ sub is_allowed() { 1 }
 package OpenBSD::Ustar;
 use POSIX;
 
-# prepare item and introduce long names where needed.
+# prepare item according to pkg_create's rules.
 sub prepare_long
 {
 	my ($self, $item) = @_;

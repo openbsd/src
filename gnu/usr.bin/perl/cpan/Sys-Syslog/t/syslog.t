@@ -2,6 +2,7 @@
 
 use strict;
 use Config;
+use FileHandle;
 use File::Spec;
 use Test::More;
 
@@ -241,8 +242,9 @@ SKIP: {
     # setlogsock() with "stream" and a local file
     SKIP: {
         my $logfile = "test.log";
-        open(LOG, ">$logfile") or skip "can't create file '$logfile': $!", 2;
-        close(LOG);
+        my $fh = FileHandle->new;
+        open $fh, ">$logfile" or skip "can't create file '$logfile': $!", 2;
+        close $fh;
         $r = eval { setlogsock("stream", $logfile ) } || '';
         is( $@, '', "setlogsock() called, with 'stream' and '$logfile' (file exists)" );
         ok( $r, "setlogsock() should return true: '$r'" );
@@ -304,7 +306,8 @@ SKIP: {
 
     # create the log file
     my $log = "t/stream";
-    open my $fh, ">$log" or skip "can't write file '$log': $!", 3;
+    my $fh = FileHandle->new;
+    open $fh, ">$log" or skip "can't write file '$log': $!", 3;
     close $fh;
 
     # configure Sys::Syslog to use it

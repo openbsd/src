@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.90 2017/04/08 02:57:25 deraadt Exp $ */
+/*	$OpenBSD: uhub.c,v 1.92 2019/01/07 14:24:22 mpi Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -126,7 +126,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 		usb_hub_ss_descriptor_t	ss;
 	} hd;
 	int p, port, nports, powerdelay;
-	struct usbd_interface *iface;
+	struct usbd_interface *iface = uaa->iface;
 	usb_endpoint_descriptor_t *ed;
 	struct usbd_tt *tts = NULL;
 	uint8_t ttthink = 0;
@@ -233,11 +233,6 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Set up interrupt pipe. */
-	err = usbd_device2interface_handle(dev, 0, &iface);
-	if (err) {
-		printf("%s: no interface handle\n", sc->sc_dev.dv_xname);
-		goto bad;
-	}
 	ed = usbd_interface2endpoint_descriptor(iface, 0);
 	if (ed == NULL) {
 		printf("%s: no endpoint descriptor\n", sc->sc_dev.dv_xname);
@@ -292,7 +287,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 
 	if (UHUB_IS_HIGH_SPEED(sc)) {
 		tts = mallocarray((UHUB_IS_SINGLE_TT(sc) ? 1 : nports),
-		    sizeof (struct usbd_tt), M_USBDEV, M_NOWAIT);
+		    sizeof(struct usbd_tt), M_USBDEV, M_NOWAIT);
 		if (!tts)
 			goto bad;
 	}
@@ -339,12 +334,10 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
  bad:
-	if (sc->sc_statusbuf)
-		free(sc->sc_statusbuf, M_USBDEV, sc->sc_statuslen);
+	free(sc->sc_statusbuf, M_USBDEV, sc->sc_statuslen);
 	if (hub) {
-		if (hub->ports)
-			free(hub->ports, M_USBDEV, 0);
-		free(hub, M_USBDEV, sizeof *hub);
+		free(hub->ports, M_USBDEV, hub->nports * sizeof(*hub->ports));
+		free(hub, M_USBDEV, sizeof(*hub));
 	}
 	dev->hub = NULL;
 }
@@ -474,13 +467,11 @@ uhub_detach(struct device *self, int flags)
 		}
 	}
 
-	if (hub->ports[0].tt)
-		free(hub->ports[0].tt, M_USBDEV, 0);
-	if (sc->sc_statusbuf)
-		free(sc->sc_statusbuf, M_USBDEV, sc->sc_statuslen);
-	if (hub->ports)
-		free(hub->ports, M_USBDEV, 0);
-	free(hub, M_USBDEV, sizeof *hub);
+	free(hub->ports[0].tt, M_USBDEV,
+	    (UHUB_IS_SINGLE_TT(sc) ? 1 : hub->nports) * sizeof(struct usbd_tt));
+	free(sc->sc_statusbuf, M_USBDEV, sc->sc_statuslen);
+	free(hub->ports, M_USBDEV, hub->nports * sizeof(*hub->ports));
+	free(hub, M_USBDEV, sizeof(*hub));
 	sc->sc_hub->hub = NULL;
 
 	return (0);

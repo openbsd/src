@@ -1,4 +1,4 @@
-/* $OpenBSD: mvmbus.c,v 1.1 2016/10/21 20:11:36 patrick Exp $ */
+/* $OpenBSD: mvmbus.c,v 1.3 2018/07/09 09:24:22 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -52,8 +52,6 @@
 #define  MVMBUS_SDRAM_SIZE_ENABLED		(1 << 0)
 #define  MVMBUS_SDRAM_SIZE_MASK			0xff000000
 
-#define MVMBUS_NO_REMAP			0xffffffff
-
 struct mvmbus_softc {
 	struct simplebus_softc	 sc_sbus;
 	bus_space_tag_t		 sc_iot;
@@ -85,9 +83,13 @@ void	 mvmbus_setup_window(struct mvmbus_softc *, int, paddr_t, size_t,
 void	 mvmbus_disable_window(struct mvmbus_softc *, int);
 int	 mvmbus_window_conflicts(struct mvmbus_softc *, paddr_t, size_t);
 int	 mvmbus_window_is_free(struct mvmbus_softc *, int);
+int	 mvmbus_find_window(struct mvmbus_softc *, paddr_t, size_t);
 void	 mvmbus_parse_dram_info(struct mvmbus_softc *);
 
+struct mvmbus_softc *mvmbus_sc;
 struct mbus_dram_info *mvmbus_dram_info;
+uint32_t mvmbus_pcie_mem_aperture[2];
+uint32_t mvmbus_pcie_io_aperture[2];
 
 struct cfattach mvmbus_ca = {
 	sizeof (struct mvmbus_softc), mvmbus_match, mvmbus_attach
@@ -119,6 +121,7 @@ mvmbus_attach(struct device *parent, struct device *self, void *args)
 	void *mbusc;
 	int i;
 
+	mvmbus_sc = sc;
 	sc->sc_iot = faa->fa_iot;
 
 	/* The registers are in the controller itself, find it. */
@@ -146,7 +149,10 @@ mvmbus_attach(struct device *parent, struct device *self, void *args)
 		    &sc->sc_bridge_ioh))
 			sc->sc_bridge_ioh = 0;
 
-	/* TODO: pcie properties */
+	OF_getpropintarray(faa->fa_node, "pcie-mem-aperture",
+	    mvmbus_pcie_mem_aperture, sizeof(mvmbus_pcie_mem_aperture));
+	OF_getpropintarray(faa->fa_node, "pcie-io-aperture",
+	    mvmbus_pcie_io_aperture, sizeof(mvmbus_pcie_io_aperture));
 
 	/* TODO: support more than the armada 370/380/xp */
 	sc->sc_num_wins = 20;
@@ -227,7 +233,7 @@ mvmbus_window_is_free(struct mvmbus_softc *sc, int window)
 	 * don't do this yet, make sure we don't use this window.
 	 */
 	if (window == 13)
-		return 1;
+		return 0;
 	return !sc->sc_windows[window].enabled;
 }
 
@@ -294,14 +300,12 @@ mvmbus_setup_window(struct mvmbus_softc *sc, int window, paddr_t base,
 void
 mvmbus_disable_window(struct mvmbus_softc *sc, int window)
 {
-	int i;
-
 	bus_space_write_4(sc->sc_iot, sc->sc_mbus_ioh,
 	    MVMBUS_XP_WINDOW(window) + MVMBUS_WINDOW_BASE, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_mbus_ioh,
 	    MVMBUS_XP_WINDOW(window) + MVMBUS_WINDOW_CTRL, 0);
 
-	for (i = 0; i < sc->sc_num_remappable_wins; i++) {
+	if (window < sc->sc_num_remappable_wins) {
 		bus_space_write_4(sc->sc_iot, sc->sc_mbus_ioh,
 		    MVMBUS_XP_WINDOW(window) + MVMBUS_WINDOW_REMAP_LO, 0);
 		bus_space_write_4(sc->sc_iot, sc->sc_mbus_ioh,
@@ -326,6 +330,48 @@ mvmbus_window_conflicts(struct mvmbus_softc *sc, paddr_t base, size_t size)
 	}
 
 	return 0;
+}
+
+int
+mvmbus_find_window(struct mvmbus_softc *sc, paddr_t base, size_t size)
+{
+	int win;
+
+	for (win = 0; win < sc->sc_num_wins; win++) {
+		if (!sc->sc_windows[win].enabled)
+			continue;
+		if (sc->sc_windows[win].base != base)
+			continue;
+		if (sc->sc_windows[win].size != size)
+			continue;
+		break;
+	}
+
+	if (win == sc->sc_num_wins)
+		return -1;
+	return win;
+}
+
+void
+mvmbus_add_window(paddr_t base, size_t size, paddr_t remap,
+    uint8_t target, uint8_t attr)
+{
+	struct mvmbus_softc *sc = mvmbus_sc;
+
+	KASSERT(sc != NULL);
+	mvmbus_alloc_window(sc, base, size, remap, target, attr);
+}
+
+void
+mvmbus_del_window(paddr_t base, size_t size)
+{
+	struct mvmbus_softc *sc = mvmbus_sc;
+	int win;
+
+	KASSERT(sc != NULL);
+	win = mvmbus_find_window(sc, base, size);
+	if (win >= 0)
+		mvmbus_disable_window(sc, win);
 }
 
 void

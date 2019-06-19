@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_load_file.3,v 1.9 2017/10/08 06:56:36 jmc Exp $
+.\" $OpenBSD: tls_load_file.3,v 1.11 2018/11/29 14:24:23 tedu Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2017 $
+.Dd $Mdocdate: November 29 2018 $
 .Dt TLS_LOAD_FILE 3
 .Os
 .Sh NAME
@@ -45,7 +45,8 @@
 .Nm tls_config_clear_keys ,
 .Nm tls_config_set_verify_depth ,
 .Nm tls_config_verify_client ,
-.Nm tls_config_verify_client_optional
+.Nm tls_config_verify_client_optional ,
+.Nm tls_default_ca_cert_file
 .Nd TLS certificate and key configuration
 .Sh SYNOPSIS
 .In tls.h
@@ -118,7 +119,7 @@
 .Ft int
 .Fo tls_config_set_ocsp_staple_file
 .Fa "struct tls_config *config"
-.Fa "const uint8_t *staple_file"
+.Fa "const char *staple_file"
 .Fc
 .Ft int
 .Fo tls_config_set_keypair_file
@@ -193,6 +194,8 @@
 .Fn tls_config_verify_client "struct tls_config *config"
 .Ft void
 .Fn tls_config_verify_client_optional "struct tls_config *config"
+.Ft const char *
+.Fn tls_default_ca_cert_file "void"
 .Sh DESCRIPTION
 .Fn tls_load_file
 loads a certificate or key from disk into memory to be used with
@@ -209,6 +212,9 @@ argument is specified.
 unloads the memory that was returned from an earlier
 .Fn tls_load_file
 call, ensuring that the memory contents is discarded.
+.Pp
+.Fn tls_default_ca_cert_file
+returns the path of the file that contains the default root certificates.
 .Pp
 .Fn tls_config_set_ca_file
 sets the filename used to load a file

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-vqp.c,v 1.7 2006/08/24 05:11:43 stevesk Exp $	*/
+/*	$OpenBSD: print-vqp.c,v 1.8 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Kevin Steves <stevesk@openbsd.org>
@@ -217,7 +217,7 @@ vqp_print(const u_char *bp, u_int len)
 	u_int dcount;
 
 	TCHECK(p->version);
-	printf(" VQPv%u", p->version);
+	printf("VQPv%u", p->version);
 	if (p->version != 1)
 		return;
 	TCHECK(p->opcode);

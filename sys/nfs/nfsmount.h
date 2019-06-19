@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.27 2017/02/22 11:42:46 mpi Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.28 2018/04/09 09:39:53 mpi Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -49,12 +49,11 @@ struct	nfsmount {
 		nm_ntree;		/* filehandle/node tree */
 	TAILQ_HEAD(reqs, nfsreq)
 		nm_reqsq;		/* request queue for this mount. */
-	struct timeout nm_rtimeout;	/* timeout (scans/resends nm_reqsq). */
-	int	nm_flag;		/* Flags for soft/hard... */
+	struct	timeout nm_rtimeout;	/* timeout (scans/resends nm_reqsq). */
 	struct	mount *nm_mountp;	/* Vfs structure for this filesystem */
+	struct	vnode *nm_vnode;	/* vnode of root dir */
+	int	nm_flag;		/* Flags for soft/hard... */
 	int	nm_numgrps;		/* Max. size of groupslist */
-	u_char	nm_fh[NFSX_V3FHMAX];	/* File handle of root dir */
-	int	nm_fhsize;		/* Size of root file handle */
 	struct	socket *nm_so;		/* Rpc socket */
 	int	nm_sotype;		/* Type of socket */
 	int	nm_soproto;		/* and protocol */

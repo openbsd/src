@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.23 2017/05/08 09:31:34 rzalamena Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.24 2018/06/04 19:20:12 kn Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -92,7 +92,6 @@ mroute6pr(void)
 	struct mif6info *mif;
 	size_t needed, mifi, nummifs, mfci, nummfcs;
 	int banner_printed, saved_nflag;
-	mifi_t maxmif = 0;
 	u_int mrtproto;
 	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_MRTPROTO };
 	size_t len = sizeof(int);
@@ -119,8 +118,6 @@ mroute6pr(void)
 	needed = get_sysctl(mib, sizeof(mib) / sizeof(mib[0]), &buf);
 	nummifs = needed / sizeof(*mif);
 	mif = (struct mif6info *)buf;
-	if (nummifs)
-		maxmif = mif[nummifs - 1].m6_mifi;
 
 	banner_printed = 0;
 	for (mifi = 0; mifi < nummifs; ++mifi, ++mif) {

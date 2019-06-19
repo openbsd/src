@@ -1,4 +1,4 @@
-/*	$OpenBSD: sypwr.c,v 1.1 2017/12/31 11:13:59 kettenis Exp $	*/
+/*	$OpenBSD: sypwr.c,v 1.2 2018/08/03 21:07:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,14 +35,18 @@ struct sypwr_softc {
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
 
+	uint32_t	sc_fixed_microvolt;
+
 	struct regulator_device sc_rd;
 };
 
 int	sypwr_match(struct device *, void *, void *);
 void	sypwr_attach(struct device *, struct device *, void *);
+int	sypwr_activate(struct device *, int);
 
 struct cfattach sypwr_ca = {
-	sizeof(struct sypwr_softc), sypwr_match, sypwr_attach
+	sizeof(struct sypwr_softc), sypwr_match, sypwr_attach,
+	NULL, sypwr_activate
 };
 
 struct cfdriver sypwr_cd = {
@@ -74,14 +78,18 @@ sypwr_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
+	sc->sc_fixed_microvolt =
+	    OF_getpropint(node, "silergy,fixed-microvolt", 0);
+
 	/*
 	 * Only register the regulator if it is under I2C control
-	 * (i.e. initialized by the firmware).  Otherwise we have no
-	 * idea what the current output voltage is, which will confuse
-	 * the regulator framework.
+	 * (i.e. initialized by the firmware) or if the device tree
+	 * specifies its fixed voltage.  Otherwise we have no idea
+	 * what the current output voltage is, which will confuse the
+	 * regulator framework.
 	 */
 	reg = sypwr_read(sc, SY8106A_VOUT1_SEL);
-	if (reg & SY8106A_VOUT1_SEL_I2C) {
+	if (reg & SY8106A_VOUT1_SEL_I2C || sc->sc_fixed_microvolt != 0) {
 		uint32_t voltage;
 
 		voltage = sypwr_get_voltage(sc);
@@ -96,6 +104,29 @@ sypwr_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+}
+
+int
+sypwr_activate(struct device *self, int act)
+{
+	struct sypwr_softc *sc = (struct sypwr_softc *)self;
+	uint8_t reg;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		/*
+		 * Restore fixed voltage otherwise we might hang after
+		 * a warm reset.
+		 */
+		if (sc->sc_fixed_microvolt != 0) {
+			reg = sypwr_read(sc, SY8106A_VOUT1_SEL);
+			reg &= ~SY8106A_VOUT1_SEL_I2C;
+			sypwr_write(sc, SY8106A_VOUT1_SEL, reg);
+		}
+		break;
+	}
+
+	return 0;
 }
 
 uint8_t
@@ -144,7 +175,10 @@ sypwr_get_voltage(void *cookie)
 	uint8_t value;
 	
 	value = sypwr_read(sc, SY8106A_VOUT1_SEL);
-	return 680000 + (value & SY8106A_VOUT1_SEL_MASK) * 10000;
+	if (value & SY8106A_VOUT1_SEL_I2C)
+		return 680000 + (value & SY8106A_VOUT1_SEL_MASK) * 10000;
+	else
+		return sc->sc_fixed_microvolt;
 }
 
 int

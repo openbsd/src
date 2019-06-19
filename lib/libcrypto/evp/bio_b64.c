@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_b64.c,v 1.20 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: bio_b64.c,v 1.22 2018/08/24 19:47:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,7 +91,7 @@ typedef struct b64_struct {
 	char tmp[B64_BLOCK_SIZE];
 } BIO_B64_CTX;
 
-static BIO_METHOD methods_b64 = {
+static const BIO_METHOD methods_b64 = {
 	.type = BIO_TYPE_BASE64,
 	.name = "base64 encoding",
 	.bwrite = b64_write,
@@ -103,7 +103,7 @@ static BIO_METHOD methods_b64 = {
 	.callback_ctrl = b64_callback_ctrl
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_f_base64(void)
 {
 	return (&methods_b64);
@@ -430,9 +430,10 @@ b64_write(BIO *b, const char *in, int inl)
 				ret += n;
 			}
 		} else {
-			EVP_EncodeUpdate(&(ctx->base64),
+			if (!EVP_EncodeUpdate(&(ctx->base64),
 			    (unsigned char *)ctx->buf, &ctx->buf_len,
-			    (unsigned char *)in, n);
+			    (unsigned char *)in, n))
+				return ((ret == 0) ? -1 : ret);
 			OPENSSL_assert(ctx->buf_len <= (int)sizeof(ctx->buf));
 			OPENSSL_assert(ctx->buf_len >= ctx->buf_off);
 			ret += n;

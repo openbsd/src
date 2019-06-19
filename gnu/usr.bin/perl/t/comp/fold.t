@@ -4,7 +4,7 @@
 # we've not yet verified that use works.
 # use strict;
 
-print "1..30\n";
+print "1..35\n";
 my $test = 0;
 
 # Historically constant folding was performed by evaluating the ops, and if
@@ -180,3 +180,15 @@ is "@values", "4 4",
     is $w, 1, '1+undef_constant is not folded outside warninsg scope';
     BEGIN { $^W = 1 }
 }
+
+$a = eval 'my @z; @z = 0..~0 if 0; 3';
+is ($a, 3, "list constant folding doesn't signal compile-time error");
+is ($@, '', 'no error');
+
+$b = 0;
+$a = eval 'my @z; @z = 0..~0 if $b; 3';
+is ($a, 3, "list constant folding doesn't signal compile-time error");
+is ($@, '', 'no error');
+
+$a = eval 'local $SIG{__WARN__} = sub {}; join("", ":".."~", "z")';
+is ($a, ":z", "aborted list constant folding still executable");

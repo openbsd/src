@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.22 2016/09/03 10:28:08 renato Exp $ */
+/*	$OpenBSD: ripe.c,v 1.23 2018/11/04 07:52:55 remi Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -195,6 +195,9 @@ ripe(struct ripd_conf *xconf, int pipe_parent2ripe[2], int pipe_ripe2rde[2],
 			log_debug("ripe: error starting interface: %s",
 			    iface->name);
 	}
+
+	if (pledge("stdio inet mcast", NULL) == -1)
+		fatal("pledge");
 
 	evtimer_set(&oeconf->report_timer, report_timer, oeconf);
 	start_report_timer();

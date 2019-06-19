@@ -117,27 +117,26 @@ static const short safe_years[SOLAR_CYCLE_LENGTH] = {
 
 static int S_is_exception_century(Year year)
 {
-    int is_exception = ((year % 100 == 0) && !(year % 400 == 0));
+    const int is_exception = ((year % 100 == 0) && !(year % 400 == 0));
     TIME64_TRACE1("# is_exception_century: %s\n", is_exception ? "yes" : "no");
 
     return(is_exception);
 }
 
 
-static Time64_T S_timegm64(struct TM *date) {
+static Time64_T S_timegm64(const struct TM *date) {
     int      days    = 0;
     Time64_T seconds = 0;
-    Year     year;
 
     if( date->tm_year > 70 ) {
-        year = 70;
+        Year year = 70;
         while( year < date->tm_year ) {
             days += length_of_year[IS_LEAP(year)];
             year++;
         }
     }
     else if ( date->tm_year < 70 ) {
-        year = 69;
+        Year year = 69;
         do {
             days -= length_of_year[IS_LEAP(year)];
             year--;
@@ -160,7 +159,7 @@ static Time64_T S_timegm64(struct TM *date) {
 
 
 #ifdef DEBUGGING
-static int S_check_tm(struct TM *tm)
+static int S_check_tm(const struct TM *tm)
 {
     /* Don't forget leap seconds */
     assert(tm->tm_sec >= 0);
@@ -297,7 +296,7 @@ static struct tm * S_localtime_r(const time_t *clock, struct tm *result) {
 #ifdef __VMS
     dTHX;    /* the following is defined as Perl_my_localtime(aTHX_ ...) */
 #endif
-    const struct tm *static_result = localtime(clock);
+    const struct tm * const static_result = localtime(clock);
 
     assert(result != NULL);
 
@@ -318,7 +317,7 @@ static struct tm * S_gmtime_r(const time_t *clock, struct tm *result) {
 #ifdef __VMS
     dTHX;    /* the following is defined as Perl_my_localtime(aTHX_ ...) */
 #endif
-    const struct tm *static_result = gmtime(clock);
+    const struct tm * const static_result = gmtime(clock);
 
     assert(result != NULL);
 
@@ -341,7 +340,6 @@ struct TM *Perl_gmtime64_r (const Time64_T *in_time, struct TM *p)
     Time64_T m;
     Time64_T time = *in_time;
     Year year = 70;
-    int cycles = 0;
 
     assert(p != NULL);
 
@@ -390,7 +388,7 @@ struct TM *Perl_gmtime64_r (const Time64_T *in_time, struct TM *p)
 
     if (m >= 0) {
         /* Gregorian cycles, this is huge optimization for distant times */
-        cycles = (int)Perl_floor(m / (Time64_T) days_in_gregorian_cycle);
+        const int cycles = (int)Perl_floor(m / (Time64_T) days_in_gregorian_cycle);
         if( cycles ) {
             m -= (cycles * (Time64_T) days_in_gregorian_cycle);
             year += (cycles * years_in_gregorian_cycle);
@@ -411,6 +409,8 @@ struct TM *Perl_gmtime64_r (const Time64_T *in_time, struct TM *p)
             v_tm_mon++;
         }
     } else {
+        int cycles;
+
         year--;
 
         /* Gregorian cycles */

@@ -13,13 +13,40 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/FunctionComparator.h"
-#include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CallSite.h"
+#include "llvm/IR/Constant.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Operator.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Value.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
 
 using namespace llvm;
 
@@ -160,7 +187,6 @@ int FunctionComparator::cmpOperandBundlesSchema(const Instruction *L,
 /// For more details see declaration comments.
 int FunctionComparator::cmpConstants(const Constant *L,
                                      const Constant *R) const {
-
   Type *TyL = L->getType();
   Type *TyR = R->getType();
 
@@ -226,8 +252,8 @@ int FunctionComparator::cmpConstants(const Constant *L,
   if (!L->isNullValue() && R->isNullValue())
     return -1;
 
-  auto GlobalValueL = const_cast<GlobalValue*>(dyn_cast<GlobalValue>(L));
-  auto GlobalValueR = const_cast<GlobalValue*>(dyn_cast<GlobalValue>(R));
+  auto GlobalValueL = const_cast<GlobalValue *>(dyn_cast<GlobalValue>(L));
+  auto GlobalValueR = const_cast<GlobalValue *>(dyn_cast<GlobalValue>(R));
   if (GlobalValueL && GlobalValueR) {
     return cmpGlobalValues(GlobalValueL, GlobalValueR);
   }
@@ -350,7 +376,7 @@ int FunctionComparator::cmpConstants(const Constant *L,
     }
   }
   default: // Unknown constant, abort.
-    DEBUG(dbgs() << "Looking at valueID " << L->getValueID() << "\n");
+    LLVM_DEBUG(dbgs() << "Looking at valueID " << L->getValueID() << "\n");
     llvm_unreachable("Constant ValueID not recognized.");
     return -1;
   }
@@ -401,10 +427,9 @@ int FunctionComparator::cmpTypes(Type *TyL, Type *TyR) const {
   case Type::TokenTyID:
     return 0;
 
-  case Type::PointerTyID: {
+  case Type::PointerTyID:
     assert(PTyL && PTyR && "Both types must be pointers here.");
     return cmpNumbers(PTyL->getAddressSpace(), PTyR->getAddressSpace());
-  }
 
   case Type::StructTyID: {
     StructType *STyL = cast<StructType>(TyL);
@@ -637,7 +662,6 @@ int FunctionComparator::cmpOperations(const Instruction *L,
 // Read method declaration comments for more details.
 int FunctionComparator::cmpGEPs(const GEPOperator *GEPL,
                                 const GEPOperator *GEPR) const {
-
   unsigned int ASL = GEPL->getPointerAddressSpace();
   unsigned int ASR = GEPR->getPointerAddressSpace();
 
@@ -685,7 +709,7 @@ int FunctionComparator::cmpInlineAsm(const InlineAsm *L,
     return Res;
   if (int Res = cmpNumbers(L->getDialect(), R->getDialect()))
     return Res;
-  llvm_unreachable("InlineAsm blocks were not uniqued.");
+  assert(L->getFunctionType() != R->getFunctionType());
   return 0;
 }
 
@@ -869,15 +893,19 @@ namespace {
 // buffer.
 class HashAccumulator64 {
   uint64_t Hash;
+
 public:
   // Initialize to random constant, so the state isn't zero.
   HashAccumulator64() { Hash = 0x6acaa36bef8325c5ULL; }
+
   void add(uint64_t V) {
-     Hash = llvm::hashing::detail::hash_16_bytes(Hash, V);
+     Hash = hashing::detail::hash_16_bytes(Hash, V);
   }
+
   // No finishing is required, because the entire hash value is used.
   uint64_t getHash() { return Hash; }
 };
+
 } // end anonymous namespace
 
 // A function hash is calculated by considering only the number of arguments and
@@ -896,7 +924,7 @@ FunctionComparator::FunctionHash FunctionComparator::functionHash(Function &F) {
   H.add(F.arg_size());
 
   SmallVector<const BasicBlock *, 8> BBs;
-  SmallSet<const BasicBlock *, 16> VisitedBBs;
+  SmallPtrSet<const BasicBlock *, 16> VisitedBBs;
 
   // Walk the blocks in the same order as FunctionComparator::cmpBasicBlocks(),
   // accumulating the hash of the function "structure." (BB and opcode sequence)
@@ -919,5 +947,3 @@ FunctionComparator::FunctionHash FunctionComparator::functionHash(Function &F) {
   }
   return H.getHash();
 }
-
-

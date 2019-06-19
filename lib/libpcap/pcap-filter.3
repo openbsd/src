@@ -1,4 +1,4 @@
-.\"     $OpenBSD: pcap-filter.3,v 1.2 2014/02/19 04:51:32 lteo Exp $
+.\"     $OpenBSD: pcap-filter.3,v 1.3 2018/12/09 15:07:06 denis Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -522,6 +522,30 @@ filters on VLAN 200 encapsulated within VLAN 100, and
 .in -.5i
 filters IPv4 protocols encapsulated in VLAN 300 encapsulated within any
 higher order VLAN.
+.IP "\fBmpls \fI[label]\fR"
+True if the packet is an MPLS (Multi-Protocol Label Switching) packet.
+If \fIlabel\fR is specified, only true if the packet has the specified
+\fIlabel\fR.
+Note that the first \fBmpls\fR keyword encountered in \fIexpression\fR
+changes the decoding offsets for the remainder of \fIexpression\fR on
+the assumption that the packet is an MPLS packet.  The \fBmpls
+\fI[label]\fR expression may be used more than once, to filter on MPLS
+labels stack.  Each use of that expression increments the filter offsets
+by 4.
+.IP
+For example:
+.in +.5i
+.nf
+\fBmpls 42 && mpls 12\fR
+.fi
+.in -.5i
+filters on MPLS label 42 first and requires the next label to be 12 and
+.in +.5i
+.nf
+\fBmpls 42 && net 192.0.2.0/24\fR
+.fi
+.in -.5i
+filters on network 192.0.2.0/24 transported inside packets with label 42.
 .IP  "\fBtcp\fR, \fBudp\fR, \fBicmp\fR"
 Abbreviations for:
 .in +.5i

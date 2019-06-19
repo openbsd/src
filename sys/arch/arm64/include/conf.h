@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.2 2017/01/23 12:34:06 kettenis Exp $	*/
+/*	$OpenBSD: conf.h,v 1.3 2019/01/23 09:57:36 phessler Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -47,6 +47,16 @@ cdev_decl(mm);
 	(dev_type_mmap((*))) enodev }
 
 cdev_decl(openprom);
+
+/* open, close, write, ioctl, kqueue */
+#define cdev_acpiapm_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, selfalse, \
+	(dev_type_mmap((*))) enodev, 0, 0, dev_init(c,n,kqfilter) }
+
+cdev_decl(apm);
+cdev_decl(acpiapm);
 
 /*
  * These numbers have to be in sync with bdevsw/cdevsw.

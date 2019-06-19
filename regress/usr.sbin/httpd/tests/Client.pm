@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.1 2015/07/16 16:35:57 reyk Exp $
+#	$OpenBSD: Client.pm,v 1.2 2018/05/19 13:57:43 jsing Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -59,6 +59,11 @@ sub child {
 	    PeerAddr		=> $self->{connectaddr},
 	    PeerPort		=> $self->{connectport},
 	    SSL_verify_mode	=> SSL_VERIFY_NONE,
+	    SSL_use_cert	=> $self->{offertlscert} ? 1 : 0,
+	    SSL_cert_file	=> $self->{offertlscert} ?
+					$self->{chroot}."/client.crt" : "",
+	    SSL_key_file	=> $self->{offertlscert} ?
+					$self->{chroot}."/client.key" : "",
 	) or die ref($self), " $iosocket socket connect failed: $!,$SSL_ERROR";
 	print STDERR "connect sock: ",$cs->sockhost()," ",$cs->sockport(),"\n";
 	print STDERR "connect peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";

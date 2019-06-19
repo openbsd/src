@@ -1,5 +1,6 @@
-.\"	$OpenBSD: EVP_EncodeInit.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
-.\"	OpenSSL f430ba31 Jun 19 19:39:01 2016 +0200
+.\" $OpenBSD: EVP_EncodeInit.3,v 1.7 2019/06/06 01:06:58 schwarze Exp $
+.\" full merge up to: OpenSSL f430ba31 Jun 19 19:39:01 2016 +0200
+.\" selective merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
 .\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
@@ -48,10 +49,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt EVP_ENCODEINIT 3
 .Os
 .Sh NAME
+.Nm EVP_ENCODE_CTX_new ,
+.Nm EVP_ENCODE_CTX_free ,
 .Nm EVP_EncodeInit ,
 .Nm EVP_EncodeUpdate ,
 .Nm EVP_EncodeFinal ,
@@ -63,6 +66,12 @@
 .Nd EVP base64 encode/decode routines
 .Sh SYNOPSIS
 .In openssl/evp.h
+.Ft EVP_ENCODE_CTX *
+.Fn EVP_ENCODE_CTX_new void
+.Ft void
+.Fo EVP_ENCODE_CTX_free
+.Fa "EVP_ENCODE_CTX *ctx"
+.Fc
 .Ft void
 .Fo EVP_EncodeInit
 .Fa "EVP_ENCODE_CTX *ctx"
@@ -120,6 +129,14 @@ For every 3 bytes of binary data provided, 4 bytes of base64-encoded
 data will be produced, plus some occasional newlines.
 If the input data length is not a multiple of 3, then the output data
 will be padded at the end using the "=" character.
+.Pp
+.Fn EVP_ENCODE_CTX_new
+allocates, initializes and returns a context to be used for the encode
+and decode functions.
+.Pp
+.Fn EVP_ENCODE_CTX_free
+frees
+.Fa ctx .
 .Pp
 Encoding of binary data is performed in blocks of 48 input bytes (or
 less for the final block).
@@ -275,6 +292,13 @@ The output will be padded with 0 bits if necessary to ensure that the
 output is always 3 bytes for every 4 input bytes.
 This function will return the length of the data decoded or -1 on error.
 .Sh RETURN VALUES
+.Fn EVP_ENCODE_CTX_new
+returns a pointer to the newly allocated
+.Vt EVP_ENCODE_CTX
+object or
+.Dv NULL
+on error.
+.Pp
 .Fn EVP_EncodeUpdate
 returns 0 on error or 1 on success.
 .Pp
@@ -292,8 +316,19 @@ returns -1 on error or 1 on success.
 .Fn EVP_DecodeBlock
 returns the length of the data decoded or -1 on error.
 .Sh SEE ALSO
+.Xr BIO_f_base64 3 ,
 .Xr evp 3
 .Sh HISTORY
-These functions first appeared in SSLeay 0.5.1
+The
+.Fn EVP_Encode*
+and
+.Fn EVP_Decode*
+functions first appeared in SSLeay 0.5.1
 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn EVP_ENCODE_CTX_new
+and
+.Fn EVP_ENCODE_CTX_free
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.5 .

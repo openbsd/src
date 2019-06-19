@@ -1,5 +1,8 @@
 #!./perl
 
+# This file is for testing select() with one argument.  Four-argument
+# select() is tested in sselect.t.
+
 BEGIN {
     chdir 't' if -d 't';
     require './test.pl';

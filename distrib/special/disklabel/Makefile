@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2016/09/03 13:37:40 guenther Exp $
+#	$OpenBSD: Makefile,v 1.10 2019/05/11 11:31:08 krw Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -41,7 +41,7 @@ CFLAGS+= -DSEEALSO="\"fdisk(8)\""
 CFLAGS+= -DSEEALSO="\"fdisk(8), installboot(8)\""
 .endif
 
-.if (${MACHINE} == "macppc" || ${MACHINE} == "socppc")
+.if (${MACHINE} == "macppc")
 CFLAGS+= -DSEEALSO="\"fdisk(8), pdisk(8)\""
 .endif
 

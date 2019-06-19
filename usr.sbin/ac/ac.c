@@ -25,9 +25,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/file.h>
 #include <sys/time.h>
+
 #include <err.h>
 #include <errno.h>
 #include <pwd.h>
@@ -188,7 +187,8 @@ update_user(struct user_list *head, char *name, time_t secs)
 	if ((up = malloc(sizeof(struct user_list))) == NULL)
 		err(1, "malloc");
 	up->next = head;
-	strlcpy(up->name, name, sizeof (up->name));
+	strncpy(up->name, name, sizeof(up->name) - 1);
+	up->name[sizeof(up->name) - 1] = '\0';
 	up->secs = secs;
 	Total += secs;
 	return up;
@@ -411,6 +411,8 @@ ac(FILE	*fp)
 		prev = usr.ut_time;
 		if (Flags & AC_D) {
 			ltm = localtime(&usr.ut_time);
+			if (ltm == NULL)
+				err(1, "localtime");
 			if (day >= 0 && day != ltm->tm_yday) {
 				day = ltm->tm_yday;
 				/*
@@ -462,6 +464,8 @@ ac(FILE	*fp)
 
 	if (Flags & AC_D) {
 		ltm = localtime(&usr.ut_time);
+		if (ltm == NULL)
+			err(1, "localtime");
 		if (day >= 0 && day != ltm->tm_yday) {
 			/*
 			 * print yesterday's total

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.171 2017/11/29 15:24:50 benno Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.179 2019/05/31 15:25:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
 
@@ -184,6 +185,7 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&env->sc_hosts);
 	TAILQ_INIT(&env->sc_sessions);
 	env->sc_rtable = getrtable();
+	env->sc_snmp = -1;
 	/* initialize the TLS session id to a random key for all relay procs */
 	arc4random_buf(env->sc_conf.tls_sid, sizeof(env->sc_conf.tls_sid));
 
@@ -212,7 +214,7 @@ main(int argc, char *argv[])
 		ps->ps_title[proc_id] = title;
 
 	/* only the parent returns */
-	proc_init(ps, procs, nitems(procs), argc0, argv, proc_id);
+	proc_init(ps, procs, nitems(procs), debug, argc0, argv, proc_id);
 
 	log_procinit("parent");
 	if (!debug && daemon(1, 0) == -1)
@@ -220,6 +222,11 @@ main(int argc, char *argv[])
 
 	if (ps->ps_noaction == 0)
 		log_info("startup");
+
+	if (unveil("/", "r") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 	event_init();
 
@@ -548,6 +555,7 @@ purge_relay(struct relayd *env, struct relay *rlay)
 {
 	struct rsession		*con;
 	struct relay_table	*rlt;
+	struct relay_cert	*cert, *tmpcert;
 
 	/* shutdown and remove relay */
 	if (event_initialized(&rlay->rl_ev))
@@ -558,7 +566,7 @@ purge_relay(struct relayd *env, struct relay *rlay)
 	/* cleanup sessions */
 	while ((con =
 	    SPLAY_ROOT(&rlay->rl_sessions)) != NULL)
-		relay_close(con, NULL);
+		relay_close(con, NULL, 0);
 
 	/* cleanup relay */
 	if (rlay->rl_bev != NULL)
@@ -566,7 +574,6 @@ purge_relay(struct relayd *env, struct relay *rlay)
 	if (rlay->rl_dstbev != NULL)
 		bufferevent_free(rlay->rl_dstbev);
 
-	purge_key(&rlay->rl_tls_key, rlay->rl_conf.tls_key_len);
 	purge_key(&rlay->rl_tls_cakey, rlay->rl_conf.tls_cakey_len);
 
 	if (rlay->rl_tls_pkey != NULL) {
@@ -589,6 +596,19 @@ purge_relay(struct relayd *env, struct relay *rlay)
 	while ((rlt = TAILQ_FIRST(&rlay->rl_tables))) {
 		TAILQ_REMOVE(&rlay->rl_tables, rlt, rlt_entry);
 		free(rlt);
+	}
+
+	TAILQ_FOREACH_SAFE(cert, env->sc_certs, cert_entry, tmpcert) {
+		if (rlay->rl_conf.id != cert->cert_relayid)
+			continue;
+		if (cert->cert_fd != -1)
+			close(cert->cert_fd);
+		if (cert->cert_key_fd != -1)
+			close(cert->cert_key_fd);
+		if (cert->cert_pkey != NULL)
+			EVP_PKEY_free(cert->cert_pkey);
+		TAILQ_REMOVE(env->sc_certs, cert, cert_entry);
+		free(cert);
 	}
 
 	free(rlay);
@@ -803,6 +823,48 @@ kv_find(struct kvtree *keys, struct kv *kv)
 		match = RB_FIND(kvtree, keys, kv);
 	}
 
+	return (match);
+}
+
+struct kv *
+kv_find_value(struct kvtree *keys, char *key, const char *value,
+    const char *delim)
+{
+	struct kv	*match, kv;
+	char		*val = NULL, *next, *ptr;
+	size_t		 len;
+
+	kv.kv_key = key;
+	if ((match = RB_FIND(kvtree, keys, &kv)) == NULL)
+		return (NULL);
+
+	if (match->kv_value == NULL)
+		return (NULL);
+
+	if (delim == NULL) {
+		if (strcasecmp(match->kv_value, value) == 0)
+			goto done;
+	} else {
+		if ((val = strdup(match->kv_value)) == NULL)
+			return (NULL);
+		for (next = ptr = val; ptr != NULL;
+		    ptr = strsep(&next, delim)) {
+			/* strip whitespace */
+			ptr += strspn(ptr, " \t");
+			len = strcspn(ptr, " \t");
+			if (strncasecmp(ptr, value, len) == 0)
+				goto done;
+		}
+	}
+
+	/* not matched */
+	match = NULL;
+ done:
+#ifdef DEBUG
+	if (match != NULL)
+		DPRINTF("%s: matched %s: %s", __func__, key, value);
+#endif
+	free(val);
 	return (match);
 }
 
@@ -1186,6 +1248,163 @@ pkey_add(struct relayd *env, EVP_PKEY *pkey, char *hash)
 	TAILQ_INSERT_TAIL(env->sc_pkeys, ca_pkey, pkey_entry);
 
 	return (ca_pkey);
+}
+
+struct relay_cert *
+cert_add(struct relayd *env, objid_t id)
+{
+	static objid_t		 last_cert_id = 0;
+	struct relay_cert	*cert;
+
+	if ((cert = calloc(1, sizeof(*cert))) == NULL)
+		return (NULL);
+
+	if (id == 0)
+		id = ++last_cert_id;
+	if (id == INT_MAX) {
+		log_warnx("too many tls keypairs defined");
+		free(cert);
+		return (NULL);
+	}
+
+	cert->cert_id = id;
+	cert->cert_fd = -1;
+	cert->cert_key_fd = -1;
+
+	TAILQ_INSERT_TAIL(env->sc_certs, cert, cert_entry);
+
+	return (cert);
+}
+
+struct relay_cert *
+cert_find(struct relayd *env, objid_t id)
+{
+	struct relay_cert	*cert;
+
+	TAILQ_FOREACH(cert, env->sc_certs, cert_entry)
+		if (cert->cert_id == id)
+			return (cert);
+	return (NULL);
+}
+
+char *
+relay_load_fd(int fd, off_t *len)
+{
+	char		*buf = NULL;
+	struct stat	 st;
+	off_t		 size;
+	ssize_t		 rv;
+	int		 err;
+
+	if (fstat(fd, &st) != 0)
+		goto fail;
+	size = st.st_size;
+	if ((buf = calloc(1, size + 1)) == NULL)
+		goto fail;
+	if ((rv = pread(fd, buf, size, 0)) != size)
+		goto fail;
+
+	close(fd);
+
+	*len = size;
+	return (buf);
+
+ fail:
+	err = errno;
+	free(buf);
+	close(fd);
+	errno = err;
+	return (NULL);
+}
+
+int
+relay_load_certfiles(struct relayd *env, struct relay *rlay, const char *name)
+{
+	char	 certfile[PATH_MAX];
+	char	 hbuf[PATH_MAX];
+	struct protocol *proto = rlay->rl_proto;
+	struct relay_cert *cert;
+	int	 useport = htons(rlay->rl_conf.port);
+	int	 cert_fd = -1, key_fd = -1;
+
+	if (rlay->rl_conf.flags & F_TLSCLIENT) {
+		if (strlen(proto->tlsca) && rlay->rl_tls_ca_fd == -1) {
+			if ((rlay->rl_tls_ca_fd =
+			    open(proto->tlsca, O_RDONLY)) == -1)
+				return (-1);
+			log_debug("%s: using ca %s", __func__, proto->tlsca);
+		}
+		if (strlen(proto->tlscacert) && rlay->rl_tls_cacert_fd == -1) {
+			if ((rlay->rl_tls_cacert_fd =
+			    open(proto->tlscacert, O_RDONLY)) == -1)
+				return (-1);
+			log_debug("%s: using ca certificate %s", __func__,
+			    proto->tlscacert);
+		}
+		if (strlen(proto->tlscakey) && !rlay->rl_conf.tls_cakey_len &&
+		    proto->tlscapass != NULL) {
+			if ((rlay->rl_tls_cakey =
+			    ssl_load_key(env, proto->tlscakey,
+			    &rlay->rl_conf.tls_cakey_len,
+			    proto->tlscapass)) == NULL)
+				return (-1);
+			log_debug("%s: using ca key %s", __func__,
+			    proto->tlscakey);
+		}
+	}
+
+	if ((rlay->rl_conf.flags & F_TLS) == 0)
+		return (0);
+
+	if (name == NULL &&
+	    print_host(&rlay->rl_conf.ss, hbuf, sizeof(hbuf)) == NULL)
+		goto fail;
+	else if (name != NULL &&
+	    strlcpy(hbuf, name, sizeof(hbuf)) >= sizeof(hbuf))
+		goto fail;
+
+	if (snprintf(certfile, sizeof(certfile),
+	    "/etc/ssl/%s:%u.crt", hbuf, useport) == -1)
+		goto fail;
+	if ((cert_fd = open(certfile, O_RDONLY)) == -1) {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/%s.crt", hbuf) == -1)
+			goto fail;
+		if ((cert_fd = open(certfile, O_RDONLY)) == -1)
+			goto fail;
+		useport = 0;
+	}
+	log_debug("%s: using certificate %s", __func__, certfile);
+
+	if (useport) {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/private/%s:%u.key", hbuf, useport) == -1)
+			goto fail;
+	} else {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/private/%s.key", hbuf) == -1)
+			goto fail;
+	}
+	if ((key_fd = open(certfile, O_RDONLY)) == -1)
+		goto fail;
+	log_debug("%s: using private key %s", __func__, certfile);
+
+	if ((cert = cert_add(env, 0)) == NULL)
+		goto fail;
+
+	cert->cert_relayid = rlay->rl_conf.id;
+	cert->cert_fd = cert_fd;
+	cert->cert_key_fd = key_fd;
+
+	return (0);
+
+ fail:
+	if (cert_fd != -1)
+		close(cert_fd);
+	if (key_fd != -1)
+		close(key_fd);
+
+	return (-1);
 }
 
 void

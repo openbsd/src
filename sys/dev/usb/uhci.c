@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.143 2017/05/15 10:52:08 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.147 2019/03/12 08:13:50 ratchov Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -190,7 +190,7 @@ usbd_status	uhci_device_setintr(struct uhci_softc *sc,
 
 void		uhci_device_clear_toggle(struct usbd_pipe *pipe);
 
-__inline__ struct uhci_soft_qh *uhci_find_prev_qh(struct uhci_soft_qh *,
+static inline struct uhci_soft_qh *uhci_find_prev_qh(struct uhci_soft_qh *,
 		    struct uhci_soft_qh *);
 
 #ifdef UHCI_DEBUG
@@ -314,7 +314,7 @@ struct usbd_pipe_methods uhci_device_isoc_methods = {
 	} while (0)
 #define uhci_active_intr_list(ex) ((ex)->inext.le_prev != NULL)
 
-__inline__ struct uhci_soft_qh *
+static inline struct uhci_soft_qh *
 uhci_find_prev_qh(struct uhci_soft_qh *pqh, struct uhci_soft_qh *sqh)
 {
 	DPRINTFN(15,("uhci_find_prev_qh: pqh=%p sqh=%p\n", pqh, sqh));
@@ -1924,10 +1924,12 @@ uhci_device_intr_close(struct usbd_pipe *pipe)
 {
 	struct uhci_pipe *upipe = (struct uhci_pipe *)pipe;
 	struct uhci_softc *sc = (struct uhci_softc *)pipe->device->bus;
+	struct uhci_soft_qh **qhs;
 	int i, npoll;
 	int s;
 
 	/* Unlink descriptors from controller data structures. */
+	qhs = upipe->u.intr.qhs;
 	npoll = upipe->u.intr.npoll;
 	s = splusb();
 	for (i = 0; i < npoll; i++)
@@ -1942,7 +1944,7 @@ uhci_device_intr_close(struct usbd_pipe *pipe)
 
 	for(i = 0; i < npoll; i++)
 		uhci_free_sqh(sc, upipe->u.intr.qhs[i]);
-	free(upipe->u.intr.qhs, M_USBHC, 0);
+	free(qhs, M_USBHC, npoll * sizeof(*qhs));
 
 	/* XXX free other resources */
 }
@@ -2186,7 +2188,7 @@ uhci_device_isoc_start(struct usbd_xfer *xfer)
 #endif
 
 	/* Find the last TD */
-	i = ux->curframe + xfer->nframes;
+	i = ux->curframe + (xfer->nframes - 1);
 	if (i >= UHCI_VFRAMELIST_COUNT)
 		i -= UHCI_VFRAMELIST_COUNT;
 	end = upipe->u.iso.stds[i];
@@ -2302,7 +2304,7 @@ uhci_device_isoc_close(struct usbd_pipe *pipe)
 	}
 	splx(s);
 
-	free(iso->stds, M_USBHC, 0);
+	free(iso->stds, M_USBHC, UHCI_VFRAMELIST_COUNT * sizeof(*iso->stds));
 }
 
 usbd_status
@@ -2319,9 +2321,8 @@ uhci_setup_isoc(struct usbd_pipe *pipe)
 	int i, s;
 
 	iso = &upipe->u.iso;
-	iso->stds = malloc(UHCI_VFRAMELIST_COUNT *
-			   sizeof (struct uhci_soft_td *),
-			   M_USBHC, M_WAITOK);
+	iso->stds = mallocarray(UHCI_VFRAMELIST_COUNT, sizeof(*iso->stds),
+	    M_USBHC, M_WAITOK);
 
 	token = rd ? UHCI_TD_IN (0, endpt, addr, 0) :
 		     UHCI_TD_OUT(0, endpt, addr, 0);
@@ -2356,7 +2357,7 @@ uhci_setup_isoc(struct usbd_pipe *pipe)
  bad:
 	while (--i >= 0)
 		uhci_free_std(sc, iso->stds[i]);
-	free(iso->stds, M_USBHC, 0);
+	free(iso->stds, M_USBHC, UHCI_VFRAMELIST_COUNT * sizeof(*iso->stds));
 	return (USBD_NOMEM);
 }
 
@@ -2557,8 +2558,7 @@ uhci_device_setintr(struct uhci_softc *sc, struct uhci_pipe *upipe, int ival)
 	npoll = (UHCI_VFRAMELIST_COUNT + ival - 1) / ival;
 	DPRINTFN(2, ("uhci_device_setintr: ival=%d npoll=%d\n", ival, npoll));
 
-	qhs = mallocarray(npoll, sizeof(struct uhci_soft_qh *), M_USBHC,
-	    M_NOWAIT);
+	qhs = mallocarray(npoll, sizeof(*qhs), M_USBHC, M_NOWAIT);
 	if (qhs == NULL)
 		return (USBD_NOMEM);
 
@@ -2582,7 +2582,7 @@ uhci_device_setintr(struct uhci_softc *sc, struct uhci_pipe *upipe, int ival)
 		if (sqh == NULL) {
 			while (i > 0)
 				uhci_free_sqh(sc, qhs[--i]);
-			free(qhs, M_USBHC, 0);
+			free(qhs, M_USBHC, npoll * sizeof(*qhs));
 			return (USBD_NOMEM);
 		}
 		sqh->elink = NULL;
@@ -2708,7 +2708,7 @@ usb_config_descriptor_t uhci_confd = {
 	1,
 	1,
 	0,
-	UC_SELF_POWERED,
+	UC_BUS_POWERED | UC_SELF_POWERED,
 	0			/* max power */
 };
 

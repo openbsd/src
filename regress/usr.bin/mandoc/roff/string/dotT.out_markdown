@@ -1,0 +1,17 @@
+STRING-DOTT(1) - General Commands Manual
+
+# NAME
+
+**string-dotT** - interpolating the device name
+
+# DESCRIPTION
+
+BEGINTEST
+
+We are using the  markdown device.
+
+The device name can be overridden.
+ENDTEST  
+end of file
+
+OpenBSD - January 7, 2019

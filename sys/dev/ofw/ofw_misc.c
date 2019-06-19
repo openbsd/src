@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.4 2018/03/21 09:16:13 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.5 2018/04/02 17:42:15 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -49,6 +49,19 @@ regmap_register(int node, bus_space_tag_t tag, bus_space_handle_t handle,
 	rm->rm_handle = handle;
 	rm->rm_size = size;
 	LIST_INSERT_HEAD(&regmaps, rm, rm_list);
+}
+
+struct regmap *
+regmap_bycompatible(char *compatible)
+{
+	struct regmap *rm;
+
+	LIST_FOREACH(rm, &regmaps, rm_list) {
+		if (OF_is_compatible(rm->rm_node, compatible))
+			return rm;
+	}
+
+	return NULL;
 }
 
 struct regmap *

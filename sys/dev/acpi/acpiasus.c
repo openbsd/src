@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiasus.c,v 1.18 2017/02/25 20:09:20 jcs Exp $ */
+/* $OpenBSD: acpiasus.c,v 1.19 2018/07/01 19:40:49 mlarkin Exp $ */
 /* $NetBSD: asus_acpi.c,v 1.2.2.2 2008/04/03 12:42:37 mjf Exp $ */
 /*
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -97,7 +97,7 @@ struct cfdriver acpiasus_cd = {
 
 const char *acpiasus_hids[] = {
 	"ASUS010",
-	0
+	NULL
 };
 
 int

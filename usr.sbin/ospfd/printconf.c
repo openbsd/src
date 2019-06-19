@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.18 2018/02/05 12:11:28 remi Exp $ */
+/*	$OpenBSD: printconf.c,v 1.20 2018/12/28 19:25:10 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -43,6 +43,11 @@ print_mainconf(struct ospfd_conf *conf)
 		printf("fib-update no\n");
 	else
 		printf("fib-update yes\n");
+
+	printf("fib-priority %hhu\n", conf->fib_priority);
+
+	if (conf->rdomain)
+		printf("rdomain %d\n", conf->rdomain);
 
 	if (conf->rfc1583compat)
 		printf("rfc1583compat yes\n");

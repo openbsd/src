@@ -1,4 +1,4 @@
-#!./perl 
+#!./perl
 
 #
 # Regression tests for the Math::Trig package
@@ -12,6 +12,9 @@ use Test::More tests => 153;
 
 use Math::Trig 1.18;
 use Math::Trig 1.18 qw(:pi Inf);
+
+our $vax_float = (pack("d",1) =~ /^[\x80\x10]\x40/);
+our $has_inf   = !$vax_float;
 
 my $pip2 = pi / 2;
 
@@ -289,9 +292,14 @@ use Math::Trig ':radial';
     ok(near($dst1, $dst2));
 }
 
+SKIP: {
+# With netbsd-vax (or any vax) there is neither Inf, nor 1e40.
+skip("different float range", 42) if $vax_float;
+skip("no inf",                42) unless $has_inf;
+
 print "# Infinity\n";
 
-my $BigDouble = 1e40;
+my $BigDouble = eval '1e40';
 
 # E.g. netbsd-alpha core dumps on Inf arith without this.
 local $SIG{FPE} = sub { };
@@ -318,17 +326,17 @@ ok(-Inf() / $BigDouble == -Inf());
 
 print "# sinh/sech/cosh/csch/tanh/coth unto infinity\n";
 
-ok(near(sinh(100), 1.3441e+43, 1e-3));
-ok(near(sech(100), 7.4402e-44, 1e-3));
-ok(near(cosh(100), 1.3441e+43, 1e-3));
-ok(near(csch(100), 7.4402e-44, 1e-3));
+ok(near(sinh(100), eval '1.3441e+43', 1e-3));
+ok(near(sech(100), eval '7.4402e-44', 1e-3));
+ok(near(cosh(100), eval '1.3441e+43', 1e-3));
+ok(near(csch(100), eval '7.4402e-44', 1e-3));
 ok(near(tanh(100), 1));
 ok(near(coth(100), 1));
 
-ok(near(sinh(-100), -1.3441e+43, 1e-3));
-ok(near(sech(-100),  7.4402e-44, 1e-3));
-ok(near(cosh(-100),  1.3441e+43, 1e-3));
-ok(near(csch(-100), -7.4402e-44, 1e-3));
+ok(near(sinh(-100), eval '-1.3441e+43', 1e-3));
+ok(near(sech(-100), eval ' 7.4402e-44', 1e-3));
+ok(near(cosh(-100), eval ' 1.3441e+43', 1e-3));
+ok(near(csch(-100), eval '-7.4402e-44', 1e-3));
 ok(near(tanh(-100), -1));
 ok(near(coth(-100), -1));
 
@@ -345,6 +353,8 @@ cmp_ok(cosh(-1e5), '==', Inf());
 cmp_ok(csch(-1e5), '==', 0);
 cmp_ok(tanh(-1e5), '==', -1);
 cmp_ok(coth(-1e5), '==', -1);
+
+}
 
 print "# great_circle_distance with small angles\n";
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.155 2017/05/28 10:06:13 benno Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.160 2019/03/19 23:27:50 tedu Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -359,16 +359,16 @@ main(int argc, char *argv[])
 
 	/* revoke privs */
 	ouid = getuid();
-	if ((pw = getpwnam(TRACEROUTE_USER)) != NULL) {
+	if (ouid == 0 && (pw = getpwnam(TRACEROUTE_USER)) != NULL) {
 		uid = pw->pw_uid;
 		gid = pw->pw_gid;
 	} else {
 		uid = getuid();
 		gid = getgid();
 	}
-	if (setgroups(1, &gid) ||
+	if (ouid && (setgroups(1, &gid) ||
 	    setresgid(gid, gid, gid) ||
-	    setresuid(uid, uid, uid))
+	    setresuid(uid, uid, uid)))
 		err(1, "unable to revoke privs");
 
 	if (strcmp("traceroute6", __progname) == 0) {
@@ -414,7 +414,7 @@ main(int argc, char *argv[])
 		err(1, "sysctl");
 	conf->max_ttl = i;
 
-	while ((ch = getopt(argc, argv, v6flag ? "AcDdf:Ilm:np:q:Ss:w:vV:" :
+	while ((ch = getopt(argc, argv, v6flag ? "AcDdf:Ilm:np:q:Ss:t:w:vV:" :
 	    "AcDdf:g:Ilm:nP:p:q:Ss:t:V:vw:x")) != -1)
 		switch (ch) {
 		case 'A':
@@ -559,6 +559,12 @@ main(int argc, char *argv[])
 		default:
 			usage(v6flag);
 		}
+
+	if (ouid == 0 && (setgroups(1, &gid) ||
+	    setresgid(gid, gid, gid) ||
+	    setresuid(uid, uid, uid)))
+		err(1, "unable to revoke privs");
+
 	argc -= optind;
 	argv += optind;
 
@@ -588,16 +594,10 @@ main(int argc, char *argv[])
 
 	switch (res->ai_family) {
 	case AF_INET:
-		if (res->ai_addrlen != sizeof(to4))
-		    errx(1, "size of sockaddr mismatch");
-
 		to = (struct sockaddr *)&to4;
 		from = (struct sockaddr *)&from4;
 		break;
 	case AF_INET6:
-		if (res->ai_addrlen != sizeof(to6))
-			errx(1, "size of sockaddr mismatch");
-
 		to = (struct sockaddr *)&to6;
 		from = (struct sockaddr *)&from6;
 		break;
@@ -686,8 +686,8 @@ main(int argc, char *argv[])
 		ip->ip_v = IPVERSION;
 		ip->ip_tos = conf->tos;
 
-		if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL, (char *)&on,
-		    sizeof(on)) < 0)
+		if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL,
+		     &on, sizeof(on)) < 0)
 			err(6, "IP_HDRINCL");
 
 		if (conf->source) {
@@ -779,8 +779,6 @@ main(int argc, char *argv[])
 			    &res)))
 				errx(1, "%s: %s", conf->source,
 				    gai_strerror(error));
-			if (res->ai_addrlen != sizeof(from6))
-				errx(1, "size of sockaddr mismatch");
 			memcpy(&from6, res->ai_addr, res->ai_addrlen);
 			freeaddrinfo(res);
 		} else {
@@ -810,6 +808,12 @@ main(int argc, char *argv[])
 		    0)
 			err(1, "bind sndsock");
 
+		if (conf->tflag) {
+			if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_TCLASS,
+			    &conf->tos, sizeof(conf->tos)) < 0)
+				err(6, "IPV6_TCLASS");
+		}
+
 		len = sizeof(from6);
 		if (getsockname(sndsock, (struct sockaddr *)&from6, &len) < 0)
 			err(1, "getsockname");
@@ -822,13 +826,13 @@ main(int argc, char *argv[])
 
 	if (conf->dflag) {
 		(void) setsockopt(rcvsock, SOL_SOCKET, SO_DEBUG,
-		    (char *)&on, sizeof(on));
+		    &on, sizeof(on));
 		(void) setsockopt(sndsock, SOL_SOCKET, SO_DEBUG,
-		    (char *)&on, sizeof(on));
+		    &on, sizeof(on));
 	}
 
-	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
-	    sizeof(datalen)) < 0)
+	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF,
+	    &datalen, sizeof(datalen)) < 0)
 		err(6, "SO_SNDBUF");
 
 	if (conf->nflag && !conf->Aflag) {
@@ -951,10 +955,10 @@ void
 usage(int v6flag)
 {
 	if (v6flag) {
-		fprintf(stderr, "usage: traceroute6 [-AcDdIlnSv] [-f first_hop] "
-		    "[-m max_hop] [-p port]\n"
-		    "\t[-q nqueries] [-s src_addr] [-V rtable] [-w waittime] "
-		    "host\n\t[datalen]\n");
+		fprintf(stderr, "usage: %s "
+		    "[-AcDdIlnSv] [-f first_hop] [-m max_hop] [-p port]\n"
+		    "\t[-q nqueries] [-s src_addr] [-t toskeyword] [-V rtable] "
+		    "[-w waittime]\n\thost [datalen]\n", __progname);
 	} else {
 		fprintf(stderr,
 		    "usage: %s [-AcDdIlnSvx] [-f first_ttl] [-g gateway_addr] "

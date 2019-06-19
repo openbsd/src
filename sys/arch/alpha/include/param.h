@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.41 2017/06/05 17:49:06 deraadt Exp $ */
+/* $OpenBSD: param.h,v 1.43 2019/03/24 06:19:26 visa Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,7 +65,7 @@
 #define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
 #define	USPACE_ALIGN	0			/* u-area alignment 0-none */
 
-#define	NMBCLUSTERS	(16 * 1024)		/* max cluster allocation */
+#define	NMBCLUSTERS	(32 * 1024)		/* max cluster allocation */
 
 #ifndef	MSGBUFSIZE
 #define	MSGBUFSIZE	(2 * PAGE_SIZE)		/* default message buffer size */
@@ -83,10 +83,6 @@
 
 void	delay(unsigned long);
 #define	DELAY(n)	delay(n)
-
-/* XXX THE FOLLOWING PROTOTYPE BELONGS IN INTR.H */
-int spl0(void);			/* drop ipl to zero */
-/* XXX END INTR.H */
 
 /* XXX THE FOLLOWING PROTOTYPE SHOULD BE A BUS.H INTERFACE */
 paddr_t alpha_XXX_dmamap(vaddr_t);

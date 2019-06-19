@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp521.c,v 1.19 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: ecp_nistp521.c,v 1.23 2018/11/05 20:18:21 tb Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -1614,7 +1614,8 @@ EC_GFp_nistp521_method(void)
 		.precompute_mult = ec_GFp_nistp521_precompute_mult,
 		.have_precompute_mult = ec_GFp_nistp521_have_precompute_mult,
 		.field_mul = ec_GFp_nist_field_mul,
-		.field_sqr = ec_GFp_nist_field_sqr
+		.field_sqr = ec_GFp_nist_field_sqr,
+		.blind_coordinates = NULL,
 	};
 
 	return &ret;
@@ -1721,7 +1722,7 @@ ec_GFp_nistp521_group_set_curve(EC_GROUP * group, const BIGNUM * p,
 	}
 	group->field_mod_func = BN_nist_mod_521;
 	ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -1979,7 +1980,7 @@ ec_GFp_nistp521_points_mul(const EC_GROUP * group, EC_POINT * r,
 	}
 	ret = EC_POINT_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	EC_POINT_free(generator);
 	BN_CTX_free(new_ctx);
@@ -2088,7 +2089,7 @@ ec_GFp_nistp521_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 		goto err;
 	ret = 1;
 	pre = NULL;
-err:
+ err:
 	BN_CTX_end(ctx);
 	EC_POINT_free(generator);
 	BN_CTX_free(new_ctx);

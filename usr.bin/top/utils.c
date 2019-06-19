@@ -1,4 +1,4 @@
-/* $OpenBSD: utils.c,v 1.26 2017/03/15 04:24:14 deraadt Exp $	 */
+/* $OpenBSD: utils.c,v 1.29 2018/09/22 17:10:28 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -88,8 +88,8 @@ itoa(int val)
  * format_uid(uid) - like itoa, except for uid_t and the number is right
  * justified in a 6 character field to match uname_field in top.c.
  */
-char *
-format_uid(uid_t uid)
+const char *
+format_uid(uid_t uid, int nouser)
 {
 	static char buffer[16];	/* result is built here */
 
@@ -99,22 +99,6 @@ format_uid(uid_t uid)
 	 */
 	(void)snprintf(buffer, sizeof(buffer), "%6u", uid);
 	return (buffer);
-}
-
-/*
- * digits(val) - return number of decimal digits in val.  Only works for
- * positive numbers.  If val <= 0 then digits(val) == 0.
- */
-int
-digits(int val)
-{
-	int cnt = 0;
-
-	while (val > 0) {
-		cnt++;
-		val /= 10;
-	}
-	return (cnt);
 }
 
 /*

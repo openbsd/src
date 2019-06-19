@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.127 2017/12/11 05:27:40 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.128 2019/04/01 07:00:52 tedu Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -418,6 +418,9 @@ cpu_startup()
 __dead void
 boot(int howto)
 {
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (curproc && curproc->p_addr)
 		savectx(curpcb);
 
@@ -459,6 +462,7 @@ haltsys:
 	if ((howto & RB_HALT) != 0) {
 		printf("halted\n\n");
 	} else {
+doreset:
 		/* Reset all cpus, which causes reboot */
 		*((volatile uint32_t *)RESET_CPU_ALL) = 0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoak_subr.c,v 1.8 2017/01/09 14:44:28 mpi Exp $   */
+/*	$OpenBSD: uoak_subr.c,v 1.9 2018/05/01 18:14:46 landry Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -231,7 +231,7 @@ void
 uoak_get_devinfo(struct uoak_softc *sc)
 {
 	/* get device serial# */
-	usbd_fill_deviceinfo(sc->sc_udev, &sc->sc_udi, 1);
+	usbd_fill_deviceinfo(sc->sc_udev, &sc->sc_udi);
 }
 
 void

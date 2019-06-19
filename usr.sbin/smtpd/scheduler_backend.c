@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_backend.c,v 1.15 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: scheduler_backend.c,v 1.16 2018/05/24 11:38:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -52,11 +52,28 @@ scheduler_backend_lookup(const char *name)
 void
 scheduler_info(struct scheduler_info *sched, struct envelope *evp)
 {
+	struct dispatcher *disp;
+
+	disp = evp->type == D_BOUNCE ?
+	    env->sc_dispatcher_bounce :
+	    dict_xget(env->sc_dispatchers, evp->dispatcher);
+
+	switch (disp->type) {
+	case DISPATCHER_LOCAL:
+		sched->type = D_MDA;
+		break;
+	case DISPATCHER_REMOTE:
+		sched->type = D_MTA;
+		break;
+	case DISPATCHER_BOUNCE:
+		sched->type = D_BOUNCE;
+		break;
+	}
+	sched->ttl = disp->ttl ? disp->ttl : env->sc_ttl;
+
 	sched->evpid = evp->id;
-	sched->type = evp->type;
 	sched->creation = evp->creation;
 	sched->retry = evp->retry;
-	sched->expire = evp->expire;
 	sched->lasttry = evp->lasttry;
 	sched->lastbounce = evp->lastbounce;
 	sched->nexttry	= 0;

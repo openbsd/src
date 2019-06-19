@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.49 2018/02/10 10:00:32 dlg Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.51 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -312,40 +312,6 @@ trunc:
 }
 
 /*
- * compute an IP header checksum.
- * don't modifiy the packet.
- */
-u_short
-in_cksum(const u_short *addr, int len, int csum)
-{
-	int nleft = len;
-	const u_short *w = addr;
-	u_short answer;
-	int sum = csum;
-
- 	/*
-	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
-	 *  we add sequential 16 bit words to it, and at the end, fold
-	 *  back all the carry bits from the top 16 bits into the lower
-	 *  16 bits.
- 	 */
-	while (nleft > 1)  {
-		sum += *w++;
-		nleft -= 2;
-	}
-	if (nleft == 1)
-		sum += htons(*(u_char *)w<<8);
-
-	/*
-	 * add back carry outs from top 16 bits to low 16 bits
-	 */
-	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
-	sum += (sum >> 16);			/* add carry */
-	answer = ~sum;				/* truncate to 16 bits */
-	return (answer);
-}
-
-/*
  * print an IP datagram.
  */
 void
@@ -475,9 +441,8 @@ ip_print(const u_char *bp, u_int length)
 			}
 			break;
 
-#ifdef INET6
 #ifndef IPPROTO_IPV6
-#define IPPROTO_IPV6
+#define IPPROTO_IPV6 41
 #endif
 		case IPPROTO_IPV6:
 			/* ip6-in-ip encapsulation */
@@ -491,7 +456,6 @@ ip_print(const u_char *bp, u_int length)
 				goto out;
  			}
  			break;
-#endif /*INET6*/
 
 #ifndef IPPROTO_GRE
 #define IPPROTO_GRE 47

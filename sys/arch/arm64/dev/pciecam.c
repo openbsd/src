@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.2 2017/04/08 22:38:17 kettenis Exp $ */
+/* $OpenBSD: pciecam.c,v 1.9 2019/06/02 18:40:58 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -74,6 +74,8 @@ struct pciecam_softc {
 	bus_space_handle_t		 sc_ioh;
 	bus_dma_tag_t			 sc_dmat;
 
+	int				 sc_dw_quirk;
+
 	int				 sc_acells;
 	int				 sc_scells;
 	int				 sc_pacells;
@@ -99,8 +101,6 @@ int pciecam_conf_size(void *, pcitag_t);
 pcireg_t pciecam_conf_read(void *, pcitag_t, int);
 void pciecam_conf_write(void *, pcitag_t, int, pcireg_t);
 int pciecam_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-int pciecam_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
-int pciecam_intr_map_msix(struct pci_attach_args *, int, pci_intr_handle_t *);
 const char *pciecam_intr_string(void *, pci_intr_handle_t);
 void *pciecam_intr_establish(void *, pci_intr_handle_t, int, int (*func)(void *), void *, char *);
 void pciecam_intr_disestablish(void *, void *);
@@ -119,7 +119,8 @@ pciecam_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "pci-host-ecam-generic");
+	return (OF_is_compatible(faa->fa_node, "pci-host-ecam-generic") ||
+	    OF_is_compatible(faa->fa_node, "snps,dw-pcie-ecam"));
 }
 
 void
@@ -134,6 +135,9 @@ pciecam_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 	sc->sc_dmat = faa->fa_dmat;
+
+	if (OF_is_compatible(faa->fa_node, "snps,dw-pcie-ecam"))
+		sc->sc_dw_quirk = 1;
 
 	sc->sc_acells = OF_getpropint(sc->sc_node, "#address-cells",
 	    faa->fa_acells);
@@ -224,8 +228,8 @@ pciecam_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = pciecam_intr_map;
-	sc->sc_pc.pc_intr_map_msi = pciecam_intr_map_msi;
-	sc->sc_pc.pc_intr_map_msix = pciecam_intr_map_msix;
+	sc->sc_pc.pc_intr_map_msi = _pci_intr_map_msi;
+	sc->sc_pc.pc_intr_map_msix = _pci_intr_map_msix;
 	sc->sc_pc.pc_intr_string = pciecam_intr_string;
 	sc->sc_pc.pc_intr_establish = pciecam_intr_establish;
 	sc->sc_pc.pc_intr_disestablish = pciecam_intr_disestablish;
@@ -238,9 +242,11 @@ pciecam_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = &sc->sc_bus;
 	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_memex = sc->sc_memex;
+	pba.pba_pmemex = sc->sc_memex;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
+	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
 }
@@ -252,8 +258,13 @@ pciecam_attach_hook(struct device *parent, struct device *self,
 }
 
 int
-pciecam_bus_maxdevs(void *sc, int busno) {
-	return (32);
+pciecam_bus_maxdevs(void *v, int bus)
+{
+	struct pciecam_softc *sc = (struct pciecam_softc *)v;
+
+	if (bus == 0 && sc->sc_dw_quirk)
+		return 1;
+	return 32;
 }
 
 #define BUS_SHIFT 24
@@ -305,80 +316,44 @@ pciecam_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	HWRITE4(sc, PCIE_ADDR_OFFSET(bus, dev, fn, reg & ~0x3), data);
 }
 
-struct pciecam_intr_handle {
-	pci_chipset_tag_t	ih_pc;
-	pcitag_t		ih_tag;
-	int			ih_intrpin;
-	int			ih_msi;
-};
-
 int
-pciecam_intr_map(struct pci_attach_args *pa,
-    pci_intr_handle_t *ihp)
+pciecam_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	struct pciecam_intr_handle *ih;
-	ih = malloc(sizeof(struct pciecam_intr_handle), M_DEVBUF, M_WAITOK);
-	ih->ih_pc = pa->pa_pc;
-	ih->ih_tag = pa->pa_intrtag;
-	ih->ih_intrpin = pa->pa_intrpin;
-	ih->ih_msi = 0;
-	*ihp = (pci_intr_handle_t)ih;
-	return 0;
-}
-
-int
-pciecam_intr_map_msi(struct pci_attach_args *pa,
-    pci_intr_handle_t *ihp)
-{
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
-	struct pciecam_intr_handle *ih;
-
-	if (pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
-		return 1;
-
-	ih = malloc(sizeof(struct pciecam_intr_handle), M_DEVBUF, M_WAITOK);
-	ih->ih_pc = pa->pa_pc;
-	ih->ih_tag = pa->pa_tag;
-	ih->ih_intrpin = pa->pa_intrpin;
-	ih->ih_msi = 1;
-	*ihp = (pci_intr_handle_t)ih;
+	ihp->ih_pc = pa->pa_pc;
+	ihp->ih_tag = pa->pa_intrtag;
+	ihp->ih_intrpin = pa->pa_intrpin;
+	ihp->ih_type = PCI_INTX;
 
 	return 0;
-}
-
-int
-pciecam_intr_map_msix(struct pci_attach_args *pa,
-    int vec, pci_intr_handle_t *ihp)
-{
-	*ihp = (pci_intr_handle_t) pa->pa_pc;
-	return -1;
 }
 
 const char *
-pciecam_intr_string(void *sc, pci_intr_handle_t ihp)
+pciecam_intr_string(void *sc, pci_intr_handle_t ih)
 {
-	struct pciecam_intr_handle *ih = (struct pciecam_intr_handle *)ihp;
-
-	if (ih->ih_msi)
+	switch (ih.ih_type) {
+	case PCI_MSI:
 		return "msi";
+	case PCI_MSIX:
+		return "msix";
+	}
 
 	return "irq";
 }
 
 void *
-pciecam_intr_establish(void *self, pci_intr_handle_t ihp, int level,
+pciecam_intr_establish(void *self, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, char *name)
 {
 	struct pciecam_softc *sc = (struct pciecam_softc *)self;
-	struct pciecam_intr_handle *ih = (struct pciecam_intr_handle *)ihp;
 	void *cookie;
 
-	if (ih->ih_msi) {
-		uint64_t addr, data;
-		pcireg_t reg;
-		int off;
+	KASSERT(ih.ih_type != PCI_NONE);
 
+	if (ih.ih_type != PCI_INTX) {
+		uint64_t addr, data;
+
+		/* Assume hardware passes Requester ID as sideband data. */
+		data = pci_requester_id(ih.ih_pc, ih.ih_tag);
 		cookie = arm_intr_establish_fdt_msi(sc->sc_node, &addr,
 		    &data, level, func, arg, (void *)name);
 		if (cookie == NULL)
@@ -386,41 +361,25 @@ pciecam_intr_establish(void *self, pci_intr_handle_t ihp, int level,
 
 		/* TODO: translate address to the PCI device's view */
 
-		if (pci_get_capability(ih->ih_pc, ih->ih_tag, PCI_CAP_MSI,
-		    &off, &reg) == 0)
-			panic("%s: no msi capability", __func__);
-
-		if (reg & PCI_MSI_MC_C64) {
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MA, addr);
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MAU32, addr >> 32);
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MD64, data);
-		} else {
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MA, addr);
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MD32, data);
-		}
-		pci_conf_write(ih->ih_pc, ih->ih_tag,
-		    off, reg | PCI_MSI_MC_MSIE);
+		if (ih.ih_type == PCI_MSIX) {
+			pci_msix_enable(ih.ih_pc, ih.ih_tag,
+			    &sc->sc_bus, ih.ih_intrpin, addr, data);
+		} else
+			pci_msi_enable(ih.ih_pc, ih.ih_tag, addr, data);
 	} else {
 		int bus, dev, fn;
 		uint32_t reg[4];
 
-		pciecam_decompose_tag(sc, ih->ih_tag, &bus, &dev, &fn);
+		pciecam_decompose_tag(sc, ih.ih_tag, &bus, &dev, &fn);
 
 		reg[0] = bus << 16 | dev << 11 | fn << 8;
 		reg[1] = reg[2] = 0;
-		reg[3] = ih->ih_intrpin;
+		reg[3] = ih.ih_intrpin;
 
 		cookie = arm_intr_establish_fdt_imap(sc->sc_node, reg,
-		    sizeof(reg), sc->sc_pacells, level, func, arg,
-		    (void *)name);
+		    sizeof(reg), level, func, arg, name);
 	}
 
-	free(ih, M_DEVBUF, sizeof(struct pciecam_intr_handle));
 	return cookie;
 }
 

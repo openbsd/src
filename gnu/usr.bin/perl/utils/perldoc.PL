@@ -29,7 +29,7 @@ warn "How odd, I'm going to generate $file_shortname?!"
 
 $file .= '.com' if $^O eq 'VMS';
 
-open OUT,">$file" or die "Can't create $file: $!";
+open OUT, ">", $file or die "Can't create $file: $!";
 
 print "Extracting \"$file\" (with variable substitutions)\n";
 

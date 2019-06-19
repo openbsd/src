@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPUBaseInfo.h"
+#include "AMDGPUTargetTransformInfo.h"
 #include "AMDGPU.h"
 #include "SIDefines.h"
 #include "llvm/ADT/StringRef.h"
@@ -23,6 +24,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrDesc.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -39,7 +41,9 @@
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 
 #define GET_INSTRINFO_NAMED_OPS
+#define GET_INSTRMAP_INFO
 #include "AMDGPUGenInstrInfo.inc"
+#undef GET_INSTRMAP_INFO
 #undef GET_INSTRINFO_NAMED_OPS
 
 namespace {
@@ -49,7 +53,7 @@ unsigned getBitMask(unsigned Shift, unsigned Width) {
   return ((1 << Width) - 1) << Shift;
 }
 
-/// \brief Packs \p Src into \p Dst for given bit \p Shift and bit \p Width.
+/// Packs \p Src into \p Dst for given bit \p Shift and bit \p Width.
 ///
 /// \returns Packed \p Dst.
 unsigned packBits(unsigned Src, unsigned Dst, unsigned Shift, unsigned Width) {
@@ -58,7 +62,7 @@ unsigned packBits(unsigned Src, unsigned Dst, unsigned Shift, unsigned Width) {
   return Dst;
 }
 
-/// \brief Unpacks bits from \p Src for given bit \p Shift and bit \p Width.
+/// Unpacks bits from \p Src for given bit \p Shift and bit \p Width.
 ///
 /// \returns Unpacked bits.
 unsigned unpackBits(unsigned Src, unsigned Shift, unsigned Width) {
@@ -93,22 +97,54 @@ unsigned getVmcntBitWidthHi() { return 2; }
 
 namespace llvm {
 
-static cl::opt<bool> EnablePackedInlinableLiterals(
-    "enable-packed-inlinable-literals",
-    cl::desc("Enable packed inlinable literals (v2f16, v2i16)"),
-    cl::init(false));
-
 namespace AMDGPU {
+
+struct MIMGInfo {
+  uint16_t Opcode;
+  uint16_t BaseOpcode;
+  uint8_t MIMGEncoding;
+  uint8_t VDataDwords;
+  uint8_t VAddrDwords;
+};
+
+#define GET_MIMGBaseOpcodesTable_IMPL
+#define GET_MIMGDimInfoTable_IMPL
+#define GET_MIMGInfoTable_IMPL
+#define GET_MIMGLZMappingTable_IMPL
+#include "AMDGPUGenSearchableTables.inc"
+
+int getMIMGOpcode(unsigned BaseOpcode, unsigned MIMGEncoding,
+                  unsigned VDataDwords, unsigned VAddrDwords) {
+  const MIMGInfo *Info = getMIMGOpcodeHelper(BaseOpcode, MIMGEncoding,
+                                             VDataDwords, VAddrDwords);
+  return Info ? Info->Opcode : -1;
+}
+
+int getMaskedMIMGOp(unsigned Opc, unsigned NewChannels) {
+  const MIMGInfo *OrigInfo = getMIMGInfo(Opc);
+  const MIMGInfo *NewInfo =
+      getMIMGOpcodeHelper(OrigInfo->BaseOpcode, OrigInfo->MIMGEncoding,
+                          NewChannels, OrigInfo->VAddrDwords);
+  return NewInfo ? NewInfo->Opcode : -1;
+}
+
+// Wrapper for Tablegen'd function.  enum Subtarget is not defined in any
+// header files, so we need to wrap it in a function that takes unsigned
+// instead.
+int getMCOpcode(uint16_t Opcode, unsigned Gen) {
+  return getMCOpcodeGen(Opcode, static_cast<Subtarget>(Gen));
+}
 
 namespace IsaInfo {
 
 IsaVersion getIsaVersion(const FeatureBitset &Features) {
-  // SI.
+  // GCN GFX6 (Southern Islands (SI)).
   if (Features.test(FeatureISAVersion6_0_0))
     return {6, 0, 0};
   if (Features.test(FeatureISAVersion6_0_1))
     return {6, 0, 1};
-  // CI.
+
+  // GCN GFX7 (Sea Islands (CI)).
   if (Features.test(FeatureISAVersion7_0_0))
     return {7, 0, 0};
   if (Features.test(FeatureISAVersion7_0_1))
@@ -117,34 +153,61 @@ IsaVersion getIsaVersion(const FeatureBitset &Features) {
     return {7, 0, 2};
   if (Features.test(FeatureISAVersion7_0_3))
     return {7, 0, 3};
+  if (Features.test(FeatureISAVersion7_0_4))
+    return {7, 0, 4};
+  if (Features.test(FeatureSeaIslands))
+    return {7, 0, 0};
 
-  // VI.
-  if (Features.test(FeatureISAVersion8_0_0))
-    return {8, 0, 0};
+  // GCN GFX8 (Volcanic Islands (VI)).
   if (Features.test(FeatureISAVersion8_0_1))
     return {8, 0, 1};
   if (Features.test(FeatureISAVersion8_0_2))
     return {8, 0, 2};
   if (Features.test(FeatureISAVersion8_0_3))
     return {8, 0, 3};
-  if (Features.test(FeatureISAVersion8_0_4))
-    return {8, 0, 4};
   if (Features.test(FeatureISAVersion8_1_0))
     return {8, 1, 0};
+  if (Features.test(FeatureVolcanicIslands))
+    return {8, 0, 0};
 
-  // GFX9.
+  // GCN GFX9.
   if (Features.test(FeatureISAVersion9_0_0))
     return {9, 0, 0};
-  if (Features.test(FeatureISAVersion9_0_1))
-    return {9, 0, 1};
   if (Features.test(FeatureISAVersion9_0_2))
     return {9, 0, 2};
-  if (Features.test(FeatureISAVersion9_0_3))
-    return {9, 0, 3};
+  if (Features.test(FeatureISAVersion9_0_4))
+    return {9, 0, 4};
+  if (Features.test(FeatureISAVersion9_0_6))
+    return {9, 0, 6};
+  if (Features.test(FeatureGFX9))
+    return {9, 0, 0};
 
-  if (!Features.test(FeatureGCN) || Features.test(FeatureSouthernIslands))
+  if (Features.test(FeatureSouthernIslands))
     return {0, 0, 0};
   return {7, 0, 0};
+}
+
+void streamIsaVersion(const MCSubtargetInfo *STI, raw_ostream &Stream) {
+  auto TargetTriple = STI->getTargetTriple();
+  auto ISAVersion = IsaInfo::getIsaVersion(STI->getFeatureBits());
+
+  Stream << TargetTriple.getArchName() << '-'
+         << TargetTriple.getVendorName() << '-'
+         << TargetTriple.getOSName() << '-'
+         << TargetTriple.getEnvironmentName() << '-'
+         << "gfx"
+         << ISAVersion.Major
+         << ISAVersion.Minor
+         << ISAVersion.Stepping;
+
+  if (hasXNACK(*STI))
+    Stream << "+xnack";
+
+  Stream.flush();
+}
+
+bool hasCodeObjectV3(const MCSubtargetInfo *STI) {
+  return STI->getFeatureBits().test(FeatureCodeObjectV3);
 }
 
 unsigned getWavefrontSize(const FeatureBitset &Features) {
@@ -181,7 +244,7 @@ unsigned getMaxWorkGroupsPerCU(const FeatureBitset &Features,
 }
 
 unsigned getMaxWavesPerCU(const FeatureBitset &Features) {
-  return getMaxWavesPerEU(Features) * getEUsPerCU(Features);
+  return getMaxWavesPerEU() * getEUsPerCU(Features);
 }
 
 unsigned getMaxWavesPerCU(const FeatureBitset &Features,
@@ -193,9 +256,7 @@ unsigned getMinWavesPerEU(const FeatureBitset &Features) {
   return 1;
 }
 
-unsigned getMaxWavesPerEU(const FeatureBitset &Features) {
-  if (!Features.test(FeatureGCN))
-    return 8;
+unsigned getMaxWavesPerEU() {
   // FIXME: Need to take scratch memory into account.
   return 10;
 }
@@ -251,11 +312,13 @@ unsigned getAddressableNumSGPRs(const FeatureBitset &Features) {
 unsigned getMinNumSGPRs(const FeatureBitset &Features, unsigned WavesPerEU) {
   assert(WavesPerEU != 0);
 
-  if (WavesPerEU >= getMaxWavesPerEU(Features))
+  if (WavesPerEU >= getMaxWavesPerEU())
     return 0;
-  unsigned MinNumSGPRs =
-      alignDown(getTotalNumSGPRs(Features) / (WavesPerEU + 1),
-                getSGPRAllocGranule(Features)) + 1;
+
+  unsigned MinNumSGPRs = getTotalNumSGPRs(Features) / (WavesPerEU + 1);
+  if (Features.test(FeatureTrapHandler))
+    MinNumSGPRs -= std::min(MinNumSGPRs, (unsigned)TRAP_NUM_SGPRS);
+  MinNumSGPRs = alignDown(MinNumSGPRs, getSGPRAllocGranule(Features)) + 1;
   return std::min(MinNumSGPRs, getAddressableNumSGPRs(Features));
 }
 
@@ -264,12 +327,47 @@ unsigned getMaxNumSGPRs(const FeatureBitset &Features, unsigned WavesPerEU,
   assert(WavesPerEU != 0);
 
   IsaVersion Version = getIsaVersion(Features);
-  unsigned MaxNumSGPRs = alignDown(getTotalNumSGPRs(Features) / WavesPerEU,
-                                   getSGPRAllocGranule(Features));
   unsigned AddressableNumSGPRs = getAddressableNumSGPRs(Features);
   if (Version.Major >= 8 && !Addressable)
     AddressableNumSGPRs = 112;
+  unsigned MaxNumSGPRs = getTotalNumSGPRs(Features) / WavesPerEU;
+  if (Features.test(FeatureTrapHandler))
+    MaxNumSGPRs -= std::min(MaxNumSGPRs, (unsigned)TRAP_NUM_SGPRS);
+  MaxNumSGPRs = alignDown(MaxNumSGPRs, getSGPRAllocGranule(Features));
   return std::min(MaxNumSGPRs, AddressableNumSGPRs);
+}
+
+unsigned getNumExtraSGPRs(const FeatureBitset &Features, bool VCCUsed,
+                          bool FlatScrUsed, bool XNACKUsed) {
+  unsigned ExtraSGPRs = 0;
+  if (VCCUsed)
+    ExtraSGPRs = 2;
+
+  IsaVersion Version = getIsaVersion(Features);
+  if (Version.Major < 8) {
+    if (FlatScrUsed)
+      ExtraSGPRs = 4;
+  } else {
+    if (XNACKUsed)
+      ExtraSGPRs = 4;
+
+    if (FlatScrUsed)
+      ExtraSGPRs = 6;
+  }
+
+  return ExtraSGPRs;
+}
+
+unsigned getNumExtraSGPRs(const FeatureBitset &Features, bool VCCUsed,
+                          bool FlatScrUsed) {
+  return getNumExtraSGPRs(Features, VCCUsed, FlatScrUsed,
+                          Features[AMDGPU::FeatureXNACK]);
+}
+
+unsigned getNumSGPRBlocks(const FeatureBitset &Features, unsigned NumSGPRs) {
+  NumSGPRs = alignTo(std::max(1u, NumSGPRs), getSGPREncodingGranule(Features));
+  // SGPRBlocks is actual number of SGPR blocks minus 1.
+  return NumSGPRs / getSGPREncodingGranule(Features) - 1;
 }
 
 unsigned getVGPRAllocGranule(const FeatureBitset &Features) {
@@ -291,7 +389,7 @@ unsigned getAddressableNumVGPRs(const FeatureBitset &Features) {
 unsigned getMinNumVGPRs(const FeatureBitset &Features, unsigned WavesPerEU) {
   assert(WavesPerEU != 0);
 
-  if (WavesPerEU >= getMaxWavesPerEU(Features))
+  if (WavesPerEU >= getMaxWavesPerEU())
     return 0;
   unsigned MinNumVGPRs =
       alignDown(getTotalNumVGPRs(Features) / (WavesPerEU + 1),
@@ -308,6 +406,12 @@ unsigned getMaxNumVGPRs(const FeatureBitset &Features, unsigned WavesPerEU) {
   return std::min(MaxNumVGPRs, AddressableNumVGPRs);
 }
 
+unsigned getNumVGPRBlocks(const FeatureBitset &Features, unsigned NumVGPRs) {
+  NumVGPRs = alignTo(std::max(1u, NumVGPRs), getVGPREncodingGranule(Features));
+  // VGPRBlocks is actual number of VGPR blocks minus 1.
+  return NumVGPRs / getVGPREncodingGranule(Features) - 1;
+}
+
 } // end namespace IsaInfo
 
 void initDefaultAMDKernelCodeT(amd_kernel_code_t &Header,
@@ -317,7 +421,7 @@ void initDefaultAMDKernelCodeT(amd_kernel_code_t &Header,
   memset(&Header, 0, sizeof(Header));
 
   Header.amd_kernel_code_version_major = 1;
-  Header.amd_kernel_code_version_minor = 1;
+  Header.amd_kernel_code_version_minor = 2;
   Header.amd_machine_kind = 1; // AMD_MACHINE_KIND_AMDGPU
   Header.amd_machine_version_major = ISA.Major;
   Header.amd_machine_version_minor = ISA.Minor;
@@ -337,16 +441,32 @@ void initDefaultAMDKernelCodeT(amd_kernel_code_t &Header,
   Header.private_segment_alignment = 4;
 }
 
-bool isGroupSegment(const GlobalValue *GV, AMDGPUAS AS) {
-  return GV->getType()->getAddressSpace() == AS.LOCAL_ADDRESS;
+amdhsa::kernel_descriptor_t getDefaultAmdhsaKernelDescriptor() {
+  amdhsa::kernel_descriptor_t KD;
+  memset(&KD, 0, sizeof(KD));
+  AMDHSA_BITS_SET(KD.compute_pgm_rsrc1,
+                  amdhsa::COMPUTE_PGM_RSRC1_FLOAT_DENORM_MODE_16_64,
+                  amdhsa::FLOAT_DENORM_MODE_FLUSH_NONE);
+  AMDHSA_BITS_SET(KD.compute_pgm_rsrc1,
+                  amdhsa::COMPUTE_PGM_RSRC1_ENABLE_DX10_CLAMP, 1);
+  AMDHSA_BITS_SET(KD.compute_pgm_rsrc1,
+                  amdhsa::COMPUTE_PGM_RSRC1_ENABLE_IEEE_MODE, 1);
+  AMDHSA_BITS_SET(KD.compute_pgm_rsrc2,
+                  amdhsa::COMPUTE_PGM_RSRC2_ENABLE_SGPR_WORKGROUP_ID_X, 1);
+  return KD;
 }
 
-bool isGlobalSegment(const GlobalValue *GV, AMDGPUAS AS) {
-  return GV->getType()->getAddressSpace() == AS.GLOBAL_ADDRESS;
+bool isGroupSegment(const GlobalValue *GV) {
+  return GV->getType()->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS;
 }
 
-bool isReadOnlySegment(const GlobalValue *GV, AMDGPUAS AS) {
-  return GV->getType()->getAddressSpace() == AS.CONSTANT_ADDRESS;
+bool isGlobalSegment(const GlobalValue *GV) {
+  return GV->getType()->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS;
+}
+
+bool isReadOnlySegment(const GlobalValue *GV) {
+  return GV->getType()->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS ||
+         GV->getType()->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS_32BIT;
 }
 
 bool shouldEmitConstantsToTextSection(const Triple &TT) {
@@ -486,7 +606,9 @@ unsigned getInitialPSInputAddr(const Function &F) {
 bool isShader(CallingConv::ID cc) {
   switch(cc) {
     case CallingConv::AMDGPU_VS:
+    case CallingConv::AMDGPU_LS:
     case CallingConv::AMDGPU_HS:
+    case CallingConv::AMDGPU_ES:
     case CallingConv::AMDGPU_GS:
     case CallingConv::AMDGPU_PS:
     case CallingConv::AMDGPU_CS:
@@ -508,11 +630,25 @@ bool isEntryFunctionCC(CallingConv::ID CC) {
   case CallingConv::AMDGPU_GS:
   case CallingConv::AMDGPU_PS:
   case CallingConv::AMDGPU_CS:
+  case CallingConv::AMDGPU_ES:
   case CallingConv::AMDGPU_HS:
+  case CallingConv::AMDGPU_LS:
     return true;
   default:
     return false;
   }
+}
+
+bool hasXNACK(const MCSubtargetInfo &STI) {
+  return STI.getFeatureBits()[AMDGPU::FeatureXNACK];
+}
+
+bool hasMIMG_R128(const MCSubtargetInfo &STI) {
+  return STI.getFeatureBits()[AMDGPU::FeatureMIMG_R128];
+}
+
+bool hasPackedD16(const MCSubtargetInfo &STI) {
+  return !STI.getFeatureBits()[AMDGPU::FeatureUnpackedD16VMem];
 }
 
 bool isSI(const MCSubtargetInfo &STI) {
@@ -531,6 +667,10 @@ bool isGFX9(const MCSubtargetInfo &STI) {
   return STI.getFeatureBits()[AMDGPU::FeatureGFX9];
 }
 
+bool isGCN3Encoding(const MCSubtargetInfo &STI) {
+  return STI.getFeatureBits()[AMDGPU::FeatureGCN3Encoding];
+}
+
 bool isSGPR(unsigned Reg, const MCRegisterInfo* TRI) {
   const MCRegisterClass SGPRClass = TRI->getRegClass(AMDGPU::SReg_32RegClassID);
   const unsigned FirstSubReg = TRI->getSubReg(Reg, 1);
@@ -545,43 +685,73 @@ bool isRegIntersect(unsigned Reg0, unsigned Reg1, const MCRegisterInfo* TRI) {
   return false;
 }
 
-unsigned getMCReg(unsigned Reg, const MCSubtargetInfo &STI) {
-
-  switch(Reg) {
-  default: break;
-  case AMDGPU::FLAT_SCR:
-    assert(!isSI(STI));
-    return isCI(STI) ? AMDGPU::FLAT_SCR_ci : AMDGPU::FLAT_SCR_vi;
-
-  case AMDGPU::FLAT_SCR_LO:
-    assert(!isSI(STI));
-    return isCI(STI) ? AMDGPU::FLAT_SCR_LO_ci : AMDGPU::FLAT_SCR_LO_vi;
-
-  case AMDGPU::FLAT_SCR_HI:
-    assert(!isSI(STI));
-    return isCI(STI) ? AMDGPU::FLAT_SCR_HI_ci : AMDGPU::FLAT_SCR_HI_vi;
+#define MAP_REG2REG \
+  using namespace AMDGPU; \
+  switch(Reg) { \
+  default: return Reg; \
+  CASE_CI_VI(FLAT_SCR) \
+  CASE_CI_VI(FLAT_SCR_LO) \
+  CASE_CI_VI(FLAT_SCR_HI) \
+  CASE_VI_GFX9(TTMP0) \
+  CASE_VI_GFX9(TTMP1) \
+  CASE_VI_GFX9(TTMP2) \
+  CASE_VI_GFX9(TTMP3) \
+  CASE_VI_GFX9(TTMP4) \
+  CASE_VI_GFX9(TTMP5) \
+  CASE_VI_GFX9(TTMP6) \
+  CASE_VI_GFX9(TTMP7) \
+  CASE_VI_GFX9(TTMP8) \
+  CASE_VI_GFX9(TTMP9) \
+  CASE_VI_GFX9(TTMP10) \
+  CASE_VI_GFX9(TTMP11) \
+  CASE_VI_GFX9(TTMP12) \
+  CASE_VI_GFX9(TTMP13) \
+  CASE_VI_GFX9(TTMP14) \
+  CASE_VI_GFX9(TTMP15) \
+  CASE_VI_GFX9(TTMP0_TTMP1) \
+  CASE_VI_GFX9(TTMP2_TTMP3) \
+  CASE_VI_GFX9(TTMP4_TTMP5) \
+  CASE_VI_GFX9(TTMP6_TTMP7) \
+  CASE_VI_GFX9(TTMP8_TTMP9) \
+  CASE_VI_GFX9(TTMP10_TTMP11) \
+  CASE_VI_GFX9(TTMP12_TTMP13) \
+  CASE_VI_GFX9(TTMP14_TTMP15) \
+  CASE_VI_GFX9(TTMP0_TTMP1_TTMP2_TTMP3) \
+  CASE_VI_GFX9(TTMP4_TTMP5_TTMP6_TTMP7) \
+  CASE_VI_GFX9(TTMP8_TTMP9_TTMP10_TTMP11) \
+  CASE_VI_GFX9(TTMP12_TTMP13_TTMP14_TTMP15) \
+  CASE_VI_GFX9(TTMP0_TTMP1_TTMP2_TTMP3_TTMP4_TTMP5_TTMP6_TTMP7) \
+  CASE_VI_GFX9(TTMP4_TTMP5_TTMP6_TTMP7_TTMP8_TTMP9_TTMP10_TTMP11) \
+  CASE_VI_GFX9(TTMP8_TTMP9_TTMP10_TTMP11_TTMP12_TTMP13_TTMP14_TTMP15) \
+  CASE_VI_GFX9(TTMP0_TTMP1_TTMP2_TTMP3_TTMP4_TTMP5_TTMP6_TTMP7_TTMP8_TTMP9_TTMP10_TTMP11_TTMP12_TTMP13_TTMP14_TTMP15) \
   }
-  return Reg;
+
+#define CASE_CI_VI(node) \
+  assert(!isSI(STI)); \
+  case node: return isCI(STI) ? node##_ci : node##_vi;
+
+#define CASE_VI_GFX9(node) \
+  case node: return isGFX9(STI) ? node##_gfx9 : node##_vi;
+
+unsigned getMCReg(unsigned Reg, const MCSubtargetInfo &STI) {
+  if (STI.getTargetTriple().getArch() == Triple::r600)
+    return Reg;
+  MAP_REG2REG
 }
+
+#undef CASE_CI_VI
+#undef CASE_VI_GFX9
+
+#define CASE_CI_VI(node)   case node##_ci: case node##_vi:   return node;
+#define CASE_VI_GFX9(node) case node##_vi: case node##_gfx9: return node;
 
 unsigned mc2PseudoReg(unsigned Reg) {
-  switch (Reg) {
-  case AMDGPU::FLAT_SCR_ci:
-  case AMDGPU::FLAT_SCR_vi:
-    return FLAT_SCR;
-
-  case AMDGPU::FLAT_SCR_LO_ci:
-  case AMDGPU::FLAT_SCR_LO_vi:
-    return AMDGPU::FLAT_SCR_LO;
-
-  case AMDGPU::FLAT_SCR_HI_ci:
-  case AMDGPU::FLAT_SCR_HI_vi:
-    return AMDGPU::FLAT_SCR_HI;
-
-  default:
-    return Reg;
-  }
+  MAP_REG2REG
 }
+
+#undef CASE_CI_VI
+#undef CASE_VI_GFX9
+#undef MAP_REG2REG
 
 bool isSISrcOperand(const MCInstrDesc &Desc, unsigned OpNo) {
   assert(OpNo < Desc.NumOperands);
@@ -722,83 +892,61 @@ bool isInlinableLiteral16(int16_t Literal, bool HasInv2Pi) {
 bool isInlinableLiteralV216(int32_t Literal, bool HasInv2Pi) {
   assert(HasInv2Pi);
 
-  if (!EnablePackedInlinableLiterals)
-    return false;
-
   int16_t Lo16 = static_cast<int16_t>(Literal);
   int16_t Hi16 = static_cast<int16_t>(Literal >> 16);
   return Lo16 == Hi16 && isInlinableLiteral16(Lo16, HasInv2Pi);
 }
 
-bool isUniformMMO(const MachineMemOperand *MMO) {
-  const Value *Ptr = MMO->getValue();
-  // UndefValue means this is a load of a kernel input.  These are uniform.
-  // Sometimes LDS instructions have constant pointers.
-  // If Ptr is null, then that means this mem operand contains a
-  // PseudoSourceValue like GOT.
-  if (!Ptr || isa<UndefValue>(Ptr) || isa<Argument>(Ptr) ||
-      isa<Constant>(Ptr) || isa<GlobalValue>(Ptr))
-    return true;
+bool isArgPassedInSGPR(const Argument *A) {
+  const Function *F = A->getParent();
 
-  const Instruction *I = dyn_cast<Instruction>(Ptr);
-  return I && I->getMetadata("amdgpu.uniform");
+  // Arguments to compute shaders are never a source of divergence.
+  CallingConv::ID CC = F->getCallingConv();
+  switch (CC) {
+  case CallingConv::AMDGPU_KERNEL:
+  case CallingConv::SPIR_KERNEL:
+    return true;
+  case CallingConv::AMDGPU_VS:
+  case CallingConv::AMDGPU_LS:
+  case CallingConv::AMDGPU_HS:
+  case CallingConv::AMDGPU_ES:
+  case CallingConv::AMDGPU_GS:
+  case CallingConv::AMDGPU_PS:
+  case CallingConv::AMDGPU_CS:
+    // For non-compute shaders, SGPR inputs are marked with either inreg or byval.
+    // Everything else is in VGPRs.
+    return F->getAttributes().hasParamAttribute(A->getArgNo(), Attribute::InReg) ||
+           F->getAttributes().hasParamAttribute(A->getArgNo(), Attribute::ByVal);
+  default:
+    // TODO: Should calls support inreg for SGPR inputs?
+    return false;
+  }
 }
 
 int64_t getSMRDEncodedOffset(const MCSubtargetInfo &ST, int64_t ByteOffset) {
-  if (isSI(ST) || isCI(ST))
-    return ByteOffset >> 2;
-
-  return ByteOffset;
+  if (isGCN3Encoding(ST))
+    return ByteOffset;
+  return ByteOffset >> 2;
 }
 
 bool isLegalSMRDImmOffset(const MCSubtargetInfo &ST, int64_t ByteOffset) {
   int64_t EncodedOffset = getSMRDEncodedOffset(ST, ByteOffset);
-  return isSI(ST) || isCI(ST) ? isUInt<8>(EncodedOffset) :
-                                isUInt<20>(EncodedOffset);
+  return isGCN3Encoding(ST) ?
+    isUInt<20>(EncodedOffset) : isUInt<8>(EncodedOffset);
 }
+
 } // end namespace AMDGPU
 
 } // end namespace llvm
-
-const unsigned AMDGPUAS::MAX_COMMON_ADDRESS;
-const unsigned AMDGPUAS::GLOBAL_ADDRESS;
-const unsigned AMDGPUAS::LOCAL_ADDRESS;
-const unsigned AMDGPUAS::PARAM_D_ADDRESS;
-const unsigned AMDGPUAS::PARAM_I_ADDRESS;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_0;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_1;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_2;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_3;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_4;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_5;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_6;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_7;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_8;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_9;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_10;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_11;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_12;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_13;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_14;
-const unsigned AMDGPUAS::CONSTANT_BUFFER_15;
-const unsigned AMDGPUAS::UNKNOWN_ADDRESS_SPACE;
 
 namespace llvm {
 namespace AMDGPU {
 
 AMDGPUAS getAMDGPUAS(Triple T) {
-  auto Env = T.getEnvironmentName();
   AMDGPUAS AS;
-  if (Env == "amdgiz" || Env == "amdgizcl") {
-    AS.FLAT_ADDRESS     = 0;
-    AS.PRIVATE_ADDRESS  = 5;
-    AS.REGION_ADDRESS   = 4;
-  }
-  else {
-    AS.FLAT_ADDRESS     = 4;
-    AS.PRIVATE_ADDRESS  = 0;
-    AS.REGION_ADDRESS   = 5;
-   }
+  AS.FLAT_ADDRESS = 0;
+  AS.PRIVATE_ADDRESS = 5;
+  AS.REGION_ADDRESS = 2;
   return AS;
 }
 
@@ -808,6 +956,22 @@ AMDGPUAS getAMDGPUAS(const TargetMachine &M) {
 
 AMDGPUAS getAMDGPUAS(const Module &M) {
   return getAMDGPUAS(Triple(M.getTargetTriple()));
+}
+
+namespace {
+
+struct SourceOfDivergence {
+  unsigned Intr;
+};
+const SourceOfDivergence *lookupSourceOfDivergence(unsigned Intr);
+
+#define GET_SourcesOfDivergence_IMPL
+#include "AMDGPUGenSearchableTables.inc"
+
+} // end anonymous namespace
+
+bool isIntrinsicSourceOfDivergence(unsigned IntrID) {
+  return lookupSourceOfDivergence(IntrID);
 }
 } // namespace AMDGPU
 } // namespace llvm

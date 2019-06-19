@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_enc.c,v 1.20 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: bio_enc.c,v 1.22 2018/08/24 19:30:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,7 +87,7 @@ typedef struct enc_struct {
 	char buf[ENC_BLOCK_SIZE + BUF_OFFSET + 2];
 } BIO_ENC_CTX;
 
-static BIO_METHOD methods_enc = {
+static const BIO_METHOD methods_enc = {
 	.type = BIO_TYPE_CIPHER,
 	.name = "cipher",
 	.bwrite = enc_write,
@@ -98,7 +98,7 @@ static BIO_METHOD methods_enc = {
 	.callback_ctrl = enc_callback_ctrl
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_f_cipher(void)
 {
 	return (&methods_enc);
@@ -404,23 +404,32 @@ EVP_CIPHER_ctx *c;
 	}
 */
 
-void
+int
 BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
     const unsigned char *i, int e)
 {
 	BIO_ENC_CTX *ctx;
+	long (*cb)(BIO *, int, const char *, int, long, long);
 
 	if (b == NULL)
-		return;
+		return 0;
 
-	if ((b->callback != NULL) &&
-	    (b->callback(b, BIO_CB_CTRL, (const char *)c, BIO_CTRL_SET, e, 0L) <= 0))
-		return;
+	if ((ctx = BIO_get_data(b)) == NULL)
+		return 0;
 
-	b->init = 1;
-	ctx = (BIO_ENC_CTX *)b->ptr;
-	EVP_CipherInit_ex(&(ctx->cipher), c, NULL, k, i, e);
+	if ((cb = BIO_get_callback(b)) != NULL) {
+		if (cb(b, BIO_CB_CTRL, (const char *)c, BIO_CTRL_SET, e, 0L)
+		    <= 0)
+			return 0;
+	}
 
-	if (b->callback != NULL)
-		b->callback(b, BIO_CB_CTRL, (const char *)c, BIO_CTRL_SET, e, 1L);
+	BIO_set_init(b, 1);
+
+	if (!EVP_CipherInit_ex(&(ctx->cipher), c, NULL, k, i, e))
+		return 0;
+
+	if (cb != NULL)
+		return cb(b, BIO_CB_CTRL, (const char *)c, BIO_CTRL_SET, e, 1L);
+
+	return 1;
 }

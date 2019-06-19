@@ -1,4 +1,4 @@
-//===--- HexagonCommonGEP.cpp ---------------------------------------------===//
+//===- HexagonCommonGEP.cpp -----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,10 +11,12 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
@@ -35,7 +37,6 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -66,12 +67,12 @@ namespace llvm {
 namespace {
 
   struct GepNode;
-  typedef std::set<GepNode*> NodeSet;
-  typedef std::map<GepNode*,Value*> NodeToValueMap;
-  typedef std::vector<GepNode*> NodeVect;
-  typedef std::map<GepNode*,NodeVect> NodeChildrenMap;
-  typedef std::set<Use*> UseSet;
-  typedef std::map<GepNode*,UseSet> NodeToUsesMap;
+  using NodeSet = std::set<GepNode *>;
+  using NodeToValueMap = std::map<GepNode *, Value *>;
+  using NodeVect = std::vector<GepNode *>;
+  using NodeChildrenMap = std::map<GepNode *, NodeVect>;
+  using UseSet = std::set<Use *>;
+  using NodeToUsesMap = std::map<GepNode *, UseSet>;
 
   // Numbering map for gep nodes. Used to keep track of ordering for
   // gep nodes.
@@ -114,9 +115,9 @@ namespace {
     }
 
   private:
-    typedef std::map<Value*,GepNode*> ValueToNodeMap;
-    typedef std::vector<Value*> ValueVect;
-    typedef std::map<GepNode*,ValueVect> NodeToValuesMap;
+    using ValueToNodeMap = std::map<Value *, GepNode *>;
+    using ValueVect = std::vector<Value *>;
+    using NodeToValuesMap = std::map<GepNode *, ValueVect>;
 
     void getBlockTraversalOrder(BasicBlock *Root, ValueVect &Order);
     bool isHandledGepForm(GetElementPtrInst *GepI);
@@ -160,6 +161,7 @@ namespace {
 } // end anonymous namespace
 
 char HexagonCommonGEP::ID = 0;
+
 INITIALIZE_PASS_BEGIN(HexagonCommonGEP, "hcommgep", "Hexagon Common GEP",
       false, false)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
@@ -179,15 +181,15 @@ namespace {
       InBounds  = 0x08
     };
 
-    uint32_t Flags;
+    uint32_t Flags = 0;
     union {
       GepNode *Parent;
       Value *BaseVal;
     };
-    Value *Idx;
-    Type *PTy;  // Type of the pointer operand.
+    Value *Idx = nullptr;
+    Type *PTy = nullptr;  // Type of the pointer operand.
 
-    GepNode() : Flags(0), Parent(nullptr), Idx(nullptr), PTy(nullptr) {}
+    GepNode() : Parent(nullptr) {}
     GepNode(const GepNode *N) : Flags(N->Flags), Idx(N->Idx), PTy(N->PTy) {
       if (Flags & Root)
         BaseVal = N->BaseVal;
@@ -267,7 +269,8 @@ namespace {
 
   template <typename NodeContainer>
   void dump_node_container(raw_ostream &OS, const NodeContainer &S) {
-    typedef typename NodeContainer::const_iterator const_iterator;
+    using const_iterator = typename NodeContainer::const_iterator;
+
     for (const_iterator I = S.begin(), E = S.end(); I != E; ++I)
       OS << *I << ' ' << **I << '\n';
   }
@@ -282,7 +285,8 @@ namespace {
   raw_ostream &operator<< (raw_ostream &OS,
                            const NodeToUsesMap &M) LLVM_ATTRIBUTE_UNUSED;
   raw_ostream &operator<< (raw_ostream &OS, const NodeToUsesMap &M){
-    typedef NodeToUsesMap::const_iterator const_iterator;
+    using const_iterator = NodeToUsesMap::const_iterator;
+
     for (const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
       const UseSet &Us = I->second;
       OS << I->first << " -> #" << Us.size() << '{';
@@ -300,6 +304,7 @@ namespace {
 
   struct in_set {
     in_set(const NodeSet &S) : NS(S) {}
+
     bool operator() (GepNode *N) const {
       return NS.find(N) != NS.end();
     }
@@ -337,7 +342,7 @@ bool HexagonCommonGEP::isHandledGepForm(GetElementPtrInst *GepI) {
 
 void HexagonCommonGEP::processGepInst(GetElementPtrInst *GepI,
       ValueToNodeMap &NM) {
-  DEBUG(dbgs() << "Visiting GEP: " << *GepI << '\n');
+  LLVM_DEBUG(dbgs() << "Visiting GEP: " << *GepI << '\n');
   GepNode *N = new (*Mem) GepNode;
   Value *PtrOp = GepI->getPointerOperand();
   uint32_t InBounds = GepI->isInBounds() ? GepNode::InBounds : 0;
@@ -421,12 +426,13 @@ void HexagonCommonGEP::collect() {
     }
   }
 
-  DEBUG(dbgs() << "Gep nodes after initial collection:\n" << Nodes);
+  LLVM_DEBUG(dbgs() << "Gep nodes after initial collection:\n" << Nodes);
 }
 
 static void invert_find_roots(const NodeVect &Nodes, NodeChildrenMap &NCM,
                               NodeVect &Roots) {
-    typedef NodeVect::const_iterator const_iterator;
+    using const_iterator = NodeVect::const_iterator;
+
     for (const_iterator I = Nodes.begin(), E = Nodes.end(); I != E; ++I) {
       GepNode *N = *I;
       if (N->Flags & GepNode::Root) {
@@ -458,9 +464,9 @@ static void nodes_for_root(GepNode *Root, NodeChildrenMap &NCM,
 
 namespace {
 
-  typedef std::set<NodeSet> NodeSymRel;
-  typedef std::pair<GepNode*,GepNode*> NodePair;
-  typedef std::set<NodePair> NodePairSet;
+  using NodeSymRel = std::set<NodeSet>;
+  using NodePair = std::pair<GepNode *, GepNode *>;
+  using NodePairSet = std::set<NodePair>;
 
 } // end anonymous namespace
 
@@ -529,7 +535,7 @@ void HexagonCommonGEP::common() {
   // To do this we need to compare all pairs of nodes. To save time,
   // first, partition the set of all nodes into sets of potentially equal
   // nodes, and then compare pairs from within each partition.
-  typedef std::map<unsigned,NodeSet> NodeSetMap;
+  using NodeSetMap = std::map<unsigned, NodeSet>;
   NodeSetMap MaybeEq;
 
   for (NodeVect::iterator I = Nodes.begin(), E = Nodes.end(); I != E; ++I) {
@@ -569,7 +575,7 @@ void HexagonCommonGEP::common() {
     }
   }
 
-  DEBUG({
+  LLVM_DEBUG({
     dbgs() << "Gep node equality:\n";
     for (NodePairSet::iterator I = Eq.begin(), E = Eq.end(); I != E; ++I)
       dbgs() << "{ " << I->first << ", " << I->second << " }\n";
@@ -588,7 +594,7 @@ void HexagonCommonGEP::common() {
   });
 
   // Create a projection from a NodeSet to the minimal element in it.
-  typedef std::map<const NodeSet*,GepNode*> ProjMap;
+  using ProjMap = std::map<const NodeSet *, GepNode *>;
   ProjMap PM;
   for (NodeSymRel::iterator I = EqRel.begin(), E = EqRel.end(); I != E; ++I) {
     const NodeSet &S = *I;
@@ -636,7 +642,7 @@ void HexagonCommonGEP::common() {
     N->Parent = Rep;
   }
 
-  DEBUG(dbgs() << "Gep nodes after commoning:\n" << Nodes);
+  LLVM_DEBUG(dbgs() << "Gep nodes after commoning:\n" << Nodes);
 
   // Finally, erase the nodes that are no longer used.
   NodeSet Erase;
@@ -656,35 +662,35 @@ void HexagonCommonGEP::common() {
   NodeVect::iterator NewE = remove_if(Nodes, in_set(Erase));
   Nodes.resize(std::distance(Nodes.begin(), NewE));
 
-  DEBUG(dbgs() << "Gep nodes after post-commoning cleanup:\n" << Nodes);
+  LLVM_DEBUG(dbgs() << "Gep nodes after post-commoning cleanup:\n" << Nodes);
 }
 
 template <typename T>
 static BasicBlock *nearest_common_dominator(DominatorTree *DT, T &Blocks) {
-    DEBUG({
-      dbgs() << "NCD of {";
-      for (typename T::iterator I = Blocks.begin(), E = Blocks.end();
-           I != E; ++I) {
-        if (!*I)
-          continue;
-        BasicBlock *B = cast<BasicBlock>(*I);
-        dbgs() << ' ' << B->getName();
-      }
-      dbgs() << " }\n";
-    });
-
-    // Allow null basic blocks in Blocks.  In such cases, return nullptr.
-    typename T::iterator I = Blocks.begin(), E = Blocks.end();
-    if (I == E || !*I)
-      return nullptr;
-    BasicBlock *Dom = cast<BasicBlock>(*I);
-    while (++I != E) {
-      BasicBlock *B = cast_or_null<BasicBlock>(*I);
-      Dom = B ? DT->findNearestCommonDominator(Dom, B) : nullptr;
-      if (!Dom)
-        return nullptr;
+  LLVM_DEBUG({
+    dbgs() << "NCD of {";
+    for (typename T::iterator I = Blocks.begin(), E = Blocks.end(); I != E;
+         ++I) {
+      if (!*I)
+        continue;
+      BasicBlock *B = cast<BasicBlock>(*I);
+      dbgs() << ' ' << B->getName();
     }
-    DEBUG(dbgs() << "computed:" << Dom->getName() << '\n');
+    dbgs() << " }\n";
+  });
+
+  // Allow null basic blocks in Blocks.  In such cases, return nullptr.
+  typename T::iterator I = Blocks.begin(), E = Blocks.end();
+  if (I == E || !*I)
+    return nullptr;
+  BasicBlock *Dom = cast<BasicBlock>(*I);
+  while (++I != E) {
+    BasicBlock *B = cast_or_null<BasicBlock>(*I);
+    Dom = B ? DT->findNearestCommonDominator(Dom, B) : nullptr;
+    if (!Dom)
+      return nullptr;
+    }
+    LLVM_DEBUG(dbgs() << "computed:" << Dom->getName() << '\n');
     return Dom;
 }
 
@@ -717,7 +723,9 @@ static BasicBlock *nearest_common_dominatee(DominatorTree *DT, T &Blocks) {
 template <typename T>
 static BasicBlock::iterator first_use_of_in_block(T &Values, BasicBlock *B) {
     BasicBlock::iterator FirstUse = B->end(), BEnd = B->end();
-    typedef typename T::iterator iterator;
+
+    using iterator = typename T::iterator;
+
     for (iterator I = Values.begin(), E = Values.end(); I != E; ++I) {
       Value *V = *I;
       // If V is used in a PHI node, the use belongs to the incoming block,
@@ -745,7 +753,7 @@ static bool is_empty(const BasicBlock *B) {
 
 BasicBlock *HexagonCommonGEP::recalculatePlacement(GepNode *Node,
       NodeChildrenMap &NCM, NodeToValueMap &Loc) {
-  DEBUG(dbgs() << "Loc for node:" << Node << '\n');
+  LLVM_DEBUG(dbgs() << "Loc for node:" << Node << '\n');
   // Recalculate the placement for Node, assuming that the locations of
   // its children in Loc are valid.
   // Return nullptr if there is no valid placement for Node (for example, it
@@ -812,7 +820,7 @@ BasicBlock *HexagonCommonGEP::recalculatePlacement(GepNode *Node,
 
 BasicBlock *HexagonCommonGEP::recalculatePlacementRec(GepNode *Node,
       NodeChildrenMap &NCM, NodeToValueMap &Loc) {
-  DEBUG(dbgs() << "LocRec begin for node:" << Node << '\n');
+  LLVM_DEBUG(dbgs() << "LocRec begin for node:" << Node << '\n');
   // Recalculate the placement of Node, after recursively recalculating the
   // placements of all its children.
   NodeChildrenMap::iterator CF = NCM.find(Node);
@@ -822,7 +830,7 @@ BasicBlock *HexagonCommonGEP::recalculatePlacementRec(GepNode *Node,
       recalculatePlacementRec(*I, NCM, Loc);
   }
   BasicBlock *LB = recalculatePlacement(Node, NCM, Loc);
-  DEBUG(dbgs() << "LocRec end for node:" << Node << '\n');
+  LLVM_DEBUG(dbgs() << "LocRec end for node:" << Node << '\n');
   return LB;
 }
 
@@ -944,8 +952,8 @@ namespace {
 void HexagonCommonGEP::separateChainForNode(GepNode *Node, Use *U,
       NodeToValueMap &Loc) {
   User *R = U->getUser();
-  DEBUG(dbgs() << "Separating chain for node (" << Node << ") user: "
-               << *R << '\n');
+  LLVM_DEBUG(dbgs() << "Separating chain for node (" << Node << ") user: " << *R
+                    << '\n');
   BasicBlock *PB = cast<Instruction>(R)->getParent();
 
   GepNode *N = Node;
@@ -988,7 +996,7 @@ void HexagonCommonGEP::separateChainForNode(GepNode *Node, Use *U,
 
   // Should at least have U in NewUs.
   NewNode->Flags |= GepNode::Used;
-  DEBUG(dbgs() << "new node: " << NewNode << "  " << *NewNode << '\n');
+  LLVM_DEBUG(dbgs() << "new node: " << NewNode << "  " << *NewNode << '\n');
   assert(!NewUs.empty());
   Uses[NewNode] = NewUs;
 }
@@ -999,7 +1007,7 @@ void HexagonCommonGEP::separateConstantChains(GepNode *Node,
   NodeSet Ns;
   nodes_for_root(Node, NCM, Ns);
 
-  DEBUG(dbgs() << "Separating constant chains for node: " << Node << '\n');
+  LLVM_DEBUG(dbgs() << "Separating constant chains for node: " << Node << '\n');
   // Collect all used nodes together with the uses from loads and stores,
   // where the GEP node could be folded into the load/store instruction.
   NodeToUsesMap FNs; // Foldable nodes.
@@ -1036,7 +1044,7 @@ void HexagonCommonGEP::separateConstantChains(GepNode *Node,
       FNs.insert(std::make_pair(N, LSs));
   }
 
-  DEBUG(dbgs() << "Nodes with foldable users:\n" << FNs);
+  LLVM_DEBUG(dbgs() << "Nodes with foldable users:\n" << FNs);
 
   for (NodeToUsesMap::iterator I = FNs.begin(), E = FNs.end(); I != E; ++I) {
     GepNode *N = I->first;
@@ -1058,32 +1066,33 @@ void HexagonCommonGEP::computeNodePlacement(NodeToValueMap &Loc) {
   for (NodeVect::iterator I = Roots.begin(), E = Roots.end(); I != E; ++I)
     recalculatePlacementRec(*I, NCM, Loc);
 
-  DEBUG(dbgs() << "Initial node placement:\n" << LocationAsBlock(Loc));
+  LLVM_DEBUG(dbgs() << "Initial node placement:\n" << LocationAsBlock(Loc));
 
   if (OptEnableInv) {
     for (NodeVect::iterator I = Roots.begin(), E = Roots.end(); I != E; ++I)
       adjustForInvariance(*I, NCM, Loc);
 
-    DEBUG(dbgs() << "Node placement after adjustment for invariance:\n"
-                 << LocationAsBlock(Loc));
+    LLVM_DEBUG(dbgs() << "Node placement after adjustment for invariance:\n"
+                      << LocationAsBlock(Loc));
   }
   if (OptEnableConst) {
     for (NodeVect::iterator I = Roots.begin(), E = Roots.end(); I != E; ++I)
       separateConstantChains(*I, NCM, Loc);
   }
-  DEBUG(dbgs() << "Node use information:\n" << Uses);
+  LLVM_DEBUG(dbgs() << "Node use information:\n" << Uses);
 
   // At the moment, there is no further refinement of the initial placement.
   // Such a refinement could include splitting the nodes if they are placed
   // too far from some of its users.
 
-  DEBUG(dbgs() << "Final node placement:\n" << LocationAsBlock(Loc));
+  LLVM_DEBUG(dbgs() << "Final node placement:\n" << LocationAsBlock(Loc));
 }
 
 Value *HexagonCommonGEP::fabricateGEP(NodeVect &NA, BasicBlock::iterator At,
       BasicBlock *LocB) {
-  DEBUG(dbgs() << "Fabricating GEP in " << LocB->getName()
-               << " for nodes:\n" << NA);
+  LLVM_DEBUG(dbgs() << "Fabricating GEP in " << LocB->getName()
+                    << " for nodes:\n"
+                    << NA);
   unsigned Num = NA.size();
   GepNode *RN = NA[0];
   assert((RN->Flags & GepNode::Root) && "Creating GEP for non-root");
@@ -1120,7 +1129,7 @@ Value *HexagonCommonGEP::fabricateGEP(NodeVect &NA, BasicBlock::iterator At,
     Type *ElTy = cast<PointerType>(InpTy->getScalarType())->getElementType();
     NewInst = GetElementPtrInst::Create(ElTy, Input, A, "cgep", &*At);
     NewInst->setIsInBounds(RN->Flags & GepNode::InBounds);
-    DEBUG(dbgs() << "new GEP: " << *NewInst << '\n');
+    LLVM_DEBUG(dbgs() << "new GEP: " << *NewInst << '\n');
     Input = NewInst;
   } while (nax <= Num);
 
@@ -1153,7 +1162,7 @@ void HexagonCommonGEP::getAllUsersForNode(GepNode *Node, ValueVect &Values,
 }
 
 void HexagonCommonGEP::materialize(NodeToValueMap &Loc) {
-  DEBUG(dbgs() << "Nodes before materialization:\n" << Nodes << '\n');
+  LLVM_DEBUG(dbgs() << "Nodes before materialization:\n" << Nodes << '\n');
   NodeChildrenMap NCM;
   NodeVect Roots;
   // Compute the inversion again, since computing placement could alter
@@ -1247,7 +1256,9 @@ void HexagonCommonGEP::removeDeadCode() {
   for (unsigned i = BO.size(); i > 0; --i) {
     BasicBlock *B = cast<BasicBlock>(BO[i-1]);
     BasicBlock::InstListType &IL = B->getInstList();
-    typedef BasicBlock::InstListType::reverse_iterator reverse_iterator;
+
+    using reverse_iterator = BasicBlock::InstListType::reverse_iterator;
+
     ValueVect Ins;
     for (reverse_iterator I = IL.rbegin(), E = IL.rend(); I != E; ++I)
       Ins.push_back(&*I);

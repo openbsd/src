@@ -10,10 +10,10 @@
 #ifndef liblldb_ClangExpressionParser_h_
 #define liblldb_ClangExpressionParser_h_
 
-#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ClangForward.h"
 #include "lldb/Expression/DiagnosticManager.h"
 #include "lldb/Expression/ExpressionParser.h"
+#include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/Status.h"
 #include "lldb/lldb-public.h"
 
@@ -26,14 +26,14 @@ class IRExecutionUnit;
 
 //----------------------------------------------------------------------
 /// @class ClangExpressionParser ClangExpressionParser.h
-/// "lldb/Expression/ClangExpressionParser.h"
-/// @brief Encapsulates an instance of Clang that can parse expressions.
+/// "lldb/Expression/ClangExpressionParser.h" Encapsulates an instance of
+/// Clang that can parse expressions.
 ///
 /// ClangExpressionParser is responsible for preparing an instance of
 /// ClangExpression for execution.  ClangExpressionParser uses ClangExpression
 /// as a glorified parameter list, performing the required parsing and
-/// conversion to formats (DWARF bytecode, or JIT compiled machine code)
-/// that can be executed.
+/// conversion to formats (DWARF bytecode, or JIT compiled machine code) that
+/// can be executed.
 //----------------------------------------------------------------------
 class ClangExpressionParser : public ExpressionParser {
 public:
@@ -59,8 +59,8 @@ public:
   ~ClangExpressionParser() override;
 
   //------------------------------------------------------------------
-  /// Parse a single expression and convert it to IR using Clang.  Don't
-  /// wrap the expression in anything at all.
+  /// Parse a single expression and convert it to IR using Clang.  Don't wrap
+  /// the expression in anything at all.
   ///
   /// @param[in] diagnostic_manager
   ///     The diagnostic manager to report errors to.
@@ -74,8 +74,8 @@ public:
   bool RewriteExpression(DiagnosticManager &diagnostic_manager) override;
 
   //------------------------------------------------------------------
-  /// Ready an already-parsed expression for execution, possibly
-  /// evaluating it statically.
+  /// Ready an already-parsed expression for execution, possibly evaluating it
+  /// statically.
   ///
   /// @param[out] func_addr
   ///     The address to which the function has been written.

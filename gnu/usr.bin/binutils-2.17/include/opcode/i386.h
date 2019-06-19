@@ -1530,6 +1530,10 @@ static const template i386_optab[] =
 {"xrstor", 1, 0x0fae, 5, CpuXSAVE, q_Suf|Modrm, { LLongMem, 0, 0 } },
 {"xsaveopt", 1, 0x0fae, 6, CpuXSAVE, q_Suf|Modrm, { LLongMem, 0, 0 } },
 
+/* Intel PCID extension */
+{"invpcid", 2, 0x660f3882, X, CpuNEW|CpuNo64, Modrm|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_xSuf|NoRex64, { BaseIndex|Disp8|Disp16|Disp32|Disp32S, Reg32 } },
+{"invpcid", 2, 0x660f3882, X, CpuNEW|Cpu64, Modrm|IgnoreSize|No_bSuf|No_wSuf|No_sSuf|No_qSuf|No_xSuf|NoRex64, { BaseIndex|Disp8|Disp16|Disp32|Disp32S, Reg64 } },
+
 /* sentinel */
 {NULL, 0, 0, 0, 0, 0, { 0, 0, 0} }
 };

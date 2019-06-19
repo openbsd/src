@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.41 2018/02/19 08:59:53 mpi Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.44 2018/05/27 06:02:15 visa Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -462,12 +462,11 @@ int
 quotaon_vnode(struct vnode *vp, void *arg) 
 {
 	int error;
-	struct proc *p = (struct proc *)arg;
 
 	if (vp->v_type == VNON || vp->v_writecount == 0)
 		return (0);
 
-	if (vget(vp, LK_EXCLUSIVE, p)) {
+	if (vget(vp, LK_EXCLUSIVE)) {
 		return (0);
 	}
 
@@ -499,7 +498,7 @@ quotaon(struct proc *p, struct mount *mp, int type, caddr_t fname)
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 	if (vp->v_type != VREG) {
 		(void) vn_close(vp, FREAD|FWRITE, p->p_ucred, p);
 		return (EACCES);
@@ -544,7 +543,7 @@ quotaon(struct proc *p, struct mount *mp, int type, caddr_t fname)
 	 * adding references to quota file being opened.
 	 * NB: only need to add dquot's for inodes being modified.
 	 */
-	error = vfs_mount_foreach_vnode(mp, quotaon_vnode, p);
+	error = vfs_mount_foreach_vnode(mp, quotaon_vnode, NULL);
 
 	ump->um_qflags[type] &= ~QTF_OPENING;
 	if (error)
@@ -567,8 +566,7 @@ quotaoff_vnode(struct vnode *vp, void *arg)
 	if (vp->v_type == VNON)
 		return (0);
 
-
-	if (vget(vp, LK_EXCLUSIVE, qa->p))
+	if (vget(vp, LK_EXCLUSIVE))
 		return (0);
 	ip = VTOI(vp);
 	dq = ip->i_dquot[qa->type];
@@ -760,13 +758,12 @@ int
 qsync_vnode(struct vnode *vp, void *arg)
 {
 	int i;
-	struct proc *p = curproc;
 	struct dquot *dq;
 	    
 	if (vp->v_type == VNON)
 		return (0);
 
-	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, p))
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT))
 		return (0);
 
 	for (i = 0; i < MAXQUOTAS; i++) {
@@ -838,7 +835,6 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
     struct dquot **dqp)
 {
 	SIPHASH_CTX ctx;
-	struct proc *p = curproc;
 	struct dquot *dq;
 	struct dqhash *dqh;
 	struct vnode *dqvp;
@@ -899,7 +895,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	 * Initialize the contents of the dquot structure.
 	 */
 	if (vp != dqvp)
-		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	LIST_INSERT_HEAD(dqh, dq, dq_hash);
 	dqref(dq);
 	dq->dq_flags = DQ_LOCK;
@@ -921,7 +917,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		memset(&dq->dq_dqb, 0, sizeof(struct dqblk));
 	if (vp != dqvp)
-		VOP_UNLOCK(dqvp, p);
+		VOP_UNLOCK(dqvp);
 	if (dq->dq_flags & DQ_WANT)
 		wakeup(dq);
 	dq->dq_flags = 0;
@@ -978,7 +974,6 @@ dqrele(struct vnode *vp, struct dquot *dq)
 int
 dqsync(struct vnode *vp, struct dquot *dq)
 {
-	struct proc *p = curproc;
 	struct vnode *dqvp;
 	struct iovec aiov;
 	struct uio auio;
@@ -992,13 +987,13 @@ dqsync(struct vnode *vp, struct dquot *dq)
 		panic("dqsync: file");
 
 	if (vp != dqvp)
-		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
 		(void) tsleep(dq, PINOD+2, "dqsync", 0);
 		if ((dq->dq_flags & DQ_MOD) == 0) {
 			if (vp != dqvp)
-				VOP_UNLOCK(dqvp, p);
+				VOP_UNLOCK(dqvp);
 			return (0);
 		}
 	}
@@ -1019,7 +1014,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 		wakeup(dq);
 	dq->dq_flags &= ~(DQ_MOD|DQ_LOCK|DQ_WANT);
 	if (vp != dqvp)
-		VOP_UNLOCK(dqvp, p);
+		VOP_UNLOCK(dqvp);
 	return (error);
 }
 

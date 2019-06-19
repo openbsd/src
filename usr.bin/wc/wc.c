@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.21 2016/09/16 09:25:23 fcambus Exp $	*/
+/*	$OpenBSD: wc.c,v 1.25 2018/09/30 12:44:22 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -31,7 +31,8 @@
 
 #include <sys/param.h>	/* MAXBSIZE */
 #include <sys/stat.h>
-#include <sys/file.h>
+
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <locale.h>
@@ -208,15 +209,17 @@ cnt(char *file)
 		gotsp = 1;
 		while ((len = getline(&buf, &bufsz, stream)) > 0) {
 			if (multibyte) {
-				for (C = buf; *C != '\0'; C += len) {
+				const char *end = buf + len;
+				for (C = buf; C < end; C += len) {
 					++charct;
 					len = mbtowc(&wc, C, MB_CUR_MAX);
 					if (len == -1) {
 						mbtowc(NULL, NULL,
 						    MB_CUR_MAX);
 						len = 1;
-						wc = L' ';
-					}
+						wc = L'?';
+					} else if (len == 0)
+						len = 1;
 					if (iswspace(wc)) {
 						gotsp = 1;
 						if (wc == L'\n')
@@ -228,7 +231,7 @@ cnt(char *file)
 				}
 			} else {
 				charct += len;
-				for (C = buf; *C != '\0'; ++C) {
+				for (C = buf; len--; ++C) {
 					if (isspace((unsigned char)*C)) {
 						gotsp = 1;
 						if (*C == '\n')

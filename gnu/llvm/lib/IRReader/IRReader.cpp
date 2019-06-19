@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/IRReader/IRReader.h"
-#include "llvm-c/Core.h"
 #include "llvm-c/IRReader.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/BitcodeReader.h"
@@ -68,7 +67,9 @@ std::unique_ptr<Module> llvm::getLazyIRFileModule(StringRef Filename,
 }
 
 std::unique_ptr<Module> llvm::parseIR(MemoryBufferRef Buffer, SMDiagnostic &Err,
-                                      LLVMContext &Context) {
+                                      LLVMContext &Context,
+                                      bool UpgradeDebugInfo,
+                                      StringRef DataLayoutString) {
   NamedRegionTimer T(TimeIRParsingName, TimeIRParsingDescription,
                      TimeIRParsingGroupName, TimeIRParsingGroupDescription,
                      TimePassesIsEnabled);
@@ -83,14 +84,19 @@ std::unique_ptr<Module> llvm::parseIR(MemoryBufferRef Buffer, SMDiagnostic &Err,
       });
       return nullptr;
     }
+    if (!DataLayoutString.empty())
+      ModuleOrErr.get()->setDataLayout(DataLayoutString);
     return std::move(ModuleOrErr.get());
   }
 
-  return parseAssembly(Buffer, Err, Context);
+  return parseAssembly(Buffer, Err, Context, nullptr, UpgradeDebugInfo,
+                       DataLayoutString);
 }
 
 std::unique_ptr<Module> llvm::parseIRFile(StringRef Filename, SMDiagnostic &Err,
-                                          LLVMContext &Context) {
+                                          LLVMContext &Context,
+                                          bool UpgradeDebugInfo,
+                                          StringRef DataLayoutString) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
       MemoryBuffer::getFileOrSTDIN(Filename);
   if (std::error_code EC = FileOrErr.getError()) {
@@ -99,7 +105,8 @@ std::unique_ptr<Module> llvm::parseIRFile(StringRef Filename, SMDiagnostic &Err,
     return nullptr;
   }
 
-  return parseIR(FileOrErr.get()->getMemBufferRef(), Err, Context);
+  return parseIR(FileOrErr.get()->getMemBufferRef(), Err, Context,
+                 UpgradeDebugInfo, DataLayoutString);
 }
 
 //===----------------------------------------------------------------------===//

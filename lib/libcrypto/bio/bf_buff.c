@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_buff.c,v 1.24 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bf_buff.c,v 1.25 2018/05/01 13:29:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,7 +73,7 @@ static int buffer_free(BIO *data);
 static long buffer_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 #define DEFAULT_BUFFER_SIZE	4096
 
-static BIO_METHOD methods_buffer = {
+static const BIO_METHOD methods_buffer = {
 	.type = BIO_TYPE_BUFFER,
 	.name = "buffer",
 	.bwrite = buffer_write,
@@ -86,7 +86,7 @@ static BIO_METHOD methods_buffer = {
 	.callback_ctrl = buffer_callback_ctrl
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_f_buffer(void)
 {
 	return (&methods_buffer);

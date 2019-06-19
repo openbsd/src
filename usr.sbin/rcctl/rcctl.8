@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.34 2016/10/10 15:22:26 schwarze Exp $
+.\"	$OpenBSD: rcctl.8,v 1.35 2018/09/20 12:24:14 solene Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 10 2016 $
+.Dd $Mdocdate: September 20 2018 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -166,7 +166,8 @@ in
 When a disabled package daemon is enabled, it is appended to the end of
 .Va pkg_scripts .
 When a package daemon is disabled, it is removed from
-.Va pkg_scripts .
+.Va pkg_scripts
+and its variables are removed if any.
 .El
 .Sh EXIT STATUS
 .Nm Ar action

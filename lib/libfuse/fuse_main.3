@@ -1,6 +1,7 @@
-.\" $OpenBSD: fuse_main.3,v 1.2 2016/05/18 17:36:24 jmc Exp $
+.\" $OpenBSD: fuse_main.3,v 1.6 2018/11/28 21:19:11 mpi Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
+.\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,69 +15,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 18 2016 $
+.Dd $Mdocdate: November 28 2018 $
 .Dt FUSE_MAIN 3
 .Os
 .Sh NAME
-.Nm fuse_main ,
-.Nm fuse_version ,
-.Nm fuse_new ,
-.Nm fuse_parse_cmdline ,
-.Nm fuse_mount ,
-.Nm fuse_remove_signal_handlers ,
-.Nm fuse_set_signal_handlers ,
-.Nm fuse_get_session ,
-.Nm fuse_get_context ,
-.Nm fuse_is_lib_option ,
-.Nm fuse_loop ,
-.Nm fuse_loop_mt ,
-.Nm fuse_chan_fd ,
-.Nm fuse_unmount ,
-.Nm fuse_daemonize ,
-.Nm fuse_destroy ,
-.Nm fuse_teardown
-.Nd FUSE implementation routines
+.Nm fuse_main
+.Nd FUSE helper function
 .Sh SYNOPSIS
 .In fuse.h
 .Ft int
 .Fn fuse_main "int argc" "char **argv" "const struct fuse_operations *ops" \
     "void *data"
-.Ft int
-.Fn fuse_version "void"
-.Ft struct fuse *
-.Fn fuse_new "struct fuse_chan *fc" "struct fuse_args *args" \
-    "const struct fuse_operations *ops" "size_t size" "void *userdata"
-.Ft int
-.Fn fuse_parse_cmdline "struct fuse_args *args" "char **mp" "int *mt" "int *fg"
-.Ft struct fuse_chan *
-.Fn fuse_mount "const char *dir" "struct fuse_args *args"
-.Ft void
-.Fn fuse_remove_signal_handlers "struct fuse_session *se"
-.Ft int
-.Fn fuse_set_signal_handlers "struct fuse_session *se"
-.Ft struct fuse_session *
-.Fn fuse_get_session "struct fuse *f"
-.Ft struct fuse_context *
-.Fn fuse_get_context "void"
-.Ft int
-.Fn fuse_is_lib_option "const char *opt"
-.Ft int
-.Fn fuse_loop "struct fuse *fuse"
-.Ft int
-.Fn fuse_loop_mt "struct fuse *fuse"
-.Ft int
-.Fn fuse_chan_fd "struct fuse_chan *ch"
-.Ft void
-.Fn fuse_unmount "const char *dir" "struct fuse_chan *ch"
-.Ft int
-.Fn fuse_daemonize "int foreground"
-.Ft void
-.Fn fuse_destroy "struct fuse *f"
-.Ft void
-.Fn fuse_teardown "struct fuse *f" "char *mp"
 .Sh DESCRIPTION
-The FUSE library provides routines to implement a filesystem in userspace.
-.Pp
 There are two ways of implementing a FUSE filesystem:
 by calling only
 .Fn fuse_main
@@ -84,97 +34,19 @@ and passing this function the
 .Em ops
 argument containing all the callbacks of the filesystem,
 or by using the other functions,
-as detailed below.
+as detailed in
+.Xr fuse_loop 3
 .Pp
-.Fn fuse_version
-returns the FUSE version number.
-.Pp
-.Fn fuse_new
-returns a
-.Fa struct fuse
-that will be needed by
-.Fn fuse_loop .
-.Pp
-.Fn fuse_parse_cmdline
-parses the
-.Fa struct fuse_args
-given by the user and will set
-.Fa mp
-with a char * containing the mountpoint directory.
-.Pp
-.Fn fuse_mount
-looks for an empty
-.Xr fuse 4
-device to create a connection.
-If this function finds an available device it will open it for FUSE
-communication with the FUSE VFS driver and will mount the filesystem.
-This function will return a
-.Fa struct fuse_chan
-that will be needed by
-.Fn fuse_new .
-.Pp
-.Fn fuse_remove_signal_handlers
-is currently undocumented.
-.Pp
-.Fn fuse_set_signal_handlers
-is currently undocumented.
-.Pp
-.Fn fuse_get_session
-returns a pointer to the structure
-.Fa fuse_session
-contained in a
-.Fa struct fuse .
-.Pp
-.Fn fuse_get_context
-returns a pointer to the structure
-.Fa fuse_context .
-The returned fuse_context is only available during the lifetime of a FUSE
-operation.
-.Pp
-.Fn fuse_is_lib_option
-checks if the string
-.Fa opt
-is an option handled by libfuse or by the FUSE client.
-It returns 1 if it is handled by the lib and 0 otherwise.
-.Pp
-.Fn fuse_loop_mt
-is unsupported.
-.Pp
-.Fn fuse_loop
-is the main loop of a FUSE program.
-This function looks for FUSE requests from the kernel and responds to them
-using the
-.Fa struct fuse_operation
-present in the structure
-.Fa fuse .
-It will return only if something goes wrong
-or if the kernel sends a
-.Fa FUSE_DESTROY
-opcode to libfuse.
-.Pp
-.Fn fuse_chan_fd
-returns the filedescriptor used by the given
-.Fa fuse_chan
-structure.
-.Pp
-.Fn fuse_unmount
-unmounts the
-.Fa dir
-mountpoint.
-.Pp
-.Fn fuse_daemonize
-daemonises the FUSE library.
-It runs the FUSE program in the background,
-whilst continuing to handle kernel filesystem opcodes.
-.Pp
-.Fn fuse_destroy
-is currently undocumented.
-.Pp
-.Fn fuse_teardown
-calls
-.Fn fuse_unmount
+.Fa argv
+is the list of arguments supplied to the program's main method and
+must at a minimum specify the directory on which the file system is to
+be mounted.
+The other arguments can be custom arguments specific to the
+file system or those supported by
+.Xr fuse_parse_cmdline 3 ,
+.Xr fuse_new 3
 and
-.Fn fuse_destroy .
+.Xr fuse_mount 3 .
 .Sh EXAMPLES
 Here is a simple example of a FUSE implementation:
 .Bd -literal
@@ -252,14 +124,21 @@ main(int ac, char **av)
 }
 .Ed
 .Sh SEE ALSO
+.Xr fuse_loop 3 ,
+.Xr fuse_mount 3 ,
+.Xr fuse_new 3 ,
+.Xr fuse_parse_cmdline 3 ,
+.Xr fuse_setup 3 ,
 .Xr fuse 4
 .Sh STANDARDS
-The original FUSE specification can be found at
-.Lk http://libfuse.github.io/doxygen/ .
-The original implementation can be found at
-.Lk https://github.com/libfuse/libfuse/ .
+The
+.Fn fuse_main
+function conforms to FUSE 2.6.
 .Sh HISTORY
-The FUSE library first appeared in
+The
+.Fn fuse_main
+function first appeared in
 .Ox 5.4 .
-.Sh BUGS
-This man page is woefully incomplete.
+.Sh AUTHORS
+.An Sylvestre Gallon Aq Mt ccna.syl@gmail.com
+.An Helg Bredow Aq Mt helg@openbsd.org

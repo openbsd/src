@@ -459,7 +459,7 @@ or even:
 
 and pass C<$buf> to your send routine. Some protocols demand that the
 count should include the length of the count itself: then just add 4
-to the data length. (But make sure to read L<"Lengths and Widths"> before
+to the data length. (But make sure to read L</"Lengths and Widths"> before
 you really code this!)
 
 
@@ -487,7 +487,7 @@ obviously works for C<E<lt>>, where the "little end" touches the code.
 
 You will probably find these modifiers even more useful if you have
 to deal with big- or little-endian C structures. Be sure to read
-L<"Packing and Unpacking C Structures"> for more on that.
+L</"Packing and Unpacking C Structures"> for more on that.
 
 
 =head2 Floating point Numbers
@@ -668,9 +668,10 @@ Usually you'll want to pack or unpack UTF-8 strings:
    my @hebrew = unpack( 'U*', $utf );
 
 Please note: in the general case, you're better off using
-Encode::decode_utf8 to decode a UTF-8 encoded byte string to a Perl
-Unicode string, and Encode::encode_utf8 to encode a Perl Unicode string
-to UTF-8 bytes. These functions provide means of handling invalid byte
+L<C<Encode::decode('UTF-8', $utf)>|Encode/decode> to decode a UTF-8
+encoded byte string to a Perl Unicode string, and
+L<C<Encode::encode('UTF-8', $str)>|Encode/encode> to encode a Perl Unicode
+string to UTF-8 bytes. These functions provide means of handling invalid byte
 sequences and generally have a friendlier interface.
 
 =head2 Another Portable Binary Encoding
@@ -798,7 +799,7 @@ C<A4> or C<Z*>:
    my $txt = unpack( 'A4/A*', $buf );
 
 C</> is not implemented in Perls before 5.6, so if your code is required to
-work on older Perls you'll need to C<unpack( 'Z* Z* C')> to get the length,
+work on ancient Perls you'll need to C<unpack( 'Z* Z* C')> to get the length,
 then use it to make a new unpack string. For example
 
    # pack a message: ASCIIZ, ASCIIZ, length, string, byte

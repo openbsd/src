@@ -12,7 +12,10 @@ use warnings;
 
 # mro.pm versions < 1.00 reserved for MRO::Compat
 #  for partial back-compat to 5.[68].x
-our $VERSION = '1.18';
+our $VERSION = '1.22';
+
+require XSLoader;
+XSLoader::load('mro');
 
 sub import {
     mro::set_mro(scalar(caller), $_[1]) if $_[1];
@@ -36,9 +39,6 @@ sub method {
     goto &$method if defined $method;
     return;
 }
-
-require XSLoader;
-XSLoader::load('mro');
 
 1;
 
@@ -308,7 +308,7 @@ works (like C<goto &maybe::next::method>);
 
 =over 4
 
-=item L<http://haahr.tempdomainname.com/dylan/linearization-oopsla96.html>
+=item L<http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.19.3910&rep=rep1&type=pdf>
 
 =back
 

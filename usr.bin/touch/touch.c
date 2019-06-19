@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.25 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: touch.c,v 1.26 2019/03/10 15:11:52 schwarze Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <locale.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -49,7 +48,7 @@ void		stime_arg1(char *, struct timespec *);
 void		stime_arg2(char *, int, struct timespec *);
 void		stime_argd(char *, struct timespec *);
 void		stime_file(char *, struct timespec *);
-__dead void	usage(void);
+static void __dead usage(void);
 
 int
 main(int argc, char *argv[])
@@ -57,8 +56,6 @@ main(int argc, char *argv[])
 	struct timespec	 ts[2];
 	int		 aflag, cflag, mflag, ch, fd, len, rval, timeset;
 	char		*p;
-
-	(void)setlocale(LC_ALL, "");
 
 	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
 		err(1, "pledge");
@@ -145,7 +142,7 @@ main(int argc, char *argv[])
 			warn("%s", *argv);
 		}
 	}
-	exit(rval);
+	return rval;
 }
 
 #define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
@@ -324,7 +321,7 @@ terr:		errx(1,
 	tsp[1] = tsp[0];
 }
 
-__dead void
+static void __dead
 usage(void)
 {
 	(void)fprintf(stderr,

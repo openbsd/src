@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 26;
+use Test::More tests => 27;
 use List::Util qw(pairgrep pairfirst pairmap pairs unpairs pairkeys pairvalues);
 
 no warnings 'misc'; # avoid "Odd number of elements" warnings most of the time
@@ -81,6 +81,16 @@ is_deeply( [ pairmap { $b } one => 1, two => 2, three => ],
 is_deeply( [ pairmap { my @l = (1) x 1000; "$a=$b" } one => 1, two => 2, three => 3 ],
            [ "one=1", "two=2", "three=3" ],
            'pairmap copes with stack movement' );
+
+{
+    # do the pairmap and is_deeply as two separate statements to avoid
+    # the stack being extended before pairmap is called
+    my @a = pairmap { $a .. $b }
+                        1 => 3, 4 => 4, 5 => 6, 7 => 1998, 1999 => 2000;
+    my @exp; push @exp, $_ for 1..2000;
+    is_deeply( \@a, \@exp,
+           'pairmap result has more elements than input' );
+}
 
 is_deeply( [ pairs one => 1, two => 2, three => 3 ],
            [ [ one => 1 ], [ two => 2 ], [ three => 3 ] ],

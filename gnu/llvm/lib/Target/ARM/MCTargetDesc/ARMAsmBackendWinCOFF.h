@@ -11,15 +11,17 @@
 #define LLVM_LIB_TARGET_ARM_ARMASMBACKENDWINCOFF_H
 
 #include "ARMAsmBackend.h"
+#include "llvm/MC/MCObjectWriter.h"
 using namespace llvm;
 
 namespace {
 class ARMAsmBackendWinCOFF : public ARMAsmBackend {
 public:
-  ARMAsmBackendWinCOFF(const Target &T, const Triple &TheTriple)
-      : ARMAsmBackend(T, TheTriple, true) {}
-  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createARMWinCOFFObjectWriter(OS, /*Is64Bit=*/false);
+  ARMAsmBackendWinCOFF(const Target &T, const MCSubtargetInfo &STI)
+      : ARMAsmBackend(T, STI, support::little) {}
+  std::unique_ptr<MCObjectTargetWriter>
+  createObjectTargetWriter() const override {
+    return createARMWinCOFFObjectWriter(/*Is64Bit=*/false);
   }
 };
 }

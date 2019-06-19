@@ -56,13 +56,16 @@ test_wc()
 # single byte characters
 test_wc "two lines\nand five words\n" "       2       5      25"
 
+# non-printable characters
+test_wc "a\033b\000c\n" "       1       1       6"
+
 # multibyte characters
 test_wc "ax\0314\0200b\n" "       1       1       5" "       1       1       6"
 test_wc "a\0354\0277\0277b\n" "       1       1       4" \
 	"       1       1       6"
 
 # invalid bytes
-test_wc "a\0377\0277c\n" "       1       2       5" "       1       1       5"
+test_wc "a\0377\0277c\n" "       1       1       5"
 
 # edge cases
 test_wc "" "       0       0       0"

@@ -4,7 +4,7 @@ use strict;
 use Config;
 push @INC, '.';
 if (-f 't/test.pl') {
-  require 't/test.pl';
+  require './t/test.pl';
 } else {
   require '../../t/test.pl';
 }

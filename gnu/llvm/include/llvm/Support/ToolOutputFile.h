@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the tool_output_file class.
+//  This file defines the ToolOutputFile class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,9 +21,9 @@ namespace llvm {
 /// This class contains a raw_fd_ostream and adds a few extra features commonly
 /// needed for compiler-like tool output files:
 ///   - The file is automatically deleted if the process is killed.
-///   - The file is automatically deleted when the tool_output_file
+///   - The file is automatically deleted when the ToolOutputFile
 ///     object is destroyed unless the client calls keep().
-class tool_output_file {
+class ToolOutputFile {
   /// This class is declared before the raw_fd_ostream so that it is constructed
   /// before the raw_fd_ostream is constructed and destructed after the
   /// raw_fd_ostream is destructed. It installs cleanups in its constructor and
@@ -35,7 +35,7 @@ class tool_output_file {
     /// The flag which indicates whether we should not delete the file.
     bool Keep;
 
-    explicit CleanupInstaller(StringRef ilename);
+    explicit CleanupInstaller(StringRef Filename);
     ~CleanupInstaller();
   } Installer;
 
@@ -43,12 +43,12 @@ class tool_output_file {
   raw_fd_ostream OS;
 
 public:
-  /// This constructor's arguments are passed to to raw_fd_ostream's
+  /// This constructor's arguments are passed to raw_fd_ostream's
   /// constructor.
-  tool_output_file(StringRef Filename, std::error_code &EC,
-                   sys::fs::OpenFlags Flags);
+  ToolOutputFile(StringRef Filename, std::error_code &EC,
+                 sys::fs::OpenFlags Flags);
 
-  tool_output_file(StringRef Filename, int FD);
+  ToolOutputFile(StringRef Filename, int FD);
 
   /// Return the contained raw_fd_ostream.
   raw_fd_ostream &os() { return OS; }

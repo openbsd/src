@@ -18,7 +18,7 @@ sub loadopts {
 	shift @ARGV;
 	my $optfile = shift @ARGV;
 	local (*F);
-	open OPTF, $optfile or die "Can't open $optfile: $!\n";
+	open OPTF, '<', $optfile or die "Can't open $optfile: $!\n";
 	my @opts;
 	chomp(my $line = <OPTF>);
 	my @vars = split(/\t+~\t+/, $line);
@@ -43,7 +43,7 @@ while (@{$optref} && $optref->[0] =~ /^([\w_]+)=(.*)$/) {
 my $pl_h = '../patchlevel.h';
 
 if (-e $pl_h) {
-    open PL, "<$pl_h" or die "Can't open $pl_h: $!";
+    open PL, '<', $pl_h or die "Can't open $pl_h: $!";
     while (<PL>) {
 	if (/^#\s*define\s+(PERL_\w+)\s+([\d.]+)/) {
 	    $opt{$1} = $2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.158 2017/12/30 20:46:59 guenther Exp $ */
+/*	$OpenBSD: machdep.c,v 1.160 2019/04/01 07:00:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -822,6 +822,9 @@ int	waittime = -1;
 __dead void
 boot(int howto)
 {
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (curproc)
 		savectx(curproc->p_addr, 0);
 
@@ -859,8 +862,10 @@ haltsys:
 			printf("System Power Down.\n");
 		else
 			printf("System Halt.\n");
-	} else
+	} else {
+doreset:
 		printf("System restart.\n");
+	}
 
 	delay(1000000);
 	md_halt(howto);
@@ -1005,4 +1010,10 @@ is_memory_range(paddr_t pa, psize_t len, psize_t limit)
 			return TRUE;
 
 	return FALSE;
+}
+
+void
+intr_barrier(void *cookie)
+{
+	sched_barrier(NULL);
 }

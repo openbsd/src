@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.conf.5,v 1.14 2012/04/24 14:56:09 jmc Exp $
+.\"	$OpenBSD: ripd.conf.5,v 1.18 2018/12/31 20:34:16 remi Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2012 $
+.Dd $Mdocdate: December 31 2018 $
 .Dt RIPD.CONF 5
 .Os
 .Sh NAME
@@ -29,10 +29,10 @@ The
 .Xr ripd 8
 daemon implements the Routing Information Protocol version 2 as described
 in RFC 2453.
-.Sh SECTIONS
+.Pp
 The
 .Nm
-config file is divided into three main sections.
+config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -66,6 +66,11 @@ interface em0 {
 Global settings concerns the main behaviour of the daemon.
 .Pp
 .Bl -tag -width Ds -compact
+.It Ic fib-priority Ar prio
+Set the routing priority to
+.Ar prio .
+The default is 40.
+.Pp
 .It Xo
 .Ic fib-update
 .Pq Ic yes Ns | Ns Ic no
@@ -149,14 +154,17 @@ The default is
 .Xc
 Immediately trigger responses when a route changes.
 The default is
-.Ic yes .
+.Ic no .
 .El
 .Sh INTERFACES
 Each interface can have several parameters configured individually, otherwise
 they are inherited.
 .Bd -literal -offset indent
 interface em0 {
+	cost 9
+	auth-type none
 }
+interface ix1
 .Ed
 .Pp
 Interface-specific parameters are listed below.

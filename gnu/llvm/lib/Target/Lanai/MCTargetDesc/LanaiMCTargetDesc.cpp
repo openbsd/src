@@ -60,12 +60,15 @@ createLanaiMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
 }
 
 static MCStreamer *createMCStreamer(const Triple &T, MCContext &Context,
-                                    MCAsmBackend &MAB, raw_pwrite_stream &OS,
-                                    MCCodeEmitter *Emitter, bool RelaxAll) {
+                                    std::unique_ptr<MCAsmBackend> &&MAB,
+                                    std::unique_ptr<MCObjectWriter> &&OW,
+                                    std::unique_ptr<MCCodeEmitter> &&Emitter,
+                                    bool RelaxAll) {
   if (!T.isOSBinFormatELF())
     llvm_unreachable("OS not supported");
 
-  return createELFStreamer(Context, MAB, OS, Emitter, RelaxAll);
+  return createELFStreamer(Context, std::move(MAB), std::move(OW),
+                           std::move(Emitter), RelaxAll);
 }
 
 static MCInstPrinter *createLanaiMCInstPrinter(const Triple & /*T*/,

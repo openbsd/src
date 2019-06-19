@@ -1,4 +1,4 @@
-/*	$OpenBSD: fread.c,v 1.15 2016/09/21 04:38:56 guenther Exp $ */
+/*	$OpenBSD: fread.c,v 1.19 2018/12/16 15:38:29 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -69,18 +69,33 @@ fread(void *buf, size_t size, size_t count, FILE *fp)
 	total = resid;
 	p = buf;
 
-	if ((fp->_flags & __SNBF) != 0) {
-		/*
-		 * We know if we're unbuffered that our buffer is empty, so
-		 * we can just read directly. This is much faster than the
-		 * loop below which will perform a series of one byte reads.
-		 */
-		while (resid > 0 && (r = (*fp->_read)(fp->_cookie, p, resid)) > 0) {
-			p += r;
-			resid -= r;
+	/*
+	 * If we're unbuffered we know that the buffer in fp is empty so
+	 * we can read directly into buf.  This is much faster than a
+	 * series of one byte reads into fp->_nbuf.
+	 */
+	if ((fp->_flags & __SNBF) != 0 && buf != NULL) {
+		while (resid > 0) {
+			/* set up the buffer */
+			fp->_bf._base = fp->_p = p;
+			fp->_bf._size = resid;
+
+			if (__srefill(fp)) {
+				/* no more input: return partial result */
+				count = (total - resid) / size;
+				break;
+			}
+			p += fp->_r;
+			resid -= fp->_r;
 		}
+
+		/* restore the old buffer (see __smakebuf) */
+		fp->_bf._base = fp->_p = fp->_nbuf;
+		fp->_bf._size = 1;
+		fp->_r = 0;
+
 		FUNLOCKFILE(fp);
-		return ((total - resid) / size);
+		return (count);
 	}
 
 	while (resid > (r = fp->_r)) {

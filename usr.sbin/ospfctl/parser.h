@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.13 2011/05/09 12:25:35 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.14 2019/05/16 21:07:33 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -64,6 +64,7 @@ struct parse_result {
 
 struct parse_result	*parse(int, char *[]);
 int			 parse_addr(const char *, struct in_addr *);
+int			 parse_area(const char *, struct in_addr *);
 int			 parse_prefix(const char *, struct in_addr *,
 			     u_int8_t *);
 

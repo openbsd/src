@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = ('../lib');
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 my $vms_exit_mode = 0;
@@ -36,7 +36,7 @@ $ENV{LANGUAGE} = 'C';		# Ditto in GNU.
 my $Is_VMS   = $^O eq 'VMS';
 my $Is_Win32 = $^O eq 'MSWin32';
 
-plan(tests => 24);
+plan(tests => 41);
 
 my $Perl = which_perl();
 
@@ -114,7 +114,7 @@ unless( ok($rc == 255 << 8 or $rc == -1 or $rc == 256 or $rc == 512) ) {
 unless ( ok( $! == 2  or  $! =~ /\bno\b.*\bfile/i or  
              $! == 13 or  $! =~ /permission denied/i or
              $! == 22 or  $! =~ /invalid argument/i  ) ) {
-    printf "# \$! eq %d, '%s'\n", $!, $!;
+    diag sprintf "\$! eq %d, '%s'\n", $!, $!;
 }
 
 
@@ -123,9 +123,34 @@ is( <<`END`,                    "ok\n",     '<<`HEREDOC`' );
 $Perl -le "print 'ok'"
 END
 
+is( <<~`END`,                   "ok\n",     '<<~`HEREDOC`' );
+  $Perl -le "print 'ok'"
+  END
+
 {
-    local $_ = qq($Perl -le "print 'ok'");
-    is( readpipe, "ok\n", 'readpipe default argument' );
+    sub rpecho { qq($Perl -le "print '$_[0]'") }
+    is scalar(readpipe(rpecho("b"))), "b\n",
+	"readpipe with one argument in scalar context";
+    is join(",", "a", readpipe(rpecho("b")), "c"), "a,b\n,c",
+	"readpipe with one argument in list context";
+    local $_ = rpecho("f");
+    is scalar(readpipe), "f\n",
+	"readpipe default argument in scalar context";
+    is join(",", "a", readpipe, "c"), "a,f\n,c",
+	"readpipe default argument in list context";
+    sub rpechocxt {
+	rpecho(wantarray ? "list" : defined(wantarray) ? "scalar" : "void");
+    }
+    is scalar(readpipe(rpechocxt())), "scalar\n",
+	"readpipe argument context in scalar context";
+    is join(",", "a", readpipe(rpechocxt()), "b"), "a,scalar\n,b",
+	"readpipe argument context in list context";
+    foreach my $args ("(\$::p,\$::q)", "((\$::p,\$::q))") {
+	foreach my $lvalue ("my \$r", "my \@r") {
+	    eval("$lvalue = readpipe$args if 0");
+	    like $@, qr/\AToo many arguments for /;
+	}
+    }
 }
 
 package o {
@@ -151,6 +176,38 @@ TODO: {
     ok( !exec("lskdjfalksdjfdjfkls"), 
         "exec failure doesn't terminate process");
 }
+
+{
+    local $! = 0;
+    ok !exec(), 'empty exec LIST fails';
+    ok $! == 2 || $! =~ qr/\bno\b.*\bfile\b/i, 'errno = ENOENT'
+        or diag sprintf "\$! eq %d, '%s'\n", $!, $!;
+
+}
+{
+    local $! = 0;
+    my $err = $!;
+    ok !(exec {""} ()), 'empty exec PROGRAM LIST fails';
+    ok $! == 2 || $! =~ qr/\bno\b.*\bfile\b/i, 'errno = ENOENT'
+        or diag sprintf "\$! eq %d, '%s'\n", $!, $!;
+}
+
+package CountRead {
+    sub TIESCALAR { bless({ n => 0 }, $_[0]) }
+    sub FETCH { ++$_[0]->{n} }
+}
+my $cr;
+tie $cr, "CountRead";
+my $exit_statement = "exit(\$ARGV[0] eq '1' ? 0 : 1)";
+$exit_statement = qq/"$exit_statement"/ if $^O eq 'VMS';
+is system($^X, "-e", $exit_statement, $cr), 0,
+    "system args have magic processed exactly once";
+is tied($cr)->{n}, 1, "system args have magic processed before fork";
+
+$exit_statement = "exit(\$ARGV[0] eq \$ARGV[1] ? 0 : 1)";
+$exit_statement = qq/"$exit_statement"/ if $^O eq 'VMS';
+is system($^X, "-e", $exit_statement, "$$", $$), 0,
+    "system args have magic processed before fork";
 
 my $test = curr_test();
 exec $Perl, '-le', qq{${quote}print 'ok $test - exec PROG, LIST'${quote}};

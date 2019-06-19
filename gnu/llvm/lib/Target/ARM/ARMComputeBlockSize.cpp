@@ -14,7 +14,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include <vector>
 
 using namespace llvm;
@@ -35,6 +35,7 @@ mayOptimizeThumb2Instruction(const MachineInstr *MI) {
     case ARM::tBcc:
     // optimizeThumb2JumpTables.
     case ARM::t2BR_JT:
+    case ARM::tBR_JTr:
       return true;
   }
   return false;

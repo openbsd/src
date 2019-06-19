@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ttys.5,v 1.11 2008/10/22 22:16:16 mpf Exp $
+.\"	$OpenBSD: ttys.5,v 1.12 2018/09/25 20:02:43 jmc Exp $
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)ttys.5	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 22 2008 $
+.Dd $Mdocdate: September 25 2018 $
 .Dt TTYS 5
 .Os
 .Sh NAME
@@ -129,6 +129,12 @@ may be followed by a quoted command string which
 will execute
 .Em before
 starting the command specified by the second field.
+.Pp
+Changes to the ttys file take effect after it has been reloaded by
+.Xr init 8 ,
+which can be triggered by sending it a
+.Dv HUP
+signal.
 .Sh FILES
 .Bl -tag -width /etc/ttys -compact
 .It Pa /etc/ttys

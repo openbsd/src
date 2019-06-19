@@ -75,7 +75,6 @@ is($x->bstr(), 'NaN', qq|$x = inf * NaN; $x->bstr() = 'NaN'|);
 
 for my $nan (qw/ nan naN nAn nAN Nan NaN NAn NAN /) {
     my $x = 1 + $nan;
-    print ref($x), "<<<\n";
     is($x->bstr(), "NaN", qq|\$x = 1 + "$nan"; \$x->bstr() = "NaN"|);
     isa_ok($x, "Math::BigInt");
 }

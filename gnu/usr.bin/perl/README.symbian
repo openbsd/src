@@ -367,7 +367,7 @@ The Symbian port is licensed under the same terms as Perl itself.
  - The following extensions are missing for various technical
    reasons:
    B ByteLoader Devel::DProf Devel::PPPort Encode GDBM_File
-   I18N::Langinfo IPC::SysV NDBM_File Opcode PerlIO::encoding POSIX
+   IPC::SysV NDBM_File Opcode PerlIO::encoding POSIX
    re Safe Sys::Hostname Sys::Syslog
    threads threads::shared Unicode::Normalize
  - Using MakeMaker or the Module::* to build and install modules

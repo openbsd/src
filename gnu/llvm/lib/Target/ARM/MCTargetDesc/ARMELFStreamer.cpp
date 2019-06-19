@@ -33,6 +33,7 @@
 #include "llvm/MC/MCFragment.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -92,9 +93,9 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   void emitTextAttribute(unsigned Attribute, StringRef String) override;
   void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
                             StringRef StringValue) override;
-  void emitArch(unsigned Arch) override;
+  void emitArch(ARM::ArchKind Arch) override;
   void emitArchExtension(unsigned ArchExt) override;
-  void emitObjectArch(unsigned Arch) override;
+  void emitObjectArch(ARM::ArchKind Arch) override;
   void emitFPU(unsigned FPU) override;
   void emitInst(uint32_t Inst, char Suffix = '\0') override;
   void finishAttributeSection() override;
@@ -218,7 +219,7 @@ void ARMTargetAsmStreamer::emitIntTextAttribute(unsigned Attribute,
   OS << "\n";
 }
 
-void ARMTargetAsmStreamer::emitArch(unsigned Arch) {
+void ARMTargetAsmStreamer::emitArch(ARM::ArchKind Arch) {
   OS << "\t.arch\t" << ARM::getArchName(Arch) << "\n";
 }
 
@@ -226,7 +227,7 @@ void ARMTargetAsmStreamer::emitArchExtension(unsigned ArchExt) {
   OS << "\t.arch_extension\t" << ARM::getArchExtName(ArchExt) << "\n";
 }
 
-void ARMTargetAsmStreamer::emitObjectArch(unsigned Arch) {
+void ARMTargetAsmStreamer::emitObjectArch(ARM::ArchKind Arch) {
   OS << "\t.object_arch\t" << ARM::getArchName(Arch) << '\n';
 }
 
@@ -303,8 +304,8 @@ private:
 
   StringRef CurrentVendor;
   unsigned FPU = ARM::FK_INVALID;
-  unsigned Arch = ARM::AK_INVALID;
-  unsigned EmittedArch = ARM::AK_INVALID;
+  ARM::ArchKind Arch = ARM::ArchKind::INVALID;
+  ARM::ArchKind EmittedArch = ARM::ArchKind::INVALID;
   SmallVector<AttributeItem, 64> Contents;
 
   MCSection *AttributeSection = nullptr;
@@ -404,8 +405,8 @@ private:
   void emitTextAttribute(unsigned Attribute, StringRef String) override;
   void emitIntTextAttribute(unsigned Attribute, unsigned IntValue,
                             StringRef StringValue) override;
-  void emitArch(unsigned Arch) override;
-  void emitObjectArch(unsigned Arch) override;
+  void emitArch(ARM::ArchKind Arch) override;
+  void emitObjectArch(ARM::ArchKind Arch) override;
   void emitFPU(unsigned FPU) override;
   void emitInst(uint32_t Inst, char Suffix = '\0') override;
   void finishAttributeSection() override;
@@ -440,9 +441,11 @@ class ARMELFStreamer : public MCELFStreamer {
 public:
   friend class ARMTargetELFStreamer;
 
-  ARMELFStreamer(MCContext &Context, MCAsmBackend &TAB, raw_pwrite_stream &OS,
-                 MCCodeEmitter *Emitter, bool IsThumb)
-      : MCELFStreamer(Context, TAB, OS, Emitter), IsThumb(IsThumb) {
+  ARMELFStreamer(MCContext &Context, std::unique_ptr<MCAsmBackend> TAB,
+                 std::unique_ptr<MCObjectWriter> OW, std::unique_ptr<MCCodeEmitter> Emitter,
+                 bool IsThumb)
+      : MCELFStreamer(Context, std::move(TAB), std::move(OW), std::move(Emitter)),
+        IsThumb(IsThumb) {
     EHReset();
   }
 
@@ -510,9 +513,11 @@ public:
 
       assert(IsThumb);
       EmitThumbMappingSymbol();
+      // Thumb wide instructions are emitted as a pair of 16-bit words of the
+      // appropriate endianness.
       for (unsigned II = 0, IE = Size; II != IE; II = II + 2) {
-        const unsigned I0 = LittleEndian ? II + 0 : (Size - II - 1);
-        const unsigned I1 = LittleEndian ? II + 1 : (Size - II - 2);
+        const unsigned I0 = LittleEndian ? II + 0 : II + 1;
+        const unsigned I1 = LittleEndian ? II + 1 : II + 0;
         Buffer[Size - II - 2] = uint8_t(Inst >> I0 * CHAR_BIT);
         Buffer[Size - II - 1] = uint8_t(Inst >> I1 * CHAR_BIT);
       }
@@ -776,11 +781,11 @@ void ARMTargetELFStreamer::emitIntTextAttribute(unsigned Attribute,
                     /* OverwriteExisting= */ true);
 }
 
-void ARMTargetELFStreamer::emitArch(unsigned Value) {
+void ARMTargetELFStreamer::emitArch(ARM::ArchKind Value) {
   Arch = Value;
 }
 
-void ARMTargetELFStreamer::emitObjectArch(unsigned Value) {
+void ARMTargetELFStreamer::emitObjectArch(ARM::ArchKind Value) {
   EmittedArch = Value;
 }
 
@@ -791,7 +796,7 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
                    ARM::getCPUAttr(Arch),
                    false);
 
-  if (EmittedArch == ARM::AK_INVALID)
+  if (EmittedArch == ARM::ArchKind::INVALID)
     setAttributeItem(CPU_arch,
                      ARM::getArchAttr(Arch),
                      false);
@@ -801,58 +806,61 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
                      false);
 
   switch (Arch) {
-  case ARM::AK_ARMV2:
-  case ARM::AK_ARMV2A:
-  case ARM::AK_ARMV3:
-  case ARM::AK_ARMV3M:
-  case ARM::AK_ARMV4:
+  case ARM::ArchKind::ARMV2:
+  case ARM::ArchKind::ARMV2A:
+  case ARM::ArchKind::ARMV3:
+  case ARM::ArchKind::ARMV3M:
+  case ARM::ArchKind::ARMV4:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     break;
 
-  case ARM::AK_ARMV4T:
-  case ARM::AK_ARMV5T:
-  case ARM::AK_ARMV5TE:
-  case ARM::AK_ARMV6:
+  case ARM::ArchKind::ARMV4T:
+  case ARM::ArchKind::ARMV5T:
+  case ARM::ArchKind::ARMV5TE:
+  case ARM::ArchKind::ARMV6:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     break;
 
-  case ARM::AK_ARMV6T2:
+  case ARM::ArchKind::ARMV6T2:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     break;
 
-  case ARM::AK_ARMV6K:
-  case ARM::AK_ARMV6KZ:
+  case ARM::ArchKind::ARMV6K:
+  case ARM::ArchKind::ARMV6KZ:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     setAttributeItem(Virtualization_use, AllowTZ, false);
     break;
 
-  case ARM::AK_ARMV6M:
+  case ARM::ArchKind::ARMV6M:
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     break;
 
-  case ARM::AK_ARMV7A:
+  case ARM::ArchKind::ARMV7A:
     setAttributeItem(CPU_arch_profile, ApplicationProfile, false);
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     break;
 
-  case ARM::AK_ARMV7R:
+  case ARM::ArchKind::ARMV7R:
     setAttributeItem(CPU_arch_profile, RealTimeProfile, false);
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     break;
 
-  case ARM::AK_ARMV7M:
+  case ARM::ArchKind::ARMV7EM:
+  case ARM::ArchKind::ARMV7M:
     setAttributeItem(CPU_arch_profile, MicroControllerProfile, false);
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
     break;
 
-  case ARM::AK_ARMV8A:
-  case ARM::AK_ARMV8_1A:
-  case ARM::AK_ARMV8_2A:
+  case ARM::ArchKind::ARMV8A:
+  case ARM::ArchKind::ARMV8_1A:
+  case ARM::ArchKind::ARMV8_2A:
+  case ARM::ArchKind::ARMV8_3A:
+  case ARM::ArchKind::ARMV8_4A:
     setAttributeItem(CPU_arch_profile, ApplicationProfile, false);
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, AllowThumb32, false);
@@ -860,26 +868,26 @@ void ARMTargetELFStreamer::emitArchDefaultAttributes() {
     setAttributeItem(Virtualization_use, AllowTZVirtualization, false);
     break;
 
-  case ARM::AK_ARMV8MBaseline:
-  case ARM::AK_ARMV8MMainline:
+  case ARM::ArchKind::ARMV8MBaseline:
+  case ARM::ArchKind::ARMV8MMainline:
     setAttributeItem(THUMB_ISA_use, AllowThumbDerived, false);
     setAttributeItem(CPU_arch_profile, MicroControllerProfile, false);
     break;
 
-  case ARM::AK_IWMMXT:
+  case ARM::ArchKind::IWMMXT:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     setAttributeItem(WMMX_arch, AllowWMMXv1, false);
     break;
 
-  case ARM::AK_IWMMXT2:
+  case ARM::ArchKind::IWMMXT2:
     setAttributeItem(ARM_ISA_use, Allowed, false);
     setAttributeItem(THUMB_ISA_use, Allowed, false);
     setAttributeItem(WMMX_arch, AllowWMMXv2, false);
     break;
 
   default:
-    report_fatal_error("Unknown Arch: " + Twine(Arch));
+    report_fatal_error("Unknown Arch: " + Twine(ARM::getArchName(Arch)));
     break;
   }
 }
@@ -1057,13 +1065,13 @@ void ARMTargetELFStreamer::finishAttributeSection() {
   if (FPU != ARM::FK_INVALID)
     emitFPUDefaultAttributes();
 
-  if (Arch != ARM::AK_INVALID)
+  if (Arch != ARM::ArchKind::INVALID)
     emitArchDefaultAttributes();
 
   if (Contents.empty())
     return;
 
-  std::sort(Contents.begin(), Contents.end(), AttributeItem::LessTag);
+  llvm::sort(Contents.begin(), Contents.end(), AttributeItem::LessTag);
 
   ARMELFStreamer &Streamer = getStreamer();
 
@@ -1169,6 +1177,8 @@ void ARMELFStreamer::reset() {
   ATS.reset();
   MappingSymbolCounter = 0;
   MCELFStreamer::reset();
+  LastMappingSymbols.clear();
+  LastEMSInfo.reset();
   // MCELFStreamer clear's the assembler's e_flags. However, for
   // arm we manually set the ABI version on streamer creation, so
   // do the same here
@@ -1485,19 +1495,21 @@ MCTargetStreamer *createARMObjectTargetStreamer(MCStreamer &S,
   return new ARMTargetStreamer(S);
 }
 
-MCELFStreamer *createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
-                                    raw_pwrite_stream &OS,
-                                    MCCodeEmitter *Emitter, bool RelaxAll,
-                                    bool IsThumb) {
-    ARMELFStreamer *S = new ARMELFStreamer(Context, TAB, OS, Emitter, IsThumb);
-    // FIXME: This should eventually end up somewhere else where more
-    // intelligent flag decisions can be made. For now we are just maintaining
-    // the status quo for ARM and setting EF_ARM_EABI_VER5 as the default.
-    S->getAssembler().setELFHeaderEFlags(ELF::EF_ARM_EABI_VER5);
+MCELFStreamer *createARMELFStreamer(MCContext &Context,
+                                    std::unique_ptr<MCAsmBackend> TAB,
+                                    std::unique_ptr<MCObjectWriter> OW,
+                                    std::unique_ptr<MCCodeEmitter> Emitter,
+                                    bool RelaxAll, bool IsThumb) {
+  ARMELFStreamer *S = new ARMELFStreamer(Context, std::move(TAB), std::move(OW),
+                                         std::move(Emitter), IsThumb);
+  // FIXME: This should eventually end up somewhere else where more
+  // intelligent flag decisions can be made. For now we are just maintaining
+  // the status quo for ARM and setting EF_ARM_EABI_VER5 as the default.
+  S->getAssembler().setELFHeaderEFlags(ELF::EF_ARM_EABI_VER5);
 
-    if (RelaxAll)
-      S->getAssembler().setRelaxAll(true);
-    return S;
+  if (RelaxAll)
+    S->getAssembler().setRelaxAll(true);
+  return S;
 }
 
 } // end namespace llvm

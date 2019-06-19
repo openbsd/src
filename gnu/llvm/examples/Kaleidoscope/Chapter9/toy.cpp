@@ -823,7 +823,7 @@ DIType *DebugInfo::getDoubleTy() {
   if (DblTy)
     return DblTy;
 
-  DblTy = DBuilder->createBasicType("double", 64, 64, dwarf::DW_ATE_float);
+  DblTy = DBuilder->createBasicType("double", 64, dwarf::DW_ATE_float);
   return DblTy;
 }
 
@@ -1379,7 +1379,7 @@ static void MainLoop() {
 // "Library" functions that can be "extern'd" from user code.
 //===----------------------------------------------------------------------===//
 
-#ifdef LLVM_ON_WIN32
+#ifdef _WIN32
 #define DLLEXPORT __declspec(dllexport)
 #else
 #define DLLEXPORT
@@ -1436,7 +1436,8 @@ int main() {
   // Currently down as "fib.ks" as a filename since we're redirecting stdin
   // but we'd like actual source locations.
   KSDbgInfo.TheCU = DBuilder->createCompileUnit(
-      dwarf::DW_LANG_C, "fib.ks", ".", "Kaleidoscope Compiler", 0, "", 0);
+      dwarf::DW_LANG_C, DBuilder->createFile("fib.ks", "."),
+      "Kaleidoscope Compiler", 0, "", 0);
 
   // Run the main "interpreter loop" now.
   MainLoop();

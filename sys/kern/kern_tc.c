@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.31 2017/03/07 20:22:37 dhill Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.48 2019/06/03 01:27:30 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -22,12 +22,17 @@
  */
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
+#include <sys/rwlock.h>
+#include <sys/stdint.h>
 #include <sys/timeout.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/queue.h>
 #include <sys/malloc.h>
 #include <dev/rndvar.h>
 
@@ -41,7 +46,6 @@
 
 u_int dummy_get_timecount(struct timecounter *);
 
-void ntp_update_second(int64_t *);
 int sysctl_tc_hardware(void *, size_t *, void *, size_t);
 int sysctl_tc_choice(void *, size_t *, void *, size_t);
 
@@ -63,54 +67,60 @@ static struct timecounter dummy_timecounter = {
 	dummy_get_timecount, 0, ~0u, 1000000, "dummy", -1000000
 };
 
+/*
+ * Locks used to protect struct members, global variables in this file:
+ *	I	immutable after initialization
+ *	t	tc_lock
+ *	w	windup_mtx
+ */
+
 struct timehands {
 	/* These fields must be initialized by the driver. */
-	struct timecounter	*th_counter;
-	int64_t			th_adjustment;
-	u_int64_t		th_scale;
-	u_int	 		th_offset_count;
-	struct bintime		th_offset;
-	struct timeval		th_microtime;
-	struct timespec		th_nanotime;
+	struct timecounter	*th_counter;		/* [w] */
+	int64_t			th_adjtimedelta;	/* [tw] */
+	int64_t			th_adjustment;		/* [w] */
+	u_int64_t		th_scale;		/* [w] */
+	u_int	 		th_offset_count;	/* [w] */
+	struct bintime		th_boottime;		/* [tw] */
+	struct bintime		th_offset;		/* [w] */
+	struct timeval		th_microtime;		/* [w] */
+	struct timespec		th_nanotime;		/* [w] */
 	/* Fields not to be copied in tc_windup start with th_generation. */
-	volatile u_int		th_generation;
-	struct timehands	*th_next;
+	volatile u_int		th_generation;		/* [w] */
+	struct timehands	*th_next;		/* [I] */
 };
 
 static struct timehands th0;
-static struct timehands th9 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th0};
-static struct timehands th8 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th9};
-static struct timehands th7 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th8};
-static struct timehands th6 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th7};
-static struct timehands th5 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th6};
-static struct timehands th4 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th5};
-static struct timehands th3 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th4};
-static struct timehands th2 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th3};
-static struct timehands th1 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th2};
+static struct timehands th1 = {
+	.th_next = &th0
+};
 static struct timehands th0 = {
-	&dummy_timecounter,
-	0,
-	(uint64_t)-1 / 1000000,
-	0,
-	{1, 0},
-	{0, 0},
-	{0, 0},
-	1,
-	&th1
+	.th_counter = &dummy_timecounter,
+	.th_scale = UINT64_MAX / 1000000,
+	.th_offset = { .sec = 1, .frac = 0 },
+	.th_generation = 1,
+	.th_next = &th1
 };
 
-static struct timehands *volatile timehands = &th0;
-struct timecounter *timecounter = &dummy_timecounter;
-static struct timecounter *timecounters = &dummy_timecounter;
+struct rwlock tc_lock = RWLOCK_INITIALIZER("tc_lock");
+
+/*
+ * tc_windup() must be called before leaving this mutex.
+ */
+struct mutex windup_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
+
+static struct timehands *volatile timehands = &th0;		/* [w] */
+struct timecounter *timecounter = &dummy_timecounter;		/* [t] */
+static SLIST_HEAD(, timecounter) tc_list = SLIST_HEAD_INITIALIZER(tc_list);
 
 volatile time_t time_second = 1;
 volatile time_t time_uptime = 0;
 
 struct bintime naptime;
-static struct bintime boottimebin;
 static int timestepwarnings;
 
-void tc_windup(void);
+void ntp_update_second(struct timehands *);
+void tc_windup(struct bintime *, struct bintime *, int64_t *);
 
 /*
  * Return the difference between the timehands' counter value now and what
@@ -129,8 +139,32 @@ tc_delta(struct timehands *th)
 /*
  * Functions for reading the time.  We have to loop until we are sure that
  * the timehands that we operated on was not updated under our feet.  See
- * the comment in <sys/time.h> for a description of these 12 functions.
+ * the comment in <sys/time.h> for a description of these functions.
  */
+
+void
+binboottime(struct bintime *bt)
+{
+	struct timehands *th;
+	u_int gen;
+
+	do {
+		th = timehands;
+		gen = th->th_generation;
+		membar_consumer();
+		*bt = th->th_boottime;
+		membar_consumer();
+	} while (gen == 0 || gen != th->th_generation);
+}
+
+void
+microboottime(struct timeval *tvp)
+{
+	struct bintime bt;
+	
+	binboottime(&bt);
+	BINTIME_TO_TIMEVAL(&bt, tvp);
+}
 
 void
 binuptime(struct bintime *bt)
@@ -141,8 +175,10 @@ binuptime(struct bintime *bt)
 	do {
 		th = timehands;
 		gen = th->th_generation;
+		membar_consumer();
 		*bt = th->th_offset;
-		bintime_addx(bt, th->th_scale * tc_delta(th));
+		bintimeaddfrac(bt, th->th_scale * tc_delta(th), bt);
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -152,7 +188,7 @@ nanouptime(struct timespec *tsp)
 	struct bintime bt;
 
 	binuptime(&bt);
-	bintime2timespec(&bt, tsp);
+	BINTIME_TO_TIMESPEC(&bt, tsp);
 }
 
 void
@@ -161,15 +197,24 @@ microuptime(struct timeval *tvp)
 	struct bintime bt;
 
 	binuptime(&bt);
-	bintime2timeval(&bt, tvp);
+	BINTIME_TO_TIMEVAL(&bt, tvp);
 }
 
 void
 bintime(struct bintime *bt)
 {
+	struct timehands *th;
+	u_int gen;
 
-	binuptime(bt);
-	bintime_add(bt, &boottimebin);
+	do {
+		th = timehands;
+		gen = th->th_generation;
+		membar_consumer();
+		*bt = th->th_offset;
+		bintimeaddfrac(bt, th->th_scale * tc_delta(th), bt);
+		bintimeadd(bt, &th->th_boottime, bt);
+		membar_consumer();
+	} while (gen == 0 || gen != th->th_generation);
 }
 
 void
@@ -178,7 +223,7 @@ nanotime(struct timespec *tsp)
 	struct bintime bt;
 
 	bintime(&bt);
-	bintime2timespec(&bt, tsp);
+	BINTIME_TO_TIMESPEC(&bt, tsp);
 }
 
 void
@@ -187,7 +232,7 @@ microtime(struct timeval *tvp)
 	struct bintime bt;
 
 	bintime(&bt);
-	bintime2timeval(&bt, tvp);
+	BINTIME_TO_TIMEVAL(&bt, tvp);
 }
 
 void
@@ -199,7 +244,9 @@ getnanouptime(struct timespec *tsp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
-		bintime2timespec(&th->th_offset, tsp);
+		membar_consumer();
+		BINTIME_TO_TIMESPEC(&th->th_offset, tsp);
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -212,7 +259,9 @@ getmicrouptime(struct timeval *tvp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
-		bintime2timeval(&th->th_offset, tvp);
+		membar_consumer();
+		BINTIME_TO_TIMEVAL(&th->th_offset, tvp);
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -225,7 +274,9 @@ getnanotime(struct timespec *tsp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
+		membar_consumer();
 		*tsp = th->th_nanotime;
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -238,7 +289,9 @@ getmicrotime(struct timeval *tvp)
 	do {
 		th = timehands;
 		gen = th->th_generation;
+		membar_consumer();
 		*tvp = th->th_microtime;
+		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
 
@@ -263,8 +316,8 @@ tc_init(struct timecounter *tc)
 		}
 	}
 
-	tc->tc_next = timecounters;
-	timecounters = tc;
+	SLIST_INSERT_HEAD(&tc_list, tc, tc_next);
+
 	/*
 	 * Never automatically use a timecounter with negative quality.
 	 * Even though we run on the dummy counter, switching here may be
@@ -278,7 +331,7 @@ tc_init(struct timecounter *tc)
 	    tc->tc_frequency < timecounter->tc_frequency)
 		return;
 	(void)tc->tc_get_timecount(tc);
-	add_timer_randomness(tc->tc_get_timecount(tc));
+	enqueue_randomness(tc->tc_get_timecount(tc));
 
 	timecounter = tc;
 }
@@ -294,26 +347,33 @@ tc_getfrequency(void)
 /*
  * Step our concept of UTC, aka the realtime clock.
  * This is done by modifying our estimate of when we booted.
- * XXX: not locked.
+ *
+ * Any ongoing adjustment is meaningless after a clock jump,
+ * so we zero adjtimedelta here as well.
  */
 void
-tc_setrealtimeclock(struct timespec *ts)
+tc_setrealtimeclock(const struct timespec *ts)
 {
 	struct timespec ts2;
 	struct bintime bt, bt2;
+	int64_t zero = 0;
 
+	rw_enter_write(&tc_lock);
+	mtx_enter(&windup_mtx);
 	binuptime(&bt2);
-	timespec2bintime(ts, &bt);
-	bintime_sub(&bt, &bt2);
-	bintime_add(&bt2, &boottimebin);
-	boottimebin = bt;
-	bintime2timespec(&bt, &boottime);
-	add_timer_randomness(ts->tv_sec);
+	TIMESPEC_TO_BINTIME(ts, &bt);
+	bintimesub(&bt, &bt2, &bt);
+	bintimeadd(&bt2, &timehands->th_boottime, &bt2);
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
-	tc_windup();
+	tc_windup(&bt, NULL, &zero);
+	mtx_leave(&windup_mtx);
+	rw_exit_write(&tc_lock);
+
+	enqueue_randomness(ts->tv_sec);
+
 	if (timestepwarnings) {
-		bintime2timespec(&bt2, &ts2);
+		BINTIME_TO_TIMESPEC(&bt2, &ts2);
 		log(LOG_INFO, "Time stepped from %lld.%09ld to %lld.%09ld\n",
 		    (long long)ts2.tv_sec, ts2.tv_nsec,
 		    (long long)ts->tv_sec, ts->tv_nsec);
@@ -323,40 +383,57 @@ tc_setrealtimeclock(struct timespec *ts)
 /*
  * Step the monotonic and realtime clocks, triggering any timeouts that
  * should have occurred across the interval.
- * XXX: not locked.
  */
 void
-tc_setclock(struct timespec *ts)
+tc_setclock(const struct timespec *ts)
 {
 	struct bintime bt, bt2;
+	struct timespec earlier;
+	static int first = 1;
+	int rewind = 0;
 #ifndef SMALL_KERNEL
 	long long adj_ticks;
 #endif
 
 	/*
 	 * When we're called for the first time, during boot when
-	 * the root partition is mounted, boottime is still zero:
-	 * we just need to set it.
+	 * the root partition is mounted, we need to set boottime.
 	 */
-	if (boottimebin.sec == 0) {
+	if (first) {
 		tc_setrealtimeclock(ts);
+		first = 0;
 		return;
 	}
 
-	add_timer_randomness(ts->tv_sec);
+	enqueue_randomness(ts->tv_sec);
 
-	timespec2bintime(ts, &bt);
-	bintime_sub(&bt, &boottimebin);
+	mtx_enter(&windup_mtx);
+	TIMESPEC_TO_BINTIME(ts, &bt);
+	bintimesub(&bt, &timehands->th_boottime, &bt);
+
+	/*
+	 * Don't rewind the offset.
+	 */
+	if (bintimecmp(&bt, &timehands->th_offset, <))
+		rewind = 1;
+
 	bt2 = timehands->th_offset;
-	timehands->th_offset = bt;
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
-	tc_windup();
+	tc_windup(NULL, rewind ? NULL : &bt, NULL);
+	mtx_leave(&windup_mtx);
+
+	if (rewind) {
+		BINTIME_TO_TIMESPEC(&bt, &earlier);
+		printf("%s: cannot rewind uptime to %lld.%09ld\n",
+		    __func__, (long long)earlier.tv_sec, earlier.tv_nsec);
+		return;
+	}
 
 #ifndef SMALL_KERNEL
 	/* convert the bintime to ticks */
-	bintime_sub(&bt, &bt2);
-	bintime_add(&naptime, &bt);
+	bintimesub(&bt, &bt2, &bt);
+	bintimeadd(&naptime, &bt, &naptime);
 	adj_ticks = (uint64_t)hz * bt.sec +
 	    (((uint64_t)1000000 * (uint32_t)(bt.frac >> 32)) >> 32) / tick;
 	if (adj_ticks > 0) {
@@ -373,13 +450,21 @@ tc_setclock(struct timespec *ts)
  * timecounter and/or do seconds processing in NTP.  Slightly magic.
  */
 void
-tc_windup(void)
+tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
+    int64_t *new_adjtimedelta)
 {
 	struct bintime bt;
+	struct timecounter *active_tc;
 	struct timehands *th, *tho;
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
 	int i;
+
+	if (new_boottime != NULL || new_adjtimedelta != NULL)
+		rw_assert_wrlock(&tc_lock);
+	MUTEX_ASSERT_LOCKED(&windup_mtx);
+
+	active_tc = timecounter;
 
 	/*
 	 * Make the next timehands a copy of the current one, but do not
@@ -390,7 +475,15 @@ tc_windup(void)
 	th = tho->th_next;
 	ogen = th->th_generation;
 	th->th_generation = 0;
+	membar_producer();
 	memcpy(th, tho, offsetof(struct timehands, th_generation));
+
+	/*
+	 * If changing the boot offset, do so before updating the
+	 * offset fields.
+	 */
+	if (new_offset != NULL)
+		th->th_offset = *new_offset;
 
 	/*
 	 * Capture a timecounter delta on the current timecounter and if
@@ -398,13 +491,13 @@ tc_windup(void)
 	 * Update the offset fields accordingly.
 	 */
 	delta = tc_delta(th);
-	if (th->th_counter != timecounter)
-		ncount = timecounter->tc_get_timecount(timecounter);
+	if (th->th_counter != active_tc)
+		ncount = active_tc->tc_get_timecount(active_tc);
 	else
 		ncount = 0;
 	th->th_offset_count += delta;
 	th->th_offset_count &= th->th_counter->tc_counter_mask;
-	bintime_addx(&th->th_offset, th->th_scale * delta);
+	bintimeaddfrac(&th->th_offset, th->th_scale * delta, &th->th_offset);
 
 #ifdef notyet
 	/*
@@ -420,6 +513,15 @@ tc_windup(void)
 #endif
 
 	/*
+	 * If changing the boot time or clock adjustment, do so before
+	 * NTP processing.
+	 */
+	if (new_boottime != NULL)
+		th->th_boottime = *new_boottime;
+	if (new_adjtimedelta != NULL)
+		th->th_adjtimedelta = *new_adjtimedelta;
+
+	/*
 	 * Deal with NTP second processing.  The for loop normally
 	 * iterates at most once, but in extreme situations it might
 	 * keep NTP sane if timeouts are not run for several seconds.
@@ -429,21 +531,21 @@ tc_windup(void)
 	 * case we missed a leap second.
 	 */
 	bt = th->th_offset;
-	bintime_add(&bt, &boottimebin);
+	bintimeadd(&bt, &th->th_boottime, &bt);
 	i = bt.sec - tho->th_microtime.tv_sec;
 	if (i > LARGE_STEP)
 		i = 2;
 	for (; i > 0; i--)
-		ntp_update_second(&th->th_adjustment);
+		ntp_update_second(th);
 
 	/* Update the UTC timestamps used by the get*() functions. */
 	/* XXX shouldn't do this here.  Should force non-`get' versions. */
-	bintime2timeval(&bt, &th->th_microtime);
-	bintime2timespec(&bt, &th->th_nanotime);
+	BINTIME_TO_TIMEVAL(&bt, &th->th_microtime);
+	BINTIME_TO_TIMESPEC(&bt, &th->th_nanotime);
 
 	/* Now is a good time to change timecounters. */
-	if (th->th_counter != timecounter) {
-		th->th_counter = timecounter;
+	if (th->th_counter != active_tc) {
+		th->th_counter = active_tc;
 		th->th_offset_count = ncount;
 	}
 
@@ -481,11 +583,13 @@ tc_windup(void)
 	 */
 	if (++ogen == 0)
 		ogen = 1;
+	membar_producer();
 	th->th_generation = ogen;
 
 	/* Go live with the new struct timehands. */
 	time_second = th->th_microtime.tv_sec;
 	time_uptime = th->th_offset.sec;
+	membar_producer();
 	timehands = th;
 }
 
@@ -503,7 +607,7 @@ sysctl_tc_hardware(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	error = sysctl_string(oldp, oldlenp, newp, newlen, newname, sizeof(newname));
 	if (error != 0 || strcmp(newname, tc->tc_name) == 0)
 		return (error);
-	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
+	SLIST_FOREACH(newtc, &tc_list, tc_next) {
 		if (strcmp(newname, newtc->tc_name) != 0)
 			continue;
 
@@ -511,7 +615,10 @@ sysctl_tc_hardware(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 		(void)newtc->tc_get_timecount(newtc);
 		(void)newtc->tc_get_timecount(newtc);
 
+		rw_enter_write(&tc_lock);
 		timecounter = newtc;
+		rw_exit_write(&tc_lock);
+
 		return (0);
 	}
 	return (EINVAL);
@@ -525,13 +632,16 @@ sysctl_tc_choice(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	struct timecounter *tc;
 	int error, maxlen;
 
+	if (SLIST_EMPTY(&tc_list))
+		return (sysctl_rdstring(oldp, oldlenp, newp, ""));
+
 	spc = "";
 	maxlen = 0;
-	for (tc = timecounters; tc != NULL; tc = tc->tc_next)
+	SLIST_FOREACH(tc, &tc_list, tc_next)
 		maxlen += sizeof(buf);
 	choices = malloc(maxlen, M_TEMP, M_WAITOK);
 	*choices = '\0';
-	for (tc = timecounters; tc != NULL; tc = tc->tc_next) {
+	SLIST_FOREACH(tc, &tc_list, tc_next) {
 		snprintf(buf, sizeof(buf), "%s%s(%d)",
 		    spc, tc->tc_name, tc->tc_quality);
 		spc = " ";
@@ -557,8 +667,11 @@ tc_ticktock(void)
 
 	if (++count < tc_tick)
 		return;
+	if (!mtx_enter_try(&windup_mtx))
+		return;
 	count = 0;
-	tc_windup();
+	tc_windup(NULL, NULL, NULL);
+	mtx_leave(&windup_mtx);
 }
 
 void
@@ -616,29 +729,60 @@ sysctl_tc(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* NOTREACHED */
 }
 
+/*
+ * Skew the timehands according to any adjfreq(2)/adjtime(2) adjustments.
+ */
 void
-ntp_update_second(int64_t *adjust)
+ntp_update_second(struct timehands *th)
 {
 	int64_t adj;
 
-	/* Skew time according to any adjtime(2) adjustments. */
-	if (adjtimedelta > 0)
-		adj = MIN(5000, adjtimedelta);
+	MUTEX_ASSERT_LOCKED(&windup_mtx);
+
+	if (th->th_adjtimedelta > 0)
+		adj = MIN(5000, th->th_adjtimedelta);
 	else
-		adj = MAX(-5000, adjtimedelta);
-	adjtimedelta -= adj;
-	*adjust = (adj * 1000) << 32;
-	*adjust += timecounter->tc_freq_adj;
+		adj = MAX(-5000, th->th_adjtimedelta);
+	th->th_adjtimedelta -= adj;
+	th->th_adjustment = (adj * 1000) << 32;
+	th->th_adjustment += th->th_counter->tc_freq_adj;
 }
 
-int
+void
 tc_adjfreq(int64_t *old, int64_t *new)
 {
 	if (old != NULL) {
+		rw_assert_anylock(&tc_lock);
 		*old = timecounter->tc_freq_adj;
 	}
 	if (new != NULL) {
+		rw_assert_wrlock(&tc_lock);
+		mtx_enter(&windup_mtx);
 		timecounter->tc_freq_adj = *new;
+		tc_windup(NULL, NULL, NULL);
+		mtx_leave(&windup_mtx);
 	}
-	return 0;
+}
+
+void
+tc_adjtime(int64_t *old, int64_t *new)
+{
+	struct timehands *th;
+	u_int gen;
+
+	if (old != NULL) {
+		do {
+			th = timehands;
+			gen = th->th_generation;
+			membar_consumer();
+			*old = th->th_adjtimedelta;
+			membar_consumer();
+		} while (gen == 0 || gen != th->th_generation);
+	}
+	if (new != NULL) {
+		rw_assert_wrlock(&tc_lock);
+		mtx_enter(&windup_mtx);
+		tc_windup(NULL, NULL, new);
+		mtx_leave(&windup_mtx);
+	}
 }

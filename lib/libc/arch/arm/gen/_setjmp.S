@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.5 2016/08/07 02:02:57 guenther Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.6 2018/06/22 15:18:50 kettenis Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -69,13 +69,13 @@ ENTRY(_setjmp)
 	eor	r3, lr, r3			/* r3 = lr ^ __jmpxor[1] */
 
 #ifdef SOFTFLOAT
-	add	r0, r0, #52
+	add	r0, r0, #68
 #else
+	/* Store fpcsr */
+	vmrs	r1, fpscr
+	str	r1, [r0], #4
 	/* Store fp registers */
-	sfm	f4, 4, [r0], #48
-	/* Store fpsr */
-	rfs	r1
-	str	r1, [r0], #0x0004
+	vstmia	r0!, {d8-d15}
 #endif	/* SOFTFLOAT */
 	/* Store integer registers */
 	stmia	r0, {r2-r11}
@@ -98,13 +98,13 @@ ENTRY(_longjmp)
 	bne	botch
 
 #ifdef SOFTFLOAT
-	add	r0, r0, #52
+	add	r0, r0, #68
 #else
+	/* Restore fpcsr */
+	ldr	r4, [r0], #4
+	vmsr	fpscr, r4
 	/* Restore fp registers */
-	lfm	f4, 4, [r0], #48
-	/* Restore fpsr */
-	ldr	r4, [r0], #0x0004
-	wfs	r4
+	vldmia	r0!, {d8-d15}
 #endif	/* SOFTFLOAT */
 	/* Restore integer registers */
 	ldmia	r0, {r2-r11}

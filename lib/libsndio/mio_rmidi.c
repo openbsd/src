@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio_rmidi.c,v 1.25 2017/11/04 09:35:56 ratchov Exp $	*/
+/*	$OpenBSD: mio_rmidi.c,v 1.27 2018/09/19 16:21:00 miko Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -69,7 +68,7 @@ mio_rmidi_getfd(const char *str, unsigned int mode, int nbio)
 #endif
 	p = _sndio_parsetype(str, "rmidi");
 	if (p == NULL) {
-		DPRINTF("mio_rmidi_getfd: %s: \"rsnd\" expected\n", str);
+		DPRINTF("mio_rmidi_getfd: %s: \"rmidi\" expected\n", str);
 		return -1;
 	}
 	switch (*p) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.85 2016/05/09 13:03:55 schwarze Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.88 2019/01/09 17:57:05 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -30,7 +30,6 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <libgen.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -692,6 +691,12 @@ int
 rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
 {
 	struct rcs_lock *lkp;
+	struct rcs_delta *rdp;
+
+	if ((rdp = rcs_findrev(file, rev)) == NULL) {
+		rcs_errno = RCS_ERR_NOENT;
+		return (-1);
+	}
 
 	/* first look for duplication */
 	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
@@ -706,6 +711,9 @@ rcs_lock_add(RCSFILE *file, const char *user, RCSNUM *rev)
 	lkp->rl_name = xstrdup(user);
 	lkp->rl_num = rcsnum_alloc();
 	rcsnum_cpy(rev, lkp->rl_num, 0);
+
+	free(rdp->rd_locker);
+	rdp->rd_locker = xstrdup(user);
 
 	TAILQ_INSERT_TAIL(&(file->rf_locks), lkp, rl_list);
 
@@ -725,6 +733,12 @@ int
 rcs_lock_remove(RCSFILE *file, const char *user, RCSNUM *rev)
 {
 	struct rcs_lock *lkp;
+	struct rcs_delta *rdp;
+
+	if ((rdp = rcs_findrev(file, rev)) == NULL) {
+		rcs_errno = RCS_ERR_NOENT;
+		return (-1);
+	}
 
 	TAILQ_FOREACH(lkp, &(file->rf_locks), rl_list) {
 		if (strcmp(lkp->rl_name, user) == 0 &&
@@ -741,6 +755,9 @@ rcs_lock_remove(RCSFILE *file, const char *user, RCSNUM *rev)
 	rcsnum_free(lkp->rl_num);
 	free(lkp->rl_name);
 	free(lkp);
+
+	free(rdp->rd_locker);
+	rdp->rd_locker = NULL;
 
 	/* not synced anymore */
 	file->rf_flags &= ~RCS_SYNCED;
@@ -1655,6 +1672,10 @@ rcs_expand_keywords(char *rcsfile_in, struct rcs_delta *rdp, BUF *bp, int mode)
 					++j;
 				buf_append(newbuf, rdp->rd_log + i, j);
 			}
+
+			if (i > 0 && rdp->rd_log[i - 1] != '\n')
+				buf_putc(newbuf, '\n');
+
 			buf_append(newbuf, line, line2 - line);
 			for (j = 0; c + j < fin; ++j) {
 				if (c[j] != ' ')

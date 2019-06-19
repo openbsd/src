@@ -30,6 +30,7 @@ is $t[3], "a";
 	is $t[3], "e";
 }
 is $t[3], "a";
+BEGIN { push @INC, '.' }
 use t::scope_0;
 is scope0_test(), "d";
 

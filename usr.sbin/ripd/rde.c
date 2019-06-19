@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.21 2016/09/03 10:28:08 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.22 2018/11/04 07:52:55 remi Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -108,6 +108,9 @@ rde(struct ripd_conf *xconf, int pipe_parent2rde[2], int pipe_ripe2rde[2],
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
+
+	if (pledge("stdio", NULL) == -1)
+		fatal("pledge");
 
 	event_init();
 

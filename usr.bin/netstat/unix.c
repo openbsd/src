@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.31 2018/01/05 10:41:24 mpi Exp $	*/
+/*	$OpenBSD: unix.c,v 1.32 2018/04/26 12:42:51 guenther Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #include <sys/ucred.h>
-#include <sys/file.h>
 
 #include <netinet/in.h>
 

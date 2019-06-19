@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.47 2017/09/25 19:13:56 krw Exp $	*/
+/*	$OpenBSD: io.c,v 1.48 2019/01/29 22:28:30 tedu Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -326,7 +326,7 @@ opencal(void)
 			if (!(chdir(home) == 0 &&
 			    chdir(calendarHome) == 0 &&
 			    (fdin = open(calendarFile, O_RDONLY)) != -1))
-				errx(1, "no calendar file: ``%s'' or ``~/%s/%s''",
+				errx(1, "no calendar file: \"%s\" or \"~/%s/%s\"",
 				    calendarFile, calendarHome, calendarFile);
 		}
 	}

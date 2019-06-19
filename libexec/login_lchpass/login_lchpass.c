@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.20 2016/09/03 10:48:15 gsoares Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.21 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -33,23 +33,16 @@
  *
  *	BSDI $From: login_lchpass.c,v 1.4 1997/08/08 18:58:23 prb Exp $
  */
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/file.h>
-#include <sys/uio.h>
-#include <sys/wait.h>
 
-#include <err.h>
-#include <errno.h>
+#include <sys/resource.h>
+#include <sys/uio.h>
+
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <stdarg.h>
 #include <login_cap.h>
 #include <readpassphrase.h>
 

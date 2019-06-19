@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtioreg.h,v 1.1 2017/01/21 11:23:06 reyk Exp $	*/
+/*	$OpenBSD: virtioreg.h,v 1.4 2019/03/24 18:21:12 sf Exp $	*/
 /*	$NetBSD: virtioreg.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -64,8 +64,8 @@
  */
 
 
-#ifndef _DEV_PCI_VIRTIOREG_H_
-#define	_DEV_PCI_VIRTIOREG_H_
+#ifndef _DEV_PV_VIRTIOREG_H_
+#define	_DEV_PV_VIRTIOREG_H_
 
 #include <sys/types.h>
 
@@ -82,33 +82,21 @@
 #define PCI_PRODUCT_VIRTIO_MAC80211	10
 #define PCI_PRODUCT_VIRTIO_VMMCI	65535	/* private id */
 
-/* Virtio header */
-#define VIRTIO_CONFIG_DEVICE_FEATURES	0 /* 32bit */
-#define VIRTIO_CONFIG_GUEST_FEATURES	4 /* 32bit */
-#define  VIRTIO_F_NOTIFY_ON_EMPTY		(1<<24)
-#define  VIRTIO_F_RING_INDIRECT_DESC		(1<<28)
-#define  VIRTIO_F_RING_EVENT_IDX		(1<<29)
-#define  VIRTIO_F_BAD_FEATURE			(1<<30)
-#define VIRTIO_CONFIG_QUEUE_ADDRESS	8 /* 32bit */
-#define VIRTIO_CONFIG_QUEUE_SIZE	12 /* 16bit */
-#define VIRTIO_CONFIG_QUEUE_SELECT	14 /* 16bit */
-#define VIRTIO_CONFIG_QUEUE_NOTIFY	16 /* 16bit */
-#define VIRTIO_CONFIG_DEVICE_STATUS	18 /* 8bit */
-#define  VIRTIO_CONFIG_DEVICE_STATUS_RESET	0
-#define  VIRTIO_CONFIG_DEVICE_STATUS_ACK	1
-#define  VIRTIO_CONFIG_DEVICE_STATUS_DRIVER	2
-#define  VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK	4
-#define  VIRTIO_CONFIG_DEVICE_STATUS_FAILED	128
-#define VIRTIO_CONFIG_ISR_STATUS	19 /* 8bit */
-#define  VIRTIO_CONFIG_ISR_CONFIG_CHANGE	2
-#define VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI	20
-/* Only if MSIX is enabled: */
-#define VIRTIO_MSI_CONFIG_VECTOR	20 /* 16bit, optional */
-#define VIRTIO_MSI_QUEUE_VECTOR		22 /* 16bit, optional */
-#define VIRTIO_CONFIG_DEVICE_CONFIG_MSI		24
+/* device-independent feature bits */
+#define  VIRTIO_F_NOTIFY_ON_EMPTY		(1ULL<<24)
+#define  VIRTIO_F_RING_INDIRECT_DESC		(1ULL<<28)
+#define  VIRTIO_F_RING_EVENT_IDX		(1ULL<<29)
+#define  VIRTIO_F_BAD_FEATURE			(1ULL<<30)
+#define  VIRTIO_F_VERSION_1			(1ULL<<32)
 
-#define VIRTIO_MSI_NO_VECTOR		0xffff
-
+/* device status bits */
+#define  VIRTIO_CONFIG_DEVICE_STATUS_RESET		0
+#define  VIRTIO_CONFIG_DEVICE_STATUS_ACK		1
+#define  VIRTIO_CONFIG_DEVICE_STATUS_DRIVER		2
+#define  VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK		4
+#define  VIRTIO_CONFIG_DEVICE_STATUS_FEATURES_OK	8
+#define  VIRTIO_CONFIG_DEVICE_STATUS_DEVICE_NEEDS_RESET	64
+#define  VIRTIO_CONFIG_DEVICE_STATUS_FAILED		128
 
 /* Virtqueue */
 /* This marks a buffer as continuing via the next field. */
@@ -195,4 +183,4 @@ struct vring_used {
 
 #define VIRTIO_PAGE_SIZE	(4096)
 
-#endif /* _DEV_PCI_VIRTIOREG_H_ */
+#endif /* _DEV_PV_VIRTIOREG_H_ */

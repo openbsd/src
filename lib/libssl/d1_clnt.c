@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_clnt.c,v 1.79 2017/10/10 15:13:26 jsing Exp $ */
+/* $OpenBSD: d1_clnt.c,v 1.82 2018/11/05 05:45:15 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -126,54 +126,6 @@
 #include <openssl/objects.h>
 
 #include "bytestring.h"
-
-static const SSL_METHOD_INTERNAL DTLSv1_client_method_internal_data = {
-	.version = DTLS1_VERSION,
-	.min_version = DTLS1_VERSION,
-	.max_version = DTLS1_VERSION,
-	.ssl_new = dtls1_new,
-	.ssl_clear = dtls1_clear,
-	.ssl_free = dtls1_free,
-	.ssl_accept = ssl_undefined_function,
-	.ssl_connect = ssl3_connect,
-	.ssl_read = ssl3_read,
-	.ssl_peek = ssl3_peek,
-	.ssl_write = ssl3_write,
-	.ssl_shutdown = dtls1_shutdown,
-	.ssl_pending = ssl3_pending,
-	.get_ssl_method = dtls1_get_client_method,
-	.get_timeout = dtls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
-	.ssl_renegotiate = ssl3_renegotiate,
-	.ssl_renegotiate_check = ssl3_renegotiate_check,
-	.ssl_get_message = dtls1_get_message,
-	.ssl_read_bytes = dtls1_read_bytes,
-	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl3_enc = &DTLSv1_enc_data,
-};
-
-static const SSL_METHOD DTLSv1_client_method_data = {
-	.ssl_dispatch_alert = dtls1_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = dtls1_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &DTLSv1_client_method_internal_data,
-};
-
-const SSL_METHOD *
-DTLSv1_client_method(void)
-{
-	return &DTLSv1_client_method_data;
-}
-
-const SSL_METHOD *
-dtls1_get_client_method(int ver)
-{
-	if (ver == DTLS1_VERSION)
-		return (DTLSv1_client_method());
-	return (NULL);
-}
 
 int
 dtls1_get_hello_verify(SSL *s)

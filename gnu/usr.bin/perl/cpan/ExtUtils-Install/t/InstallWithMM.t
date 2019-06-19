@@ -56,7 +56,7 @@ delete @ENV{qw(PREFIX LIB MAKEFLAGS)};
     ok( chdir('Big-Dummy'), "chdir'd to Big-Dummy" ) ||
       diag("chdir failed: $!");
 
-    my @mpl_out = run(qq{$perl Makefile.PL "PREFIX=../dummy-install"});
+    my @mpl_out = run(qq{"$perl" Makefile.PL "PREFIX=../dummy-install"});
     END { rmtree '../dummy-install'; }
 
     cmp_ok( $?, '==', 0, 'Makefile.PL exited with zero' ) ||

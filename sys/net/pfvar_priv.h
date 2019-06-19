@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.4 2017/08/06 13:16:11 mpi Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.5 2018/09/11 07:53:38 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -101,8 +101,12 @@ struct pf_pdesc {
 extern struct task	pf_purge_task;
 extern struct timeout	pf_purge_to;
 
+struct pf_state		*pf_state_ref(struct pf_state *);
+void			 pf_state_unref(struct pf_state *);
+
 #ifdef WITH_PF_LOCK
 extern struct rwlock	pf_lock;
+extern struct rwlock	pf_state_lock;
 
 #define PF_LOCK()		do {			\
 		NET_ASSERT_LOCKED();			\
@@ -124,11 +128,42 @@ extern struct rwlock	pf_lock;
 		if (rw_status(&pf_lock) == RW_WRITE)	\
 			splassert_fail(0, rw_status(&pf_lock), __func__);\
 	} while (0)
+
+#define PF_STATE_ENTER_READ()	do {			\
+		rw_enter_read(&pf_state_lock);		\
+	} while (0)
+
+#define PF_STATE_EXIT_READ()	do {			\
+		rw_exit_read(&pf_state_lock);		\
+	} while (0)
+
+#define PF_STATE_ENTER_WRITE()	do {			\
+		rw_enter_write(&pf_state_lock);		\
+	} while (0)
+
+#define PF_STATE_EXIT_WRITE()	do {			\
+		PF_ASSERT_STATE_LOCKED();		\
+		rw_exit_write(&pf_state_lock);		\
+	} while (0)
+
+#define PF_ASSERT_STATE_LOCKED()	do {		\
+		if (rw_status(&pf_state_lock) != RW_WRITE)\
+			splassert_fail(RW_WRITE,	\
+			    rw_status(&pf_state_lock), __func__);\
+	} while (0)
+
 #else /* !WITH_PF_LOCK */
 #define PF_LOCK()		(void)(0)
 #define PF_UNLOCK()		(void)(0)
 #define PF_ASSERT_LOCKED()	(void)(0)
 #define PF_ASSERT_UNLOCKED()	(void)(0)
+
+#define PF_STATE_ENTER_READ()	(void)(0)
+#define PF_STATE_EXIT_READ()	(void)(0)
+#define PF_STATE_ENTER_WRITE()	(void)(0)
+#define PF_STATE_EXIT_WRITE()	(void)(0)
+#define PF_ASSERT_STATE_LOCKED()	(void)(0)
+
 #endif /* WITH_PF_LOCK */
 
 extern void			 pf_purge_timeout(void *);

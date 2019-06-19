@@ -67,8 +67,8 @@ so it doesn't kill itself:
     # block scope for local
     {
         local $SIG{HUP} = "IGNORE";
-        kill HUP => -$$;
-        # snazzy writing of: kill("HUP", -$$)
+        kill HUP => -getpgrp();
+        # snazzy writing of: kill("HUP", -getpgrp())
     }
 
 Another interesting signal to send is signal number zero.  This doesn't

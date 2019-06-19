@@ -4,7 +4,7 @@ use TestInit qw(T);
 use strict;
 use Config;
 
-require 't/test.pl';
+require './t/test.pl';
 
 skip_all("Code to read symbols not ported to $^O")
     if $^O eq 'VMS' or $^O eq 'MSWin32';
@@ -15,7 +15,7 @@ my %skip = map { ("PL_$_", 1) }
     qw(
 	  DBcv bitcount cshname force_link_funcs generation lastgotoprobe
 	  mod_latin1_uc modcount no_symref_sv uudmap
-	  watchaddr watchok warn_uninit_sv
+	  watchaddr watchok warn_uninit_sv hash_chars
      );
 
 $skip{PL_hash_rand_bits}= $skip{PL_hash_rand_bits_enabled}= 1; # we can be compiled without these, so skip testing them
@@ -59,6 +59,13 @@ foreach my $file (map {$_ . $Config{_o}} qw(globals regcomp)) {
 	++$unexported{$1};
     }
     close $fh or die "Problem running nm $file";
+}
+
+unless ($Config{d_double_has_inf}) {
+    $skip{PL_inf}++;
+}
+unless ($Config{d_double_has_nan}) {
+    $skip{PL_nan}++;
 }
 
 foreach (sort keys %exported) {

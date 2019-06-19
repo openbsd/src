@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.111 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.112 2018/11/09 14:14:31 claudio Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -700,7 +700,6 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 
 	/*
 	 * Add PPP header.  If no space in first mbuf, allocate another.
-	 * (This assumes M_LEADINGSPACE is always 0 for a cluster mbuf.)
 	 */
 	M_PREPEND(m0, PPP_HDRLEN, M_DONTWAIT);
 	if (m0 == NULL) {
@@ -1279,7 +1278,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 		mp->m_next = NULL;
 		if (hlen + PPP_HDRLEN > MHLEN) {
 			MCLGET(mp, M_DONTWAIT);
-			if (M_TRAILINGSPACE(mp) < hlen + PPP_HDRLEN) {
+			if (m_trailingspace(mp) < hlen + PPP_HDRLEN) {
 				m_freem(mp);
 				/* lose if big headers and no clusters */
 				goto bad;
@@ -1302,7 +1301,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 		 */
 		m->m_data += PPP_HDRLEN + xlen;
 		m->m_len -= PPP_HDRLEN + xlen;
-		if (m->m_len <= M_TRAILINGSPACE(mp)) {
+		if (m->m_len <= m_trailingspace(mp)) {
 			bcopy(mtod(m, u_char *),
 			    mtod(mp, u_char *) + mp->m_len, m->m_len);
 			mp->m_len += m->m_len;

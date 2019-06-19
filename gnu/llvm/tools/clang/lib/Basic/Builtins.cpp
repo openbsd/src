@@ -69,9 +69,15 @@ bool Builtin::Context::builtinIsSupported(const Builtin::Info &BuiltinInfo,
   bool MSModeUnsupported =
       !LangOpts.MicrosoftExt && (BuiltinInfo.Langs & MS_LANG);
   bool ObjCUnsupported = !LangOpts.ObjC1 && BuiltinInfo.Langs == OBJC_LANG;
-  bool OclCUnsupported = LangOpts.OpenCLVersion != 200 &&
-                         BuiltinInfo.Langs == OCLC20_LANG;
+  bool OclC1Unsupported = (LangOpts.OpenCLVersion / 100) != 1 &&
+                          (BuiltinInfo.Langs & ALL_OCLC_LANGUAGES ) ==  OCLC1X_LANG;
+  bool OclC2Unsupported = LangOpts.OpenCLVersion != 200 &&
+                          (BuiltinInfo.Langs & ALL_OCLC_LANGUAGES) == OCLC20_LANG;
+  bool OclCUnsupported = !LangOpts.OpenCL &&
+                         (BuiltinInfo.Langs & ALL_OCLC_LANGUAGES);
+  bool OpenMPUnsupported = !LangOpts.OpenMP && BuiltinInfo.Langs == OMP_LANG;
   return !BuiltinsUnsupported && !MathBuiltinsUnsupported && !OclCUnsupported &&
+         !OclC1Unsupported && !OclC2Unsupported && !OpenMPUnsupported &&
          !GnuModeUnsupported && !MSModeUnsupported && !ObjCUnsupported;
 }
 
@@ -99,6 +105,22 @@ void Builtin::Context::initializeBuiltins(IdentifierTable &Table,
 
 void Builtin::Context::forgetBuiltin(unsigned ID, IdentifierTable &Table) {
   Table.get(getRecord(ID).Name).setBuiltinID(0);
+}
+
+unsigned Builtin::Context::getRequiredVectorWidth(unsigned ID) const {
+  const char *WidthPos = ::strchr(getRecord(ID).Attributes, 'V');
+  if (!WidthPos)
+    return 0;
+
+  ++WidthPos;
+  assert(*WidthPos == ':' &&
+         "Vector width specifier must be followed by a ':'");
+  ++WidthPos;
+
+  char *EndPos;
+  unsigned Width = ::strtol(WidthPos, &EndPos, 10);
+  assert(*EndPos == ':' && "Vector width specific must end with a ':'");
+  return Width;
 }
 
 bool Builtin::Context::isLike(unsigned ID, unsigned &FormatIdx,
@@ -132,4 +154,11 @@ bool Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx,
 bool Builtin::Context::isScanfLike(unsigned ID, unsigned &FormatIdx,
                                    bool &HasVAListArg) {
   return isLike(ID, FormatIdx, HasVAListArg, "sS");
+}
+
+bool Builtin::Context::canBeRedeclared(unsigned ID) const {
+  return ID == Builtin::NotBuiltin ||
+         ID == Builtin::BI__va_start ||
+         (!hasReferenceArgsOrResult(ID) &&
+          !hasCustomTypechecking(ID));
 }

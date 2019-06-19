@@ -24,7 +24,7 @@
 #include <sys/types.h>
 #include <system_error>
 #include <tuple>
-#if LLVM_ON_WIN32
+#if _WIN32
 #include <windows.h>
 #endif
 #if LLVM_ON_UNIX
@@ -43,7 +43,7 @@
 
 using namespace llvm;
 
-/// \brief Attempt to read the lock file with the given name, if it exists.
+/// Attempt to read the lock file with the given name, if it exists.
 ///
 /// \param LockFileName The name of the lock file to read.
 ///
@@ -201,12 +201,11 @@ LockFileManager::LockFileManager(StringRef FileName)
     Out.close();
 
     if (Out.has_error()) {
-      // We failed to write out PID, so make up an excuse, remove the
+      // We failed to write out PID, so report the error, remove the
       // unique lock file, and fail.
-      auto EC = make_error_code(errc::no_space_on_device);
       std::string S("failed to write to ");
       S.append(UniqueLockFileName.str());
-      setError(EC, S);
+      setError(Out.error(), S);
       sys::fs::remove(UniqueLockFileName);
       return;
     }
@@ -262,21 +261,20 @@ LockFileManager::LockFileState LockFileManager::getState() const {
   if (Owner)
     return LFS_Shared;
 
-  if (Error)
+  if (ErrorCode)
     return LFS_Error;
 
   return LFS_Owned;
 }
 
 std::string LockFileManager::getErrorMessage() const {
-  if (Error) {
+  if (ErrorCode) {
     std::string Str(ErrorDiagMsg);
-    std::string ErrCodeMsg = Error->message();
+    std::string ErrCodeMsg = ErrorCode.message();
     raw_string_ostream OSS(Str);
     if (!ErrCodeMsg.empty())
-      OSS << ": " << Error->message();
-    OSS.flush();
-    return Str;
+      OSS << ": " << ErrCodeMsg;
+    return OSS.str();
   }
   return "";
 }
@@ -297,7 +295,7 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
   if (getState() != LFS_Shared)
     return Res_Success;
 
-#if LLVM_ON_WIN32
+#if _WIN32
   unsigned long Interval = 1;
 #else
   struct timespec Interval;
@@ -312,7 +310,7 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
     // finish up and remove the lock file.
     // FIXME: Should we hook in to system APIs to get a notification when the
     // lock file is deleted?
-#if LLVM_ON_WIN32
+#if _WIN32
     Sleep(Interval);
 #else
     nanosleep(&Interval, nullptr);
@@ -331,7 +329,7 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
       return Res_OwnerDied;
 
     // Exponentially increase the time we wait for the lock to be removed.
-#if LLVM_ON_WIN32
+#if _WIN32
     Interval *= 2;
 #else
     Interval.tv_sec *= 2;
@@ -342,7 +340,7 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
     }
 #endif
   } while (
-#if LLVM_ON_WIN32
+#if _WIN32
            Interval < MaxSeconds * 1000
 #else
            Interval.tv_sec < (time_t)MaxSeconds

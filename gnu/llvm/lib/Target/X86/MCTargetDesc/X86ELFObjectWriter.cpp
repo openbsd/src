@@ -15,6 +15,7 @@
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cassert>
@@ -73,6 +74,9 @@ static X86_64RelType getType64(unsigned Kind,
   case X86::reloc_riprel_4byte_relax:
   case X86::reloc_riprel_4byte_relax_rex:
   case X86::reloc_riprel_4byte_movq_load:
+    return RT64_32;
+  case X86::reloc_branch_4byte_pcrel:
+    Modifier = MCSymbolRefExpr::VK_PLT;
     return RT64_32;
   case FK_PCRel_2:
   case FK_Data_2:
@@ -297,10 +301,7 @@ unsigned X86ELFObjectWriter::getRelocType(MCContext &Ctx, const MCValue &Target,
   return getRelocType32(Ctx, Modifier, getType32(Type), IsPCRel, Kind);
 }
 
-MCObjectWriter *llvm::createX86ELFObjectWriter(raw_pwrite_stream &OS,
-                                               bool IsELF64, uint8_t OSABI,
-                                               uint16_t EMachine) {
-  MCELFObjectTargetWriter *MOTW =
-    new X86ELFObjectWriter(IsELF64, OSABI, EMachine);
-  return createELFObjectWriter(MOTW, OS,  /*IsLittleEndian=*/true);
+std::unique_ptr<MCObjectTargetWriter>
+llvm::createX86ELFObjectWriter(bool IsELF64, uint8_t OSABI, uint16_t EMachine) {
+  return llvm::make_unique<X86ELFObjectWriter>(IsELF64, OSABI, EMachine);
 }

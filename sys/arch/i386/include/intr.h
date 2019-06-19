@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.47 2015/09/13 12:28:31 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.48 2018/08/20 15:02:07 visa Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ void splassert_check(int, const char *);
 #define	splvm()		splraise(IPL_VM)
 #define	splhigh()	splraise(IPL_HIGH)
 #define	splsched()	splraise(IPL_SCHED)
-#define spllock() 	splhigh()
 #define	spl0()		spllower(IPL_NONE)
 
 #include <machine/pic.h>

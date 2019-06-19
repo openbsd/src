@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.50 2018/01/26 16:22:20 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.53 2018/12/05 10:28:21 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -95,42 +95,12 @@
 #include <arm/cpuconf.h>
 
 #include <machine/intr.h>
-#ifndef _LOCORE
-#if 0
-#include <sys/user.h>
-#endif
 #include <machine/frame.h>
 #include <machine/pcb.h>
-#endif	/* !_LOCORE */
-
 #include <arm/armreg.h>
 
-#ifndef _LOCORE
 /* 1 == use cpu_sleep(), 0 == don't */
 extern int cpu_do_powersave;
-#endif
-
-#ifdef _LOCORE
-#define IRQdisable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr ; \
-	orr	r0, r0, #(PSR_I) ; \
-	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}
-
-#define IRQenable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr ; \
-	bic	r0, r0, #(PSR_I) ; \
-	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}		
-
-#else
-#define IRQdisable __set_cpsr_c(PSR_I, PSR_I);
-#define IRQenable __set_cpsr_c(PSR_I, 0);
-#endif	/* _LOCORE */
-
-#ifndef _LOCORE
 
 /* All the CLKF_* macros take a struct clockframe * as an argument. */
 
@@ -179,6 +149,8 @@ void	arm32_vector_init(vaddr_t, int);
 
 #include <sys/device.h>
 #include <sys/sched.h>
+#include <sys/srp.h>
+
 struct cpu_info {
 	struct device *ci_dev;		/* Device corresponding to this CPU */
 	struct cpu_info *ci_next;
@@ -204,15 +176,16 @@ struct cpu_info {
 	int	ci_mutex_level;
 #endif
 
+#ifdef MULTIPROCESSOR
+	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
+#endif
+
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
 #endif
 
 	void (*ci_flush_bp)(void);
 };
-
-extern struct cpu_info cpu_info_primary;
-extern struct cpu_info *cpu_info_list;
 
 static inline struct cpu_info *
 curcpu(void)
@@ -221,6 +194,9 @@ curcpu(void)
 	__asm volatile("mrc	p15, 0, %0, c13, c0, 4" : "=r" (__ci));
 	return (__ci);
 }
+
+extern struct cpu_info cpu_info_primary;
+extern struct cpu_info *cpu_info_list;
 
 #ifndef MULTIPROCESSOR
 #define cpu_number()	0
@@ -306,10 +282,27 @@ void swi_handler	(trapframe_t *);
 /* machine_machdep.c */
 void board_startup(void);
 
-#endif	/* !_LOCORE */
+static inline u_long
+intr_disable(void)
+{
+	uint32_t cpsr;
+
+	__asm volatile ("mrs %0, cpsr" : "=r"(cpsr));
+	__asm volatile ("msr cpsr_c, %0" :: "r"(cpsr | PSR_I));
+
+	return cpsr;
+}
+
+static inline void
+intr_restore(u_long cpsr)
+{
+	__asm volatile ("msr cpsr_c, %0" :: "r"(cpsr));
+}
 
 #endif /* _KERNEL */
 
-#endif /* !_ARM_CPU_H_ */
+#ifdef MULTIPROCESSOR
+#include <sys/mplock.h>
+#endif /* MULTIPROCESSOR */
 
-/* End of cpu.h */
+#endif /* !_ARM_CPU_H_ */

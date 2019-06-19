@@ -11,7 +11,7 @@ use strict;
 
 BEGIN {
     require '../../t/test.pl';
-    plan(455);
+    plan(527);
     use_ok('XS::APItest')
 };
 
@@ -33,7 +33,7 @@ sub i {
     $call_sv_count++;
 }
 call_sv_C();
-is($call_sv_count, 6, "call_sv_C passes");
+is($call_sv_count, 7, "call_sv_C passes");
 
 sub d {
     die "its_dead_jim\n";
@@ -80,6 +80,9 @@ for my $test (
     ok(eq_array( [ call_pv('f', $flags, @$args) ], $expected),
 	"$description call_pv('f')");
 
+    ok(eq_array( [ call_argv('f', $flags, @$args) ], $expected),
+	"$description call_argv('f')") or warn "@{[call_argv('f', $flags, @$args)]}";
+
     ok(eq_array( [ eval_sv('f(' . join(',',map"'$_'",@$args) . ')', $flags) ],
         $expected), "$description eval_sv('f(args)')");
 
@@ -113,6 +116,14 @@ for my $test (
 
 	$@ = "before\n";
 	$warn = "";
+	ok(eq_array( [ call_argv('d', $flags|G_EVAL|$keep, @$args) ], 
+		    $returnval),
+		    "$desc G_EVAL call_argv('d')");
+	is($@, $exp_err, "$desc G_EVAL call_argv('d') - \$@");
+	is($warn, $exp_warn, "$desc G_EVAL call_argv('d') - warning");
+
+	$@ = "before\n";
+	$warn = "";
 	ok(eq_array( [ eval_sv('d()', $flags|$keep) ],
 		    $returnval),
 		    "$desc eval_sv('d()')");
@@ -134,6 +145,9 @@ for my $test (
     ok(eq_array( [ sub { call_pv('f', $flags|G_NOARGS, "bad") }->(@$args) ],
 	$expected), "$description G_NOARGS call_pv('f')");
 
+    ok(eq_array( [ sub { call_argv('f', $flags|G_NOARGS, "bad") }->(@$args) ],
+	$expected), "$description G_NOARGS call_argv('f')");
+
     ok(eq_array( [ sub { eval_sv('f(@_)', $flags|G_NOARGS) }->(@$args) ],
         $expected), "$description G_NOARGS eval_sv('f(@_)')");
 
@@ -145,6 +159,9 @@ for my $test (
 
     ok(eq_array( [ eval { call_pv('d', $flags, @$args) }, $@ ],
 	[ "its_dead_jim\n" ]), "$description eval { call_pv('d') }");
+
+    ok(eq_array( [ eval { call_argv('d', $flags, @$args) }, $@ ],
+	[ "its_dead_jim\n" ]), "$description eval { call_argv('d') }");
 
     ok(eq_array( [ eval { eval_sv('d', $flags), $@ }, $@ ],
 	[ @$returnval,

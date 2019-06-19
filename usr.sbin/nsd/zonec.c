@@ -805,6 +805,7 @@ precsize_aton (char *cp, char **endptr)
 	}
 
 	if(mval >= poweroften[7]) {
+		assert(poweroften[7] != 0);
 		/* integer overflow possible for *100 */
 		mantissa = mval / poweroften[7];
 		exponent = 9; /* max */
@@ -816,6 +817,7 @@ precsize_aton (char *cp, char **endptr)
 			if (cmval < poweroften[exponent+1])
 				break;
 
+		assert(poweroften[exponent] != 0);
 		mantissa = cmval / poweroften[exponent];
 	}
 	if (mantissa > 9)

@@ -1,25 +1,10 @@
 package File::Spec::Unix;
 
 use strict;
-use vars qw($VERSION);
+use Cwd ();
 
-$VERSION = '3.63_01';
-my $xs_version = $VERSION;
+our $VERSION = '3.74';
 $VERSION =~ tr/_//d;
-
-#dont try to load XSLoader and DynaLoader only to ultimately fail on miniperl
-if(!defined &canonpath && defined &DynaLoader::boot_DynaLoader) {
-  eval {#eval is questionable since we are handling potential errors like
-        #"Cwd object version 3.48 does not match bootstrap parameter 3.50
-        #at lib/DynaLoader.pm line 216." by having this eval
-    if ( $] >= 5.006 ) {
-	require XSLoader;
-	XSLoader::load("Cwd", $xs_version);
-    } else {
-	require Cwd;
-    }
-  };
-}
 
 =head1 NAME
 
@@ -185,7 +170,8 @@ sub _tmpdir {
 	@dirlist = grep { ! Scalar::Util::tainted($_) } @dirlist;
     }
     elsif ($] < 5.007) { # No ${^TAINT} before 5.8
-	@dirlist = grep { eval { eval('1'.substr $_,0,0) } } @dirlist;
+	@dirlist = grep { !defined($_) || eval { eval('1'.substr $_,0,0) } }
+			@dirlist;
     }
     
     foreach (@dirlist) {
@@ -409,7 +395,7 @@ Based on code written by Shigio Yamaguchi.
 
 sub abs2rel {
     my($self,$path,$base) = @_;
-    $base = $self->_cwd() unless defined $base and length $base;
+    $base = Cwd::getcwd() unless defined $base and length $base;
 
     ($path, $base) = map $self->canonpath($_), $path, $base;
 
@@ -436,7 +422,7 @@ sub abs2rel {
 	}
     }
     else {
-	my $wd= ($self->splitpath($self->_cwd(), 1))[1];
+	my $wd= ($self->splitpath(Cwd::getcwd(), 1))[1];
 	$path_directories = $self->catdir($wd, $path);
 	$base_directories = $self->catdir($wd, $base);
     }
@@ -519,7 +505,7 @@ sub rel2abs {
     if ( ! $self->file_name_is_absolute( $path ) ) {
         # Figure out the effective $base and clean it up.
         if ( !defined( $base ) || $base eq '' ) {
-	    $base = $self->_cwd();
+	    $base = Cwd::getcwd();
         }
         elsif ( ! $self->file_name_is_absolute( $base ) ) {
             $base = $self->rel2abs( $base ) ;
@@ -551,15 +537,6 @@ Please submit bug reports and patches to perlbug@perl.org.
 L<File::Spec>
 
 =cut
-
-# Internal routine to File::Spec, no point in making this public since
-# it is the standard Cwd interface.  Most of the platform-specific
-# File::Spec subclasses use this.
-sub _cwd {
-    require Cwd;
-    Cwd::getcwd();
-}
-
 
 # Internal method to reduce xx\..\yy -> yy
 sub _collapse {

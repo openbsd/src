@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.67 2018/02/19 08:59:52 mpi Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.68 2019/06/16 00:10:37 kn Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -109,8 +109,8 @@ struct pppoetag {
 		PPPOE_ADD_16(PTR, SESS);	\
 		PPPOE_ADD_16(PTR, LEN)
 
-#define	PPPOE_DISC_TIMEOUT	(hz*5)	/* base for quick timeout calculation */
-#define	PPPOE_SLOW_RETRY	(hz*60)	/* persistent retry interval */
+#define	PPPOE_DISC_TIMEOUT	5	/* base for quick timeout calculation (seconds) */
+#define	PPPOE_SLOW_RETRY	60	/* persistent retry interval (seconds) */
 #define	PPPOE_DISC_MAXPADI	4	/* retry PADI four times (quickly) */
 #define	PPPOE_DISC_MAXPADR	2	/* retry PADR twice */
 
@@ -579,7 +579,7 @@ breakbreak:
 			PPPOEDEBUG(("%s: failed to send PADR, error=%d\n",
 			    sc->sc_sppp.pp_if.if_xname, err));
 		}
-		timeout_add(&sc->sc_timeout,
+		timeout_add_sec(&sc->sc_timeout,
 		    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried));
 
 		break;
@@ -1086,7 +1086,7 @@ pppoe_timeout(void *arg)
 			PPPOEDEBUG(("%s: failed to transmit PADI, error=%d\n",
 			    sc->sc_sppp.pp_if.if_xname, err));
 		}
-		timeout_add(&sc->sc_timeout, retry_wait);
+		timeout_add_sec(&sc->sc_timeout, retry_wait);
 		splx(x);
 
 		break;
@@ -1102,7 +1102,7 @@ pppoe_timeout(void *arg)
 				PPPOEDEBUG(("%s: failed to send PADI, error=%d\n",
 				    sc->sc_sppp.pp_if.if_xname, err));
 			}
-			timeout_add(&sc->sc_timeout,
+			timeout_add_sec(&sc->sc_timeout,
 			    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried));
 			splx(x);
 			break;
@@ -1112,7 +1112,7 @@ pppoe_timeout(void *arg)
 			PPPOEDEBUG(("%s: failed to send PADR, error=%d\n",
 			    sc->sc_sppp.pp_if.if_xname, err));
 		}
-		timeout_add(&sc->sc_timeout,
+		timeout_add_sec(&sc->sc_timeout,
 		    PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried));
 		splx(x);
 
@@ -1146,7 +1146,7 @@ pppoe_connect(struct pppoe_softc *sc)
 		PPPOEDEBUG(("%s: failed to send PADI, error=%d\n",
 		    sc->sc_sppp.pp_if.if_xname, err));
 
-	timeout_add(&sc->sc_timeout, PPPOE_DISC_TIMEOUT);
+	timeout_add_sec(&sc->sc_timeout, PPPOE_DISC_TIMEOUT);
 	splx(x);
 
 	return (err);
@@ -1346,7 +1346,7 @@ pppoe_tlf(struct sppp *sp)
 	 * function and defer disconnecting to the timeout handler.
 	 */
 	sc->sc_state = PPPOE_STATE_CLOSING;
-	timeout_add(&sc->sc_timeout, hz / 50);
+	timeout_add_msec(&sc->sc_timeout, 20);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.61 2016/05/07 21:52:29 tedu Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.62 2018/08/21 20:20:04 millert Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -31,12 +31,14 @@
  */
 
 #include <sys/param.h>	/* ALIGN */
+#include <sys/mman.h>
 #include <fcntl.h>
 #include <db.h>
 #include <syslog.h>
 #include <pwd.h>
 #include <errno.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -53,13 +55,21 @@
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
+struct pw_storage {
+	struct passwd pw;
+	uid_t uid;
+	char name[_PW_NAME_LEN + 1];
+	char pwbuf[_PW_BUF_LEN];
+};
+
 _THREAD_PRIVATE_KEY(pw);
 
 static DB *_pw_db;			/* password database */
 
+/* mmap'd password storage */
+static struct pw_storage *_pw_storage = MAP_FAILED;
+
 /* Following are used only by setpwent(), getpwent(), and endpwent() */
-static struct passwd _pw_passwd;	/* password structure */
-static char _pw_string[_PW_BUF_LEN];	/* string pointed to by _pw_passwd */
 static int _pw_keynum;			/* key counter */
 static int _pw_stayopen;		/* keep fd's open */
 static int _pw_flags;			/* password flags */
@@ -81,7 +91,6 @@ static char	*__ypcurrent;
 static int	__ypcurrentlen;
 static int	__yp_pw_flags;
 static struct passwd *__ypproto;
-static char	__ypline[_PW_BUF_LEN];
 static int	__getpwent_has_yppw = -1;
 static struct _ypexclude *__ypexhead;
 
@@ -251,6 +260,53 @@ __ypparse(struct passwd *pw, char *s, int yp_pw_flags)
 }
 #endif
 
+static struct passwd *
+__get_pw_buf(char **bufp, size_t *buflenp, uid_t uid, const char *name)
+{
+	bool remap = true;
+
+	/* Unmap the old buffer unless we are looking up the same uid/name */
+	if (_pw_storage != MAP_FAILED) {
+		if (name != NULL) {
+			if (strcmp(_pw_storage->name, name) == 0) {
+#ifdef PWDEBUG
+				struct syslog_data sdata = SYSLOG_DATA_INIT;
+				syslog_r(LOG_CRIT | LOG_CONS, &sdata,
+				    "repeated passwd lookup of user \"%s\"",
+				    name);
+#endif
+				remap = false;
+			}
+		} else if (uid != (uid_t)-1) {
+			if (_pw_storage->uid == uid) {
+#ifdef PWDEBUG
+				struct syslog_data sdata = SYSLOG_DATA_INIT;
+				syslog_r(LOG_CRIT | LOG_CONS, &sdata,
+				    "repeated passwd lookup of uid %u",
+				    uid);
+#endif
+				remap = false;
+			}
+		}
+		if (remap)
+			munmap(_pw_storage, sizeof(*_pw_storage));
+	}
+
+	if (remap) {
+		_pw_storage = mmap(NULL, sizeof(*_pw_storage),
+		    PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
+		if (_pw_storage == MAP_FAILED)
+			return NULL;
+		if (name != NULL)
+			strlcpy(_pw_storage->name, name, sizeof(_pw_storage->name));
+		_pw_storage->uid = uid;
+	}
+
+	*bufp = _pw_storage->pwbuf;
+	*buflenp = sizeof(_pw_storage->pwbuf);
+	return &_pw_storage->pw;
+}
+
 struct passwd *
 getpwent(void)
 {
@@ -259,11 +315,17 @@ getpwent(void)
 	char *map;
 #endif
 	char bf[1 + sizeof(_pw_keynum)];
-	struct passwd *pw = NULL;
+	struct passwd *pw, *ret = NULL;
+	char *pwbuf;
+	size_t buflen;
 	DBT key;
 
 	_THREAD_PRIVATE_MUTEX_LOCK(pw);
 	if (!_pw_db && !__initdb(0))
+		goto done;
+
+	/* Allocate space for struct and strings, unmapping the old. */
+	if ((pw = __get_pw_buf(&pwbuf, &buflen, -1, NULL)) == NULL)
 		goto done;
 
 #ifdef YP
@@ -304,13 +366,13 @@ again:
 				    &__ypcurrent, &__ypcurrentlen,
 				    &data, &datalen);
 				if (r != 0 ||
-				    __ypcurrentlen > sizeof(__ypline)) {
+				    __ypcurrentlen > buflen) {
 					__ypmode = YPMODE_NONE;
 					free(data);
 					goto again;
 				}
 			}
-			bcopy(data, __ypline, datalen);
+			bcopy(data, pwbuf, datalen);
 			free(data);
 			break;
 		case YPMODE_NETGRP:
@@ -326,7 +388,7 @@ again:
 			} else
 				goto again;
 			if (r != 0 ||
-			    __ypcurrentlen > sizeof(__ypline)) {
+			    __ypcurrentlen > buflen) {
 				/*
 				 * if the netgroup is invalid, keep looking
 				 * as there may be valid users later on.
@@ -334,7 +396,7 @@ again:
 				free(data);
 				goto again;
 			}
-			bcopy(data, __ypline, datalen);
+			bcopy(data, pwbuf, datalen);
 			free(data);
 			break;
 		case YPMODE_USER:
@@ -345,11 +407,11 @@ again:
 				free(name);
 				name = NULL;
 				if (r != 0 ||
-				    __ypcurrentlen > sizeof(__ypline)) {
+				    __ypcurrentlen > buflen) {
 					free(data);
 					goto again;
 				}
-				bcopy(data, __ypline, datalen);
+				bcopy(data, pwbuf, datalen);
 				free(data);
 			} else {		/* XXX */
 				__ypmode = YPMODE_NONE;
@@ -361,10 +423,10 @@ again:
 			break;
 		}
 
-		__ypline[datalen] = '\0';
-		if (__ypparse(&_pw_passwd, __ypline, __yp_pw_flags))
+		pwbuf[datalen] = '\0';
+		if (__ypparse(pw, pwbuf, __yp_pw_flags))
 			goto again;
-		pw = &_pw_passwd;
+		ret = pw;
 		goto done;
 	}
 #endif
@@ -374,40 +436,39 @@ again:
 	bcopy((char *)&_pw_keynum, &bf[1], sizeof(_pw_keynum));
 	key.data = (u_char *)bf;
 	key.size = 1 + sizeof(_pw_keynum);
-	if (__hashpw(&key, _pw_string, sizeof _pw_string,
-	    &_pw_passwd, &_pw_flags)) {
+	if (__hashpw(&key, pwbuf, buflen, pw, &_pw_flags)) {
 #ifdef YP
 		static long long __yppbuf[_PW_BUF_LEN / sizeof(long long)];
 		const char *user, *host, *dom;
 
 		/* if we don't have YP at all, don't bother. */
 		if (__getpwent_has_yppw) {
-			if (_pw_passwd.pw_name[0] == '+') {
+			if (pw->pw_name[0] == '+') {
 				/* set the mode */
-				switch (_pw_passwd.pw_name[1]) {
+				switch (pw->pw_name[1]) {
 				case '\0':
 					__ypmode = YPMODE_FULL;
 					break;
 				case '@':
 					__ypmode = YPMODE_NETGRP;
-					setnetgrent(_pw_passwd.pw_name + 2);
+					setnetgrent(pw->pw_name + 2);
 					break;
 				default:
 					__ypmode = YPMODE_USER;
-					name = strdup(_pw_passwd.pw_name + 1);
+					name = strdup(pw->pw_name + 1);
 					break;
 				}
 
-				__ypproto_set(&_pw_passwd, __yppbuf,
-				    _pw_flags, &__yp_pw_flags);
+				__ypproto_set(pw, __yppbuf, _pw_flags,
+				    &__yp_pw_flags);
 				goto again;
-			} else if (_pw_passwd.pw_name[0] == '-') {
+			} else if (pw->pw_name[0] == '-') {
 				/* an attempted exclusion */
-				switch (_pw_passwd.pw_name[1]) {
+				switch (pw->pw_name[1]) {
 				case '\0':
 					break;
 				case '@':
-					setnetgrent(_pw_passwd.pw_name + 2);
+					setnetgrent(pw->pw_name + 2);
 					while (getnetgrent(&host, &user, &dom)) {
 						if (user && *user)
 							__ypexclude_add(&__ypexhead,
@@ -417,20 +478,20 @@ again:
 					break;
 				default:
 					__ypexclude_add(&__ypexhead,
-					    _pw_passwd.pw_name + 1);
+					    pw->pw_name + 1);
 					break;
 				}
 				goto again;
 			}
 		}
 #endif
-		pw = &_pw_passwd;
+		ret = pw;
 		goto done;
 	}
 
 done:
 	_THREAD_PRIVATE_MUTEX_UNLOCK(pw);
-	return (pw);
+	return (ret);
 }
 
 #ifdef YP
@@ -697,10 +758,10 @@ _pwhashbyuid(uid_t uid, char *buf, size_t buflen, struct passwd *pw,
 
 static int
 getpwnam_internal(const char *name, struct passwd *pw, char *buf, size_t buflen,
-    struct passwd **pwretp, int shadow)
+    struct passwd **pwretp, bool shadow, bool reentrant)
 {
 	struct passwd *pwret = NULL;
-	int flags = 0, *flagsp;
+	int flags = 0, *flagsp = &flags;
 	int my_errno = 0;
 	int saved_errno, tmp_errno;
 
@@ -710,10 +771,12 @@ getpwnam_internal(const char *name, struct passwd *pw, char *buf, size_t buflen,
 	if (!_pw_db && !__initdb(shadow))
 		goto fail;
 
-	if (pw == &_pw_passwd)
+	if (!reentrant) {
+		/* Allocate space for struct and strings, unmapping the old. */
+		if ((pw = __get_pw_buf(&buf, &buflen, -1, name)) == NULL)
+			goto fail;
 		flagsp = &_pw_flags;
-	else
-		flagsp = &flags;
+	}
 
 #ifdef YP
 	if (__has_yppw())
@@ -743,7 +806,7 @@ int
 getpwnam_r(const char *name, struct passwd *pw, char *buf, size_t buflen,
     struct passwd **pwretp)
 {
-	return getpwnam_internal(name, pw, buf, buflen, pwretp, 0);
+	return getpwnam_internal(name, pw, buf, buflen, pwretp, false, true);
 }
 DEF_WEAK(getpwnam_r);
 
@@ -753,8 +816,7 @@ getpwnam(const char *name)
 	struct passwd *pw = NULL;
 	int my_errno;
 
-	my_errno = getpwnam_r(name, &_pw_passwd, _pw_string,
-	    sizeof _pw_string, &pw);
+	my_errno = getpwnam_internal(name, NULL, NULL, 0, &pw, false, false);
 	if (my_errno) {
 		pw = NULL;
 		errno = my_errno;
@@ -768,8 +830,7 @@ getpwnam_shadow(const char *name)
 	struct passwd *pw = NULL;
 	int my_errno;
 
-	my_errno = getpwnam_internal(name, &_pw_passwd, _pw_string,
-	    sizeof _pw_string, &pw, 1);
+	my_errno = getpwnam_internal(name, NULL, NULL, 0, &pw, true, false);
 	if (my_errno) {
 		pw = NULL;
 		errno = my_errno;
@@ -780,10 +841,10 @@ DEF_WEAK(getpwnam_shadow);
 
 static int
 getpwuid_internal(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
-    struct passwd **pwretp, int shadow)
+    struct passwd **pwretp, bool shadow, bool reentrant)
 {
 	struct passwd *pwret = NULL;
-	int flags = 0, *flagsp;
+	int flags = 0, *flagsp = &flags;
 	int my_errno = 0;
 	int saved_errno, tmp_errno;
 
@@ -793,10 +854,12 @@ getpwuid_internal(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
 	if (!_pw_db && !__initdb(shadow))
 		goto fail;
 
-	if (pw == &_pw_passwd)
+	if (!reentrant) {
+		/* Allocate space for struct and strings, unmapping the old. */
+		if ((pw = __get_pw_buf(&buf, &buflen, uid, NULL)) == NULL)
+			goto fail;
 		flagsp = &_pw_flags;
-	else
-		flagsp = &flags;
+	}
 
 #ifdef YP
 	if (__has_yppw())
@@ -827,7 +890,7 @@ int
 getpwuid_r(uid_t uid, struct passwd *pw, char *buf, size_t buflen,
     struct passwd **pwretp)
 {
-	return getpwuid_internal(uid, pw, buf, buflen, pwretp, 0);
+	return getpwuid_internal(uid, pw, buf, buflen, pwretp, false, true);
 }
 DEF_WEAK(getpwuid_r);
 
@@ -837,8 +900,7 @@ getpwuid(uid_t uid)
 	struct passwd *pw = NULL;
 	int my_errno;
 
-	my_errno = getpwuid_r(uid, &_pw_passwd, _pw_string,
-	    sizeof _pw_string, &pw);
+	my_errno = getpwuid_internal(uid, NULL, NULL, 0, &pw, false, false);
 	if (my_errno) {
 		pw = NULL;
 		errno = my_errno;
@@ -852,8 +914,7 @@ getpwuid_shadow(uid_t uid)
 	struct passwd *pw = NULL;
 	int my_errno;
 
-	my_errno = getpwuid_internal(uid, &_pw_passwd, _pw_string,
-	    sizeof _pw_string, &pw, 1);
+	my_errno = getpwuid_internal(uid, NULL, NULL, 0, &pw, true, false);
 	if (my_errno) {
 		pw = NULL;
 		errno = my_errno;

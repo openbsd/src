@@ -31,7 +31,7 @@ our (@EXPORT_OK, @ISA, $VERSION);
 # consistency is good).
 BEGIN {
     @ISA       = qw(Exporter);
-    $VERSION   = '2.00';
+    $VERSION   = '2.01';
     @EXPORT_OK = qw(
       read_snippet read_test_data slurp test_snippet test_snippet_with_io
     );
@@ -93,7 +93,8 @@ sub _stderr_restore {
 # Read one test snippet from the provided relative file name and return it.
 # For the format, see t/data/snippets/README.
 #
-# $path - Relative path to read test data from
+# $path     - Relative path to read test data from
+# $encoding - Encoding of snippet (UTF-8 if not specified)
 #
 # Returns: Reference to hash of test data with the following keys:
 #            name      - Name of the test for status reporting
@@ -103,15 +104,16 @@ sub _stderr_restore {
 #            errors    - Expected errors
 #            exception - Text of exception (with file and line stripped)
 sub read_snippet {
-    my ($path) = @_;
+    my ($path, $encoding) = @_;
     $path = File::Spec->catfile('t', 'data', 'snippets', $path);
+    $encoding ||= 'UTF-8';
     my %data;
 
     # Read the sections and store them in the %data hash.
     my ($line, $section);
     open(my $fh, '<', $path) or BAIL_OUT("cannot open $path: $!");
     while (defined($line = <$fh>)) {
-        $line = decode('UTF-8', $line);
+        $line = decode($encoding, $line);
         if ($line =~ m{ \A \s* \[ (\S+) \] \s* \z }xms) {
             $section = $1;
         } elsif ($section) {
@@ -246,11 +248,14 @@ sub slurp {
 # loading the snippet, creating the formatter, running it, and checking the
 # results, and reports those results with Test::More.
 #
-# $class   - Class name of the formatter, as a string
-# $snippet - Path to the snippet file defining the test
+# $class       - Class name of the formatter, as a string
+# $snippet     - Path to the snippet file defining the test
+# $options_ref - Hash of options with the following keys:
+#   encoding - Set to use a non-standard encoding
 sub test_snippet {
-    my ($class, $snippet) = @_;
-    my $data_ref = read_snippet($snippet);
+    my ($class, $snippet, $options_ref) = @_;
+    my $encoding = defined($options_ref) ? $options_ref->{encoding} : undef;
+    my $data_ref = read_snippet($snippet, $encoding);
 
     # Create the formatter object.
     my $parser = $class->new(%{ $data_ref->{options} }, name => 'TEST');
@@ -278,7 +283,7 @@ sub test_snippet {
     }
     if ($data_ref->{exception} || $exception) {
         if ($exception) {
-            $exception =~ s{ [ ] at [ ] .* }{}xms;
+            $exception =~ s{ [ ] at [ ] .* }{\n}xms;
         }
         is($exception, $data_ref->{exception}, "$data_ref->{name}: exception");
     }
@@ -391,14 +396,14 @@ should be explicitly imported.
 
 =over 4
 
-=item read_snippet(PATH[, OPTIONS])
+=item read_snippet(PATH[, ENCODING])
 
 Read one test snippet from the provided relative file name and return it.  The
 path should be relative to F<t/data/snippets>.  For the format, see
 F<t/data/snippets/README>.
 
-OPTIONS, if present, is a hash that currently supports only one key: C<utf8>,
-to set a PerlIO input encoding layer of UTF-8 when reading the snippet.
+ENCODING, if present, specifies the encoding of the snippet.  If not given,
+the snippet is assumed to be encoded in C<UTF-8>.
 
 The result will be a hash with the following keys:
 
@@ -476,11 +481,15 @@ The output data for the test.  This is always present.
 Read the contents of FILE and return it as a string.  If STRIP is set to
 C<man>, strip off any Pod::Man header from the file before returning it.
 
-=item test_snippet(CLASS, SNIPPET)
+=item test_snippet(CLASS, SNIPPET[, OPTIONS])
 
 Test a formatter on a particular POD snippet.  This does all the work of
 loading the snippet, creating the formatter by instantiating CLASS, running
 it, and checking the results.  Results are reported with Test::More.
+
+OPTIONS, if present, is a reference to a hash of options.  Currently, only
+one key is supported: C<encoding>, which, if set, specifies the encoding of
+the snippet.
 
 =item test_snippet_with_io(CLASS, SNIPPET[, OPTIONS])
 
@@ -488,8 +497,8 @@ The same as test_snippet(), except, rather than parsing the input into a
 string buffer, this function uses real, temporary input and output files.
 This can be used to test I/O layer handling and proper encoding.
 
-OPTIONS, if present, is a reference to a hash of options.  Currently, only
-one key is supported: C<perlio>, which, if set to true, will set a PerlIO
+OPTIONS, if present, is a reference to a hash of options.  Currently, only one
+key is supported: C<perlio_utf8>, which, if set to true, will set a PerlIO
 UTF-8 encoding layer on the output file before writing to it.
 
 =back
@@ -500,7 +509,7 @@ Russ Allbery <rra@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2015 Russ Allbery <rra@cpan.org>
+Copyright 2015, 2016 Russ Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

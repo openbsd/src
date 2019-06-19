@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.10 2017/08/27 01:39:26 beck Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.11 2018/08/24 20:22:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -86,7 +86,7 @@ struct evp_pkey_asn1_method_st {
 	int (*pub_print)(BIO *out, const EVP_PKEY *pkey, int indent,
 	    ASN1_PCTX *pctx);
 
-	int (*priv_decode)(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf);
+	int (*priv_decode)(EVP_PKEY *pk, const PKCS8_PRIV_KEY_INFO *p8inf);
 	int (*priv_encode)(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk);
 	int (*priv_print)(BIO *out, const EVP_PKEY *pkey, int indent,
 	    ASN1_PCTX *pctx);

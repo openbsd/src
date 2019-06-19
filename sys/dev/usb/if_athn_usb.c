@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.50 2018/02/05 09:52:03 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.52 2018/12/06 07:50:38 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1144,7 +1144,7 @@ athn_usb_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni,
 void
 athn_usb_newassoc_cb(struct athn_usb_softc *usc, void *arg)
 {
- 	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
+	struct ieee80211com *ic = &usc->sc_sc.sc_ic;
 	struct ieee80211_node *ni = *(void **)arg;
 	struct athn_node *an = (struct athn_node *)ni;
 	int s;
@@ -1152,7 +1152,7 @@ athn_usb_newassoc_cb(struct athn_usb_softc *usc, void *arg)
 	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
 
- 	s = splnet();
+	s = splnet();
 	/* NB: Node may have left before we got scheduled. */
 	if (an->sta_index != 0)
 		(void)athn_usb_node_set_rates(usc, ni);
@@ -1202,8 +1202,6 @@ athn_usb_newauth_cb(struct athn_usb_softc *usc, void *arg)
 	struct athn_node *an = (struct athn_node *)ni;
 	int s, error = 0;
 
-	free(arg, M_DEVBUF, sizeof(*arg));
-
 	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
 
@@ -1231,7 +1229,7 @@ athn_usb_newauth(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct ifnet *ifp = &ic->ic_if;
 	struct athn_node *an = (struct athn_node *)ni;
 	int nsta;
-	struct athn_usb_newauth_cb_arg *arg;
+	struct athn_usb_newauth_cb_arg arg;
 
 	if (ic->ic_opmode != IEEE80211_M_HOSTAP)
 		return 0;
@@ -1254,12 +1252,9 @@ athn_usb_newauth(struct ieee80211com *ic, struct ieee80211_node *ni,
 	 * In a process context, try to add this node to the
 	 * firmware table and confirm the AUTH request.
 	 */
-	arg = malloc(sizeof(*arg), M_DEVBUF, M_NOWAIT);
-	if (arg == NULL)
-		return ENOMEM;
-	arg->ni = ieee80211_ref_node(ni);
-	arg->seq = seq;
-	athn_usb_do_async(usc, athn_usb_newauth_cb, arg, sizeof(*arg));
+	arg.ni = ieee80211_ref_node(ni);
+	arg.seq = seq;
+	athn_usb_do_async(usc, athn_usb_newauth_cb, &arg, sizeof(arg));
 	return EBUSY;
 #else
 	return 0;

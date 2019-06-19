@@ -1,4 +1,4 @@
-/* $OpenBSD: support.S,v 1.6 2017/08/09 03:06:55 jsg Exp $ */
+/* $OpenBSD: support.S,v 1.9 2019/03/15 05:42:38 kevlo Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * Copyright (c) 2014-2015 The FreeBSD Foundation
@@ -27,13 +27,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <machine/asm.h>
-#if 0
-__FBSDID("$FreeBSD: head/sys/arm64/arm64/support.S 297615 2016-04-06 14:08:10Z andrew $");
-#endif
 
 #include <machine/setjmp.h>
 #include <machine/param.h>
@@ -43,6 +39,7 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/support.S 297615 2016-04-06 14:08:10Z a
 
 #ifdef DDB
 ENTRY(setjmp)
+	RETGUARD_SETUP(setjmp, x15)
 	/* Store the stack pointer */
 	mov	x8, sp
 	str	x8, [x0], #8
@@ -57,10 +54,13 @@ ENTRY(setjmp)
 
 	/* Return zero */
 	mov	x0, #0
+	RETGUARD_CHECK(setjmp, x15)
 	ret
 END(setjmp)
 
 ENTRY(longjmp)
+	RETGUARD_SYMBOL(longjmp)
+	RETGUARD_LOAD_RANDOM(longjmp, x15)
 	/* Restore the stack pointer */
 	ldr	x8, [x0], #8
 	mov	sp, x8
@@ -72,9 +72,11 @@ ENTRY(longjmp)
 	ldp	x25, x26, [x0], #16
 	ldp	x27, x28, [x0], #16
 	ldp	x29, lr, [x0], #16
+	RETGUARD_CALC_COOKIE(x15)
 
 	/* Return nonzero */
 	mov	x0, #1
+	RETGUARD_CHECK(longjmp, x15)
 	ret
 END(longjmp)
 #endif
@@ -83,6 +85,7 @@ END(longjmp)
  * pagezero, simple implementation
  */
 ENTRY(pagezero_simple)
+	RETGUARD_SETUP(pagezero_simple, x15)
 	add	x1, x0, #PAGE_SIZE
 
 1:
@@ -92,6 +95,7 @@ ENTRY(pagezero_simple)
 	stp	xzr, xzr, [x0], #0x10
 	cmp	x0, x1
 	b.ne	1b
+	RETGUARD_CHECK(pagezero_simple, x15)
 	ret
 
 END(pagezero_simple)
@@ -100,6 +104,7 @@ END(pagezero_simple)
  * pagezero, cache assisted
  */
 ENTRY(pagezero_cache)
+	RETGUARD_SETUP(pagezero_cache, x15)
 	add	x1, x0, #PAGE_SIZE
 
 	ldr	x2, =dczva_line_size
@@ -110,6 +115,7 @@ ENTRY(pagezero_cache)
 	add	x0, x0, x2
 	cmp	x0, x1
 	b.ne	1b
+	RETGUARD_CHECK(pagezero_cache, x15)
 	ret
 
 END(pagezero_cache)

@@ -1,4 +1,4 @@
-/* $OpenBSD: tfork_thread.S,v 1.2 2017/02/20 08:42:46 patrick Exp $ */
+/* $OpenBSD: tfork_thread.S,v 1.3 2018/08/12 17:15:10 mortimer Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -24,11 +24,13 @@
  */
 
 ENTRY(__tfork_thread)
+	RETGUARD_SETUP(__tfork_thread, x15)
 	SYSTRAP(__tfork)
 	bcs	CERROR
 
 	/* check if we are parent or child */
 	cbz	x0, 1f
+	RETGUARD_CHECK(__tfork_thread, x15)
 	ret
 
 1:

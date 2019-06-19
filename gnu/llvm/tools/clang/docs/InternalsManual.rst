@@ -49,12 +49,12 @@ when the code is incorrect or dubious.  In Clang, each diagnostic produced has
 (at the minimum) a unique ID, an English translation associated with it, a
 :ref:`SourceLocation <SourceLocation>` to "put the caret", and a severity
 (e.g., ``WARNING`` or ``ERROR``).  They can also optionally include a number of
-arguments to the dianostic (which fill in "%0"'s in the string) as well as a
+arguments to the diagnostic (which fill in "%0"'s in the string) as well as a
 number of source ranges that related to the diagnostic.
 
 In this section, we'll be giving examples produced by the Clang command line
 driver, but diagnostics can be :ref:`rendered in many different ways
-<DiagnosticClient>` depending on how the ``DiagnosticClient`` interface is
+<DiagnosticConsumer>` depending on how the ``DiagnosticConsumer`` interface is
 implemented.  A representative example of a diagnostic is:
 
 .. code-block:: text
@@ -188,7 +188,7 @@ Formatting a Diagnostic Argument
 Arguments to diagnostics are fully typed internally, and come from a couple
 different classes: integers, types, names, and random strings.  Depending on
 the class of the argument, it can be optionally formatted in different ways.
-This gives the ``DiagnosticClient`` information about what the argument means
+This gives the ``DiagnosticConsumer`` information about what the argument means
 without requiring it to use a specific presentation (consider this MVC for
 Clang :).
 
@@ -319,6 +319,32 @@ they should be discussed before they are added.  If you are creating a lot of
 repetitive diagnostics and/or have an idea for a useful formatter, please bring
 it up on the cfe-dev mailing list.
 
+**"sub" format**
+
+Example:
+  Given the following record definition of type ``TextSubstitution``:
+
+  .. code-block:: text
+
+    def select_ovl_candidate : TextSubstitution<
+      "%select{function|constructor}0%select{| template| %2}1">;
+
+  which can be used as
+
+  .. code-block:: text
+
+    def note_ovl_candidate : Note<
+      "candidate %sub{select_ovl_candidate}3,2,1 not viable">;
+
+  and will act as if it was written
+  ``"candidate %select{function|constructor}3%select{| template| %1}2 not viable"``.
+Description:
+  This format specifier is used to avoid repeating strings verbatim in multiple
+  diagnostics. The argument to ``%sub`` must name a ``TextSubstitution`` tblgen
+  record. The substitution must specify all arguments used by the substitution,
+  and the modifier indexes in the substitution are re-numbered accordingly. The
+  substituted text must itself be a valid format string before substitution.
+
 .. _internals-producing-diag:
 
 Producing the Diagnostic
@@ -387,7 +413,7 @@ exactly where those parentheses would be inserted into the source code.  The
 fix-it hints themselves describe what changes to make to the source code in an
 abstract manner, which the text diagnostic printer renders as a line of
 "insertions" below the caret line.  :ref:`Other diagnostic clients
-<DiagnosticClient>` might choose to render the code differently (e.g., as
+<DiagnosticConsumer>` might choose to render the code differently (e.g., as
 markup inline) or even give the user the ability to automatically fix the
 problem.
 
@@ -420,26 +446,26 @@ Fix-it hints can be created with one of three constructors:
     Specifies that the code in the given source ``Range`` should be removed,
     and replaced with the given ``Code`` string.
 
-.. _DiagnosticClient:
+.. _DiagnosticConsumer:
 
-The ``DiagnosticClient`` Interface
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The ``DiagnosticConsumer`` Interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Once code generates a diagnostic with all of the arguments and the rest of the
 relevant information, Clang needs to know what to do with it.  As previously
 mentioned, the diagnostic machinery goes through some filtering to map a
 severity onto a diagnostic level, then (assuming the diagnostic is not mapped
-to "``Ignore``") it invokes an object that implements the ``DiagnosticClient``
+to "``Ignore``") it invokes an object that implements the ``DiagnosticConsumer``
 interface with the information.
 
 It is possible to implement this interface in many different ways.  For
-example, the normal Clang ``DiagnosticClient`` (named
+example, the normal Clang ``DiagnosticConsumer`` (named
 ``TextDiagnosticPrinter``) turns the arguments into strings (according to the
 various formatting rules), prints out the file/line/column information and the
 string, then prints out the line of code, the source ranges, and the caret.
 However, this behavior isn't required.
 
-Another implementation of the ``DiagnosticClient`` interface is the
+Another implementation of the ``DiagnosticConsumer`` interface is the
 ``TextDiagnosticBuffer`` class, which is used when Clang is in ``-verify``
 mode.  Instead of formatting and printing out the diagnostics, this
 implementation just captures and remembers the diagnostics as they fly by.
@@ -493,11 +519,11 @@ source code of the program.  Important design points include:
 
 In practice, the ``SourceLocation`` works together with the ``SourceManager``
 class to encode two pieces of information about a location: its spelling
-location and its instantiation location.  For most tokens, these will be the
+location and its expansion location.  For most tokens, these will be the
 same.  However, for a macro expansion (or tokens that came from a ``_Pragma``
 directive) these will describe the location of the characters corresponding to
 the token and the location where the token was used (i.e., the macro
-instantiation point or the location of the ``_Pragma`` itself).
+expansion point or the location of the ``_Pragma`` itself).
 
 The Clang front-end inherently depends on the location of a token being tracked
 correctly.  If it is ever incorrect, the front-end may get confused and die.
@@ -795,7 +821,7 @@ preprocessor and notifies a client of the parsing progress.
 Historically, the parser used to talk to an abstract ``Action`` interface that
 had virtual methods for parse events, for example ``ActOnBinOp()``.  When Clang
 grew C++ support, the parser stopped supporting general ``Action`` clients --
-it now always talks to the :ref:`Sema libray <Sema>`.  However, the Parser
+it now always talks to the :ref:`Sema library <Sema>`.  However, the Parser
 still accesses AST objects only through opaque types like ``ExprResult`` and
 ``StmtResult``.  Only :ref:`Sema <Sema>` looks at the AST node contents of these
 wrappers.
@@ -1324,9 +1350,9 @@ range of iterators over declarations of "``f``".
 function ``DeclContext::getPrimaryContext`` retrieves the "primary" context for
 a given ``DeclContext`` instance, which is the ``DeclContext`` responsible for
 maintaining the lookup table used for the semantics-centric view.  Given a
-DeclContext, one can obtain the set of declaration contexts that are semanticaly
-connected to this declaration context, in source order, including this context
-(which will be the only result, for non-namespace contexts) via
+DeclContext, one can obtain the set of declaration contexts that are
+semantically connected to this declaration context, in source order, including
+this context (which will be the only result, for non-namespace contexts) via
 ``DeclContext::collectAllContexts``. Note that these functions are used
 internally within the lookup and insertion methods of the ``DeclContext``, so
 the vast majority of clients can ignore them.
@@ -1514,7 +1540,7 @@ use an i-c-e where one is required, but accepting the code unless running with
 Things get a little bit more tricky when it comes to compatibility with
 real-world source code.  Specifically, GCC has historically accepted a huge
 superset of expressions as i-c-e's, and a lot of real world code depends on
-this unfortuate accident of history (including, e.g., the glibc system
+this unfortunate accident of history (including, e.g., the glibc system
 headers).  GCC accepts anything its "fold" optimizer is capable of reducing to
 an integer constant, which means that the definition of what it accepts changes
 as its optimizer does.  One example is that GCC accepts things like "``case
@@ -1540,7 +1566,7 @@ Implementation Approach
 After trying several different approaches, we've finally converged on a design
 (Note, at the time of this writing, not all of this has been implemented,
 consider this a design goal!).  Our basic approach is to define a single
-recursive method evaluation method (``Expr::Evaluate``), which is implemented
+recursive evaluation method (``Expr::Evaluate``), which is implemented
 in ``AST/ExprConstant.cpp``.  Given an expression with "scalar" type (integer,
 fp, complex, or pointer) this method returns the following information:
 
@@ -1638,15 +1664,15 @@ and then the semantic handling of the attribute.
 Parsing of the attribute is determined by the various syntactic forms attributes
 can take, such as GNU, C++11, and Microsoft style attributes, as well as other
 information provided by the table definition of the attribute. Ultimately, the
-parsed representation of an attribute object is an ``AttributeList`` object.
+parsed representation of an attribute object is an ``ParsedAttr`` object.
 These parsed attributes chain together as a list of parsed attributes attached
 to a declarator or declaration specifier. The parsing of attributes is handled
 automatically by Clang, except for attributes spelled as keywords. When
 implementing a keyword attribute, the parsing of the keyword and creation of the
-``AttributeList`` object must be done manually.
+``ParsedAttr`` object must be done manually.
 
 Eventually, ``Sema::ProcessDeclAttributeList()`` is called with a ``Decl`` and
-an ``AttributeList``, at which point the parsed attribute can be transformed
+an ``ParsedAttr``, at which point the parsed attribute can be transformed
 into a semantic attribute. The process by which a parsed attribute is converted
 into a semantic attribute depends on the attribute definition and semantic
 requirements of the attribute. The end result, however, is that the semantic
@@ -1725,8 +1751,8 @@ subjects in the list, but a custom diagnostic parameter can also be specified in
 the ``SubjectList``. The diagnostics generated for subject list violations are
 either ``diag::warn_attribute_wrong_decl_type`` or
 ``diag::err_attribute_wrong_decl_type``, and the parameter enumeration is found
-in `include/clang/Sema/AttributeList.h
-<http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Sema/AttributeList.h?view=markup>`_
+in `include/clang/Sema/ParsedAttr.h
+<http://llvm.org/viewvc/llvm-project/cfe/trunk/include/clang/Sema/ParsedAttr.h?view=markup>`_
 If a previously unused Decl node is added to the ``SubjectList``, the logic used
 to automatically determine the diagnostic parameter in `utils/TableGen/ClangAttrEmitter.cpp
 <http://llvm.org/viewvc/llvm-project/cfe/trunk/utils/TableGen/ClangAttrEmitter.cpp?view=markup>`_
@@ -1823,7 +1849,7 @@ Note that setting this member to 1 will opt out of common attribute semantic
 handling, requiring extra implementation efforts to ensure the attribute
 appertains to the appropriate subject, etc.
 
-If the attribute should not be propagated from from a template declaration to an
+If the attribute should not be propagated from a template declaration to an
 instantiation of the template, set the ``Clone`` member to 0. By default, all
 attributes will be cloned to template instantiations.
 
@@ -1861,14 +1887,9 @@ requirements. To support this feature, an attribute inheriting from
 should be the same value between all arguments sharing a spelling, and
 corresponds to the parsed attribute's ``Kind`` enumerator. This allows
 attributes to share a parsed attribute kind, but have distinct semantic
-attribute classes. For instance, ``AttributeList::AT_Interrupt`` is the shared
+attribute classes. For instance, ``ParsedAttr`` is the shared
 parsed attribute kind, but ARMInterruptAttr and MSP430InterruptAttr are the
 semantic attributes generated.
-
-By default, when declarations are merging attributes, an attribute will not be
-duplicated. However, if an attribute can be duplicated during this merging
-stage, set ``DuplicatesAllowedWhileMerging`` to ``1``, and the attribute will
-be merged.
 
 By default, attribute arguments are parsed in an evaluated context. If the
 arguments for an attribute should be parsed in an unevaluated context (akin to
@@ -2037,7 +2058,7 @@ are similar.
    * ``CodeGenFunction`` contains functions ``ConvertType`` and
      ``ConvertTypeForMem`` that convert Clang's types (``clang::Type*`` or
      ``clang::QualType``) to LLVM types.  Use the former for values, and the
-     later for memory locations: test with the C++ "``bool``" type to check
+     latter for memory locations: test with the C++ "``bool``" type to check
      this.  If you find that you are having to use LLVM bitcasts to make the
      subexpressions of your expression have the type that your expression
      expects, STOP!  Go fix semantic analysis and the AST so that you don't

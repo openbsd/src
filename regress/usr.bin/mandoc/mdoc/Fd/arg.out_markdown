@@ -1,0 +1,17 @@
+FD-ARG(2) - System Calls Manual
+
+# NAME
+
+**Fd-arg** - escape sequences in the arguments of in-line EOL macros
+
+# DESCRIPTION
+
+**&#35;unquoted unescaped**
+
+**&#35;quoted unescaped**
+
+**&#35;unquoted escaped**
+
+**&#35;quoted escaped**
+
+OpenBSD - December 21, 2018

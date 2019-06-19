@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdbool.h>
+#include "bool.h"
 
 struct mode {
 	bool werror;
@@ -37,6 +37,7 @@ struct mode {
 	bool do_stddef;
 	bool do_output;
 	bool output_linenumbers;
+	bool output_cheaplinenumbers;
 	bool output_retain_comments;
 	const char *output_file;
 	bool do_depend;

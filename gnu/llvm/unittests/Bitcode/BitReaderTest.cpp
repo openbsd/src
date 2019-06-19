@@ -12,10 +12,6 @@
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
-#include "llvm/Bitcode/BitstreamReader.h"
-#include "llvm/Bitcode/BitstreamWriter.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
@@ -48,7 +44,7 @@ std::unique_ptr<Module> parseAssembly(LLVMContext &Context,
 static void writeModuleToBuffer(std::unique_ptr<Module> Mod,
                                 SmallVectorImpl<char> &Buffer) {
   raw_svector_ostream OS(Buffer);
-  WriteBitcodeToFile(Mod.get(), OS);
+  WriteBitcodeToFile(*Mod, OS);
 }
 
 static std::unique_ptr<Module> getLazyModuleFromAssembly(LLVMContext &Context,

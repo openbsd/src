@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.22 2016/09/04 16:41:43 tb Exp $	*/
+/*	$OpenBSD: parse.c,v 1.23 2018/04/26 12:42:51 guenther Exp $	*/
 /*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
 
 /*
@@ -30,13 +30,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/file.h>
-
 #include <ctype.h>
 #include <err.h>
-#include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

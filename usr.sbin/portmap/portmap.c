@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.48 2015/10/14 13:32:44 jsg Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.49 2018/08/04 03:23:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -247,7 +247,7 @@ main(int argc, char *argv[])
 	}
 	endpwent();
 
-	if (pledge("stdio rpath inet proc", NULL) == -1)
+	if (pledge("stdio inet proc", NULL) == -1)
 		err(1, "pledge");
 
 	if (svc_register(xprt, PMAPPROG, PMAPVERS, reg_service, FALSE) == 0) {
@@ -609,7 +609,7 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 		return;
 	}
 
-	if (pledge("stdio rpath inet", NULL) == -1)
+	if (pledge("stdio inet", NULL) == -1)
 		err(1, "pledge");
 
 	port = pml->pml_map.pm_port;

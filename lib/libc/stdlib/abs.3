@@ -29,15 +29,16 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: abs.3,v 1.11 2013/07/17 05:42:11 schwarze Exp $
+.\"	$OpenBSD: abs.3,v 1.12 2019/01/18 07:32:17 schwarze Exp $
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: January 18 2019 $
 .Dt ABS 3
 .Os
 .Sh NAME
 .Nm abs
 .Nd integer absolute value function
 .Sh SYNOPSIS
+.In limits.h
 .In stdlib.h
 .Ft int
 .Fn abs "int j"
@@ -66,5 +67,9 @@ The
 .Fn abs
 function first appeared in
 .At v6 .
-.Sh BUGS
-The absolute value of the most negative integer remains negative.
+.Sh CAVEATS
+The result of applying
+.Fn abs
+to
+.Dv INT_MIN
+is undefined.

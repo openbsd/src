@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.50 2017/03/11 11:55:03 mpi Exp $ */
+/* $OpenBSD: pckbc.c,v 1.52 2019/06/03 16:46:49 anton Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -59,6 +59,7 @@ struct pckbc_devcmd {
 	int flags;
 #define KBC_CMDFLAG_SYNC 1 /* give descriptor back to caller */
 #define KBC_CMDFLAG_SLOW 2
+#define KBC_CMDFLAG_QUEUED 4 /* descriptor on cmdqueue */
 	u_char cmd[4];
 	int cmdlen, cmdidx, retries;
 	u_char response[4];
@@ -160,6 +161,9 @@ pckbc_poll_data1(bus_space_tag_t iot, bus_space_handle_t ioh_d,
 			} else {
 				if (slot == PCKBC_AUX_SLOT) {
 					DPRINTF("lost kbd 0x%x\n", c);
+					continue;
+				} else if (stat & KBS_AUXDATA) {
+					DPRINTF("discard aux data 0x%x\n", c);
 					continue;
 				}
 			}
@@ -696,12 +700,21 @@ pckbc_cleanqueue(struct pckbc_slotdata *q)
 
 	while ((cmd = TAILQ_FIRST(&q->cmdqueue))) {
 		TAILQ_REMOVE(&q->cmdqueue, cmd, next);
+		cmd->flags &= ~KBC_CMDFLAG_QUEUED;
 #ifdef PCKBCDEBUG
 		printf("pckbc_cleanqueue: removing");
 		for (i = 0; i < cmd->cmdlen; i++)
 			printf(" %02x", cmd->cmd[i]);
 		printf("\n");
 #endif
+		/*
+		 * A synchronous command on the cmdqueue is currently owned by a
+		 * sleeping proc. The same proc is responsible for putting it
+		 * back on the freequeue once awake.
+		 */
+		if (cmd->flags & KBC_CMDFLAG_SYNC)
+			continue;
+
 		TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
 	}
 }
@@ -790,15 +803,15 @@ pckbc_start(struct pckbc_internal *t, pckbc_slot_t slot)
 			if (cmd->status)
 				printf("pckbc_start: command error\n");
 
+			TAILQ_REMOVE(&q->cmdqueue, cmd, next);
+			cmd->flags &= ~KBC_CMDFLAG_QUEUED;
 			if (cmd->flags & KBC_CMDFLAG_SYNC) {
 				wakeup(cmd);
-				cmd = TAILQ_NEXT(cmd, next);
 			} else {
-				TAILQ_REMOVE(&q->cmdqueue, cmd, next);
 				timeout_del(&t->t_cleanup);
 				TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
-				cmd = TAILQ_FIRST(&q->cmdqueue);
 			}
+			cmd = TAILQ_FIRST(&q->cmdqueue);
 		} while (cmd);
 		return;
 	}
@@ -853,15 +866,15 @@ pckbc_cmdresponse(struct pckbc_internal *t, pckbc_slot_t slot, u_char data)
 		return (0);
 
 	/* dequeue: */
+	TAILQ_REMOVE(&q->cmdqueue, cmd, next);
+	cmd->flags &= ~KBC_CMDFLAG_QUEUED;
 	if (cmd->flags & KBC_CMDFLAG_SYNC) {
 		wakeup(cmd);
-		cmd = TAILQ_NEXT(cmd, next);
 	} else {
-		TAILQ_REMOVE(&q->cmdqueue, cmd, next);
 		timeout_del(&t->t_cleanup);
 		TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
-		cmd = TAILQ_FIRST(&q->cmdqueue);
 	}
+	cmd = TAILQ_FIRST(&q->cmdqueue);
 	if (cmd == NULL)
 		return (1);
 restart:
@@ -910,6 +923,7 @@ pckbc_enqueue_cmd(pckbc_tag_t self, pckbc_slot_t slot, u_char *cmd, int len,
 	}
 
 	isactive = CMD_IN_QUEUE(q);
+	nc->flags |= KBC_CMDFLAG_QUEUED;
 	TAILQ_INSERT_TAIL(&q->cmdqueue, nc, next);
 	if (!isactive)
 		pckbc_start(t, slot);
@@ -918,10 +932,17 @@ pckbc_enqueue_cmd(pckbc_tag_t self, pckbc_slot_t slot, u_char *cmd, int len,
 		res = (sync ? nc->status : 0);
 	else if (sync) {
 		if ((res = tsleep(nc, 0, "kbccmd", 1*hz))) {
-			TAILQ_REMOVE(&q->cmdqueue, nc, next);
 			pckbc_cleanup(t);
 		} else {
-			TAILQ_REMOVE(&q->cmdqueue, nc, next);
+			/*
+			 * Under certain circumstances, such as during suspend,
+			 * tsleep() becomes a no-op and the command is left on
+			 * the cmdqueue.
+			 */
+			if (nc->flags & KBC_CMDFLAG_QUEUED) {
+				TAILQ_REMOVE(&q->cmdqueue, nc, next);
+				nc->flags &= ~KBC_CMDFLAG_QUEUED;
+			}
 			res = nc->status;
 		}
 	} else

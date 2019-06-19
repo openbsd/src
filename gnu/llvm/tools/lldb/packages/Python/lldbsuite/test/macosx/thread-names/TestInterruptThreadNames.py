@@ -1,4 +1,4 @@
-"""Test that we get thread names when interrupting a process.""" 
+"""Test that we get thread names when interrupting a process."""
 from __future__ import print_function
 
 
@@ -23,7 +23,7 @@ class TestInterruptThreadNames(TestBase):
     def test_with_python_api(self):
         """Test that we get thread names when interrupting a process."""
         self.build()
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = self.getBuildArtifact("a.out")
 
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
@@ -63,14 +63,21 @@ class TestInterruptThreadNames(TestBase):
         process.Kill()
 
 
-    # The process will set a global variable 'threads_up_and_running' to 1 when 
+    # The process will set a global variable 'threads_up_and_running' to 1 when
     # it has has completed its setup.  Sleep for one second, pause the program,
     # check to see if the global has that value, and continue if it does not.
     def wait_until_program_setup_complete(self, process, listener):
         inferior_set_up = lldb.SBValue()
         retry = 5
         while retry > 0:
-            time.sleep(1)
+            arch = self.getArchitecture()
+            # when running the testsuite against a remote arm device, it may take
+            # a little longer for the process to start up.  Use a "can't possibly take
+            # longer than this" value.
+            if arch == 'arm64' or arch == 'armv7':
+                time.sleep(10)
+            else:
+                time.sleep(1)
             process.SendAsyncInterrupt()
             self.assertTrue(self.wait_for_stop(process, listener), "Check that process is paused")
             inferior_set_up = process.GetTarget().CreateValueFromExpression("threads_up_and_running", "threads_up_and_running")
@@ -100,7 +107,7 @@ class TestInterruptThreadNames(TestBase):
         return False
 
     # Listen to the process events until we get an event saying the process is
-    # stopped.  Retry up to five times in case we get other events that we are 
+    # stopped.  Retry up to five times in case we get other events that we are
     # not looking for.
     def wait_for_stop(self, process, listener):
         retry_count = 5

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.23 2018/02/28 19:49:33 matthieu Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.31 2019/05/08 22:00:55 krw Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: February 28 2018 $
+.Dd $Mdocdate: May 8 2019 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -73,22 +73,23 @@ data type can be entered either as an explicit IP address
 A domain name must resolve to a single IP address.
 .Pp
 The
+.Ar cidr
+data type specifies a network in CIDR notion.
+e.g. 1.2.3/24.
+.Pp
+The
 .Ar int32
 data type specifies a signed 32-bit integer.
 The
 .Ar uint32
 data type specifies an unsigned 32-bit integer.
 The
-.Ar int16
-and
 .Ar uint16
-data types specify signed and unsigned 16-bit integers.
+data type specifies unsigned 16-bit integers.
 The
-.Ar int8
-and
 .Ar uint8
-data types specify signed and unsigned 8-bit integers.
-Unsigned 8-bit integers are also sometimes referred to as octets.
+data type specifies unsigned 8-bit integers,
+sometimes referred to as octets.
 .Pp
 The
 .Ar string
@@ -168,15 +169,19 @@ Some DHCP clients will support it, and others actually require it.
 This option specifies the broadcast address in use on the client's subnet.
 Legal values for broadcast addresses are specified in section 3.2.1.3 of
 RFC 1122.
-.It Ic option classless-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
-This option specifies a list of static routes in CDIR notation, which
-should be sent to the client.
-This option is specified in RFC 3442.
-Note that, since the RFC says that clients supporting this option must ignore the
+.It Ic option classless-static-routes Ar cidr ip-address Oo , Ar cidr ip-address ... Oc ;
+This option specifies a list of destination networks and the
+associated gateways.
+This option is defined in RFC 3442.
+The RFC says that clients supporting this option must ignore the
 .Ic Routers
-option when both are present, the default route
-needs to be included in the list of routes specified here.
-.It Ic option classless-ms-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
+option when both are present.
+Thus default routes, if any,
+must be included in the list.
+The
+.Ar cidr
+of a default route is 0/0.
+.It Ic option classless-ms-static-routes Ar cidr ip-address Oo , Ar cidr ip-address ... Oc ;
 This option does the same as
 .Ic classless-static-routes ,
 but uses option code 249 instead of 121,
@@ -216,16 +221,22 @@ allow the client to request a lease time for the IP address.
 In a server reply (DHCPOFFER), a DHCP server uses this option to specify the
 lease time it is willing to offer.
 .It Ic option dhcp-max-message-size Ar uint16 ;
-This option specifies the maximum length DHCP message that it is willing
-to accept.
+This option specifies the maximum length
+.Ic option dhcp-message
+that the DHCP client is willing to accept.
 The length is specified as an unsigned 16-bit integer.
 A client may use the maximum DHCP message size option in DHCPDISCOVER or
 DHCPREQUEST messages, but should not use the option in DHCPDECLINE messages.
+.It Ic option dhcp-message Ar string ;
+This option is used to send an error message to a DHCP client in
+the event of a failure.
+The maximum acceptable length of the message can be set with
+.Ic option dhcp-max-message-size .
 .It Ic option dhcp-message-type Ar uint8 ;
 This option is used to convey the type of the DHCP message.
 Values: 1=DHCPDISCOVER, 2=DHCPOFFER, 3=DHCPREQUEST, 4=DHCPDECLINE, 5=DHCPACK,
 6=DHCPNAK, 7=DHCPRELEASE, 8=DHCPINFORM.
-.It Ic option dhcp-option-overload Ar uint8 Oo , Ar uint8 ... Oc ;
+.It Ic option dhcp-option-overload Ar uint8 ;
 This option is used to indicate that the DHCP 'sname' or 'file' fields are
 being overloaded by using them to carry DHCP options.
 A DHCP server inserts this option if the returned parameters will exceed
@@ -274,6 +285,20 @@ The
 option specifies a list of Domain Name System name servers
 available to the client.
 Servers should be listed in order of preference.
+.It Ic option domain-search Ar string Oo , Ar string ... Oc ;
+The
+.Ic domain-search
+option specifies a list of the domain names that should be
+used during DNS name resolution.
+.Pp
+When
+.Xr dhclient 8
+constructs
+.Xr resolv.conf 5
+it will use this list of domains in preference to any information
+provided by the
+.Ic domain-name
+option.
 .It Ic option extensions-path Ar string ;
 A string to specify a file, retrievable via TFTP, which contains information
 which can be interpreted in the same way as the 64-octet vendor-extension
@@ -358,7 +383,7 @@ This option specifies a list of IP addresses indicating Mobile IP
 home agents available to the client.
 Agents should be listed in order of preference, although normally there
 will be only one such agent.
-.It Ic option nds-context Ar string ;
+.It Ic option nds-context Ar data-string ;
 This option specifies the initial NDS context the client should use.
 NDS contexts are 16-bit Unicode strings.
 For transmission in the NDS Context Option, an NDS context is
@@ -377,7 +402,7 @@ This option specifies one or more NDS servers for the client to contact
 for access to the NDS database.
 Servers should be listed in order of preference.
 See RFC 2241 for details.
-.It Ic option nds-tree-name Ar string ;
+.It Ic option nds-tree-name Ar data-string ;
 This option specifies the name of the NDS tree the client will be contacting.
 NDS tree names are 16-bit Unicode strings.
 For transmission in the NDS Tree Name Option, an NDS tree name is
@@ -477,7 +502,7 @@ The
 .Ic pop-server
 option specifies a list of POP3 servers available to the client.
 Servers should be listed in order of preference.
-.It Ic option relay-agent-information Ar string ;
+.It Ic option relay-agent-information Ar data-string ;
 This is a "container" option for specific agent-supplied sub-options.
 See RFC 3046 for details.
 .It Ic option resource-location-servers Ar ip-address Oo , Ar ip-address ... Oc ;
@@ -525,6 +550,8 @@ option.
 Note that this option is obsolete and should be replaced by the
 .Ic classless-static-routes
 option.
+.Xr dhclient 8
+ignores this option.
 .It Ic option streettalk-directory-assistance-server Ar ip-address Oo , Ar ip-address ... Oc ;
 The StreetTalk Directory Assistance (STDA) server option specifies a
 list of STDA servers available to the client.

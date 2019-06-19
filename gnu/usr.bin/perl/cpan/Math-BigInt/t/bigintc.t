@@ -12,7 +12,7 @@ my ($BASE_LEN, undef, $AND_BITS, $XOR_BITS, $OR_BITS,
   = Math::BigInt::Calc->_base_len();
 
 print "# BASE_LEN = $BASE_LEN\n";
-print "# MAX_VAL = $MAX_VAL\n";
+print "# MAX_VAL  = $MAX_VAL\n";
 print "# AND_BITS = $AND_BITS\n";
 print "# XOR_BITS = $XOR_BITS\n";
 print "# IOR_BITS = $OR_BITS\n";
@@ -25,7 +25,7 @@ my $CALC = 'Math::BigInt::Calc';		# pass classname to sub's
 
 my $x = $CALC->_new("123");
 my $y = $CALC->_new("321");
-is(ref($x),         "ARRAY", q|ref($x) is an ARRAY|);
+is(ref($x), "Math::BigInt::Calc", q|ref($x) is an Math::BigInt::Calc|);
 is($CALC->_str($x), 123,     qq|$CALC->_str(\$x) = 123|);
 is($CALC->_str($y), 321,     qq|$CALC->_str(\$y) = 321|);
 
@@ -327,8 +327,9 @@ is($CALC->_str($y), 123, qq|$CALC->_str(\$y) = 123|);
 foreach (qw/1 12 123 1234 12345 1234567 12345678 123456789 1234567890/) {
 
     $x = $CALC->_new("$_");
-    is(ref($x),         "ARRAY", q|ref($x) = "ARRAY"|);
-    is($CALC->_str($x), "$_",    qq|$CALC->_str(\$x) = "$_"|);
+    is(ref($x), "Math::BigInt::Calc",
+       q|ref($x) = "Math::BigInt::Calc"|);
+    is($CALC->_str($x), "$_", qq|$CALC->_str(\$x) = "$_"|);
 
     $x = $CALC->_num($x);
     is(ref($x), "", q|ref($x) = ""|);

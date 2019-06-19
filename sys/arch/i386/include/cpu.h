@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.160 2018/03/22 19:30:19 bluhm Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.167 2019/01/18 01:34:50 pd Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #include <machine/psl.h>
 #include <machine/segments.h>
 #include <machine/intrdefs.h>
+#include <machine/tss.h>
 
 #ifdef MULTIPROCESSOR
 #include <machine/i82489reg.h>
@@ -66,43 +67,18 @@
 #include <sys/device.h>
 #include <sys/sched.h>
 #include <sys/sensors.h>
+#include <sys/srp.h>
 
 struct intrsource;
-
-/* VMXON region (Intel) */
-struct vmxon_region {
-	uint32_t	vr_revision;
-};
-
-/*
- * VMX for Intel CPUs
- */
-struct vmx {
-	uint64_t	vmx_cr0_fixed0;
-	uint64_t	vmx_cr0_fixed1;
-	uint64_t	vmx_cr4_fixed0;
-	uint64_t	vmx_cr4_fixed1;
-	uint32_t	vmx_vmxon_revision;
-	uint32_t	vmx_msr_table_size;
-	uint32_t	vmx_cr3_tgt_count;
-	uint64_t	vmx_vm_func;
-};
-
-/*
- * SVM for AMD CPUs
- */
-struct svm {
-};
-
-union vmm_cpu_cap {
-	struct vmx vcc_vmx;
-	struct svm vcc_svm;
-};
 
 #ifdef _KERNEL
 /* XXX stuff to move to cpuvar.h later */
 struct cpu_info {
-	struct device ci_dev;		/* our device */
+	u_int32_t	ci_kern_cr3;	/* U+K page table */
+	u_int32_t	ci_scratch;	/* for U<-->K transition */
+
+#define ci_PAGEALIGN	ci_dev
+	struct device *ci_dev;		/* our device */
 	struct cpu_info *ci_self;	/* pointer to this structure */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 	struct cpu_info *ci_next;	/* next cpu */
@@ -115,6 +91,10 @@ struct cpu_info {
 	u_int ci_apicid;		/* our APIC ID */
 	u_int ci_acpi_proc_id;
 	u_int32_t ci_randseed;
+
+	u_int32_t ci_kern_esp;		/* kernel-only stack */
+	u_int32_t ci_intr_esp;		/* U<-->K trampoline stack */
+	u_int32_t ci_user_cr3;		/* U-K page table */
 
 #if defined(MULTIPROCESSOR)
 	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
@@ -129,7 +109,6 @@ struct cpu_info {
 
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */
-	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
 	struct pmap *ci_curpmap;
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
@@ -154,6 +133,7 @@ struct cpu_info {
 	u_int32_t	ci_feature_flags;	/* X86 CPUID feature bits */
 	u_int32_t	ci_feature_sefflags_ebx;/* more CPUID feature bits */
 	u_int32_t	ci_feature_sefflags_ecx;/* more CPUID feature bits */
+	u_int32_t	ci_feature_sefflags_edx;/* more CPUID feature bits */
 	u_int32_t	ci_feature_tpmflags;	/* thermal & power bits */
 	u_int32_t	cpu_class;		/* CPU class */
 	u_int32_t	ci_cflushsz;		/* clflush cache-line size */
@@ -175,6 +155,8 @@ struct cpu_info {
 	int		ci_want_resched;
 
 	union descriptor *ci_gdt;
+	struct i386tss	*ci_tss;
+	struct i386tss	*ci_nmi_tss;
 
 	volatile int ci_ddb_paused;	/* paused due to other proc in ddb */
 #define CI_DDB_RUNNING		0
@@ -188,15 +170,6 @@ struct cpu_info {
 #if defined(GPROF) || defined(DDBPROF)
 	struct gmonparam	*ci_gmon;
 #endif
-	u_int32_t		ci_vmm_flags;
-#define CI_VMM_VMX		(1 << 0)
-#define CI_VMM_SVM		(1 << 1)
-#define CI_VMM_RVI		(1 << 2)
-#define CI_VMM_EPT		(1 << 3)
-#define CI_VMM_DIS		(1 << 4)
-	union vmm_cpu_cap	ci_vmm_cap;
-	uint64_t		ci_vmxon_region_pa; /* Must be 64 bit */
-	struct vmxon_region	*ci_vmxon_region;
 };
 
 /*
@@ -223,14 +196,17 @@ struct cpu_info {
  * the only CPU on uniprocessors), and the primary CPU is the
  * first CPU on the CPU info list.
  */
-extern struct cpu_info cpu_info_primary;
+struct cpu_info_full;
+extern struct cpu_info_full cpu_info_full_primary;
+#define cpu_info_primary (*(struct cpu_info *)((char *)&cpu_info_full_primary + PAGE_SIZE*2 - offsetof(struct cpu_info, ci_PAGEALIGN)))
+
 extern struct cpu_info *cpu_info_list;
 
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)
 
-#define CPU_INFO_UNIT(ci)	((ci)->ci_dev.dv_unit)
+#define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
 
 #ifdef MULTIPROCESSOR
 
@@ -387,6 +363,7 @@ extern int cpu_apmi_edx;
 /* cpu.c */
 extern u_int cpu_mwait_size;
 extern u_int cpu_mwait_states;
+extern void cpu_update_nmi_cr3(vaddr_t);
 
 /* machdep.c */
 extern int cpu_apmhalt;
@@ -495,11 +472,6 @@ int	kvtop(caddr_t);
 /* mp_setperf.c */
 void	mp_setperf_init(void);
 #endif
-
-#ifdef VM86
-/* vm86.c */
-void	vm86_gpfault(struct proc *, int);
-#endif /* VM86 */
 
 int	cpu_paenable(void *);
 #endif /* _KERNEL */

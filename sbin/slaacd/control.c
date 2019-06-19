@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2017/12/10 10:07:54 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.6 2019/03/11 22:53:29 pamela Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -103,16 +103,6 @@ control_listen(void)
 	evtimer_set(&control_state.evt, control_accept, NULL);
 
 	return (0);
-}
-
-void
-control_cleanup(char *path)
-{
-	if (path == NULL)
-		return;
-	event_del(&control_state.ev);
-	event_del(&control_state.evt);
-	unlink(path);
 }
 
 void
@@ -249,31 +239,31 @@ control_dispatch_imsg(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_LOG_VERBOSE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(verbose))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
 				break;
 
 			/* Forward to all other processes. */
 			frontend_imsg_compose_main(imsg.hdr.type, imsg.hdr.pid,
-			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			    imsg.data, IMSG_DATA_SIZE(imsg));
 			frontend_imsg_compose_engine(imsg.hdr.type, 0,
-			    imsg.hdr.pid, imsg.data,
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
+			    imsg.hdr.pid, imsg.data, IMSG_DATA_SIZE(imsg));
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;
 		case IMSG_CTL_SHOW_INTERFACE_INFO:
+			if (IMSG_DATA_SIZE(imsg) != sizeof(uint32_t))
+				break;
 			c->iev.ibuf.pid = imsg.hdr.pid;
 			frontend_imsg_compose_engine(imsg.hdr.type, 0,
-			    imsg.hdr.pid, imsg.data, imsg.hdr.len -
-			    IMSG_HEADER_SIZE);
+			    imsg.hdr.pid, imsg.data, IMSG_DATA_SIZE(imsg));
 			break;
 		case IMSG_CTL_SEND_SOLICITATION:
+			if (IMSG_DATA_SIZE(imsg) != sizeof(uint32_t))
+				break;
 			c->iev.ibuf.pid = imsg.hdr.pid;
 			frontend_imsg_compose_engine(imsg.hdr.type, 0,
-			    imsg.hdr.pid, imsg.data, imsg.hdr.len -
-			    IMSG_HEADER_SIZE);
+			    imsg.hdr.pid, imsg.data, IMSG_DATA_SIZE(imsg));
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -295,5 +285,5 @@ control_imsg_relay(struct imsg *imsg)
 		return (0);
 
 	return (imsg_compose_event(&c->iev, imsg->hdr.type, 0, imsg->hdr.pid,
-	    -1, imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
+	    -1, imsg->data, IMSG_DATA_SIZE(*imsg)));
 }

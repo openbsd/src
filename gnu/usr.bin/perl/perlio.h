@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef _PERLIO_H
-#define _PERLIO_H
+#ifndef PERLIO_H_
+#define PERLIO_H_
 /*
   Interface for perl to IO functions.
   There is a hierarchy of Configure determined #define controls:
@@ -336,7 +336,7 @@ typedef struct PerlIO_list_s PerlIO_list_t;
 #endif
 
 END_EXTERN_C
-#endif				/* _PERLIO_H */
+#endif				/* PERLIO_H_ */
 
 /*
  * ex: set ts=8 sts=4 sw=4 et:

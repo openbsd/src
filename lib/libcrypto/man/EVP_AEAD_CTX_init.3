@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.6 2017/08/28 17:43:43 jsing Exp $
+.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.9 2019/06/06 01:06:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, Google Inc.
 .\" Parts of the text were written by Adam Langley and David Benjamin.
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 28 2017 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt EVP_AEAD_CTX_INIT 3
 .Os
 .Sh NAME
@@ -30,7 +30,8 @@
 .Nm EVP_AEAD_nonce_length ,
 .Nm EVP_aead_aes_128_gcm ,
 .Nm EVP_aead_aes_256_gcm ,
-.Nm EVP_aead_chacha20_poly1305
+.Nm EVP_aead_chacha20_poly1305 ,
+.Nm EVP_aead_xchacha20_poly1305
 .Nd authenticated encryption with additional data
 .Sh SYNOPSIS
 .In openssl/evp.h
@@ -99,6 +100,10 @@
 .Fc
 .Ft const EVP_AEAD *
 .Fo EVP_aead_chacha20_poly1305
+.Fa void
+.Fc
+.Ft const EVP_AEAD *
+.Fo EVP_aead_xchacha20_poly1305
 .Fa void
 .Fc
 .Sh DESCRIPTION
@@ -219,6 +224,8 @@ AES-128 in Galois Counter Mode.
 AES-256 in Galois Counter Mode.
 .It Fn EVP_aead_chacha20_poly1305
 ChaCha20 with a Poly1305 authenticator.
+.It Fn EVP_aead_xchacha20_poly1305
+XChaCha20 with a Poly1305 authenticator.
 .El
 .Pp
 Where possible the
@@ -268,7 +275,8 @@ EVP_AEAD_CTX_seal(&ctx, out, &out_len, BUFSIZE, nonce,
 EVP_AEAD_CTX_cleanup(&ctx);
 .Ed
 .Sh SEE ALSO
-.Xr evp 3
+.Xr evp 3 ,
+.Xr EVP_EncryptInit 3
 .Sh STANDARDS
 .Rs
 .%A A. Langley
@@ -284,6 +292,13 @@ EVP_AEAD_CTX_cleanup(&ctx);
 .%D May 2015
 .%R RFC 7539
 .%T ChaCha20 and Poly1305 for IETF Protocols
+.Re
+.Pp
+.Rs
+.%A S. Arciszewski
+.%D October 2018
+.%R draft-arciszewski-xchacha-02
+.%T XChaCha: eXtended-nonce ChaCha and AEAD_XChaCha20_Poly1305
 .Re
 .Sh HISTORY
 AEAD is based on the implementation by

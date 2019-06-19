@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc_gmac.c,v 1.8 2017/06/29 17:36:16 deraadt Exp $	*/
+/*	$OpenBSD: dwc_gmac.c,v 1.11 2018/12/30 20:11:59 kettenis Exp $	*/
 /* $NetBSD: dwc_gmac.c,v 1.34 2015/08/21 20:12:29 jmcneill Exp $ */
 
 /*-
@@ -222,8 +222,8 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk, int phyloc)
 
 	ifmedia_init(&mii->mii_media, 0, dwc_gmac_ifmedia_upd,
 	    dwc_gmac_ifmedia_sts);
-	mii_attach((void *)sc, mii, 0xffffffff, phyloc, MII_OFFSET_ANY,
-	    MIIF_DOPAUSE);
+	mii_attach((void *)sc, mii, 0xffffffff, phyloc,
+	    (phyloc == MII_PHY_ANY) ? 0 : MII_OFFSET_ANY, MIIF_DOPAUSE);
 
 	if (LIST_EMPTY(&mii->mii_phys)) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
@@ -290,7 +290,7 @@ dwc_gmac_reset(struct dwc_gmac_softc *sc)
 	size_t cnt;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_BUSMODE,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_BUSMODE) | GMAC_BUSMODE_RESET);
-	for (cnt = 0; cnt < 3000; cnt++) {
+	for (cnt = 0; cnt < 30000; cnt++) {
 		if ((bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_BUSMODE)
 		    & GMAC_BUSMODE_RESET) == 0)
 			return 0;
@@ -304,13 +304,13 @@ dwc_gmac_reset(struct dwc_gmac_softc *sc)
 void
 dwc_gmac_write_hwaddr(struct dwc_gmac_softc *sc, uint8_t *enaddr)
 {
-	uint32_t lo, hi;
+	uint32_t hi, lo;
 
+	hi = enaddr[4] | (enaddr[5] << 8);
 	lo = enaddr[0] | (enaddr[1] << 8) | (enaddr[2] << 16)
 	    | (enaddr[3] << 24);
-	hi = enaddr[4] | (enaddr[5] << 8);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO, lo);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0HI, hi);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO, lo);
 }
 
 int

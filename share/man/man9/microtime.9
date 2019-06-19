@@ -1,4 +1,4 @@
-.\"	$OpenBSD: microtime.9,v 1.16 2016/04/03 06:43:59 jsg Exp $
+.\"	$OpenBSD: microtime.9,v 1.18 2019/01/19 01:53:44 cheloha Exp $
 .\"     $NetBSD: microtime.9,v 1.2 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2016 $
+.Dd $Mdocdate: January 19 2019 $
 .Dt MICROTIME 9
 .Os
 .Sh NAME
@@ -36,13 +36,15 @@
 .Nm getmicrotime ,
 .Nm microuptime ,
 .Nm getmicrouptime ,
+.Nm microboottime ,
 .Nm nanotime ,
 .Nm getnanotime ,
 .Nm nanouptime ,
 .Nm getnanouptime ,
 .Nm bintime ,
-.Nm binuptime
-.Nd system clock
+.Nm binuptime ,
+.Nm binboottime
+.Nd system clocks
 .Sh SYNOPSIS
 .In sys/time.h
 .Ft void
@@ -59,6 +61,10 @@
 .Fc
 .Ft void
 .Fo getmicrouptime
+.Fa "struct timeval *tv"
+.Fc
+.Ft void
+.Fo microboottime
 .Fa "struct timeval *tv"
 .Fc
 .Ft void
@@ -85,11 +91,15 @@
 .Fo binuptime
 .Fa "struct bintime *tv"
 .Fc
+.Ft void
+.Fo binboottime
+.Fa "struct bintime *tv"
+.Fc
 .Sh DESCRIPTION
-This family of functions return the system clock in various different formats.
-The functions with the "uptime" suffix return the monotonically increasing
-time since boot.
-The functions without "up" return UTC time.
+This family of functions return different system clocks in various formats.
+The "uptime" functions return the monotonically increasing time since boot.
+The "boottime" functions return the UTC time at which the system booted.
+The "time" functions return the current UTC time.
 The various formats for the result are specified with:
 .Bl -tag -offset indent -width "micro"
 .It bin
@@ -109,7 +119,7 @@ be produced in the given format.
 .Sh CODE REFERENCES
 The implementation of these functions is partly machine dependent, but
 the bulk of the code is in the file
-.Pa sys/kern/kern_clock.c .
+.Pa sys/kern/kern_tc.c .
 .Sh SEE ALSO
 .Xr settimeofday 2 ,
 .Xr hardclock 9 ,

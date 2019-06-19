@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.122 2017/04/20 03:04:11 dlg Exp $ */
+/*	$OpenBSD: main.c,v 1.123 2019/04/22 18:32:09 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -513,10 +513,10 @@ figure_out_CURDIR()
 	/* curdir is cwd... */
 	cwd = dogetcwd();
 	if (cwd == NULL)
-		err(2, "%s", strerror(errno));
+		err(2, "getcwd");
 
 	if (stat(cwd, &sa) == -1)
-		err(2, "%s: %s", cwd, strerror(errno));
+		err(2, "%s", cwd);
 
 	/* ...but we can use the alias $PWD if we can prove it is the same
 	 * directory */

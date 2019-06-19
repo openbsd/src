@@ -234,7 +234,7 @@ print_rrs(FILE* out, struct zone* zone)
 static int
 print_header(zone_type* zone, FILE* out, time_t* now, const char* logs)
 {
-	char buf[4096];
+	char buf[4096+16];
 	/* ctime prints newline at end of this line */
 	snprintf(buf, sizeof(buf), "; zone %s written by NSD %s on %s",
 		zone->opts->name, PACKAGE_VERSION, ctime(now));

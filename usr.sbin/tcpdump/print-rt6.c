@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rt6.c,v 1.6 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-rt6.c,v 1.7 2018/10/22 16:12:45 kn Exp $	*/
 
 
 /*
@@ -21,8 +21,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifdef INET6
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -109,4 +107,3 @@ rt6_print(const u_char *bp, const u_char *bp2)
 	fputs(", [|srcrt]", stdout);
 	return 65535;		/* XXX */
 }
-#endif /* INET6 */

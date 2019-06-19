@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.44 2015/09/14 20:06:58 schwarze Exp $
+.\"	$OpenBSD: awk.1,v 1.45 2019/05/26 01:16:09 naddy Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2015 $
+.Dd $Mdocdate: May 26 2019 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -731,7 +731,8 @@ Print all lines between start/stop pairs:
 .Pp
 .Dl /start/, /stop/
 .Pp
-Simulate echo(1):
+Simulate
+.Xr echo 1 :
 .Bd -literal -offset indent
 BEGIN { # Simulate echo(1)
         for (i = 1; i < ARGC; i++) printf "%s ", ARGV[i]

@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_conf.c,v 1.10 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ts_conf.c,v 1.11 2018/04/14 07:18:37 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -248,8 +248,7 @@ err:
 		TSerror(TS_R_COULD_NOT_SET_ENGINE);
 		ERR_asprintf_error_data("engine:%s", name);
 	}
-	if (e)
-		ENGINE_free(e);
+	ENGINE_free(e);
 	return ret;
 }
 

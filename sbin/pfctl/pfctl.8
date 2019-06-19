@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.171 2017/08/11 22:30:38 benno Exp $
+.\" $OpenBSD: pfctl.8,v 1.178 2019/05/08 21:09:57 sashan Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 11 2017 $
+.Dd $Mdocdate: May 8 2019 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -94,8 +94,9 @@ The options are as follows:
 Apply flags
 .Fl f ,
 .Fl F ,
+.Fl s ,
 and
-.Fl s
+.Fl T
 only to the rules in the specified
 .Ar anchor .
 In addition to the main ruleset,
@@ -196,6 +197,11 @@ Flush the filter information (statistics that are not bound to rules).
 Flush the tables.
 .It Fl F Cm osfp
 Flush the passive operating system fingerprints.
+.It Fl F Cm Reset
+Reset limits, timeouts and other options back to default settings.
+See the OPTIONS section in
+.Xr pf.conf 5
+for details.
 .It Fl F Cm all
 Flush all of the above.
 .El
@@ -313,7 +319,11 @@ instead of the default
 .It Fl q
 Only print errors and warnings.
 .It Fl r
-Perform reverse DNS lookups on states when displaying them.
+Perform reverse DNS lookups on states and tables when displaying them.
+.Fl N
+and
+.Fl r
+are mutually exclusive.
 .It Fl S Ar statefile
 Store the pf state table in the file specified by
 .Ar statefile .
@@ -391,7 +401,7 @@ Show the list of tables.
 .It Fl s Cm osfp
 Show the list of operating system fingerprints.
 .It Fl s Cm Interfaces
-Show the list of interfaces and interface drivers available to PF.
+Show the list of interfaces and interface groups available to PF.
 When used together with
 .Fl v ,
 it additionally lists which interfaces have skip rules activated.
@@ -458,7 +468,7 @@ Kill a table.
 Flush all addresses of a table.
 .It Fl T Cm add
 Add one or more addresses in a table.
-Automatically create a nonexisting table.
+Automatically create a persistent table if it does not exist.
 .It Fl T Cm delete
 Delete one or more addresses from a table.
 .It Fl T Cm expire Ar number
@@ -470,7 +480,7 @@ For entries which have never had their statistics cleared,
 refers to the time they were added to the table.
 .It Fl T Cm replace
 Replace the addresses of the table.
-Automatically create a nonexisting table.
+Automatically create a persistent table if it does not exist.
 .It Fl T Cm show
 Show the content (addresses) of a table.
 .It Fl T Cm test

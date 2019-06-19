@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.47 2015/10/10 09:13:14 lum Exp $	*/
+/*	$OpenBSD: basic.c,v 1.49 2019/06/17 11:39:26 lum Exp $	*/
 
 /* This file is in the public domain */
 
@@ -20,6 +20,8 @@
 #include <stdlib.h>
 
 #include "def.h"
+
+#define percint(n1, n2)		((n1 * (int) n2) * 0.1)
 
 /*
  * Go to beginning of line.
@@ -115,46 +117,63 @@ forwchar(int f, int n)
 }
 
 /*
- * Go to the beginning of the
- * buffer. Setting WFFULL is conservative,
- * but almost always the case.
+ * Go to the beginning of the buffer. Setting WFFULL is conservative,
+ * but almost always the case. A universal argument of higher than 9
+ * puts the cursor back to the end of buffer.
  */
 int
 gotobob(int f, int n)
 {
-	(void) setmark(f, n);
+	if (!curwp->w_markp)
+		(void) setmark(f, n);
 	curwp->w_dotp = bfirstlp(curbp);
 	curwp->w_doto = 0;
 	curwp->w_rflag |= WFFULL;
 	curwp->w_dotline = 1;
+	if (f & FFOTHARG && n > 0) {
+		if (n > 9)
+			gotoeob(0, 0);
+		else
+			forwline(f, percint(curwp->w_bufp->b_lines, n) - 1);
+	}
 	return (TRUE);
 }
 
 /*
  * Go to the end of the buffer. Leave dot 3 lines from the bottom of the
  * window if buffer length is longer than window length; same as emacs.
- * Setting WFFULL is conservative, but almost always the case.
+ * Setting WFFULL is conservative, but almost always the case. A universal
+ * argument of higher than 9 puts the cursor back to the start of buffer.
  */
 int
 gotoeob(int f, int n)
 {
+	int		 ln;
 	struct line	*lp;
 
-	(void) setmark(f, n);
+	if (!curwp->w_markp)
+		(void) setmark(f, n);
 	curwp->w_dotp = blastlp(curbp);
 	curwp->w_doto = llength(curwp->w_dotp);
 	curwp->w_dotline = curwp->w_bufp->b_lines;
 
 	lp = curwp->w_dotp;
-	n = curwp->w_ntrows - 3;
+	ln = curwp->w_ntrows - 3;
 
-	if (n < curwp->w_bufp->b_lines && n >= 3) {
-		while (n--)
+	if (ln < curwp->w_bufp->b_lines && ln >= 3) {
+		while (ln--)
 			curwp->w_dotp = lback(curwp->w_dotp);
 
 		curwp->w_linep = curwp->w_dotp;
 		curwp->w_dotp = lp;
 	}
+	if (f & FFOTHARG && n > 0) {
+		if (n > 9)
+			gotobob(0, 0);
+		else
+			backline(f, percint(curwp->w_bufp->b_lines, n));
+	}
+
 	curwp->w_rflag |= WFFULL;
 	return (TRUE);
 }

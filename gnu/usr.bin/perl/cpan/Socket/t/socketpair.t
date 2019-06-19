@@ -83,7 +83,7 @@ $SIG{ALRM} = sub {die "Unexpected alarm during testing"};
 
 ok (socketpair (LEFT, RIGHT, AF_UNIX, SOCK_STREAM, PF_UNSPEC),
     "socketpair (LEFT, RIGHT, AF_UNIX, SOCK_STREAM, PF_UNSPEC)")
-    or print "# \$\! = $!\n";
+    or print STDERR "# \$\! = $!\n";
 
 if ($has_perlio) {
     binmode(LEFT,  ":bytes");
@@ -148,7 +148,7 @@ $SIG{PIPE} = 'IGNORE';
     # should help
     $! = $err;
     ok (($!{EPIPE} or $!{ESHUTDOWN}), '$! should be EPIPE or ESHUTDOWN')
-	or printf "\$\!=%d(%s)\n", $err, $err;
+	or printf STDERR "# \$\! = %d (%s)\n", $err, $err;
 }
 
 my @gripping = (chr 255, chr 127);
@@ -178,7 +178,7 @@ SKIP: {
 
     ok (socketpair (LEFT, RIGHT, AF_UNIX, SOCK_DGRAM, PF_UNSPEC),
 	"socketpair (LEFT, RIGHT, AF_UNIX, SOCK_DGRAM, PF_UNSPEC)")
-	or print "# \$\! = $!\n";
+	or print STDERR "# \$\! = $!\n";
 
     if ($has_perlio) {
 	binmode(LEFT,  ":bytes");

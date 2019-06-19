@@ -167,7 +167,7 @@ for (my $i = $#tests; $i > 0; $i-=3) {
 
 plan tests => $total_tests;
 
-ok (open (HEADER, ">$header"), "open '$header'");
+ok (open (HEADER, '>', $header), "open '$header'");
 print HEADER <<HEADER or die $!;
 #define Camel 2
 #define Dromedary 1
@@ -238,7 +238,7 @@ while (my ($args, $version, $expectation) = splice @tests, 0, 3) {
 
   foreach my $leaf (File::Spec->catfile('lib', "$name.pm"), 'Makefile.PL') {
     my $file = File::Spec->catfile($name, $leaf);
-    if (ok (open (FILE, $file), "open $file")) {
+    if (ok (open (FILE, '<', $file), "open $file")) {
       my $match = qr/use $version;/;
       my $found;
       while (<FILE>) {

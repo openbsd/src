@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.11 2018/03/10 15:50:31 jmc Exp $
+.\"	$OpenBSD: rdomain.4,v 1.12 2018/09/09 10:13:21 henning Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 10 2018 $
+.Dd $Mdocdate: September 9 2018 $
 .Dt RDOMAIN 4
 .Os
 .Sh NAME
@@ -82,6 +82,11 @@ with the same ID and a
 interface with a unit number matching the ID get created and assigned to the new
 domain.
 .Pp
+An rdomain can be deleted by removing all interfaces from it and then
+destroying the
+.Xr lo 4
+interface with the unit number matching the ID.
+.Pp
 The highest ID that can be used for an
 .Nm rdomain
 is 255.
@@ -117,6 +122,12 @@ and nat-to and move to rtable 0 on interface em1:
 block in on rdomain 4 proto tcp to any port 80
 match out on rdomain 4 to !$internal_net nat-to (em1) rtable 0
 .Ed
+.Pp
+Delete rdomain 4 again:
+.Bd -literal -offset indent
+# ifconfig em0 rdomain 0
+# ifconfig lo4 destroy
+.Ed
 .Sh SEE ALSO
 .Xr ps 1 ,
 .Xr lo 4 ,
@@ -133,9 +144,5 @@ first appeared in
 and IPv6 support first appeared in
 .Ox 5.5 .
 .Sh CAVEATS
-When an rtable already exists, a new domain with the same ID cannot be created.
-Since there is no command to destroy an rtable,
-a reboot is necessary.
-.Pp
 No tool is available to assign more than one rtable to an rdomain
 other than to the default one (0).

@@ -18,16 +18,25 @@ class VOP3PInst<string OpName, VOPProfile P, SDPatternOperator node = null_frag>
 
 // Non-packed instructions that use the VOP3P encoding.
 // VOP3 neg/abs and VOP3P opsel/opsel_hi modifiers are allowed.
-class VOP3_VOP3PInst<string OpName, VOPProfile P, SDPatternOperator node = null_frag> :
+class VOP3_VOP3PInst<string OpName, VOPProfile P, bit UseTiedOutput = 0,
+                     SDPatternOperator node = null_frag> :
   VOP3P_Pseudo<OpName, P> {
+  // These operands are only sort of f16 operands. Depending on
+  // op_sel_hi, these may be interpreted as f32. The inline immediate
+  // values are really f16 converted to f32, so we treat these as f16
+  // operands.
   let InOperandList =
-    (ins
-      FP32InputMods:$src0_modifiers, VCSrc_f32:$src0,
-      FP32InputMods:$src1_modifiers, VCSrc_f32:$src1,
-      FP32InputMods:$src2_modifiers, VCSrc_f32:$src2,
-      clampmod:$clamp,
-      op_sel:$op_sel,
-      op_sel_hi:$op_sel_hi);
+    !con(
+      !con(
+        (ins FP16InputMods:$src0_modifiers, VCSrc_f16:$src0,
+             FP16InputMods:$src1_modifiers, VCSrc_f16:$src1,
+             FP16InputMods:$src2_modifiers, VCSrc_f16:$src2,
+             clampmod:$clamp),
+         !if(UseTiedOutput, (ins VGPR_32:$vdst_in), (ins))),
+         (ins op_sel:$op_sel, op_sel_hi:$op_sel_hi));
+
+  let Constraints = !if(UseTiedOutput, "$vdst = $vdst_in", "");
+  let DisableEncoding = !if(UseTiedOutput, "$vdst_in", "");
   let AsmOperands =
     " $vdst, $src0_modifiers, $src1_modifiers, $src2_modifiers$op_sel$op_sel_hi$clamp";
 }
@@ -59,18 +68,135 @@ def V_PK_LSHLREV_B16 : VOP3PInst<"v_pk_lshlrev_b16", VOP3_Profile<VOP_V2I16_V2I1
 def V_PK_ASHRREV_I16 : VOP3PInst<"v_pk_ashrrev_i16", VOP3_Profile<VOP_V2I16_V2I16_V2I16>, ashr_rev>;
 def V_PK_LSHRREV_B16 : VOP3PInst<"v_pk_lshrrev_b16", VOP3_Profile<VOP_V2I16_V2I16_V2I16>, lshr_rev>;
 
-// XXX - Commutable?
+multiclass MadFmaMixPats<SDPatternOperator fma_like,
+                         Instruction mix_inst,
+                         Instruction mixlo_inst,
+                         Instruction mixhi_inst> {
+  def : GCNPat <
+    (f16 (fpround (fma_like (f32 (VOP3PMadMixMods f16:$src0, i32:$src0_modifiers)),
+                            (f32 (VOP3PMadMixMods f16:$src1, i32:$src1_modifiers)),
+                            (f32 (VOP3PMadMixMods f16:$src2, i32:$src2_modifiers))))),
+    (mixlo_inst $src0_modifiers, $src0,
+                $src1_modifiers, $src1,
+                $src2_modifiers, $src2,
+                DSTCLAMP.NONE,
+                (i32 (IMPLICIT_DEF)))
+  >;
+
+  // FIXME: Special case handling for maxhi (especially for clamp)
+  // because dealing with the write to high half of the register is
+  // difficult.
+  def : GCNPat <
+    (build_vector f16:$elt0, (fpround (fma_like (f32 (VOP3PMadMixMods f16:$src0, i32:$src0_modifiers)),
+                                                (f32 (VOP3PMadMixMods f16:$src1, i32:$src1_modifiers)),
+                                                (f32 (VOP3PMadMixMods f16:$src2, i32:$src2_modifiers))))),
+    (v2f16 (mixhi_inst $src0_modifiers, $src0,
+                       $src1_modifiers, $src1,
+                       $src2_modifiers, $src2,
+                       DSTCLAMP.NONE,
+                       $elt0))
+  >;
+
+  def : GCNPat <
+    (build_vector
+      f16:$elt0,
+      (AMDGPUclamp (fpround (fma_like (f32 (VOP3PMadMixMods f16:$src0, i32:$src0_modifiers)),
+                                      (f32 (VOP3PMadMixMods f16:$src1, i32:$src1_modifiers)),
+                                      (f32 (VOP3PMadMixMods f16:$src2, i32:$src2_modifiers)))))),
+    (v2f16 (mixhi_inst $src0_modifiers, $src0,
+                       $src1_modifiers, $src1,
+                       $src2_modifiers, $src2,
+                       DSTCLAMP.ENABLE,
+                       $elt0))
+  >;
+
+  def : GCNPat <
+    (AMDGPUclamp (build_vector
+      (fpround (fma_like (f32 (VOP3PMadMixMods f16:$lo_src0, i32:$lo_src0_modifiers)),
+                         (f32 (VOP3PMadMixMods f16:$lo_src1, i32:$lo_src1_modifiers)),
+                         (f32 (VOP3PMadMixMods f16:$lo_src2, i32:$lo_src2_modifiers)))),
+      (fpround (fma_like (f32 (VOP3PMadMixMods f16:$hi_src0, i32:$hi_src0_modifiers)),
+                         (f32 (VOP3PMadMixMods f16:$hi_src1, i32:$hi_src1_modifiers)),
+                         (f32 (VOP3PMadMixMods f16:$hi_src2, i32:$hi_src2_modifiers)))))),
+    (v2f16 (mixhi_inst $hi_src0_modifiers, $hi_src0,
+                       $hi_src1_modifiers, $hi_src1,
+                       $hi_src2_modifiers, $hi_src2,
+                       DSTCLAMP.ENABLE,
+                       (mixlo_inst $lo_src0_modifiers, $lo_src0,
+                                   $lo_src1_modifiers, $lo_src1,
+                                   $lo_src2_modifiers, $lo_src2,
+                                   DSTCLAMP.ENABLE,
+                                   (i32 (IMPLICIT_DEF)))))
+  >;
+}
+
+let SubtargetPredicate = HasMadMixInsts in {
 // These are VOP3a-like opcodes which accept no omod.
 // Size of src arguments (16/32) is controlled by op_sel.
 // For 16-bit src arguments their location (hi/lo) are controlled by op_sel_hi.
-def V_MAD_MIX_F32 : VOP3_VOP3PInst<"v_mad_mix_f32", VOP3_Profile<VOP_F32_V2F16_V2F16_V2F16>>;
-def V_MAD_MIXLO_F16 : VOP3_VOP3PInst<"v_mad_mixlo_f16", VOP3_Profile<VOP_V2F16_V2F16_V2F16_V2F16>>;
-def V_MAD_MIXHI_F16 : VOP3_VOP3PInst<"v_mad_mixhi_f16", VOP3_Profile<VOP_V2F16_V2F16_V2F16_V2F16>>;
+let isCommutable = 1 in {
+def V_MAD_MIX_F32 : VOP3_VOP3PInst<"v_mad_mix_f32", VOP3_Profile<VOP_F32_F16_F16_F16, VOP3_OPSEL>>;
 
+// Clamp modifier is applied after conversion to f16.
+def V_MAD_MIXLO_F16 : VOP3_VOP3PInst<"v_mad_mixlo_f16", VOP3_Profile<VOP_F16_F16_F16_F16, VOP3_OPSEL>, 1>;
+
+let ClampLo = 0, ClampHi = 1 in {
+def V_MAD_MIXHI_F16 : VOP3_VOP3PInst<"v_mad_mixhi_f16", VOP3_Profile<VOP_F16_F16_F16_F16, VOP3_OPSEL>, 1>;
+}
+}
+
+defm : MadFmaMixPats<fmad, V_MAD_MIX_F32, V_MAD_MIXLO_F16, V_MAD_MIXHI_F16>;
+} // End SubtargetPredicate = HasMadMixInsts
+
+
+// Essentially the same as the mad_mix versions
+let SubtargetPredicate = HasFmaMixInsts in {
+let isCommutable = 1 in {
+def V_FMA_MIX_F32 : VOP3_VOP3PInst<"v_fma_mix_f32", VOP3_Profile<VOP_F32_F16_F16_F16, VOP3_OPSEL>>;
+
+// Clamp modifier is applied after conversion to f16.
+def V_FMA_MIXLO_F16 : VOP3_VOP3PInst<"v_fma_mixlo_f16", VOP3_Profile<VOP_F16_F16_F16_F16, VOP3_OPSEL>, 1>;
+
+let ClampLo = 0, ClampHi = 1 in {
+def V_FMA_MIXHI_F16 : VOP3_VOP3PInst<"v_fma_mixhi_f16", VOP3_Profile<VOP_F16_F16_F16_F16, VOP3_OPSEL>, 1>;
+}
+}
+
+defm : MadFmaMixPats<fma, V_FMA_MIX_F32, V_FMA_MIXLO_F16, V_FMA_MIXHI_F16>;
+}
+
+let SubtargetPredicate = HasDLInsts in {
+
+def V_DOT2_F32_F16 : VOP3PInst<"v_dot2_f32_f16", VOP3_Profile<VOP_F32_V2F16_V2F16_F32>>;
+def V_DOT2_I32_I16 : VOP3PInst<"v_dot2_i32_i16", VOP3_Profile<VOP_I32_V2I16_V2I16_I32>>;
+def V_DOT2_U32_U16 : VOP3PInst<"v_dot2_u32_u16", VOP3_Profile<VOP_I32_V2I16_V2I16_I32>>;
+def V_DOT4_I32_I8  : VOP3PInst<"v_dot4_i32_i8", VOP3_Profile<VOP_I32_I32_I32_I32, VOP3_PACKED>>;
+def V_DOT4_U32_U8  : VOP3PInst<"v_dot4_u32_u8", VOP3_Profile<VOP_I32_I32_I32_I32, VOP3_PACKED>>;
+def V_DOT8_I32_I4  : VOP3PInst<"v_dot8_i32_i4", VOP3_Profile<VOP_I32_I32_I32_I32, VOP3_PACKED>>;
+def V_DOT8_U32_U4  : VOP3PInst<"v_dot8_u32_u4", VOP3_Profile<VOP_I32_I32_I32_I32, VOP3_PACKED>>;
+
+multiclass DotPats<SDPatternOperator dot_op,
+                   VOP3PInst dot_inst> {
+  def : GCNPat <
+    (dot_op (dot_inst.Pfl.Src0VT (VOP3PMods0 dot_inst.Pfl.Src0VT:$src0, i32:$src0_modifiers)),
+            (dot_inst.Pfl.Src1VT (VOP3PMods dot_inst.Pfl.Src1VT:$src1, i32:$src1_modifiers)),
+            (dot_inst.Pfl.Src2VT (VOP3PMods dot_inst.Pfl.Src2VT:$src2, i32:$src2_modifiers)), i1:$clamp),
+    (dot_inst $src0_modifiers, $src0, $src1_modifiers, $src1, $src2_modifiers, $src2, (as_i1imm $clamp))>;
+}
+
+defm : DotPats<AMDGPUfdot2, V_DOT2_F32_F16>;
+defm : DotPats<int_amdgcn_sdot2, V_DOT2_I32_I16>;
+defm : DotPats<int_amdgcn_udot2, V_DOT2_U32_U16>;
+defm : DotPats<int_amdgcn_sdot4, V_DOT4_I32_I8>;
+defm : DotPats<int_amdgcn_udot4, V_DOT4_U32_U8>;
+defm : DotPats<int_amdgcn_sdot8, V_DOT8_I32_I4>;
+defm : DotPats<int_amdgcn_udot8, V_DOT8_U32_U4>;
+
+} // End SubtargetPredicate = HasDLInsts
 
 multiclass VOP3P_Real_vi<bits<10> op> {
-  def _vi : VOP3P_Real<!cast<VOP3P_Pseudo>(NAME), SIEncodingFamily.VI>,
-            VOP3Pe <op, !cast<VOP3P_Pseudo>(NAME).Pfl> {
+  def _vi : VOP3P_Real<!cast<VOP3_Pseudo>(NAME), SIEncodingFamily.VI>,
+            VOP3Pe <op, !cast<VOP3_Pseudo>(NAME).Pfl> {
     let AssemblerPredicates = [HasVOP3PInsts];
     let DecoderNamespace = "VI";
   }
@@ -97,6 +223,33 @@ defm V_PK_MUL_F16 : VOP3P_Real_vi <0x390>;
 defm V_PK_MIN_F16 : VOP3P_Real_vi <0x391>;
 defm V_PK_MAX_F16 : VOP3P_Real_vi <0x392>;
 
+
+let SubtargetPredicate = HasMadMixInsts in {
 defm V_MAD_MIX_F32 : VOP3P_Real_vi <0x3a0>;
 defm V_MAD_MIXLO_F16 : VOP3P_Real_vi <0x3a1>;
 defm V_MAD_MIXHI_F16 : VOP3P_Real_vi <0x3a2>;
+}
+
+let SubtargetPredicate = HasFmaMixInsts in {
+let DecoderNamespace = "GFX9_DL" in {
+// The mad_mix instructions were renamed and their behaviors changed,
+// but the opcode stayed the same so we need to put these in a
+// different DecoderNamespace to avoid the ambiguity.
+defm V_FMA_MIX_F32 : VOP3P_Real_vi <0x3a0>;
+defm V_FMA_MIXLO_F16 : VOP3P_Real_vi <0x3a1>;
+defm V_FMA_MIXHI_F16 : VOP3P_Real_vi <0x3a2>;
+}
+}
+
+
+let SubtargetPredicate = HasDLInsts in {
+
+defm V_DOT2_F32_F16 : VOP3P_Real_vi <0x3a3>;
+defm V_DOT2_I32_I16 : VOP3P_Real_vi <0x3a6>;
+defm V_DOT2_U32_U16 : VOP3P_Real_vi <0x3a7>;
+defm V_DOT4_I32_I8  : VOP3P_Real_vi <0x3a8>;
+defm V_DOT4_U32_U8  : VOP3P_Real_vi <0x3a9>;
+defm V_DOT8_I32_I4  : VOP3P_Real_vi <0x3aa>;
+defm V_DOT8_U32_U4  : VOP3P_Real_vi <0x3ab>;
+
+} // End SubtargetPredicate = HasDLInsts

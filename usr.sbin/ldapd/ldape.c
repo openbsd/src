@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.26 2017/02/24 14:28:31 gsoares Exp $ */
+/*	$OpenBSD: ldape.c,v 1.30 2018/08/12 22:04:09 rob Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -42,7 +42,7 @@ static void		 ldape_needfd(struct imsgev *iev);
 
 int			 ldap_starttls(struct request *req);
 void			 send_ldap_extended_response(struct conn *conn,
-				int msgid, unsigned long type,
+				int msgid, unsigned int type,
 				long long result_code,
 				const char *extended_oid);
 
@@ -69,10 +69,10 @@ ldape_sig_handler(int sig, short why, void *data)
 }
 
 void
-send_ldap_extended_response(struct conn *conn, int msgid, unsigned long type,
+send_ldap_extended_response(struct conn *conn, int msgid, unsigned int type,
     long long result_code, const char *extended_oid)
 {
-	int			 rc;
+	ssize_t			 rc;
 	struct ber_element	*root, *elm;
 	void			*buf;
 
@@ -116,8 +116,8 @@ ldap_refer(struct request *req, const char *basedn, struct search *search,
 	struct ber_element	*root, *elm, *ref_root = NULL;
 	struct referral		*ref;
 	long long		 result_code = LDAP_REFERRAL;
-	unsigned long		 type;
-	int			 rc;
+	unsigned int		 type;
+	ssize_t			 rc;
 	void			*buf;
 	char			*url, *scope_str = NULL;
 
@@ -189,7 +189,7 @@ fail:
 }
 
 void
-send_ldap_result(struct conn *conn, int msgid, unsigned long type,
+send_ldap_result(struct conn *conn, int msgid, unsigned int type,
     long long result_code)
 {
 	send_ldap_extended_response(conn, msgid, type, result_code, NULL);
@@ -229,7 +229,8 @@ ldap_abandon(struct request *req)
 int
 ldap_unbind(struct request *req)
 {
-	log_debug("current bind dn = %s", req->conn->binddn);
+	log_debug("current bind dn = %s",
+	    req->conn->binddn == NULL ? "" : req->conn->binddn);
 	conn_disconnect(req->conn);
 	request_free(req);
 	return -1;		/* don't send any response */
@@ -346,11 +347,9 @@ ldape(int debug, int verbose, char *csockpath)
 	char			 host[128];
 	mode_t			old_umask = 0;
 	
-	log_init(debug);
-	log_verbose(verbose);
-
 	TAILQ_INIT(&conn_list);
 
+	ldap_loginit("ldap server", debug, verbose);
 	setproctitle("ldap server");
 	event_init();
 
@@ -443,7 +442,7 @@ ldape(int debug, int verbose, char *csockpath)
 
 	TAILQ_FOREACH(ns, &conf->namespaces, next) {
 		if (!namespace_has_referrals(ns) && namespace_open(ns) != 0)
-			fatal(ns->suffix);
+			fatal("%s", ns->suffix);
 	}
 
 	if ((pw = getpwnam(LDAPD_USER)) == NULL)

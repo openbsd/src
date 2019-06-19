@@ -1,18 +1,11 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:35 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:40 jsg Exp $
 
 LIB=	LLVMLinker
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Linker
 
-.include <bsd.own.mk>
-SRCS=	IRMover.cpp \
+SRCS+=	IRMover.cpp \
 	LinkModules.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Linker
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>

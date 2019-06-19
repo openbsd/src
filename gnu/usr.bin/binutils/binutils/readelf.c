@@ -129,7 +129,7 @@ Elf_Internal_Syminfo *dynamic_syminfo;
 unsigned long dynamic_syminfo_offset;
 unsigned int dynamic_syminfo_nent;
 char program_interpreter[64];
-bfd_vma dynamic_info[DT_JMPREL + 1];
+bfd_vma dynamic_info[DT_RUNPATH + 1];
 bfd_vma version_info[16];
 Elf_Internal_Ehdr elf_header;
 Elf_Internal_Shdr *section_headers;
@@ -2835,8 +2835,11 @@ process_file_header (void)
 	      (long) elf_header.e_ehsize);
       printf (_("  Size of program headers:           %ld (bytes)\n"),
 	      (long) elf_header.e_phentsize);
-      printf (_("  Number of program headers:         %ld\n"),
+      printf (_("  Number of program headers:         %ld"),
 	      (long) elf_header.e_phnum);
+      if (section_headers != NULL && elf_header.e_phnum == PN_XNUM)
+	printf (" (%ld)", (long) section_headers[0].sh_info);
+      putc ('\n', stdout);
       printf (_("  Size of section headers:           %ld (bytes)\n"),
 	      (long) elf_header.e_shentsize);
       printf (_("  Number of section headers:         %ld"),
@@ -2853,6 +2856,8 @@ process_file_header (void)
 
   if (section_headers != NULL)
     {
+      if (elf_header.e_phnum == PN_XNUM)
+        elf_header.e_phnum = section_headers[0].sh_info;
       if (elf_header.e_shnum == 0)
 	elf_header.e_shnum = section_headers[0].sh_size;
       if (elf_header.e_shstrndx == SHN_XINDEX)

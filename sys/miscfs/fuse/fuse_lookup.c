@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_lookup.c,v 1.17 2017/11/27 13:15:56 helg Exp $ */
+/* $OpenBSD: fuse_lookup.c,v 1.21 2018/06/21 14:53:36 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -84,8 +84,8 @@ fusefs_lookup(void *v)
 		if (error) {
 			fb_delete(fbuf);
 
-			/* tsleep return */
-			if (error == EWOULDBLOCK)
+			/* file system is dead */
+			if (error == ENXIO)
 				return (error);
 
 			if ((nameiop == CREATE || nameiop == RENAME) &&
@@ -101,7 +101,7 @@ fusefs_lookup(void *v)
 				cnp->cn_flags |= SAVENAME;
 
 				if (!lockparent) {
-					VOP_UNLOCK(vdp, p);
+					VOP_UNLOCK(vdp);
 					cnp->cn_flags |= PDIRUNLOCK;
 				}
 
@@ -111,7 +111,7 @@ fusefs_lookup(void *v)
 			return (ENOENT);
 		}
 
-		nid = fbuf->fb_attr.st_ino;
+		nid = fbuf->fb_ino;
 		nvtype = IFTOVT(fbuf->fb_attr.st_mode);
 		fb_delete(fbuf);
 	}
@@ -149,13 +149,13 @@ fusefs_lookup(void *v)
 	}
 
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(vdp, p);	/* race to get the inode */
+		VOP_UNLOCK(vdp);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 
 		error = VFS_VGET(fmp->mp, nid, &tdp);
 
 		if (error) {
-			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
 
 			goto reclaim;
@@ -164,7 +164,7 @@ fusefs_lookup(void *v)
 		tdp->v_type = nvtype;
 
 		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(vdp, LK_EXCLUSIVE, p))) {
+			if ((error = vn_lock(vdp, LK_EXCLUSIVE))) {
 				vput(tdp);
 				return (error);
 			}
@@ -184,7 +184,7 @@ fusefs_lookup(void *v)
 		tdp->v_type = nvtype;
 
 		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(vdp, p);
+			VOP_UNLOCK(vdp);
 			cnp->cn_flags |= PDIRUNLOCK;
 		}
 

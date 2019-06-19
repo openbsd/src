@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.29 2018/11/15 05:53:31 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -103,8 +103,12 @@ EC_GFp_simple_method(void)
 		.point_cmp = ec_GFp_simple_cmp,
 		.make_affine = ec_GFp_simple_make_affine,
 		.points_make_affine = ec_GFp_simple_points_make_affine,
+		.mul_generator_ct = ec_GFp_simple_mul_generator_ct,
+		.mul_single_ct = ec_GFp_simple_mul_single_ct,
+		.mul_double_nonct = ec_GFp_simple_mul_double_nonct,
 		.field_mul = ec_GFp_simple_field_mul,
-		.field_sqr = ec_GFp_simple_field_sqr
+		.field_sqr = ec_GFp_simple_field_sqr,
+		.blind_coordinates = ec_GFp_simple_blind_coordinates,
 	};
 
 	return &ret;
@@ -220,7 +224,7 @@ ec_GFp_simple_group_set_curve(EC_GROUP * group,
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -265,7 +269,7 @@ ec_GFp_simple_group_get_curve(const EC_GROUP * group, BIGNUM * p, BIGNUM * a, BI
 	}
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_free(new_ctx);
 	return ret;
 }
@@ -346,7 +350,7 @@ ec_GFp_simple_group_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
 	}
 	ret = 1;
 
-err:
+ err:
 	if (ctx != NULL)
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
@@ -456,7 +460,7 @@ ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP * group, EC_POINT *
 	}
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_free(new_ctx);
 	return ret;
 }
@@ -504,7 +508,7 @@ ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP * group, const EC_P
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_free(new_ctx);
 	return ret;
 }
@@ -624,7 +628,7 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP * group, const EC_POIN
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -811,7 +815,7 @@ ec_GFp_simple_add(const EC_GROUP * group, EC_POINT * r, const EC_POINT * a, cons
 
 	ret = 1;
 
-end:
+ end:
 	if (ctx)		/* otherwise we already called BN_CTX_end */
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
@@ -954,7 +958,7 @@ ec_GFp_simple_dbl(const EC_GROUP * group, EC_POINT * r, const EC_POINT * a, BN_C
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -1075,7 +1079,7 @@ ec_GFp_simple_is_on_curve(const EC_GROUP * group, const EC_POINT * point, BN_CTX
 
 	ret = (0 == BN_ucmp(tmp, rh));
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -1177,7 +1181,7 @@ ec_GFp_simple_cmp(const EC_GROUP * group, const EC_POINT * a, const EC_POINT * b
 	/* points are equal */
 	ret = 0;
 
-end:
+ end:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -1215,7 +1219,7 @@ ec_GFp_simple_make_affine(const EC_GROUP * group, EC_POINT * point, BN_CTX * ctx
 	}
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	return ret;
@@ -1380,7 +1384,7 @@ ec_GFp_simple_points_make_affine(const EC_GROUP * group, size_t num, EC_POINT * 
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
 	if (heap != NULL) {
@@ -1403,9 +1407,319 @@ ec_GFp_simple_field_mul(const EC_GROUP * group, BIGNUM * r, const BIGNUM * a, co
 	return BN_mod_mul(r, a, b, &group->field, ctx);
 }
 
-
 int 
 ec_GFp_simple_field_sqr(const EC_GROUP * group, BIGNUM * r, const BIGNUM * a, BN_CTX * ctx)
 {
 	return BN_mod_sqr(r, a, &group->field, ctx);
+}
+
+/*
+ * Apply randomization of EC point projective coordinates:
+ *
+ * 	(X, Y, Z) = (lambda^2 * X, lambda^3 * Y, lambda * Z)
+ * 
+ * where lambda is in the interval [1, group->field).
+ */
+int
+ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
+{
+	BIGNUM *lambda = NULL;
+	BIGNUM *tmp = NULL;
+	int ret = 0;
+
+	BN_CTX_start(ctx);
+	if ((lambda = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((tmp = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	/* Generate lambda in [1, group->field - 1] */
+	if (!bn_rand_interval(lambda, BN_value_one(), &group->field))
+		goto err;
+
+	if (group->meth->field_encode != NULL &&
+	    !group->meth->field_encode(group, lambda, lambda, ctx))
+		goto err;
+
+	/* Z = lambda * Z */
+	if (!group->meth->field_mul(group, &p->Z, lambda, &p->Z, ctx))
+		goto err;
+
+	/* tmp = lambda^2 */
+	if (!group->meth->field_sqr(group, tmp, lambda, ctx))
+		goto err;
+
+	/* X = lambda^2 * X */
+	if (!group->meth->field_mul(group, &p->X, tmp, &p->X, ctx))
+		goto err;
+
+	/* tmp = lambda^3 */
+	if (!group->meth->field_mul(group, tmp, tmp, lambda, ctx))
+		goto err;
+
+	/* Y = lambda^3 * Y */
+	if (!group->meth->field_mul(group, &p->Y, tmp, &p->Y, ctx))
+		goto err;
+
+	/* Disable optimized arithmetics after replacing Z by lambda * Z. */
+	p->Z_is_one = 0;
+
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	return ret;
+}
+
+
+#define EC_POINT_BN_set_flags(P, flags) do {				\
+	BN_set_flags(&(P)->X, (flags));         			\
+	BN_set_flags(&(P)->Y, (flags));         			\
+	BN_set_flags(&(P)->Z, (flags));         			\
+} while(0)
+
+#define EC_POINT_CSWAP(c, a, b, w, t) do {      			\
+	if (!BN_swap_ct(c, &(a)->X, &(b)->X, w)	||			\
+	    !BN_swap_ct(c, &(a)->Y, &(b)->Y, w)	|| 			\
+	    !BN_swap_ct(c, &(a)->Z, &(b)->Z, w))			\
+		goto err;						\
+	t = ((a)->Z_is_one ^ (b)->Z_is_one) & (c);			\
+	(a)->Z_is_one ^= (t);						\
+	(b)->Z_is_one ^= (t);						\
+} while(0)
+
+/*
+ * This function computes (in constant time) a point multiplication over the
+ * EC group.
+ *
+ * At a high level, it is Montgomery ladder with conditional swaps.
+ *
+ * It performs either a fixed point multiplication
+ *          (scalar * generator)
+ * when point is NULL, or a variable point multiplication
+ *          (scalar * point)
+ * when point is not NULL.
+ *
+ * scalar should be in the range [0,n) otherwise all constant time bets are off.
+ *
+ * NB: This says nothing about EC_POINT_add and EC_POINT_dbl,
+ * which of course are not constant time themselves.
+ *
+ * The product is stored in r.
+ *
+ * Returns 1 on success, 0 otherwise.
+ */
+static int
+ec_GFp_simple_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+    const EC_POINT *point, BN_CTX *ctx)
+{
+	int i, cardinality_bits, group_top, kbit, pbit, Z_is_one;
+	EC_POINT *s = NULL;
+	BIGNUM *k = NULL;
+	BIGNUM *lambda = NULL;
+	BIGNUM *cardinality = NULL;
+	BN_CTX *new_ctx = NULL;
+	int ret = 0;
+
+	if (ctx == NULL && (ctx = new_ctx = BN_CTX_new()) == NULL)
+		return 0;
+
+	BN_CTX_start(ctx);
+
+	if ((s = EC_POINT_new(group)) == NULL)
+		goto err;
+
+	if (point == NULL) {
+		if (!EC_POINT_copy(s, group->generator))
+			goto err;
+	} else {
+		if (!EC_POINT_copy(s, point))
+			goto err;
+	}
+
+	EC_POINT_BN_set_flags(s, BN_FLG_CONSTTIME);
+
+	if ((cardinality = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((lambda = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((k = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if (!BN_mul(cardinality, &group->order, &group->cofactor, ctx))
+		goto err;
+
+	/*
+	 * Group cardinalities are often on a word boundary.
+	 * So when we pad the scalar, some timing diff might
+	 * pop if it needs to be expanded due to carries.
+	 * So expand ahead of time.
+	 */
+	cardinality_bits = BN_num_bits(cardinality);
+	group_top = cardinality->top;
+	if ((bn_wexpand(k, group_top + 2) == NULL) ||
+	    (bn_wexpand(lambda, group_top + 2) == NULL))
+		goto err;
+
+	if (!BN_copy(k, scalar))
+		goto err;
+
+	BN_set_flags(k, BN_FLG_CONSTTIME);
+
+	if (BN_num_bits(k) > cardinality_bits || BN_is_negative(k)) {
+		/*
+		 * This is an unusual input, and we don't guarantee
+		 * constant-timeness
+		 */
+		if (!BN_nnmod(k, k, cardinality, ctx))
+			goto err;
+	}
+
+	if (!BN_add(lambda, k, cardinality))
+		goto err;
+	BN_set_flags(lambda, BN_FLG_CONSTTIME);
+	if (!BN_add(k, lambda, cardinality))
+		goto err;
+	/*
+	 * lambda := scalar + cardinality
+	 * k := scalar + 2*cardinality
+	 */
+	kbit = BN_is_bit_set(lambda, cardinality_bits);
+	if (!BN_swap_ct(kbit, k, lambda, group_top + 2))
+		goto err;
+
+	group_top = group->field.top;
+	if ((bn_wexpand(&s->X, group_top) == NULL) ||
+	    (bn_wexpand(&s->Y, group_top) == NULL) ||
+	    (bn_wexpand(&s->Z, group_top) == NULL) ||
+	    (bn_wexpand(&r->X, group_top) == NULL) ||
+	    (bn_wexpand(&r->Y, group_top) == NULL) ||
+	    (bn_wexpand(&r->Z, group_top) == NULL))
+		goto err;
+
+	/*
+	 * Apply coordinate blinding for EC_POINT if the underlying EC_METHOD
+	 * implements it.
+	 */
+	if (!ec_point_blind_coordinates(group, s, ctx))
+		goto err;
+
+	/* top bit is a 1, in a fixed pos */
+	if (!EC_POINT_copy(r, s))
+		goto err;
+
+	EC_POINT_BN_set_flags(r, BN_FLG_CONSTTIME);
+
+	if (!EC_POINT_dbl(group, s, s, ctx))
+		goto err;
+
+	pbit = 0;
+
+	/*
+	 * The ladder step, with branches, is
+	 *
+	 * k[i] == 0: S = add(R, S), R = dbl(R)
+	 * k[i] == 1: R = add(S, R), S = dbl(S)
+	 *
+	 * Swapping R, S conditionally on k[i] leaves you with state
+	 *
+	 * k[i] == 0: T, U = R, S
+	 * k[i] == 1: T, U = S, R
+	 *
+	 * Then perform the ECC ops.
+	 *
+	 * U = add(T, U)
+	 * T = dbl(T)
+	 *
+	 * Which leaves you with state
+	 *
+	 * k[i] == 0: U = add(R, S), T = dbl(R)
+	 * k[i] == 1: U = add(S, R), T = dbl(S)
+	 *
+	 * Swapping T, U conditionally on k[i] leaves you with state
+	 *
+	 * k[i] == 0: R, S = T, U
+	 * k[i] == 1: R, S = U, T
+	 *
+	 * Which leaves you with state
+	 *
+	 * k[i] == 0: S = add(R, S), R = dbl(R)
+	 * k[i] == 1: R = add(S, R), S = dbl(S)
+	 *
+	 * So we get the same logic, but instead of a branch it's a
+	 * conditional swap, followed by ECC ops, then another conditional swap.
+	 *
+	 * Optimization: The end of iteration i and start of i-1 looks like
+	 *
+	 * ...
+	 * CSWAP(k[i], R, S)
+	 * ECC
+	 * CSWAP(k[i], R, S)
+	 * (next iteration)
+	 * CSWAP(k[i-1], R, S)
+	 * ECC
+	 * CSWAP(k[i-1], R, S)
+	 * ...
+	 *
+	 * So instead of two contiguous swaps, you can merge the condition
+	 * bits and do a single swap.
+	 *
+	 * k[i]   k[i-1]    Outcome
+	 * 0      0         No Swap
+	 * 0      1         Swap
+	 * 1      0         Swap
+	 * 1      1         No Swap
+	 *
+	 * This is XOR. pbit tracks the previous bit of k.
+	 */
+
+	for (i = cardinality_bits - 1; i >= 0; i--) {
+		kbit = BN_is_bit_set(k, i) ^ pbit;
+		EC_POINT_CSWAP(kbit, r, s, group_top, Z_is_one);
+		if (!EC_POINT_add(group, s, r, s, ctx))
+			goto err;
+		if (!EC_POINT_dbl(group, r, r, ctx))
+			goto err;
+		/*
+		 * pbit logic merges this cswap with that of the
+		 * next iteration
+		 */
+		pbit ^= kbit;
+	}
+	/* one final cswap to move the right value into r */
+	EC_POINT_CSWAP(pbit, r, s, group_top, Z_is_one);
+	
+	ret = 1;
+
+ err:
+	EC_POINT_free(s);
+	if (ctx != NULL)
+		BN_CTX_end(ctx);
+	BN_CTX_free(new_ctx);
+
+	return ret;
+}
+
+#undef EC_POINT_BN_set_flags
+#undef EC_POINT_CSWAP
+
+int
+ec_GFp_simple_mul_generator_ct(const EC_GROUP *group, EC_POINT *r,
+    const BIGNUM *scalar, BN_CTX *ctx)
+{
+	return ec_GFp_simple_mul_ct(group, r, scalar, NULL, ctx);
+}
+
+int
+ec_GFp_simple_mul_single_ct(const EC_GROUP *group, EC_POINT *r,
+    const BIGNUM *scalar, const EC_POINT *point, BN_CTX *ctx)
+{
+	return ec_GFp_simple_mul_ct(group, r, scalar, point, ctx);
+}
+
+int
+ec_GFp_simple_mul_double_nonct(const EC_GROUP *group, EC_POINT *r,
+    const BIGNUM *g_scalar, const BIGNUM *p_scalar, const EC_POINT *point,
+    BN_CTX *ctx)
+{
+	return ec_wNAF_mul(group, r, g_scalar, 1, &point, &p_scalar, ctx);
 }

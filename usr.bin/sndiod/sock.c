@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.21 2018/01/10 09:05:48 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.29 2018/06/26 07:39:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -274,7 +274,6 @@ sock_new(int fd)
 
 	f = xmalloc(sizeof(struct sock));
 	f->pstate = SOCK_AUTH;
-	f->opt = NULL;
 	f->slot = NULL;
 	f->port = NULL;
 	f->midi = NULL;
@@ -627,21 +626,18 @@ sock_setpar(struct sock *f)
 			rchan = 1;
 		else if (rchan > NCHAN_MAX)
 			rchan = NCHAN_MAX;
-		s->sub.slot_cmin = f->opt->rmin;
-		s->sub.slot_cmax = f->opt->rmin + rchan - 1;
-		s->sub.dev_cmin = f->opt->rmin;
-		s->sub.dev_cmax = f->opt->rmax;
+		s->sub.nch = rchan;
 #ifdef DEBUG
 		if (log_level >= 3) {
 			sock_log(f);
 			log_puts(": recording channels ");
-			log_putu(s->sub.dev_cmin);
+			log_putu(s->opt->rmin);
 			log_puts(":");
-			log_putu(s->sub.dev_cmax);
+			log_putu(s->opt->rmax);
 			log_puts(" -> ");
-			log_putu(s->sub.slot_cmin);
+			log_putu(s->opt->rmin);
 			log_puts(":");
-			log_putu(s->sub.slot_cmax);
+			log_putu(s->opt->rmin + s->sub.nch - 1);
 			log_puts("\n");
 		}
 #endif
@@ -651,21 +647,18 @@ sock_setpar(struct sock *f)
 			pchan = 1;
 		else if (pchan > NCHAN_MAX)
 			pchan = NCHAN_MAX;
-		s->mix.slot_cmin = f->opt->pmin;
-		s->mix.slot_cmax = f->opt->pmin + pchan - 1;
-		s->mix.dev_cmin = f->opt->pmin;
-		s->mix.dev_cmax = f->opt->pmax;
+		s->mix.nch = pchan;
 #ifdef DEBUG
 		if (log_level >= 3) {
 			sock_log(f);
 			log_puts(": playback channels ");
-			log_putu(s->mix.slot_cmin);
+			log_putu(s->opt->pmin);
 			log_puts(":");
-			log_putu(s->mix.slot_cmax);
+			log_putu(s->opt->pmin + s->mix.nch - 1);
 			log_puts(" -> ");
-			log_putu(s->mix.dev_cmin);
+			log_putu(s->opt->pmin);
 			log_puts(":");
-			log_putu(s->mix.dev_cmax);
+			log_putu(s->opt->pmax);
 			log_puts("\n");
 		}
 #endif
@@ -714,7 +707,7 @@ sock_setpar(struct sock *f)
 			return 0;
 		}
 		s->xrun = p->xrun;
-		if (f->opt->mmc && s->xrun == XRUN_IGNORE)
+		if (s->opt->mmc && s->xrun == XRUN_IGNORE)
 			s->xrun = XRUN_SYNC;
 #ifdef DEBUG
 		if (log_level >= 3) {
@@ -771,9 +764,9 @@ int
 sock_hello(struct sock *f)
 {
 	struct amsg_hello *p = &f->rmsg.u.hello;
-	struct slot *s;
 	struct port *c;
 	struct dev *d;
+	struct opt *opt;
 	unsigned int mode;
 
 	mode = ntohs(p->mode);
@@ -842,54 +835,16 @@ sock_hello(struct sock *f)
 			return 0;
 		return 1;
 	}
-	f->opt = opt_byname(p->opt, p->devnum);
-	if (f->opt == NULL)
+	d = dev_bynum(p->devnum);
+	if (d == NULL)
 		return 0;
-#ifdef DEBUG
-	if (log_level >= 3) {
-		sock_log(f);
-		log_puts(": using ");
-		dev_log(f->opt->dev);
-		log_puts(".");
-		log_puts(f->opt->name);
-		log_puts(", mode = ");
-		log_putx(mode);
-		log_puts("\n");
-	}
-#endif
-	if ((mode & MODE_REC) && (f->opt->mode & MODE_MON)) {
-		mode |= MODE_MON;
-		mode &= ~MODE_REC;
-	}
-	if ((mode & f->opt->mode) != mode) {
-		if (log_level >= 1) {
-			sock_log(f);
-			log_puts(": requested mode not allowed\n");
-		}
+	opt = opt_byname(d, p->opt);
+	if (opt == NULL)
 		return 0;
-	}
-	s = slot_new(f->opt->dev, p->who, &sock_slotops, f, mode);
-	if (s == NULL)
+	f->slot = slot_new(d, opt, p->who, &sock_slotops, f, mode);
+	if (f->slot == NULL)
 		return 0;
 	f->midi = NULL;
-	if (s->mode & MODE_PLAY) {
-		s->mix.slot_cmin = s->mix.dev_cmin = f->opt->pmin;
-		s->mix.slot_cmax = s->mix.dev_cmax = f->opt->pmax;
-	}
-	if (s->mode & MODE_RECMASK) {
-		s->sub.slot_cmin = s->sub.dev_cmin = f->opt->rmin;
-		s->sub.slot_cmax = s->sub.dev_cmax = f->opt->rmax;
-	}
-	if (f->opt->mmc) {
-		s->xrun = XRUN_SYNC;
-		s->tstate = MMC_STOP;
-	} else {
-		s->xrun = XRUN_IGNORE;
-		s->tstate = MMC_OFF;
-	}
-	s->mix.maxweight = f->opt->maxweight;
-	s->dup = f->opt->dup;
-	f->slot = s;
 	return 1;
 }
 
@@ -1041,15 +996,15 @@ sock_execmsg(struct sock *f)
 			aparams_log(&s->par);
 			if (s->mode & MODE_PLAY) {
 				log_puts(", play ");
-				log_puti(s->mix.slot_cmin);
+				log_puti(s->opt->pmin);
 				log_puts(":");
-				log_puti(s->mix.slot_cmax);
+				log_puti(s->opt->pmin + s->mix.nch - 1);
 			}
 			if (s->mode & MODE_RECMASK) {
 				log_puts(", rec ");
-				log_puti(s->sub.slot_cmin);
+				log_puti(s->opt->rmin);
 				log_puts(":");
-				log_puti(s->sub.slot_cmax);
+				log_puti(s->opt->rmin + s->sub.nch - 1);
 			}
 			log_puts(", ");
 			log_putu(s->appbufsz / s->round);
@@ -1152,14 +1107,10 @@ sock_execmsg(struct sock *f)
 		m->u.par.sig = s->par.sig;
 		m->u.par.le = s->par.le;
 		m->u.par.msb = s->par.msb;
-		if (s->mode & MODE_PLAY) {
-			m->u.par.pchan = htons(s->mix.slot_cmax -
-			    s->mix.slot_cmin + 1);
-		}
-		if (s->mode & MODE_RECMASK) {
-			m->u.par.rchan = htons(s->sub.slot_cmax -
-			    s->sub.slot_cmin + 1);
-		}
+		if (s->mode & MODE_PLAY)
+			m->u.par.pchan = htons(s->mix.nch);
+		if (s->mode & MODE_RECMASK)
+			m->u.par.rchan = htons(s->sub.nch);
 		m->u.par.rate = htonl(s->rate);
 		m->u.par.appbufsz = htonl(s->appbufsz);
 		m->u.par.bufsz = htonl(SLOT_BUFSZ(s));

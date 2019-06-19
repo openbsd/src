@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.13 2017/12/04 09:51:03 mpi Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.14 2019/04/23 13:35:12 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -95,14 +95,14 @@ __mp_lock_spin(struct __mp_lock *mpl)
 }
 
 void
-___mp_lock(struct __mp_lock *mpl LOCK_FL_VARS)
+__mp_lock(struct __mp_lock *mpl)
 {
 	int s;
 
 #ifdef WITNESS
 	if (!__mp_lock_held(mpl, curcpu()))
 		WITNESS_CHECKORDER(&mpl->mpl_lock_obj,
-		    LOP_EXCLUSIVE | LOP_NEWORDER, file, line, NULL);
+		    LOP_EXCLUSIVE | LOP_NEWORDER, NULL);
 #endif
 
 	/*
@@ -133,11 +133,11 @@ ___mp_lock(struct __mp_lock *mpl LOCK_FL_VARS)
 		__mp_lock_spin(mpl);
 	}
 
-	WITNESS_LOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE, file, line);
+	WITNESS_LOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE);
 }
 
 void
-___mp_unlock(struct __mp_lock *mpl LOCK_FL_VARS)
+__mp_unlock(struct __mp_lock *mpl)
 {
 	int s;
 
@@ -149,7 +149,7 @@ ___mp_unlock(struct __mp_lock *mpl LOCK_FL_VARS)
 	}
 #endif
 
-	WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE, file, line);
+	WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE);
 
 	s = hppa_intr_disable();
 	if (--mpl->mpl_count == 1) {
@@ -161,7 +161,7 @@ ___mp_unlock(struct __mp_lock *mpl LOCK_FL_VARS)
 }
 
 int
-___mp_release_all(struct __mp_lock *mpl LOCK_FL_VARS)
+__mp_release_all(struct __mp_lock *mpl)
 {
 	int rv = mpl->mpl_count - 1;
 	int s;
@@ -179,7 +179,7 @@ ___mp_release_all(struct __mp_lock *mpl LOCK_FL_VARS)
 
 #ifdef WITNESS
 	for (i = 0; i < rv; i++)
-		WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE, file, line);
+		WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE);
 #endif
 
 	s = hppa_intr_disable();
@@ -192,7 +192,7 @@ ___mp_release_all(struct __mp_lock *mpl LOCK_FL_VARS)
 }
 
 int
-___mp_release_all_but_one(struct __mp_lock *mpl LOCK_FL_VARS)
+__mp_release_all_but_one(struct __mp_lock *mpl)
 {
 	int rv = mpl->mpl_count - 2;
 #ifdef WITNESS
@@ -209,7 +209,7 @@ ___mp_release_all_but_one(struct __mp_lock *mpl LOCK_FL_VARS)
 
 #ifdef WITNESS
 	for (i = 0; i < rv; i++)
-		WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE, file, line);
+		WITNESS_UNLOCK(&mpl->mpl_lock_obj, LOP_EXCLUSIVE);
 #endif
 
 	mpl->mpl_count = 2;
@@ -218,10 +218,10 @@ ___mp_release_all_but_one(struct __mp_lock *mpl LOCK_FL_VARS)
 }
 
 void
-___mp_acquire_count(struct __mp_lock *mpl, int count LOCK_FL_VARS)
+__mp_acquire_count(struct __mp_lock *mpl, int count)
 {
 	while (count--)
-		___mp_lock(mpl LOCK_FL_ARGS);
+		__mp_lock(mpl);
 }
 
 int

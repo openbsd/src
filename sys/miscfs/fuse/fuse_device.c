@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.24 2018/01/22 13:16:48 helg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.29 2018/06/27 13:58:22 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -56,9 +56,7 @@ int stat_fbufs_wait = 0;
 int stat_opened_fusedev = 0;
 
 LIST_HEAD(, fuse_d) fuse_d_list;
-struct fuse_d *fuse_create(int);
 struct fuse_d *fuse_lookup(int);
-void	fuse_destroy(dev_t dev, struct fuse_d *fd);
 
 void	fuseattach(int);
 int	fuseopen(dev_t, int, int, struct proc *);
@@ -101,11 +99,11 @@ fuse_dump_buff(char *buff, int len)
 		return;
 	}
 
-	bzero(text, 17);
+	memset(text, 0, 17);
 	for (i = 0; i < len; i++) {
 		if (i != 0 && (i % 16) == 0) {
 			printf(": %s\n", text);
-			bzero(text, 17);
+			memset(text, 0, 17);
 		}
 
 		printf("%.2x ", buff[i] & 0xff);
@@ -137,36 +135,11 @@ fuse_lookup(int unit)
 	return (NULL);
 }
 
-struct fuse_d *
-fuse_create(int unit)
-{
-	struct fuse_d *fd;
-
-	if ((fd = fuse_lookup(unit)) != NULL)
-		return (NULL);
-
-	fd = malloc(sizeof(*fd), M_DEVBUF, M_WAITOK | M_ZERO);
-	fd->fd_unit = unit;
-	SIMPLEQ_INIT(&fd->fd_fbufs_in);
-	SIMPLEQ_INIT(&fd->fd_fbufs_wait);
-	LIST_INSERT_HEAD(&fuse_d_list, fd, fd_list);
-	return (fd);
-}
-
-void
-fuse_destroy(dev_t dev, struct fuse_d *fd)
-{
-	LIST_REMOVE(fd, fd_list);
-	fuse_device_cleanup(dev, NULL);
-	free(fd, M_DEVBUF, sizeof *fd);
-}
-
 /*
- * if fbuf == NULL cleanup all msgs else remove fbuf from
- * sc_fbufs_in and sc_fbufs_wait.
+ * Cleanup all msgs from sc_fbufs_in and sc_fbufs_wait.
  */
 void
-fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
+fuse_device_cleanup(dev_t dev)
 {
 	struct fuse_d *fd;
 	struct fusebuf *f, *ftmp, *lprev;
@@ -175,44 +148,35 @@ fuse_device_cleanup(dev_t dev, struct fusebuf *fbuf)
 	if (fd == NULL)
 		return;
 
-	/* clear FIFO IN*/
+	/* clear FIFO IN */
 	lprev = NULL;
 	SIMPLEQ_FOREACH_SAFE(f, &fd->fd_fbufs_in, fb_next, ftmp) {
-		if (fbuf == f || fbuf == NULL) {
-			DPRINTF("cleanup unprocessed msg in sc_fbufs_in\n");
-			if (lprev == NULL)
-				SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
-			else
-				SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_in, lprev,
-				    fb_next);
+		DPRINTF("cleanup unprocessed msg in sc_fbufs_in\n");
+		if (lprev == NULL)
+			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_in, fb_next);
+		else
+			SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_in, lprev,
+			    fb_next);
 
-			stat_fbufs_in--;
-			if (fbuf == NULL)
-				fb_delete(f);
-			else
-				break;
-		}
+		stat_fbufs_in--;
+		f->fb_err = ENXIO;
+		wakeup(f);
 		lprev = f;
 	}
 
 	/* clear FIFO WAIT*/
 	lprev = NULL;
 	SIMPLEQ_FOREACH_SAFE(f, &fd->fd_fbufs_wait, fb_next, ftmp) {
-		if (fbuf == f || fbuf == NULL) {
-			DPRINTF("umount unprocessed msg in sc_fbufs_wait\n");
-			if (lprev == NULL)
-				SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_wait,
-				    fb_next);
-			else
-				SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_wait, lprev,
-				    fb_next);
+		DPRINTF("umount unprocessed msg in sc_fbufs_wait\n");
+		if (lprev == NULL)
+			SIMPLEQ_REMOVE_HEAD(&fd->fd_fbufs_wait, fb_next);
+		else
+			SIMPLEQ_REMOVE_AFTER(&fd->fd_fbufs_wait, lprev,
+			    fb_next);
 
-			stat_fbufs_wait--;
-			if (fbuf == NULL)
-				fb_delete(f);
-			else
-				break;
-		}
+		stat_fbufs_wait--;
+		f->fb_err = ENXIO;
+		wakeup(f);
 		lprev = f;
 	}
 }
@@ -253,12 +217,19 @@ int
 fuseopen(dev_t dev, int flags, int fmt, struct proc * p)
 {
 	struct fuse_d *fd;
+	int unit = minor(dev);
 
 	if (flags & O_EXCL)
 		return (EBUSY); /* No exclusive opens */
 
-	if ((fd = fuse_create(minor(dev))) == NULL)
+	if ((fd = fuse_lookup(unit)) != NULL)
 		return (EBUSY);
+
+	fd = malloc(sizeof(*fd), M_DEVBUF, M_WAITOK | M_ZERO);
+	fd->fd_unit = unit;
+	SIMPLEQ_INIT(&fd->fd_fbufs_in);
+	SIMPLEQ_INIT(&fd->fd_fbufs_wait);
+	LIST_INSERT_HEAD(&fuse_d_list, fd, fd_list);
 
 	stat_opened_fusedev++;
 	return (0);
@@ -277,16 +248,18 @@ fuseclose(dev_t dev, int flags, int fmt, struct proc *p)
 	if (fd->fd_fmp) {
 		printf("fuse: device close without umount\n");
 		fd->fd_fmp->sess_init = 0;
-		if ((vfs_busy(fd->fd_fmp->mp, VB_WRITE|VB_NOWAIT)) != 0)
+		fuse_device_cleanup(dev);
+		if ((vfs_busy(fd->fd_fmp->mp, VB_WRITE | VB_NOWAIT)) != 0)
 			goto end;
-		error = dounmount(fd->fd_fmp->mp, MNT_FORCE, curproc);
+		error = dounmount(fd->fd_fmp->mp, MNT_FORCE, p);
 		if (error)
 			printf("fuse: unmount failed with error %d\n", error);
 		fd->fd_fmp = NULL;
 	}
 
 end:
-	fuse_destroy(dev, fd);
+	LIST_REMOVE(fd, fd_list);
+	free(fd, M_DEVBUF, sizeof(*fd));
 	stat_opened_fusedev--;
 	return (0);
 }
@@ -351,7 +324,7 @@ fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 #endif
 
 		/* Adding fbuf in fd_fbufs_wait */
-		free(fbuf->fb_dat, M_FUSEFS, 0);
+		free(fbuf->fb_dat, M_FUSEFS, fbuf->fb_len);
 		fbuf->fb_dat = NULL;
 		SIMPLEQ_INSERT_TAIL(&fd->fd_fbufs_wait, fbuf, fb_next);
 		stat_fbufs_wait++;
@@ -386,7 +359,7 @@ fuseioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    ioexch->fbxch_len);
 		if (error) {
 			printf("fuse: Cannot copyin\n");
-			free(fbuf->fb_dat, M_FUSEFS, 0);
+			free(fbuf->fb_dat, M_FUSEFS, fbuf->fb_len);
 			fbuf->fb_dat = NULL;
 			return (error);
 		}
@@ -438,7 +411,7 @@ fuseread(dev_t dev, struct uio *uio, int ioflag)
 
 	/* Do not send kernel pointers */
 	memcpy(&hdr.fh_next, &fbuf->fb_next, sizeof(fbuf->fb_next));
-	bzero(&fbuf->fb_next, sizeof(fbuf->fb_next));
+	memset(&fbuf->fb_next, 0, sizeof(fbuf->fb_next));
 	tmpaddr = fbuf->fb_dat;
 	fbuf->fb_dat = NULL;
 	error = uiomove(fbuf, FUSEBUFSIZE, uio);

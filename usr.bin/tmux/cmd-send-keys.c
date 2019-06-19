@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.42 2017/06/28 11:36:39 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.48 2019/05/12 08:58:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -55,45 +55,49 @@ const struct cmd_entry cmd_send_prefix_entry = {
 	.exec = cmd_send_keys_exec
 };
 
-static void
-cmd_send_keys_inject(struct client *c, struct cmdq_item *item, key_code key)
+static struct cmdq_item *
+cmd_send_keys_inject(struct client *c, struct cmd_find_state *fs,
+    struct cmdq_item *item, key_code key)
 {
-	struct window_pane	*wp = item->target.wp;
-	struct session		*s = item->target.s;
-	struct key_table	*table;
-	struct key_binding	*bd, bd_find;
+	struct window_mode_entry	*wme;
+	struct key_table		*table;
+	struct key_binding		*bd;
 
-	if (wp->mode == NULL || wp->mode->key_table == NULL) {
-		if (options_get_number(wp->window->options, "xterm-keys"))
+	wme = TAILQ_FIRST(&fs->wp->modes);
+	if (wme == NULL || wme->mode->key_table == NULL) {
+		if (options_get_number(fs->wp->window->options, "xterm-keys"))
 			key |= KEYC_XTERM;
-		window_pane_key(wp, NULL, s, key, NULL);
-		return;
+		window_pane_key(fs->wp, item->client, fs->s, fs->wl, key, NULL);
+		return (item);
 	}
-	table = key_bindings_get_table(wp->mode->key_table(wp), 1);
+	table = key_bindings_get_table(wme->mode->key_table(wme), 1);
 
-	bd_find.key = (key & ~KEYC_XTERM);
-	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
+	bd = key_bindings_get(table, key & ~KEYC_XTERM);
 	if (bd != NULL) {
 		table->references++;
-		key_bindings_dispatch(bd, item, c, NULL, &item->target);
+		item = key_bindings_dispatch(bd, item, c, NULL, &item->target);
 		key_bindings_unref_table(table);
 	}
+	return (item);
 }
 
 static enum cmd_retval
 cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 {
-	struct args		*args = self->args;
-	struct client		*c = cmd_find_client(item, NULL, 1);
-	struct window_pane	*wp = item->target.wp;
-	struct session		*s = item->target.s;
-	struct mouse_event	*m = &item->shared->mouse;
-	struct utf8_data	*ud, *uc;
-	wchar_t			 wc;
-	int			 i, literal;
-	key_code		 key;
-	u_int			 np = 1;
-	char			*cause = NULL;
+	struct args			*args = self->args;
+	struct client			*c = cmd_find_client(item, NULL, 1);
+	struct window_pane		*wp = item->target.wp;
+	struct session			*s = item->target.s;
+	struct winlink			*wl = item->target.wl;
+	struct mouse_event		*m = &item->shared->mouse;
+	struct cmd_find_state		*fs = &item->target;
+	struct window_mode_entry	*wme = TAILQ_FIRST(&wp->modes);
+	struct utf8_data		*ud, *uc;
+	wchar_t				 wc;
+	int				 i, literal;
+	key_code			 key;
+	u_int				 np = 1;
+	char				*cause = NULL;
 
 	if (args_has(args, 'N')) {
 		np = args_strtonum(args, 'N', 1, UINT_MAX, &cause);
@@ -102,19 +106,23 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 			free(cause);
 			return (CMD_RETURN_ERROR);
 		}
-		if (args_has(args, 'X') || args->argc == 0)
-			wp->modeprefix = np;
+		if (wme != NULL && (args_has(args, 'X') || args->argc == 0)) {
+			if (wme == NULL || wme->mode->command == NULL) {
+				cmdq_error(item, "not in a mode");
+				return (CMD_RETURN_ERROR);
+			}
+			wme->prefix = np;
+		}
 	}
 
 	if (args_has(args, 'X')) {
-		if (wp->mode == NULL || wp->mode->command == NULL) {
+		if (wme == NULL || wme->mode->command == NULL) {
 			cmdq_error(item, "not in a mode");
 			return (CMD_RETURN_ERROR);
 		}
 		if (!m->valid)
-			wp->mode->command(wp, c, s, args, NULL);
-		else
-			wp->mode->command(wp, c, s, args, m);
+			m = NULL;
+		wme->mode->command(wme, c, s, wl, args, m);
 		return (CMD_RETURN_NORMAL);
 	}
 
@@ -124,7 +132,7 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 			cmdq_error(item, "no mouse target");
 			return (CMD_RETURN_ERROR);
 		}
-		window_pane_key(wp, NULL, s, m->key, m);
+		window_pane_key(wp, item->client, s, wl, m->key, m);
 		return (CMD_RETURN_NORMAL);
 	}
 
@@ -133,7 +141,7 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 			key = options_get_number(s->options, "prefix2");
 		else
 			key = options_get_number(s->options, "prefix");
-		cmd_send_keys_inject(c, item, key);
+		cmd_send_keys_inject(c, fs, item, key);
 		return (CMD_RETURN_NORMAL);
 	}
 
@@ -147,9 +155,10 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 			literal = args_has(args, 'l');
 			if (!literal) {
 				key = key_string_lookup_string(args->argv[i]);
-				if (key != KEYC_NONE && key != KEYC_UNKNOWN)
-					cmd_send_keys_inject(c, item, key);
-				else
+				if (key != KEYC_NONE && key != KEYC_UNKNOWN) {
+					item = cmd_send_keys_inject(c, fs, item,
+					    key);
+				} else
 					literal = 1;
 			}
 			if (literal) {
@@ -157,7 +166,8 @@ cmd_send_keys_exec(struct cmd *self, struct cmdq_item *item)
 				for (uc = ud; uc->size != 0; uc++) {
 					if (utf8_combine(uc, &wc) != UTF8_DONE)
 						continue;
-					cmd_send_keys_inject(c, item, wc);
+					item = cmd_send_keys_inject(c, fs, item,
+					    wc);
 				}
 				free(ud);
 			}

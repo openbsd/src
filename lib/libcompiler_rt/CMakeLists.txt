@@ -51,7 +51,6 @@ set(GENERIC_SOURCES
   cmpti2.c
   comparedf2.c
   comparesf2.c
-  cpu_model.c
   ctzdi2.c
   ctzsi2.c
   ctzti2.c
@@ -66,7 +65,6 @@ set(GENERIC_SOURCES
   divtc3.c
   divti3.c
   divtf3.c
-  divxc3.c
   extendsfdf2.c
   extendhfsf2.c
   ffsdi2.c
@@ -84,27 +82,18 @@ set(GENERIC_SOURCES
   fixunssfdi.c
   fixunssfsi.c
   fixunssfti.c
-  fixunsxfdi.c
-  fixunsxfsi.c
-  fixunsxfti.c
-  fixxfdi.c
-  fixxfti.c
   floatdidf.c
   floatdisf.c
-  floatdixf.c
   floatsidf.c
   floatsisf.c
   floattidf.c
   floattisf.c
-  floattixf.c
   floatundidf.c
   floatundisf.c
-  floatundixf.c
   floatunsidf.c
   floatunsisf.c
   floatuntidf.c
   floatuntisf.c
-  floatuntixf.c
   int_util.c
   lshrdi3.c
   lshrti3.c
@@ -124,7 +113,6 @@ set(GENERIC_SOURCES
   mulvdi3.c
   mulvsi3.c
   mulvti3.c
-  mulxc3.c
   negdf2.c
   negdi2.c
   negsf2.c
@@ -142,7 +130,6 @@ set(GENERIC_SOURCES
   powidf2.c
   powisf2.c
   powitf2.c
-  powixf2.c
   subdf3.c
   subsf3.c
   subvdi3.c
@@ -186,8 +173,8 @@ set(GENERIC_TF_SOURCES
   trunctfsf2.c)
 
 option(COMPILER_RT_EXCLUDE_ATOMIC_BUILTIN
-  "Skip the atomic builtin (this may be needed if system headers are unavailable)"
-  Off)
+  "Skip the atomic builtin (these should normally be provided by a shared library)"
+  On)
 
 if(NOT FUCHSIA AND NOT COMPILER_RT_BAREMETAL_BUILD)
   set(GENERIC_SOURCES
@@ -226,17 +213,32 @@ if (NOT FUCHSIA)
     clear_cache.c)
 endif()
 
+# These sources work on all x86 variants, but only x86 variants.
+set(x86_ARCH_SOURCES
+  cpu_model.c
+  divxc3.c
+  fixxfdi.c
+  fixxfti.c
+  fixunsxfdi.c
+  fixunsxfsi.c
+  fixunsxfti.c
+  floatdixf.c
+  floattixf.c
+  floatundixf.c
+  floatuntixf.c
+  mulxc3.c
+  powixf2.c
+)
+
 if (NOT MSVC)
   set(x86_64_SOURCES
-      x86_64/chkstk.S
-      x86_64/chkstk2.S
       x86_64/floatdidf.c
       x86_64/floatdisf.c
       x86_64/floatdixf.c
       x86_64/floatundidf.S
       x86_64/floatundisf.S
-      x86_64/floatundixf.S
-      ${GENERIC_SOURCES})
+      x86_64/floatundixf.S)
+  filter_builtin_sources(x86_64_SOURCES EXCLUDE x86_64_SOURCES "${x86_64_SOURCES};${GENERIC_SOURCES}")
   set(x86_64h_SOURCES ${x86_64_SOURCES})
 
   if (WIN32)
@@ -249,8 +251,6 @@ if (NOT MSVC)
   set(i386_SOURCES
       i386/ashldi3.S
       i386/ashrdi3.S
-      i386/chkstk.S
-      i386/chkstk2.S
       i386/divdi3.S
       i386/floatdidf.S
       i386/floatdisf.S
@@ -262,8 +262,8 @@ if (NOT MSVC)
       i386/moddi3.S
       i386/muldi3.S
       i386/udivdi3.S
-      i386/umoddi3.S
-      ${GENERIC_SOURCES})
+      i386/umoddi3.S)
+  filter_builtin_sources(i386_SOURCES EXCLUDE i386_SOURCES "${i386_SOURCES};${GENERIC_SOURCES}")
 
   if (WIN32)
     set(i386_SOURCES
@@ -271,9 +271,6 @@ if (NOT MSVC)
         i386/chkstk.S
         i386/chkstk2.S)
   endif()
-
-  set(i686_SOURCES
-      ${i386_SOURCES})
 else () # MSVC
   # Use C versions of functions when building on MSVC
   # MSVC's assembler takes Intel syntax, not AT&T syntax.
@@ -285,8 +282,12 @@ else () # MSVC
       ${GENERIC_SOURCES})
   set(x86_64h_SOURCES ${x86_64_SOURCES})
   set(i386_SOURCES ${GENERIC_SOURCES})
-  set(i686_SOURCES ${i386_SOURCES})
 endif () # if (NOT MSVC)
+
+set(x86_64h_SOURCES ${x86_64h_SOURCES} ${x86_ARCH_SOURCES})
+set(x86_64_SOURCES ${x86_64_SOURCES} ${x86_ARCH_SOURCES})
+set(i386_SOURCES ${i386_SOURCES} ${x86_ARCH_SOURCES})
+set(i686_SOURCES ${i686_SOURCES} ${x86_ARCH_SOURCES})
 
 set(arm_SOURCES
   arm/bswapdi2.S
@@ -319,8 +320,8 @@ set(arm_SOURCES
   arm/sync_fetch_and_xor_8.S
   arm/udivmodsi4.S
   arm/udivsi3.S
-  arm/umodsi3.S
-  ${GENERIC_SOURCES})
+  arm/umodsi3.S)
+filter_builtin_sources(arm_SOURCES EXCLUDE arm_SOURCES "${arm_SOURCES};${GENERIC_SOURCES}")
 
 set(thumb1_SOURCES
   arm/divsi3.S
@@ -405,6 +406,7 @@ if(MINGW)
       arm/aeabi_ldivmod.S
       arm/aeabi_uidivmod.S
       arm/aeabi_uldivmod.S
+      arm/chkstk.S
       divmoddi4.c
       divmodsi4.c
       divdi3.c
@@ -424,6 +426,7 @@ if(MINGW)
       udivsi3.c
       umoddi3.c
       emutls.c)
+  filter_builtin_sources(arm_SOURCES EXCLUDE arm_SOURCES "${arm_SOURCES};${GENERIC_SOURCES}")
 elseif(NOT WIN32)
   # TODO the EABI sources should only be added to EABI targets
   set(arm_SOURCES
@@ -440,6 +443,12 @@ set(aarch64_SOURCES
   ${GENERIC_TF_SOURCES}
   ${GENERIC_SOURCES})
 
+if (MINGW)
+  set(aarch64_SOURCES
+      ${aarch64_SOURCES}
+      aarch64/chkstk.S)
+endif()
+
 set(armhf_SOURCES ${arm_SOURCES})
 set(armv7_SOURCES ${arm_SOURCES})
 set(armv7s_SOURCES ${arm_SOURCES})
@@ -451,6 +460,41 @@ set(armv6m_SOURCES ${thumb1_SOURCES})
 set(armv7m_SOURCES ${arm_SOURCES})
 set(armv7em_SOURCES ${arm_SOURCES})
 
+# hexagon arch
+set(hexagon_SOURCES ${GENERIC_SOURCES} ${GENERIC_TF_SOURCES})
+set(hexagon_SOURCES
+  hexagon/common_entry_exit_abi1.S
+  hexagon/common_entry_exit_abi2.S
+  hexagon/common_entry_exit_legacy.S
+  hexagon/dfaddsub.S
+  hexagon/dfdiv.S
+  hexagon/dffma.S
+  hexagon/dfminmax.S
+  hexagon/dfmul.S
+  hexagon/dfsqrt.S
+  hexagon/divdi3.S
+  hexagon/divsi3.S
+  hexagon/fabs_opt.S
+  hexagon/fastmath2_dlib_asm.S
+  hexagon/fastmath2_ldlib_asm.S
+  hexagon/fastmath_dlib_asm.S
+  hexagon/fma_opt.S
+  hexagon/fmax_opt.S
+  hexagon/fmin_opt.S
+  hexagon/memcpy_forward_vp4cp4n2.S
+  hexagon/memcpy_likely_aligned.S
+  hexagon/moddi3.S
+  hexagon/modsi3.S
+  hexagon/sfdiv_opt.S
+  hexagon/sfsqrt_opt.S
+  hexagon/udivdi3.S
+  hexagon/udivmoddi4.S
+  hexagon/udivmodsi4.S
+  hexagon/udivsi3.S
+  hexagon/umoddi3.S
+  hexagon/umodsi3.S)
+
+
 set(mips_SOURCES ${GENERIC_SOURCES})
 set(mipsel_SOURCES ${mips_SOURCES})
 set(mips64_SOURCES ${GENERIC_TF_SOURCES}
@@ -458,8 +502,32 @@ set(mips64_SOURCES ${GENERIC_TF_SOURCES}
 set(mips64el_SOURCES ${GENERIC_TF_SOURCES}
                      ${mips_SOURCES})
 
-set(wasm32_SOURCES ${GENERIC_SOURCES})
-set(wasm64_SOURCES ${GENERIC_SOURCES})
+set(powerpc64_SOURCES
+  ppc/divtc3.c
+  ppc/fixtfdi.c
+  ppc/fixunstfdi.c
+  ppc/floatditf.c
+  ppc/floatunditf.c
+  ppc/gcc_qadd.c
+  ppc/gcc_qdiv.c
+  ppc/gcc_qmul.c
+  ppc/gcc_qsub.c
+  ppc/multc3.c
+  ${GENERIC_SOURCES})
+set(powerpc64le_SOURCES ${powerpc64_SOURCES})
+
+set(riscv_SOURCES ${GENERIC_SOURCES} ${GENERIC_TF_SOURCES})
+set(riscv32_SOURCES
+  riscv/mulsi3.S
+  ${riscv_SOURCES})
+set(riscv64_SOURCES ${riscv_SOURCES})
+
+set(wasm32_SOURCES
+  ${GENERIC_TF_SOURCES}
+  ${GENERIC_SOURCES})
+set(wasm64_SOURCES
+  ${GENERIC_TF_SOURCES}
+  ${GENERIC_SOURCES})
 
 add_custom_target(builtins)
 set_target_properties(builtins PROPERTIES FOLDER "Compiler-RT Misc")
@@ -493,8 +561,19 @@ else ()
       # NOTE: some architectures (e.g. i386) have multiple names.  Ensure that
       # we catch them all.
       set(_arch ${arch})
-      if("${arch}" STREQUAL "i686")
-        set(_arch "i386|i686")
+      if("${arch}" STREQUAL "armv6m")
+        set(_arch "arm|armv6m")
+      elseif("${arch}" MATCHES "^(armhf|armv7|armv7s|armv7k|armv7m|armv7em)$")
+        set(_arch "arm")
+      endif()
+
+      # For ARM archs, exclude any VFP builtins if VFP is not supported
+      if (${arch} MATCHES "^(arm|armhf|armv7|armv7s|armv7k|armv7m|armv7em)$")
+        string(REPLACE ";" " " _TARGET_${arch}_CFLAGS "${TARGET_${arch}_CFLAGS}")
+        check_compile_definition(__VFP_FP__ "${CMAKE_C_FLAGS} ${_TARGET_${arch}_CFLAGS}" COMPILER_RT_HAS_${arch}_VFP)
+        if(NOT COMPILER_RT_HAS_${arch}_VFP)
+          list(REMOVE_ITEM ${arch}_SOURCES ${arm_Thumb1_VFPv2_SOURCES} ${arm_Thumb1_SjLj_EH_SOURCES})
+        endif()
       endif()
 
       # Filter out generic versions of routines that are re-implemented in
@@ -512,6 +591,12 @@ else ()
       # Release mode already sets it via -O2/3, Debug mode doesn't.
       if (${arch} STREQUAL "armhf")
         list(APPEND BUILTIN_CFLAGS -fomit-frame-pointer -DCOMPILER_RT_ARMHF_TARGET)
+      endif()
+
+      # For RISCV32, we must force enable int128 for compiling long
+      # double routines.
+      if("${arch}" STREQUAL "riscv32")
+        list(APPEND BUILTIN_CFLAGS -fforce-enable-int128)
       endif()
 
       add_compiler_rt_runtime(clang_rt.builtins

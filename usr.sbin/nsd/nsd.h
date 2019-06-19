@@ -18,6 +18,9 @@ struct netio_handler;
 struct nsd_options;
 struct udb_base;
 struct daemon_remote;
+#ifdef USE_DNSTAP
+struct dt_collector;
+#endif
 
 /* The NSD runtime states and NSD ipc command values */
 #define	NSD_RUN	0
@@ -260,6 +263,13 @@ struct	nsd
 	/* current zonestat array to use */
 	struct nsdst* zonestatnow;
 #endif /* BIND8_STATS */
+#ifdef USE_DNSTAP
+	/* the dnstap collector process info */
+	struct dt_collector* dt_collector;
+	/* the pipes from server processes to the dt_collector,
+	 * arrays of size child_count.  Kept open for (re-)forks. */
+	int *dt_collector_fd_send, *dt_collector_fd_recv;
+#endif /* USE_DNSTAP */
 	/* ratelimit for errors, time value */
 	time_t err_limit_time;
 	/* ratelimit for errors, packet count */
@@ -282,7 +292,7 @@ int server_init(struct nsd *nsd);
 int server_prepare(struct nsd *nsd);
 void server_main(struct nsd *nsd);
 void server_child(struct nsd *nsd);
-void server_shutdown(struct nsd *nsd);
+void server_shutdown(struct nsd *nsd) ATTR_NORETURN;
 void server_close_all_sockets(struct nsd_socket sockets[], size_t n);
 struct event_base* nsd_child_event_base(void);
 /* extra domain numbers for temporary domains */

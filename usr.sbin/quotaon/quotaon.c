@@ -33,9 +33,10 @@
 /*
  * Turn quota on/off for a filesystem.
  */
-#include <sys/file.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <ufs/ufs/quota.h>
+
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>

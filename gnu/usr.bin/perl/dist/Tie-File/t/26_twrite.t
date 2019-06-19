@@ -27,7 +27,7 @@ $: = Tie::File::_default_recsep();
 # The problem was premature termination in the inner loop
 # because you had $more_data scoped *inside* the block instead of outside.
 # 20020331
-open F, "> $file" or die "Couldn't open $file: $!";
+open F, '>', $file or die "Couldn't open $file: $!";
 binmode F;
 for (1..100) {
   print F "$_ ", 'a'x150, $: ;
@@ -263,7 +263,7 @@ try(42000,     0,     0);  # old=0        , new=0        ; old = new
 
 sub try {
   my ($pos, $len, $newlen) = @_;
-  open F, "> $file" or die "Couldn't open file $file: $!";
+  open F, '>', $file or die "Couldn't open file $file: $!";
   binmode F;
 
   # The record has exactly 17 characters.  This will help ensure that
@@ -289,7 +289,7 @@ sub try {
   $o->_twrite($newdata, $pos, $len);
   undef $o; untie @lines;
 
-  open F, "< $file" or die "Couldn't open file $file: $!";
+  open F, '<', $file or die "Couldn't open file $file: $!";
   binmode F;
   my $actual;
   { local $/;
@@ -313,7 +313,7 @@ sub check_contents {
   my $x = join $:, @c, '';
   local *FH = $o->{fh};
   seek FH, 0, SEEK_SET;
-#  my $open = open FH, "< $file";
+#  my $open = open FH, '<', $file;
   my $a;
   { local $/; $a = <FH> }
   $a = "" unless defined $a;

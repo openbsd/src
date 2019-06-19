@@ -7,24 +7,10 @@ BEGIN {
     *bar::is = *is;
     *bar::like = *like;
 }
-plan 151;
-
-# -------------------- Errors with feature disabled -------------------- #
-
-eval "#line 8 foo\nmy sub foo";
-is $@, qq 'Experimental "my" subs not enabled at foo line 8.\n',
-  'my sub unexperimental error';
-eval "#line 8 foo\nCORE::state sub foo";
-is $@, qq 'Experimental "state" subs not enabled at foo line 8.\n',
-  'state sub unexperimental error';
-eval "#line 8 foo\nour sub foo";
-is $@, qq 'Experimental "our" subs not enabled at foo line 8.\n',
-  'our sub unexperimental error';
+plan 150;
 
 # -------------------- our -------------------- #
 
-no warnings "experimental::lexical_subs";
-use feature 'lexical_subs';
 {
   our sub foo { 42 }
   is foo, 42, 'calling our sub from same package';
@@ -126,11 +112,11 @@ use feature 'state'; # state
 {
   state sub foo { 44 }
   isnt \&::foo, \&foo, 'state sub is not stored in the package';
-  is eval foo, 44, 'calling state sub from same package';
-  is eval &foo, 44, 'calling state sub from same package (amper)';
+  is foo, 44, 'calling state sub from same package';
+  is &foo, 44, 'calling state sub from same package (amper)';
   package bar;
-  is eval foo, 44, 'calling state sub from another package';
-  is eval &foo, 44, 'calling state sub from another package (amper)';
+  is foo, 44, 'calling state sub from another package';
+  is &foo, 44, 'calling state sub from another package (amper)';
 }
 package bar;
 is foo, 43, 'state sub falling out of scope';
@@ -760,6 +746,10 @@ not_lexical11();
   my sub x;
   eval 'sub x {3}';
   is x, 3, 'my sub defined inside eval';
+
+  my sub z;
+  BEGIN { eval 'sub z {4}' }
+  is z, 4, 'my sub defined in BEGIN { eval "..." }';
 }
 
 {
@@ -967,3 +957,6 @@ like runperl(
 {
   my sub h; sub{my $x; sub{h}}
 }
+
+is join("-", qw(aa bb), do { my sub lleexx; 123 }, qw(cc dd)),
+  "aa-bb-123-cc-dd", 'do { my sub...} in a list [perl #132442]';

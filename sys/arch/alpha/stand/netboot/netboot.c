@@ -1,4 +1,4 @@
-/*	$OpenBSD: netboot.c,v 1.8 2011/06/05 21:49:36 miod Exp $	*/
+/*	$OpenBSD: netboot.c,v 1.9 2019/04/10 04:17:33 deraadt Exp $	*/
 /*	$NetBSD: netboot.c,v 1.1 1996/09/18 20:03:12 cgd Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ void
 main()
 {
 	u_int64_t entry;
-	u_long marks[MARK_MAX];
+	uint64_t marks[MARK_MAX];
 	int rc;
 
 	/* Init prom callback vector. */

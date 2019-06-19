@@ -5,14 +5,15 @@ use warnings;
 BEGIN {
     unless (-d 'blib') {
         chdir 't' if -d 't';
-        @INC = '../lib';
     }
+    require q(./test.pl);
+    set_up_inc('../lib');
 }
 
 use utf8;
 use open qw( :utf8 :std );
 
-require q(./test.pl); plan(tests => 7);
+plan(tests => 7);
 
 {
     package 밧e텟ʇ;

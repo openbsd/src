@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.7 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: frame.h,v 1.10 2018/07/10 08:57:44 guenther Exp $	*/
 /*	$NetBSD: frame.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 /*-
@@ -94,16 +94,12 @@ struct trapframe {
 	int64_t tf_r13;
 	int64_t tf_r14;
 	int64_t tf_r15;
-	int64_t	tf_rbp;
+	int64_t	tf_err;		/* not the hardware position */
 	int64_t	tf_rbx;
 	int64_t	tf_rax;
-	int64_t	tf_gs;
-	int64_t	tf_fs;
-	int64_t	tf_es;
-	int64_t	tf_ds;
 	int64_t	tf_trapno;
+	int64_t	tf_rbp;	/* hardware puts err here, INTRENTRY() moves it up */
 	/* below portion defined in hardware */
-	int64_t	tf_err;
 	int64_t	tf_rip;
 	int64_t	tf_cs;
 	int64_t	tf_rflags;
@@ -116,7 +112,6 @@ struct trapframe {
  * Interrupt stack frame
  */
 struct intrframe {
-	int64_t	if_ppl;
 	int64_t	if_rdi;
 	int64_t	if_rsi;
 	int64_t	if_rdx;
@@ -129,15 +124,11 @@ struct intrframe {
 	int64_t if_r13;
 	int64_t if_r14;
 	int64_t if_r15;
-	int64_t	if_rbp;
+	int64_t	if_err;		/* IREENT_MAGIC if resume/recurse */
 	int64_t	if_rbx;
 	int64_t	if_rax;
-	int64_t	tf_gs;
-	int64_t	tf_fs;
-	int64_t	tf_es;
-	int64_t	tf_ds;
-	u_int64_t __if_trapno; /* for compat with trap frame - trapno */
-	u_int64_t __if_err;	/* for compat with trap frame - err */
+	int64_t if_ppl;		/* previous priority level */
+	int64_t	if_rbp;
 	/* below portion defined in hardware */
 	int64_t	if_rip;
 	int64_t	if_cs;

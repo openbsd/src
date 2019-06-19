@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.52 2016/10/24 13:46:58 schwarze Exp $
+.\"	$OpenBSD: less.1,v 1.54 2019/05/26 01:16:09 naddy Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 24 2016 $
+.Dd $Mdocdate: May 26 2019 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@
 .Nd view files
 .Sh SYNOPSIS
 .Nm less
-.Op Fl #?~AaBCcdEeFfGgIiJKLMmNnQqRrSsUuVWwX
+.Op Fl ?~AaBCcdEeFfGgIiJKLMmNnQqRrSsUuVWwX
 .Op Fl b Ar n
 .Op Fl h Ar n
 .Op Fl j Ar n
@@ -44,6 +44,7 @@
 .Op Fl x Ar n , Ns Ar ...
 .Op Fl y Ar n
 .Op Fl z Ar n
+.Op Fl # Ar n
 .Op Ar
 .Sh DESCRIPTION
 .Nm
@@ -702,10 +703,14 @@ remains
 .It Fl ~ | -tilde
 Normally lines after end of file are displayed as a single tilde (~).
 This option causes lines after end of file to be displayed as blank lines.
-.It Fl # | -shift
-Specifies the default number of positions to scroll horizontally
+.It Fl # Ar n | Fl -shift Ns = Ns Ar n
+Specifies the default number
+.Ar n
+of positions to scroll horizontally
 in the RIGHTARROW and LEFTARROW commands.
-If the number specified is zero, it sets the default number of
+If
+.Ar n
+is zero, it sets the default number of
 positions to one half of the screen width.
 Alternately, the number may be specified as a fraction of the width
 of the screen, starting with a decimal point: .5 is half of the
@@ -1854,9 +1859,13 @@ The default is "-".
 The maximum number of commands to save in the history file.
 The default is 100.
 .It Ev LESSKEY
-Name of the default lesskey(1) file.
+Name of the default
+.Xr lesskey 1
+file.
 .It Ev LESSKEY_SYSTEM
-Name of the default system-wide lesskey(1) file.
+Name of the default system-wide
+.Xr lesskey 1
+file.
 .It Ev LESSMETACHARS
 List of characters which are considered "metacharacters" by the shell.
 .It Ev LESSMETAESCAPE

@@ -17,14 +17,11 @@
 
 namespace llvm {
 
-  enum AsmComments {
-    AC_EVEX_2_VEX = 0x2 // For instr that was compressed from EVEX to VEX.
-  };
-
   class MCInst;
+  class MCInstrInfo;
   class raw_ostream;
   bool EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
-                              const char *(*getRegName)(unsigned));
+                              const MCInstrInfo &MCII);
 }
 
 #endif

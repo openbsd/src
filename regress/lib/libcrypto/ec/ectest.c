@@ -1,3 +1,4 @@
+/*	$OpenBSD: ectest.c,v 1.8 2018/07/15 18:22:57 tb Exp $	*/
 /* crypto/ec/ectest.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
@@ -661,101 +662,29 @@ prime_field_tests(void)
 
 
 	/* more tests using the last curve */
-
+	fprintf(stdout, "infinity tests ...");
+	fflush(stdout);
 	if (!EC_POINT_copy(Q, P))
 		ABORT;
 	if (EC_POINT_is_at_infinity(group, Q))
 		ABORT;
+	/* P := 2P */
 	if (!EC_POINT_dbl(group, P, P, ctx))
 		ABORT;
 	if (!EC_POINT_is_on_curve(group, P, ctx))
 		ABORT;
-	if (!EC_POINT_invert(group, Q, ctx)) ABORT; /* P = -2Q */
-
-		if (!EC_POINT_add(group, R, P, Q, ctx))
-			ABORT;
+	/* Q := -P */
+	if (!EC_POINT_invert(group, Q, ctx))
+		ABORT;
+	/* R := 2P - P = P */
+	if (!EC_POINT_add(group, R, P, Q, ctx))
+		ABORT;
+	/* R := R + Q = P - P = infty */
 	if (!EC_POINT_add(group, R, R, Q, ctx))
 		ABORT;
-	if (!EC_POINT_is_at_infinity(group, R)) ABORT; /* R = P + 2Q */
-
-	{
-		const EC_POINT *points[4];
-		const BIGNUM *scalars[4];
-		BIGNUM scalar3;
-
-		if (EC_POINT_is_at_infinity(group, Q))
-			ABORT;
-		points[0] = Q;
-		points[1] = Q;
-		points[2] = Q;
-		points[3] = Q;
-
-		if (!EC_GROUP_get_order(group, z, ctx))
-			ABORT;
-		if (!BN_add(y, z, BN_value_one()))
-			ABORT;
-		if (BN_is_odd(y))
-			ABORT;
-		if (!BN_rshift1(y, y))
-			ABORT;
-		scalars[0] = y; /* (group order + 1)/2,  so  y*Q + y*Q = Q */
-		scalars[1] = y;
-
-		fprintf(stdout, "combined multiplication ...");
-		fflush(stdout);
-
-		/* z is still the group order */
-		if (!EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx))
-			ABORT;
-		if (!EC_POINTs_mul(group, R, z, 2, points, scalars, ctx))
-			ABORT;
-		if (0 != EC_POINT_cmp(group, P, R, ctx))
-			ABORT;
-		if (0 != EC_POINT_cmp(group, R, Q, ctx))
-			ABORT;
-
-		fprintf(stdout, ".");
-		fflush(stdout);
-
-		if (!BN_pseudo_rand(y, BN_num_bits(y), 0, 0))
-			ABORT;
-		if (!BN_add(z, z, y))
-			ABORT;
-		BN_set_negative(z, 1);
-		scalars[0] = y;
-		scalars[1] = z; /* z = -(order + y) */
-
-		if (!EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx))
-			ABORT;
-		if (!EC_POINT_is_at_infinity(group, P))
-			ABORT;
-
-		fprintf(stdout, ".");
-		fflush(stdout);
-
-		if (!BN_pseudo_rand(x, BN_num_bits(y) - 1, 0, 0))
-			ABORT;
-		if (!BN_add(z, x, y))
-			ABORT;
-		BN_set_negative(z, 1);
-		scalars[0] = x;
-		scalars[1] = y;
-		scalars[2] = z; /* z = -(x+y) */
-
-		BN_init(&scalar3);
-		BN_zero(&scalar3);
-		scalars[3] = &scalar3;
-
-		if (!EC_POINTs_mul(group, P, NULL, 4, points, scalars, ctx))
-			ABORT;
-		if (!EC_POINT_is_at_infinity(group, P))
-			ABORT;
-
-		fprintf(stdout, " ok\n\n");
-
-		BN_free(&scalar3);
-	}
-
+	if (!EC_POINT_is_at_infinity(group, R))
+		ABORT;
+	fprintf(stdout, " ok\n\n");
 
 	if (ctx)
 		BN_CTX_free(ctx);
@@ -1185,91 +1114,29 @@ prime_field_tests(void)
 	);
 
 	/* more tests using the last curve */
-
+	fprintf(stdout, "infinity tests ...");
+	fflush(stdout);
 	if (!EC_POINT_copy(Q, P))
 		ABORT;
 	if (EC_POINT_is_at_infinity(group, Q))
 		ABORT;
+	/* P := 2P */
 	if (!EC_POINT_dbl(group, P, P, ctx))
 		ABORT;
 	if (!EC_POINT_is_on_curve(group, P, ctx))
 		ABORT;
-	if (!EC_POINT_invert(group, Q, ctx)) ABORT; /* P = -2Q */
-
-		if (!EC_POINT_add(group, R, P, Q, ctx))
-			ABORT;
+	/* Q := -P */
+	if (!EC_POINT_invert(group, Q, ctx))
+		ABORT;
+	/* R := 2P - P = P */
+	if (!EC_POINT_add(group, R, P, Q, ctx))
+		ABORT;
+	/* R := R + Q = P - P = infty */
 	if (!EC_POINT_add(group, R, R, Q, ctx))
 		ABORT;
-	if (!EC_POINT_is_at_infinity(group, R)) ABORT; /* R = P + 2Q */
-
-	{
-		const EC_POINT *points[3];
-		const BIGNUM *scalars[3];
-
-		if (EC_POINT_is_at_infinity(group, Q))
-			ABORT;
-		points[0] = Q;
-		points[1] = Q;
-		points[2] = Q;
-
-		if (!BN_add(y, z, BN_value_one()))
-			ABORT;
-		if (BN_is_odd(y))
-			ABORT;
-		if (!BN_rshift1(y, y))
-			ABORT;
-		scalars[0] = y; /* (group order + 1)/2,  so  y*Q + y*Q = Q */
-		scalars[1] = y;
-
-		fprintf(stdout, "combined multiplication ...");
-		fflush(stdout);
-
-		/* z is still the group order */
-		if (!EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx))
-			ABORT;
-		if (!EC_POINTs_mul(group, R, z, 2, points, scalars, ctx))
-			ABORT;
-		if (0 != EC_POINT_cmp(group, P, R, ctx))
-			ABORT;
-		if (0 != EC_POINT_cmp(group, R, Q, ctx))
-			ABORT;
-
-		fprintf(stdout, ".");
-		fflush(stdout);
-
-		if (!BN_pseudo_rand(y, BN_num_bits(y), 0, 0))
-			ABORT;
-		if (!BN_add(z, z, y))
-			ABORT;
-		BN_set_negative(z, 1);
-		scalars[0] = y;
-		scalars[1] = z; /* z = -(order + y) */
-
-		if (!EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx))
-			ABORT;
-		if (!EC_POINT_is_at_infinity(group, P))
-			ABORT;
-
-		fprintf(stdout, ".");
-		fflush(stdout);
-
-		if (!BN_pseudo_rand(x, BN_num_bits(y) - 1, 0, 0))
-			ABORT;
-		if (!BN_add(z, x, y))
-			ABORT;
-		BN_set_negative(z, 1);
-		scalars[0] = x;
-		scalars[1] = y;
-		scalars[2] = z; /* z = -(x+y) */
-
-		if (!EC_POINTs_mul(group, P, NULL, 3, points, scalars, ctx))
-			ABORT;
-		if (!EC_POINT_is_at_infinity(group, P))
-			ABORT;
-
-		fprintf(stdout, " ok\n\n");
-	}
-
+	if (!EC_POINT_is_at_infinity(group, R))
+		ABORT;
+	fprintf(stdout, " ok\n\n");
 
 	if (ctx)
 		BN_CTX_free(ctx);

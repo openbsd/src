@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.24 2017/05/01 09:29:07 gilles Exp $	*/
+/*	$OpenBSD: table.c,v 1.48 2019/01/10 07:40:52 eric Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -27,14 +27,12 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 
-#include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <netdb.h>
+#include <regex.h>
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
@@ -50,38 +48,33 @@ extern struct table_backend table_backend_getpwnam;
 extern struct table_backend table_backend_proc;
 
 static const char * table_service_name(enum table_service);
-static const char * table_backend_name(struct table_backend *);
-static const char * table_dump_lookup(enum table_service, union lookup *);
+static int table_parse_lookup(enum table_service, const char *, const char *,
+    union lookup *);
 static int parse_sockaddr(struct sockaddr *, int, const char *);
 
 static unsigned int last_table_id = 0;
 
+static struct table_backend *backends[] = {
+	&table_backend_static,
+	&table_backend_db,
+	&table_backend_getpwnam,
+	&table_backend_proc,
+	NULL
+};
+
 struct table_backend *
 table_backend_lookup(const char *backend)
 {
-	if (!strcmp(backend, "static") || !strcmp(backend, "file"))
-		return &table_backend_static;
-	if (!strcmp(backend, "db"))
-		return &table_backend_db;
-	if (!strcmp(backend, "getpwnam"))
-		return &table_backend_getpwnam;
-	if (!strcmp(backend, "proc"))
-		return &table_backend_proc;
-	return NULL;
-}
+	int i;
 
-static const char *
-table_backend_name(struct table_backend *backend)
-{
-	if (backend == &table_backend_static)
-		return "static";
-	if (backend == &table_backend_db)
-		return "db";
-	if (backend == &table_backend_getpwnam)
-		return "getpwnam";
-	if (backend == &table_backend_proc)
-		return "proc";
-	return "???";
+	if (!strcmp(backend, "file"))
+		backend = "static";
+
+	for (i = 0; backends[i]; i++)
+		if (!strcmp(backends[i]->name, backend))
+			return (backends[i]);
+
+	return NULL;
 }
 
 static const char *
@@ -98,113 +91,114 @@ table_service_name(enum table_service s)
 	case K_MAILADDR:	return "MAILADDR";
 	case K_ADDRNAME:	return "ADDRNAME";
 	case K_MAILADDRMAP:	return "MAILADDRMAP";
-	default:		return "???";
+	case K_RELAYHOST:	return "RELAYHOST";
+	case K_STRING:		return "STRING";
+	case K_REGEX:		return "REGEX";
 	}
+	return "???";
 }
 
 struct table *
-table_find(const char *name, const char *tag)
+table_find(struct smtpd *conf, const char *name)
 {
-	char buf[LINE_MAX];
-
-	if (tag == NULL)
-		return dict_get(env->sc_tables_dict, name);
-
-	if ((size_t)snprintf(buf, sizeof(buf), "%s#%s", name, tag) >= sizeof(buf)) {
-		log_warnx("warn: table name too long: %s#%s", name, tag);
-		return (NULL);
-	}
-
-	return dict_get(env->sc_tables_dict, buf);
+	return dict_get(conf->sc_tables_dict, name);
 }
 
 int
-table_lookup(struct table *table, struct dict *params, const char *key, enum table_service kind,
+table_match(struct table *table, enum table_service kind, const char *key)
+{
+	return table_lookup(table, kind, key, NULL);
+}
+
+int
+table_lookup(struct table *table, enum table_service kind, const char *key,
     union lookup *lk)
 {
-	int	r;
-	char	lkey[1024];
+	char lkey[1024], *buf = NULL;
+	int r;
 
+	r = -1;
 	if (table->t_backend->lookup == NULL)
-		return (-1);
-
-	if (!lowercase(lkey, key, sizeof lkey)) {
+		errno = ENOTSUP;
+	else if (!lowercase(lkey, key, sizeof lkey)) {
 		log_warnx("warn: lookup key too long: %s", key);
-		return -1;
+		errno = EINVAL;
 	}
+	else
+		r = table->t_backend->lookup(table, kind, lkey, lk ? &buf : NULL);
 
-	r = table->t_backend->lookup(table->t_handle, params, lkey, kind, lk);
-
-	if (r == 1)
+	if (r == 1) {
 		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %s%s%s",
-		    lk ? "lookup" : "check",
-		    lkey,
+		    lk ? "lookup" : "match",
+		    key,
 		    table_service_name(kind),
-		    table_backend_name(table->t_backend),
+		    table->t_backend->name,
 		    table->t_name,
 		    lk ? "\"" : "",
-		    (lk) ? table_dump_lookup(kind, lk): "found",
+		    lk ? buf : "true",
 		    lk ? "\"" : "");
+		if (buf)
+			r = table_parse_lookup(kind, lkey, buf, lk);
+	}
 	else
-		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %d",
-		    lk ? "lookup" : "check",
-		    lkey,
+		log_trace(TRACE_LOOKUP, "lookup: %s \"%s\" as %s in table %s:%s -> %s%s",
+		    lk ? "lookup" : "match",
+		    key,
 		    table_service_name(kind),
-		    table_backend_name(table->t_backend),
+		    table->t_backend->name,
 		    table->t_name,
-		    r);
+		    (r == -1) ? "error: " : (lk ? "none" : "false"),
+		    (r == -1) ? strerror(errno) : "");
+
+	free(buf);
 
 	return (r);
 }
 
 int
-table_fetch(struct table *table, struct dict *params, enum table_service kind, union lookup *lk)
+table_fetch(struct table *table, enum table_service kind, union lookup *lk)
 {
-	int 	r;
+	char *buf = NULL;
+	int r;
 
+	r = -1;
 	if (table->t_backend->fetch == NULL)
-		return (-1);
-
-	r = table->t_backend->fetch(table->t_handle, params, kind, lk);
-
-	if (r == 1)
-		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %s%s%s",
-		    table_service_name(kind),
-		    table_backend_name(table->t_backend),
-		    table->t_name,
-		    lk ? "\"" : "",
-		    (lk) ? table_dump_lookup(kind, lk): "found",
-		    lk ? "\"" : "");
+		errno = ENOTSUP;
 	else
-		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %d",
+		r = table->t_backend->fetch(table, kind, &buf);
+
+	if (r == 1) {
+		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> \"%s\"",
 		    table_service_name(kind),
-		    table_backend_name(table->t_backend),
+		    table->t_backend->name,
 		    table->t_name,
-		    r);
+		    buf);
+		r = table_parse_lookup(kind, NULL, buf, lk);
+	}
+	else
+		log_trace(TRACE_LOOKUP, "lookup: fetch %s from table %s:%s -> %s%s",
+		    table_service_name(kind),
+		    table->t_backend->name,
+		    table->t_name,
+		    (r == -1) ? "error: " : "none",
+		    (r == -1) ? strerror(errno) : "");
+
+	free(buf);
 
 	return (r);
 }
 
 struct table *
-table_create(const char *backend, const char *name, const char *tag,
+table_create(struct smtpd *conf, const char *backend, const char *name,
     const char *config)
 {
 	struct table		*t;
 	struct table_backend	*tb;
-	char			 buf[LINE_MAX];
 	char			 path[LINE_MAX];
 	size_t			 n;
 	struct stat		 sb;
 
-	if (name && tag) {
-		if ((size_t)snprintf(buf, sizeof(buf), "%s#%s", name, tag) >=
-		    sizeof(buf))
-			fatalx("table_create: name too long \"%s#%s\"",
-			    name, tag);
-		name = buf;
-	}
-
-	if (name && table_find(name, NULL))
+	if (name && table_find(conf, name))
 		fatalx("table_create: table \"%s\" already defined", name);
 
 	if ((tb = table_backend_lookup(backend)) == NULL) {
@@ -229,15 +223,8 @@ table_create(const char *backend, const char *name, const char *tag,
 	if (tb == NULL)
 		fatalx("table_create: backend \"%s\" does not exist", backend);
 
-	t = xcalloc(1, sizeof(*t), "table_create");
+	t = xcalloc(1, sizeof(*t));
 	t->t_backend = tb;
-
-	/* XXX */
-	/*
-	 * until people forget about it, "file" really means "static"
-	 */
-	if (!strcmp(backend, "file"))
-		backend = "static";
 
 	if (config) {
 		if (strlcpy(t->t_config, config, sizeof t->t_config)
@@ -246,7 +233,7 @@ table_create(const char *backend, const char *name, const char *tag,
 			    t->t_config);
 	}
 
-	if (strcmp(backend, "static") != 0)
+	if (strcmp(tb->name, "static") != 0)
 		t->t_type = T_DYNAMIC;
 
 	if (name == NULL)
@@ -258,21 +245,15 @@ table_create(const char *backend, const char *name, const char *tag,
 			fatalx("table_create: table name too long");
 	}
 
-	dict_init(&t->t_dict);
-	dict_set(env->sc_tables_dict, t->t_name, t);
+	dict_set(conf->sc_tables_dict, t->t_name, t);
 
 	return (t);
 }
 
 void
-table_destroy(struct table *t)
+table_destroy(struct smtpd *conf, struct table *t)
 {
-	void	*p = NULL;
-
-	while (dict_poproot(&t->t_dict, (void **)&p))
-		free(p);
-
-	dict_xpop(env->sc_tables_dict, t->t_name);
+	dict_xpop(conf->sc_tables_dict, t->t_name);
 	free(t);
 }
 
@@ -287,22 +268,47 @@ table_config(struct table *t)
 void
 table_add(struct table *t, const char *key, const char *val)
 {
-	char	lkey[1024], *old;
-
-	if (t->t_type & T_DYNAMIC)
+	if (t->t_backend->add == NULL)
 		fatalx("table_add: cannot add to table");
 
-	if (!lowercase(lkey, key, sizeof lkey)) {
-		log_warnx("warn: lookup key too long: %s", key);
-		return;
+	if (t->t_backend->add(t, key, val) == 0)
+		log_warnx("warn: failed to add \"%s\" in table \"%s\"", key, t->t_name);
+}
+
+void
+table_dump(struct table *t)
+{
+	const char *type;
+	char buf[LINE_MAX];
+
+	switch(t->t_type) {
+	case T_NONE:
+		type = "NONE";
+		break;
+	case T_DYNAMIC:
+		type = "DYNAMIC";
+		break;
+	case T_LIST:
+		type = "LIST";
+		break;
+	case T_HASH:
+		type = "HASH";
+		break;
+	default:
+		type = "???";
+		break;
 	}
 
-	old = dict_set(&t->t_dict, lkey, val ? xstrdup(val, "table_add") : NULL);
-	if (old) {
-		log_warnx("warn: duplicate key \"%s\" in static table \"%s\"",
-		    lkey, t->t_name);
-		free(old);
-	}
+	if (t->t_config[0])
+		snprintf(buf, sizeof(buf), " config=\"%s\"", t->t_config);
+	else
+		buf[0] = '\0';
+
+	log_debug("TABLE \"%s\" backend=%s type=%s%s", t->t_name,
+	    t->t_backend->name, type, buf);
+
+	if (t->t_backend->dump)
+		t->t_backend->dump(t);
 }
 
 int
@@ -326,20 +332,16 @@ table_check_use(struct table *t, uint32_t tmask, uint32_t smask)
 int
 table_open(struct table *t)
 {
-	t->t_handle = NULL;
 	if (t->t_backend->open == NULL)
 		return (1);
-	t->t_handle = t->t_backend->open(t);
-	if (t->t_handle == NULL)
-		return (0);
-	return (1);
+	return (t->t_backend->open(t));
 }
 
 void
 table_close(struct table *t)
 {
 	if (t->t_backend->close)
-		t->t_backend->close(t->t_handle);
+		t->t_backend->close(t);
 }
 
 int
@@ -457,69 +459,61 @@ table_inet6_match(struct sockaddr_in6 *ss, struct netaddr *ssmask)
 	return (1);
 }
 
-void
-table_dump_all(void)
+int
+table_regex_match(const char *string, const char *pattern)
 {
-	struct table	*t;
-	void		*iter, *i2;
-	const char 	*key, *sep;
-	char		*value;
-	char		 buf[1024];
+	regex_t preg;
+	int	cflags = REG_EXTENDED|REG_NOSUB;
 
-	iter = NULL;
-	while (dict_iter(env->sc_tables_dict, &iter, NULL, (void **)&t)) {
-		i2 = NULL;
-		sep = "";
- 		buf[0] = '\0';
-		if (t->t_type & T_DYNAMIC) {
-			(void)strlcat(buf, "DYNAMIC", sizeof(buf));
-			sep = ",";
-		}
-		if (t->t_type & T_LIST) {
-			(void)strlcat(buf, sep, sizeof(buf));
-			(void)strlcat(buf, "LIST", sizeof(buf));
-			sep = ",";
-		}
-		if (t->t_type & T_HASH) {
-			(void)strlcat(buf, sep, sizeof(buf));
-			(void)strlcat(buf, "HASH", sizeof(buf));
-			sep = ",";
-		}
-		log_debug("TABLE \"%s\" type=%s config=\"%s\"",
-		    t->t_name, buf, t->t_config);
-		while(dict_iter(&t->t_dict, &i2, &key, (void**)&value)) {
-			if (value)
-				log_debug("	\"%s\" -> \"%s\"", key, value);
-			else
-				log_debug("	\"%s\"", key);
-		}
+	if (strncmp(pattern, "(?i)", 4) == 0) {
+		cflags |= REG_ICASE;
+		pattern += 4;
 	}
+
+	if (regcomp(&preg, pattern, cflags) != 0)
+		return (0);
+
+	if (regexec(&preg, string, 0, NULL, 0) != 0)
+		return (0);
+
+	return (1);
 }
 
 void
-table_open_all(void)
+table_dump_all(struct smtpd *conf)
 {
 	struct table	*t;
 	void		*iter;
 
 	iter = NULL;
-	while (dict_iter(env->sc_tables_dict, &iter, NULL, (void **)&t))
+	while (dict_iter(conf->sc_tables_dict, &iter, NULL, (void **)&t))
+		table_dump(t);
+}
+
+void
+table_open_all(struct smtpd *conf)
+{
+	struct table	*t;
+	void		*iter;
+
+	iter = NULL;
+	while (dict_iter(conf->sc_tables_dict, &iter, NULL, (void **)&t))
 		if (!table_open(t))
 			fatalx("failed to open table %s", t->t_name);
 }
 
 void
-table_close_all(void)
+table_close_all(struct smtpd *conf)
 {
 	struct table	*t;
 	void		*iter;
 
 	iter = NULL;
-	while (dict_iter(env->sc_tables_dict, &iter, NULL, (void **)&t))
+	while (dict_iter(conf->sc_tables_dict, &iter, NULL, (void **)&t))
 		table_close(t);
 }
 
-int
+static int
 table_parse_lookup(enum table_service service, const char *key,
     const char *line, union lookup *lk)
 {
@@ -621,89 +615,16 @@ table_parse_lookup(enum table_service service, const char *key,
 			return (-1);
 		return (1);
 
+	case K_RELAYHOST:
+		if (strlcpy(lk->relayhost, line, sizeof(lk->relayhost))
+		    >= sizeof(lk->relayhost))
+			return (-1);
+		return (1);
+
 	default:
 		return (-1);
 	}
 }
-
-static const char *
-table_dump_lookup(enum table_service s, union lookup *lk)
-{
-	static char	buf[LINE_MAX];
-	int		ret;
-
-	switch (s) {
-	case K_NONE:
-		break;
-
-	case K_ALIAS:
-		expand_to_text(lk->expand, buf, sizeof(buf));
-		break;
-
-	case K_DOMAIN:
-		ret = snprintf(buf, sizeof(buf), "%s", lk->domain.name);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_CREDENTIALS:
-		ret = snprintf(buf, sizeof(buf), "%s:%s",
-		    lk->creds.username, lk->creds.password);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_NETADDR:
-		ret = snprintf(buf, sizeof(buf), "%s/%d",
-		    sockaddr_to_text((struct sockaddr *)&lk->netaddr.ss),
-		    lk->netaddr.bits);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_USERINFO:
-		ret = snprintf(buf, sizeof(buf), "%s:%d:%d:%s",
-		    lk->userinfo.username,
-		    lk->userinfo.uid,
-		    lk->userinfo.gid,
-		    lk->userinfo.directory);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_SOURCE:
-		ret = snprintf(buf, sizeof(buf), "%s",
-		    ss_to_text(&lk->source.addr));
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_MAILADDR:
-		ret = snprintf(buf, sizeof(buf), "%s@%s",
-		    lk->mailaddr.user,
-		    lk->mailaddr.domain);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	case K_ADDRNAME:
-		ret = snprintf(buf, sizeof(buf), "%s",
-		    lk->addrname.name);
-		if (ret == -1 || (size_t)ret >= sizeof (buf))
-			goto err;
-		break;
-
-	default:
-		(void)strlcpy(buf, "???", sizeof(buf));
-		break;
-	}
-
-	return (buf);
-
-err:
-	return (NULL);
-}
-
 
 static int
 parse_sockaddr(struct sockaddr *sa, int family, const char *str)

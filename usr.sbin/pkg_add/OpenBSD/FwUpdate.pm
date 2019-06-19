@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.27 2018/01/17 13:35:52 patrick Exp $
+# $OpenBSD: FwUpdate.pm,v 1.30 2019/04/07 12:30:39 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -147,7 +147,8 @@ OpenBSD::Auto::cache(updater,
     });
 
 my %possible_drivers = map {($_, "$_-firmware")}
-    (qw(acx athn bwfm bwi intel ipw iwi iwm iwn malo otus pgt radeondrm rsu rtwn
+    (qw(acx amdgpu athn bwfm bwi intel inteldrm ipw iwi
+	iwm iwn malo otus pgt radeondrm rsu rtwn
 	uath upgt urtwn uvideo vmm wpi));
 
 my %match = map {($_, qr{^\Q$_\E\d+\s+at\s})} (keys %possible_drivers);
@@ -279,6 +280,11 @@ sub show_info
 	$state->fw_status("Installed", \@installed);
 	$state->fw_status("Installed, extra", \@unneeded);
 	$state->fw_status("Missing", \@needed);
+}
+
+sub silence_children
+{
+	0
 }
 
 sub process_parameters

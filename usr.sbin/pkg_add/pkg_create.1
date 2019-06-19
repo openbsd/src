@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.108 2018/01/08 05:42:48 bentley Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.115 2018/07/30 08:05:06 ajacoutot Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 8 2018 $
+.Dd $Mdocdate: July 30 2018 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Op Fl M Ar displayfile
 .Op Fl P Ar pkgpath : Ns Ar pkgspec : Ns Ar default
 .Op Fl U Ar undisplayfile
+.Op Fl u Ar userlist
 .Op Fl V Ar n
 .Op Fl W Ar libspec
 .Fl d Ar desc
@@ -225,6 +226,20 @@ Display the file (using
 .Xr more 1 )
 when deinstalling the package.
 Useful for reminders about stuff to clean up.
+.It Fl u Ar userlist
+Check all
+.Cm @newuser
+and
+.Cm @newgroup
+statements against a
+.Ar userlist
+file
+.Po
+usually
+.Pa ${PORTSDIR}/infrastructure/db/user.list
+.Pc
+and error out for entries not registered in that file.
+Also error out if the file is incoherent.
 .It Fl V Ar n
 Adds
 .Ar n
@@ -371,6 +386,70 @@ If
 .Ar name
 does not begin with an @, same as
 .Dl name/
+.Pp
+.It Cm @define-tag Ar tag Ar mode Ar params
+Define a tag of name
+.Ar tag .
+Tags define actions to be performed at specific time during
+.Xr pkg_add 1
+and
+.Xr pkg_delete 1 .
+A given tag may be defined several times with additional properties.
+Currently, the following modes are defined:
+.Bl -tag -width abc -compact
+.It Ar at-end
+if the tag occurs in any dependency, the given command
+.Ar params
+is executed at the end, similar to
+.Cm @exec
+commands.
+.Pp
+The
+.Cm "\&%D"
+escape sequence stands for localbase.
+.Pp
+Actual tags may themselves contain parameters, so the
+.Ar params
+list recognizes two additional escape sequences:
+.Bl -tag -width indent
+.It Cm "\&%l"
+list of tag parameters, in a random order, with duplicates removed.
+.It Cm "\&%u"
+execute the command once for each distinct tag parameter.
+.El
+.Pp
+As a special case, deleting the package that contains the
+.Cm @define-tag
+will work differently:
+If that
+.Cm @tag
+is present in the same package as the
+.Cm @define-tag ,
+then it will be run when encountered, presumably before the command itself
+has been deleted.
+If that
+.Cm @tag
+is not present, the command won't be run at all,
+since the package has been deleted from the file system,
+and usually cleaning up only requires removing index files.
+.Pp
+.It Ar supersedes
+If the given tag is found in dependencies, it supersedes the other
+tag given in the same line.
+For instance:
+.Bd -literal -offset indent
+@define-tag mktexlsr at-end mktexlsr
+@define-tag mktexlsr-local at-end mktexlsr texmf-local
+@define-tag mktexlsr supersedes mktexlsr-local
+.Ed
+.Pp
+Here, the tag
+.Ar mktexlsr
+rebuilds every texmf directory index, whereas
+.Ar mktexlsr-local
+only rebuilds the local texmf directory index,
+so if both tags are seen, only the global command will be run.
+.El
 .Pp
 .It Cm @exec Ar command
 Execute
@@ -744,6 +823,16 @@ deleted last, so that
 .Cm @unexec
 can rely on them.
 .Pp
+.It Cm @tag Ar name Op Ar parameter
+Reference a tag of given
+.Ar name .
+The corresponding
+.Cm @define-tag
+definition must be accessible through the dependency tree.
+.Ar parameter
+is amenable to the same substitutions as
+.Cm @exec .
+.Pp
 .It Cm @unexec-always Ar command
 Synonym of
 .Cm @unexec .
@@ -834,15 +923,6 @@ inclusion will be ignored.
 However, if both the positive and negative fragment files do not exist,
 .Nm
 will error out, to make it easier to spot fragment names errors.
-.Sh ENVIRONMENT
-.Bl -tag -width PKG_DESTDIR
-.It Ev PKG_DESTDIR
-Default value for
-.Ar pkg-destdir ,
-if no
-.Fl B
-option is specified.
-.El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
 .Xr pkg_delete 1 ,

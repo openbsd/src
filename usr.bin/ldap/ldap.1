@@ -1,0 +1,250 @@
+.\" $OpenBSD: ldap.1,v 1.10 2018/08/01 10:42:55 rob Exp $
+.\"
+.\" Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: August 1 2018 $
+.Dt LDAP 1
+.Os
+.Sh NAME
+.Nm ldap
+.Nd simple LDAP client
+.Sh SYNOPSIS
+.Nm ldap
+.Cm search
+.Op Fl LvWxZ
+.Op Fl b Ar basedn
+.Op Fl c Ar CAfile
+.Op Fl D Ar binddn
+.Op Fl H Ar host
+.Op Fl l Ar timelimit
+.Op Fl s Ar scope
+.Op Fl w Ar secret
+.Op Fl y Ar secretfile
+.Op Fl z Ar sizelimit
+.Op Ar filter
+.Op Ar attributes ...
+.Sh DESCRIPTION
+The
+.Nm
+utility is a simple LDAP client.
+It queries an LDAP server to perform a command and outputs the results
+in the LDAP Data Interchange Format (LDIF).
+.Bl -tag -width Ds
+.It Cm search Ar options Oo Ar filter Oc Op Ar attributes ...
+Perform a directory search request.
+The optional
+.Ar filter
+argument specifies the LDAP filter for the directory search.
+The default is
+.Ar (objectClass=*)
+and the format must comply to the
+.Dq String Representation of Search Filters
+as described in RFC 4515.
+If one or more
+.Ar attribute
+options are specified,
+.Nm
+restricts the output to the specified attributes.
+.El
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl b Ar basedn
+Use the specified distinguished name (dn) as the starting point for
+directory search requests.
+.It Fl c Ar CAfile
+When TLS is enabled, load the CA bundle for certificate verification
+from the specified file.
+The default is
+.Pa /etc/ssl/cert.pem .
+If the LDAP server uses a self-signed certificate,
+use a file that contains the server certificate in PEM format, e.g.
+.Pa /etc/ssl/ldapserver.example.com.crt .
+.It Fl D Ar binddn
+Use the specified distinguished name to bind to the directory.
+.It Fl H Ar host
+The hostname of the LDAP server or an LDAP URL.
+The LDAP URL is described in RFC 4516 with the following format:
+.Pp
+.Sm off
+.Op Ar protocol No ://
+.Ar host Op : Ar port
+.Oo
+.Li / Ar basedn
+.Li ?\& Ar attribute , ...
+.Li ?\& Ar scope
+.Li ?\& Ar filter
+.Oc
+.Sm on
+.Pp
+The default is
+.Ar ldap://localhost:389/ .
+Each of
+.Ar basedn , attribute , scope
+and
+.Ar filter
+may be omitted,
+but the preceding
+.Sq /
+or
+.Sq ?\&
+is required if a subsequent field is non-empty.
+.Pp
+The following protocols are supported:
+.Pp
+.Bl -tag -width "ldap+tls" -compact
+.It ldap
+Connect with TCP in plain text.
+This is the default.
+.It ldaps
+Connect with TLS.
+The default port is 636.
+.It ldap+tls
+Connect with TCP and enable TLS using the StartTLS operation.
+This is the same as the
+.Fl Z
+option.
+.It ldapi
+Connect to a UNIX-domain socket.
+The host argument is required to be a URL-encoded path, for example
+.Ar ldapi://%2fvar%2frun%2fldapi
+for
+.Pa /var/run/ldapi .
+.El
+.It Fl L
+Output the directory search result in a standards-compliant version of
+the LDAP Data Interchange Format (LDIF).
+This encodes attribute values that include non-printable or UTF-8
+characters in the Base64 format and wraps lines at a 79-character limit.
+If this option is not specified,
+.Nm
+encodes
+.Dq unsafe
+characters and newlines in a visual format using
+.Xr vis 3
+instead.
+.It Fl l Ar timelimit
+Request the server to abort the search request after
+.Ar timelimit
+seconds.
+The default value is 0
+for no limit.
+.It Fl s Ar scope
+Specify the
+.Ar scope
+to be either
+.Ic base ,
+.Ic one ,
+or
+.Ic sub .
+The default is
+.Ic sub
+for subtree searches.
+.It Fl v
+Product more verbose output.
+.It Fl W
+Prompt for the bind secret with echo turned off.
+.It Fl w Ar secret
+Specify the bind secret on the command line.
+.It Fl x
+Use simple authentication.
+This is the default as
+.Nm
+does not support SASL authentication.
+.It Fl y Ar secretfile
+Read the bind secret from the first line of the specified file or from
+standard input if the
+.Ar secretfile
+argument is
+.Sq - .
+The file must not be world-readable if it is a regular file.
+.It Fl Z
+Enable TLS using the StartTLS operation.
+.It Fl z Ar sizelimit
+Request the server to limit the search result to a maximum number of
+.Ar sizelimit
+entries.
+The default value is 0.
+for no limit.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/ssl/cert.pemXXX" -compact
+.It Pa /etc/ssl/cert.pem
+Default CA file.
+.El
+.Sh EXAMPLES
+The following script can be used with the
+.Ar AuthorizedKeysCommand
+option of
+.Xr sshd 8 :
+.Bd -literal -offset indent
+#!/bin/sh
+ldap search -D cn=Reader,dc=example,dc=com -w mypass123 \e
+	-b ou=People,dc=example,dc=com \e
+	-H ldapserver -c /etc/ssl/ldapserver.crt -Z \e
+	"(&(objectClass=bsdAccount)(uid=$1))" sshPublicKey | \e
+	sed 's/^sshPublicKey: //p;d;'
+exit 0
+.Ed
+.Pp
+And the related configuration in
+.Xr sshd_config 5 :
+.Bd -literal -offset indent
+Match Group ldapusers
+	AuthorizedKeysCommand /etc/ssh/ldap-authorized_keys.sh
+	AuthorizedKeysCommandUser _ldap
+.Ed
+.Sh SEE ALSO
+.Xr sshd_config 5 ,
+.Xr ldapd 8 ,
+.Xr sshd 8
+.Sh STANDARDS
+.Rs
+.%A G. Good
+.%D June 2000
+.%R RFC 2849
+.%T The LDAP Data Interchange Format (LDIF) - Technical Specification
+.Re
+.Pp
+.Rs
+.%A M. Smith, Ed.
+.%A T. Howes
+.%D June 2006
+.%R RFC 4515
+.%T Lightweight Directory Access Protocol (LDAP): String Representation of Search Filters
+.Re
+.Pp
+.Rs
+.%A M. Smith, Ed.
+.%A T. Howes
+.%D June 2006
+.%R RFC 4516
+.%T Lightweight Directory Access Protocol (LDAP): Uniform Resource Locator
+.Re
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Ox 6.4 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+utility was written by
+.An Reyk Floeter Aq Mt reyk@openbsd.org .
+.Sh CAVEATS
+SASL authentication is not supported.
+Authentication should be performed using simple authentication over a
+TLS connection.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.4 2017/11/04 22:53:57 jca Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.5 2018/03/31 22:06:22 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -31,6 +31,7 @@ PROTO_STD_DEPRECATED(pthread_condattr_destroy);
 PROTO_STD_DEPRECATED(pthread_condattr_getclock);
 PROTO_STD_DEPRECATED(pthread_condattr_init);
 PROTO_STD_DEPRECATED(pthread_condattr_setclock);
+PROTO_STD_DEPRECATED(pthread_equal);
 PROTO_NORMAL(pthread_exit);
 PROTO_NORMAL(pthread_getspecific);
 PROTO_NORMAL(pthread_key_create);

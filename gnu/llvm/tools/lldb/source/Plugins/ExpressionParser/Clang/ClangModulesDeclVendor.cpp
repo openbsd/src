@@ -25,8 +25,10 @@
 #include "llvm/Support/Threading.h"
 
 // Project includes
+#include "ClangHost.h"
 #include "ClangModulesDeclVendor.h"
 
+#include "lldb/Core/ModuleList.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Symbol/CompileUnit.h"
@@ -39,9 +41,9 @@
 using namespace lldb_private;
 
 namespace {
-// Any Clang compiler requires a consumer for diagnostics.  This one stores them
-// as strings
-// so we can provide them to the user in case a module failed to load.
+// Any Clang compiler requires a consumer for diagnostics.  This one stores
+// them as strings so we can provide them to the user in case a module failed
+// to load.
 class StoringDiagnosticConsumer : public clang::DiagnosticConsumer {
 public:
   StoringDiagnosticConsumer();
@@ -61,8 +63,7 @@ private:
 };
 
 // The private implementation of our ClangModulesDeclVendor.  Contains all the
-// Clang state required
-// to load modules.
+// Clang state required to load modules.
 class ClangModulesDeclVendorImpl : public ClangModulesDeclVendor {
 public:
   ClangModulesDeclVendorImpl(
@@ -85,6 +86,7 @@ public:
   void ForEachMacro(const ModuleVector &modules,
                     std::function<bool(const std::string &)> handler) override;
 
+  clang::ExternalASTMerger::ImporterSource GetImporterSource() override;
 private:
   void
   ReportModuleExportsHelper(std::set<ClangModulesDeclVendor::ModuleID> &exports,
@@ -109,6 +111,7 @@ private:
   typedef std::set<ModuleID> ImportedModuleSet;
   ImportedModuleMap m_imported_modules;
   ImportedModuleSet m_user_imported_modules;
+  const clang::ExternalASTMerger::OriginMap m_origin_map;
 };
 } // anonymous namespace
 
@@ -142,18 +145,6 @@ void StoringDiagnosticConsumer::DumpDiagnostics(Stream &error_stream) {
   }
 }
 
-static FileSpec GetResourceDir() {
-  static FileSpec g_cached_resource_dir;
-
-  static llvm::once_flag g_once_flag;
-
-  llvm::call_once(g_once_flag, []() {
-    HostInfo::GetLLDBPath(lldb::ePathTypeClangDir, g_cached_resource_dir);
-  });
-
-  return g_cached_resource_dir;
-}
-
 ClangModulesDeclVendor::ClangModulesDeclVendor() {}
 
 ClangModulesDeclVendor::~ClangModulesDeclVendor() {}
@@ -166,7 +157,7 @@ ClangModulesDeclVendorImpl::ClangModulesDeclVendorImpl(
     : m_diagnostics_engine(std::move(diagnostics_engine)),
       m_compiler_invocation(std::move(compiler_invocation)),
       m_compiler_instance(std::move(compiler_instance)),
-      m_parser(std::move(parser)) {}
+      m_parser(std::move(parser)), m_origin_map() {}
 
 void ClangModulesDeclVendorImpl::ReportModuleExportsHelper(
     std::set<ClangModulesDeclVendor::ModuleID> &exports,
@@ -548,6 +539,12 @@ ClangModulesDeclVendorImpl::DoGetModule(clang::ModuleIdPath path,
                                          is_inclusion_directive);
 }
 
+clang::ExternalASTMerger::ImporterSource
+ClangModulesDeclVendorImpl::GetImporterSource() {
+  return {m_compiler_instance->getASTContext(),
+          m_compiler_instance->getFileManager(), m_origin_map};
+}
+
 static const char *ModuleImportBufferName = "LLDBModulesMemoryBuffer";
 
 lldb_private::ClangModulesDeclVendor *
@@ -582,14 +579,11 @@ ClangModulesDeclVendor::Create(Target &target) {
   // Add additional search paths with { "-I", path } or { "-F", path } here.
 
   {
-    llvm::SmallString<128> DefaultModuleCache;
-    const bool erased_on_reboot = false;
-    llvm::sys::path::system_temp_directory(erased_on_reboot,
-                                           DefaultModuleCache);
-    llvm::sys::path::append(DefaultModuleCache, "org.llvm.clang");
-    llvm::sys::path::append(DefaultModuleCache, "ModuleCache");
+    llvm::SmallString<128> path;
+    auto props = ModuleList::GetGlobalModuleListProperties();
+    props.GetClangModulesCachePath().GetPath(path);
     std::string module_cache_argument("-fmodules-cache-path=");
-    module_cache_argument.append(DefaultModuleCache.str().str());
+    module_cache_argument.append(path.str());
     compiler_invocation_arguments.push_back(module_cache_argument);
   }
 
@@ -605,7 +599,7 @@ ClangModulesDeclVendor::Create(Target &target) {
   }
 
   {
-    FileSpec clang_resource_dir = GetResourceDir();
+    FileSpec clang_resource_dir = GetClangResourceDir();
 
     if (llvm::sys::fs::is_directory(clang_resource_dir.GetPath())) {
       compiler_invocation_arguments.push_back("-resource-dir");

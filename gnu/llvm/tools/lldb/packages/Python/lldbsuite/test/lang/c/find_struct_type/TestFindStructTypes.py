@@ -17,7 +17,7 @@ class TestFindTypesOnStructType(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
-    # If your test case doesn't stress debug info, the 
+    # If your test case doesn't stress debug info, the
     # set this to true.  That way it won't be run once for
     # each debug info format.
     NO_DEBUG_INFO_TESTCASE = True
@@ -33,7 +33,7 @@ class TestFindTypesOnStructType(TestBase):
 
     def do_test(self):
         """Make sure FindTypes actually finds 'struct typename' not just 'typename'."""
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = self.getBuildArtifact("a.out")
 
         # Create a target by the debugger.
         target = self.dbg.CreateTarget(exe)

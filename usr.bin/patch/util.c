@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.40 2015/07/26 14:32:19 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.42 2018/12/30 23:09:58 guenther Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -31,7 +31,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <libgen.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -43,7 +42,6 @@
 #include "common.h"
 #include "util.h"
 #include "backupfile.h"
-#include "pathnames.h"
 
 /* Rename a file, copying it if necessary. */
 

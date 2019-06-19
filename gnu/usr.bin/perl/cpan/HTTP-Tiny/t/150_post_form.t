@@ -6,13 +6,15 @@ use open IN => ':raw';
 
 use File::Basename;
 use Test::More 0.88;
-use t::Util    qw[tmpfile rewind slurp monkey_patch dir_list parse_case
+use lib 't';
+use Util    qw[tmpfile rewind slurp monkey_patch dir_list parse_case
                   set_socket_source sort_headers $CRLF $LF];
 use HTTP::Tiny;
 BEGIN { monkey_patch() }
 
 for my $file ( dir_list("corpus", qr/^form/ ) ) {
   my $data = do { local (@ARGV,$/) = $file; <> };
+  $data =~ s/$CRLF/$LF/gm if $^O eq 'MSWin32';
   my ($params, $expect_req, $give_res) = split /--+\n/, $data;
   # cleanup source data
   my $version = HTTP::Tiny->VERSION || 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.37 2015/12/22 08:48:39 mmcc Exp $	*/
+/*	$OpenBSD: common.c,v 1.39 2018/09/21 19:00:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -56,6 +56,8 @@
 char			host[HOST_NAME_MAX+1];	/* Name of this host */
 uid_t			userid = (uid_t)-1;	/* User's UID */
 gid_t			groupid = (gid_t)-1;	/* User's GID */
+gid_t		        gidset[NGROUPS_MAX];	/* User's GID list */
+int			gidsetlen = 0;		/* Number of GIDS in list */
 char		       *homedir = NULL;		/* User's $HOME */
 char		       *locuser = NULL;		/* Local User's name */
 int			isserver = FALSE;	/* We're the server */
@@ -65,7 +67,6 @@ char		       *currenthost = NULL;	/* Current client hostname */
 char		       *progname = NULL;	/* Name of this program */
 int			rem_r = -1;		/* Client file descriptor */
 int			rem_w = -1;		/* Client file descriptor */
-struct passwd	       *pw = NULL;		/* Local user's pwd entry */
 volatile sig_atomic_t 	contimedout = FALSE;	/* Connection timed out */
 int			rtimeout = RTIMEOUT;	/* Response time out */
 jmp_buf			finish_jmpbuf;		/* Finish() jmp buffer */
@@ -107,6 +108,7 @@ xwrite(int fd, void *buf, size_t len)
 int
 init(int argc, char **argv, char **envp)
 {
+	struct passwd *pw;
 	int i;
 
 	/*
@@ -129,6 +131,7 @@ init(int argc, char **argv, char **envp)
 	homedir = xstrdup(pw->pw_dir);
 	locuser = xstrdup(pw->pw_name);
 	groupid = pw->pw_gid;
+	gidsetlen = getgroups(NGROUPS_MAX, gidset);
 	gethostname(host, sizeof(host));
 #if 0
 	if ((cp = strchr(host, '.')) != NULL)
@@ -436,7 +439,7 @@ getusername(uid_t uid, char *file, opt_t opts)
 {
 	static char buf[100];
 	static uid_t lastuid = (uid_t)-1;
-	struct passwd *pwd = NULL;
+	const char *name;
 
 	/*
 	 * The value of opts may have changed so we always
@@ -448,14 +451,14 @@ getusername(uid_t uid, char *file, opt_t opts)
   	}
 
 	/*
-	 * Try to avoid getpwuid() call.
+	 * Try to avoid passwd lookup.
 	 */
 	if (lastuid == uid && buf[0] != '\0' && buf[0] != ':')
 		return(buf);
 
 	lastuid = uid;
 
-	if ((pwd = getpwuid(uid)) == NULL) {
+	if ((name = user_from_uid(uid, 1)) == NULL) {
 		if (IS_ON(opts, DO_DEFOWNER) && !isserver) 
 			(void) strlcpy(buf, defowner, sizeof(buf));
 		else {
@@ -464,7 +467,7 @@ getusername(uid_t uid, char *file, opt_t opts)
 			(void) snprintf(buf, sizeof(buf), ":%u", uid);
 		}
 	} else {
-		(void) strlcpy(buf, pwd->pw_name, sizeof(buf));
+		(void) strlcpy(buf, name, sizeof(buf));
 	}
 
 	return(buf);
@@ -478,7 +481,7 @@ getgroupname(gid_t gid, char *file, opt_t opts)
 {
 	static char buf[100];
 	static gid_t lastgid = (gid_t)-1;
-	struct group *grp = NULL;
+	const char *name;
 
 	/*
 	 * The value of opts may have changed so we always
@@ -490,14 +493,14 @@ getgroupname(gid_t gid, char *file, opt_t opts)
   	}
 
 	/*
-	 * Try to avoid getgrgid() call.
+	 * Try to avoid group lookup.
 	 */
 	if (lastgid == gid && buf[0] != '\0' && buf[0] != ':')
 		return(buf);
 
 	lastgid = gid;
 
-	if ((grp = (struct group *)getgrgid(gid)) == NULL) {
+	if ((name = group_from_gid(gid, 1)) == NULL) {
 		if (IS_ON(opts, DO_DEFGROUP) && !isserver) 
 			(void) strlcpy(buf, defgroup, sizeof(buf));
 		else {
@@ -506,7 +509,7 @@ getgroupname(gid_t gid, char *file, opt_t opts)
 			(void) snprintf(buf, sizeof(buf), ":%u", gid);
 		}
 	} else
-		(void) strlcpy(buf, grp->gr_name, sizeof(buf));
+		(void) strlcpy(buf, name, sizeof(buf));
 
 	return(buf);
 }
@@ -572,7 +575,10 @@ response(void)
 char *
 exptilde(char *ebuf, char *file, size_t ebufsize)
 {
+	struct passwd *pw;
 	char *pw_dir, *rest;
+	static char lastuser[_PW_NAME_LEN + 1];
+	static char lastdir[PATH_MAX];
 	size_t len;
 
 	if (*file != '~') {
@@ -580,11 +586,10 @@ notilde:
 		(void) strlcpy(ebuf, file, ebufsize);
 		return(ebuf);
 	}
+	pw_dir = homedir;
 	if (*++file == CNULL) {
-		pw_dir = homedir;
 		rest = NULL;
 	} else if (*file == '/') {
-		pw_dir = homedir;
 		rest = file;
 	} else {
 		rest = file;
@@ -594,17 +599,21 @@ notilde:
 			*rest = CNULL;
 		else
 			rest = NULL;
-		if (pw == NULL || strcmp(pw->pw_name, file) != 0) {
-			if ((pw = getpwnam(file)) == NULL) {
-				error("%s: unknown user name", file);
-				if (rest != NULL)
-					*rest = '/';
-				return(NULL);
+		if (strcmp(locuser, file) != 0) {
+			if (strcmp(lastuser, file) != 0) {
+				if ((pw = getpwnam(file)) == NULL) {
+					error("%s: unknown user name", file);
+					if (rest != NULL)
+						*rest = '/';
+					return(NULL);
+				}
+				strlcpy(lastuser, pw->pw_name, sizeof(lastuser));
+				strlcpy(lastdir, pw->pw_dir, sizeof(lastdir));
 			}
+			pw_dir = lastdir;
 		}
 		if (rest != NULL)
 			*rest = '/';
-		pw_dir = pw->pw_dir;
 	}
 	if ((len = strlcpy(ebuf, pw_dir, ebufsize)) >= ebufsize)
 		goto notilde;

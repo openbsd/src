@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_asn1.c,v 1.20 2017/11/28 16:51:21 jsing Exp $ */
+/* $OpenBSD: evp_asn1.c,v 1.23 2018/11/09 04:20:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,7 @@
 #include <openssl/err.h>
 
 int
-ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
+ASN1_TYPE_set_octetstring(ASN1_TYPE *a, const unsigned char *data, int len)
 {
 	ASN1_STRING *os;
 
@@ -79,7 +79,7 @@ ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
 }
 
 int
-ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data, int max_len)
+ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_len)
 {
 	int ret, num;
 	unsigned char *p;
@@ -127,7 +127,7 @@ const ASN1_ITEM ASN1_INT_OCTETSTRING_it = {
 };
 
 int
-ASN1_TYPE_set_int_octetstring(ASN1_TYPE *at, long num, unsigned char *data,
+ASN1_TYPE_set_int_octetstring(ASN1_TYPE *at, long num, const unsigned char *data,
     int len)
 {
 	ASN1_int_octetstring *ios;
@@ -137,11 +137,7 @@ ASN1_TYPE_set_int_octetstring(ASN1_TYPE *at, long num, unsigned char *data,
 	if ((ios = (ASN1_int_octetstring *)ASN1_item_new(
 	    &ASN1_INT_OCTETSTRING_it)) == NULL)
 		goto err;
-	if ((ios->num = ASN1_INTEGER_new()) == NULL)
-		goto err;
 	if (!ASN1_INTEGER_set(ios->num, num))
-		goto err;
-	if ((ios->value = ASN1_OCTET_STRING_new()) == NULL)
 		goto err;
 	if (!ASN1_OCTET_STRING_set(ios->value, data, len))
 		goto err;
@@ -162,7 +158,7 @@ ASN1_TYPE_set_int_octetstring(ASN1_TYPE *at, long num, unsigned char *data,
 }
 
 int
-ASN1_TYPE_get_int_octetstring(ASN1_TYPE *at, long *num, unsigned char *data,
+ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *at, long *num, unsigned char *data,
     int max_len)
 {
 	ASN1_STRING *sp = at->value.sequence;

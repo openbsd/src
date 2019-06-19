@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.36 2017/11/29 15:24:50 benno Exp $	*/
+/*	$OpenBSD: config.c,v 1.39 2019/06/01 09:54:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -81,6 +81,12 @@ config_init(struct relayd *env)
 		    calloc(1, sizeof(*env->sc_relays))) == NULL)
 			return (-1);
 		TAILQ_INIT(env->sc_relays);
+
+		if ((env->sc_certs =
+		    calloc(1, sizeof(*env->sc_certs))) == NULL)
+			return (-1);
+		TAILQ_INIT(env->sc_certs);
+
 		if ((env->sc_pkeys =
 		    calloc(1, sizeof(*env->sc_pkeys))) == NULL)
 			return (-1);
@@ -98,6 +104,7 @@ config_init(struct relayd *env)
 		env->sc_proto_default.tcpflags = TCPFLAG_DEFAULT;
 		env->sc_proto_default.tcpbacklog = RELAY_BACKLOG;
 		env->sc_proto_default.tlsflags = TLSFLAG_DEFAULT;
+		TAILQ_INIT(&env->sc_proto_default.tlscerts);
 		(void)strlcpy(env->sc_proto_default.tlsciphers,
 		    TLSCIPHERS_DEFAULT,
 		    sizeof(env->sc_proto_default.tlsciphers));
@@ -140,6 +147,7 @@ config_purge(struct relayd *env, u_int reset)
 	struct netroute		*nr;
 	struct router		*rt;
 	struct ca_pkey		*pkey;
+	struct keyname		*keyname;
 	u_int			 what;
 
 	what = ps->ps_what[privsep_process] & reset;
@@ -185,6 +193,12 @@ config_purge(struct relayd *env, u_int reset)
 			free(proto->style);
 			free(proto->tlscapass);
 			free(proto);
+			while ((keyname =
+			    TAILQ_FIRST(&proto->tlscerts)) != NULL) {
+				TAILQ_REMOVE(&proto->tlscerts, keyname, entry);
+				free(keyname->name);
+				free(keyname);
+			}
 		}
 		env->sc_protocount = 0;
 	}
@@ -223,6 +237,14 @@ config_setreset(struct relayd *env, u_int reset)
 		    id == privsep_process)
 			continue;
 		proc_compose(ps, id, IMSG_CTL_RESET, &reset, sizeof(reset));
+
+		/*
+		 * XXX Make sure that the reset message is sent
+		 * immediately by flushing the imsg output buffer, before
+		 * sending any other imsg that potentially include an fd.
+		 * This should better be fixed in the imsg API itself.
+		 */
+		proc_flush_imsg(ps, id, -1);
 	}
 
 	return (0);
@@ -690,6 +712,7 @@ config_getproto(struct relayd *env, struct imsg *imsg)
 	}
 
 	TAILQ_INIT(&proto->rules);
+	TAILQ_INIT(&proto->tlscerts);
 	proto->tlscapass = NULL;
 
 	TAILQ_INSERT_TAIL(env->sc_protos, proto, entry);
@@ -773,12 +796,13 @@ config_getrule(struct relayd *env, struct imsg *imsg)
 }
 
 static int
-config_setrelayfd(struct privsep *ps, int id, int n, int rlay_id, int type,
-    int ofd)
+config_setrelayfd(struct privsep *ps, int id, int n,
+    objid_t obj_id, objid_t rlay_id, enum fd_type type, int ofd)
 {
 	struct ctl_relayfd	rfd;
 	int			fd;
 
+	rfd.id = obj_id;
 	rfd.relayid = rlay_id;
 	rfd.type = type;
 
@@ -798,6 +822,7 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 	struct ctl_relaytable	 crt;
 	struct relay_table	*rlt;
 	struct relay_config	 rl;
+	struct relay_cert	*cert;
 	int			 id;
 	int			 fd, n, m;
 	struct iovec		 iov[6];
@@ -823,12 +848,6 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 		iov[c].iov_base = &rl;
 		iov[c++].iov_len = sizeof(rl);
 
-		if ((what & CONFIG_CA_ENGINE) == 0 &&
-		    rl.tls_key_len) {
-			iov[c].iov_base = rlay->rl_tls_key;
-			iov[c++].iov_len = rl.tls_key_len;
-		} else
-			rl.tls_key_len = 0;
 		if ((what & CONFIG_CA_ENGINE) == 0 &&
 		    rl.tls_cakey_len) {
 			iov[c].iov_base = rlay->rl_tls_cakey;
@@ -868,22 +887,42 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 			}
 		}
 
-
-		if (what & CONFIG_CERTS) {
+		/* cert keypairs */
+		TAILQ_FOREACH(cert, env->sc_certs, cert_entry) {
+			if (cert->cert_relayid != rlay->rl_conf.id)
+				continue;
 			n = -1;
 			proc_range(ps, id, &n, &m);
-			for (n = 0; n < m; n++) {
-				if (rlay->rl_tls_cert_fd != -1 &&
+			for (n = 0; (what & CONFIG_CERTS) && n < m; n++) {
+				if (cert->cert_fd != -1 &&
 				    config_setrelayfd(ps, id, n,
-				    rlay->rl_conf.id, RELAY_FD_CERT,
-				    rlay->rl_tls_cert_fd) == -1) {
+				    cert->cert_id, cert->cert_relayid,
+				    RELAY_FD_CERT, cert->cert_fd) == -1) {
 					log_warn("%s: fd passing failed for "
 					    "`%s'", __func__,
 					    rlay->rl_conf.name);
 					return (-1);
 				}
-				if (rlay->rl_tls_ca_fd != -1 &&
+				if (id == PROC_CA &&
+				    cert->cert_key_fd != -1 &&
 				    config_setrelayfd(ps, id, n,
+				    cert->cert_id, cert->cert_relayid,
+				    RELAY_FD_KEY, cert->cert_key_fd) == -1) {
+					log_warn("%s: fd passing failed for "
+					    "`%s'", __func__,
+					    rlay->rl_conf.name);
+					return (-1);
+				}
+			}
+		}
+
+		/* CA certs */
+		if (what & CONFIG_CERTS) {
+			n = -1;
+			proc_range(ps, id, &n, &m);
+			for (n = 0; n < m; n++) {
+				if (rlay->rl_tls_ca_fd != -1 &&
+				    config_setrelayfd(ps, id, n, 0,
 				    rlay->rl_conf.id, RELAY_FD_CACERT,
 				    rlay->rl_tls_ca_fd) == -1) {
 					log_warn("%s: fd passing failed for "
@@ -892,7 +931,7 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 					return (-1);
 				}
 				if (rlay->rl_tls_cacert_fd != -1 &&
-				    config_setrelayfd(ps, id, n,
+				    config_setrelayfd(ps, id, n, 0,
 				    rlay->rl_conf.id, RELAY_FD_CAFILE,
 				    rlay->rl_tls_cacert_fd) == -1) {
 					log_warn("%s: fd passing failed for "
@@ -933,10 +972,6 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 		close(rlay->rl_s);
 		rlay->rl_s = -1;
 	}
-	if (rlay->rl_tls_cert_fd != -1) {
-		close(rlay->rl_tls_cert_fd);
-		rlay->rl_tls_cert_fd = -1;
-	}
 	if (rlay->rl_tls_cacert_fd != -1) {
 		close(rlay->rl_tls_cacert_fd);
 		rlay->rl_tls_cacert_fd = -1;
@@ -944,6 +979,19 @@ config_setrelay(struct relayd *env, struct relay *rlay)
 	if (rlay->rl_tls_ca_fd != -1) {
 		close(rlay->rl_tls_ca_fd);
 		rlay->rl_tls_ca_fd = -1;
+	}
+	TAILQ_FOREACH(cert, env->sc_certs, cert_entry) {
+		if (cert->cert_relayid != rlay->rl_conf.id)
+			continue;
+
+		if (cert->cert_fd != -1) {
+			close(cert->cert_fd);
+			cert->cert_fd = -1;
+		}
+		if (cert->cert_key_fd != -1) {
+			close(cert->cert_key_fd);
+			cert->cert_key_fd = -1;
+		}
 	}
 
 	return (0);
@@ -965,7 +1013,6 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 	s = sizeof(rlay->rl_conf);
 
 	rlay->rl_s = imsg->fd;
-	rlay->rl_tls_cert_fd = -1;
 	rlay->rl_tls_ca_fd = -1;
 	rlay->rl_tls_cacert_fd = -1;
 
@@ -980,17 +1027,11 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 	}
 
 	if ((off_t)(IMSG_DATA_SIZE(imsg) - s) <
-	    (rlay->rl_conf.tls_key_len + rlay->rl_conf.tls_cakey_len)) {
+	    (rlay->rl_conf.tls_cakey_len)) {
 		log_debug("%s: invalid message length", __func__);
 		goto fail;
 	}
 
-	if (rlay->rl_conf.tls_key_len) {
-		if ((rlay->rl_tls_key = get_data(p + s,
-		    rlay->rl_conf.tls_key_len)) == NULL)
-			goto fail;
-		s += rlay->rl_conf.tls_key_len;
-	}
 	if (rlay->rl_conf.tls_cakey_len) {
 		if ((rlay->rl_tls_cakey = get_data(p + s,
 		    rlay->rl_conf.tls_cakey_len)) == NULL)
@@ -1010,7 +1051,6 @@ config_getrelay(struct relayd *env, struct imsg *imsg)
 	return (0);
 
  fail:
-	free(rlay->rl_tls_key);
 	free(rlay->rl_tls_cakey);
 	close(rlay->rl_s);
 	free(rlay);
@@ -1062,22 +1102,37 @@ config_getrelaytable(struct relayd *env, struct imsg *imsg)
 int
 config_getrelayfd(struct relayd *env, struct imsg *imsg)
 {
-	struct relay_table	*rlt = NULL;
 	struct ctl_relayfd	 crfd;
-	struct relay		*rlay;
+	struct relay		*rlay = NULL;
+	struct relay_cert	*cert;
 	u_int8_t		*p = imsg->data;
 
 	IMSG_SIZE_CHECK(imsg, &crfd);
 	memcpy(&crfd, p, sizeof(crfd));
 
-	if ((rlay = relay_find(env, crfd.relayid)) == NULL) {
-		log_debug("%s: unknown relay", __func__);
-		goto fail;
+	switch (crfd.type) {
+	case RELAY_FD_CERT:
+	case RELAY_FD_KEY:
+		if ((cert = cert_find(env, crfd.id)) == NULL) {
+			if ((cert = cert_add(env, crfd.id)) == NULL)
+				return (-1);
+			cert->cert_relayid = crfd.relayid;
+		}
+		/* FALLTHROUGH */
+	default:
+		if ((rlay = relay_find(env, crfd.relayid)) == NULL) {
+			log_debug("%s: unknown relay", __func__);
+			return (-1);
+		}
+		break;
 	}
 
 	switch (crfd.type) {
 	case RELAY_FD_CERT:
-		rlay->rl_tls_cert_fd = imsg->fd;
+		cert->cert_fd = imsg->fd;
+		break;
+	case RELAY_FD_KEY:
+		cert->cert_key_fd = imsg->fd;
 		break;
 	case RELAY_FD_CACERT:
 		rlay->rl_tls_ca_fd = imsg->fd;
@@ -1092,8 +1147,4 @@ config_getrelayfd(struct relayd *env, struct imsg *imsg)
 	    imsg->fd, crfd.type, rlay->rl_conf.name);
 
 	return (0);
-
- fail:
-	free(rlt);
-	return (-1);
 }

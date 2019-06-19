@@ -51,14 +51,13 @@
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BasicAliasAnalysis.h"
+#include "llvm/Analysis/OptimizationRemarkEmitter.h"
 #include "llvm/Analysis/TypeMetadataUtils.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
-#include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -111,6 +110,12 @@ static cl::opt<std::string> ClWriteSummary(
     "wholeprogramdevirt-write-summary",
     cl::desc("Write summary to given YAML file after running pass"),
     cl::Hidden);
+
+static cl::opt<unsigned>
+    ClThreshold("wholeprogramdevirt-branch-funnel-threshold", cl::Hidden,
+                cl::init(10), cl::ZeroOrMore,
+                cl::desc("Maximum number of call targets per "
+                         "call site to enable branch funnels"));
 
 // Find the minimum offset that we may store a value of size Size bits at. If
 // IsAfter is set, look for an offset before the object, otherwise look for an
@@ -275,18 +280,26 @@ struct VirtualCallSite {
   // of that field for details.
   unsigned *NumUnsafeUses;
 
-  void emitRemark(const Twine &OptName, const Twine &TargetName) {
+  void
+  emitRemark(const StringRef OptName, const StringRef TargetName,
+             function_ref<OptimizationRemarkEmitter &(Function *)> OREGetter) {
     Function *F = CS.getCaller();
-    emitOptimizationRemark(
-        F->getContext(), DEBUG_TYPE, *F,
-        CS.getInstruction()->getDebugLoc(),
-        OptName + ": devirtualized a call to " + TargetName);
+    DebugLoc DLoc = CS->getDebugLoc();
+    BasicBlock *Block = CS.getParent();
+
+    using namespace ore;
+    OREGetter(F).emit(OptimizationRemark(DEBUG_TYPE, OptName, DLoc, Block)
+                      << NV("Optimization", OptName)
+                      << ": devirtualized a call to "
+                      << NV("FunctionName", TargetName));
   }
 
-  void replaceAndErase(const Twine &OptName, const Twine &TargetName,
-                       bool RemarksEnabled, Value *New) {
+  void replaceAndErase(
+      const StringRef OptName, const StringRef TargetName, bool RemarksEnabled,
+      function_ref<OptimizationRemarkEmitter &(Function *)> OREGetter,
+      Value *New) {
     if (RemarksEnabled)
-      emitRemark(OptName, TargetName);
+      emitRemark(OptName, TargetName, OREGetter);
     CS->replaceAllUsesWith(New);
     if (auto II = dyn_cast<InvokeInst>(CS.getInstruction())) {
       BranchInst::Create(II->getNormalDest(), CS.getInstruction());
@@ -309,12 +322,17 @@ struct CallSiteInfo {
   /// cases we are directly operating on the call sites at the IR level.
   std::vector<VirtualCallSite> CallSites;
 
+  /// Whether all call sites represented by this CallSiteInfo, including those
+  /// in summaries, have been devirtualized. This starts off as true because a
+  /// default constructed CallSiteInfo represents no call sites.
+  bool AllCallSitesDevirted = true;
+
   // These fields are used during the export phase of ThinLTO and reflect
   // information collected from function summaries.
 
   /// Whether any function summary contains an llvm.assume(llvm.type.test) for
   /// this slot.
-  bool SummaryHasTypeTestAssumeUsers;
+  bool SummaryHasTypeTestAssumeUsers = false;
 
   /// CFI-specific: a vector containing the list of function summaries that use
   /// the llvm.type.checked.load intrinsic and therefore will require
@@ -330,8 +348,22 @@ struct CallSiteInfo {
            !SummaryTypeCheckedLoadUsers.empty();
   }
 
-  /// As explained in the comment for SummaryTypeCheckedLoadUsers.
-  void markDevirt() { SummaryTypeCheckedLoadUsers.clear(); }
+  void markSummaryHasTypeTestAssumeUsers() {
+    SummaryHasTypeTestAssumeUsers = true;
+    AllCallSitesDevirted = false;
+  }
+
+  void addSummaryTypeCheckedLoadUser(FunctionSummary *FS) {
+    SummaryTypeCheckedLoadUsers.push_back(FS);
+    AllCallSitesDevirted = false;
+  }
+
+  void markDevirt() {
+    AllCallSitesDevirted = true;
+
+    // As explained in the comment for SummaryTypeCheckedLoadUsers.
+    SummaryTypeCheckedLoadUsers.clear();
+  }
 };
 
 // Call site information collected for a specific VTableSlot.
@@ -366,7 +398,9 @@ CallSiteInfo &VTableSlotInfo::findCallSiteInfo(CallSite CS) {
 
 void VTableSlotInfo::addCallSite(Value *VTable, CallSite CS,
                                  unsigned *NumUnsafeUses) {
-  findCallSiteInfo(CS).CallSites.push_back({VTable, CS, NumUnsafeUses});
+  auto &CSI = findCallSiteInfo(CS);
+  CSI.AllCallSitesDevirted = false;
+  CSI.CallSites.push_back({VTable, CS, NumUnsafeUses});
 }
 
 struct DevirtModule {
@@ -383,6 +417,7 @@ struct DevirtModule {
   IntegerType *IntPtrTy;
 
   bool RemarksEnabled;
+  function_ref<OptimizationRemarkEmitter &(Function *)> OREGetter;
 
   MapVector<VTableSlot, VTableSlotInfo> CallSlots;
 
@@ -397,6 +432,7 @@ struct DevirtModule {
   std::map<CallInst *, unsigned> NumUnsafeUsesForTypeTest;
 
   DevirtModule(Module &M, function_ref<AAResults &(Function &)> AARGetter,
+               function_ref<OptimizationRemarkEmitter &(Function *)> OREGetter,
                ModuleSummaryIndex *ExportSummary,
                const ModuleSummaryIndex *ImportSummary)
       : M(M), AARGetter(AARGetter), ExportSummary(ExportSummary),
@@ -405,7 +441,7 @@ struct DevirtModule {
         Int32Ty(Type::getInt32Ty(M.getContext())),
         Int64Ty(Type::getInt64Ty(M.getContext())),
         IntPtrTy(M.getDataLayout().getIntPtrType(M.getContext(), 0)),
-        RemarksEnabled(areRemarksEnabled()) {
+        RemarksEnabled(areRemarksEnabled()), OREGetter(OREGetter) {
     assert(!(ExportSummary && ImportSummary));
   }
 
@@ -429,6 +465,12 @@ struct DevirtModule {
                            VTableSlotInfo &SlotInfo,
                            WholeProgramDevirtResolution *Res);
 
+  void applyICallBranchFunnel(VTableSlotInfo &SlotInfo, Constant *JT,
+                              bool &IsExported);
+  void tryICallBranchFunnel(MutableArrayRef<VirtualCallTarget> TargetsForSlot,
+                            VTableSlotInfo &SlotInfo,
+                            WholeProgramDevirtResolution *Res, VTableSlot Slot);
+
   bool tryEvaluateFunctionsWithArgs(
       MutableArrayRef<VirtualCallTarget> TargetsForSlot,
       ArrayRef<uint64_t> Args);
@@ -444,16 +486,25 @@ struct DevirtModule {
   std::string getGlobalName(VTableSlot Slot, ArrayRef<uint64_t> Args,
                             StringRef Name);
 
+  bool shouldExportConstantsAsAbsoluteSymbols();
+
   // This function is called during the export phase to create a symbol
   // definition containing information about the given vtable slot and list of
   // arguments.
   void exportGlobal(VTableSlot Slot, ArrayRef<uint64_t> Args, StringRef Name,
                     Constant *C);
+  void exportConstant(VTableSlot Slot, ArrayRef<uint64_t> Args, StringRef Name,
+                      uint32_t Const, uint32_t &Storage);
 
   // This function is called during the import phase to create a reference to
   // the symbol definition created during the export phase.
   Constant *importGlobal(VTableSlot Slot, ArrayRef<uint64_t> Args,
-                         StringRef Name, unsigned AbsWidth = 0);
+                         StringRef Name);
+  Constant *importConstant(VTableSlot Slot, ArrayRef<uint64_t> Args,
+                           StringRef Name, IntegerType *IntTy,
+                           uint32_t Storage);
+
+  Constant *getMemberAddr(const TypeMemberInfo *M);
 
   void applyUniqueRetValOpt(CallSiteInfo &CSInfo, StringRef FnName, bool IsOne,
                             Constant *UniqueMemberAddr);
@@ -482,8 +533,9 @@ struct DevirtModule {
 
   // Lower the module using the action and summary passed as command line
   // arguments. For testing purposes only.
-  static bool runForTesting(Module &M,
-                            function_ref<AAResults &(Function &)> AARGetter);
+  static bool runForTesting(
+      Module &M, function_ref<AAResults &(Function &)> AARGetter,
+      function_ref<OptimizationRemarkEmitter &(Function *)> OREGetter);
 };
 
 struct WholeProgramDevirt : public ModulePass {
@@ -508,9 +560,23 @@ struct WholeProgramDevirt : public ModulePass {
   bool runOnModule(Module &M) override {
     if (skipModule(M))
       return false;
+
+    // In the new pass manager, we can request the optimization
+    // remark emitter pass on a per-function-basis, which the
+    // OREGetter will do for us.
+    // In the old pass manager, this is harder, so we just build
+    // an optimization remark emitter on the fly, when we need it.
+    std::unique_ptr<OptimizationRemarkEmitter> ORE;
+    auto OREGetter = [&](Function *F) -> OptimizationRemarkEmitter & {
+      ORE = make_unique<OptimizationRemarkEmitter>(F);
+      return *ORE;
+    };
+
     if (UseCommandLine)
-      return DevirtModule::runForTesting(M, LegacyAARGetter(*this));
-    return DevirtModule(M, LegacyAARGetter(*this), ExportSummary, ImportSummary)
+      return DevirtModule::runForTesting(M, LegacyAARGetter(*this), OREGetter);
+
+    return DevirtModule(M, LegacyAARGetter(*this), OREGetter, ExportSummary,
+                        ImportSummary)
         .run();
   }
 
@@ -542,14 +608,19 @@ PreservedAnalyses WholeProgramDevirtPass::run(Module &M,
   auto AARGetter = [&](Function &F) -> AAResults & {
     return FAM.getResult<AAManager>(F);
   };
-  if (!DevirtModule(M, AARGetter, nullptr, nullptr).run())
+  auto OREGetter = [&](Function *F) -> OptimizationRemarkEmitter & {
+    return FAM.getResult<OptimizationRemarkEmitterAnalysis>(*F);
+  };
+  if (!DevirtModule(M, AARGetter, OREGetter, ExportSummary, ImportSummary)
+           .run())
     return PreservedAnalyses::all();
   return PreservedAnalyses::none();
 }
 
 bool DevirtModule::runForTesting(
-    Module &M, function_ref<AAResults &(Function &)> AARGetter) {
-  ModuleSummaryIndex Summary;
+    Module &M, function_ref<AAResults &(Function &)> AARGetter,
+    function_ref<OptimizationRemarkEmitter &(Function *)> OREGetter) {
+  ModuleSummaryIndex Summary(/*HaveGVs=*/false);
 
   // Handle the command-line summary arguments. This code is for testing
   // purposes only, so we handle errors directly.
@@ -566,7 +637,7 @@ bool DevirtModule::runForTesting(
 
   bool Changed =
       DevirtModule(
-          M, AARGetter,
+          M, AARGetter, OREGetter,
           ClSummaryAction == PassSummaryAction::Export ? &Summary : nullptr,
           ClSummaryAction == PassSummaryAction::Import ? &Summary : nullptr)
           .run();
@@ -684,17 +755,16 @@ void DevirtModule::applySingleImplDevirt(VTableSlotInfo &SlotInfo,
   auto Apply = [&](CallSiteInfo &CSInfo) {
     for (auto &&VCallSite : CSInfo.CallSites) {
       if (RemarksEnabled)
-        VCallSite.emitRemark("single-impl", TheFn->getName());
+        VCallSite.emitRemark("single-impl", TheFn->getName(), OREGetter);
       VCallSite.CS.setCalledFunction(ConstantExpr::getBitCast(
           TheFn, VCallSite.CS.getCalledValue()->getType()));
       // This use is no longer unsafe.
       if (VCallSite.NumUnsafeUses)
         --*VCallSite.NumUnsafeUses;
     }
-    if (CSInfo.isExported()) {
+    if (CSInfo.isExported())
       IsExported = true;
-      CSInfo.markDevirt();
-    }
+    CSInfo.markDevirt();
   };
   Apply(SlotInfo.CSInfo);
   for (auto &P : SlotInfo.ConstCSInfo)
@@ -724,15 +794,157 @@ bool DevirtModule::trySingleImplDevirt(
   // to make it visible to thin LTO objects. We can only get here during the
   // ThinLTO export phase.
   if (TheFn->hasLocalLinkage()) {
+    std::string NewName = (TheFn->getName() + "$merged").str();
+
+    // Since we are renaming the function, any comdats with the same name must
+    // also be renamed. This is required when targeting COFF, as the comdat name
+    // must match one of the names of the symbols in the comdat.
+    if (Comdat *C = TheFn->getComdat()) {
+      if (C->getName() == TheFn->getName()) {
+        Comdat *NewC = M.getOrInsertComdat(NewName);
+        NewC->setSelectionKind(C->getSelectionKind());
+        for (GlobalObject &GO : M.global_objects())
+          if (GO.getComdat() == C)
+            GO.setComdat(NewC);
+      }
+    }
+
     TheFn->setLinkage(GlobalValue::ExternalLinkage);
     TheFn->setVisibility(GlobalValue::HiddenVisibility);
-    TheFn->setName(TheFn->getName() + "$merged");
+    TheFn->setName(NewName);
   }
 
   Res->TheKind = WholeProgramDevirtResolution::SingleImpl;
   Res->SingleImplName = TheFn->getName();
 
   return true;
+}
+
+void DevirtModule::tryICallBranchFunnel(
+    MutableArrayRef<VirtualCallTarget> TargetsForSlot, VTableSlotInfo &SlotInfo,
+    WholeProgramDevirtResolution *Res, VTableSlot Slot) {
+  Triple T(M.getTargetTriple());
+  if (T.getArch() != Triple::x86_64)
+    return;
+
+  if (TargetsForSlot.size() > ClThreshold)
+    return;
+
+  bool HasNonDevirt = !SlotInfo.CSInfo.AllCallSitesDevirted;
+  if (!HasNonDevirt)
+    for (auto &P : SlotInfo.ConstCSInfo)
+      if (!P.second.AllCallSitesDevirted) {
+        HasNonDevirt = true;
+        break;
+      }
+
+  if (!HasNonDevirt)
+    return;
+
+  FunctionType *FT =
+      FunctionType::get(Type::getVoidTy(M.getContext()), {Int8PtrTy}, true);
+  Function *JT;
+  if (isa<MDString>(Slot.TypeID)) {
+    JT = Function::Create(FT, Function::ExternalLinkage,
+                          getGlobalName(Slot, {}, "branch_funnel"), &M);
+    JT->setVisibility(GlobalValue::HiddenVisibility);
+  } else {
+    JT = Function::Create(FT, Function::InternalLinkage, "branch_funnel", &M);
+  }
+  JT->addAttribute(1, Attribute::Nest);
+
+  std::vector<Value *> JTArgs;
+  JTArgs.push_back(JT->arg_begin());
+  for (auto &T : TargetsForSlot) {
+    JTArgs.push_back(getMemberAddr(T.TM));
+    JTArgs.push_back(T.Fn);
+  }
+
+  BasicBlock *BB = BasicBlock::Create(M.getContext(), "", JT, nullptr);
+  Constant *Intr =
+      Intrinsic::getDeclaration(&M, llvm::Intrinsic::icall_branch_funnel, {});
+
+  auto *CI = CallInst::Create(Intr, JTArgs, "", BB);
+  CI->setTailCallKind(CallInst::TCK_MustTail);
+  ReturnInst::Create(M.getContext(), nullptr, BB);
+
+  bool IsExported = false;
+  applyICallBranchFunnel(SlotInfo, JT, IsExported);
+  if (IsExported)
+    Res->TheKind = WholeProgramDevirtResolution::BranchFunnel;
+}
+
+void DevirtModule::applyICallBranchFunnel(VTableSlotInfo &SlotInfo,
+                                          Constant *JT, bool &IsExported) {
+  auto Apply = [&](CallSiteInfo &CSInfo) {
+    if (CSInfo.isExported())
+      IsExported = true;
+    if (CSInfo.AllCallSitesDevirted)
+      return;
+    for (auto &&VCallSite : CSInfo.CallSites) {
+      CallSite CS = VCallSite.CS;
+
+      // Jump tables are only profitable if the retpoline mitigation is enabled.
+      Attribute FSAttr = CS.getCaller()->getFnAttribute("target-features");
+      if (FSAttr.hasAttribute(Attribute::None) ||
+          !FSAttr.getValueAsString().contains("+retpoline"))
+        continue;
+
+      if (RemarksEnabled)
+        VCallSite.emitRemark("branch-funnel", JT->getName(), OREGetter);
+
+      // Pass the address of the vtable in the nest register, which is r10 on
+      // x86_64.
+      std::vector<Type *> NewArgs;
+      NewArgs.push_back(Int8PtrTy);
+      for (Type *T : CS.getFunctionType()->params())
+        NewArgs.push_back(T);
+      PointerType *NewFT = PointerType::getUnqual(
+          FunctionType::get(CS.getFunctionType()->getReturnType(), NewArgs,
+                            CS.getFunctionType()->isVarArg()));
+
+      IRBuilder<> IRB(CS.getInstruction());
+      std::vector<Value *> Args;
+      Args.push_back(IRB.CreateBitCast(VCallSite.VTable, Int8PtrTy));
+      for (unsigned I = 0; I != CS.getNumArgOperands(); ++I)
+        Args.push_back(CS.getArgOperand(I));
+
+      CallSite NewCS;
+      if (CS.isCall())
+        NewCS = IRB.CreateCall(IRB.CreateBitCast(JT, NewFT), Args);
+      else
+        NewCS = IRB.CreateInvoke(
+            IRB.CreateBitCast(JT, NewFT),
+            cast<InvokeInst>(CS.getInstruction())->getNormalDest(),
+            cast<InvokeInst>(CS.getInstruction())->getUnwindDest(), Args);
+      NewCS.setCallingConv(CS.getCallingConv());
+
+      AttributeList Attrs = CS.getAttributes();
+      std::vector<AttributeSet> NewArgAttrs;
+      NewArgAttrs.push_back(AttributeSet::get(
+          M.getContext(), ArrayRef<Attribute>{Attribute::get(
+                              M.getContext(), Attribute::Nest)}));
+      for (unsigned I = 0; I + 2 <  Attrs.getNumAttrSets(); ++I)
+        NewArgAttrs.push_back(Attrs.getParamAttributes(I));
+      NewCS.setAttributes(
+          AttributeList::get(M.getContext(), Attrs.getFnAttributes(),
+                             Attrs.getRetAttributes(), NewArgAttrs));
+
+      CS->replaceAllUsesWith(NewCS.getInstruction());
+      CS->eraseFromParent();
+
+      // This use is no longer unsafe.
+      if (VCallSite.NumUnsafeUses)
+        --*VCallSite.NumUnsafeUses;
+    }
+    // Don't mark as devirtualized because there may be callers compiled without
+    // retpoline mitigation, which would mean that they are lowered to
+    // llvm.type.test and therefore require an llvm.type.test resolution for the
+    // type identifier.
+  };
+  Apply(SlotInfo.CSInfo);
+  for (auto &P : SlotInfo.ConstCSInfo)
+    Apply(P.second);
 }
 
 bool DevirtModule::tryEvaluateFunctionsWithArgs(
@@ -769,7 +981,7 @@ void DevirtModule::applyUniformRetValOpt(CallSiteInfo &CSInfo, StringRef FnName,
                                          uint64_t TheRetVal) {
   for (auto Call : CSInfo.CallSites)
     Call.replaceAndErase(
-        "uniform-ret-val", FnName, RemarksEnabled,
+        "uniform-ret-val", FnName, RemarksEnabled, OREGetter,
         ConstantInt::get(cast<IntegerType>(Call.CS.getType()), TheRetVal));
   CSInfo.markDevirt();
 }
@@ -808,6 +1020,12 @@ std::string DevirtModule::getGlobalName(VTableSlot Slot,
   return OS.str();
 }
 
+bool DevirtModule::shouldExportConstantsAsAbsoluteSymbols() {
+  Triple T(M.getTargetTriple());
+  return (T.getArch() == Triple::x86 || T.getArch() == Triple::x86_64) &&
+         T.getObjectFormat() == Triple::ELF;
+}
+
 void DevirtModule::exportGlobal(VTableSlot Slot, ArrayRef<uint64_t> Args,
                                 StringRef Name, Constant *C) {
   GlobalAlias *GA = GlobalAlias::create(Int8Ty, 0, GlobalValue::ExternalLinkage,
@@ -815,27 +1033,55 @@ void DevirtModule::exportGlobal(VTableSlot Slot, ArrayRef<uint64_t> Args,
   GA->setVisibility(GlobalValue::HiddenVisibility);
 }
 
+void DevirtModule::exportConstant(VTableSlot Slot, ArrayRef<uint64_t> Args,
+                                  StringRef Name, uint32_t Const,
+                                  uint32_t &Storage) {
+  if (shouldExportConstantsAsAbsoluteSymbols()) {
+    exportGlobal(
+        Slot, Args, Name,
+        ConstantExpr::getIntToPtr(ConstantInt::get(Int32Ty, Const), Int8PtrTy));
+    return;
+  }
+
+  Storage = Const;
+}
+
 Constant *DevirtModule::importGlobal(VTableSlot Slot, ArrayRef<uint64_t> Args,
-                                     StringRef Name, unsigned AbsWidth) {
+                                     StringRef Name) {
   Constant *C = M.getOrInsertGlobal(getGlobalName(Slot, Args, Name), Int8Ty);
   auto *GV = dyn_cast<GlobalVariable>(C);
+  if (GV)
+    GV->setVisibility(GlobalValue::HiddenVisibility);
+  return C;
+}
+
+Constant *DevirtModule::importConstant(VTableSlot Slot, ArrayRef<uint64_t> Args,
+                                       StringRef Name, IntegerType *IntTy,
+                                       uint32_t Storage) {
+  if (!shouldExportConstantsAsAbsoluteSymbols())
+    return ConstantInt::get(IntTy, Storage);
+
+  Constant *C = importGlobal(Slot, Args, Name);
+  auto *GV = cast<GlobalVariable>(C->stripPointerCasts());
+  C = ConstantExpr::getPtrToInt(C, IntTy);
+
   // We only need to set metadata if the global is newly created, in which
   // case it would not have hidden visibility.
-  if (!GV || GV->getVisibility() == GlobalValue::HiddenVisibility)
+  if (GV->hasMetadata(LLVMContext::MD_absolute_symbol))
     return C;
 
-  GV->setVisibility(GlobalValue::HiddenVisibility);
   auto SetAbsRange = [&](uint64_t Min, uint64_t Max) {
     auto *MinC = ConstantAsMetadata::get(ConstantInt::get(IntPtrTy, Min));
     auto *MaxC = ConstantAsMetadata::get(ConstantInt::get(IntPtrTy, Max));
     GV->setMetadata(LLVMContext::MD_absolute_symbol,
                     MDNode::get(M.getContext(), {MinC, MaxC}));
   };
+  unsigned AbsWidth = IntTy->getBitWidth();
   if (AbsWidth == IntPtrTy->getBitWidth())
     SetAbsRange(~0ull, ~0ull); // Full set.
-  else if (AbsWidth)
+  else
     SetAbsRange(0, 1ull << AbsWidth);
-  return GV;
+  return C;
 }
 
 void DevirtModule::applyUniqueRetValOpt(CallSiteInfo &CSInfo, StringRef FnName,
@@ -843,12 +1089,20 @@ void DevirtModule::applyUniqueRetValOpt(CallSiteInfo &CSInfo, StringRef FnName,
                                         Constant *UniqueMemberAddr) {
   for (auto &&Call : CSInfo.CallSites) {
     IRBuilder<> B(Call.CS.getInstruction());
-    Value *Cmp = B.CreateICmp(IsOne ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE,
-                              Call.VTable, UniqueMemberAddr);
+    Value *Cmp =
+        B.CreateICmp(IsOne ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE,
+                     B.CreateBitCast(Call.VTable, Int8PtrTy), UniqueMemberAddr);
     Cmp = B.CreateZExt(Cmp, Call.CS->getType());
-    Call.replaceAndErase("unique-ret-val", FnName, RemarksEnabled, Cmp);
+    Call.replaceAndErase("unique-ret-val", FnName, RemarksEnabled, OREGetter,
+                         Cmp);
   }
   CSInfo.markDevirt();
+}
+
+Constant *DevirtModule::getMemberAddr(const TypeMemberInfo *M) {
+  Constant *C = ConstantExpr::getBitCast(M->Bits->GV, Int8PtrTy);
+  return ConstantExpr::getGetElementPtr(Int8Ty, C,
+                                        ConstantInt::get(Int64Ty, M->Offset));
 }
 
 bool DevirtModule::tryUniqueRetValOpt(
@@ -870,12 +1124,7 @@ bool DevirtModule::tryUniqueRetValOpt(
     // checked for a uniform return value in tryUniformRetValOpt.
     assert(UniqueMember);
 
-    Constant *UniqueMemberAddr =
-        ConstantExpr::getBitCast(UniqueMember->Bits->GV, Int8PtrTy);
-    UniqueMemberAddr = ConstantExpr::getGetElementPtr(
-        Int8Ty, UniqueMemberAddr,
-        ConstantInt::get(Int64Ty, UniqueMember->Offset));
-
+    Constant *UniqueMemberAddr = getMemberAddr(UniqueMember);
     if (CSInfo.isExported()) {
       Res->TheKind = WholeProgramDevirtResolution::ByArg::UniqueRetVal;
       Res->Info = IsOne;
@@ -909,17 +1158,19 @@ void DevirtModule::applyVirtualConstProp(CallSiteInfo &CSInfo, StringRef FnName,
   for (auto Call : CSInfo.CallSites) {
     auto *RetType = cast<IntegerType>(Call.CS.getType());
     IRBuilder<> B(Call.CS.getInstruction());
-    Value *Addr = B.CreateGEP(Int8Ty, Call.VTable, Byte);
+    Value *Addr =
+        B.CreateGEP(Int8Ty, B.CreateBitCast(Call.VTable, Int8PtrTy), Byte);
     if (RetType->getBitWidth() == 1) {
       Value *Bits = B.CreateLoad(Addr);
       Value *BitsAndBit = B.CreateAnd(Bits, Bit);
       auto IsBitSet = B.CreateICmpNE(BitsAndBit, ConstantInt::get(Int8Ty, 0));
       Call.replaceAndErase("virtual-const-prop-1-bit", FnName, RemarksEnabled,
-                           IsBitSet);
+                           OREGetter, IsBitSet);
     } else {
       Value *ValAddr = B.CreateBitCast(Addr, RetType->getPointerTo());
       Value *Val = B.CreateLoad(RetType, ValAddr);
-      Call.replaceAndErase("virtual-const-prop", FnName, RemarksEnabled, Val);
+      Call.replaceAndErase("virtual-const-prop", FnName, RemarksEnabled,
+                           OREGetter, Val);
     }
   }
   CSInfo.markDevirt();
@@ -1007,18 +1258,18 @@ bool DevirtModule::tryVirtualConstProp(
       for (auto &&Target : TargetsForSlot)
         Target.WasDevirt = true;
 
-    Constant *ByteConst = ConstantInt::get(Int32Ty, OffsetByte);
-    Constant *BitConst = ConstantInt::get(Int8Ty, 1ULL << OffsetBit);
 
     if (CSByConstantArg.second.isExported()) {
       ResByArg->TheKind = WholeProgramDevirtResolution::ByArg::VirtualConstProp;
-      exportGlobal(Slot, CSByConstantArg.first, "byte",
-                   ConstantExpr::getIntToPtr(ByteConst, Int8PtrTy));
-      exportGlobal(Slot, CSByConstantArg.first, "bit",
-                   ConstantExpr::getIntToPtr(BitConst, Int8PtrTy));
+      exportConstant(Slot, CSByConstantArg.first, "byte", OffsetByte,
+                     ResByArg->Byte);
+      exportConstant(Slot, CSByConstantArg.first, "bit", 1ULL << OffsetBit,
+                     ResByArg->Bit);
     }
 
     // Rewrite each call to a load from OffsetByte/OffsetBit.
+    Constant *ByteConst = ConstantInt::get(Int32Ty, OffsetByte);
+    Constant *BitConst = ConstantInt::get(Int8Ty, 1ULL << OffsetBit);
     applyVirtualConstProp(CSByConstantArg.second,
                           TargetsForSlot[0].Fn->getName(), ByteConst, BitConst);
   }
@@ -1112,8 +1363,7 @@ void DevirtModule::scanTypeTestUsers(Function *TypeTestFunc,
       Value *Ptr = CI->getArgOperand(0)->stripPointerCasts();
       if (SeenPtrs.insert(Ptr).second) {
         for (DevirtCallSite Call : DevirtCalls) {
-          CallSlots[{TypeId, Call.Offset}].addCallSite(CI->getArgOperand(0),
-                                                       Call.CS, nullptr);
+          CallSlots[{TypeId, Call.Offset}].addCallSite(Ptr, Call.CS, nullptr);
         }
       }
     }
@@ -1250,15 +1500,24 @@ void DevirtModule::importResolution(VTableSlot Slot, VTableSlotInfo &SlotInfo) {
       break;
     }
     case WholeProgramDevirtResolution::ByArg::VirtualConstProp: {
-      Constant *Byte = importGlobal(Slot, CSByConstantArg.first, "byte", 32);
-      Byte = ConstantExpr::getPtrToInt(Byte, Int32Ty);
-      Constant *Bit = importGlobal(Slot, CSByConstantArg.first, "bit", 8);
-      Bit = ConstantExpr::getPtrToInt(Bit, Int8Ty);
+      Constant *Byte = importConstant(Slot, CSByConstantArg.first, "byte",
+                                      Int32Ty, ResByArg.Byte);
+      Constant *Bit = importConstant(Slot, CSByConstantArg.first, "bit", Int8Ty,
+                                     ResByArg.Bit);
       applyVirtualConstProp(CSByConstantArg.second, "", Byte, Bit);
+      break;
     }
     default:
       break;
     }
+  }
+
+  if (Res.TheKind == WholeProgramDevirtResolution::BranchFunnel) {
+    auto *JT = M.getOrInsertFunction(getGlobalName(Slot, {}, "branch_funnel"),
+                                     Type::getVoidTy(M.getContext()));
+    bool IsExported = false;
+    applyICallBranchFunnel(SlotInfo, JT, IsExported);
+    assert(!IsExported);
   }
 }
 
@@ -1329,14 +1588,13 @@ bool DevirtModule::run() {
         // FIXME: Only add live functions.
         for (FunctionSummary::VFuncId VF : FS->type_test_assume_vcalls()) {
           for (Metadata *MD : MetadataByGUID[VF.GUID]) {
-            CallSlots[{MD, VF.Offset}].CSInfo.SummaryHasTypeTestAssumeUsers =
-                true;
+            CallSlots[{MD, VF.Offset}]
+                .CSInfo.markSummaryHasTypeTestAssumeUsers();
           }
         }
         for (FunctionSummary::VFuncId VF : FS->type_checked_load_vcalls()) {
           for (Metadata *MD : MetadataByGUID[VF.GUID]) {
-            CallSlots[{MD, VF.Offset}]
-                .CSInfo.SummaryTypeCheckedLoadUsers.push_back(FS);
+            CallSlots[{MD, VF.Offset}].CSInfo.addSummaryTypeCheckedLoadUser(FS);
           }
         }
         for (const FunctionSummary::ConstVCall &VC :
@@ -1344,7 +1602,7 @@ bool DevirtModule::run() {
           for (Metadata *MD : MetadataByGUID[VC.VFunc.GUID]) {
             CallSlots[{MD, VC.VFunc.Offset}]
                 .ConstCSInfo[VC.Args]
-                .SummaryHasTypeTestAssumeUsers = true;
+                .markSummaryHasTypeTestAssumeUsers();
           }
         }
         for (const FunctionSummary::ConstVCall &VC :
@@ -1352,7 +1610,7 @@ bool DevirtModule::run() {
           for (Metadata *MD : MetadataByGUID[VC.VFunc.GUID]) {
             CallSlots[{MD, VC.VFunc.Offset}]
                 .ConstCSInfo[VC.Args]
-                .SummaryTypeCheckedLoadUsers.push_back(FS);
+                .addSummaryTypeCheckedLoadUser(FS);
           }
         }
       }
@@ -1376,9 +1634,12 @@ bool DevirtModule::run() {
                        cast<MDString>(S.first.TypeID)->getString())
                    .WPDRes[S.first.ByteOffset];
 
-      if (!trySingleImplDevirt(TargetsForSlot, S.second, Res) &&
-          tryVirtualConstProp(TargetsForSlot, S.second, Res, S.first))
-        DidVirtualConstProp = true;
+      if (!trySingleImplDevirt(TargetsForSlot, S.second, Res)) {
+        DidVirtualConstProp |=
+            tryVirtualConstProp(TargetsForSlot, S.second, Res, S.first);
+
+        tryICallBranchFunnel(TargetsForSlot, S.second, Res, S.first);
+      }
 
       // Collect functions devirtualized at least for one call site for stats.
       if (RemarksEnabled)
@@ -1406,9 +1667,11 @@ bool DevirtModule::run() {
     // Generate remarks for each devirtualized function.
     for (const auto &DT : DevirtTargets) {
       Function *F = DT.second;
-      DISubprogram *SP = F->getSubprogram();
-      emitOptimizationRemark(F->getContext(), DEBUG_TYPE, *F, SP,
-                             Twine("devirtualized ") + F->getName());
+
+      using namespace ore;
+      OREGetter(F).emit(OptimizationRemark(DEBUG_TYPE, "Devirtualized", F)
+                        << "devirtualized "
+                        << NV("FunctionName", F->getName()));
     }
   }
 

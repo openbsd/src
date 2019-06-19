@@ -1,8 +1,9 @@
 package Encode::MIME::Name;
 use strict;
 use warnings;
-our $VERSION = do { my @r = ( q$Revision: 1.1 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 1.3 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
+# NOTE: This table must be 1:1 mapping
 our %MIME_NAME_OF = (
     'AdobeStandardEncoding' => 'Adobe-Standard-Encoding',
     'AdobeSymbol'           => 'Adobe-Symbol-Encoding',
@@ -37,13 +38,14 @@ our %MIME_NAME_OF = (
     'cp866'                 => 'IBM866',
     'cp869'                 => 'IBM869',
     'cp936'                 => 'GBK',
+    'euc-cn'                => 'EUC-CN',
     'euc-jp'                => 'EUC-JP',
     'euc-kr'                => 'EUC-KR',
     #'gb2312-raw'            => 'GB2312', # no, you're wrong, I18N::Charset
     'hp-roman8'             => 'hp-roman8',
     'hz'                    => 'HZ-GB-2312',
     'iso-2022-jp'           => 'ISO-2022-JP',
-    'iso-2022-jp-1'         => 'ISO-2022-JP',
+    'iso-2022-jp-1'         => 'ISO-2022-JP-1',
     'iso-2022-kr'           => 'ISO-2022-KR',
     'iso-8859-1'            => 'ISO-8859-1',
     'iso-8859-10'           => 'ISO-8859-10',
@@ -73,12 +75,19 @@ our %MIME_NAME_OF = (
     'UTF-32BE'              => 'UTF-32BE',
     'UTF-32LE'              => 'UTF-32LE',
     'UTF-7'                 => 'UTF-7',
-    'utf8'                  => 'UTF-8',
     'utf-8-strict'          => 'UTF-8',
     'viscii'                => 'VISCII',
 );
 
+# NOTE: %MIME_NAME_OF is still 1:1 mapping
+our %ENCODE_NAME_OF = map { uc $MIME_NAME_OF{$_} => $_ } keys %MIME_NAME_OF;
+
+# Add additional 1:N mapping
+$MIME_NAME_OF{'utf8'} = 'UTF-8';
+
 sub get_mime_name($) { $MIME_NAME_OF{$_[0]} };
+
+sub get_encode_name($) { $ENCODE_NAME_OF{uc $_[0]} };
 
 1;
 __END__

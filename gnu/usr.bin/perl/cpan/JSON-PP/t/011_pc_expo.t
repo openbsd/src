@@ -1,5 +1,5 @@
-# copied over from JSON::PP::PC and modified to use JSON::PP
-# copied over from JSON::PP::XS and modified to use JSON::PP
+# copied over from JSON::PC and modified to use JSON::PP
+# copied over from JSON::XS and modified to use JSON::PP
 
 use Test::More;
 use strict;
@@ -22,8 +22,10 @@ is($js,'[-12.34]', 'digit -12.34');
 $js  = q|[-1.234e5]|;
 $obj = $pc->decode($js);
 is($obj->[0], -123400, 'digit -1.234e5');
+{ #SKIP_IF_CPANEL
 $js = $pc->encode($obj);
 is($js,'[-123400]', 'digit -1.234e5');
+}
 
 $js  = q|[1.23E-4]|;
 $obj = $pc->decode($js);
@@ -38,10 +40,19 @@ else {
 }
 
 
+my $vax_float = (pack("d",1) =~ /^[\x80\x10]\x40/);
 
-$js  = q|[1.01e+67]|; # 30 -> 67 ... patched by H.Merijn Brand
-$obj = $pc->decode($js);
-is($obj->[0], 1.01e+67, 'digit 1.01e+67');
-$js = $pc->encode($obj);
-like($js,qr/\[1.01[Ee]\+0?67\]/, 'digit 1.01e+67');
-
+if ($vax_float) {
+    # VAX has smaller float range.
+    $js  = q|[1.01e+37]|;
+    $obj = $pc->decode($js);
+    is($obj->[0], eval '1.01e+37', 'digit 1.01e+37');
+    $js = $pc->encode($obj);
+    like($js,qr/\[1.01[Ee]\+0?37\]/, 'digit 1.01e+37');
+} else {
+    $js  = q|[1.01e+67]|; # 30 -> 67 ... patched by H.Merijn Brand
+    $obj = $pc->decode($js);
+    is($obj->[0], eval '1.01e+67', 'digit 1.01e+67');
+    $js = $pc->encode($obj);
+    like($js,qr/\[1.01[Ee]\+0?67\]/, 'digit 1.01e+67');
+}

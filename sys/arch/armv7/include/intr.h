@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.6 2017/03/09 15:36:52 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.11 2019/05/06 03:34:43 mlarkin Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 
 /* Interrupt priority "flags". */
 #define	IPL_MPSAFE	0	/* no "mpsafe" interrupts */
+#define	IPL_MPFLOOR	IPL_NONE	/* no MP on armv7 */
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -124,7 +125,6 @@ extern struct arm_intr_func arm_intr_func;
 #define	spl0()		spllower(IPL_NONE)
 
 #define	splsched()	splhigh()
-#define	spllock()	splhigh()
 
 void	intr_barrier(void *);
 
@@ -135,7 +135,7 @@ void arm_setsoftintr(int si);
 #define _setsoftintr arm_setsoftintr
 
 #include <arm/softintr.h>
-    
+
 void *arm_intr_establish(int irqno, int level, int (*func)(void *),
     void *cookie, char *name);
 void arm_intr_disestablish(void *cookie);
@@ -152,7 +152,11 @@ struct interrupt_controller {
 	void	*ic_cookie;
 	void	*(*ic_establish)(void *, int *, int, int (*)(void *),
 		    void *, char *);
+	void	*(*ic_establish_msi)(void *, uint64_t *, uint64_t *, int,
+		    int (*)(void *), void *, char *);
 	void	 (*ic_disestablish)(void *);
+	void	 (*ic_enable)(void *);
+	void	 (*ic_disable)(void *);
 	void	 (*ic_route)(void *, int, struct cpu_info *);
 
 	LIST_ENTRY(interrupt_controller) ic_list;
@@ -166,7 +170,13 @@ void	*arm_intr_establish_fdt(int, int, int (*)(void *),
 	    void *, char *);
 void	*arm_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, char *);
+void	*arm_intr_establish_fdt_imap(int, int *, int, int, int (*)(void *),
+	    void *, char *);
+void	*arm_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int ,
+	    int (*)(void *), void *, char *);
 void	 arm_intr_disestablish_fdt(void *);
+void	 arm_intr_enable(void *);
+void	 arm_intr_disable(void *);
 void	 arm_intr_route(void *, int, struct cpu_info *);
 
 void	*arm_intr_parent_establish_fdt(void *, int *, int,

@@ -11,6 +11,7 @@
 #include "CommonArgs.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
+#include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "llvm/Option/ArgList.h"
 
@@ -38,59 +39,33 @@ void wasm::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                                 const char *LinkingOutput) const {
 
   const ToolChain &ToolChain = getToolChain();
-  const Driver &D = ToolChain.getDriver();
   const char *Linker = Args.MakeArgString(ToolChain.GetLinkerPath());
   ArgStringList CmdArgs;
   CmdArgs.push_back("-flavor");
   CmdArgs.push_back("wasm");
 
-  // Enable garbage collection of unused input sections by default, since code
-  // size is of particular importance. This is significantly facilitated by
-  // the enabling of -ffunction-sections and -fdata-sections in
-  // Clang::ConstructJob.
-  if (areOptimizationsEnabled(Args))
-    CmdArgs.push_back("--gc-sections");
-
-  if (Args.hasArg(options::OPT_rdynamic))
-    CmdArgs.push_back("-export-dynamic");
   if (Args.hasArg(options::OPT_s))
     CmdArgs.push_back("--strip-all");
-  if (Args.hasArg(options::OPT_shared))
-    CmdArgs.push_back("-shared");
-  if (Args.hasArg(options::OPT_static))
-    CmdArgs.push_back("-Bstatic");
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
+  Args.AddAllArgs(CmdArgs, options::OPT_u);
   ToolChain.AddFilePathLibArgs(Args, CmdArgs);
 
-  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles)) {
-    if (Args.hasArg(options::OPT_shared))
-      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("rcrt1.o")));
-    else if (Args.hasArg(options::OPT_pie))
-      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("Scrt1.o")));
-    else
-      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt1.o")));
-
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crti.o")));
-  }
+  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles))
+    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt1.o")));
 
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs, JA);
 
   if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs)) {
-    if (D.CCCIsCXX())
+    if (ToolChain.ShouldLinkCXXStdlib(Args))
       ToolChain.AddCXXStdlibLibArgs(Args, CmdArgs);
 
     if (Args.hasArg(options::OPT_pthread))
       CmdArgs.push_back("-lpthread");
 
-    CmdArgs.push_back("-allow-undefined-file");
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("wasm.syms")));
     CmdArgs.push_back("-lc");
-    CmdArgs.push_back("-lcompiler_rt");
+    AddRunTimeLibs(ToolChain, ToolChain.getDriver(), CmdArgs, Args);
   }
-
-  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles))
-    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtn.o")));
 
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
@@ -123,9 +98,6 @@ bool WebAssembly::isPICDefaultForced() const { return false; }
 
 bool WebAssembly::IsIntegratedAssemblerDefault() const { return true; }
 
-// TODO: Support Objective C stuff.
-bool WebAssembly::SupportsObjCGC() const { return false; }
-
 bool WebAssembly::hasBlocksRuntime() const { return false; }
 
 // TODO: Support profiling.
@@ -146,6 +118,12 @@ ToolChain::RuntimeLibType WebAssembly::GetDefaultRuntimeLibType() const {
 }
 
 ToolChain::CXXStdlibType WebAssembly::GetCXXStdlibType(const ArgList &Args) const {
+  if (Arg *A = Args.getLastArg(options::OPT_stdlib_EQ)) {
+    StringRef Value = A->getValue();
+    if (Value != "libc++")
+      getDriver().Diag(diag::err_drv_invalid_stdlib_name)
+          << A->getAsString(Args);
+  }
   return ToolChain::CST_Libcxx;
 }
 
@@ -161,6 +139,27 @@ void WebAssembly::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
       !DriverArgs.hasArg(options::OPT_nostdincxx))
     addSystemInclude(DriverArgs, CC1Args,
                      getDriver().SysRoot + "/include/c++/v1");
+}
+
+void WebAssembly::AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
+                                      llvm::opt::ArgStringList &CmdArgs) const {
+
+  switch (GetCXXStdlibType(Args)) {
+  case ToolChain::CST_Libcxx:
+    CmdArgs.push_back("-lc++");
+    CmdArgs.push_back("-lc++abi");
+    break;
+  case ToolChain::CST_Libstdcxx:
+    llvm_unreachable("invalid stdlib name");
+  }
+}
+
+std::string WebAssembly::getThreadModel() const {
+  // The WebAssembly MVP does not yet support threads; for now, use the
+  // "single" threading model, which lowers atomics to non-atomic operations.
+  // When threading support is standardized and implemented in popular engines,
+  // this override should be removed.
+  return "single";
 }
 
 Tool *WebAssembly::buildLinker() const {

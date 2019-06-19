@@ -29,10 +29,10 @@ class TlsGlobalTestCase(TestBase):
                     "=" +
                     os.environ["LD_LIBRARY_PATH"] +
                     ":" +
-                    os.getcwd())
+                    self.getBuildDir())
             else:
                 self.runCmd("settings set target.env-vars " +
-                            self.dylibPath + "=" + os.getcwd())
+                            self.dylibPath + "=" + self.getBuildDir())
             self.addTearDownHook(
                 lambda: self.runCmd(
                     "settings remove target.env-vars " +
@@ -48,8 +48,10 @@ class TlsGlobalTestCase(TestBase):
     def test(self):
         """Test thread-local storage."""
         self.build()
-        exe = os.path.join(os.getcwd(), "a.out")
-        self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
+        exe = self.getBuildArtifact("a.out")
+        target = self.dbg.CreateTarget(exe)
+        if self.platformIsDarwin():
+            self.registerSharedLibrariesWithTarget(target, ['liba.dylib'])
 
         line1 = line_number('main.c', '// thread breakpoint')
         lldbutil.run_break_set_by_file_and_line(

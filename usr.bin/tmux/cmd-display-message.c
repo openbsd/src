@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.42 2017/05/01 12:20:55 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.50 2019/05/30 20:54:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -39,8 +39,8 @@ const struct cmd_entry cmd_display_message_entry = {
 	.name = "display-message",
 	.alias = "display",
 
-	.args = { "c:pt:F:", 0, 1 },
-	.usage = "[-p] [-c target-client] [-F format] "
+	.args = { "ac:Ipt:F:v", 0, 1 },
+	.usage = "[-aIpv] [-c target-client] [-F format] "
 		 CMD_TARGET_PANE_USAGE " [message]",
 
 	.target = { 't', CMD_FIND_PANE, 0 },
@@ -49,23 +49,40 @@ const struct cmd_entry cmd_display_message_entry = {
 	.exec = cmd_display_message_exec
 };
 
+static void
+cmd_display_message_each(const char *key, const char *value, void *arg)
+{
+	struct cmdq_item	*item = arg;
+
+	cmdq_print(item, "%s=%s", key, value);
+}
+
 static enum cmd_retval
 cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = self->args;
-	struct client		*c;
+	struct client		*c, *target_c;
 	struct session		*s = item->target.s;
 	struct winlink		*wl = item->target.wl;
 	struct window_pane	*wp = item->target.wp;
 	const char		*template;
-	char			*msg;
+	char			*msg, *cause;
 	struct format_tree	*ft;
+	int			 flags;
+
+	if (args_has(args, 'I')) {
+		if (window_pane_start_input(wp, item, &cause) != 0) {
+			cmdq_error(item, "%s", cause);
+			free(cause);
+			return (CMD_RETURN_ERROR);
+		}
+		return (CMD_RETURN_WAIT);
+	}
 
 	if (args_has(args, 'F') && args->argc != 0) {
 		cmdq_error(item, "only one of -F or argument must be given");
 		return (CMD_RETURN_ERROR);
 	}
-	c = cmd_find_client(item, args_get(args, 'c'), 1);
 
 	template = args_get(args, 'F');
 	if (args->argc != 0)
@@ -73,10 +90,30 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 	if (template == NULL)
 		template = DISPLAY_MESSAGE_TEMPLATE;
 
-	ft = format_create(item->client, item, FORMAT_NONE, 0);
-	format_defaults(ft, c, s, wl, wp);
+	/*
+	 * -c is intended to be the client where the message should be
+	 * displayed if -p is not given. But it makes sense to use it for the
+	 * formats too, assuming it matches the session. If it doesn't, use the
+	 * best client for the session.
+	 */
+	c = cmd_find_client(item, args_get(args, 'c'), 1);
+	if (c != NULL && c->session == s)
+		target_c = c;
+	else
+		target_c = cmd_find_best_client(s);
+	if (args_has(self->args, 'v'))
+		flags = FORMAT_VERBOSE;
+	else
+		flags = 0;
+	ft = format_create(item->client, item, FORMAT_NONE, flags);
+	format_defaults(ft, target_c, s, wl, wp);
 
-	msg = format_expand_time(ft, template, time(NULL));
+	if (args_has(args, 'a')) {
+		format_each(ft, cmd_display_message_each, item);
+		return (CMD_RETURN_NORMAL);
+	}
+
+	msg = format_expand_time(ft, template);
 	if (args_has(self->args, 'p'))
 		cmdq_print(item, "%s", msg);
 	else if (c != NULL)

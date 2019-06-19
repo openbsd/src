@@ -43,12 +43,18 @@ $objAf->change(level => 1);
 ok($objAf->eq("n", "N"));
 ok($objAf->eq("N", "\x{149}"));
 
+# 4
+
 $objAf->change(level => 2);
 
 ok($objAf->eq("n", "N"));
 ok($objAf->eq("N", "\x{149}"));
 
+# 6
+
 $objAf->change(level => 3);
 
 ok($objAf->lt("n", "N"));
 ok($objAf->lt("N", "\x{149}"));
+
+# 8

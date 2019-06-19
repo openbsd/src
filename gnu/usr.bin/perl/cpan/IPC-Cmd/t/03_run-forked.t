@@ -83,6 +83,7 @@ close($fh);
 
 SKIP: {
   skip 'Skip these tests in PERL_CORE', 100 if $ENV{PERL_CORE};
+  skip 'These tests heisenfail on HPUX', 100 if $^O eq 'hpux';
   for (my $i = 0; $i < 100; $i++) {
     my $f_ipc_cmd = IPC::Cmd::run_forked("$cat $filename");
     my $f_backticks = `$cat $filename`;

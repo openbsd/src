@@ -3227,7 +3227,7 @@ macro_end (void)
 	     warning now.  */
 	  const char *msg = macro_warning (subtype);
 	  if (msg != 0)
-	    as_warn (msg);
+	    as_warn ("%s", msg);
 	}
       else
 	{
@@ -12355,6 +12355,8 @@ s_mipsset (int x ATTRIBUTE_UNUSED)
     mips_opts.sym32 = TRUE;
   else if (strcmp (name, "nosym32") == 0)
     mips_opts.sym32 = FALSE;
+  else if (strcmp (name, "hardfloat") == 0)
+    /* ignored */;
   else
     {
       as_warn (_("Tried to set unrecognized symbol: %s\n"), name);
@@ -13777,7 +13779,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT asec, fragS *fragp)
 	{
 	  const char *msg = macro_warning (fragp->fr_subtype);
 	  if (msg != 0)
-	    as_warn_where (fragp->fr_file, fragp->fr_line, msg);
+	    as_warn_where (fragp->fr_file, fragp->fr_line, "%s", msg);
 	}
 
       /* Go through all the fixups for the first sequence.  Disable them

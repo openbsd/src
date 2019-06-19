@@ -2,11 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib); # ../lib needed for test.deparse
     require "./test.pl";
+    set_up_inc(qw(. ../lib)); # ../lib needed for test.deparse
 }
 
-plan tests => 35;
+plan tests => 38;
 
 # compile time evaluation
 
@@ -66,3 +66,9 @@ is(ord($x), 0x1234, 'runtime ord \x{....}');
     is(ord(chr(0x1FFFFF)), 0x1FFFFF, 'last four-byte char in UTF-8');
     is(ord(chr(0x200000)), 0x200000, 'first five-byte char in UTF-8');
 }
+
+is(ord(""), 0, "ord of literal empty string");
+is(ord(do { my $x = ""; utf8::downgrade($x); $x }), 0,
+    "ord of downgraded empty string");
+is(ord(do { my $x = ""; utf8::upgrade($x); $x }), 0,
+    "ord of upgraded empty string");

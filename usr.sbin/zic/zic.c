@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.22 2016/03/15 19:50:47 millert Exp $	*/
+/*	$OpenBSD: zic.c,v 1.23 2019/01/12 15:33:17 schwarze Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,6 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

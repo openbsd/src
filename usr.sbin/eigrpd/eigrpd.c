@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.21 2016/09/02 17:59:58 benno Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.27 2019/03/31 03:36:18 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -268,7 +269,7 @@ main(int argc, char *argv[])
 	    eigrpd_conf->rdomain) == -1)
 		fatalx("kr_init failed");
 
-	if (pledge("inet rpath stdio sendfd", NULL) == -1)
+	if (pledge("stdio rpath inet sendfd", NULL) == -1)
 		fatal("pledge");
 
 	event_dispatch();
@@ -330,7 +331,10 @@ start_child(enum eigrpd_process p, char *argv0, int fd, int debug, int verbose,
 		return (pid);
 	}
 
-	if (dup2(fd, 3) == -1)
+	if (fd != 3) {
+		if (dup2(fd, 3) == -1)
+			fatal("cannot setup imsg fd");
+	} else if (fcntl(fd, F_SETFD, 0) == -1)
 		fatal("cannot setup imsg fd");
 
 	argv[argc++] = argv0;
@@ -641,25 +645,6 @@ merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 	conf->fib_priority_external = xconf->fib_priority_external;
 	conf->fib_priority_summary = xconf->fib_priority_summary;
 
-	/* merge interfaces */
-	TAILQ_FOREACH_SAFE(iface, &conf->iface_list, entry, itmp) {
-		/* find deleted ifaces */
-		if ((xi = if_lookup(xconf, iface->ifindex)) == NULL) {
-			TAILQ_REMOVE(&conf->iface_list, iface, entry);
-			free(iface);
-		}
-	}
-	TAILQ_FOREACH_SAFE(xi, &xconf->iface_list, entry, itmp) {
-		/* find new ifaces */
-		if ((iface = if_lookup(conf, xi->ifindex)) == NULL) {
-			TAILQ_REMOVE(&xconf->iface_list, xi, entry);
-			TAILQ_INSERT_TAIL(&conf->iface_list, xi, entry);
-			continue;
-		}
-
-		/* TODO update existing ifaces */
-	}
-
 	/* merge instances */
 	TAILQ_FOREACH_SAFE(eigrp, &conf->instances, entry, etmp) {
 		/* find deleted instances */
@@ -701,6 +686,25 @@ merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 		/* update existing instances */
 		merge_instances(conf, eigrp, xe);
 	}
+
+	/* merge interfaces */
+	TAILQ_FOREACH_SAFE(iface, &conf->iface_list, entry, itmp) {
+		/* find deleted ifaces */
+		if ((xi = if_lookup(xconf, iface->ifindex)) == NULL) {
+			TAILQ_REMOVE(&conf->iface_list, iface, entry);
+			free(iface);
+		}
+	}
+	TAILQ_FOREACH_SAFE(xi, &xconf->iface_list, entry, itmp) {
+		/* find new ifaces */
+		if ((iface = if_lookup(conf, xi->ifindex)) == NULL) {
+			TAILQ_REMOVE(&xconf->iface_list, xi, entry);
+			TAILQ_INSERT_TAIL(&conf->iface_list, xi, entry);
+			continue;
+		}
+
+		/* TODO update existing ifaces */
+	}	
 
 	/* resend addresses to activate new interfaces */
 	if (eigrpd_process == PROC_MAIN)

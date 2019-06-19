@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.12 2017/10/28 01:48:03 yasuoka Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.24 2019/05/04 11:34:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -30,6 +30,8 @@
 
 #include <machine/biosvar.h>
 #include <machine/efifbvar.h>
+
+extern void mainbus_efifb_reattach(void);
 
 /* coreboot tables */
 
@@ -79,7 +81,6 @@ struct efifb {
 	int			 depth;
 	paddr_t			 paddr;
 	psize_t			 psize;
-	int			 detached;
 
 	struct cb_framebuffer	 cb_table_fb;
 };
@@ -101,6 +102,7 @@ int	 efifb_show_screen(void *, void *, int, void (*cb) (void *, int, int),
 	    void *);
 int	 efifb_list_font(void *, struct wsdisplay_font *);
 int	 efifb_load_font(void *, void *, struct wsdisplay_font *);
+void	 efifb_scrollback(void *, void *, int lines);
 void	 efifb_efiinfo_init(struct efifb *);
 void	 efifb_cnattach_common(void);
 
@@ -133,13 +135,15 @@ struct wsdisplay_accessops efifb_accessops = {
 	.free_screen = efifb_free_screen,
 	.show_screen = efifb_show_screen,
 	.load_font = efifb_load_font,
-	.list_font = efifb_list_font
+	.list_font = efifb_list_font,
+	.scrollback = efifb_scrollback,
 };
 
 struct cfdriver efifb_cd = {
 	NULL, "efifb", DV_DULL
 };
 
+int efifb_detached;
 struct efifb efifb_console;
 struct wsdisplay_charcell efifb_bs[EFIFB_HEIGHT * EFIFB_WIDTH];
 
@@ -148,17 +152,17 @@ efifb_match(struct device *parent, void *cf, void *aux)
 {
 	struct efifb_attach_args *eaa = aux;
 
+	if (efifb_detached)
+		return 0;
+
 	if (strcmp(eaa->eaa_name, efifb_cd.cd_name) == 0) {
-		if (efifb_console.paddr != 0) {
-			if (efifb_console.detached)
-				return (0);
-			return (1);
-		}
+		if (efifb_console.paddr != 0)
+			return 1;
 		if (bios_efiinfo != NULL && bios_efiinfo->fb_addr != 0)
-			return (1);
+			return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -212,11 +216,6 @@ efifb_attach(struct device *parent, struct device *self, void *aux)
 
 		ccol = ri->ri_ccol;
 		crow = ri->ri_crow;
-
-		if (bus_space_map(iot, fb->paddr, fb->psize,
-		    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR,
-		    &ioh) == 0)
-			ri->ri_origbits = bus_space_vaddr(iot, ioh);
 
 		efifb_rasops_preinit(fb);
 		ri->ri_flg &= ~RI_CLEAR;
@@ -324,12 +323,6 @@ efifb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case 8:
 			*(u_int *)data = WSDISPLAYIO_DEPTH_8;
 			break;
-		case 4:
-			*(u_int *)data = WSDISPLAYIO_DEPTH_4;
-			break;
-		case 1:
-			*(u_int *)data = WSDISPLAYIO_DEPTH_1;
-			break;
 		default:
 			return (-1);
 		}
@@ -399,6 +392,15 @@ efifb_list_font(void *v, struct wsdisplay_font *font)
 	return (rasops_list_font(ri, font));
 }
 
+void
+efifb_scrollback(void *v, void *cookie, int lines)
+{
+	struct efifb_softc	*sc = v;
+	struct rasops_info	*ri = &sc->sc_fb->rinfo;
+
+	rasops_scrollback(ri, cookie, lines);
+}
+
 int
 efifb_cnattach(void)
 {
@@ -423,6 +425,7 @@ efifb_efiinfo_init(struct efifb *fb)
 	fb->psize = bios_efiinfo->fb_height *
 	    bios_efiinfo->fb_pixpsl * (fb->depth / 8);
 }
+
 void
 efifb_cnattach_common(void)
 {
@@ -445,6 +448,28 @@ efifb_cnattach_common(void)
 
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&efifb_std_descr, ri, 0, 0, defattr);
+}
+
+void
+efifb_cnremap(void)
+{
+	struct efifb		*fb = &efifb_console;
+	struct rasops_info	*ri = &fb->rinfo;
+	bus_space_tag_t		 iot = X86_BUS_SPACE_MEM;
+	bus_space_handle_t	 ioh;
+
+	if (fb->paddr == 0)
+		return;
+
+	if (_bus_space_map(iot, fb->paddr, fb->psize,
+	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR, &ioh) == 0)
+		ri->ri_origbits = bus_space_vaddr(iot, ioh);
+
+	efifb_rasops_preinit(fb);
+	ri->ri_flg &= ~RI_CLEAR;
+	ri->ri_flg |= RI_CENTER | RI_WRONLY;
+
+	rasops_init(ri, efifb_std_descr.nrows, efifb_std_descr.ncols);
 }
 
 int
@@ -478,10 +503,48 @@ efifb_is_console(struct pci_attach_args *pa)
 	return 0;
 }
 
-void
-efifb_cndetach(void)
+int
+efifb_is_primary(struct pci_attach_args *pa)
 {
-	efifb_console.detached = 1;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t type;
+	bus_addr_t base;
+	bus_size_t size;
+	int reg;
+
+	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
+		if (!pci_mapreg_probe(pc, tag, reg, &type))
+			continue;
+
+		if (type == PCI_MAPREG_TYPE_IO)
+			continue;
+
+		if (pci_mapreg_info(pc, tag, reg, type, &base, &size, NULL))
+			continue;
+
+		if (bios_efiinfo != NULL && bios_efiinfo->fb_addr != 0)
+			return (1);
+
+		if (type & PCI_MAPREG_MEM_TYPE_64BIT)
+			reg += 4;
+	}
+
+	/* XXX coreboot framebuffer isn't matched above. */
+	return efifb_is_console(pa);;
+}
+
+void
+efifb_detach(void)
+{
+	efifb_detached = 1;
+}
+
+void
+efifb_reattach(void)
+{
+	efifb_detached = 0;
+	mainbus_efifb_reattach();
 }
 
 int
@@ -564,4 +627,11 @@ cb_find_fb(paddr_t addr)
 	}
 
 	return NULL;
+}
+
+psize_t
+efifb_stolen(void)
+{
+	struct efifb *fb = &efifb_console;
+	return fb->psize;
 }

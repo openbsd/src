@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.50 2015/10/29 03:00:31 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.51 2018/08/03 15:01:28 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -98,9 +98,6 @@ main(int argc, char *argv[])
 	const char *errstr;
 	int ch, lastch = '\0', newarg = 1, prevoptind = 1;
 
-	if (pledge("stdio rpath", NULL) == -1)
-		err(1, "pledge");
-
 	while ((ch = getopt(argc, argv, "0123456789cf:h:n:st:d:T")) != -1) {
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
@@ -154,6 +151,11 @@ main(int argc, char *argv[])
 	}
 	if (maxrec == 0)
 		exit(0);
+
+	if (unveil(file, "r") == -1)
+		err(1, "unveil");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	if (argc) {
 		setvbuf(stdout, NULL, _IOLBF, 0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: t_bitst.c,v 1.7 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: t_bitst.c,v 1.8 2018/04/25 11:48:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -83,7 +83,7 @@ ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
 }
 
 int
-ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, char *name, int value,
+ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
     BIT_STRING_BITNAME *tbl)
 {
 	int bitnum;
@@ -99,7 +99,7 @@ ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, char *name, int value,
 }
 
 int
-ASN1_BIT_STRING_num_asc(char *name, BIT_STRING_BITNAME *tbl)
+ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl)
 {
 	BIT_STRING_BITNAME *bnam;
 

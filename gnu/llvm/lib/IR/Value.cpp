@@ -15,6 +15,7 @@
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
@@ -38,6 +39,10 @@
 
 using namespace llvm;
 
+static cl::opt<unsigned> NonGlobalValueMaxNameSize(
+    "non-global-value-max-name-size", cl::Hidden, cl::init(1024),
+    cl::desc("Maximum size for the name of non-global values."));
+
 //===----------------------------------------------------------------------===//
 //                                Value Class
 //===----------------------------------------------------------------------===//
@@ -50,6 +55,7 @@ Value::Value(Type *ty, unsigned scid)
     : VTy(checkType(ty)), UseList(nullptr), SubclassID(scid),
       HasValueHandle(0), SubclassOptionalData(0), SubclassData(0),
       NumUserOperands(0), IsUsedByMD(false), HasName(false) {
+  static_assert(ConstantFirstVal == 0, "!(SubclassID < ConstantFirstVal)");
   // FIXME: Why isn't this in the subclass gunk??
   // Note, we cannot call isa<CallInst> before the CallInst has been
   // constructed.
@@ -57,7 +63,7 @@ Value::Value(Type *ty, unsigned scid)
     assert((VTy->isFirstClassType() || VTy->isVoidTy() || VTy->isStructTy()) &&
            "invalid CallInst type!");
   else if (SubclassID != BasicBlockVal &&
-           (SubclassID < ConstantFirstVal || SubclassID > ConstantLastVal))
+           (/*SubclassID < ConstantFirstVal ||*/ SubclassID > ConstantLastVal))
     assert((VTy->isFirstClassType() || VTy->isVoidTy()) &&
            "Cannot create non-first-class values except for constants!");
   static_assert(sizeof(Value) == 2 * sizeof(void *) + 2 * sizeof(unsigned),
@@ -242,6 +248,11 @@ void Value::setNameImpl(const Twine &NewName) {
   if (getName() == NameRef)
     return;
 
+  // Cap the size of non-GlobalValue names.
+  if (NameRef.size() > NonGlobalValueMaxNameSize && !isa<GlobalValue>(this))
+    NameRef =
+        NameRef.substr(0, std::max(1u, (unsigned)NonGlobalValueMaxNameSize));
+
   assert(!getType()->isVoidTy() && "Cannot assign a name to void values!");
 
   // Get the symbol table to update for this object.
@@ -407,7 +418,7 @@ void Value::doRAUW(Value *New, bool NoMetadata) {
   if (!NoMetadata && isUsedByMetadata())
     ValueAsMetadata::handleRAUW(this, New);
 
-  while (!use_empty()) {
+  while (!materialized_use_empty()) {
     Use &U = *UseList;
     // Must handle Constants specially, we cannot call replaceUsesOfWith on a
     // constant because they are uniqued.
@@ -459,7 +470,7 @@ namespace {
 enum PointerStripKind {
   PSK_ZeroIndices,
   PSK_ZeroIndicesAndAliases,
-  PSK_ZeroIndicesAndAliasesAndBarriers,
+  PSK_ZeroIndicesAndAliasesAndInvariantGroups,
   PSK_InBoundsConstantIndices,
   PSK_InBounds
 };
@@ -478,7 +489,7 @@ static const Value *stripPointerCastsAndOffsets(const Value *V) {
     if (auto *GEP = dyn_cast<GEPOperator>(V)) {
       switch (StripKind) {
       case PSK_ZeroIndicesAndAliases:
-      case PSK_ZeroIndicesAndAliasesAndBarriers:
+      case PSK_ZeroIndicesAndAliasesAndInvariantGroups:
       case PSK_ZeroIndices:
         if (!GEP->hasAllZeroIndices())
           return V;
@@ -506,11 +517,12 @@ static const Value *stripPointerCastsAndOffsets(const Value *V) {
           V = RV;
           continue;
         }
-        // The result of invariant.group.barrier must alias it's argument,
+        // The result of launder.invariant.group must alias it's argument,
         // but it can't be marked with returned attribute, that's why it needs
         // special case.
-        if (StripKind == PSK_ZeroIndicesAndAliasesAndBarriers &&
-            CS.getIntrinsicID() == Intrinsic::invariant_group_barrier) {
+        if (StripKind == PSK_ZeroIndicesAndAliasesAndInvariantGroups &&
+            (CS.getIntrinsicID() == Intrinsic::launder_invariant_group ||
+             CS.getIntrinsicID() == Intrinsic::strip_invariant_group)) {
           V = CS.getArgOperand(0);
           continue;
         }
@@ -536,8 +548,8 @@ const Value *Value::stripInBoundsConstantOffsets() const {
   return stripPointerCastsAndOffsets<PSK_InBoundsConstantIndices>(this);
 }
 
-const Value *Value::stripPointerCastsAndBarriers() const {
-  return stripPointerCastsAndOffsets<PSK_ZeroIndicesAndAliasesAndBarriers>(
+const Value *Value::stripPointerCastsAndInvariantGroups() const {
+  return stripPointerCastsAndOffsets<PSK_ZeroIndicesAndAliasesAndInvariantGroups>(
       this);
 }
 
@@ -547,9 +559,9 @@ Value::stripAndAccumulateInBoundsConstantOffsets(const DataLayout &DL,
   if (!getType()->isPointerTy())
     return this;
 
-  assert(Offset.getBitWidth() == DL.getPointerSizeInBits(cast<PointerType>(
+  assert(Offset.getBitWidth() == DL.getIndexSizeInBits(cast<PointerType>(
                                      getType())->getAddressSpace()) &&
-         "The offset must have exactly as many bits as our pointer.");
+         "The offset bit width does not match the DL specification.");
 
   // Even though we don't look through PHI nodes, we could be called on an
   // instruction in an unreachable block, which may be on a cycle.
@@ -588,17 +600,18 @@ const Value *Value::stripInBoundsOffsets() const {
   return stripPointerCastsAndOffsets<PSK_InBounds>(this);
 }
 
-unsigned Value::getPointerDereferenceableBytes(const DataLayout &DL,
+uint64_t Value::getPointerDereferenceableBytes(const DataLayout &DL,
                                                bool &CanBeNull) const {
   assert(getType()->isPointerTy() && "must be pointer");
 
-  unsigned DerefBytes = 0;
+  uint64_t DerefBytes = 0;
   CanBeNull = false;
   if (const Argument *A = dyn_cast<Argument>(this)) {
     DerefBytes = A->getDereferenceableBytes();
-    if (DerefBytes == 0 && A->hasByValAttr() && A->getType()->isSized()) {
-      DerefBytes = DL.getTypeStoreSize(A->getType());
-      CanBeNull = false;
+    if (DerefBytes == 0 && (A->hasByValAttr() || A->hasStructRetAttr())) {
+      Type *PT = cast<PointerType>(A->getType())->getElementType();
+      if (PT->isSized())
+        DerefBytes = DL.getTypeStoreSize(PT);
     }
     if (DerefBytes == 0) {
       DerefBytes = A->getDereferenceableOrNullBytes();
@@ -624,7 +637,7 @@ unsigned Value::getPointerDereferenceableBytes(const DataLayout &DL,
       CanBeNull = true;
     }
   } else if (auto *AI = dyn_cast<AllocaInst>(this)) {
-    if (AI->getAllocatedType()->isSized()) {
+    if (!AI->isArrayAllocation()) {
       DerefBytes = DL.getTypeStoreSize(AI->getAllocatedType());
       CanBeNull = false;
     }
@@ -644,6 +657,10 @@ unsigned Value::getPointerAlignment(const DataLayout &DL) const {
 
   unsigned Align = 0;
   if (auto *GO = dyn_cast<GlobalObject>(this)) {
+    // Don't make any assumptions about function pointer alignment. Some
+    // targets use the LSBs to store additional information.
+    if (isa<Function>(GO))
+      return 0;
     Align = GO->getAlignment();
     if (Align == 0) {
       if (auto *GVar = dyn_cast<GlobalVariable>(GO)) {

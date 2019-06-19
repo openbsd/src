@@ -1,0 +1,24 @@
+BD-NF(1)                    General Commands Manual                   BD-NF(1)
+
+NNAAMMEE
+     BBdd--nnff - interaction of no-fill blocks and requests
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST initial text
+     after .nf
+     request
+     after .fi request
+
+     in unfilled
+     block
+     after .fi request in unfilled block
+     after end of unfilled block
+
+     in filled block
+     after .nf request
+     in filled block
+     after end of filled block
+     ENDTEST
+     end of file
+
+OpenBSD                         January 7, 2019                        OpenBSD

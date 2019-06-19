@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.49 2017/08/16 18:34:10 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.50 2018/08/25 17:24:22 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,6 +78,8 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
+
+#define __HAVE_ACPI
 
 #endif /* _KERNEL */
 

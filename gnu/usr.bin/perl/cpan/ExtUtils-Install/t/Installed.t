@@ -109,6 +109,9 @@ my $fake_mod_dir = File::Spec->catdir(cwd(), 'auto', 'FakeMod');
 
     # should find $fake_mod_dir via '.' in @INC
 
+    local @INC = @INC;
+    push @INC, '.' if not $INC[-1] eq '.';
+
     my $realei = ExtUtils::Installed->new();
     isa_ok( $realei, 'ExtUtils::Installed' );
     isa_ok( $realei->{Perl}{packlist}, 'ExtUtils::Packlist' );

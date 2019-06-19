@@ -1,0 +1,12 @@
+5.010001
+mro_get_from_name              # U
+mro_get_private_data           # U
+mro_register                   # U
+mro_set_mro                    # U
+mro_set_private_data           # U
+save_hints                     # U
+save_padsv_and_mortalize       # U
+save_pushi32ptr                # U
+save_pushptr                   # U
+save_pushptrptr                # U
+sv_insert_flags                # U

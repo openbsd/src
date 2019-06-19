@@ -4,7 +4,7 @@ perlfaq8 - System Interaction
 
 =head1 VERSION
 
-version 5.021010
+version 5.021011
 
 =head1 DESCRIPTION
 
@@ -239,7 +239,7 @@ and in pixels:
 This is more portable than the raw C<ioctl>, but not as
 illustrative:
 
-    require 'sys/ioctl.ph';
+    require './sys/ioctl.ph';
     die "no TIOCGWINSZ " unless defined &TIOCGWINSZ;
     open(my $tty_fh, "+</dev/tty")                     or die "No tty: $!";
     unless (ioctl($tty_fh, &TIOCGWINSZ, $winsize='')) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.48 2017/05/29 04:40:35 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2019/05/01 14:13:12 florian Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -73,6 +73,7 @@ char	*portselector(void);
 
 char	defent[TABBUFSIZ];
 char	tabent[TABBUFSIZ];
+char	saveLO[FILENAME_MAX];
 
 char	*env[128];
 
@@ -169,6 +170,34 @@ main(int argc, char *argv[])
 
 	ioctl(0, FIOASYNC, &off);	/* turn off async mode */
 
+	tname = "default";
+
+	if (unveil(_PATH_GETTYTAB, "r") == -1) {
+		syslog(LOG_ERR, "%s: %m", tname);
+		exit(1);
+	}
+	if (unveil("/dev", "rw") == -1) {
+		syslog(LOG_ERR, "%s: %m", tname);
+		exit(1);
+	}
+	if (unveil(_PATH_GETTY, "x") == -1) {
+		syslog(LOG_ERR, "%s: %m", tname);
+		exit(1);
+	}
+
+	gettable("default", defent);
+	gendefaults();
+	if (argc > 1)
+		tname = argv[1];
+	gettable(tname, tabent);
+	if (LO == NULL)
+		LO = _PATH_LOGIN;
+	if (unveil(LO, "x") == -1) {
+		syslog(LOG_ERR, "%s: %m", tname);
+		exit(1);
+	}
+	strlcpy(saveLO, LO, sizeof saveLO);
+
 	/*
 	 * The following is a work around for vhangup interactions
 	 * which cause great problems getting window systems started.
@@ -229,13 +258,14 @@ main(int argc, char *argv[])
 	}
 	omode = tmode;
 
-	gettable("default", defent);
-	gendefaults();
-	tname = "default";
-	if (argc > 1)
-		tname = argv[1];
 	for (;;) {
 		gettable(tname, tabent);
+		if (strcmp(LO, saveLO) != 0) {
+			/* re-exec to apply new unveil */
+			closefrom(0);
+			execv(_PATH_GETTY, argv);
+			exit(0);
+		}
 		if (OPset || EPset || APset)
 			APset++, OPset++, EPset++;
 		setdefaults();

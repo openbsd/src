@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.63 2015/11/23 19:24:34 mmcc Exp $
+.\"	$OpenBSD: boot.8,v 1.64 2019/01/02 21:20:41 anton Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: January 2 2019 $
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ parsing the configuration file, then an interactive command line.
 While at the command line you have 5 seconds to type any commands, if needed.
 If time expires, the kernel will be loaded according to
 the current variable settings (see the
-.Nm set
+.Ic set
 command).
 Each time a kernel load fails, the timeout is increased by one second.
 The sequence of
@@ -152,7 +152,7 @@ The following commands are accepted at the
 .Nm
 prompt:
 .Bl -tag -width shorten
-.It boot Oo Oo Ar device : Oc Ns Ar image Oc Op Fl acds
+.It Ic boot Oo Oo Ar device : Oc Ns Ar image Oc Op Fl acds
 Boots the specified kernel image
 with any options given.
 If
@@ -197,18 +197,18 @@ at the earliest convenient point.
 .It Fl s
 Causes the kernel to boot single-user.
 .El
-.It echo Op Ar args
+.It Ic echo Op Ar args
 Displays
 .Ar args
 on the console device.
-.It help
+.It Ic help
 Prints a list of available commands and machine dependent
 commands, if any.
-.It machine Op Ar command
+.It Ic machine Op Ar command
 Issues machine-dependent commands.
 These are defined for i386 architecture:
 .Bl -tag -width diskinfo
-.It Nm boot
+.It Ic boot
 Boots the specified partition boot block in place of the original (MBR) boot
 block:
 .Bd -unfilled -offset indent
@@ -220,12 +220,12 @@ Where
 is the first MBR partition table entry, and
 .Ar d
 the last.
-.It Nm comaddr
+.It Ic comaddr
 Set the I/O base address for the serial port to be used as serial console.
-.It Nm diskinfo
+.It Ic diskinfo
 Prints a list of hard disks installed on your system including:
 BIOS device number, and the BIOS geometry.
-.It Nm memory
+.It Ic memory
 If used without any arguments, this command will print out
 the memory configuration as determined through BIOS routines.
 Otherwise the arguments specify how to modify the
@@ -273,18 +273,18 @@ effectively excludes the 15\(en16MB range from the map of useful memory:
 .Bd -unfilled -offset indent
 machine mem -0x100000@0xf00000
 .Ed
-.It Nm regs
+.It Ic regs
 Prints contents of processor registers if compiled with
 .Em DEBUG .
 .El
-.It ls Op Ar directory
+.It Ic ls Op Ar directory
 Prints contents of the specified
 .Ar directory
 in long format including: attributes and file type, owner, group,
 size, filename.
-.It reboot
+.It Ic reboot
 Reboots the machine by initiating a warm boot procedure.
-.It set Op Ar varname Op Ar value
+.It Ic set Op Ar varname Op Ar value
 If invoked without arguments, prints a list of variables and their values.
 If only
 .Ar varname
@@ -297,30 +297,30 @@ are both specified, sets that variable to the given value.
 Variables include:
 .Pp
 .Bl -tag -compact -width boothow
-.It Nm addr
+.It Ic addr
 Address at which to load the kernel.
-.It Nm debug
+.It Ic debug
 Debug flag if
 .Nm
 was compiled with DEBUG defined.
-.It Nm device
+.It Ic device
 Boot device name (e.g.,
 .Li fd0a ,
 .Li hd0a ) .
-.It Nm howto
+.It Ic howto
 Options to pass to the loaded kernel.
-.It Nm image
+.It Ic image
 File name containing the kernel image.
-.It Nm timeout
+.It Ic timeout
 Number of seconds boot will wait for human intervention before
 booting the default kernel image.
-.It Nm tty
+.It Ic tty
 Active console device name (e.g.,
 .Li com0 ,
 .Li com1 ,
 .Li pc0 ) .
 .El
-.It stty Op Ar device Op Ar speed
+.It Ic stty Op Ar device Op Ar speed
 Displays or sets the
 .Ar speed
 for a console
@@ -339,7 +339,7 @@ The baudrate value is not used for the
 console.
 .Pp
 The default baudrate is 9600bps.
-.It time
+.It Ic time
 Displays system time and date.
 .El
 .Sh FILES

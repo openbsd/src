@@ -1,4 +1,4 @@
-.\" $OpenBSD: wcstod.3,v 1.2 2010/09/10 18:38:19 jmc Exp $
+.\" $OpenBSD: wcstod.3,v 1.3 2019/01/16 12:55:49 schwarze Exp $
 .\" $NetBSD: wcstod.3,v 1.5 2007/05/21 15:29:51 tnozaki Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Tim J. Robbins
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: wcstod.3,v 1.4 2003/05/22 13:02:27 ru Exp $
 .\"
-.Dd $Mdocdate: September 10 2010 $
+.Dd $Mdocdate: January 16 2019 $
 .Dt WCSTOD 3
 .Os
 .Sh NAME
@@ -72,3 +72,12 @@ and
 .Fn wcstold
 functions conform to
 .St -isoC-99 .
+.Sh CAVEATS
+On systems other than
+.Ox ,
+the
+.Dv LC_NUMERIC
+.Xr locale 1
+category can cause parsing failures; see CAVEATS in
+.Xr setlocale 3
+for details.

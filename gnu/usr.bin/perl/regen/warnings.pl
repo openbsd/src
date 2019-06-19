@@ -16,10 +16,10 @@
 #
 # This script is normally invoked from regen.pl.
 
-$VERSION = '1.36';
+$VERSION = '1.42';
 
 BEGIN {
-    require 'regen/regen_lib.pl';
+    require './regen/regen_lib.pl';
     push @INC, './lib';
 }
 use strict ;
@@ -105,11 +105,18 @@ my $tree = {
                                     [ 5.021, DEFAULT_ON ],
                                 'experimental::bitwise' =>
                                     [ 5.021, DEFAULT_ON ],
+                                'experimental::declared_refs' =>
+                                    [ 5.025, DEFAULT_ON ],
+                                'experimental::script_run' =>
+                                    [ 5.027, DEFAULT_ON ],
+                                'experimental::alpha_assertions' =>
+                                    [ 5.027, DEFAULT_ON ],
                         }],
 
         'missing'       => [ 5.021, DEFAULT_OFF],
         'redundant'     => [ 5.021, DEFAULT_OFF],
         'locale'        => [ 5.021, DEFAULT_ON],
+        'shadow'        => [ 5.027, DEFAULT_OFF],
 
          #'default'     => [ 5.008, DEFAULT_ON ],
 }]};
@@ -336,6 +343,9 @@ Too many warnings categories -- max is 255
 EOM
 
   walk ($tree) ;
+  for (my $i = $index; $i & 3; $i++) {
+      push @{$list{all}}, $i;
+  }
 
   $index *= 2 ;
   $warn_size = int($index / 8) + ($index % 8 != 0) ;
@@ -371,6 +381,64 @@ EOM
     : (STRLEN*)CopyD(p, PerlMemShared_malloc(sizeof(*p)+*p), sizeof(*p)+*p, \
 		     			     char))
 
+/*
+
+=head1 Warning and Dieing
+
+=for apidoc Am|bool|ckWARN|U32 w
+
+Returns a boolean as to whether or not warnings are enabled for the warning
+category C<w>.  If the category is by default enabled even if not within the
+scope of S<C<use warnings>>, instead use the L</ckWARN_d> macro.
+
+=for apidoc Am|bool|ckWARN_d|U32 w
+
+Like C<L</ckWARN>>, but for use if and only if the warning category is by
+default enabled even if not within the scope of S<C<use warnings>>.
+
+=for apidoc Am|bool|ckWARN2|U32 w1|U32 w2
+
+Like C<L</ckWARN>>, but takes two warnings categories as input, and returns
+TRUE if either is enabled.  If either category is by default enabled even if
+not within the scope of S<C<use warnings>>, instead use the L</ckWARN2_d>
+macro.  The categories must be completely independent, one may not be
+subclassed from the other.
+
+=for apidoc Am|bool|ckWARN2_d|U32 w1|U32 w2
+
+Like C<L</ckWARN2>>, but for use if and only if either warning category is by
+default enabled even if not within the scope of S<C<use warnings>>.
+
+=for apidoc Am|bool|ckWARN3|U32 w1|U32 w2|U32 w3
+
+Like C<L</ckWARN2>>, but takes three warnings categories as input, and returns
+TRUE if any is enabled.  If any of the categories is by default enabled even
+if not within the scope of S<C<use warnings>>, instead use the L</ckWARN3_d>
+macro.  The categories must be completely independent, one may not be
+subclassed from any other.
+
+=for apidoc Am|bool|ckWARN3_d|U32 w1|U32 w2|U32 w3
+
+Like C<L</ckWARN3>>, but for use if and only if any of the warning categories
+is by default enabled even if not within the scope of S<C<use warnings>>.
+
+=for apidoc Am|bool|ckWARN4|U32 w1|U32 w2|U32 w3|U32 w4
+
+Like C<L</ckWARN3>>, but takes four warnings categories as input, and returns
+TRUE if any is enabled.  If any of the categories is by default enabled even
+if not within the scope of S<C<use warnings>>, instead use the L</ckWARN4_d>
+macro.  The categories must be completely independent, one may not be
+subclassed from any other.
+
+=for apidoc Am|bool|ckWARN4_d|U32 w1|U32 w2|U32 w3|U32 w4
+
+Like C<L</ckWARN4>>, but for use if and only if any of the warning categories
+is by default enabled even if not within the scope of S<C<use warnings>>.
+
+=cut
+
+*/
+
 #define ckWARN(w)		Perl_ckwarn(aTHX_ packWARN(w))
 
 /* The w1, w2 ... should be independent warnings categories; one shouldn't be
@@ -402,12 +470,15 @@ EOM
 #define unpackWARN4(x)		(((x) >>24) & 0xFF)
 
 #define ckDEAD(x)							\
-	   ( ! specialWARN(PL_curcop->cop_warnings) &&			\
-	    ( isWARNf_on(PL_curcop->cop_warnings, WARN_ALL) || 		\
-	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN1(x)) ||	\
-	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN2(x)) ||	\
-	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN3(x)) ||	\
-	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN4(x))))
+   (PL_curcop &&                                                        \
+    !specialWARN(PL_curcop->cop_warnings) &&			        \
+    (isWARNf_on(PL_curcop->cop_warnings, unpackWARN1(x)) ||	        \
+      (unpackWARN2(x) &&                                                \
+	(isWARNf_on(PL_curcop->cop_warnings, unpackWARN2(x)) ||	        \
+	  (unpackWARN3(x) &&                                            \
+	    (isWARNf_on(PL_curcop->cop_warnings, unpackWARN3(x)) ||	\
+	      (unpackWARN4(x) &&                                        \
+		isWARNf_on(PL_curcop->cop_warnings, unpackWARN4(x)))))))))
 
 /* end of file warnings.h */
 EOM
@@ -472,7 +543,7 @@ print $pm ");\n\n" ;
 print $pm "# These are used by various things, including our own tests\n";
 print $pm tab(6, 'our $NONE'), '=  "', ('\0' x $warn_size) , "\";\n" ;
 print $pm tab(6, 'our $DEFAULT'), '=  "', mkHex($warn_size, map $_ * 2, @def),
-			   '", # [', mkRange(@def), "]\n" ;
+			   '", # [', mkRange(sort { $a <=> $b } @def), "]\n" ;
 print $pm tab(6, 'our $LAST_BIT'), '=  ' . "$index ;\n" ;
 print $pm tab(6, 'our $BYTES'),    '=  ' . "$warn_size ;\n" ;
 while (<DATA>) {
@@ -500,8 +571,6 @@ die sprintf "Incorrect use of pragma '%s' at %s line %d.\n", __PACKAGE__, +(call
 
 KEYWORDS
 
-our $All = "" ; vec($All, $Offsets{'all'}, 2) = 3 ;
-
 sub Croaker
 {
     require Carp; # this initializes %CarpInternal
@@ -510,12 +579,32 @@ sub Croaker
     Carp::croak(@_);
 }
 
+sub _expand_bits {
+    my $bits = shift;
+    my $want_len = ($LAST_BIT + 7) >> 3;
+    my $len = length($bits);
+    if ($len != $want_len) {
+	if ($bits eq "") {
+	    $bits = "\x00" x $want_len;
+	} elsif ($len > $want_len) {
+	    substr $bits, $want_len, $len-$want_len, "";
+	} else {
+	    my $a = vec($bits, $Offsets{all} >> 1, 2);
+	    $a |= $a << 2;
+	    $a |= $a << 4;
+	    $bits .= chr($a) x ($want_len - $len);
+	}
+    }
+    return $bits;
+}
+
 sub _bits {
     my $mask = shift ;
     my $catmask ;
     my $fatal = 0 ;
     my $no_fatal = 0 ;
 
+    $mask = _expand_bits($mask);
     foreach my $word ( @_ ) {
 	if ($word eq 'FATAL') {
 	    $fatal = 1;
@@ -528,7 +617,7 @@ sub _bits {
 	elsif ($catmask = $Bits{$word}) {
 	    $mask |= $catmask ;
 	    $mask |= $DeadBits{$word} if $fatal ;
-	    $mask &= ~($DeadBits{$word}|$All) if $no_fatal ;
+	    $mask = ~(~$mask | $DeadBits{$word}) if $no_fatal ;
 	}
 	else
 	  { Croaker("Unknown warnings category '$word'")}
@@ -541,7 +630,7 @@ sub bits
 {
     # called from B::Deparse.pm
     push @_, 'all' unless @_ ;
-    return _bits(undef, @_) ;
+    return _bits("", @_) ;
 }
 
 sub import
@@ -550,16 +639,12 @@ sub import
 
     my $mask = ${^WARNING_BITS} // ($^W ? $Bits{all} : $DEFAULT) ;
 
-    if (vec($mask, $Offsets{'all'}, 1)) {
-	$mask |= $Bits{'all'} ;
-	$mask |= $DeadBits{'all'} if vec($mask, $Offsets{'all'}+1, 1);
-    }
+    # append 'all' when implied (empty import list or after a lone
+    # "FATAL" or "NONFATAL")
+    push @_, 'all'
+	if !@_ || (@_==1 && ($_[0] eq 'FATAL' || $_[0] eq 'NONFATAL'));
 
-    # append 'all' when implied (after a lone "FATAL" or "NONFATAL")
-    push @_, 'all' if @_==1 && ( $_[0] eq 'FATAL' || $_[0] eq 'NONFATAL' );
-
-    # Empty @_ is equivalent to @_ = 'all' ;
-    ${^WARNING_BITS} = @_ ? _bits($mask, @_) : $mask | $Bits{all} ;
+    ${^WARNING_BITS} = _bits($mask, @_);
 }
 
 sub unimport
@@ -569,20 +654,16 @@ sub unimport
     my $catmask ;
     my $mask = ${^WARNING_BITS} // ($^W ? $Bits{all} : $DEFAULT) ;
 
-    if (vec($mask, $Offsets{'all'}, 1)) {
-	$mask |= $Bits{'all'} ;
-	$mask |= $DeadBits{'all'} if vec($mask, $Offsets{'all'}+1, 1);
-    }
-
     # append 'all' when implied (empty import list or after a lone "FATAL")
     push @_, 'all' if !@_ || @_==1 && $_[0] eq 'FATAL';
 
+    $mask = _expand_bits($mask);
     foreach my $word ( @_ ) {
 	if ($word eq 'FATAL') {
 	    next;
 	}
 	elsif ($catmask = $Bits{$word}) {
-	    $mask &= ~($catmask | $DeadBits{$word} | $All);
+	    $mask = ~(~$mask | $catmask | $DeadBits{$word});
 	}
 	else
 	  { Croaker("Unknown warnings category '$word'")}
@@ -593,6 +674,7 @@ sub unimport
 
 my %builtin_type; @builtin_type{qw(SCALAR ARRAY HASH CODE REF GLOB LVALUE Regexp)} = ();
 
+sub LEVEL () { 8 };
 sub MESSAGE () { 4 };
 sub FATAL () { 2 };
 sub NORMAL () { 1 };
@@ -604,8 +686,18 @@ sub __chk
     my $isobj = 0 ;
     my $wanted = shift;
     my $has_message = $wanted & MESSAGE;
+    my $has_level   = $wanted & LEVEL  ;
 
-    unless (@_ == 1 || @_ == ($has_message ? 2 : 0)) {
+    if ($has_level) {
+	if (@_ != ($has_message ? 3 : 2)) {
+	    my $sub = (caller 1)[3];
+	    my $syntax = $has_message
+		? "category, level, 'message'"
+		: 'category, level';
+	    Croaker("Usage: $sub($syntax)");
+        }
+    }
+    elsif (not @_ == 1 || @_ == ($has_message ? 2 : 0)) {
 	my $sub = (caller 1)[3];
 	my $syntax = $has_message ? "[category,] 'message'" : '[category]';
 	Croaker("Usage: $sub($syntax)");
@@ -643,6 +735,9 @@ sub __chk
 	}
 	$i -= 2 ;
     }
+    elsif ($has_level) {
+	$i = 2 + shift;
+    }
     else {
 	$i = _error_loc(); # see where Carp will allocate the error
     }
@@ -652,21 +747,34 @@ sub __chk
     my(@callers_bitmask) = (caller($i))[9] ;
     my $callers_bitmask =
 	 @callers_bitmask ? $callers_bitmask[0] // $DEFAULT : 0 ;
+    length($callers_bitmask) > ($offset >> 3) or $offset = $Offsets{all};
 
     my @results;
     foreach my $type (FATAL, NORMAL) {
 	next unless $wanted & $type;
 
-	push @results, (vec($callers_bitmask, $offset + $type - 1, 1) ||
-			vec($callers_bitmask, $Offsets{'all'} + $type - 1, 1));
+	push @results, vec($callers_bitmask, $offset + $type - 1, 1);
     }
 
     # &enabled and &fatal_enabled
     return $results[0] unless $has_message;
 
     # &warnif, and the category is neither enabled as warning nor as fatal
-    return if $wanted == (NORMAL | FATAL | MESSAGE)
+    return if ($wanted & (NORMAL | FATAL | MESSAGE))
+		      == (NORMAL | FATAL | MESSAGE)
 	&& !($results[0] || $results[1]);
+
+    # If we have an explicit level, bypass Carp.
+    if ($has_level and @callers_bitmask) {
+	# logic copied from util.c:mess_sv
+	my $stuff = " at " . join " line ", (caller $i)[1,2];
+	$stuff .= sprintf ", <%s> %s %d",
+			   *${^LAST_FH}{NAME},
+			   ($/ eq "\n" ? "line" : "chunk"), $.
+	    if $. && ${^LAST_FH};
+	die "$message$stuff.\n" if $results[0];
+	return warn "$message$stuff.\n";
+    }
 
     require Carp;
     Carp::croak($message) if $results[0];
@@ -690,14 +798,13 @@ sub register_categories
 
     for my $name (@names) {
 	if (! defined $Bits{$name}) {
-	    $Bits{$name}     = _mkMask($LAST_BIT);
-	    vec($Bits{'all'}, $LAST_BIT, 1) = 1;
-	    $Offsets{$name}  = $LAST_BIT ++;
-	    foreach my $k (keys %Bits) {
-		vec($Bits{$k}, $LAST_BIT, 1) = 0;
+	    $Offsets{$name}  = $LAST_BIT;
+	    $Bits{$name}     = _mkMask($LAST_BIT++);
+	    $DeadBits{$name} = _mkMask($LAST_BIT++);
+	    if (length($Bits{$name}) > length($Bits{all})) {
+		$Bits{all} .= "\x55";
+		$DeadBits{all} .= "\xaa";
 	    }
-	    $DeadBits{$name} = _mkMask($LAST_BIT);
-	    vec($DeadBits{'all'}, $LAST_BIT++, 1) = 1;
 	}
     }
 }
@@ -727,9 +834,29 @@ sub warnif
     return __chk(NORMAL | FATAL | MESSAGE, @_);
 }
 
+sub enabled_at_level
+{
+    return __chk(NORMAL | LEVEL, @_);
+}
+
+sub fatal_enabled_at_level
+{
+    return __chk(FATAL | LEVEL, @_);
+}
+
+sub warn_at_level
+{
+    return __chk(FATAL | MESSAGE | LEVEL, @_);
+}
+
+sub warnif_at_level
+{
+    return __chk(NORMAL | FATAL | MESSAGE | LEVEL, @_);
+}
+
 # These are not part of any public interface, so we can delete them to save
 # space.
-delete @warnings::{qw(NORMAL FATAL MESSAGE)};
+delete @warnings::{qw(NORMAL FATAL MESSAGE LEVEL)};
 
 1;
 __END__
@@ -1262,6 +1389,9 @@ warnings::register like this:
 
 =head1 FUNCTIONS
 
+Note: The functions with names ending in C<_at_level> were added in Perl
+5.28.
+
 =over 4
 
 =item use warnings::register
@@ -1291,6 +1421,11 @@ Return TRUE if that warnings category is enabled in the first scope
 where the object is used.
 Otherwise returns FALSE.
 
+=item warnings::enabled_at_level($category, $level)
+
+Like C<warnings::enabled>, but $level specifies the exact call frame, 0
+being the immediate caller.
+
 =item warnings::fatal_enabled()
 
 Return TRUE if the warnings category with the same name as the current
@@ -1311,6 +1446,11 @@ warnings category.
 Return TRUE if that warnings category has been set to FATAL in the first
 scope where the object is used.
 Otherwise returns FALSE.
+
+=item warnings::fatal_enabled_at_level($category, $level)
+
+Like C<warnings::fatal_enabled>, but $level specifies the exact call frame,
+0 being the immediate caller.
 
 =item warnings::warn($message)
 
@@ -1338,6 +1478,10 @@ warnings category.
 If that warnings category has been set to "FATAL" in the scope where C<$object>
 is first used then die. Otherwise return.
 
+=item warnings::warn_at_level($category, $level, $message)
+
+Like C<warnings::warn>, but $level specifies the exact call frame,
+0 being the immediate caller.
 
 =item warnings::warnif($message)
 
@@ -1359,6 +1503,11 @@ Equivalent to:
 
     if (warnings::enabled($object))
       { warnings::warn($object, $message) }
+
+=item warnings::warnif_at_level($category, $level, $message)
+
+Like C<warnings::warnif>, but $level specifies the exact call frame,
+0 being the immediate caller.
 
 =item warnings::register_categories(@names)
 

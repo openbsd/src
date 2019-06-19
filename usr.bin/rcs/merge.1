@@ -1,4 +1,4 @@
-.\"	$OpenBSD: merge.1,v 1.3 2010/10/28 15:08:50 jmc Exp $
+.\"	$OpenBSD: merge.1,v 1.4 2018/06/07 11:37:21 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
 .\" All rights reserved.
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: October 28 2010 $
+.Dd $Mdocdate: June 7 2018 $
 .Dt MERGE 1
 .Os
 .Sh NAME
@@ -57,16 +57,7 @@ Be quiet about reporting.
 .It Fl V
 Print RCS's version number.
 .El
-.Sh EXAMPLES
-Using labels:
-.Bd -literal -offset indent
-$ merge -q -p -L one -L two -L three file1 file2 file3
-<<<<<<< one
-=======
-bar
->>>>>>> three
-.Ed
-.Sh DIAGNOSTICS
+.Sh EXIT STATUS
 The
 .Nm
 utility exits with one of the following values:
@@ -79,6 +70,15 @@ Overlaps were found.
 .It 2
 An error occurred.
 .El
+.Sh EXAMPLES
+Using labels:
+.Bd -literal -offset indent
+$ merge -q -p -L one -L two -L three file1 file2 file3
+<<<<<<< one
+=======
+bar
+>>>>>>> three
+.Ed
 .Sh SEE ALSO
 .Xr co 1 ,
 .Xr diff 1 ,

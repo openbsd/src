@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.21 2018/02/06 04:19:56 florian Exp $ */
+/*	$Id: http.c,v 1.26 2019/06/07 08:07:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,8 +34,6 @@
 
 #include "http.h"
 #include "extern.h"
-
-#define DEFAULT_CA_FILE "/etc/ssl/cert.pem"
 
 /*
  * A buffer for transferring HTTP/S data.
@@ -137,7 +135,7 @@ http_init()
 		goto err;
 	}
 
-	if (tls_config_set_ca_file(tlscfg, DEFAULT_CA_FILE) == -1) {
+	if (tls_config_set_ca_file(tlscfg, tls_default_ca_cert_file()) == -1) {
 		warn("tls_config_set_ca_file: %s", tls_config_error(tlscfg));
 		goto err;
 	}
@@ -335,26 +333,35 @@ err:
 }
 
 struct httpxfer *
-http_open(const struct http *http, const void *p, size_t psz)
+http_open(const struct http *http, int headreq, const void *p, size_t psz)
 {
 	char		*req;
 	int		 c;
 	struct httpxfer	*trans;
 
 	if (p == NULL) {
-		c = asprintf(&req,
-		    "GET %s HTTP/1.0\r\n"
-		    "Host: %s\r\n"
-		    "\r\n",
-		    http->path, http->host);
+		if (headreq)
+			c = asprintf(&req,
+			    "HEAD %s HTTP/1.0\r\n"
+			    "Host: %s\r\n"
+			    "\r\n",
+			    http->path, http->host);
+		else
+			c = asprintf(&req,
+			    "GET %s HTTP/1.0\r\n"
+			    "Host: %s\r\n"
+			    "\r\n",
+			    http->path, http->host);
 	} else {
 		c = asprintf(&req,
 		    "POST %s HTTP/1.0\r\n"
 		    "Host: %s\r\n"
 		    "Content-Length: %zu\r\n"
+		    "Content-Type: application/jose+json\r\n"
 		    "\r\n",
 		    http->path, http->host, psz);
 	}
+
 	if (c == -1) {
 		warn("asprintf");
 		return NULL;
@@ -444,9 +451,8 @@ http_head_get(const char *v, struct httphead *h, size_t hsz)
 	size_t	 i;
 
 	for (i = 0; i < hsz; i++) {
-		if (strcmp(h[i].key, v))
-			continue;
-		return &h[i];
+		if (strcasecmp(h[i].key, v) == 0)
+			return &h[i];
 	}
 	return NULL;
 }
@@ -679,7 +685,7 @@ http_get_free(struct httpget *g)
 
 struct httpget *
 http_get(const struct source *addrs, size_t addrsz, const char *domain,
-    short port, const char *path, const void *post, size_t postsz)
+    short port, const char *path, int headreq, const void *post, size_t postsz)
 {
 	struct http	*h;
 	struct httpxfer	*x;
@@ -693,7 +699,7 @@ http_get(const struct source *addrs, size_t addrsz, const char *domain,
 	if (h == NULL)
 		return NULL;
 
-	if ((x = http_open(h, post, postsz)) == NULL) {
+	if ((x = http_open(h, headreq, post, postsz)) == NULL) {
 		http_free(h);
 		return NULL;
 	} else if ((headr = http_head_read(h, x, &headrsz)) == NULL) {

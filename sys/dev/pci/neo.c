@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.32 2016/09/19 06:46:44 ratchov Exp $       */
+/*      $OpenBSD: neo.c,v 1.33 2018/04/11 04:48:31 ratchov Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -612,7 +612,6 @@ neo_activate(struct device *self, int act)
 		break;
 	case DVACT_RESUME:
 		nm_init(sc);
-		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 		break;
 	}
 	return 0;

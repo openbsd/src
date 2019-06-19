@@ -80,12 +80,11 @@ struct pt_watch_regs default_watch_regs;
 using namespace lldb_private;
 using namespace lldb_private::process_linux;
 
-NativeRegisterContextLinux *
+std::unique_ptr<NativeRegisterContextLinux>
 NativeRegisterContextLinux::CreateHostNativeRegisterContextLinux(
-    const ArchSpec &target_arch, NativeThreadProtocol &native_thread,
-    uint32_t concrete_frame_idx) {
-  return new NativeRegisterContextLinux_mips64(target_arch, native_thread,
-                                               concrete_frame_idx);
+    const ArchSpec &target_arch, NativeThreadProtocol &native_thread) {
+  return llvm::make_unique<NativeRegisterContextLinux_mips64>(target_arch,
+                                                              native_thread);
 }
 
 #define REG_CONTEXT_SIZE                                                       \
@@ -110,9 +109,8 @@ CreateRegisterInfoInterface(const ArchSpec &target_arch) {
 }
 
 NativeRegisterContextLinux_mips64::NativeRegisterContextLinux_mips64(
-    const ArchSpec &target_arch, NativeThreadProtocol &native_thread,
-    uint32_t concrete_frame_idx)
-    : NativeRegisterContextLinux(native_thread, concrete_frame_idx,
+    const ArchSpec &target_arch, NativeThreadProtocol &native_thread)
+    : NativeRegisterContextLinux(native_thread,
                                  CreateRegisterInfoInterface(target_arch)) {
   switch (target_arch.GetMachine()) {
   case llvm::Triple::mips:
@@ -142,9 +140,9 @@ NativeRegisterContextLinux_mips64::NativeRegisterContextLinux_mips64(
     break;
   }
 
-  // Initialize m_iovec to point to the buffer and buffer size
-  // using the conventions of Berkeley style UIO structures, as required
-  // by PTRACE extensions.
+  // Initialize m_iovec to point to the buffer and buffer size using the
+  // conventions of Berkeley style UIO structures, as required by PTRACE
+  // extensions.
   m_iovec.iov_base = &m_msa;
   m_iovec.iov_len = sizeof(MSA_linux_mips);
 
@@ -339,7 +337,8 @@ lldb_private::Status NativeRegisterContextLinux_mips64::WriteRegister(
     uint8_t byte_size = reg_info->byte_size;
     lldbassert(reg_info->byte_offset < sizeof(UserArea));
 
-    // Initialise the FP and MSA buffers by reading all co-processor 1 registers
+    // Initialise the FP and MSA buffers by reading all co-processor 1
+    // registers
     ReadCP1();
 
     if (IsFPR(reg_index)) {
@@ -1033,13 +1032,11 @@ Status NativeRegisterContextLinux_mips64::Read_SR_Config(uint32_t offset,
   Status error = NativeProcessLinux::PtraceWrapper(
       PTRACE_GETREGS, m_thread.GetID(), NULL, &regs, sizeof regs);
   if (error.Success()) {
-    lldb_private::ArchSpec arch;
-    if (m_thread.GetProcess().GetArchitecture(arch)) {
-      void *target_address = ((uint8_t *)&regs) + offset +
-                             4 * (arch.GetMachine() == llvm::Triple::mips);
-      value.SetUInt(*(uint32_t *)target_address, size);
-    } else
-      error.SetErrorString("failed to get architecture");
+    const lldb_private::ArchSpec &arch =
+        m_thread.GetProcess().GetArchitecture();
+    void *target_address = ((uint8_t *)&regs) + offset +
+                           4 * (arch.GetMachine() == llvm::Triple::mips);
+    value.SetUInt(*(uint32_t *)target_address, size);
   }
   return error;
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.147 2018/03/16 16:58:26 schwarze Exp $
+.\"	$OpenBSD: sh.1,v 1.152 2019/05/22 15:23:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2018 $
+.Dd $Mdocdate: May 22 2019 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -495,7 +495,7 @@ to the index of the next variable to be processed.
 The string
 .Ar optstring
 contains a list of acceptable options;
-a colon following an option indicates it may take an argument.
+a colon following an option indicates it requires an argument.
 If an option not recognised by
 .Ar optstring
 is found,
@@ -866,7 +866,11 @@ it keeps a record of commands run in a
 either internally in memory or in a file,
 as determined by
 .Dv HISTFILE .
-The command line and all the commands in command history
+When
+.Cm vi
+command line editing mode is enabled
+.Pq set -o vi ,
+the command line and all the commands in command history
 can be edited using commands similar to those of
 .Xr vi 1 .
 .Pp
@@ -1738,7 +1742,7 @@ or within
 to have them executed in the current environment:
 .Pp
 .D1 Pq Ar command ...
-.D1 Brq Ar \ \&command ... Ns ;\&
+.D1 Brq \& Ar command ... ; No \&
 .Pp
 Any redirections specified after the closing bracket apply to all commands
 within the brackets.
@@ -1755,7 +1759,7 @@ A
 executes a series of commands for each item in a list.
 Its format is:
 .Bd -unfilled -offset indent
-.No for Ar name Op in Ar word ...
+.No for Ar name Op in Op Ar word ...
 do
 .No "   " Ar command
 .No "   " Ar ...
@@ -1773,8 +1777,10 @@ The construct
 .Qq in word ...
 can be omitted,
 which is equivalent to: in \&"$@\&".
-The exit status is zero if there are no items
-or otherwise the exit status of the last command executed.
+The exit status is that of the last command executed.
+If there are no items,
+.Ar command
+is not executed and the exit status is zero.
 .Pp
 A
 .Em while loop
@@ -2117,7 +2123,6 @@ The default is
 .Sq +\ \& .
 .It PWD
 The absolute pathname to the current working directory.
-Assignments to this variable are ignored.
 .El
 .Sh ASYNCHRONOUS EVENTS
 The following signals affect the execution of

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.43 2016/03/07 13:47:53 stsp Exp $
+.\"	$OpenBSD: rtw.4,v 1.45 2019/03/29 07:07:05 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 7 2016 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt RTW 4
 .Os
 .Sh NAME
@@ -70,6 +70,11 @@ It is strongly recommended that WEP
 not be used as the sole mechanism
 to secure wireless communication,
 due to serious weaknesses in it.
+.Pp
+In BSS mode,
+the driver supports powersave mode,
+which can be enabled via
+.Xr ifconfig 8 .
 .Pp
 The
 .Nm
@@ -135,8 +140,7 @@ using WEP key
 .Dq mywepkey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid
-nwkey mywepkey
+nwid mynwid nwkey mywepkey
 dhcp
 .Ed
 .Pp
@@ -145,8 +149,7 @@ The following
 example creates a host-based access point on boot:
 .Bd -literal -offset indent
 mediaopt hostap
-nwid mynwid
-nwkey mywepkey
+nwid mynwid nwkey mywepkey
 inet 192.168.1.1 255.255.255.0
 .Ed
 .Sh SEE ALSO

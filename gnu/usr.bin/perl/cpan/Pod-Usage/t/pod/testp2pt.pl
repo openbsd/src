@@ -1,5 +1,7 @@
 package TestPodIncPlainText;
 
+my $PARENTDIR;
+
 BEGIN {
    use File::Basename;
    use File::Spec;
@@ -9,7 +11,7 @@ BEGIN {
    unshift @INC, $THISDIR;
    require "testcmp.pl";
    import TestCompare;
-   my $PARENTDIR = dirname $THISDIR;
+   $PARENTDIR = dirname $THISDIR;
    push @INC, map { File::Spec->catfile($_, 'lib') } ($PARENTDIR, $THISDIR);
 }
 
@@ -24,6 +26,10 @@ use vars qw($MYPKG @EXPORT @ISA);
 $MYPKG = eval { (caller)[0] };
 @EXPORT = qw(&testpodplaintext);
 BEGIN {
+    # we want this for testing only
+    unshift(@INC, File::Spec->catfile($PARENTDIR, 'inc'));
+print "INC=@INC\n";
+
     require Pod::PlainText;
     @ISA = qw( Pod::PlainText );
     require VMS::Filespec if $^O eq 'VMS';

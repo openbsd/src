@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.24 2017/12/12 01:12:34 deraadt Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.28 2018/11/17 20:46:12 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,6 +37,7 @@
 #include <sys/time.h>
 #include <sys/event.h>
 #include <sys/un.h>
+#include <sys/fcntl.h>
 #include <ufs/ufs/quota.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -323,12 +324,16 @@ ktrfds(const char *data, size_t count)
 	size_t i;
 	int fd;
 
-	for (i = 0; i < count - 1; i++) {
+	printf("int");
+	if (count > 1)
+		printf(" [%zu] { ", count);
+	for (i = 0; i < count; i++) {
 		memcpy(&fd, &data[i * sizeof(fd)], sizeof(fd));
-		printf("fd[%zu] = %d, ", i, fd);
+		printf("%d%s", fd, i < count - 1 ? ", " : "");
 	}
-	memcpy(&fd, &data[i * sizeof(fd)], sizeof(fd));
-	printf("fd[%zu] = %d\n", i, fd);
+	if (count > 1)
+		printf(" }");
+	printf("\n");
 }
 
 static void
@@ -496,7 +501,9 @@ ktrcmsghdr(char *data, socklen_t len)
 				printf("SCM_RIGHTS, data=");
 				fds = (int *)CMSG_DATA(cmsg);
 				for (i = 0;
-				    cmsg->cmsg_len > CMSG_LEN(sizeof(int) * i);
+				    cmsg->cmsg_len > CMSG_LEN(sizeof(int) * i) 
+				    && (char *)fds + (i + 1) * sizeof(int) <=
+				    data + len;
 				    i++) {
 					printf("%s%d", i ? "," : "", fds[i]);
 				}
@@ -517,6 +524,17 @@ ktrcmsghdr(char *data, socklen_t len)
 	printf("\n");
 }
 
+static void
+ktrflock(const struct flock *fl)
+{
+	printf("struct flock { start=%lld, len=%lld, pid=%d, type=",
+	    fl->l_start, fl->l_len, fl->l_pid);
+	flocktypename(fl->l_type);
+	printf(", whence=");
+	whencename(fl->l_whence);
+	printf(" }\n");
+}
+
 void
 ktrstruct(char *buf, size_t buflen)
 {
@@ -533,8 +551,7 @@ ktrstruct(char *buf, size_t buflen)
 		goto invalid;
 	data = buf + namelen + 1;
 	datalen = buflen - namelen - 1;
-	if (datalen == 0)
-		goto invalid;
+
 	/* sanity check */
 	for (i = 0; i < namelen; ++i)
 		if (!isalpha((unsigned char)name[i]))
@@ -550,6 +567,9 @@ ktrstruct(char *buf, size_t buflen)
 		struct sockaddr_storage ss;
 
 		if (datalen > sizeof(ss))
+			goto invalid;
+		if (datalen < offsetof(struct sockaddr_storage, ss_len) +
+		    sizeof(ss.ss_len))
 			goto invalid;
 		memcpy(&ss, data, datalen);
 		if ((ss.ss_family != AF_UNIX && 
@@ -641,6 +661,9 @@ ktrstruct(char *buf, size_t buflen)
 	} else if (strcmp(name, "cmsghdr") == 0) {
 		char *cmsg;
 
+		if (datalen == 0)
+			goto invalid;
+
 		if ((cmsg = malloc(datalen)) == NULL)
 			err(1, "malloc");
 		memcpy(cmsg, data, datalen);
@@ -654,6 +677,17 @@ ktrstruct(char *buf, size_t buflen)
 		printf("execpromise=");
 		showbufc(basecol + sizeof("execpromise=") - 1,
 		    (unsigned char *)data, datalen, VIS_DQ | VIS_TAB | VIS_NL);
+	} else if (strcmp(name, "unveil") == 0) {
+		printf("flags=");
+		showbufc(basecol + sizeof("flags=") - 1,
+		    (unsigned char *)data, datalen, VIS_DQ | VIS_TAB | VIS_NL);
+	} else if (strcmp(name, "flock") == 0) {
+		struct flock fl;
+
+		if (datalen != sizeof(fl))
+			goto invalid;
+		memcpy(&fl, data, datalen);
+		ktrflock(&fl);
 	} else {
 		printf("unknown structure %s\n", name);
 	}

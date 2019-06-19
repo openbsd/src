@@ -15,12 +15,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
-#include "ToolRunner.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
-#include <algorithm>
-#include <ctime>
 #include <random>
 using namespace llvm;
 
@@ -36,7 +32,7 @@ BugDriver::runManyPasses(const std::vector<std::string> &AllPasses) {
   outs() << "\n";
   if (ReferenceOutputFile.empty()) {
     outs() << "Generating reference output from raw program: \n";
-    if (Error E = createReferenceFile(Program))
+    if (Error E = createReferenceFile(*Program))
       return E;
   }
 
@@ -57,7 +53,7 @@ BugDriver::runManyPasses(const std::vector<std::string> &AllPasses) {
     }
 
     std::string Filename;
-    if (runPasses(Program, PassesToRun, Filename, false)) {
+    if (runPasses(*Program, PassesToRun, Filename, false)) {
       outs() << "\n";
       outs() << "Optimizer passes caused failure!\n\n";
       return debugOptimizerCrash();
@@ -69,7 +65,7 @@ BugDriver::runManyPasses(const std::vector<std::string> &AllPasses) {
     // Step 3: Compile the optimized code.
     //
     outs() << "Running the code generator to test for a crash: ";
-    if (Error E = compileProgram(Program)) {
+    if (Error E = compileProgram(*Program)) {
       outs() << "\n*** compileProgram threw an exception: ";
       outs() << toString(std::move(E));
       return debugCodeGeneratorCrash();
@@ -81,7 +77,7 @@ BugDriver::runManyPasses(const std::vector<std::string> &AllPasses) {
     // output (created above).
     //
     outs() << "*** Checking if passes caused miscompliation:\n";
-    Expected<bool> Diff = diffProgram(Program, Filename, "", false);
+    Expected<bool> Diff = diffProgram(*Program, Filename, "", false);
     if (Error E = Diff.takeError()) {
       errs() << toString(std::move(E));
       return debugCodeGeneratorCrash();

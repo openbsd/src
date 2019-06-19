@@ -38,6 +38,7 @@ public:
     bool is_open() const;
     basic_filebuf* open(const char* s, ios_base::openmode mode);
     basic_filebuf* open(const string& s, ios_base::openmode mode);
+    basic_filebuf* open(const filesystem::path& p, ios_base::openmode mode); // C++17
     basic_filebuf* close();
 
 protected:
@@ -77,6 +78,8 @@ public:
     basic_ifstream();
     explicit basic_ifstream(const char* s, ios_base::openmode mode = ios_base::in);
     explicit basic_ifstream(const string& s, ios_base::openmode mode = ios_base::in);
+    explicit basic_ifstream(const filesystem::path& p,
+                            ios_base::openmode mode = ios_base::in); // C++17
     basic_ifstream(basic_ifstream&& rhs);
 
     basic_ifstream& operator=(basic_ifstream&& rhs);
@@ -86,6 +89,8 @@ public:
     bool is_open() const;
     void open(const char* s, ios_base::openmode mode = ios_base::in);
     void open(const string& s, ios_base::openmode mode = ios_base::in);
+    void open(const filesystem::path& s, ios_base::openmode mode = ios_base::in); // C++17
+
     void close();
 };
 
@@ -110,6 +115,8 @@ public:
     basic_ofstream();
     explicit basic_ofstream(const char* s, ios_base::openmode mode = ios_base::out);
     explicit basic_ofstream(const string& s, ios_base::openmode mode = ios_base::out);
+    explicit basic_ofstream(const filesystem::path& p,
+                            ios_base::openmode mode = ios_base::out); // C++17
     basic_ofstream(basic_ofstream&& rhs);
 
     basic_ofstream& operator=(basic_ofstream&& rhs);
@@ -119,6 +126,9 @@ public:
     bool is_open() const;
     void open(const char* s, ios_base::openmode mode = ios_base::out);
     void open(const string& s, ios_base::openmode mode = ios_base::out);
+    void open(const filesystem::path& p,
+              ios_base::openmode mode = ios_base::out); // C++17
+
     void close();
 };
 
@@ -143,6 +153,8 @@ public:
     basic_fstream();
     explicit basic_fstream(const char* s, ios_base::openmode mode = ios_base::in|ios_base::out);
     explicit basic_fstream(const string& s, ios_base::openmode mode = ios_base::in|ios_base::out);
+    explicit basic_fstream(const filesystem::path& p,
+                           ios_base::openmode mode = ios_base::in|ios_base::out); C++17
     basic_fstream(basic_fstream&& rhs);
 
     basic_fstream& operator=(basic_fstream&& rhs);
@@ -152,6 +164,9 @@ public:
     bool is_open() const;
     void open(const char* s, ios_base::openmode mode = ios_base::in|ios_base::out);
     void open(const string& s, ios_base::openmode mode = ios_base::in|ios_base::out);
+    void open(const filesystem::path& s,
+              ios_base::openmode mode = ios_base::in|ios_base::out); // C++17
+
     void close();
 };
 
@@ -170,17 +185,21 @@ typedef basic_fstream<wchar_t> wfstream;
 #include <istream>
 #include <__locale>
 #include <cstdio>
-
-#include <__undef_min_max>
+#include <cstdlib>
+#include <filesystem>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
+_LIBCPP_PUSH_MACROS
+#include <__undef_macros>
+
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 template <class _CharT, class _Traits>
-class _LIBCPP_TYPE_VIS_ONLY basic_filebuf
+class _LIBCPP_TEMPLATE_VIS basic_filebuf
     : public basic_streambuf<_CharT, _Traits>
 {
 public:
@@ -193,13 +212,13 @@ public:
 
     // 27.9.1.2 Constructors/destructor:
     basic_filebuf();
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_CXX03_LANG
     basic_filebuf(basic_filebuf&& __rhs);
 #endif
     virtual ~basic_filebuf();
 
     // 27.9.1.3 Assign/swap:
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_CXX03_LANG
     _LIBCPP_INLINE_VISIBILITY
     basic_filebuf& operator=(basic_filebuf&& __rhs);
 #endif
@@ -210,12 +229,28 @@ public:
     bool is_open() const;
 #ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
     basic_filebuf* open(const char* __s, ios_base::openmode __mode);
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+    basic_filebuf* open(const wchar_t* __s, ios_base::openmode __mode);
+#endif
     _LIBCPP_INLINE_VISIBILITY
     basic_filebuf* open(const string& __s, ios_base::openmode __mode);
+
+#if _LIBCPP_STD_VER >= 17
+    _LIBCPP_INLINE_VISIBILITY
+    basic_filebuf* open(const _VSTD_FS::path& __p, ios_base::openmode __mode) {
+      return open(__p.c_str(), __mode);
+    }
+#endif
+    _LIBCPP_INLINE_VISIBILITY
+    basic_filebuf* __open(int __fd, ios_base::openmode __mode);
 #endif
     basic_filebuf* close();
 
-protected:
+    _LIBCPP_INLINE_VISIBILITY
+    inline static const char*
+    __make_mdstring(ios_base::openmode __mode) _NOEXCEPT;
+
+  protected:
     // 27.9.1.5 Overridden virtual functions:
     virtual int_type underflow();
     virtual int_type pbackfail(int_type __c = traits_type::eof());
@@ -229,25 +264,25 @@ protected:
     virtual void imbue(const locale& __loc);
 
 private:
-    char*       __extbuf_;
-    const char* __extbufnext_;
-    const char* __extbufend_;
-    char __extbuf_min_[8];
-    size_t __ebs_;
-    char_type* __intbuf_;
-    size_t __ibs_;
-    FILE* __file_;
-    const codecvt<char_type, char, state_type>* __cv_;
-    state_type __st_;
-    state_type __st_last_;
-    ios_base::openmode __om_;
-    ios_base::openmode __cm_;
-    bool __owns_eb_;
-    bool __owns_ib_;
-    bool __always_noconv_;
+  char* __extbuf_;
+  const char* __extbufnext_;
+  const char* __extbufend_;
+  char __extbuf_min_[8];
+  size_t __ebs_;
+  char_type* __intbuf_;
+  size_t __ibs_;
+  FILE* __file_;
+  const codecvt<char_type, char, state_type>* __cv_;
+  state_type __st_;
+  state_type __st_last_;
+  ios_base::openmode __om_;
+  ios_base::openmode __cm_;
+  bool __owns_eb_;
+  bool __owns_ib_;
+  bool __always_noconv_;
 
-    bool __read_mode();
-    void __write_mode();
+  bool __read_mode();
+  void __write_mode();
 };
 
 template <class _CharT, class _Traits>
@@ -276,7 +311,7 @@ basic_filebuf<_CharT, _Traits>::basic_filebuf()
     setbuf(0, 4096);
 }
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_CXX03_LANG
 
 template <class _CharT, class _Traits>
 basic_filebuf<_CharT, _Traits>::basic_filebuf(basic_filebuf&& __rhs)
@@ -313,7 +348,7 @@ basic_filebuf<_CharT, _Traits>::basic_filebuf(basic_filebuf&& __rhs)
         else
             this->setp((char_type*)__extbuf_,
                        (char_type*)__extbuf_ + (__rhs. epptr() - __rhs.pbase()));
-        this->pbump(__rhs. pptr() - __rhs.pbase());
+        this->__pbump(__rhs. pptr() - __rhs.pbase());
     }
     else if (__rhs.eback())
     {
@@ -352,7 +387,7 @@ basic_filebuf<_CharT, _Traits>::operator=(basic_filebuf&& __rhs)
     return *this;
 }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_CXX03_LANG
 
 template <class _CharT, class _Traits>
 basic_filebuf<_CharT, _Traits>::~basic_filebuf()
@@ -432,7 +467,7 @@ basic_filebuf<_CharT, _Traits>::swap(basic_filebuf& __rhs)
         ptrdiff_t __e = this->epptr() - this->pbase();
         this->setp((char_type*)__extbuf_min_,
                    (char_type*)__extbuf_min_ + __e);
-        this->pbump(__n);
+        this->__pbump(__n);
     }
     if (__rhs.eback() == (char_type*)__extbuf_min_)
     {
@@ -448,7 +483,7 @@ basic_filebuf<_CharT, _Traits>::swap(basic_filebuf& __rhs)
         ptrdiff_t __e = __rhs.epptr() - __rhs.pbase();
         __rhs.setp((char_type*)__rhs.__extbuf_min_,
                    (char_type*)__rhs.__extbuf_min_ + __e);
-        __rhs.pbump(__n);
+        __rhs.__pbump(__n);
     }
 }
 
@@ -468,6 +503,46 @@ basic_filebuf<_CharT, _Traits>::is_open() const
     return __file_ != 0;
 }
 
+template <class _CharT, class _Traits>
+const char* basic_filebuf<_CharT, _Traits>::__make_mdstring(
+    ios_base::openmode __mode) _NOEXCEPT {
+  switch (__mode & ~ios_base::ate) {
+  case ios_base::out:
+  case ios_base::out | ios_base::trunc:
+    return "w";
+  case ios_base::out | ios_base::app:
+  case ios_base::app:
+    return "a";
+  case ios_base::in:
+    return "r";
+  case ios_base::in | ios_base::out:
+    return "r+";
+  case ios_base::in | ios_base::out | ios_base::trunc:
+    return "w+";
+  case ios_base::in | ios_base::out | ios_base::app:
+  case ios_base::in | ios_base::app:
+    return "a+";
+  case ios_base::out | ios_base::binary:
+  case ios_base::out | ios_base::trunc | ios_base::binary:
+    return "wb";
+  case ios_base::out | ios_base::app | ios_base::binary:
+  case ios_base::app | ios_base::binary:
+    return "ab";
+  case ios_base::in | ios_base::binary:
+    return "rb";
+  case ios_base::in | ios_base::out | ios_base::binary:
+    return "r+b";
+  case ios_base::in | ios_base::out | ios_base::trunc | ios_base::binary:
+    return "w+b";
+  case ios_base::in | ios_base::out | ios_base::app | ios_base::binary:
+  case ios_base::in | ios_base::app | ios_base::binary:
+    return "a+b";
+  default:
+    return nullptr;
+  }
+  _LIBCPP_UNREACHABLE();
+}
+
 #ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
 template <class _CharT, class _Traits>
 basic_filebuf<_CharT, _Traits>*
@@ -476,51 +551,104 @@ basic_filebuf<_CharT, _Traits>::open(const char* __s, ios_base::openmode __mode)
     basic_filebuf<_CharT, _Traits>* __rt = 0;
     if (__file_ == 0)
     {
+      if (const char* __mdstr = __make_mdstring(__mode)) {
         __rt = this;
-        const char* __mdstr;
+        __file_ = fopen(__s, __mdstr);
+        if (__file_) {
+          __om_ = __mode;
+          if (__mode & ios_base::ate) {
+            if (fseek(__file_, 0, SEEK_END)) {
+              fclose(__file_);
+              __file_ = 0;
+              __rt = 0;
+            }
+          }
+        } else
+          __rt = 0;
+      }
+    }
+    return __rt;
+}
+
+template <class _CharT, class _Traits>
+_LIBCPP_INLINE_VISIBILITY basic_filebuf<_CharT, _Traits>*
+basic_filebuf<_CharT, _Traits>::__open(int __fd, ios_base::openmode __mode) {
+  basic_filebuf<_CharT, _Traits>* __rt = 0;
+  if (__file_ == 0) {
+    if (const char* __mdstr = __make_mdstring(__mode)) {
+      __rt = this;
+      __file_ = fdopen(__fd, __mdstr);
+      if (__file_) {
+        __om_ = __mode;
+        if (__mode & ios_base::ate) {
+          if (fseek(__file_, 0, SEEK_END)) {
+            fclose(__file_);
+            __file_ = 0;
+            __rt = 0;
+          }
+        }
+      } else
+        __rt = 0;
+    }
+  }
+  return __rt;
+}
+
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+// This is basically the same as the char* overload except that it uses _wfopen
+// and long mode strings.
+template <class _CharT, class _Traits>
+basic_filebuf<_CharT, _Traits>*
+basic_filebuf<_CharT, _Traits>::open(const wchar_t* __s, ios_base::openmode __mode)
+{
+    basic_filebuf<_CharT, _Traits>* __rt = 0;
+    if (__file_ == 0)
+    {
+        __rt = this;
+        const wchar_t* __mdstr;
         switch (__mode & ~ios_base::ate)
         {
         case ios_base::out:
         case ios_base::out | ios_base::trunc:
-            __mdstr = "w";
+            __mdstr = L"w";
             break;
         case ios_base::out | ios_base::app:
         case ios_base::app:
-            __mdstr = "a";
+            __mdstr = L"a";
             break;
         case ios_base::in:
-            __mdstr = "r";
+            __mdstr = L"r";
             break;
         case ios_base::in | ios_base::out:
-            __mdstr = "r+";
+            __mdstr = L"r+";
             break;
         case ios_base::in | ios_base::out | ios_base::trunc:
-            __mdstr = "w+";
+            __mdstr = L"w+";
             break;
         case ios_base::in | ios_base::out | ios_base::app:
         case ios_base::in | ios_base::app:
-            __mdstr = "a+";
+            __mdstr = L"a+";
             break;
         case ios_base::out | ios_base::binary:
         case ios_base::out | ios_base::trunc | ios_base::binary:
-            __mdstr = "wb";
+            __mdstr = L"wb";
             break;
         case ios_base::out | ios_base::app | ios_base::binary:
         case ios_base::app | ios_base::binary:
-            __mdstr = "ab";
+            __mdstr = L"ab";
             break;
         case ios_base::in | ios_base::binary:
-            __mdstr = "rb";
+            __mdstr = L"rb";
             break;
         case ios_base::in | ios_base::out | ios_base::binary:
-            __mdstr = "r+b";
+            __mdstr = L"r+b";
             break;
         case ios_base::in | ios_base::out | ios_base::trunc | ios_base::binary:
-            __mdstr = "w+b";
+            __mdstr = L"w+b";
             break;
         case ios_base::in | ios_base::out | ios_base::app | ios_base::binary:
         case ios_base::in | ios_base::app | ios_base::binary:
-            __mdstr = "a+b";
+            __mdstr = L"a+b";
             break;
         default:
             __rt = 0;
@@ -528,7 +656,7 @@ basic_filebuf<_CharT, _Traits>::open(const char* __s, ios_base::openmode __mode)
         }
         if (__rt)
         {
-            __file_ = fopen(__s, __mdstr);
+            __file_ = _wfopen(__s, __mdstr);
             if (__file_)
             {
                 __om_ = __mode;
@@ -548,6 +676,7 @@ basic_filebuf<_CharT, _Traits>::open(const char* __s, ios_base::openmode __mode)
     }
     return __rt;
 }
+#endif
 
 template <class _CharT, class _Traits>
 inline
@@ -573,6 +702,7 @@ basic_filebuf<_CharT, _Traits>::close()
             __file_ = 0;
         else
             __rt = 0;
+        setbuf(0, 0);
     }
     return __rt;
 }
@@ -615,13 +745,12 @@ basic_filebuf<_CharT, _Traits>::underflow()
                                  static_cast<size_t>(__extbufend_ - __extbufnext_));
             codecvt_base::result __r;
             __st_last_ = __st_;
-            size_t __nr = fread((void*)__extbufnext_, 1, __nmemb, __file_);
+            size_t __nr = fread((void*) const_cast<char *>(__extbufnext_), 1, __nmemb, __file_);
             if (__nr != 0)
             {
-#ifndef _LIBCPP_NO_EXCEPTIONS
                 if (!__cv_)
-                    throw bad_cast();
-#endif
+                    __throw_bad_cast();
+
                 __extbufend_ = __extbufnext_ + __nr;
                 char_type*  __inext;
                 __r = __cv_->in(__st_, __extbuf_, __extbufend_, __extbufnext_,
@@ -629,7 +758,8 @@ basic_filebuf<_CharT, _Traits>::underflow()
                                        this->eback() + __ibs_, __inext);
                 if (__r == codecvt_base::noconv)
                 {
-                    this->setg((char_type*)__extbuf_, (char_type*)__extbuf_, (char_type*)__extbufend_);
+                    this->setg((char_type*)__extbuf_, (char_type*)__extbuf_, 
+                                          (char_type*)const_cast<char *>(__extbufend_));
                     __c = traits_type::to_int_type(*this->gptr());
                 }
                 else if (__inext != this->eback() + __unget_sz)
@@ -700,10 +830,9 @@ basic_filebuf<_CharT, _Traits>::overflow(int_type __c)
             codecvt_base::result __r;
             do
             {
-#ifndef _LIBCPP_NO_EXCEPTIONS
                 if (!__cv_)
-                    throw bad_cast();
-#endif
+                    __throw_bad_cast();
+
                 const char_type* __e;
                 __r = __cv_->out(__st_, this->pbase(), this->pptr(), __e,
                                         __extbuf_, __extbuf_ + __ebs_, __extbe);
@@ -722,8 +851,8 @@ basic_filebuf<_CharT, _Traits>::overflow(int_type __c)
                         return traits_type::eof();
                     if (__r == codecvt_base::partial)
                     {
-                        this->setp((char_type*)__e, this->pptr());
-                        this->pbump(this->epptr() - this->pbase());
+                        this->setp(const_cast<char_type*>(__e), this->pptr());
+                        this->__pbump(this->epptr() - this->pbase());
                     }
                 }
                 else
@@ -793,10 +922,9 @@ typename basic_filebuf<_CharT, _Traits>::pos_type
 basic_filebuf<_CharT, _Traits>::seekoff(off_type __off, ios_base::seekdir __way,
                                         ios_base::openmode)
 {
-#ifndef _LIBCPP_NO_EXCEPTIONS
     if (!__cv_)
-        throw bad_cast();
-#endif
+        __throw_bad_cast();
+
     int __width = __cv_->encoding();
     if (__file_ == 0 || (__width <= 0 && __off != 0) || sync())
         return pos_type(off_type(-1));
@@ -816,7 +944,7 @@ basic_filebuf<_CharT, _Traits>::seekoff(off_type __off, ios_base::seekdir __way,
     default:
         return pos_type(off_type(-1));
     }
-#if defined(_WIN32) || defined(_NEWLIB_VERSION)
+#if defined(_LIBCPP_HAS_NO_OFF_T_FUNCTIONS)
     if (fseek(__file_, __width > 0 ? __width * __off : 0, __whence))
         return pos_type(off_type(-1));
     pos_type __r = ftell(__file_);
@@ -835,7 +963,7 @@ basic_filebuf<_CharT, _Traits>::seekpos(pos_type __sp, ios_base::openmode)
 {
     if (__file_ == 0 || sync())
         return pos_type(off_type(-1));
-#if defined(_WIN32) || defined(_NEWLIB_VERSION)
+#if defined(_LIBCPP_HAS_NO_OFF_T_FUNCTIONS)
     if (fseek(__file_, __sp, SEEK_SET))
         return pos_type(off_type(-1));
 #else
@@ -852,10 +980,9 @@ basic_filebuf<_CharT, _Traits>::sync()
 {
     if (__file_ == 0)
         return 0;
-#ifndef _LIBCPP_NO_EXCEPTIONS
     if (!__cv_)
-        throw bad_cast();
-#endif
+        __throw_bad_cast();
+
     if (__cm_ & ios_base::out)
     {
         if (this->pptr() != this->pbase())
@@ -900,7 +1027,7 @@ basic_filebuf<_CharT, _Traits>::sync()
                 }
             }
         }
-#if defined(_WIN32) || defined(_NEWLIB_VERSION)
+#if defined(_LIBCPP_HAS_NO_OFF_T_FUNCTIONS)
         if (fseek(__file_, -__c, SEEK_CUR))
             return -1;
 #else
@@ -1003,7 +1130,7 @@ basic_filebuf<_CharT, _Traits>::__write_mode()
 // basic_ifstream
 
 template <class _CharT, class _Traits>
-class _LIBCPP_TYPE_VIS_ONLY basic_ifstream
+class _LIBCPP_TEMPLATE_VIS basic_ifstream
     : public basic_istream<_CharT, _Traits>
 {
 public:
@@ -1018,15 +1145,22 @@ public:
 #ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
     _LIBCPP_INLINE_VISIBILITY
     explicit basic_ifstream(const char* __s, ios_base::openmode __mode = ios_base::in);
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+    _LIBCPP_INLINE_VISIBILITY
+    explicit basic_ifstream(const wchar_t* __s, ios_base::openmode __mode = ios_base::in);
+#endif
     _LIBCPP_INLINE_VISIBILITY
     explicit basic_ifstream(const string& __s, ios_base::openmode __mode = ios_base::in);
+#if _LIBCPP_STD_VER >= 17
+    _LIBCPP_INLINE_VISIBILITY
+    explicit basic_ifstream(const filesystem::path& __p, ios_base::openmode __mode = ios_base::in)
+      : basic_ifstream(__p.c_str(), __mode) {}
+#endif // _LIBCPP_STD_VER >= 17
 #endif
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_CXX03_LANG
     _LIBCPP_INLINE_VISIBILITY
     basic_ifstream(basic_ifstream&& __rhs);
-#endif
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     basic_ifstream& operator=(basic_ifstream&& __rhs);
 #endif
@@ -1039,7 +1173,20 @@ public:
     bool is_open() const;
 #ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
     void open(const char* __s, ios_base::openmode __mode = ios_base::in);
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+    void open(const wchar_t* __s, ios_base::openmode __mode = ios_base::in);
+#endif
     void open(const string& __s, ios_base::openmode __mode = ios_base::in);
+#if _LIBCPP_STD_VER >= 17
+    _LIBCPP_INLINE_VISIBILITY
+    void open(const filesystem::path& __p,
+              ios_base::openmode __mode = ios_base::in) {
+      return open(__p.c_str(), __mode);
+    }
+#endif // _LIBCPP_STD_VER >= 17
+
+    _LIBCPP_INLINE_VISIBILITY
+    void __open(int __fd, ios_base::openmode __mode);
 #endif
     _LIBCPP_INLINE_VISIBILITY
     void close();
@@ -1065,6 +1212,17 @@ basic_ifstream<_CharT, _Traits>::basic_ifstream(const char* __s, ios_base::openm
         this->setstate(ios_base::failbit);
 }
 
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+template <class _CharT, class _Traits>
+inline
+basic_ifstream<_CharT, _Traits>::basic_ifstream(const wchar_t* __s, ios_base::openmode __mode)
+    : basic_istream<char_type, traits_type>(&__sb_)
+{
+    if (__sb_.open(__s, __mode | ios_base::in) == 0)
+        this->setstate(ios_base::failbit);
+}
+#endif
+
 template <class _CharT, class _Traits>
 inline
 basic_ifstream<_CharT, _Traits>::basic_ifstream(const string& __s, ios_base::openmode __mode)
@@ -1075,7 +1233,7 @@ basic_ifstream<_CharT, _Traits>::basic_ifstream(const string& __s, ios_base::ope
 }
 #endif
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_CXX03_LANG
 
 template <class _CharT, class _Traits>
 inline
@@ -1096,7 +1254,7 @@ basic_ifstream<_CharT, _Traits>::operator=(basic_ifstream&& __rhs)
     return *this;
 }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_CXX03_LANG
 
 template <class _CharT, class _Traits>
 inline
@@ -1142,6 +1300,18 @@ basic_ifstream<_CharT, _Traits>::open(const char* __s, ios_base::openmode __mode
         this->setstate(ios_base::failbit);
 }
 
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+template <class _CharT, class _Traits>
+void
+basic_ifstream<_CharT, _Traits>::open(const wchar_t* __s, ios_base::openmode __mode)
+{
+    if (__sb_.open(__s, __mode | ios_base::in))
+        this->clear();
+    else
+        this->setstate(ios_base::failbit);
+}
+#endif
+
 template <class _CharT, class _Traits>
 void
 basic_ifstream<_CharT, _Traits>::open(const string& __s, ios_base::openmode __mode)
@@ -1150,6 +1320,15 @@ basic_ifstream<_CharT, _Traits>::open(const string& __s, ios_base::openmode __mo
         this->clear();
     else
         this->setstate(ios_base::failbit);
+}
+
+template <class _CharT, class _Traits>
+void basic_ifstream<_CharT, _Traits>::__open(int __fd,
+                                             ios_base::openmode __mode) {
+  if (__sb_.__open(__fd, __mode | ios_base::in))
+    this->clear();
+  else
+    this->setstate(ios_base::failbit);
 }
 #endif
 
@@ -1165,7 +1344,7 @@ basic_ifstream<_CharT, _Traits>::close()
 // basic_ofstream
 
 template <class _CharT, class _Traits>
-class _LIBCPP_TYPE_VIS_ONLY basic_ofstream
+class _LIBCPP_TEMPLATE_VIS basic_ofstream
     : public basic_ostream<_CharT, _Traits>
 {
 public:
@@ -1179,14 +1358,23 @@ public:
     basic_ofstream();
     _LIBCPP_INLINE_VISIBILITY
     explicit basic_ofstream(const char* __s, ios_base::openmode __mode = ios_base::out);
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+    _LIBCPP_INLINE_VISIBILITY
+    explicit basic_ofstream(const wchar_t* __s, ios_base::openmode __mode = ios_base::out);
+#endif
     _LIBCPP_INLINE_VISIBILITY
     explicit basic_ofstream(const string& __s, ios_base::openmode __mode = ios_base::out);
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+
+#if _LIBCPP_STD_VER >= 17
+    _LIBCPP_INLINE_VISIBILITY
+    explicit basic_ofstream(const filesystem::path& __p, ios_base::openmode __mode = ios_base::out)
+      : basic_ofstream(__p.c_str(), __mode) {}
+#endif // _LIBCPP_STD_VER >= 17
+
+#ifndef _LIBCPP_CXX03_LANG
     _LIBCPP_INLINE_VISIBILITY
     basic_ofstream(basic_ofstream&& __rhs);
-#endif
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     basic_ofstream& operator=(basic_ofstream&& __rhs);
 #endif
@@ -1199,7 +1387,19 @@ public:
     bool is_open() const;
 #ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
     void open(const char* __s, ios_base::openmode __mode = ios_base::out);
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+    void open(const wchar_t* __s, ios_base::openmode __mode = ios_base::out);
+#endif
     void open(const string& __s, ios_base::openmode __mode = ios_base::out);
+
+#if _LIBCPP_STD_VER >= 17
+    _LIBCPP_INLINE_VISIBILITY
+    void open(const filesystem::path& __p, ios_base::openmode __mode = ios_base::out)
+    { return open(__p.c_str(), __mode); }
+#endif // _LIBCPP_STD_VER >= 17
+
+    _LIBCPP_INLINE_VISIBILITY
+    void __open(int __fd, ios_base::openmode __mode);
 #endif
     _LIBCPP_INLINE_VISIBILITY
     void close();
@@ -1225,6 +1425,17 @@ basic_ofstream<_CharT, _Traits>::basic_ofstream(const char* __s, ios_base::openm
         this->setstate(ios_base::failbit);
 }
 
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+template <class _CharT, class _Traits>
+inline
+basic_ofstream<_CharT, _Traits>::basic_ofstream(const wchar_t* __s, ios_base::openmode __mode)
+    : basic_ostream<char_type, traits_type>(&__sb_)
+{
+    if (__sb_.open(__s, __mode | ios_base::out) == 0)
+        this->setstate(ios_base::failbit);
+}
+#endif
+
 template <class _CharT, class _Traits>
 inline
 basic_ofstream<_CharT, _Traits>::basic_ofstream(const string& __s, ios_base::openmode __mode)
@@ -1235,7 +1446,7 @@ basic_ofstream<_CharT, _Traits>::basic_ofstream(const string& __s, ios_base::ope
 }
 #endif
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_CXX03_LANG
 
 template <class _CharT, class _Traits>
 inline
@@ -1256,7 +1467,7 @@ basic_ofstream<_CharT, _Traits>::operator=(basic_ofstream&& __rhs)
     return *this;
 }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_CXX03_LANG
 
 template <class _CharT, class _Traits>
 inline
@@ -1302,6 +1513,18 @@ basic_ofstream<_CharT, _Traits>::open(const char* __s, ios_base::openmode __mode
         this->setstate(ios_base::failbit);
 }
 
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+template <class _CharT, class _Traits>
+void
+basic_ofstream<_CharT, _Traits>::open(const wchar_t* __s, ios_base::openmode __mode)
+{
+    if (__sb_.open(__s, __mode | ios_base::out))
+        this->clear();
+    else
+        this->setstate(ios_base::failbit);
+}
+#endif
+
 template <class _CharT, class _Traits>
 void
 basic_ofstream<_CharT, _Traits>::open(const string& __s, ios_base::openmode __mode)
@@ -1310,6 +1533,15 @@ basic_ofstream<_CharT, _Traits>::open(const string& __s, ios_base::openmode __mo
         this->clear();
     else
         this->setstate(ios_base::failbit);
+}
+
+template <class _CharT, class _Traits>
+void basic_ofstream<_CharT, _Traits>::__open(int __fd,
+                                             ios_base::openmode __mode) {
+  if (__sb_.__open(__fd, __mode | ios_base::out))
+    this->clear();
+  else
+    this->setstate(ios_base::failbit);
 }
 #endif
 
@@ -1325,7 +1557,7 @@ basic_ofstream<_CharT, _Traits>::close()
 // basic_fstream
 
 template <class _CharT, class _Traits>
-class _LIBCPP_TYPE_VIS_ONLY basic_fstream
+class _LIBCPP_TEMPLATE_VIS basic_fstream
     : public basic_iostream<_CharT, _Traits>
 {
 public:
@@ -1340,15 +1572,24 @@ public:
 #ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
     _LIBCPP_INLINE_VISIBILITY
     explicit basic_fstream(const char* __s, ios_base::openmode __mode = ios_base::in | ios_base::out);
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+    _LIBCPP_INLINE_VISIBILITY
+    explicit basic_fstream(const wchar_t* __s, ios_base::openmode __mode = ios_base::in | ios_base::out);
+#endif
     _LIBCPP_INLINE_VISIBILITY
     explicit basic_fstream(const string& __s, ios_base::openmode __mode = ios_base::in | ios_base::out);
+
+#if _LIBCPP_STD_VER >= 17
+    _LIBCPP_INLINE_VISIBILITY
+    explicit basic_fstream(const filesystem::path& __p, ios_base::openmode __mode = ios_base::in | ios_base::out)
+      : basic_fstream(__p.c_str(), __mode) {}
+#endif // _LIBCPP_STD_VER >= 17
+
 #endif
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_CXX03_LANG
     _LIBCPP_INLINE_VISIBILITY
     basic_fstream(basic_fstream&& __rhs);
-#endif
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     _LIBCPP_INLINE_VISIBILITY
     basic_fstream& operator=(basic_fstream&& __rhs);
 #endif
@@ -1361,7 +1602,17 @@ public:
     bool is_open() const;
 #ifndef _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE
     void open(const char* __s, ios_base::openmode __mode = ios_base::in | ios_base::out);
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+    void open(const wchar_t* __s, ios_base::openmode __mode = ios_base::in | ios_base::out);
+#endif
     void open(const string& __s, ios_base::openmode __mode = ios_base::in | ios_base::out);
+
+#if _LIBCPP_STD_VER >= 17
+    _LIBCPP_INLINE_VISIBILITY
+    void open(const filesystem::path& __p, ios_base::openmode __mode = ios_base::in|ios_base::out)
+    { return open(__p.c_str(), __mode); }
+#endif // _LIBCPP_STD_VER >= 17
+
 #endif
     _LIBCPP_INLINE_VISIBILITY
     void close();
@@ -1387,6 +1638,17 @@ basic_fstream<_CharT, _Traits>::basic_fstream(const char* __s, ios_base::openmod
         this->setstate(ios_base::failbit);
 }
 
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+template <class _CharT, class _Traits>
+inline
+basic_fstream<_CharT, _Traits>::basic_fstream(const wchar_t* __s, ios_base::openmode __mode)
+    : basic_iostream<char_type, traits_type>(&__sb_)
+{
+    if (__sb_.open(__s, __mode) == 0)
+        this->setstate(ios_base::failbit);
+}
+#endif
+
 template <class _CharT, class _Traits>
 inline
 basic_fstream<_CharT, _Traits>::basic_fstream(const string& __s, ios_base::openmode __mode)
@@ -1397,7 +1659,7 @@ basic_fstream<_CharT, _Traits>::basic_fstream(const string& __s, ios_base::openm
 }
 #endif
 
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#ifndef _LIBCPP_CXX03_LANG
 
 template <class _CharT, class _Traits>
 inline
@@ -1418,7 +1680,7 @@ basic_fstream<_CharT, _Traits>::operator=(basic_fstream&& __rhs)
     return *this;
 }
 
-#endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
+#endif  // _LIBCPP_CXX03_LANG
 
 template <class _CharT, class _Traits>
 inline
@@ -1464,6 +1726,18 @@ basic_fstream<_CharT, _Traits>::open(const char* __s, ios_base::openmode __mode)
         this->setstate(ios_base::failbit);
 }
 
+#ifdef _LIBCPP_HAS_OPEN_WITH_WCHAR
+template <class _CharT, class _Traits>
+void
+basic_fstream<_CharT, _Traits>::open(const wchar_t* __s, ios_base::openmode __mode)
+{
+    if (__sb_.open(__s, __mode))
+        this->clear();
+    else
+        this->setstate(ios_base::failbit);
+}
+#endif
+
 template <class _CharT, class _Traits>
 void
 basic_fstream<_CharT, _Traits>::open(const string& __s, ios_base::openmode __mode)
@@ -1485,5 +1759,7 @@ basic_fstream<_CharT, _Traits>::close()
 }
 
 _LIBCPP_END_NAMESPACE_STD
+
+_LIBCPP_POP_MACROS
 
 #endif  // _LIBCPP_FSTREAM

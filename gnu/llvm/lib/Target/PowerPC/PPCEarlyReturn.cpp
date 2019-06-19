@@ -73,7 +73,7 @@ protected:
 
         if ((*PI)->empty())
           continue;
-        
+
         for (MachineBasicBlock::iterator J = (*PI)->getLastNonDebugInstr();;) {
           if (J == (*PI)->end())
             break;
@@ -128,7 +128,7 @@ protected:
                 if (J->getOperand(i).isMBB() &&
                     J->getOperand(i).getMBB() == &ReturnMBB)
                   OtherReference = true;
-          } else if (!J->isTerminator() && !J->isDebugValue())
+          } else if (!J->isTerminator() && !J->isDebugInstr())
             break;
 
           if (J == (*PI)->begin())
@@ -173,7 +173,7 @@ protected:
 
 public:
     bool runOnMachineFunction(MachineFunction &MF) override {
-      if (skipFunction(*MF.getFunction()))
+      if (skipFunction(MF.getFunction()))
         return false;
 
       TII = MF.getSubtarget().getInstrInfo();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.64 2016/12/05 22:39:25 jca Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.65 2018/07/11 12:09:34 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -89,13 +89,16 @@ main(int argc, char *argv[])
 	struct parse_result	*res;
 	struct imsg		 imsg;
 	unsigned int		 ifidx = 0;
-	int			 ctl_sock;
+	int			 ctl_sock, r;
 	int			 done = 0;
 	int			 n, verbose = 0;
 	int			 ch;
 	char			*sockname;
 
-	sockname = OSPFD_SOCKET;
+	r = getrtable();
+	if (asprintf(&sockname, "%s.%d", OSPFD_SOCKET, r) == -1)
+		err(1, "asprintf");
+
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch (ch) {
 		case 's':

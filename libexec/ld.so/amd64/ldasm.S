@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.29 2017/08/28 14:12:09 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.30 2019/05/10 13:29:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -32,7 +32,7 @@
 #define DL_LOFF_OFFSET	(7*8)	/* index 7 */
 #include <machine/asm.h>
 
-	.text
+	.section .boot.text,"ax",@progbits
 	.align	16,0xcc
 	.globl	_dl_start
 	.type	_dl_start,@function
@@ -65,11 +65,9 @@ _dl_start:
 	leaq	_dl_dtors(%rip), %rdx	# %rdx = cleanup
 	movq	%r12, %rsp
 	jmp	*%rax
+END(_dl_start)
 
-	.align 16,0xcc
-	.global _dl_bind_start
-	.type _dl_bind_start,@function
-_dl_bind_start:
+_ENTRY(_dl_bind_start)
 	.cfi_startproc
 	.cfi_adjust_cfa_offset	16
 	pushfq				# save registers
@@ -143,3 +141,4 @@ _dl_bind_start:
 	.cfi_adjust_cfa_offset	-8
 	ret
 	.cfi_endproc
+END(_dl_bind_start)

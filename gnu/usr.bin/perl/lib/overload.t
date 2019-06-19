@@ -48,7 +48,7 @@ package main;
 
 $| = 1;
 BEGIN { require './test.pl'; require './charset_tools.pl' }
-plan tests => 5215;
+plan tests => 5362;
 
 use Scalar::Util qw(tainted);
 
@@ -1021,7 +1021,7 @@ unless ($aaa) {
   main::ok($x+0 =~ qr/Recurse=ARRAY/);
 }
 
-# BugID 20010422.003
+# BugID 20010422.003 (#6872)
 package Foo;
 
 use overload
@@ -2816,6 +2816,16 @@ package bitops2 {
        'experimental "bitwise" ops with nomethod'
 }
 
+package length_utf8 {
+    use overload '""' => sub { "\x{100}" };
+    my $o = bless [];
+print length $o, "\n";
+
+    ::is length($o), 1, "overloaded utf8 length";
+    ::is "$o", "\x{100}", "overloaded utf8 value";
+}
+
+
 { # undefining the overload stash -- KEEP THIS TEST LAST
     package ant;
     use overload '+' => 'onion';
@@ -2826,4 +2836,341 @@ package bitops2 {
 }
 
 
-# EOF
+# test various aspects of string concat overloading, especially where
+# multiple concats etc are optimised into a single multiconcat op
+
+package Concat {
+
+    my $id;
+
+    # append a brief description of @_ to $id
+    sub id {
+        my @a = map ref $_      ?  "[" . $_->[0] . "]" :
+                    !defined $_ ? "u"                  :
+                    $_,
+                @_;
+        $id .= '(' . join (',', @a) . ')';
+    }
+
+    use overload
+        '.'  => sub {
+                    id('.', @_);
+                    my ($l, $r, $rev) = @_;
+                    ($l, $r) = map ref $_ ? $_->[0] : $_, $l, $r;
+                    ($l,$r) = ($r, $l) if $rev;
+                    bless [ $l . $r ];
+                },
+
+        '.=' => sub {
+                    id('.=', @_);
+                    my ($l, $r, $rev) = @_;
+                    my ($ll, $rr) = map ref $_ ? $_->[0] : $_, $l, $r;
+                    die "Unexpected reverse in .=" if $rev;
+                    $l->[0] .= ref $r ? $r->[0] : $r;
+                    $l;
+                },
+
+        '=' => sub {
+                    id('=', @_);
+                    bless [ $_[0][0] ];
+                },
+
+        '""' => sub {
+                    id('""', @_);
+                    $_[0][0];
+                },
+    ;
+
+    my $a = 'a';
+    my $b = 'b';
+    my $c = 'c';
+    my $A = bless [ 'A' ];
+    my $B = bless [ 'B' ];
+    my $C = bless [ 'C' ];
+
+    my ($r, $R);
+
+
+    # like cc, but with $is_ref set to 1
+    sub c {
+        my ($expr, $expect, $exp_id) = @_;
+        cc($expr, $expect, 1, $exp_id);
+    }
+
+    # eval $expr, and see if it returns $expect, and whether
+    # the returned value is a ref ($is_ref). Finally, check that
+    # $id, which has accumulated info from all overload method calls,
+    # matches $exp_id.
+
+    sub cc {
+        my ($expr, $expect, $is_ref, $exp_id) = @_;
+
+        $id = '';
+        $r = 'r';
+        $R = bless ['R'];
+
+        my $got = eval $expr;
+        die "eval failed: $@" if $@;
+        ::is "$got", $expect,   "expect: $expr";
+        ::is $id, $exp_id,      "id:     $expr";
+        ::is ref($got), ($is_ref ? 'Concat' : ''), "is_ref: $expr";
+    }
+
+    # single concats
+
+    c '$r=$A.$b',       'Ab',   '(.,[A],b,)("",[Ab],u,)';
+    c '$r=$a.$B',       'aB',   '(.,[B],a,1)("",[aB],u,)';
+    c '$r=$A.$B',       'AB',   '(.,[A],[B],)("",[AB],u,)';
+    c '$R.=$a',         'Ra',   '(.=,[R],a,u)("",[Ra],u,)';
+    c '$R.=$A',         'RA',   '(.=,[R],[A],u)("",[RA],u,)';
+
+   # two concats
+
+    c '$r=$A.$b.$c',    'Abc',   '(.,[A],b,)(.=,[Ab],c,u)("",[Abc],u,)';
+    c '$r=$A.($b.$c)',  'Abc',   '(.,[A],bc,)("",[Abc],u,)';
+    c '$r=$a.$B.$c',    'aBc',   '(.,[B],a,1)(.=,[aB],c,u)("",[aBc],u,)';
+    c '$r=$a.($B.$c)',  'aBc',   '(.,[B],c,)(.,[Bc],a,1)("",[aBc],u,)';
+    c '$r=$a.$b.$C',    'abC',   '(.,[C],ab,1)("",[abC],u,)';
+    c '$r=$a.($b.$C)',  'abC',   '(.,[C],b,1)(.,[bC],a,1)("",[abC],u,)';
+
+   # two concats plus mutator
+
+    c '$r.=$A.$b.$c',   'rAbc',  '(.,[A],b,)(.=,[Ab],c,u)(.,[Abc],r,1)'
+                                .'("",[rAbc],u,)';
+    c '$r.=$A.($b.$c)', 'rAbc',  '(.,[A],bc,)(.,[Abc],r,1)("",[rAbc],u,)';
+    c '$r.=$a.$B.$c',   'raBc',  '(.,[B],a,1)(.=,[aB],c,u)(.,[aBc],r,1)'
+                                .'("",[raBc],u,)';
+    c '$r.=$a.($B.$c)', 'raBc',  '(.,[B],c,)(.,[Bc],a,1)(.,[aBc],r,1)'
+                                .'("",[raBc],u,)';
+    c '$r.=$a.$b.$C',   'rabC',  '(.,[C],ab,1)(.,[abC],r,1)("",[rabC],u,)';
+    c '$r.=$a.($b.$C)', 'rabC',  '(.,[C],b,1)(.,[bC],a,1)(.,[abC],r,1)'
+                                .'("",[rabC],u,)';
+
+    c '$R.=$A.$b.$c',   'RAbc',  '(.,[A],b,)(.=,[Ab],c,u)(.=,[R],[Abc],u)'
+                                .'("",[RAbc],u,)';
+    c '$R.=$A.($b.$c)', 'RAbc',  '(.,[A],bc,)(.=,[R],[Abc],u)("",[RAbc],u,)';
+    c '$R.=$a.$B.$c',   'RaBc',  '(.,[B],a,1)(.=,[aB],c,u)(.=,[R],[aBc],u)'
+                                .'("",[RaBc],u,)';
+    c '$R.=$a.($B.$c)', 'RaBc',  '(.,[B],c,)(.,[Bc],a,1)(.=,[R],[aBc],u)'
+                                .'("",[RaBc],u,)';
+    c '$R.=$a.$b.$C',   'RabC',  '(.,[C],ab,1)(.=,[R],[abC],u)("",[RabC],u,)';
+    c '$R.=$a.($b.$C)', 'RabC',  '(.,[C],b,1)(.,[bC],a,1)(.=,[R],[abC],u)'
+                                .'("",[RabC],u,)';
+
+    # concat over assign
+
+    c '($R.=$a).$B.$c', 'RaBc',  '(.=,[R],a,u)(.,[Ra],[B],)(.=,[RaB],c,u)'
+                                  .'("",[RaBc],u,)';
+    ::is "$R", "Ra", 'R in concat over assign';
+
+
+    # nested mutators
+
+    c '(($R.=$a).=$b).=$c', 'Rabc',  '(.=,[R],a,u)(=,[Ra],u,)(.=,[Ra],b,u)'
+                                   . '(=,[Rab],u,)(.=,[Rab],c,u)("",[Rabc],u,)';
+    c '(($R.=$a).=$B).=$c', 'RaBc',  '(.=,[R],a,u)(=,[Ra],u,)(.=,[Ra],[B],u)'
+                                   . '(=,[RaB],u,)(.=,[RaB],c,u)("",[RaBc],u,)';
+
+    # plain SV on both LHS and RHS with RHS object
+
+    c '$r=$r.$A.$r',   'rAr',  '(.,[A],r,1)(.=,[rA],r,u)("",[rAr],u,)';
+    c '$r.=$r.$A.$r',  'rrAr', '(.,[A],r,1)(.=,[rA],r,u)(.,[rAr],r,1)'
+                              .'("",[rrAr],u,)';
+
+    # object on both LHS and RHS
+
+    c '$R.=$R',        'RR',    '(.=,[R],[R],u)("",[RR],u,)';
+    c '$R.=$R.$b.$c',  'RRbc',  '(.,[R],b,)(.=,[Rb],c,u)(.=,[R],[Rbc],u)'
+                               .'("",[RRbc],u,)';
+    c '$R.=$a.$R.$c',  'RaRc',  '(.,[R],a,1)(.=,[aR],c,u)(.=,[R],[aRc],u)'
+                               .'("",[RaRc],u,)'; 
+    c '$R.=$a.$b.$R',  'RabR',  '(.,[R],ab,1)(.=,[R],[abR],u)("",[RabR],u,)';
+
+
+    # sprintf shouldn't do concat overloading
+
+    cc '$r=sprintf("%s%s%s",$a,$B,$c)',  'aBc',  0, '("",[B],u,)';
+    cc '$R=sprintf("%s%s%s",$a,$B,$c)',  'aBc',  0, '("",[B],u,)';
+    cc '$r.=sprintf("%s%s%s",$a,$B,$c)', 'raBc', 0, '("",[B],u,)';
+    cc '$R.=sprintf("%s%s%s",$a,$B,$c)', 'RaBc', 1, '("",[B],u,)(.=,[R],aBc,u)'
+                                                   .'("",[RaBc],u,)';
+
+    # multiple constants should individually overload (RT #132385)
+
+    c '$r=$A."b"."c"', 'Abc',  '(.,[A],b,)(.=,[Ab],c,u)("",[Abc],u,)';
+
+    # ... except for this
+    c '$R.="a"."b"',   'Rab',  '(.=,[R],ab,u)("",[Rab],u,)';
+}
+
+# RT #132385
+# The first arg of a reversed concat shouldn't be stringified:
+#      $left . $right
+#  where $right is overloaded, should invoke
+#      concat($right, $left, 1)
+#  rather than
+#      concat($right, "$left", 1)
+# There's a similar issue with
+#      $left .= $right
+# when left is overloaded
+
+package RT132385 {
+
+    use constant C => [ "constref" ];
+
+    use overload '.' => sub {
+                            my ($l, $r, $rev) = @_;
+                            ($l,$r) = ($r,$l) if $rev;
+                            $l = ref $l ? $l->[0] : "$l";
+                            $r = ref $r ? $r->[0] : "$r";
+                            "$l-$r";
+                        }
+    ;
+
+    my $r1 = [ "ref1" ];
+    my $r2 = [ "ref2" ];
+    my $s1 =   "str1";
+
+    my $o = bless [ "obj" ];
+
+    # try variations that will call either pp_concat or pp_multiconcat,
+    # with the ref as the first or a later arg
+
+    ::is($r1.$o,        "ref1-obj",             "RT #132385 r1.o");
+    ::is($r1.$o.$s1 ,   "ref1-objstr1",         "RT #132385 r1.o.s1");
+    ::is("const".$o.$s1 ,"const-objstr1",       "RT #132385 const.o.s1");
+    ::is(C.$o.$s1       ,"constref-objstr1",    "RT #132385 C.o.s1");
+
+    ::like($r1.$r2.$o,   qr/^ARRAY\(0x\w+\)ARRAY\(0x\w+\)-obj/,
+                                                "RT #132385 r1.r2.o");
+
+    # ditto with a mutator
+    ::is($o .= $r1,     "obj-ref1",             "RT #132385 o.=r1");
+}
+
+# the RHS of an overloaded .= should be passed as-is to the overload
+# method, rather than being stringified or otherwise being processed in
+# such a way that it triggers an undef warning
+package RT132783 {
+    use warnings;
+    use overload '.=' => sub { return "foo" };
+    my $w = 0;
+    local $SIG{__WARN__} = sub { $w++ };
+    my $undef;
+    my $ov = bless [];
+    $ov .= $undef;
+    ::is($w, 0, "RT #132783 - should be no warnings");
+}
+
+# changing the overloaded object to a plain string within an overload
+# method should be permanent.
+package RT132827 {
+    use overload '""' => sub { $_[0] = "a" };
+    my $ov = bless [];
+    my $b = $ov . "b";
+    ::is(ref \$ov, "SCALAR", "RT #132827");
+}
+
+# RT #132793
+# An arg like like "$b" in $overloaded .= "$b" should be stringified
+# before being passed to the method
+
+package RT132793 {
+    my $type;
+    my $str = 0;
+    use overload
+        '.=' => sub { $type = ref(\$_[1]); "foo"; },
+        '""' => sub { $str++;              "bar" };
+
+    my $a = bless {};
+    my $b = bless {};
+    $a .= "$b";
+    ::is($type, "SCALAR", "RT #132793 type");
+    ::is($str,  1,        "RT #132793 stringify count");
+}
+
+# RT #132801
+# A second RHS-not-stringified bug
+
+package RT132801 {
+    my $type;
+    my $str    = 0;
+    my $concat = 0;
+    use overload
+        '.'  => sub { $concat++; bless []; },
+        '""' => sub { $str++;    "bar" };
+
+    my $a = "A";
+    my $b = bless [];
+    my $c;
+    $c = "$a-$b";
+    ::is($concat, 1, "RT #132801 concat count");
+    ::is($str,    1, "RT #132801 stringify count");
+}
+
+# General testing of optimising away OP_STRINGIFY, and whether
+# OP_MULTICONCAT emulates existing behaviour.
+#
+# It could well be argued that the existing behaviour is buggy, but
+# for now emulate the old behaviour.
+#
+# In more detail:
+#
+# Since 5.000, any OP_STRINGIFY immediately following an OP_CONCAT
+# is optimised away, on the assumption that since concat will always
+# return a valid string anyway, it doesn't need stringifying.
+# So in "$x", the stringify is needed, but on "$x$y" it isn't.
+# This assumption is flawed once overloading has been introduced, since
+# concat might return an overloaded object which still needs stringifying.
+# However, this flawed behaviour is apparently needed by at least one
+# module, and is tested for in opbasic/concat.t: see RT #124160.
+#
+# There is also a wart with the OPpTARGET_MY optimisation: specifically,
+# in $lex = "...", if $lex is a lexical var, then a chain of 2 or more
+# concats *doesn't* optimise away OP_STRINGIFY:
+#
+# $lex = "$x";        # stringifies
+# $lex = "$x$y";      # doesn't stringify
+# $lex = "$x$y$z..."; # stringifies
+
+package Stringify {
+    my $count;
+    use overload
+        '.'  => sub {
+                        my ($a, $b, $rev) = @_;
+                        bless [ $rev ? "$b" . $a->[0] : $a->[0] . "$b" ];
+            },
+        '""' => sub {  $count++; $_[0][0] },
+    ;
+
+    for my $test(
+        [ 1, '$pkg   =  "$ov"' ],
+        [ 1, '$lex   =  "$ov"' ],
+        [ 1, 'my $a  =  "$ov"' ],
+        [ 1, '$pkg  .=  "$ov"' ],
+        [ 1, '$lex  .=  "$ov"' ],
+        [ 1, 'my $a .=  "$ov"' ],
+
+        [ 0, '$pkg   =  "$ov$x"' ],
+        [ 0, '$lex   =  "$ov$x"' ],
+        [ 0, 'my $a  =  "$ov$x"' ],
+        [ 0, '$pkg  .=  "$ov$x"' ],
+        [ 0, '$lex  .=  "$ov$x"' ],
+        [ 0, 'my $a .=  "$ov$x"' ],
+
+        [ 0, '$pkg   =  "$ov$x$y"' ],
+        [ 1, '$lex   =  "$ov$x$y"' ],  # XXX note the anomaly
+        [ 0, 'my $a  =  "$ov$x$y"' ],
+        [ 0, '$pkg  .=  "$ov$x$y"' ],
+        [ 0, '$lex  .=  "$ov$x$y"' ],
+        [ 0, 'my $a .=  "$ov$x$y"' ],
+    )
+    {
+        my ($stringify, $code) = @$test;
+        our $pkg = 'P';
+        my ($ov, $x, $y, $lex) = (bless(['OV']), qw(X Y L));
+        $count = 0;
+        eval "$code; 1" or die $@;
+        ::is $count, $stringify, $code;
+    }
+}

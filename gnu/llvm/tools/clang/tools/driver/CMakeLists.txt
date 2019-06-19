@@ -4,6 +4,7 @@ set( LLVM_LINK_COMPONENTS
   CodeGen
   Core
   IPO
+  AggressiveInstCombine
   InstCombine
   Instrumentation
   MC
@@ -32,12 +33,14 @@ add_clang_tool(clang
   driver.cpp
   cc1_main.cpp
   cc1as_main.cpp
+  cc1gen_reproducer_main.cpp
 
   DEPENDS
   ${tablegen_deps}
   )
 
 target_link_libraries(clang
+  PRIVATE
   clangBasic
   clangCodeGen
   clangDriver
@@ -60,10 +63,6 @@ add_dependencies(clang clang-headers)
 
 if(NOT CLANG_LINKS_TO_CREATE)
   set(CLANG_LINKS_TO_CREATE clang++ clang-cl clang-cpp)
-
-  if (MSVC)
-    list(APPEND CLANG_LINKS_TO_CREATE ../msbuild-bin/cl)
-  endif()
 endif()
 
 foreach(link ${CLANG_LINKS_TO_CREATE})
@@ -85,6 +84,7 @@ if (APPLE)
 
   set(TOOL_INFO_PLIST_OUT "${CMAKE_CURRENT_BINARY_DIR}/${TOOL_INFO_PLIST}")
   target_link_libraries(clang
+    PRIVATE
     "-Wl,-sectcreate,__TEXT,__info_plist,${TOOL_INFO_PLIST_OUT}")
   configure_file("${TOOL_INFO_PLIST}.in" "${TOOL_INFO_PLIST_OUT}" @ONLY)
 
@@ -94,20 +94,16 @@ if (APPLE)
   set(TOOL_INFO_BUILD_VERSION)
 endif()
 
-if(CLANG_ORDER_FILE AND (LD64_EXECUTABLE OR GOLD_EXECUTABLE))
-  include(CMakePushCheckState)
+if(CLANG_ORDER_FILE AND
+    (LLVM_LINKER_IS_LD64 OR LLVM_LINKER_IS_GOLD OR LLVM_LINKER_IS_LLD))
+  include(CheckLinkerFlag)
 
-  function(check_linker_flag flag out_var)
-    cmake_push_check_state()
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${flag}")
-    check_cxx_compiler_flag("" ${out_var})
-    cmake_pop_check_state()
-  endfunction()
-
-  if (LD64_EXECUTABLE)
+  if (LLVM_LINKER_IS_LD64)
     set(LINKER_ORDER_FILE_OPTION "-Wl,-order_file,${CLANG_ORDER_FILE}")
-  elseif (GOLD_EXECUTABLE)
+  elseif (LLVM_LINKER_IS_GOLD)
     set(LINKER_ORDER_FILE_OPTION "-Wl,--section-ordering-file,${CLANG_ORDER_FILE}")
+  elseif (LLVM_LINKER_IS_LLD)
+    set(LINKER_ORDER_FILE_OPTION "-Wl,--symbol-ordering-file,${CLANG_ORDER_FILE}")
   endif()
 
   # This is a test to ensure the actual order file works with the linker.
@@ -121,11 +117,11 @@ if(CLANG_ORDER_FILE AND (LD64_EXECUTABLE OR GOLD_EXECUTABLE))
   if("${ORDER_FILE}" STREQUAL "\n")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CLANG_ORDER_FILE})
   elseif(LINKER_ORDER_FILE_WORKS)
-    target_link_libraries(clang ${LINKER_ORDER_FILE_OPTION})
+    target_link_libraries(clang PRIVATE ${LINKER_ORDER_FILE_OPTION})
     set_target_properties(clang PROPERTIES LINK_DEPENDS ${CLANG_ORDER_FILE})
   endif()
 endif()
 
 if(WITH_POLLY AND LINK_POLLY_INTO_TOOLS)
-  target_link_libraries(clang Polly)
+  target_link_libraries(clang PRIVATE Polly)
 endif(WITH_POLLY AND LINK_POLLY_INTO_TOOLS)

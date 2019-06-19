@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.130 2017/09/02 15:56:29 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.137 2019/06/01 22:42:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,6 +73,7 @@
 
 #ifdef DDB
 #include <mips64/db_machdep.h>
+#include <ddb/db_access.h>
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 #endif
@@ -149,6 +150,13 @@ ast(void)
 	struct proc *p = ci->ci_curproc;
 
 	p->p_md.md_astpending = 0;
+
+	/*
+	 * Make sure the AST flag gets cleared before handling the AST.
+	 * Otherwise there is a risk of losing an AST that was sent
+	 * by another CPU.
+	 */
+	membar_enter();
 
 	atomic_inc_int(&uvmexp.softs);
 	mi_ast(p, ci->ci_want_resched);
@@ -251,8 +259,12 @@ trap(struct trapframe *trapframe)
 	}
 #endif
 
-	if (type & T_USER)
+	if (type & T_USER) {
 		refreshcreds(p);
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			return;
+	}
 
 	itsa(trapframe, ci, p, type);
 
@@ -1460,6 +1472,104 @@ end:
 	}
 }
 
+#ifdef DDB
+void
+db_save_stack_trace(struct db_stack_trace *st)
+{
+	extern char k_general[];
+	extern char u_general[];
+	extern char k_intr[];
+	extern char u_intr[];
+	db_expr_t diff;
+	char *name;
+	Elf_Sym *sym;
+	struct trapframe *tf;
+	vaddr_t pc, ra, sp, subr, va;
+	InstFmt inst;
+	int first = 1;
+	int done, framesize;
+
+	/* Get a pc that comes after the prologue in this subroutine. */
+	__asm__ volatile ("1: dla %0, 1b" : "=r" (pc));
+
+	ra = (vaddr_t)__builtin_return_address(0);
+	sp = (vaddr_t)__builtin_frame_address(0);
+
+	st->st_count = 0;
+	while (st->st_count < DB_STACK_TRACE_MAX && pc != 0) {
+		if (!VALID_ADDRESS(pc) || !VALID_ADDRESS(sp))
+			break;
+
+		if (!first)
+			st->st_pc[st->st_count++] = pc;
+		first = 0;
+
+		/* Determine the start address of the current subroutine. */
+		sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+		if (sym == NULL)
+			break;
+		db_symbol_values(sym, &name, NULL);
+		subr = pc - (vaddr_t)diff;
+
+		if (subr == (vaddr_t)k_general || subr == (vaddr_t)k_intr ||
+		    subr == (vaddr_t)u_general || subr == (vaddr_t)u_intr) {
+			tf = (struct trapframe *)*(register_t *)sp;
+			pc = tf->pc;
+			ra = tf->ra;
+			sp = tf->sp;
+			continue;
+		}
+
+		/*
+		 * Figure out the return address and the size of the current
+		 * stack frame by analyzing the subroutine's prologue.
+		 */
+		done = 0;
+		framesize = 0;
+		for (va = subr; va < pc && !done; va += 4) {
+			inst.word = kdbpeek(va);
+			if (inst_branch(inst.word) || inst_call(inst.word) ||
+			    inst_return(inst.word)) {
+				/* Check the delay slot and stop. */
+				va += 4;
+				inst.word = kdbpeek(va);
+				done = 1;
+			}
+			switch (inst.JType.op) {
+			case OP_SPECIAL:
+				switch (inst.RType.func) {
+				case OP_SYSCALL:
+				case OP_BREAK:
+					done = 1;
+				}
+				break;
+			case OP_SD:
+				if (inst.IType.rs == SP &&
+				    inst.IType.rt == RA && ra == 0)
+					ra = kdbpeekd(sp +
+					    (int16_t)inst.IType.imm);
+				break;
+			case OP_DADDI:
+			case OP_DADDIU:
+				if (inst.IType.rs == SP &&
+				    inst.IType.rt == SP &&
+				    (int16_t)inst.IType.imm < 0 &&
+				    framesize == 0)
+					framesize = -(int16_t)inst.IType.imm;
+				break;
+			}
+
+			if (framesize != 0 && ra != 0)
+				break;
+		}
+
+		pc = ra;
+		ra = 0;
+		sp += framesize;
+	}
+}
+#endif
+
 #undef	VALID_ADDRESS
 
 #if !defined(DDB)
@@ -1488,7 +1598,7 @@ fn_name(vaddr_t addr)
 	for (i = 0; names[i].name != NULL; i++)
 		if (names[i].addr == (void*)addr)
 			return (names[i].name);
-	snprintf(buf, sizeof(buf), "%p", addr);
+	snprintf(buf, sizeof(buf), "%p", (void *)addr);
 	return (buf);
 }
 #endif	/* !DDB */
@@ -1572,7 +1682,7 @@ fpe_branch_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 	 */
 
 	rc = uvm_map_protect(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, PROT_MASK, FALSE);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_READ | PROT_WRITE, FALSE);
 	if (rc != 0) {
 #ifdef DEBUG
 		printf("%s: uvm_map_protect on %p failed: %d\n",
@@ -1582,7 +1692,7 @@ fpe_branch_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 	}
 	KERNEL_LOCK();
 	rc = uvm_fault_wire(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, PROT_MASK);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_READ | PROT_WRITE);
 	KERNEL_UNLOCK();
 	if (rc != 0) {
 #ifdef DEBUG
@@ -1616,7 +1726,6 @@ fpe_branch_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 	p->p_md.md_fpslotva = (vaddr_t)tf->pc + 4;
 	p->p_md.md_flags |= MDP_FPUSED;
 	tf->pc = p->p_md.md_fppgva;
-	pmap_proc_iflush(p->p_p, tf->pc, 2 * 4);
 
 	return 0;
 

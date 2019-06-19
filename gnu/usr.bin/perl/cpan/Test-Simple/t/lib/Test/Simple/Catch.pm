@@ -10,7 +10,9 @@ my $out = tie *$out_fh, 'TieOut';
 my $err = tie *$err_fh, 'TieOut';
 
 use Test::Builder;
+require Test::Builder::Formatter;
 my $t = Test::Builder->new;
+$t->{Stack}->top->format(Test::Builder::Formatter->new);
 $t->output($out_fh);
 $t->failure_output($err_fh);
 $t->todo_output($err_fh);

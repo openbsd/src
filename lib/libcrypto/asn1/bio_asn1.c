@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.12 2015/12/23 01:46:33 mmcc Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.13 2018/05/01 13:29:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -125,7 +125,7 @@ static int asn1_bio_setup_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
     asn1_ps_func *setup, asn1_bio_state_t ex_state,
     asn1_bio_state_t other_state);
 
-static BIO_METHOD methods_asn1 = {
+static const BIO_METHOD methods_asn1 = {
 	.type = BIO_TYPE_ASN1,
 	.name = "asn1",
 	.bwrite = asn1_bio_write,
@@ -138,7 +138,7 @@ static BIO_METHOD methods_asn1 = {
 	.callback_ctrl = asn1_bio_callback_ctrl
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_f_asn1(void)
 {
 	return (&methods_asn1);

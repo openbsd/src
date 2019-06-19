@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.46 2018/02/23 19:08:56 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.47 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -341,6 +341,12 @@ cpu_clockspeed(int *freq)
 }
 
 #ifdef MULTIPROCESSOR
+
+void
+cpu_boot_secondary_processors(void)
+{
+}
+
 int
 cpu_alloc_idle_pcb(struct cpu_info *ci)
 {

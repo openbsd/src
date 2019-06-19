@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.19 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: stack.c,v 1.20 2018/04/01 00:36:28 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -312,6 +312,7 @@ sk_set(_STACK *st, int i, void *value)
 {
 	if (!st || (i < 0) || (i >= st->num))
 		return NULL;
+	st->sorted = 0;
 	return (st->data[i] = value);
 }
 

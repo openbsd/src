@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umbg.4,v 1.4 2013/07/16 16:05:49 schwarze Exp $
+.\"	$OpenBSD: umbg.4,v 1.6 2019/03/26 16:41:35 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,19 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: March 26 2019 $
 .Dt UMBG 4
 .Os
 .Sh NAME
 .Nm umbg
-.Nd Meinberg Funkuhren USB5131 timedelta sensor
+.Nd Meinberg Funkuhren USB5131 and DCF600USB timedelta sensors
 .Sh SYNOPSIS
 .Cd "umbg* at uhub?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Meinberg Funkuhren USB5131, a time signal
-station receiver for the German DCF77 station.
+driver provides support for Meinberg Funkuhren USB5131 and
+DCF600USB time signal receivers for the German DCF77 station.
 .Nm
 implements a timedelta sensor and the delta (in nanoseconds) between the
 received time information and the local time can be accessed through the

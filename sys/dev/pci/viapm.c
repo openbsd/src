@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.16 2012/10/05 10:51:28 haesbaert Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.17 2018/07/05 10:09:11 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -53,7 +53,7 @@
 /*
  * Driver for the SMBus controller and power management timer
  * in the VIA VT82C596[B], VT82C686A, VT8231, VT8233[A], VT8235, VT8237[A,S],
- * VT8251, CX700, VX800 and VX855 South Bridges.
+ * VT8251, CX700, VX800, VX855 and VX900 South Bridges.
  * Also for the hardware monitoring part of the VIA VT82C686A and VT8231.
  */
 
@@ -246,7 +246,8 @@ const struct pci_matchid viapm_ids[] = {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_ISA },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700_ISA },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX800_ISA },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX855_ISA }
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX855_ISA },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VX900_ISA }
 };
 
 /*

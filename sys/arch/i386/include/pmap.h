@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.83 2016/10/21 06:20:59 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.86 2019/01/18 01:34:50 pd Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -88,19 +88,25 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
  * page list, and number of PTPs within the pmap.
  */
 
-#define PMAP_TYPE_NORMAL	1
-#define PMAP_TYPE_EPT		2
-#define PMAP_TYPE_RVI		3
-#define pmap_nested(pm) ((pm)->pm_type != PMAP_TYPE_NORMAL)
-
 struct pmap {
 	uint64_t pm_pdidx[4];		/* PDIEs for PAE mode */
+	uint64_t pm_pdidx_intel[4];	/* PDIEs for PAE mode U-K */
 
 	struct mutex pm_mtx;
 	struct mutex pm_apte_mtx;
 
-	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
-	vaddr_t pm_pdir;		/* VA of PD (lck by object lock) */
+	/*
+	 * pm_pdir		: VA of PD when executing in privileged mode
+	 *			  (lock by objeckt lock)
+	 * pm_pdirpa		: PA of PD when executing in privileged mode,
+	 *			  (read-only after create)
+	 * pm_pdir_intel	: VA of PD when executing on Intel CPU in
+	 *			  usermode (no kernel mappings)
+	 * pm_pdirpa_intel	: PA of PD when executing on Intel CPU in
+	 *			  usermode (no kernel mappings)
+	 */
+	paddr_t pm_pdirpa, pm_pdirpa_intel;
+	vaddr_t pm_pdir, pm_pdir_intel;
 	int	pm_pdirsize;		/* PD size (4k vs 16k on PAE) */
 	struct uvm_object pm_obj;	/* object (lck by object lock) */
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
@@ -111,10 +117,6 @@ struct pmap {
 	int pm_flags;			/* see below */
 
 	struct segment_descriptor pm_codeseg;	/* cs descriptor for process */
-	int pm_type;			/* Type of pmap this is (PMAP_TYPE_x) */
-	vaddr_t pm_npt_pml4;		/* Nested paging PML4 VA */
-	paddr_t pm_npt_pa;		/* Nested paging PML4 PA */
-	vaddr_t pm_npt_pdpt;		/* Nested paging PDPT */
 };
 
 /*
@@ -216,7 +218,9 @@ extern struct pool pmap_pv_pool;
  * Prototypes
  */
 
+vaddr_t pmap_tmpmap_pa_86(paddr_t);
 vaddr_t pmap_tmpmap_pa(paddr_t);
+void pmap_tmpunmap_pa_86(void);
 void pmap_tmpunmap_pa(void);
 
 void pmap_bootstrap(vaddr_t);
@@ -263,6 +267,7 @@ extern u_int32_t (*pmap_pte_bits_p)(vaddr_t);
 extern paddr_t (*pmap_pte_paddr_p)(vaddr_t);
 extern boolean_t (*pmap_clear_attrs_p)(struct vm_page *, int);
 extern int (*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+extern void (*pmap_enter_special_p)(vaddr_t, paddr_t, vm_prot_t, u_int32_t);
 extern boolean_t (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 extern vaddr_t (*pmap_growkernel_p)(vaddr_t);
 extern void (*pmap_page_remove_p)(struct vm_page *);
@@ -281,6 +286,7 @@ u_int32_t pmap_pte_bits_pae(vaddr_t);
 paddr_t pmap_pte_paddr_pae(vaddr_t);
 boolean_t pmap_clear_attrs_pae(struct vm_page *, int);
 int pmap_enter_pae(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+void pmap_enter_special_pae(vaddr_t, paddr_t, vm_prot_t, u_int32_t);
 boolean_t pmap_extract_pae(pmap_t, vaddr_t, paddr_t *);
 vaddr_t pmap_growkernel_pae(vaddr_t);
 void pmap_page_remove_pae(struct vm_page *);
@@ -315,6 +321,7 @@ u_int32_t pmap_pte_bits_86(vaddr_t);
 paddr_t pmap_pte_paddr_86(vaddr_t);
 boolean_t pmap_clear_attrs_86(struct vm_page *, int);
 int pmap_enter_86(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
+void pmap_enter_special_86(vaddr_t, paddr_t, vm_prot_t, u_int32_t);
 boolean_t pmap_extract_86(pmap_t, vaddr_t, paddr_t *);
 vaddr_t pmap_growkernel_86(vaddr_t);
 void pmap_page_remove_86(struct vm_page *);
@@ -433,6 +440,12 @@ __inline static int
 pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	return (*pmap_enter_p)(pmap, va, pa, prot, flags);
+}
+
+__inline static void
+pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
+{
+	(*pmap_enter_special_p)(va, pa, prot, flags);
 }
 
 __inline static boolean_t

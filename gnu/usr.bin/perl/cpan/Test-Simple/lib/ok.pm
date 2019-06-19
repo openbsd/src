@@ -1,5 +1,5 @@
 package ok;
-$ok::VERSION = '0.16';
+our $VERSION = '1.302133';
 
 use strict;
 use Test::More ();
@@ -19,6 +19,8 @@ sub import {
 
 
 __END__
+
+=encoding UTF-8
 
 =head1 NAME
 

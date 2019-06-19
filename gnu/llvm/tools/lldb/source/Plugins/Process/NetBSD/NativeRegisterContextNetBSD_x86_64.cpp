@@ -149,10 +149,8 @@ const int fpu_save = []() -> int {
 
 NativeRegisterContextNetBSD *
 NativeRegisterContextNetBSD::CreateHostNativeRegisterContextNetBSD(
-    const ArchSpec &target_arch, NativeThreadProtocol &native_thread,
-    uint32_t concrete_frame_idx) {
-  return new NativeRegisterContextNetBSD_x86_64(target_arch, native_thread,
-                                                concrete_frame_idx);
+    const ArchSpec &target_arch, NativeThreadProtocol &native_thread) {
+  return new NativeRegisterContextNetBSD_x86_64(target_arch, native_thread);
 }
 
 // ----------------------------------------------------------------------------
@@ -163,15 +161,14 @@ static RegisterInfoInterface *
 CreateRegisterInfoInterface(const ArchSpec &target_arch) {
   assert((HostInfo::GetArchitecture().GetAddressByteSize() == 8) &&
          "Register setting path assumes this is a 64-bit host");
-  // X86_64 hosts know how to work with 64-bit and 32-bit EXEs using the
-  // x86_64 register context.
+  // X86_64 hosts know how to work with 64-bit and 32-bit EXEs using the x86_64
+  // register context.
   return new RegisterContextNetBSD_x86_64(target_arch);
 }
 
 NativeRegisterContextNetBSD_x86_64::NativeRegisterContextNetBSD_x86_64(
-    const ArchSpec &target_arch, NativeThreadProtocol &native_thread,
-    uint32_t concrete_frame_idx)
-    : NativeRegisterContextNetBSD(native_thread, concrete_frame_idx,
+    const ArchSpec &target_arch, NativeThreadProtocol &native_thread)
+    : NativeRegisterContextNetBSD(native_thread,
                                   CreateRegisterInfoInterface(target_arch)),
       m_gpr_x86_64(), m_fpr_x86_64(), m_dbr_x86_64() {}
 
@@ -808,8 +805,7 @@ Status NativeRegisterContextNetBSD_x86_64::SetHardwareWatchpointWithIndex(
   if (error.Fail())
     return error;
 
-  // for watchpoints 0, 1, 2, or 3, respectively,
-  // set bits 1, 3, 5, or 7
+  // for watchpoints 0, 1, 2, or 3, respectively, set bits 1, 3, 5, or 7
   uint64_t enable_bit = 1 << (2 * wp_index);
 
   // set bits 16-17, 20-21, 24-25, or 28-29
@@ -848,8 +844,8 @@ bool NativeRegisterContextNetBSD_x86_64::ClearHardwareWatchpoint(
 
   RegisterValue reg_value;
 
-  // for watchpoints 0, 1, 2, or 3, respectively,
-  // clear bits 0, 1, 2, or 3 of the debug status register (DR6)
+  // for watchpoints 0, 1, 2, or 3, respectively, clear bits 0, 1, 2, or 3 of
+  // the debug status register (DR6)
   const RegisterInfo *const reg_info_dr6 =
       GetRegisterInfoAtIndex(lldb_dr6_x86_64);
   Status error = ReadRegister(reg_info_dr6, reg_value);
@@ -861,9 +857,9 @@ bool NativeRegisterContextNetBSD_x86_64::ClearHardwareWatchpoint(
   if (error.Fail())
     return false;
 
-  // for watchpoints 0, 1, 2, or 3, respectively,
-  // clear bits {0-1,16-19}, {2-3,20-23}, {4-5,24-27}, or {6-7,28-31}
-  // of the debug control register (DR7)
+  // for watchpoints 0, 1, 2, or 3, respectively, clear bits {0-1,16-19},
+  // {2-3,20-23}, {4-5,24-27}, or {6-7,28-31} of the debug control register
+  // (DR7)
   const RegisterInfo *const reg_info_dr7 =
       GetRegisterInfoAtIndex(lldb_dr7_x86_64);
   error = ReadRegister(reg_info_dr7, reg_value);

@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.116 2017/12/28 04:42:40 cheloha Exp $
+.\" $OpenBSD: ports.7,v 1.127 2019/06/16 14:24:42 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: December 28 2017 $
+.Dd $Mdocdate: June 16 2019 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -74,16 +74,6 @@ The ports master Makefile, normally located in
 below)
 offers a few useful targets.
 .Bl -tag -width configure
-.It Cm index
-rebuild the ports complete index,
-.Pa /usr/ports/INDEX
-.It Cm pkglocatedb
-build a
-.Xr pkg_mklocatedb 1
-database file and place it in
-.Pa ${PORTSDIR}/packages/${MACHINE_ARCH}/ftp ,
-for use by
-.Xr locate 1 ,
 .It Cm print-index
 display the contents of the index in a user-friendly way,
 .It Cm search
@@ -100,7 +90,15 @@ that builds an sqlite database containing most information relevant to
 every port in the ports tree.
 This database can be searched using any tool able to manipulate such
 databases, for instance sqlitebrowser, or a script language with an
-sqlite interface, e.g., perl, python, ocaml, lua, php5.
+sqlite interface, e.g., perl, python, ocaml, lua, php.
+.Pp
+All static index generating information has now been superseded by the
+.Pa sqlports ,
+.Pa portslist
+or
+.Pa pkglocatedb
+packages, which contain
+similar information to the old INDEX file, but are more frequently updated.
 .Sh SELECTING A SET OF PORTS
 One can define
 .Ev SUBDIRLIST
@@ -109,7 +107,7 @@ to point to a file that contains a list of
 one per line, to build stuff only in some directories.
 .Pp
 If
-.Pa /usr/ports/INDEX
+.Pa portslist
 is up to date, it is possible to select subsets by setting the following
 variables on the command line:
 .Bl -tag -width category
@@ -155,7 +153,7 @@ see
 .Xr sh 1
 .Dq File name patterns
 .Pc ,
-e.g., SKIPDIR='editors/openoffice*' .
+e.g., SKIPDIR='editors/openoffice*'.
 .Pp
 The variable
 .Ev STARTDIR
@@ -239,9 +237,7 @@ Fetch all of the files needed to build this port from the site(s)
 listed in
 .Ev MASTER_SITES .
 See
-.Ev FETCH_CMD
-and
-.Ev MASTER_SITE_OVERRIDE .
+.Ev FETCH_CMD .
 Use
 .Xr dpb 1
 with option
@@ -276,6 +272,9 @@ will skip this step.
 Expand the distfile into a work directory.
 .It Cm patch
 Apply any patches that are necessary for the port.
+.It Cm gen
+Recreate configure machinery if needed, mainly used by GNU based software
+that wants autogen/autoconf/automake.
 .It Cm configure
 Configure the port.
 Some ports will ask questions during this stage.
@@ -301,7 +300,13 @@ install the port with
 Install the resulting package.
 .El
 .Pp
-The following targets are not run during the normal install process.
+The following targets are not run during the normal install process
+.Po
+exception
+.Cm clean
+is run for dependencies with the default settings of
+.Ev BULK Ns = Ns Dv Auto
+.Pc .
 .Bl -tag -width fetch-list
 .It Cm print-build-depends , print-run-depends
 Print an ordered list of all the compile and run dependencies.
@@ -437,29 +442,6 @@ and same installation), and of multi-core machines.
 .Pp
 For more detailed information, see
 .Xr bulk 8 .
-.Sh NETWORK CONFIGURATION
-The variables pertaining to network access have been marshalled into
-.Pa ${PORTSDIR}/infrastructure/templates/network.conf.template .
-.Pp
-To customize that setup, copy that file into
-.Pa ${PORTSDIR}/infrastructure/db/network.conf
-and edit it.
-.Bl -tag -width MASTER_SITES
-.It Ev MASTER_SITE_OPENBSD
-If set to
-.Dv Yes ,
-include the master
-.Ox
-site when fetching files.
-.It Ev MASTER_SITE_FREEBSD
-If set to
-.Dv Yes ,
-include the master
-.Fx
-site when fetching files.
-.It Ev MASTER_SITE_OVERRIDE
-Go to this site first for all files.
-.El
 .Sh FLAVORS
 The
 .Ox
@@ -585,6 +567,13 @@ Variable names starting with
 are private to the ports infrastructure,
 should not be changed by the user, and are liable to change without notice.
 .Bl -tag -width MASTER_SITES
+.It Ev PORTS_PRIVSEP
+If set to
+.Sq Yes ,
+all operations will happen as restricted users
+.Ar _pfetch
+and
+.Ar _pbuild .
 .It Ev PORTSDIR
 Location of the ports tree
 (usually
@@ -626,12 +615,15 @@ Command to use to fetch files.
 Normally
 .Xr ftp 1 .
 .It Ev FETCH_PACKAGES
-If set to
-.Dv Yes ,
-try to use
+If set,
+try to use as options to
 .Xr pkg_add 1
 to install the missing packages from
 .Ev PKG_PATH .
+For instance:
+.Bd -literal -offset indent
+make FETCH_PACKAGES=
+.Ed
 .It Ev PATCH_DEBUG
 If defined, display verbose output when applying each patch.
 .It Ev INTERACTIVE
@@ -649,7 +641,7 @@ Set
 .Ev UPDATE_COOKIES_DIR ,
 .Ev DISTDIR ,
 and
-.Ev PLIST_DB
+.Ev PLIST_REPOSITORY
 in
 .Pa /etc/mk.conf
 accordingly.
@@ -659,8 +651,10 @@ accordingly.
 The default ports directory.
 .It Pa /usr/ports/Makefile
 Ports master Makefile.
-.It Pa /usr/ports/INDEX
-Ports index.
+.It Pa /usr/local/share/ports-INDEX
+Ports index, part of the
+.Pa portlist
+package.
 .It Pa /usr/ports/pobj
 Build directories.
 A number of insecurely coded ports require a dedicated file system with the
@@ -669,10 +663,8 @@ A number of insecurely coded ports require a dedicated file system with the
 option.
 .It Pa /usr/ports/infrastructure/mk/bsd.port.mk
 The ports main engine.
-.It Pa /usr/ports/infrastructure/templates/network.conf.template
-Network configuration defaults.
 .It Pa /usr/ports/infrastructure/db/network.conf
-Local network configuration.
+Network configuration.
 .It Pa /usr/ports/infrastructure/db/user.list
 List of users and groups created by ports.
 .El

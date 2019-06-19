@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.9 2017/04/20 13:57:30 visa Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.10 2019/04/23 13:35:12 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -44,7 +44,7 @@ ENTRY(__mtx_init)
 	retl
 	 stw	%g0, [%o0 + MTX_OLDIPL]
 
-ENTRY(__mtx_enter)
+ENTRY(mtx_enter)
 	rdpr	%pil, %g4
 	GET_CURCPU(%g1)
 1:
@@ -80,7 +80,7 @@ ENTRY(__mtx_enter)
 	retl
 	 membar	#LoadLoad | #LoadStore
 
-ENTRY(__mtx_enter_try)
+ENTRY(mtx_enter_try)
 	rdpr	%pil, %g4
 	GET_CURCPU(%g1)
 1:
@@ -112,7 +112,7 @@ ENTRY(__mtx_enter_try)
 	retl
 	 mov	1, %o0
 
-ENTRY(__mtx_leave)
+ENTRY(mtx_leave)
 #ifdef DIAGNOSTIC
 	GET_CURCPU(%g1)
 	ld	[%g1 + CI_MUTEX_LEVEL], %g5

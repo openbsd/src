@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.96 2017/10/24 19:33:32 millert Exp $
+#	$OpenBSD: Makefile,v 1.100 2019/01/20 23:24:19 djm Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -54,6 +54,7 @@ LTESTS= 	connect \
 		sshcfgparse \
 		cfgparse \
 		cfgmatch \
+		cfgmatchlisten \
 		addrmatch \
 		localcommand \
 		forcecommand \
@@ -81,7 +82,8 @@ LTESTS= 	connect \
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
 
-#LTESTS= 	cipher-speed
+EXTRA_TESTS=	agent-pkcs11
+#EXTRA_TESTS+= 	cipher-speed
 
 USERNAME!=	id -un
 CLEANFILES+=	*.core actual agent-key.* authorized_keys_${USERNAME} \
@@ -106,8 +108,6 @@ CLEANFILES+=	*.core actual agent-key.* authorized_keys_${USERNAME} \
 		t10.out t10.out.pub t12.out t12.out.pub t2.out t3.out \
 		t6.out1 t6.out2 t7.out t7.out.pub t8.out t8.out.pub \
 		t9.out t9.out.pub testdata user_*key* user_ca* user_key*
-
-SUDO_CLEAN+=	/var/run/testdata_${USERNAME} /var/run/keycommand_${USERNAME}
 
 # Enable all malloc(3) randomisations and checks
 TEST_ENV=      "MALLOC_OPTIONS=CFGJRSUX"
@@ -185,7 +185,7 @@ modpipe: modpipe.c
 
 t-integrity: modpipe
 
-.for t in ${LTESTS} ${INTEROP_TESTS}
+.for t in ${LTESTS} ${INTEROP_TESTS} ${EXTRA_TESTS}
 t-${t}:
 	env SUDO="${SUDO}" ${TEST_ENV} \
 	    sh ${.CURDIR}/test-exec.sh ${.OBJDIR} ${.CURDIR}/${t}.sh
@@ -202,6 +202,13 @@ INTEROP_TARGETS+=t-${t}
 # Not run by default
 interop: ${INTEROP_TARGETS}
 
+.for t in ${EXTRA_TESTS}
+EXTRA_TARGETS+=t-${t}
+.endfor
+
+# Not run by default
+extra: ${EXTRA_TARGETS}
+
 .for s in ${SUBDIR}
 CLEAN_SUBDIR+=c-${s}
 c-${s}:
@@ -210,7 +217,6 @@ c-${s}:
 
 clean: ${CLEAN_SUBDIR}
 	rm -f ${CLEANFILES}
-	test -z "${SUDO}" || ${SUDO} rm -f ${SUDO_CLEAN}
 	rm -rf .putty
 
 .include <bsd.regress.mk>

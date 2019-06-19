@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2015/11/21 12:37:42 reyk Exp $	*/
+/*	$OpenBSD: util.c,v 1.2 2019/05/13 09:54:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -176,6 +176,29 @@ table_check(enum table_check check)
 	/* NOTREACHED */
 	return ("invalid");
 }
+
+#ifdef DEBUG
+const char *
+relay_state(enum relay_state state)
+{
+	switch (state) {
+	case STATE_INIT:
+		return ("init");
+	case STATE_PENDING:
+		return ("pending");
+	case STATE_PRECONNECT:
+		return ("preconnect");
+	case STATE_CONNECTED:
+		return ("connected");
+	case STATE_CLOSED:
+		return ("closed");
+	case STATE_DONE:
+		return ("done");
+	};
+	/* NOTREACHED */
+	return ("invalid");
+}
+#endif
 
 const char *
 print_availability(u_long cnt, u_long up)

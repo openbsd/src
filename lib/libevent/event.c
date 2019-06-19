@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.38 2015/01/06 23:11:23 bluhm Exp $	*/
+/*	$OpenBSD: event.c,v 1.41 2019/05/01 19:14:25 jca Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -62,7 +62,6 @@ static const struct eventop *eventops[] = {
 /* Global state */
 struct event_base *current_base = NULL;
 extern struct event_base *evsignal_base;
-static int use_monotonic;
 
 /* Handle signals - This is a deprecated interface */
 int (*event_sigcb)(void);		/* Signal callback when gotsig is set */
@@ -77,37 +76,21 @@ static void	event_process_active(struct event_base *);
 
 static int	timeout_next(struct event_base *, struct timeval **);
 static void	timeout_process(struct event_base *);
-static void	timeout_correct(struct event_base *, struct timeval *);
 
 static void
-detect_monotonic(void)
+gettime(struct event_base *base, struct timeval *tp)
 {
 	struct timespec	ts;
 
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
-		use_monotonic = 1;
-}
-
-static int
-gettime(struct event_base *base, struct timeval *tp)
-{
 	if (base->tv_cache.tv_sec) {
 		*tp = base->tv_cache;
-		return (0);
+		return;
 	}
 
-	if (use_monotonic) {
-		struct timespec	ts;
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
+		event_err(1, "%s: clock_gettime", __func__);
 
-		if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
-			return (-1);
-
-		tp->tv_sec = ts.tv_sec;
-		tp->tv_usec = ts.tv_nsec / 1000;
-		return (0);
-	}
-
-	return (gettimeofday(tp, NULL));
+	TIMESPEC_TO_TIMEVAL(tp, &ts);
 }
 
 struct event_base *
@@ -133,7 +116,6 @@ event_base_new(void)
 	event_sigcb = NULL;
 	event_gotsig = 0;
 
-	detect_monotonic();
 	gettime(base, &base->event_tv);
 
 	min_heap_ctor(&base->timeheap);
@@ -163,7 +145,8 @@ event_base_new(void)
 void
 event_base_free(struct event_base *base)
 {
-	int i, n_deleted=0;
+	int i;
+	size_t n_deleted=0;
 	struct event *ev;
 
 	if (base == NULL && current_base)
@@ -199,7 +182,7 @@ event_base_free(struct event_base *base)
 	}
 
 	if (n_deleted)
-		event_debug(("%s: %d events were still set in base",
+		event_debug(("%s: %zu events were still set in base",
 			__func__, n_deleted));
 
 	if (base->evsel->dealloc != NULL)
@@ -464,8 +447,6 @@ event_base_loop(struct event_base *base, int flags)
 				}
 			}
 		}
-
-		timeout_correct(base, &tv);
 
 		tv_p = &tv;
 		if (!base->event_count_active && !(flags & EVLOOP_NONBLOCK)) {
@@ -819,8 +800,7 @@ timeout_next(struct event_base *base, struct timeval **tv_p)
 		return (0);
 	}
 
-	if (gettime(base, &now) == -1)
-		return (-1);
+	gettime(base, &now);
 
 	if (timercmp(&ev->ev_timeout, &now, <=)) {
 		timerclear(tv);
@@ -834,47 +814,6 @@ timeout_next(struct event_base *base, struct timeval **tv_p)
 
 	event_debug(("timeout_next: in %lld seconds", (long long)tv->tv_sec));
 	return (0);
-}
-
-/*
- * Determines if the time is running backwards by comparing the current
- * time against the last time we checked.  Not needed when using clock
- * monotonic.
- */
-
-static void
-timeout_correct(struct event_base *base, struct timeval *tv)
-{
-	struct event **pev;
-	unsigned int size;
-	struct timeval off;
-
-	if (use_monotonic)
-		return;
-
-	/* Check if time is running backwards */
-	gettime(base, tv);
-	if (timercmp(tv, &base->event_tv, >=)) {
-		base->event_tv = *tv;
-		return;
-	}
-
-	event_debug(("%s: time is running backwards, corrected",
-		    __func__));
-	timersub(&base->event_tv, tv, &off);
-
-	/*
-	 * We can modify the key element of the node without destroying
-	 * the key, beause we apply it to all in the right order.
-	 */
-	pev = base->timeheap.p;
-	size = base->timeheap.n;
-	for (; size-- > 0; ++pev) {
-		struct timeval *ev_tv = &(**pev).ev_timeout;
-		timersub(ev_tv, &off, ev_tv);
-	}
-	/* Now remember what the new time turned out to be. */
-	base->event_tv = *tv;
 }
 
 void

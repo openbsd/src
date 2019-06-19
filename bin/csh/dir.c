@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.21 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: dir.c,v 1.23 2018/10/24 06:01:03 martijn Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ void
 dinit(Char *hp)
 {
     char *tcp;
-    Char *cp;
+    Char *cp = NULL;
     struct directory *dp;
     char    path[PATH_MAX];
     static const char emsg[] = "csh: Trying to start from \"%s\"\n";
@@ -75,45 +75,45 @@ dinit(Char *hp)
 	(void) fprintf(csherr, "csh: %s\n", strerror(errno));
 	if (hp && *hp) {
 	    tcp = short2str(hp);
-	    if (chdir(tcp) == -1)
-		cp = NULL;
-	    else
+	    if (chdir(tcp) == 0)
 		cp = hp;
 	    (void) fprintf(csherr, emsg, vis_str(hp));
-	}
-	else
-	    cp = NULL;
-	if (cp == NULL) {
-	    (void) fprintf(csherr, emsg, "/");
-	    if (chdir("/") == -1)
-		/* I am not even try to print an error message! */
-		xexit(1);
-	    cp = SAVE("/");
 	}
     }
     else {
 	struct stat swd, shp;
 
-	/*
-	 * See if $HOME is the working directory we got and use that
-	 */
-	if (hp && *hp &&
-	    stat(tcp, &swd) != -1 && stat(short2str(hp), &shp) != -1 &&
-	    swd.st_dev == shp.st_dev && swd.st_ino == shp.st_ino)
-	    cp = hp;
-	else {
-	    char   *cwd;
-
+	if (stat(tcp, &swd) == -1) {
+	    (void) fprintf(csherr, "csh: %s: %s\n", tcp, strerror(errno));
+	} else {
 	    /*
-	     * use PWD if we have it (for subshells)
+	     * See if $HOME is the working directory we got and use that
 	     */
-	    if ((cwd = getenv("PWD")) != NULL) {
-		if (stat(cwd, &shp) != -1 && swd.st_dev == shp.st_dev &&
-		    swd.st_ino == shp.st_ino)
-		    tcp = cwd;
+	    if (hp && *hp && stat(short2str(hp), &shp) != -1 &&
+		swd.st_dev == shp.st_dev && swd.st_ino == shp.st_ino)
+		cp = hp;
+	    else {
+		char   *cwd;
+
+		/*
+		 * use PWD if we have it (for subshells)
+		 */
+		if ((cwd = getenv("PWD")) != NULL) {
+		    if (stat(cwd, &shp) != -1 && swd.st_dev == shp.st_dev &&
+			swd.st_ino == shp.st_ino)
+			tcp = cwd;
+		}
+		cp = dcanon(SAVE(tcp), STRNULL);
 	    }
-	    cp = dcanon(SAVE(tcp), STRNULL);
 	}
+    }
+
+    if (cp == NULL) {
+	(void) fprintf(csherr, emsg, "/");
+	if (chdir("/") == -1)
+	    /* I am not even try to print an error message! */
+	    xexit(1);
+	cp = SAVE("/");
     }
 
     dp = xcalloc(1, sizeof(struct directory));
@@ -132,7 +132,7 @@ dset(Char *dp)
      * Don't call set() directly cause if the directory contains ` or
      * other junk characters glob will fail.
      */
-    Char **vec = xreallocarray(NULL, 2, sizeof(Char **));
+    Char **vec = xreallocarray(NULL, 2, sizeof(*vec));
 
     vec[0] = Strsave(dp);
     vec[1] = 0;

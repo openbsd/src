@@ -1,4 +1,4 @@
-/* $OpenBSD: pcb.h,v 1.3 2017/03/24 19:48:01 kettenis Exp $ */
+/* $OpenBSD: pcb.h,v 1.4 2018/07/04 17:52:29 drahn Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -31,6 +31,7 @@ struct trapframe;
 struct pcb {
 	u_int		pcb_flags;
 #define	PCB_FPU		0x00000001	/* Process had FPU initialized */
+#define	PCB_SINGLESTEP	0x00000002	/* Single step process */
 	struct		trapframe *pcb_tf;
 
 	register_t	pcb_sp;		// stack pointer of switchframe

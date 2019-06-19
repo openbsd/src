@@ -1,7 +1,7 @@
-/*	$OpenBSD: mdoc.c,v 1.157 2017/08/11 16:55:10 schwarze Exp $ */
+/*	$OpenBSD: mdoc.c,v 1.163 2018/12/31 07:45:42 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010, 2012-2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -75,13 +75,6 @@ mdoc_parseln(struct roff_man *mdoc, int ln, char *buf, int offs)
 	return roff_getcontrol(mdoc->roff, buf, &offs) ?
 	    mdoc_pmacro(mdoc, ln, buf, offs) :
 	    mdoc_ptext(mdoc, ln, buf, offs);
-}
-
-void
-mdoc_macro(MACRO_PROT_ARGS)
-{
-	assert(tok >= MDOC_Dd && tok < MDOC_MAX);
-	(*mdoc_macros[tok].fp)(mdoc, tok, line, ppos, pos, buf);
 }
 
 void
@@ -160,15 +153,6 @@ mdoc_elem_alloc(struct roff_man *mdoc, int line, int pos,
 	mdoc->next = ROFF_NEXT_CHILD;
 }
 
-void
-mdoc_node_relink(struct roff_man *mdoc, struct roff_node *p)
-{
-
-	roff_node_unlink(mdoc, p);
-	p->prev = p->next = NULL;
-	roff_node_append(mdoc, p);
-}
-
 /*
  * Parse free-form text, that is, a line that does not begin with the
  * control character.
@@ -194,7 +178,8 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 	    (n->parent != NULL && n->parent->tok == MDOC_Bl &&
 	     n->parent->norm->Bl.type == LIST_column)) {
 		mdoc->flags |= MDOC_FREECOL;
-		mdoc_macro(mdoc, MDOC_It, line, offs, &offs, buf);
+		(*mdoc_macro(MDOC_It)->fp)(mdoc, MDOC_It,
+		    line, offs, &offs, buf);
 		return 1;
 	}
 
@@ -223,7 +208,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 			 * Strip trailing tabs in literal context only;
 			 * outside, they affect the next line.
 			 */
-			if (MDOC_LITERAL & mdoc->flags)
+			if (mdoc->flags & ROFF_NOFILL)
 				continue;
 			break;
 		case '\\':
@@ -240,8 +225,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 	*end = '\0';
 
 	if (ws)
-		mandoc_msg(MANDOCERR_SPACE_EOL, mdoc->parse,
-		    line, (int)(ws-buf), NULL);
+		mandoc_msg(MANDOCERR_SPACE_EOL, line, (int)(ws - buf), NULL);
 
 	/*
 	 * Blank lines are allowed in no-fill mode
@@ -249,7 +233,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 	 * but add a single vertical space elsewhere.
 	 */
 
-	if (buf[offs] == '\0' && ! (mdoc->flags & MDOC_LITERAL)) {
+	if (buf[offs] == '\0' && (mdoc->flags & ROFF_NOFILL) == 0) {
 		switch (mdoc->last->type) {
 		case ROFFT_TEXT:
 			sp = mdoc->last->string;
@@ -265,8 +249,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 		default:
 			break;
 		}
-		mandoc_msg(MANDOCERR_FI_BLANK, mdoc->parse,
-		    line, (int)(c - buf), NULL);
+		mandoc_msg(MANDOCERR_FI_BLANK, line, (int)(c - buf), NULL);
 		roff_elem_alloc(mdoc, line, offs, ROFF_sp);
 		mdoc->last->flags |= NODE_VALID | NODE_ENDED;
 		mdoc->next = ROFF_NEXT_SIBLING;
@@ -275,7 +258,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 
 	roff_word_alloc(mdoc, line, offs, buf+offs);
 
-	if (mdoc->flags & MDOC_LITERAL)
+	if (mdoc->flags & ROFF_NOFILL)
 		return 1;
 
 	/*
@@ -306,8 +289,7 @@ mdoc_ptext(struct roff_man *mdoc, int line, char *buf, int offs)
 		if (*c == ' ')
 			c++;
 		if (isupper((unsigned char)(*c)))
-			mandoc_msg(MANDOCERR_EOS, mdoc->parse,
-			    line, (int)(c - buf), NULL);
+			mandoc_msg(MANDOCERR_EOS, line, (int)(c - buf), NULL);
 	}
 
 	return 1;
@@ -335,8 +317,7 @@ mdoc_pmacro(struct roff_man *mdoc, int ln, char *buf, int offs)
 	if (sz == 2 || sz == 3)
 		tok = roffhash_find(mdoc->mdocmac, buf + sv, sz);
 	if (tok == TOKEN_NONE) {
-		mandoc_msg(MANDOCERR_MACRO, mdoc->parse,
-		    ln, sv, buf + sv - 1);
+		mandoc_msg(MANDOCERR_MACRO, ln, sv, "%s", buf + sv - 1);
 		return 1;
 	}
 
@@ -366,8 +347,7 @@ mdoc_pmacro(struct roff_man *mdoc, int ln, char *buf, int offs)
 	 */
 
 	if ('\0' == buf[offs] && ' ' == buf[offs - 1])
-		mandoc_msg(MANDOCERR_SPACE_EOL, mdoc->parse,
-		    ln, offs - 1, NULL);
+		mandoc_msg(MANDOCERR_SPACE_EOL, ln, offs - 1, NULL);
 
 	/*
 	 * If an initial macro or a list invocation, divert directly
@@ -376,7 +356,7 @@ mdoc_pmacro(struct roff_man *mdoc, int ln, char *buf, int offs)
 
 	n = mdoc->last;
 	if (n == NULL || tok == MDOC_It || tok == MDOC_El) {
-		mdoc_macro(mdoc, tok, ln, sv, &offs, buf);
+		(*mdoc_macro(tok)->fp)(mdoc, tok, ln, sv, &offs, buf);
 		return 1;
 	}
 
@@ -392,13 +372,13 @@ mdoc_pmacro(struct roff_man *mdoc, int ln, char *buf, int offs)
 	    (n->parent != NULL && n->parent->tok == MDOC_Bl &&
 	     n->parent->norm->Bl.type == LIST_column)) {
 		mdoc->flags |= MDOC_FREECOL;
-		mdoc_macro(mdoc, MDOC_It, ln, sv, &sv, buf);
+		(*mdoc_macro(MDOC_It)->fp)(mdoc, MDOC_It, ln, sv, &sv, buf);
 		return 1;
 	}
 
 	/* Normal processing of a macro. */
 
-	mdoc_macro(mdoc, tok, ln, sv, &offs, buf);
+	(*mdoc_macro(tok)->fp)(mdoc, tok, ln, sv, &offs, buf);
 
 	/* In quick mode (for mandocdb), abort after the NAME section. */
 
@@ -445,13 +425,4 @@ mdoc_isdelim(const char *p)
 		return DELIM_MIDDLE;
 
 	return DELIM_NONE;
-}
-
-void
-mdoc_validate(struct roff_man *mdoc)
-{
-
-	mdoc->last = mdoc->first;
-	mdoc_node_validate(mdoc);
-	mdoc_state_reset(mdoc);
 }

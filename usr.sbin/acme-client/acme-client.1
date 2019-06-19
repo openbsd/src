@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.23 2017/10/17 22:47:58 schwarze Exp $
+.\"	$OpenBSD: acme-client.1,v 1.32 2019/06/15 17:06:44 florian Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2017 $
+.Dd $Mdocdate: June 15 2019 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -22,58 +22,35 @@
 .Nd ACME client
 .Sh SYNOPSIS
 .Nm acme-client
-.Op Fl ADFnrv
+.Op Fl Fnrv
 .Op Fl f Ar configfile
 .Ar domain
 .Sh DESCRIPTION
-The
 .Nm
-utility is an
-Automatic Certificate Management Environment (ACME) client.
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl A
-Create a new RSA account key if one does not already exist.
-.It Fl D
-Create a new RSA domain key if one does not already exist.
-.It Fl F
-Force updating the certificate signature even if it's too soon.
-.It Fl f Ar configfile
-Specify an alternative configuration file.
-.It Fl n
-No operation: check and print configuration.
-.It Fl r
-Revoke the X509 certificate found in the certificates.
-.It Fl v
-Verbose operation.
-Specify twice to also trace communication and data transfers.
-.It Ar domain
-The domain name.
-.El
-.Pp
-.Nm
-looks in its configuration for a
+is an
+Automatic Certificate Management Environment (ACME) client:
+it looks in its configuration for a domain section
+corresponding to the
 .Ar domain
-section corresponding to the domain given as command line argument.
-It then uses that configuration to retrieve a TLS certificate.
+given as command line argument
+and uses that configuration to retrieve an X.509 certificate
+which can be used to provide domain name validation
+(i.e. prove that the domain is who it says it is).
+The certificates are typically used to provide HTTPS for web servers,
+but can be used in any situation where domain name validation is required
+(such as mail servers).
+.Pp
 If the certificate already exists and is less than 30 days from expiry,
 .Nm
-will attempt to refresh the signature.
-Before a certificate can be requested, an account key needs to be
-created using the
-.Fl A
-argument.
-The first time a certificate is requested, the RSA key needs to be created with
-.Fl D .
+attempts to renew the certificate.
 .Pp
-Challenges are used to verify that the submitter has access to the
-registered domains.
+In order to prove that the client has access to the domain,
+a challenge is issued by the signing authority.
 .Nm
-only implements the
+implements the
 .Dq http-01
 challenge type, where a file is created within a directory accessible
-by a locally-run web server.
+by a locally run web server.
 The default challenge directory
 .Pa /var/www/acme
 can be served by
@@ -83,11 +60,31 @@ which will properly map response challenges:
 .Bd -literal -offset indent
 location "/.well-known/acme-challenge/*" {
 	root "/acme"
-	root strip 2
+	request strip 2
 }
 .Ed
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl F
+Force certificate renewal, even if it's too soon.
+.It Fl f Ar configfile
+Specify an alternative configuration file.
+.It Fl n
+No operation: check and print configuration.
+.It Fl r
+Revoke the X.509 certificate.
+.It Fl v
+Verbose operation.
+Specify twice to also trace communication and data transfers.
+.It Ar domain
+The domain name.
+.El
 .Sh FILES
 .Bl -tag -width "/etc/acme-client.conf" -compact
+.It Pa /etc/acme
+Private keys for
+.Nm .
 .It Pa /etc/acme-client.conf
 Default configuration.
 .It Pa /var/www/acme
@@ -95,31 +92,51 @@ Default challengedir.
 .El
 .Sh EXIT STATUS
 .Nm
-returns 1 on failure, 2 if the certificates didn't change (up to date),
-or 0 if certificates were changed (revoked or updated).
+returns 0 if certificates were changed (revoked or updated),
+1 on failure,
+or
+2 if the certificates didn't change (up to date).
 .Sh EXAMPLES
-To initialize a new account and Domain key:
+Example configuration files for
+.Nm
+and
+.Xr httpd 8
+are provided in
+.Pa /etc/examples/acme-client.conf
+and
+.Pa /etc/examples/httpd.conf .
 .Pp
-.Dl # acme-client -vAD example.com
+To generate a certificate for example.com and use it to provide HTTPS,
+create
+.Pa acme-client.conf
+and
+.Pa httpd.conf
+and run:
 .Pp
-To create and submit a new key for a single domain, assuming that the
-web server has already been configured to map the challenge directory
-as above:
+.Dl # acme-client -v example.com && rcctl reload httpd
 .Pp
-.Dl # acme-client -vD example.com
-.Pp
-A daily
+A
 .Xr cron 8
-job can renew the certificates:
-.Pp
-.Dl acme-client example.com && rcctl reload httpd
+job can renew the certificate as necessary.
+On renewal,
+.Xr httpd 8
+is reloaded:
+.Bd -literal -offset indent
+0	*	*	*	*	sleep $((RANDOM \e% 2048)) && \e
+	acme-client example.com && rcctl reload httpd
+.Ed
 .Sh SEE ALSO
 .Xr openssl 1 ,
 .Xr acme-client.conf 5 ,
 .Xr httpd.conf 5
 .Sh STANDARDS
 .Rs
-.%U https://tools.ietf.org/html/draft-ietf-acme-acme-03
+.%A R. Barnes
+.%A J. Hoffman-Andrews
+.%A D. McCarney
+.%A J. Kasten
+.%D March 2019
+.%R RFC 8555
 .%T Automatic Certificate Management Environment (ACME)
 .Re
 .Sh HISTORY
@@ -132,10 +149,3 @@ The
 .Nm
 utility was written by
 .An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
-.Sh BUGS
-The challenge and certificate processes currently retain their (root)
-privileges.
-.Pp
-For the time being,
-.Nm
-only supports RSA as an account key format.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.34 2017/03/03 23:36:06 renato Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.39 2019/03/31 20:14:14 jmc Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -19,7 +19,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 3 2017 $
+.Dd $Mdocdate: March 31 2019 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -29,10 +29,10 @@
 The
 .Xr ldpd 8
 daemon implements the Label Distribution Protocol as described in RFC 5036.
-.Sh SECTIONS
+.Pp
 The
 .Nm
-config file is divided into seven main sections.
+config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -70,16 +70,8 @@ macros can be defined that will later be expanded in context.
 Macro names must start with a letter, digit, or underscore,
 and may contain any of those characters.
 Macro names may not be reserved words (for example,
-.Ic password ) .
+.Ic neighbor ) .
 Macros are not expanded inside quotes.
-.Pp
-For example:
-.Bd -literal -offset indent
-secret="openbsd"
-neighbor 10.0.1.5 {
-	password $secret
-}
-.Ed
 .Sh GLOBAL CONFIGURATION
 Several settings can be configured globally or within a more restricted scope,
 like per address-family or per interface.
@@ -117,6 +109,27 @@ Table 0 is the default table.
 .It Ic router-id Ar address
 Set the router ID; in combination with labelspace it forms the LSR-ID.
 If not specified, the numerically lowest IP address of the router will be used.
+.Pp
+.It Xo
+.Ic tcp md5sig password Ar secret
+.Op Ar lsr-id Ns Op / Ns Ar prefix
+.Xc
+.It Xo
+.Ic tcp md5sig key Ar secret
+.Op Ar lsr-id Ns Op / Ns Ar prefix
+.Xc
+.It Xo
+.Ic no tcp md5sig
+.Op Ar lsr-id Ns Op / Ns Ar prefix
+.Xc
+Enable or disable TCP MD5 signatures per RFC 5036.
+The shared secret can either be given as a password or hexadecimal key.
+An optional prefix may be specified to scope the key configuration to a
+set of neighbors with the specified LSR-IDs.
+.Bd -literal -offset indent
+tcp md5sig password mekmitasdigoat 192.168.0.0/24
+no tcp md5sig 192.168.0.25
+.Ed
 .Pp
 .It Xo
 .Ic transport-preference
@@ -164,9 +177,10 @@ and RFC 7552 (for the IPv6 address-family).
 Since GTSM is mandatory for LDPv6, the only effect of disabling GTSM for the
 IPv6 address-family is that
 .Xr ldpd 8
-will not check the incoming packets' hop limit.
-Outgoing packets will still be sent using a hop limit of 255 to guarantee
-interoperability.
+will not discard packets with a hop limit below 255.
+This may be necessary to interoperate with older implementations.
+Outgoing packets will still be sent using a hop limit of 255
+for maximum compatibility.
 .Pp
 If GTSM is enabled, multi-hop neighbors should have either GTSM disabled
 individually or configured with an appropriate gtsm-hops distance.
@@ -278,8 +292,12 @@ When GTSM is enabled for this neighbor, incoming packets are required to have
 a TTL/hop limit of 256 minus this value, ensuring they have not passed
 through more than the expected number of hops.
 The default value is 1; valid range is 1\-255.
-.It Ic password Ar secret
-Enable TCP MD5 signatures per RFC 5036.
+.It Ic tcp md5sig password Ar secret
+Enable TCP MD5 signatures per RFC 5036 with the specified password.
+.It Ic tcp md5sig key Ar secret
+Enable TCP MD5 signatures per RFC 5036 with the specified hexadecimal key.
+.It Ic no tcp md5sig
+Disable the use of TCP MD5 signatures.
 .El
 .Sh LAYER 2 VPNS
 .Xr ldpd 8

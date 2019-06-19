@@ -1,85 +1,118 @@
-#	$OpenBSD: Makefile,v 1.3 2017/08/22 23:20:00 jsg Exp $
+#	$OpenBSD: Makefile,v 1.14 2019/05/03 20:03:58 deraadt Exp $
 
-REV=	${OSrev}
-
-TOP=		${.CURDIR}/..
-
-BSD_RD=		bsd.rd
-IMAGE=		mr.fs
-CBIN?=		instbin
-CRUNCHCONF?=	${CBIN}.conf
-CRUNCHCONFS?=	${.CURDIR}/../common/crunch.conf
-LISTS=		${.CURDIR}/list
-UTILS?=		${.CURDIR}/../../miniroot
-
+FS=		miniroot${OSrev}.fs
+FSSIZE=		43008
+FSDISKTYPE=	miniroot
+MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
 
-DISKTYPE=	rdroot
-MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
+MSDOSSTART=	8192
+MSDOSSIZE=	8192
+FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
+
+NEWFS_ARGS_msdos=-L boot -c1 -F16
+MOUNT_ARGS_msdos=-o-l
+
+PDTB=		/usr/local/share/dtb/arm64
+PUBOOT=		/usr/local/share/u-boot
+PRPI=		/usr/local/share/raspberrypi-firmware/boot
+
+LISTS=		${.CURDIR}/list
+UTILS=		${.CURDIR}/../../miniroot
+
+MRFSDISKTYPE=	rdroot
+MRMAKEFSARGS=	-o disklabel=${MRFSDISKTYPE},minfree=0,density=4096
 
 DIRS=\
 	pine64 \
 	rpi
 
-.ifndef DESTDIR
-all ${IMAGE}:
-	@echo setenv DESTDIR before making a ramdisk!
-	@false
-.else
+PIFILES=\
+	bootcode.bin \
+	start.elf \
+	fixup.dat \
+	bcm2710-rpi-3-b.dtb \
+	bcm2710-rpi-3-b-plus.dtb \
+	bcm2710-rpi-cm3.dtb
 
-ALLBSD=		bsd
-ALLBSDRD=	${BSD_RD}
-all:	${ALLBSDRD}
+all: ${FS}
+
+${FS}: bsd.rd
+	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
+	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
+	echo 'u\ne 0\nc\nn\n${MSDOSSTART}\n${MSDOSSIZE}\ne 3\nA6\nn\n${FFSSTART}\n*\nf 0\nw\nq\n' \
+	    | fdisk -e `cat vnd` >/dev/null
+	echo 'a a\n\n\n\nw\nq\n' | disklabel -E `cat vnd` >/dev/null
+	newfs -t msdos ${NEWFS_ARGS_msdos} /dev/r`cat vnd`i
+	mount ${MOUNT_ARGS_msdos} /dev/`cat vnd`i ${MOUNT_POINT}
+.for FILE in ${PIFILES}
+	cp ${PRPI}/${FILE} ${MOUNT_POINT}/
+.endfor
+	cp ${PUBOOT}/rpi_3/u-boot.bin ${MOUNT_POINT}/
+	mkdir -p ${MOUNT_POINT}/efi/boot
+	cp /usr/mdec/BOOTAA64.EFI ${MOUNT_POINT}/efi/boot/bootaa64.efi
+	echo bootaa64.efi > ${MOUNT_POINT}/efi/boot/startup.nsh
+	echo 'arm_64bit=1\nenable_uart=1\ndevice_tree_address=0x02600000\nkernel=u-boot.bin' > ${MOUNT_POINT}/config.txt
+	dd if=${PUBOOT}/pine64_plus/u-boot-sunxi-with-spl.bin \
+	    of=/dev/r`cat vnd`c bs=1024 seek=8
+	umount ${MOUNT_POINT}
+	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
+	install -c -m 555 -o root -g wheel bsd.rd ${MOUNT_POINT}/bsd
+	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd
+	df -i ${MOUNT_POINT}
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
+
+bsd.rd: mr.fs bsd
+	cp bsd bsd.rd
+	rdsetroot bsd.rd mr.fs
 
 bsd:
-	cd ${TOP}/../../sys/arch/arm64/compile/RAMDISK && \
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${TOP}/../../sys/arch/arm64/compile/RAMDISK/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
-${BSD_RD}: ${IMAGE} bsd rdsetroot
-	cp bsd ${BSD_RD}
-	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
-
-${IMAGE}: ${CBIN}
+mr.fs: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 .for DIR in ${DIRS}
 	mkdir -p $@.d/usr/mdec/${DIR}
 .endfor
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
-	rm $@.d/${CBIN}
-	makefs ${MAKEFSARGS_RD} $@ $@.d
+	rm $@.d/instbin
+	makefs ${MRMAKEFSARGS} $@ $@.d
 
-.endif
+instbin.mk instbin.cache instbin.c: instbin.conf
+	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
+	    -c instbin.c -e instbin -m instbin.mk instbin.conf
 
-rdsetroot:	${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
-	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
-	    ${TOP}/../common/elf64.c
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+instbin.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-
-${CRUNCHCONF}: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
-
-clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    lib*.a lib*.olist ${CBIN}.map \
-	    *.o *.lo *.c ${ALLBSD} ${ALLBSDRD} rdsetroot
-	rm -f instbin.conf
-	rm -rf cd-dir ${IMAGE}.d
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .ifdef RELEASEDIR
 install:
-	cp ${ALLBSDRD} ${RELEASEDIR}
-.endif	# RELEASEDIR
+	cp bsd.rd ${RELEASEDIR}/bsd.rd
+	chmod a+r ${RELEASEDIR}/bsd.rd
+	cp ${FS} ${RELEASEDIR}
+.endif
+
+clean cleandir:
+	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
+	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd.rd
+	rm -f instbin.conf
+	rm -rf cd-dir mr.fs.d
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

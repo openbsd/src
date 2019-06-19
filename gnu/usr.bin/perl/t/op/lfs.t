@@ -4,9 +4,9 @@
 
 BEGIN {
 	chdir 't' if -d 't';
-	@INC = '../lib';
 	require './test.pl';
-	require Config;
+	set_up_inc('../lib');
+    require Config;
 	# Don't bother if there are no quad offsets.
 	skip_all('no 64-bit file offsets')
 		if $Config::Config{lseeksize} < 8;

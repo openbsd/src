@@ -21,7 +21,7 @@
 #include "PPCTargetMachine.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
-#include "llvm/Target/TargetLowering.h"
+#include "llvm/CodeGen/TargetLowering.h"
 
 namespace llvm {
 
@@ -51,6 +51,8 @@ public:
   int getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
                     Type *Ty);
 
+  unsigned getUserCost(const User *U, ArrayRef<const Value *> Operands);
+
   TTI::PopcntSupportKind getPopcntSupport(unsigned TyWidth);
   void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                TTI::UnrollingPreferences &UP);
@@ -59,9 +61,10 @@ public:
 
   /// \name Vector TTI Implementations
   /// @{
-
+  bool useColdCCForColdCall(Function &F);
   bool enableAggressiveInterleaving(bool LoopHasReductions);
-  bool expandMemCmp(Instruction *I, unsigned &MaxLoadSize);
+  const TTI::MemCmpExpansionOptions *enableMemCmpExpansion(
+      bool IsZeroCmp) const;
   bool enableInterleavedAccessVectorization();
   unsigned getNumberOfRegisters(bool Vector);
   unsigned getRegisterBitWidth(bool Vector) const;

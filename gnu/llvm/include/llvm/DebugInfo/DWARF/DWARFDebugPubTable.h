@@ -32,7 +32,7 @@ public:
 
     /// The name of the object as given by the DW_AT_name attribute of the
     /// referenced DIE.
-    const char *Name;
+    StringRef Name;
   };
 
   /// Each table consists of sets of variable length entries. Each set describes
@@ -69,7 +69,7 @@ private:
 public:
   DWARFDebugPubTable(StringRef Data, bool LittleEndian, bool GnuStyle);
 
-  void dump(StringRef Name, raw_ostream &OS) const;
+  void dump(raw_ostream &OS) const;
 
   ArrayRef<Set> getData() { return Sets; }
 };

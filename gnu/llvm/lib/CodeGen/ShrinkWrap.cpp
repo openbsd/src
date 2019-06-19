@@ -1,4 +1,4 @@
-//===-- ShrinkWrap.cpp - Compute safe point for prolog/epilog insertion ---===//
+//===- ShrinkWrap.cpp - Compute safe point for prolog/epilog insertion ----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -45,39 +45,49 @@
 //
 // If this pass found points matching all these properties, then
 // MachineFrameInfo is updated with this information.
+//
 //===----------------------------------------------------------------------===//
+
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
-// To check for profitability.
+#include "llvm/Analysis/CFG.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
-// For property #1 for Save.
 #include "llvm/CodeGen/MachineDominators.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
-// To record the result of the analysis.
 #include "llvm/CodeGen/MachineFrameInfo.h"
-// For property #2.
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
-// For property #1 for Restore.
+#include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/CodeGen/MachineOptimizationRemarkEmitter.h"
 #include "llvm/CodeGen/MachinePostDominators.h"
-#include "llvm/CodeGen/Passes.h"
-// To know about callee-saved.
 #include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetLowering.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/Function.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-// To query the target about frame lowering.
-#include "llvm/Target/TargetFrameLowering.h"
-// To know about frame setup operation.
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
-// To access TargetInstrInfo.
-#include "llvm/Target/TargetSubtargetInfo.h"
-
-#define DEBUG_TYPE "shrink-wrap"
+#include <cassert>
+#include <cstdint>
+#include <memory>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "shrink-wrap"
 
 STATISTIC(NumFunc, "Number of functions");
 STATISTIC(NumCandidates, "Number of shrink-wrapping candidates");
@@ -85,11 +95,12 @@ STATISTIC(NumCandidatesDropped,
           "Number of shrink-wrapping candidates dropped because of frequency");
 
 static cl::opt<cl::boolOrDefault>
-    EnableShrinkWrapOpt("enable-shrink-wrap", cl::Hidden,
-                        cl::desc("enable the shrink-wrapping pass"));
+EnableShrinkWrapOpt("enable-shrink-wrap", cl::Hidden,
+                    cl::desc("enable the shrink-wrapping pass"));
 
 namespace {
-/// \brief Class to determine where the safe point to insert the
+
+/// Class to determine where the safe point to insert the
 /// prologue and epilogue are.
 /// Unlike the paper from Fred C. Chow, PLDI'88, that introduces the
 /// shrink-wrapping term for prologue/epilogue placement, this pass
@@ -101,35 +112,52 @@ class ShrinkWrap : public MachineFunctionPass {
   RegisterClassInfo RCI;
   MachineDominatorTree *MDT;
   MachinePostDominatorTree *MPDT;
+
   /// Current safe point found for the prologue.
   /// The prologue will be inserted before the first instruction
   /// in this basic block.
   MachineBasicBlock *Save;
+
   /// Current safe point found for the epilogue.
   /// The epilogue will be inserted before the first terminator instruction
   /// in this basic block.
   MachineBasicBlock *Restore;
+
   /// Hold the information of the basic block frequency.
   /// Use to check the profitability of the new points.
   MachineBlockFrequencyInfo *MBFI;
+
   /// Hold the loop information. Used to determine if Save and Restore
   /// are in the same loop.
   MachineLoopInfo *MLI;
+
+  // Emit remarks.
+  MachineOptimizationRemarkEmitter *ORE = nullptr;
+
   /// Frequency of the Entry block.
   uint64_t EntryFreq;
+
   /// Current opcode for frame setup.
   unsigned FrameSetupOpcode;
+
   /// Current opcode for frame destroy.
   unsigned FrameDestroyOpcode;
+
+  /// Stack pointer register, used by llvm.{savestack,restorestack}
+  unsigned SP;
+
   /// Entry block.
   const MachineBasicBlock *Entry;
-  typedef SmallSetVector<unsigned, 16> SetOfRegs;
+
+  using SetOfRegs = SmallSetVector<unsigned, 16>;
+
   /// Registers that need to be saved for the current function.
   mutable SetOfRegs CurrentCSRs;
+
   /// Current MachineFunction.
   MachineFunction *MachineFunc;
 
-  /// \brief Check if \p MI uses or defines a callee-saved register or
+  /// Check if \p MI uses or defines a callee-saved register or
   /// a frame index. If this is the case, this means \p MI must happen
   /// after Save and before Restore.
   bool useOrDefCSROrFI(const MachineInstr &MI, RegScavenger *RS) const;
@@ -149,14 +177,14 @@ class ShrinkWrap : public MachineFunctionPass {
     return CurrentCSRs;
   }
 
-  /// \brief Update the Save and Restore points such that \p MBB is in
+  /// Update the Save and Restore points such that \p MBB is in
   /// the region that is dominated by Save and post-dominated by Restore
   /// and Save and Restore still match the safe point definition.
   /// Such point may not exist and Save and/or Restore may be null after
   /// this call.
   void updateSaveRestorePoints(MachineBasicBlock &MBB, RegScavenger *RS);
 
-  /// \brief Initialize the pass for \p MF.
+  /// Initialize the pass for \p MF.
   void init(MachineFunction &MF) {
     RCI.runOnMachineFunction(MF);
     MDT = &getAnalysis<MachineDominatorTree>();
@@ -165,10 +193,13 @@ class ShrinkWrap : public MachineFunctionPass {
     Restore = nullptr;
     MBFI = &getAnalysis<MachineBlockFrequencyInfo>();
     MLI = &getAnalysis<MachineLoopInfo>();
+    ORE = &getAnalysis<MachineOptimizationRemarkEmitterPass>().getORE();
     EntryFreq = MBFI->getEntryFreq();
-    const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
+    const TargetSubtargetInfo &Subtarget = MF.getSubtarget();
+    const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
     FrameSetupOpcode = TII.getCallFrameSetupOpcode();
     FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
+    SP = Subtarget.getTargetLowering()->getStackPointerRegisterToSaveRestore();
     Entry = &MF.front();
     CurrentCSRs.clear();
     MachineFunc = &MF;
@@ -180,7 +211,7 @@ class ShrinkWrap : public MachineFunctionPass {
   /// shrink-wrapping.
   bool ArePointsInteresting() const { return Save != Entry && Save && Restore; }
 
-  /// \brief Check if shrink wrapping is enabled for this target and function.
+  /// Check if shrink wrapping is enabled for this target and function.
   static bool isShrinkWrapEnabled(const MachineFunction &MF);
 
 public:
@@ -196,18 +227,26 @@ public:
     AU.addRequired<MachineDominatorTree>();
     AU.addRequired<MachinePostDominatorTree>();
     AU.addRequired<MachineLoopInfo>();
+    AU.addRequired<MachineOptimizationRemarkEmitterPass>();
     MachineFunctionPass::getAnalysisUsage(AU);
+  }
+
+  MachineFunctionProperties getRequiredProperties() const override {
+    return MachineFunctionProperties().set(
+      MachineFunctionProperties::Property::NoVRegs);
   }
 
   StringRef getPassName() const override { return "Shrink Wrapping analysis"; }
 
-  /// \brief Perform the shrink-wrapping analysis and update
+  /// Perform the shrink-wrapping analysis and update
   /// the MachineFrameInfo attached to \p MF with the results.
   bool runOnMachineFunction(MachineFunction &MF) override;
 };
-} // End anonymous namespace.
+
+} // end anonymous namespace
 
 char ShrinkWrap::ID = 0;
+
 char &llvm::ShrinkWrapID = ShrinkWrap::ID;
 
 INITIALIZE_PASS_BEGIN(ShrinkWrap, DEBUG_TYPE, "Shrink Wrap Pass", false, false)
@@ -215,24 +254,34 @@ INITIALIZE_PASS_DEPENDENCY(MachineBlockFrequencyInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(MachinePostDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
+INITIALIZE_PASS_DEPENDENCY(MachineOptimizationRemarkEmitterPass)
 INITIALIZE_PASS_END(ShrinkWrap, DEBUG_TYPE, "Shrink Wrap Pass", false, false)
 
 bool ShrinkWrap::useOrDefCSROrFI(const MachineInstr &MI,
                                  RegScavenger *RS) const {
   if (MI.getOpcode() == FrameSetupOpcode ||
       MI.getOpcode() == FrameDestroyOpcode) {
-    DEBUG(dbgs() << "Frame instruction: " << MI << '\n');
+    LLVM_DEBUG(dbgs() << "Frame instruction: " << MI << '\n');
     return true;
   }
   for (const MachineOperand &MO : MI.operands()) {
     bool UseOrDefCSR = false;
     if (MO.isReg()) {
+      // Ignore instructions like DBG_VALUE which don't read/def the register.
+      if (!MO.isDef() && !MO.readsReg())
+        continue;
       unsigned PhysReg = MO.getReg();
       if (!PhysReg)
         continue;
       assert(TargetRegisterInfo::isPhysicalRegister(PhysReg) &&
              "Unallocated register?!");
-      UseOrDefCSR = RCI.getLastCalleeSavedAlias(PhysReg);
+      // The stack pointer is not normally described as a callee-saved register
+      // in calling convention definitions, so we need to watch for it
+      // separately. An SP mentioned by a call instruction, we can ignore,
+      // though, as it's harmless and we do not want to effectively disable tail
+      // calls by forcing the restore point to post-dominate them.
+      UseOrDefCSR = (!MI.isCall() && PhysReg == SP) ||
+                    RCI.getLastCalleeSavedAlias(PhysReg);
     } else if (MO.isRegMask()) {
       // Check if this regmask clobbers any of the CSRs.
       for (unsigned Reg : getCurrentCSRs(RS)) {
@@ -242,16 +291,17 @@ bool ShrinkWrap::useOrDefCSROrFI(const MachineInstr &MI,
         }
       }
     }
-    if (UseOrDefCSR || MO.isFI()) {
-      DEBUG(dbgs() << "Use or define CSR(" << UseOrDefCSR << ") or FI("
-                   << MO.isFI() << "): " << MI << '\n');
+    // Skip FrameIndex operands in DBG_VALUE instructions.
+    if (UseOrDefCSR || (MO.isFI() && !MI.isDebugValue())) {
+      LLVM_DEBUG(dbgs() << "Use or define CSR(" << UseOrDefCSR << ") or FI("
+                        << MO.isFI() << "): " << MI << '\n');
       return true;
     }
   }
   return false;
 }
 
-/// \brief Helper function to find the immediate (post) dominator.
+/// Helper function to find the immediate (post) dominator.
 template <typename ListOfBBs, typename DominanceAnalysis>
 static MachineBasicBlock *FindIDom(MachineBasicBlock &Block, ListOfBBs BBs,
                                    DominanceAnalysis &Dom) {
@@ -275,7 +325,7 @@ void ShrinkWrap::updateSaveRestorePoints(MachineBasicBlock &MBB,
     Save = MDT->findNearestCommonDominator(Save, &MBB);
 
   if (!Save) {
-    DEBUG(dbgs() << "Found a block that is not reachable from Entry\n");
+    LLVM_DEBUG(dbgs() << "Found a block that is not reachable from Entry\n");
     return;
   }
 
@@ -309,7 +359,8 @@ void ShrinkWrap::updateSaveRestorePoints(MachineBasicBlock &MBB,
   }
 
   if (!Restore) {
-    DEBUG(dbgs() << "Restore point needs to be spanned on several blocks\n");
+    LLVM_DEBUG(
+        dbgs() << "Restore point needs to be spanned on several blocks\n");
     return;
   }
 
@@ -388,58 +439,38 @@ void ShrinkWrap::updateSaveRestorePoints(MachineBasicBlock &MBB,
   }
 }
 
-/// Check whether the edge (\p SrcBB, \p DestBB) is a backedge according to MLI.
-/// I.e., check if it exists a loop that contains SrcBB and where DestBB is the
-/// loop header.
-static bool isProperBackedge(const MachineLoopInfo &MLI,
-                             const MachineBasicBlock *SrcBB,
-                             const MachineBasicBlock *DestBB) {
-  for (const MachineLoop *Loop = MLI.getLoopFor(SrcBB); Loop;
-       Loop = Loop->getParentLoop()) {
-    if (Loop->getHeader() == DestBB)
-      return true;
-  }
-  return false;
-}
+static bool giveUpWithRemarks(MachineOptimizationRemarkEmitter *ORE,
+                              StringRef RemarkName, StringRef RemarkMessage,
+                              const DiagnosticLocation &Loc,
+                              const MachineBasicBlock *MBB) {
+  ORE->emit([&]() {
+    return MachineOptimizationRemarkMissed(DEBUG_TYPE, RemarkName, Loc, MBB)
+           << RemarkMessage;
+  });
 
-/// Check if the CFG of \p MF is irreducible.
-static bool isIrreducibleCFG(const MachineFunction &MF,
-                             const MachineLoopInfo &MLI) {
-  const MachineBasicBlock *Entry = &*MF.begin();
-  ReversePostOrderTraversal<const MachineBasicBlock *> RPOT(Entry);
-  BitVector VisitedBB(MF.getNumBlockIDs());
-  for (const MachineBasicBlock *MBB : RPOT) {
-    VisitedBB.set(MBB->getNumber());
-    for (const MachineBasicBlock *SuccBB : MBB->successors()) {
-      if (!VisitedBB.test(SuccBB->getNumber()))
-        continue;
-      // We already visited SuccBB, thus MBB->SuccBB must be a backedge.
-      // Check that the head matches what we have in the loop information.
-      // Otherwise, we have an irreducible graph.
-      if (!isProperBackedge(MLI, MBB, SuccBB))
-        return true;
-    }
-  }
+  LLVM_DEBUG(dbgs() << RemarkMessage << '\n');
   return false;
 }
 
 bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
-  if (skipFunction(*MF.getFunction()) || MF.empty() || !isShrinkWrapEnabled(MF))
+  if (skipFunction(MF.getFunction()) || MF.empty() || !isShrinkWrapEnabled(MF))
     return false;
 
-  DEBUG(dbgs() << "**** Analysing " << MF.getName() << '\n');
+  LLVM_DEBUG(dbgs() << "**** Analysing " << MF.getName() << '\n');
 
   init(MF);
 
-  if (isIrreducibleCFG(MF, *MLI)) {
+  ReversePostOrderTraversal<MachineBasicBlock *> RPOT(&*MF.begin());
+  if (containsIrreducibleCFG<MachineBasicBlock *>(RPOT, *MLI)) {
     // If MF is irreducible, a block may be in a loop without
     // MachineLoopInfo reporting it. I.e., we may use the
     // post-dominance property in loops, which lead to incorrect
     // results. Moreover, we may miss that the prologue and
     // epilogue are not in the same loop, leading to unbalanced
     // construction/deconstruction of the stack frame.
-    DEBUG(dbgs() << "Irreducible CFGs are not supported yet\n");
-    return false;
+    return giveUpWithRemarks(ORE, "UnsupportedIrreducibleCFG",
+                             "Irreducible CFGs are not supported yet.",
+                             MF.getFunction().getSubprogram(), &MF.front());
   }
 
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
@@ -447,12 +478,28 @@ bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
       TRI->requiresRegisterScavenging(MF) ? new RegScavenger() : nullptr);
 
   for (MachineBasicBlock &MBB : MF) {
-    DEBUG(dbgs() << "Look into: " << MBB.getNumber() << ' ' << MBB.getName()
-                 << '\n');
+    LLVM_DEBUG(dbgs() << "Look into: " << MBB.getNumber() << ' '
+                      << MBB.getName() << '\n');
 
-    if (MBB.isEHFuncletEntry()) {
-      DEBUG(dbgs() << "EH Funclets are not supported yet.\n");
-      return false;
+    if (MBB.isEHFuncletEntry())
+      return giveUpWithRemarks(ORE, "UnsupportedEHFunclets",
+                               "EH Funclets are not supported yet.",
+                               MBB.front().getDebugLoc(), &MBB);
+
+    if (MBB.isEHPad()) {
+      // Push the prologue and epilogue outside of
+      // the region that may throw by making sure
+      // that all the landing pads are at least at the
+      // boundary of the save and restore points.
+      // The problem with exceptions is that the throw
+      // is not properly modeled and in particular, a
+      // basic block can jump out from the middle.
+      updateSaveRestorePoints(MBB, RS.get());
+      if (!ArePointsInteresting()) {
+        LLVM_DEBUG(dbgs() << "EHPad prevents shrink-wrapping\n");
+        return false;
+      }
+      continue;
     }
 
     for (const MachineInstr &MI : MBB) {
@@ -464,7 +511,7 @@ bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
       // If we are at a point where we cannot improve the placement of
       // save/restore instructions, just give up.
       if (!ArePointsInteresting()) {
-        DEBUG(dbgs() << "No Shrink wrap candidate found\n");
+        LLVM_DEBUG(dbgs() << "No Shrink wrap candidate found\n");
         return false;
       }
       // No need to look for other instructions, this basic block
@@ -477,20 +524,21 @@ bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
     // because it means we did not encounter any frame/CSR related code.
     // Otherwise, we would have returned from the previous loop.
     assert(!Save && !Restore && "We miss a shrink-wrap opportunity?!");
-    DEBUG(dbgs() << "Nothing to shrink-wrap\n");
+    LLVM_DEBUG(dbgs() << "Nothing to shrink-wrap\n");
     return false;
   }
 
-  DEBUG(dbgs() << "\n ** Results **\nFrequency of the Entry: " << EntryFreq
-               << '\n');
+  LLVM_DEBUG(dbgs() << "\n ** Results **\nFrequency of the Entry: " << EntryFreq
+                    << '\n');
 
   const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   do {
-    DEBUG(dbgs() << "Shrink wrap candidates (#, Name, Freq):\nSave: "
-                 << Save->getNumber() << ' ' << Save->getName() << ' '
-                 << MBFI->getBlockFreq(Save).getFrequency() << "\nRestore: "
-                 << Restore->getNumber() << ' ' << Restore->getName() << ' '
-                 << MBFI->getBlockFreq(Restore).getFrequency() << '\n');
+    LLVM_DEBUG(dbgs() << "Shrink wrap candidates (#, Name, Freq):\nSave: "
+                      << Save->getNumber() << ' ' << Save->getName() << ' '
+                      << MBFI->getBlockFreq(Save).getFrequency()
+                      << "\nRestore: " << Restore->getNumber() << ' '
+                      << Restore->getName() << ' '
+                      << MBFI->getBlockFreq(Restore).getFrequency() << '\n');
 
     bool IsSaveCheap, TargetCanUseSaveAsPrologue = false;
     if (((IsSaveCheap = EntryFreq >= MBFI->getBlockFreq(Save).getFrequency()) &&
@@ -498,7 +546,8 @@ bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
         ((TargetCanUseSaveAsPrologue = TFI->canUseAsPrologue(*Save)) &&
          TFI->canUseAsEpilogue(*Restore)))
       break;
-    DEBUG(dbgs() << "New points are too expensive or invalid for the target\n");
+    LLVM_DEBUG(
+        dbgs() << "New points are too expensive or invalid for the target\n");
     MachineBasicBlock *NewBB;
     if (!IsSaveCheap || !TargetCanUseSaveAsPrologue) {
       Save = FindIDom<>(*Save, Save->predecessors(), *MDT);
@@ -520,9 +569,10 @@ bool ShrinkWrap::runOnMachineFunction(MachineFunction &MF) {
     return false;
   }
 
-  DEBUG(dbgs() << "Final shrink wrap candidates:\nSave: " << Save->getNumber()
-               << ' ' << Save->getName() << "\nRestore: "
-               << Restore->getNumber() << ' ' << Restore->getName() << '\n');
+  LLVM_DEBUG(dbgs() << "Final shrink wrap candidates:\nSave: "
+                    << Save->getNumber() << ' ' << Save->getName()
+                    << "\nRestore: " << Restore->getNumber() << ' '
+                    << Restore->getName() << '\n');
 
   MachineFrameInfo &MFI = MF.getFrameInfo();
   MFI.setSavePoint(Save);
@@ -537,16 +587,17 @@ bool ShrinkWrap::isShrinkWrapEnabled(const MachineFunction &MF) {
   switch (EnableShrinkWrapOpt) {
   case cl::BOU_UNSET:
     return TFI->enableShrinkWrapping(MF) &&
-      // Windows with CFI has some limitations that make it impossible
-      // to use shrink-wrapping.
-      !MF.getTarget().getMCAsmInfo()->usesWindowsCFI() &&
-      // Sanitizers look at the value of the stack at the location
-      // of the crash. Since a crash can happen anywhere, the
-      // frame must be lowered before anything else happen for the
-      // sanitizers to be able to get a correct stack frame.
-      !(MF.getFunction()->hasFnAttribute(Attribute::SanitizeAddress) ||
-        MF.getFunction()->hasFnAttribute(Attribute::SanitizeThread) ||
-        MF.getFunction()->hasFnAttribute(Attribute::SanitizeMemory));
+           // Windows with CFI has some limitations that make it impossible
+           // to use shrink-wrapping.
+           !MF.getTarget().getMCAsmInfo()->usesWindowsCFI() &&
+           // Sanitizers look at the value of the stack at the location
+           // of the crash. Since a crash can happen anywhere, the
+           // frame must be lowered before anything else happen for the
+           // sanitizers to be able to get a correct stack frame.
+           !(MF.getFunction().hasFnAttribute(Attribute::SanitizeAddress) ||
+             MF.getFunction().hasFnAttribute(Attribute::SanitizeThread) ||
+             MF.getFunction().hasFnAttribute(Attribute::SanitizeMemory) ||
+             MF.getFunction().hasFnAttribute(Attribute::SanitizeHWAddress));
   // If EnableShrinkWrap is set, it takes precedence on whatever the
   // target sets. The rational is that we assume we want to test
   // something related to shrink-wrapping.

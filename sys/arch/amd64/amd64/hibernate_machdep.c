@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.41 2018/03/20 04:18:40 jmatthew Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.45 2018/07/27 21:11:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -28,19 +28,20 @@
 #include <sys/kcore.h>
 #include <sys/atomic.h>
 
-#include <dev/acpi/acpivar.h>
-
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pmemrange.h>
 
+#include <machine/biosvar.h>
 #include <machine/cpu.h>
-#include <machine/hibernate_var.h>
+#include <machine/hibernate.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 
 #ifdef MULTIPROCESSOR
 #include <machine/mpbiosvar.h>
 #endif /* MULTIPROCESSOR */
+
+#include <dev/acpi/acpivar.h>
 
 #include "acpi.h"
 #include "wd.h"
@@ -54,8 +55,6 @@
 void    hibernate_enter_resume_4k_pte(vaddr_t, paddr_t);
 void    hibernate_enter_resume_2m_pde(vaddr_t, paddr_t);
 
-extern	void hibernate_resume_machdep(void);
-extern	void hibernate_flush(void);
 extern	caddr_t start, end;
 extern	int mem_cluster_cnt;
 extern  phys_ram_seg_t mem_clusters[];
@@ -413,17 +412,27 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 
 /*
  * During inflate, certain pages that contain our bookkeeping information
- * (eg, the chunk table, scratch pages, etc) need to be skipped over and
- * not inflated into.
+ * (eg, the chunk table, scratch pages, retguard region, etc) need to be
+ * skipped over and not inflated into.
  *
- * Returns 1 if the physical page at dest should be skipped, 0 otherwise
+ * Return values:
+ *  HIB_MOVE: if the physical page at dest should be moved to the retguard save
+ *    region in the piglet
+ *  HIB_SKIP: if the physical page at dest should be skipped
+ *  0: otherwise (no special treatment needed)
  */
 int
 hibernate_inflate_skip(union hibernate_info *hib_info, paddr_t dest)
 {
+	extern char __retguard_start_phys, __retguard_end_phys;
+
 	if (dest >= hib_info->piglet_pa &&
 	    dest <= (hib_info->piglet_pa + 4 * HIBERNATE_CHUNK_SIZE))
-		return (1);
+		return (HIB_SKIP);
+
+	if (dest >= ((paddr_t)&__retguard_start_phys) &&
+	    dest <= ((paddr_t)&__retguard_end_phys))
+		return (HIB_MOVE);
 
 	return (0);
 }
@@ -431,13 +440,13 @@ hibernate_inflate_skip(union hibernate_info *hib_info, paddr_t dest)
 void
 hibernate_enable_intr_machdep(void)
 {
-	enable_intr();
+	intr_enable();
 }
 
 void
 hibernate_disable_intr_machdep(void)
 {
-	disable_intr();
+	intr_disable();
 }
 
 #ifdef MULTIPROCESSOR

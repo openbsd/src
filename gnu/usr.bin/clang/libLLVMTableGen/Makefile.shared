@@ -1,0 +1,25 @@
+# $OpenBSD: Makefile.shared,v 1.1 2019/03/05 09:44:42 jsg Exp $
+
+LIB=	LLVMTableGen
+
+NOPROFILE=
+
+CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/TableGen
+
+
+SRCS+=	TableGenError.cpp \
+	Main.cpp \
+	JSONBackend.cpp \
+	Record.cpp \
+	SetTheory.cpp \
+	StringMatcher.cpp \
+	TableGenBackend.cpp \
+	TGLexer.cpp \
+	TGParser.cpp
+
+TableGenError.cpp:
+	ln -s ${LLVM_SRCS}/lib/TableGen/Error.cpp $@
+
+.PATH:	${.CURDIR}/../../../llvm/lib/TableGen
+
+CLEANFILES+= TableGenError.cpp

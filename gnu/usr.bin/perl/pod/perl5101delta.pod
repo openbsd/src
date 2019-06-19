@@ -127,7 +127,7 @@ if overload fallback is active, it will be used instead, as usual.)
 =item *
 
 The semantics of C<use feature :5.10*> have changed slightly.
-See L<"Modules and Pragmata"> for more information.
+See L</"Modules and Pragmata"> for more information.
 
 =item *
 

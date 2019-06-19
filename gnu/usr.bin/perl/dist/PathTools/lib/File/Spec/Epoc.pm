@@ -1,13 +1,12 @@
 package File::Spec::Epoc;
 
 use strict;
-use vars qw($VERSION @ISA);
 
-$VERSION = '3.63_01';
+our $VERSION = '3.74';
 $VERSION =~ tr/_//d;
 
 require File::Spec::Unix;
-@ISA = qw(File::Spec::Unix);
+our @ISA = qw(File::Spec::Unix);
 
 =head1 NAME
 

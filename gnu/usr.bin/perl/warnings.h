@@ -111,9 +111,19 @@
 #define WARN_MISSING			 64
 #define WARN_REDUNDANT			 65
 
-#define WARNsize			 17
-#define WARN_ALLstring			 "\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125"
-#define WARN_NONEstring			 "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+/* Warnings Categories added in Perl 5.025 */
+
+#define WARN_EXPERIMENTAL__DECLARED_REFS 66
+
+/* Warnings Categories added in Perl 5.027 */
+
+#define WARN_EXPERIMENTAL__ALPHA_ASSERTIONS 67
+#define WARN_EXPERIMENTAL__SCRIPT_RUN	 68
+#define WARN_SHADOW			 69
+
+#define WARNsize			 18
+#define WARN_ALLstring			 "\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125\125"
+#define WARN_NONEstring			 "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 
 #define isLEXWARN_on \
 	cBOOL(PL_curcop && PL_curcop->cop_warnings != pWARN_STD)
@@ -127,6 +137,64 @@
     (specialWARN(p) ? (STRLEN*)(p)	\
     : (STRLEN*)CopyD(p, PerlMemShared_malloc(sizeof(*p)+*p), sizeof(*p)+*p, \
 		     			     char))
+
+/*
+
+=head1 Warning and Dieing
+
+=for apidoc Am|bool|ckWARN|U32 w
+
+Returns a boolean as to whether or not warnings are enabled for the warning
+category C<w>.  If the category is by default enabled even if not within the
+scope of S<C<use warnings>>, instead use the L</ckWARN_d> macro.
+
+=for apidoc Am|bool|ckWARN_d|U32 w
+
+Like C<L</ckWARN>>, but for use if and only if the warning category is by
+default enabled even if not within the scope of S<C<use warnings>>.
+
+=for apidoc Am|bool|ckWARN2|U32 w1|U32 w2
+
+Like C<L</ckWARN>>, but takes two warnings categories as input, and returns
+TRUE if either is enabled.  If either category is by default enabled even if
+not within the scope of S<C<use warnings>>, instead use the L</ckWARN2_d>
+macro.  The categories must be completely independent, one may not be
+subclassed from the other.
+
+=for apidoc Am|bool|ckWARN2_d|U32 w1|U32 w2
+
+Like C<L</ckWARN2>>, but for use if and only if either warning category is by
+default enabled even if not within the scope of S<C<use warnings>>.
+
+=for apidoc Am|bool|ckWARN3|U32 w1|U32 w2|U32 w3
+
+Like C<L</ckWARN2>>, but takes three warnings categories as input, and returns
+TRUE if any is enabled.  If any of the categories is by default enabled even
+if not within the scope of S<C<use warnings>>, instead use the L</ckWARN3_d>
+macro.  The categories must be completely independent, one may not be
+subclassed from any other.
+
+=for apidoc Am|bool|ckWARN3_d|U32 w1|U32 w2|U32 w3
+
+Like C<L</ckWARN3>>, but for use if and only if any of the warning categories
+is by default enabled even if not within the scope of S<C<use warnings>>.
+
+=for apidoc Am|bool|ckWARN4|U32 w1|U32 w2|U32 w3|U32 w4
+
+Like C<L</ckWARN3>>, but takes four warnings categories as input, and returns
+TRUE if any is enabled.  If any of the categories is by default enabled even
+if not within the scope of S<C<use warnings>>, instead use the L</ckWARN4_d>
+macro.  The categories must be completely independent, one may not be
+subclassed from any other.
+
+=for apidoc Am|bool|ckWARN4_d|U32 w1|U32 w2|U32 w3|U32 w4
+
+Like C<L</ckWARN4>>, but for use if and only if any of the warning categories
+is by default enabled even if not within the scope of S<C<use warnings>>.
+
+=cut
+
+*/
 
 #define ckWARN(w)		Perl_ckwarn(aTHX_ packWARN(w))
 
@@ -159,12 +227,15 @@
 #define unpackWARN4(x)		(((x) >>24) & 0xFF)
 
 #define ckDEAD(x)							\
-	   ( ! specialWARN(PL_curcop->cop_warnings) &&			\
-	    ( isWARNf_on(PL_curcop->cop_warnings, WARN_ALL) || 		\
-	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN1(x)) ||	\
-	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN2(x)) ||	\
-	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN3(x)) ||	\
-	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN4(x))))
+   (PL_curcop &&                                                        \
+    !specialWARN(PL_curcop->cop_warnings) &&			        \
+    (isWARNf_on(PL_curcop->cop_warnings, unpackWARN1(x)) ||	        \
+      (unpackWARN2(x) &&                                                \
+	(isWARNf_on(PL_curcop->cop_warnings, unpackWARN2(x)) ||	        \
+	  (unpackWARN3(x) &&                                            \
+	    (isWARNf_on(PL_curcop->cop_warnings, unpackWARN3(x)) ||	\
+	      (unpackWARN4(x) &&                                        \
+		isWARNf_on(PL_curcop->cop_warnings, unpackWARN4(x)))))))))
 
 /* end of file warnings.h */
 

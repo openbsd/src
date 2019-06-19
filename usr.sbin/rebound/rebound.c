@@ -1,4 +1,4 @@
-/* $OpenBSD: rebound.c,v 1.95 2018/02/11 01:23:40 tb Exp $ */
+/* $OpenBSD: rebound.c,v 1.108 2019/04/01 06:40:05 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -43,7 +43,21 @@
 
 #define MINIMUM(a,b) (((a)<(b))?(a):(b))
 
+/*
+ * TTL for permanently cached records.
+ * They don't expire, but need something to put in the response.
+ */
+#define CACHETTL 10
+
 uint16_t randomid(void);
+
+int https_init(void);
+int https_connect(const char *ip, const char *name);
+int https_query(uint8_t *query, size_t qlen, uint8_t *resp, size_t *resplen);
+
+static int https;
+static char https_ip[256];
+static char https_name[256];
 
 union sockun {
 	struct sockaddr a;
@@ -74,7 +88,7 @@ struct dnspacket {
  * after the response is set, the request must not free it.
  */
 struct dnscache {
-	TAILQ_ENTRY(dnscache) fifo;
+	RB_ENTRY(dnscache) expnode;
 	RB_ENTRY(dnscache) cachenode;
 	struct dnspacket *req;
 	size_t reqlen;
@@ -82,8 +96,10 @@ struct dnscache {
 	size_t resplen;
 	struct timespec ts;
 	struct timespec basetime;
+	int permanent;
 };
-static TAILQ_HEAD(, dnscache) cachefifo;
+static RB_HEAD(cacheexp, dnscache) cacheexp;
+RB_PROTOTYPE_STATIC(cacheexp, dnscache, expnode, expirycmp)
 static RB_HEAD(cachetree, dnscache) cachetree;
 RB_PROTOTYPE_STATIC(cachetree, dnscache, cachenode, cachecmp)
 
@@ -115,7 +131,9 @@ static int connmax;
 static uint64_t conntotal;
 static int stopaccepting;
 
-static void
+static void sendreply(struct request *req, uint8_t *buf, size_t r);
+
+void
 logmsg(int prio, const char *msg, ...)
 {
 	va_list ap;
@@ -133,7 +151,7 @@ logmsg(int prio, const char *msg, ...)
 	}
 }
 
-static void __dead
+void __dead
 logerr(const char *msg, ...)
 {
 	va_list ap;
@@ -152,6 +170,17 @@ logerr(const char *msg, ...)
 	}
 	exit(1);
 }
+
+static int
+expirycmp(struct dnscache *c1, struct dnscache *c2)
+{
+	if (timespeccmp(&c1->ts, &c2->ts, <))
+		return -1;
+	if (timespeccmp(&c1->ts, &c2->ts, >))
+		return 1;
+	return c1 < c2 ? -1 : 1;
+}
+RB_GENERATE_STATIC(cacheexp, dnscache, expnode, expirycmp)
 
 static int
 cachecmp(struct dnscache *c1, struct dnscache *c2)
@@ -195,14 +224,14 @@ freecacheent(struct dnscache *ent)
 {
 	cachecount -= 1;
 	RB_REMOVE(cachetree, &cachetree, ent);
-	TAILQ_REMOVE(&cachefifo, ent, fifo);
+	RB_REMOVE(cacheexp, &cacheexp, ent);
 	free(ent->req);
 	free(ent->resp);
 	free(ent);
 }
 
 /*
- * names end with either a nul byte, or a two byte 0xc0 pointer
+ * names end with either a nul byte or a two byte 0xc0 pointer
  */
 static size_t
 dnamelen(const unsigned char *p, size_t len)
@@ -228,6 +257,9 @@ adjustttl(struct dnscache *ent)
 	uint32_t ttl, cnt, i;
 	uint16_t len;
 	time_t diff;
+
+	if (ent->permanent)
+		return 0;
 
 	diff = now.tv_sec - ent->basetime.tv_sec;
 	if (diff <= 0)
@@ -408,6 +440,26 @@ newrequest(int ud, struct sockaddr *remoteaddr)
 		req->cacheent = hit;
 	}
 
+	if (https) {
+		int rv;
+		char resp[65536];
+		size_t resplen;
+
+		rv = https_query(buf, r, resp, &resplen);
+		if (rv != 0) {
+			rv = https_connect(https_ip, https_name);
+			if (rv == 0)
+				rv = https_query(buf, r, buf, &resplen);
+		}
+		if (rv != 0) {
+			logmsg(LOG_NOTICE, "failed to make https query");
+			goto fail;
+		}
+		sendreply(req, resp, resplen);
+		freerequest(req);
+		return NULL;
+	}
+
 	req->s = socket(remoteaddr->sa_family, SOCK_DGRAM, 0);
 	if (req->s == -1)
 		goto fail;
@@ -475,17 +527,13 @@ minttl(struct dnspacket *resp, u_int rlen)
 }
 
 static void
-sendreply(struct request *req)
+sendreply(struct request *req, uint8_t *buf, size_t r)
 {
-	uint8_t buf[65536];
 	struct dnspacket *resp;
 	struct dnscache *ent;
-	size_t r;
 	uint32_t ttl;
 
 	resp = (struct dnspacket *)buf;
-
-	r = recv(req->s, buf, sizeof(buf), 0);
 	if (r == 0 || r == -1 || r < sizeof(struct dnspacket))
 		return;
 	if (resp->id != req->reqid)
@@ -493,7 +541,8 @@ sendreply(struct request *req)
 	resp->id = req->clientid;
 	if (ntohs(resp->qdcount) == 1) {
 		/* some more checking */
-		size_t namelen = dnamelen(resp->qname, r - sizeof(struct dnspacket));
+		size_t namelen = dnamelen(resp->qname,
+		    r - sizeof(struct dnspacket));
 		if (namelen > r - sizeof(struct dnspacket))
 			return;
 		if (namelen > NAMELEN)
@@ -525,9 +574,24 @@ sendreply(struct request *req)
 		}
 		memcpy(ent->resp, buf, r);
 		ent->resplen = r;
+		if (RB_INSERT(cacheexp, &cacheexp, ent)) {
+			free(ent->resp);
+			ent->resp = NULL;
+			RB_REMOVE(cachetree, &cachetree, ent);
+			return;
+		}
 		cachecount += 1;
-		TAILQ_INSERT_TAIL(&cachefifo, ent, fifo);
 	}
+}
+
+static void
+handlereply(struct request *req)
+{
+	uint8_t buf[65536];
+	size_t r;
+
+	r = recv(req->s, buf, sizeof(buf), 0);
+	sendreply(req, buf, r);
 }
 
 static struct request *
@@ -600,10 +664,141 @@ fail:
 	return NULL;
 }
 
+static size_t
+encodename(const char *name, unsigned char *buf)
+{
+	const char *s = name;
+	const char *dot;
+	unsigned char len;
+	size_t totlen = 0;
+
+	while (*s) {
+		dot = strchr(s, '.');
+		if (!dot)
+			break;
+		len = dot - s;
+		*buf++ = len;
+		memcpy(buf, s, len);
+		buf += len;
+		totlen += len + 1;
+		if (*dot == 0)
+			break;
+		s = dot + 1;
+	}
+	*buf = 0;
+	totlen += 1;
+	return totlen;
+}
+
+static int
+preloadcache(const char *name, uint16_t type, void *rdata, uint16_t rdatalen)
+{
+	struct dnspacket *req = NULL, *resp = NULL;
+	size_t reqlen, resplen;
+	struct dnscache *ent = NULL;
+	unsigned char *p;
+	uint16_t len, class;
+	uint32_t ttl;
+
+	/* header + len + name + type + class */
+	reqlen = sizeof(*req) + 1 + strlen(name) + 2 + 2;
+	req = malloc(reqlen);
+	if (req == NULL)
+		goto fail;
+
+	req->id = 0;
+	req->flags = htons(0x100);
+	req->qdcount = htons(1);
+	req->ancount = 0;
+	req->nscount = 0;
+	req->arcount = 0;
+	p = (char *)req + sizeof(*req);
+	len = encodename(name, p);
+	p += len;
+	memcpy(p, &type, 2);
+	p += 2;
+	class = htons(1); /* IN */
+	memcpy(p, &class, 2);
+
+	/* req + name (compressed) + type + class + ttl + len + data */
+	resplen = reqlen + 2 + 2 + 2 + 4 + 2 + rdatalen;
+	resp = malloc(resplen);
+	if (resp == NULL)
+		goto fail;
+	memcpy(resp, req, reqlen);
+	resp->flags = htons(0x100 | 0x8000);	/* response */
+	resp->ancount = htons(1);
+	p = (char *)resp + reqlen;
+	len = htons(sizeof(*req));
+	memcpy(p, &len, 2);
+	*p |= 0xc0;
+	p += 2;
+	memcpy(p, &type, 2);
+	p += 2;
+	memcpy(p, &class, 2);
+	p += 2;
+	ttl = htonl(CACHETTL);
+	memcpy(p, &ttl, 4);
+	p += 4;
+	len = htons(rdatalen);
+	memcpy(p, &len, 2);
+	p += 2;
+	memcpy(p, rdata, rdatalen);
+
+	ent = calloc(1, sizeof(*ent));
+	if (ent == NULL)
+		goto fail;
+	ent->req = req;
+	ent->reqlen = reqlen;
+	ent->resp = resp;
+	ent->resplen = resplen;
+	ent->permanent = 1;
+
+	/* not added to the cacheexp tree */
+	RB_INSERT(cachetree, &cachetree, ent);
+	return 0;
+
+fail:
+	free(req);
+	free(resp);
+	free(ent);
+	return -1;
+}
+
+static void
+preloadA(const char *name, const char *ip)
+{
+	struct in_addr in;
+
+	inet_aton(ip, &in);
+
+	if (preloadcache(name, htons(1), &in, 4) == -1)
+		logerr("failed to add cache entry for %s", name);
+}
+
+static void
+preloadPTR(const char *ip, const char *name)
+{
+	char ipbuf[256];
+	char namebuf[256];
+	struct in_addr in;
+
+	inet_aton(ip, &in);
+	in.s_addr = swap32(in.s_addr);
+	snprintf(ipbuf, sizeof(ipbuf), "%s.in-addr.arpa.", inet_ntoa(in));
+
+	encodename(name, namebuf);
+
+	if (preloadcache(ipbuf, htons(12), namebuf, 1 + strlen(namebuf)) == -1)
+		logerr("failed to add cache entry for %s", ip);
+}
+
 static int
 readconfig(int conffd, union sockun *remoteaddr)
 {
 	const char ns[] = "nameserver";
+	const char rc[] = "record";
+	const char doh[] = "https";
 	char buf[1024];
 	char *p;
 	struct sockaddr_in *sin = &remoteaddr->i;
@@ -616,29 +811,50 @@ readconfig(int conffd, union sockun *remoteaddr)
 	while (fgets(buf, sizeof(buf), conf) != NULL) {
 		buf[strcspn(buf, "\n")] = '\0';
 
-		if (strncmp(buf, ns, strlen(ns)) != 0)
-			continue;
-		p = buf + strlen(ns) + 1;
-		while (isspace((unsigned char)*p))
-			p++;
+		if (strncmp(buf, ns, strlen(ns)) == 0) {
+			p = buf + strlen(ns) + 1;
+			while (isspace((unsigned char)*p))
+				p++;
 
-		/* this will not end well */
-		if (strcmp(p, "127.0.0.1") == 0)
-			continue;
+			/* this will not end well */
+			if (strcmp(p, "127.0.0.1") == 0)
+				continue;
 
-		memset(remoteaddr, 0, sizeof(*remoteaddr));
-		if (inet_pton(AF_INET, p, &sin->sin_addr) == 1) {
-			sin->sin_len = sizeof(*sin);
-			sin->sin_family = AF_INET;
-			sin->sin_port = htons(53);
-			rv = AF_INET;
-		} else if (inet_pton(AF_INET6, p, &sin6->sin6_addr) == 1) {
-			sin6->sin6_len = sizeof(*sin6);
-			sin6->sin6_family = AF_INET6;
-			sin6->sin6_port = htons(53);
-			rv = AF_INET6;
+			memset(remoteaddr, 0, sizeof(*remoteaddr));
+			if (inet_pton(AF_INET, p, &sin->sin_addr) == 1) {
+				sin->sin_len = sizeof(*sin);
+				sin->sin_family = AF_INET;
+				sin->sin_port = htons(53);
+				rv = AF_INET;
+			} else if (inet_pton(AF_INET6, p, &sin6->sin6_addr) == 1) {
+				sin6->sin6_len = sizeof(*sin6);
+				sin6->sin6_family = AF_INET6;
+				sin6->sin6_port = htons(53);
+				rv = AF_INET6;
+			}
+		} else if (strncmp(buf, rc, strlen(rc)) == 0) {
+			char rectype[16], name[256], value[256];
+			p = buf + strlen(rc) + 1;
+
+			memset(rectype, 0, sizeof(rectype));
+			sscanf(p, "%15s %255s %255s", rectype, name, value);
+			if (strcmp(rectype, "A") == 0) {
+				if (strlen(name) < 2 ||
+				    name[strlen(name) - 1] != '.') {
+					logerr("do not like name %s", name);
+					continue;
+				}
+				preloadA(name, value);
+				preloadPTR(value, name);
+			}
+		} else if (strncmp(buf, doh, strlen(doh)) == 0) {
+			p = buf + strlen(doh) + 1;
+			if (sscanf(p, "%255s %255s", https_ip, https_name) != 2)
+				logerr("do not like https line");
+			https = 1;
+			if (rv == -1)
+				rv = 0;
 		}
-		break;
 	}
 	fclose(conf);
 	return rv;
@@ -662,8 +878,10 @@ workerinit(void)
 	cachemax = 10000; /* something big, but not huge */
 
 	TAILQ_INIT(&reqfifo);
-	TAILQ_INIT(&cachefifo);
+	RB_INIT(&cacheexp);
 	RB_INIT(&cachetree);
+
+	https_init();
 
 	if (!(pwd = getpwnam("_rebound")))
 		logerr("getpwnam failed");
@@ -683,11 +901,50 @@ workerinit(void)
 		logerr("pledge failed");
 }
 
+static void
+readevent(int kq, struct kevent *ke, struct sockaddr *remoteaddr,
+    int *udpfds, int numudp, int *tcpfds, int numtcp)
+{
+	struct kevent ch[2];
+	struct request *req;
+	int i;
+
+	req = ke->udata;
+	if (req != NULL) {
+		if (req->tcp == 0)
+			handlereply(req);
+		freerequest(req);
+		return;
+	}
+	for (i = 0; i < numudp; i++) {
+		if (ke->ident == udpfds[i]) {
+			if ((req = newrequest(ke->ident, remoteaddr))) {
+				EV_SET(&ch[0], req->s, EVFILT_READ,
+				    EV_ADD, 0, 0, req);
+				kevent(kq, ch, 1, NULL, 0, NULL);
+			}
+			return;
+		}
+	}
+	for (i = 0; i < numtcp; i++) {
+		if (ke->ident == tcpfds[i]) {
+			if ((req = newtcprequest(ke->ident, remoteaddr))) {
+				EV_SET(&ch[0], req->s,
+				    req->tcp == 1 ? EVFILT_WRITE :
+				    EVFILT_READ, EV_ADD, 0, 0, req);
+				kevent(kq, ch, 1, NULL, 0, NULL);
+			}
+			return;
+		}
+	}
+	logerr("read event on unknown fd");
+}
+
 static int
-workerloop(int conffd, int ud, int ld, int ud6, int ld6)
+workerloop(int conffd, int udpfds[], int numudp, int tcpfds[], int numtcp)
 {
 	union sockun remoteaddr;
-	struct kevent ch[2], kev[4];
+	struct kevent ch[2];
 	struct timespec ts, *timeout = NULL;
 	struct request *req;
 	struct dnscache *ent;
@@ -698,8 +955,8 @@ workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 	if (!debug) {
 		pid_t parent = getppid();
 		/* would need pledge(proc) to do this below */
-		EV_SET(&kev[0], parent, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-		if (kevent(kq, kev, 1, NULL, 0, NULL) == -1)
+		EV_SET(&ch[0], parent, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
+		if (kevent(kq, ch, 1, NULL, 0, NULL) == -1)
 			logerr("kevent1: %d", errno);
 	}
 
@@ -709,18 +966,23 @@ workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 	if (af == -1)
 		logerr("parse error in config file");
 
-	EV_SET(&kev[0], ud, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[1], ld, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[2], ud6, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[3], ld6, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	if (kevent(kq, kev, 4, NULL, 0, NULL) == -1)
-		logerr("kevent4: %d", errno);
-	EV_SET(&kev[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[1], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
-	if (kevent(kq, kev, 2, NULL, 0, NULL) == -1)
-		logerr("kevent2: %d", errno);
+	for (i = 0; i < numudp; i++) {
+		EV_SET(&ch[0], udpfds[i], EVFILT_READ, EV_ADD, 0, 0, NULL);
+		if (kevent(kq, ch, 1, NULL, 0, NULL) == -1)
+			logerr("udp kevent: %d", errno);
+	}
+	for (i = 0; i < numtcp; i++) {
+		EV_SET(&ch[0], tcpfds[i], EVFILT_READ, EV_ADD, 0, 0, NULL);
+		if (kevent(kq, ch, 1, NULL, 0, NULL) == -1)
+			logerr("tcp kevent: %d", errno);
+	}
+	EV_SET(&ch[0], SIGHUP, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	EV_SET(&ch[1], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+	if (kevent(kq, ch, 2, NULL, 0, NULL) == -1)
+		logerr("sig kevent: %d", errno);
 	logmsg(LOG_INFO, "worker process going to work");
 	while (1) {
+		struct kevent kev[4];
 		r = kevent(kq, NULL, 0, kev, 4, timeout);
 		if (r == -1)
 			logerr("kevent failed (%d)", errno);
@@ -728,8 +990,11 @@ workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 		clock_gettime(CLOCK_MONOTONIC, &now);
 
 		if (stopaccepting) {
-			EV_SET(&ch[0], ld, EVFILT_READ, EV_ADD, 0, 0, NULL);
-			kevent(kq, ch, 1, NULL, 0, NULL);
+			for (i = 0; i < numtcp; i++) {
+				EV_SET(&ch[0], tcpfds[i], EVFILT_READ,
+				    EV_ADD, 0, 0, NULL);
+				kevent(kq, ch, 1, NULL, 0, NULL);
+			}
 			stopaccepting = 0;
 		}
 
@@ -765,25 +1030,8 @@ workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 				}
 				break;
 			case EVFILT_READ:
-				if (ke->ident == ud || ke->ident == ud6) {
-					if ((req = newrequest(ke->ident, &remoteaddr.a))) {
-						EV_SET(&ch[0], req->s, EVFILT_READ,
-						    EV_ADD, 0, 0, req);
-						kevent(kq, ch, 1, NULL, 0, NULL);
-					}
-				} else if (ke->ident == ld || ke->ident == ld6) {
-					if ((req = newtcprequest(ke->ident, &remoteaddr.a))) {
-						EV_SET(&ch[0], req->s,
-						    req->tcp == 1 ? EVFILT_WRITE :
-						    EVFILT_READ, EV_ADD, 0, 0, req);
-						kevent(kq, ch, 1, NULL, 0, NULL);
-					}
-				} else {
-					req = ke->udata;
-					if (req->tcp == 0)
-						sendreply(req);
-					freerequest(req);
-				}
+				readevent(kq, ke, &remoteaddr.a, udpfds,
+				    numudp, tcpfds, numtcp);
 				break;
 			default:
 				logerr("don't know what happened");
@@ -794,8 +1042,11 @@ workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 		timeout = NULL;
 
 		if (stopaccepting) {
-			EV_SET(&ch[0], ld, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-			kevent(kq, ch, 1, NULL, 0, NULL);
+			for (i = 0; i < numtcp; i++) {
+				EV_SET(&ch[0], tcpfds[i], EVFILT_READ,
+				    EV_DELETE, 0, 0, NULL);
+				kevent(kq, ch, 1, NULL, 0, NULL);
+			}
 			memset(&ts, 0, sizeof(ts));
 			/* one second added below */
 			timeout = &ts;
@@ -804,10 +1055,10 @@ workerloop(int conffd, int ud, int ld, int ud6, int ld6)
 		while (conncount > connmax)
 			freerequest(TAILQ_FIRST(&reqfifo));
 		while (cachecount > cachemax)
-			freecacheent(TAILQ_FIRST(&cachefifo));
+			freecacheent(RB_MIN(cacheexp, &cacheexp));
 
 		/* burn old cache entries */
-		while ((ent = TAILQ_FIRST(&cachefifo))) {
+		while ((ent = RB_MIN(cacheexp, &cacheexp))) {
 			if (timespeccmp(&ent->ts, &now, <=))
 				freecacheent(ent);
 			else
@@ -856,34 +1107,61 @@ openconfig(const char *confname, int kq)
 }
 
 static pid_t
-reexec(int conffd, int ud, int ld, int ud6, int ld6)
+reexec(int conffd, int *udpfds, int numudp, int *tcpfds, int numtcp)
 {
 	pid_t child;
+	char **argv;
+	int argc;
+	int i;
 
-	if (conffd != 8 || ud != 3 || ld != 4 || ud6 != 5 || ld6 != 6)
-		logerr("can't re-exec, fds are wrong");
-
-	switch ((child = fork())) {
-	case -1:
+	if ((child = fork()) == -1)
 		logerr("failed to fork");
-		break;
-	case 0:
-		execl("/usr/sbin/rebound", "rebound", "-W", NULL);
-		logerr("re-exec failed");
-	default:
-		break;
+	if (child != 0)
+		return child;
+
+	/*   = rebound -W -- -c conffd [-u udpfd]    [-t tcpfd]    NULL */
+	argc = 1       +1 +1 +1 +1     +(2 * numudp) +(2 * numtcp) +1;
+	argv = reallocarray(NULL, argc, sizeof(char *));
+	if (!argv)
+		logerr("out of memory building argv");
+	argc = 0;
+	argv[argc++] = "rebound";
+	argv[argc++] = "-W";
+	argv[argc++] = "--";
+	argv[argc++] = "-c";
+	if (asprintf(&argv[argc++], "%d", conffd) == -1)
+		logerr("out of memory building argv");
+	for (i = 0; i < numudp; i++) {
+		argv[argc++] = "-u";
+		if (asprintf(&argv[argc++], "%d", udpfds[i]) == -1)
+			logerr("out of memory building argv");
 	}
-	return child;
+	for (i = 0; i < numtcp; i++) {
+		argv[argc++] = "-t";
+		if (asprintf(&argv[argc++], "%d", tcpfds[i]) == -1)
+			logerr("out of memory building argv");
+	}
+	argv[argc++] = NULL;
+
+	execv("/usr/sbin/rebound", argv);
+	logerr("re-exec failed");
 }
 
 static int
-monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
+monitorloop(int *udpfds, int numudp, int *tcpfds, int numtcp,
+    const char *confname)
 {
 	pid_t child;
 	struct kevent kev;
 	int r, kq;
 	int conffd = -1;
 	struct timespec ts, *timeout = NULL;
+
+	if (unveil(confname, "r") == -1)
+		err(1, "unveil");
+
+	if (unveil("/usr/sbin/rebound", "x") == -1)
+		err(1, "unveil");
 
 	if (pledge("stdio rpath proc exec", NULL) == -1)
 		err(1, "pledge");
@@ -900,11 +1178,11 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 	while (1) {
 		int hupped = 0;
 		int childdead = 0;
-	
+
 		if (conffd == -1)
 			conffd = openconfig(confname, kq);
 
-		child = reexec(conffd, ud, ld, ud6, ld6);
+		child = reexec(conffd, udpfds, numudp, tcpfds, numtcp);
 
 		/* monitor child */
 		EV_SET(&kev, child, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
@@ -930,7 +1208,8 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 			case EVFILT_SIGNAL:
 				if (kev.ident == SIGHUP) {
 					/* signaled. kill child. */
-					logmsg(LOG_INFO, "received HUP, restarting");
+					logmsg(LOG_INFO,
+					    "received HUP, restarting");
 					close(conffd);
 					conffd = -1;
 					hupped = 1;
@@ -939,7 +1218,8 @@ monitorloop(int ud, int ld, int ud6, int ld6, const char *confname)
 					kill(child, SIGHUP);
 				} else if (kev.ident == SIGTERM) {
 					/* good bye */
-					logmsg(LOG_INFO, "received TERM, quitting");
+					logmsg(LOG_INFO,
+					    "received TERM, quitting");
 					kill(child, SIGTERM);
 					exit(0);
 				}
@@ -968,6 +1248,32 @@ doublebreak:
 	return 1;
 }
 
+static void
+addfd(int fd, int **fdp, int *numfds)
+{
+	int *fds = *fdp;
+
+	fds = reallocarray(fds, *numfds + 1, sizeof(int));
+	if (fds == NULL)
+		logerr("failed to allocate port array");
+	fds[*numfds] = fd;
+	*numfds += 1;
+	*fdp = fds;
+}
+
+static int
+argtofd(const char *arg)
+{
+	const char *errstr;
+	int n;
+
+	n = strtonum(arg, 0, 512, &errstr);
+	if (errstr)
+		logerr("invalid fd in argv");
+	return n;
+}
+
+
 static void __dead
 usage(void)
 {
@@ -979,8 +1285,13 @@ int
 main(int argc, char **argv)
 {
 	union sockun bindaddr;
-	int ld, ld6, ud, ud6, ch;
+	int *udpfds = NULL;
+	int numudp = 0;
+	int *tcpfds = NULL;
+	int numtcp = 0;
+	int ch, fd;
 	int one = 1;
+	int worker = 0;
 	const char *confname = "/etc/resolv.conf";
 	const char *bindname = "127.0.0.1";
 
@@ -1003,8 +1314,8 @@ main(int argc, char **argv)
 			break;
 		case 'W':
 			daemonized = 1;
-			/* parent responsible for setting up fds */
-			return workerloop(8, 3, 4, 5, 6);
+			worker = 1;
+			break;
 		default:
 			usage();
 			break;
@@ -1013,10 +1324,43 @@ main(int argc, char **argv)
 	argv += optind;
 	argc -= optind;
 
+	if (worker) {
+		int conffd;
+
+		/* rewind "--" argument */
+		argv--;
+		argc++;
+
+		optreset = optind = 1;
+		while ((ch = getopt(argc, argv, "c:t:u:")) != -1) {
+			switch (ch) {
+			case 'c':
+				conffd = argtofd(optarg);
+				break;
+			case 't':
+				fd = argtofd(optarg);
+				addfd(fd, &tcpfds, &numtcp);
+				break;
+			case 'u':
+				fd = argtofd(optarg);
+				addfd(fd, &udpfds, &numudp);
+				break;
+			default:
+				usage();
+				break;
+			}
+		}
+		argv += optind;
+		argc -= optind;
+		if (argc)
+			logerr("extraneous arguments for worker");
+
+		return workerloop(conffd, udpfds, numudp, tcpfds, numtcp);
+	}
+
 	if (argc)
 		usage();
 
-	/* make sure we consistently open fds */
 	closefrom(3);
 
 	memset(&bindaddr, 0, sizeof(bindaddr));
@@ -1025,20 +1369,22 @@ main(int argc, char **argv)
 	bindaddr.i.sin_port = htons(53);
 	inet_aton(bindname, &bindaddr.i.sin_addr);
 
-	ud = socket(AF_INET, SOCK_DGRAM, 0);
-	if (ud == -1)
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd == -1)
 		logerr("socket: %s", strerror(errno));
-	if (bind(ud, &bindaddr.a, bindaddr.a.sa_len) == -1)
+	if (bind(fd, &bindaddr.a, bindaddr.a.sa_len) == -1)
 		logerr("bind: %s", strerror(errno));
+	addfd(fd, &udpfds, &numudp);
 
-	ld = socket(AF_INET, SOCK_STREAM, 0);
-	if (ld == -1)
+	fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (fd == -1)
 		logerr("socket: %s", strerror(errno));
-	setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
-	if (bind(ld, &bindaddr.a, bindaddr.a.sa_len) == -1)
+	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+	if (bind(fd, &bindaddr.a, bindaddr.a.sa_len) == -1)
 		logerr("bind: %s", strerror(errno));
-	if (listen(ld, 10) == -1)
+	if (listen(fd, 10) == -1)
 		logerr("listen: %s", strerror(errno));
+	addfd(fd, &tcpfds, &numtcp);
 
 	memset(&bindaddr, 0, sizeof(bindaddr));
 	bindaddr.i6.sin6_len = sizeof(bindaddr.i6);
@@ -1046,29 +1392,35 @@ main(int argc, char **argv)
 	bindaddr.i6.sin6_port = htons(53);
 	bindaddr.i6.sin6_addr = in6addr_loopback;
 
-	ud6 = socket(AF_INET6, SOCK_DGRAM, 0);
-	if (ud6 == -1)
+	fd = socket(AF_INET6, SOCK_DGRAM, 0);
+	if (fd == -1 && errno == EPROTONOSUPPORT) {
+		logmsg(LOG_NOTICE, "no inet6 support available");
+		goto noinet6;
+	}
+	if (fd == -1)
 		logerr("socket: %s", strerror(errno));
-	if (bind(ud6, &bindaddr.a, bindaddr.a.sa_len) == -1)
+	if (bind(fd, &bindaddr.a, bindaddr.a.sa_len) == -1)
 		logerr("bind: %s", strerror(errno));
+	addfd(fd, &udpfds, &numudp);
 
-	ld6 = socket(AF_INET6, SOCK_STREAM, 0);
-	if (ld6 == -1)
+	fd = socket(AF_INET6, SOCK_STREAM, 0);
+	if (fd == -1)
 		logerr("socket: %s", strerror(errno));
-	setsockopt(ld6, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
-	if (bind(ld6, &bindaddr.a, bindaddr.a.sa_len) == -1)
+	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+	if (bind(fd, &bindaddr.a, bindaddr.a.sa_len) == -1)
 		logerr("bind: %s", strerror(errno));
-	if (listen(ld6, 10) == -1)
+	if (listen(fd, 10) == -1)
 		logerr("listen: %s", strerror(errno));
-
+	addfd(fd, &tcpfds, &numtcp);
+noinet6:
 	if (debug) {
 		int conffd = openconfig(confname, -1);
-		return workerloop(conffd, ud, ld, ud6, ld6);
+		return workerloop(conffd, udpfds, numudp, tcpfds, numtcp);
 	}
 
 	if (daemon(0, 0) == -1)
 		logerr("daemon: %s", strerror(errno));
 	daemonized = 1;
 
-	return monitorloop(ud, ld, ud6, ld6, confname);
+	return monitorloop(udpfds, numudp, tcpfds, numtcp, confname);
 }

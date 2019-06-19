@@ -19,7 +19,7 @@ esac
 #
 cat <<'EOM' >&4
 If you have problems, you might have try including
-	-DSTANDARD_C -cckr 
+	-cckr
 in ccflags.
 EOM
 

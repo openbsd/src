@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.29 2017/07/27 05:57:04 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.30 2019/01/31 18:01:14 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -387,7 +387,7 @@ Static struct pipex_session  *pipex_lookup_by_ip_address (struct in_addr);
 Static struct pipex_session  *pipex_lookup_by_session_id (int, int);
 Static void                  pipex_ip_output (struct mbuf *, struct pipex_session *);
 Static void                  pipex_ppp_output (struct mbuf *, struct pipex_session *, int);
-Static inline int            pipex_ppp_proto (struct mbuf *, struct pipex_session *, int, int *);
+Static int                   pipex_ppp_proto (struct mbuf *, struct pipex_session *, int, int *);
 Static void                  pipex_ppp_input (struct mbuf *, struct pipex_session *, int);
 Static void                  pipex_ip_input (struct mbuf *, struct pipex_session *);
 #ifdef INET6
@@ -417,9 +417,6 @@ Static void                  pipex_mppe_input (struct mbuf *, struct pipex_sessi
 Static void                  pipex_mppe_output (struct mbuf *, struct pipex_session *, uint16_t);
 Static void                  pipex_ccp_input (struct mbuf *, struct pipex_session *);
 Static int                   pipex_ccp_output (struct pipex_session *, int, int);
-Static inline int            pipex_mppe_setkey(struct pipex_mppe *);
-Static inline int            pipex_mppe_setoldkey(struct pipex_mppe *, uint16_t);
-Static inline void           pipex_mppe_crypt(struct pipex_mppe *, int, u_char *, u_char *);
 #endif
 
 Static struct mbuf           *adjust_tcp_mss (struct mbuf *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.95 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.96 2018/11/09 14:14:31 claudio Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1371,7 +1371,7 @@ epget(struct ep_softc *sc, int totlen)
 
 	off = 0;
 	while (totlen) {
-		len = min(totlen, M_TRAILINGSPACE(m));
+		len = min(totlen, m_trailingspace(m));
 		if (len == 0)
 			panic("ep_get: packet does not fit in MCLBYTES");
 

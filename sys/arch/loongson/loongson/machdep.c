@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.82 2017/12/30 20:46:59 guenther Exp $ */
+/*	$OpenBSD: machdep.c,v 1.87 2019/04/01 07:02:04 tedu Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -116,6 +116,7 @@ int	ncpu = 1;		/* At least one CPU in the system. */
 int	nnodes = 1;		/* Number of NUMA nodes, only on 3A. */
 struct	user *proc0paddr;
 int	lid_action = 1;
+int	pwr_action = 1;
 
 #ifdef MULTIPROCESSOR
 uint64_t cpu_spinup_a0;
@@ -910,7 +911,8 @@ dobootopts(int argc)
 			continue;
 
 		/* device path */
-		if (*arg == '/' || strncmp(arg, "tftp://", 7) == 0) {
+		if (*arg == '/' || strncmp(arg, "bootduid=", 9) == 0 ||
+		    strncmp(arg, "tftp://", 7) == 0) {
 			if (*pmon_bootp == '\0') {
 				strlcpy(pmon_bootp, arg, sizeof pmon_bootp);
 				parsepmonbp();
@@ -1048,6 +1050,11 @@ int	waittime = -1;
 __dead void
 boot(int howto)
 {
+	void (*__reset)(void) = (void (*)(void))RESET_EXC_VEC;
+
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (curproc)
 		savectx(curproc->p_addr, 0);
 
@@ -1093,7 +1100,7 @@ haltsys:
 		} else
 			printf("System Halt.\n");
 	} else {
-		void (*__reset)(void) = (void (*)(void))RESET_EXC_VEC;
+doreset:
 		printf("System restart.\n");
 		if (sys_platform->reset != NULL)
 			(*(sys_platform->reset))();
@@ -1255,6 +1262,12 @@ pmoncnputc(dev_t dev, int c)
 		pmon_printf("\n");
 	else
 		pmon_printf("%c", c);
+}
+
+void
+intr_barrier(void *cookie)
+{
+	sched_barrier(NULL);
 }
 
 #ifdef MULTIPROCESSOR

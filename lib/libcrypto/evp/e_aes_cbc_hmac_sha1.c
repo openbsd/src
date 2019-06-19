@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.14 2016/11/05 10:47:57 miod Exp $ */
+/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.15 2019/04/03 15:33:37 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -249,7 +249,11 @@ aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		/* decrypt HMAC|padding at once */
 		aesni_cbc_encrypt(in, out, len, &key->ks, ctx->iv, 0);
 
-		if (plen) {	/* "TLS" mode of operation */
+		if (plen == 0 || plen == NO_PAYLOAD_LENGTH) {
+			SHA1_Update(&key->md, out, len);
+		} else if (plen < 4) {
+			return 0;
+		} else {	/* "TLS" mode of operation */
 			size_t inp_len, mask, j, i;
 			unsigned int res, maxpad, pad, bitlen;
 			int ret = 1;
@@ -459,8 +463,6 @@ aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			ret &= (int)~res;
 #endif
 			return ret;
-		} else {
-			SHA1_Update(&key->md, out, len);
 		}
 	}
 
@@ -505,7 +507,13 @@ aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 	case EVP_CTRL_AEAD_TLS1_AAD:
 		{
 			unsigned char *p = ptr;
-			unsigned int len = p[arg - 2] << 8 | p[arg - 1];
+			unsigned int len;
+
+			/* RFC 5246, 6.2.3.3: additional data has length 13 */
+			if (arg != 13)
+				return -1;
+
+			len = p[arg - 2] << 8 | p[arg - 1];
 
 			if (ctx->encrypt) {
 				key->payload_length = len;
@@ -521,8 +529,6 @@ aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 				return (int)(((len + SHA_DIGEST_LENGTH +
 				    AES_BLOCK_SIZE) & -AES_BLOCK_SIZE) - len);
 			} else {
-				if (arg > 13)
-					arg = 13;
 				memcpy(key->aux.tls_aad, ptr, arg);
 				key->payload_length = arg;
 

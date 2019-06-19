@@ -31,23 +31,8 @@
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
-#if HAVE_DIRENT_H
-# include <dirent.h>
-# define NAMLEN(dirent) strlen((dirent)->d_name)
-#else
-# define dirent direct
-# define NAMLEN(dirent) (dirent)->d_namlen
-# if HAVE_SYS_NDIR_H
-#  include <sys/ndir.h>
-# endif
-# if HAVE_SYS_DIR_H
-#  include <sys/dir.h>
-# endif
-# if HAVE_NDIR_H
-#  include <ndir.h>
-# endif
-#endif
 
+#include <dirent.h>
 #include <pwd.h>
 
 #ifdef __APPLE__
@@ -108,10 +93,12 @@ using namespace llvm;
 namespace llvm {
 namespace sys  {
 namespace fs {
-#if defined(__FreeBSD__) || defined (__NetBSD__) || defined(__Bitrig__) || \
-    defined(__OpenBSD__) || defined(__minix) || defined(__FreeBSD_kernel__) || \
-    defined(__linux__) || defined(__CYGWIN__) || defined(__DragonFly__) || \
-    defined(_AIX)
+
+const file_t kInvalidFile = -1;
+
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||     \
+    defined(__minix) || defined(__FreeBSD_kernel__) || defined(__linux__) ||   \
+    defined(__CYGWIN__) || defined(__DragonFly__) || defined(_AIX)
 static int
 test_dir(char ret[PATH_MAX], const char *dir, const char *bin)
 {
@@ -180,9 +167,9 @@ std::string getMainExecutable(const char *argv0, void *MainAddr) {
     if (realpath(exe_path, link_path))
       return link_path;
   }
-#elif defined(__FreeBSD__) || defined (__NetBSD__) || defined(__Bitrig__) || \
-      defined(__OpenBSD__) || defined(__minix) || defined(__DragonFly__) || \
-      defined(__FreeBSD_kernel__) || defined(_AIX)
+#elif defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||   \
+    defined(__minix) || defined(__DragonFly__) ||                              \
+    defined(__FreeBSD_kernel__) || defined(_AIX)
   char exe_path[PATH_MAX];
 
   if (getprogpath(exe_path, argv0) != NULL)
@@ -218,11 +205,11 @@ std::string getMainExecutable(const char *argv0, void *MainAddr) {
   return "";
 }
 
-TimePoint<> file_status::getLastAccessedTime() const {
+TimePoint<> basic_file_status::getLastAccessedTime() const {
   return toTimePoint(fs_st_atime);
 }
 
-TimePoint<> file_status::getLastModificationTime() const {
+TimePoint<> basic_file_status::getLastModificationTime() const {
   return toTimePoint(fs_st_mtime);
 }
 
@@ -381,6 +368,12 @@ static bool is_local_impl(struct STATVFS &Vfs) {
 #elif defined(__CYGWIN__)
   // Cygwin doesn't expose this information; would need to use Win32 API.
   return false;
+#elif defined(__Fuchsia__)
+  // Fuchsia doesn't yet support remote filesystem mounts.
+  return true;
+#elif defined(__HAIKU__)
+  // Haiku doesn't expose this information.
+  return false;
 #elif defined(__sun)
   // statvfs::f_basetype contains a null-terminated FSType name of the mounted target
   StringRef fstype(Vfs.f_basetype);
@@ -427,7 +420,7 @@ std::error_code resize_file(int FD, uint64_t Size) {
   // If we have posix_fallocate use it. Unlike ftruncate it always allocates
   // space, so we get an error if the disk is full.
   if (int Err = ::posix_fallocate(FD, 0, Size)) {
-    if (Err != EOPNOTSUPP)
+    if (Err != EINVAL && Err != EOPNOTSUPP)
       return std::error_code(Err, std::generic_category());
   }
 #endif
@@ -531,7 +524,7 @@ static void expandTildeExpr(SmallVectorImpl<char> &Path) {
 }
 
 static std::error_code fillStatus(int StatRet, const struct stat &Status,
-                             file_status &Result) {
+                                  file_status &Result) {
   if (StatRet != 0) {
     std::error_code ec(errno, std::generic_category());
     if (ec == errc::no_such_file_or_directory)
@@ -642,15 +635,10 @@ std::error_code mapped_file_region::init(int FD, uint64_t Offset,
   return std::error_code();
 }
 
-mapped_file_region::mapped_file_region(int fd, mapmode mode, uint64_t length,
+mapped_file_region::mapped_file_region(int fd, mapmode mode, size_t length,
                                        uint64_t offset, std::error_code &ec)
-    : Size(length), Mapping() {
-  // Make sure that the requested size fits within SIZE_T.
-  if (length > std::numeric_limits<size_t>::max()) {
-    ec = make_error_code(errc::invalid_argument);
-    return;
-  }
-
+    : Size(length), Mapping(), Mode(mode) {
+  (void)Mode;
   ec = init(fd, offset, mode);
   if (ec)
     Mapping = nullptr;
@@ -661,7 +649,7 @@ mapped_file_region::~mapped_file_region() {
     ::munmap(Mapping, Size);
 }
 
-uint64_t mapped_file_region::size() const {
+size_t mapped_file_region::size() const {
   assert(Mapping && "Mapping failed but used anyway!");
   return Size;
 }
@@ -709,7 +697,7 @@ std::error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   if (cur_dir == nullptr && errno != 0) {
     return std::error_code(errno, std::generic_category());
   } else if (cur_dir != nullptr) {
-    StringRef name(cur_dir->d_name, NAMLEN(cur_dir));
+    StringRef name(cur_dir->d_name);
     if ((name.size() == 1 && name[0] == '.') ||
         (name.size() == 2 && name[0] == '.' && name[1] == '.'))
       return directory_iterator_increment(it);
@@ -718,6 +706,13 @@ std::error_code detail::directory_iterator_increment(detail::DirIterState &it) {
     return directory_iterator_destruct(it);
 
   return std::error_code();
+}
+
+ErrorOr<basic_file_status> directory_entry::status() const {
+  file_status s;
+  if (auto EC = fs::status(Path, s, FollowSymlinks))
+    return EC;
+  return s;
 }
 
 #if !defined(F_GETPATH)
@@ -729,21 +724,85 @@ static bool hasProcSelfFD() {
 }
 #endif
 
-std::error_code openFileForRead(const Twine &Name, int &ResultFD,
-                                SmallVectorImpl<char> *RealPath) {
+static int nativeOpenFlags(CreationDisposition Disp, OpenFlags Flags,
+                           FileAccess Access) {
+  int Result = 0;
+  if (Access == FA_Read)
+    Result |= O_RDONLY;
+  else if (Access == FA_Write)
+    Result |= O_WRONLY;
+  else if (Access == (FA_Read | FA_Write))
+    Result |= O_RDWR;
+
+  // This is for compatibility with old code that assumed F_Append implied
+  // would open an existing file.  See Windows/Path.inc for a longer comment.
+  if (Flags & F_Append)
+    Disp = CD_OpenAlways;
+
+  if (Disp == CD_CreateNew) {
+    Result |= O_CREAT; // Create if it doesn't exist.
+    Result |= O_EXCL;  // Fail if it does.
+  } else if (Disp == CD_CreateAlways) {
+    Result |= O_CREAT; // Create if it doesn't exist.
+    Result |= O_TRUNC; // Truncate if it does.
+  } else if (Disp == CD_OpenAlways) {
+    Result |= O_CREAT; // Create if it doesn't exist.
+  } else if (Disp == CD_OpenExisting) {
+    // Nothing special, just don't add O_CREAT and we get these semantics.
+  }
+
+  if (Flags & F_Append)
+    Result |= O_APPEND;
+
+#ifdef O_CLOEXEC
+  if (!(Flags & OF_ChildInherit))
+    Result |= O_CLOEXEC;
+#endif
+
+  return Result;
+}
+
+std::error_code openFile(const Twine &Name, int &ResultFD,
+                         CreationDisposition Disp, FileAccess Access,
+                         OpenFlags Flags, unsigned Mode) {
+  int OpenFlags = nativeOpenFlags(Disp, Flags, Access);
+
   SmallString<128> Storage;
   StringRef P = Name.toNullTerminatedStringRef(Storage);
-  int OpenFlags = O_RDONLY;
-#ifdef O_CLOEXEC
-  OpenFlags |= O_CLOEXEC;
-#endif
-  if ((ResultFD = sys::RetryAfterSignal(-1, open, P.begin(), OpenFlags)) < 0)
+  // Call ::open in a lambda to avoid overload resolution in RetryAfterSignal
+  // when open is overloaded, such as in Bionic.
+  auto Open = [&]() { return ::open(P.begin(), OpenFlags, Mode); };
+  if ((ResultFD = sys::RetryAfterSignal(-1, Open)) < 0)
     return std::error_code(errno, std::generic_category());
 #ifndef O_CLOEXEC
-  int r = fcntl(ResultFD, F_SETFD, FD_CLOEXEC);
-  (void)r;
-  assert(r == 0 && "fcntl(F_SETFD, FD_CLOEXEC) failed");
+  if (!(Flags & OF_ChildInherit)) {
+    int r = fcntl(ResultFD, F_SETFD, FD_CLOEXEC);
+    (void)r;
+    assert(r == 0 && "fcntl(F_SETFD, FD_CLOEXEC) failed");
+  }
 #endif
+  return std::error_code();
+}
+
+Expected<int> openNativeFile(const Twine &Name, CreationDisposition Disp,
+                             FileAccess Access, OpenFlags Flags,
+                             unsigned Mode) {
+
+  int FD;
+  std::error_code EC = openFile(Name, FD, Disp, Access, Flags, Mode);
+  if (EC)
+    return errorCodeToError(EC);
+  return FD;
+}
+
+std::error_code openFileForRead(const Twine &Name, int &ResultFD,
+                                OpenFlags Flags,
+                                SmallVectorImpl<char> *RealPath) {
+  std::error_code EC =
+      openFile(Name, ResultFD, CD_OpenExisting, FA_Read, Flags, 0666);
+  if (EC)
+    return EC;
+
   // Attempt to get the real name of the file, if the user asked
   if(!RealPath)
     return std::error_code();
@@ -763,6 +822,9 @@ std::error_code openFileForRead(const Twine &Name, int &ResultFD,
     if (CharCount > 0)
       RealPath->append(Buffer, Buffer + CharCount);
   } else {
+    SmallString<128> Storage;
+    StringRef P = Name.toNullTerminatedStringRef(Storage);
+
     // Use ::realpath to get the real path name
     if (::realpath(P.begin(), Buffer) != nullptr)
       RealPath->append(Buffer, Buffer + strlen(Buffer));
@@ -771,88 +833,18 @@ std::error_code openFileForRead(const Twine &Name, int &ResultFD,
   return std::error_code();
 }
 
-std::error_code openFileForWrite(const Twine &Name, int &ResultFD,
-                            sys::fs::OpenFlags Flags, unsigned Mode) {
-  // Verify that we don't have both "append" and "excl".
-  assert((!(Flags & sys::fs::F_Excl) || !(Flags & sys::fs::F_Append)) &&
-         "Cannot specify both 'excl' and 'append' file creation flags!");
-
-  int OpenFlags = O_CREAT;
-
-#ifdef O_CLOEXEC
-  OpenFlags |= O_CLOEXEC;
-#endif
-
-  if (Flags & F_RW)
-    OpenFlags |= O_RDWR;
-  else
-    OpenFlags |= O_WRONLY;
-
-  if (Flags & F_Append)
-    OpenFlags |= O_APPEND;
-  else
-    OpenFlags |= O_TRUNC;
-
-  if (Flags & F_Excl)
-    OpenFlags |= O_EXCL;
-
-  SmallString<128> Storage;
-  StringRef P = Name.toNullTerminatedStringRef(Storage);
-  if ((ResultFD = sys::RetryAfterSignal(-1, open, P.begin(), OpenFlags, Mode)) < 0)
-    return std::error_code(errno, std::generic_category());
-#ifndef O_CLOEXEC
-  int r = fcntl(ResultFD, F_SETFD, FD_CLOEXEC);
-  (void)r;
-  assert(r == 0 && "fcntl(F_SETFD, FD_CLOEXEC) failed");
-#endif
-  return std::error_code();
+Expected<file_t> openNativeFileForRead(const Twine &Name, OpenFlags Flags,
+                                       SmallVectorImpl<char> *RealPath) {
+  file_t ResultFD;
+  std::error_code EC = openFileForRead(Name, ResultFD, Flags, RealPath);
+  if (EC)
+    return errorCodeToError(EC);
+  return ResultFD;
 }
 
-std::error_code getPathFromOpenFD(int FD, SmallVectorImpl<char> &ResultPath) {
-  if (FD < 0)
-    return make_error_code(errc::bad_file_descriptor);
-
-#if defined(F_GETPATH)
-  // When F_GETPATH is availble, it is the quickest way to get
-  // the path from a file descriptor.
-  ResultPath.reserve(MAXPATHLEN);
-  if (::fcntl(FD, F_GETPATH, ResultPath.begin()) == -1)
-    return std::error_code(errno, std::generic_category());
-
-  ResultPath.set_size(strlen(ResultPath.begin()));
-#else
-  // If we have a /proc filesystem mounted, we can quickly establish the
-  // real name of the file with readlink. Otherwise, we don't know how to
-  // get the filename from a file descriptor. Give up.
-  if (!fs::hasProcSelfFD())
-    return make_error_code(errc::function_not_supported);
-
-  ResultPath.reserve(PATH_MAX);
-  char ProcPath[64];
-  snprintf(ProcPath, sizeof(ProcPath), "/proc/self/fd/%d", FD);
-  ssize_t CharCount = ::readlink(ProcPath, ResultPath.begin(), ResultPath.capacity());
-  if (CharCount < 0)
-      return std::error_code(errno, std::generic_category());
-
-  // Was the filename truncated?
-  if (static_cast<size_t>(CharCount) == ResultPath.capacity()) {
-    // Use lstat to get the size of the filename
-    struct stat sb;
-    if (::lstat(ProcPath, &sb) < 0)
-      return std::error_code(errno, std::generic_category());
-
-    ResultPath.reserve(sb.st_size + 1);
-    CharCount = ::readlink(ProcPath, ResultPath.begin(), ResultPath.capacity());
-    if (CharCount < 0)
-      return std::error_code(errno, std::generic_category());
-
-    // Test for race condition: did the link size change?
-    if (CharCount > sb.st_size)
-      return std::error_code(ENAMETOOLONG, std::generic_category());
-  }
-  ResultPath.set_size(static_cast<size_t>(CharCount));
-#endif
-  return std::error_code();
+void closeFile(file_t &F) {
+  ::close(F);
+  F = kInvalidFile;
 }
 
 template <typename T>
@@ -863,12 +855,11 @@ static std::error_code remove_directories_impl(const T &Entry,
   directory_iterator End;
   while (Begin != End) {
     auto &Item = *Begin;
-    file_status st;
-    EC = Item.status(st);
-    if (EC && !IgnoreErrors)
-      return EC;
+    ErrorOr<basic_file_status> st = Item.status();
+    if (!st && !IgnoreErrors)
+      return st.getError();
 
-    if (is_directory(st)) {
+    if (is_directory(*st)) {
       EC = remove_directories_impl(Item, IgnoreErrors);
       if (EC && !IgnoreErrors)
         return EC;
@@ -908,12 +899,12 @@ std::error_code real_path(const Twine &path, SmallVectorImpl<char> &dest,
     return real_path(Storage, dest, false);
   }
 
-  int fd;
-  std::error_code EC = openFileForRead(path, fd, &dest);
-
-  if (EC)
-    return EC;
-  ::close(fd);
+  SmallString<128> Storage;
+  StringRef P = path.toNullTerminatedStringRef(Storage);
+  char Buffer[PATH_MAX];
+  if (::realpath(P.begin(), Buffer) == nullptr)
+    return std::error_code(errno, std::generic_category());
+  dest.append(Buffer, Buffer + strlen(Buffer));
   return std::error_code();
 }
 

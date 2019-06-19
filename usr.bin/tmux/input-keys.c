@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.62 2017/06/28 11:36:39 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.63 2018/10/18 08:38:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -248,9 +248,9 @@ input_key_mouse(struct window_pane *wp, struct mouse_event *m)
 
 	if ((mode & ALL_MOUSE_MODES) == 0)
 		return;
-	if (!window_pane_visible(wp))
-		return;
 	if (cmd_mouse_at(wp, m, &x, &y, 0) != 0)
+		return;
+	if (!window_pane_visible(wp))
 		return;
 
 	/* If this pane is not in button or all mode, discard motion events. */

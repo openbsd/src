@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.15 2017/03/12 17:57:12 kettenis Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.18 2018/07/10 04:19:59 guenther Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.22 2003/10/08 00:28:41 thorpej Exp $	*/
 
 /*
@@ -51,12 +51,14 @@
 #include <sys/systm.h>
 #include <sys/user.h>
 
-#include <arm/armreg.h>
-
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
+
+#include <arm/armreg.h>
 #include <arm/cpufunc.h>
+
+#include <uvm/uvm_extern.h>
 
 static __inline struct trapframe *
 process_frame(struct proc *p)
@@ -67,17 +69,16 @@ process_frame(struct proc *p)
 /*
  * Send an interrupt to process.
  *
- * Stack is set up to allow sigcode stored
- * in u. to call routine, followed by kcall
- * to sigreturn routine below.  After sigreturn
- * resets the signal mask, the stack, and the
- * frame pointer, it returns to the user specified pc.
+ * Stack is set up to allow sigcode to call routine, followed by
+ * syscall to sigreturn routine below.  After sigreturn resets the
+ * signal mask, the stack, and the frame pointer, it returns to the
+ * user specified pc.
  */
 void
-sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
-   union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_p->ps_sigacts;
@@ -87,8 +88,8 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	/* Allocate space for the signal handler context. */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_usr_sp) && (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)((caddr_t)p->p_sigstk.ss_sp +
-		    p->p_sigstk.ss_size);
+		fp = (struct sigframe *)
+		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->tf_usr_sp;
 
@@ -126,11 +127,21 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	frame.sf_sc.sc_spsr   = tf->tf_spsr;
 
 	/* Save signal mask. */
-	frame.sf_sc.sc_mask = returnmask;
+	frame.sf_sc.sc_mask = mask;
+
+	/* Save FPU registers. */
+	frame.sf_sc.sc_fpused = pcb->pcb_flags & PCB_FPU;
+	if (frame.sf_sc.sc_fpused) {
+		frame.sf_sc.sc_fpscr = pcb->pcb_fpstate.fp_scr;
+		memcpy(&frame.sf_sc.sc_fpreg, &pcb->pcb_fpstate.fp_reg,
+		   sizeof(pcb->pcb_fpstate.fp_reg));
+		pcb->pcb_flags &= ~PCB_FPU;
+		pcb->pcb_fpcpu = NULL;
+	}
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		frame.sf_sip = &fp->sf_si;
-		initsiginfo(&frame.sf_si, sig, code, type, val);
+		frame.sf_si = *ksip;
 	}
 
 	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
@@ -174,6 +185,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf;
 
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
@@ -225,6 +237,18 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 
 	/* Restore signal mask. */
 	p->p_sigmask = ksc.sc_mask & ~sigcantmask;
+
+	/* Restore FPU registers. */
+	if (ksc.sc_fpused) {
+		pcb->pcb_fpstate.fp_scr = ksc.sc_fpscr;
+		memcpy(&pcb->pcb_fpstate.fp_reg, &ksc.sc_fpreg,
+		    sizeof(pcb->pcb_fpstate.fp_reg));
+		pcb->pcb_flags |= PCB_FPU;
+		pcb->pcb_fpcpu = NULL;
+	} else {
+		pcb->pcb_flags &= ~PCB_FPU;
+		pcb->pcb_fpcpu = NULL;
+	}
 
 	return (EJUSTRETURN);
 }

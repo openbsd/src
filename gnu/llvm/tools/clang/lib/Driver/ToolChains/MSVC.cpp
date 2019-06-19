@@ -19,7 +19,6 @@
 #include "clang/Driver/SanitizerArgs.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/Config/llvm-config.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -31,13 +30,7 @@
 #include "llvm/Support/Process.h"
 #include <cstdio>
 
-// Include the necessary headers to interface with the Windows registry and
-// environment.
-#if defined(LLVM_ON_WIN32)
-#define USE_WIN32
-#endif
-
-#ifdef USE_WIN32
+#ifdef _WIN32
   #define WIN32_LEAN_AND_MEAN
   #define NOGDI
   #ifndef NOMINMAX
@@ -375,7 +368,7 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   if (TC.getSanitizerArgs().needsAsanRt()) {
     CmdArgs.push_back(Args.MakeArgString("-debug"));
     CmdArgs.push_back(Args.MakeArgString("-incremental:no"));
-    if (TC.getSanitizerArgs().needsSharedAsanRt() ||
+    if (TC.getSanitizerArgs().needsSharedRt() ||
         Args.hasArg(options::OPT__SLASH_MD, options::OPT__SLASH_MDd)) {
       for (const auto &Lib : {"asan_dynamic", "asan_dynamic_runtime_thunk"})
         CmdArgs.push_back(TC.getCompilerRTArgString(Args, Lib));
@@ -476,7 +469,10 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     // their own link.exe which may come first.
     linkPath = FindVisualStudioExecutable(TC, "link.exe");
 
-#ifdef USE_WIN32
+    if (!TC.FoundMSVCInstall() && !llvm::sys::fs::can_execute(linkPath))
+      C.getDriver().Diag(clang::diag::warn_drv_msvc_not_found);
+
+#ifdef _WIN32
     // When cross-compiling with VS2017 or newer, link.exe expects to have
     // its containing bin directory at the top of PATH, followed by the
     // native target bin directory.
@@ -691,8 +687,6 @@ MSVCToolChain::MSVCToolChain(const Driver &D, const llvm::Triple &Triple,
 }
 
 Tool *MSVCToolChain::buildLinker() const {
-  if (VCToolChainPath.empty())
-    getDriver().Diag(clang::diag::warn_drv_msvc_not_found);
   return new tools::visualstudio::Linker(*this);
 }
 
@@ -752,6 +746,8 @@ static const char *llvmArchToWindowsSDKArch(llvm::Triple::ArchType Arch) {
     return "x64";
   case ArchType::arm:
     return "arm";
+  case ArchType::aarch64:
+    return "arm64";
   default:
     return "";
   }
@@ -769,6 +765,8 @@ static const char *llvmArchToLegacyVCArch(llvm::Triple::ArchType Arch) {
     return "amd64";
   case ArchType::arm:
     return "arm";
+  case ArchType::aarch64:
+    return "arm64";
   default:
     return "";
   }
@@ -784,6 +782,8 @@ static const char *llvmArchToDevDivInternalArch(llvm::Triple::ArchType Arch) {
     return "amd64";
   case ArchType::arm:
     return "arm";
+  case ArchType::aarch64:
+    return "arm64";
   default:
     return "";
   }
@@ -835,7 +835,7 @@ MSVCToolChain::getSubDirectoryPath(SubDirectoryType Type,
   return Path.str();
 }
 
-#ifdef USE_WIN32
+#ifdef _WIN32
 static bool readFullStringValue(HKEY hkey, const char *valueName,
                                 std::string &value) {
   std::wstring WideValueName;
@@ -869,7 +869,7 @@ static bool readFullStringValue(HKEY hkey, const char *valueName,
 }
 #endif
 
-/// \brief Read registry string.
+/// Read registry string.
 /// This also supports a means to look for high-versioned keys by use
 /// of a $VERSION placeholder in the key path.
 /// $VERSION in the key path is a placeholder for the version number,
@@ -879,7 +879,7 @@ static bool readFullStringValue(HKEY hkey, const char *valueName,
 /// characters are compared.  This function only searches HKLM.
 static bool getSystemRegistryString(const char *keyPath, const char *valueName,
                                     std::string &value, std::string *phValue) {
-#ifndef USE_WIN32
+#ifndef _WIN32
   return false;
 #else
   HKEY hRootKey = HKEY_LOCAL_MACHINE;
@@ -961,7 +961,7 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
     }
   }
   return returnValue;
-#endif // USE_WIN32
+#endif // _WIN32
 }
 
 // Find the most recent version of Universal CRT or Windows 10 SDK.
@@ -992,7 +992,7 @@ static bool getWindows10SDKVersionFromPath(const std::string &SDKPath,
   return !SDKVersion.empty();
 }
 
-/// \brief Get Windows SDK installation directory.
+/// Get Windows SDK installation directory.
 static bool getWindowsSDKDir(std::string &Path, int &Major,
                              std::string &WindowsSDKIncludeVersion,
                              std::string &WindowsSDKLibVersion) {
@@ -1122,7 +1122,7 @@ static VersionTuple getMSVCVersionFromTriple(const llvm::Triple &Triple) {
 
 static VersionTuple getMSVCVersionFromExe(const std::string &BinDir) {
   VersionTuple Version;
-#ifdef USE_WIN32
+#ifdef _WIN32
   SmallString<128> ClExe(BinDir);
   llvm::sys::path::append(ClExe, "cl.exe");
 
@@ -1236,7 +1236,7 @@ void MSVCToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     return;
   }
 
-#if defined(LLVM_ON_WIN32)
+#if defined(_WIN32)
   // As a fallback, select default install paths.
   // FIXME: Don't guess drives and paths like this on Windows.
   const StringRef Paths[] = {
@@ -1266,9 +1266,8 @@ VersionTuple MSVCToolChain::computeMSVCVersion(const Driver *D,
   if (MSVT.empty() &&
       Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
                    IsWindowsMSVC)) {
-    // -fms-compatibility-version=18.00 is default.
-    // FIXME: Consider bumping this to 19 (MSVC2015) soon.
-    MSVT = VersionTuple(18);
+    // -fms-compatibility-version=19.11 is default, aka 2017
+    MSVT = VersionTuple(19, 11);
   }
   return MSVT;
 }
@@ -1299,6 +1298,7 @@ MSVCToolChain::ComputeEffectiveClangTriple(const ArgList &Args,
 SanitizerMask MSVCToolChain::getSupportedSanitizers() const {
   SanitizerMask Res = ToolChain::getSupportedSanitizers();
   Res |= SanitizerKind::Address;
+  Res &= ~SanitizerKind::CFIMFCall;
   return Res;
 }
 
@@ -1317,24 +1317,26 @@ static void TranslateOptArg(Arg *A, llvm::opt::DerivedArgList &DAL,
     case '2':
     case 'x':
     case 'd':
-      if (&OptChar == ExpandChar) {
-        if (OptChar == 'd') {
-          DAL.AddFlagArg(A, Opts.getOption(options::OPT_O0));
-        } else {
-          if (OptChar == '1') {
-            DAL.AddJoinedArg(A, Opts.getOption(options::OPT_O), "s");
-          } else if (OptChar == '2' || OptChar == 'x') {
-            DAL.AddFlagArg(A, Opts.getOption(options::OPT_fbuiltin));
-            DAL.AddJoinedArg(A, Opts.getOption(options::OPT_O), "2");
-          }
-          if (SupportsForcingFramePointer &&
-              !DAL.hasArgNoClaim(options::OPT_fno_omit_frame_pointer))
-            DAL.AddFlagArg(A,
-                           Opts.getOption(options::OPT_fomit_frame_pointer));
-          if (OptChar == '1' || OptChar == '2')
-            DAL.AddFlagArg(A,
-                           Opts.getOption(options::OPT_ffunction_sections));
+      // Ignore /O[12xd] flags that aren't the last one on the command line.
+      // Only the last one gets expanded.
+      if (&OptChar != ExpandChar) {
+        A->claim();
+        break;
+      }
+      if (OptChar == 'd') {
+        DAL.AddFlagArg(A, Opts.getOption(options::OPT_O0));
+      } else {
+        if (OptChar == '1') {
+          DAL.AddJoinedArg(A, Opts.getOption(options::OPT_O), "s");
+        } else if (OptChar == '2' || OptChar == 'x') {
+          DAL.AddFlagArg(A, Opts.getOption(options::OPT_fbuiltin));
+          DAL.AddJoinedArg(A, Opts.getOption(options::OPT_O), "2");
         }
+        if (SupportsForcingFramePointer &&
+            !DAL.hasArgNoClaim(options::OPT_fno_omit_frame_pointer))
+          DAL.AddFlagArg(A, Opts.getOption(options::OPT_fomit_frame_pointer));
+        if (OptChar == '1' || OptChar == '2')
+          DAL.AddFlagArg(A, Opts.getOption(options::OPT_ffunction_sections));
       }
       break;
     case 'b':
@@ -1430,9 +1432,7 @@ MSVCToolChain::TranslateArgs(const llvm::opt::DerivedArgList &Args,
 
   // First step is to search for the character we'd like to expand.
   const char *ExpandChar = nullptr;
-  for (Arg *A : Args) {
-    if (!A->getOption().matches(options::OPT__SLASH_O))
-      continue;
+  for (Arg *A : Args.filtered(options::OPT__SLASH_O)) {
     StringRef OptStr = A->getValue();
     for (size_t I = 0, E = OptStr.size(); I != E; ++I) {
       char OptChar = OptStr[I];

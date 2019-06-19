@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-timer.c,v 1.2 2016/09/20 23:05:27 bluhm Exp $	*/
+/*	$OpenBSD: kqueue-timer.c,v 1.3 2018/05/22 19:15:22 cheloha Exp $	*/
 /*
  * Copyright (c) 2015 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <sys/event.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -65,6 +66,34 @@ do_timer(void)
 
 	n = kevent(kq, NULL, 0, &ev, 1, &ts);
 	ASSX(n == 1);
+
+	return (0);
+}
+
+int
+do_invalid_timer(void)
+{
+	int i, kq, n;
+	struct kevent ev;
+	struct timespec invalid_ts[3] = { {-1, 0}, {0, -1}, {0, 1000000000L} };
+
+	ASS((kq = kqueue()) >= 0,
+	    warn("kqueue"));
+
+	memset(&ev, 0, sizeof(ev));
+	ev.filter = EVFILT_TIMER;
+	ev.flags = EV_ADD | EV_ENABLE;
+	ev.data = 500;			/* 1/2 second in ms */
+
+	n = kevent(kq, &ev, 1, NULL, 0, NULL);
+	ASSX(n != -1);
+
+	for (i = 0; i < 3; i++) {
+		n = kevent(kq, NULL, 0, &ev, 1, &invalid_ts[i]);
+		ASS(n == -1 && errno == EINVAL,
+		    warn("kevent: timeout %lld %ld",
+		    (long long)invalid_ts[i].tv_sec, invalid_ts[i].tv_nsec));
+	}
 
 	return (0);
 }

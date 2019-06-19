@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/BinaryFormat/COFF.h"
 #include "llvm/Support/Error.h"
 
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
@@ -46,10 +47,12 @@ public:
   void setVersionHeader(PdbRaw_DbiVer V);
   void setAge(uint32_t A);
   void setBuildNumber(uint16_t B);
+  void setBuildNumber(uint8_t Major, uint8_t Minor);
   void setPdbDllVersion(uint16_t V);
   void setPdbDllRbld(uint16_t R);
   void setFlags(uint16_t F);
   void setMachineType(PDB_Machine M);
+  void setMachineType(COFF::MachineTypes M);
   void setSectionMap(ArrayRef<SecMapEntry> SecMap);
 
   // Add given bytes as a new stream.
@@ -59,11 +62,11 @@ public:
 
   uint32_t calculateSerializedLength() const;
 
+  void setGlobalsStreamIndex(uint32_t Index);
   void setPublicsStreamIndex(uint32_t Index);
   void setSymbolRecordStreamIndex(uint32_t Index);
 
   Expected<DbiModuleDescriptorBuilder &> addModuleInfo(StringRef ModuleName);
-  Error addModuleSourceFile(StringRef Module, StringRef File);
   Error addModuleSourceFile(DbiModuleDescriptorBuilder &Module, StringRef File);
   Expected<uint32_t> getSourceFileNameIndex(StringRef FileName);
 
@@ -71,8 +74,9 @@ public:
 
   Error commit(const msf::MSFLayout &Layout, WritableBinaryStreamRef MsfBuffer);
 
-  void addSectionContrib(DbiModuleDescriptorBuilder *ModuleDbi,
-                         const llvm::object::coff_section *SecHdr);
+  void addSectionContrib(const SectionContrib &SC) {
+    SectionContribs.emplace_back(SC);
+  }
 
   // A helper function to create a Section Map from a COFF section header.
   static std::vector<SecMapEntry>
@@ -105,13 +109,13 @@ private:
   uint16_t PdbDllRbld;
   uint16_t Flags;
   PDB_Machine MachineType;
+  uint32_t GlobalsStreamIndex = kInvalidStreamIndex;
   uint32_t PublicsStreamIndex = kInvalidStreamIndex;
   uint32_t SymRecordStreamIndex = kInvalidStreamIndex;
 
   const DbiStreamHeader *Header;
 
-  StringMap<std::unique_ptr<DbiModuleDescriptorBuilder>> ModiMap;
-  std::vector<DbiModuleDescriptorBuilder *> ModiList;
+  std::vector<std::unique_ptr<DbiModuleDescriptorBuilder>> ModiList;
 
   StringMap<uint32_t> SourceFileNames;
 
@@ -120,7 +124,7 @@ private:
   MutableBinaryByteStream FileInfoBuffer;
   std::vector<SectionContrib> SectionContribs;
   ArrayRef<SecMapEntry> SectionMap;
-  llvm::SmallVector<DebugStream, (int)DbgHeaderType::Max> DbgStreams;
+  std::array<Optional<DebugStream>, (int)DbgHeaderType::Max> DbgStreams;
 };
 }
 }

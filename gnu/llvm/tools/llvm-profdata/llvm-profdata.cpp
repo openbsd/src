@@ -24,27 +24,42 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
-#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Signals.h"
+#include "llvm/Support/WithColor.h"
 #include "llvm/Support/ThreadPool.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 
 using namespace llvm;
 
-enum ProfileFormat { PF_None = 0, PF_Text, PF_Binary, PF_GCC };
+enum ProfileFormat {
+  PF_None = 0,
+  PF_Text,
+  PF_Compact_Binary,
+  PF_GCC,
+  PF_Binary
+};
 
-static void exitWithError(const Twine &Message, StringRef Whence = "",
-                          StringRef Hint = "") {
-  errs() << "error: ";
+static void warn(Twine Message, std::string Whence = "",
+                 std::string Hint = "") {
+  WithColor::warning();
   if (!Whence.empty())
     errs() << Whence << ": ";
   errs() << Message << "\n";
   if (!Hint.empty())
-    errs() << Hint << "\n";
+    WithColor::note() << Hint << "\n";
+}
+
+static void exitWithError(Twine Message, std::string Whence = "",
+                          std::string Hint = "") {
+  WithColor::error();
+  if (!Whence.empty())
+    errs() << Whence << ": ";
+  errs() << Message << "\n";
+  if (!Hint.empty())
+    WithColor::note() << Hint << "\n";
   ::exit(1);
 }
 
@@ -119,7 +134,7 @@ struct WriterContext {
   std::mutex Lock;
   InstrProfWriter Writer;
   Error Err;
-  StringRef ErrWhence;
+  std::string ErrWhence;
   std::mutex &ErrLock;
   SmallSet<instrprof_error, 4> &WriterErrorCodes;
 
@@ -129,6 +144,22 @@ struct WriterContext {
         ErrLock(ErrLock), WriterErrorCodes(WriterErrorCodes) {}
 };
 
+/// Determine whether an error is fatal for profile merging.
+static bool isFatalError(instrprof_error IPE) {
+  switch (IPE) {
+  default:
+    return true;
+  case instrprof_error::success:
+  case instrprof_error::eof:
+  case instrprof_error::unknown_function:
+  case instrprof_error::hash_mismatch:
+  case instrprof_error::count_mismatch:
+  case instrprof_error::counter_overflow:
+  case instrprof_error::value_site_count_mismatch:
+    return false;
+  }
+}
+
 /// Load an input into a writer context.
 static void loadInput(const WeightedFile &Input, WriterContext *WC) {
   std::unique_lock<std::mutex> CtxGuard{WC->Lock};
@@ -137,6 +168,9 @@ static void loadInput(const WeightedFile &Input, WriterContext *WC) {
   if (WC->Err)
     return;
 
+  // Copy the filename, because llvm::ThreadPool copied the input "const
+  // WeightedFile &" by value, making a reference to the filename within it
+  // invalid outside of this packaged task.
   WC->ErrWhence = Input.Filename;
 
   auto ReaderOrErr = InstrProfReader::create(Input.Filename);
@@ -174,12 +208,22 @@ static void loadInput(const WeightedFile &Input, WriterContext *WC) {
                              FuncName, firstTime);
     });
   }
-  if (Reader->hasError())
-    WC->Err = Reader->getError();
+  if (Reader->hasError()) {
+    if (Error E = Reader->getError()) {
+      instrprof_error IPE = InstrProfError::take(std::move(E));
+      if (isFatalError(IPE))
+        WC->Err = make_error<InstrProfError>(IPE);
+    }
+  }
 }
 
 /// Merge the \p Src writer context into \p Dst.
 static void mergeWriterContexts(WriterContext *Dst, WriterContext *Src) {
+  // If we've already seen a hard error, continuing with the merge would
+  // clobber it.
+  if (Dst->Err || Src->Err)
+    return;
+
   bool Reported = false;
   Dst->Writer.mergeRecordsFromWriter(std::move(Src->Writer), [&](Error E) {
     if (Reported) {
@@ -198,7 +242,8 @@ static void mergeInstrProfile(const WeightedFileVector &Inputs,
   if (OutputFilename.compare("-") == 0)
     exitWithError("Cannot write indexed profdata format to stdout.");
 
-  if (OutputFormat != PF_Binary && OutputFormat != PF_Text)
+  if (OutputFormat != PF_Binary && OutputFormat != PF_Compact_Binary &&
+      OutputFormat != PF_Text)
     exitWithError("Unknown format is specified.");
 
   std::error_code EC;
@@ -211,8 +256,8 @@ static void mergeInstrProfile(const WeightedFileVector &Inputs,
 
   // If NumThreads is not specified, auto-detect a good default.
   if (NumThreads == 0)
-    NumThreads = std::max(1U, std::min(std::thread::hardware_concurrency(),
-                                       unsigned(Inputs.size() / 2)));
+    NumThreads =
+        std::min(hardware_concurrency(), unsigned((Inputs.size() + 1) / 2));
 
   // Initialize the writer contexts.
   SmallVector<std::unique_ptr<WriterContext>, 4> Contexts;
@@ -254,9 +299,19 @@ static void mergeInstrProfile(const WeightedFileVector &Inputs,
   }
 
   // Handle deferred hard errors encountered during merging.
-  for (std::unique_ptr<WriterContext> &WC : Contexts)
-    if (WC->Err)
+  for (std::unique_ptr<WriterContext> &WC : Contexts) {
+    if (!WC->Err)
+      continue;
+    if (!WC->Err.isA<InstrProfError>())
       exitWithError(std::move(WC->Err), WC->ErrWhence);
+
+    instrprof_error IPE = InstrProfError::take(std::move(WC->Err));
+    if (isFatalError(IPE))
+      exitWithError(make_error<InstrProfError>(IPE), WC->ErrWhence);
+    else
+      warn(toString(make_error<InstrProfError>(IPE)),
+           WC->ErrWhence);
+  }
 
   InstrProfWriter &Writer = Contexts[0]->Writer;
   if (OutputFormat == PF_Text) {
@@ -268,8 +323,8 @@ static void mergeInstrProfile(const WeightedFileVector &Inputs,
 }
 
 static sampleprof::SampleProfileFormat FormatMap[] = {
-    sampleprof::SPF_None, sampleprof::SPF_Text, sampleprof::SPF_Binary,
-    sampleprof::SPF_GCC};
+    sampleprof::SPF_None, sampleprof::SPF_Text, sampleprof::SPF_Compact_Binary,
+    sampleprof::SPF_GCC, sampleprof::SPF_Binary};
 
 static void mergeSampleProfile(const WeightedFileVector &Inputs,
                                StringRef OutputFilename,
@@ -418,6 +473,8 @@ static int merge_main(int argc, const char *argv[]) {
   cl::opt<ProfileFormat> OutputFormat(
       cl::desc("Format of output profile"), cl::init(PF_Binary),
       cl::values(clEnumValN(PF_Binary, "binary", "Binary encoding (default)"),
+                 clEnumValN(PF_Compact_Binary, "compbinary",
+                            "Compact binary encoding"),
                  clEnumValN(PF_Text, "text", "Text encoding"),
                  clEnumValN(PF_GCC, "gcc",
                             "GCC encoding (only meaningful for -sample)")));
@@ -625,6 +682,8 @@ static int showInstrProfile(const std::string &Filename, bool ShowCounts,
   if (ShowCounts && TextFormat)
     return 0;
   std::unique_ptr<ProfileSummary> PS(Builder.getSummary());
+  OS << "Instrumentation level: "
+     << (Reader->isIRLevelProfile() ? "IR" : "Front-end") << "\n";
   if (ShowAllFunctions || !ShowFunction.empty())
     OS << "Functions shown: " << ShownFunctions << "\n";
   OS << "Total functions: " << PS->getNumFunctions() << "\n";
@@ -741,7 +800,7 @@ static int show_main(int argc, const char *argv[]) {
     exitWithErrorCode(EC, OutputFilename);
 
   if (ShowAllFunctions && !ShowFunction.empty())
-    errs() << "warning: -function argument ignored: showing all functions\n";
+    WithColor::warning() << "-function argument ignored: showing all functions\n";
 
   std::vector<uint32_t> Cutoffs(DetailedSummaryCutoffs.begin(),
                                 DetailedSummaryCutoffs.end());
@@ -756,10 +815,7 @@ static int show_main(int argc, const char *argv[]) {
 }
 
 int main(int argc, const char *argv[]) {
-  // Print a stack trace if we signal out.
-  sys::PrintStackTraceOnErrorSignal(argv[0]);
-  PrettyStackTraceProgram X(argc, argv);
-  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
+  InitLLVM X(argc, argv);
 
   StringRef ProgName(sys::path::filename(argv[0]));
   if (argc > 1) {

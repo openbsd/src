@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.9 2015/05/23 14:26:06 jsg Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.11 2018/09/16 12:17:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -117,6 +117,21 @@ md_find_node(struct md *md, const char *name)
 	TAILQ_FOREACH(node, &md->node_list, link) {
 		if (strcmp(node->name->str, name) == 0)
 			return node;
+	}
+
+	return NULL;
+}
+
+struct md_node *
+md_find_subnode(struct md *md, struct md_node *node, const char *name)
+{
+	struct md_prop *prop;
+
+	TAILQ_FOREACH(prop, &node->prop_list, link) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0 &&
+		    strcmp(prop->d.arc.node->name->str, name) == 0)
+			return prop->d.arc.node;
 	}
 
 	return NULL;
@@ -648,4 +663,21 @@ md_write(struct md *md, const char *path)
 		err(1, "fwrite");
 
 	fclose(fp);
+}
+
+uint32_t
+md_size(const char *path)
+{
+	uint32_t size;
+	FILE *fp;
+
+	fp = fopen(path, "r");
+	if (fp == NULL)
+		err(1, "fopen");
+
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	fclose(fp);
+
+	return size;
 }

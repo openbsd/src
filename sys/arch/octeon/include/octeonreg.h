@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonreg.h,v 1.8 2017/07/13 05:53:57 visa Exp $	*/
+/*	$OpenBSD: octeonreg.h,v 1.9 2018/12/18 14:24:02 visa Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.com).
@@ -30,6 +30,7 @@
 #define _MACHINE_OCTEONREG_H_
 
 #define OCTEON_CF_BASE		0x1D000800ULL
+#define OCTEON_CIU3_BASE	0x1010000000000ULL
 #define OCTEON_CIU_BASE		0x1070000000000ULL
 #define OCTEON_CIU_SIZE		0x7000
 #define OCTEON_MIO_BOOT_BASE	0x1180000000000ULL
@@ -166,6 +167,8 @@
 #define CIU_INT1_EN4_1          0x00000C98
 #define CIU_IP4_SUM2(x)		(0x00008c00 + 8 * (x))
 #define CIU_IP4_EN2(x)		(0x0000a400 + 8 * (x))
+
+#define CIU3_FUSE		0x000001a0
 
 #define FPA3_CLK_COUNT		0x12800000000f0ULL
 

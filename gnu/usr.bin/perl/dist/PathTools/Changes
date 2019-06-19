@@ -1,5 +1,47 @@
 Revision history for Perl distribution PathTools.
 
+3.74
+- No changes.
+
+3.73
+- Define NEED_croak_xs_usage, fixing usage of croak_xs_usage()
+- [perl #132853] Add metadata (ABSTRACT, LICENSE, AUTHOR)
+- [perl #132733] Skip cwd_enoent test on Cygwin
+- [perl #132651] Avoid infinite recursion in _perl_abs_path()
+- [rt.cpan.org #114236] Compatibility with File::Path 2.06_04
+
+3.72
+- [perl #132648] Correct error returns from fast_abs_path()
+
+3.71
+- [perl #130818] Remove support for running PathTools on MacOS
+  and EPOC
+
+3.70
+- Change strcmp into the easier to read strEQ
+
+3.69
+- avoid loading modules repeatedly at runtime
+- replace 'use vars' by 'our'
+- Switch to XSLoader from Dynaloader
+
+3.68
+- avoid warning from pre-5.8 code for detecting tainted values
+- make taint.t detect that a pre-5.8 Perl supports tainting
+- avoid a dynamic linking problem on Perl 5.6
+
+3.67 - Mon Feb 27 09:33:04 EST 2017
+- Add security usage note to File::Spec::no_upwards
+
+3.66 - Sat Nov 19 10:30:19 MST 2016
+- white space change so can compile under C++11
+
+3.65 - Mon, 25 Jul 2016 23:15:33 -0700
+- (perl #127384)(CVE-2016-1238)
+
+3.64 - Tue May 24 10:00:19 MST 2016
+- just minor pod changes to silence Pod::Checker
+
 3.62 - Mon Jan 11 08:39:19 EST 2016
 - ensure File::Spec::canonpath() preserves taint (CVE-2015-8607)
 

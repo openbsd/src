@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.23 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.24 2018/04/15 00:10:59 jcs Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -82,6 +82,7 @@ com_puc_attach(parent, self, aux)
 	struct com_softc *sc = (void *)self;
 	struct puc_attach_args *pa = aux;
 	const char *intrstr;
+	int i;
 
 	/* Grab a PCI interrupt. */
 	intrstr = pa->intr_string(pa);
@@ -99,10 +100,14 @@ com_puc_attach(parent, self, aux)
 	sc->sc_iot = pa->t;
 	sc->sc_ioh = pa->h;
 	sc->sc_iobase = pa->a;
-	if (PUC_IS_COM_MUL(pa->type))
-		sc->sc_frequency = COM_FREQ * PUC_COM_GET_MUL(pa->type);
-	else
-		sc->sc_frequency = COM_FREQ * (1 << PUC_COM_GET_POW2(pa->type));
+
+	sc->sc_frequency = COM_FREQ;
+
+	for (i = 0; i < nitems(puc_port_types); i++)
+		if (puc_port_types[i].type == pa->type) {
+			sc->sc_frequency = puc_port_types[i].freq;
+			break;
+		}
 
 	com_attach_subr(sc);
 }

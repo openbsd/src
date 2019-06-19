@@ -40,22 +40,22 @@ std::ostream &operator<<(std::ostream &OS,
 // std::is_assignable and actually writing such an assignment.
 #if !defined(_MSC_VER)
 static_assert(
-    !std::is_assignable<StringRef, std::string>::value,
+    !std::is_assignable<StringRef&, std::string>::value,
     "Assigning from prvalue std::string");
 static_assert(
-    !std::is_assignable<StringRef, std::string &&>::value,
+    !std::is_assignable<StringRef&, std::string &&>::value,
     "Assigning from xvalue std::string");
 static_assert(
-    std::is_assignable<StringRef, std::string &>::value,
+    std::is_assignable<StringRef&, std::string &>::value,
     "Assigning from lvalue std::string");
 static_assert(
-    std::is_assignable<StringRef, const char *>::value,
+    std::is_assignable<StringRef&, const char *>::value,
     "Assigning from prvalue C string");
 static_assert(
-    std::is_assignable<StringRef, const char * &&>::value,
+    std::is_assignable<StringRef&, const char * &&>::value,
     "Assigning from xvalue C string");
 static_assert(
-    std::is_assignable<StringRef, const char * &>::value,
+    std::is_assignable<StringRef&, const char * &>::value,
     "Assigning from lvalue C string");
 #endif
 
@@ -181,6 +181,17 @@ TEST(StringRefTest, Split) {
             Str.rsplit('l'));
   EXPECT_EQ(std::make_pair(StringRef("hell"), StringRef("")),
             Str.rsplit('o'));
+
+  EXPECT_EQ(std::make_pair(StringRef("he"), StringRef("o")),
+		    Str.rsplit("ll"));
+  EXPECT_EQ(std::make_pair(StringRef(""), StringRef("ello")),
+		    Str.rsplit("h"));
+  EXPECT_EQ(std::make_pair(StringRef("hell"), StringRef("")),
+	      Str.rsplit("o"));
+  EXPECT_EQ(std::make_pair(StringRef("hello"), StringRef("")),
+		    Str.rsplit("::"));
+  EXPECT_EQ(std::make_pair(StringRef("hel"), StringRef("o")),
+		    Str.rsplit("l"));
 }
 
 TEST(StringRefTest, Split2) {
@@ -875,7 +886,12 @@ struct GetDoubleStrings {
                      {"0.0", false, false, 0.0},
                      {"-0.0", false, false, -0.0},
                      {"123.45", false, true, 123.45},
-                     {"123.45", true, false, 123.45}};
+                     {"123.45", true, false, 123.45},
+                     {"1.8e308", true, false, std::numeric_limits<double>::infinity()},
+                     {"1.8e308", false, true, std::numeric_limits<double>::infinity()},
+                     {"0x0.0000000000001P-1023", false, true, 0.0},
+                     {"0x0.0000000000001P-1023", true, false, 0.0},
+                    };
 
 TEST(StringRefTest, getAsDouble) {
   for (const auto &Entry : DoubleStrings) {

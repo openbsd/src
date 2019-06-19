@@ -407,7 +407,7 @@ ArgType::matchesType(ASTContext &C, QualType argTy) const {
 
     case WIntTy: {
 
-      QualType PromoArg = 
+      QualType PromoArg =
         argTy->isPromotableIntegerType()
           ? C.getPromotedIntegerType(argTy) : argTy;
 
@@ -623,7 +623,7 @@ const char *ConversionSpecifier::toString() const {
 Optional<ConversionSpecifier>
 ConversionSpecifier::getStandardSpecifier() const {
   ConversionSpecifier::Kind NewKind;
-  
+
   switch (getKind()) {
   default:
     return None;
@@ -672,7 +672,7 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
   switch (LM.getKind()) {
     case LengthModifier::None:
       return true;
-      
+
     // Handle most integer flags
     case LengthModifier::AsShort:
       if (Target.getTriple().isOSMSVCRT()) {
@@ -706,13 +706,17 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
         case ConversionSpecifier::XArg:
         case ConversionSpecifier::nArg:
           return true;
+        case ConversionSpecifier::FreeBSDbArg:
+          return Target.getTriple().isOSFreeBSD() ||
+                 Target.getTriple().isPS4() ||
+                 Target.getTriple().isOSOpenBSD();
         case ConversionSpecifier::FreeBSDrArg:
         case ConversionSpecifier::FreeBSDyArg:
           return Target.getTriple().isOSFreeBSD() || Target.getTriple().isPS4();
         default:
           return false;
       }
-      
+
     // Handle 'l' flag
     case LengthModifier::AsLong: // or AsWideChar
       switch (CS.getKind()) {
@@ -739,13 +743,17 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
         case ConversionSpecifier::ScanListArg:
         case ConversionSpecifier::ZArg:
           return true;
+        case ConversionSpecifier::FreeBSDbArg:
+          return Target.getTriple().isOSFreeBSD() ||
+                 Target.getTriple().isPS4() ||
+                 Target.getTriple().isOSOpenBSD();
         case ConversionSpecifier::FreeBSDrArg:
         case ConversionSpecifier::FreeBSDyArg:
           return Target.getTriple().isOSFreeBSD() || Target.getTriple().isPS4();
         default:
           return false;
       }
-      
+
     case LengthModifier::AsLongDouble:
       switch (CS.getKind()) {
         case ConversionSpecifier::aArg:
@@ -897,6 +905,7 @@ bool FormatSpecifier::hasStandardLengthConversionCombination() const {
         case ConversionSpecifier::uArg:
         case ConversionSpecifier::xArg:
         case ConversionSpecifier::XArg:
+        case ConversionSpecifier::FreeBSDbArg:
           return false;
         default:
           return true;

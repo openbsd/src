@@ -693,7 +693,7 @@ simulated recursion.
 
 C<re_intuit_start()> is responsible for handling start points and no-match
 optimisations as determined by the results of the analysis done by
-C<study_chunk()> (and described in L<Peep-hole Optimisation and Analysis>).
+C<study_chunk()> (and described in L</Peep-hole Optimisation and Analysis>).
 
 The basic structure of this routine is to try to find the start- and/or
 end-points of where the pattern could match, and to ensure that the string

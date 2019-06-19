@@ -3,7 +3,7 @@ package Thread::Queue;
 use strict;
 use warnings;
 
-our $VERSION = '3.09';
+our $VERSION = '3.12';
 $VERSION = eval $VERSION;
 
 use threads::shared 1.21;
@@ -65,8 +65,8 @@ sub end
     lock(%$self);
     # No more data is coming
     $$self{'ENDED'} = 1;
-    # Try to release at least one blocked thread
-    cond_signal(%$self);
+
+    cond_signal(%$self);  # Unblock possibly waiting threads
 }
 
 # Return 1 or more items from the head of a queue, blocking if needed
@@ -80,17 +80,21 @@ sub dequeue
 
     # Wait for requisite number of items
     cond_wait(%$self) while ((@$queue < $count) && ! $$self{'ENDED'});
-    cond_signal(%$self) if ((@$queue >= $count) || $$self{'ENDED'});
 
     # If no longer blocking, try getting whatever is left on the queue
     return $self->dequeue_nb($count) if ($$self{'ENDED'});
 
     # Return single item
-    return shift(@$queue) if ($count == 1);
+    if ($count == 1) {
+        my $item = shift(@$queue);
+        cond_signal(%$self);  # Unblock possibly waiting threads
+        return $item;
+    }
 
     # Return multiple items
     my @items;
     push(@items, shift(@$queue)) for (1..$count);
+    cond_signal(%$self);  # Unblock possibly waiting threads
     return @items;
 }
 
@@ -104,7 +108,11 @@ sub dequeue_nb
     my $count = @_ ? $self->_validate_count(shift) : 1;
 
     # Return single item
-    return shift(@$queue) if ($count == 1);
+    if ($count == 1) {
+        my $item = shift(@$queue);
+        cond_signal(%$self);  # Unblock possibly waiting threads
+        return $item;
+    }
 
     # Return multiple items
     my @items;
@@ -112,6 +120,7 @@ sub dequeue_nb
         last if (! @$queue);
         push(@items, shift(@$queue));
     }
+    cond_signal(%$self);  # Unblock possibly waiting threads
     return @items;
 }
 
@@ -135,7 +144,6 @@ sub dequeue_timed
     while ((@$queue < $count) && ! $$self{'ENDED'}) {
         last if (! cond_timedwait(%$self, $timeout));
     }
-    cond_signal(%$self) if ((@$queue >= $count) || $$self{'ENDED'});
 
     # Get whatever we need off the queue if available
     return $self->dequeue_nb($count);
@@ -187,8 +195,7 @@ sub insert
     # Add previous items back onto the queue
     push(@$queue, @tmp);
 
-    # Soup's up
-    cond_signal(%$self);
+    cond_signal(%$self);  # Unblock possibly waiting threads
 }
 
 # Remove items from anywhere in a queue
@@ -206,7 +213,7 @@ sub extract
         $index += @$queue;
         if ($index < 0) {
             $count += $index;
-            return if ($count <= 0);            # Beyond the head of the queue
+            return if ($count <= 0);           # Beyond the head of the queue
             return $self->dequeue_nb($count);  # Extract from the head
         }
     }
@@ -223,6 +230,8 @@ sub extract
 
     # Add back any removed items
     push(@$queue, @tmp);
+
+    cond_signal(%$self);  # Unblock possibly waiting threads
 
     # Return single item
     return $items[0] if ($count == 1);
@@ -263,14 +272,19 @@ sub _validate_count
     if (! defined($count) ||
         ! looks_like_number($count) ||
         (int($count) != $count) ||
-        ($count < 1))
+        ($count < 1) ||
+        ($$self{'LIMIT'} && $count > $$self{'LIMIT'}))
     {
         require Carp;
         my ($method) = (caller(1))[3];
         my $class_name = ref($self);
         $method =~ s/$class_name\:://;
         $count = 'undef' if (! defined($count));
-        Carp::croak("Invalid 'count' argument ($count) to '$method' method");
+        if ($$self{'LIMIT'} && $count > $$self{'LIMIT'}) {
+            Carp::croak("'count' argument ($count) to '$method' method exceeds queue size limit ($$self{'LIMIT'})");
+        } else {
+            Carp::croak("Invalid 'count' argument ($count) to '$method' method");
+        }
     }
 
     return $count;
@@ -304,7 +318,7 @@ Thread::Queue - Thread-safe queues
 
 =head1 VERSION
 
-This document describes Thread::Queue version 3.09
+This document describes Thread::Queue version 3.12
 
 =head1 SYNOPSIS
 
@@ -494,6 +508,9 @@ C<limit> does not prevent enqueuing items beyond that count:
                          # 'undef')
  $q->limit = 0;          # Queue size is now unlimited
 
+Calling any of the dequeue methods with C<COUNT> greater than a queue's
+C<limit> will generate an error.
+
 =item ->end()
 
 Declares that no more items will be added to the queue.
@@ -618,8 +635,11 @@ Passing array/hash refs that contain objects may not work for Perl prior to
 
 =head1 SEE ALSO
 
-Thread::Queue Discussion Forum on CPAN:
-L<http://www.cpanforum.com/dist/Thread-Queue>
+Thread::Queue on MetaCPAN:
+L<https://metacpan.org/release/Thread-Queue>
+
+Code repository for CPAN distribution:
+L<https://github.com/Dual-Life/Thread-Queue>
 
 L<threads>, L<threads::shared>
 

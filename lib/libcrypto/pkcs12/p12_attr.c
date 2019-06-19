@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_attr.c,v 1.10 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: p12_attr.c,v 1.12 2018/08/24 20:07:41 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -77,14 +77,10 @@ PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, unsigned char *name, int namelen)
 int
 PKCS8_add_keyusage(PKCS8_PRIV_KEY_INFO *p8, int usage)
 {
-	unsigned char us_val;
+	unsigned char us_val = (unsigned char)usage;
 
-	us_val = (unsigned char) usage;
-	if (X509at_add1_attr_by_NID(&p8->attributes, NID_key_usage,
-	    V_ASN1_BIT_STRING, &us_val, 1))
-		return 1;
-	else
-		return 0;
+	return PKCS8_pkey_add1_attr_by_NID(p8, NID_key_usage, V_ASN1_BIT_STRING,
+	    &us_val, 1);
 }
 
 /* Add a friendlyname to a safebag */
@@ -122,7 +118,7 @@ PKCS12_add_CSPName_asc(PKCS12_SAFEBAG *bag, const char *name, int namelen)
 }
 
 ASN1_TYPE *
-PKCS12_get_attr_gen(STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
+PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid)
 {
 	X509_ATTRIBUTE *attrib;
 	int i;

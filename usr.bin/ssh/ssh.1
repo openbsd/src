@@ -33,8 +33,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.391 2018/02/23 07:38:09 jmc Exp $
-.Dd $Mdocdate: February 23 2018 $
+.\" $OpenBSD: ssh.1,v 1.403 2019/06/12 11:31:50 jmc Exp $
+.Dd $Mdocdate: June 12 2019 $
 .Dt SSH 1
 .Os
 .Sh NAME
@@ -270,8 +270,8 @@ on the master process.
 .It Fl I Ar pkcs11
 Specify the PKCS#11 shared library
 .Nm
-should use to communicate with a PKCS#11 token providing the user's
-private RSA key.
+should use to communicate with a PKCS#11 token providing keys for user
+authentication.
 .Pp
 .It Fl i Ar identity_file
 Selects a file from which the identity (private key) for
@@ -308,6 +308,11 @@ Multiple jump hops may be specified separated by comma characters.
 This is a shortcut to specify a
 .Cm ProxyJump
 configuration directive.
+Note that configuration directives supplied on the command-line generally
+apply to the destination host and not any specified jump hosts.
+Use
+.Pa ~/.ssh/config
+to specify configuration for jump hosts.
 .Pp
 .It Fl K
 Enables GSSAPI-based authentication and forwarding (delegation) of GSSAPI
@@ -391,7 +396,10 @@ options places
 .Nm
 into
 .Dq master
-mode with confirmation required before slave connections are accepted.
+mode but with confirmation required using
+.Xr ssh-askpass 1
+before each operation that changes the multiplexing state
+(e.g. opening a new session).
 Refer to the description of
 .Cm ControlMaster
 in
@@ -466,6 +474,7 @@ For full details of the options listed below, and their possible values, see
 .It CanonicalizeHostname
 .It CanonicalizeMaxDots
 .It CanonicalizePermittedCNAMEs
+.It CASignatureAlgorithms
 .It CertificateFile
 .It ChallengeResponseAuthentication
 .It CheckHostIP
@@ -495,11 +504,10 @@ For full details of the options listed below, and their possible values, see
 .It HostbasedKeyTypes
 .It HostKeyAlgorithms
 .It HostKeyAlias
-.It HostName
+.It Hostname
 .It IdentitiesOnly
 .It IdentityAgent
 .It IdentityFile
-.It Include
 .It IPQoS
 .It KbdInteractiveAuthentication
 .It KbdInteractiveDevices
@@ -528,6 +536,7 @@ For full details of the options listed below, and their possible values, see
 .It SendEnv
 .It ServerAliveInterval
 .It ServerAliveCountMax
+.It SetEnv
 .It StreamLocalBindMask
 .It StreamLocalBindUnlink
 .It StrictHostKeyChecking
@@ -535,7 +544,6 @@ For full details of the options listed below, and their possible values, see
 .It Tunnel
 .It TunnelDevice
 .It UpdateHostKeys
-.It UsePrivilegedPort
 .It User
 .It UserKnownHostsFile
 .It VerifyHostKeyDNS
@@ -557,6 +565,10 @@ The available features are:
 (supported symmetric ciphers),
 .Ar cipher-auth
 (supported symmetric ciphers that support authenticated encryption),
+.Ar help
+(supported query terms for use with the
+.Fl Q
+flag),
 .Ar mac
 (supported message integrity codes),
 .Ar kex
@@ -566,9 +578,11 @@ The available features are:
 .Ar key-cert
 (certificate key types),
 .Ar key-plain
-(non-certificate key types), and
+(non-certificate key types),
 .Ar protocol-version
-(supported SSH protocol versions).
+(supported SSH protocol versions), and
+.Ar sig
+(supported signature algorithms).
 .Pp
 .It Fl q
 Quiet mode.
@@ -742,10 +756,15 @@ and
 .Cm TunnelDevice
 directives in
 .Xr ssh_config 5 .
+.Pp
 If the
 .Cm Tunnel
-directive is unset, it is set to the default tunnel mode, which is
+directive is unset, it will be set to the default tunnel mode, which is
 .Dq point-to-point .
+If a different
+.Cm Tunnel
+forwarding mode it desired, then it should be specified before
+.Fl w .
 .Pp
 .It Fl X
 Enables X11 forwarding.
@@ -1071,49 +1090,35 @@ Increase the verbosity
 when errors are being written to stderr.
 .El
 .Sh TCP FORWARDING
-Forwarding of arbitrary TCP connections over the secure channel can
-be specified either on the command line or in a configuration file.
+Forwarding of arbitrary TCP connections over a secure channel
+can be specified either on the command line or in a configuration file.
 One possible application of TCP forwarding is a secure connection to a
 mail server; another is going through firewalls.
 .Pp
-In the example below, we look at encrypting communication between
-an IRC client and server, even though the IRC server does not directly
-support encrypted communications.
+In the example below, we look at encrypting communication for an IRC client,
+even though the IRC server it connects to does not directly
+support encrypted communication.
 This works as follows:
 the user connects to the remote host using
 .Nm ,
-specifying a port to be used to forward connections
-to the remote server.
-After that it is possible to start the service which is to be encrypted
-on the client machine,
-connecting to the same local port,
+specifying the ports to be used to forward the connection.
+After that it is possible to start the program locally,
 and
 .Nm
-will encrypt and forward the connection.
+will encrypt and forward the connection to the remote server.
 .Pp
-The following example tunnels an IRC session from client machine
-.Dq 127.0.0.1
-(localhost)
-to remote server
-.Dq server.example.com :
-.Bd -literal -offset 4n
-$ ssh -f -L 1234:localhost:6667 server.example.com sleep 10
-$ irc -c '#users' -p 1234 pinky 127.0.0.1
-.Ed
-.Pp
-This tunnels a connection to IRC server
+The following example tunnels an IRC session from the client
+to an IRC server at
 .Dq server.example.com ,
 joining channel
 .Dq #users ,
 nickname
 .Dq pinky ,
-using port 1234.
-It doesn't matter which port is used,
-as long as it's greater than 1023
-(remember, only root can open sockets on privileged ports)
-and doesn't conflict with any ports already in use.
-The connection is forwarded to port 6667 on the remote server,
-since that's the standard port for IRC services.
+using the standard IRC port, 6667:
+.Bd -literal -offset 4n
+$ ssh -f -L 6667:localhost:6667 server.example.com sleep 10
+$ irc -c '#users' pinky IRC/127.0.0.1
+.Ed
 .Pp
 The
 .Fl f
@@ -1123,7 +1128,7 @@ and the remote command
 .Dq sleep 10
 is specified to allow an amount of time
 (10 seconds, in the example)
-to start the service which is to be tunnelled.
+to start the program which is going to use the tunnel.
 If no connections are made within the time specified,
 .Nm
 will exit.

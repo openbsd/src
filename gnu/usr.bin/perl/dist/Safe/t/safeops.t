@@ -111,7 +111,6 @@ padsv		SKIP my $x
 padav		SKIP my @x
 padhv		SKIP my %x
 padany		SKIP (not implemented)
-pushre		SKIP split /foo/
 rv2gv		*x
 rv2sv		$x
 av2arylen	$#x
@@ -235,6 +234,7 @@ exists		exists $h{Key}
 rv2hv		%h
 helem		$h{kEy}
 hslice		@h{kEy}
+multiconcat	SKIP (set by optimizer)
 multideref	SKIP (set by optimizer)
 unpack		unpack
 pack		pack
@@ -287,7 +287,7 @@ return		return
 last		last
 next		next
 redo		redo THIS
-dump		dump
+dump		CORE::dump
 goto		goto THERE
 exit		exit 0
 open		open FOO

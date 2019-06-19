@@ -1,4 +1,4 @@
-# Pod::Text -- Convert POD data to formatted text.
+# Convert POD data to formatted text.
 #
 # This module converts POD to formatted text.  It replaces the old Pod::Text
 # module that came with versions of Perl prior to 5.6.0 and attempts to match
@@ -12,7 +12,7 @@
 # standard Perl mailing lists.
 #
 # Copyright 1999, 2000, 2001, 2002, 2004, 2006, 2008, 2009, 2012, 2013, 2014,
-#     2015 Russ Allbery <rra@cpan.org>
+#     2015, 2016 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -39,7 +39,26 @@ use Pod::Simple ();
 # We have to export pod2text for backward compatibility.
 @EXPORT = qw(pod2text);
 
-$VERSION = '4.07';
+$VERSION = '4.10';
+
+# Ensure that $Pod::Simple::nbsp and $Pod::Simple::shy are available.  Code
+# taken from Pod::Simple 3.32, but was only added in 3.30.
+my ($NBSP, $SHY);
+if ($Pod::Simple::VERSION ge 3.30) {
+    $NBSP = $Pod::Simple::nbsp;
+    $SHY  = $Pod::Simple::shy;
+} else {
+    if ($] ge 5.007_003) {
+        $NBSP = chr utf8::unicode_to_native(0xA0);
+        $SHY  = chr utf8::unicode_to_native(0xAD);
+    } elsif (Pod::Simple::ASCII) {
+        $NBSP = "\xA0";
+        $SHY  = "\xAD";
+    } else {
+        $NBSP = "\x41";
+        $SHY  = "\xCA";
+    }
+}
 
 ##############################################################################
 # Initialization
@@ -273,7 +292,12 @@ sub reformat {
 sub output {
     my ($self, @text) = @_;
     my $text = join ('', @text);
-    $text =~ tr/\240\255/ /d;
+    if ($NBSP) {
+        $text =~ s/$NBSP/ /g;
+    }
+    if ($SHY) {
+        $text =~ s/$SHY//g;
+    }
     unless ($$self{opt_utf8}) {
         my $encoding = $$self{encoding} || '';
         if ($encoding && $encoding ne $$self{ENCODING}) {
@@ -683,7 +707,7 @@ sub parse_from_file {
     my $self = shift;
     $self->reinit;
 
-    # Fake the old cutting option to Pod::Parser.  This fiddings with internal
+    # Fake the old cutting option to Pod::Parser.  This fiddles with internal
     # Pod::Simple state and is quite ugly; we need a better approach.
     if (ref ($_[0]) eq 'HASH') {
         my $opts = shift @_;
@@ -999,7 +1023,7 @@ how to use Pod::Simple.
 =head1 COPYRIGHT AND LICENSE
 
 Copyright 1999, 2000, 2001, 2002, 2004, 2006, 2008, 2009, 2012, 2013, 2014,
-2015 Russ Allbery <rra@cpan.org>
+2015, 2016 Russ Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

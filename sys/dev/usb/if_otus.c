@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.60 2017/10/26 15:00:28 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.63 2019/01/15 22:08:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -582,6 +582,7 @@ otus_alloc_tx_cmd(struct otus_softc *sc)
 		printf("%s: could not allocate xfer buffer\n",
 		    sc->sc_dev.dv_xname);
 		usbd_free_xfer(cmd->xfer);
+		cmd->xfer = NULL;
 		return ENOMEM;
 	}
 	return 0;
@@ -691,13 +692,16 @@ void
 otus_next_scan(void *arg)
 {
 	struct otus_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	usbd_ref_incr(sc->sc_udev);
 
-	if (sc->sc_ic.ic_state == IEEE80211_S_SCAN)
+	if (sc->sc_ic.ic_state == IEEE80211_S_SCAN &&
+	    (ifp->if_flags & IFF_RUNNING))
 		ieee80211_next_scan(&sc->sc_ic.ic_if);
 
 	usbd_ref_decr(sc->sc_udev);
@@ -2271,7 +2275,7 @@ otus_init(struct ifnet *ifp)
 	}
 
 	/* Start Rx. */
-	otus_write(sc, 0x1c3d30, 0x100);
+	otus_write(sc, AR_MAC_REG_DMA_TRIGGER, AR_DMA_TRIGGER_RXQ);
 	(void)otus_write_barrier(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -2307,7 +2311,7 @@ otus_stop(struct ifnet *ifp)
 	splx(s);
 
 	/* Stop Rx. */
-	otus_write(sc, 0x1c3d30, 0);
+	otus_write(sc, AR_MAC_REG_DMA_TRIGGER, 0);
 	(void)otus_write_barrier(sc);
 
 	sc->tx_queued = 0;

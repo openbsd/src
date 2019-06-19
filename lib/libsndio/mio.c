@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.20 2015/11/22 12:01:23 ratchov Exp $	*/
+/*	$OpenBSD: mio.c,v 1.22 2018/10/31 10:06:54 miko Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,7 +17,6 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -129,10 +128,6 @@ mio_read(struct mio_hdl *hdl, void *buf, size_t len)
 		hdl->eof = 1;
 		return 0;
 	}
-	if (len == 0) {
-		DPRINTF("mio_read: zero length read ignored\n");
-		return 0;
-	}
 	while (todo > 0) {
 		n = hdl->ops->read(hdl, data, todo);
 		if (n == 0 && hdl->eof)
@@ -161,14 +156,6 @@ mio_write(struct mio_hdl *hdl, const void *buf, size_t len)
 	if (!(hdl->mode & MIO_OUT)) {
 		DPRINTF("mio_write: not output device\n");
 		hdl->eof = 1;
-		return 0;
-	}
-	if (len == 0) {
-		DPRINTF("mio_write: zero length write ignored\n");
-		return 0;
-	}
-	if (todo == 0) {
-		DPRINTF("mio_write: zero length write ignored\n");
 		return 0;
 	}
 	while (todo > 0) {

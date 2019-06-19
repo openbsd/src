@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2013/03/21 21:51:00 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2019/04/10 04:17:36 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ devboot(dev_t dev, char *p)
 }
 
 int
-run_loadfile(u_long *marks, int howto)
+run_loadfile(uint64_t *marks, int howto)
 {
 	char bootline[512];		/* Should check size? */
 	u_int32_t entry;

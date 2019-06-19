@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apmd.8,v 1.49 2017/08/29 06:13:20 jmc Exp $
+.\"	$OpenBSD: apmd.8,v 1.50 2018/12/04 18:00:57 tedu Exp $
 .\"
 .\" Copyright (c) 1995 John T. Kohl
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 29 2017 $
+.Dd $Mdocdate: December 4 2018 $
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -77,9 +77,8 @@ ignored if the system is connected to line current and not running from
 batteries (user requests are still honored).
 .It Fl d
 .Nm
-enters debug mode, logging to facility
-.Dv LOG_LOCAL1 ,
-and stays in the foreground on the controlling terminal.
+enters debug mode, staying in the foreground.
+Logging output is printed to stdout.
 .It Fl f Ar devname
 Specify an alternate device file name,
 .Ar devname .

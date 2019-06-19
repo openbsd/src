@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.23 2016/01/03 14:43:20 tb Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.26 2019/03/10 20:49:24 schwarze Exp $	*/
 /*	$FreeBSD: uudecode.c,v 1.49 2003/05/03 19:44:46 obrien Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
  * Used with uuencode.
  */
 
-#include <sys/socket.h>
 #include <sys/stat.h>
 
 #include <netinet/in.h>
@@ -43,20 +42,19 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <locale.h>
+#include <limits.h>
 #include <pwd.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 
 static const char *infile, *outfile;
 static FILE *infp, *outfp;
 static int base64, cflag, iflag, oflag, pflag, rflag, sflag;
 
-static void	usage(void);
+static void __dead	usage(void);
 static int	decode(void);
 static int	decode2(void);
 static int	uu_decode(void);
@@ -83,7 +81,6 @@ main(int argc, char *argv[])
 		pmode = MODE_B64DECODE;
 	}
 
-	setlocale(LC_ALL, "");
 	while ((ch = getopt(argc, argv, optstr[pmode])) != -1) {
 		switch(ch) {
 		case 'c':
@@ -154,7 +151,7 @@ main(int argc, char *argv[])
 		infp = stdin;
 		rval = decode();
 	}
-	exit(rval);
+	return (rval);
 }
 
 static int
@@ -359,9 +356,9 @@ uu_decode(void)
 #define	DEC(c)	(((c) - ' ') & 077)		/* single character decode */
 #define IS_DEC(c) ( (((c) - ' ') >= 0) && (((c) - ' ') <= 077 + 1) )
 
-#define OUT_OF_RANGE do {						\
-	warnx("%s: %s: character out of range: [%d-%d]",		\
-	    infile, outfile, 1 + ' ', 077 + ' ' + 1);			\
+#define OUT_OF_RANGE(c) do {						\
+	warnx("%s: %s: character value (%d) out of range [%d-%d]",	\
+	    infile, outfile, (unsigned char)(c), 1 + ' ', 077 + ' ' + 1); \
 	return (1);							\
 } while (0)
 
@@ -374,10 +371,14 @@ uu_decode(void)
 			break;
 		for (++p; i > 0; p += 4, i -= 3)
 			if (i >= 3) {
-				if (!(IS_DEC(*p) && IS_DEC(*(p + 1)) &&
-				     IS_DEC(*(p + 2)) && IS_DEC(*(p + 3))))
-					OUT_OF_RANGE;
-
+				if (!IS_DEC(*p))
+					OUT_OF_RANGE(*p);
+				if (!IS_DEC(*(p + 1)))
+					OUT_OF_RANGE(*(p + 1));
+				if (!IS_DEC(*(p + 2)))
+					OUT_OF_RANGE(*(p + 2));
+				if (!IS_DEC(*(p + 3)))
+					OUT_OF_RANGE(*(p + 3));
 				ch = DEC(p[0]) << 2 | DEC(p[1]) >> 4;
 				putc(ch, outfp);
 				ch = DEC(p[1]) << 4 | DEC(p[2]) >> 2;
@@ -387,23 +388,26 @@ uu_decode(void)
 			}
 			else {
 				if (i >= 1) {
-					if (!(IS_DEC(*p) && IS_DEC(*(p + 1))))
-						OUT_OF_RANGE;
+					if (!IS_DEC(*p))
+						OUT_OF_RANGE(*p);
+					if (!IS_DEC(*(p + 1)))
+						OUT_OF_RANGE(*(p + 1));
 					ch = DEC(p[0]) << 2 | DEC(p[1]) >> 4;
 					putc(ch, outfp);
 				}
 				if (i >= 2) {
-					if (!(IS_DEC(*(p + 1)) &&
-					    IS_DEC(*(p + 2))))
-						OUT_OF_RANGE;
-
+					if (!IS_DEC(*(p + 1)))
+						OUT_OF_RANGE(*(p + 1));
+					if (!IS_DEC(*(p + 2)))
+						OUT_OF_RANGE(*(p + 2));
 					ch = DEC(p[1]) << 4 | DEC(p[2]) >> 2;
 					putc(ch, outfp);
 				}
 				if (i >= 3) {
-					if (!(IS_DEC(*(p + 2)) &&
-					    IS_DEC(*(p + 3))))
-						OUT_OF_RANGE;
+					if (!IS_DEC(*(p + 2)))
+						OUT_OF_RANGE(*(p + 2));
+					if (!IS_DEC(*(p + 3)))
+						OUT_OF_RANGE(*(p + 3));
 					ch = DEC(p[2]) << 6 | DEC(p[3]);
 					putc(ch, outfp);
 				}
@@ -442,7 +446,7 @@ base64_decode(void)
 		    "error decoding base64 input stream"));
 }
 
-static void
+static void __dead
 usage(void)
 {
 	switch (pmode) {

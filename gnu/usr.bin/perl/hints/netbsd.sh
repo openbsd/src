@@ -254,3 +254,14 @@ esac
 case "$usemymalloc" in
 '') usemymalloc=n ;;
 esac
+
+# NetBSD 6 defines the *at() functions in libc, but either doesn't
+# implement them, or implements them only for AT_FDCWD
+case "$osver" in
+[1-6].*)
+        d_unlinkat="$undef"
+        d_renameat="$undef"
+        d_linkat="$undef"
+        d_fchmodat="$undef"
+        ;;
+esac

@@ -1,4 +1,4 @@
-/* $OpenBSD: encode.c,v 1.24 2016/05/04 15:05:13 tedu Exp $ */
+/* $OpenBSD: encode.c,v 1.26 2019/01/19 01:24:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,6 +112,18 @@ static const unsigned char data_ascii2bin[128] = {
 	0x31, 0x32, 0x33, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
+EVP_ENCODE_CTX *
+EVP_ENCODE_CTX_new(void)
+{
+	return calloc(1, sizeof(EVP_ENCODE_CTX));
+}
+
+void
+EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx)
+{
+	free(ctx);
+}
+
 void
 EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 {
@@ -120,7 +132,7 @@ EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 	ctx->line_num = 0;
 }
 
-void
+int
 EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
@@ -128,13 +140,13 @@ EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 	size_t total = 0;
 
 	*outl = 0;
-	if (inl == 0)
-		return;
+	if (inl <= 0)
+		return 0;
 	OPENSSL_assert(ctx->length <= (int)sizeof(ctx->enc_data));
 	if (ctx->length - ctx->num > inl) {
 		memcpy(&(ctx->enc_data[ctx->num]), in, inl);
 		ctx->num += inl;
-		return;
+		return 1;
 	}
 	if (ctx->num != 0) {
 		i = ctx->length - ctx->num;
@@ -160,12 +172,14 @@ EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 	if (total > INT_MAX) {
 		/* Too much output data! */
 		*outl = 0;
-		return;
+		return 0;
 	}
 	if (inl != 0)
 		memcpy(&(ctx->enc_data[0]), in, inl);
 	ctx->num = inl;
 	*outl = total;
+
+	return 1;
 }
 
 void

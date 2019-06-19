@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.37 2017/06/04 14:20:12 naddy Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.39 2018/11/16 21:15:47 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -101,7 +101,7 @@ int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 #define _RF_U		0x04000000		/* Unaligned */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	((s) & 0xff)		/* right shift */
-static int reloc_target_flags[] = {
+static const int reloc_target_flags[] = {
 	0,							/* NONE */
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* RELOC_32*/
 	_RF_S|_RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(0),		/* PC32 */
@@ -136,7 +136,7 @@ static int reloc_target_flags[] = {
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
 
-static long reloc_target_bitmask[] = {
+static const long reloc_target_bitmask[] = {
 #define _BM(x)	(~(-(1ULL << (x))))
 	0,		/* NONE */
 	_BM(32),	/* RELOC_32*/
@@ -439,9 +439,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			*where += object->obj_base;
 		}
 	}
-
-	/* mprotect the GOT */
-	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
 
 	return (fails);
 }

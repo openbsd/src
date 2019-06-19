@@ -1,0 +1,18 @@
+.\" $OpenBSD: dotT.in,v 1.2 2019/01/07 06:51:37 schwarze Exp $
+.Dd $Mdocdate: January 7 2019 $
+.Dt STRING-DOTT 1
+.Os
+.Sh NAME
+.Nm string-dotT
+.Nd interpolating the device name
+.Sh DESCRIPTION
+BEGINTEST
+.Pp
+We are using the \*(.T device.
+.Pp
+.ds .T name
+The device \*(.T can be overridden.
+.nf
+ENDTEST
+.br
+end of file

@@ -1,4 +1,4 @@
-.\" $OpenBSD: __thrsleep.2,v 1.6 2016/09/03 17:02:22 akfaew Exp $
+.\" $OpenBSD: __thrsleep.2,v 1.7 2018/04/24 16:28:42 pirofti Exp $
 .\"
 .\" Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2016 $
+.Dd $Mdocdate: April 24 2018 $
 .Dt __THRSLEEP 2
 .Os
 .Sh NAME
@@ -148,12 +148,19 @@ arguments was reached.
 A signal arrived or the
 .Fa abort
 argument pointed to a non-zero value.
+.It Bq Er ECANCELED
+A signal arrived and
+.Fa SA_RESTART
+was set.
 .It Bq Er EINVAL
 The
 .Fa clock_id
 argument is not a valid
 .Xr clock_gettime 2
-clock id.
+clock id
+or
+.Fa abstime
+specified a nanosecond value less than zero or greater than 1000 million.
 .El
 .Pp
 .Fn __thrwakeup
@@ -167,6 +174,7 @@ with the same
 were found.
 .El
 .Sh SEE ALSO
+.Xr sigaction 2 ,
 .Xr pthread_cond_wait 3 ,
 .Xr pthread_mutex_lock 3 ,
 .Xr tsleep 9

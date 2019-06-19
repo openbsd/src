@@ -20,7 +20,7 @@ namespace diagtool {
     const char *NameStr;
     short DiagID;
     uint8_t NameLen;
-    
+
     llvm::StringRef getName() const {
       return llvm::StringRef(NameStr, NameLen);
     }
@@ -30,10 +30,10 @@ namespace diagtool {
     }
   };
 
-  /// \brief Get every diagnostic in the system, sorted by name.
+  /// Get every diagnostic in the system, sorted by name.
   llvm::ArrayRef<DiagnosticRecord> getBuiltinDiagnosticsByName();
 
-  /// \brief Get a diagnostic by its ID.
+  /// Get a diagnostic by its ID.
   const DiagnosticRecord &getDiagnosticForID(short DiagID);
 
 
@@ -80,7 +80,7 @@ namespace diagtool {
       bool operator==(group_iterator &Other) const {
         return CurrentID == Other.CurrentID;
       }
-      
+
       bool operator!=(group_iterator &Other) const {
         return CurrentID != Other.CurrentID;
       }
@@ -89,17 +89,19 @@ namespace diagtool {
     typedef group_iterator<GroupRecord> subgroup_iterator;
     subgroup_iterator subgroup_begin() const;
     subgroup_iterator subgroup_end() const;
+    llvm::iterator_range<subgroup_iterator> subgroups() const;
 
     typedef group_iterator<DiagnosticRecord> diagnostics_iterator;
     diagnostics_iterator diagnostics_begin() const;
     diagnostics_iterator diagnostics_end() const;
+    llvm::iterator_range<diagnostics_iterator> diagnostics() const;
 
     bool operator<(llvm::StringRef Other) const {
       return getName() < Other;
     }
   };
 
-  /// \brief Get every diagnostic group in the system, sorted by name.
+  /// Get every diagnostic group in the system, sorted by name.
   llvm::ArrayRef<GroupRecord> getDiagnosticGroups();
 
   template<>

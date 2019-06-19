@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.16 2018/03/16 12:31:09 mpi Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.19 2018/07/15 16:27:39 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -3235,7 +3235,7 @@ ec_group_new_from_data(const ec_list_element curve)
 		}
 	}
 	ok = 1;
-err:
+ err:
 	if (!ok) {
 		EC_GROUP_free(group);
 		group = NULL;

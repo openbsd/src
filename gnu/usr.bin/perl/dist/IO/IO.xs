@@ -11,6 +11,10 @@
 #define PERLIO_NOT_STDIO 1
 #include "perl.h"
 #include "XSUB.h"
+#define NEED_eval_pv
+#define NEED_newCONSTSUB
+#define NEED_newSVpvn_flags
+#include "ppport.h"
 #include "poll.h"
 #ifdef I_UNISTD
 #  include <unistd.h>
@@ -318,7 +322,7 @@ PPCODE:
 {
 #ifdef HAS_POLL
     const int nfd = (items - 1) / 2;
-    SV *tmpsv = NEWSV(999,nfd * sizeof(struct pollfd));
+    SV *tmpsv = sv_2mortal(NEWSV(999,nfd * sizeof(struct pollfd)));
     /* We should pass _some_ valid pointer even if nfd is zero, but it
      * doesn't matter what it is, since we're telling it to not check any fds.
      */
@@ -337,7 +341,6 @@ PPCODE:
 	    sv_setiv(ST(i), fds[j].revents); i++;
 	}
     }
-    SvREFCNT_dec(tmpsv);
     XSRETURN_IV(ret);
 #else
 	not_here("IO::Poll::poll");

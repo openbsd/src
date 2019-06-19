@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_mkdb.c,v 1.15 2015/10/16 13:37:44 millert Exp $	*/
+/*	$OpenBSD: dev_mkdb.c,v 1.17 2018/10/18 14:37:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -61,6 +61,15 @@ main(int argc, char *argv[])
 	u_char buf[MAXNAMLEN + 1];
 	char dbtmp[PATH_MAX], dbname[PATH_MAX];
 
+	(void)snprintf(dbtmp, sizeof(dbtmp), "%sdev.tmp", _PATH_VARRUN);
+	(void)snprintf(dbname, sizeof(dbname), "%sdev.db", _PATH_VARRUN);
+
+	if (unveil(_PATH_DEV, "r") == -1)
+		err(1, "unveil");
+	if (unveil(dbtmp, "rwc") == -1)
+		err(1, "unveil");
+	if (unveil(dbname, "wc") == -1)
+		err(1, "unveil");
 	if (pledge("stdio rpath wpath cpath flock", NULL) == -1)
 		err(1, "pledge");
 
@@ -81,8 +90,6 @@ main(int argc, char *argv[])
 
 	dirp = opendir(".");
 
-	(void)snprintf(dbtmp, sizeof(dbtmp), "%sdev.tmp", _PATH_VARRUN);
-	(void)snprintf(dbname, sizeof(dbtmp), "%sdev.db", _PATH_VARRUN);
 	bzero(&info, sizeof(info));
 	info.bsize = 8192;
 	db = dbopen(dbtmp, O_CREAT|O_EXLOCK|O_RDWR|O_TRUNC,
@@ -101,6 +108,9 @@ main(int argc, char *argv[])
 	key.size = sizeof(bkey);
 	data.data = buf;
 	while ((dp = readdir(dirp))) {
+		if (strcmp(dp->d_name, "..") == 0)
+			continue;
+
 		if (lstat(dp->d_name, &sb)) {
 			warn("%s", dp->d_name);
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.24 2017/02/19 21:39:32 guenther Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.26 2019/01/09 16:42:38 visa Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ MD_SECT_CALL_FUNC(".init", __do_init);
 MD_SECT_CALL_FUNC(".fini", __do_fini);
 
 
-void
+static void
 __do_init(void)
 {
 	static int initialized;
@@ -145,7 +145,10 @@ __do_init(void)
 	}
 }
 
-void
+char __csu_do_fini_array __dso_hidden = 0;
+extern __dso_hidden init_f __fini_array_start[], __fini_array_end[];
+
+static void
 __do_fini(void)
 {
 	static int finalized;
@@ -156,6 +159,13 @@ __do_fini(void)
 		 * Call global destructors.
 		 */
 		__dtors();
+
+		if (__csu_do_fini_array) {
+			size_t i = __fini_array_end - __fini_array_start;
+			while (i-- > 0)
+				__fini_array_start[i]();
+		}
+
 	}
 }
 

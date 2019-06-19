@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.82 2017/01/22 10:17:39 dlg Exp $ */
+/*	$OpenBSD: if_url.c,v 1.84 2018/10/02 19:49:10 stsp Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -995,7 +995,7 @@ url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	DPRINTF(("%s: %s: enter\n", sc->sc_dev.dv_xname, __func__));
 
 	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
+		return ENXIO;
 
 	s = splnet();
 
@@ -1160,8 +1160,7 @@ url_ifmedia_change(struct ifnet *ifp)
 	sc->sc_link = 0;
 	if (mii->mii_instance) {
 		struct mii_softc *miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		     miisc = LIST_NEXT(miisc, mii_list))
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
 			mii_phy_reset(miisc);
 	}
 

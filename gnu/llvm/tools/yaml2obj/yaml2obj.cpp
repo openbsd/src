@@ -19,10 +19,8 @@
 #include "llvm/ObjectYAML/ObjectYAML.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
-#include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Signals.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/raw_ostream.h"
@@ -65,22 +63,20 @@ static int convertYAML(yaml::Input &YIn, raw_ostream &Out) {
     }
   } while (YIn.nextDocument());
 
-  error("yaml2obj: Cannot find the " + utostr(DocNum) +
+  error("yaml2obj: Cannot find the " + Twine(DocNum) +
         llvm::getOrdinalSuffix(DocNum) + " document");
 }
 
 int main(int argc, char **argv) {
+  InitLLVM X(argc, argv);
   cl::ParseCommandLineOptions(argc, argv);
-  sys::PrintStackTraceOnErrorSignal(argv[0]);
-  PrettyStackTraceProgram X(argc, argv);
-  llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   if (OutputFilename.empty())
     OutputFilename = "-";
 
   std::error_code EC;
-  std::unique_ptr<tool_output_file> Out(
-      new tool_output_file(OutputFilename, EC, sys::fs::F_None));
+  std::unique_ptr<ToolOutputFile> Out(
+      new ToolOutputFile(OutputFilename, EC, sys::fs::F_None));
   if (EC)
     error("yaml2obj: Error opening '" + OutputFilename + "': " + EC.message());
 

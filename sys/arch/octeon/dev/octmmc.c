@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.11 2018/01/07 05:19:41 visa Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.13 2019/01/13 16:45:44 visa Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -28,6 +28,7 @@
 #include <sys/kernel.h>
 
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcvar.h>
@@ -78,6 +79,7 @@ struct octmmc_bus {
 	uint64_t		 bus_switch;
 	uint64_t		 bus_rca;
 	uint64_t		 bus_wdog;
+	uint32_t		 bus_cd_gpio[3];
 };
 
 struct octmmc_softc {
@@ -285,6 +287,12 @@ octmmc_attach(struct device *parent, struct device *self, void *aux)
 		if (bus_width == 0)
 			bus_width = OF_getpropint(node,
 			    "cavium,bus-max-width", 8);
+
+		OF_getpropintarray(node, "cd-gpios", bus->bus_cd_gpio,
+		    sizeof(bus->bus_cd_gpio));
+		if (bus->bus_cd_gpio[0] != 0)
+			gpio_controller_config_pin(bus->bus_cd_gpio,
+			    GPIO_CONFIG_INPUT);
 
 		if (octmmc_init_bus(bus)) {
 			printf("%s: could not init bus %d\n", DEVNAME(sc),
@@ -498,6 +506,11 @@ octmmc_host_maxblklen(sdmmc_chipset_handle_t sch)
 int
 octmmc_card_detect(sdmmc_chipset_handle_t sch)
 {
+	struct octmmc_bus *bus = sch;
+
+	if (bus->bus_cd_gpio[0] != 0)
+		return gpio_controller_get_pin(bus->bus_cd_gpio);
+
 	return 1;
 }
 
@@ -651,8 +664,7 @@ octmmc_exec_dma(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 
 wait_intr:
 	cmd->c_error = octmmc_wait_intr(sc, MIO_EMM_INT_CMD_ERR |
-	    MIO_EMM_INT_DMA_DONE | MIO_EMM_INT_DMA_ERR,
-	    OCTMMC_CMD_TIMEOUT * hz);
+	    MIO_EMM_INT_DMA_DONE | MIO_EMM_INT_DMA_ERR, OCTMMC_CMD_TIMEOUT);
 
 	status = MMC_RD_8(sc, MIO_EMM_RSP_STS);
 
@@ -762,7 +774,7 @@ octmmc_exec_pio(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 	MMC_WR_8(sc, MIO_EMM_CMD, piocmd);
 
 	cmd->c_error = octmmc_wait_intr(sc, MIO_EMM_INT_CMD_DONE,
-	    OCTMMC_CMD_TIMEOUT * hz);
+	    OCTMMC_CMD_TIMEOUT);
 
 	mtx_leave(&sc->sc_intr_mtx);
 
@@ -962,7 +974,7 @@ octmmc_wait_intr(struct octmmc_softc *sc, uint64_t mask, int timeout)
 	sc->sc_intr_status = 0;
 	while ((sc->sc_intr_status & mask) == 0) {
 		if (msleep(&sc->sc_intr_status, &sc->sc_intr_mtx, PWAIT,
-		    "hcintr", timeout) == EWOULDBLOCK)
+		    "hcintr", timeout * hz) == EWOULDBLOCK)
 			return ETIMEDOUT;
 	}
 	return 0;

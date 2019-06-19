@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_reject.c,v 1.16 2016/09/03 10:51:26 gsoares Exp $	*/
+/*	$OpenBSD: login_reject.c,v 1.17 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -33,19 +33,11 @@
  *
  *	BSDI $From: login_reject.c,v 1.5 1996/08/22 20:43:11 prb Exp $
  */
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/file.h>
-#include <sys/wait.h>
 
-#include <err.h>
-#include <errno.h>
+#include <sys/resource.h>
+
 #include <login_cap.h>
-#include <pwd.h>
 #include <readpassphrase.h>
-#include <signal.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

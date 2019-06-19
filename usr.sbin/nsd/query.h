@@ -96,7 +96,7 @@ struct query {
 
 	/* Used for dname compression.  */
 	uint16_t     compressed_dname_count;
-	domain_type *compressed_dnames[MAXRRSPP];
+	domain_type **compressed_dnames;
 
 	 /*
 	  * Indexed by domain->number, index 0 is reserved for the
@@ -172,7 +172,8 @@ void query_add_compression_domain(struct query *query,
  */
 query_type *query_create(region_type *region,
 			 uint16_t *compressed_dname_offsets,
-			 size_t compressed_dname_size);
+			 size_t compressed_dname_size,
+			 domain_type **compressed_dnames);
 
 /*
  * Reset a query structure so it is ready for receiving and processing

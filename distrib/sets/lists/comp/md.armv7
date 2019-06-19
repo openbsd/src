@@ -30,6 +30,7 @@
 ./usr/include/arm/limits.h
 ./usr/include/arm/lock.h
 ./usr/include/arm/machdep.h
+./usr/include/arm/mplock.h
 ./usr/include/arm/mutex.h
 ./usr/include/arm/openpromio.h
 ./usr/include/arm/param.h
@@ -82,10 +83,12 @@
 ./usr/include/armv7/lock.h
 ./usr/include/armv7/machine_reg.h
 ./usr/include/armv7/math.h
+./usr/include/armv7/mplock.h
 ./usr/include/armv7/mutex.h
 ./usr/include/armv7/openpromio.h
 ./usr/include/armv7/param.h
 ./usr/include/armv7/pcb.h
+./usr/include/armv7/pci_machdep.h
 ./usr/include/armv7/pmap.h
 ./usr/include/armv7/proc.h
 ./usr/include/armv7/profile.h
@@ -110,6 +113,11 @@
 ./usr/libdata/ldscripts/armelf_obsd.x
 ./usr/libdata/ldscripts/armelf_obsd.xbn
 ./usr/libdata/ldscripts/armelf_obsd.xc
+./usr/libdata/ldscripts/armelf_obsd.xd
+./usr/libdata/ldscripts/armelf_obsd.xdc
+./usr/libdata/ldscripts/armelf_obsd.xdcz
+./usr/libdata/ldscripts/armelf_obsd.xdw
+./usr/libdata/ldscripts/armelf_obsd.xdz
 ./usr/libdata/ldscripts/armelf_obsd.xn
 ./usr/libdata/ldscripts/armelf_obsd.xr
 ./usr/libdata/ldscripts/armelf_obsd.xs
@@ -121,6 +129,11 @@
 ./usr/libdata/ldscripts/armelfb_obsd.x
 ./usr/libdata/ldscripts/armelfb_obsd.xbn
 ./usr/libdata/ldscripts/armelfb_obsd.xc
+./usr/libdata/ldscripts/armelfb_obsd.xd
+./usr/libdata/ldscripts/armelfb_obsd.xdc
+./usr/libdata/ldscripts/armelfb_obsd.xdcz
+./usr/libdata/ldscripts/armelfb_obsd.xdw
+./usr/libdata/ldscripts/armelfb_obsd.xdz
 ./usr/libdata/ldscripts/armelfb_obsd.xn
 ./usr/libdata/ldscripts/armelfb_obsd.xr
 ./usr/libdata/ldscripts/armelfb_obsd.xs

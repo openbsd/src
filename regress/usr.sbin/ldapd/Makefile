@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2017/06/25 22:06:06 bluhm Exp $
+# $OpenBSD: Makefile,v 1.9 2018/06/28 02:47:55 gsoares Exp $
 
 OUT=${.CURDIR}/out
 DIT=dc=example,dc=com
@@ -33,9 +33,9 @@ bootstrap:
 	@[ -z "${SUDO}" ] || ${SUDO} true
 	@${SUDO} install -m 600 -o root ${.CURDIR}/ldapd.conf ${.OBJDIR}/ldapd1.conf
 	@${SUDO} ldapd -n -r ${.OBJDIR} -f ${.OBJDIR}/ldapd1.conf
-	@${SUDO} ldapd -dvv -r ${.OBJDIR} -f ${.OBJDIR}/ldapd1.conf > ${.OBJDIR}/log 2>&1 &
+	@${SUDO} ldapd -dvv -r ${.OBJDIR} -f ${.OBJDIR}/ldapd1.conf > ${.OBJDIR}/log 2>&1 & \
+		echo $$! > ${.OBJDIR}/ldapd.pid
 	@sleep 1
-	@grep -a startup ${.OBJDIR}/log |sed -e 's/.*\[// ; s/\].*//' > ${.OBJDIR}/ldapd.pid
 
 .if ! (make(clean) || make(cleandir) || make(obj))
 .END:

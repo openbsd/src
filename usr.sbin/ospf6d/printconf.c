@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.5 2016/12/24 14:58:55 jca Exp $ */
+/*	$OpenBSD: printconf.c,v 1.8 2018/12/29 16:04:31 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -45,6 +45,11 @@ print_mainconf(struct ospfd_conf *conf)
 	else
 		printf("fib-update yes\n");
 
+	printf("fib-priority %hhu\n", conf->fib_priority);
+
+	if (conf->rdomain)
+		printf("rdomain %d\n", conf->rdomain);
+
 	if (conf->flags & OSPFD_FLAG_STUB_ROUTER)
 		printf("stub router yes\n");
 
@@ -90,9 +95,12 @@ print_redistribute(struct ospfd_conf *conf)
 			printf("%sredistribute default ", print_no(r->type));
 			break;
 		}
-		printf("set { metric %d type %d }\n",
+		printf("set { metric %d type %d }",
 		    (r->metric & LSA_METRIC_MASK),
 		    ((r->metric & LSA_ASEXT_E_FLAG) == 0 ? 1 : 2));
+		if (r->dependon[0])
+			printf(" depend on %s", r->dependon);
+		printf("\n");
 	}
 }
 
@@ -119,6 +127,8 @@ print_iface(struct iface *iface)
 		printf("\t\tpassive\n");
 	if (*iface->demote_group)
 		printf("\t\tdemote %s\n", iface->demote_group);
+	if (iface->dependon[0] != '\0')
+		printf("\t\tdepend on %s\n", iface->dependon);
 
 	printf("\t\tretransmit-interval %d\n", iface->rxmt_interval);
 	printf("\t\trouter-dead-time %d\n", iface->dead_interval);

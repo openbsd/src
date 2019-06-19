@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_conn_version.3,v 1.7 2018/02/10 04:43:16 jsing Exp $
+.\" $OpenBSD: tls_conn_version.3,v 1.9 2018/12/14 20:18:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Bob Beck <beck@openbsd.org>
 .\" Copyright (c) 2016, 2018 Joel Sing <jsing@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2018 $
+.Dd $Mdocdate: December 14 2018 $
 .Dt TLS_CONN_VERSION 3
 .Os
 .Sh NAME
@@ -54,8 +54,8 @@
 .Fc
 .Ft const uint8_t *
 .Fo tls_peer_cert_chain_pem
-.Fa struct tls *ctx
-.Fa size_t *size
+.Fa "struct tls *ctx"
+.Fa "size_t *size"
 .Fc
 .Ft const char *
 .Fn tls_peer_cert_issuer "struct tls *ctx"
@@ -150,9 +150,6 @@ the peer certificate from
 returns the time corresponding to the end of the validity period of
 the peer certificate from
 .Ar ctx .
-.Pp
-POINTER TO
-.Xr tls_ocsp_process_response 3
 .Sh RETURN VALUES
 The
 .Fn tls_conn_session_resumed

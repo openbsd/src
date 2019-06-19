@@ -136,7 +136,8 @@ static Elf_Internal_Syminfo *dynamic_syminfo;
 static unsigned long dynamic_syminfo_offset;
 static unsigned int dynamic_syminfo_nent;
 static char program_interpreter[64];
-static bfd_vma dynamic_info[DT_JMPREL + 1];
+static bfd_vma dynamic_info[DT_RUNPATH + 1];
+static bfd_vma dynamic_info_DT_GNU_HASH;
 static bfd_vma version_info[16];
 static Elf_Internal_Ehdr elf_header;
 static Elf_Internal_Shdr *section_headers;
@@ -1505,7 +1506,6 @@ get_dynamic_type (unsigned long type)
 
     case DT_VERSYM:	return "VERSYM";
 
-    case DT_GNU_HASH:	return "GNU_HASH";
     case DT_TLSDESC_GOT: return "TLSDESC_GOT";
     case DT_TLSDESC_PLT: return "TLSDESC_PLT";
     case DT_RELACOUNT:	return "RELACOUNT";
@@ -1525,6 +1525,7 @@ get_dynamic_type (unsigned long type)
     case DT_GNU_CONFLICTSZ: return "GNU_CONFLICTSZ";
     case DT_GNU_LIBLIST: return "GNU_LIBLIST";
     case DT_GNU_LIBLISTSZ: return "GNU_LIBLISTSZ";
+    case DT_GNU_HASH:	return "GNU_HASH";
 
     default:
       if ((type >= DT_LOPROC) && (type <= DT_HIPROC))
@@ -2613,6 +2614,7 @@ get_section_type_name (unsigned int sh_type)
     case SHT_INIT_ARRAY:	return "INIT_ARRAY";
     case SHT_FINI_ARRAY:	return "FINI_ARRAY";
     case SHT_PREINIT_ARRAY:	return "PREINIT_ARRAY";
+    case SHT_GNU_HASH:		return "GNU_HASH";
     case SHT_GROUP:		return "GROUP";
     case SHT_SYMTAB_SHNDX:	return "SYMTAB SECTION INDICIES";
     case SHT_GNU_verdef:	return "VERDEF";
@@ -2623,6 +2625,8 @@ get_section_type_name (unsigned int sh_type)
     case 0x7ffffffd:		return "AUXILIARY";
     case 0x7fffffff:		return "FILTER";
     case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
+    case SHT_LLVM_LINKER_OPTIONS: return "LLVM_LINKER_OPTIONS";
+    case SHT_LLVM_ADDRSIG:	return "LLVM_ADDRSIG";
 
     default:
       if ((sh_type >= SHT_LOPROC) && (sh_type <= SHT_HIPROC))
@@ -3173,8 +3177,11 @@ process_file_header (void)
 	      (long) elf_header.e_ehsize);
       printf (_("  Size of program headers:           %ld (bytes)\n"),
 	      (long) elf_header.e_phentsize);
-      printf (_("  Number of program headers:         %ld\n"),
+      printf (_("  Number of program headers:         %ld"),
 	      (long) elf_header.e_phnum);
+      if (section_headers != NULL && elf_header.e_phnum == PN_XNUM)
+	printf (" (%ld)", (long) section_headers[0].sh_info);
+      putc ('\n', stdout);
       printf (_("  Size of section headers:           %ld (bytes)\n"),
 	      (long) elf_header.e_shentsize);
       printf (_("  Number of section headers:         %ld"),
@@ -3191,6 +3198,8 @@ process_file_header (void)
 
   if (section_headers != NULL)
     {
+      if (elf_header.e_phnum == PN_XNUM)
+        elf_header.e_phnum = section_headers[0].sh_info;
       if (elf_header.e_shnum == 0)
 	elf_header.e_shnum = section_headers[0].sh_size;
       if (elf_header.e_shstrndx == SHN_XINDEX)
@@ -6264,6 +6273,15 @@ process_dynamic_section (FILE *file)
 	    }
 	  break;
 
+	case DT_GNU_HASH:
+	  dynamic_info_DT_GNU_HASH = entry->d_un.d_val;
+	  if (do_dynamic)
+	    {
+	      print_vma (entry->d_un.d_val, PREFIX_HEX);
+	      putchar ('\n');
+	    }
+	  break;
+
 	default:
 	  if ((entry->d_tag >= DT_VERSYM) && (entry->d_tag <= DT_VERNEEDNUM))
 	    version_info[DT_VERSIONTAGIDX (entry->d_tag)] =
@@ -6939,6 +6957,9 @@ process_symbol_table (FILE *file)
   bfd_vma nchains = 0;
   bfd_vma *buckets = NULL;
   bfd_vma *chains = NULL;
+  bfd_vma ngnubuckets = 0;
+  bfd_vma *gnubuckets = NULL;
+  bfd_vma *gnuchains = NULL;
 
   if (! do_syms && !do_histogram)
     return 1;
@@ -7316,6 +7337,166 @@ process_symbol_table (FILE *file)
     {
       free (buckets);
       free (chains);
+    }
+
+  if (do_histogram && dynamic_info_DT_GNU_HASH)
+    {
+      unsigned char nb[16];
+      bfd_vma i, maxchain = 0xffffffff, symidx, bitmaskwords;
+      unsigned long *lengths;
+      unsigned long *counts;
+      unsigned long hn;
+      unsigned long maxlength = 0;
+      unsigned long nzero_counts = 0;
+      unsigned long nsyms = 0;
+      bfd_vma buckets_vma;
+
+      if (fseek (file,
+		 (archive_file_offset
+		  + offset_from_vma (file, dynamic_info_DT_GNU_HASH,
+				     sizeof nb)),
+		 SEEK_SET))
+	{
+	  error (_("Unable to seek to start of dynamic information"));
+	  return 0;
+	}
+
+      if (fread (nb, 16, 1, file) != 1)
+	{
+	  error (_("Failed to read in number of buckets\n"));
+	  return 0;
+	}
+
+      ngnubuckets = byte_get (nb, 4);
+      symidx = byte_get (nb + 4, 4);
+      bitmaskwords = byte_get (nb + 8, 4);
+      buckets_vma = dynamic_info_DT_GNU_HASH + 16;
+      if (is_32bit_elf)
+	buckets_vma += bitmaskwords * 4;
+      else
+	buckets_vma += bitmaskwords * 8;
+
+      if (fseek (file,
+		 (archive_file_offset
+		  + offset_from_vma (file, buckets_vma, 4)),
+		 SEEK_SET))
+	{
+	  error (_("Unable to seek to start of dynamic information"));
+	  return 0;
+	}
+
+      gnubuckets = get_dynamic_data (file, ngnubuckets, 4);
+
+      if (gnubuckets == NULL)
+	return 0;
+
+      for (i = 0; i < ngnubuckets; i++)
+	if (gnubuckets[i] != 0)
+	  {
+	    if (gnubuckets[i] < symidx)
+	      return 0;
+
+	    if (maxchain == 0xffffffff || gnubuckets[i] > maxchain)
+	      maxchain = gnubuckets[i];
+	  }
+
+      if (maxchain == 0xffffffff)
+	return 0;
+
+      maxchain -= symidx;
+
+      if (fseek (file,
+		 (archive_file_offset
+		  + offset_from_vma (file, buckets_vma
+					   + 4 * (ngnubuckets + maxchain), 4)),
+		 SEEK_SET))
+	{
+	  error (_("Unable to seek to start of dynamic information"));
+	  return 0;
+	}
+
+      do
+	{
+	  if (fread (nb, 4, 1, file) != 1)
+	    {
+	      error (_("Failed to determine last chain length\n"));
+	      return 0;
+	    }
+
+	  if (maxchain + 1 == 0)
+	    return 0;
+
+	  ++maxchain;
+	}
+      while ((byte_get (nb, 4) & 1) == 0);
+
+      if (fseek (file,
+		 (archive_file_offset
+		  + offset_from_vma (file, buckets_vma + 4 * ngnubuckets, 4)),
+		 SEEK_SET))
+	{
+	  error (_("Unable to seek to start of dynamic information"));
+	  return 0;
+	}
+
+      gnuchains = get_dynamic_data (file, maxchain, 4);
+
+      if (gnuchains == NULL)
+	return 0;
+
+      lengths = calloc (ngnubuckets, sizeof (*lengths));
+      if (lengths == NULL)
+	{
+	  error (_("Out of memory"));
+	  return 0;
+	}
+
+      printf (_("\nHistogram for `.gnu.hash' bucket list length (total of %lu buckets):\n"),
+	      (unsigned long) ngnubuckets);
+      printf (_(" Length  Number     %% of total  Coverage\n"));
+
+      for (hn = 0; hn < ngnubuckets; ++hn)
+	if (gnubuckets[hn] != 0)
+	  {
+	    bfd_vma off, length = 1;
+
+	    for (off = gnubuckets[hn] - symidx;
+		 (gnuchains[off] & 1) == 0; ++off)
+	      ++length;
+	    lengths[hn] = length;
+	    if (length > maxlength)
+	      maxlength = length;
+	    nsyms += length;
+	  }
+
+      counts = calloc (maxlength + 1, sizeof (*counts));
+      if (counts == NULL)
+	{
+	  error (_("Out of memory"));
+	  return 0;
+	}
+
+      for (hn = 0; hn < ngnubuckets; ++hn)
+	++counts[lengths[hn]];
+
+      if (ngnubuckets > 0)
+	{
+	  unsigned long j;
+	  printf ("      0  %-10lu (%5.1f%%)\n",
+		  counts[0], (counts[0] * 100.0) / ngnubuckets);
+	  for (j = 1; j <= maxlength; ++j)
+	    {
+	      nzero_counts += counts[j] * j;
+	      printf ("%7lu  %-10lu (%5.1f%%)    %5.1f%%\n",
+		      j, counts[j], (counts[j] * 100.0) / ngnubuckets,
+		      (nzero_counts * 100.0) / nsyms);
+	    }
+	}
+
+      free (counts);
+      free (lengths);
+      free (gnubuckets);
+      free (gnuchains);
     }
 
   return 1;

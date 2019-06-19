@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PKCS7_new.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: PKCS7_new.3,v 1.6 2019/06/10 09:49:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 10 2019 $
 .Dt PKCS7_NEW 3
 .Os
 .Sh NAME
@@ -241,11 +241,14 @@ serial number.
 frees
 .Fa cert .
 .Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr d2i_PKCS7 3 ,
 .Xr i2d_PKCS7_bio_stream 3 ,
 .Xr PEM_read_PKCS7 3 ,
 .Xr PEM_write_bio_PKCS7_stream 3 ,
 .Xr PKCS7_decrypt 3 ,
 .Xr PKCS7_encrypt 3 ,
+.Xr PKCS7_ISSUER_AND_SERIAL_digest 3 ,
 .Xr PKCS7_sign 3 ,
 .Xr PKCS7_sign_add_signer 3 ,
 .Xr PKCS7_verify 3 ,

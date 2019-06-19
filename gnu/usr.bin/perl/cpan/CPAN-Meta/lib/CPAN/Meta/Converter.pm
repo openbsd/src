@@ -3,7 +3,7 @@ use strict;
 use warnings;
 package CPAN::Meta::Converter;
 
-our $VERSION = '2.150005';
+our $VERSION = '2.150010';
 
 #pod =head1 SYNOPSIS
 #pod
@@ -43,22 +43,36 @@ BEGIN {
 # Perl 5.10.0 didn't have "is_qv" in version.pm
 *_is_qv = version->can('is_qv') ? sub { $_[0]->is_qv } : sub { exists $_[0]->{qv} };
 
+# We limit cloning to a maximum depth to bail out on circular data
+# structures.  While actual cycle detection might be technically better,
+# we expect circularity in META data structures to be rare and generally
+# the result of user error.  Therefore, a depth counter is lower overhead.
+our $DCLONE_MAXDEPTH = 1024;
+our $_CLONE_DEPTH;
+
 sub _dclone {
-  my $ref = shift;
+  my ( $ref  ) = @_;
+  return $ref unless my $reftype = ref $ref;
 
-  # if an object is in the data structure and doesn't specify how to
-  # turn itself into JSON, we just stringify the object.  That does the
-  # right thing for typical things that might be there, like version objects,
-  # Path::Class objects, etc.
-  no warnings 'once';
-  no warnings 'redefine';
-  local *UNIVERSAL::TO_JSON = sub { "$_[0]" };
+  local $_CLONE_DEPTH = defined $_CLONE_DEPTH ? $_CLONE_DEPTH - 1 : $DCLONE_MAXDEPTH;
+  die "Depth Limit $DCLONE_MAXDEPTH Exceeded" if $_CLONE_DEPTH == 0;
 
-  my $json = Parse::CPAN::Meta->json_backend()->new
-      ->utf8
-      ->allow_blessed
-      ->convert_blessed;
-  $json->decode($json->encode($ref))
+  return [ map { _dclone( $_ ) } @{$ref} ] if 'ARRAY' eq $reftype;
+  return { map { $_ => _dclone( $ref->{$_} ) } keys %{$ref} } if 'HASH' eq $reftype;
+
+  if ( 'SCALAR' eq $reftype ) {
+    my $new = _dclone(${$ref});
+    return \$new;
+  }
+
+  # We can't know if TO_JSON gives us cloned data, so refs must recurse
+  if ( eval { $ref->can('TO_JSON') } ) {
+    my $data = $ref->TO_JSON;
+    return ref $data ? _dclone( $data ) : $data;
+  }
+
+  # Just stringify everything else
+  return "$ref";
 }
 
 my %known_specs = (
@@ -333,7 +347,7 @@ sub _no_index_directory {
   my ($element, $key, $meta, $version) = @_;
   return unless $element;
 
-  # cleanup wrong format
+  # clean up wrong format
   if ( ! ref $element ) {
     my $item = $element;
     $element = { directory => [ $item ], file => [ $item ] };
@@ -421,7 +435,7 @@ sub _version_map {
   }
   elsif ( ref $element eq 'ARRAY' ) {
     my $hashref = { map { $_ => 0 } @$element };
-    return _version_map($hashref); # cleanup any weird stuff
+    return _version_map($hashref); # clean up any weird stuff
   }
   elsif ( ref $element eq '' && length $element ) {
     return { $element => 0 }
@@ -1499,7 +1513,7 @@ CPAN::Meta::Converter - Convert CPAN distribution metadata structures
 
 =head1 VERSION
 
-version 2.150005
+version 2.150010
 
 =head1 SYNOPSIS
 
@@ -1622,11 +1636,15 @@ David Golden <dagolden@cpan.org>
 
 Ricardo Signes <rjbs@cpan.org>
 
+=item *
+
+Adam Kennedy <adamk@cpan.org>
+
 =back
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2010 by David Golden and Ricardo Signes.
+This software is copyright (c) 2010 by David Golden, Ricardo Signes, Adam Kennedy and Contributors.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

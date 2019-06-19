@@ -2,7 +2,7 @@ package ExtUtils::ParseXS::Eval;
 use strict;
 use warnings;
 
-our $VERSION = '3.31';
+our $VERSION = '3.39';
 
 =head1 NAME
 
@@ -29,7 +29,7 @@ Warns the contents of C<$@> if any.
 Not all these variables are necessarily considered "public" wrt. use in
 typemaps, so beware. Variables set up from the ExtUtils::ParseXS object:
 
-  $Package $Alias $func_name $Full_func_name $pname
+  $Package $ALIAS $func_name $Full_func_name $pname
 
 Variables set up from C<$other_hashref>:
 
@@ -63,7 +63,7 @@ Warns the contents of C<$@> if any.
 Not all these variables are necessarily considered "public" wrt. use in
 typemaps, so beware. Variables set up from the ExtUtils::ParseXS object:
 
-  $Package $Alias $func_name $Full_func_name $pname
+  $Package $ALIAS $func_name $Full_func_name $pname
 
 Variables set up from C<$other_hashref>:
 

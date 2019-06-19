@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.69 2018/02/24 11:42:31 visa Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.71 2019/03/17 05:06:36 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -28,10 +28,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
+#include <sys/evcount.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -178,12 +179,6 @@ set_intr(int pri, uint32_t mask,
 	cpu_int_tab[pri].int_hand = int_hand;
 	cpu_int_tab[pri].int_mask = mask;
 	idle_mask |= mask;
-}
-
-void
-intr_barrier(void *cookie)
-{
-	sched_barrier(NULL);
 }
 
 void

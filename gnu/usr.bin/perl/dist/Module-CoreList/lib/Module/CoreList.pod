@@ -172,9 +172,6 @@ the Unicode Character Database bundled with Perl.
 
 Available in version 3.00 and above.
 
-C<%Module::CoreList::version> is implemented via C<Module::CoreList::TieHashDelta>
-using this hash of delta changes.
-
 It is a hash of hashes that is keyed on perl version. Each keyed hash will have the
 following keys:
 

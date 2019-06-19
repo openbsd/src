@@ -1,10 +1,10 @@
-/*	$OpenBSD: apmvar.h,v 1.5 2015/02/07 22:16:52 miod Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.7 2019/01/22 02:36:30 phessler Exp $	*/
 
 /*
  *  Copyright (c) 2001 Alexander Guy
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -15,7 +15,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,7 +27,7 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 #ifndef _MACHINE_APMVAR_H_
 #define _MACHINE_APMVAR_H_
@@ -54,7 +54,7 @@
 #define		APM_BATT_LIFE_UNKNOWN	0xff
 
 #define		APM_NOEVENT		0x0000
-#define		APM_STANDBY_REQ		0x0001 
+#define		APM_STANDBY_REQ		0x0001
 #define		APM_SUSPEND_REQ		0x0002
 #define		APM_NORMAL_RESUME	0x0003
 #define		APM_CRIT_RESUME		0x0004 /* suspend/resume happened
@@ -81,9 +81,9 @@
  *
  * This software may be used, modified, copied, and distributed, in
  * both source and binary form provided that the above copyright and
- * these terms are retained. Under no circumstances is the author 
- * responsible for the proper functioning of this software, nor does 
- * the author assume any responsibility for damages incurred with its 
+ * these terms are retained. Under no circumstances is the author
+ * responsible for the proper functioning of this software, nor does
+ * the author assume any responsibility for damages incurred with its
  * use.
  *
  * Sep., 1994	Implemented on FreeBSD 1.1.5.1R (Toshiba AVS001WD)

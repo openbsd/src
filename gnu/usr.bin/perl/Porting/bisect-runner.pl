@@ -67,6 +67,7 @@ unless(GetOptions(\%options,
                   'all-fixups', 'early-fixup=s@', 'late-fixup=s@', 'valgrind',
                   'check-args', 'check-shebang!', 'usage|help|?', 'gold=s',
                   'module=s', 'with-module=s', 'cpan-config-dir=s',
+                  'test-module=s', 'no-module-tests',
                   'A=s@',
                   'D=s@' => sub {
                       my (undef, $val) = @_;
@@ -127,9 +128,23 @@ if (defined $target && $target =~ /\.t\z/) {
 }
 
 pod2usage(exitval => 255, verbose => 1)
-    unless @ARGV || $match || $options{'test-build'} || defined $options{'one-liner'} || defined $options{module};
+    unless @ARGV || $match || $options{'test-build'}
+        || defined $options{'one-liner'} || defined $options{module}
+        || defined $options{'test-module'};
 pod2usage(exitval => 255, verbose => 1)
     if !$options{'one-liner'} && ($options{l} || $options{w});
+if ($options{'no-module-tests'} && $options{module}) {
+    print STDERR "--module and --no-module-tests are exclusive.\n\n";
+    pod2usage(exitval => 255, verbose => 1)
+}
+if ($options{'no-module-tests'} && $options{'test-module'}) {
+    print STDERR "--test-module and --no-module-tests are exclusive.\n\n";
+    pod2usage(exitval => 255, verbose => 1)
+}
+if ($options{module} && $options{'test-module'}) {
+    print STDERR "--module and --test-module are exclusive.\n\n";
+    pod2usage(exitval => 255, verbose => 1)
+}
 
 check_shebang($ARGV[0])
     if $options{'check-shebang'} && @ARGV && !$options{match};
@@ -595,6 +610,33 @@ modules and they can then be used in other tests.
 For example:
 
   .../Porting/bisect.pl --with-module=Moose -e 'use Moose; ...'
+
+=item *
+
+--no-module-tests
+
+Use in conjunction with I<--with-module> to install the modules without
+running their tests. This can be a big time saver.
+
+For example:
+
+  .../Porting/bisect.pl --with-module=Moose --no-module-tests \
+       -e 'use Moose; ...'
+
+=item *
+
+--test-module
+
+This is like I<--module>, but just runs the module's tests, instead of
+installing it.
+
+WARNING: This is a somewhat experimental option, known to work on recent
+CPAN shell versions.  If you use this option and strange things happen,
+please report them.
+
+Usually, you can just use I<--module>, but if you are getting inconsistent
+installation failures and you just want to see when the tests started
+failing, you might find this option useful.
 
 =item *
 
@@ -1249,7 +1291,7 @@ sub match_and_exit {
         while (<$fh>) {
             if ($_ =~ $re) {
                 ++$matches;
-                if (/[^[:^cntrl:]\h\v]/a) { # Matches non-spacing non-C1 controls
+                if (/[^[:^cntrl:]\h\v]/) { # Matches non-spacing non-C1 controls
                     print "Binary file $file matches\n";
                 } else {
                     $_ .= "\n" unless /\n\z/;
@@ -1381,7 +1423,8 @@ push @ARGS, map {"-A$_"} @{$options{A}};
 my $prefix;
 
 # Testing a module? We need to install perl/cpan modules to a temp dir
-if ($options{module} || $options{'with-module'}) {
+if ($options{module} || $options{'with-module'} || $options{'test-module'})
+{
   $prefix = tempdir(CLEANUP => 1);
 
   push @ARGS, "-Dprefix=$prefix";
@@ -1403,7 +1446,15 @@ if (-f 'config.sh') {
     # Emulate noextensions if Configure doesn't support it.
     fake_noextensions()
         if $major < 10 && $defines{noextensions};
-    system_or_die('./Configure -S');
+    if (system './Configure -S') {
+        # See commit v5.23.5-89-g7a4fcb3.  Configure may try to run
+        # ./optdef.sh instead of UU/optdef.sh.  Copying the file is
+        # easier than patching Configure (which mentions optdef.sh multi-
+        # ple times).
+        require File::Copy;
+        File::Copy::copy("UU/optdef.sh", "./optdef.sh");
+        system_or_die('./Configure -S');
+    }
 }
 
 if ($target =~ /config\.s?h/) {
@@ -1463,12 +1514,40 @@ if ($target ne 'miniperl') {
     system "$options{make} $j $real_target </dev/null";
 }
 
-# Testing a cpan module? See if it will install
-if ($options{module} || $options{'with-module'}) {
+my $expected_file_found = $expected_file =~ /perl$/
+    ? -x $expected_file : -r $expected_file;
+
+if ($expected_file_found && $expected_file eq 't/perl') {
+    # Check that it isn't actually pointing to ../miniperl, which will happen
+    # if the sanity check ./miniperl -Ilib -MExporter -e '<?>' fails, and
+    # Makefile tries to run minitest.
+
+    # Of course, helpfully sometimes it's called ../perl, other times .././perl
+    # and who knows if that list is exhaustive...
+    my ($dev0, $ino0) = stat 't/perl';
+    my ($dev1, $ino1) = stat 'perl';
+    unless (defined $dev0 && defined $dev1 && $dev0 == $dev1 && $ino0 == $ino1) {
+        undef $expected_file_found;
+        my $link = readlink $expected_file;
+        warn "'t/perl' => '$link', not 'perl'";
+        die_255("Could not realink t/perl: $!") unless defined $link;
+    }
+}
+
+my $just_testing = 0;
+
+if ($options{'test-build'}) {
+    report_and_exit($expected_file_found, 'could build', 'could not build',
+                    $real_target);
+} elsif (!$expected_file_found) {
+    skip("could not build $real_target");
+} elsif (my $mod_opt = $options{module} || $options{'with-module'}
+               || ($just_testing++, $options{'test-module'})) {
+  # Testing a cpan module? See if it will install
   # First we need to install this perl somewhere
   system_or_die('./installperl');
 
-  my @m = split(',', $options{module} || $options{'with-module'});
+  my @m = split(',', $mod_opt);
 
   my $bdir = File::Temp::tempdir(
     CLEANUP => 1,
@@ -1501,10 +1580,18 @@ if ($options{module} || $options{'with-module'}) {
     s/-/::/g if /-/ and !m|/|;
   }
   my $install = join ",", map { "'$_'" } @m;
+  if ($just_testing) {
+    $install = "test($install)";
+  } elsif ($options{'no-module-tests'}) {
+    $install = "notest('install',$install)";
+  } else {
+    $install = "install($install)";
+  }
   my $last = $m[-1];
-  my $shellcmd = "install($install); die unless CPAN::Shell->expand(Module => '$last')->uptodate;";
+  my $status_method = $just_testing ? 'test' : 'uptodate';
+  my $shellcmd = "$install; die unless CPAN::Shell->expand(Module => '$last')->$status_method;";
 
-  if ($options{module}) {
+  if ($options{module} || $options{'test-module'}) {
     run_report_and_exit(@cpanshell, $shellcmd);
   } else {
     my $ret = run_with_options({setprgp => $options{setpgrp},
@@ -1517,33 +1604,6 @@ if ($options{module} || $options{'with-module'}) {
       report_and_exit(!$ret, 'zero exit from', 'non-zero exit from', "@_");
     }
   }
-}
-
-my $expected_file_found = $expected_file =~ /perl$/
-    ? -x $expected_file : -r $expected_file;
-
-if ($expected_file_found && $expected_file eq 't/perl') {
-    # Check that it isn't actually pointing to ../miniperl, which will happen
-    # if the sanity check ./miniperl -Ilib -MExporter -e '<?>' fails, and
-    # Makefile tries to run minitest.
-
-    # Of course, helpfully sometimes it's called ../perl, other times .././perl
-    # and who knows if that list is exhaustive...
-    my ($dev0, $ino0) = stat 't/perl';
-    my ($dev1, $ino1) = stat 'perl';
-    unless (defined $dev0 && defined $dev1 && $dev0 == $dev1 && $ino0 == $ino1) {
-        undef $expected_file_found;
-        my $link = readlink $expected_file;
-        warn "'t/perl' => '$link', not 'perl'";
-        die_255("Could not realink t/perl: $!") unless defined $link;
-    }
-}
-
-if ($options{'test-build'}) {
-    report_and_exit($expected_file_found, 'could build', 'could not build',
-                    $real_target);
-} elsif (!$expected_file_found) {
-    skip("could not build $real_target");
 }
 
 match_and_exit($real_target, @ARGV) if $match;

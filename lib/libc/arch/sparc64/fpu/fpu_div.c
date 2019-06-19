@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_div.c,v 1.3 2013/11/26 20:33:07 deraadt Exp $	*/
+/*	$OpenBSD: fpu_div.c,v 1.4 2019/03/15 05:42:38 kevlo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,10 +44,6 @@
  *	@(#)fpu_div.c	8.1 (Berkeley) 6/11/93
  *	$NetBSD: fpu_div.c,v 1.2 1994/11/20 20:52:38 deraadt Exp $
  */
-
-#if 0
-__FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_div.c,v 1.3 2002/03/22 21:52:58 obrien Exp $");
-#endif
 
 /*
  * Perform an FPU divide (return x / y).

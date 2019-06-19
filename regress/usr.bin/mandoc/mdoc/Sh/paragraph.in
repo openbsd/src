@@ -1,0 +1,19 @@
+.\" $OpenBSD: paragraph.in,v 1.1 2019/01/07 06:51:37 schwarze Exp $
+.Dd $Mdocdate: January 7 2019 $
+.Dt SH-PARAGRAPH 1
+.Os
+.Sh NAME
+.Nm Sh-paragraph
+.Nd interaction of paragraph and section macros
+.Sh DESCRIPTION
+BEGINTEST
+.Pp
+descriptive text
+.Ss Subsection
+initial subsection text
+.Pp
+subsection paragraph
+.Sh EXAMPLES
+ENDTEST
+.br
+end of file

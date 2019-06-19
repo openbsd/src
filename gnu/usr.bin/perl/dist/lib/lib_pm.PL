@@ -61,7 +61,7 @@ if ($expand_config_vars) {
 	      q(reverse split / /, $Config{inc_version_list});
 }
  
-open OUT,">$file" or die "Can't create $file: $!";
+open OUT,'>', $file or die "Can't create $file: $!";
  
 print "Extracting $file (with variable substitutions)\n";
  
@@ -86,7 +86,7 @@ my \@inc_version_list = $Config_inc_version_list;
 print OUT <<'!NO!SUBS!';
 
 our @ORIG_INC = @INC;	# take a handy copy of 'original' value
-our $VERSION = '0.63';
+our $VERSION = '0.64';
 
 sub import {
     shift;

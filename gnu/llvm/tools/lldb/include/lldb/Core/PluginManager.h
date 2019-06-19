@@ -10,6 +10,7 @@
 #ifndef liblldb_PluginManager_h_
 #define liblldb_PluginManager_h_
 
+#include "lldb/Core/Architecture.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/Status.h"          // for Status
 #include "lldb/lldb-enumerations.h"       // for ScriptLanguage
@@ -52,6 +53,21 @@ public:
 
   static ABICreateInstance
   GetABICreateCallbackForPluginName(const ConstString &name);
+
+  //------------------------------------------------------------------
+  // Architecture
+  //------------------------------------------------------------------
+  using ArchitectureCreateInstance =
+      std::unique_ptr<Architecture> (*)(const ArchSpec &);
+
+  static void RegisterPlugin(const ConstString &name,
+                             llvm::StringRef description,
+                             ArchitectureCreateInstance create_callback);
+
+  static void UnregisterPlugin(ArchitectureCreateInstance create_callback);
+
+  static std::unique_ptr<Architecture>
+  CreateArchitectureInstance(const ArchSpec &arch);
 
   //------------------------------------------------------------------
   // Disassembler
@@ -461,11 +477,11 @@ public:
       const ConstString &name);
 
   //------------------------------------------------------------------
-  // Some plug-ins might register a DebuggerInitializeCallback
-  // callback when registering the plug-in. After a new Debugger
-  // instance is created, this DebuggerInitialize function will get
-  // called. This allows plug-ins to install Properties and do any
-  // other initialization that requires a debugger instance.
+  // Some plug-ins might register a DebuggerInitializeCallback callback when
+  // registering the plug-in. After a new Debugger instance is created, this
+  // DebuggerInitialize function will get called. This allows plug-ins to
+  // install Properties and do any other initialization that requires a
+  // debugger instance.
   //------------------------------------------------------------------
   static void DebuggerInitialize(Debugger &debugger);
 

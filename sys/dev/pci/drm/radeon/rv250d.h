@@ -1,4 +1,3 @@
-/*	$OpenBSD: rv250d.h,v 1.1 2013/08/12 04:11:53 jsg Exp $	*/
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.

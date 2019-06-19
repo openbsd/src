@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.23 2015/10/16 17:56:07 mmcc Exp $	*/
+/*	$OpenBSD: names.c,v 1.24 2018/09/16 02:38:57 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -582,7 +582,7 @@ count(struct name *np)
  * Delete the given name from a namelist.
  */
 struct name *
-delname(struct name *np, char *name)
+delname(struct name *np, const char *name)
 {
 	struct name *p;
 

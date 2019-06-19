@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.24 2017/02/27 11:44:23 jca Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.26 2018/10/22 16:12:45 kn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -488,7 +488,6 @@ ns_rprint(const u_char *cp, const u_char *bp, int is_mdns)
 			EXTRACT_16BITS(cp), EXTRACT_16BITS(cp + 2));
 		break;
 
-#ifdef INET6
 	case T_AAAA:
 		if (!TTEST2(*cp, sizeof(struct in6_addr)))
 			return(NULL);
@@ -521,7 +520,6 @@ ns_rprint(const u_char *cp, const u_char *bp, int is_mdns)
 		}
 		break;
 	    }
-#endif /*INET6*/
 
 	case T_OPT:
 		printf(" UDPsize=%u", class);
@@ -589,7 +587,7 @@ ns_print(const u_char *bp, u_int length, int is_mdns)
 
 	if (DNS_QR(np)) {
 		/* this is a response */
-		printf(" %d%s%s%s%s%s%s",
+		printf("%d%s%s%s%s%s%s",
 			EXTRACT_16BITS(&np->id),
 			ns_ops[DNS_OPCODE(np)],
 			ns_resp[DNS_RCODE(np)],
@@ -657,7 +655,7 @@ ns_print(const u_char *bp, u_int length, int is_mdns)
 	}
 	else {
 		/* this is a request */
-		printf(" %d%s%s%s", EXTRACT_16BITS(&np->id), ns_ops[DNS_OPCODE(np)],
+		printf("%d%s%s%s", EXTRACT_16BITS(&np->id), ns_ops[DNS_OPCODE(np)],
 		    DNS_RD(np) ? "+" : "",
 		    DNS_CD(np) ? "%" : "");
 
@@ -739,7 +737,7 @@ ns_print(const u_char *bp, u_int length, int is_mdns)
 				goto trunc;
 		}
 	}
-	printf(" (%d)", length);
+	printf("(%d)", length);
 	return;
 
   trunc:

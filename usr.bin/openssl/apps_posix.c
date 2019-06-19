@@ -124,13 +124,13 @@
 #include "apps.h"
 
 double
-app_timer_real(int stop)
+app_timer_real(int get)
 {
 	static struct timespec start;
 	struct timespec elapsed, now;
 
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	if (stop) {
+	if (get) {
 		timespecsub(&now, &start, &elapsed);
 		return elapsed.tv_sec + elapsed.tv_nsec / 1000000000.0;
 	}
@@ -139,14 +139,14 @@ app_timer_real(int stop)
 }
 
 double
-app_timer_user(int stop)
+app_timer_user(int get)
 {
 	static struct timeval start;
 	struct timeval elapsed;
 	struct rusage now;
 
 	getrusage(RUSAGE_SELF, &now);
-	if (stop) {
+	if (get) {
 		timersub(&now.ru_utime, &start, &elapsed);
 		return elapsed.tv_sec + elapsed.tv_usec / 1000000.0;
 	}

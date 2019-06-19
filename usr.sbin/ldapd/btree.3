@@ -1,4 +1,4 @@
-.\" $OpenBSD: btree.3,v 1.4 2013/07/16 11:13:33 schwarze Exp $
+.\" $OpenBSD: btree.3,v 1.5 2018/11/04 08:04:08 jmc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: November 4 2018 $
 .Dt BTREE 3
 .Os
 .Sh NAME
@@ -43,9 +43,9 @@
 .Nm btree_get_path ,
 .Nm btree_cmp ,
 .Nm btval_reset
-.Nd Append-only prefix B+Tree database library.
+.Nd append-only prefix B+tree database library
 .Sh SYNOPSIS
-.Fd #include <btree.h>
+.In <btree.h>
 .Ft "struct btree *"
 .Fn "btree_open_fd" "int fd" "unsigned int flags"
 .Ft "struct btree *"

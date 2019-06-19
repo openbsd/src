@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.c,v 1.12 2015/05/20 23:39:55 schwarze Exp $	*/
+/*	$OpenBSD: stringlist.c,v 1.14 2019/05/16 12:44:18 florian Exp $	*/
 /*	$NetBSD: stringlist.c,v 1.2 1997/01/17 07:26:20 lukem Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/VirtRegMap.h - Virtual Register Map -*- C++ -*--------===//
+//===- llvm/CodeGen/VirtRegMap.h - Virtual Register Map ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,15 +19,17 @@
 
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/Pass.h"
+#include <cassert>
 
 namespace llvm {
-  class MachineInstr;
-  class MachineFunction;
-  class MachineRegisterInfo;
-  class TargetInstrInfo;
-  class raw_ostream;
-  class SlotIndexes;
+
+class MachineFunction;
+class MachineRegisterInfo;
+class raw_ostream;
+class TargetInstrInfo;
 
   class VirtRegMap : public MachineFunctionPass {
   public:
@@ -63,13 +65,14 @@ namespace llvm {
     /// createSpillSlot - Allocate a spill slot for RC from MFI.
     unsigned createSpillSlot(const TargetRegisterClass *RC);
 
-    VirtRegMap(const VirtRegMap&) = delete;
-    void operator=(const VirtRegMap&) = delete;
-
   public:
     static char ID;
+
     VirtRegMap() : MachineFunctionPass(ID), Virt2PhysMap(NO_PHYS_REG),
-                   Virt2StackSlotMap(NO_STACK_SLOT), Virt2SplitMap(0) { }
+                   Virt2StackSlotMap(NO_STACK_SLOT), Virt2SplitMap(0) {}
+    VirtRegMap(const VirtRegMap &) = delete;
+    VirtRegMap &operator=(const VirtRegMap &) = delete;
+
     bool runOnMachineFunction(MachineFunction &MF) override;
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -87,24 +90,24 @@ namespace llvm {
 
     void grow();
 
-    /// @brief returns true if the specified virtual register is
+    /// returns true if the specified virtual register is
     /// mapped to a physical register
     bool hasPhys(unsigned virtReg) const {
       return getPhys(virtReg) != NO_PHYS_REG;
     }
 
-    /// @brief returns the physical register mapped to the specified
+    /// returns the physical register mapped to the specified
     /// virtual register
     unsigned getPhys(unsigned virtReg) const {
       assert(TargetRegisterInfo::isVirtualRegister(virtReg));
       return Virt2PhysMap[virtReg];
     }
 
-    /// @brief creates a mapping for the specified virtual register to
+    /// creates a mapping for the specified virtual register to
     /// the specified physical register
     void assignVirt2Phys(unsigned virtReg, MCPhysReg physReg);
 
-    /// @brief clears the specified virtual register's, physical
+    /// clears the specified virtual register's, physical
     /// register mapping
     void clearVirt(unsigned virtReg) {
       assert(TargetRegisterInfo::isVirtualRegister(virtReg));
@@ -113,26 +116,26 @@ namespace llvm {
       Virt2PhysMap[virtReg] = NO_PHYS_REG;
     }
 
-    /// @brief clears all virtual to physical register mappings
+    /// clears all virtual to physical register mappings
     void clearAllVirt() {
       Virt2PhysMap.clear();
       grow();
     }
 
-    /// @brief returns true if VirtReg is assigned to its preferred physreg.
+    /// returns true if VirtReg is assigned to its preferred physreg.
     bool hasPreferredPhys(unsigned VirtReg);
 
-    /// @brief returns true if VirtReg has a known preferred register.
+    /// returns true if VirtReg has a known preferred register.
     /// This returns false if VirtReg has a preference that is a virtual
     /// register that hasn't been assigned yet.
     bool hasKnownPreference(unsigned VirtReg);
 
-    /// @brief records virtReg is a split live interval from SReg.
+    /// records virtReg is a split live interval from SReg.
     void setIsSplitFromReg(unsigned virtReg, unsigned SReg) {
       Virt2SplitMap[virtReg] = SReg;
     }
 
-    /// @brief returns the live interval virtReg is split from.
+    /// returns the live interval virtReg is split from.
     unsigned getPreSplitReg(unsigned virtReg) const {
       return Virt2SplitMap[virtReg];
     }
@@ -146,7 +149,7 @@ namespace llvm {
       return Orig ? Orig : VirtReg;
     }
 
-    /// @brief returns true if the specified virtual register is not
+    /// returns true if the specified virtual register is not
     /// mapped to a stack slot or rematerialized.
     bool isAssignedReg(unsigned virtReg) const {
       if (getStackSlot(virtReg) == NO_STACK_SLOT)
@@ -156,19 +159,20 @@ namespace llvm {
       return (Virt2SplitMap[virtReg] && Virt2PhysMap[virtReg] != NO_PHYS_REG);
     }
 
-    /// @brief returns the stack slot mapped to the specified virtual
+    /// returns the stack slot mapped to the specified virtual
     /// register
     int getStackSlot(unsigned virtReg) const {
       assert(TargetRegisterInfo::isVirtualRegister(virtReg));
       return Virt2StackSlotMap[virtReg];
     }
 
-    /// @brief create a mapping for the specifed virtual register to
+    /// create a mapping for the specifed virtual register to
     /// the next available stack slot
     int assignVirt2StackSlot(unsigned virtReg);
-    /// @brief create a mapping for the specified virtual register to
+
+    /// create a mapping for the specified virtual register to
     /// the specified stack slot
-    void assignVirt2StackSlot(unsigned virtReg, int frameIndex);
+    void assignVirt2StackSlot(unsigned virtReg, int SS);
 
     void print(raw_ostream &OS, const Module* M = nullptr) const override;
     void dump() const;
@@ -178,6 +182,7 @@ namespace llvm {
     VRM.print(OS);
     return OS;
   }
-} // End llvm namespace
 
-#endif
+} // end llvm namespace
+
+#endif // LLVM_CODEGEN_VIRTREGMAP_H

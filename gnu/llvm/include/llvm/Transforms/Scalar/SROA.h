@@ -17,14 +17,22 @@
 #define LLVM_TRANSFORMS_SCALAR_SROA_H
 
 #include "llvm/ADT/SetVector.h"
-#include "llvm/Analysis/AssumptionCache.h"
-#include "llvm/IR/Dominators.h"
-#include "llvm/IR/Function.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Support/Compiler.h"
 #include <vector>
 
 namespace llvm {
+
+class AllocaInst;
+class AssumptionCache;
+class DominatorTree;
+class Function;
+class Instruction;
+class LLVMContext;
+class PHINode;
+class SelectInst;
+class Use;
 
 /// A private "module" namespace for types and utilities used by SROA. These
 /// are implementation details and should not be used by clients.
@@ -37,7 +45,7 @@ class SROALegacyPass;
 
 } // end namespace sroa
 
-/// \brief An optimization pass providing Scalar Replacement of Aggregates.
+/// An optimization pass providing Scalar Replacement of Aggregates.
 ///
 /// This pass takes allocations which can be completely analyzed (that is, they
 /// don't escape) and tries to turn them into scalar SSA values. There are
@@ -60,7 +68,7 @@ class SROA : public PassInfoMixin<SROA> {
   DominatorTree *DT = nullptr;
   AssumptionCache *AC = nullptr;
 
-  /// \brief Worklist of alloca instructions to simplify.
+  /// Worklist of alloca instructions to simplify.
   ///
   /// Each alloca in the function is added to this. Each new alloca formed gets
   /// added to it as well to recursively simplify unless that alloca can be
@@ -69,12 +77,12 @@ class SROA : public PassInfoMixin<SROA> {
   /// already present to ensure it is re-visited.
   SetVector<AllocaInst *, SmallVector<AllocaInst *, 16>> Worklist;
 
-  /// \brief A collection of instructions to delete.
+  /// A collection of instructions to delete.
   /// We try to batch deletions to simplify code and make things a bit more
   /// efficient.
   SetVector<Instruction *, SmallVector<Instruction *, 8>> DeadInsts;
 
-  /// \brief Post-promotion worklist.
+  /// Post-promotion worklist.
   ///
   /// Sometimes we discover an alloca which has a high probability of becoming
   /// viable for SROA after a round of promotion takes place. In those cases,
@@ -84,17 +92,17 @@ class SROA : public PassInfoMixin<SROA> {
   /// the event they are deleted.
   SetVector<AllocaInst *, SmallVector<AllocaInst *, 16>> PostPromotionWorklist;
 
-  /// \brief A collection of alloca instructions we can directly promote.
+  /// A collection of alloca instructions we can directly promote.
   std::vector<AllocaInst *> PromotableAllocas;
 
-  /// \brief A worklist of PHIs to speculate prior to promoting allocas.
+  /// A worklist of PHIs to speculate prior to promoting allocas.
   ///
   /// All of these PHIs have been checked for the safety of speculation and by
   /// being speculated will allow promoting allocas currently in the promotable
   /// queue.
   SetVector<PHINode *, SmallVector<PHINode *, 2>> SpeculatablePHIs;
 
-  /// \brief A worklist of select instructions to speculate prior to promoting
+  /// A worklist of select instructions to speculate prior to promoting
   /// allocas.
   ///
   /// All of these select instructions have been checked for the safety of
@@ -105,7 +113,7 @@ class SROA : public PassInfoMixin<SROA> {
 public:
   SROA() = default;
 
-  /// \brief Run the pass over the function.
+  /// Run the pass over the function.
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 
 private:
@@ -122,7 +130,7 @@ private:
   bool splitAlloca(AllocaInst &AI, sroa::AllocaSlices &AS);
   bool runOnAlloca(AllocaInst &AI);
   void clobberUse(Use &U);
-  void deleteDeadInstructions(SmallPtrSetImpl<AllocaInst *> &DeletedAllocas);
+  bool deleteDeadInstructions(SmallPtrSetImpl<AllocaInst *> &DeletedAllocas);
   bool promoteAllocas(Function &F);
 };
 

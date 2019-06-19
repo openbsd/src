@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.33 2017/10/16 13:10:50 anton Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.34 2018/06/12 15:24:31 millert Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -198,7 +198,7 @@ main(int argc, char *argv[])
 	 * NULL.
 	 */
 	linelen = 1 + argc + nargs + 1;
-	if ((av = bxp = calloc(linelen, sizeof(char **))) == NULL)
+	if ((av = bxp = calloc(linelen, sizeof(char *))) == NULL)
 		err(1, NULL);
 
 	/*
@@ -438,7 +438,7 @@ prerun(int argc, char *argv[])
 	 * Allocate memory to hold the argument list, and
 	 * a NULL at the tail.
 	 */
-	tmp = calloc(argc + 1, sizeof(char**));
+	tmp = calloc(argc + 1, sizeof(char *));
 	if (tmp == NULL)
 		err(1, NULL);
 	tmp2 = tmp;

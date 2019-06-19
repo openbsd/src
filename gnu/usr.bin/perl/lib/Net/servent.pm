@@ -2,15 +2,15 @@ package Net::servent;
 use strict;
 
 use 5.006_001;
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
+our ( $s_name, @s_aliases, $s_port, $s_proto );
 BEGIN {
     use Exporter   ();
     @EXPORT      = qw(getservbyname getservbyport getservent getserv);
     @EXPORT_OK   = qw( $s_name @s_aliases $s_port $s_proto );
     %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
 }
-use vars      @EXPORT_OK;
 
 # Class::Struct forbids use of @ISA
 sub import { goto &Exporter::import }

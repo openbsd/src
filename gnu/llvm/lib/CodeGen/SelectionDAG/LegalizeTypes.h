@@ -18,9 +18,9 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
 
@@ -89,48 +89,84 @@ private:
 
   /// Pretend all of this node's results are legal.
   bool IgnoreNodeResults(SDNode *N) const {
-    return N->getOpcode() == ISD::TargetConstant;
+    return N->getOpcode() == ISD::TargetConstant ||
+           N->getOpcode() == ISD::Register;
   }
+
+  // Bijection from SDValue to unique id. As each created node gets a
+  // new id we do not need to worry about reuse expunging.  Should we
+  // run out of ids, we can do a one time expensive compactifcation.
+  typedef unsigned TableId;
+
+  TableId NextValueId = 1;
+
+  SmallDenseMap<SDValue, TableId, 8> ValueToIdMap;
+  SmallDenseMap<TableId, SDValue, 8> IdToValueMap;
 
   /// For integer nodes that are below legal width, this map indicates what
   /// promoted value to use.
-  SmallDenseMap<SDValue, SDValue, 8> PromotedIntegers;
+  SmallDenseMap<TableId, TableId, 8> PromotedIntegers;
 
   /// For integer nodes that need to be expanded this map indicates which
   /// operands are the expanded version of the input.
-  SmallDenseMap<SDValue, std::pair<SDValue, SDValue>, 8> ExpandedIntegers;
+  SmallDenseMap<TableId, std::pair<TableId, TableId>, 8> ExpandedIntegers;
 
   /// For floating-point nodes converted to integers of the same size, this map
   /// indicates the converted value to use.
-  SmallDenseMap<SDValue, SDValue, 8> SoftenedFloats;
+  SmallDenseMap<TableId, TableId, 8> SoftenedFloats;
 
   /// For floating-point nodes that have a smaller precision than the smallest
   /// supported precision, this map indicates what promoted value to use.
-  SmallDenseMap<SDValue, SDValue, 8> PromotedFloats;
+  SmallDenseMap<TableId, TableId, 8> PromotedFloats;
 
   /// For float nodes that need to be expanded this map indicates which operands
   /// are the expanded version of the input.
-  SmallDenseMap<SDValue, std::pair<SDValue, SDValue>, 8> ExpandedFloats;
+  SmallDenseMap<TableId, std::pair<TableId, TableId>, 8> ExpandedFloats;
 
   /// For nodes that are <1 x ty>, this map indicates the scalar value of type
   /// 'ty' to use.
-  SmallDenseMap<SDValue, SDValue, 8> ScalarizedVectors;
+  SmallDenseMap<TableId, TableId, 8> ScalarizedVectors;
 
   /// For nodes that need to be split this map indicates which operands are the
   /// expanded version of the input.
-  SmallDenseMap<SDValue, std::pair<SDValue, SDValue>, 8> SplitVectors;
+  SmallDenseMap<TableId, std::pair<TableId, TableId>, 8> SplitVectors;
 
   /// For vector nodes that need to be widened, indicates the widened value to
   /// use.
-  SmallDenseMap<SDValue, SDValue, 8> WidenedVectors;
+  SmallDenseMap<TableId, TableId, 8> WidenedVectors;
 
   /// For values that have been replaced with another, indicates the replacement
   /// value to use.
-  SmallDenseMap<SDValue, SDValue, 8> ReplacedValues;
+  SmallDenseMap<TableId, TableId, 8> ReplacedValues;
 
   /// This defines a worklist of nodes to process. In order to be pushed onto
   /// this worklist, all operands of a node must have already been processed.
   SmallVector<SDNode*, 128> Worklist;
+
+  TableId getTableId(SDValue V) {
+    assert(V.getNode() && "Getting TableId on SDValue()");
+
+    auto I = ValueToIdMap.find(V);
+    if (I != ValueToIdMap.end()) {
+      // replace if there's been a shift.
+      RemapId(I->second);
+      assert(I->second && "All Ids should be nonzero");
+      return I->second;
+    }
+    // Add if it's not there.
+    ValueToIdMap.insert(std::make_pair(V, NextValueId));
+    IdToValueMap.insert(std::make_pair(NextValueId, V));
+    ++NextValueId;
+    assert(NextValueId != 0 &&
+           "Ran out of Ids. Increase id type size or add compactification");
+    return NextValueId - 1;
+  }
+
+  const SDValue &getSDValue(TableId &Id) {
+    RemapId(Id);
+    assert(Id && "TableId should be non-zero");
+    return IdToValueMap[Id];
+  }
 
 public:
   explicit DAGTypeLegalizer(SelectionDAG &dag)
@@ -146,10 +182,25 @@ public:
   bool run();
 
   void NoteDeletion(SDNode *Old, SDNode *New) {
-    ExpungeNode(Old);
-    ExpungeNode(New);
-    for (unsigned i = 0, e = Old->getNumValues(); i != e; ++i)
-      ReplacedValues[SDValue(Old, i)] = SDValue(New, i);
+    for (unsigned i = 0, e = Old->getNumValues(); i != e; ++i) {
+      TableId NewId = getTableId(SDValue(New, i));
+      TableId OldId = getTableId(SDValue(Old, i));
+
+      if (OldId != NewId)
+        ReplacedValues[OldId] = NewId;
+
+      // Delete Node from tables.
+      ValueToIdMap.erase(SDValue(Old, i));
+      IdToValueMap.erase(OldId);
+      PromotedIntegers.erase(OldId);
+      ExpandedIntegers.erase(OldId);
+      SoftenedFloats.erase(OldId);
+      PromotedFloats.erase(OldId);
+      ExpandedFloats.erase(OldId);
+      ScalarizedVectors.erase(OldId);
+      SplitVectors.erase(OldId);
+      WidenedVectors.erase(OldId);
+    }
   }
 
   SelectionDAG &getDAG() const { return DAG; }
@@ -157,9 +208,9 @@ public:
 private:
   SDNode *AnalyzeNewNode(SDNode *N);
   void AnalyzeNewValue(SDValue &Val);
-  void ExpungeNode(SDNode *N);
   void PerformExpensiveChecks();
-  void RemapValue(SDValue &N);
+  void RemapId(TableId &Id);
+  void RemapValue(SDValue &V);
 
   // Common routines.
   SDValue BitConvertToInteger(SDValue Op);
@@ -181,10 +232,6 @@ private:
   std::pair<SDValue, SDValue> ExpandAtomic(SDNode *Node);
 
   SDValue PromoteTargetBoolean(SDValue Bool, EVT ValVT);
-
-  /// Modify Bit Vector to match SetCC result type of ValVT.
-  /// The bit vector is widened with zeroes when WithZeroes is true.
-  SDValue WidenTargetBoolean(SDValue Bool, EVT ValVT, bool WithZeroes = false);
 
   void ReplaceValueWith(SDValue From, SDValue To);
   void SplitInteger(SDValue Op, SDValue &Lo, SDValue &Hi);
@@ -210,8 +257,8 @@ private:
   /// returns an i32, the lower 16 bits of which coincide with Op, and the upper
   /// 16 bits of which contain rubbish.
   SDValue GetPromotedInteger(SDValue Op) {
-    SDValue &PromotedOp = PromotedIntegers[Op];
-    RemapValue(PromotedOp);
+    TableId &PromotedId = PromotedIntegers[getTableId(Op)];
+    SDValue PromotedOp = getSDValue(PromotedId);
     assert(PromotedOp.getNode() && "Operand wasn't promoted?");
     return PromotedOp;
   }
@@ -285,7 +332,7 @@ private:
   SDValue PromoteIntRes_XMULO(SDNode *N, unsigned ResNo);
 
   // Integer Operand Promotion.
-  bool PromoteIntegerOperand(SDNode *N, unsigned OperandNo);
+  bool PromoteIntegerOperand(SDNode *N, unsigned OpNo);
   SDValue PromoteIntOp_ANY_EXTEND(SDNode *N);
   SDValue PromoteIntOp_ATOMIC_STORE(AtomicSDNode *N);
   SDValue PromoteIntOp_BITCAST(SDNode *N);
@@ -376,11 +423,10 @@ private:
   bool ExpandShiftWithUnknownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi);
 
   // Integer Operand Expansion.
-  bool ExpandIntegerOperand(SDNode *N, unsigned OperandNo);
+  bool ExpandIntegerOperand(SDNode *N, unsigned OpNo);
   SDValue ExpandIntOp_BR_CC(SDNode *N);
   SDValue ExpandIntOp_SELECT_CC(SDNode *N);
   SDValue ExpandIntOp_SETCC(SDNode *N);
-  SDValue ExpandIntOp_SETCCE(SDNode *N);
   SDValue ExpandIntOp_SETCCCARRY(SDNode *N);
   SDValue ExpandIntOp_Shift(SDNode *N);
   SDValue ExpandIntOp_SINT_TO_FP(SDNode *N);
@@ -400,18 +446,21 @@ private:
   /// Given an operand Op of Float type, returns the integer if the Op is not
   /// supported in target HW and converted to the integer.
   /// The integer contains exactly the same bits as Op - only the type changed.
-  /// For example, if Op is an f32 which was softened to an i32, then this method
-  /// returns an i32, the bits of which coincide with those of Op.
+  /// For example, if Op is an f32 which was softened to an i32, then this
+  /// method returns an i32, the bits of which coincide with those of Op.
   /// If the Op can be efficiently supported in target HW or the operand must
   /// stay in a register, the Op is not converted to an integer.
   /// In that case, the given op is returned.
   SDValue GetSoftenedFloat(SDValue Op) {
-    SDValue &SoftenedOp = SoftenedFloats[Op];
-    if (!SoftenedOp.getNode() &&
-        isSimpleLegalType(Op.getValueType()))
+    TableId Id = getTableId(Op);
+    auto Iter = SoftenedFloats.find(Id);
+    if (Iter == SoftenedFloats.end()) {
+      assert(isSimpleLegalType(Op.getValueType()) &&
+             "Operand wasn't converted to integer?");
       return Op;
-    RemapValue(SoftenedOp);
-    assert(SoftenedOp.getNode() && "Operand wasn't converted to integer?");
+    }
+    SDValue SoftenedOp = getSDValue(Iter->second);
+    assert(SoftenedOp.getNode() && "Unconverted op in SoftenedFloats?");
     return SoftenedOp;
   }
   void SetSoftenedFloat(SDValue Op, SDValue Result);
@@ -461,7 +510,7 @@ private:
   SDValue SoftenFloatRes_XINT_TO_FP(SDNode *N);
 
   // Return true if we can skip softening the given operand or SDNode because
-  // either it was soften before by SoftenFloatResult and references to the 
+  // either it was soften before by SoftenFloatResult and references to the
   // operand were replaced by ReplaceValueWith or it's value type is legal in HW
   // registers and the operand can be left unchanged.
   bool CanSkipSoftenFloatOperand(SDNode *N, unsigned OpNo);
@@ -530,7 +579,7 @@ private:
   void ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo, SDValue &Hi);
 
   // Float Operand Expansion.
-  bool ExpandFloatOperand(SDNode *N, unsigned OperandNo);
+  bool ExpandFloatOperand(SDNode *N, unsigned OpNo);
   SDValue ExpandFloatOp_BR_CC(SDNode *N);
   SDValue ExpandFloatOp_FCOPYSIGN(SDNode *N);
   SDValue ExpandFloatOp_FP_ROUND(SDNode *N);
@@ -548,8 +597,8 @@ private:
   //===--------------------------------------------------------------------===//
 
   SDValue GetPromotedFloat(SDValue Op) {
-    SDValue &PromotedOp = PromotedFloats[Op];
-    RemapValue(PromotedOp);
+    TableId &PromotedId = PromotedFloats[getTableId(Op)];
+    SDValue PromotedOp = getSDValue(PromotedId);
     assert(PromotedOp.getNode() && "Operand wasn't promoted?");
     return PromotedOp;
   }
@@ -571,7 +620,7 @@ private:
   SDValue PromoteFloatRes_UNDEF(SDNode *N);
   SDValue PromoteFloatRes_XINT_TO_FP(SDNode *N);
 
-  bool PromoteFloatOperand(SDNode *N, unsigned ResNo);
+  bool PromoteFloatOperand(SDNode *N, unsigned OpNo);
   SDValue PromoteFloatOp_BITCAST(SDNode *N, unsigned OpNo);
   SDValue PromoteFloatOp_FCOPYSIGN(SDNode *N, unsigned OpNo);
   SDValue PromoteFloatOp_FP_EXTEND(SDNode *N, unsigned OpNo);
@@ -588,15 +637,15 @@ private:
   /// element type, this returns the element. For example, if Op is a v1i32,
   /// Op = < i32 val >, this method returns val, an i32.
   SDValue GetScalarizedVector(SDValue Op) {
-    SDValue &ScalarizedOp = ScalarizedVectors[Op];
-    RemapValue(ScalarizedOp);
+    TableId &ScalarizedId = ScalarizedVectors[getTableId(Op)];
+    SDValue ScalarizedOp = getSDValue(ScalarizedId);
     assert(ScalarizedOp.getNode() && "Operand wasn't scalarized?");
     return ScalarizedOp;
   }
   void SetScalarizedVector(SDValue Op, SDValue Result);
 
   // Vector Result Scalarization: <1 x ty> -> ty.
-  void ScalarizeVectorResult(SDNode *N, unsigned OpNo);
+  void ScalarizeVectorResult(SDNode *N, unsigned ResNo);
   SDValue ScalarizeVecRes_MERGE_VALUES(SDNode *N, unsigned ResNo);
   SDValue ScalarizeVecRes_BinOp(SDNode *N);
   SDValue ScalarizeVecRes_TernaryOp(SDNode *N);
@@ -618,7 +667,6 @@ private:
   SDValue ScalarizeVecRes_SETCC(SDNode *N);
   SDValue ScalarizeVecRes_UNDEF(SDNode *N);
   SDValue ScalarizeVecRes_VECTOR_SHUFFLE(SDNode *N);
-  SDValue ScalarizeVecRes_VSETCC(SDNode *N);
 
   // Vector Operand Scalarization: <1 x ty> -> ty.
   bool ScalarizeVectorOperand(SDNode *N, unsigned OpNo);
@@ -646,13 +694,14 @@ private:
   void SetSplitVector(SDValue Op, SDValue Lo, SDValue Hi);
 
   // Vector Result Splitting: <128 x ty> -> 2 x <64 x ty>.
-  void SplitVectorResult(SDNode *N, unsigned OpNo);
+  void SplitVectorResult(SDNode *N, unsigned ResNo);
   void SplitVecRes_BinOp(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_TernaryOp(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_UnaryOp(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_ExtendOp(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_InregOp(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_ExtVecInRegOp(SDNode *N, SDValue &Lo, SDValue &Hi);
+  void SplitVecRes_StrictFPOp(SDNode *N, SDValue &Lo, SDValue &Hi);
 
   void SplitVecRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_BUILD_VECTOR(SDNode *N, SDValue &Lo, SDValue &Hi);
@@ -662,9 +711,9 @@ private:
   void SplitVecRes_FPOWI(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_FCOPYSIGN(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo, SDValue &Hi);
-  void SplitVecRes_LOAD(LoadSDNode *N, SDValue &Lo, SDValue &Hi);
-  void SplitVecRes_MLOAD(MaskedLoadSDNode *N, SDValue &Lo, SDValue &Hi);
-  void SplitVecRes_MGATHER(MaskedGatherSDNode *N, SDValue &Lo, SDValue &Hi);
+  void SplitVecRes_LOAD(LoadSDNode *LD, SDValue &Lo, SDValue &Hi);
+  void SplitVecRes_MLOAD(MaskedLoadSDNode *MLD, SDValue &Lo, SDValue &Hi);
+  void SplitVecRes_MGATHER(MaskedGatherSDNode *MGT, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_SCALAR_TO_VECTOR(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_SETCC(SDNode *N, SDValue &Lo, SDValue &Hi);
   void SplitVecRes_VECTOR_SHUFFLE(ShuffleVectorSDNode *N, SDValue &Lo,
@@ -684,7 +733,7 @@ private:
   SDValue SplitVecOp_STORE(StoreSDNode *N, unsigned OpNo);
   SDValue SplitVecOp_MSTORE(MaskedStoreSDNode *N, unsigned OpNo);
   SDValue SplitVecOp_MSCATTER(MaskedScatterSDNode *N, unsigned OpNo);
-  SDValue SplitVecOp_MGATHER(MaskedGatherSDNode *N, unsigned OpNo);
+  SDValue SplitVecOp_MGATHER(MaskedGatherSDNode *MGT, unsigned OpNo);
   SDValue SplitVecOp_CONCAT_VECTORS(SDNode *N);
   SDValue SplitVecOp_VSETCC(SDNode *N);
   SDValue SplitVecOp_FP_ROUND(SDNode *N);
@@ -701,8 +750,8 @@ private:
   /// method returns a v4i32 for which the first two elements are the same as
   /// those of Op, while the last two elements contain rubbish.
   SDValue GetWidenedVector(SDValue Op) {
-    SDValue &WidenedOp = WidenedVectors[Op];
-    RemapValue(WidenedOp);
+    TableId &WidenedId = WidenedVectors[getTableId(Op)];
+    SDValue WidenedOp = getSDValue(WidenedId);
     assert(WidenedOp.getNode() && "Operand wasn't widened?");
     return WidenedOp;
   }
@@ -727,7 +776,6 @@ private:
   SDValue WidenVecRes_SETCC(SDNode* N);
   SDValue WidenVecRes_UNDEF(SDNode *N);
   SDValue WidenVecRes_VECTOR_SHUFFLE(ShuffleVectorSDNode *N);
-  SDValue WidenVecRes_VSETCC(SDNode* N);
 
   SDValue WidenVecRes_Ternary(SDNode *N);
   SDValue WidenVecRes_Binary(SDNode *N);

@@ -17,26 +17,36 @@
 namespace llvm {
 namespace detail {
 struct ErrorHolder {
-  bool Success;
-  std::string Message;
+  std::vector<std::shared_ptr<ErrorInfoBase>> Infos;
+
+  bool Success() const { return Infos.empty(); }
 };
 
 template <typename T> struct ExpectedHolder : public ErrorHolder {
-  Optional<T *> Value;
+  ExpectedHolder(ErrorHolder Err, Expected<T> &Exp)
+      : ErrorHolder(std::move(Err)), Exp(Exp) {}
+
+  Expected<T> &Exp;
 };
 
 inline void PrintTo(const ErrorHolder &Err, std::ostream *Out) {
-  *Out << (Err.Success ? "succeeded" : "failed");
-  if (!Err.Success) {
-    *Out << "  (" << StringRef(Err.Message).trim().str() << ")";
+  raw_os_ostream OS(*Out);
+  OS << (Err.Success() ? "succeeded" : "failed");
+  if (!Err.Success()) {
+    const char *Delim = "  (";
+    for (const auto &Info : Err.Infos) {
+      OS << Delim;
+      Delim = "; ";
+      Info->log(OS);
+    }
+    OS << ")";
   }
 }
 
 template <typename T>
 void PrintTo(const ExpectedHolder<T> &Item, std::ostream *Out) {
-  if (Item.Success) {
-    *Out << "succeeded with value \"" << ::testing::PrintToString(**Item.Value)
-         << "\"";
+  if (Item.Success()) {
+    *Out << "succeeded with value " << ::testing::PrintToString(*Item.Exp);
   } else {
     PrintTo(static_cast<const ErrorHolder &>(Item), Out);
   }

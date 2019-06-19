@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.25 2017/12/15 16:40:33 jca Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.26 2018/05/15 11:57:32 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -275,7 +275,7 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 	if (!args || !args->argc || !args->argv)
 		return (0);
 
-	bzero(&outargs, sizeof(outargs));
+	memset(&outargs, 0, sizeof(outargs));
 	fuse_opt_add_arg(&outargs, args->argv[0]);
 
 	for (i = 1; i < args->argc; i++) {

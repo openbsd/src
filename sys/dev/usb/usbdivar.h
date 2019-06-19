@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.73 2018/02/03 13:37:37 mpi Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.79 2018/11/27 14:56:09 mpi Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -158,6 +158,7 @@ struct usbd_device {
 	const struct usbd_quirks     *quirks;  /* device quirks, always set */
 	struct usbd_hub	       *hub;           /* only if this is a hub */
 	struct device         **subdevs;       /* sub-devices, 0 terminated */
+	int			nsubdev;       /* size of the `subdevs' array */
 	int			ndevs;	       /* # of subdevs */
 
 	char                   *serial;        /* serial number, can be NULL */
@@ -173,7 +174,8 @@ struct usbd_interface {
 	struct usbd_endpoint   *endpoints;
 	void		       *priv;
 	LIST_HEAD(, usbd_pipe)	pipes;
-	u_int8_t		claimed;
+	uint8_t			claimed;
+	uint8_t			nendpt;
 };
 
 struct usbd_pipe {

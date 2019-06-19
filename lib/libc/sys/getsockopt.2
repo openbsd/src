@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.51 2016/10/19 05:50:54 jmc Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.55 2019/02/13 11:55:21 martijn Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 19 2016 $
+.Dd $Mdocdate: February 13 2019 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -168,6 +168,8 @@ get the credentials from other side of connection
 set the routing table used for route lookups
 .It Dv SO_SPLICE
 splice two sockets together or get data length
+.It Dv SO_ZEROIZE
+clear all memory containing user supplied data
 .It Dv SO_TYPE
 get the type of the socket (get only)
 .It Dv SO_ERROR
@@ -349,9 +351,10 @@ credentials from the other side of the connection
 .Dv AF_UNIX
 sockets).
 These credentials are from the time that
-.Xr bind 2
-or
+.Xr bind 2 ,
 .Xr connect 2
+or
+.Xr socketpair 2
 were called.
 .Pp
 The
@@ -442,6 +445,11 @@ source socket
 .Fa s .
 A successful new splice resets this number.
 .Pp
+Userland may write sensitive data into a socket.
+If
+.Dv SO_ZEROIZE
+is set, overwrite kernel memory after sending data.
+.Pp
 Finally,
 .Dv SO_TYPE
 and
@@ -506,6 +514,6 @@ functions conform to
 The
 .Fn getsockopt
 system call appeared in
-.Bx 4.2 .
+.Bx 4.1c .
 .Sh BUGS
 Several of the socket options should be handled at lower levels of the system.

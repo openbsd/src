@@ -1,7 +1,7 @@
 #!./perl
 
 BEGIN {
-    unshift @INC, 't';
+    splice @INC, 0, 0, 't', '.';
     require Config;
     if (($Config::Config{'extensions'} !~ /\bB\b/) ){
         print "1..0 # Skip -- Perl configured without B module\n";
@@ -13,7 +13,7 @@ BEGIN {
 use warnings;
 use strict;
 
-my $tests = 46; # not counting those in the __DATA__ section
+my $tests = 52; # not counting those in the __DATA__ section
 
 use B::Deparse;
 my $deparse = B::Deparse->new();
@@ -63,7 +63,7 @@ while (<DATA>) {
 	    new B::Deparse split /,/, $meta{options}
 	: $deparse;
 
-    my $coderef = eval "$meta{context};\n" . <<'EOC' . "sub {$input\n}";
+    my $code = "$meta{context};\n" . <<'EOC' . "sub {$input\n}";
 # Tell B::Deparse about our ambient pragmas
 my ($hint_bits, $warning_bits, $hinthash);
 BEGIN {
@@ -75,10 +75,14 @@ $deparse->ambient_pragmas (
     '%^H'        => $hinthash,
 );
 EOC
+    my $coderef = eval $code;
 
     local $::TODO = $meta{todo};
     if ($@) {
-	is($@, "", "compilation of $desc");
+	is($@, "", "compilation of $desc")
+            or diag "=============================================\n"
+                  . "CODE:\n--------\n$code\n--------\n"
+                  . "=============================================\n";
     }
     else {
 	my $deparsed = $deparse->coderef2text( $coderef );
@@ -87,7 +91,12 @@ EOC
 	$regex =~ s/\s+/\\s+/g;
 	$regex = '^\{\s*' . $regex . '\s*\}$';
 
-        like($deparsed, qr/$regex/, $desc);
+        like($deparsed, qr/$regex/, $desc)
+            or diag "=============================================\n"
+                  . "CODE:\n--------\n$input\n--------\n"
+                  . "EXPECTED:\n--------\n{\n$expected\n}\n--------\n"
+                  . "GOT:\n--------\n$deparsed\n--------\n"
+                  . "=============================================\n";
     }
 }
 
@@ -142,6 +151,21 @@ $a = `$^X $path "-MO=Deparse" -e "use constant PI => 4" 2>&1`;
 $a =~ s/-e syntax OK\n//g;
 is($a, "use constant ('PI', 4);\n",
    "Proxy Constant Subroutines must not show up as (incorrect) prototypes");
+
+$a = `$^X $path "-MO=Deparse" -e "sub foo(){1}" 2>&1`;
+$a =~ s/-e syntax OK\n//g;
+is($a, "sub foo () {\n    1;\n}\n",
+   "Main prog consisting of just a constant (via empty proto)");
+
+$a = readpipe qq|$^X $path "-MO=Deparse"|
+             .qq| -e "package F; sub f(){0} sub s{}"|
+             .qq| -e "#line 123 four-five-six"|
+             .qq| -e "package G; sub g(){0} sub s{}" 2>&1|;
+$a =~ s/-e syntax OK\n//g;
+like($a, qr/sub F::f \(\) \{\s*0;?\s*}/,
+   "Constant is dumped in package in which other subs are dumped");
+unlike($a, qr/sub g/,
+   "Constant is not dumped in package in which other subs are not dumped");
 
 #Re: perlbug #35857, patch #24505
 #handle warnings::register-ed packages properly.
@@ -363,20 +387,20 @@ EOCODP
 # CORE::no
 $a = readpipe qq`$^X $path "-MO=Deparse" -Xe `
              .qq`"use feature q|:all|; my sub no; CORE::no less" 2>&1`;
-like($a, qr/my sub no;\nCORE::no less;/,
+like($a, qr/my sub no;\n.*CORE::no less;/s,
     'CORE::no after my sub no');
 
 # CORE::use
 $a = readpipe qq`$^X $path "-MO=Deparse" -Xe `
              .qq`"use feature q|:all|; my sub use; CORE::use less" 2>&1`;
-like($a, qr/my sub use;\nCORE::use less;/,
+like($a, qr/my sub use;\n.*CORE::use less;/s,
     'CORE::use after my sub use');
 
 # CORE::__DATA__
 $a = readpipe qq`$^X $path "-MO=Deparse" -Xe `
              .qq`"use feature q|:all|; my sub __DATA__; `
              .qq`CORE::__DATA__" 2>&1`;
-like($a, qr/my sub __DATA__;\n.*\nCORE::__DATA__/s,
+like($a, qr/my sub __DATA__;\n.*CORE::__DATA__/s,
     'CORE::__DATA__ after my sub __DATA__');
 
 # sub declarations
@@ -521,6 +545,22 @@ unlike runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path, '-w' ],
                prog => 'BEGIN { undef &foo }'),
        qr'Use of uninitialized value',
       'no warnings for undefined sub';
+
+is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+    prog => 'sub f { 1; } BEGIN { *g = \&f; }'),
+    "sub f {\n    1;\n}\nsub BEGIN {\n    *g = \\&f;\n}\n",
+    "sub glob alias shouldn't impede emitting original sub";
+
+is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+    prog => 'package Foo; sub f { 1; } BEGIN { *g = \&f; }'),
+    "package Foo;\nsub f {\n    1;\n}\nsub BEGIN {\n    *g = \\&f;\n}\n",
+    "sub glob alias outside main shouldn't impede emitting original sub";
+
+is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
+    prog => 'package Foo; sub f { 1; } BEGIN { *Bar::f = \&f; }'),
+    "package Foo;\nsub f {\n    1;\n}\nsub BEGIN {\n    *Bar::f = \\&f;\n}\n",
+    "sub glob alias in separate package shouldn't impede emitting original sub";
+
 
 done_testing($tests);
 
@@ -780,11 +820,37 @@ print $_ foreach (reverse 1, 2..5);
 our @ary;
 @ary = split(' ', 'foo', 0);
 ####
+my @ary;
+@ary = split(' ', 'foo', 0);
+####
 # Split to our array
 our @array = split(//, 'foo', 0);
 ####
 # Split to my array
 my @array  = split(//, 'foo', 0);
+####
+our @array;
+my $c;
+@array = split(/x(?{ $c++; })y/, 'foo', 0);
+####
+my($x, $y, $p);
+our $c;
+($x, $y) = split(/$p(?{ $c++; })y/, 'foo', 2);
+####
+our @ary;
+my $pat;
+@ary = split(/$pat/, 'foo', 0);
+####
+my @ary;
+our $pat;
+@ary = split(/$pat/, 'foo', 0);
+####
+our @array;
+my $pat;
+local @array = split(/$pat/, 'foo', 0);
+####
+our $pat;
+my @array  = split(/$pat/, 'foo', 0);
 ####
 # bug #40055
 do { () }; 
@@ -1372,11 +1438,48 @@ s/X//r;
 use feature 'unicode_strings';
 s/X//d;
 ####
-# all the flags (tr///)
-tr/X/Y/c;
-tr/X//d;
-tr/X//s;
-tr/X//r;
+# tr/// with all the flags: empty replacement
+tr/B-G//;
+tr/B-G//c;
+tr/B-G//d;
+tr/B-G//s;
+tr/B-G//cd;
+tr/B-G//ds;
+tr/B-G//cs;
+tr/B-G//cds;
+tr/B-G//r;
+####
+# tr/// with all the flags: short replacement
+tr/B-G/b/;
+tr/B-G/b/c;
+tr/B-G/b/d;
+tr/B-G/b/s;
+tr/B-G/b/cd;
+tr/B-G/b/ds;
+tr/B-G/b/cs;
+tr/B-G/b/cds;
+tr/B-G/b/r;
+####
+# tr/// with all the flags: equal length replacement
+tr/B-G/b-g/;
+tr/B-G/b-g/c;
+tr/B-G/b-g/s;
+tr/B-G/b-g/cs;
+tr/B-G/b-g/r;
+####
+# tr with extended table (/c)
+tr/\000-\375/AB/c;
+tr/\000-\375/A-C/c;
+tr/\000-\375/A-D/c;
+tr/\000-\375/A-I/c;
+tr/\000-\375/AB/cd;
+tr/\000-\375/A-C/cd;
+tr/\000-\375/A-D/cd;
+tr/\000-\375/A-I/cd;
+tr/\000-\375/AB/cds;
+tr/\000-\375/A-C/cds;
+tr/\000-\375/A-D/cds;
+tr/\000-\375/A-I/cds;
 ####
 # [perl #119807] s//\(3)/ge should not warn when deparsed (\3 warns)
 s/foo/\(3);/eg;
@@ -1941,36 +2044,28 @@ my($a, $b, $c) = @_;
 ####
 # SKIP ?$] < 5.017004 && "lexical subs not implemented on this Perl version"
 # lexical subroutine
-use feature 'lexical_subs';
+# CONTEXT use feature 'lexical_subs';
 no warnings "experimental::lexical_subs";
 my sub f {}
 print f();
 >>>>
-use feature 'lexical_subs';
-BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x15"}
+BEGIN {${^WARNING_BITS} = "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x55"}
 my sub f {
-    BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x15"}
     
 }
-BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x15"}
 print f();
 ####
 # SKIP ?$] < 5.017004 && "lexical subs not implemented on this Perl version"
 # lexical "state" subroutine
-use feature 'state', 'lexical_subs';
+# CONTEXT use feature 'state', 'lexical_subs';
 no warnings 'experimental::lexical_subs';
 state sub f {}
 print f();
 >>>>
-use feature 'lexical_subs';
-BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x15"}
-CORE::state sub f {
-    BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x15"}
-    use feature 'state';
+BEGIN {${^WARNING_BITS} = "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x55"}
+state sub f {
     
 }
-BEGIN {${^WARNING_BITS} = "\x54\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x15"}
-use feature 'state';
 print f();
 ####
 # SKIP ?$] < 5.017004 && "lexical subs not implemented on this Perl version"
@@ -2461,11 +2556,16 @@ my $e = delete $h{'foo'}[$i];
 ####
 # multideref with leading expression
 my $r;
-my $x = ($r // [])->{'foo'}[0];
+my $x = +($r // [])->{'foo'}[0];
 ####
 # multideref with complex middle index
 my(%h, $i, $j, $k);
 my $x = $h{'foo'}[$i + $j]{$k};
+####
+# multideref with trailing non-simple index that initially looks simple
+# (i.e. the constant "3")
+my($r, $i, $j, $k);
+my $x = +($r || {})->{'foo'}[$i + $j]{3 + $k};
 ####
 # chdir
 chdir 'file';
@@ -2488,3 +2588,478 @@ $_ ^= $_;
 $_ |.= $_;
 $_ &.= $_;
 $_ ^.= $_;
+####
+####
+# Should really use 'no warnings "experimental::signatures"',
+# but it doesn't yet deparse correctly.
+# anon subs used because this test framework doesn't deparse named subs
+# in the DATA code snippets.
+#
+# general signature
+no warnings;
+use feature 'signatures';
+my $x;
+sub ($a, $, $b = $glo::bal, $c = $a, $d = 'foo', $e = -37, $f = 0, $g = 1, $h = undef, $i = $a + 1, $j = /foo/, @) {
+    $x++;
+}
+;
+$x++;
+####
+# Signature and prototype
+no warnings;
+use feature 'signatures';
+my $x;
+my $f = sub : prototype($$) ($a, $b) {
+    $x++;
+}
+;
+$x++;
+####
+# Signature and prototype and attrs
+no warnings;
+use feature 'signatures';
+my $x;
+my $f = sub : prototype($$) lvalue ($a, $b) {
+    $x++;
+}
+;
+$x++;
+####
+# Signature and attrs
+no warnings;
+use feature 'signatures';
+my $x;
+my $f = sub : lvalue method ($a, $b) {
+    $x++;
+}
+;
+$x++;
+####
+# named array slurp, null body
+no warnings;
+use feature 'signatures';
+sub (@a) {
+    ;
+}
+;
+####
+# named hash slurp
+no warnings;
+use feature 'signatures';
+sub ($key, %h) {
+    $h{$key};
+}
+;
+####
+# anon hash slurp
+no warnings;
+use feature 'signatures';
+sub ($a, %) {
+    $a;
+}
+;
+####
+# parenthesised default arg
+no warnings;
+use feature 'signatures';
+sub ($a, $b = (/foo/), $c = 1) {
+    $a + $b + $c;
+}
+;
+####
+# parenthesised default arg with TARGMY
+no warnings;
+use feature 'signatures';
+sub ($a, $b = ($a + 1), $c = 1) {
+    $a + $b + $c;
+}
+;
+####
+# empty default
+no warnings;
+use feature 'signatures';
+sub ($a, $=) {
+    $a;
+}
+;
+####
+# padrange op within pattern code blocks
+/(?{ my($x, $y) = (); })/;
+my $a;
+/$a(?{ my($x, $y) = (); })/;
+my $r1 = qr/(?{ my($x, $y) = (); })/;
+my $r2 = qr/$a(?{ my($x, $y) = (); })/;
+####
+# don't remove pattern whitespace escapes
+/a\ b/;
+/a\ b/x;
+/a\	b/;
+/a\	b/x;
+####
+# my attributes
+my $s1 :foo(f1, f2) bar(b1, b2);
+my @a1 :foo(f1, f2) bar(b1, b2);
+my %h1 :foo(f1, f2) bar(b1, b2);
+my($s2, @a2, %h2) :foo(f1, f2) bar(b1, b2);
+####
+# my class attributes
+package Foo::Bar;
+my Foo::Bar $s1 :foo(f1, f2) bar(b1, b2);
+my Foo::Bar @a1 :foo(f1, f2) bar(b1, b2);
+my Foo::Bar %h1 :foo(f1, f2) bar(b1, b2);
+my Foo::Bar ($s2, @a2, %h2) :foo(f1, f2) bar(b1, b2);
+package main;
+my Foo::Bar $s3 :foo(f1, f2) bar(b1, b2);
+my Foo::Bar @a3 :foo(f1, f2) bar(b1, b2);
+my Foo::Bar %h3 :foo(f1, f2) bar(b1, b2);
+my Foo::Bar ($s4, @a4, %h4) :foo(f1, f2) bar(b1, b2);
+####
+# avoid false positives in my $x :attribute
+'attributes'->import('main', \my $x1, 'foo(bar)'), my $y1;
+'attributes'->import('Fooo', \my $x2, 'foo(bar)'), my $y2;
+####
+# hash slices and hash key/value slices
+my(@a, %h);
+our(@oa, %oh);
+@a = @h{'foo', 'bar'};
+@a = %h{'foo', 'bar'};
+@a = delete @h{'foo', 'bar'};
+@a = delete %h{'foo', 'bar'};
+@oa = @oh{'foo', 'bar'};
+@oa = %oh{'foo', 'bar'};
+@oa = delete @oh{'foo', 'bar'};
+@oa = delete %oh{'foo', 'bar'};
+####
+# keys optimised away in void and scalar context
+no warnings;
+;
+our %h1;
+my($x, %h2);
+%h1;
+keys %h1;
+$x = %h1;
+$x = keys %h1;
+%h2;
+keys %h2;
+$x = %h2;
+$x = keys %h2;
+####
+# eq,const optimised away for (index() == -1)
+my($a, $b);
+our $c;
+$c = index($a, $b) == 2;
+$c = rindex($a, $b) == 2;
+$c = index($a, $b) == -1;
+$c = rindex($a, $b) == -1;
+$c = index($a, $b) != -1;
+$c = rindex($a, $b) != -1;
+$c = (index($a, $b) == -1);
+$c = (rindex($a, $b) == -1);
+$c = (index($a, $b) != -1);
+$c = (rindex($a, $b) != -1);
+####
+# eq,const,sassign,madmy optimised away for (index() == -1)
+my($a, $b);
+my $c;
+$c = index($a, $b) == 2;
+$c = rindex($a, $b) == 2;
+$c = index($a, $b) == -1;
+$c = rindex($a, $b) == -1;
+$c = index($a, $b) != -1;
+$c = rindex($a, $b) != -1;
+$c = (index($a, $b) == -1);
+$c = (rindex($a, $b) == -1);
+$c = (index($a, $b) != -1);
+$c = (rindex($a, $b) != -1);
+####
+# plain multiconcat
+my($a, $b, $c, $d, @a);
+$d = length $a . $b . $c;
+$d = length($a) . $b . $c;
+print '' . $a;
+push @a, ($a . '') * $b;
+unshift @a, "$a" * ($b . '');
+print $a . 'x' . $b . $c;
+print $a . 'x' . $b . $c, $d;
+print $b . $c . ($a . $b);
+print $b . $c . ($a . $b);
+print $b . $c . @a;
+print $a . "\x{100}";
+####
+# double-quoted multiconcat
+my($a, $b, $c, $d, @a);
+print "${a}x\x{100}$b$c";
+print "$a\Q$b\E$c\Ua$a\E\Lb$b\uc$c\E$a${b}c$c";
+print "A=$a[length 'b' . $c . 'd'] b=$b";
+print "A=@a B=$b";
+print "\x{101}$a\x{100}";
+$a = qr/\Q
+$b $c
+\x80
+\x{100}
+\E$c
+/;
+####
+# sprintf multiconcat
+my($a, $b, $c, $d, @a);
+print sprintf("%s%s%%%sx%s\x{100}%s", $a, $b, $c, scalar @a, $d);
+####
+# multiconcat with lexical assign
+my($a, $b, $c, $d, $e, @a);
+$d = 'foo' . $a;
+$d = "foo$a";
+$d = $a . '';
+$d = 'foo' . $a . 'bar';
+$d = $a . $b;
+$d = $a . $b . $c;
+$d = $a . $b . $c . @a;
+$e = ($d = $a . $b . $c);
+$d = !$a . $b . $c;
+$a = $b . $c . ($a . $b);
+$e = f($d = !$a . $b) . $c;
+$d = "${a}x\x{100}$b$c";
+f($d = !$a . $b . $c);
+####
+# multiconcat with lexical my
+my($a, $b, $c, $d, $e, @a);
+my $d1 = 'foo' . $a;
+my $d2 = "foo$a";
+my $d3 = $a . '';
+my $d4 = 'foo' . $a . 'bar';
+my $d5 = $a . $b;
+my $d6 = $a . $b . $c;
+my $e7 = ($d = $a . $b . $c);
+my $d8 = !$a . $b . $c;
+my $d9 = $b . $c . ($a . $b);
+my $da = f($d = !$a . $b) . $c;
+my $dc = "${a}x\x{100}$b$c";
+f(my $db = !$a . $b . $c);
+my $dd = $a . $b . $c . @a;
+####
+# multiconcat with lexical append
+my($a, $b, $c, $d, $e, @a);
+$d .= '';
+$d .= $a;
+$d .= "$a";
+$d .= 'foo' . $a;
+$d .= "foo$a";
+$d .= $a . '';
+$d .= 'foo' . $a . 'bar';
+$d .= $a . $b;
+$d .= $a . $b . $c;
+$d .= $a . $b . @a;
+$e .= ($d = $a . $b . $c);
+$d .= !$a . $b . $c;
+$a .= $b . $c . ($a . $b);
+$e .= f($d .= !$a . $b) . $c;
+f($d .= !$a . $b . $c);
+$d .= "${a}x\x{100}$b$c";
+####
+# multiconcat with expression assign
+my($a, $b, $c, @a);
+our($d, $e);
+$d = 'foo' . $a;
+$d = "foo$a";
+$d = $a . '';
+$d = 'foo' . $a . 'bar';
+$d = $a . $b;
+$d = $a . $b . $c;
+$d = $a . $b . @a;
+$e = ($d = $a . $b . $c);
+$a["-$b-"] = !$a . $b . $c;
+$a[$b]{$c}{$d ? $a : $b . $c} = !$a . $b . $c;
+$a = $b . $c . ($a . $b);
+$e = f($d = !$a . $b) . $c;
+$d = "${a}x\x{100}$b$c";
+f($d = !$a . $b . $c);
+####
+# multiconcat with expression concat
+my($a, $b, $c, @a);
+our($d, $e);
+$d .= 'foo' . $a;
+$d .= "foo$a";
+$d .= $a . '';
+$d .= 'foo' . $a . 'bar';
+$d .= $a . $b;
+$d .= $a . $b . $c;
+$d .= $a . $b . @a;
+$e .= ($d .= $a . $b . $c);
+$a["-$b-"] .= !$a . $b . $c;
+$a[$b]{$c}{$d ? $a : $b . $c} .= !$a . $b . $c;
+$a .= $b . $c . ($a . $b);
+$e .= f($d .= !$a . $b) . $c;
+$d .= "${a}x\x{100}$b$c";
+f($d .= !$a . $b . $c);
+####
+# multiconcat with CORE::sprintf
+# CONTEXT sub sprintf {}
+my($a, $b);
+my $x = CORE::sprintf('%s%s', $a, $b);
+####
+# multiconcat with backticks
+my($a, $b);
+our $x;
+$x = `$a-$b`;
+####
+# multiconcat within qr//
+my($r, $a, $b);
+$r = qr/abc\Q$a-$b\Exyz/;
+####
+# tr with unprintable characters
+my $str;
+$str = 'foo';
+$str =~ tr/\cA//;
+####
+# CORE::foo special case in bareword parsing
+print $CORE::foo, $CORE::foo::bar;
+print @CORE::foo, @CORE::foo::bar;
+print %CORE::foo, %CORE::foo::bar;
+print $CORE::foo{'a'}, $CORE::foo::bar{'a'};
+print &CORE::foo, &CORE::foo::bar;
+print &CORE::foo(), &CORE::foo::bar();
+print \&CORE::foo, \&CORE::foo::bar;
+print *CORE::foo, *CORE::foo::bar;
+print stat CORE::foo::, stat CORE::foo::bar;
+print CORE::foo:: 1;
+print CORE::foo::bar 2;
+####
+# trailing colons on glob names
+no strict 'vars';
+$Foo::::baz = 1;
+print $foo, $foo::, $foo::::;
+print @foo, @foo::, @foo::::;
+print %foo, %foo::, %foo::::;
+print $foo{'a'}, $foo::{'a'}, $foo::::{'a'};
+print &foo, &foo::, &foo::::;
+print &foo(), &foo::(), &foo::::();
+print \&foo, \&foo::, \&foo::::;
+print *foo, *foo::, *foo::::;
+print stat Foo, stat Foo::::;
+print Foo 1;
+print Foo:::: 2;
+####
+# trailing colons mixed with CORE
+no strict 'vars';
+print $CORE, $CORE::, $CORE::::;
+print @CORE, @CORE::, @CORE::::;
+print %CORE, %CORE::, %CORE::::;
+print $CORE{'a'}, $CORE::{'a'}, $CORE::::{'a'};
+print &CORE, &CORE::, &CORE::::;
+print &CORE(), &CORE::(), &CORE::::();
+print \&CORE, \&CORE::, \&CORE::::;
+print *CORE, *CORE::, *CORE::::;
+print stat CORE, stat CORE::::;
+print CORE 1;
+print CORE:::: 2;
+print $CORE::foo, $CORE::foo::, $CORE::foo::::;
+print @CORE::foo, @CORE::foo::, @CORE::foo::::;
+print %CORE::foo, %CORE::foo::, %CORE::foo::::;
+print $CORE::foo{'a'}, $CORE::foo::{'a'}, $CORE::foo::::{'a'};
+print &CORE::foo, &CORE::foo::, &CORE::foo::::;
+print &CORE::foo(), &CORE::foo::(), &CORE::foo::::();
+print \&CORE::foo, \&CORE::foo::, \&CORE::foo::::;
+print *CORE::foo, *CORE::foo::, *CORE::foo::::;
+print stat CORE::foo::, stat CORE::foo::::;
+print CORE::foo:: 1;
+print CORE::foo:::: 2;
+####
+# \&foo
+my sub foo {
+    1;
+}
+no strict 'vars';
+print \&main::foo;
+print \&{foo};
+print \&bar;
+use strict 'vars';
+print \&main::foo;
+print \&{foo};
+print \&main::bar;
+####
+# exists(&foo)
+my sub foo {
+    1;
+}
+no strict 'vars';
+print exists &main::foo;
+print exists &{foo};
+print exists &bar;
+use strict 'vars';
+print exists &main::foo;
+print exists &{foo};
+print exists &main::bar;
+# precedence of optimised-away 'keys' (OPpPADHV_ISKEYS/OPpRV2HV_ISKEYS)
+my($r1, %h1, $res);
+our($r2, %h2);
+$res = keys %h1;
+$res = keys %h2;
+$res = keys %$r1;
+$res = keys %$r2;
+$res = keys(%h1) / 2 - 1;
+$res = keys(%h2) / 2 - 1;
+$res = keys(%$r1) / 2 - 1;
+$res = keys(%$r2) / 2 - 1;
+####
+# ditto in presence of sub keys {}
+# CONTEXT sub keys {}
+no warnings;
+my($r1, %h1, $res);
+our($r2, %h2);
+CORE::keys %h1;
+CORE::keys(%h1) / 2;
+$res = CORE::keys %h1;
+$res = CORE::keys %h2;
+$res = CORE::keys %$r1;
+$res = CORE::keys %$r2;
+$res = CORE::keys(%h1) / 2 - 1;
+$res = CORE::keys(%h2) / 2 - 1;
+$res = CORE::keys(%$r1) / 2 - 1;
+$res = CORE::keys(%$r2) / 2 - 1;
+####
+# concat: STACKED: ambiguity between .= and optimised nested
+my($a, $b);
+$b = $a . $a . $a;
+(($a .= $a) .= $a) .= $a;
+####
+# multiconcat: $$ within string
+my($a, $x);
+$x = "${$}abc";
+$x = "\$$a";
+####
+# single state aggregate assignment
+# CONTEXT use feature "state";
+state @a = (1, 2, 3);
+state %h = ('a', 1, 'b', 2);
+####
+# state var with attribute
+# CONTEXT use feature "state";
+state $x :shared;
+state $y :shared = 1;
+state @a :shared;
+state @b :shared = (1, 2);
+state %h :shared;
+state %i :shared = ('a', 1, 'b', 2);
+####
+# \our @a shouldn't be a list
+my $r = \our @a;
+my(@l) = \our((@b));
+@l = \our(@c, @d);
+####
+# postfix $#
+our(@b, $s, $l);
+$l = (\my @a)->$#*;
+(\@b)->$#* = 1;
+++(\my @c)->$#*;
+$l = $#a;
+$#a = 1;
+$l = $#b;
+$#b = 1;
+my $r;
+$l = $r->$#*;
+$r->$#* = 1;
+$l = $#{@$r;};
+$#{$r;} = 1;
+$l = $s->$#*;
+$s->$#* = 1;
+$l = $#{@$s;};
+$#{$s;} = 1;

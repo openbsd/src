@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.155 2016/04/14 17:05:32 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.157 2018/12/13 14:59:16 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -391,6 +391,7 @@ int		 ldelete(RSIZE, int);
 int		 ldelnewline(void);
 int		 lreplace(RSIZE, char *);
 char *		 linetostr(const struct line *);
+int		 setcasereplace(int, int);
 
 /* yank.c X */
 
@@ -416,6 +417,7 @@ int		 delwind(int, int);
 
 /* buffer.c */
 int		 togglereadonly(int, int);
+int		 togglereadonlyall(int, int);
 struct buffer   *bfind(const char *, int);
 int		 poptobuffer(int, int);
 int		 killbuffer(struct buffer *);
@@ -736,6 +738,7 @@ extern int		 defb_flag;
 extern int		 doaudiblebell;
 extern int		 dovisiblebell;
 extern int		 dblspace;
+extern int		 allbro;
 extern char	 	 cinfo[];
 extern char		*keystrings[];
 extern char		 pat[NPAT];

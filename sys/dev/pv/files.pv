@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pv,v 1.13 2017/06/14 10:25:40 mikeb Exp $
+#	$OpenBSD: files.pv,v 1.15 2018/11/23 12:37:40 reyk Exp $
 #
 # Config file and device description for paravirtual devices.
 # Included by ports that need it.
@@ -7,6 +7,11 @@ define	pvbus {}
 device	pvbus
 attach	pvbus at mainbus
 file	dev/pv/pvbus.c			pvbus	needs-flag
+
+# KVM clock
+device	pvclock
+attach	pvclock at pvbus
+file	dev/pv/pvclock.c		pvclock	needs-flag
 
 # VMware Tools
 device	vmt
@@ -48,7 +53,7 @@ file	dev/pv/hvs.c			hvs
 # VirtIO
 file	dev/pv/virtio.c			virtio
 
-device	vio
+device	vio: ether, ifnet, ifmedia
 attach	vio at virtio
 file	dev/pv/if_vio.c			vio
 

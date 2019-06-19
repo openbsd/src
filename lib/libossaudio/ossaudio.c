@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.18 2015/04/19 08:42:19 ratchov Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.19 2018/10/26 14:46:05 miko Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -30,10 +30,6 @@
 /*
  * This is an OSS (Linux) sound API emulator.
  * It provides the essentials of the API.
- */
-
-/* XXX This file is essentially the same as sys/compat/ossaudio.c.
- * With some preprocessor magic it could be the same file.
  */
 
 #include <stdarg.h>

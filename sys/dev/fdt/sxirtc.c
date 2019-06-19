@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirtc.c,v 1.2 2017/03/27 14:03:19 kettenis Exp $	*/
+/*	$OpenBSD: sxirtc.c,v 1.3 2019/01/21 11:24:05 jsg Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2013 Artturi Alm
@@ -76,7 +76,9 @@ sxirtc_match(struct device *parent, void *match, void *aux)
 
 	return (OF_is_compatible(faa->fa_node, "allwinner,sun4i-a10-rtc") ||
 	    OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-rtc") ||
-	    OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-rtc"));
+	    OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-rtc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun8i-h3-rtc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-h5-rtc"));
 }
 
 void
@@ -98,7 +100,9 @@ sxirtc_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("sxirtc_attach: bus_space_map failed!");
 
-	if (OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-rtc")) {
+	if (OF_is_compatible(faa->fa_node, "allwinner,sun6i-a31-rtc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun8i-h3-rtc") ||
+	    OF_is_compatible(faa->fa_node, "allwinner,sun50i-h5-rtc")) {
 		sc->sc_yymmdd = SXIRTC_YYMMDD_A31;
 		sc->sc_hhmmss = SXIRTC_HHMMSS_A31;
 	} else {

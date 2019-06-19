@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_enc.c,v 1.21 2016/12/30 16:04:34 jsing Exp $ */
+/* $OpenBSD: tasn_enc.c,v 1.22 2019/04/01 15:48:04 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -541,11 +541,14 @@ asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
 	const unsigned char *cont;
 	unsigned char c;
 	int len;
-	const ASN1_PRIMITIVE_FUNCS *pf;
 
-	pf = it->funcs;
-	if (pf && pf->prim_i2c)
+	if (it->funcs != NULL) {
+		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
+
+		if (pf->prim_i2c == NULL)
+			return -1;
 		return pf->prim_i2c(pval, cout, putype, it);
+	}
 
 	/* Should type be omitted? */
 	if ((it->itype != ASN1_ITYPE_PRIMITIVE) ||

@@ -1,6 +1,7 @@
 XS::APItest::PtrTable		T_PTROBJ
 
 const WCHAR *			WPV
+U8 *		                T_PV
 
 INPUT
 

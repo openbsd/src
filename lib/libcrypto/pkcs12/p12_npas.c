@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.13 2018/05/13 14:22:34 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -65,10 +65,11 @@
 
 /* PKCS#12 password change routine */
 
-static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass);
-static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass,
-    char *newpass);
-static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass);
+static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass);
+static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
+    const char *newpass);
+static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
+    const char *newpass);
 static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen);
 
 /*
@@ -76,7 +77,7 @@ static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen);
  */
 
 int
-PKCS12_newpass(PKCS12 *p12, char *oldpass, char *newpass)
+PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass)
 {
 	/* Check for NULL PKCS12 structure */
 
@@ -103,7 +104,7 @@ PKCS12_newpass(PKCS12 *p12, char *oldpass, char *newpass)
 /* Parse the outer PKCS#12 structure */
 
 static int
-newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
+newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
 {
 	STACK_OF(PKCS7) *asafes, *newsafes;
 	STACK_OF(PKCS12_SAFEBAG) *bags;
@@ -189,7 +190,8 @@ err:
 
 
 static int
-newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass, char *newpass)
+newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
+    const char *newpass)
 {
 	int i;
 
@@ -204,7 +206,7 @@ newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, char *oldpass, char *newpass)
 /* Change password of safebag: only needs handle shrouded keybags */
 
 static int
-newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
+newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass, const char *newpass)
 {
 	PKCS8_PRIV_KEY_INFO *p8;
 	X509_SIG *p8new;

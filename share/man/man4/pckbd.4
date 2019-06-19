@@ -1,4 +1,4 @@
-.\" $OpenBSD: pckbd.4,v 1.40 2012/01/28 13:22:17 tobias Exp $
+.\" $OpenBSD: pckbd.4,v 1.41 2019/05/11 14:19:16 abieber Exp $
 .\" $NetBSD: pckbd.4,v 1.3 1999/12/21 11:31:07 drochner Exp $
 .\"
 .\" Copyright (c) 1999
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 28 2012 $
+.Dd $Mdocdate: May 11 2019 $
 .Dt PCKBD 4
 .Os
 .Sh NAME
@@ -162,6 +162,11 @@ British.
 .It KB_US
 .Pq us
 English/US keyboard mapping (default).
+.It KB_US | KB_COLEMAK
+.Pq us.colemak
+English/US keyboard with
+.Dq Colemak
+layout.
 .It KB_US | KB_DECLK
 .Pq us.declk
 English/US mapping for
@@ -180,7 +185,8 @@ variant.
 This switches off the
 .Dq dead accents .
 .Pp
-The KB_BE, KB_FR, KB_FR | KB_DVORAK, KB_JP, KB_UK, KB_US and KB_US | KB_DVORAK
+The KB_BE, KB_FR, KB_FR | KB_DVORAK, KB_JP, KB_UK, KB_US,
+KB_US | KB_DVORAK and KB_US | KB_COLEMAK
 mappings can be modified
 to swap the left Control and the Caps Lock keys by the
 KB_SWAPCTRLCAPS variant bit or the

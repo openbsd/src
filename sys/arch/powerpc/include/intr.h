@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.55 2018/01/22 09:31:35 mpi Exp $ */
+/*	$OpenBSD: intr.h,v 1.56 2018/08/20 15:02:07 visa Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -117,7 +117,6 @@ void splassert_check(int, const char *);
 #define	splclock()	splraise(IPL_CLOCK)
 #define	splvm()		splraise(IPL_VM)
 #define	splsched()	splhigh()
-#define	spllock()	splhigh()
 #define	splstatclock()	splhigh()
 #define	splsoftclock()	splraise(IPL_SOFTCLOCK)
 #define	splsoftnet()	splraise(IPL_SOFTNET)

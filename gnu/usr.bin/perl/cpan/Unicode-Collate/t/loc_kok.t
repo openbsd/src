@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..21\n"; }
+BEGIN { $| = 1; print "1..23\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -56,11 +56,11 @@ ok($objKok->eq("\x{933}", "\x{934}"));
 
 for my $h (0, 1) {
     no warnings 'utf8';
-    my $t = $h ? pack('U', 0xFFFF) : "";
-    $objKok->change(highestFFFF => 1) if $h;
+    my $t = $h ? pack('U', 0xFFFF) : 'z';
 
     ok($objKok->lt("\x{950}$t", "\x{902}"));
     ok($objKok->lt("\x{902}$t", "\x{903}"));
+    ok($objKok->lt("\x{903}$t", "\x{A8FD}"));
     ok($objKok->lt("\x{903}$t", "\x{972}"));
 
     ok($objKok->lt("\x{938}$t", "\x{939}"));
@@ -69,4 +69,4 @@ for my $h (0, 1) {
     ok($objKok->lt("\x{915}\x{94D}\x{937}$t", "\x{93D}"));
 }
 
-# 21
+# 23

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_sign.3,v 1.5 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: X509_sign.3,v 1.8 2019/06/14 13:59:32 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt X509_SIGN 3
 .Os
 .Sh NAME
@@ -174,10 +174,14 @@ and
 return 1 if the signature is valid or 0 if the signature check fails.
 If the signature could not be checked at all because it was invalid or
 some other error occurred, then -1 is returned.
+.Pp
+In some cases of failure, the reason can be determined with
+.Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr d2i_X509 3 ,
-.Xr ERR_get_error 3 ,
+.Xr EVP_DigestInit 3 ,
 .Xr X509_CRL_get0_by_serial 3 ,
+.Xr X509_CRL_new 3 ,
 .Xr X509_get_pubkey 3 ,
 .Xr X509_get_subject_name 3 ,
 .Xr X509_get_version 3 ,
@@ -186,6 +190,7 @@ some other error occurred, then -1 is returned.
 .Xr X509_NAME_get_index_by_NID 3 ,
 .Xr X509_NAME_print_ex 3 ,
 .Xr X509_new 3 ,
+.Xr X509_REQ_new 3 ,
 .Xr X509_verify_cert 3 ,
 .Xr X509V3_get_d2i 3
 .Sh HISTORY

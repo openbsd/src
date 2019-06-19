@@ -33,6 +33,7 @@
 		pthread_cleanup_push;
 		pthread_create;
 		pthread_detach;
+		pthread_get_name_np;
 		pthread_getconcurrency;
 		pthread_getcpuclockid;
 		pthread_getprio;
@@ -91,7 +92,6 @@
 		sem_trywait;
 		sem_unlink;
 		sem_wait;
-		sigwait;
 
 		/* used for debugging & regress */
 		_thread_dump_info;

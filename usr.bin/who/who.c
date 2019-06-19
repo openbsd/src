@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.27 2015/10/21 16:06:57 millert Exp $	*/
+/*	$OpenBSD: who.c,v 1.28 2018/08/08 22:55:14 deraadt Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (pledge("stdio rpath getpw", NULL) == -1)
+	if (pledge("stdio unveil rpath getpw", NULL) == -1)
 		err(1, "pledge");
 
 	if ((mytty = ttyname(0))) {
@@ -122,8 +122,12 @@ main(int argc, char *argv[])
 	if (show_labels)
 		output_labels();
 
+	if (unveil(_PATH_UTMP, "r") == -1)
+		err(1, "unveil");
 	switch (argc) {
 	case 0:					/* who */
+		if (pledge("stdio rpath getpw", NULL) == -1)
+			err(1, "pledge");
 		ufp = file(_PATH_UTMP);
 
 		if (only_current_term) {
@@ -150,6 +154,10 @@ main(int argc, char *argv[])
 		}
 		break;
 	case 1:					/* who utmp_file */
+		if (unveil(*argv, "r") == -1)
+			err(1, "unveil");
+		if (pledge("stdio rpath getpw", NULL) == -1)
+			err(1, "pledge");
 		ufp = file(*argv);
 
 		if (only_current_term) {
@@ -175,6 +183,8 @@ main(int argc, char *argv[])
 		}
 		break;
 	case 2:					/* who am i */
+		if (pledge("stdio rpath getpw", NULL) == -1)
+			err(1, "pledge");
 		ufp = file(_PATH_UTMP);
 		who_am_i(ufp);
 		break;

@@ -27,6 +27,7 @@
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -86,10 +87,12 @@ class AArch64ELFStreamer : public MCELFStreamer {
 public:
   friend class AArch64TargetELFStreamer;
 
-  AArch64ELFStreamer(MCContext &Context, MCAsmBackend &TAB,
-                     raw_pwrite_stream &OS, MCCodeEmitter *Emitter)
-      : MCELFStreamer(Context, TAB, OS, Emitter), MappingSymbolCounter(0),
-        LastEMS(EMS_None) {}
+  AArch64ELFStreamer(MCContext &Context, std::unique_ptr<MCAsmBackend> TAB,
+                     std::unique_ptr<MCObjectWriter> OW,
+                     std::unique_ptr<MCCodeEmitter> Emitter)
+      : MCELFStreamer(Context, std::move(TAB), std::move(OW),
+                      std::move(Emitter)),
+        MappingSymbolCounter(0), LastEMS(EMS_None) {}
 
   void ChangeSection(MCSection *Section, const MCExpr *Subsection) override {
     // We have to keep track of the mapping symbol state of any sections we
@@ -99,6 +102,14 @@ public:
     LastEMS = LastMappingSymbols.lookup(Section);
 
     MCELFStreamer::ChangeSection(Section, Subsection);
+  }
+
+  // Reset state between object emissions
+  void reset() override {
+    MappingSymbolCounter = 0;
+    MCELFStreamer::reset();
+    LastMappingSymbols.clear();
+    LastEMS = EMS_None;
   }
 
   /// This function is the one used to emit instruction data into the ELF
@@ -198,10 +209,13 @@ MCTargetStreamer *createAArch64AsmTargetStreamer(MCStreamer &S,
   return new AArch64TargetAsmStreamer(S, OS);
 }
 
-MCELFStreamer *createAArch64ELFStreamer(MCContext &Context, MCAsmBackend &TAB,
-                                        raw_pwrite_stream &OS,
-                                        MCCodeEmitter *Emitter, bool RelaxAll) {
-  AArch64ELFStreamer *S = new AArch64ELFStreamer(Context, TAB, OS, Emitter);
+MCELFStreamer *createAArch64ELFStreamer(MCContext &Context,
+                                        std::unique_ptr<MCAsmBackend> TAB,
+                                        std::unique_ptr<MCObjectWriter> OW,
+                                        std::unique_ptr<MCCodeEmitter> Emitter,
+                                        bool RelaxAll) {
+  AArch64ELFStreamer *S = new AArch64ELFStreamer(
+      Context, std::move(TAB), std::move(OW), std::move(Emitter));
   if (RelaxAll)
     S->getAssembler().setRelaxAll(true);
   return S;

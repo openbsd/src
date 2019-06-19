@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.43 2018/02/28 14:56:46 deraadt Exp $
+.\" $OpenBSD: signify.1,v 1.47 2019/05/08 17:55:41 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: February 28 2018 $
+.Dd $Mdocdate: May 8 2019 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Fl s Ar seckey
 .Nm signify
 .Fl S
-.Op Fl ez
+.Op Fl enz
 .Op Fl x Ar sigfile
 .Fl s Ar seckey
 .Fl m Ar message
@@ -91,10 +91,15 @@ When verifying with
 .Fl e ,
 the file to create.
 .It Fl n
-Do not ask for a passphrase during key generation.
+When generating a key pair, do not ask for a passphrase.
 Otherwise,
 .Nm
 will prompt the user for a passphrase to protect the secret key.
+When signing with
+.Fl z ,
+store a zero time stamp in the
+.Xr gzip 1
+header.
 .It Fl p Ar pubkey
 Public key produced by
 .Fl G ,
@@ -165,12 +170,12 @@ Verify a release directory containing
 .Pa SHA256.sig
 and a full set of release files:
 .Bd -literal -offset indent -compact
-$ signify -C -p /etc/signify/openbsd-64-base.pub -x SHA256.sig
+$ signify -C -p /etc/signify/openbsd-66-base.pub -x SHA256.sig
 .Ed
 .Pp
 Verify a bsd.rd before an upgrade:
 .Bd -literal -offset indent -compact
-$ signify -C -p /etc/signify/openbsd-64-base.pub -x SHA256.sig bsd.rd
+$ signify -C -p /etc/signify/openbsd-66-base.pub -x SHA256.sig bsd.rd
 .Ed
 .Pp
 Sign a gzip archive:
@@ -186,7 +191,8 @@ $ ftp url | signify -Vz -t arc | tar ztf -
 .Xr fw_update 1 ,
 .Xr gzip 1 ,
 .Xr pkg_add 1 ,
-.Xr sha256 1
+.Xr sha256 1 ,
+.Xr sysupgrade 8
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.39 2018/03/22 19:30:18 bluhm Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.43 2018/06/22 13:21:14 bluhm Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -31,20 +31,13 @@
  */
 
 /*
- * The GDT handling has two phases.  During the early lifetime of the
- * kernel there is a static gdt which will be stored in bootstrap_gdt.
- * Later, when the virtual memory is initialized, this will be
- * replaced with a maximum sized GDT.
- *
- * The bootstrap GDT area will hold the initial requirement of NGDT
- * descriptors.  The normal GDT will have a statically sized virtual memory
- * area of size MAXGDTSIZ.
+ * The initial GDT is setup for the boot processor.  The GDT holds
+ * NGDT descriptors.
  *
  * Every CPU in a system has its own copy of the GDT.  The only real difference
  * between the two are currently that there is a cpu-specific segment holding
  * the struct cpu_info of the processor, for simplicity at getting cpu_info
- * fields from assembly.  The boot processor will actually refer to the global
- * copy of the GDT as pointed to by the gdt variable.
+ * fields from assembly.
  */
 
 #include <sys/param.h>
@@ -53,19 +46,12 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/cpu.h>
 #include <machine/gdt.h>
 #include <machine/pcb.h>
-
-union descriptor bootstrap_gdt[NGDT];
-union descriptor *gdt = bootstrap_gdt;
-
-int gdt_next;		/* next available slot for sweeping */
-int gdt_free;		/* next free slot; terminated with GNULL_SEL */
+#include <machine/tss.h>
 
 struct mutex gdt_lock_store = MUTEX_INITIALIZER(IPL_HIGH);
-
-int gdt_get_slot(void);
-void gdt_put_slot(int);
 
 /*
  * Lock and unlock the GDT.
@@ -78,15 +64,15 @@ void
 setgdt(int sel, void *base, size_t limit, int type, int dpl, int def32,
     int gran)
 {
-	struct segment_descriptor *sd = &gdt[sel].sd;
+	struct segment_descriptor *sd = &cpu_info_primary.ci_gdt[sel].sd;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
-	KASSERT(sel < MAXGDTSIZ);
+	KASSERT(sel < NGDT);
 
 	setsegment(sd, base, limit, type, dpl, def32, gran);
 	CPU_INFO_FOREACH(cii, ci)
-		if (ci->ci_gdt != NULL && ci->ci_gdt != gdt)
+		if (ci->ci_gdt != NULL && ci != &cpu_info_primary)
 			ci->ci_gdt[sel].sd = *sd;
 }
 
@@ -96,24 +82,8 @@ setgdt(int sel, void *base, size_t limit, int type, int dpl, int def32,
 void
 gdt_init(void)
 {
-	struct vm_page *pg;
-	vaddr_t va;
 	struct cpu_info *ci = &cpu_info_primary;
 
-	gdt_next = NGDT;
-	gdt_free = GNULL_SEL;
-
-	gdt = (union descriptor *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
-	for (va = (vaddr_t)gdt; va < (vaddr_t)gdt + MAXGDTSIZ;
-	    va += PAGE_SIZE) {
-		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
-		if (pg == NULL)
-			panic("gdt_init: no pages");
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    PROT_READ | PROT_WRITE);
-	}
-	bcopy(bootstrap_gdt, gdt, NGDT * sizeof(union descriptor));
-	ci->ci_gdt = gdt;
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
 	    SDT_MEMRWA, SEL_KPL, 0, 0);
 
@@ -127,22 +97,7 @@ gdt_init(void)
 void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
-	struct vm_page *pg;
-	vaddr_t va;
-
-	ci->ci_gdt = (union descriptor *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
-	uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
-	    (vaddr_t)ci->ci_gdt + MAXGDTSIZ, FALSE, FALSE);
-	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + MAXGDTSIZ;
-	    va += PAGE_SIZE) {
-		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
-		if (pg == NULL)
-			panic("gdt_init: no pages");
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    PROT_READ | PROT_WRITE);
-	}
-	bzero(ci->ci_gdt, MAXGDTSIZ);
-	bcopy(gdt, ci->ci_gdt, MAXGDTSIZ);
+	bcopy(cpu_info_primary.ci_gdt, ci->ci_gdt, GDT_SIZE);
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
 	    SDT_MEMRWA, SEL_KPL, 0, 0);
 }
@@ -158,66 +113,14 @@ gdt_init_cpu(struct cpu_info *ci)
 {
 	struct region_descriptor region;
 
-	setregion(&region, ci->ci_gdt, MAXGDTSIZ - 1);
+	setsegment(&ci->ci_gdt[GTSS_SEL].sd, ci->ci_tss,
+	    sizeof(*ci->ci_tss)-1, SDT_SYS386TSS, SEL_KPL, 0, 0);
+	setsegment(&ci->ci_gdt[GNMITSS_SEL].sd, ci->ci_nmi_tss,
+	    sizeof(*ci->ci_nmi_tss)-1, SDT_SYS386TSS, SEL_KPL, 0, 0);
+
+	setregion(&region, ci->ci_gdt, GDT_SIZE - 1);
 	lgdt(&region);
-}
 
-/*
- * Allocate a GDT slot as follows:
- * 1) If there are entries on the free list, use those.
- * 2) If there are fewer than MAXGDTSIZ entries in use, there are free slots
- *    near the end that we can sweep through.
- */
-int
-gdt_get_slot(void)
-{
-	int slot;
-
-	gdt_lock();
-
-	if (gdt_free != GNULL_SEL) {
-		slot = gdt_free;
-		gdt_free = gdt[slot].gd.gd_selector;
-	} else {
-		if (gdt_next >= MAXGDTSIZ)
-			panic("gdt_get_slot: out of GDT descriptors");
-		slot = gdt_next++;
-	}
-
-	gdt_unlock();
-	return (slot);
-}
-
-/*
- * Deallocate a GDT slot, putting it on the free list.
- */
-void
-gdt_put_slot(int slot)
-{
-
-	gdt_lock();
-
-	gdt[slot].gd.gd_type = SDT_SYSNULL;
-	gdt[slot].gd.gd_selector = gdt_free;
-	gdt_free = slot;
-
-	gdt_unlock();
-}
-
-int
-tss_alloc(struct pcb *pcb)
-{
-	int slot;
-
-	slot = gdt_get_slot();
-	setgdt(slot, &pcb->pcb_tss, sizeof(struct pcb) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0, 0);
-	return GSEL(slot, SEL_KPL);
-}
-
-void
-tss_free(int sel)
-{
-
-	gdt_put_slot(IDXSEL(sel));
+	ltr(GSEL(GTSS_SEL, SEL_KPL));
+	lldt(0);
 }

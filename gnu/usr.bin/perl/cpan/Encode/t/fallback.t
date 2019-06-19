@@ -17,7 +17,7 @@ BEGIN {
 
 use strict;
 #use Test::More qw(no_plan);
-use Test::More tests => 50;
+use Test::More tests => 58;
 use Encode q(:all);
 
 my $uo = '';
@@ -50,6 +50,7 @@ my $ao = $uo;
 utf8::upgrade($uo);
 
 my $ascii  = find_encoding('ascii');
+my $latin1 = find_encoding('latin1');
 my $utf8   = find_encoding('utf8');
 
 my $src = $uo;
@@ -166,19 +167,46 @@ is($src, $ao, "coderef residue decode");
 
 $src = "\x{3000}";
 $dst = $ascii->encode($src, sub{ $_[0] });
-is $dst, 0x3000."", qq{$ascii->encode(\$src, sub{ \$_[0] } )};
+is $dst, 0x3000."", q{$ascii->encode($src, sub{ $_[0] } )};
 $dst = encode("ascii", "\x{3000}", sub{ $_[0] });
-is $dst, 0x3000."", qq{encode("ascii", "\\x{3000}", sub{ \$_[0] })};
+is $dst, 0x3000."", q{encode("ascii", "\x{3000}", sub{ $_[0] })};
 
 $src = pack "C*", 0xFF;
 $dst = $ascii->decode($src, sub{ $_[0] });
-is $dst, 0xFF."", qq{$ascii->encode(\$src, sub{ \$_[0] } )};
+is $dst, 0xFF."", q{$ascii->encode($src, sub{ $_[0] } )};
 $dst = decode("ascii", (pack "C*", 0xFF), sub{ $_[0] });
-is $dst, 0xFF."", qq{decode("ascii", (pack "C*", 0xFF), sub{ \$_[0] })};
+is $dst, 0xFF."", q{decode("ascii", (pack "C*", 0xFF), sub{ $_[0] })};
 
 
 $src = pack "C*", 0x80;
 $dst = $utf8->decode($src, sub{ $_[0] });
-is $dst, 0x80."", qq{$utf8->encode(\$src, sub{ \$_[0] } )};
+is $dst, 0x80."", q{$utf8->encode($src, sub{ $_[0] } )};
 $dst = decode("utf8", $src, sub{ $_[0] });
-is $dst, 0x80."", qq{decode("utf8", (pack "C*", 0x80), sub{ \$_[0] })};
+is $dst, 0x80."", q{decode("utf8", (pack "C*", 0x80), sub{ $_[0] })};
+
+$src = "\x{3000}";
+$dst = $latin1->encode($src, sub { "\N{U+FF}" });
+is $dst, "\x{ff}", q{$latin1->encode($src, sub { "\N{U+FF}" })};
+$dst = encode("latin1", $src, sub { "\N{U+FF}" });
+is $dst, "\x{ff}", q{encode("latin1", $src, sub { "\N{U+FF}" })};
+
+$src = "\x{3000}";
+$dst = $latin1->encode($src, sub { utf8::upgrade(my $r = "\x{ff}"); $r });
+is $dst, "\x{ff}", q{$latin1->encode($src, sub { utf8::upgrade(my $r = "\x{ff}"); $r })};
+$dst = encode("latin1", $src, sub { utf8::upgrade(my $r = "\x{ff}"); $r });
+is $dst, "\x{ff}", q{encode("latin1", $src, sub { utf8::upgrade(my $r = "\x{ff}"); $r })};
+
+$src = "\x{ff}";
+$dst = $utf8->decode($src, sub { chr($_[0]) });
+is $dst, "\x{ff}", q{$utf8->decode($src, sub { chr($_[0]) })};
+$dst = decode("utf8", $src, sub { chr($_[0]) });
+is $dst, "\x{ff}", q{decode("utf8", $src, sub { chr($_[0]) })};
+
+{
+    use charnames ':full';
+    $src = "\x{ff}";
+    $dst = $utf8->decode($src, sub { utf8::downgrade(my $r = "\N{LATIN SMALL LETTER Y WITH DIAERESIS}"); $r });
+    is $dst, "\N{LATIN SMALL LETTER Y WITH DIAERESIS}", q{$utf8->decode($src, sub { utf8::downgrade(my $r = "\N{LATIN SMALL LETTER Y WITH DIAERESIS}"); $r })};
+    $dst = decode("utf8", $src, sub { utf8::downgrade(my $r = "\N{LATIN SMALL LETTER Y WITH DIAERESIS}"); $r });
+    is $dst, "\N{LATIN SMALL LETTER Y WITH DIAERESIS}", q{decode("utf8", $src, sub { utf8::downgrade(my $r = "\N{LATIN SMALL LETTER Y WITH DIAERESIS}"); $r })};
+}

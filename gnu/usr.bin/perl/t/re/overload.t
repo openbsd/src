@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw '../lib ../ext/re';
     require './test.pl';
+    set_up_inc(qw '../lib ../ext/re');
 }
 
 use strict;

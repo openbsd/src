@@ -32,6 +32,7 @@ namespace llvm {
 namespace object {
 
 StringRef getELFRelocationTypeName(uint32_t Machine, uint32_t Type);
+uint32_t getELFRelrRelocationType(uint32_t Machine);
 StringRef getELFSectionTypeName(uint32_t Machine, uint32_t Type);
 
 // Subclasses of ELFFile may need this for template instantiation
@@ -60,6 +61,7 @@ public:
   using Elf_Phdr = typename ELFT::Phdr;
   using Elf_Rel = typename ELFT::Rel;
   using Elf_Rela = typename ELFT::Rela;
+  using Elf_Relr = typename ELFT::Relr;
   using Elf_Verdef = typename ELFT::Verdef;
   using Elf_Verdaux = typename ELFT::Verdaux;
   using Elf_Verneed = typename ELFT::Verneed;
@@ -67,11 +69,15 @@ public:
   using Elf_Versym = typename ELFT::Versym;
   using Elf_Hash = typename ELFT::Hash;
   using Elf_GnuHash = typename ELFT::GnuHash;
+  using Elf_Nhdr = typename ELFT::Nhdr;
+  using Elf_Note = typename ELFT::Note;
+  using Elf_Note_Iterator = typename ELFT::NoteIterator;
   using Elf_Dyn_Range = typename ELFT::DynRange;
   using Elf_Shdr_Range = typename ELFT::ShdrRange;
   using Elf_Sym_Range = typename ELFT::SymRange;
   using Elf_Rel_Range = typename ELFT::RelRange;
   using Elf_Rela_Range = typename ELFT::RelaRange;
+  using Elf_Relr_Range = typename ELFT::RelrRange;
   using Elf_Phdr_Range = typename ELFT::PhdrRange;
 
   const uint8_t *base() const {
@@ -82,6 +88,8 @@ public:
 
 private:
   StringRef Buf;
+
+  ELFFile(StringRef Object);
 
 public:
   const Elf_Ehdr *getHeader() const {
@@ -102,17 +110,19 @@ public:
   Expected<ArrayRef<Elf_Word>> getSHNDXTable(const Elf_Shdr &Section,
                                              Elf_Shdr_Range Sections) const;
 
-  void VerifyStrTab(const Elf_Shdr *sh) const;
-
   StringRef getRelocationTypeName(uint32_t Type) const;
   void getRelocationTypeName(uint32_t Type,
                              SmallVectorImpl<char> &Result) const;
+  uint32_t getRelrRelocationType() const;
 
-  /// \brief Get the symbol for a given relocation.
+  const char *getDynamicTagAsString(unsigned Arch, uint64_t Type) const;
+  const char *getDynamicTagAsString(uint64_t Type) const;
+
+  /// Get the symbol for a given relocation.
   Expected<const Elf_Sym *> getRelocationSymbol(const Elf_Rel *Rel,
                                                 const Elf_Shdr *SymTab) const;
 
-  ELFFile(StringRef Object);
+  static Expected<ELFFile> create(StringRef Object);
 
   bool isMipsELF64() const {
     return getHeader()->e_machine == ELF::EM_MIPS &&
@@ -125,6 +135,10 @@ public:
   }
 
   Expected<Elf_Shdr_Range> sections() const;
+
+  Expected<Elf_Dyn_Range> dynamicEntries() const;
+
+  Expected<const uint8_t *> toMappedAddr(uint64_t VAddr) const;
 
   Expected<Elf_Sym_Range> symbols(const Elf_Shdr *Sec) const {
     if (!Sec)
@@ -140,13 +154,92 @@ public:
     return getSectionContentsAsArray<Elf_Rel>(Sec);
   }
 
-  /// \brief Iterate over program header table.
+  Expected<Elf_Relr_Range> relrs(const Elf_Shdr *Sec) const {
+    return getSectionContentsAsArray<Elf_Relr>(Sec);
+  }
+
+  Expected<std::vector<Elf_Rela>> decode_relrs(Elf_Relr_Range relrs) const;
+
+  Expected<std::vector<Elf_Rela>> android_relas(const Elf_Shdr *Sec) const;
+
+  /// Iterate over program header table.
   Expected<Elf_Phdr_Range> program_headers() const {
     if (getHeader()->e_phnum && getHeader()->e_phentsize != sizeof(Elf_Phdr))
       return createError("invalid e_phentsize");
+    if (getHeader()->e_phoff +
+            (getHeader()->e_phnum * getHeader()->e_phentsize) >
+        getBufSize())
+      return createError("program headers longer than binary");
     auto *Begin =
         reinterpret_cast<const Elf_Phdr *>(base() + getHeader()->e_phoff);
     return makeArrayRef(Begin, Begin + getHeader()->e_phnum);
+  }
+
+  /// Get an iterator over notes in a program header.
+  ///
+  /// The program header must be of type \c PT_NOTE.
+  ///
+  /// \param Phdr the program header to iterate over.
+  /// \param Err [out] an error to support fallible iteration, which should
+  ///  be checked after iteration ends.
+  Elf_Note_Iterator notes_begin(const Elf_Phdr &Phdr, Error &Err) const {
+    if (Phdr.p_type != ELF::PT_NOTE) {
+      Err = createError("attempt to iterate notes of non-note program header");
+      return Elf_Note_Iterator(Err);
+    }
+    if (Phdr.p_offset + Phdr.p_filesz > getBufSize()) {
+      Err = createError("invalid program header offset/size");
+      return Elf_Note_Iterator(Err);
+    }
+    return Elf_Note_Iterator(base() + Phdr.p_offset, Phdr.p_filesz, Err);
+  }
+
+  /// Get an iterator over notes in a section.
+  ///
+  /// The section must be of type \c SHT_NOTE.
+  ///
+  /// \param Shdr the section to iterate over.
+  /// \param Err [out] an error to support fallible iteration, which should
+  ///  be checked after iteration ends.
+  Elf_Note_Iterator notes_begin(const Elf_Shdr &Shdr, Error &Err) const {
+    if (Shdr.sh_type != ELF::SHT_NOTE) {
+      Err = createError("attempt to iterate notes of non-note section");
+      return Elf_Note_Iterator(Err);
+    }
+    if (Shdr.sh_offset + Shdr.sh_size > getBufSize()) {
+      Err = createError("invalid section offset/size");
+      return Elf_Note_Iterator(Err);
+    }
+    return Elf_Note_Iterator(base() + Shdr.sh_offset, Shdr.sh_size, Err);
+  }
+
+  /// Get the end iterator for notes.
+  Elf_Note_Iterator notes_end() const {
+    return Elf_Note_Iterator();
+  }
+
+  /// Get an iterator range over notes of a program header.
+  ///
+  /// The program header must be of type \c PT_NOTE.
+  ///
+  /// \param Phdr the program header to iterate over.
+  /// \param Err [out] an error to support fallible iteration, which should
+  ///  be checked after iteration ends.
+  iterator_range<Elf_Note_Iterator> notes(const Elf_Phdr &Phdr,
+                                          Error &Err) const {
+    return make_range(notes_begin(Phdr, Err), notes_end());
+  }
+
+  /// Get an iterator range over notes of a section.
+  ///
+  /// The section must be of type \c SHT_NOTE.
+  ///
+  /// \param Shdr the section to iterate over.
+  /// \param Err [out] an error to support fallible iteration, which should
+  ///  be checked after iteration ends.
+  iterator_range<Elf_Note_Iterator> notes(const Elf_Shdr &Shdr,
+                                          Error &Err) const {
+    return make_range(notes_begin(Shdr, Err), notes_end());
   }
 
   Expected<StringRef> getSectionStringTable(Elf_Shdr_Range Sections) const;
@@ -159,6 +252,7 @@ public:
                                         Elf_Sym_Range Symtab,
                                         ArrayRef<Elf_Word> ShndxTable) const;
   Expected<const Elf_Shdr *> getSection(uint32_t Index) const;
+  Expected<const Elf_Shdr *> getSection(const StringRef SectionName) const;
 
   Expected<const Elf_Sym *> getSymbol(const Elf_Shdr *Sec,
                                       uint32_t Index) const;
@@ -171,10 +265,10 @@ public:
   Expected<ArrayRef<uint8_t>> getSectionContents(const Elf_Shdr *Sec) const;
 };
 
-using ELF32LEFile = ELFFile<ELFType<support::little, false>>;
-using ELF64LEFile = ELFFile<ELFType<support::little, true>>;
-using ELF32BEFile = ELFFile<ELFType<support::big, false>>;
-using ELF64BEFile = ELFFile<ELFType<support::big, true>>;
+using ELF32LEFile = ELFFile<ELF32LE>;
+using ELF64LEFile = ELFFile<ELF64LE>;
+using ELF32BEFile = ELFFile<ELF32BE>;
+using ELF64BEFile = ELFFile<ELF64BE>;
 
 template <class ELFT>
 inline Expected<const typename ELFT::Shdr *>
@@ -271,6 +365,9 @@ ELFFile<ELFT>::getSectionContentsAsArray(const Elf_Shdr *Sec) const {
       Offset + Size > Buf.size())
     return createError("invalid section offset");
 
+  if (Offset % alignof(T))
+    return createError("unaligned data");
+
   const T *Start = reinterpret_cast<const T *>(base() + Offset);
   return makeArrayRef(Start, Size / sizeof(T));
 }
@@ -318,6 +415,11 @@ void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
 }
 
 template <class ELFT>
+uint32_t ELFFile<ELFT>::getRelrRelocationType() const {
+  return getELFRelrRelocationType(getHeader()->e_machine);
+}
+
+template <class ELFT>
 Expected<const typename ELFT::Sym *>
 ELFFile<ELFT>::getRelocationSymbol(const Elf_Rel *Rel,
                                    const Elf_Shdr *SymTab) const {
@@ -341,14 +443,13 @@ ELFFile<ELFT>::getSectionStringTable(Elf_Shdr_Range Sections) const {
   return getStringTable(&Sections[Index]);
 }
 
-template <class ELFT>
-ELFFile<ELFT>::ELFFile(StringRef Object) : Buf(Object) {
-  assert(sizeof(Elf_Ehdr) <= Buf.size() && "Invalid buffer");
-}
+template <class ELFT> ELFFile<ELFT>::ELFFile(StringRef Object) : Buf(Object) {}
 
 template <class ELFT>
-bool compareAddr(uint64_t VAddr, const Elf_Phdr_Impl<ELFT> *Phdr) {
-  return VAddr < Phdr->p_vaddr;
+Expected<ELFFile<ELFT>> ELFFile<ELFT>::create(StringRef Object) {
+  if (sizeof(Elf_Ehdr) > Object.size())
+    return createError("Invalid buffer");
+  return ELFFile(Object);
 }
 
 template <class ELFT>
@@ -418,6 +519,22 @@ ELFFile<ELFT>::getSection(uint32_t Index) const {
   if (!TableOrErr)
     return TableOrErr.takeError();
   return object::getSection<ELFT>(*TableOrErr, Index);
+}
+
+template <class ELFT>
+Expected<const typename ELFT::Shdr *>
+ELFFile<ELFT>::getSection(const StringRef SectionName) const {
+  auto TableOrErr = sections();
+  if (!TableOrErr)
+    return TableOrErr.takeError();
+  for (auto &Sec : *TableOrErr) {
+    auto SecNameOrErr = getSectionName(&Sec);
+    if (!SecNameOrErr)
+      return SecNameOrErr.takeError();
+    if (*SecNameOrErr == SectionName)
+      return &Sec;
+  }
+  return createError("invalid section name");
 }
 
 template <class ELFT>

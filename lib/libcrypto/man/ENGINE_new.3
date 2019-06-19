@@ -1,0 +1,190 @@
+.\" $OpenBSD: ENGINE_new.3,v 1.4 2019/06/10 09:49:48 schwarze Exp $
+.\" content checked up to:
+.\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 10 2019 $
+.Dt ENGINE_NEW 3
+.Os
+.Sh NAME
+.Nm ENGINE_new ,
+.Nm ENGINE_up_ref ,
+.Nm ENGINE_free ,
+.Nm ENGINE_set_destroy_function ,
+.Nm ENGINE_get_destroy_function
+.Nd create and destroy ENGINE objects
+.Sh SYNOPSIS
+.In openssl/engine.h
+.Ft ENGINE *
+.Fn ENGINE_new void
+.Ft int
+.Fo ENGINE_up_ref
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_free
+.Fa "ENGINE *e"
+.Fc
+.Ft typedef int
+.Fo (*ENGINE_GEN_INT_FUNC_PTR)
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_destroy_function
+.Fa "ENGINE *e"
+.Fa "ENGINE_GEN_INT_FUNC_PTR destroy_f"
+.Fc
+.Ft ENGINE_GEN_INT_FUNC_PTR
+.Fo ENGINE_get_destroy_function
+.Fa "const ENGINE *e"
+.Fc
+.Sh DESCRIPTION
+.Vt ENGINE
+objects can be used to provide alternative implementations of
+cryptographic algorithms, to support additional algorithms, to
+support cryptographic hardware, and to switch among alternative
+implementations of algorithms at run time.
+LibreSSL generally avoids engines and prefers providing
+cryptographic functionality in the crypto library itself.
+.Pp
+.Fn ENGINE_new
+allocates and initializes an empty
+.Vt ENGINE
+object and sets its structural reference count to 1
+and its functional reference count to 0.
+For more information about the functional reference count, see the
+.Xr ENGINE_init 3
+manual page.
+.Pp
+Many functions increment the structural reference count by 1
+when successful.
+Some of them, including
+.Xr ENGINE_get_first 3 ,
+.Xr ENGINE_get_last 3 ,
+.Xr ENGINE_get_next 3 ,
+.Xr ENGINE_get_prev 3 ,
+and
+.Xr ENGINE_by_id 3 ,
+do so because they return a structural reference to the user.
+Other functions, including
+.Xr ENGINE_add 3 ,
+.Xr ENGINE_init 3 ,
+.Xr ENGINE_get_cipher_engine 3 ,
+.Xr ENGINE_get_digest_engine 3 ,
+and the
+.Xr ENGINE_get_default_RSA 3
+and
+.Xr ENGINE_set_default 3
+families of functions
+do so when they store a structural refence internally.
+.Pp
+.Fn ENGINE_up_ref
+explicitly increment the structural reference count by 1.
+.Pp
+.Fn ENGINE_free
+decrements the structural reference count by 1,
+and if it reaches 0, the optional
+.Fa destroy_f
+previously installed with
+.Fn ENGINE_set_destroy_function
+is called, if one is installed, and both the memory used internally by
+.Fa e
+and
+.Fa e
+itself are freed.
+If
+.Fa e
+is a
+.Dv NULL
+pointer, no action occurs.
+.Pp
+Many functions internally call the equivalent of
+.Fn ENGINE_free .
+Some of them, including
+.Xr ENGINE_get_next 3
+and
+.Xr ENGINE_get_prev 3 ,
+thus invalidate the structural reference passed in by the user.
+Other functions, including
+.Xr ENGINE_finish 3 ,
+.Xr ENGINE_remove 3 ,
+and the
+.Xr ENGINE_set_default 3
+family of functions
+do so when an internally stored structural reference is no longer needed.
+.Pp
+.Fn ENGINE_set_destroy_function
+installs a callback function that will be called by
+.Fn ENGINE_free ,
+but only when
+.Fa e
+actually gets destroyed,
+not when only its reference count gets decremented.
+The value returned from the
+.Fa destroy_f
+will be ignored.
+.Sh RETURN VALUES
+.Fn ENGINE_new
+returns a structural reference to the new
+.Vt ENGINE
+object or
+.Dv NULL
+if an error occurs.
+.Pp
+.Fn ENGINE_up_ref
+returns 0 if
+.Fa e
+is
+.Dv NULL
+and 1 otherwise.
+.Pp
+.Fn ENGINE_free
+and
+.Fn ENGINE_set_destroy_function
+always return 1.
+.Pp
+.Fn ENGINE_get_destroy_function
+returns a function pointer to the callback, or
+.Dv NULL
+if none is installed.
+.Sh SEE ALSO
+.Xr crypto 3 ,
+.Xr ENGINE_add 3 ,
+.Xr ENGINE_ctrl 3 ,
+.Xr ENGINE_get_default_RSA 3 ,
+.Xr ENGINE_init 3 ,
+.Xr ENGINE_register_all_RSA 3 ,
+.Xr ENGINE_register_RSA 3 ,
+.Xr ENGINE_set_default 3 ,
+.Xr ENGINE_set_flags 3 ,
+.Xr ENGINE_set_RSA 3 ,
+.Xr ENGINE_unregister_RSA 3
+.Sh HISTORY
+.Fn ENGINE_new
+and
+.Fn ENGINE_free
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 2.9 .
+.Pp
+.Fn ENGINE_set_destroy_function
+and
+.Fn ENGINE_get_destroy_function
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn ENGINE_up_ref
+first appeared in OpenSSL 0.9.7 and has been available since
+.Ox 3.4 .

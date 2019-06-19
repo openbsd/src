@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.21 2015/03/14 03:38:47 jsg Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.22 2019/01/07 03:41:06 dlg Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		printf(": couldn't establish interrupt\n");
 		return;
 	}
-	printf(": irq %d", ca->ca_intrline);
+	printf(": irq %d, ", ca->ca_intrline);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = cardbus_findvendor(ca->ca_id);

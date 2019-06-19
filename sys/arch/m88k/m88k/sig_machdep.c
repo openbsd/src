@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.27 2016/10/08 23:31:57 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.29 2018/07/10 04:19:59 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -104,8 +104,7 @@ pid_t sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
-    union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
@@ -128,7 +127,8 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_r[31]) && (psp->ps_sigonstack & sigmask(sig))) {
 		addr = local_stack_frame(tf,
-		    (vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size, fsize);
+		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size),
+		    fsize);
 	} else
 		addr = local_stack_frame(tf, tf->tf_r[31], fsize);
 
@@ -143,7 +143,7 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	sf.sf_sc.sc_cookie = (long)sf.sf_scp ^ p->p_p->ps_sigcookie;
 
 	if (psp->ps_siginfo & sigmask(sig))
-		initsiginfo(&sf.sf_si, sig, code, type, val);
+		sf.sf_si = *ksip;
 
 	/*
 	 * Copy the whole user context into signal context that we

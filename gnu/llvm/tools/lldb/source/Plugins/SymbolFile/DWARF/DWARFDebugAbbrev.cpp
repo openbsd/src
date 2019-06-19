@@ -80,8 +80,8 @@ DWARFAbbreviationDeclarationSet::GetAbbreviationDeclaration(
 //----------------------------------------------------------------------
 // DWARFAbbreviationDeclarationSet::AppendAbbrevDeclSequential()
 //
-// Append an abbreviation declaration with a sequential code for O(n)
-// lookups. Handy when creating an DWARFAbbreviationDeclarationSet.
+// Append an abbreviation declaration with a sequential code for O(n) lookups.
+// Handy when creating an DWARFAbbreviationDeclarationSet.
 //----------------------------------------------------------------------
 dw_uleb128_t DWARFAbbreviationDeclarationSet::AppendAbbrevDeclSequential(
     const DWARFAbbreviationDeclaration &abbrevDecl) {
@@ -98,11 +98,26 @@ dw_uleb128_t DWARFAbbreviationDeclarationSet::AppendAbbrevDeclSequential(
 }
 
 //----------------------------------------------------------------------
+// DWARFAbbreviationDeclarationSet::GetUnsupportedForms()
+//----------------------------------------------------------------------
+void DWARFAbbreviationDeclarationSet::GetUnsupportedForms(
+    std::set<dw_form_t> &invalid_forms) const {
+  for (const auto &abbr_decl : m_decls) {
+    const size_t num_attrs = abbr_decl.NumAttributes();
+    for (size_t i=0; i<num_attrs; ++i) {
+      dw_form_t form = abbr_decl.GetFormByIndex(i);
+      if (!DWARFFormValue::FormIsSupported(form))
+        invalid_forms.insert(form);
+    }
+  }
+}
+
+//----------------------------------------------------------------------
 // Encode
 //
-// Encode the abbreviation table onto the end of the buffer provided
-// into a byte representation as would be found in a ".debug_abbrev"
-// debug information section.
+// Encode the abbreviation table onto the end of the buffer provided into a
+// byte representation as would be found in a ".debug_abbrev" debug information
+// section.
 //----------------------------------------------------------------------
 // void
 // DWARFAbbreviationDeclarationSet::Encode(BinaryStreamBuf& debug_abbrev_buf)
@@ -174,4 +189,13 @@ DWARFDebugAbbrev::GetAbbreviationDeclarationSet(
   if (pos != m_abbrevCollMap.end())
     return &(pos->second);
   return NULL;
+}
+
+//----------------------------------------------------------------------
+// DWARFDebugAbbrev::GetUnsupportedForms()
+//----------------------------------------------------------------------
+void DWARFDebugAbbrev::GetUnsupportedForms(
+    std::set<dw_form_t> &invalid_forms) const {
+  for (const auto &pair : m_abbrevCollMap)
+    pair.second.GetUnsupportedForms(invalid_forms);
 }

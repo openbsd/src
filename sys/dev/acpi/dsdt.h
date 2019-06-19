@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.74 2017/11/29 15:22:22 kettenis Exp $ */
+/* $OpenBSD: dsdt.h,v 1.77 2018/08/19 08:23:47 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -34,12 +34,12 @@ struct aml_scope {
 
 
 struct aml_opcode {
-	u_int32_t		opcode;
+	uint32_t		opcode;
 	const char		*mnem;
 	const char		*args;
 };
 
-const char		*aml_eisaid(u_int32_t);
+const char		*aml_eisaid(uint32_t);
 const char		*aml_mnem(int, uint8_t *);
 int64_t			aml_val2int(struct aml_value *);
 struct aml_node		*aml_searchname(struct aml_node *, const void *);
@@ -56,7 +56,7 @@ void			aml_walktree(struct aml_node *);
 void			aml_find_node(struct aml_node *, const char *,
 			    int (*)(struct aml_node *, void *), void *);
 int			acpi_parse_aml(struct acpi_softc *, u_int8_t *,
-			    u_int32_t);
+			    uint32_t);
 void			aml_register_notify(struct aml_node *, const char *,
 			    int (*)(struct aml_node *, int, void *), void *,
 			    int);
@@ -191,8 +191,13 @@ union acpi_resource {
 		uint8_t		typecode;
 		uint16_t	length;
 		uint8_t		type;
+#define LR_TYPE_MEMORY		0
+#define LR_TYPE_IO		1
+#define LR_TYPE_BUS		2
 		uint8_t		flags;
 		uint8_t		tflags;
+#define LR_MEMORY_TTP		(1L << 5)
+#define LR_IO_TTP		(1L << 4)
 		uint16_t	_gra;
 		uint16_t	_min;
 		uint16_t	_max;
@@ -334,8 +339,9 @@ union amlpci_t {
 	struct {
 		uint16_t reg;
 		uint16_t fun;
-		uint16_t dev;
-		uint16_t bus;
+		uint8_t dev;
+		uint8_t bus;
+		uint16_t seg;
 	};
 };
 int			aml_rdpciaddr(struct aml_node *pcidev,

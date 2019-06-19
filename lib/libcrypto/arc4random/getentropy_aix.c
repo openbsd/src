@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_aix.c,v 1.5 2016/08/07 03:27:21 tb Exp $	*/
+/*	$OpenBSD: getentropy_aix.c,v 1.6 2018/11/20 08:04:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Michael Felt <aixtools@gmail.com>
@@ -60,7 +60,6 @@
 
 int	getentropy(void *buf, size_t len);
 
-static int gotdata(char *buf, size_t len);
 static int getentropy_urandom(void *buf, size_t len, const char *path,
     int devfscheck);
 static int getentropy_fallback(void *buf, size_t len);
@@ -118,22 +117,6 @@ getentropy(void *buf, size_t len)
 	return (ret);
 }
 
-/*
- * Basic sanity checking; wish we could do better.
- */
-static int
-gotdata(char *buf, size_t len)
-{
-	char	any_set = 0;
-	size_t	i;
-
-	for (i = 0; i < len; ++i)
-		any_set |= buf[i];
-	if (any_set == 0)
-		return (-1);
-	return (0);
-}
-
 static int
 getentropy_urandom(void *buf, size_t len, const char *path, int devfscheck)
 {
@@ -179,10 +162,8 @@ start:
 		i += ret;
 	}
 	close(fd);
-	if (gotdata(buf, len) == 0) {
-		errno = save_errno;
-		return (0);		/* satisfied */
-	}
+	errno = save_errno;
+	return (0);		/* satisfied */
 nodevrandom:
 	errno = EIO;
 	return (-1);
@@ -416,10 +397,6 @@ getentropy_fallback(void *buf, size_t len)
 	}
 	explicit_bzero(&ctx, sizeof ctx);
 	explicit_bzero(results, sizeof results);
-	if (gotdata(buf, len) == 0) {
-		errno = save_errno;
-		return (0);		/* satisfied */
-	}
-	errno = EIO;
-	return (-1);
+	errno = save_errno;
+	return (0);		/* satisfied */
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: RSyslogd.pm,v 1.5 2016/05/03 17:05:31 bluhm Exp $
+#	$OpenBSD: RSyslogd.pm,v 1.6 2018/10/06 11:56:26 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -26,7 +26,7 @@ sub new {
 	my $class = shift;
 	my %args = @_;
 	$args{logfile} ||= "rsyslogd.log";
-	$args{up} ||= "calling select";
+	$args{up} ||= "calling (select|poll)";
 	$args{down} ||= "Clean shutdown completed";
 	$args{func} = sub { Carp::confess "$class func may not be called" };
 	$args{conffile} ||= "rsyslogd.conf";

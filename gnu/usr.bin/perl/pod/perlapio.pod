@@ -58,7 +58,7 @@ perlapio - perl's IO abstraction interface.
   SSize_t PerlIO_get_bufsiz(PerlIO *f);
 
   PerlIO *PerlIO_importFILE(FILE *stdio, const char *mode);
-  FILE   *PerlIO_exportFILE(PerlIO *f, int flags);
+  FILE   *PerlIO_exportFILE(PerlIO *f, const char *mode);
   FILE   *PerlIO_findFILE(PerlIO *f);
   void    PerlIO_releaseFILE(PerlIO *f,FILE *stdio);
 
@@ -82,7 +82,7 @@ C<PerlIO *> takes the place of FILE *. Like FILE * it should be
 treated as opaque (it is probably safe to assume it is a pointer to
 something).
 
-There are currently three implementations:
+There are currently two implementations:
 
 =over 4
 
@@ -138,7 +138,7 @@ when C<NULL> is returned if this limit is exceeded.
 
 =item B<PerlIO_reopen(path,mode,f)>
 
-While this currently exists in all three implementations perl itself
+While this currently exists in both implementations, perl itself
 does not use it. I<As perl does not use it, it is not well tested.>
 
 Perl prefers to C<dup> the new low-level descriptor to the descriptor

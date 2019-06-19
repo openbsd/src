@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ethers.3,v 1.24 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: ethers.3,v 1.25 2018/11/09 17:49:32 brynet Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: November 9 2018 $
 .Dt ETHER_ATON 3
 .Os
 .Sh NAME
@@ -79,17 +79,7 @@ zero if they find the requested host name or address, and \-1 if not.
 .Pp
 Each call reads
 .Pa /etc/ethers
-from the beginning; if a
-.Ql +
-appears alone on a line in the file, then
-.Fn ether_hostton
-will consult the
-.Pa ethers.byname
-YP map, and
-.Fn ether_ntohost
-will consult the
-.Pa ethers.byaddr
-YP map.
+from the beginning.
 .Pp
 The
 .Fn ether_line

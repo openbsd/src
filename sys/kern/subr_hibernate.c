@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.123 2017/08/17 06:50:41 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.125 2018/06/21 07:49:13 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -55,6 +55,7 @@
  * 29*PAGE_SIZE			start of hiballoc area
  * 30*PAGE_SIZE			preserved entropy
  * 110*PAGE_SIZE		end of hiballoc area (80 pages)
+ * 366*PAGE_SIZE		end of retguard preservation region (256 pages)
  * ...				unused
  * HIBERNATE_CHUNK_SIZE		start of hibernate chunk table
  * 2*HIBERNATE_CHUNK_SIZE	bounce area for chunks being unpacked
@@ -776,7 +777,7 @@ void
 hibernate_inflate_region(union hibernate_info *hib, paddr_t dest,
     paddr_t src, size_t size)
 {
-	int end_stream = 0, rle;
+	int end_stream = 0, rle, skip;
 	struct hibernate_zlib_state *hibernate_state;
 
 	hibernate_state =
@@ -790,10 +791,31 @@ hibernate_inflate_region(union hibernate_info *hib, paddr_t dest,
 		 * Is this a special page? If yes, redirect the
 		 * inflate output to a scratch page (eg, discard it)
 		 */
-		if (hibernate_inflate_skip(hib, dest)) {
+		skip = hibernate_inflate_skip(hib, dest);
+		if (skip == HIB_SKIP) {
 			hibernate_enter_resume_mapping(
 			    HIBERNATE_INFLATE_PAGE,
 			    HIBERNATE_INFLATE_PAGE, 0);
+		} else if (skip == HIB_MOVE) {
+			/*
+			 * Special case : retguard region. This gets moved
+			 * temporarily into the piglet region and copied into
+			 * place immediately before resume
+			 */
+			hibernate_enter_resume_mapping(
+			    HIBERNATE_INFLATE_PAGE,
+			    hib->piglet_pa + (110 * PAGE_SIZE) +
+			    hib->retguard_ofs, 0);
+			hib->retguard_ofs += PAGE_SIZE;
+			if (hib->retguard_ofs > 255 * PAGE_SIZE) {
+				/*
+				 * XXX - this will likely reboot/hang most
+				 *       machines since the console output
+				 *       buffer will be unmapped, but there's
+				 *       not much else we can do here.
+				 */
+				panic("retguard move error, out of space");
+			}
 		} else {
 			hibernate_enter_resume_mapping(
 			    HIBERNATE_INFLATE_PAGE, dest, 0);
@@ -1230,6 +1252,7 @@ hibernate_unpack_image(union hibernate_info *hib)
 
 	/* Can't use hiber_info that's passed in after this point */
 	bcopy(hib, &local_hib, sizeof(union hibernate_info));
+	local_hib.retguard_ofs = 0;
 
 	/* VA == PA */
 	local_hib.piglet_va = local_hib.piglet_pa;
@@ -1262,9 +1285,18 @@ hibernate_unpack_image(union hibernate_info *hib)
 
 	/*
 	 * Resume the loaded kernel by jumping to the MD resume vector.
-	 * We won't be returning from this call.
+	 * We won't be returning from this call. We pass the location of
+	 * the retguard save area so the MD code can replace it before
+	 * resuming. See the piglet layout at the top of this file for
+	 * more information on the layout of the piglet area.
+	 *
+	 * We use 'global_piglet_va' here since by the time we are at
+	 * this point, we have already unpacked the image, and we want
+	 * the suspended kernel's view of what the piglet was, before
+	 * suspend occurred (since we will need to use that in the retguard
+	 * copy code in hibernate_resume_machdep.)
 	 */
-	hibernate_resume_machdep();
+	hibernate_resume_machdep(global_piglet_va + (110 * PAGE_SIZE));
 }
 
 /*

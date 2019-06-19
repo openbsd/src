@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.20 2017/04/26 21:25:43 naddy Exp $	*/
+/*	$OpenBSD: io.c,v 1.22 2018/06/04 13:29:07 martijn Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -295,8 +295,8 @@ get_tty_line(void)
 
 
 
-#define ESCAPES "\a\b\f\n\r\t\v\\"
-#define ESCCHARS "abfnrtv\\"
+#define ESCAPES "\a\b\f\n\r\t\v\\$"
+#define ESCCHARS "abfnrtv\\$"
 
 extern int rows;
 extern int cols;
@@ -306,9 +306,6 @@ int
 put_tty_line(char *s, int l, int n, int gflag)
 {
 	int col = 0;
-#ifndef BACKWARDS
-	int lc = 0;
-#endif
 	char *cp;
 
 	if (gflag & GNP) {
@@ -319,18 +316,9 @@ put_tty_line(char *s, int l, int n, int gflag)
 		if ((gflag & GLS) && ++col > cols) {
 			fputs("\\\n", stdout);
 			col = 1;
-#ifndef BACKWARDS
-			if (!scripted && !isglobal && ++lc > rows) {
-				lc = 0;
-				fputs("Press <RETURN> to continue... ", stdout);
-				fflush(stdout);
-				if (get_tty_line() < 0)
-					return ERR;
-			}
-#endif
 		}
 		if (gflag & GLS) {
-			if (31 < *s && *s < 127 && *s != '\\')
+			if (31 < *s && *s < 127 && *s != '\\' && *s != '$')
 				putchar(*s);
 			else {
 				putchar('\\');
@@ -348,10 +336,8 @@ put_tty_line(char *s, int l, int n, int gflag)
 		} else
 			putchar(*s);
 	}
-#ifndef BACKWARDS
 	if (gflag & GLS)
 		putchar('$');
-#endif
 	putchar('\n');
 	return 0;
 }

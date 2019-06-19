@@ -1,4 +1,4 @@
-/* $OpenBSD: x_bignum.c,v 1.8 2015/07/25 17:07:17 jsing Exp $ */
+/* $OpenBSD: x_bignum.c,v 1.10 2019/04/01 15:49:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -75,15 +75,18 @@ static int bn_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
     const ASN1_ITEM *it);
 static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     int utype, char *free_cont, const ASN1_ITEM *it);
+static int bn_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
+    int indent, const ASN1_PCTX *pctx);
 
 static ASN1_PRIMITIVE_FUNCS bignum_pf = {
-	NULL,
-	0,
-	bn_new,
-	bn_free,
-	0,
-	bn_c2i,
-	bn_i2c
+	.app_data = NULL,
+	.flags = 0,
+	.prim_new = bn_new,
+	.prim_free = bn_free,
+	.prim_clear = NULL,	/* XXX */
+	.prim_c2i = bn_c2i,
+	.prim_i2c = bn_i2c,
+	.prim_print = bn_print,
 };
 
 const ASN1_ITEM BIGNUM_it = {
@@ -163,5 +166,19 @@ bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 		bn_free(pval, it);
 		return 0;
 	}
+	return 1;
+}
+
+static int
+bn_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it, int indent,
+    const ASN1_PCTX *pctx)
+{
+	BIGNUM *bn = (BIGNUM *)*pval;
+
+	if (!BN_print(out, bn))
+		return 0;
+	if (BIO_printf(out, "\n") <= 0)
+		return 0;
+
 	return 1;
 }

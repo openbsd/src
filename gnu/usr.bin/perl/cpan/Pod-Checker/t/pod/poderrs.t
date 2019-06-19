@@ -14,7 +14,7 @@ exit( ($passed == 1) ? 0 : -1 )  unless $ENV{HARNESS_ACTIVE};
                                         
 ### The above line should contain spaces
 
-
+#line 18
 __END__
 
 =head2 This should cause a warning
@@ -22,6 +22,8 @@ __END__
 =head1 NAME
 
 poderrors.t - test Pod::Checker on some pod syntax errors
+
+    GASP! A verbatim paragraph in NAME
 
 =unknown1 this is an unknown command with two N<unknownA>
 and D<unknownB> interior sequences.
@@ -46,6 +48,10 @@ sure we get a warning.
 	                                     	
 The above blank line contains tabs and spaces only
 
+F<Many B<fcodes B<inside C<other I<fcodes F<inside I<many S<many C<more X<fcodes. S<This is X<ridiculous.>>>>>>>>>>>>
+
+A L<link|perlvar/$/> to L<perlvar/$E<sol>>
+
 =head1 Additional tests
 
 =head2 item without over
@@ -66,17 +72,17 @@ The above blank line contains tabs and spaces only
 
 =end
 
+=end something
+
 =head2 begin and begin
 
 =begin html
 
 =begin text
 
-=end
+=end text
 
-=end
-
-second one results in end w/o begin
+=end html
 
 =head2 begin w/o formatter
 
@@ -102,6 +108,7 @@ E<abcI<bla>>
 E<0x100>
 E<07777>
 E<300>
+E<unknown_entity>
 
 =head2 Unresolved internal links
 
@@ -116,10 +123,20 @@ def>
 L<>
 L<   aha>
 L<oho   >
+L<  weehee  >
 L<"Warnings"> this one is ok
 L</unescaped> ok too, this POD has an X of the same name
-L<http://www.perl.org> this is OK
-L<The Perl Home Page|http://www.perl.org> this is also OK
+
+L<<  lead >>
+L<< trail  >>
+L<< neither >>
+L<<<  both  >>>
+
+L<<<<>>>>
+
+L<<<< >>>>
+
+L<<<<  >>>>
 
 =head2 Warnings
 
@@ -134,12 +151,6 @@ L<some text with / in it|perlvar/$|> should give warnings as hell
 
 the 200 is evil
 
-=begin html
-
-What?
-
-=end xml
-
 X<unescaped>see these unescaped < and > in the text?
 
 =head2 Misc
@@ -148,11 +159,19 @@ Z<ddd> should be empty
 
 X<> should not be empty
 
+X<0> should not generate a warning about being empty
+
+E<> should not be empty
+
 =over four
 
 This paragrapgh is misplaced - it ought to be an item.
 
 =item four should be numeric!
+
+=back
+
+=over 4
 
 =item
 
@@ -162,9 +181,78 @@ This paragrapgh is misplaced - it ought to be an item.
 
 =back
 
-All empty over/back:
+=over
+
+    This verbatim paragraph should not be here. Spaces are on the line below this
+    
+=item *
+
+bullet
+
+=item 1
+
+number, uh oh
+
+=back
+
+=over
+
+=item *
+
+first bullet
+
+=item 1
+
+then number
+
+=item finally definition
+
+=back
+
+=over
+
+=item 1
+
+first number
+
+=item 3
+
+bad numbering
+
+=item then definition
+
+=item *
+
+finally bullet
+
+=back
+
+=over
+
+=item first defintion
+
+=item *
+
+then bullet
+
+=item 1
+
+finally number
+
+=item second definition
+
+    This should not generate an empty =item warning,
+    because it has verbatim text.
+
+=back
+
+Empty over/back:
 
 =over 4
+
+=over 2
+
+=back
 
 =back
 
@@ -194,48 +282,43 @@ we already have a head Misc
 
 =head2 another one
 
-=head2 the next line should be empty
-=head2 ... but there is a command instead
-
-And here is some text
-=head2 again followed by a command
-
-  verbatim
-=item line missing
-
 previous section is empty!
 
 =head1 LINK TESTS
 
-Due to bug reported by Rafael Garcia-Suarez "rgarciasuarez@free.fr":
 
-The following hyperlinks :
-L<"I/O Operators">
+
+
+
+
+
+
+
+
 L<perlop/"I/O Operators">
-trigger a podchecker warning (using bleadperl) :
-    node 'I/O Operators' contains non-escaped | or /
+don't trigger a warning because node is quoted
+
+L<"I/O Operators">
+incorrectly interpreted as 'O Operators in I', but this is deprecated syntax, as per perlpodspec.
+no warning due to quotes
+
+=head1
+
+Empty head above and unclosed over/begins below
+
+=head3 test X<stuff> I<test>
+
+=over
+
+=begin html
+
+What?
+
+=begin :xml
+
+L<This pod's NAME in a link means it is internal|poderrors.t/link_to_nowhere>,
+so should generate a warning
 
 =cut
 
-=pod
-
-=head1 ON-OFF tests
-
-The above =pod is OK. The following =cut is ok, the one after not.
-
-=cut
-
-# some comment or code here, not POD
-
-=cut
-
-# more code
-
-=head2 This opens POD
-
-=pod
-
-And the =pod above is too much.
-
-=cut
 

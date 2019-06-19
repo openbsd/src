@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vget.9,v 1.11 2013/06/04 19:27:16 schwarze Exp $
+.\"     $OpenBSD: vget.9,v 1.12 2018/05/27 06:02:14 visa Exp $
 .\"
 .\" Copyright (c) 1996 Doug Rabson
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vget.9,v 1.7 2001/12/26 23:14:04 davidc Exp $
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: May 27 2018 $
 .Dt VGET 9
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .In sys/param.h
 .In sys/vnode.h
 .Ft int
-.Fn vget "struct vnode *vp" "int flags" "struct proc *p"
+.Fn vget "struct vnode *vp" "int flags"
 .Sh DESCRIPTION
 Get a vnode from the free list and increment its reference count.
 .Pp
@@ -48,8 +48,6 @@ Its arguments are:
 The vnode to remove from the free list.
 .It Fa flags
 If non-zero, the vnode will also be locked.
-.It Fa p
-The process responsible for this call.
 .El
 .Pp
 When not in use, vnodes are kept on a free list.

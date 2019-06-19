@@ -1,9 +1,11 @@
-# $OpenBSD: factory,v 1.11 2016/09/28 21:12:14 millert Exp $
+# $OpenBSD: factory,v 1.12 2018/10/22 21:44:28 millert Exp $
+# tzdb data for noncommittal factory settings
+
 # This file is in the public domain, so clarified as of
 # 2009-05-17 by Arthur David Olson.
 
-# For distributors who don't want to put time zone specification in
-# their installation procedures.  Users that run 'date' will get the
+# For distributors who don't want to specify a timezone in their
+# installation procedures.  Users who run 'date' will get the
 # time zone abbreviation "-00", indicating that the actual time zone
 # is unknown.
 

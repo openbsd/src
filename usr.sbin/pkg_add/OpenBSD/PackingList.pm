@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.144 2018/01/01 14:02:37 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.146 2018/06/23 19:34:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -208,6 +208,15 @@ sub SharedItemsOnly
 	}
 }
 
+sub UpdatePlistOnly
+{
+	my ($fh, $cont) = @_;
+	while (<$fh>) {
+		next unless m/^\@(?:cwd|dir|fontdir|ghost|mandir|depend)\b/o || m/^\@(?:sample|extra)\b.*\/$/o || m/^[^\@].*\/$/o;
+		&$cont($_);
+	}
+}
+
 sub DirrmOnly
 {
 	&OpenBSD::PackingList::SharedItemsOnly;
@@ -235,7 +244,7 @@ sub PrelinkStuffOnly
 {
 	my ($fh, $cont) = @_;
 	while (<$fh>) {
-		next unless m/^\@(?:cwd|bin|lib|name|libset|depend|wantlib|comment\s+ubdir\=)\b/o;
+		next unless m/^\@(?:cwd|bin|lib|name|define-tag|libset|depend|wantlib|comment\s+ubdir\=)\b/o;
 		&$cont($_);
 	}
 }

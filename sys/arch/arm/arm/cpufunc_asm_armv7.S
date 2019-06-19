@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.15 2018/01/15 14:11:16 kettenis Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.16 2018/08/06 18:39:13 kettenis Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <machine/cpu.h>
 #include <machine/asm.h>
 #include <arm/armreg.h>
 #include <arm/sysreg.h>

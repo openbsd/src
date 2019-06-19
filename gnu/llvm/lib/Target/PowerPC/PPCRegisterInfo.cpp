@@ -21,12 +21,15 @@
 #include "PPCTargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
@@ -36,8 +39,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetFrameLowering.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include <cstdlib>
@@ -49,6 +50,9 @@ using namespace llvm;
 #define GET_REGINFO_TARGET_DESC
 #include "PPCGenRegisterInfo.inc"
 
+STATISTIC(InflateGPRC, "Number of gprc inputs for getLargestLegalClass");
+STATISTIC(InflateGP8RC, "Number of g8rc inputs for getLargestLegalClass");
+
 static cl::opt<bool>
 EnableBasePointer("ppc-use-base-pointer", cl::Hidden, cl::init(true),
          cl::desc("Enable use of a base pointer for complex stack frames"));
@@ -56,6 +60,16 @@ EnableBasePointer("ppc-use-base-pointer", cl::Hidden, cl::init(true),
 static cl::opt<bool>
 AlwaysBasePointer("ppc-always-use-base-pointer", cl::Hidden, cl::init(false),
          cl::desc("Force the use of a base pointer in every function"));
+
+static cl::opt<bool>
+EnableGPRToVecSpills("ppc-enable-gpr-to-vsr-spills", cl::Hidden, cl::init(false),
+         cl::desc("Enable spills from gpr to vsr rather than stack"));
+
+static cl::opt<bool>
+StackPtrConst("ppc-stack-ptr-caller-preserved",
+                cl::desc("Consider R1 caller preserved so stack saves of "
+                         "caller preserved registers can be LICM candidates"),
+                cl::init(true), cl::Hidden);
 
 PPCRegisterInfo::PPCRegisterInfo(const PPCTargetMachine &TM)
   : PPCGenRegisterInfo(TM.isPPC64() ? PPC::LR8 : PPC::LR,
@@ -82,6 +96,8 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCTargetMachine &TM)
   // VSX
   ImmToIdxMap[PPC::DFLOADf32] = PPC::LXSSPX;
   ImmToIdxMap[PPC::DFLOADf64] = PPC::LXSDX;
+  ImmToIdxMap[PPC::SPILLTOVSR_LD] = PPC::SPILLTOVSR_LDX;
+  ImmToIdxMap[PPC::SPILLTOVSR_ST] = PPC::SPILLTOVSR_STX;
   ImmToIdxMap[PPC::DFSTOREf32] = PPC::STXSSPX;
   ImmToIdxMap[PPC::DFSTOREf64] = PPC::STXSDX;
   ImmToIdxMap[PPC::LXV] = PPC::LXVX;
@@ -90,6 +106,12 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCTargetMachine &TM)
   ImmToIdxMap[PPC::STXV] = PPC::STXVX;
   ImmToIdxMap[PPC::STXSD] = PPC::STXSDX;
   ImmToIdxMap[PPC::STXSSP] = PPC::STXSSPX;
+
+  // SPE
+  ImmToIdxMap[PPC::EVLDD] = PPC::EVLDDX;
+  ImmToIdxMap[PPC::EVSTDD] = PPC::EVSTDDX;
+  ImmToIdxMap[PPC::SPESTW] = PPC::SPESTWX;
+  ImmToIdxMap[PPC::SPELWZ] = PPC::SPELWZX;
 }
 
 /// getPointerRegClass - Return the register class to use to hold pointers.
@@ -113,7 +135,7 @@ PPCRegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
 const MCPhysReg*
 PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   const PPCSubtarget &Subtarget = MF->getSubtarget<PPCSubtarget>();
-  if (MF->getFunction()->getCallingConv() == CallingConv::AnyReg) {
+  if (MF->getFunction().getCallingConv() == CallingConv::AnyReg) {
     if (Subtarget.hasVSX())
       return CSR_64_AllRegs_VSX_SaveList;
     if (Subtarget.hasAltivec())
@@ -131,8 +153,22 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   if (TM.isPPC64() && MF->getInfo<PPCFunctionInfo>()->isSplitCSR())
     return CSR_SRV464_TLS_PE_SaveList;
 
+  if (Subtarget.hasSPE())
+    return CSR_SVR432_SPE_SaveList;
+
   // On PPC64, we might need to save r2 (but only if it is not reserved).
   bool SaveR2 = MF->getRegInfo().isAllocatable(PPC::X2);
+
+  if (MF->getFunction().getCallingConv() == CallingConv::Cold) {
+    return TM.isPPC64()
+               ? (Subtarget.hasAltivec()
+                      ? (SaveR2 ? CSR_SVR64_ColdCC_R2_Altivec_SaveList
+                                : CSR_SVR64_ColdCC_Altivec_SaveList)
+                      : (SaveR2 ? CSR_SVR64_ColdCC_R2_SaveList
+                                : CSR_SVR64_ColdCC_SaveList))
+               : (Subtarget.hasAltivec() ? CSR_SVR32_ColdCC_Altivec_SaveList
+                                         : CSR_SVR32_ColdCC_SaveList);
+  }
 
   return TM.isPPC64()
              ? (Subtarget.hasAltivec()
@@ -151,7 +187,7 @@ PPCRegisterInfo::getCalleeSavedRegsViaCopy(const MachineFunction *MF) const {
     return nullptr;
   if (!TM.isPPC64())
     return nullptr;
-  if (MF->getFunction()->getCallingConv() != CallingConv::CXX_FAST_TLS)
+  if (MF->getFunction().getCallingConv() != CallingConv::CXX_FAST_TLS)
     return nullptr;
   if (!MF->getInfo<PPCFunctionInfo>()->isSplitCSR())
     return nullptr;
@@ -185,6 +221,13 @@ PPCRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
                                                   : CSR_Darwin64_RegMask)
                         : (Subtarget.hasAltivec() ? CSR_Darwin32_Altivec_RegMask
                                                   : CSR_Darwin32_RegMask);
+
+  if (CC == CallingConv::Cold) {
+    return TM.isPPC64() ? (Subtarget.hasAltivec() ? CSR_SVR64_ColdCC_Altivec_RegMask
+                                                  : CSR_SVR64_ColdCC_RegMask)
+                        : (Subtarget.hasAltivec() ? CSR_SVR32_ColdCC_Altivec_RegMask
+                                                  : CSR_SVR32_ColdCC_RegMask);
+  }
 
   return TM.isPPC64() ? (Subtarget.hasAltivec() ? CSR_SVR464_Altivec_RegMask
                                                 : CSR_SVR464_RegMask)
@@ -276,15 +319,26 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 bool PPCRegisterInfo::isCallerPreservedPhysReg(unsigned PhysReg,
                                                const MachineFunction &MF) const {
   assert(TargetRegisterInfo::isPhysicalRegister(PhysReg));
-  if (TM.isELFv2ABI() && PhysReg == PPC::X2) {
+  const PPCSubtarget &Subtarget = MF.getSubtarget<PPCSubtarget>();
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  if (!TM.isPPC64())
+    return false;
+
+  if (!Subtarget.isSVR4ABI())
+    return false;
+  if (PhysReg == PPC::X2)
     // X2 is guaranteed to be preserved within a function if it is reserved.
     // The reason it's reserved is that it's the TOC pointer (and the function
     // uses the TOC). In functions where it isn't reserved (i.e. leaf functions
     // with no TOC access), we can't claim that it is preserved.
     return (getReservedRegs(MF).test(PPC::X2));
-  } else {
-    return false;
-  }
+  if (StackPtrConst && (PhysReg == PPC::X1) && !MFI.hasVarSizedObjects()
+      && !MFI.hasOpaqueSPAdjustment())
+    // The value of the stack pointer does not change within a function after
+    // the prologue and before the epilogue if there are no dynamic allocations
+    // and no inline asm which clobbers X1.
+    return true;
+  return false;
 }
 
 unsigned PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
@@ -297,6 +351,8 @@ unsigned PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
     return 0;
   case PPC::G8RC_NOX0RegClassID:
   case PPC::GPRC_NOR0RegClassID:
+  case PPC::SPERCRegClassID:
+  case PPC::SPE4RCRegClassID:
   case PPC::G8RCRegClassID:
   case PPC::GPRCRegClassID: {
     unsigned FP = TFI->hasFP(MF) ? 1 : 0;
@@ -328,6 +384,18 @@ PPCRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
     // With VSX, we can inflate various sub-register classes to the full VSX
     // register set.
 
+    // For Power9 we allow the user to enable GPR to vector spills.
+    // FIXME: Currently limited to spilling GP8RC. A follow on patch will add
+    // support to spill GPRC.
+    if (TM.isELFv2ABI()) {
+      if (Subtarget.hasP9Vector() && EnableGPRToVecSpills &&
+          RC == &PPC::G8RCRegClass) {
+        InflateGP8RC++;
+        return &PPC::SPILLTOVSRRCRegClass;
+      }
+      if (RC == &PPC::GPRCRegClass && EnableGPRToVecSpills)
+        InflateGPRC++;
+    }
     if (RC == &PPC::F8RCRegClass)
       return &PPC::VSFRCRegClass;
     else if (RC == &PPC::VRRCRegClass)
@@ -879,7 +947,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Naked functions have stack size 0, although getStackSize may not reflect
   // that because we didn't call all the pieces that compute it for naked
   // functions.
-  if (!MF.getFunction()->hasFnAttribute(Attribute::Naked)) {
+  if (!MF.getFunction().hasFnAttribute(Attribute::Naked)) {
     if (!(hasBasePointer(MF) && FrameIndex < 0))
       Offset += MFI.getStackSize();
   }
@@ -911,11 +979,16 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
            SReg = MF.getRegInfo().createVirtualRegister(RC);
 
   // Insert a set of rA with the full offset value before the ld, st, or add
-  BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::LIS8 : PPC::LIS), SRegHi)
-    .addImm(Offset >> 16);
-  BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::ORI8 : PPC::ORI), SReg)
-    .addReg(SRegHi, RegState::Kill)
-    .addImm(Offset);
+  if (isInt<16>(Offset))
+    BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::LI8 : PPC::LI), SReg)
+      .addImm(Offset);
+  else {
+    BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::LIS8 : PPC::LIS), SRegHi)
+      .addImm(Offset >> 16);
+    BuildMI(MBB, II, dl, TII.get(is64Bit ? PPC::ORI8 : PPC::ORI), SReg)
+      .addReg(SRegHi, RegState::Kill)
+      .addImm(Offset);
+  }
 
   // Convert into indexed form of the instruction:
   //

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat_backend.c,v 1.10 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: stat_backend.c,v 1.11 2018/12/27 10:35:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -30,19 +30,12 @@
 #include "log.h"
 #include "smtpd.h"
 
-struct stat_backend	stat_backend_ramstat;
-struct stat_backend	stat_backend_sqlite;
+extern struct stat_backend	stat_backend_ramstat;
 
 struct stat_backend *
 stat_backend_lookup(const char *name)
 {
-	if (!strcmp(name, "ram"))
-		return &stat_backend_ramstat;
-
-	if (!strcmp(name, "sqlite"))
-		return &stat_backend_sqlite;
-
-	return (NULL);
+	return &stat_backend_ramstat;
 }
 
 void

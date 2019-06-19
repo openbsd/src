@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.34 2016/09/02 17:59:58 benno Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.36 2018/08/05 08:10:35 mestre Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -76,8 +76,7 @@ eigrpe(int debug, int verbose, char *sockname)
 	log_verbose(verbose);
 
 	/* create eigrpd control socket outside chroot */
-	global.csock = sockname;
-	if (control_init(global.csock) == -1)
+	if (control_init(sockname) == -1)
 		fatalx("control socket setup failed");
 
 	if (inet_pton(AF_INET, AllEIGRPRouters_v4, &global.mcast_addr_v4) != 1)
@@ -133,7 +132,7 @@ eigrpe(int debug, int verbose, char *sockname)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	if (pledge("stdio cpath inet mcast recvfd", NULL) == -1)
+	if (pledge("stdio inet mcast recvfd", NULL) == -1)
 		fatal("pledge");
 
 	event_init();
@@ -187,7 +186,6 @@ eigrpe_shutdown(void)
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
 
-	control_cleanup(global.csock);
 	config_clear(econf);
 
 	event_del(&ev4);

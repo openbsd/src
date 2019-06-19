@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pmaps.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_pmaps.c,v 1.13 2019/05/08 21:53:10 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -146,21 +146,38 @@ POLICY_MAPPING_free(POLICY_MAPPING *a)
 
 static STACK_OF(CONF_VALUE) *
 i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method, void *a,
-    STACK_OF(CONF_VALUE) *ext_list)
+    STACK_OF(CONF_VALUE) *extlist)
 {
+	STACK_OF(CONF_VALUE) *free_extlist = NULL;
 	POLICY_MAPPINGS *pmaps = a;
 	POLICY_MAPPING *pmap;
+	char issuer[80], subject[80];
 	int i;
-	char obj_tmp1[80];
-	char obj_tmp2[80];
+
+	if (extlist == NULL) {
+		if ((free_extlist = extlist = sk_CONF_VALUE_new_null()) == NULL)
+			return NULL;
+	}
 
 	for (i = 0; i < sk_POLICY_MAPPING_num(pmaps); i++) {
-		pmap = sk_POLICY_MAPPING_value(pmaps, i);
-		i2t_ASN1_OBJECT(obj_tmp1, 80, pmap->issuerDomainPolicy);
-		i2t_ASN1_OBJECT(obj_tmp2, 80, pmap->subjectDomainPolicy);
-		X509V3_add_value(obj_tmp1, obj_tmp2, &ext_list);
+		if ((pmap = sk_POLICY_MAPPING_value(pmaps, i)) == NULL)
+			goto err;
+		if (!i2t_ASN1_OBJECT(issuer, sizeof issuer,
+		    pmap->issuerDomainPolicy))
+			goto err;
+		if (!i2t_ASN1_OBJECT(subject, sizeof subject,
+		    pmap->subjectDomainPolicy))
+			goto err;
+		if (!X509V3_add_value(issuer, subject, &extlist))
+			goto err;
 	}
-	return ext_list;
+
+	return extlist;
+
+ err:
+	sk_CONF_VALUE_pop_free(free_extlist, X509V3_conf_free);
+
+	return NULL;
 }
 
 static void *

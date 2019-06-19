@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.74 2015/10/05 15:40:39 uebayasi Exp $	*/
+/*	$OpenBSD: if.c,v 1.75 2019/03/04 21:32:26 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -63,6 +63,26 @@ static void catchalarm(int);
 static void get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 static void fetchifs(void);
 
+struct iftot;
+
+struct if_show_err {
+	const char *name;
+	const char *iname;
+	const char *oname;
+	uint64_t (*count)(uint64_t, uint64_t);
+};
+
+static uint64_t	if_show_fails(uint64_t, uint64_t);
+static uint64_t	if_show_errors(uint64_t, uint64_t);
+static uint64_t	if_show_qdrops(uint64_t, uint64_t);
+
+static const struct if_show_err if_show_errs[] = {
+	[IF_SHOW_FAIL] = { "fails", "Ifail", "Ofail", if_show_fails },
+	[IF_SHOW_ERRS] = { "errs", "Ierrs", "Oerrs", if_show_errors },
+	[IF_SHOW_DROP] = { "drops", "Idrop", "Odrop", if_show_qdrops },
+};
+static const struct if_show_err *if_errs = if_show_errs;
+
 /*
  * Print a description of the network interfaces.
  * NOTE: ifnetaddr is the location of the kernel global "ifnet",
@@ -83,6 +103,8 @@ intpr(int interval, int repeatcount)
 	u_int64_t total = 0;
 	size_t len;
 
+	if_errs = &if_show_errs[dflag];
+
 	if (interval) {
 		sidewaysintpr((unsigned)interval, repeatcount);
 		return;
@@ -94,13 +116,13 @@ intpr(int interval, int repeatcount)
 	    "Name", "Mtu", "Network", "Address");
 	if (bflag)
 		printf("%10.10s %10.10s", "Ibytes", "Obytes");
-	else
+	else {
 		printf("%8.8s %5.5s %8.8s %5.5s %5.5s",
-		    "Ipkts", "Ierrs", "Opkts", "Oerrs", "Colls");
+		    "Ipkts", if_errs->iname,
+		    "Opkts", if_errs->oname, "Colls");
+	}
 	if (tflag)
 		printf(" %s", "Time");
-	if (dflag)
-		printf(" %s", "Drop");
 	putchar('\n');
 
 	lim = buf + len;
@@ -137,13 +159,15 @@ intpr(int interval, int repeatcount)
 
 			if (qflag) {
 				total = ifd->ifi_ibytes + ifd->ifi_obytes +
-				    ifd->ifi_ipackets + ifd->ifi_ierrors +
-				    ifd->ifi_opackets + ifd->ifi_oerrors +
+				    ifd->ifi_ipackets +
+				    ifd->ifi_opackets +
 				    ifd->ifi_collisions;
+				total += if_errs->count(ifd->ifi_ierrors,
+				    ifd->ifi_iqdrops);
+				total += if_errs->count(ifd->ifi_oerrors,
+				    ifd->ifi_oqdrops);
 				if (tflag)
 					total += 0; // XXX ifnet.if_timer;
-				if (dflag)
-					total += ifd->ifi_oqdrops;
 				if (total == 0)
 					continue;
 			}
@@ -271,13 +295,13 @@ hexprint:
 			    ifd->ifi_ibytes, ifd->ifi_obytes);
 	} else
 		printf("%8llu %5llu %8llu %5llu %5llu",
-		    ifd->ifi_ipackets, ifd->ifi_ierrors,
-		    ifd->ifi_opackets, ifd->ifi_oerrors,
+		    ifd->ifi_ipackets,
+		    if_errs->count(ifd->ifi_ierrors, ifd->ifi_iqdrops),
+		    ifd->ifi_opackets,
+		    if_errs->count(ifd->ifi_oerrors, ifd->ifi_oqdrops),
 		    ifd->ifi_collisions);
 	if (tflag)
 		printf(" %4d", 0 /* XXX ifnet.if_timer */);
-	if (dflag)
-		printf(" %5llu", ifd->ifi_oqdrops);
 	putchar('\n');
 }
 
@@ -286,11 +310,12 @@ struct	iftot {
 	u_int64_t ift_ip;		/* input packets */
 	u_int64_t ift_ib;		/* input bytes */
 	u_int64_t ift_ie;		/* input errors */
+	u_int64_t ift_iq;		/* input qdrops */
 	u_int64_t ift_op;		/* output packets */
 	u_int64_t ift_ob;		/* output bytes */
 	u_int64_t ift_oe;		/* output errors */
+	u_int64_t ift_oq;		/* output qdrops */
 	u_int64_t ift_co;		/* collisions */
-	u_int64_t ift_dr;		/* drops */
 } ip_cur, ip_old, sum_cur, sum_old;
 
 volatile sig_atomic_t signalled;	/* set if alarm goes off "early" */
@@ -328,8 +353,6 @@ banner:
 		printf("%5.5s in %5.5s%5.5s out %5.5s %5.5s",
 		    ip_cur.ift_name, " ",
 		    ip_cur.ift_name, " ", " ");
-	if (dflag)
-		printf(" %5.5s", " ");
 
 	if (bflag)
 		printf("  %7.7s in %8.8s %6.6s out %5.5s",
@@ -337,17 +360,14 @@ banner:
 	else
 		printf("  %5.5s in %5.5s%5.5s out %5.5s %5.5s",
 		    "total", " ", "total", " ", " ");
-	if (dflag)
-		printf(" %5.5s", " ");
 	putchar('\n');
 	if (bflag)
 		printf("%10.10s %8.8s %10.10s %5.5s",
 		    "bytes", " ", "bytes", " ");
 	else
 		printf("%8.8s %5.5s %8.8s %5.5s %5.5s",
-		    "packets", "errs", "packets", "errs", "colls");
-	if (dflag)
-		printf(" %5.5s", "drops");
+		    "packets", if_errs->name,
+		    "packets", if_errs->name, "colls");
 
 	if (bflag)
 		printf("%10.10s %8.8s %10.10s %5.5s",
@@ -355,8 +375,6 @@ banner:
 	else
 		printf("  %8.8s %5.5s %8.8s %5.5s %5.5s",
 		    "packets", "errs", "packets", "errs", "colls");
-	if (dflag)
-		printf(" %5.5s", "drops");
 	putchar('\n');
 	fflush(stdout);
 	line = 0;
@@ -380,13 +398,12 @@ loop:
 	} else
 		printf("%8llu %5llu %8llu %5llu %5llu",
 		    ip_cur.ift_ip - ip_old.ift_ip,
-		    ip_cur.ift_ie - ip_old.ift_ie,
+		    if_errs->count(ip_cur.ift_ie - ip_old.ift_ie,
+		     ip_cur.ift_iq - ip_old.ift_iq),
 		    ip_cur.ift_op - ip_old.ift_op,
-		    ip_cur.ift_oe - ip_old.ift_oe,
+		    if_errs->count(ip_cur.ift_oe - ip_old.ift_oe,
+		     ip_cur.ift_oq - ip_old.ift_oq),
 		    ip_cur.ift_co - ip_old.ift_co);
-	if (dflag)
-		printf(" %5llu",
-		    ip_cur.ift_dr - ip_old.ift_dr);
 
 	ip_old = ip_cur;
 
@@ -394,21 +411,21 @@ loop:
 		if (hflag) {
 			fmt_scaled(sum_cur.ift_ib - sum_old.ift_ib, ibytes);
 			fmt_scaled(sum_cur.ift_ob - sum_old.ift_ob, obytes);
-			printf("  %10s %8.8s %10s %5.5s",
+			printf("%10s %8.8s %10s %5.5s",
 			    ibytes, " ", obytes, " ");
 		} else
-			printf("  %10llu %8.8s %10llu %5.5s",
+			printf("%10llu %8.8s %10llu %5.5s",
 			    sum_cur.ift_ib - sum_old.ift_ib, " ",
 			    sum_cur.ift_ob - sum_old.ift_ob, " ");
 	} else
-		printf("  %8llu %5llu %8llu %5llu %5llu",
+		printf("%8llu %5llu %8llu %5llu %5llu",
 		    sum_cur.ift_ip - sum_old.ift_ip,
-		    sum_cur.ift_ie - sum_old.ift_ie,
+		    if_errs->count(sum_cur.ift_ie - sum_old.ift_ie,
+		     sum_cur.ift_iq - sum_old.ift_iq),
 		    sum_cur.ift_op - sum_old.ift_op,
-		    sum_cur.ift_oe - sum_old.ift_oe,
+		    if_errs->count(sum_cur.ift_oe - sum_old.ift_oe,
+		     sum_cur.ift_oq - sum_old.ift_oq),
 		    sum_cur.ift_co - sum_old.ift_co);
-	if (dflag)
-		printf(" %5llu", sum_cur.ift_dr - sum_old.ift_dr);
 
 	sum_old = sum_cur;
 
@@ -547,21 +564,23 @@ fetchifs(void)
 				ip_cur.ift_ip = ifd->ifi_ipackets;
 				ip_cur.ift_ib = ifd->ifi_ibytes;
 				ip_cur.ift_ie = ifd->ifi_ierrors;
+				ip_cur.ift_iq = ifd->ifi_iqdrops;
 				ip_cur.ift_op = ifd->ifi_opackets;
 				ip_cur.ift_ob = ifd->ifi_obytes;
 				ip_cur.ift_oe = ifd->ifi_oerrors;
+				ip_cur.ift_oq = ifd->ifi_oqdrops;
 				ip_cur.ift_co = ifd->ifi_collisions;
-				ip_cur.ift_dr = ifd->ifi_oqdrops;
 			}
 
 			sum_cur.ift_ip += ifd->ifi_ipackets;
 			sum_cur.ift_ib += ifd->ifi_ibytes;
 			sum_cur.ift_ie += ifd->ifi_ierrors;
+			sum_cur.ift_iq += ifd->ifi_iqdrops;
 			sum_cur.ift_op += ifd->ifi_opackets;
 			sum_cur.ift_ob += ifd->ifi_obytes;
 			sum_cur.ift_oe += ifd->ifi_oerrors;
+			sum_cur.ift_oq += ifd->ifi_oqdrops;
 			sum_cur.ift_co += ifd->ifi_collisions;
-			sum_cur.ift_dr += ifd->ifi_oqdrops;
 			break;
 		}
 	}
@@ -571,11 +590,30 @@ fetchifs(void)
 		ip_cur.ift_ip = ifd->ifi_ipackets;
 		ip_cur.ift_ib = ifd->ifi_ibytes;
 		ip_cur.ift_ie = ifd->ifi_ierrors;
+		ip_cur.ift_iq = ifd->ifi_iqdrops;
 		ip_cur.ift_op = ifd->ifi_opackets;
 		ip_cur.ift_ob = ifd->ifi_obytes;
 		ip_cur.ift_oe = ifd->ifi_oerrors;
+		ip_cur.ift_oq = ifd->ifi_oqdrops;
 		ip_cur.ift_co = ifd->ifi_collisions;
-		ip_cur.ift_dr = ifd->ifi_oqdrops;
 	}
 	free(buf);
+}
+
+static uint64_t
+if_show_fails(uint64_t errors, uint64_t qdrops)
+{
+	return (errors + qdrops);
+}
+
+static uint64_t
+if_show_errors(uint64_t errors, uint64_t qdrops)
+{
+	return (errors);
+}
+
+static uint64_t
+if_show_qdrops(uint64_t errors, uint64_t qdrops)
+{
+	return (qdrops);
 }

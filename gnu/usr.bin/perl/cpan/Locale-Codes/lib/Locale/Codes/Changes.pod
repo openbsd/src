@@ -22,13 +22,196 @@ September, December). I will also check on request, so if a code
 changes that you use, feel free to contact me.  Any time there are new
 codes, I will add them to the module and release a new version.
 
-=head1 VERSION 3.41  (planned 2016-12-01; sbeck)
+=head1 VERSION 3.59  (planned 2018-12-01; sbeck)
 
-=head1 VERSION 3.40  (planned 2016-09-01; sbeck)
+=head1 VERSION 3.58  (planned 2018-09-01; sbeck)
 
-=head1 VERSION 3.39  (planned 2016-06-01; sbeck)
+=head1 VERSION 3.57  (planned 2018-06-01; sbeck)
 
-=head1 VERSION 3.38  (planned 2016-03-01; sbeck)
+=head1 VERSION 3.56  (planned 2018-03-01; sbeck)
+
+NEW CODE(s)
+
+=head1 VERSION 3.55  (2017-11-17; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item B<(*) Deprecated in core>
+
+Because correct usage of any of the Locale::Codes modules requires that
+they be kept up-to-date, I have long felt that it should not be distributed
+as a core module.  After discussion on the perl5-porters list, it is agreed,
+and the deprecation process has been started.
+
+Thanks to p5p-porters (especially Dagfinn Ilmari Mannsaker) for discussion
+and guidance.
+
+=item Changes from a github pull request applied
+
+A couple minor changes (updated .travis.yml to include newest versions of
+perl; and a couple changes to pod_coverage.t) reported by lancew on GitHub.
+
+=item Got rid of Build.PL
+
+Simplified things by only supporting one of Makefile.PL/Build.PL (and the latter
+has been removed from perl core some time ago).  RT 123572
+
+=item Fixed INSTALLDIRS
+
+The behavior of installing core modules changed in 5.12 a bit, and Makefile.PL
+now reflects that.  RT 123571
+
+=back
+
+=head1 VERSION 3.54  (2017-09-01; sbeck)
+
+NEW CODE(s)
+
+=head1 VERSION 3.53  (2017-07-25; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item Fixed the default error condition in legacy modules.
+
+With the addition of the OO module, better error handling was added (and it
+was on by default).  The non-OO (legacy) modules did not report errors, so
+code that uses them, would now behave differently if invalid data were
+passed in.
+
+I have turned off error handling by default in the legacy modules.  The
+show_errors method was added to each of the non-OO modules to report errors
+if desired.
+
+Reported by dmaestro on GitHub.
+
+=back
+
+=head1 VERSION 3.52  (2017-06-01; sbeck)
+
+NEW CODE(s)
+
+=head1 VERSION 3.51  (2017-04-10; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item Tests no longer require (.) in INC
+
+As of perl 5.25.11, (.) is being removed from INC.  I had to adjust the
+tests accordingly.
+
+=back
+
+=head1 VERSION 3.50  (2017-03-01; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item B<(*) Rewrote as OO module>
+
+The core module (Locale::Codes) is now an OO module that can be used
+directly.  All of the other modules (Locale::Codes::TYPE) are still
+the older functional interfaces and remain unchanged.
+
+=item B<Added some constants>
+
+Historically, the constant names used to identify the codesets have been
+named inconsistently.  The original constants for codesets are:
+
+   Type      Constants
+
+   country   LOCALE_CODE_*
+   currency  LOCALE_CURR_*
+   language  LOCALE_LANG_*
+
+   script    LOCALE_SCRIPT_*
+   langfam   LOCALE_LANGFAM_*
+   langvar   LOCALE_LANGVAR_*
+   langext   LOCALE_LANGEXT_*
+
+For consistencies sake, I have added some new codes (which are otherwise
+identical to the irregularly named codes):
+
+   country   LOCALE_COUNTRY_*
+   currency  LOCALE_CURRENCY_*
+   language  LOCALE_LANGUAGE_*
+
+Going forward, all constants will include the full name of the code type.
+
+=item Non-OO modules are now generated
+
+All non-OO modules are now automatically generated.  This will make it easier
+to keep them 100% consistent as well as making it easier to add new types
+of code sets.
+
+All of the documentation for them is also generated except for the description
+of the code sets.  That has been moved into the Locale::Codes::Types document.
+
+=item Fixed a bug where constants were not exported
+
+Some of the constants for some of the newer code sets were not exported properly.
+This was fixed when I started generating the non-OO modules, but was reported
+(after I had already fixed it in development) as RT 119741 .
+
+=back
+
+=head1 VERSION 3.42  (2016-11-30; sbeck)
+
+=over 4
+
+=item B<Added Czech republic aliases back in>
+
+Common Czech republic aliases disappeared from the standards, so I added
+them back in.  Rob Emery
+
+=back
+
+=head1 VERSION 3.41  (2016-11-18; sbeck)
+
+NEW CODE(s) (Jiri Bohac noted that they were needed so this was release a
+couple weeks earlier than planned)
+
+=head1 VERSION 3.40  (2016-09-01; sbeck)
+
+NEW CODE(s)
+
+=head1 VERSION 3.39  (2016-05-31; sbeck)
+
+No new codes (for the existing codesets).
+
+=over 4
+
+=item B<Added UN codes back in>
+
+The UN codes have been added back in as their own list of codes.
+Jarkko Hietaniemi
+
+=item B<Added GENC codes>
+
+The GENC codes have been added.  These are the new US Government codes
+that replace the FIPS-10 codes.  They are based on, but not identical to
+the ISO 3166 codes.
+
+=back
+
+=head1 VERSION 3.38  (2016-03-02; sbeck)
+
+NEW CODE(s)
+
+=over 4
+
+=item B<Tests reworked>
+
+Improved test suite (and made some changes to Codes.pm) based on Devel::Cover.
+Test suite now has 100% coverage.
+
+=back
 
 =head1 VERSION 3.37  (2015-12-01; sbeck)
 
@@ -307,8 +490,7 @@ Added Language Extension codes (langext) and Language Variation codes
 
 Added language codes from ISO 639-5
 
-Added language/script codes from the IANA language subtag
-registry
+Added language/script codes from the IANA language subtag registry
 
 =item B<Bug fixes>
 
@@ -772,7 +954,7 @@ Currently maintained by Sullivan Beck (sbeck@cpan.org).
 =head1 COPYRIGHT
 
    Copyright (c) 2001-2010 Neil Bowers
-   Copyright (c) 2010-2015 Sullivan Beck
+   Copyright (c) 2010-2018 Sullivan Beck
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

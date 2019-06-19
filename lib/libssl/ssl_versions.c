@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.3 2017/05/06 20:37:25 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.4 2018/11/06 01:40:23 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -94,7 +94,7 @@ ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 	 */
 
 	min_version = 0;
-	max_version = TLS1_2_VERSION;
+	max_version = TLS1_3_VERSION;
 
 	if ((s->internal->options & SSL_OP_NO_TLSv1) == 0)
 		min_version = TLS1_VERSION;
@@ -102,7 +102,11 @@ ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 		min_version = TLS1_1_VERSION;
 	else if ((s->internal->options & SSL_OP_NO_TLSv1_2) == 0)
 		min_version = TLS1_2_VERSION;
+	else if ((s->internal->options & SSL_OP_NO_TLSv1_3) == 0)
+		min_version = TLS1_3_VERSION;
 
+	if ((s->internal->options & SSL_OP_NO_TLSv1_3) && min_version < TLS1_3_VERSION)
+		max_version = TLS1_2_VERSION;
 	if ((s->internal->options & SSL_OP_NO_TLSv1_2) && min_version < TLS1_2_VERSION)
 		max_version = TLS1_1_VERSION;
 	if ((s->internal->options & SSL_OP_NO_TLSv1_1) && min_version < TLS1_1_VERSION)
@@ -171,7 +175,9 @@ ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
 		return 0;
 	}
 
-	if (peer_ver >= TLS1_2_VERSION)
+	if (peer_ver >= TLS1_3_VERSION)
+		shared_version = TLS1_3_VERSION;
+	else if (peer_ver >= TLS1_2_VERSION)
 		shared_version = TLS1_2_VERSION;
 	else if (peer_ver >= TLS1_1_VERSION)
 		shared_version = TLS1_1_VERSION;

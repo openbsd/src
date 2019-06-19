@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srvr.c,v 1.91 2017/10/12 15:52:50 jsing Exp $ */
+/* $OpenBSD: d1_srvr.c,v 1.95 2018/11/05 05:45:15 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -125,54 +125,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-static const SSL_METHOD_INTERNAL DTLSv1_server_method_internal_data = {
-	.version = DTLS1_VERSION,
-	.min_version = DTLS1_VERSION,
-	.max_version = DTLS1_VERSION,
-	.ssl_new = dtls1_new,
-	.ssl_clear = dtls1_clear,
-	.ssl_free = dtls1_free,
-	.ssl_accept = ssl3_accept,
-	.ssl_connect = ssl_undefined_function,
-	.ssl_read = ssl3_read,
-	.ssl_peek = ssl3_peek,
-	.ssl_write = ssl3_write,
-	.ssl_shutdown = dtls1_shutdown,
-	.ssl_pending = ssl3_pending,
-	.get_ssl_method = dtls1_get_server_method,
-	.get_timeout = dtls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
-	.ssl_renegotiate = ssl3_renegotiate,
-	.ssl_renegotiate_check = ssl3_renegotiate_check,
-	.ssl_get_message = dtls1_get_message,
-	.ssl_read_bytes = dtls1_read_bytes,
-	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl3_enc = &DTLSv1_enc_data,
-};
-
-static const SSL_METHOD DTLSv1_server_method_data = {
-	.ssl_dispatch_alert = dtls1_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = dtls1_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &DTLSv1_server_method_internal_data,
-};
-
-const SSL_METHOD *
-DTLSv1_server_method(void)
-{
-	return &DTLSv1_server_method_data;
-}
-
-const SSL_METHOD *
-dtls1_get_server_method(int ver)
-{
-	if (ver == DTLS1_VERSION)
-		return (DTLSv1_server_method());
-	return (NULL);
-}
-
 int
 dtls1_send_hello_verify_request(SSL *s)
 {
@@ -188,7 +140,7 @@ dtls1_send_hello_verify_request(SSL *s)
 			return 0;
 		}
 
-		if (!ssl3_handshake_msg_start_cbb(s, &cbb, &verify,
+		if (!ssl3_handshake_msg_start(s, &cbb, &verify,
 		    DTLS1_MT_HELLO_VERIFY_REQUEST))
 			goto err;
 		if (!CBB_add_u16(&verify, s->version))
@@ -197,7 +149,7 @@ dtls1_send_hello_verify_request(SSL *s)
 			goto err;
 		if (!CBB_add_bytes(&cookie, D1I(s)->cookie, D1I(s)->cookie_len))
 			goto err;
-		if (!ssl3_handshake_msg_finish_cbb(s, &cbb))
+		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
 		S3I(s)->hs.state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B;

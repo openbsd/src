@@ -83,14 +83,14 @@ class CreateDuringStepTestCase(TestBase):
 
     def create_during_step_base(self, step_cmd, step_stop_reason):
         """Test thread creation while using step-in."""
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = self.getBuildArtifact("a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Get the target process
         target = self.dbg.GetSelectedTarget()
 
         # This should create a breakpoint in the stepping thread.
-        self.bkpt = target.BreakpointCreateByLocation("main.cpp", self.breakpoint) 
+        self.bkpt = target.BreakpointCreateByLocation("main.cpp", self.breakpoint)
 
         # Run the program.
         self.runCmd("run", RUN_SUCCEEDED)

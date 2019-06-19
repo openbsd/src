@@ -9,7 +9,7 @@ require 5.006;
 our $Debug = 0;
 our $ExportLevel = 0;
 our $Verbose ||= 0;
-our $VERSION = '5.72';
+our $VERSION = '5.73';
 our (%Cache);
 
 sub as_heavy {
@@ -106,14 +106,14 @@ In module F<YourModule.pm>:
 
   package YourModule;
   require Exporter;
-  @ISA = qw(Exporter);
-  @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
+  our @ISA = qw(Exporter);
+  our @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
 
 or
 
   package YourModule;
   use Exporter 'import'; # gives you Exporter's import() method directly
-  @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
+  our @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
 
 In other files which wish to use C<YourModule>:
 
@@ -146,8 +146,8 @@ symbols can represent functions, scalars, arrays, hashes, or typeglobs.
 The symbols must be given by full name with the exception that the
 ampersand in front of a function is optional, e.g.
 
-    @EXPORT    = qw(afunc $scalar @array);   # afunc is a function
-    @EXPORT_OK = qw(&bfunc %hash *typeglob); # explicit prefix on &bfunc
+    our @EXPORT    = qw(afunc $scalar @array);   # afunc is a function
+    our @EXPORT_OK = qw(&bfunc %hash *typeglob); # explicit prefix on &bfunc
 
 If you are only exporting function names it is recommended to omit the
 ampersand, as the implementation is faster this way.
@@ -234,9 +234,9 @@ include :DEFAULT explicitly.
 
 e.g., F<Module.pm> defines:
 
-    @EXPORT      = qw(A1 A2 A3 A4 A5);
-    @EXPORT_OK   = qw(B1 B2 B3 B4 B5);
-    %EXPORT_TAGS = (T1 => [qw(A1 A2 B1 B2)], T2 => [qw(A1 A2 B3 B4)]);
+    our @EXPORT      = qw(A1 A2 A3 A4 A5);
+    our @EXPORT_OK   = qw(B1 B2 B3 B4 B5);
+    our %EXPORT_TAGS = (T1 => [qw(A1 A2 B1 B2)], T2 => [qw(A1 A2 B3 B4)]);
 
 Note that you cannot use tags in @EXPORT or @EXPORT_OK.
 
@@ -279,8 +279,8 @@ import function:
 
     package A;
 
-    @ISA = qw(Exporter);
-    @EXPORT_OK = qw($b);
+    our @ISA = qw(Exporter);
+    our @EXPORT_OK = qw($b);
 
     sub import
     {
@@ -293,8 +293,8 @@ inheritance, as it stands Exporter::import() will never get called.
 Instead, say the following:
 
     package A;
-    @ISA = qw(Exporter);
-    @EXPORT_OK = qw($b);
+    our @ISA = qw(Exporter);
+    our @EXPORT_OK = qw($b);
 
     sub import
     {
@@ -374,7 +374,7 @@ Since the symbols listed within C<%EXPORT_TAGS> must also appear in either
 C<@EXPORT> or C<@EXPORT_OK>, two utility functions are provided which allow
 you to easily add tagged sets of symbols to C<@EXPORT> or C<@EXPORT_OK>:
 
-  %EXPORT_TAGS = (foo => [qw(aa bb cc)], bar => [qw(aa cc dd)]);
+  our %EXPORT_TAGS = (foo => [qw(aa bb cc)], bar => [qw(aa cc dd)]);
 
   Exporter::export_tags('foo');     # add aa, bb and cc to @EXPORT
   Exporter::export_ok_tags('bar');  # add aa, cc and dd to @EXPORT_OK
@@ -391,7 +391,7 @@ useful to create the utility ":all" to simplify "use" statements.
 
 The simplest way to do this is:
 
-  %EXPORT_TAGS = (foo => [qw(aa bb cc)], bar => [qw(aa cc dd)]);
+ our  %EXPORT_TAGS = (foo => [qw(aa bb cc)], bar => [qw(aa cc dd)]);
 
   # add all the other ":class" tags to the ":all" class,
   # deleting duplicates
@@ -460,7 +460,7 @@ variables C<@EXPORT_OK>, C<@EXPORT>, C<@ISA>, etc.
   our @ISA = qw(Exporter);
   our @EXPORT_OK = qw(munge frobnicate);
 
-If backward compatibility for Perls under 5.6 is important,
+If backward compatibility for Perls B<under> 5.6 is important,
 one must write instead a C<use vars> statement.
 
   use vars qw(@ISA @EXPORT_OK);

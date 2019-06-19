@@ -23,8 +23,7 @@ class NativeProcessLinux;
 class NativeRegisterContextLinux_arm : public NativeRegisterContextLinux {
 public:
   NativeRegisterContextLinux_arm(const ArchSpec &target_arch,
-                                 NativeThreadProtocol &native_thread,
-                                 uint32_t concrete_frame_idx);
+                                 NativeThreadProtocol &native_thread);
 
   uint32_t GetRegisterSetCount() const override;
 
@@ -43,7 +42,7 @@ public:
   Status WriteAllRegisterValues(const lldb::DataBufferSP &data_sp) override;
 
   //------------------------------------------------------------------
-  // Hardware breakpoints/watchpoint mangement functions
+  // Hardware breakpoints/watchpoint management functions
   //------------------------------------------------------------------
 
   uint32_t NumSupportedHardwareBreakpoints() override;
@@ -141,7 +140,7 @@ private:
                            // occurred.
     lldb::addr_t real_addr; // Address value that should cause target to stop.
     uint32_t control;       // Breakpoint/watchpoint control value.
-    uint32_t refcount;      // Serves as enable/disable and refernce counter.
+    uint32_t refcount;      // Serves as enable/disable and reference counter.
   };
 
   struct DREG m_hbr_regs[16]; // Arm native linux hardware breakpoints

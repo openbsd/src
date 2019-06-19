@@ -16,6 +16,7 @@
 #include "llvm/DebugInfo/MSF/MSFCommon.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/DbiModuleDescriptor.h"
+#include "llvm/DebugInfo/PDB/Native/GSIStreamBuilder.h"
 #include "llvm/DebugInfo/PDB/Native/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
 #include "llvm/Support/BinaryItemStream.h"
@@ -25,16 +26,6 @@ using namespace llvm;
 using namespace llvm::codeview;
 using namespace llvm::msf;
 using namespace llvm::pdb;
-
-namespace llvm {
-template <> struct BinaryItemTraits<CVSymbol> {
-  static size_t length(const CVSymbol &Item) { return Item.RecordData.size(); }
-
-  static ArrayRef<uint8_t> bytes(const CVSymbol &Item) {
-    return Item.RecordData;
-  }
-};
-}
 
 static uint32_t calculateDiSymbolStreamSize(uint32_t SymbolByteSize,
                                             uint32_t C13Size) {
@@ -69,6 +60,11 @@ void DbiModuleDescriptorBuilder::setPdbFilePathNI(uint32_t NI) {
   PdbFilePathNI = NI;
 }
 
+void DbiModuleDescriptorBuilder::setFirstSectionContrib(
+    const SectionContrib &SC) {
+  Layout.SC = SC;
+}
+
 void DbiModuleDescriptorBuilder::addSymbol(CVSymbol Symbol) {
   Symbols.push_back(Symbol);
   // Symbols written to a PDB file are required to be 4 byte aligned.  The same
@@ -98,16 +94,8 @@ uint32_t DbiModuleDescriptorBuilder::calculateSerializedLength() const {
   return alignTo(L + M + O, sizeof(uint32_t));
 }
 
-template <typename T> struct Foo {
-  explicit Foo(T &&Answer) : Answer(Answer) {}
-
-  T Answer;
-};
-
-template <typename T> Foo<T> makeFoo(T &&t) { return Foo<T>(std::move(t)); }
-
 void DbiModuleDescriptorBuilder::finalize() {
-  Layout.SC.ModuleIndex = Layout.Mod;
+  Layout.SC.Imod = Layout.Mod;
   Layout.FileNameOffs = 0; // TODO: Fix this
   Layout.Flags = 0;        // TODO: Fix this
   Layout.C11Bytes = 0;

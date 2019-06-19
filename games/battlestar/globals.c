@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.c,v 1.15 2016/08/27 03:34:45 guenther Exp $	*/
+/*	$OpenBSD: globals.c,v 1.16 2019/05/09 20:19:23 tedu Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/03/21 15:07:32 cgd Exp $	*/
 
 /*
@@ -255,7 +255,6 @@ int     snooze;
 int     meetgirl;
 int     godready;
 int     wintime;
-int     wiz;
 int     tempwiz;
 int     matchlight;
 int     loved;

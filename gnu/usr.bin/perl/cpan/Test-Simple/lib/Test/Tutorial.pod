@@ -297,7 +297,7 @@ Now we can test bunches of dates by just adding them to
 C<%ICal_Dates>.  Now that it's less work to test with more dates, you'll
 be inclined to just throw more in as you think of them.
 Only problem is, every time we add to that we have to keep adjusting
-the L<< use Test::More tests => ## >> line.  That can rapidly get
+the C<< use Test::More tests => ## >> line.  That can rapidly get
 annoying.  There are ways to make this work better.
 
 First, we can calculate the plan dynamically using the C<plan()>
@@ -358,7 +358,7 @@ for you or for the next person who runs your test.
 
 =head2 Skipping tests
 
-Poking around in the existing Date::ICal tests, I found this in
+Poking around in the existing L<Date::ICal> tests, I found this in
 F<t/01sanity.t> [7]
 
     #!/usr/bin/perl -w

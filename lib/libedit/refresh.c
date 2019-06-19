@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.c,v 1.21 2017/07/26 12:10:56 schwarze Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.22 2018/10/11 15:19:09 millert Exp $	*/
 /*	$NetBSD: refresh.c,v 1.50 2016/05/02 16:35:17 christos Exp $	*/
 
 /*-
@@ -1083,7 +1083,7 @@ re_fastputc(EditLine *el, wint_t c)
 			el->el_display[i - 1] = lastline;
 		} else {
 			el->el_cursor.v++;
-			lastline = el->el_display[el->el_refresh.r_oldcv++];
+			lastline = el->el_display[++el->el_refresh.r_oldcv];
 		}
 		re__copy_and_pad(lastline, L"", el->el_terminal.t_size.h);
 

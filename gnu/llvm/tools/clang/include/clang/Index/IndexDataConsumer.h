@@ -1,4 +1,4 @@
-//===--- IndexDataConsumer.h - Abstract index data consumer ---------------===//
+//===--- IndexDataConsumer.h - Abstract index data consumer -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,6 +11,7 @@
 #define LLVM_CLANG_INDEX_INDEXDATACONSUMER_H
 
 #include "clang/Index/IndexSymbol.h"
+#include "clang/Lex/Preprocessor.h"
 
 namespace clang {
   class ASTContext;
@@ -36,26 +37,23 @@ public:
 
   virtual void initialize(ASTContext &Ctx) {}
 
+  virtual void setPreprocessor(std::shared_ptr<Preprocessor> PP) {}
+
   /// \returns true to continue indexing, or false to abort.
   virtual bool handleDeclOccurence(const Decl *D, SymbolRoleSet Roles,
                                    ArrayRef<SymbolRelation> Relations,
-                                   FileID FID, unsigned Offset,
-                                   ASTNodeInfo ASTNode);
+                                   SourceLocation Loc, ASTNodeInfo ASTNode);
 
   /// \returns true to continue indexing, or false to abort.
   virtual bool handleMacroOccurence(const IdentifierInfo *Name,
                                     const MacroInfo *MI, SymbolRoleSet Roles,
-                                    FileID FID, unsigned Offset);
+                                    SourceLocation Loc);
 
   /// \returns true to continue indexing, or false to abort.
   virtual bool handleModuleOccurence(const ImportDecl *ImportD,
-                                     SymbolRoleSet Roles,
-                                     FileID FID, unsigned Offset);
+                                     SymbolRoleSet Roles, SourceLocation Loc);
 
   virtual void finish() {}
-
-private:
-  virtual void _anchor();
 };
 
 } // namespace index

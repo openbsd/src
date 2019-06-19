@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 use strict;
@@ -64,11 +64,13 @@ expected_tie_calls(tied $c, 1, 2, 'chomping a ref');
 {
     my $outfile = tempfile();
     open my $h, ">$outfile" or die  "$0 cannot close $outfile: $!";
+    binmode $h;
     print $h "bar\n";
     close $h or die "$0 cannot close $outfile: $!";    
 
     $c = *foo;                                         # 1 write
     open $h, $outfile;
+    binmode $h;
     sysread $h, $c, 3, 7;                              # 1 read; 1 write
     is $c, "*main::bar", 'what sysread wrote';         # 1 read
     expected_tie_calls(tied $c, 2, 2, 'calling sysread with tied buf');
@@ -188,6 +190,29 @@ ok($wgot == 0, 'a plain *foo causes no set-magic');
      'mortal magic var from do passed to refgen';
   is tied $$x, undef,
      'mortal magic var from do is copied';
+}
+
+# For better or worse, the order in which concat args are fetched varies
+# depending on their number. In A .= B.C.D, they are fetched in the order
+# BCDA, while for A .= B, the order is AB (so for a single concat, the LHS
+# tied arg is FETCH()ed first). Make sure multiconcat preserves current
+# behaviour.
+
+package Increment {
+    sub TIESCALAR {  bless [0, 0] }
+    # returns a new value for each FETCH, until the first STORE
+    sub FETCH { my $x = $_[0][0]; $_[0][0]++ unless $_[0][1]; $x }
+    sub STORE { @{$_[0]} = ($_[1],1) }
+
+    my $t;
+    tie $t, 'Increment';
+    my $r;
+    $r = $t . $t;
+    ::is $r, '01', 'Increment 01';
+    $r = "-$t-$t-$t-";
+    ::is $r, '-2-3-4-', 'Increment 234';
+    $t .= "-$t-$t-$t-";
+    ::is $t, '8-5-6-7-', 'Increment 8567';
 }
 
 done_testing();

@@ -11,7 +11,7 @@ use strict;
 use warnings;
 
 use ExtUtils::MakeMaker;
-use Test::More;
+use Test::More tests => 6;
 
 my $mm = bless {}, "MM";
 
@@ -62,5 +62,3 @@ process_cmp
 #     NAME => q[Foo]
 #     PREREQ_PM => { Baz=>q[0.12], Foo::Bar=>q[1.23], Long=>q[1.45], Short=>q[0] }
 EXPECT
-
-done_testing();

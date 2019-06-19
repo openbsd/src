@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.8 2016/05/08 18:41:17 guenther Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.9 2019/03/15 05:42:38 kevlo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,10 +44,6 @@
  *	@(#)fpu_explode.c	8.1 (Berkeley) 6/11/93
  *	$NetBSD: fpu_explode.c,v 1.5 2000/08/03 18:32:08 eeh Exp $
  */
-
-#if 0
-__FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_explode.c,v 1.5 2002/05/11 21:20:04 jake Exp $");
-#endif
 
 /*
  * FPU subroutines: `explode' the machine's `packed binary' format numbers

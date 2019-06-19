@@ -7,7 +7,16 @@ use overload '""' => "as_string";
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5";
+$VERSION = "5.5001";
+
+{
+    package CPAN::Exception::RecursiveDependency::na;
+    use overload '""' => "as_string";
+    sub new { bless {}, shift };
+    sub as_string { "N/A" };
+}
+
+my $NA = CPAN::Exception::RecursiveDependency::na->new;
 
 # a module sees its distribution (no version)
 # a distribution sees its prereqs (which are module names) (usually with versions)
@@ -25,12 +34,13 @@ sub new {
         }
     }
     my $in_loop = 0;
-    for my $i (0..$#deps) {
+    my %mark;
+ DWALK: for my $i (0..$#deps) {
         my $x = $deps[$i]{name};
         $in_loop ||= $loop_starts_with && $x eq $loop_starts_with;
         my $xo = CPAN::Shell->expandany($x) or next;
         if ($xo->isa("CPAN::Module")) {
-            my $have = $xo->inst_version || "N/A";
+            my $have = $xo->inst_version || $NA;
             my($want,$d,$want_type);
             if ($i>0 and $d = $deps[$i-1]{name}) {
                 my $do = CPAN::Shell->expandany($d);
@@ -54,19 +64,37 @@ sub new {
             $deps[$i]{want_type} = $want_type;
             $deps[$i]{want} = $want;
             $deps[$i]{display_as} = "$x (have: $have; $want_type$want)";
-        } elsif ($xo->isa("CPAN::Distribution")) {
-            $deps[$i]{display_as} = $xo->pretty_id;
-            if ($in_loop) {
-                $xo->{make} = CPAN::Distrostatus->new("NO cannot resolve circular dependency");
-            } else {
-                $xo->{make} = CPAN::Distrostatus->new("NO one dependency ($loop_starts_with) is a circular dependency");
+            if ((! ref $have || !$have->isa('CPAN::Exception::RecursiveDependency::na'))
+                && CPAN::Version->vge($have, $want)) {
+                # https://rt.cpan.org/Ticket/Display.html?id=115340
+                undef $loop_starts_with;
+                last DWALK;
             }
+        } elsif ($xo->isa("CPAN::Distribution")) {
+            my $pretty = $deps[$i]{display_as} = $xo->pretty_id;
+            my $mark_as;
+            if ($in_loop) {
+                $mark_as = CPAN::Distrostatus->new("NO cannot resolve circular dependency");
+            } else {
+                $mark_as = CPAN::Distrostatus->new("NO one dependency ($loop_starts_with) is a circular dependency");
+            }
+            $mark{$pretty} = { xo => $xo, mark_as => $mark_as };
+        }
+    }
+    if ($loop_starts_with) {
+        while (my($k,$v) = each %mark) {
+            my $xo = $v->{xo};
+            $xo->{make} = $v->{mark_as};
             $xo->store_persistent_state; # otherwise I will not reach
                                          # all involved parties for
                                          # the next session
         }
     }
     bless { deps => \@deps, loop_starts_with => $loop_starts_with }, $class;
+}
+
+sub is_resolvable {
+    ! defined shift->{loop_starts_with};
 }
 
 sub as_string {

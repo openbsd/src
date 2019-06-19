@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.66 2017/08/04 02:01:46 rob Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.67 2019/05/08 22:00:55 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -371,6 +371,7 @@ time_t			 parse_date(FILE *);
 unsigned char		*parse_numeric_aggregate(FILE *, unsigned char *,
 			    int *, int, int, int);
 void			 convert_num(unsigned char *, char *, int, int);
+struct tree		*parse_domain_and_comp(FILE *);
 
 /* tree.c */
 pair			 cons(caddr_t, pair);

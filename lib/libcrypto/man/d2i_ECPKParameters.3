@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ECPKParameters.3,v 1.11 2018/03/23 00:09:11 schwarze Exp $
+.\"	$OpenBSD: d2i_ECPKParameters.3,v 1.12 2018/05/19 22:51:40 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: May 19 2018 $
 .Dt D2I_ECPKPARAMETERS 3
 .Os
 .Sh NAME
@@ -184,7 +184,7 @@
 .Fc
 .Ft int
 .Fo i2o_ECPublicKey
-.Fa "EC_KEY *val_in"
+.Fa "const EC_KEY *val_in"
 .Fa "unsigned char **des_out"
 .Fc
 .Ft int

@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs8.c,v 1.11 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: pkcs8.c,v 1.13 2018/08/24 22:56:45 jmc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -75,7 +75,6 @@ static struct {
 	int nocrypt;
 	char *outfile;
 	int outformat;
-	int p8_broken;
 	char *passargin;
 	char *passargout;
 	int pbe_nid;
@@ -106,13 +105,6 @@ pkcs8_opt_v2(char *arg)
 
 static struct option pkcs8_options[] = {
 	{
-		.name = "embed",
-		.desc = "Generate DSA keys in a broken format",
-		.type = OPTION_VALUE,
-		.value = PKCS8_EMBEDDED_PARAM,
-		.opt.value = &pkcs8_config.p8_broken,
-	},
-	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file (default stdin)",
@@ -121,8 +113,8 @@ static struct option pkcs8_options[] = {
 	},
 	{
 		.name = "inform",
-		.argname = "format",
-		.desc = "Input format (DER or PEM (default))",
+		.argname = "der | pem",
+		.desc = "Input format (default PEM)",
 		.type = OPTION_ARG_FORMAT,
 		.opt.value = &pkcs8_config.informat,
 	},
@@ -140,20 +132,6 @@ static struct option pkcs8_options[] = {
 		.opt.value = &pkcs8_config.iter,
 	},
 	{
-		.name = "nooct",
-		.desc = "Generate RSA keys in a broken format (no octet)",
-		.type = OPTION_VALUE,
-		.value = PKCS8_NO_OCTET,
-		.opt.value = &pkcs8_config.p8_broken,
-	},
-	{
-		.name = "nsdb",
-		.desc = "Generate DSA keys in the broken Netscape DB format",
-		.type = OPTION_VALUE,
-		.value = PKCS8_NS_DB,
-		.opt.value = &pkcs8_config.p8_broken,
-	},
-	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
@@ -162,8 +140,8 @@ static struct option pkcs8_options[] = {
 	},
 	{
 		.name = "outform",
-		.argname = "format",
-		.desc = "Output format (DER or PEM (default))",
+		.argname = "der | pem",
+		.desc = "Output format (default PEM)",
 		.type = OPTION_ARG_FORMAT,
 		.opt.value = &pkcs8_config.outformat,
 	},
@@ -208,11 +186,10 @@ static struct option pkcs8_options[] = {
 static void
 pkcs8_usage()
 {
-	fprintf(stderr, "usage: pkcs8 [-embed] [-in file] "
-	    "[-inform fmt] [-nocrypt]\n"
-	    "    [-noiter] [-nooct] [-nsdb] [-out file] [-outform fmt] "
-	    "[-passin src]\n"
-	    "    [-passout src] [-topk8] [-v1 alg] [-v2 alg]\n\n");
+	fprintf(stderr, "usage: pkcs8 [-in file] [inform der | pem] "
+	    "[-nocrypt] [-noiter]\n"
+	    "    [-out file] [-outform der | pem] [-passin arg]\n"
+	    "    [-passout arg] [-topk8] [-v1 alg] [-v2 alg]\n\n");
 	options_usage(pkcs8_options);
 }
 
@@ -238,7 +215,6 @@ pkcs8_main(int argc, char **argv)
 	pkcs8_config.iter = PKCS12_DEFAULT_ITER;
 	pkcs8_config.informat = FORMAT_PEM;
 	pkcs8_config.outformat = FORMAT_PEM;
-	pkcs8_config.p8_broken = PKCS8_OK;
 	pkcs8_config.pbe_nid = -1;
 
 	if (options_parse(argc, argv, pkcs8_options, NULL, NULL) != 0) {
@@ -278,8 +254,7 @@ pkcs8_main(int argc, char **argv)
 		    pkcs8_config.informat, 1, passin, "key");
 		if (!pkey)
 			goto end;
-		if (!(p8inf = EVP_PKEY2PKCS8_broken(pkey,
-		    pkcs8_config.p8_broken))) {
+		if (!(p8inf = EVP_PKEY2PKCS8(pkey))) {
 			BIO_printf(bio_err, "Error converting key\n");
 			ERR_print_errors(bio_err);
 			goto end;
@@ -368,32 +343,6 @@ pkcs8_main(int argc, char **argv)
 		BIO_printf(bio_err, "Error converting key\n");
 		ERR_print_errors(bio_err);
 		goto end;
-	}
-	if (p8inf->broken) {
-		BIO_printf(bio_err, "Warning: broken key encoding: ");
-		switch (p8inf->broken) {
-		case PKCS8_NO_OCTET:
-			BIO_printf(bio_err, "No Octet String in PrivateKey\n");
-			break;
-
-		case PKCS8_EMBEDDED_PARAM:
-			BIO_printf(bio_err,
-			    "DSA parameters included in PrivateKey\n");
-			break;
-
-		case PKCS8_NS_DB:
-			BIO_printf(bio_err,
-			    "DSA public key include in PrivateKey\n");
-			break;
-
-		case PKCS8_NEG_PRIVKEY:
-			BIO_printf(bio_err, "DSA private key value is negative\n");
-			break;
-
-		default:
-			BIO_printf(bio_err, "Unknown broken type\n");
-			break;
-		}
 	}
 	if (pkcs8_config.outformat == FORMAT_PEM)
 		PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL,

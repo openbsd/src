@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_asset.c,v 1.11 2015/01/16 06:40:15 deraadt Exp $ */
+/*	$OpenBSD: irr_asset.c,v 1.12 2018/09/17 13:35:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -26,12 +26,12 @@
 
 #include "irrfilter.h"
 
-int		 as_set_compare(struct as_set *, struct as_set *);
-struct as_set	*as_set_find(char *);
+int		as_set_compare(struct irr_as_set *, struct irr_as_set *);
+struct irr_as_set *as_set_find(char *);
 
-RB_HEAD(as_set_h, as_set)	as_set_h;
-RB_PROTOTYPE(as_set_h, as_set, entry, as_set_compare)
-RB_GENERATE(as_set_h, as_set, entry, as_set_compare)
+RB_HEAD(as_set_h, irr_as_set)	as_set_h;
+RB_PROTOTYPE(as_set_h, irr_as_set, entry, as_set_compare)
+RB_GENERATE(as_set_h, irr_as_set, entry, as_set_compare)
 
 enum obj_type {
 	T_UNKNOWN,
@@ -39,21 +39,21 @@ enum obj_type {
 	T_AUTNUM
 };
 
-struct as_set	*curass;
+struct irr_as_set	*curass;
 
-struct as_set	*asset_get(char *);
+struct irr_as_set *asset_get(char *);
 enum obj_type	 asset_membertype(char *);
-void		 asset_resolve(struct as_set *);
-int		 asset_merge(struct as_set *, struct as_set *);
-int		 asset_add_as(struct as_set *, char *);
-int		 asset_add_asset(struct as_set *, char *);
+void		 asset_resolve(struct irr_as_set *);
+int		 asset_merge(struct irr_as_set *, struct irr_as_set *);
+int		 asset_add_as(struct irr_as_set *, char *);
+int		 asset_add_asset(struct irr_as_set *, char *);
 
-struct as_set *
+struct irr_as_set *
 asset_expand(char *s)
 {
-	struct as_set	*ass;
-	char		*name;
-	size_t		 i;
+	struct irr_as_set	*ass;
+	char			*name;
+	size_t			 i;
 
 	if ((name = calloc(1, strlen(s) + 1)) == NULL)
 		err(1, "asset_expand calloc");
@@ -67,11 +67,11 @@ asset_expand(char *s)
 	return (ass);
 }
 
-struct as_set *
+struct irr_as_set *
 asset_get(char *name)
 {
-	struct as_set	*ass, *mas;
-	u_int		 i;
+	struct irr_as_set	*ass, *mas;
+	u_int			 i;
 
 	/*
 	 * the caching prevents the endless recursion.
@@ -152,10 +152,10 @@ asset_membertype(char *name)
 }
 
 void
-asset_resolve(struct as_set *ass)
+asset_resolve(struct irr_as_set *ass)
 {
-	struct as_set	*mas;
-	u_int		 i;
+	struct irr_as_set	*mas;
+	u_int			 i;
 
 	/*
 	 * traverse all as_set members and fold their
@@ -186,7 +186,7 @@ asset_resolve(struct as_set *ass)
 }
 
 int
-asset_merge(struct as_set *ass, struct as_set *mas)
+asset_merge(struct irr_as_set *ass, struct irr_as_set *mas)
 {
 	u_int	i, j;
 
@@ -239,7 +239,7 @@ asset_addmember(char *s)
 }
 
 int
-asset_add_as(struct as_set *ass, char *s)
+asset_add_as(struct irr_as_set *ass, char *s)
 {
 	void *p;
 
@@ -257,7 +257,7 @@ asset_add_as(struct as_set *ass, char *s)
 }
 
 int
-asset_add_asset(struct as_set *ass, char *s)
+asset_add_asset(struct irr_as_set *ass, char *s)
 {
 	void *p;
 
@@ -276,15 +276,15 @@ asset_add_asset(struct as_set *ass, char *s)
 
 /* RB helpers */
 int
-as_set_compare(struct as_set *a, struct as_set *b)
+as_set_compare(struct irr_as_set *a, struct irr_as_set *b)
 {
 	return (strcmp(a->name, b->name));
 }
 
-struct as_set *
+struct irr_as_set *
 as_set_find(char *name)
 {
-	struct as_set	s;
+	struct irr_as_set	s;
 
 	s.name = name;
 	return (RB_FIND(as_set_h, &as_set_h, &s));

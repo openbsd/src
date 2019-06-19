@@ -1,4 +1,4 @@
-/* $OpenBSD: ast.c,v 1.4 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: ast.c,v 1.7 2018/06/22 16:08:12 drahn Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -18,7 +18,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
+#include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
 #include <machine/pcb.h>
@@ -36,7 +39,7 @@ ast(struct trapframe *tf)
 {
 	struct proc *p = curcpu()->ci_curproc;
 
-	p->p_md.md_astpending = 0;
+	p->p_addr->u_pcb.pcb_tf = tf;
 
 	refreshcreds(p);
 	uvmexp.softs++;

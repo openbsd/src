@@ -14,7 +14,7 @@ for my $i (0 .. 255) {
         print "not ";
     }
     print "ok ";
-    print $i + 1;
+    print $i + 1 . " - native_to_unicode $i";
     print "\n";
 }
 
@@ -23,5 +23,4 @@ for my $i (0 .. 255) {
 if (utf8::unicode_to_native(utf8::native_to_unicode(100000)) != 100000) {
     print "not ";
 }
-print "ok ";
-print "257\n";
+print "ok 257 - native_to_unicode of large number\n";

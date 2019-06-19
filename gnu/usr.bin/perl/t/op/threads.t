@@ -2,14 +2,14 @@
 
 BEGIN {
      chdir 't' if -d 't';
-     @INC = '../lib';
      require './test.pl';
+     set_up_inc( '../lib' );
      $| = 1;
 
      skip_all_without_config('useithreads');
      skip_all_if_miniperl("no dynamic loading on miniperl, no threads");
 
-     plan(28);
+     plan(30);
 }
 
 use strict;
@@ -323,7 +323,7 @@ use threads;
     # During cloning 'look' at the object
     sub CLONE {
         foreach my $id (keys(%reg)) {
-            # This triggers SvREFCNT_inc() then SvREFCNT_dec() on the referant.
+            # This triggers SvREFCNT_inc() then SvREFCNT_dec() on the referent.
             my $obj = $reg{$id};
         }
     }
@@ -399,10 +399,28 @@ fresh_perl_is(
   'no crash when deleting $::{INC} in thread'
 );
 
-fresh_perl_is(<<'CODE', 'ok', 'no crash modifying extended array element');
+fresh_perl_is(<<'CODE', 'ok', {}, 'no crash modifying extended array element');
 use threads;
 my @a = 1;
 threads->create(sub { $#a = 1; $a[1] = 2; print qq/ok\n/ })->join;
+CODE
+
+fresh_perl_is(<<'CODE', '3.5,3.5', {}, 'RT #36664: Strange behavior of shared array');
+use threads;
+use threads::shared;
+
+our @List : shared = (1..5);
+my $v = 3.5;
+$v > 0;
+$List[3] = $v;
+printf "%s,%s", @List[(3)], $List[3];
+CODE
+
+fresh_perl_like(<<'CODE', qr/ok/, {}, 'RT #41121 binmode(STDOUT,":encoding(utf8) does not crash');
+use threads;
+binmode(STDOUT,":encoding(utf8)");
+threads->create(sub{});
+print "ok\n";
 CODE
 
 # EOF

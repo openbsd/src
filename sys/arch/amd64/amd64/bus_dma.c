@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.50 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.51 2019/06/09 12:52:04 kettenis Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -319,7 +319,8 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 			if (plen < sgsize)
 				sgsize = plen;
 
-			if (paddr > dma_constraint.ucr_high)
+			if (paddr > dma_constraint.ucr_high &&
+			    (map->_dm_flags & BUS_DMA_64BIT) == 0)
 				panic("Non dma-reachable buffer at paddr %#lx(raw)",
 				    paddr);
 
@@ -583,7 +584,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 */
 		pmap_extract(pmap, vaddr, (paddr_t *)&curaddr);
 
-		if (curaddr > dma_constraint.ucr_high)
+		if (curaddr > dma_constraint.ucr_high &&
+		    (map->_dm_flags & BUS_DMA_64BIT) == 0)
 			panic("Non dma-reachable buffer at curaddr %#lx(raw)",
 			    curaddr);
 

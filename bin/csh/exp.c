@@ -1,4 +1,4 @@
-/*	$OpenBSD: exp.c,v 1.16 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: exp.c,v 1.18 2018/09/18 06:56:09 deraadt Exp $	*/
 /*	$NetBSD: exp.c,v 1.6 1995/03/21 09:02:51 cgd Exp $	*/
 
 /*-

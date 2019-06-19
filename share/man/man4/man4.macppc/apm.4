@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.13 2016/02/27 20:57:32 natano Exp $
+.\"	$OpenBSD: apm.4,v 1.14 2019/01/23 22:33:43 jsg Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: February 27 2016 $
+.Dd $Mdocdate: January 23 2019 $
 .Dt APM 4 macppc
 .Os
 .Sh NAME
@@ -217,43 +217,7 @@ Power change event messages are suppressed.
 Power change event messages are suppressed unless the estimated
 battery life percentage changes.
 .El
-.Pp
-However, in no case will power status messages be displayed until the
-battery life goes below the percentage in the
-.Xr sysctl 8
-state variable
-.Dv machdep.apmwarn .
-Setting
-.Dv machdep.apmwarn
-to zero disables all warnings regardless of the
-.Dv APM_IOC_PRN_CTL
-setting.
 .El
-.Pp
-.Em NOT YET SUPPORTED on macppc:
-As noted above, the operation of the APM
-driver can be modified using the
-.Dv machdep.apmwarn
-.Xr sysctl 8
-variable.
-Another driver modifier is the
-.Dv machdep.apmhalt
-variable.
-When
-.Dv machdep.apmhalt
-is set to 1 the APM
-power down code is modified in a way necessary for correct operation on
-some systems, mainly
-.Tn IBM
-laptops.
-If your system does not power down when given the command
-.Li "halt -p"
-try setting
-.Dv machdep.apmhalt
-to 1 using
-.Xr sysctl 8 .
-The variable can be set at boot time in
-.Xr sysctl.conf 5 .
 .Sh FILES
 .Bl -tag -width "/dev/apmctlXXX"
 .It /dev/apm
@@ -270,11 +234,9 @@ An attempt to open the file when in use will fail, returning
 .Sh SEE ALSO
 .Xr adb 4 ,
 .Xr intro 4 ,
-.Xr sysctl.conf 5 ,
 .Xr apm 8 ,
 .Xr apmd 8 ,
-.Xr halt 8 ,
-.Xr sysctl 8
+.Xr halt 8
 .Sh HISTORY
 The
 .Nm

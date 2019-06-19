@@ -106,8 +106,8 @@ man1/xr.1
 /usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
 
 >>> badname
-/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
 /usr/obj/regress/usr.bin/mandoc/db/run/man/man1/second.1
+/usr/obj/regress/usr.bin/mandoc/db/run/man/man1/empty.1
 /usr/obj/regress/usr.bin/mandoc/db/run/man/man1/third.1
 
 >>> badsect0

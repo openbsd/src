@@ -21,8 +21,9 @@ BEGIN {
     set_up_inc('../lib');
 }
 
+our @global;
 
-plan tests => 527;  # Update this when adding/deleting tests.
+plan tests => 502;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -745,19 +746,6 @@ sub run_tests {
 			use re 'eval';
 			ok($ss =~ /^$cc/, fmt("code         $u->[2]", $ss, $cc));
 		    }
-
-                    SKIP:
-		    {
-                        skip("Encode not working on EBCDIC", 1) unless defined $enc;
-			# Poor man's "use encoding 'ascii'".
-			# This causes a different code path in S_const_str()
-			# to be used
-			no warnings 'deprecated';
-			local ${^ENCODING} = $enc;
-			use warnings 'deprecated';
-			use re 'eval';
-			ok($ss =~ /^$cc/, fmt("encode       $u->[2]", $ss, $cc));
-		    }
 		}
 	    }
 	}
@@ -1079,7 +1067,6 @@ sub run_tests {
     {
 	use Tie::Array;
 
-	use vars '@global';
 	local @global;
 	my @array;
 	my @refs = (0, \@array, 2);
@@ -1231,6 +1218,89 @@ sub run_tests {
 	is "$&", "foo"x1000 . "bar"x1000,
 	    'padtmp swiping does not affect "$a$b" =~ /(??{})/'
     }
+
+    {
+        # [perl #129140]
+        # this used to cause a double-free of the code_block struct
+        # when re-running the compilation after spotting utf8.
+        # This test doesn't catch it, but might panic, or fail under
+        # valgrind etc
+
+        my $s = '';
+        /$s(?{})\x{100}/ for '', '';
+        pass "RT #129140";
+    }
+
+    # RT #130650 code blocks could get double-freed during a pattern
+    # compilation croak
+
+    {
+        # this used to panic or give ASAN errors
+        eval 'qr/(?{})\6/';
+        like $@, qr/Reference to nonexistent group/, "RT #130650";
+    }
+
+    # RT #129881
+    # on exit from a pattern with multiple code blocks from different
+    # CVs, PL_comppad wasn't being restored correctly
+
+    sub {
+        # give first few pad slots known values
+        my ($x1, $x2, $x3, $x4, $x5) = 101..105;
+        # these vars are in a separate pad
+        my $r = qr/((?{my ($y1, $y2) = 201..202; 1;})A){2}X/;
+        # the first alt fails, causing a switch to this anon
+        # sub's pad
+        "AAA" =~ /$r|(?{my ($z1, $z2) = 301..302; 1;})A/;
+        is $x1, 101, "RT #129881: x1";
+        is $x2, 102, "RT #129881: x2";
+        is $x3, 103, "RT #129881: x3";
+    }->();
+
+
+    # RT #126697
+    # savestack wasn't always being unwound on EVAL failure
+    {
+        local our $i = 0;
+        my $max = 0;
+
+        'ABC' =~ m{
+            \A
+            (?:
+                (?: AB | A | BC )
+                (?{
+                    local $i = $i + 1;
+                    $max = $i if $max < $i;
+                })
+            )*
+            \z
+        }x;
+        is $max, 2, "RT #126697";
+    }
+
+    # RT #132772
+    #
+    # Ensure that optimisation of OP_CONST into OP_MULTICONCAT doesn't
+    # leave any freed ops in the execution path. This is is associated
+    # with rpeep() being called before optimize_optree(), which causes
+    # gv/rv2sv to be prematurely optimised into gvsv, confusing
+    # S_maybe_multiconcat when it tries to reorganise a concat subtree
+    # into a multiconcat list
+
+    {
+        my $a = "a";
+        local $b = "b"; # not lexical, so optimised to OP_GVSV
+        local $_ = "abc";
+        ok /^a(??{ $b."c" })$/,  "RT #132772 - compile time";
+        ok /^$a(??{ $b."c" })$/, "RT #132772 - run time";
+        my $qr = qr/^a(??{ $b."c" })$/;
+        ok /$qr/,  "RT #132772 - compile time time qr//";
+        $qr = qr/(??{ $b."c" })$/;
+        ok /^a$qr$/,  "RT #132772 -  compile time time qr// compound";
+        $qr = qr/$a(??{ $b."c" })$/;
+        ok /^$qr$/,  "RT #132772 -  run time time qr//";
+    }
+
 
 } # End of sub run_tests
 

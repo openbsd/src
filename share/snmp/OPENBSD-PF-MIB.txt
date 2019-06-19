@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.5 2015/06/10 10:03:59 mikeb Exp $
+-- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.6 2018/06/19 10:08:45 mpi Exp $
 --
 -- Copyright (c) 2004-2013 Joel Knight <knight.joel@gmail.com>
 -- 
@@ -197,7 +197,7 @@ pfCntProtoCksum OBJECT-TYPE
     MAX-ACCESS  read-only
     STATUS      current
     DESCRIPTION
-	"The number of packets that were dropped due to memory limitations."
+	"The number of packets that were dropped due to TCP checksum failures."
     ::= { pfCounters 10 }
 
 pfCntStateMismatch OBJECT-TYPE

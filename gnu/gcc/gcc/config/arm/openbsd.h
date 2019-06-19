@@ -76,7 +76,8 @@ Boston, MA 02111-1307, USA.  */
    %{!static:-Bdynamic} \
    %{rdynamic:-export-dynamic} \
    %{assert*} \
-   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
+   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so} \
+   %{!nostdlib:-L/usr/lib}"
 #endif
 
 #undef SUBTARGET_EXTRA_ASM_SPEC

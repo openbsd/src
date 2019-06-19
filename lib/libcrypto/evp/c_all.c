@@ -1,4 +1,4 @@
-/* $OpenBSD: c_all.c,v 1.22 2018/03/17 16:20:01 beck Exp $ */
+/* $OpenBSD: c_all.c,v 1.26 2019/03/17 18:07:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,33 +152,39 @@ OpenSSL_add_all_ciphers_internal(void)
 #ifndef OPENSSL_NO_AES
 	EVP_add_cipher(EVP_aes_128_ecb());
 	EVP_add_cipher(EVP_aes_128_cbc());
+	EVP_add_cipher(EVP_aes_128_ccm());
 	EVP_add_cipher(EVP_aes_128_cfb());
 	EVP_add_cipher(EVP_aes_128_cfb1());
 	EVP_add_cipher(EVP_aes_128_cfb8());
 	EVP_add_cipher(EVP_aes_128_ofb());
 	EVP_add_cipher(EVP_aes_128_ctr());
 	EVP_add_cipher(EVP_aes_128_gcm());
+	EVP_add_cipher(EVP_aes_128_wrap());
 	EVP_add_cipher(EVP_aes_128_xts());
 	EVP_add_cipher_alias(SN_aes_128_cbc, "AES128");
 	EVP_add_cipher_alias(SN_aes_128_cbc, "aes128");
 	EVP_add_cipher(EVP_aes_192_ecb());
 	EVP_add_cipher(EVP_aes_192_cbc());
+	EVP_add_cipher(EVP_aes_192_ccm());
 	EVP_add_cipher(EVP_aes_192_cfb());
 	EVP_add_cipher(EVP_aes_192_cfb1());
 	EVP_add_cipher(EVP_aes_192_cfb8());
 	EVP_add_cipher(EVP_aes_192_ofb());
 	EVP_add_cipher(EVP_aes_192_ctr());
 	EVP_add_cipher(EVP_aes_192_gcm());
+	EVP_add_cipher(EVP_aes_192_wrap());
 	EVP_add_cipher_alias(SN_aes_192_cbc, "AES192");
 	EVP_add_cipher_alias(SN_aes_192_cbc, "aes192");
 	EVP_add_cipher(EVP_aes_256_ecb());
 	EVP_add_cipher(EVP_aes_256_cbc());
+	EVP_add_cipher(EVP_aes_256_ccm());
 	EVP_add_cipher(EVP_aes_256_cfb());
 	EVP_add_cipher(EVP_aes_256_cfb1());
 	EVP_add_cipher(EVP_aes_256_cfb8());
 	EVP_add_cipher(EVP_aes_256_ofb());
 	EVP_add_cipher(EVP_aes_256_ctr());
 	EVP_add_cipher(EVP_aes_256_gcm());
+	EVP_add_cipher(EVP_aes_256_wrap());
 	EVP_add_cipher(EVP_aes_256_xts());
 	EVP_add_cipher_alias(SN_aes_256_cbc, "AES256");
 	EVP_add_cipher_alias(SN_aes_256_cbc, "aes256");
@@ -223,6 +229,16 @@ OpenSSL_add_all_ciphers_internal(void)
 	EVP_add_cipher(EVP_gost2814789_ecb());
 	EVP_add_cipher(EVP_gost2814789_cfb64());
 	EVP_add_cipher(EVP_gost2814789_cnt());
+#endif
+
+#ifndef OPENSSL_NO_SM4
+	EVP_add_cipher(EVP_sm4_ecb());
+	EVP_add_cipher(EVP_sm4_cbc());
+	EVP_add_cipher(EVP_sm4_cfb());
+	EVP_add_cipher(EVP_sm4_ofb());
+	EVP_add_cipher(EVP_sm4_ctr());
+	EVP_add_cipher_alias(SN_sm4_cbc, "SM4");
+	EVP_add_cipher_alias(SN_sm4_cbc, "sm4");
 #endif
 }
 
@@ -285,6 +301,9 @@ OpenSSL_add_all_digests_internal(void)
 #ifndef OPENSSL_NO_SHA512
 	EVP_add_digest(EVP_sha384());
 	EVP_add_digest(EVP_sha512());
+#endif
+#ifndef OPENSSL_NO_SM3
+	EVP_add_digest(EVP_sm3());
 #endif
 #ifndef OPENSSL_NO_WHIRLPOOL
 	EVP_add_digest(EVP_whirlpool());

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.34 2017/05/31 03:45:15 jsg Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.35 2018/10/02 02:05:34 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -23,6 +23,18 @@
 #define RT2860_PCI_MCUCTRL		0x0008
 #define RT2860_PCI_SYSCTRL		0x000c
 #define RT2860_PCIE_JTAG		0x0010
+
+/* RT3290 registers */
+#define RT3290_CMB_CTRL			0x0020
+#define RT3290_EFUSE_CTRL		0x0024
+#define RT3290_EFUSE_DATA3		0x0028
+#define RT3290_EFUSE_DATA2		0x002c
+#define RT3290_EFUSE_DATA1		0x0030
+#define RT3290_EFUSE_DATA0		0x0034
+#define RT3290_OSC_CTRL			0x0038
+#define RT3290_COEX_CFG0		0x0040
+#define RT3290_PLL_CTRL			0x0050
+#define RT3290_WLAN_CTRL		0x0080
 
 #define RT3090_AUX_CTRL			0x010c
 
@@ -223,6 +235,41 @@
 #define RT2860_SHIFT_D	2
 #define RT2860_Q	(1 << 3)
 #define RT2860_SHIFT_Q	3
+
+/* possible flags for register RT3290_CMB_CTRL */
+#define RT3290_XTAL_RDY		(1U << 22)
+#define RT3290_PLL_LD		(1U << 23)
+#define RT3290_LDO_CORE_LEVEL	(0xf << 24)
+#define RT3290_LDO_BGSEL	(3 << 29)
+#define RT3290_LDO3_EN		(1U << 30)
+#define RT3290_LDO0_EN		(1U << 31)
+
+/* possible flags for register RT3290_OSC_CTRL */
+#define RT3290_OSC_REF_CYCLE	0x1fff
+#define RT3290_OSC_CAL_CNT	(0xfff << 16)
+#define RT3290_OSC_CAL_ACK	(1U << 28)
+#define RT3290_OSC_CLK_32K_VLD	(1U << 29)
+#define RT3290_OSC_CAL_REQ	(1U << 30)
+#define RT3290_ROSC_EN		(1U << 31)
+
+/* possible flags for register RT3290_COEX_CFG0 */
+#define RT3290_CFG0_DEF		(0x59 << 24)
+
+/* possible flags for register RT3290_PLL_CTRL */
+#define RT3290_PLL_CONTROL	 	(7 << 16)
+
+/* possible flags for register RT3290_WLAN_CTRL */
+#define RT3290_WLAN_EN			(1U << 0)
+#define RT3290_WLAN_CLK_EN		(1U << 1)
+#define RT3290_WLAN_RSV1		(1U << 2)
+#define RT3290_WLAN_RESET		(1U << 3)
+#define RT3290_PCIE_APP0_CLK_REQ	(1U << 4)
+#define RT3290_FRC_WL_ANT_SET		(1U << 5)
+#define RT3290_INV_TR_SW0		(1U << 6)
+#define RT3290_RADIO_EN			(1U << 8)
+#define RT3290_GPIO_IN_ALL		(0xff << 8)
+#define RT3290_GPIO_OUT_ALL		(0xff << 16)
+#define RT3290_GPIO_OUT_OE_ALL		(0xff << 24)
 
 /* possible flags for registers INT_STATUS/INT_MASK */
 #define RT2860_TX_COHERENT	(1 << 17)
@@ -925,6 +972,7 @@ struct rt2860_rxwi {
 #define RT3070_RF_3320	0x000b	/* 1T1R */
 #define RT3070_RF_3053	0x000d	/* dual-band 3T3R */
 #define RT5592_RF_5592	0x000f	/* dual-band 2T2R */
+#define RT3290_RF_3290	0x3290	/* 1T1R */
 #define RT5390_RF_5360	0x5360	/* 1T1R */
 #define RT5390_RF_5370	0x5370	/* 1T1R */
 #define RT5390_RF_5372	0x5372	/* 2T2R */
@@ -1168,6 +1216,24 @@ static const struct rt2860_rate {
 	{ 103, 0x00 },	\
 	{ 105, 0x05 },	\
 	{ 106, 0x35 }
+
+#define RT3290_DEF_BBP	\
+	{  31, 0x08 },	\
+	{  68, 0x0b },	\
+	{  73, 0x13 },	\
+	{  75, 0x46 },	\
+	{  76, 0x28 },	\
+	{  77, 0x59 },	\
+	{  82, 0x62 },	\
+	{  83, 0x7a },	\
+	{  84, 0x9a },	\
+	{  86, 0x38 },	\
+	{  91, 0x04 },	\
+	{ 103, 0xc0 },	\
+	{ 104, 0x92 },	\
+	{ 105, 0x3c },	\
+	{ 106, 0x03 },	\
+	{ 128, 0x12 }
 
 #define RT5390_DEF_BBP	\
 	{  31, 0x08 },	\
@@ -1468,6 +1534,53 @@ static const struct rt2860_rate {
 	{ 24, 0x16 },	\
 	{ 25, 0x01 },	\
 	{ 29, 0x1f }
+
+#define RT3290_DEF_RF	\
+	{  1, 0x0f },	\
+	{  2, 0x80 },	\
+	{  3, 0x08 },	\
+	{  4, 0x00 },	\
+	{  6, 0xa0 },	\
+	{  8, 0xf3 },	\
+	{  9, 0x02 },	\
+	{ 10, 0x53 },	\
+	{ 11, 0x4a },	\
+	{ 12, 0x46 },	\
+	{ 13, 0x9f },	\
+	{ 18, 0x03 },	\
+	{ 22, 0x20 },	\
+	{ 25, 0x80 },	\
+	{ 27, 0x09 },	\
+	{ 29, 0x10 },	\
+	{ 30, 0x10 },	\
+	{ 31, 0x80 },	\
+	{ 32, 0x80 },	\
+	{ 33, 0x00 },	\
+	{ 34, 0x05 },	\
+	{ 35, 0x12 },	\
+	{ 36, 0x00 },	\
+	{ 38, 0x85 },	\
+	{ 39, 0x1b },	\
+	{ 40, 0x0b },	\
+	{ 41, 0xbb },	\
+	{ 42, 0xd5 },	\
+	{ 43, 0x7b },	\
+	{ 44, 0x0e },	\
+	{ 45, 0xa2 },	\
+	{ 46, 0x73 },	\
+	{ 47, 0x00 },	\
+	{ 48, 0x10 },	\
+	{ 49, 0x98 },	\
+	{ 52, 0x38 },	\
+	{ 53, 0x00 },	\
+	{ 54, 0x78 },	\
+	{ 55, 0x43 },	\
+	{ 56, 0x02 },	\
+	{ 57, 0x80 },	\
+	{ 58, 0x7f },	\
+	{ 59, 0x09 },	\
+	{ 60, 0x45 },	\
+	{ 61, 0xc1 }
 
 #define RT3572_DEF_RF	\
 	{  0, 0x70 },	\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.87 2017/10/25 12:09:07 mpi Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.92 2019/01/22 09:25:29 krw Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -74,7 +74,6 @@
  */
 
 
-#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -98,7 +97,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <paths.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -118,7 +116,6 @@ static int32_t thiszone;	/* time difference with gmt */
 static int rtsock = -1;
 static int repeat = 0;
 
-char ntop_buf[INET6_ADDRSTRLEN];	/* inet_ntop() */
 char host_buf[NI_MAXHOST];		/* getnameinfo() */
 char ifix_buf[IFNAMSIZ];		/* if_indextoname() */
 
@@ -138,13 +135,6 @@ void ifinfo(char *);
 static char *sec2str(time_t);
 static void ts_print(const struct timeval *);
 static int rdomain;
-
-static char *rtpref_str[] = {
-	"medium",		/* 00 */
-	"high",			/* 01 */
-	"rsv",			/* 10 */
-	"low"			/* 11 */
-};
 
 int
 main(int argc, char *argv[])
@@ -298,10 +288,10 @@ getsocket(void)
 
 	if (rtsock >= 0)
 		return;
-	rtsock = socket(PF_ROUTE, SOCK_RAW, 0);
+	rtsock = socket(AF_ROUTE, SOCK_RAW, 0);
 	if (rtsock < 0)
 		err(1, "routing socket");
-	if (setsockopt(rtsock, PF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
+	if (setsockopt(rtsock, AF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
 		err(1, "ROUTE_TABLEFILTER");
 
 	if (pledge("stdio dns", NULL) == -1)
@@ -354,6 +344,7 @@ set(int argc, char **argv)
 		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
 	}
 #endif
+	freeaddrinfo(res);
 	ea = (u_char *)LLADDR(&sdl_m);
 	if (ndp_ether_aton(eaddr, ea) == 0)
 		sdl_m.sdl_alen = 6;
@@ -428,6 +419,7 @@ get(char *host)
 		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
 	}
 #endif
+	freeaddrinfo(res);
 	dump(&sin->sin6_addr, 0);
 	if (found_entry == 0) {
 		getnameinfo((struct sockaddr *)sin, sin->sin6_len, host_buf,
@@ -470,7 +462,7 @@ delete(char *host)
 		    htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
 	}
 #endif
-
+	freeaddrinfo(res);
 	if (rtget(&sin, &sdl)) {
 		errx(1, "RTM_GET(%s) failed", host);
 		/* NOTREACHED */
@@ -884,7 +876,7 @@ void
 ifinfo(char *ifname)
 {
 	struct in6_ndireq nd;
-	int i, s;
+	int s;
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		err(1, "socket");

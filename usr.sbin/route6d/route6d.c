@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.93 2018/01/16 10:33:55 mpi Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.98 2019/01/22 09:25:29 krw Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -567,6 +567,7 @@ init(void)
 		/*NOTREACHED*/
 	}
 
+	freeaddrinfo(res);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
 	hints.ai_socktype = SOCK_DGRAM;
@@ -580,12 +581,13 @@ init(void)
 		/*NOTREACHED*/
 	}
 	memcpy(&ripsin, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
 
 	pfd[0].fd = ripsock;
 	pfd[0].events = POLLIN;
 
 	if (nflag == 0) {
-		if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
+		if ((rtsock = socket(AF_ROUTE, SOCK_RAW, 0)) < 0) {
 			fatal("route socket");
 			/*NOTREACHED*/
 		}
@@ -1602,11 +1604,9 @@ rtrecv(void)
 	case RTM_ADD:
 		rtable++;
 		return;
-	case RTM_LOSING:
 	case RTM_MISS:
 	case RTM_RESOLVE:
 	case RTM_GET:
-	case RTM_LOCK:
 		/* nothing to be done here */
 		log_debug("\tnothing to be done, ignored");
 		return;
@@ -1640,11 +1640,9 @@ rtrecv(void)
 	case RTM_NEWADDR:
 	case RTM_IFINFO:
 	case RTM_ADD:
-	case RTM_LOSING:
 	case RTM_MISS:
 	case RTM_RESOLVE:
 	case RTM_GET:
-	case RTM_LOCK:
 		/* should already be handled */
 		fatalx("rtrecv: never reach here");
 		/*NOTREACHED*/
@@ -2256,10 +2254,8 @@ do { \
 	RTTYPE("DELETE", RTM_DELETE);
 	RTTYPE("CHANGE", RTM_CHANGE);
 	RTTYPE("GET", RTM_GET);
-	RTTYPE("LOSING", RTM_LOSING);
 	RTTYPE("REDIRECT", RTM_REDIRECT);
 	RTTYPE("MISS", RTM_MISS);
-	RTTYPE("LOCK", RTM_LOCK);
 	RTTYPE("RESOLVE", RTM_RESOLVE);
 	RTTYPE("NEWADDR", RTM_NEWADDR);
 	RTTYPE("DELADDR", RTM_DELADDR);

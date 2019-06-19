@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.32 2016/11/21 17:21:33 mikeb Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.34 2019/04/10 09:55:02 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -169,7 +169,6 @@ struct tx_ring {
 	union ixgbe_adv_tx_desc	*tx_base;
 	struct ixgbe_tx_buf	*tx_buffers;
 	struct ixgbe_dma_alloc	txdma;
-	volatile uint32_t	tx_avail;
 	uint32_t		next_avail_desc;
 	uint32_t		next_to_clean;
 	enum {
@@ -252,6 +251,7 @@ struct ix_softc {
 	uint32_t		link_speed;
 	bool			link_up;
 	uint32_t		linkvec;
+	struct rwlock		sfflock;
 
 	/* Mbuf cluster size */
 	uint32_t		rx_mbuf_sz;

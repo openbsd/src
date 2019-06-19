@@ -123,7 +123,6 @@ Deprecated.  Use C<GIMME_V> instead.
 				/*  On OP_NULL, saw a "do". */
 				/*  On OP_EXISTS, treat av as av, not avhv.  */
 				/*  On OP_(ENTER|LEAVE)EVAL, don't clear $@ */
-                                /*  On pushre, rx is used as part of split, e.g. split " " */
 				/*  On regcomp, "use re 'eval'" was in scope */
 				/*  On RV2[ACGHS]V, don't create GV--in
 				    defined()*/
@@ -154,7 +153,7 @@ Deprecated.  Use C<GIMME_V> instead.
 /* There is no room in op_flags for this one, so it has its own bit-
    field member (op_folded) instead.  The flag is only used to tell
    op_convert_list to set op_folded.  */
-#define OPf_FOLDED      1<<16
+#define OPf_FOLDED      (1<<16)
 
 /* old names; don't use in new code, but don't break them, either */
 #define OPf_LIST	OPf_WANT_LIST
@@ -189,6 +188,8 @@ typedef union  {
     SV        *sv;
     IV        iv;
     UV        uv;
+    char      *pv;
+    SSize_t   ssize;
 } UNOP_AUX_item;
 
 #ifdef USE_ITHREADS
@@ -261,11 +262,8 @@ struct pmop {
     U32         op_pmflags;
     union {
 	OP *	op_pmreplroot;		/* For OP_SUBST */
-#ifdef USE_ITHREADS
-	PADOFFSET  op_pmtargetoff;	/* For OP_PUSHRE */
-#else
-	GV *	op_pmtargetgv;
-#endif
+	PADOFFSET op_pmtargetoff;	/* For OP_SPLIT lex ary or thr GV */
+	GV *	op_pmtargetgv;	        /* For OP_SPLIT non-threaded GV */
     }	op_pmreplrootu;
     union {
 	OP *	op_pmreplstart;	/* Only used in OP_SUBST */
@@ -330,6 +328,10 @@ struct pmop {
  * enough, move PMf_BASE_SHIFT down (if possible) and add the new bit at the
  * other end instead; this preserves binary compatibility. */
 #define PMf_BASE_SHIFT (_RXf_PMf_SHIFT_NEXT+2)
+
+/* Set by the parser if it discovers an error, so the regex shouldn't be
+ * compiled */
+#define PMf_HAS_ERROR	(1U<<(PMf_BASE_SHIFT+4))
 
 /* 'use re "taint"' in scope: taint $1 etc. if target tainted */
 #define PMf_RETAINT	(1U<<(PMf_BASE_SHIFT+5))
@@ -479,6 +481,24 @@ struct loop {
 #define kLOOP		cLOOPx(kid)
 
 
+typedef enum {
+    OPclass_NULL,     /*  0 */
+    OPclass_BASEOP,   /*  1 */
+    OPclass_UNOP,     /*  2 */
+    OPclass_BINOP,    /*  3 */
+    OPclass_LOGOP,    /*  4 */
+    OPclass_LISTOP,   /*  5 */
+    OPclass_PMOP,     /*  6 */
+    OPclass_SVOP,     /*  7 */
+    OPclass_PADOP,    /*  8 */
+    OPclass_PVOP,     /*  9 */
+    OPclass_LOOP,     /* 10 */
+    OPclass_COP,      /* 11 */
+    OPclass_METHOP,   /* 12 */
+    OPclass_UNOP_AUX  /* 13 */
+} OPclass;
+
+
 #ifdef USE_ITHREADS
 #  define	cGVOPx_gv(o)	((GV*)PAD_SVl(cPADOPx(o)->op_padix))
 #  ifndef PERL_CORE
@@ -502,7 +522,7 @@ struct loop {
 #  define	cMETHOPx_rclass(v) (cMETHOPx(v)->op_rclass_sv)
 #endif
 
-#  define	cMETHOPx_meth(v)	cSVOPx_sv(v)
+#define	cMETHOPx_meth(v)	cSVOPx_sv(v)
 
 #define	cGVOP_gv		cGVOPx_gv(PL_op)
 #define	cGVOPo_gv		cGVOPx_gv(o)
@@ -606,6 +626,15 @@ struct loop {
 #if defined(PERL_IN_PERLY_C) || defined(PERL_IN_OP_C) || defined(PERL_IN_TOKE_C)
 #define ref(o, type) doref(o, type, TRUE)
 #endif
+
+
+/* translation table attached to OP_TRANS/OP_TRANSR ops */
+
+typedef struct {
+    Size_t size; /* number of entries in map[], not including final slot */
+    short map[1]; /* Unwarranted chumminess */
+} OPtrans_map;
+
 
 /*
 =head1 Optree Manipulation Functions
@@ -913,7 +942,10 @@ Return a short description of the provided OP.
 =for apidoc Am|U32|OP_CLASS|OP *o
 Return the class of the provided OP: that is, which of the *OP
 structures it uses.  For core ops this currently gets the information out
-of C<PL_opargs>, which does not always accurately reflect the type used.
+of C<PL_opargs>, which does not always accurately reflect the type used;
+in v5.26 onwards, see also the function C<L</op_class>> which can do a better
+job of determining the used type.
+
 For custom ops the type is returned from the registration, and it is up
 to the registree to ensure it is accurate.  The value returned will be
 one of the C<OA_>* constants from F<op.h>.
@@ -1077,9 +1109,13 @@ C<sib> is non-null. For a higher-level interface, see C<L</op_sibling_splice>>.
 #define MDEREF_SHIFT           7
 
 #if defined(PERL_IN_DOOP_C) || defined(PERL_IN_PP_C)
-static const char * const deprecated_above_ff_msg
-    = "Use of strings with code points over 0xFF as arguments to "
-      "%s operator is deprecated";
+#   define FATAL_ABOVE_FF_MSG                                       \
+      "Use of strings with code points over 0xFF as arguments to "  \
+      "%s operator is not allowed"
+#  define DEPRECATED_ABOVE_FF_MSG                                   \
+      "Use of strings with code points over 0xFF as arguments to "  \
+      "%s operator is deprecated. This will be a fatal error in "   \
+      "Perl 5.32"
 #endif
 
 

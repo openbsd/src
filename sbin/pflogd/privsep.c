@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.30 2017/09/09 13:02:52 brynet Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.32 2018/08/26 18:26:51 brynet Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -42,7 +42,6 @@
 enum cmd_types {
 	PRIV_INIT_PCAP,		/* init pcap fdpass bpf */
 	PRIV_SET_SNAPLEN,	/* set the snaplength */
-	PRIV_MOVE_LOG,		/* move logfile away */
 	PRIV_OPEN_LOG,		/* open logfile for appending */
 };
 
@@ -54,7 +53,6 @@ static int  may_read(int, void *, size_t);
 static void must_read(int, void *, size_t);
 static void must_write(int, void *, size_t);
 static int  set_snaplen(int snap);
-static int  move_log(const char *name);
 
 extern char *filename;
 extern char *interface;
@@ -133,6 +131,19 @@ priv_init(int Pflag, int argc, char *argv[])
 
 	setproctitle("[priv]");
 
+	if (unveil("/etc/resolv.conf", "r") == -1)
+		err(1, "unveil");
+	if (unveil("/etc/hosts", "r") == -1)
+		err(1, "unveil");
+	if (unveil("/etc/services", "r") == -1)
+		err(1, "unveil");
+	if (unveil("/dev/bpf", "r") == -1)
+		err(1, "unveil");
+	if (unveil(filename, "rwc") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
+
 #if 0
 	/* This needs to do bpf ioctl */
 BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
@@ -195,13 +206,6 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 				    filename, strerror(olderrno));
 			break;
 
-		case PRIV_MOVE_LOG:
-			logmsg(LOG_DEBUG,
-			    "[priv]: msg PRIV_MOVE_LOG received");
-			ret = move_log(filename);
-			must_write(socks[0], &ret, sizeof(int));
-			break;
-
 		default:
 			logmsg(LOG_ERR, "[priv]: unknown command %d", cmd);
 			_exit(1);
@@ -224,48 +228,6 @@ set_snaplen(int snap)
 
 	return 0;
 }
-
-static int
-move_log(const char *name)
-{
-	char ren[PATH_MAX];
-	int len;
-
-	for (;;) {
-		int fd;
-
-		len = snprintf(ren, sizeof(ren), "%s.bad.XXXXXXXX", name);
-		if (len >= sizeof(ren)) {
-			logmsg(LOG_ERR, "[priv] new name too long");
-			return (1);
-		}
-
-		/* lock destination */
-		fd = mkstemp(ren);
-		if (fd >= 0) {
-			close(fd);
-			break;
-		}
-		if (errno != EINTR) {
-			logmsg(LOG_ERR, "[priv] failed to create new name: %s",
-			    strerror(errno));
-			return (1);			
-		}
-	}
-
-	if (rename(name, ren)) {
-		logmsg(LOG_ERR, "[priv] failed to rename %s to %s: %s",
-		    name, ren, strerror(errno));
-		unlink(ren);
-		return (1);
-	}
-
-	logmsg(LOG_NOTICE,
-	       "[priv]: log file %s moved to %s", name, ren);
-
-	return (0);
-}
-
 
 /* receive bpf fd from privileged process using fdpass and init pcap */
 int
@@ -345,22 +307,6 @@ priv_open_log(void)
 	fd = receive_fd(priv_fd);
 
 	return (fd);
-}
-
-/* Move-away and reopen log-file */
-int
-priv_move_log(void)
-{
-	int cmd, ret;
-
-	if (priv_fd < 0)
-		errx(1, "%s: called from privileged portion", __func__);
-
-	cmd = PRIV_MOVE_LOG;
-	must_write(priv_fd, &cmd, sizeof(int));
-	must_read(priv_fd, &ret, sizeof(int));
-
-	return (ret);
 }
 
 /* If priv parent gets a TERM or HUP, pass it through to child instead */

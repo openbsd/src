@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..41\n"; }
+BEGIN { $| = 1; print "1..54\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -55,9 +55,9 @@ ok($objCa->eq("a\x{300}a", "aa\x{300}"));
 
 $objCa->change(level => 2);
 
-ok($objCa->lt("a\x{300}a", "aa\x{300}"));
-ok($objCa->gt("Ca\x{300}ca\x{302}", "ca\x{302}ca\x{300}"));
-ok($objCa->gt("ca\x{300}ca\x{302}", "Ca\x{302}ca\x{300}"));
+ok($objCa->gt("a\x{300}a", "aa\x{300}"));
+ok($objCa->lt("Ca\x{300}ca\x{302}", "ca\x{302}ca\x{300}"));
+ok($objCa->lt("ca\x{300}ca\x{302}", "Ca\x{302}ca\x{300}"));
 
 # 12
 
@@ -97,10 +97,29 @@ ok($objCa->lt("LL", "L${dot}L"));
 
 # 38
 
-$objCa->change(backwards => undef, level => 2);
+$objCa->change(upper_before_lower => 1);
 
-ok($objCa->gt("a\x{300}a", "aa\x{300}"));
-ok($objCa->lt("Ca\x{300}ca\x{302}", "ca\x{302}ca\x{300}"));
-ok($objCa->lt("ca\x{300}ca\x{302}", "Ca\x{302}ca\x{300}"));
+ok($objCa->gt("ch", "cH"));
+ok($objCa->gt("cH", "Ch"));
+ok($objCa->gt("Ch", "CH"));
 
-# 41
+ok($objCa->gt("ll", "lL"));
+ok($objCa->gt("lL", "Ll"));
+ok($objCa->gt("Ll", "LL"));
+ok($objCa->lt("ll", "l${dot}l"));
+ok($objCa->lt("lL", "l${dot}l"));
+ok($objCa->lt("lL", "l${dot}L"));
+ok($objCa->lt("Ll", "l${dot}L"));
+ok($objCa->lt("Ll", "L${dot}l"));
+ok($objCa->lt("LL", "L${dot}l"));
+ok($objCa->lt("LL", "L${dot}L"));
+
+# 51
+
+$objCa->change(backwards => 2, level => 2);
+
+ok($objCa->lt("a\x{300}a", "aa\x{300}"));
+ok($objCa->gt("Ca\x{300}ca\x{302}", "ca\x{302}ca\x{300}"));
+ok($objCa->gt("ca\x{300}ca\x{302}", "Ca\x{302}ca\x{300}"));
+
+# 54

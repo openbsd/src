@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ecn.h,v 1.6 2012/03/15 16:37:11 markus Exp $	*/
+/*	$OpenBSD: ip_ecn.h,v 1.7 2018/11/14 23:55:04 dlg Exp $	*/
 /*	$KAME: ip_ecn.h,v 1.5 2000/03/27 04:58:38 sumikawa Exp $	*/
 
 /*
@@ -47,5 +47,6 @@
 #if defined(_KERNEL)
 extern void ip_ecn_ingress(int, u_int8_t *, u_int8_t *);
 extern int ip_ecn_egress(int, u_int8_t *, u_int8_t *);
+void ip_tos_patch(struct ip *, uint8_t);
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_ECN_H_ */

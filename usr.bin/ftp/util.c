@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.86 2017/12/23 20:04:23 cheloha Exp $	*/
+/*	$OpenBSD: util.c,v 1.89 2019/05/16 12:44:18 florian Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-

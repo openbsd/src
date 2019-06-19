@@ -1,4 +1,4 @@
-/*	$OpenBSD: scheduler_ramqueue.c,v 1.43 2017/01/09 09:53:23 reyk Exp $	*/
+/*	$OpenBSD: scheduler_ramqueue.c,v 1.45 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -207,7 +207,7 @@ scheduler_ram_insert(struct scheduler_info *si)
 
 	/* find/prepare a ramqueue update */
 	if ((update = tree_get(&updates, msgid)) == NULL) {
-		update = xcalloc(1, sizeof *update, "scheduler_insert");
+		update = xcalloc(1, sizeof *update);
 		stat_increment("scheduler.ramqueue.update", 1);
 		rq_queue_init(update);
 		tree_xset(&updates, msgid, update);
@@ -215,7 +215,7 @@ scheduler_ram_insert(struct scheduler_info *si)
 
 	/* find/prepare the msgtree message in ramqueue update */
 	if ((message = tree_get(&update->messages, msgid)) == NULL) {
-		message = xcalloc(1, sizeof *message, "scheduler_insert");
+		message = xcalloc(1, sizeof *message);
 		message->msgid = msgid;
 		tree_init(&message->envelopes);
 		tree_xset(&update->messages, msgid, message);
@@ -223,12 +223,12 @@ scheduler_ram_insert(struct scheduler_info *si)
 	}
 
 	/* create envelope in ramqueue message */
-	envelope = xcalloc(1, sizeof *envelope, "scheduler_insert");
+	envelope = xcalloc(1, sizeof *envelope);
 	envelope->evpid = si->evpid;
 	envelope->type = si->type;
 	envelope->message = message;
 	envelope->ctime = si->creation;
-	envelope->expire = si->creation + si->expire;
+	envelope->expire = si->creation + si->ttl;
 	envelope->sched = scheduler_backoff(si->creation,
 	    (si->type == D_MTA) ? BACKOFF_TRANSFER : BACKOFF_DELIVERY, si->retry);
 	tree_xset(&message->envelopes, envelope->evpid, envelope);
@@ -391,7 +391,7 @@ scheduler_ram_hold(uint64_t evpid, uint64_t holdq)
 
 	hq = tree_get(&holdqs[evp->type], holdq);
 	if (hq == NULL) {
-		hq = xcalloc(1, sizeof(*hq), "scheduler_hold");
+		hq = xcalloc(1, sizeof(*hq));
 		TAILQ_INIT(&hq->q);
 		tree_xset(&holdqs[evp->type], holdq, hq);
 		stat_increment("scheduler.ramqueue.holdq", 1);

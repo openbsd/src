@@ -1,6 +1,6 @@
 package B::Xref;
 
-our $VERSION = '1.05';
+our $VERSION = '1.07';
 
 =head1 NAME
 
@@ -143,7 +143,7 @@ Malcolm Beattie, mbeattie@sable.ox.ac.uk.
 use strict;
 use Config;
 use B qw(peekop class comppadlist main_start svref_2object walksymtable
-         OPpLVAL_INTRO SVf_POK OPpOUR_INTRO cstring
+         OPpLVAL_INTRO SVf_POK SVf_ROK OPpOUR_INTRO cstring
         );
 
 sub UNKNOWN { ["?", "?", "?"] }
@@ -331,7 +331,13 @@ sub pp_gv {
     }
     else {
 	$gv = $op->gv;
-	$top = [$gv->STASH->NAME, "*", $gv->SAFENAME];
+	if ($gv->FLAGS & SVf_ROK) { # sub ref
+	    my $cv = $gv->RV;
+	    $top = [$cv->STASH->NAME, '*', B::safename($cv->NAME_HEK)]
+	}
+	else {
+	    $top = [$gv->STASH->NAME, '*', $gv->SAFENAME];
+	}
     }
     process($top, $op->private & OPpLVAL_INTRO ? "intro" : "used");
 }
@@ -449,7 +455,7 @@ sub compile {
 	    last OPTION;
 	} elsif ($opt eq "o") {
 	    $arg ||= shift @options;
-	    open(STDOUT, ">$arg") or return "$arg: $!\n";
+	    open(STDOUT, '>', $arg) or return "$arg: $!\n";
 	} elsif ($opt eq "d") {
 	    $nodefs = 1;
 	} elsif ($opt eq "r") {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.21 2017/04/19 05:36:13 natano Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.22 2019/02/22 07:04:20 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.21 2017/04/19 05:36:13 natano Exp $
+ * $Id: pppoed.c,v 1.22 2019/02/22 07:04:20 jmc Exp $
  */
 #include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
@@ -827,7 +827,7 @@ pppoed_recv_PADR(pppoed_listener *_this, uint8_t shost[ETHER_ADDR_LEN],
 		PPPOED_ASSERT(shuffle_cnt == 0);
 		if (shuffle_cnt++ > 0) {
 			pppoed_log(_pppoed, LOG_ERR,
-			    "unexpected errror in %s(): session_free_list full",
+			    "unexpected error in %s(): session_free_list full",
 			    __func__);
 			slist_add(&_pppoed->session_free_list,
 			    (void *)PPPOED_SESSION_SHUFFLE_MARK);

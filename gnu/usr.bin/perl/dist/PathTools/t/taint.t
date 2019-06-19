@@ -11,7 +11,7 @@ use lib File::Spec->catdir('t', 'lib');
 use Test::More;
 BEGIN {
     plan(
-        ${^TAINT}
+	!eval { eval("1".substr($^X,0,0)) }
         ? (tests => 21)
         : (skip_all => "A perl without taint support")
     );

@@ -62,6 +62,11 @@
 ./usr/libdata/ldscripts/hppaobsd.x
 ./usr/libdata/ldscripts/hppaobsd.xbn
 ./usr/libdata/ldscripts/hppaobsd.xc
+./usr/libdata/ldscripts/hppaobsd.xd
+./usr/libdata/ldscripts/hppaobsd.xdc
+./usr/libdata/ldscripts/hppaobsd.xdcz
+./usr/libdata/ldscripts/hppaobsd.xdw
+./usr/libdata/ldscripts/hppaobsd.xdz
 ./usr/libdata/ldscripts/hppaobsd.xn
 ./usr/libdata/ldscripts/hppaobsd.xr
 ./usr/libdata/ldscripts/hppaobsd.xs

@@ -15,20 +15,25 @@ X<subroutine, declaration> X<sub>
 
     sub NAME BLOCK		  # A declaration and a definition.
     sub NAME(PROTO) BLOCK	  #  ditto, but with prototypes
-    sub NAME(SIG) BLOCK           #  with a signature instead
     sub NAME : ATTRS BLOCK	  #  with attributes
     sub NAME(PROTO) : ATTRS BLOCK #  with prototypes and attributes
-    sub NAME(SIG) : ATTRS BLOCK   #  with a signature and attributes
+
+    use feature 'signatures';
+    sub NAME(SIG) BLOCK                    # with signature
+    sub NAME :ATTRS (SIG) BLOCK            # with signature, attributes
+    sub NAME :prototype(PROTO) (SIG) BLOCK # with signature, prototype
 
 To define an anonymous subroutine at runtime:
 X<subroutine, anonymous>
 
     $subref = sub BLOCK;		 # no proto
     $subref = sub (PROTO) BLOCK;	 # with proto
-    $subref = sub (SIG) BLOCK;           # with signature
     $subref = sub : ATTRS BLOCK;	 # with attributes
     $subref = sub (PROTO) : ATTRS BLOCK; # with proto and attributes
-    $subref = sub (SIG) : ATTRS BLOCK;   # with signature and attributes
+
+    use feature 'signatures';
+    $subref = sub (SIG) BLOCK;           # with signature
+    $subref = sub : ATTRS(SIG) BLOCK;    # with signature, attributes
 
 To import subroutines:
 X<import>
@@ -98,8 +103,8 @@ Aside from an experimental facility (see L</Signatures> below),
 Perl does not have named formal parameters.  In practice all you
 do is assign to a C<my()> list of these.  Variables that aren't
 declared to be private are global variables.  For gory details
-on creating private variables, see L<"Private Variables via my()">
-and L<"Temporary Values via local()">.  To create protected
+on creating private variables, see L</"Private Variables via my()">
+and L</"Temporary Values via local()">.  To create protected
 environments for a set of functions in a separate package (and
 probably a separate file), see L<perlmod/"Packages">.
 X<formal parameter> X<parameter, formal>
@@ -192,7 +197,7 @@ Do not, however, be tempted to do this:
 Like the flattened incoming parameter list, the return list is also
 flattened on return.  So all you have managed to do here is stored
 everything in C<@a> and made C<@b> empty.  See 
-L<Pass by Reference> for alternatives.
+L</Pass by Reference> for alternatives.
 
 A subroutine may be called using an explicit C<&> prefix.  The
 C<&> is optional in modern Perl, as are parentheses if the
@@ -317,10 +322,15 @@ a warning unless the "experimental::signatures" warnings category is
 disabled.
 
 The signature is part of a subroutine's body.  Normally the body of a
-subroutine is simply a braced block of code.  When using a signature,
-the signature is a parenthesised list that goes immediately after
-the subroutine name (or, for anonymous subroutines, immediately after
-the C<sub> keyword).  The signature declares lexical variables that are
+subroutine is simply a braced block of code, but when using a signature,
+the signature is a parenthesised list that goes immediately before the
+block, after any name or attributes.
+
+For example,
+
+    sub foo :lvalue ($a, $b = 1, @c) { .... }
+
+The signature declares lexical variables that are
 in scope for the block.  When the subroutine is called, the signature
 takes control first.  It populates the signature variables from the
 list of arguments that were passed.  If the argument list doesn't meet
@@ -490,12 +500,13 @@ a signature.  They do different jobs: the prototype affects compilation
 of calls to the subroutine, and the signature puts argument values into
 lexical variables at runtime.  You can therefore write
 
-    sub foo ($left, $right) : prototype($$) {
+    sub foo :prototype($$) ($left, $right) {
 	return $left + $right;
     }
 
-The prototype attribute, and any other attributes, come after 
-the signature.
+The prototype attribute, and any other attributes, must come before
+the signature.  The signature always immediately precedes the block of
+the subroutine's body.
 
 =head2 Private Variables via my()
 X<my> X<variable, lexical> X<lexical> X<lexical variable> X<scope, lexical>
@@ -736,10 +747,11 @@ And this example uses anonymous subroutines to create separate counters:
 Also, since C<$x> is lexical, it can't be reached or modified by any Perl
 code outside.
 
-When combined with variable declaration, simple scalar assignment to C<state>
+When combined with variable declaration, simple assignment to C<state>
 variables (as in C<state $x = 42>) is executed only the first time.  When such
 statements are evaluated subsequent times, the assignment is ignored.  The
-behavior of this sort of assignment to non-scalar variables is undefined.
+behavior of assignment to C<state> declarations where the left hand side
+of the assignment involves any parentheses is currently undefined.
 
 =head3 Persistent variables with closures
 
@@ -1056,41 +1068,62 @@ using the CPAN module Sentinel or something similar.
 =head2 Lexical Subroutines
 X<my sub> X<state sub> X<our sub> X<subroutine, lexical>
 
-B<WARNING>: Lexical subroutines are still experimental.  The feature may be
-modified or removed in future versions of Perl.
-
-Lexical subroutines are only available under the C<use feature
-'lexical_subs'> pragma, which produces a warning unless the
-"experimental::lexical_subs" warnings category is disabled.
-
 Beginning with Perl 5.18, you can declare a private subroutine with C<my>
 or C<state>.  As with state variables, the C<state> keyword is only
 available under C<use feature 'state'> or C<use 5.010> or higher.
 
+Prior to Perl 5.26, lexical subroutines were deemed experimental and were
+available only under the C<use feature 'lexical_subs'> pragma.  They also
+produced a warning unless the "experimental::lexical_subs" warnings
+category was disabled.
+
 These subroutines are only visible within the block in which they are
 declared, and only after that declaration:
 
+    # Include these two lines if your code is intended to run under Perl
+    # versions earlier than 5.26.
     no warnings "experimental::lexical_subs";
     use feature 'lexical_subs';
 
-    foo();		# calls the package/global subroutine
+    foo();              # calls the package/global subroutine
     state sub foo {
-	foo();		# also calls the package subroutine
+        foo();          # also calls the package subroutine
     }
-    foo();		# calls "state" sub
-    my $ref = \&foo;	# take a reference to "state" sub
+    foo();              # calls "state" sub
+    my $ref = \&foo;    # take a reference to "state" sub
 
     my sub bar { ... }
-    bar();		# calls "my" sub
+    bar();              # calls "my" sub
 
-To use a lexical subroutine from inside the subroutine itself, you must
-predeclare it.  The C<sub foo {...}> subroutine definition syntax respects
-any previous C<my sub;> or C<state sub;> declaration.
+You can't (directly) write a recursive lexical subroutine:
 
-    my sub baz;		# predeclaration
-    sub baz {		# define the "my" sub
-	baz();		# recursive call
+    # WRONG
+    my sub baz {
+        baz();
     }
+
+This example fails because C<baz()> refers to the package/global subroutine
+C<baz>, not the lexical subroutine currently being defined.
+
+The solution is to use L<C<__SUB__>|perlfunc/__SUB__>:
+
+    my sub baz {
+        __SUB__->();    # calls itself
+    }
+
+It is possible to predeclare a lexical subroutine.  The C<sub foo {...}>
+subroutine definition syntax respects any previous C<my sub;> or C<state sub;>
+declaration.  Using this to define recursive subroutines is a bad idea,
+however:
+
+    my sub baz;         # predeclaration
+    sub baz {           # define the "my" sub
+        baz();          # WRONG: calls itself, but leaks memory
+    }
+
+Just like C<< my $f; $f = sub { $f->() } >>, this example leaks memory.  The
+name C<baz> is a reference to the subroutine, and the subroutine uses the name
+C<baz>; they keep each other alive (see L<perlref/Circular References>).
 
 =head3 C<state sub> vs C<my sub>
 
@@ -1101,9 +1134,6 @@ containing block to the next.
 
 So, in general, "state" subroutines are faster.  But "my" subs are
 necessary if you want to create closures:
-
-    no warnings "experimental::lexical_subs";
-    use feature 'lexical_subs';
 
     sub whatever {
 	my $x = shift;
@@ -1125,9 +1155,6 @@ subroutine of the same name.
 The two main uses for this are to switch back to using the package sub
 inside an inner scope:
 
-    no warnings "experimental::lexical_subs";
-    use feature 'lexical_subs';
-
     sub foo { ... }
 
     sub bar {
@@ -1142,9 +1169,6 @@ inside an inner scope:
 and to make a subroutine visible to other packages in the same scope:
 
     package MySneakyModule;
-
-    no warnings "experimental::lexical_subs";
-    use feature 'lexical_subs';
 
     our sub do_something { ... }
 
@@ -1591,14 +1615,14 @@ and someone has been calling it with an array or expression
 returning a list:
 
     func(@foo);
-    func( split /:/ );
+    func( $text =~ /\w+/g );
 
 Then you've just supplied an automatic C<scalar> in front of their
 argument, which can be more than a bit surprising.  The old C<@foo>
 which used to hold one thing doesn't get passed in.  Instead,
 C<func()> now gets passed in a C<1>; that is, the number of elements
-in C<@foo>.  And the C<split> gets called in scalar context so it
-starts scribbling on your C<@_> parameter list.  Ouch!
+in C<@foo>.  And the C<m//g> gets called in scalar context so instead of a
+list of words it returns a boolean result and advances C<pos($text)>.  Ouch!
 
 If a sub has both a PROTO and a BLOCK, the prototype is not applied
 until after the BLOCK is completely defined.  This means that a recursive

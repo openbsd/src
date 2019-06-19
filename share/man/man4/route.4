@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.46 2018/03/16 19:45:13 benno Exp $
+.\"	$OpenBSD: route.4,v 1.52 2019/04/30 16:34:19 jmc Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 16 2018 $
+.Dd $Mdocdate: April 30 2019 $
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .In net/if.h
 .In net/route.h
 .Ft int
-.Fn socket PF_ROUTE SOCK_RAW family
+.Fn socket AF_ROUTE SOCK_RAW family
 .Sh DESCRIPTION
 .Ox
 provides some packet routing facilities.
@@ -94,6 +94,8 @@ listeners on the routing control socket described below.
 .Pp
 If there are two identical destinations, the route priority acts as a
 tie-breaker.
+If there are multiple routes to the same destination,
+the one with the lowest priority wins.
 The kernel assigns certain default priorities based on the type of
 route, as given in the table below.
 For connected and static routes, this default priority is added to the
@@ -154,7 +156,7 @@ to most significant bit within the vector.
 Any messages sent to the kernel are returned, and copies are sent
 to all interested listeners.
 The kernel will provide the process ID
-for the sender, and the sender may use an additional sequence
+of the sender, and the sender may use an additional sequence
 field to distinguish between outstanding messages.
 However, message replies may be lost when kernel buffers are exhausted.
 .Pp
@@ -194,8 +196,19 @@ by doing a
 system call for further input.
 .Pp
 A process can specify an alternate routing table by using the
-.Dv SO_RTABLE
+.Dv ROUTE_TABLEFILTER
 .Xr setsockopt 2 .
+A value of
+.Dv RTABLE_ANY
+specifies all routing tables.
+For example, to receive messages for routing table 5:
+.Bd -literal -offset indent
+unsigned int rdomain = 5;
+
+if (setsockopt(routefd, AF_ROUTE, ROUTE_TABLEFILTER,
+    &rdomain, sizeof(rdomain)) == -1)
+	err(1, "setsockopt(ROUTE_TABLEFILTER)");
+.Ed
 .Pp
 A process can specify which route message types it's interested in
 by using
@@ -212,7 +225,7 @@ unsigned int rtfilter;
 rtfilter = ROUTE_FILTER(RTM_IFINFO) |
     ROUTE_FILTER(RTM_IFANNOUNCE);
 
-if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
+if (setsockopt(routefd, AF_ROUTE, ROUTE_MSGFILTER,
     &rtfilter, sizeof(rtfilter)) == -1)
 	err(1, "setsockopt(ROUTE_MSGFILTER)");
 .Ed
@@ -226,7 +239,7 @@ For example, to select only local, directly connected and static routes:
 .Bd -literal -offset indent
 unsigned int maxprio = RTP_STATIC;
 
-if (setsockopt(routefd, PF_ROUTE, ROUTE_PRIOFILTER,
+if (setsockopt(routefd, AF_ROUTE, ROUTE_PRIOFILTER,
     &maxprio, sizeof(maxprio)) == -1)
 	err(1, "setsockopt(ROUTE_PRIOFILTER)");
 .Ed
@@ -272,13 +285,13 @@ Messages include:
 #define RTM_LOSING	0x5	/* Kernel Suspects Partitioning */
 #define RTM_REDIRECT	0x6	/* Told to use different route */
 #define RTM_MISS	0x7	/* Lookup failed on this address */
-#define RTM_LOCK	0x8	/* fix specified metrics */
 #define RTM_RESOLVE	0xb	/* req to resolve dst to LL addr */
 #define RTM_NEWADDR	0xc	/* address being added to iface */
 #define RTM_DELADDR	0xd	/* address being removed from iface */
 #define RTM_IFINFO	0xe	/* iface going up/down etc. */
 #define RTM_IFANNOUNCE	0xf	/* iface arrival/departure */
 #define RTM_DESYNC	0x10	/* route socket buffer overflow */
+#define RTM_INVALIDATE	0x11	/* Invalidate cache of L2 route */
 .Ed
 .Pp
 A message header consists of one of the following:
@@ -358,6 +371,9 @@ the
 message uses an
 .Vt if_announcemsghdr
 header,
+.Dv RTM_INVALIDATE
+is used only internally in the kernel and should never appear in a route
+message,
 and all other messages use the
 .Vt rt_msghdr
 header.
@@ -466,6 +482,7 @@ Specifiers for which addresses are present in the messages are:
 .Xr netstat 1 ,
 .Xr socket 2 ,
 .Xr sysctl 2 ,
+.Xr rtable 4 ,
 .Xr mygate 5 ,
 .Xr route 8 ,
 .Xr route 9

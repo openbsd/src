@@ -4,7 +4,7 @@ perlfaq9 - Web, Email and Networking
 
 =head1 VERSION
 
-version 5.021010
+version 5.021011
 
 =head1 DESCRIPTION
 

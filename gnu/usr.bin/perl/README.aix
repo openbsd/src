@@ -14,7 +14,7 @@ is compiled and/or runs.
 
 =head2 Compiling Perl 5 on AIX
 
-For information on compilers on older versions of AIX, see L<Compiling
+For information on compilers on older versions of AIX, see L</Compiling
 Perl 5 on older AIX versions up to 4.3.3>.
 
 When compiling Perl, you must use an ANSI C compiler. AIX does not ship
@@ -31,7 +31,7 @@ works on your system.
 If you plan to link Perl to any module that requires thread-support,
 like DBD::Oracle, it is better to use the _r version of the compiler.
 This will not build a threaded Perl, but a thread-enabled Perl. See
-also L<Threaded Perl> later on.
+also L</Threaded Perl> later on.
 
 As of writing (2010-09) only the I<IBM XL C for AIX> or I<IBM XL C/C++
 for AIX> compiler is supported by IBM on AIX 5L/6.1/7.1.
@@ -428,7 +428,7 @@ fill in its choices
 Follow the messages ... and you're done.
 
 If you like a more web-like approach, a good start point can be
-http://www14.software.ibm.com/webapp/download/downloadaz.jsp and click
+L<http://www14.software.ibm.com/webapp/download/downloadaz.jsp> and click
 "C for AIX", and follow the instructions.
 
 =head2 The usenm option

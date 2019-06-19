@@ -28,6 +28,7 @@ use Test::More tests=>144;
 use bytes ();
 my %utf8hash;
 
+$Storable::flags = Storable::FLAGS_COMPAT;
 $Storable::canonical = $Storable::canonical; # Shut up a used only once warning.
 
 for $Storable::canonical (0, 1) {

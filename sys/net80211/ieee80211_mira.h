@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.h,v 1.3 2017/01/12 18:06:57 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.h,v 1.5 2019/02/27 04:10:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -25,9 +25,6 @@
  * Ioannis Pefkianakis, Yun Hu, Starsky H.Y. Wong, Hao Yang, Songwu Lu
  * http://www.cs.ucla.edu/wing/publication/papers/Pefkianakis.MOBICOM10.pdf
  */
-
-/* The number of data rates MiRA can choose from. */
-#define IEEE80211_MIRA_NUM_RATES 32 /* XXX limited to MCS 0-31 */
 
 /* 
  * Goodput statistics struct. Measures the effective data rate of an MCS
@@ -88,7 +85,16 @@ struct ieee80211_mira_node {
 	int best_mcs;
 
 	/* Goodput statistics for each MCS. */
-	struct ieee80211_mira_goodput_stats g[IEEE80211_MIRA_NUM_RATES];
+	struct ieee80211_mira_goodput_stats g[IEEE80211_HT_RATESET_NUM_MCS];
+
+	/* Interference observation window (see MiRA paper section 5.2). */
+	int ifwnd;
+	uint32_t ifwnd_frames;
+	uint32_t ifwnd_retries;
+	uint32_t ifwnd_txfail;
+
+	/* Current RTS threshold for this node. */
+	int rts_threshold;
 };
 
 /* Initialize rate control state. */
@@ -100,5 +106,9 @@ void	ieee80211_mira_choose(struct ieee80211_mira_node *,
 
 /* Cancel timeouts scheduled by ieee80211_mira_choose(). */
 void	ieee80211_mira_cancel_timeouts(struct ieee80211_mira_node *);
+
+/* Returns RTS threshold to be used for a frame about to be transmitted. */
+int	ieee80211_mira_get_rts_threshold(struct ieee80211_mira_node *,
+    struct ieee80211com *, struct ieee80211_node *, size_t);
 
 #endif /* _NET80211_IEEE80211_MIRA_H_ */

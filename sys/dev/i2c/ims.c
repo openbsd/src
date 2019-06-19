@@ -1,4 +1,4 @@
-/* $OpenBSD: ims.c,v 1.1 2016/01/12 01:11:15 jcs Exp $ */
+/* $OpenBSD: ims.c,v 1.2 2018/09/01 20:50:16 jcs Exp $ */
 /*
  * HID-over-i2c mouse/trackpad driver
  *
@@ -83,6 +83,12 @@ ims_match(struct device *parent, void *match, void *aux)
 
 	if (hid_is_collection(desc, size, iha->reportid,
 	    HID_USAGE2(HUP_DIGITIZERS, HUD_PEN)))
+		return (IMATCH_IFACECLASS);
+
+	if (hid_is_collection(desc, size, iha->reportid,
+	    HID_USAGE2(HUP_DIGITIZERS, HUD_TOUCHSCREEN)) &&
+	    hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
+	    iha->reportid, hid_input, NULL, NULL))
 		return (IMATCH_IFACECLASS);
 
 	return (IMATCH_NONE);

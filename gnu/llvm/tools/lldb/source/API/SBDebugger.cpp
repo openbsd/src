@@ -11,6 +11,9 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+
+#include "SystemInitializerFull.h"
+
 #include "lldb/API/SBDebugger.h"
 
 #include "lldb/lldb-private.h"
@@ -26,6 +29,7 @@
 #include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBStringList.h"
+#include "lldb/API/SBStructuredData.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/API/SBThread.h"
 #include "lldb/API/SBTypeCategory.h"
@@ -34,18 +38,21 @@
 #include "lldb/API/SBTypeNameSpecifier.h"
 #include "lldb/API/SBTypeSummary.h"
 #include "lldb/API/SBTypeSynthetic.h"
-#include "lldb/API/SystemInitializerFull.h"
 
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Core/StructuredDataImpl.h"
 #include "lldb/DataFormatters/DataVisualization.h"
+#include "lldb/Host/XML.h"
 #include "lldb/Initialization/SystemLifetimeManager.h"
-#include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/OptionArgParser.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
+#include "lldb/Utility/Args.h"
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
@@ -69,7 +76,7 @@ static llvm::sys::DynamicLibrary LoadPlugin(const lldb::DebuggerSP &debugger_sp,
     // TODO: mangle this differently for your system - on OSX, the first
     // underscore needs to be removed and the second one stays
     LLDBCommandPluginInit init_func =
-        (LLDBCommandPluginInit)dynlib.getAddressOfSymbol(
+        (LLDBCommandPluginInit)(uintptr_t)dynlib.getAddressOfSymbol(
             "_ZN4lldb16PluginInitializeENS_10SBDebuggerE");
     if (init_func) {
       if (init_func(debugger_sb))
@@ -163,14 +170,10 @@ SBDebugger SBDebugger::Create(bool source_init_files,
   SBDebugger debugger;
 
   // Currently we have issues if this function is called simultaneously on two
-  // different
-  // threads. The issues mainly revolve around the fact that the
-  // lldb_private::FormatManager
-  // uses global collections and having two threads parsing the .lldbinit files
-  // can cause
-  // mayhem. So to get around this for now we need to use a mutex to prevent bad
-  // things
-  // from happening.
+  // different threads. The issues mainly revolve around the fact that the
+  // lldb_private::FormatManager uses global collections and having two threads
+  // parsing the .lldbinit files can cause mayhem. So to get around this for
+  // now we need to use a mutex to prevent bad things from happening.
   static std::recursive_mutex g_mutex;
   std::lock_guard<std::recursive_mutex> guard(g_mutex);
 
@@ -215,10 +218,10 @@ void SBDebugger::Destroy(SBDebugger &debugger) {
 }
 
 void SBDebugger::MemoryPressureDetected() {
-  // Since this function can be call asynchronously, we allow it to be
-  // non-mandatory. We have seen deadlocks with this function when called
-  // so we need to safeguard against this until we can determine what is
-  // causing the deadlocks.
+  // Since this function can be call asynchronously, we allow it to be non-
+  // mandatory. We have seen deadlocks with this function when called so we
+  // need to safeguard against this until we can determine what is causing the
+  // deadlocks.
   Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_API));
 
   const bool mandatory = false;
@@ -251,9 +254,9 @@ void SBDebugger::SkipAppInitFiles(bool b) {
     m_opaque_sp->GetCommandInterpreter().SkipAppInitFiles(b);
 }
 
-// Shouldn't really be settable after initialization as this could cause lots of
-// problems; don't want users
-// trying to switch modes in the middle of a debugging session.
+// Shouldn't really be settable after initialization as this could cause lots
+// of problems; don't want users trying to switch modes in the middle of a
+// debugging session.
 void SBDebugger::SetInputFileHandle(FILE *fh, bool transfer_ownership) {
   Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_API));
 
@@ -476,8 +479,8 @@ bool SBDebugger::SetDefaultArchitecture(const char *arch_name) {
 ScriptLanguage
 SBDebugger::GetScriptingLanguage(const char *script_language_name) {
   if (!script_language_name) return eScriptLanguageDefault;
-  return Args::StringToScriptLanguage(llvm::StringRef(script_language_name),
-                                      eScriptLanguageDefault, nullptr);
+  return OptionArgParser::ToScriptLanguage(
+      llvm::StringRef(script_language_name), eScriptLanguageDefault, nullptr);
 }
 
 const char *SBDebugger::GetVersionString() {
@@ -486,6 +489,38 @@ const char *SBDebugger::GetVersionString() {
 
 const char *SBDebugger::StateAsCString(StateType state) {
   return lldb_private::StateAsCString(state);
+}
+
+static void AddBoolConfigEntry(StructuredData::Dictionary &dict,
+                               llvm::StringRef name, bool value,
+                               llvm::StringRef description) {
+  auto entry_up = llvm::make_unique<StructuredData::Dictionary>();
+  entry_up->AddBooleanItem("value", value);
+  entry_up->AddStringItem("description", description);
+  dict.AddItem(name, std::move(entry_up));
+}
+
+static void AddLLVMTargets(StructuredData::Dictionary &dict) {
+  auto array_up = llvm::make_unique<StructuredData::Array>();
+#define LLVM_TARGET(target)                                                    \
+  array_up->AddItem(llvm::make_unique<StructuredData::String>(#target));
+#include "llvm/Config/Targets.def"
+  auto entry_up = llvm::make_unique<StructuredData::Dictionary>();
+  entry_up->AddItem("value", std::move(array_up));
+  entry_up->AddStringItem("description", "A list of configured LLVM targets.");
+  dict.AddItem("targets", std::move(entry_up));
+}
+
+SBStructuredData SBDebugger::GetBuildConfiguration() {
+  auto config_up = llvm::make_unique<StructuredData::Dictionary>();
+  AddBoolConfigEntry(
+      *config_up, "xml", XMLDocument::XMLEnabled(),
+      "A boolean value that indicates if XML support is enabled in LLDB");
+  AddLLVMTargets(*config_up);
+
+  SBStructuredData data;
+  data.m_impl_up->SetObjectSP(std::move(config_up));
+  return data;
 }
 
 bool SBDebugger::StateIsRunningState(StateType state) {
@@ -619,6 +654,20 @@ SBTarget SBDebugger::CreateTarget(const char *filename) {
   return sb_target;
 }
 
+SBTarget SBDebugger::GetDummyTarget() {
+  SBTarget sb_target;
+  if (m_opaque_sp) {
+      sb_target.SetSP(m_opaque_sp->GetDummyTarget()->shared_from_this());
+  }
+  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_API));
+  if (log)
+    log->Printf(
+        "SBDebugger(%p)::GetDummyTarget() => SBTarget(%p)",
+        static_cast<void *>(m_opaque_sp.get()),
+        static_cast<void *>(sb_target.GetSP().get()));
+  return sb_target;
+}
+
 bool SBDebugger::DeleteTarget(lldb::SBTarget &target) {
   bool result = false;
   if (m_opaque_sp) {
@@ -677,8 +726,8 @@ SBTarget SBDebugger::FindTargetWithFileAndArch(const char *filename,
   SBTarget sb_target;
   if (m_opaque_sp && filename && filename[0]) {
     // No need to lock, the target list is thread safe
-    ArchSpec arch(arch_name,
-                  m_opaque_sp->GetPlatformList().GetSelectedPlatform().get());
+    ArchSpec arch = Platform::GetAugmentedArchSpec(
+        m_opaque_sp->GetPlatformList().GetSelectedPlatform().get(), arch_name);
     TargetSP target_sp(
         m_opaque_sp->GetTargetList().FindTargetWithExecutableAndArchitecture(
             FileSpec(filename, false), arch_name ? &arch : nullptr));
@@ -772,6 +821,67 @@ void SBDebugger::SetSelectedPlatform(SBPlatform &sb_platform) {
                 static_cast<void *>(m_opaque_sp.get()),
                 static_cast<void *>(sb_platform.GetSP().get()),
                 sb_platform.GetName());
+}
+
+uint32_t SBDebugger::GetNumPlatforms() {
+  if (m_opaque_sp) {
+    // No need to lock, the platform list is thread safe
+    return m_opaque_sp->GetPlatformList().GetSize();
+  }
+  return 0;
+}
+
+SBPlatform SBDebugger::GetPlatformAtIndex(uint32_t idx) {
+  SBPlatform sb_platform;
+  if (m_opaque_sp) {
+    // No need to lock, the platform list is thread safe
+    sb_platform.SetSP(m_opaque_sp->GetPlatformList().GetAtIndex(idx));
+  }
+  return sb_platform;
+}
+
+uint32_t SBDebugger::GetNumAvailablePlatforms() {
+  uint32_t idx = 0;
+  while (true) {
+    if (!PluginManager::GetPlatformPluginNameAtIndex(idx)) {
+      break;
+    }
+    ++idx;
+  }
+  // +1 for the host platform, which should always appear first in the list.
+  return idx + 1;
+}
+
+SBStructuredData SBDebugger::GetAvailablePlatformInfoAtIndex(uint32_t idx) {
+  SBStructuredData data;
+  auto platform_dict = llvm::make_unique<StructuredData::Dictionary>();
+  llvm::StringRef name_str("name"), desc_str("description");
+
+  if (idx == 0) {
+    PlatformSP host_platform_sp(Platform::GetHostPlatform());
+    platform_dict->AddStringItem(
+        name_str, host_platform_sp->GetPluginName().GetStringRef());
+    platform_dict->AddStringItem(
+        desc_str, llvm::StringRef(host_platform_sp->GetDescription()));
+  } else if (idx > 0) {
+    const char *plugin_name =
+        PluginManager::GetPlatformPluginNameAtIndex(idx - 1);
+    if (!plugin_name) {
+      return data;
+    }
+    platform_dict->AddStringItem(name_str, llvm::StringRef(plugin_name));
+
+    const char *plugin_desc =
+        PluginManager::GetPlatformPluginDescriptionAtIndex(idx - 1);
+    if (!plugin_desc) {
+      return data;
+    }
+    platform_dict->AddStringItem(desc_str, llvm::StringRef(plugin_desc));
+  }
+
+  data.m_impl_up->SetObjectSP(
+      StructuredData::ObjectSP(platform_dict.release()));
+  return data;
 }
 
 void SBDebugger::DispatchInput(void *baton, const void *data, size_t data_len) {

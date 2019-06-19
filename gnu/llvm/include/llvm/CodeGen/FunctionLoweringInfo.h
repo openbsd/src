@@ -23,11 +23,11 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/KnownBits.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include <cassert>
 #include <utility>
 #include <vector>
@@ -118,6 +118,17 @@ public:
   /// cross-basic-block values.
   DenseMap<const Value *, unsigned> ValueMap;
 
+  /// VirtReg2Value map is needed by the Divergence Analysis driven
+  /// instruction selection. It is reverted ValueMap. It is computed
+  /// in lazy style - on demand. It is used to get the Value corresponding
+  /// to the live in virtual register and is called from the
+  /// TargetLowerinInfo::isSDNodeSourceOfDivergence.
+  DenseMap<unsigned, const Value*> VirtReg2Value;
+
+  /// This method is called from TargetLowerinInfo::isSDNodeSourceOfDivergence
+  /// to get the Value corresponding to the live-in virtual register.
+  const Value * getValueFromVirtualReg(unsigned Vreg);
+
   /// Track virtual registers created for exception pointers.
   DenseMap<const Value *, unsigned> CatchPadExceptionPointers;
 
@@ -166,6 +177,8 @@ public:
 
   /// RegFixups - Registers which need to be replaced after isel is done.
   DenseMap<unsigned, unsigned> RegFixups;
+
+  DenseSet<unsigned> RegsWithFixups;
 
   /// StatepointStackSlots - A list of temporary stack slots (frame indices)
   /// used to spill values at a statepoint.  We store them here to enable

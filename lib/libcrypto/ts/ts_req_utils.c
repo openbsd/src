@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_req_utils.c,v 1.5 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ts_req_utils.c,v 1.6 2018/05/13 15:04:05 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -134,7 +134,7 @@ TS_MSG_IMPRINT_get_msg(TS_MSG_IMPRINT *a)
 }
 
 int
-TS_REQ_set_policy_id(TS_REQ *a, ASN1_OBJECT *policy)
+TS_REQ_set_policy_id(TS_REQ *a, const ASN1_OBJECT *policy)
 {
 	ASN1_OBJECT *new_policy;
 
@@ -219,7 +219,7 @@ TS_REQ_get_ext_by_NID(TS_REQ *a, int nid, int lastpos)
 }
 
 int
-TS_REQ_get_ext_by_OBJ(TS_REQ *a, ASN1_OBJECT *obj, int lastpos)
+TS_REQ_get_ext_by_OBJ(TS_REQ *a, const ASN1_OBJECT *obj, int lastpos)
 {
 	return X509v3_get_ext_by_OBJ(a->extensions, obj, lastpos);
 }

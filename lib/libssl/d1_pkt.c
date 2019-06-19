@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.63 2017/05/07 04:22:24 beck Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.66 2018/12/03 17:16:12 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -200,11 +200,11 @@ dtls1_copy_record(SSL *s, pitem *item)
 
 	rdata = (DTLS1_RECORD_DATA *)item->data;
 
-	free(s->s3->rbuf.buf);
+	free(S3I(s)->rbuf.buf);
 
 	s->internal->packet = rdata->packet;
 	s->internal->packet_length = rdata->packet_length;
-	memcpy(&(s->s3->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER));
+	memcpy(&(S3I(s)->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER));
 	memcpy(&(S3I(s)->rrec), &(rdata->rrec), sizeof(SSL3_RECORD));
 
 	/* Set proper sequence number for mac calculation */
@@ -231,7 +231,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
 	rdata->packet = s->internal->packet;
 	rdata->packet_length = s->internal->packet_length;
-	memcpy(&(rdata->rbuf), &(s->s3->rbuf), sizeof(SSL3_BUFFER));
+	memcpy(&(rdata->rbuf), &(S3I(s)->rbuf), sizeof(SSL3_BUFFER));
 	memcpy(&(rdata->rrec), &(S3I(s)->rrec), sizeof(SSL3_RECORD));
 
 	item->data = rdata;
@@ -239,7 +239,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
 	s->internal->packet = NULL;
 	s->internal->packet_length = 0;
-	memset(&(s->s3->rbuf), 0, sizeof(SSL3_BUFFER));
+	memset(&(S3I(s)->rbuf), 0, sizeof(SSL3_BUFFER));
 	memset(&(S3I(s)->rrec), 0, sizeof(SSL3_RECORD));
 
 	if (!ssl3_setup_buffers(s))
@@ -643,7 +643,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	SSL3_RECORD *rr;
 	void (*cb)(const SSL *ssl, int type2, int val) = NULL;
 
-	if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
+	if (S3I(s)->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_buffers(s))
 			return (-1);
 
@@ -672,7 +672,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 	}
 
-start:
+ start:
 	s->internal->rwstate = SSL_NOTHING;
 
 	/* S3I(s)->rrec.type	    - is the type of record
@@ -825,14 +825,6 @@ start:
             /* XDTLS:  In a pathalogical case, the Client Hello
              *  may be fragmented--don't always expect dest_maxlen bytes */
 			if (rr->length < dest_maxlen) {
-#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-				/*
-				 * for normal alerts rr->length is 2, while
-				 * dest_maxlen is 7 if we were to handle this
-				 * non-existing alert...
-				 */
-				FIX ME
-#endif
 				s->internal->rstate = SSL_ST_READ_HEADER;
 				rr->length = 0;
 				goto start;
@@ -863,7 +855,7 @@ start:
 		    (D1I(s)->handshake_fragment[3] != 0)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
-			goto err;
+			goto f_err;
 		}
 
 		/* no need to check sequence number on HELLO REQUEST messages */
@@ -888,7 +880,7 @@ start:
 				}
 
 				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-					if (s->s3->rbuf.left == 0) /* no read-ahead left? */
+					if (S3I(s)->rbuf.left == 0) /* no read-ahead left? */
 					{
 						BIO *bio;
 						/* In the case where we try to read application data,
@@ -973,9 +965,9 @@ start:
 		/* XDTLS: check that epoch is consistent */
 		if ((rr->length != ccs_hdr_len) ||
 		    (rr->off != 0) || (rr->data[0] != SSL3_MT_CCS)) {
-			i = SSL_AD_ILLEGAL_PARAMETER;
+			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-			goto err;
+			goto f_err;
 		}
 
 		rr->length = 0;
@@ -1043,7 +1035,7 @@ start:
 		}
 
 		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-			if (s->s3->rbuf.left == 0) /* no read-ahead left? */
+			if (S3I(s)->rbuf.left == 0) /* no read-ahead left? */
 			{
 				BIO *bio;
 				/* In the case where we try to read application data,
@@ -1105,9 +1097,9 @@ start:
 	}
 	/* not reached */
 
-f_err:
+ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-err:
+ err:
 	return (-1);
 }
 
@@ -1196,13 +1188,13 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 
 	/* first check if there is a SSL3_BUFFER still being written
 	 * out.  This will happen with non blocking IO */
-	if (s->s3->wbuf.left != 0) {
+	if (S3I(s)->wbuf.left != 0) {
 		OPENSSL_assert(0); /* XDTLS:  want to see if we ever get here */
 		return (ssl3_write_pending(s, type, buf, len));
 	}
 
 	/* If we have an alert to send, lets send it */
-	if (s->s3->alert_dispatch) {
+	if (S3I(s)->alert_dispatch) {
 		i = s->method->ssl_dispatch_alert(s);
 		if (i <= 0)
 			return (i);
@@ -1213,7 +1205,7 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		return 0;
 
 	wr = &(S3I(s)->wrec);
-	wb = &(s->s3->wbuf);
+	wb = &(S3I(s)->wbuf);
 	sess = s->session;
 
 	if ((sess == NULL) || (s->internal->enc_write_ctx == NULL) ||
@@ -1390,34 +1382,23 @@ dtls1_dispatch_alert(SSL *s)
 	unsigned char buf[DTLS1_AL_HEADER_LENGTH];
 	unsigned char *ptr = &buf[0];
 
-	s->s3->alert_dispatch = 0;
+	S3I(s)->alert_dispatch = 0;
 
 	memset(buf, 0x00, sizeof(buf));
-	*ptr++ = s->s3->send_alert[0];
-	*ptr++ = s->s3->send_alert[1];
-
-#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-	if (s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE) {
-		s2n(D1I(s)->handshake_read_seq, ptr);
-		l2n3(D1I(s)->r_msg_hdr.frag_off, ptr);
-	}
-#endif
+	*ptr++ = S3I(s)->send_alert[0];
+	*ptr++ = S3I(s)->send_alert[1];
 
 	i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf));
 	if (i <= 0) {
-		s->s3->alert_dispatch = 1;
+		S3I(s)->alert_dispatch = 1;
 		/* fprintf( stderr, "not done with alert\n" ); */
 	} else {
-		if (s->s3->send_alert[0] == SSL3_AL_FATAL
-#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-		|| s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-#endif
-		)
+		if (S3I(s)->send_alert[0] == SSL3_AL_FATAL)
 			(void)BIO_flush(s->wbio);
 
 		if (s->internal->msg_callback)
 			s->internal->msg_callback(1, s->version, SSL3_RT_ALERT,
-			    s->s3->send_alert, 2, s, s->internal->msg_callback_arg);
+			    S3I(s)->send_alert, 2, s, s->internal->msg_callback_arg);
 
 		if (s->internal->info_callback != NULL)
 			cb = s->internal->info_callback;
@@ -1425,7 +1406,7 @@ dtls1_dispatch_alert(SSL *s)
 			cb = s->ctx->internal->info_callback;
 
 		if (cb != NULL) {
-			j = (s->s3->send_alert[0]<<8)|s->s3->send_alert[1];
+			j = (S3I(s)->send_alert[0]<<8)|S3I(s)->send_alert[1];
 			cb(s, SSL_CB_WRITE_ALERT, j);
 		}
 	}

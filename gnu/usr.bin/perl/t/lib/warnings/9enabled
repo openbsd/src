@@ -1,4 +1,5 @@
-Check warnings::enabled & warnings::warn
+Check warnings::enabled, warnings::warn and other functionality of
+warnings.pm.
 
 __END__
 
@@ -883,10 +884,10 @@ def abc43 enabled
 def all enabled
 abc43 self not enabled
 abc43 def enabled
-abc43 all not enabled
+abc43 all enabled
 def self enabled
 def abc43 not enabled
-def all not enabled
+def all enabled
 ########
 -w
 --FILE-- abc44.pm
@@ -1291,7 +1292,7 @@ ok2
 --FILE-- fatal4.pm
 package fatal4 ;
 no warnings ;
-print "ok1\n" if !warnings::fatal_enabled('all') ;
+print "ok1\n" if warnings::fatal_enabled('all') ;
 print "ok2\n" if warnings::fatal_enabled("void") ;
 print "ok3\n" if !warnings::fatal_enabled("syntax") ;
 1;
@@ -1302,3 +1303,173 @@ EXPECT
 ok1
 ok2
 ok3
+########
+{ Quux::quux(); }
+{ no warnings; Quux::quux(); }
+{ no warnings; use warnings "void"; Quux::quux(); }
+{ use warnings; Quux::quux(); }
+{ use warnings; no warnings "void"; Quux::quux(); }
+use warnings ();
+BEGIN { warnings::register_categories(qw(wibble wobble wabble wubble webble)); }
+package Quux {
+  sub quux {
+    warnings::warnif($_, "My $_ is flanged")
+      foreach qw(wibble wobble wabble wubble webble);
+    ();
+  }
+}
+{ Quux::quux(); }
+{ no warnings; Quux::quux(); }
+{ no warnings; use warnings "void"; Quux::quux(); }
+{ use warnings; Quux::quux(); }
+{ use warnings; no warnings "void"; Quux::quux(); }
+{ no warnings; use warnings qw(wibble wabble webble); Quux::quux(); }
+{ no warnings; use warnings qw(wobble wubble); Quux::quux(); }
+{ use warnings; no warnings qw(wibble wabble webble); Quux::quux(); }
+{ use warnings; no warnings qw(wobble wubble); Quux::quux(); }
+{ use warnings qw(wubble NONFATAL void); Quux::quux(); }
+{ use warnings qw(wubble); no warnings "void"; Quux::quux(); }
+{ no warnings "webble"; Quux::quux(); }
+{ use warnings qw(NONFATAL webble); Quux::quux(); }
+print "done\n";
+EXPECT
+My wibble is flanged at - line 4.
+My wobble is flanged at - line 4.
+My wabble is flanged at - line 4.
+My wubble is flanged at - line 4.
+My webble is flanged at - line 4.
+My wibble is flanged at - line 5.
+My wobble is flanged at - line 5.
+My wabble is flanged at - line 5.
+My wubble is flanged at - line 5.
+My webble is flanged at - line 5.
+My wibble is flanged at - line 18.
+My wobble is flanged at - line 18.
+My wabble is flanged at - line 18.
+My wubble is flanged at - line 18.
+My webble is flanged at - line 18.
+My wibble is flanged at - line 19.
+My wobble is flanged at - line 19.
+My wabble is flanged at - line 19.
+My wubble is flanged at - line 19.
+My webble is flanged at - line 19.
+My wibble is flanged at - line 20.
+My wabble is flanged at - line 20.
+My webble is flanged at - line 20.
+My wobble is flanged at - line 21.
+My wubble is flanged at - line 21.
+My wobble is flanged at - line 22.
+My wubble is flanged at - line 22.
+My wibble is flanged at - line 23.
+My wabble is flanged at - line 23.
+My webble is flanged at - line 23.
+My wubble is flanged at - line 24.
+My wubble is flanged at - line 25.
+My webble is flanged at - line 27.
+done
+########
+# NAME _at_level
+select STDERR;
+{ use warnings "utf8"; foo() }
+sub foo { use warnings "syntax"; bar() }
+sub bar {
+ use warnings "unpack";
+ local $\="\n";
+ print "1. ", warnings::enabled_at_level("unpack", 0)||0;
+ print "2. ", warnings::enabled_at_level("unpack", 1)||0;
+ print "3. ", warnings::enabled_at_level("unpack", 2)||0;
+ print "4. ", warnings::enabled_at_level("syntax", 0)||0;
+ print "5. ", warnings::enabled_at_level("syntax", 1)||0;
+ print "6. ", warnings::enabled_at_level("syntax", 2)||0;
+ print "7. ", warnings::enabled_at_level("utf8", 0)||0;
+ print "8. ", warnings::enabled_at_level("utf8", 1)||0;
+ print "9. ", warnings::enabled_at_level("utf8", 2)||0;
+ warnings::warn_at_level  ("misc",0,"A mandatory foo warning");
+ warnings::warn_at_level  ("misc",1,"A mandatory top-level warning");
+ warnings::warnif_at_level("syntax",0,"A conditional syntax warning");
+ warnings::warnif_at_level("syntax",1,"A conditional syntax warning");
+ warnings::warnif_at_level("utf8",0,"A conditional utf8 warning");
+ warnings::warnif_at_level("utf8",1,"A conditional utf8 warning");
+}
+{ use warnings "syntax"; use warnings FATAL => "utf8"; foo2() }
+sub foo2 {
+  use warnings FATAL => "syntax"; use warnings "utf8"; bar2()
+}
+sub bar2 {
+ $\="\n";
+ print "10. ", warnings::fatal_enabled_at_level("syntax", 0)||0;
+ print "11. ", warnings::fatal_enabled_at_level("syntax", 1)||0;
+ print "12. ", warnings::fatal_enabled_at_level("utf8", 0)||0;
+ print "13. ", warnings::fatal_enabled_at_level("utf8", 1)||0;
+ undef $\;
+ eval { warnings::warn_at_level  ("syntax",1,"A fatal warning") };
+ print "Died: $@" if $@;
+ eval { warnings::warnif_at_level("syntax",1,"A fatal syntax warning") };
+ print "Died: $@" if $@;
+ eval { warnings::warnif_at_level("syntax",2,"A syntax warning") };
+ print "Died: $@" if $@;
+ eval { warnings::warnif_at_level("utf8",1,"A utf8 warning") };
+ print "Died: $@" if $@;
+ eval { warnings::warnif_at_level("utf8",2,"A fatal utf8 warning") };
+ print "Died: $@" if $@;
+}
+EXPECT
+1. 0
+2. 0
+3. 0
+4. 1
+5. 0
+6. 0
+7. 0
+8. 1
+9. 0
+A mandatory foo warning at - line 3.
+A mandatory top-level warning at - line 2.
+A conditional syntax warning at - line 3.
+A conditional utf8 warning at - line 2.
+10. 1
+11. 0
+12. 0
+13. 1
+Died: A fatal warning at - line 25.
+Died: A fatal syntax warning at - line 25.
+A syntax warning at - line 23.
+A utf8 warning at - line 25.
+Died: A fatal utf8 warning at - line 23.
+########
+# NAME _at_level with filehandle
+use warnings;
+# Create temp file for testing handles.
+open oUt, ">tmp" or die $!;
+print oUt "foo\nbar\n";
+close oUt;
+sub bimp {
+ open FH, "tmp";
+ <FH>; <FH>;
+ warnings::warn_at_level("syntax", 0, "Foo warning");
+ close FH;
+ warnings::warn_at_level("syntax", 0, "Bar warning");
+};
+bimp;
+EXPECT
+Foo warning at - line 13, <FH> line 2.
+Bar warning at - line 13.
+########
+# NAME _at_level with chunky filehandle
+use warnings;
+# Create temp file for testing handles.
+open oUt, ">tmp" or die $!;
+print oUt "foo7bar7";
+close oUt;
+sub bimp {
+ open FH, "tmp";
+ $/ = 7;
+ <FH>; <FH>;
+ warnings::warn_at_level("syntax", 0, "Foo warning");
+ close FH;
+ warnings::warn_at_level("syntax", 0, "Bar warning");
+};
+bimp;
+EXPECT
+Foo warning at - line 14, <FH> chunk 2.
+Bar warning at - line 14.

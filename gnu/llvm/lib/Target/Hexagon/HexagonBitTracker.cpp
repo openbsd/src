@@ -1,4 +1,4 @@
-//===--- HexagonBitTracker.cpp --------------------------------------------===//
+//===- HexagonBitTracker.cpp ----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,20 +11,22 @@
 #include "Hexagon.h"
 #include "HexagonInstrInfo.h"
 #include "HexagonRegisterInfo.h"
-#include "HexagonTargetMachine.h"
+#include "HexagonSubtarget.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
@@ -34,7 +36,7 @@
 
 using namespace llvm;
 
-typedef BitTracker BT;
+using BT = BitTracker;
 
 HexagonEvaluator::HexagonEvaluator(const HexagonRegisterInfo &tri,
                                    MachineRegisterInfo &mri,
@@ -58,10 +60,8 @@ HexagonEvaluator::HexagonEvaluator(const HexagonRegisterInfo &tri,
   // der the initial sequence of formal parameters that are known to be
   // passed via registers.
   unsigned InVirtReg, InPhysReg = 0;
-  const Function &F = *MF.getFunction();
-  typedef Function::const_arg_iterator arg_iterator;
-  for (arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
-    const Argument &Arg = *I;
+
+  for (const Argument &Arg : MF.getFunction().args()) {
     Type *ATy = Arg.getType();
     unsigned Width = 0;
     if (ATy->isIntegerTy())
@@ -88,28 +88,67 @@ HexagonEvaluator::HexagonEvaluator(const HexagonRegisterInfo &tri,
 }
 
 BT::BitMask HexagonEvaluator::mask(unsigned Reg, unsigned Sub) const {
-  using namespace Hexagon;
-
   if (Sub == 0)
     return MachineEvaluator::mask(Reg, 0);
-  const TargetRegisterClass *RC = MRI.getRegClass(Reg);
-  unsigned ID = RC->getID();
+  const TargetRegisterClass &RC = *MRI.getRegClass(Reg);
+  unsigned ID = RC.getID();
   uint16_t RW = getRegBitWidth(RegisterRef(Reg, Sub));
   auto &HRI = static_cast<const HexagonRegisterInfo&>(TRI);
   bool IsSubLo = (Sub == HRI.getHexagonSubRegIndex(RC, Hexagon::ps_sub_lo));
   switch (ID) {
-    case DoubleRegsRegClassID:
-    case VecDblRegsRegClassID:
-    case VecDblRegs128BRegClassID:
+    case Hexagon::DoubleRegsRegClassID:
+    case Hexagon::HvxWRRegClassID:
       return IsSubLo ? BT::BitMask(0, RW-1)
                      : BT::BitMask(RW, 2*RW-1);
     default:
       break;
   }
 #ifndef NDEBUG
-  dbgs() << PrintReg(Reg, &TRI, Sub) << '\n';
+  dbgs() << printReg(Reg, &TRI, Sub) << " in reg class "
+         << TRI.getRegClassName(&RC) << '\n';
 #endif
   llvm_unreachable("Unexpected register/subregister");
+}
+
+uint16_t HexagonEvaluator::getPhysRegBitWidth(unsigned Reg) const {
+  assert(TargetRegisterInfo::isPhysicalRegister(Reg));
+
+  using namespace Hexagon;
+  for (auto &RC : {HvxVRRegClass, HvxWRRegClass, HvxQRRegClass})
+    if (RC.contains(Reg))
+      return TRI.getRegSizeInBits(RC);
+  // Default treatment for other physical registers.
+  if (const TargetRegisterClass *RC = TRI.getMinimalPhysRegClass(Reg))
+    return TRI.getRegSizeInBits(*RC);
+
+  llvm_unreachable(
+      (Twine("Unhandled physical register") + TRI.getName(Reg)).str().c_str());
+}
+
+const TargetRegisterClass &HexagonEvaluator::composeWithSubRegIndex(
+      const TargetRegisterClass &RC, unsigned Idx) const {
+  if (Idx == 0)
+    return RC;
+
+#ifndef NDEBUG
+  const auto &HRI = static_cast<const HexagonRegisterInfo&>(TRI);
+  bool IsSubLo = (Idx == HRI.getHexagonSubRegIndex(RC, Hexagon::ps_sub_lo));
+  bool IsSubHi = (Idx == HRI.getHexagonSubRegIndex(RC, Hexagon::ps_sub_hi));
+  assert(IsSubLo != IsSubHi && "Must refer to either low or high subreg");
+#endif
+
+  switch (RC.getID()) {
+    case Hexagon::DoubleRegsRegClassID:
+      return Hexagon::IntRegsRegClass;
+    case Hexagon::HvxWRRegClassID:
+      return Hexagon::HvxVRRegClass;
+    default:
+      break;
+  }
+#ifndef NDEBUG
+  dbgs() << "Reg class id: " << RC.getID() << " idx: " << Idx << '\n';
+#endif
+  llvm_unreachable("Unimplemented combination of reg class/subreg idx");
 }
 
 namespace {
@@ -147,8 +186,7 @@ bool HexagonEvaluator::evaluate(const MachineInstr &MI,
   unsigned NumDefs = 0;
 
   // Sanity verification: there should not be any defs with subregisters.
-  for (unsigned i = 0, n = MI.getNumOperands(); i < n; ++i) {
-    const MachineOperand &MO = MI.getOperand(i);
+  for (const MachineOperand &MO : MI.operands()) {
     if (!MO.isReg() || !MO.isDef())
       continue;
     NumDefs++;
@@ -197,8 +235,7 @@ bool HexagonEvaluator::evaluate(const MachineInstr &MI,
   // checking what kind of operand a given instruction has individually
   // for each instruction, do it here. Global symbols as operands gene-
   // rally do not provide any useful information.
-  for (unsigned i = 0, n = MI.getNumOperands(); i < n; ++i) {
-    const MachineOperand &MO = MI.getOperand(i);
+  for (const MachineOperand &MO : MI.operands()) {
     if (MO.isGlobal() || MO.isBlockAddress() || MO.isSymbol() || MO.isJTI() ||
         MO.isCPI())
       return false;
@@ -288,7 +325,7 @@ bool HexagonEvaluator::evaluate(const MachineInstr &MI,
       int FI = op(1).getIndex();
       int Off = op(2).getImm();
       unsigned A = MFI.getObjectAlignment(FI) + std::abs(Off);
-      unsigned L = Log2_32(A);
+      unsigned L = countTrailingZeros(A);
       RegisterCell RC = RegisterCell::self(Reg[0].Reg, W0);
       RC.fill(0, L, BT::BitValue::Zero);
       return rr0(RC, Outputs);
@@ -310,9 +347,11 @@ bool HexagonEvaluator::evaluate(const MachineInstr &MI,
       return rr0(RC, Outputs);
     }
     case C2_tfrrp: {
-      RegisterCell RC = RegisterCell::self(Reg[0].Reg, W0);
-      W0 = 8; // XXX Pred size
-      return rr0(eINS(RC, eXTR(rc(1), 0, W0), 0), Outputs);
+      uint16_t RW = W0;
+      uint16_t PW = 8; // XXX Pred size: getRegBitWidth(Reg[1]);
+      RegisterCell RC = RegisterCell::self(Reg[0].Reg, RW);
+      RC.fill(PW, RW, BT::BitValue::Zero);
+      return rr0(eINS(RC, eXTR(rc(1), 0, PW), 0), Outputs);
     }
 
     // Arithmetic:
@@ -700,7 +739,6 @@ bool HexagonEvaluator::evaluate(const MachineInstr &MI,
     case A4_combineri:
     case A2_combinew:
     case V6_vcombine:
-    case V6_vcombine_128B:
       assert(W0 % 2 == 0);
       return rr0(cop(2, W0/2).cat(cop(1, W0/2)), Outputs);
     case A2_combine_ll:
@@ -914,6 +952,19 @@ bool HexagonEvaluator::evaluate(const MachineInstr &MI,
     }
 
     default:
+      // For instructions that define a single predicate registers, store
+      // the low 8 bits of the register only.
+      if (unsigned DefR = getUniqueDefVReg(MI)) {
+        if (MRI.getRegClass(DefR) == &Hexagon::PredRegsRegClass) {
+          BT::RegisterRef PD(DefR, 0);
+          uint16_t RW = getRegBitWidth(PD);
+          uint16_t PW = 8; // XXX Pred size: getRegBitWidth(Reg[1]);
+          RegisterCell RC = RegisterCell::self(DefR, RW);
+          RC.fill(PW, RW, BT::BitValue::Zero);
+          putCell(PD, RC, Outputs);
+          return true;
+        }
+      }
       return MachineEvaluator::evaluate(MI, Inputs, Outputs);
   }
   #undef im
@@ -978,6 +1029,21 @@ bool HexagonEvaluator::evaluate(const MachineInstr &BI,
   Targets.insert(BI.getOperand(1).getMBB());
   FallsThru = false;
   return true;
+}
+
+unsigned HexagonEvaluator::getUniqueDefVReg(const MachineInstr &MI) const {
+  unsigned DefReg = 0;
+  for (const MachineOperand &Op : MI.operands()) {
+    if (!Op.isReg() || !Op.isDef())
+      continue;
+    unsigned R = Op.getReg();
+    if (!TargetRegisterInfo::isVirtualRegister(R))
+      continue;
+    if (DefReg != 0)
+      return 0;
+    DefReg = R;
+  }
+  return DefReg;
 }
 
 bool HexagonEvaluator::evaluateLoad(const MachineInstr &MI,
@@ -1212,10 +1278,8 @@ unsigned HexagonEvaluator::getNextPhysReg(unsigned PReg, unsigned Width) const {
 }
 
 unsigned HexagonEvaluator::getVirtRegFor(unsigned PReg) const {
-  typedef MachineRegisterInfo::livein_iterator iterator;
-  for (iterator I = MRI.livein_begin(), E = MRI.livein_end(); I != E; ++I) {
-    if (I->first == PReg)
-      return I->second;
-  }
+  for (std::pair<unsigned,unsigned> P : MRI.liveins())
+    if (P.first == PReg)
+      return P.second;
   return 0;
 }

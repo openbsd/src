@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief Defines the clang::TargetOptions class.
+/// Defines the clang::TargetOptions class.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -22,7 +22,7 @@
 
 namespace clang {
 
-/// \brief Options for controlling the target.
+/// Options for controlling the target.
 class TargetOptions {
 public:
   /// The name of the target triple to compile for.
@@ -47,21 +47,26 @@ public:
   /// If given, the version string of the linker in use.
   std::string LinkerVersion;
 
-  /// \brief The list of target specific features to enable or disable, as written on the command line.
+  /// The list of target specific features to enable or disable, as written on the command line.
   std::vector<std::string> FeaturesAsWritten;
 
   /// The list of target specific features to enable or disable -- this should
   /// be a list of strings starting with by '+' or '-'.
   std::vector<std::string> Features;
 
-  std::vector<std::string> Reciprocals;
-
   /// Supported OpenCL extensions and optional core features.
   OpenCLOptions SupportedOpenCLOptions;
 
-  /// \brief The list of OpenCL extensions to enable or disable, as written on
+  /// The list of OpenCL extensions to enable or disable, as written on
   /// the command line.
   std::vector<std::string> OpenCLExtensionsAsWritten;
+
+  /// If given, enables support for __int128_t and __uint128_t types.
+  bool ForceEnableInt128 = false;
+
+  /// \brief If enabled, use 32-bit pointers for accessing const/local/shared
+  /// address space.
+  bool NVPTXUseShortPointers = false;
 };
 
 }  // end namespace clang

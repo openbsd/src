@@ -1,0 +1,15 @@
+STRING-DOTT(1)              General Commands Manual             STRING-DOTT(1)
+
+NNAAMMEE
+     ssttrriinngg--ddoottTT – interpolating the device name
+
+DDEESSCCRRIIPPTTIIOONN
+     BEGINTEST
+
+     We are using the utf8 device.
+
+     The device name can be overridden.
+     ENDTEST
+     end of file
+
+OpenBSD                         January 7, 2019                        OpenBSD

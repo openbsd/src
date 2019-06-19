@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.3 2018/01/12 14:52:55 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.6 2018/07/02 07:25:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -25,6 +25,7 @@
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
+#include <machine/vfp.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
@@ -40,6 +41,8 @@ extern uint32_t mmap_desc_size;
 extern uint32_t mmap_desc_ver;
 
 extern EFI_MEMORY_DESCRIPTOR *mmap;
+
+uint64_t efi_acpi_table;
 
 struct efi_softc {
 	struct device	sc_dev;
@@ -125,7 +128,7 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 			vaddr_t va = desc->VirtualStart;
 			paddr_t pa = desc->PhysicalStart;
 			int npages = desc->NumberOfPages;
-			vm_prot_t prot = PROT_READ;
+			vm_prot_t prot = PROT_READ | PROT_WRITE;
 
 #ifdef EFI_DEBUG
 			printf("type 0x%x pa 0x%llx va 0x%llx pages 0x%llx attr 0x%llx\n",
@@ -142,10 +145,20 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 			if ((desc->Attribute & EFI_MEMORY_WB) == 0)
 				pa |= PMAP_DEVICE;
 
+			/*
+			 * Only make pages marked as runtime service code
+			 * executable.  This violates the standard but it
+			 * seems we can get away with it.
+			 */
 			if (desc->Type == EfiRuntimeServicesCode)
 				prot |= PROT_EXEC;
-			else
-				prot |= PROT_WRITE;
+
+			if (desc->Attribute & EFI_MEMORY_RP)
+				prot &= ~PROT_READ;
+			if (desc->Attribute & EFI_MEMORY_XP)
+				prot &= ~PROT_EXEC;
+			if (desc->Attribute & EFI_MEMORY_RO)
+				prot &= ~PROT_WRITE;
 
 			while (npages--) {
 				pmap_enter(sc->sc_pm, va, pa, prot,
@@ -158,18 +171,25 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * The FirmwareVendor field has been converted from a physical
-	 * pointer to a virtual pointer, so we have to activate our
-	 * pmap to access it.
+	 * The FirmwareVendor and ConfigurationTable fields have been
+	 * converted from a physical pointer to a virtual pointer, so
+	 * we have to activate our pmap to access them.
 	 */
+	efi_enter(sc);
 	if (st->FirmwareVendor) {
 		printf("%s: ", sc->sc_dev.dv_xname);
-		efi_enter(sc);
 		for (i = 0; st->FirmwareVendor[i]; i++)
 			printf("%c", st->FirmwareVendor[i]);
-		efi_leave(sc);
 		printf(" rev 0x%x\n", st->FirmwareRevision);
 	}
+	for (i = 0; i < st->NumberOfTableEntries; i++) {
+		EFI_CONFIGURATION_TABLE *ct = &st->ConfigurationTable[i];
+		static EFI_GUID acpi_guid = EFI_ACPI_20_TABLE_GUID;
+
+		if (efi_guidcmp(&acpi_guid, &ct->VendorGuid) == 0)
+			efi_acpi_table = (uint64_t)ct->VendorTable;
+	}
+	efi_leave(sc);
 
 	if (rs == NULL)
 		return;
@@ -196,12 +216,16 @@ efi_enter(struct efi_softc *sc)
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
 	__asm volatile("isb");
 	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
+
+	vfp_kernel_enter();
 }
 
 void
 efi_leave(struct efi_softc *sc)
 {
 	struct pmap *pm = curcpu()->ci_curpm;
+
+	vfp_kernel_exit();
 
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
 	__asm volatile("isb");
@@ -268,4 +292,3 @@ efi_settime(struct todr_chip_handle *handle, struct timeval *tv)
 		return EIO;
 	return 0;
 }
-

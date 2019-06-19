@@ -8,54 +8,60 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Index/IndexingAction.h"
-#include "clang/Index/IndexDataConsumer.h"
 #include "IndexingContext.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/MultiplexConsumer.h"
+#include "clang/Index/IndexDataConsumer.h"
+#include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Serialization/ASTReader.h"
+#include "llvm/ADT/STLExtras.h"
+#include <memory>
 
 using namespace clang;
 using namespace clang::index;
 
-void IndexDataConsumer::_anchor() {}
-
 bool IndexDataConsumer::handleDeclOccurence(const Decl *D, SymbolRoleSet Roles,
                                             ArrayRef<SymbolRelation> Relations,
-                                            FileID FID, unsigned Offset,
+                                            SourceLocation Loc,
                                             ASTNodeInfo ASTNode) {
   return true;
 }
 
 bool IndexDataConsumer::handleMacroOccurence(const IdentifierInfo *Name,
-                                             const MacroInfo *MI, SymbolRoleSet Roles,
-                                             FileID FID, unsigned Offset) {
+                                             const MacroInfo *MI,
+                                             SymbolRoleSet Roles,
+                                             SourceLocation Loc) {
   return true;
 }
 
 bool IndexDataConsumer::handleModuleOccurence(const ImportDecl *ImportD,
                                               SymbolRoleSet Roles,
-                                              FileID FID, unsigned Offset) {
+                                              SourceLocation Loc) {
   return true;
 }
 
 namespace {
 
 class IndexASTConsumer : public ASTConsumer {
-  IndexingContext &IndexCtx;
+  std::shared_ptr<Preprocessor> PP;
+  std::shared_ptr<IndexingContext> IndexCtx;
 
 public:
-  IndexASTConsumer(IndexingContext &IndexCtx)
-    : IndexCtx(IndexCtx) {}
+  IndexASTConsumer(std::shared_ptr<Preprocessor> PP,
+                   std::shared_ptr<IndexingContext> IndexCtx)
+      : PP(std::move(PP)), IndexCtx(std::move(IndexCtx)) {}
 
 protected:
   void Initialize(ASTContext &Context) override {
-    IndexCtx.setASTContext(Context);
-    IndexCtx.getDataConsumer().initialize(Context);
+    IndexCtx->setASTContext(Context);
+    IndexCtx->getDataConsumer().initialize(Context);
+    IndexCtx->getDataConsumer().setPreprocessor(PP);
   }
 
   bool HandleTopLevelDecl(DeclGroupRef DG) override {
-    return IndexCtx.indexDeclGroupRef(DG);
+    return IndexCtx->indexDeclGroupRef(DG);
   }
 
   void HandleInterestingDecl(DeclGroupRef DG) override {
@@ -63,25 +69,61 @@ protected:
   }
 
   void HandleTopLevelDeclInObjCContainer(DeclGroupRef DG) override {
-    IndexCtx.indexDeclGroupRef(DG);
+    IndexCtx->indexDeclGroupRef(DG);
   }
 
   void HandleTranslationUnit(ASTContext &Ctx) override {
   }
 };
 
+class IndexPPCallbacks : public PPCallbacks {
+  std::shared_ptr<IndexingContext> IndexCtx;
+
+public:
+  IndexPPCallbacks(std::shared_ptr<IndexingContext> IndexCtx)
+      : IndexCtx(std::move(IndexCtx)) {}
+
+  void MacroExpands(const Token &MacroNameTok, const MacroDefinition &MD,
+                    SourceRange Range, const MacroArgs *Args) override {
+    IndexCtx->handleMacroReference(*MacroNameTok.getIdentifierInfo(),
+                                   Range.getBegin(), *MD.getMacroInfo());
+  }
+
+  void MacroDefined(const Token &MacroNameTok,
+                    const MacroDirective *MD) override {
+    IndexCtx->handleMacroDefined(*MacroNameTok.getIdentifierInfo(),
+                                 MacroNameTok.getLocation(),
+                                 *MD->getMacroInfo());
+  }
+
+  void MacroUndefined(const Token &MacroNameTok, const MacroDefinition &MD,
+                      const MacroDirective *Undef) override {
+    if (!MD.getMacroInfo())  // Ignore noop #undef.
+      return;
+    IndexCtx->handleMacroUndefined(*MacroNameTok.getIdentifierInfo(),
+                                   MacroNameTok.getLocation(),
+                                   *MD.getMacroInfo());
+  }
+};
+
 class IndexActionBase {
 protected:
   std::shared_ptr<IndexDataConsumer> DataConsumer;
-  IndexingContext IndexCtx;
+  std::shared_ptr<IndexingContext> IndexCtx;
 
   IndexActionBase(std::shared_ptr<IndexDataConsumer> dataConsumer,
                   IndexingOptions Opts)
-    : DataConsumer(std::move(dataConsumer)),
-      IndexCtx(Opts, *DataConsumer) {}
+      : DataConsumer(std::move(dataConsumer)),
+        IndexCtx(new IndexingContext(Opts, *DataConsumer)) {}
 
-  std::unique_ptr<IndexASTConsumer> createIndexASTConsumer() {
-    return llvm::make_unique<IndexASTConsumer>(IndexCtx);
+  std::unique_ptr<IndexASTConsumer>
+  createIndexASTConsumer(CompilerInstance &CI) {
+    return llvm::make_unique<IndexASTConsumer>(CI.getPreprocessorPtr(),
+                                               IndexCtx);
+  }
+
+  std::unique_ptr<PPCallbacks> createIndexPPCallbacks() {
+    return llvm::make_unique<IndexPPCallbacks>(IndexCtx);
   }
 
   void finish() {
@@ -98,7 +140,12 @@ public:
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  StringRef InFile) override {
-    return createIndexASTConsumer();
+    return createIndexASTConsumer(CI);
+  }
+
+  bool BeginSourceFileAction(clang::CompilerInstance &CI) override {
+    CI.getPreprocessor().addPPCallbacks(createIndexPPCallbacks());
+    return true;
   }
 
   void EndSourceFileAction() override {
@@ -119,32 +166,34 @@ public:
 
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 StringRef InFile) override;
-  void EndSourceFileAction() override;
+                                                 StringRef InFile) override {
+    auto OtherConsumer = WrapperFrontendAction::CreateASTConsumer(CI, InFile);
+    if (!OtherConsumer) {
+      IndexActionFailed = true;
+      return nullptr;
+    }
+
+    std::vector<std::unique_ptr<ASTConsumer>> Consumers;
+    Consumers.push_back(std::move(OtherConsumer));
+    Consumers.push_back(createIndexASTConsumer(CI));
+    return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
+  }
+
+  bool BeginSourceFileAction(clang::CompilerInstance &CI) override {
+    WrapperFrontendAction::BeginSourceFileAction(CI);
+    CI.getPreprocessor().addPPCallbacks(createIndexPPCallbacks());
+    return true;
+  }
+
+  void EndSourceFileAction() override {
+    // Invoke wrapped action's method.
+    WrapperFrontendAction::EndSourceFileAction();
+    if (!IndexActionFailed)
+      finish();
+  }
 };
 
 } // anonymous namespace
-
-void WrappingIndexAction::EndSourceFileAction() {
-  // Invoke wrapped action's method.
-  WrapperFrontendAction::EndSourceFileAction();
-  if (!IndexActionFailed)
-    finish();
-}
-
-std::unique_ptr<ASTConsumer>
-WrappingIndexAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
-  auto OtherConsumer = WrapperFrontendAction::CreateASTConsumer(CI, InFile);
-  if (!OtherConsumer) {
-    IndexActionFailed = true;
-    return nullptr;
-  }
-
-  std::vector<std::unique_ptr<ASTConsumer>> Consumers;
-  Consumers.push_back(std::move(OtherConsumer));
-  Consumers.push_back(createIndexASTConsumer());
-  return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
-}
 
 std::unique_ptr<FrontendAction>
 index::createIndexingAction(std::shared_ptr<IndexDataConsumer> DataConsumer,
@@ -157,7 +206,6 @@ index::createIndexingAction(std::shared_ptr<IndexDataConsumer> DataConsumer,
   return llvm::make_unique<IndexAction>(std::move(DataConsumer), Opts);
 }
 
-
 static bool topLevelDeclVisitor(void *context, const Decl *D) {
   IndexingContext &IndexCtx = *static_cast<IndexingContext*>(context);
   return IndexCtx.indexTopLevelDecl(D);
@@ -167,39 +215,44 @@ static void indexTranslationUnit(ASTUnit &Unit, IndexingContext &IndexCtx) {
   Unit.visitLocalTopLevelDecls(&IndexCtx, topLevelDeclVisitor);
 }
 
-void index::indexASTUnit(ASTUnit &Unit,
-                         std::shared_ptr<IndexDataConsumer> DataConsumer,
+void index::indexASTUnit(ASTUnit &Unit, IndexDataConsumer &DataConsumer,
                          IndexingOptions Opts) {
-  IndexingContext IndexCtx(Opts, *DataConsumer);
+  IndexingContext IndexCtx(Opts, DataConsumer);
   IndexCtx.setASTContext(Unit.getASTContext());
-  DataConsumer->initialize(Unit.getASTContext());
+  DataConsumer.initialize(Unit.getASTContext());
+  DataConsumer.setPreprocessor(Unit.getPreprocessorPtr());
   indexTranslationUnit(Unit, IndexCtx);
-  DataConsumer->finish();
+  DataConsumer.finish();
 }
 
 void index::indexTopLevelDecls(ASTContext &Ctx, ArrayRef<const Decl *> Decls,
-                               std::shared_ptr<IndexDataConsumer> DataConsumer,
+                               IndexDataConsumer &DataConsumer,
                                IndexingOptions Opts) {
-  IndexingContext IndexCtx(Opts, *DataConsumer);
+  IndexingContext IndexCtx(Opts, DataConsumer);
   IndexCtx.setASTContext(Ctx);
 
-  DataConsumer->initialize(Ctx);
+  DataConsumer.initialize(Ctx);
   for (const Decl *D : Decls)
     IndexCtx.indexTopLevelDecl(D);
-  DataConsumer->finish();
+  DataConsumer.finish();
 }
 
-void index::indexModuleFile(serialization::ModuleFile &Mod,
-                            ASTReader &Reader,
-                            std::shared_ptr<IndexDataConsumer> DataConsumer,
+std::unique_ptr<PPCallbacks>
+index::indexMacrosCallback(IndexDataConsumer &Consumer, IndexingOptions Opts) {
+  return llvm::make_unique<IndexPPCallbacks>(
+      std::make_shared<IndexingContext>(Opts, Consumer));
+}
+
+void index::indexModuleFile(serialization::ModuleFile &Mod, ASTReader &Reader,
+                            IndexDataConsumer &DataConsumer,
                             IndexingOptions Opts) {
   ASTContext &Ctx = Reader.getContext();
-  IndexingContext IndexCtx(Opts, *DataConsumer);
+  IndexingContext IndexCtx(Opts, DataConsumer);
   IndexCtx.setASTContext(Ctx);
-  DataConsumer->initialize(Ctx);
+  DataConsumer.initialize(Ctx);
 
-  for (const Decl *D :Reader.getModuleFileLevelDecls(Mod)) {
+  for (const Decl *D : Reader.getModuleFileLevelDecls(Mod)) {
     IndexCtx.indexTopLevelDecl(D);
   }
-  DataConsumer->finish();
+  DataConsumer.finish();
 }

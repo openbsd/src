@@ -12,7 +12,7 @@ sub set_cbreak {
     local($on) = @_;
 
     require 'sizeof.ph';
-    require 'sys/ioctl.ph';
+    require './sys/ioctl.ph';
 
     ioctl(STDIN,&TIOCGETP,$sgttyb)
         || die "Can't ioctl TIOCGETP: $!";

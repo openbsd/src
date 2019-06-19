@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.38 2018/02/17 16:54:08 jsing Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.43 2019/04/14 17:16:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,8 +144,8 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 
 		ctx->cipher = cipher;
 		if (ctx->cipher->ctx_size) {
-			ctx->cipher_data = malloc(ctx->cipher->ctx_size);
-			if (!ctx->cipher_data) {
+			ctx->cipher_data = calloc(1, ctx->cipher->ctx_size);
+			if (ctx->cipher_data == NULL) {
 				EVPerror(ERR_R_MALLOC_FAILURE);
 				return 0;
 			}
@@ -153,7 +153,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 			ctx->cipher_data = NULL;
 		}
 		ctx->key_len = cipher->key_len;
-		ctx->flags = 0;
+		ctx->flags &= EVP_CIPHER_CTX_FLAG_WRAP_ALLOW;
 		if (ctx->cipher->flags & EVP_CIPH_CTRL_INIT) {
 			if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL)) {
 				EVPerror(EVP_R_INITIALIZATION_ERROR);
@@ -172,6 +172,12 @@ skip_to_init:
 	    ctx->cipher->block_size != 8 &&
 	    ctx->cipher->block_size != 16) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
+		return 0;
+	}
+
+	if (!(ctx->flags & EVP_CIPHER_CTX_FLAG_WRAP_ALLOW) &&
+	    EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_WRAP_MODE) {
+		EVPerror(EVP_R_WRAP_MODE_NOT_ALLOWED);
 		return 0;
 	}
 
@@ -575,12 +581,10 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 		if (c->cipher_data)
 			explicit_bzero(c->cipher_data, c->cipher->ctx_size);
 	}
+	/* XXX - store size of cipher_data so we can always freezero(). */
 	free(c->cipher_data);
 #ifndef OPENSSL_NO_ENGINE
-	if (c->engine)
-		/* The EVP_CIPHER we used belongs to an ENGINE, release the
-		 * functional reference we held for this reason. */
-		ENGINE_finish(c->engine);
+	ENGINE_finish(c->engine);
 #endif
 	explicit_bzero(c, sizeof(EVP_CIPHER_CTX));
 	return 1;
@@ -663,16 +667,29 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 	memcpy(out, in, sizeof *out);
 
 	if (in->cipher_data && in->cipher->ctx_size) {
-		out->cipher_data = malloc(in->cipher->ctx_size);
-		if (!out->cipher_data) {
+		out->cipher_data = calloc(1, in->cipher->ctx_size);
+		if (out->cipher_data == NULL) {
 			EVPerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		memcpy(out->cipher_data, in->cipher_data, in->cipher->ctx_size);
 	}
 
-	if (in->cipher->flags & EVP_CIPH_CUSTOM_COPY)
-		return in->cipher->ctrl((EVP_CIPHER_CTX *)in,
-		    EVP_CTRL_COPY, 0, out);
+	if (in->cipher->flags & EVP_CIPH_CUSTOM_COPY) {
+		if (!in->cipher->ctrl((EVP_CIPHER_CTX *)in, EVP_CTRL_COPY,
+		    0, out)) {
+			/*
+			 * If the custom copy control failed, assume that there
+			 * may still be pointers copied in the cipher_data that
+			 * we do not own. This may result in a leak from a bad
+			 * custom copy control, but that's preferable to a
+			 * double free...
+			 */
+			freezero(out->cipher_data, in->cipher->ctx_size);
+			out->cipher_data = NULL;
+			return 0;
+		}
+	}
+
 	return 1;
 }

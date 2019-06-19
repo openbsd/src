@@ -92,7 +92,7 @@ int nsec3_condition_hash(struct domain* d, struct zone* z);
 int nsec3_condition_dshash(struct domain* d, struct zone* z);
 /* set nsec3param for this zone or NULL if no NSEC3 available */
 void nsec3_find_zone_param(struct namedb* db, struct zone* zone,
-	struct udb_ptr* z, struct rr* avoid_rr);
+	struct udb_ptr* z, struct rr* avoid_rr, int checkchain);
 /* hash domain and wcchild, and lookup nsec3 in tree, and precompile */
 void nsec3_precompile_domain(struct namedb* db, struct domain* domain,
 	struct zone* zone, struct region* tmpregion);
@@ -109,8 +109,6 @@ const struct dname* nsec3_b32_create(struct region* region, struct zone* zone,
 	unsigned char* hash);
 /* create trees for nsec3 updates and lookups in zone */
 void nsec3_zone_trees_create(struct region* region, struct zone* zone);
-/* clear trees for nsec3 in zone */
-void nsec3_hash_tree_clear(struct zone* zone);
 /* lookup zone that contains domain's nsec3 trees */
 struct zone* nsec3_tree_zone(struct namedb* db, struct domain* domain);
 /* lookup zone that contains domain's ds tree */

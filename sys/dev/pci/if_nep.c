@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.30 2017/04/11 14:43:49 dhill Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.31 2018/11/09 14:14:31 claudio Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -1803,7 +1803,7 @@ nep_encap(struct nep_softc *sc, struct mbuf **m0, int *idx)
 		m->m_pkthdr.len += padlen;
 	}
 
-	if (M_LEADINGSPACE(m) < 16)
+	if (m_leadingspace(m) < 16)
 		pad = 0;
 	else
 		pad = mtod(m, u_long) % 16;

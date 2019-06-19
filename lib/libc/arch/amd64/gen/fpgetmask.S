@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetmask.S,v 1.2 2015/05/29 08:50:12 uebayasi Exp $	*/
+/*	$OpenBSD: fpgetmask.S,v 1.3 2018/07/03 23:14:05 mortimer Exp $	*/
 /*	$NetBSD: fpgetmask.S,v 1.3 2002/06/12 19:17:22 fvdl Exp $	*/
 
 /*
@@ -20,10 +20,12 @@ ENTRY(_fpgetmask)
 #else
 ENTRY(fpgetmask)
 #endif
+	RETGUARD_SETUP(fpgetmask, r11)
 	fnstcw -4(%rsp)
 	movl -4(%rsp),%eax
 	notl %eax
 	andl $63,%eax
+	RETGUARD_CHECK(fpgetmask, r11)
 	ret
 #ifdef WEAK_ALIAS
 END(_fpgetmask)

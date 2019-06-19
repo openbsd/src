@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbusvar.h,v 1.14 2010/11/28 20:09:40 miod Exp $	*/
+/*	$OpenBSD: gscbusvar.h,v 1.15 2018/05/14 13:54:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -26,10 +26,16 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Layout of the interrupt registers, part of the parent bus.
+ */
 struct gscbus_ic {
-	enum {gsc_unknown = 0, gsc_lasi, gsc_wax, gsc_asp} gsc_type;
-	void *gsc_dv;
-	volatile void *gsc_base;
+	volatile u_int32_t irr;	/* int request register */
+	volatile u_int32_t imr;	/* int mask register */
+	volatile u_int32_t ipr;	/* int pending register */
+	volatile u_int32_t icr;	/* int control register */
+	volatile u_int32_t iar;	/* int address register */
+	volatile u_int32_t rsvd[3];
 };
 
 struct gsc_attach_args {
@@ -43,6 +49,7 @@ struct gsc_attach_args {
 #define	ga_dmatag	ga_ca.ca_dmatag
 #define	ga_irq		ga_ca.ca_irq
 #define	ga_pdc_iodc_read	ga_ca.ca_pdc_iodc_read
+	enum { gsc_unknown = 0, gsc_asp, gsc_lasi, gsc_wax } ga_parent;
 	struct gscbus_ic *ga_ic;	/* IC pointer */
 }; 
 

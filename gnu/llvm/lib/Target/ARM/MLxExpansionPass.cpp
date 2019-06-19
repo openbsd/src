@@ -21,10 +21,10 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "mlx-expansion"
@@ -233,7 +233,7 @@ bool MLxExpansion::FindMLxHazard(MachineInstr *MI) {
 
   // On Swift, we mostly care about hazards from multiplication instructions
   // writing the accumulator and the pipelining of loop iterations by out-of-
-  // order execution. 
+  // order execution.
   if (isSwift)
     return isFpMulInstruction(DefMI->getOpcode()) || hasLoopHazard(MI);
 
@@ -309,17 +309,17 @@ MLxExpansion::ExpandFPMLxInstruction(MachineBasicBlock &MBB, MachineInstr *MI,
   }
   MIB.addImm(Pred).addReg(PredReg);
 
-  DEBUG({
-      dbgs() << "Expanding: " << *MI;
-      dbgs() << "  to:\n";
-      MachineBasicBlock::iterator MII = MI;
-      MII = std::prev(MII);
-      MachineInstr &MI2 = *MII;
-      MII = std::prev(MII);
-      MachineInstr &MI1 = *MII;
-      dbgs() << "    " << MI1;
-      dbgs() << "    " << MI2;
-   });
+  LLVM_DEBUG({
+    dbgs() << "Expanding: " << *MI;
+    dbgs() << "  to:\n";
+    MachineBasicBlock::iterator MII = MI;
+    MII = std::prev(MII);
+    MachineInstr &MI2 = *MII;
+    MII = std::prev(MII);
+    MachineInstr &MI1 = *MII;
+    dbgs() << "    " << MI1;
+    dbgs() << "    " << MI2;
+  });
 
   MI->eraseFromParent();
   ++NumExpand;
@@ -371,7 +371,7 @@ bool MLxExpansion::ExpandFPMLxInstructions(MachineBasicBlock &MBB) {
 }
 
 bool MLxExpansion::runOnMachineFunction(MachineFunction &Fn) {
-  if (skipFunction(*Fn.getFunction()))
+  if (skipFunction(Fn.getFunction()))
     return false;
 
   TII = static_cast<const ARMBaseInstrInfo *>(Fn.getSubtarget().getInstrInfo());

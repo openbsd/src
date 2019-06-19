@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_radiotap.h,v 1.14 2016/10/08 14:42:36 stsp Exp $ */
+/* $OpenBSD: ieee80211_radiotap.h,v 1.15 2019/02/19 08:12:30 stsp Exp $ */
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
 /* $NetBSD: ieee80211_radiotap.h,v 1.9 2004/06/06 04:13:28 dyoung Exp $ */
 
@@ -197,6 +197,7 @@ enum ieee80211_radiotap_type {
 #define IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
 #define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
 #define IEEE80211_CHAN_HT	0x2000	/* 11n/HT channel */
+#define IEEE80211_CHAN_VHT	0x4000	/* 11ac/VHT channel */
 #endif	/* !_KERNEL */
 
 /* For IEEE80211_RADIOTAP_FLAGS */

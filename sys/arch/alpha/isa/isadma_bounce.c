@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma_bounce.c,v 1.12 2015/09/27 10:12:09 semarie Exp $	*/
+/*	$OpenBSD: isadma_bounce.c,v 1.13 2019/05/13 21:27:59 mpi Exp $	*/
 /* $NetBSD: isadma_bounce.c,v 1.3 2000/06/29 09:02:57 mrg Exp $ */
 
 /*-
@@ -115,6 +115,7 @@ isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 
 	map = *dmamp;
 	map->_dm_cookie = NULL;
+	map->_dm_cookiesize = 0;
 
 	cookiesize = sizeof(*cookie);
 
@@ -156,6 +157,7 @@ isadma_bounce_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	cookie = (struct isadma_bounce_cookie *)cookiestore;
 	cookie->id_flags = cookieflags;
 	map->_dm_cookie = cookie;
+	map->_dm_cookiesize = cookiesize;
 
 	if (cookieflags & ID_MIGHT_NEED_BOUNCE) {
 		/*
@@ -190,7 +192,7 @@ isadma_bounce_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 	if (cookie->id_flags & ID_HAS_BOUNCE)
 		isadma_bounce_free_bouncebuf(t, map);
 
-	free(cookie, M_DEVBUF, 0);
+	free(cookie, M_DEVBUF, map->_dm_cookiesize);
 	_bus_dmamap_destroy(t, map);
 }
 

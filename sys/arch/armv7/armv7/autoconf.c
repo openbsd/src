@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2018/01/28 09:02:55 otto Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2018/03/31 18:19:12 patrick Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -44,10 +44,16 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/socket.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+
+#include <net/if.h>
+#include <net/if_types.h>
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
@@ -101,36 +107,45 @@ cpu_configure(void)
 void
 diskconf(void)
 {
-	dev_t tmpdev;
+	size_t	len;
+	char	*p;
+	dev_t	tmpdev;
+	extern uint8_t *bootmac;
 
-#if 0
-	/*
-	 * Configure root, swap, and dump area.  This is
-	 * currently done by running the same checksum
-	 * algorithm over all known disks, as was done in
-	 * /boot.  Then we basically fixup the *dev vars
-	 * from the info we gleaned from this.
-	 */
-	dkcsumattach();
-#endif
+	if (*boot_file != '\0')
+		printf("bootfile: %s\n", boot_file);
 
 	/* Lookup boot device from boot if not set by configuration */
 	if (bootdv == NULL) {
-		int len;
-		char *p;
 
 		/* boot_file is of the form wd0a:/bsd, we want 'wd0a' */
 		if ((p = strchr(boot_file, ':')) != NULL)
 			len = p - boot_file;
 		else
 			len = strlen(boot_file);
-		
 		bootdv = parsedisk(boot_file, len, 0, &tmpdev);
 	}
-	if (bootdv == NULL)
-		printf("boot device: lookup '%s' failed.\n", boot_file);
-	else
+
+#if defined(NFSCLIENT)
+	if (bootmac) {
+		struct ifnet *ifp;
+
+		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+			if (ifp->if_type == IFT_ETHER &&
+			    memcmp(bootmac, ((struct arpcom *)ifp)->ac_enaddr,
+			    ETHER_ADDR_LEN) == 0)
+				break;
+		}
+		if (ifp)
+			bootdv = parsedisk(ifp->if_xname, strlen(ifp->if_xname),
+			    0, &tmpdev);
+	}
+#endif
+
+	if (bootdv != NULL)
 		printf("boot device: %s\n", bootdv->dv_xname);
+	else
+		printf("boot device: lookup %s failed.\n", boot_file);
 	setroot(bootdv, 0, RB_USERREQ);
 	dumpconf();
 }

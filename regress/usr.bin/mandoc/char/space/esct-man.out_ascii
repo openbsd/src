@@ -9,16 +9,20 @@ DDEESSCCRRIIPPTTIIOONN
        In plain text:
        single    tab
        singleescape-t
+       singleescape-a
        double         tab
        doubleescape-t
+       doubleescape-a
        This line starts with escape-t and comes close to the right margin.
        The next line starts with escape-t as well.
 
        In a literal display:
        single    tab
        singleescape-t
+       singleescape-a
        double         tab
        doubleescape-t
+       doubleescape-a
 
        After the IP macro:
 
@@ -30,7 +34,8 @@ DDEESSCCRRIIPPTTIIOONN
 
        After font macros:
        ssiinnggllee    ttaabb
+       ddoouubbllee         ttaabb
 
 
 
-OpenBSD                           2013-06-20                 SPACE-ESCT-MAN(1)
+OpenBSD                        December 20, 2018             SPACE-ESCT-MAN(1)

@@ -27,11 +27,9 @@ class WatchpointSlotsTestCase(TestBase):
         self.source = 'main.c'
 
         # Output filename.
-        self.exe_name = 'a.out'
+        self.exe_name = self.getBuildArtifact("a.out")
         self.d = {'C_SOURCES': self.source, 'EXE': self.exe_name}
 
-    # Watchpoints not supported
-    @expectedFailureAndroid(archs=['arm', 'aarch64'])
     # This is a arm and aarch64 specific test case. No other architectures tested.
     @skipIf(archs=no_match(['arm', 'aarch64']))
     def test_multiple_watchpoints_on_same_word(self):
@@ -39,7 +37,7 @@ class WatchpointSlotsTestCase(TestBase):
         self.build(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
 
-        exe = os.path.join(os.getcwd(), self.exe_name)
+        exe = self.getBuildArtifact(self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Detect line number after which we are going to increment arrayName.
@@ -67,9 +65,12 @@ class WatchpointSlotsTestCase(TestBase):
         # The hit count should be 0 initially.
         self.expect("watchpoint list -v 1", substrs=['hit_count = 0'])
 
-        # Try setting a watchpoint at byteArray[1]
-        self.expect("watchpoint set variable byteArray[1]", error=True,
-                    substrs=['Watchpoint creation failed'])
+        # debugserver on ios doesn't give an error, it creates another watchpoint,
+        # only expect errors on non-darwin platforms.
+        if not self.platformIsDarwin():
+            # Try setting a watchpoint at byteArray[1]
+            self.expect("watchpoint set variable byteArray[1]", error=True,
+                        substrs=['Watchpoint creation failed'])
 
         self.runCmd("process continue")
 
@@ -84,14 +85,19 @@ class WatchpointSlotsTestCase(TestBase):
         # Set a watchpoint at byteArray[3]
         self.expect("watchpoint set variable byteArray[3]", WATCHPOINT_CREATED,
                     substrs=['Watchpoint created','size = 1'])
-   
+
         # Resume inferior.
         self.runCmd("process continue")
 
         # We should be stopped due to the watchpoint.
         # The stop reason of the thread should be watchpoint.
-        self.expect("thread list -v", STOPPED_DUE_TO_WATCHPOINT,
-                    substrs=['stopped', 'stop reason = watchpoint 3'])
-   
+        if self.platformIsDarwin():
+            # On darwin we'll hit byteArray[3] which is watchpoint 2
+            self.expect("thread list -v", STOPPED_DUE_TO_WATCHPOINT,
+                        substrs=['stopped', 'stop reason = watchpoint 2'])
+        else:
+            self.expect("thread list -v", STOPPED_DUE_TO_WATCHPOINT,
+                        substrs=['stopped', 'stop reason = watchpoint 3'])
+
         # Resume inferior.
         self.runCmd("process continue")

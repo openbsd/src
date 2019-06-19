@@ -558,7 +558,7 @@ bzclose(s, output)
     if (DO_UTF8(output) && !sv_utf8_downgrade(output, 1))
          croak("Wide character in " COMPRESS_CLASS "::bzclose input parameter");
 #endif         
-    if(! s->flags & FLAG_APPEND_OUTPUT) {
+    if((s->flags & FLAG_APPEND_OUTPUT) != FLAG_APPEND_OUTPUT) {
         SvCUR_set(output, 0);
         /* sv_setpvn(output, "", 0); */
     }
@@ -619,7 +619,7 @@ bzflush(s, output)
     if (DO_UTF8(output) && !sv_utf8_downgrade(output, 1))
          croak("Wide character in " COMPRESS_CLASS "::bzflush input parameter");
 #endif         
-    if(! s->flags & FLAG_APPEND_OUTPUT) {
+    if((s->flags & FLAG_APPEND_OUTPUT) != FLAG_APPEND_OUTPUT) {
         SvCUR_set(output, 0);
         /* sv_setpvn(output, "", 0); */
     }

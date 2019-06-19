@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertypes.h,v 1.11 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: ethertypes.h,v 1.12 2018/11/19 00:39:23 dlg Exp $	*/
 /*	$NetBSD: ethertypes.h,v 1.13 2002/02/10 01:28:32 thorpej Exp $	*/
 
 /*
@@ -302,6 +302,7 @@
 #define	ETHERTYPE_AOE		0x88A2	/* ATA over Ethernet */
 #define	ETHERTYPE_QINQ		0x88A8	/* 802.1ad VLAN stacking */
 #define	ETHERTYPE_LLDP		0x88CC	/* Link Layer Discovery Protocol */
+#define	ETHERTYPE_PBB		0x88e7	/* 802.1Q Provider Backbone Bridging */
 #define	ETHERTYPE_LOOPBACK	0x9000	/* Loopback */
 #define	ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK	/* DEC MOP loopback */
 #define	ETHERTYPE_XNSSM		0x9001	/* 3Com (Formerly Bridge Communications), XNS Systems Management */

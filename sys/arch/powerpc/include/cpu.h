@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.63 2016/05/07 22:46:54 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.65 2019/03/23 05:27:53 visa Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 
 #include <sys/device.h>
 #include <sys/sched.h>
+#include <sys/srp.h>
 
 struct cpu_info {
 	struct device *ci_dev;		/* our device */
@@ -407,6 +408,18 @@ ppc_intr_disable(void)
 	dmsr = emsr & ~PSL_EE;
 	ppc_mtmsr(dmsr);
 	return (emsr & PSL_EE);
+}
+
+static __inline u_long
+intr_disable(void)
+{
+	return ppc_intr_disable();
+}
+
+static __inline void
+intr_restore(u_long s)
+{
+	ppc_intr_enable(s);
 }
 
 int ppc_cpuspeed(int *);

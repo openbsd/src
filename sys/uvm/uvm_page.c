@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.146 2016/11/07 00:26:33 guenther Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.148 2019/02/26 14:24:21 visa Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/smr.h>
 
 #include <uvm/uvm.h>
 
@@ -669,6 +670,7 @@ uvm_shutdown(void)
 #ifdef UVM_SWAP_ENCRYPT
 	uvm_swap_finicrypt_all();
 #endif
+	smr_flush();
 }
 
 /*
@@ -853,11 +855,14 @@ uvm_pagerealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
 		while((pg = TAILQ_FIRST(&plist)) != NULL) {
 			offset = off + ptoa(i++);
 			tpg = uvm_pagelookup(obj, offset);
+			KASSERT(tpg != NULL);
 			pg->wire_count = 1;
 			atomic_setbits_int(&pg->pg_flags, PG_CLEAN | PG_FAKE);
 			KASSERT((pg->pg_flags & PG_DEV) == 0);
 			TAILQ_REMOVE(&plist, pg, pageq);
 			uvm_pagecopy(tpg, pg);
+			KASSERT(tpg->wire_count == 1);
+			tpg->wire_count = 0;
 			uvm_pagefree(tpg);
 			uvm_pagealloc_pg(pg, obj, offset, NULL);
 		}

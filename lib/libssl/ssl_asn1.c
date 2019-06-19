@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.56 2018/03/20 16:10:57 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.57 2018/08/27 16:42:48 jsing Exp $ */
 /*
  * Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -44,22 +44,15 @@ time_max(void)
 	return 0;
 }
 
-int
-i2d_SSL_SESSION(SSL_SESSION *s, unsigned char **pp)
+static int
+SSL_SESSION_encode(SSL_SESSION *s, unsigned char **out, size_t *out_len,
+    int ticket_encoding)
 {
 	CBB cbb, session, cipher_suite, session_id, master_key, time, timeout;
-	CBB peer_cert, sidctx, verify_result, hostname, lifetime, ticket;
-	CBB value;
-	unsigned char *data = NULL, *peer_cert_bytes = NULL;
-	size_t data_len = 0;
-	int len, rv = -1;
+	CBB peer_cert, sidctx, verify_result, hostname, lifetime, ticket, value;
+	unsigned char *peer_cert_bytes = NULL;
+	int len, rv = 0;
 	uint16_t cid;
-
-	if (s == NULL)
-		return (0);
-
-	if (s->cipher == NULL && s->cipher_id == 0)
-		return (0);
 
 	if (!CBB_init(&cbb, 0))
 		goto err;
@@ -87,10 +80,11 @@ i2d_SSL_SESSION(SSL_SESSION *s, unsigned char **pp)
 	if (!CBB_add_u16(&cipher_suite, cid))
 		goto err;
 
-	/* Session ID. */
+	/* Session ID - zero length for a ticket. */
 	if (!CBB_add_asn1(&session, &session_id, CBS_ASN1_OCTETSTRING))
 		goto err;
-	if (!CBB_add_bytes(&session_id, s->session_id, s->session_id_length))
+	if (!CBB_add_bytes(&session_id, s->session_id,
+	    ticket_encoding ? 0 : s->session_id_length))
 		goto err;
 
 	/* Master key. */
@@ -173,7 +167,7 @@ i2d_SSL_SESSION(SSL_SESSION *s, unsigned char **pp)
 	}
 
 	/* Ticket [10]. */
-	if (s->tlsext_tick) {
+	if (s->tlsext_tick != NULL) {
 		if (!CBB_add_asn1(&session, &ticket, SSLASN1_TICKET_TAG))
 			goto err;
 		if (!CBB_add_asn1(&ticket, &value, CBS_ASN1_OCTETSTRING))
@@ -185,7 +179,44 @@ i2d_SSL_SESSION(SSL_SESSION *s, unsigned char **pp)
 	/* Compression method [11]. */
 	/* SRP username [12]. */
 
-	if (!CBB_finish(&cbb, &data, &data_len))
+	if (!CBB_finish(&cbb, out, out_len))
+		goto err;
+
+	rv = 1;
+
+ err:
+	CBB_cleanup(&cbb);
+	free(peer_cert_bytes);
+
+	return rv;
+}
+
+int
+SSL_SESSION_ticket(SSL_SESSION *ss, unsigned char **out, size_t *out_len)
+{
+	if (ss == NULL)
+		return 0;
+
+	if (ss->cipher == NULL && ss->cipher_id == 0)
+		return 0;
+
+	return SSL_SESSION_encode(ss, out, out_len, 1);
+}
+
+int
+i2d_SSL_SESSION(SSL_SESSION *ss, unsigned char **pp)
+{
+	unsigned char *data = NULL;
+	size_t data_len = 0;
+	int rv = -1;
+
+	if (ss == NULL)
+		return 0;
+
+	if (ss->cipher == NULL && ss->cipher_id == 0)
+		return 0;
+
+	if (!SSL_SESSION_encode(ss, &data, &data_len, 0))
 		goto err;
 
 	if (data_len > INT_MAX)
@@ -204,9 +235,7 @@ i2d_SSL_SESSION(SSL_SESSION *s, unsigned char **pp)
 	rv = (int)data_len;
 
  err:
-	CBB_cleanup(&cbb);
 	freezero(data, data_len);
-	free(peer_cert_bytes);
 
 	return rv;
 }

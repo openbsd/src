@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.14 2016/09/11 17:53:26 jsing Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.16 2018/12/31 11:44:57 claudio Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -37,6 +37,11 @@
 #include "openfirm.h"
 
 #include <machine/cpu.h>
+
+#ifdef SOFTRAID
+#include <dev/softraidvar.h>
+#include <lib/libsa/softraid.h>
+#endif
 
 static vaddr_t OF_claim_virt(vaddr_t vaddr, int len);
 static vaddr_t OF_alloc_virt(int len, int align);
@@ -619,6 +624,26 @@ OF_child(int phandle)
 	if (openfirmware(&args) == -1)
 		return 0;
 	return args.child;
+}
+
+int
+OF_parent(int phandle)
+{
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t parent;
+	} args;
+	
+	args.name = ADR2CELL("parent");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.parent;
 }
 
 int

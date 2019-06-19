@@ -10,10 +10,10 @@
 #include "PPCTargetTransformInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
+#include "llvm/CodeGen/CostTable.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/CostTable.h"
-#include "llvm/Target/TargetLowering.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "ppctti"
@@ -26,6 +26,11 @@ cl::desc("disable constant hoisting on PPC"), cl::init(false), cl::Hidden);
 static cl::opt<unsigned>
 CacheLineSize("ppc-loop-prefetch-cache-line", cl::Hidden, cl::init(64),
               cl::desc("The loop prefetch cache line size"));
+
+static cl::opt<bool>
+EnablePPCColdCC("ppc-enable-coldcc", cl::Hidden, cl::init(false),
+                cl::desc("Enable using coldcc calling conv for cold "
+                         "internal functions"));
 
 //===----------------------------------------------------------------------===//
 //
@@ -189,6 +194,17 @@ int PPCTTIImpl::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
   return PPCTTIImpl::getIntImmCost(Imm, Ty);
 }
 
+unsigned PPCTTIImpl::getUserCost(const User *U,
+                                 ArrayRef<const Value *> Operands) {
+  if (U->getType()->isVectorTy()) {
+    // Instructions that need to be split should cost more.
+    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, U->getType());
+    return LT.first * BaseT::getUserCost(U, Operands);
+  }
+
+  return BaseT::getUserCost(U, Operands);
+}
+
 void PPCTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                          TTI::UnrollingPreferences &UP) {
   if (ST->getDarwinDirective() == PPC::DIR_A2) {
@@ -204,6 +220,14 @@ void PPCTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
   BaseT::getUnrollingPreferences(L, SE, UP);
 }
 
+// This function returns true to allow using coldcc calling convention.
+// Returning true results in coldcc being used for functions which are cold at
+// all call sites when the callers of the functions are not calling any other
+// non coldcc functions.
+bool PPCTTIImpl::useColdCCForColdCall(Function &F) {
+  return EnablePPCColdCC;
+}
+
 bool PPCTTIImpl::enableAggressiveInterleaving(bool LoopHasReductions) {
   // On the A2, always unroll aggressively. For QPX unaligned loads, we depend
   // on combining the loads generated for consecutive accesses, and failure to
@@ -215,9 +239,17 @@ bool PPCTTIImpl::enableAggressiveInterleaving(bool LoopHasReductions) {
   return LoopHasReductions;
 }
 
-bool PPCTTIImpl::expandMemCmp(Instruction *I, unsigned &MaxLoadSize) {
-  MaxLoadSize = 8;
-  return true;
+const PPCTTIImpl::TTI::MemCmpExpansionOptions *
+PPCTTIImpl::enableMemCmpExpansion(bool IsZeroCmp) const {
+  static const auto Options = []() {
+    TTI::MemCmpExpansionOptions Options;
+    Options.LoadSizes.push_back(8);
+    Options.LoadSizes.push_back(4);
+    Options.LoadSizes.push_back(2);
+    Options.LoadSizes.push_back(1);
+    return Options;
+  }();
+  return &Options;
 }
 
 bool PPCTTIImpl::enableInterleavedAccessVectorization() {

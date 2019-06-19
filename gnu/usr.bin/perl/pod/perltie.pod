@@ -504,8 +504,9 @@ reports whether a key is present in the hash, and DELETE deletes one.
 CLEAR empties the hash by deleting all the key and value pairs.  FIRSTKEY
 and NEXTKEY implement the keys() and each() functions to iterate over all
 the keys. SCALAR is triggered when the tied hash is evaluated in scalar 
-context. UNTIE is called when C<untie> happens, and DESTROY is called when
-the tied variable is garbage collected.
+context, and in 5.28 onwards, by C<keys> in boolean context. UNTIE is
+called when C<untie> happens, and DESTROY is called when the tied variable
+is garbage collected.
 
 If this seems like a lot, then feel free to inherit from merely the
 standard Tie::StdHash module for most of your methods, redefining only the
@@ -805,9 +806,10 @@ thing, but we'll have to go through the LIST field indirectly.
 =item SCALAR this
 X<SCALAR>
 
-This is called when the hash is evaluated in scalar context. In order
-to mimic the behaviour of untied hashes, this method should return a
-false value when the tied hash is considered empty. If this method does
+This is called when the hash is evaluated in scalar context, and in 5.28
+onwards, by C<keys> in boolean context. In order to mimic the behaviour of
+untied hashes, this method must return a value which when used as boolean,
+indicates whether the tied hash is considered empty. If this method does
 not exist, perl will make some educated guesses and return true when
 the hash is inside an iteration. If this isn't the case, FIRSTKEY is
 called, and the result will be a false value if FIRSTKEY returns the empty
@@ -827,6 +829,11 @@ referenced by C<$self-E<gt>{LIST}>:
 	my $self = shift;
 	return scalar %{ $self->{LIST} }
     }
+
+NOTE: In perl 5.25 the behavior of scalar %hash on an untied hash changed
+to return the count of keys. Prior to this it returned a string containing
+information about the bucket setup of the hash. See
+L<Hash::Util/bucket_ratio> for a backwards compatibility path.
 
 =item UNTIE this
 X<UNTIE>
@@ -1196,10 +1203,11 @@ modules L<Tie::Scalar>, L<Tie::Array>, L<Tie::Hash>, or L<Tie::Handle>.
 
 =head1 BUGS
 
-The bucket usage information provided by C<scalar(%hash)> is not
+The normal return provided by C<scalar(%hash)> is not
 available.  What this means is that using %tied_hash in boolean
 context doesn't work right (currently this always tests false,
 regardless of whether the hash is empty or hash elements).
+[ This paragraph needs review in light of changes in 5.25 ]
 
 Localizing tied arrays or hashes does not work.  After exiting the
 scope the arrays or the hashes are not restored.

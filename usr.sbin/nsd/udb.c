@@ -62,7 +62,8 @@ chunk_get_last(void* base, udb_void chunk, int exp)
 static void
 chunk_set_last(void* base, udb_void chunk, int exp, uint8_t value)
 {
-	*((uint8_t*)UDB_REL(base, chunk+(1<<exp)-1)) = value;
+	assert(exp >= 0 && exp <= 63);
+	*((uint8_t*)UDB_REL(base, chunk+((uint64_t)1<<exp)-1)) = value;
 }
 
 /** create udb_base from a file descriptor (must be at start of file) */
@@ -627,6 +628,7 @@ int udb_exp_size(uint64_t a)
 		i >>= 1;
 		x ++;
 	}
+	assert( x>=0 && x<=63);
 	assert( ((uint64_t)1<<x) >= a);
 	assert( x==0 || ((uint64_t)1<<(x-1)) < a);
 	return x;

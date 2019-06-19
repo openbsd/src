@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pss.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: rsa_pss.c,v 1.13 2018/09/05 00:55:33 djm Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -163,7 +163,7 @@ RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 	}
 	if (!EVP_DigestFinal_ex(&ctx, H_, NULL))
 		goto err;
-	if (memcmp(H_, H, hLen)) {
+	if (timingsafe_bcmp(H_, H, hLen)) {
 		RSAerror(RSA_R_BAD_SIGNATURE);
 		ret = 0;
 	} else

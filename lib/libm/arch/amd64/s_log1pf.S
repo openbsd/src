@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_log1pf.S,v 1.5 2017/08/19 18:27:19 deraadt Exp $ */
+/*	$OpenBSD: s_log1pf.S,v 1.6 2018/07/03 22:43:34 mortimer Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -40,6 +40,7 @@
  */
 
 ENTRY(log1pf)
+	RETGUARD_SETUP(log1pf, r11)
 	XMM_ONE_ARG_FLOAT_PROLOGUE
 	flds	ARG_FLOAT_ONE
 	fabs
@@ -62,6 +63,7 @@ use_fyl2x:
 	faddp
 	fyl2x
 	XMM_FLOAT_EPILOGUE
+	RETGUARD_CHECK(log1pf, r11)
 	ret
 
 	.align	4,0xcc
@@ -70,5 +72,6 @@ use_fyl2xp1:
 	flds	ARG_FLOAT_ONE
 	fyl2xp1
 	XMM_FLOAT_EPILOGUE
+	RETGUARD_CHECK(log1pf, r11)
 	ret
 END_STD(log1pf)

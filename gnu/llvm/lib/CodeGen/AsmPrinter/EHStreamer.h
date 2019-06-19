@@ -1,4 +1,4 @@
-//===-- EHStreamer.h - Exception Handling Directive Streamer ---*- C++ -*--===//
+//===- EHStreamer.h - Exception Handling Directive Streamer -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,17 +16,16 @@
 
 #include "AsmPrinterHandler.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Compiler.h"
 
 namespace llvm {
-struct LandingPadInfo;
-class MachineModuleInfo;
-class MachineInstr;
-class MachineFunction;
-class MCSymbol;
-class MCSymbolRefExpr;
 
-template <typename T>
-class SmallVectorImpl;
+class AsmPrinter;
+struct LandingPadInfo;
+class MachineInstr;
+class MachineModuleInfo;
+class MCSymbol;
+template <typename T> class SmallVectorImpl;
 
 /// Emits exception handling directives.
 class LLVM_LIBRARY_VISIBILITY EHStreamer : public AsmPrinterHandler {
@@ -45,11 +44,12 @@ protected:
   struct PadRange {
     // The index of the landing pad.
     unsigned PadIndex;
+
     // The index of the begin and end labels in the landing pad's label lists.
     unsigned RangeIndex;
   };
 
-  typedef DenseMap<MCSymbol *, PadRange> RangeMapType;
+  using RangeMapType = DenseMap<MCSymbol *, PadRange>;
 
   /// Structure describing an entry in the actions table.
   struct ActionEntry {
@@ -66,14 +66,15 @@ protected:
 
     // LPad contains the landing pad start labels.
     const LandingPadInfo *LPad; // Null indicates that there is no landing pad.
+
     unsigned Action;
   };
 
   /// Compute the actions table and gather the first action index for each
   /// landing pad site.
-  unsigned computeActionsTable(const SmallVectorImpl<const LandingPadInfo*>&LPs,
-                               SmallVectorImpl<ActionEntry> &Actions,
-                               SmallVectorImpl<unsigned> &FirstActions);
+  void computeActionsTable(const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
+                           SmallVectorImpl<ActionEntry> &Actions,
+                           SmallVectorImpl<unsigned> &FirstActions);
 
   void computePadMap(const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
                      RangeMapType &PadMap);
@@ -85,7 +86,7 @@ protected:
   /// no entry and must not be contained in the try-range of any entry - they
   /// form gaps in the table.  Entries must be ordered by try-range address.
   void computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
-                            const SmallVectorImpl<const LandingPadInfo *> &LPs,
+                            const SmallVectorImpl<const LandingPadInfo *> &LandingPads,
                             const SmallVectorImpl<unsigned> &FirstActions);
 
   /// Emit landing pads and actions.
@@ -109,9 +110,9 @@ protected:
   ///     catches in the function.  This tables is reversed indexed base 1.
   void emitExceptionTable();
 
-  virtual void emitTypeInfos(unsigned TTypeEncoding);
+  virtual void emitTypeInfos(unsigned TTypeEncoding, MCSymbol *TTBaseLabel);
 
-  // Helpers for for identifying what kind of clause an EH typeid or selector
+  // Helpers for identifying what kind of clause an EH typeid or selector
   // corresponds to. Negative selectors are for filter clauses, the zero
   // selector is for cleanups, and positive selectors are for catch clauses.
   static bool isFilterEHSelector(int Selector) { return Selector < 0; }
@@ -131,7 +132,7 @@ public:
   /// `false' otherwise.
   static bool callToNoUnwindFunction(const MachineInstr *MI);
 };
-}
 
-#endif
+} // end namespace llvm
 
+#endif // LLVM_LIB_CODEGEN_ASMPRINTER_EHSTREAMER_H

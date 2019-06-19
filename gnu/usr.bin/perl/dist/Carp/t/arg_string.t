@@ -1,7 +1,9 @@
 use warnings;
 use strict;
 
-use Test::More tests => 32;
+# confirm that string-typed stack args are displayed correctly by longmess()
+
+use Test::More tests => 33;
 
 use Carp ();
 
@@ -15,19 +17,26 @@ my $e9 = sprintf "%02x", (($] ge 5.007_003)
                           : ((ord("A") == 193)
                              ? 0x51
                              : 0xE9));
-my $chr_e9 = chr eval "0x$e9";
+my $xe9 = "\\x$e9";
+my $chr_e9 = eval "\"$xe9\"";
 my $nl_as_hex = sprintf "%x", ord("\n");
 
 like lm(3), qr/main::lm\(3\)/;
 like lm(substr("3\x{2603}", 0, 1)), qr/main::lm\(3\)/;
 like lm(-3), qr/main::lm\(-3\)/;
 like lm(-3.5), qr/main::lm\(-3\.5\)/;
-like lm(-3.5e100), qr/main::lm\(-3\.5[eE]\+?100\)/;
+like lm(-3.5e30),
+            qr/main::lm\(
+              (
+                -3500000000000000000000000000000
+              | -3\.5[eE]\+?0?30
+              )
+              \) /x;
 like lm(""), qr/main::lm\(""\)/;
 like lm("foo"), qr/main::lm\("foo"\)/;
+like lm("a&b"), qr/main::lm\("a&b"\)/;
 like lm("a\$b\@c\\d\"e"), qr/main::lm\("a\\\$b\\\@c\\\\d\\\"e"\)/;
 like lm("a\nb"), qr/main::lm\("a\\x\{$nl_as_hex\}b"\)/;
-
 like lm("a\x{666}b"), qr/main::lm\("a\\x\{666\}b"\)/;
 like lm("\x{666}b"), qr/main::lm\("\\x\{666\}b"\)/;
 like lm("a\x{666}"), qr/main::lm\("a\\x\{666\}"\)/;

@@ -80,8 +80,6 @@
 
     "Section "with" [33m[1mother[0m markup[0m" in foo|bar
 
-    Nested <http://www.perl.org/>
-
 [1mOVER AND ITEMS[0m
     Taken from Pod::Parser tests, this is a test to ensure that multiline
     =item paragraphs get indented appropriately.
@@ -175,12 +173,12 @@
     Of course I should still be able to do all this [33mwith[0m escape sequences
     too: "$self->method()" and "$self->{FIELDNAME}" and "{FOO=>BAR}".
 
-    Dont forget "$self->method()->{FIELDNAME} = {FOO=>BAR}".
+    Don't forget "$self->method()->{FIELDNAME} = {FOO=>BAR}".
 
     And make sure that 0 works too!
 
     Now, if I use << or >> as my delimiters, then I have to use whitespace.
-    So things like "<$self-"method()>> and "<$self-"{FIELDNAME}>> wont end
+    So things like "<$self-"method()>> and "<$self-"{FIELDNAME}>> won't end
     up doing what you might expect since the first > will still terminate
     the first < seen.
 

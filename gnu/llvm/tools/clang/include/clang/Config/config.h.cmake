@@ -11,14 +11,26 @@
 /* Default linker to use. */
 #define CLANG_DEFAULT_LINKER "${CLANG_DEFAULT_LINKER}"
 
+/* Default C/ObjC standard to use. */
+#cmakedefine CLANG_DEFAULT_STD_C LangStandard::lang_${CLANG_DEFAULT_STD_C}
+
+/* Default C++/ObjC++ standard to use. */
+#cmakedefine CLANG_DEFAULT_STD_CXX LangStandard::lang_${CLANG_DEFAULT_STD_CXX}
+
 /* Default C++ stdlib to use. */
 #define CLANG_DEFAULT_CXX_STDLIB "${CLANG_DEFAULT_CXX_STDLIB}"
 
 /* Default runtime library to use. */
 #define CLANG_DEFAULT_RTLIB "${CLANG_DEFAULT_RTLIB}"
 
+/* Default objcopy to use */
+#define CLANG_DEFAULT_OBJCOPY "${CLANG_DEFAULT_OBJCOPY}"
+
 /* Default OpenMP runtime used by -fopenmp. */
 #define CLANG_DEFAULT_OPENMP_RUNTIME "${CLANG_DEFAULT_OPENMP_RUNTIME}"
+
+/* Default architecture for OpenMP offloading to Nvidia GPUs. */
+#define CLANG_OPENMP_NVPTX_DEFAULT_ARCH "${CLANG_OPENMP_NVPTX_DEFAULT_ARCH}"
 
 /* Multilib suffix for libdir. */
 #define CLANG_LIBDIR_SUFFIX "${CLANG_LIBDIR_SUFFIX}"
@@ -28,6 +40,10 @@
 
 /* Directories clang will search for headers */
 #define C_INCLUDE_DIRS "${C_INCLUDE_DIRS}"
+
+/* Directories clang will search for configuration files */
+#cmakedefine CLANG_CONFIG_FILE_SYSTEM_DIR "${CLANG_CONFIG_FILE_SYSTEM_DIR}"
+#cmakedefine CLANG_CONFIG_FILE_USER_DIR "${CLANG_CONFIG_FILE_USER_DIR}"
 
 /* Default <path> to all compiler invocations for --sysroot=<path>. */
 #define DEFAULT_SYSROOT "${DEFAULT_SYSROOT}"
@@ -56,9 +72,12 @@
 /* enable x86 relax relocations by default */
 #cmakedefine01 ENABLE_X86_RELAX_RELOCATIONS
 
+/* Enable the experimental new pass manager by default */
+#cmakedefine01 ENABLE_EXPERIMENTAL_NEW_PASS_MANAGER
+
 /* Enable each functionality of modules */
-#cmakedefine CLANG_ENABLE_ARCMT
-#cmakedefine CLANG_ENABLE_OBJC_REWRITER
-#cmakedefine CLANG_ENABLE_STATIC_ANALYZER
+#cmakedefine01 CLANG_ENABLE_ARCMT
+#cmakedefine01 CLANG_ENABLE_OBJC_REWRITER
+#cmakedefine01 CLANG_ENABLE_STATIC_ANALYZER
 
 #endif

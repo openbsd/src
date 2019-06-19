@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 2017/08/01 18:05:53 martijn Exp $ */
+/*	$OpenBSD: extern.h,v 1.14 2018/11/14 10:59:33 martijn Exp $ */
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -53,8 +53,9 @@ __dead void error(int, const char *, ...);
 void	warning(const char *, ...);
 int	 mf_fgets(SPACE *, enum e_spflag);
 int	 lastline(void);
+void	 finish_file(void);
 void	 process(void);
-void	 resetranges(void);
+void	 resetstate(void);
 char	*strregerror(int, regex_t *);
 void	*xmalloc(size_t);
 void	*xreallocarray(void *, size_t, size_t);

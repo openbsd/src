@@ -1,4 +1,4 @@
-.\"	$OpenBSD: portmap.8,v 1.9 2015/09/10 15:16:44 schwarze Exp $
+.\"	$OpenBSD: portmap.8,v 1.11 2019/03/03 18:28:33 jmc Exp $
 .\"
 .\" Copyright (c) 1987 Sun Microsystems
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -30,18 +30,18 @@
 .\"
 .\"     from: @(#)portmap.8	5.3 (Berkeley) 3/16/91
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: March 3 2019 $
 .Dt PORTMAP 8
 .Os
 .Sh NAME
 .Nm portmap
-.Nd DARPA port to RPC program number mapper
+.Nd Internet protocol port to RPC program number mapper
 .Sh SYNOPSIS
 .Nm portmap
 .Op Fl d
 .Sh DESCRIPTION
 .Nm portmap
-is a server that converts RPC program numbers into DARPA
+is a server that converts RPC program numbers into Internet
 protocol port numbers.
 It must be running in order to make RPC calls.
 .Pp

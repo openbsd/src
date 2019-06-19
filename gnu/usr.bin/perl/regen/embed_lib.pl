@@ -55,7 +55,7 @@ sub add_level {
 
 sub setup_embed {
     my $prefix = shift || '';
-    open IN, $prefix . 'embed.fnc' or die $!;
+    open IN, '<', $prefix . 'embed.fnc' or die $!;
 
     my @embed;
     my %seen;
@@ -104,7 +104,7 @@ sub setup_embed {
 
     close IN or die "Problem reading embed.fnc: $!";
 
-    open IN, $prefix . 'regen/opcodes' or die $!;
+    open IN, '<', $prefix . 'regen/opcodes' or die $!;
     {
 	my %syms;
 

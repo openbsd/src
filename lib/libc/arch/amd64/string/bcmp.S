@@ -1,6 +1,7 @@
 #include "DEFS.h"
 
 ENTRY(bcmp)
+	RETGUARD_SETUP(bcmp, r11)
 	xorl	%eax,%eax		/* clear return value */
 	cld				/* set compare direction forward */
 
@@ -17,5 +18,6 @@ ENTRY(bcmp)
 	je	L2
 
 L1:	incl	%eax
-L2:	ret
+L2:	RETGUARD_CHECK(bcmp, r11)
+	ret
 END_WEAK(bcmp)

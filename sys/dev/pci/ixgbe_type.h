@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.31 2016/11/18 14:16:10 mikeb Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.32 2019/04/10 09:55:02 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -3142,7 +3142,9 @@ enum ixgbe_phy_type {
 	ixgbe_phy_aq,
 	ixgbe_phy_x550em_kr,
 	ixgbe_phy_x550em_kx4,
+	ixgbe_phy_x550em_xfi,
 	ixgbe_phy_x550em_ext_t,
+	ixgbe_phy_ext_1g_t,
 	ixgbe_phy_cu_unknown,
 	ixgbe_phy_qt,
 	ixgbe_phy_xaui,
@@ -3160,6 +3162,8 @@ enum ixgbe_phy_type {
 	ixgbe_phy_qsfp_intel,
 	ixgbe_phy_qsfp_unknown,
 	ixgbe_phy_sfp_unsupported, /*Enforce bit set with unsupported module*/
+	ixgbe_phy_sgmii,
+	ixgbe_phy_fw,
 	ixgbe_phy_generic
 };
 

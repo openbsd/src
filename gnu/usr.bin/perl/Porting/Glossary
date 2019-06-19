@@ -41,10 +41,6 @@ alignbytes (alignbytes.U):
 	double-- or a long double when applicable. Usual values are
 	2, 4 and 8.  The default is eight, for safety.
 
-ansi2knr (ansi2knr.U):
-	This variable is set if the user needs to run ansi2knr.
-	Currently, this is not supported, so we just abort.
-
 aphostname (d_gethname.U):
 	This variable contains the command which can be used to compute the
 	host name. The command is fully qualified by its absolute path, to make
@@ -397,6 +393,10 @@ d__fwalk (d__fwalk.U):
 	This variable conditionally defines HAS__FWALK if _fwalk() is
 	available to apply a function to all the file handles.
 
+d_accept4 (d_accept4.U):
+	This variable conditionally defines HAS_ACCEPT4 if accept4() is
+	available to accept socket connections.
+
 d_access (d_access.U):
 	This variable conditionally defines HAS_ACCESS if the access() system
 	call is available to check for access permissions using real IDs.
@@ -495,14 +495,6 @@ d_backtrace (d_backtrace.U):
 	indicates to the C program that the backtrace() routine is available
 	to get a stack trace.
 
-d_bcmp (d_bcmp.U):
-	This variable conditionally defines the HAS_BCMP symbol if
-	the bcmp() routine is available to compare strings.
-
-d_bcopy (d_bcopy.U):
-	This variable conditionally defines the HAS_BCOPY symbol if
-	the bcopy() routine is available to copy strings.
-
 d_bsd (Guess.U):
 	This symbol conditionally defines the symbol BSD when running on a
 	BSD system.
@@ -515,6 +507,11 @@ d_bsdsetpgrp (d_setpgrp.U):
 	This variable conditionally defines USE_BSD_SETPGRP if
 	setpgrp needs two arguments whereas USG one needs none.
 	See also d_setpgid for a POSIX interface.
+
+d_builtin_add_overflow (d_builtin_overflow.U):
+	This variable conditionally defines HAS_BUILTIN_ADD_OVERFLOW, which
+	indicates that the compiler supports __builtin_add_overflow(x,y,&z)
+	for safely adding x and y into z while checking for overflow.
 
 d_builtin_choose_expr (d_builtin.U):
 	This conditionally defines HAS_BUILTIN_CHOOSE_EXPR, which
@@ -530,9 +527,15 @@ d_builtin_expect (d_builtin.U):
 	__builtin_expect to provide the compiler with branch prediction
 	information.
 
-d_bzero (d_bzero.U):
-	This variable conditionally defines the HAS_BZERO symbol if
-	the bzero() routine is available to set memory to 0.
+d_builtin_mul_overflow (d_builtin_overflow.U):
+	This variable conditionally defines HAS_BUILTIN_MUL_OVERFLOW, which
+	indicates that the compiler supports __builtin_mul_overflow(x,y,&z)
+	for safely multiplying x and y into z while checking for overflow.
+
+d_builtin_sub_overflow (d_builtin_overflow.U):
+	This variable conditionally defines HAS_BUILTIN_SUB_OVERFLOW, which
+	indicates that the compiler supports __builtin_sub_overflow(x,y,&z)
+	for safely subtracting y from x into z while checking for overflow.
 
 d_c99_variadic_macros (d_c99_variadic.U):
 	This variable conditionally defines the HAS_C99_VARIADIC_MACROS
@@ -551,11 +554,6 @@ d_cbrt (d_cbrt.U):
 	This variable conditionally defines the HAS_CBRT symbol, which
 	indicates to the C program that the cbrt() (cube root) function
 	is available.
-
-d_charvspr (d_vprintf.U):
-	This variable conditionally defines CHARVSPRINTF if this system
-	has vsprintf returning type (char*).  The trend seems to be to
-	declare it as "int vsprintf()".
 
 d_chown (d_chown.U):
 	This variable conditionally defines the HAS_CHOWN symbol, which
@@ -642,11 +640,6 @@ d_cuserid (d_cuserid.U):
 	indicates to the C program that the cuserid() routine is available
 	to get character login names.
 
-d_dbl_dig (d_dbl_dig.U):
-	This variable conditionally defines d_dbl_dig if this system's
-	header files provide DBL_DIG, which is the number of significant
-	digits in a double precision number.
-
 d_dbminitproto (d_dbminitproto.U):
 	This variable conditionally defines the HAS_DBMINIT_PROTO symbol,
 	which indicates to the C program that the system provides
@@ -699,6 +692,38 @@ d_dosuid (d_dosuid.U):
 	tells the C program that it should insert setuid emulation code
 	on hosts which have setuid #! scripts disabled.
 
+d_double_has_inf (longdblfio.U):
+	This variable conditionally defines the symbol DOUBLE_HAS_INF
+	which indicates that the double type has an infinity.
+
+d_double_has_nan (longdblfio.U):
+	This variable conditionally defines the symbol DOUBLE_HAS_NAN
+	which indicates that the double type has a not-a-number.
+
+d_double_has_negative_zero (longdblfio.U):
+	This variable conditionally defines the symbol DOUBLE_HAS_NEGATIVE_ZERO
+	which indicates that the double type has a negative zero.
+
+d_double_has_subnormals (longdblfio.U):
+	This variable conditionally defines the symbol DOUBLE_HAS_SUBNORMALS
+	which indicates that the double type has subnormals (denormals).
+
+d_double_style_cray (longdblfio.U):
+	This variable conditionally defines the symbol DOUBLE_STYLE_CRAY
+	which indicates that the double is the 64-bit CRAY mainframe format.
+
+d_double_style_ibm (longdblfio.U):
+	This variable conditionally defines the symbol DOUBLE_STYLE_IBM,
+	which indicates that the double is the 64-bit IBM mainframe format.
+
+d_double_style_ieee (longdblfio.U):
+	This variable conditionally defines the symbol DOUBLE_STYLE_IEEE,
+	which indicates that the double is the 64-bit IEEE 754.
+
+d_double_style_vax (longdblfio.U):
+	This variable conditionally defines the symbol DOUBLE_STYLE_VAX,
+	which indicates that the double is the 64-bit VAX format D or G.
+
 d_drand48_r (d_drand48_r.U):
 	This variable conditionally defines the HAS_DRAND48_R symbol,
 	which indicates to the C program that the drand48_r()
@@ -712,6 +737,10 @@ d_drand48proto (d_drand48proto.U):
 
 d_dup2 (d_dup2.U):
 	This variable conditionally defines HAS_DUP2 if dup2() is
+	available to duplicate file descriptors.
+
+d_dup3 (d_dup3.U):
+	This variable conditionally defines HAS_DUP3 if dup3() is
 	available to duplicate file descriptors.
 
 d_duplocale (d_newlocale.U):
@@ -816,6 +845,10 @@ d_fchmod (d_fchmod.U):
 	This variable conditionally defines the HAS_FCHMOD symbol, which
 	indicates to the C program that the fchmod() routine is available
 	to change mode of opened files.
+
+d_fchmodat (d_fsat.U):
+	This variable conditionally defines the HAS_FCHMODAT symbol, which
+	indicates the POSIX fchmodat() function is available.
 
 d_fchown (d_fchown.U):
 	This variable conditionally defines the HAS_FCHOWN symbol, which
@@ -982,6 +1015,12 @@ d_ftime (d_ftime.U):
 d_futimes (d_futimes.U):
 	This variable conditionally defines the HAS_FUTIMES symbol, which
 	indicates to the C program that the futimes() routine is available.
+
+d_gai_strerror (d_gai_strerror.U):
+	This variable conditionally defines the HAS_GAI_STRERROR symbol
+	if the gai_strerror() routine is available and can be used to
+	translate error codes returned by getaddrinfo() into human
+	readable strings.
 
 d_Gconvert (d_gconvert.U):
 	This variable holds what Gconvert is defined as to convert
@@ -1352,10 +1391,6 @@ d_inc_version_list (inc_version_list.U):
 	This variable conditionally defines PERL_INC_VERSION_LIST.
 	It is set to undef when PERL_INC_VERSION_LIST is empty.
 
-d_index (d_strchr.U):
-	This variable conditionally defines HAS_INDEX if index() and
-	rindex() are available for string searching.
-
 d_inetaton (d_inetaton.U):
 	This variable conditionally defines the HAS_INET_ATON symbol, which
 	indicates to the C program that the inet_aton() function is available
@@ -1487,6 +1522,10 @@ d_link (d_link.U):
 	This variable conditionally defines HAS_LINK if link() is
 	available to create hard links.
 
+d_linkat (d_fsat.U):
+	This variable conditionally defines the HAS_LINKAT symbol, which
+	indicates the POSIX linkat() function is available.
+
 d_llrint (d_llrint.U):
 	This variable conditionally defines the HAS_LLRINT symbol, which
 	indicates to the C program that the llrint() routine is available
@@ -1508,6 +1547,10 @@ d_llroundl (d_llroundl.U):
 	This variable conditionally defines the HAS_LLROUNDL symbol, which
 	indicates to the C program that the llroundl() routine is available
 	to return the long long value nearest to x away from zero.
+
+d_localeconv_l (d_localeconv_l.U):
+	This variable conditionally defines the HAS_LOCALECONV_L symbol, which
+	indicates to the C program that the localeconv_l() routine is available.
 
 d_localtime64 (d_timefuncs64.U):
 	This variable conditionally defines the HAS_LOCALTIME64 symbol, which
@@ -1544,6 +1587,30 @@ d_logb (d_logb.U):
 	This variable conditionally defines the HAS_LOGB symbol, which
 	indicates to the C program that the logb() routine is available
 	to extract the exponent of x.
+
+d_long_double_style_ieee (d_longdbl.U):
+	This variable conditionally defines LONG_DOUBLE_STYLE_IEEE
+	if the long double is any of the IEEE 754 style long doubles:
+	LONG_DOUBLE_STYLE_IEEE_STD, LONG_DOUBLE_STYLE_IEEE_EXTENDED,
+	LONG_DOUBLE_STYLE_IEEE_DOUBLEDOUBLE.
+
+d_long_double_style_ieee_doubledouble (d_longdbl.U):
+	This variable conditionally defines LONG_DOUBLE_STYLE_IEEE_DOUBLEDOUBLE
+	if the long double is the 128-bit IEEE 754 double-double.
+
+d_long_double_style_ieee_extended (d_longdbl.U):
+	This variable conditionally defines LONG_DOUBLE_STYLE_IEEE_EXTENDED
+	if the long double is the 80-bit IEEE 754 extended precision.
+	Note that despite the 'extended' this is less than the 'std',
+	since thisis an extension of the double precision.
+
+d_long_double_style_ieee_std (d_longdbl.U):
+	This variable conditionally defines LONG_DOUBLE_STYLE_IEEE_STD
+	if the long double is the 128-bit IEEE 754.
+
+d_long_double_style_vax (d_longdbl.U):
+	This variable conditionally defines LONG_DOUBLE_STYLE_VAX
+	if the long double is the 128-bit VAX format H.
 
 d_longdbl (d_longdbl.U):
 	This variable conditionally defines HAS_LONG_DOUBLE if
@@ -1602,6 +1669,16 @@ d_mblen (d_mblen.U):
 	indicates to the C program that the mblen() routine is available
 	to find the number of bytes in a multibye character.
 
+d_mbrlen (d_mbrlen.U):
+	This variable conditionally defines the HAS_MBRLEN symbol if the
+	mbrlen() routine is available to be used to get the length of
+	multi-byte character strings.
+
+d_mbrtowc (d_mbrtowc.U):
+	This variable conditionally defines the HAS_MBRTOWC symbol if the
+	mbrtowc() routine is available to be used to convert a multi-byte
+	character into a wide character.
+
 d_mbstowcs (d_mbstowcs.U):
 	This variable conditionally defines the HAS_MBSTOWCS symbol, which
 	indicates to the C program that the mbstowcs() routine is available
@@ -1612,36 +1689,17 @@ d_mbtowc (d_mbtowc.U):
 	indicates to the C program that the mbtowc() routine is available
 	to convert multibyte to a wide character.
 
-d_memchr (d_memchr.U):
-	This variable conditionally defines the HAS_MEMCHR symbol, which
-	indicates to the C program that the memchr() routine is available
-	to locate characters within a C string.
-
-d_memcmp (d_memcmp.U):
-	This variable conditionally defines the HAS_MEMCMP symbol, which
-	indicates to the C program that the memcmp() routine is available
-	to compare blocks of memory.
-
-d_memcpy (d_memcpy.U):
-	This variable conditionally defines the HAS_MEMCPY symbol, which
-	indicates to the C program that the memcpy() routine is available
-	to copy blocks of memory.
-
 d_memmem (d_memmem.U):
 	This variable conditionally defines the HAS_MEMMEM symbol, which
 	indicates to the C program that the memmem() routine is available
 	to return a pointer to the start of the first occurance of a
 	substring in a memory area (or NULL if not found).
 
-d_memmove (d_memmove.U):
-	This variable conditionally defines the HAS_MEMMOVE symbol, which
-	indicates to the C program that the memmove() routine is available
-	to copy potentially overlapping blocks of memory.
-
-d_memset (d_memset.U):
-	This variable conditionally defines the HAS_MEMSET symbol, which
-	indicates to the C program that the memset() routine is available
-	to set blocks of memory.
+d_memrchr (d_memrchr.U):
+	This variable conditionally defines the HAS_MEMRCHR symbol, which
+	indicates to the C program that the memrchr() routine is available
+	to return a pointer to the last occurrence of a byte in a memory
+	area (or NULL if not found).
 
 d_mkdir (d_mkdir.U):
 	This variable conditionally defines the HAS_MKDIR symbol, which
@@ -1656,6 +1714,11 @@ d_mkdtemp (d_mkdtemp.U):
 d_mkfifo (d_mkfifo.U):
 	This variable conditionally defines the HAS_MKFIFO symbol, which
 	indicates to the C program that the mkfifo() routine is available.
+
+d_mkostemp (d_mkostemp.U):
+	This variable conditionally defines HAS_MKOSTEMP if mkostemp() is
+	available to exclusively create and open a uniquely named (with a
+	suffix) temporary file.
 
 d_mkstemp (d_mkstemp.U):
 	This variable conditionally defines the HAS_MKSTEMP symbol, which
@@ -1760,6 +1823,10 @@ d_nan (d_nan.U):
 	This variable conditionally defines HAS_NAN if nan() is
 	available to generate NaN.
 
+d_nanosleep (d_nanosleep.U):
+	This variable conditionally defines HAS_NANOSLEEP
+	if nanosleep() is available to sleep with 1E-9 sec accuracy.
+
 d_ndbm (i_ndbm.U):
 	This variable conditionally defines the HAS_NDBM symbol, which
 	indicates that both the ndbm.h include file and an appropriate ndbm
@@ -1835,6 +1902,10 @@ d_open3 (d_open3.U):
 	which indicates to the C program that the 3 argument version of
 	the open(2) function is available.
 
+d_openat (d_fsat.U):
+	This variable conditionally defines the HAS_OPENAT symbol, which
+	indicates the POSIX openat() function is available.
+
 d_pathconf (d_pathconf.U):
 	This variable conditionally defines the HAS_PATHCONF symbol, which
 	indicates to the C program that the pathconf() routine is available
@@ -1859,6 +1930,11 @@ d_phostname (d_gethname.U):
 d_pipe (d_pipe.U):
 	This variable conditionally defines the HAS_PIPE symbol, which
 	indicates to the C program that the pipe() routine is available
+	to create an inter-process channel.
+
+d_pipe2 (d_pipe2.U):
+	This variable conditionally defines the HAS_PIPE2 symbol, which
+	indicates to the C program that the pipe2() routine is available
 	to create an inter-process channel.
 
 d_poll (d_poll.U):
@@ -2009,6 +2085,11 @@ d_quad (quadtype.U):
 	This variable, if defined, tells that there's a 64-bit integer type,
 	quadtype.
 
+d_querylocale (d_newlocale.U):
+	This variable conditionally defines the HAS_QUERYLOCALE symbol, which
+	indicates to the C program that the querylocale() routine is available
+	to return the name of the locale for a category mask.
+
 d_random_r (d_random_r.U):
 	This variable conditionally defines the HAS_RANDOM_R symbol,
 	which indicates to the C program that the random_r()
@@ -2070,6 +2151,10 @@ d_rename (d_rename.U):
 	indicates to the C program that the rename() routine is available
 	to rename files.
 
+d_renameat (d_fsat.U):
+	This variable conditionally defines the HAS_RENAMEAT symbol, which
+	indicates the POSIX renameat() function is available.
+
 d_rewinddir (d_readdir.U):
 	This variable conditionally defines HAS_REWINDDIR if rewinddir() is
 	available.
@@ -2085,21 +2170,6 @@ d_rmdir (d_rmdir.U):
 d_round (d_round.U):
 	This variable conditionally defines the HAS_ROUND symbol, which
 	indicates to the C program that the round() routine is available.
-
-d_safebcpy (d_safebcpy.U):
-	This variable conditionally defines the HAS_SAFE_BCOPY symbol if
-	the bcopy() routine can do overlapping copies.  Normally, you
-	should probably use memmove().
-
-d_safemcpy (d_safemcpy.U):
-	This variable conditionally defines the HAS_SAFE_MEMCPY symbol if
-	the memcpy() routine can do overlapping copies.
-	For overlapping copies, memmove() should be used, if available.
-
-d_sanemcmp (d_sanemcmp.U):
-	This variable conditionally defines the HAS_SANE_MEMCMP symbol if
-	the memcpy() routine is available and can be used to compare relative
-	magnitudes of chars with their high bits set.
 
 d_sbrkproto (d_sbrkproto.U):
 	This variable conditionally defines the HAS_SBRK_PROTO symbol,
@@ -2443,12 +2513,6 @@ d_socks5_init (d_socks5_init.U):
 	This variable conditionally defines the HAS_SOCKS5_INIT symbol, which
 	indicates to the C program that the socks5_init() routine is available.
 
-d_sprintf_returns_strlen (d_sprintf_len.U):
-	This variable defines whether sprintf returns the length of the string
-	(as per the ANSI spec). Some C libraries retain compatibility with
-	pre-ANSI C and return a pointer to the passed in buffer; for these
-	this variable will be undef.
-
 d_sqrtl (d_sqrtl.U):
 	This variable conditionally defines the HAS_SQRTL symbol, which
 	indicates to the C program that the sqrtl() routine is available.
@@ -2535,28 +2599,15 @@ d_stdstdio (d_stdstdio.U):
 	has a FILE structure declaring usable _ptr and _cnt fields (or
 	equivalent) in stdio.h.
 
-d_strchr (d_strchr.U):
-	This variable conditionally defines HAS_STRCHR if strchr() and
-	strrchr() are available for string searching.
-
 d_strcoll (d_strcoll.U):
 	This variable conditionally defines HAS_STRCOLL if strcoll() is
 	available to compare strings using collating information.
 
-d_strctcpy (d_strctcpy.U):
-	This variable conditionally defines the USE_STRUCT_COPY symbol, which
-	indicates to the C program that this C compiler knows how to copy
-	structures.
-
-d_strerrm (d_strerror.U):
-	This variable holds what Strerror is defined as to translate an error
-	code condition into an error message string. It could be 'strerror'
-	or a more complex macro emulating strerror with sys_errlist[], or the
-	"unknown" string when both strerror and sys_errlist are missing.
-
-d_strerror (d_strerror.U):
-	This variable conditionally defines HAS_STRERROR if strerror() is
-	available to translate error numbers to strings.
+d_strerror_l (d_strerror_l.U):
+	This variable conditionally defines the HAS_STRERROR_L symbol, which
+	indicates to the C program that the strerror_l() routine is available
+	to return the error message for a given errno value in a particular
+	locale (identified by a locale_t object).
 
 d_strerror_r (d_strerror_r.U):
 	This variable conditionally defines the HAS_STRERROR_R symbol,
@@ -2575,6 +2626,10 @@ d_strlcpy (d_strlcpy.U):
 	This variable conditionally defines the HAS_STRLCPY symbol, which
 	indicates to the C program that the strlcpy () routine is available.
 
+d_strnlen (d_strnlen.U):
+	This variable conditionally defines the HAS_STRNLEN symbol, which
+	indicates to the C program that the strnlen () routine is available.
+
 d_strtod (d_strtod.U):
 	This variable conditionally defines the HAS_STRTOD symbol, which
 	indicates to the C program that the strtod() routine is available
@@ -2588,6 +2643,10 @@ d_strtol (d_strtol.U):
 d_strtold (d_strtold.U):
 	This variable conditionally defines the HAS_STRTOLD symbol, which
 	indicates to the C program that the strtold() routine is available.
+
+d_strtold_l (d_strtold_l.U):
+	This variable conditionally defines the HAS_STRTOLD_L symbol, which
+	indicates to the C program that the strtold_l() routine is available.
 
 d_strtoll (d_strtoll.U):
 	This variable conditionally defines the HAS_STRTOLL symbol, which
@@ -2675,6 +2734,11 @@ d_tgamma (d_tgamma.U):
 	indicates to the C program that the tgamma() routine is available
 	for the gamma function.  See also d_lgamma.
 
+d_thread_safe_nl_langinfo_l (d_nl_langinfo_l.U):
+	This variable contains the eventual value of the
+	HAS_THREAD_SAFE_NL_LANGINFO_L symbol, which indicates if the
+	nl_langinfo_l() function exists and is thread-safe.
+
 d_time (d_time.U):
 	This variable conditionally defines the HAS_TIME symbol, which indicates
 	that the time() routine exists.  The time() routine is normally
@@ -2748,6 +2812,10 @@ d_union_semun (d_union_semun.U):
 	This variable conditionally defines HAS_UNION_SEMUN if the
 	union semun is defined by including <sys/sem.h>.
 
+d_unlinkat (d_fsat.U):
+	This variable conditionally defines the HAS_UNLINKAT symbol, which
+	indicates the POSIX unlinkat() function isavailable.
+
 d_unordered (d_unordered.U):
 	This variable conditionally defines the HAS_UNORDERED symbol, which
 	indicates to the C program that the unordered() routine is available.
@@ -2805,16 +2873,6 @@ d_voidtty (i_sysioctl.U):
 	ioctl() call with TIOCNOTTY should be used to void tty association.
 	Otherwise (on USG probably), it is enough to close the standard file
 	descriptors and do a setpgrp().
-
-d_volatile (d_volatile.U):
-	This variable conditionally defines the HASVOLATILE symbol, which
-	indicates to the C program that this C compiler knows about the
-	volatile declaration.
-
-d_vprintf (d_vprintf.U):
-	This variable conditionally defines the HAS_VPRINTF symbol, which
-	indicates to the C program that the vprintf() routine is available
-	to printf with a pointer to an argument list.
 
 d_vsnprintf (d_snprintf.U):
 	This variable conditionally defines the HAS_VSNPRINTF symbol, which
@@ -2886,6 +2944,9 @@ db_version_patch (i_db.U):
 	Berkeley DB found in the <db.h> header file.
 	For DB version 1 this is always 0.
 
+default_inc_excludes_dot (defaultincdot.U):
+	When defined, remove the legacy '.' from @INC
+
 direntrytype (i_dirent.U):
 	This symbol is set to 'struct direct' or 'struct dirent' depending on
 	whether dirent is available or not. You should use this pseudo type to
@@ -2913,6 +2974,12 @@ doublekind (longdblfio.U):
 	6 = IEEE 754 128-bit big endian,
 	7 = IEEE 754 64-bit mixed endian le-be,
 	8 = IEEE 754 64-bit mixed endian be-le,
+	9 = VAX 32bit little endian F float format
+	10 = VAX 64bit little endian D float format
+	11 = VAX 64bit little endian G float format
+	12 = IBM 32bit format
+	13 = IBM 64bit format
+	14 = Cray 64bit format
 	-1 = unknown format.
 
 doublemantbits (mantbits.U):
@@ -2948,6 +3015,11 @@ dtrace (usedtrace.U):
 
 dtraceobject (dtraceobject.U):
 	Whether we need to build an object file with the dtrace tool.
+
+dtracexnolibs (dtraceobject.U):
+	Whether dtrace accepts -xnolibs.  If available we call dtrace -h
+	and dtrace -G with -xnolibs to allow dtrace to run in a jail on
+	FreeBSD.
 
 dynamic_ext (Extensions.U):
 	This variable holds a list of XS extension files we want to
@@ -3381,11 +3453,6 @@ i_arpainet (i_arpainet.U):
 	This variable conditionally defines the I_ARPA_INET symbol,
 	and indicates whether a C program should include <arpa/inet.h>.
 
-i_assert (i_assert.U):
-	This variable conditionally defines the I_ASSERT symbol, which
-	indicates to the C program that <assert.h> exists and could be
-	included.
-
 i_bfd (i_bfd.U):
 	This variable conditionally defines the I_BFD symbol, and
 	indicates whether a C program can include <bfd.h>.
@@ -3429,11 +3496,6 @@ i_fenv (i_fenv.U):
 	This variable conditionally defines the I_FENV symbol, which
 	indicates to the C program that <fenv.h> exists and should
 	be included.
-
-i_float (i_float.U):
-	This variable conditionally defines the I_FLOAT symbol, and indicates
-	whether a C program may include <float.h> to get symbols like DBL_MAX
-	or DBL_MIN, i.e. machine dependent floating point values.
 
 i_fp (i_fp.U):
 	This variable conditionally defines the I_FP symbol, and indicates
@@ -3480,11 +3542,6 @@ i_libutil (i_libutil.U):
 	This variable conditionally defines the I_LIBUTIL symbol, and indicates
 	whether a C program should include <libutil.h>.
 
-i_limits (i_limits.U):
-	This variable conditionally defines the I_LIMITS symbol, and indicates
-	whether a C program may include <limits.h> to get symbols like WORD_BIT
-	and friends.
-
 i_locale (i_locale.U):
 	This variable conditionally defines the I_LOCALE symbol,
 	and indicates whether a C program should include <locale.h>.
@@ -3500,14 +3557,6 @@ i_malloc (i_malloc.U):
 i_mallocmalloc (i_mallocmalloc.U):
 	This variable conditionally defines the I_MALLOCMALLOC symbol,
 	and indicates whether a C program should include <malloc/malloc.h>.
-
-i_math (i_math.U):
-	This variable conditionally defines the I_MATH symbol, and indicates
-	whether a C program may include <math.h>.
-
-i_memory (i_memory.U):
-	This variable conditionally defines the I_MEMORY symbol, and indicates
-	whether a C program should include <memory.h>.
 
 i_mntent (i_mntent.U):
 	This variable conditionally defines the I_MNTENT symbol, and indicates
@@ -3574,19 +3623,9 @@ i_socks (i_socks.U):
 	This variable conditionally defines the I_SOCKS symbol, and indicates
 	whether a C program should include <socks.h>.
 
-i_stdarg (i_varhdr.U):
-	This variable conditionally defines the I_STDARG symbol, which
-	indicates to the C program that <stdarg.h> exists and should
-	be included.
-
 i_stdbool (i_stdbool.U):
 	This variable conditionally defines the I_STDBOOL symbol, which
 	indicates to the C program that <stdbool.h> exists and should
-	be included.
-
-i_stddef (i_stddef.U):
-	This variable conditionally defines the I_STDDEF symbol, which
-	indicates to the C program that <stddef.h> exists and should
 	be included.
 
 i_stdint (i_stdint.U):
@@ -3595,13 +3634,7 @@ i_stdint (i_stdint.U):
 	be included.
 
 i_stdlib (i_stdlib.U):
-	This variable conditionally defines the I_STDLIB symbol, which
-	indicates to the C program that <stdlib.h> exists and should
-	be included.
-
-i_string (i_string.U):
-	This variable conditionally defines the I_STRING symbol, which
-	indicates that <string.h> should be included rather than <strings.h>.
+	This variable unconditionally defines the I_STDLIB symbol.
 
 i_sunmath (i_sunmath.U):
 	This variable conditionally defines the I_SUNMATH symbol, and indicates
@@ -3639,8 +3672,8 @@ i_syslog (i_syslog.U):
 	and indicates whether a C program should include <syslog.h>.
 
 i_sysmman (i_sysmman.U):
-	This variable conditionally defines the I_SYS_MMAN symbol, and
-	indicates whether a C program should include <sys/mman.h>.
+	This variable conditionally defines the I_SYS_MMAN symbol,
+	and indicates whether a C program should include <sys/mman.h>.
 
 i_sysmode (i_sysmode.U):
 	This variable conditionally defines the I_SYSMODE symbol,
@@ -3741,7 +3774,7 @@ i_termios (i_termio.U):
 	to be included.
 
 i_time (i_time.U):
-	This variable conditionally defines I_TIME, which indicates
+	This variable unconditionally defines I_TIME, which indicates
 	to the C program that it should include <time.h>.
 
 i_unistd (i_unistd.U):
@@ -3756,22 +3789,13 @@ i_utime (i_utime.U):
 	This variable conditionally defines the I_UTIME symbol, and indicates
 	whether a C program should include <utime.h>.
 
-i_values (i_values.U):
-	This variable conditionally defines the I_VALUES symbol, and indicates
-	whether a C program may include <values.h> to get symbols like MAXLONG
-	and friends.
-
-i_varargs (i_varhdr.U):
-	This variable conditionally defines I_VARARGS, which indicates
-	to the C program that it should include <varargs.h>.
-
-i_varhdr (i_varhdr.U):
-	Contains the name of the header to be included to get va_dcl definition.
-	Typically one of varargs.h or stdarg.h.
-
 i_vfork (i_vfork.U):
 	This variable conditionally defines the I_VFORK symbol, and indicates
 	whether a C program should include vfork.h.
+
+i_wchar (i_wchar.U):
+	This variable conditionally defines the I_WCHAR symbol,
+	that indicates whether a C program may include <wchar.h>.
 
 i_xlocale (d_newlocale.U):
 	This symbol, if defined, indicates to the C program that it should
@@ -4170,8 +4194,9 @@ longdblkind (d_longdbl.U):
 	4 = x86 80-bit big endian,
 	5 = double-double 128-bit little endian,
 	6 = double-double 128-bit big endian,
-	7 = 128-bit mixed double-double (64-bit LEs in BE),
-	8 = 128-bit mixed double-double (64-bit BEs in LE),
+	7 = 128-bit mixed-endian double-double (64-bit LEs in BE),
+	8 = 128-bit mixed-endian double-double (64-bit BEs in LE),
+	9 = 128-bit PDP-style mixed-endian long doubles,
 	-1 = unknown format.
 
 longdblmantbits (mantbits.U):
@@ -4684,10 +4709,6 @@ procselfexe (d_procselfexe.U):
 	of the symbolic link pointing to the absolute pathname of
 	the executing program.
 
-prototype (prototype.U):
-	This variable holds the eventual value of CAN_PROTOTYPE, which
-	indicates the C compiler can handle function prototypes.
-
 ptrsize (ptrsize.U):
 	This variable contains the value of the PTRSIZE symbol, which
 	indicates to the C program how many bytes there are in a pointer.
@@ -4900,6 +4921,7 @@ shrpenv (libperl.U):
 	or
 	shrpenv=''
 	See the main perl Makefile.SH for actual working usage.
+
 	Alternatively, we might be able to use a command line option such
 	as -R $archlibexp/CORE (Solaris) or -Wl,-rpath
 	$archlibexp/CORE (Linux).
@@ -5280,10 +5302,6 @@ strerror_r_proto (d_strerror_r.U):
 	REENTRANT_PROTO_T_ABC macros of reentr.h if d_strerror_r
 	is defined.
 
-strings (i_string.U):
-	This variable holds the full path of the string header that will be
-	used. Typically /usr/include/string.h or /usr/include/strings.h.
-
 submit (Loc.U):
 	This variable is defined but not used by Configure.
 	The value is the empty string and is not useful.
@@ -5655,11 +5673,6 @@ uvxformat (perlxvf.U):
 uvXUformat (perlxvf.U):
 	This variable contains the format string used for printing
 	a Perl UV as an unsigned hexadecimal integer in uppercase ABCDEF.
-
-vaproto (vaproto.U):
-	This variable conditionally defines CAN_VAPROTO on systems supporting
-	prototype declaration of functions with a variable number of
-	arguments. See also prototype.
 
 vendorarch (vendorarch.U):
 	This variable contains the value of the PERL_VENDORARCH symbol.

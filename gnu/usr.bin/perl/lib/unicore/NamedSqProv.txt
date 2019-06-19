@@ -1,14 +1,16 @@
-# NamedSequencesProv-8.0.0.txt
-# Date: 2015-05-11, 23:40:00 GMT [KW, LI]
+# NamedSequencesProv-10.0.0.txt
+# Date: 2017-04-13, 01:00:00 GMT [KW, LI]
+# © 2017 Unicode®, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
+#
+# Unicode Character Database
+# For documentation, see http://www.unicode.org/reports/tr44/
 #
 # Provisional Unicode Named Character Sequences
 #
 # Note: This data file contains those named character
 #   sequences which have been designated to be provisional,
 #   rather than fully approved.
-#
-# Copyright (c) 1991-2015 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Format:
 # Name of Sequence; Code Point Sequence for USI
@@ -24,7 +26,7 @@
 # in this data file, would correspond to an ISO/IEC 10646 USI
 # as follows:
 #
-# <1000, 1001, 1002> 
+# <1000, 1001, 1002>
 #
 # For more information, see UAX #34: Unicode Named Character
 # Sequences, at http://www.unicode.org/unicode/reports/tr34/
@@ -38,21 +40,7 @@
 
 # Provisional entries for NamedSequences.txt.
 
-# Named keycap sequences for telephone keypad (used for emoji)
-# Added to provisional named sequences, 2015-05-05
-
-KEYCAP NUMBER SIGN;0023 20E3
-KEYCAP ASTERISK;002A 20E3
-KEYCAP DIGIT ZERO;0030 20E3
-KEYCAP DIGIT ONE;0031 20E3
-KEYCAP DIGIT TWO;0032 20E3
-KEYCAP DIGIT THREE;0033 20E3
-KEYCAP DIGIT FOUR;0034 20E3
-KEYCAP DIGIT FIVE;0035 20E3
-KEYCAP DIGIT SIX;0036 20E3
-KEYCAP DIGIT SEVEN;0037 20E3
-KEYCAP DIGIT EIGHT;0038 20E3
-KEYCAP DIGIT NINE;0039 20E3
+# Currently there are no provisional entries.
 
 # ================================================
 
@@ -64,7 +52,7 @@ KEYCAP DIGIT NINE;0039 20E3
 # GURMUKHI PARI YA;0A4D 0A2F
 
 # Entry removed 2006-05-18:
-# 
+#
 # LATIN SMALL LETTER A WITH ACUTE AND OGONEK;00E1 0328
 #
 # This entry was removed because the sequence was not in NFC,

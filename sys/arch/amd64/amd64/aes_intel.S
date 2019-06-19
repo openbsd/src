@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_intel.S,v 1.10 2018/01/17 16:33:33 deraadt Exp $	*/
+/*	$OpenBSD: aes_intel.S,v 1.13 2018/07/09 08:39:28 mortimer Exp $	*/
 
 /*
  * Implement AES algorithm in Intel AES-NI instructions.
@@ -106,6 +106,7 @@
 
 _key_expansion_128:
 _key_expansion_256a:
+	RETGUARD_SETUP(_key_expansion_128, rax)
 	pshufd	$0b11111111,%xmm1,%xmm1
 	shufps	$0b00010000,%xmm0,%xmm4
 	pxor	%xmm4,%xmm0
@@ -114,9 +115,11 @@ _key_expansion_256a:
 	pxor	%xmm1,%xmm0
 	movaps	%xmm0,(%rcx)
 	add	$0x10,%rcx
+	RETGUARD_CHECK(_key_expansion_128, rax)
 	ret
 
 _key_expansion_192a:
+	RETGUARD_SETUP(_key_expansion_192a, rax)
 	pshufd	$0b01010101,%xmm1,%xmm1
 	shufps	$0b00010000,%xmm0,%xmm4
 	pxor	%xmm4,%xmm0
@@ -137,9 +140,11 @@ _key_expansion_192a:
 	shufps	$0b01001110,%xmm2,%xmm1
 	movaps	%xmm1,16(%rcx)
 	add	$0x20,%rcx
+	RETGUARD_CHECK(_key_expansion_192a, rax)
 	ret
 
 _key_expansion_192b:
+	RETGUARD_SETUP(_key_expansion_192b, rax)
 	pshufd	$0b01010101,%xmm1,%xmm1
 	shufps	$0b00010000,%xmm0,%xmm4
 	pxor	%xmm4,%xmm0
@@ -155,9 +160,11 @@ _key_expansion_192b:
 
 	movaps	%xmm0,(%rcx)
 	add	$0x10,%rcx
+	RETGUARD_CHECK(_key_expansion_192b, rax)
 	ret
 
 _key_expansion_256b:
+	RETGUARD_SETUP(_key_expansion_256b, rax)
 	pshufd	$0b10101010,%xmm1,%xmm1
 	shufps	$0b00010000,%xmm2,%xmm4
 	pxor	%xmm4,%xmm2
@@ -166,12 +173,14 @@ _key_expansion_256b:
 	pxor	%xmm1,%xmm2
 	movaps	%xmm2,(%rcx)
 	add	$0x10,%rcx
+	RETGUARD_CHECK(_key_expansion_256b, rax)
 	ret
 
 /*
  * void aesni_set_key(struct aesni_session *ses, uint8_t *key, size_t len)
  */
 ENTRY(aesni_set_key)
+	RETGUARD_SETUP(aesni_set_key, r11)
 	movups	(%rsi),%xmm0		# user key (first 16 bytes)
 	movaps	%xmm0,(%rdi)
 	lea	0x10(%rdi),%rcx		# key addr
@@ -267,16 +276,19 @@ ENTRY(aesni_set_key)
 	sub	$0x10,%rsi
 	cmp	%rcx,%rdi
 	jb	4b
+	RETGUARD_CHECK(aesni_set_key, r11)
 	ret
 
 /*
  * void aesni_enc(struct aesni_session *ses, uint8_t *dst, uint8_t *src)
  */
 ENTRY(aesni_enc)
+	RETGUARD_SETUP(aesni_enc, r11)
 	movl	480(KEYP),KLEN		# key length
 	movups	(INP),STATE		# input
 	call	_aesni_enc1
 	movups	STATE,(OUTP)		# output
+	RETGUARD_CHECK(aesni_enc, r11)
 	ret
 
 /*
@@ -292,6 +304,7 @@ ENTRY(aesni_enc)
  *	TKEYP (T1)
  */
 _aesni_enc1:
+	RETGUARD_SETUP(_aesni_enc1, rax)
 	movaps	(KEYP),KEY		# key
 	mov	KEYP,TKEYP
 	pxor	KEY,STATE		# round 0
@@ -333,6 +346,7 @@ _aesni_enc1:
 	aesenc	KEY,STATE
 	movaps	0x70(TKEYP),KEY
 	aesenclast KEY,STATE
+	RETGUARD_CHECK(_aesni_enc1, rax)
 	ret
 
 /*
@@ -354,6 +368,7 @@ _aesni_enc1:
  *	TKEYP (T1)
  */
 _aesni_enc4:
+	RETGUARD_SETUP(_aesni_enc4, rax)
 	movaps	(KEYP),KEY		# key
 	mov	KEYP,TKEYP
 	pxor	KEY,STATE1		# round 0
@@ -440,17 +455,20 @@ _aesni_enc4:
 	aesenclast KEY,STATE2
 	aesenclast KEY,STATE3
 	aesenclast KEY,STATE4
+	RETGUARD_CHECK(_aesni_enc4, rax)
 	ret
 
 /*
  * void aesni_dec(struct aesni_session *ses, uint8_t *dst, uint8_t *src)
  */
 ENTRY(aesni_dec)
+	RETGUARD_SETUP(aesni_dec, r11)
 	mov	480(KEYP),KLEN		# key length
 	add	$240,KEYP
 	movups	(INP),STATE		# input
 	call	_aesni_dec1
 	movups	STATE,(OUTP)		# output
+	RETGUARD_CHECK(aesni_dec, r11)
 	ret
 
 /*
@@ -466,6 +484,7 @@ ENTRY(aesni_dec)
  *	TKEYP (T1)
  */
 _aesni_dec1:
+	RETGUARD_SETUP(_aesni_dec1, rax)
 	movaps	(KEYP),KEY		# key
 	mov	KEYP,TKEYP
 	pxor	KEY,STATE		# round 0
@@ -507,6 +526,7 @@ _aesni_dec1:
 	aesdec	KEY,STATE
 	movaps	0x70(TKEYP),KEY
 	aesdeclast KEY,STATE
+	RETGUARD_CHECK(_aesni_dec1, rax)
 	ret
 
 /*
@@ -528,6 +548,7 @@ _aesni_dec1:
  *	TKEYP (T1)
  */
 _aesni_dec4:
+	RETGUARD_SETUP(_aesni_dec4, rax)
 	movaps	(KEYP),KEY		# key
 	mov	KEYP,TKEYP
 	pxor	KEY,STATE1		# round 0
@@ -614,6 +635,7 @@ _aesni_dec4:
 	aesdeclast KEY,STATE2
 	aesdeclast KEY,STATE3
 	aesdeclast KEY,STATE4
+	RETGUARD_CHECK(_aesni_dec4, rax)
 	ret
 
 #if 0
@@ -622,6 +644,7 @@ _aesni_dec4:
  *     size_t len)
  */
 ENTRY(aesni_ecb_enc)
+	RETGUARD_SETUP(aesni_ecb_enc, r11)
 	test	LEN,LEN			# check length
 	jz	3f
 	mov	480(KEYP),KLEN
@@ -658,6 +681,7 @@ ENTRY(aesni_ecb_enc)
 	cmp	$16,LEN
 	jge	2b
 3:
+	RETGUARD_CHECK(aesni_ecb_enc, r11)
 	ret
 
 /*
@@ -665,6 +689,7 @@ ENTRY(aesni_ecb_enc)
  *     size_t len);
  */
 ENTRY(aesni_ecb_dec)
+	RETGUARD_SETUP(aesni_ecb_dec, r11)
 	test	LEN,LEN
 	jz	3f
 	mov	480(KEYP),KLEN
@@ -702,6 +727,7 @@ ENTRY(aesni_ecb_dec)
 	cmp	$16,LEN
 	jge	2b
 3:
+	RETGUARD_CHECK(aesni_ecb_dec, r11)
 	ret
 #endif
 
@@ -710,6 +736,7 @@ ENTRY(aesni_ecb_dec)
  *     size_t len, uint8_t *iv)
  */
 ENTRY(aesni_cbc_enc)
+	RETGUARD_SETUP(aesni_cbc_enc, r11)
 	cmp	$16,LEN
 	jb	2f
 	mov	480(KEYP),KLEN
@@ -727,6 +754,7 @@ ENTRY(aesni_cbc_enc)
 	jge	1b
 	movups	STATE,(IVP)
 2:
+	RETGUARD_CHECK(aesni_cbc_enc, r11)
 	ret
 
 /*
@@ -734,6 +762,7 @@ ENTRY(aesni_cbc_enc)
  *     size_t len, uint8_t *iv)
  */
 ENTRY(aesni_cbc_dec)
+	RETGUARD_SETUP(aesni_cbc_dec, r11)
 	cmp	$16,LEN
 	jb	4f
 	mov	480(KEYP),KLEN
@@ -784,6 +813,7 @@ ENTRY(aesni_cbc_dec)
 3:
 	movups	IV,(IVP)
 4:
+	RETGUARD_CHECK(aesni_cbc_dec, r11)
 	ret
 
 /*
@@ -799,6 +829,7 @@ ENTRY(aesni_cbc_dec)
  *	BSWAP_MASK	== endian swapping mask
  */
 _aesni_inc_init:
+	RETGUARD_SETUP(_aesni_inc_init, rax)
 	movdqa	CTR,IV
 	pslldq	$8,IV
 	movdqu	.Lbswap_mask,BSWAP_MASK
@@ -806,6 +837,7 @@ _aesni_inc_init:
 	mov	$1,TCTR_LOW
 	movd	TCTR_LOW,INC
 	movd	CTR,TCTR_LOW
+	RETGUARD_CHECK(_aesni_inc_init, rax)
 	ret
 
 /*
@@ -824,6 +856,7 @@ _aesni_inc_init:
  *	TCTR_LOW:	== lower dword of CTR
  */
 _aesni_inc:
+	RETGUARD_SETUP(_aesni_inc, rax)
 	paddq	INC,CTR
 	add	$1,TCTR_LOW
 	jnc	1f
@@ -833,6 +866,7 @@ _aesni_inc:
 1:
 	movaps	CTR,IV
 	pshufb	BSWAP_MASK,IV
+	RETGUARD_CHECK(_aesni_inc, rax)
 	ret
 
 /*
@@ -840,6 +874,8 @@ _aesni_inc:
  *     size_t len, uint8_t *icb)
  */
 ENTRY(aesni_ctr_enc)
+	RETGUARD_SETUP(aesni_ctr_enc, r11)
+	RETGUARD_PUSH(r11)
 	cmp	$16,LEN
 	jb	4f
 	mov	480(KEYP),KLEN
@@ -893,9 +929,12 @@ ENTRY(aesni_ctr_enc)
 3:
 	movq	IV,(IVP)
 4:
+	RETGUARD_POP(r11)
+	RETGUARD_CHECK(aesni_ctr_enc, r11)
 	ret
 
 _aesni_gmac_gfmul:
+	RETGUARD_SETUP(_aesni_gmac_gfmul, rax)
 	movdqa	%xmm0,%xmm3
 	pclmulqdq $0x00,%xmm1,%xmm3	# xmm3 holds a0*b0
 	movdqa	%xmm0,%xmm4
@@ -959,12 +998,14 @@ _aesni_gmac_gfmul:
 	pxor	%xmm8,%xmm2
 	pxor	%xmm2,%xmm3
 	pxor	%xmm3,%xmm6		# the result is in xmm6
+	RETGUARD_CHECK(_aesni_gmac_gfmul, rax)
 	ret
 
 /*
  * void aesni_gmac_update(GHASH_CTX *ghash, uint8_t *src, size_t len)
  */
 ENTRY(aesni_gmac_update)
+	RETGUARD_SETUP(aesni_gmac_update, r11)
 	cmp	$16,%rdx
 	jb	2f
 
@@ -990,6 +1031,7 @@ ENTRY(aesni_gmac_update)
 	movdqu	%xmm6,16(%rdi)
 	movdqu	%xmm6,32(%rdi)
 2:
+	RETGUARD_CHECK(aesni_gmac_update, r11)
 	ret
 
 /*
@@ -997,12 +1039,14 @@ ENTRY(aesni_gmac_update)
  *     uint8_t *icb, uint8_t *hashstate)
  */
 ENTRY(aesni_gmac_final)
+	RETGUARD_SETUP(aesni_gmac_final, r11)
 	movl	480(KEYP),KLEN		# key length
 	movdqu	(INP),STATE		# icb
 	call	_aesni_enc1
 	movdqu	(HSTATE),IN
 	pxor	IN,STATE
 	movdqu	STATE,(OUTP)		# output
+	RETGUARD_CHECK(aesni_gmac_final, r11)
 	ret
 
 /*
@@ -1010,6 +1054,8 @@ ENTRY(aesni_gmac_final)
  *    size_t len, uint8_t *iv)
  */
 ENTRY(aesni_xts_enc)
+	RETGUARD_SETUP(aesni_xts_enc, r11)
+	RETGUARD_PUSH(r11)
 	cmp	$16,%rcx
 	jb	2f
 
@@ -1031,6 +1077,8 @@ ENTRY(aesni_xts_enc)
 	cmp	$16,%rcx
 	jge	1b
 2:
+	RETGUARD_POP(r11)
+	RETGUARD_CHECK(aesni_xts_enc, r11)
 	ret
 
 /*
@@ -1038,6 +1086,8 @@ ENTRY(aesni_xts_enc)
  *    size_t len, uint8_t *iv)
  */
 ENTRY(aesni_xts_dec)
+	RETGUARD_SETUP(aesni_xts_dec, r11)
+	RETGUARD_PUSH(r11)
 	cmp	$16,%rcx
 	jb	2f
 
@@ -1060,6 +1110,8 @@ ENTRY(aesni_xts_dec)
 	cmp	$16,%rcx
 	jge	1b
 2:
+	RETGUARD_POP(r11)
+	RETGUARD_CHECK(aesni_xts_dec, r11)
 	ret
 
 /*
@@ -1070,6 +1122,8 @@ ENTRY(aesni_xts_dec)
  * xts is in %rdi, iv is in %r8 and we return the tweak in %xmm3.
  */
 _aesni_xts_tweak:
+	RETGUARD_SETUP(_aesni_xts_tweak, rax)
+	RETGUARD_PUSH(rax)
 	mov	(%r8),%r10
 	movd	%r10,%xmm0		# Last 64-bits of IV are always zero.
 	mov	KEYP,%r11
@@ -1078,12 +1132,15 @@ _aesni_xts_tweak:
 	call	_aesni_enc1
 	movdqa	%xmm0,%xmm3
 	mov	%r11,KEYP
+	RETGUARD_POP(rax)
+	RETGUARD_CHECK(_aesni_xts_tweak, rax)
 	ret
 
 /*
  * Exponentiate AES XTS tweak (in %xmm3).
  */
 _aesni_xts_tweak_exp:
+	RETGUARD_SETUP(_aesni_xts_tweak_exp, rax)
 	pextrw	$7,%xmm3,%r10
 	pextrw	$3,%xmm3,%r11
 	psllq	$1,%xmm3		# Left shift.
@@ -1101,4 +1158,5 @@ _aesni_xts_tweak_exp:
 	xor	$0x87,%r11		# AES XTS alpha - GF(2^128).
 	pinsrw	$0,%r11,%xmm3
 2:
+	RETGUARD_CHECK(_aesni_xts_tweak_exp, rax)
 	ret

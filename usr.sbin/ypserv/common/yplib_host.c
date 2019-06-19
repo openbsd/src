@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplib_host.c,v 1.19 2015/09/11 12:42:47 deraadt Exp $ */
+/*	$OpenBSD: yplib_host.c,v 1.20 2018/04/26 12:42:51 guenther Exp $ */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -26,18 +26,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/file.h>
-#include <sys/uio.h>
-#include <errno.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#include <unistd.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>

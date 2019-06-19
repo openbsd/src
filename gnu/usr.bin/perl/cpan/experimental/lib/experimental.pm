@@ -1,10 +1,10 @@
 package experimental;
-$experimental::VERSION = '0.016';
+$experimental::VERSION = '0.019';
 use strict;
 use warnings;
 use version ();
 
-use feature ();
+BEGIN { eval { require feature } };
 use Carp qw/croak carp/;
 
 my %warnings = map { $_ => 1 } grep { /^experimental::/ } keys %warnings::Offsets;
@@ -21,6 +21,7 @@ my %min_version = (
 	array_base      => '5',
 	autoderef       => '5.14.0',
 	bitwise         => '5.22.0',
+	const_attr      => '5.22.0',
 	current_sub     => '5.16.0',
 	evalbytes       => '5.16.0',
 	fc              => '5.16.0',
@@ -39,6 +40,7 @@ my %min_version = (
 	unicode_strings => '5.12.0',
 );
 my %max_version = (
+	autoderef       => '5.23.1',
 	lexical_topic   => '5.23.4',
 );
 
@@ -128,7 +130,7 @@ experimental - Experimental features made easy
 
 =head1 VERSION
 
-version 0.016
+version 0.019
 
 =head1 SYNOPSIS
 
@@ -159,16 +161,67 @@ To disable the feature and, if applicable, re-enable any warnings, use:
 
 The supported features, documented further below, are:
 
-	array_base    - allow the use of $[ to change the starting index of @array
-	autoderef     - allow push, each, keys, and other built-ins on references
-	lexical_topic - allow the use of lexical $_ via "my $_"
-	postderef     - allow the use of postfix dereferencing expressions, including
-	                in interpolating strings
-	refaliasing   - allow aliasing via \$x = \$y
-	regex_sets    - allow extended bracketed character classes in regexps
-	signatures    - allow subroutine signatures (for named arguments)
-	smartmatch    - allow the use of ~~
-	switch        - allow the use of ~~, given, and when
+=over 4
+
+=item * C<array_base> - allow the use of C<$[> to change the starting index of C<@array>.
+
+This is supported on all versions of perl.
+
+=item * C<autoderef> - allow push, each, keys, and other built-ins on references.
+
+This was added in perl 5.14.0 and removed in perl 5.23.1.
+
+=item * C<bitwise> - allow the new stringwise bit operators
+
+This was added in perl 5.22.0.
+
+=item * C<const_attr> - allow the :const attribute on subs
+
+This was added in perl 5.22.0.
+
+=item * C<lexical_topic> - allow the use of lexical C<$_> via C<my $_>.
+
+This was added in perl 5.10.0 and removed in perl 5.23.4.
+
+=item * C<lexical_subs> - allow the use of lexical subroutines.
+
+This was added in 5.18.0.
+
+=item * C<postderef> - allow the use of postfix dereferencing expressions,
+including in interpolating strings
+
+This was added in perl 5.20.0.
+
+=item * C<re_strict> - enables strict mode in regular expressions
+
+This was added in perl 5.22.0.
+
+=item * C<refaliasing> - allow aliasing via C<\$x = \$y>
+
+This was added in perl 5.22.0.
+
+=item * C<regex_sets> - allow extended bracketed character classes in regexps
+
+This was added in perl 5.18.0.
+
+=item * C<signatures> - allow subroutine signatures (for named arguments)
+
+This was added in perl 5.20.0.
+
+=item * C<smartmatch> - allow the use of C<~~>
+
+This was added in perl 5.10.0, but it should be noted there are significant
+incompatibilities between 5.10.0 and 5.10.1.
+
+=item * C<switch> - allow the use of C<~~>, given, and when
+
+This was added in perl 5.10.0.
+
+=item * C<win32_perlio> - allows the use of the :win32 IO layer.
+
+This was added on perl 5.22.0.
+
+=back
 
 =head2 Ordering matters
 
@@ -194,6 +247,10 @@ on again by the Moose module (fix is to switch the last two lines):
 
 Because of the nature of the features it enables, forward compatibility can not
 be guaranteed in any way.
+
+=head1 SEE ALSO
+
+L<perlexperimental|perlexperimental> contains more information about experimental features.
 
 =head1 AUTHOR
 

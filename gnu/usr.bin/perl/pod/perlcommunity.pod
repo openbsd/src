@@ -32,9 +32,6 @@ contributors. If you don't see a certain project listed at
 L<http://lists.perl.org>, check the particular website for that project.
 Most mailing lists are archived at L<http://nntp.perl.org/>.
 
-There are also plenty of Perl related newsgroups located under
-C<comp.lang.perl.*>.
-
 =head2 IRC
 
 The Perl community has a rather large IRC presence. For starters, it has its

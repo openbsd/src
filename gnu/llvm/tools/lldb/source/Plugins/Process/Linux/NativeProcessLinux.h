@@ -13,12 +13,11 @@
 #include <csignal>
 #include <unordered_set>
 
-// Other libraries and framework includes
-#include "lldb/Core/ArchSpec.h"
 #include "lldb/Host/Debug.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/linux/Support.h"
 #include "lldb/Target/MemoryRegionInfo.h"
+#include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/lldb-types.h"
 
@@ -32,10 +31,10 @@ class Scalar;
 
 namespace process_linux {
 /// @class NativeProcessLinux
-/// @brief Manages communication with the inferior (debugee) process.
+/// Manages communication with the inferior (debugee) process.
 ///
-/// Upon construction, this class prepares and launches an inferior process for
-/// debugging.
+/// Upon construction, this class prepares and launches an inferior process
+/// for debugging.
 ///
 /// Changes in the inferior process state are broadcasted.
 class NativeProcessLinux : public NativeProcessProtocol {
@@ -87,7 +86,7 @@ public:
 
   size_t UpdateThreads() override;
 
-  bool GetArchitecture(ArchSpec &arch) const override;
+  const ArchSpec &GetArchitecture() const override { return m_arch; }
 
   Status SetBreakpoint(lldb::addr_t addr, uint32_t size,
                        bool hardware) override;
@@ -102,7 +101,7 @@ public:
   Status GetFileLoadAddress(const llvm::StringRef &file_name,
                             lldb::addr_t &load_addr) override;
 
-  NativeThreadLinuxSP GetThreadByID(lldb::tid_t id);
+  NativeThreadLinux *GetThreadByID(lldb::tid_t id);
 
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
   GetAuxvData() const override {
@@ -185,25 +184,11 @@ private:
 
   Status SetupSoftwareSingleStepping(NativeThreadLinux &thread);
 
-#if 0
-        static ::ProcessMessage::CrashReason
-        GetCrashReasonForSIGSEGV(const siginfo_t *info);
-
-        static ::ProcessMessage::CrashReason
-        GetCrashReasonForSIGILL(const siginfo_t *info);
-
-        static ::ProcessMessage::CrashReason
-        GetCrashReasonForSIGFPE(const siginfo_t *info);
-
-        static ::ProcessMessage::CrashReason
-        GetCrashReasonForSIGBUS(const siginfo_t *info);
-#endif
-
   bool HasThreadNoLock(lldb::tid_t thread_id);
 
   bool StopTrackingThread(lldb::tid_t thread_id);
 
-  NativeThreadLinuxSP AddThread(lldb::tid_t thread_id);
+  NativeThreadLinux &AddThread(lldb::tid_t thread_id);
 
   Status GetSoftwareBreakpointPCOffset(uint32_t &actual_opcode_size);
 

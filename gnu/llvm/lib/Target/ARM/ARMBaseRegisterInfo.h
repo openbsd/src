@@ -17,15 +17,17 @@
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include <cstdint>
 
 #define GET_REGINFO_HEADER
 #include "ARMGenRegisterInfo.inc"
 
 namespace llvm {
+
+class LiveIntervals;
 
 /// Register allocation hints.
 namespace ARMRI {
@@ -143,7 +145,7 @@ public:
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const override;
 
-  void getRegAllocationHints(unsigned VirtReg,
+  bool getRegAllocationHints(unsigned VirtReg,
                              ArrayRef<MCPhysReg> Order,
                              SmallVectorImpl<MCPhysReg> &Hints,
                              const MachineFunction &MF,
@@ -152,6 +154,7 @@ public:
 
   void updateRegAllocHint(unsigned Reg, unsigned NewReg,
                           MachineFunction &MF) const override;
+  bool enableMultipleCopyHints() const override { return true; }
 
   bool hasBasePointer(const MachineFunction &MF) const;
 
@@ -198,13 +201,14 @@ public:
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS = nullptr) const override;
 
-  /// \brief SrcRC and DstRC will be morphed into NewRC if this returns true
+  /// SrcRC and DstRC will be morphed into NewRC if this returns true
   bool shouldCoalesce(MachineInstr *MI,
                       const TargetRegisterClass *SrcRC,
                       unsigned SubReg,
                       const TargetRegisterClass *DstRC,
                       unsigned DstSubReg,
-                      const TargetRegisterClass *NewRC) const override;
+                      const TargetRegisterClass *NewRC,
+                      LiveIntervals &LIS) const override;
 };
 
 } // end namespace llvm

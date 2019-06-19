@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.3 2016/05/22 22:06:11 bru Exp $ */
+/*	$OpenBSD: hidms.c,v 1.5 2018/09/05 16:34:58 jcs Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.95 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.113 2019/06/14 18:13:55 kettenis Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <machine/cpufunc.h>
 
 void	replacesmap(void);
+void	replacemeltdown(void);
 uint64_t cpu_freq(struct cpu_info *);
 void	tsc_timecounter_init(struct cpu_info *, uint64_t);
 #if NVMM > 0
@@ -171,6 +172,7 @@ const struct {
 	{ CPUIDECX_MWAITX,	"MWAITX" },
 }, cpu_seff0_ebxfeatures[] = {
 	{ SEFF0EBX_FSGSBASE,	"FSGSBASE" },
+	{ SEFF0EBX_TSC_ADJUST,	"TSC_ADJUST" },
 	{ SEFF0EBX_SGX,		"SGX" },
 	{ SEFF0EBX_BMI1,	"BMI1" },
 	{ SEFF0EBX_HLE,		"HLE" },
@@ -206,9 +208,13 @@ const struct {
 }, cpu_seff0_edxfeatures[] = {
 	{ SEFF0EDX_AVX512_4FNNIW, "AVX512FNNIW" },
 	{ SEFF0EDX_AVX512_4FMAPS, "AVX512FMAPS" },
+	{ SEFF0EDX_MD_CLEAR,	"MD_CLEAR" },
+	{ SEFF0EDX_TSXFA,	"TSXFA" },
 	{ SEFF0EDX_IBRS,	"IBRS,IBPB" },
 	{ SEFF0EDX_STIBP,	"STIBP" },
+	{ SEFF0EDX_L1DF,	"L1DF" },
 	 /* SEFF0EDX_ARCH_CAP (not printed) */
+	{ SEFF0EDX_SSBD,	"SSBD" },
 }, cpu_tpm_eaxfeatures[] = {
 	{ TPM_SENSOR,		"SENSOR" },
 	{ TPM_ARAT,		"ARAT" },
@@ -218,6 +224,16 @@ const struct {
 	{ CPUIDEDX_ITSC,	"ITSC" },
 }, cpu_amdspec_ebxfeatures[] = {
 	{ CPUIDEBX_IBPB,	"IBPB" },
+	{ CPUIDEBX_IBRS,	"IBRS" },
+	{ CPUIDEBX_STIBP,	"STIBP" },
+	{ CPUIDEBX_SSBD,	"SSBD" },
+	{ CPUIDEBX_VIRT_SSBD,	"VIRTSSBD" },
+	{ CPUIDEBX_SSBD_NOTREQ,	"SSBDNR" },
+}, cpu_xsave_extfeatures[] = {
+	{ XSAVE_XSAVEOPT,	"XSAVEOPT" },
+	{ XSAVE_XSAVEC,		"XSAVEC" },
+	{ XSAVE_XGETBV1,	"XGETBV1" },
+	{ XSAVE_XSAVES,		"XSAVES" },
 };
 
 int
@@ -456,7 +472,6 @@ identifycpu(struct cpu_info *ci)
 	int i;
 	char *brandstr_from, *brandstr_to;
 	int skipspace;
-	extern uint32_t cpu_meltdown;
 
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000000, ci->ci_pnfeatset, dummy, dummy, dummy);
@@ -551,6 +566,9 @@ identifycpu(struct cpu_info *ci)
 		cpu_cpuspeed = cpu_amd64speed;
 	}
 
+	printf(", %02x-%02x-%02x", ci->ci_family, ci->ci_model,
+	    ci->ci_signature & 0x0f);
+
 	printf("\n%s: ", ci->ci_dev->dv_xname);
 
 	for (i = 0; i < nitems(cpu_cpuid_features); i++)
@@ -614,12 +632,43 @@ identifycpu(struct cpu_info *ci)
 		}
 	}
 
+	/* xsave subfeatures */
+	if (cpuid_level >= 0xd) {
+		CPUID_LEAF(0xd, 1, val, dummy, dummy, dummy);
+		for (i = 0; i < nitems(cpu_xsave_extfeatures); i++)
+			if (val & cpu_xsave_extfeatures[i].bit)
+				printf(",%s", cpu_xsave_extfeatures[i].str);
+	}
+
 	if (cpu_meltdown)
 		printf(",MELTDOWN");
 
 	printf("\n");
 
+	replacemeltdown();
 	x86_print_cacheinfo(ci);
+
+	/*
+	 * "Mitigation G-2" per AMD's Whitepaper "Software Techniques
+	 * for Managing Speculation on AMD Processors"
+	 *
+	 * By setting MSR C001_1029[1]=1, LFENCE becomes a dispatch
+	 * serializing instruction.
+	 *
+	 * This MSR is available on all AMD families >= 10h, except 11h
+	 * where LFENCE is always serializing.
+	 */
+	if (!strcmp(cpu_vendor, "AuthenticAMD")) {
+		if (ci->ci_family >= 0x10 && ci->ci_family != 0x11) {
+			uint64_t msr;
+
+			msr = rdmsr(MSR_DE_CFG);
+			if ((msr & DE_CFG_SERIALIZE_LFENCE) == 0) {
+				msr |= DE_CFG_SERIALIZE_LFENCE;
+				wrmsr(MSR_DE_CFG, msr);
+			}
+		}
+	}
 
 	/*
 	 * Attempt to disable Silicon Debug and lock the configuration
@@ -779,17 +828,33 @@ cpu_topology(struct cpu_info *ci)
 		if (ci->ci_pnfeatset < 0x80000008)
 			goto no_topology;
 
-		CPUID(0x80000008, eax, ebx, ecx, edx);
-		core_bits = (ecx >> 12) & 0xf;
-		if (core_bits == 0)
-			goto no_topology;
-		/* So coreidsize 2 gives 3, 3 gives 7... */
-		core_mask = (1 << core_bits) - 1;
-		/* Core id is the least significant considering mask */
-		ci->ci_core_id = apicid & core_mask;
-		/* Pkg id is the upper remaining bits */
-		ci->ci_pkg_id = apicid & ~core_mask;
-		ci->ci_pkg_id >>= core_bits;
+		if (ci->ci_pnfeatset >= 0x8000001e) {
+			struct cpu_info *ci_other;
+			CPU_INFO_ITERATOR cii;
+
+			CPUID(0x8000001e, eax, ebx, ecx, edx);
+			ci->ci_core_id = ebx & 0xff;
+			ci->ci_pkg_id = ecx & 0xff;
+			ci->ci_smt_id = 0;
+			CPU_INFO_FOREACH(cii, ci_other) {
+				if (ci != ci_other &&
+				    ci_other->ci_core_id == ci->ci_core_id &&
+				    ci_other->ci_pkg_id == ci->ci_pkg_id)
+					ci->ci_smt_id++;
+			}
+		} else {
+			CPUID(0x80000008, eax, ebx, ecx, edx);
+			core_bits = (ecx >> 12) & 0xf;
+			if (core_bits == 0)
+				goto no_topology;
+			/* So coreidsize 2 gives 3, 3 gives 7... */
+			core_mask = (1 << core_bits) - 1;
+			/* Core id is the least significant considering mask */
+			ci->ci_core_id = apicid & core_mask;
+			/* Pkg id is the upper remaining bits */
+			ci->ci_pkg_id = apicid & ~core_mask;
+			ci->ci_pkg_id >>= core_bits;
+		}
 	} else if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
 		/* We only support leaf 1/4 detection */
 		if (cpuid_level < 4)
@@ -951,6 +1016,33 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 		CPUID(CPUID_AMD_SVM_CAP, dummy, dummy, dummy, cap);
 		if (cap & AMD_SVM_NESTED_PAGING_CAP)
 			ci->ci_vmm_flags |= CI_VMM_RVI;
+	}
+
+	/*
+	 * Check "L1 flush on VM entry" (Intel L1TF vuln) semantics
+	 * Full details can be found here:
+	 * https://software.intel.com/security-software-guidance/insights/deep-dive-intel-analysis-l1-terminal-fault
+	 */
+	if (!strcmp(cpu_vendor, "GenuineIntel")) {
+		if (ci->ci_feature_sefflags_edx & SEFF0EDX_L1DF)
+			ci->ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr = 1;
+		else
+			ci->ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr = 0;
+
+		/*
+		 * Certain CPUs may have the vulnerability remedied in
+		 * hardware (RDCL_NO), or we may be nested in an VMM that
+		 * is doing flushes (SKIP_L1DFL_VMENTRY) using the MSR.
+		 * In either case no mitigation at all is necessary.
+		 */	
+		if (ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP) {
+			msr = rdmsr(MSR_ARCH_CAPABILITIES);
+			if ((msr & ARCH_CAPABILITIES_RDCL_NO) ||
+			    ((msr & ARCH_CAPABILITIES_SKIP_L1DFL_VMENTRY) &&
+			    ci->ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr))
+				ci->ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr =
+				    VMX_SKIP_L1D_FLUSH;
+		}
 	}
 }
 #endif /* NVMM > 0 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.83 2018/01/05 11:10:25 pirofti Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.86 2019/04/01 09:28:24 tedu Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -812,7 +812,7 @@ db_boot_halt_cmd(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 void
 db_boot_reboot_cmd(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
-	db_reboot(RB_AUTOBOOT | RB_NOSYNC | RB_TIMEBAD | RB_USERREQ);
+	boot(RB_RESET | RB_AUTOBOOT | RB_NOSYNC | RB_TIMEBAD | RB_USERREQ);
 }
 
 void
@@ -878,7 +878,7 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
  */
 /*ARGSUSED*/
 void
-db_write_cmd(db_expr_t	address, boolean_t have_addr, db_expr_t count,
+db_write_cmd(db_expr_t address, boolean_t have_addr, db_expr_t count,
     char *modif)
 {
 	db_addr_t	addr;

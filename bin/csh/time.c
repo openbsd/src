@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.15 2017/07/22 09:37:21 anton Exp $	*/
+/*	$OpenBSD: time.c,v 1.17 2018/09/18 06:56:09 deraadt Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-

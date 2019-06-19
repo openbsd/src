@@ -551,6 +551,10 @@
 #define elf_backend_merge_symbol NULL
 #endif
 
+#ifndef elf_backend_hash_symbol
+#define elf_backend_hash_symbol _bfd_elf_hash_symbol
+#endif
+
 extern const struct elf_size_info _bfd_elfNN_size_info;
 
 #ifndef INCLUDED_TARGET_FILE
@@ -628,6 +632,7 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_common_section_index,
   elf_backend_common_section,
   elf_backend_merge_symbol,
+  elf_backend_hash_symbol,
   elf_backend_link_order_error_handler,
   elf_backend_relplt_name,
   ELF_MACHINE_ALT1,

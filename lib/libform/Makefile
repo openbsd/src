@@ -15,16 +15,12 @@ MAN=	form.3 form_cursor.3 form_data.3 form_driver.3 form_field.3 \
 	form_field_userptr.3 form_field_validation.3 form_fieldtype.3 \
 	form_hook.3 form_new.3 form_new_page.3 form_opts.3 form_page.3 \
 	form_post.3 form_requestname.3 form_userptr.3 form_win.3
-CLEANFILES+= form.3
 
 includes:
 	@cd ${.CURDIR}; for i in ${HDRS}; do \
 	  cmp -s $$i ${DESTDIR}/usr/include/$$i || \
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
-
-form.3: form.3tbl
-	cp ${.ALLSRC} ${.TARGET}
 
 .include <bsd.own.mk>
 

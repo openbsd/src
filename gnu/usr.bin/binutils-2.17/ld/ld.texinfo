@@ -1888,6 +1888,16 @@ time it takes the linker to perform its tasks, at the expense of
 increasing the linker's memory requirements.  Similarly reducing this
 value can reduce the memory requirements at the expense of speed.
 
+@kindex --hash-style=@var{style}
+@item --hash-style=@var{style}
+Set the type of linker's hash table(s).  @var{style} can be either
+@code{sysv} for classic ELF @code{.hash} section, @code{gnu} for
+new style GNU @code{.gnu.hash} section or @code{both} for both
+the classic ELF @code{.hash} and new style GNU @code{.gnu.hash}
+hash tables.  The default is @code{both}, except on mips64 where
+this option has no effect and only the classic ELF @code{.hash} is
+supported.
+
 @kindex --reduce-memory-overheads
 @item --reduce-memory-overheads
 This option reduces memory requirements at ld runtime, at the expense of

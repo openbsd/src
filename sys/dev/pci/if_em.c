@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.339 2018/03/16 06:30:50 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.342 2019/03/01 10:02:44 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -250,6 +250,7 @@ void em_txeof(struct em_softc *);
 int  em_allocate_receive_structures(struct em_softc *);
 int  em_allocate_transmit_structures(struct em_softc *);
 int  em_rxfill(struct em_softc *);
+void em_rxrefill(void *);
 int  em_rxeof(struct em_softc *);
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
@@ -375,6 +376,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->timer_handle, em_local_timer, sc);
 	timeout_set(&sc->tx_fifo_timer_handle, em_82547_move_tail, sc);
+	timeout_set(&sc->rx_refill, em_rxrefill, sc);
 
 	/* Determine hardware revision */
 	em_identify_hardware(sc);
@@ -557,6 +559,9 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	if (!defer)
 		em_update_link_status(sc);
 
+#ifdef EM_DEBUG
+	printf(", mac %#x phy %#x", sc->hw.mac_type, sc->hw.phy_type);
+#endif
 	printf(", address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	/* Indicate SOL/IDER usage */
@@ -956,13 +961,8 @@ em_intr(void *arg)
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		em_txeof(sc);
-
-		if (em_rxeof(sc) || ISSET(reg_icr, E1000_ICR_RXO)) {
-			if (em_rxfill(sc)) {
-				E1000_WRITE_REG(&sc->hw, RDT,
-				    sc->sc_rx_desc_head);
-			}
-		}
+		if (em_rxeof(sc))
+			em_rxrefill(sc);
 	}
 
 	/* Link status change */
@@ -1531,6 +1531,7 @@ em_stop(void *arg, int softonly)
 
 	INIT_DEBUGOUT("em_stop: begin");
 
+	timeout_del(&sc->rx_refill);
 	timeout_del(&sc->timer_handle);
 	timeout_del(&sc->tx_fifo_timer_handle);
 
@@ -1860,8 +1861,8 @@ em_hardware_init(struct em_softc *sc)
 			INIT_DEBUGOUT("\nHardware Initialization Deferred ");
 			return (EAGAIN);
 		}
-		printf("\n%s: Hardware Initialization Failed\n",
-		       DEVNAME(sc));
+		printf("\n%s: Hardware Initialization Failed: %d\n",
+		       DEVNAME(sc), ret_val);
 		return (EIO);
 	}
 
@@ -2265,7 +2266,9 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		EM_WRITE_REG(&sc->hw, E1000_IOSFPC, reg_val);
 
 		reg_val = E1000_READ_REG(&sc->hw, TARC0);
-		reg_val |= E1000_TARC0_CB_MULTIQ_3_REQ;
+		/* i218-i219 Specification Update 1.5.4.5 */
+		reg_val &= ~E1000_TARC0_CB_MULTIQ_3_REQ;
+		reg_val |= E1000_TARC0_CB_MULTIQ_2_REQ;
 		E1000_WRITE_REG(&sc->hw, TARC0, reg_val);
 	}
 }
@@ -2748,6 +2751,17 @@ em_rxfill(struct em_softc *sc)
 	    BUS_DMASYNC_PREWRITE);
 
 	return (post);
+}
+
+void
+em_rxrefill(void *arg)
+{
+	struct em_softc *sc = arg;
+
+	if (em_rxfill(sc))
+		E1000_WRITE_REG(&sc->hw, RDT, sc->sc_rx_desc_head);
+	else if (if_rxr_inuse(&sc->sc_rx_ring) == 0)
+		timeout_add(&sc->rx_refill, 1);
 }
 
 /*********************************************************************

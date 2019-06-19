@@ -1,13 +1,15 @@
-# NamedSequences-8.0.0.txt
-# Date: 2015-02-19, 00:30:00 GMT [KW, LI]
+# NamedSequences-10.0.0.txt
+# Date: 2017-04-13, 01:00:00 GMT [KW, LI]
+# © 2017 Unicode®, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
+#
+# Unicode Character Database
+# For documentation, see http://www.unicode.org/reports/tr44/
 #
 # Unicode Named Character Sequences
 #
 # This file is a normative contributory data file in the Unicode
 # Character Database.
-#
-# Copyright (c) 1991-2015 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Format:
 # Name of Sequence; Code Point Sequence for USI
@@ -34,6 +36,28 @@
 # to find entries in the list.
 
 # ================================================
+
+# Named keycap sequences for telephone keypad (used for emoji)
+# Provisional, 2015-05-05
+# FE0F added to the sequences, 2016-05-11
+# Approved 2017-05-12
+
+KEYCAP NUMBER SIGN;0023 FE0F 20E3
+KEYCAP ASTERISK;002A FE0F 20E3
+KEYCAP DIGIT ZERO;0030 FE0F 20E3
+KEYCAP DIGIT ONE;0031 FE0F 20E3
+KEYCAP DIGIT TWO;0032 FE0F 20E3
+KEYCAP DIGIT THREE;0033 FE0F 20E3
+KEYCAP DIGIT FOUR;0034 FE0F 20E3
+KEYCAP DIGIT FIVE;0035 FE0F 20E3
+KEYCAP DIGIT SIX;0036 FE0F 20E3
+KEYCAP DIGIT SEVEN;0037 FE0F 20E3
+KEYCAP DIGIT EIGHT;0038 FE0F 20E3
+KEYCAP DIGIT NINE;0039 FE0F 20E3
+
+# Latin letter plus accent combinations.
+# These are part of the original set of approved named sequences
+# for Unicode 4.1. 2005.
 
 LATIN CAPITAL LETTER A WITH MACRON AND GRAVE;0100 0300
 LATIN SMALL LETTER A WITH MACRON AND GRAVE;0101 0300
@@ -463,7 +487,16 @@ SINHALA CONSONANT SIGN YANSAYA;0DCA 200D 0DBA
 SINHALA CONSONANT SIGN RAKAARAANSAYA;0DCA 200D 0DBB
 SINHALA CONSONANT SIGN REPAYA;0DBB 0DCA 200D
 
+# Georgian letter plus accent sequence.
+# This is part of the original set of approved named sequences
+# for Unicode 4.1. 2005.
+
 GEORGIAN LETTER U-BRJGU;10E3 0302
+
+# Khmer subjoined forms and other sequences.
+# These are part of the original set of approved named sequences
+# for Unicode 4.1. 2005.
+
 KHMER CONSONANT SIGN COENG KA;17D2 1780
 KHMER CONSONANT SIGN COENG KHA;17D2 1781
 KHMER CONSONANT SIGN COENG KO;17D2 1782
@@ -508,6 +541,9 @@ KHMER VOWEL SIGN AAM;17B6 17C6
 
 # Entries for JIS X 0213 compatibility mapping.
 # Provisional 2008-11-07, Approved 2010-05-14
+#
+# Two of these were part of the original set of approved named sequences
+# for Unicode 4.1. 2005.
 
 HIRAGANA LETTER BIDAKUON NGA;304B 309A
 HIRAGANA LETTER BIDAKUON NGI;304D 309A

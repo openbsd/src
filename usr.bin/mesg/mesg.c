@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesg.c,v 1.12 2016/07/07 09:26:26 semarie Exp $	*/
+/*	$OpenBSD: mesg.c,v 1.15 2018/08/11 11:04:26 mestre Exp $	*/
 /*	$NetBSD: mesg.c,v 1.4 1994/12/23 07:16:32 jtc Exp $	*/
 
 /*
@@ -52,9 +52,6 @@ main(int argc, char *argv[])
 	char *tty;
 	int ch;
 
-	if (pledge("stdio rpath fattr", NULL) == -1)
-		err(2, "pledge");
-
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
 		case '?':
@@ -66,6 +63,12 @@ main(int argc, char *argv[])
 
 	if ((tty = ttyname(STDERR_FILENO)) == NULL)
 		err(2, "ttyname");
+
+	if (unveil(tty, "rw") == -1)
+		err(2, "unveil");
+	if (pledge("stdio rpath fattr", NULL) == -1)
+		err(2, "pledge");
+
 	if (stat(tty, &sb) < 0)
 		err(2, "%s", tty);
 

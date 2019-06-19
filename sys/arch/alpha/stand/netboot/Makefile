@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2017/06/12 18:49:34 espie Exp $
+#	$OpenBSD: Makefile,v 1.16 2019/02/24 12:57:14 kn Exp $
 #	$NetBSD: Makefile,v 1.11 1997/04/17 07:27:50 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -41,10 +41,10 @@ ${PROG} ${PROG}.mop: ${PROG}.nosym
 	mopa.out ${PROG}.nosym ${PROG}.mop
 
 realinstall:
-	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} \
 	    -o ${BINOWN} -g ${BINGRP} \
 	    -m ${BINMODE} ${PROG} ${DESTDIR}${BINDIR}/${PROG}
-	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} \
 	    -o ${BINOWN} -g ${BINGRP} \
 	    -m ${BINMODE} ${PROG}.mop ${DESTDIR}${BINDIR}/${PROG}.mop
 

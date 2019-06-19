@@ -63,6 +63,7 @@ representation.
    CMakePrimer
    AdvancedBuilds
    HowToBuildOnARM
+   HowToCrossCompileBuiltinsOnArm
    HowToCrossCompileLLVM
    CommandGuide/index
    GettingStarted
@@ -99,6 +100,9 @@ representation.
 
 :doc:`HowToBuildOnARM`
    Notes on building and testing LLVM/Clang on ARM.
+
+:doc:`HowToCrossCompileBuiltinsOnArm`
+   Notes on cross-building and testing the compiler-rt builtins for Arm.
 
 :doc:`HowToCrossCompileLLVM`
    Notes on cross-building and testing LLVM/Clang.
@@ -154,7 +158,7 @@ representation.
   misunderstood instruction.
 
 :doc:`Frontend/PerformanceTips`
-   A collection of tips for frontend authors on how to generate IR 
+   A collection of tips for frontend authors on how to generate IR
    which LLVM is able to effectively optimize.
 
 :doc:`Docker`
@@ -178,6 +182,7 @@ For developers of applications which use LLVM as a library.
    ProgrammersManual
    Extensions
    LibFuzzer
+   FuzzingLLVM
    ScudoHardenedAllocator
    OptBisect
 
@@ -211,7 +216,6 @@ For developers of applications which use LLVM as a library.
 
 `Doxygen generated documentation <http://llvm.org/doxygen/>`_
   (`classes <http://llvm.org/doxygen/inherits.html>`_)
-  (`tarball <http://llvm.org/doxygen/doxygen.tar.gz>`_)
 
 `Documentation for Go bindings <http://godoc.org/llvm.org/llvm/bindings/go/llvm>`_
 
@@ -224,11 +228,16 @@ For developers of applications which use LLVM as a library.
 :doc:`LibFuzzer`
   A library for writing in-process guided fuzzers.
 
+:doc:`FuzzingLLVM`
+  Information on writing and using Fuzzers to find bugs in LLVM.
+
 :doc:`ScudoHardenedAllocator`
   A library that implements a security-hardened `malloc()`.
 
 :doc:`OptBisect`
   A command line option for debugging optimization-induced failures.
+
+.. _index-subsystem-docs:
 
 Subsystem Documentation
 =======================
@@ -275,7 +284,9 @@ For API clients and LLVM developers.
    GlobalISel
    XRay
    XRayExample
+   XRayFDRFormat
    PDB/index
+   CFIVerify
 
 :doc:`WritingAnLLVMPass`
    Information on how to write LLVM transformations and analyses.
@@ -406,6 +417,9 @@ For API clients and LLVM developers.
 :doc:`The Microsoft PDB File Format <PDB/index>`
   A detailed description of the Microsoft PDB (Program Database) file format.
 
+:doc:`CFIVerify`
+  A description of the verification tool for Control Flow Integrity.
+
 Development Process Documentation
 =================================
 
@@ -414,6 +428,7 @@ Information about LLVM's development process.
 .. toctree::
    :hidden:
 
+   Contributing
    DeveloperPolicy
    Projects
    LLVMBuild
@@ -421,6 +436,9 @@ Information about LLVM's development process.
    Packaging
    ReleaseProcess
    Phabricator
+
+:doc:`Contributing`
+   An overview on how to contribute to LLVM.
 
 :doc:`DeveloperPolicy`
    The LLVM project's policy towards developers and their contributions.

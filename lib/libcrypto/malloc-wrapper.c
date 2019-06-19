@@ -1,4 +1,4 @@
-/* $OpenBSD: malloc-wrapper.c,v 1.6 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: malloc-wrapper.c,v 1.7 2018/05/13 13:49:04 jsing Exp $ */
 /*
  * Copyright (c) 2014 Bob Beck
  *
@@ -148,7 +148,6 @@ CRYPTO_realloc(void *ptr, int num, const char *file, int line)
 {
 	if (num <= 0)
 		return NULL;
-
 	return realloc(ptr, num);
 }
 
@@ -156,18 +155,12 @@ void *
 CRYPTO_realloc_clean(void *ptr, int old_len, int num, const char *file,
     int line)
 {
-	void *ret = NULL;
-
 	if (num <= 0)
 		return NULL;
+	/* Original does not support shrinking. */
 	if (num < old_len)
-		return NULL; /* original does not support shrinking */
-	ret = malloc(num);
-	if (ret && ptr && old_len > 0) {
-		memcpy(ret, ptr, old_len);
-		freezero(ptr, old_len);
-	}
-	return ret;
+		return NULL;
+	return recallocarray(ptr, old_len, num, 1);
 }
 
 void

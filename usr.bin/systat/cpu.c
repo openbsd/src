@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.5 2016/01/02 20:02:40 benno Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.9 2018/11/17 23:10:08 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -68,21 +68,23 @@ field_def fields_cpu[] = {
 	{ "User", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
 	{ "Nice", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
 	{ "System", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
+	{ "Spin", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
 	{ "Interrupt", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
 	{ "Idle", 10, 20, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0 },
 };
 
 #define FLD_CPU_CPU	FIELD_ADDR(fields_cpu, 0)
-#define FLD_CPU_INT	FIELD_ADDR(fields_cpu, 1)
-#define FLD_CPU_SYS	FIELD_ADDR(fields_cpu, 2)
-#define FLD_CPU_USR	FIELD_ADDR(fields_cpu, 3)
-#define FLD_CPU_NIC	FIELD_ADDR(fields_cpu, 4)
-#define FLD_CPU_IDLE	FIELD_ADDR(fields_cpu, 5)
+#define FLD_CPU_USR	FIELD_ADDR(fields_cpu, 1)
+#define FLD_CPU_NIC	FIELD_ADDR(fields_cpu, 2)
+#define FLD_CPU_SYS	FIELD_ADDR(fields_cpu, 3)
+#define FLD_CPU_SPIN	FIELD_ADDR(fields_cpu, 4)
+#define FLD_CPU_INT	FIELD_ADDR(fields_cpu, 5)
+#define FLD_CPU_IDLE	FIELD_ADDR(fields_cpu, 6)
 
 /* Define views */
 field_def *view_cpu_0[] = {
-	FLD_CPU_CPU,
-	FLD_CPU_INT, FLD_CPU_SYS, FLD_CPU_USR, FLD_CPU_NIC, FLD_CPU_IDLE, NULL
+	FLD_CPU_CPU, FLD_CPU_USR, FLD_CPU_NIC, FLD_CPU_SYS, FLD_CPU_SPIN,
+	FLD_CPU_INT, FLD_CPU_IDLE, NULL
 };
 
 /* Define view managers */
@@ -98,9 +100,7 @@ field_view views_cpu[] = {
 
 int	  cpu_count;
 int64_t	 *cpu_states;
-int64_t	**cpu_tm;
-int64_t	**cpu_old;
-int64_t	**cpu_diff;
+struct cpustats *cpu_diff, *cpu_old, *cpu_tm;
 
 /*
  * percentages(cnt, out, new, old, diffs) - calculate percentage change
@@ -146,18 +146,18 @@ percentages(int cnt, int64_t *out, int64_t *new, int64_t *old, int64_t *diffs)
 static void
 cpu_info(void)
 {
-	int	 cpu_time_mib[] = { CTL_KERN, KERN_CPTIME2, 0 }, i;
+	int	 cpustats_mib[] = { CTL_KERN, KERN_CPUSTATS, 0 }, i;
 	int64_t *tmpstate;
 	size_t	 size;
 
-	size = CPUSTATES * sizeof(int64_t);
+	size = sizeof(*cpu_tm);
 	for (i = 0; i < cpu_count; i++) {
-		cpu_time_mib[2] = i;
+		cpustats_mib[2] = i;
 		tmpstate = cpu_states + (CPUSTATES * i);
-		if (sysctl(cpu_time_mib, 3, cpu_tm[i], &size, NULL, 0) < 0)
-			error("sysctl KERN_CPTIME2");
-		percentages(CPUSTATES, tmpstate, cpu_tm[i],
-		    cpu_old[i], cpu_diff[i]);
+		if (sysctl(cpustats_mib, 3, &cpu_tm[i], &size, NULL, 0) < 0)
+			error("sysctl KERN_CPUSTATS");
+		percentages(CPUSTATES, tmpstate, cpu_tm[i].cs_time,
+		    cpu_old[i].cs_time, cpu_diff[i].cs_time);
 	}
 }
 
@@ -201,16 +201,10 @@ initcpu(void)
 	if ((cpu_states = calloc(cpu_count,
 	    CPUSTATES * sizeof(int64_t))) == NULL)
 		return (-1);
-	if ((cpu_tm = calloc(cpu_count, sizeof(int64_t *))) == NULL ||
-	    (cpu_old = calloc(cpu_count, sizeof(int64_t *))) == NULL ||
-	    (cpu_diff = calloc(cpu_count, sizeof(int64_t *))) == NULL)
+	if ((cpu_tm = calloc(cpu_count, sizeof(*cpu_tm))) == NULL ||
+	    (cpu_old = calloc(cpu_count, sizeof(*cpu_old))) == NULL ||
+	    (cpu_diff = calloc(cpu_count, sizeof(*cpu_diff))) == NULL)
 		return (-1);
-	for (i = 0; i < cpu_count; i++) {
-		if ((cpu_tm[i] = calloc(CPUSTATES, sizeof(int64_t))) == NULL ||
-		    (cpu_old[i] = calloc(CPUSTATES, sizeof(int64_t))) == NULL ||
-		    (cpu_diff[i] = calloc(CPUSTATES, sizeof(int64_t))) == NULL)
-			return (-1);
-	}
 
 	for (v = views_cpu; v->name != NULL; v++)
 		add_view(v);
@@ -228,20 +222,29 @@ initcpu(void)
 			return;						\
 	} while (0)
 
-#define ADD_LINE_CPU(v, cs) \
-	do {								\
-		if (cur >= dispstart && cur < end) { 			\
-			print_fld_size(FLD_CPU_CPU, (v));		\
-			print_fld_percentage(FLD_CPU_INT, (cs[0]));	\
-			print_fld_percentage(FLD_CPU_SYS, (cs[1]));	\
-			print_fld_percentage(FLD_CPU_USR, (cs[2]));	\
-			print_fld_percentage(FLD_CPU_NIC, (cs[3]));	\
-			print_fld_percentage(FLD_CPU_IDLE, (cs[4]));	\
-			end_line();					\
+#define ADD_LINE_CPU(v, _cs) do {					\
+	if (cur >= dispstart && cur < end) { 				\
+		print_fld_size(FLD_CPU_CPU, (v));			\
+		if (cpu_tm[v].cs_flags & CPUSTATS_ONLINE) {		\
+			print_fld_percentage(FLD_CPU_USR, _cs[CP_USER]);\
+			print_fld_percentage(FLD_CPU_NIC, _cs[CP_NICE]);\
+			print_fld_percentage(FLD_CPU_SYS, _cs[CP_SYS]);	\
+			print_fld_percentage(FLD_CPU_SPIN, _cs[CP_SPIN]);\
+			print_fld_percentage(FLD_CPU_INT, _cs[CP_INTR]);\
+			print_fld_percentage(FLD_CPU_IDLE, _cs[CP_IDLE]);\
+		} else {						\
+			print_fld_str(FLD_CPU_USR, "-");		\
+			print_fld_str(FLD_CPU_NIC, "-");		\
+			print_fld_str(FLD_CPU_SYS, "-");		\
+			print_fld_str(FLD_CPU_SPIN, "-");		\
+			print_fld_str(FLD_CPU_INT, "-");		\
+			print_fld_str(FLD_CPU_IDLE, "-");		\
 		}							\
-		if (++cur >= end)					\
-			return;						\
-	} while (0)
+		end_line();						\
+	}								\
+	if (++cur >= end)						\
+		return;							\
+} while (0)
 
 void
 print_cpu(void)

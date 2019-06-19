@@ -21,14 +21,14 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/StackMaps.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetLowering.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "instr-emitter"
@@ -394,11 +394,26 @@ void InstrEmitter::AddOperand(MachineInstrBuilder &MIB,
   } else if (ConstantFPSDNode *F = dyn_cast<ConstantFPSDNode>(Op)) {
     MIB.addFPImm(F->getConstantFPValue());
   } else if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op)) {
+    unsigned VReg = R->getReg();
+    MVT OpVT = Op.getSimpleValueType();
+    const TargetRegisterClass *OpRC =
+        TLI->isTypeLegal(OpVT) ? TLI->getRegClassFor(OpVT) : nullptr;
+    const TargetRegisterClass *IIRC =
+        II ? TRI->getAllocatableClass(TII->getRegClass(*II, IIOpNum, TRI, *MF))
+           : nullptr;
+
+    if (OpRC && IIRC && OpRC != IIRC &&
+        TargetRegisterInfo::isVirtualRegister(VReg)) {
+      unsigned NewVReg = MRI->createVirtualRegister(IIRC);
+      BuildMI(*MBB, InsertPos, Op.getNode()->getDebugLoc(),
+               TII->get(TargetOpcode::COPY), NewVReg).addReg(VReg);
+      VReg = NewVReg;
+    }
     // Turn additional physreg operands into implicit uses on non-variadic
     // instructions. This is used by call and return instructions passing
     // arguments in registers.
     bool Imp = II && (IIOpNum >= II->getNumOperands() && !II->isVariadic());
-    MIB.addReg(R->getReg(), getImplRegState(Imp));
+    MIB.addReg(VReg, getImplRegState(Imp));
   } else if (RegisterMaskSDNode *RM = dyn_cast<RegisterMaskSDNode>(Op)) {
     MIB.addRegMask(RM->getRegMask());
   } else if (GlobalAddressSDNode *TGA = dyn_cast<GlobalAddressSDNode>(Op)) {
@@ -673,7 +688,6 @@ void InstrEmitter::EmitRegSequence(SDNode *Node,
 MachineInstr *
 InstrEmitter::EmitDbgValue(SDDbgValue *SD,
                            DenseMap<SDValue, unsigned> &VRBaseMap) {
-  uint64_t Offset = SD->getOffset();
   MDNode *Var = SD->getVariable();
   MDNode *Expr = SD->getExpression();
   DebugLoc DL = SD->getDebugLoc();
@@ -683,11 +697,15 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
   if (SD->getKind() == SDDbgValue::FRAMEIX) {
     // Stack address; this needs to be lowered in target-dependent fashion.
     // EmitTargetCodeForFrameDebugValue is responsible for allocation.
-    return BuildMI(*MF, DL, TII->get(TargetOpcode::DBG_VALUE))
-        .addFrameIndex(SD->getFrameIx())
-        .addImm(Offset)
-        .addMetadata(Var)
-        .addMetadata(Expr);
+    auto FrameMI = BuildMI(*MF, DL, TII->get(TargetOpcode::DBG_VALUE))
+                       .addFrameIndex(SD->getFrameIx());
+    if (SD->isIndirect())
+      // Push [fi + 0] onto the DIExpression stack.
+      FrameMI.addImm(0);
+    else
+      // Push fi onto the DIExpression stack.
+      FrameMI.addReg(0);
+    return FrameMI.addMetadata(Var).addMetadata(Expr);
   }
   // Otherwise, we're going to create an instruction here.
   const MCInstrDesc &II = TII->get(TargetOpcode::DBG_VALUE);
@@ -706,6 +724,8 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
     else
       AddOperand(MIB, Op, (*MIB).getNumOperands(), &II, VRBaseMap,
                  /*IsDebug=*/true, /*IsClone=*/false, /*IsCloned=*/false);
+  } else if (SD->getKind() == SDDbgValue::VREG) {
+    MIB.addReg(SD->getVReg(), RegState::Debug);
   } else if (SD->getKind() == SDDbgValue::CONST) {
     const Value *V = SD->getConst();
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
@@ -727,14 +747,26 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
 
   // Indirect addressing is indicated by an Imm as the second parameter.
   if (SD->isIndirect())
-    MIB.addImm(Offset);
-  else {
-    assert(Offset == 0 && "direct value cannot have an offset");
+    MIB.addImm(0U);
+  else
     MIB.addReg(0U, RegState::Debug);
-  }
 
   MIB.addMetadata(Var);
   MIB.addMetadata(Expr);
+
+  return &*MIB;
+}
+
+MachineInstr *
+InstrEmitter::EmitDbgLabel(SDDbgLabel *SD) {
+  MDNode *Label = SD->getLabel();
+  DebugLoc DL = SD->getDebugLoc();
+  assert(cast<DILabel>(Label)->isValidLocationForIntrinsic(DL) &&
+         "Expected inlined-at fields to agree");
+
+  const MCInstrDesc &II = TII->get(TargetOpcode::DBG_LABEL);
+  MachineInstrBuilder MIB = BuildMI(*MF, DL, II);
+  MIB.addMetadata(Label);
 
   return &*MIB;
 }
@@ -810,8 +842,33 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
 
   // Add result register values for things that are defined by this
   // instruction.
-  if (NumResults)
+  if (NumResults) {
     CreateVirtualRegisters(Node, MIB, II, IsClone, IsCloned, VRBaseMap);
+
+    // Transfer any IR flags from the SDNode to the MachineInstr
+    MachineInstr *MI = MIB.getInstr();
+    const SDNodeFlags Flags = Node->getFlags();
+    if (Flags.hasNoSignedZeros())
+      MI->setFlag(MachineInstr::MIFlag::FmNsz);
+
+    if (Flags.hasAllowReciprocal())
+      MI->setFlag(MachineInstr::MIFlag::FmArcp);
+
+    if (Flags.hasNoNaNs())
+      MI->setFlag(MachineInstr::MIFlag::FmNoNans);
+
+    if (Flags.hasNoInfs())
+      MI->setFlag(MachineInstr::MIFlag::FmNoInfs);
+
+    if (Flags.hasAllowContract())
+      MI->setFlag(MachineInstr::MIFlag::FmContract);
+
+    if (Flags.hasApproximateFuncs())
+      MI->setFlag(MachineInstr::MIFlag::FmAfn);
+
+    if (Flags.hasAllowReassociation())
+      MI->setFlag(MachineInstr::MIFlag::FmReassoc);
+  }
 
   // Emit all of the actual operands of this instruction, adding them to the
   // instruction as appropriate.
@@ -938,10 +995,14 @@ EmitSpecialNode(SDNode *Node, bool IsClone, bool IsCloned,
     EmitCopyFromReg(Node, 0, IsClone, IsCloned, SrcReg, VRBaseMap);
     break;
   }
-  case ISD::EH_LABEL: {
-    MCSymbol *S = cast<EHLabelSDNode>(Node)->getLabel();
+  case ISD::EH_LABEL:
+  case ISD::ANNOTATION_LABEL: {
+    unsigned Opc = (Node->getOpcode() == ISD::EH_LABEL)
+                       ? TargetOpcode::EH_LABEL
+                       : TargetOpcode::ANNOTATION_LABEL;
+    MCSymbol *S = cast<LabelSDNode>(Node)->getLabel();
     BuildMI(*MBB, InsertPos, Node->getDebugLoc(),
-            TII->get(TargetOpcode::EH_LABEL)).addSym(S);
+            TII->get(Opc)).addSym(S);
     break;
   }
 

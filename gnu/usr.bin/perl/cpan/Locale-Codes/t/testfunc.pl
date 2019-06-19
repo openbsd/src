@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright (c) 1996-2015 Sullivan Beck. All rights reserved.
+# Copyright (c) 1996-2018 Sullivan Beck. All rights reserved.
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
@@ -475,6 +475,6 @@ sub vals_to_print {
 # cperl-continued-brace-offset: 0
 # cperl-brace-offset: 0
 # cperl-brace-imaginary-offset: 0
-# cperl-label-offset: -2
+# cperl-label-offset: 0
 # End:
 

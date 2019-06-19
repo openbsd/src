@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuencode.c,v 1.13 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: uuencode.c,v 1.15 2019/03/10 20:49:24 schwarze Exp $	*/
 /*	$FreeBSD: uuencode.c,v 1.18 2004/01/22 07:23:35 grehan Exp $	*/
 
 /*-
@@ -34,13 +34,11 @@
  * Encode a file so it can be mailed to a remote system.
  */
 
-#include <sys/socket.h>
 #include <sys/stat.h>
 
 #include <netinet/in.h>
 
 #include <err.h>
-#include <locale.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +47,7 @@
 
 void encode(void);
 void base64_encode(void);
-static void usage(void);
+static void __dead usage(void);
 
 FILE *output;
 int mode;
@@ -81,7 +79,6 @@ main(int argc, char *argv[])
 		pmode = MODE_B64ENCODE;
 	}
 
-	setlocale(LC_ALL, "");
 	while ((ch = getopt(argc, argv, optstr[pmode])) != -1) {
 		switch (ch) {
 		case 'm':
@@ -90,7 +87,6 @@ main(int argc, char *argv[])
 		case 'o':
 			outfile = optarg;
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -118,7 +114,6 @@ main(int argc, char *argv[])
 #define	RW	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
 		mode = RW & ~umask(RW);
 		break;
-	case 0:
 	default:
 		usage();
 	}
@@ -137,7 +132,7 @@ main(int argc, char *argv[])
 		encode();
 	if (ferror(output))
 		errx(1, "write error");
-	exit(0);
+	return 0;
 }
 
 /* ENC is the basic 1 character encoding function to make a char printing */
@@ -220,7 +215,7 @@ encode(void)
 	(void)fprintf(output, "%c\nend\n", ENC('\0'));
 }
 
-static void
+static void __dead
 usage(void)
 {
 	switch (pmode) {

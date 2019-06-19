@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.83 2018/03/27 08:42:49 mpi Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.85 2018/11/12 15:09:17 visa Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ procinit(void)
 	    PR_WAITOK, "processpl", NULL);
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, IPL_NONE,
 	    PR_WAITOK, "zombiepl", NULL);
-	pool_init(&ucred_pool, sizeof(struct ucred), 0, IPL_NONE,
+	pool_init(&ucred_pool, sizeof(struct ucred), 0, IPL_MPFLOOR,
 	    PR_WAITOK, "ucredpl", NULL);
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, IPL_NONE,
 	    PR_WAITOK, "pgrppl", NULL);
@@ -278,6 +278,7 @@ enternewpgrp(struct process *pr, struct pgrp *pgrp, struct session *newsess)
 	}
 	pgrp->pg_id = pr->ps_pid;
 	LIST_INIT(&pgrp->pg_members);
+	LIST_INIT(&pgrp->pg_sigiolst);
 	LIST_INSERT_HEAD(PGRPHASH(pr->ps_pid), pgrp, pg_hash);
 	pgrp->pg_jobc = 0;
 
@@ -328,6 +329,7 @@ leavepgrp(struct process *pr)
 void
 pgdelete(struct pgrp *pgrp)
 {
+	sigio_freelist(&pgrp->pg_sigiolst);
 
 	if (pgrp->pg_session->s_ttyp != NULL && 
 	    pgrp->pg_session->s_ttyp->t_pgrp == pgrp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.28 2017/02/24 14:28:31 gsoares Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.31 2018/07/31 11:01:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -82,7 +82,7 @@ SIMPLEQ_HEAD(acl, aci);
  */
 struct request {
 	TAILQ_ENTRY(request)	 next;
-	unsigned long		 type;
+	unsigned int		 type;
 	long long		 msgid;
 	struct ber_element	*root;
 	struct ber_element	*op;
@@ -365,7 +365,7 @@ int			 ldap_compare(struct request *req);
 int			 ldap_extended(struct request *req);
 
 void			 send_ldap_result(struct conn *conn, int msgid,
-				unsigned long type, long long result_code);
+				unsigned int type, long long result_code);
 int			 ldap_respond(struct request *req, int code);
 int			 ldap_refer(struct request *req, const char *basedn,
 			     struct search *search, struct referrals *refs);
@@ -461,7 +461,7 @@ extern struct imsgev	*iev_ldapd;
 int			 ldap_bind(struct request *req);
 void			 ldap_bind_continue(struct conn *conn, int ok);
 int			 authorized(struct conn *conn, struct namespace *ns,
-				int rights, char *dn, int scope);
+				int rights, char *dn, char *attr, int scope);
 
 /* parse.y */
 int			 parse_config(char *filename);
@@ -471,6 +471,7 @@ SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 
 
 /* logmsg.c */
+void			 ldap_loginit(const char *, int, int);
 const char		*print_host(struct sockaddr_storage *ss, char *buf,
 				size_t len);
 void			 hexdump(void *data, size_t len, const char *fmt, ...);

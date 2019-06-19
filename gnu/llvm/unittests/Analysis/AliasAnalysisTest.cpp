@@ -156,7 +156,7 @@ protected:
 
     // Build the various AA results and register them.
     AC.reset(new AssumptionCache(F));
-    BAR.reset(new BasicAAResult(M.getDataLayout(), TLI, *AC));
+    BAR.reset(new BasicAAResult(M.getDataLayout(), F, TLI, *AC));
     AAR->addAAResult(*BAR);
 
     return *AAR;
@@ -191,18 +191,18 @@ TEST_F(AliasAnalysisTest, getModRefInfo) {
   auto &AA = getAAResults(*F);
 
   // Check basic results
-  EXPECT_EQ(AA.getModRefInfo(Store1, MemoryLocation()), MRI_Mod);
-  EXPECT_EQ(AA.getModRefInfo(Store1), MRI_Mod);
-  EXPECT_EQ(AA.getModRefInfo(Load1, MemoryLocation()), MRI_Ref);
-  EXPECT_EQ(AA.getModRefInfo(Load1), MRI_Ref);
-  EXPECT_EQ(AA.getModRefInfo(Add1, MemoryLocation()), MRI_NoModRef);
-  EXPECT_EQ(AA.getModRefInfo(Add1), MRI_NoModRef);
-  EXPECT_EQ(AA.getModRefInfo(VAArg1, MemoryLocation()), MRI_ModRef);
-  EXPECT_EQ(AA.getModRefInfo(VAArg1), MRI_ModRef);
-  EXPECT_EQ(AA.getModRefInfo(CmpXChg1, MemoryLocation()), MRI_ModRef);
-  EXPECT_EQ(AA.getModRefInfo(CmpXChg1), MRI_ModRef);
-  EXPECT_EQ(AA.getModRefInfo(AtomicRMW, MemoryLocation()), MRI_ModRef);
-  EXPECT_EQ(AA.getModRefInfo(AtomicRMW), MRI_ModRef);
+  EXPECT_EQ(AA.getModRefInfo(Store1, MemoryLocation()), ModRefInfo::Mod);
+  EXPECT_EQ(AA.getModRefInfo(Store1, None), ModRefInfo::Mod);
+  EXPECT_EQ(AA.getModRefInfo(Load1, MemoryLocation()), ModRefInfo::Ref);
+  EXPECT_EQ(AA.getModRefInfo(Load1, None), ModRefInfo::Ref);
+  EXPECT_EQ(AA.getModRefInfo(Add1, MemoryLocation()), ModRefInfo::NoModRef);
+  EXPECT_EQ(AA.getModRefInfo(Add1, None), ModRefInfo::NoModRef);
+  EXPECT_EQ(AA.getModRefInfo(VAArg1, MemoryLocation()), ModRefInfo::ModRef);
+  EXPECT_EQ(AA.getModRefInfo(VAArg1, None), ModRefInfo::ModRef);
+  EXPECT_EQ(AA.getModRefInfo(CmpXChg1, MemoryLocation()), ModRefInfo::ModRef);
+  EXPECT_EQ(AA.getModRefInfo(CmpXChg1, None), ModRefInfo::ModRef);
+  EXPECT_EQ(AA.getModRefInfo(AtomicRMW, MemoryLocation()), ModRefInfo::ModRef);
+  EXPECT_EQ(AA.getModRefInfo(AtomicRMW, None), ModRefInfo::ModRef);
 }
 
 class AAPassInfraTest : public testing::Test {

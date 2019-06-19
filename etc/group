@@ -21,6 +21,7 @@ _fingerd:*:33:
 _sshagnt:*:34:
 _x11:*:35:
 utmp:*:45:
+_unwind:*:48:
 _switchd:*:49:
 _traceroute:*:50:
 _ping:*:51:
@@ -58,8 +59,8 @@ _ripd:*:88:
 _relayd:*:89:
 _ospf6d:*:90:
 _snmpd:*:91:
-_rtadvd:*:92:
 _ypldap:*:93:
+_rad:*:94:
 _smtpd:*:95:
 _rwalld:*:96:
 _nsd:*:97:

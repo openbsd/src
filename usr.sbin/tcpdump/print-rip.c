@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rip.c,v 1.16 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-rip.c,v 1.17 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1996
@@ -159,7 +159,7 @@ rip_print(const u_char *dat, u_int length)
 
 	i = min(length, snapend - dat) - sizeof(*rp);
 	if (i < 0) {
-		printf(" [|rip]");
+		printf("[|rip]");
 		return;
 	}
 
@@ -167,21 +167,21 @@ rip_print(const u_char *dat, u_int length)
 	switch (rp->rip_vers) {
 	case 0:
 		/* RFC 1058 */
-		printf(" RIPv0: ");
+		printf("RIPv0: ");
 		rip_printblk((u_char *)(rp + 1), snapend);
 		break;
 	default:
 		switch (rp->rip_cmd) {
 		case RIPCMD_REQUEST:
-			printf(" RIPv%d-req %d", rp->rip_vers, length);
+			printf("RIPv%d-req %d", rp->rip_vers, length);
 			break;
 		case RIPCMD_RESPONSE:
 			j = length / sizeof(*ni);
 			if (j * sizeof(*ni) != length - 4)
-				printf(" RIPv%d-resp [items %d] [%d]:",
+				printf("RIPv%d-resp [items %d] [%d]:",
 				       rp->rip_vers, j, length);
 			else
-				printf(" RIPv%d-resp [items %d]:",
+				printf("RIPv%d-resp [items %d]:",
 				       rp->rip_vers, j);
 			trunc = (i / sizeof(*ni)) != j;
 			ni = (struct rip_netinfo *)(rp + 1);
@@ -195,21 +195,21 @@ rip_print(const u_char *dat, u_int length)
 				printf("[|rip]");
 			break;
 		case RIPCMD_TRACEON:
-			printf(" RIPv%d-traceon %d: \"", rp->rip_vers, length);
+			printf("RIPv%d-traceon %d: \"", rp->rip_vers, length);
 			(void)fn_print((const u_char *)(rp + 1), snapend);
 			fputs("\"", stdout);
 			break;
 		case RIPCMD_TRACEOFF:
-			printf(" RIPv%d-traceoff %d", rp->rip_vers, length);
+			printf("RIPv%d-traceoff %d", rp->rip_vers, length);
 			break;
 		case RIPCMD_POLL:
-			printf(" RIPv%d-poll %d", rp->rip_vers, length);
+			printf("RIPv%d-poll %d", rp->rip_vers, length);
 			break;
 		case RIPCMD_POLLENTRY:
-			printf(" RIPv%d-pollentry %d", rp->rip_vers, length);
+			printf("RIPv%d-pollentry %d", rp->rip_vers, length);
 			break;
 		default:
-			printf(" RIPv%d-#%d %d", rp->rip_vers, rp->rip_cmd,
+			printf("RIPv%d-#%d %d", rp->rip_vers, rp->rip_cmd,
 			       length);
 			break;
 		}

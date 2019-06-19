@@ -53,12 +53,6 @@ typedef struct {
 
 extern const datum nullitem;
 
-#if defined(__STDC__) || defined(__cplusplus) || defined(CAN_PROTOTYPE)
-#define proto(p) p
-#else
-#define proto(p) ()
-#endif
-
 /*
  * flags to sdbm_store
  */
@@ -68,20 +62,20 @@ extern const datum nullitem;
 /*
  * ndbm interface
  */
-extern DBM *sdbm_open proto((char *, int, int));
-extern void sdbm_close proto((DBM *));
-extern datum sdbm_fetch proto((DBM *, datum));
-extern int sdbm_delete proto((DBM *, datum));
-extern int sdbm_store proto((DBM *, datum, datum, int));
-extern datum sdbm_firstkey proto((DBM *));
-extern datum sdbm_nextkey proto((DBM *));
-extern int sdbm_exists proto((DBM *, datum));
+extern DBM *sdbm_open(char *, int, int);
+extern void sdbm_close(DBM *);
+extern datum sdbm_fetch(DBM *, datum);
+extern int sdbm_delete(DBM *, datum);
+extern int sdbm_store(DBM *, datum, datum, int);
+extern datum sdbm_firstkey(DBM *);
+extern datum sdbm_nextkey(DBM *);
+extern int sdbm_exists(DBM *, datum);
 
 /*
  * other
  */
-extern DBM *sdbm_prep proto((char *, char *, int, int));
-extern long sdbm_hash proto((const char *, int));
+extern DBM *sdbm_prep(char *, char *, int, int);
+extern long sdbm_hash(const char *, int);
 
 #ifndef SDBM_ONLY
 #define dbm_open sdbm_open
@@ -115,10 +109,6 @@ extern long sdbm_hash proto((const char *, int));
 #   ifdef I_NET_ERRNO
 #     include <net/errno.h>
 #   endif
-#endif
-
-#if defined(__STDC__) || defined(_AIX) || defined(__stdc__) || defined(__cplusplus)
-# define STANDARD_C 1
 #endif
 
 #include <stdio.h>
@@ -159,10 +149,8 @@ extern long sdbm_hash proto((const char *, int));
 # endif
 #endif
 
-/* Use all the "standard" definitions? */
-#if defined(STANDARD_C) && defined(I_STDLIB)
-#   include <stdlib.h>
-#endif /* STANDARD_C */
+/* Use all the "standard" definitions */
+#include <stdlib.h>
 
 #define MEM_SIZE Size_t
 
@@ -179,10 +167,10 @@ extern long sdbm_hash proto((const char *, int));
 extern "C" {
 #endif
 
-Malloc_t Perl_malloc proto((MEM_SIZE nbytes));
-Malloc_t Perl_calloc proto((MEM_SIZE elements, MEM_SIZE size));
-Malloc_t Perl_realloc proto((Malloc_t where, MEM_SIZE nbytes));
-Free_t   Perl_mfree proto((Malloc_t where));
+Malloc_t Perl_malloc(MEM_SIZE nbytes);
+Malloc_t Perl_calloc(MEM_SIZE elements, MEM_SIZE size);
+Malloc_t Perl_realloc(Malloc_t where, MEM_SIZE nbytes);
+Free_t   Perl_mfree(Malloc_t where);
 
 #ifdef __cplusplus
 }
@@ -190,91 +178,16 @@ Free_t   Perl_mfree proto((Malloc_t where));
 
 #endif /* MYMALLOC */
 
-#ifdef I_STRING
-# ifndef __ultrix__
-#  include <string.h>
-# endif
-#else
-# include <strings.h>
+#include <string.h>
+
+#define memzero(d,l) memset(d,0,l)
+
+#ifdef BUGGY_MSC
+#  pragma function(memcmp)
 #endif
 
-#ifdef I_MEMORY
-#include <memory.h>
-#endif      
-
-#ifdef __cplusplus
-#define HAS_MEMCPY
-#endif
-
-#ifdef HAS_MEMCPY
-#  if !defined(STANDARD_C) && !defined(I_STRING) && !defined(I_MEMORY)
-#    ifndef memcpy
-        extern char * memcpy proto((char*, char*, int));
-#    endif
-#  endif
-#else
-#   ifndef memcpy
-#	ifdef HAS_BCOPY
-#	    define memcpy(d,s,l) bcopy(s,d,l)
-#	else
-#	    define memcpy(d,s,l) my_bcopy(s,d,l)
-#	endif
-#   endif
-#endif /* HAS_MEMCPY */
-
-#ifdef HAS_MEMSET
-#  if !defined(STANDARD_C) && !defined(I_STRING) && !defined(I_MEMORY)
-#    ifndef memset
-	extern char *memset proto((char*, int, int));
-#    endif
-#  endif
-#  define memzero(d,l) memset(d,0,l)
-#else
-#   ifndef memzero
-#	ifdef HAS_BZERO
-#	    define memzero(d,l) bzero(d,l)
-#	else
-#	    define memzero(d,l) my_bzero(d,l)
-#	endif
-#   endif
-#endif /* HAS_MEMSET */
-
-#if defined(mips) && defined(ultrix) && !defined(__STDC__)
-#   undef HAS_MEMCMP
-#endif
-
-#if defined(HAS_MEMCMP) && defined(HAS_SANE_MEMCMP)
-#  if !defined(STANDARD_C) && !defined(I_STRING) && !defined(I_MEMORY)
-#    ifndef memcmp
-	extern int memcmp proto((char*, char*, int));
-#    endif
-#  endif
-#  ifdef BUGGY_MSC
-#    pragma function(memcmp)
-#  endif
-#else
-#   ifndef memcmp
-	/* maybe we should have included the full embedding header... */
-#	define memcmp Perl_my_memcmp
-#ifndef __cplusplus
-	extern int memcmp proto((char*, char*, int));
-#endif
-#   endif
-#endif /* HAS_MEMCMP */
-
-#ifndef HAS_BCMP
-#   ifndef bcmp
-#	define bcmp(s1,s2,l) memcmp(s1,s2,l)
-#   endif
-#endif /* !HAS_BCMP */
-
-#ifdef HAS_MEMCMP
-#  define memNE(s1,s2,l) (memcmp(s1,s2,l))
-#  define memEQ(s1,s2,l) (!memcmp(s1,s2,l))
-#else
-#  define memNE(s1,s2,l) (bcmp(s1,s2,l))
-#  define memEQ(s1,s2,l) (!bcmp(s1,s2,l))
-#endif
+#define memNE(s1,s2,l) (memcmp(s1,s2,l))
+#define memEQ(s1,s2,l) (!memcmp(s1,s2,l))
 
 #ifdef I_NETINET_IN
 #  ifdef VMS

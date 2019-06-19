@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.73 2017/03/04 00:15:35 renato Exp $ */
+/*	$OpenBSD: lde.c,v 1.74 2019/01/23 02:02:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -480,6 +480,7 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			LIST_INIT(&nconf->tnbr_list);
 			LIST_INIT(&nconf->nbrp_list);
 			LIST_INIT(&nconf->l2vpn_list);
+			LIST_INIT(&nconf->auth_list);
 			break;
 		case IMSG_RECONF_IFACE:
 			if ((niface = malloc(sizeof(struct iface))) == NULL)
@@ -534,6 +535,18 @@ lde_dispatch_parent(int fd, short event, void *bula)
 			npw->l2vpn = nl2vpn;
 			LIST_INSERT_HEAD(&nl2vpn->pw_list, npw, entry);
 			break;
+		case IMSG_RECONF_CONF_AUTH: {
+			struct ldp_auth *auth;
+
+			auth = malloc(sizeof(*auth));
+			if (auth == NULL)
+				fatal(NULL);
+
+			memcpy(auth, imsg.data, sizeof(*auth));
+
+			LIST_INSERT_HEAD(&nconf->auth_list, auth, entry);
+			break;
+		}
 		case IMSG_RECONF_END:
 			merge_config(ldeconf, nconf);
 			nconf = NULL;

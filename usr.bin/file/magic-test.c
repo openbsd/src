@@ -1,4 +1,4 @@
-/* $OpenBSD: magic-test.c,v 1.25 2017/04/18 14:16:48 nicm Exp $ */
+/* $OpenBSD: magic-test.c,v 1.27 2019/01/15 09:24:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1016,7 +1016,7 @@ magic_test_type_regex(struct magic_line *ml, struct magic_state *ms)
 		}
 	}
 
-	if (regcomp(&re, ml->test_string, REG_EXTENDED) != 0)
+	if (regcomp(&re, ml->test_string, REG_EXTENDED|REG_NEWLINE|flags) != 0)
 		return (-1);
 	m.rm_so = ms->offset;
 	m.rm_eo = ms->size;
@@ -1404,10 +1404,10 @@ magic_test(struct magic *m, const void *base, size_t size, int flags)
 	if (*ms.out != '\0') {
 		if (flags & MAGIC_TEST_MIME) {
 			if (ms.mimetype != NULL)
-				return (xstrdup(ms.mimetype));
+				return (ms.mimetype);
 			return (NULL);
 		}
-		return (xstrdup(ms.out));
+		return (ms.out);
 	}
 	return (NULL);
 }

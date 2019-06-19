@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.173 2018/03/15 04:22:16 deraadt Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.179 2018/09/26 14:51:44 visa Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -177,9 +177,8 @@ ffs_mountroot(void)
 	}
 
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
-		mp->mnt_vfc->vfc_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT, sizeof(*mp));
+		vfs_mount_free(mp);
 		vrele(swapdev_vp);
 		vrele(rootvp);
 		return (error);
@@ -240,6 +239,16 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		devvp = ump->um_devvp;
 		error = 0;
 		ronly = fs->fs_ronly;
+
+		/*
+		 * Soft updates won't be set if read/write,
+		 * so "async" will be illegal.
+		 */
+		if (ronly == 0 && (mp->mnt_flag & MNT_ASYNC) &&
+		    (fs->fs_flags & FS_DOSOFTDEP)) {
+			error = EINVAL;
+			goto error_1;
+		}
 
 		if (ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/* Flush any dirty data */
@@ -447,7 +456,7 @@ success:
 			fs->fs_clean = ronly &&
 			    (fs->fs_flags & FS_UNCLEAN) == 0 ? 1 : 0;
 			if (ronly)
-				free(fs->fs_contigdirs, M_UFSMNT, 0);
+				free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
 		}
 		if (!ronly) {
 			if (mp->mnt_flag & MNT_SOFTDEP)
@@ -504,7 +513,7 @@ ffs_reload_vnode(struct vnode *vp, void *args)
 	/*
 	 * Step 5: invalidate all cached file data.
 	 */
-	if (vget(vp, LK_EXCLUSIVE, fra->p))
+	if (vget(vp, LK_EXCLUSIVE))
 		return (0);
 
 	if (vinvalbuf(vp, 0, fra->cred, fra->p, 0, 0))
@@ -562,9 +571,9 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	 * Step 1: invalidate all cached meta-data.
 	 */
 	devvp = VFSTOUFS(mountp)->um_devvp;
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (error)
 		panic("ffs_reload: dirty1");
 
@@ -708,9 +717,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -911,7 +920,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		if ((fs->fs_flags & FS_DOSOFTDEP) &&
 		    (error = softdep_mount(devvp, mp, fs, cred)) != 0) {
 			free(fs->fs_csp, M_UFSMNT, 0);
-			free(fs->fs_contigdirs, M_UFSMNT, 0);
+			free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
 			goto out;
 		}
 		fs->fs_fmod = 1;
@@ -931,9 +940,9 @@ out:
 	if (bp)
 		brelse(bp);
 
-	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE|LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, p);
+	VOP_UNLOCK(devvp);
 
 	if (ump) {
 		free(ump->um_fs, M_UFSMNT, ump->um_fs->fs_sbsize);
@@ -1046,11 +1055,11 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 			fs->fs_clean = 0;
 			return (error);
 		}
-		free(fs->fs_contigdirs, M_UFSMNT, 0);
+		free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
 	}
 	ump->um_devvp->v_specmountpoint = NULL;
 
-	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	vinvalbuf(ump->um_devvp, V_SAVE, NOCRED, p, 0, 0);
 	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED, p);
@@ -1096,9 +1105,9 @@ ffs_flushfiles(struct mount *mp, int flags, struct proc *p)
 	/*
 	 * Flush filesystem metadata.
 	 */
-	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(ump->um_devvp, p->p_ucred, MNT_WAIT, p);
-	VOP_UNLOCK(ump->um_devvp, p);
+	VOP_UNLOCK(ump->um_devvp);
 	return (error);
 }
 
@@ -1179,14 +1188,14 @@ ffs_sync_vnode(struct vnode *vp, void *arg)
 		goto end;
 	}
 
-	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT, fsa->p)) {
+	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT)) {
 		nlink0 = 1;		/* potentially.. */
 		goto end;
 	}
 
 	if ((error = VOP_FSYNC(vp, fsa->cred, fsa->waitfor, fsa->p)))
 		fsa->allerror = error;
-	VOP_UNLOCK(vp, fsa->p);
+	VOP_UNLOCK(vp);
 	vrele(vp);
 
 end:
@@ -1249,10 +1258,10 @@ ffs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct pr
 			goto loop;
 	}
 	if (waitfor != MNT_LAZY) {
-		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
 			allerror = error;
-		VOP_UNLOCK(ump->um_devvp, p);
+		VOP_UNLOCK(ump->um_devvp);
 	}
 	qsync(mp);
 	/*

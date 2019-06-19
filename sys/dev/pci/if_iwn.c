@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.201 2018/02/25 12:40:06 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.210 2019/04/29 09:00:16 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -278,7 +278,7 @@ int		iwn_hw_prepare(struct iwn_softc *);
 int		iwn_hw_init(struct iwn_softc *);
 void		iwn_hw_stop(struct iwn_softc *);
 int		iwn_init(struct ifnet *);
-void		iwn_stop(struct ifnet *, int);
+void		iwn_stop(struct ifnet *);
 
 #ifdef IWN_DEBUG
 #define DPRINTF(x)	do { if (iwn_debug > 0) printf x; } while (0)
@@ -754,7 +754,7 @@ iwn_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
-			iwn_stop(ifp, 0);
+			iwn_stop(ifp);
 		break;
 	case DVACT_WAKEUP:
 		iwn_wakeup(sc);
@@ -1749,7 +1749,7 @@ iwn_media_change(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING)) {
-		iwn_stop(ifp, 0);
+		iwn_stop(ifp);
 		error = iwn_init(ifp);
 	}
 	return error;
@@ -1808,6 +1808,10 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			printf("%s: %s -> %s\n", ifp->if_xname,
 			    ieee80211_state_name[ic->ic_state],
 			    ieee80211_state_name[nstate]);
+		if ((sc->sc_flags & IWN_FLAG_BGSCAN) == 0) {
+			ieee80211_set_link_state(ic, LINK_STATE_DOWN);
+			ieee80211_free_allnodes(ic, 1);
+		}
 		ic->ic_state = nstate;
 		return 0;
 
@@ -2163,11 +2167,10 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	if (chan > IEEE80211_CHAN_MAX)
 		chan = IEEE80211_CHAN_MAX;
 
-	if (ni == ic->ic_bss) {
+	/* Fix current channel. */
+	if (ni == ic->ic_bss)
 		bss_chan = ni->ni_chan;
-		/* Fix current channel. */
-		ni->ni_chan = &ic->ic_channels[chan];
-	}
+	ni->ni_chan = &ic->ic_channels[chan];
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -2608,11 +2611,8 @@ iwn_notif_intr(struct iwn_softc *sc)
 			DPRINTF(("state changed to %x\n", letoh32(*status)));
 
 			if (letoh32(*status) & 1) {
-				/* The radio button has to be pushed. */
-				printf("%s: Radio transmitter is off\n",
-				    sc->sc_dev.dv_xname);
-				/* Turn the interface down. */
-				iwn_stop(ifp, 1);
+				/* Radio transmitter is off, power down. */
+				iwn_stop(ifp);
 				return;	/* No further processing. */
 			}
 			break;
@@ -2803,9 +2803,11 @@ iwn_intr(void *arg)
 		IWN_WRITE(sc, IWN_FH_INT, r2);
 
 	if (r1 & IWN_INT_RF_TOGGLED) {
-		tmp = IWN_READ(sc, IWN_GP_CNTRL);
+		tmp = IWN_READ(sc, IWN_GP_CNTRL) & IWN_GP_CNTRL_RFKILL;
 		printf("%s: RF switch: radio %s\n", sc->sc_dev.dv_xname,
-		    (tmp & IWN_GP_CNTRL_RFKILL) ? "enabled" : "disabled");
+		    tmp ? "enabled" : "disabled");
+		if (tmp)
+			task_add(systq, &sc->init_task);
 	}
 	if (r1 & IWN_INT_CT_REACHED) {
 		printf("%s: critical temperature reached!\n",
@@ -2821,7 +2823,7 @@ iwn_intr(void *arg)
 #ifdef IWN_DEBUG
 		iwn_fatal_intr(sc);
 #endif
-		iwn_stop(ifp, 1);
+		iwn_stop(ifp);
 		task_add(systq, &sc->init_task);
 		return 1;
 	}
@@ -3066,8 +3068,13 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	/* Check if frame must be protected using RTS/CTS or CTS-to-self. */
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		int rtsthres = ic->ic_rtsthreshold;
+		if (ni->ni_flags & IEEE80211_NODE_HT)
+			rtsthres = ieee80211_mira_get_rts_threshold(&wn->mn,
+			    ic, ni, totlen + IEEE80211_CRC_LEN);
+
 		/* NB: Group frames are sent using CCK in 802.11b/g/n (2GHz). */
-		if (totlen + IEEE80211_CRC_LEN > ic->ic_rtsthreshold) {
+		if (totlen + IEEE80211_CRC_LEN > rtsthres) {
 			flags |= IWN_TX_NEED_RTS;
 		} else if ((ic->ic_flags & IEEE80211_F_USEPROT) &&
 		    ridx >= IWN_RIDX_OFDM6) {
@@ -3316,7 +3323,7 @@ iwn_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-			iwn_stop(ifp, 1);
+			iwn_stop(ifp);
 			ifp->if_oerrors++;
 			return;
 		}
@@ -3348,7 +3355,7 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				error = iwn_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				iwn_stop(ifp, 1);
+				iwn_stop(ifp);
 		}
 		break;
 
@@ -3376,7 +3383,7 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING)) {
-			iwn_stop(ifp, 0);
+			iwn_stop(ifp);
 			error = iwn_init(ifp);
 		}
 	}
@@ -4696,7 +4703,7 @@ iwn_limit_dwell(struct iwn_softc *sc, uint16_t dwell_time)
 		return (MIN(IWN_PASSIVE_DWELL_BASE, ((bintval * 85) / 100)));
 
 	/* No association context? Default */
-	return (IWN_PASSIVE_DWELL_BASE);
+	return dwell_time;
 }
 
 uint16_t
@@ -6574,12 +6581,19 @@ iwn_init(struct ifnet *ifp)
 		goto fail;
 	}
 
+	/* Initialize interrupt mask to default value. */
+	sc->int_mask = IWN_INT_MASK_DEF;
+	sc->sc_flags &= ~IWN_FLAG_USE_ICT;
+
 	/* Check that the radio is not disabled by hardware switch. */
 	if (!(IWN_READ(sc, IWN_GP_CNTRL) & IWN_GP_CNTRL_RFKILL)) {
 		printf("%s: radio is disabled by hardware switch\n",
 		    sc->sc_dev.dv_xname);
 		error = EPERM;	/* :-) */
-		goto fail;
+		/* Re-enable interrupts. */
+		IWN_WRITE(sc, IWN_INT, 0xffffffff);
+		IWN_WRITE(sc, IWN_INT_MASK, sc->int_mask);
+		return error;
 	}
 
 	/* Read firmware images from the filesystem. */
@@ -6587,10 +6601,6 @@ iwn_init(struct ifnet *ifp)
 		printf("%s: could not read firmware\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
-
-	/* Initialize interrupt mask to default value. */
-	sc->int_mask = IWN_INT_MASK_DEF;
-	sc->sc_flags &= ~IWN_FLAG_USE_ICT;
 
 	/* Initialize hardware and upload firmware. */
 	error = iwn_hw_init(sc);
@@ -6618,12 +6628,12 @@ iwn_init(struct ifnet *ifp)
 
 	return 0;
 
-fail:	iwn_stop(ifp, 1);
+fail:	iwn_stop(ifp);
 	return error;
 }
 
 void
-iwn_stop(struct ifnet *ifp, int disable)
+iwn_stop(struct ifnet *ifp)
 {
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -6632,11 +6642,6 @@ iwn_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
-
-	/* In case we were scanning, release the scan "lock". */
-	if (ic->ic_scan_lock & IEEE80211_SCAN_REQUEST)
-		wakeup(&ic->ic_scan_lock);
-	ic->ic_scan_lock = IEEE80211_SCAN_UNLOCKED;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 

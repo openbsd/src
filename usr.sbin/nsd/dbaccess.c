@@ -571,13 +571,10 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 	assert(parser);
 	/* wipe zone from memory */
 #ifdef NSEC3
-	nsec3_hash_tree_clear(zone);
-#endif
-	delete_zone_rrs(nsd->db, zone);
-#ifdef NSEC3
 	nsec3_clear_precompile(nsd->db, zone);
 	zone->nsec3_param = NULL;
-#endif /* NSEC3 */
+#endif
+	delete_zone_rrs(nsd->db, zone);
 	errors = zonec_read(zone->opts->name, fname, zone);
 	if(errors > 0) {
 		log_msg(LOG_ERR, "zone %s file %s read with %u errors",
@@ -585,13 +582,10 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 		/* wipe (partial) zone from memory */
 		zone->is_ok = 1;
 #ifdef NSEC3
-		nsec3_hash_tree_clear(zone);
-#endif
-		delete_zone_rrs(nsd->db, zone);
-#ifdef NSEC3
 		nsec3_clear_precompile(nsd->db, zone);
 		zone->nsec3_param = NULL;
-#endif /* NSEC3 */
+#endif
+		delete_zone_rrs(nsd->db, zone);
 		if(nsd->db->udb) {
 			region_type* dname_region;
 			udb_ptr z;

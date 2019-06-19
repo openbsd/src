@@ -77,19 +77,45 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/NaryReassociate.h"
-#include "llvm/Analysis/ValueTracking.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/PatternMatch.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Analysis/ValueTracking.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Dominators.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/GetElementPtrTypeIterator.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Operator.h"
+#include "llvm/IR/PatternMatch.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Value.h"
+#include "llvm/IR/ValueHandle.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Transforms/Scalar.h"
+#include <cassert>
+#include <cstdint>
+
 using namespace llvm;
 using namespace PatternMatch;
 
 #define DEBUG_TYPE "nary-reassociate"
 
 namespace {
+
 class NaryReassociateLegacyPass : public FunctionPass {
 public:
   static char ID;
@@ -101,6 +127,7 @@ public:
   bool doInitialization(Module &M) override {
     return false;
   }
+
   bool runOnFunction(Function &F) override;
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -118,9 +145,11 @@ public:
 private:
   NaryReassociatePass Impl;
 };
-} // anonymous namespace
+
+} // end anonymous namespace
 
 char NaryReassociateLegacyPass::ID = 0;
+
 INITIALIZE_PASS_BEGIN(NaryReassociateLegacyPass, "nary-reassociate",
                       "Nary reassociation", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
@@ -211,10 +240,17 @@ bool NaryReassociatePass::doOneIteration(Function &F) {
           Changed = true;
           SE->forgetValue(&*I);
           I->replaceAllUsesWith(NewI);
-          // If SeenExprs constains I's WeakTrackingVH, that entry will be
-          // replaced with
-          // nullptr.
+          WeakVH NewIExist = NewI;
+          // If SeenExprs/NewIExist contains I's WeakTrackingVH/WeakVH, that
+          // entry will be replaced with nullptr if deleted.
           RecursivelyDeleteTriviallyDeadInstructions(&*I, TLI);
+          if (!NewIExist) {
+            // Rare occation where the new instruction (NewI) have been removed,
+            // probably due to parts of the input code was dead from the
+            // beginning, reset the iterator and start over from the beginning
+            I = BB->begin();
+            continue;
+          }
           I = NewI->getIterator();
         }
         // Add the rewritten instruction to SeenExprs; the original instruction
@@ -400,6 +436,9 @@ NaryReassociatePass::tryReassociateGEPAtIndex(GetElementPtrInst *GEP,
 
 Instruction *NaryReassociatePass::tryReassociateBinaryOp(BinaryOperator *I) {
   Value *LHS = I->getOperand(0), *RHS = I->getOperand(1);
+  // There is no need to reassociate 0.
+  if (SE->getSCEV(I)->isZero())
+    return nullptr;
   if (auto *NewI = tryReassociateBinaryOp(LHS, RHS, I))
     return NewI;
   if (auto *NewI = tryReassociateBinaryOp(RHS, LHS, I))

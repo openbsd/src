@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.39 2015/11/16 03:02:40 deraadt Exp $	*/
+/*	$OpenBSD: tset.c,v 1.40 2019/03/12 11:01:25 nicm Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -928,7 +928,7 @@ set_conversions(void)
 #endif /* __OBSOLETE__ */
 #ifdef OXTABS
     /* test used to be tgetflag("pt") */
-    if (has_hardware_tabs)	/* Print tabs. */
+    if (VALID_STRING(set_tab) && VALID_STRING(clear_all_tabs))
 	mode.c_oflag &= ~OXTABS;
 #endif /* OXTABS */
     mode.c_lflag |= (ECHOE | ECHOK);

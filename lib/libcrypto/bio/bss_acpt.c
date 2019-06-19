@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_acpt.c,v 1.27 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bss_acpt.c,v 1.29 2018/05/12 18:51:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,7 +100,7 @@ static void BIO_ACCEPT_free(BIO_ACCEPT *a);
 #define ACPT_S_GET_ACCEPT_SOCKET	2
 #define ACPT_S_OK			3
 
-static BIO_METHOD methods_acceptp = {
+static const BIO_METHOD methods_acceptp = {
 	.type = BIO_TYPE_ACCEPT,
 	.name = "socket accept",
 	.bwrite = acpt_write,
@@ -111,7 +111,7 @@ static BIO_METHOD methods_acceptp = {
 	.destroy = acpt_free
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_s_accept(void)
 {
 	return (&methods_acceptp);
@@ -436,7 +436,7 @@ acpt_puts(BIO *bp, const char *str)
 }
 
 BIO *
-BIO_new_accept(char *str)
+BIO_new_accept(const char *str)
 {
 	BIO *ret;
 

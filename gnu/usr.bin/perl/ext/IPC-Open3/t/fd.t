@@ -36,7 +36,7 @@ plan 3;
 
   fresh_perl_like(<<"EOP",
 use IPC::Open3;
-open FOO, '$file' or die \$!;
+open FOO, '<', '$file' or die \$!;
 open3('<&' . fileno FOO, my \$out, undef, \$ENV{PERLEXE}, '-eprint scalar <STDIN>');
 print <\$out>;
 EOP

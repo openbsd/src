@@ -101,7 +101,7 @@ protected:
     return make_error<InstrProfError>(Err);
   }
 
-  Error error(Error E) { return error(InstrProfError::take(std::move(E))); }
+  Error error(Error &&E) { return error(InstrProfError::take(std::move(E))); }
 
   /// Clear the current error and return a successful one.
   Error success() { return error(instrprof_error::success); }
@@ -198,8 +198,6 @@ private:
   const uint8_t *ValueDataStart;
   uint32_t ValueKindLast;
   uint32_t CurValueDataSize;
-
-  InstrProfRecord::ValueMapType FunctionPtrToNameMap;
 
 public:
   RawInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
@@ -397,6 +395,8 @@ private:
   std::unique_ptr<InstrProfReaderIndexBase> Index;
   /// Profile summary data.
   std::unique_ptr<ProfileSummary> Summary;
+  // Index to the current record in the record array.
+  unsigned RecordIndex;
 
   // Read the profile summary. Return a pointer pointing to one byte past the
   // end of the summary data if it exists or the input \c Cur.
@@ -405,7 +405,7 @@ private:
 
 public:
   IndexedInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
-      : DataBuffer(std::move(DataBuffer)) {}
+      : DataBuffer(std::move(DataBuffer)), RecordIndex(0) {}
   IndexedInstrProfReader(const IndexedInstrProfReader &) = delete;
   IndexedInstrProfReader &operator=(const IndexedInstrProfReader &) = delete;
 

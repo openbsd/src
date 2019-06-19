@@ -13,7 +13,6 @@ https://metacpan.org/release/[AUTHOR]/perl-5.[VERSION.SUBVERSION]/
 SHA1 digests for this release are:
 
  [TAR.GZ SHA1]   perl-5.[VERSION.SUBVERSION].tar.gz
- [TAR.BZ2 SHA1]  perl-5.[VERSION.SUBVERSION].tar.bz2
  [TAR.XZ SHA1]   perl-5.[VERSION.SUBVERSION].tar.xz
 
 You can find a full list of changes in the file "perldelta.pod" located in
@@ -24,7 +23,7 @@ https://metacpan.org/pod/release/[AUTHOR]/perl-5.[VERSION.SUBVERSION]/pod/perlde
 [ACKNOWLEDGEMENTS SECTION FROM PERLDELTA]
 
 We expect to release version [NEXT BLEAD VERSION.SUBVERSION] on [FUTURE
-DATE].  The next major stable release of Perl 5, version 24.0, should
-appear in May 2016.
+DATE].  The next major stable release of Perl 5, version 28.0, should
+appear in May 2018.
 
 [YOUR SALUTATION HERE]

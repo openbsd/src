@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.19 2015/06/07 19:13:27 krw Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.21 2018/08/09 01:41:48 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -317,7 +317,7 @@ hds_info(struct hds_softc *sc)
 	ctrl = buf[HDS_INQ_CTRL_OFFSET];
 	port = buf[HDS_INQ_PORT_OFFSET];
 
-	if (ctrl >= '0' && ctrl <= '9' && port >= 'A' && port <= 'B') {
+	if (ctrl >= '0' && ctrl <= '9') {
 		printf("%s: ldev %s, controller %c, port %c, %s\n",
 		    DEVNAME(sc), ldev, ctrl, port,
 		    sc->sc_mode == HDS_SYMMETRIC ? "symmetric" : "asymmetric");

@@ -94,21 +94,19 @@ Derived from FileHandle.pm by Graham Barr E<lt>gbarr@pobox.comE<gt>
 
 =cut
 
-use 5.006_001;
+use 5.008_001;
 use Carp;
 use strict;
-our($VERSION, @EXPORT, @ISA);
 use IO::Handle ();
 # XXX we can't get these from IO::Handle or we'll get prototype
 # mismatch warnings on C<use POSIX; use IO::File;> :-(
 use Fcntl qw(SEEK_SET SEEK_CUR SEEK_END);
 require Exporter;
 
-@EXPORT = qw(SEEK_SET SEEK_CUR SEEK_END);
-@ISA = qw(Exporter);
+our @EXPORT = qw(SEEK_SET SEEK_CUR SEEK_END);
+our @ISA = qw(Exporter);
 
-$VERSION = "1.10";
-$VERSION = eval $VERSION;
+our $VERSION = "1.39";
 
 sub seek {
     @_ == 3 or croak 'usage: $io->seek(POS, WHENCE)';

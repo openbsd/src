@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vinvalbuf.9,v 1.10 2016/03/19 12:04:15 natano Exp $
+.\"     $OpenBSD: vinvalbuf.9,v 1.11 2018/05/02 05:10:15 visa Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vinvalbuf.9,v 1.6 2001/10/06 11:19:41 sheldonh Exp $
 .\"
-.Dd $Mdocdate: March 19 2016 $
+.Dd $Mdocdate: May 2 2018 $
 .Dt VINVALBUF 9
 .Os
 .Sh NAME
@@ -85,9 +85,9 @@ return.
 A value of 0 is returned on success.
 .Sh PSEUDOCODE
 .Bd -literal -offset indent
-vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
-VOP_UNLOCK(devvp, p);
+VOP_UNLOCK(devvp);
 if (error)
 	return (error);
 .Ed

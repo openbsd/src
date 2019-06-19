@@ -17,7 +17,6 @@
 #include "PlatformRemoteAppleTV.h"
 
 #include "lldb/Breakpoint/BreakpointLocation.h"
-#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/ModuleSpec.h"
@@ -25,6 +24,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/Status.h"
@@ -99,8 +99,8 @@ PlatformSP PlatformRemoteAppleTV::CreateInstance(bool force,
 
 #if defined(__APPLE__)
       // Only accept "unknown" for the vendor if the host is Apple and
-      // it "unknown" wasn't specified (it was just returned because it
-      // was NOT specified)
+      // "unknown" wasn't specified (it was just returned because it was NOT
+      // specified)
       case llvm::Triple::UnknownArch:
         create = !arch->TripleVendorWasSpecified();
         break;

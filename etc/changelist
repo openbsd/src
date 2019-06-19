@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.119 2018/02/10 05:56:47 florian Exp $
+#	$OpenBSD: changelist,v 1.124 2019/02/11 13:39:13 florian Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -80,7 +80,6 @@
 /etc/myname
 /etc/netgroup
 /etc/netstart
-/etc/networks
 /etc/newsyslog.conf
 /etc/npppd/npppd.conf
 +/etc/npppd/npppd-users
@@ -94,6 +93,7 @@
 /etc/profile
 /etc/protocols
 +/etc/pwd.db
+/etc/rad.conf
 +/etc/radiusd.conf
 /etc/rbootd.conf
 /etc/rc
@@ -109,7 +109,6 @@
 /etc/resolv.conf.tail
 /etc/ripd.conf
 /etc/rpc
-/etc/rtadvd.conf
 /etc/sasyncd.conf
 /etc/sensorsd.conf
 /etc/services
@@ -136,6 +135,7 @@
 /etc/switchd.conf
 /etc/sysmerge.ignore
 /etc/ttys
+/etc/unwind.conf
 /etc/usermgmt.conf
 /etc/vm.conf
 /etc/weekly
@@ -155,6 +155,7 @@
 /var/cron/cron.allow
 /var/cron/cron.deny
 /var/cron/tabs/root
+/var/db/unwind.key
 +/var/nsd/etc/nsd.conf
 /var/unbound/etc/unbound.conf
 /var/yp/Makefile.main

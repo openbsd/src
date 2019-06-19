@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpemu.S,v 1.13 2010/05/25 15:57:48 jsing Exp $	*/
+/*	$OpenBSD: fpemu.S,v 1.15 2018/11/15 21:27:31 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -87,9 +87,9 @@ LEAF_ENTRY(fpu_emulate)
 	extru	arg0, 16, 2, r31
 
 	/*
-	 * theoreticaly we would need to determine the fpu instruction
+	 * theoretically we would need to determine the fpu instruction
 	 * exception type (there could be 4 of those, but stick w/
-	 * non-timex fpus for now.
+	 * non-timex fpus for now)
 	 */
 	extru,<> arg0, 10, 5, t1
 	ldi	32, t1	/* fpemu zero reg */
@@ -225,7 +225,7 @@ $fpemu0c_2_0
 $fpemu0c_2_1
 	comib,<>,n 0, r1, $fpemu_exit
 
-	/* XXX timex is much more compilicated */
+	/* XXX timex is much more complicated */
 	ldw	0(arg3), t1
 	ldi	0, ret0
 	extru,<> t1, 5, 1, r0
@@ -291,7 +291,7 @@ $fpemu0c_3_4	/* frem */
 	.export	$fpemu_exit, code
 $fpemu_exit
 	/* these look very ugly, but we don't want to mess up w/ m4 just
-	 * for the sake of overall world prettieness value growth XXX */
+	 * for the sake of overall world prettiness value growth XXX */
 invalid_fsqrt
 invalid_frnd
 invalid_fcnvff

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.24 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.26 2018/12/05 15:54:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -462,7 +462,8 @@ axen_ax88179_init(struct axen_softc *sc)
 		USETW(wval, ctl);
 		axen_cmd(sc, AXEN_CMD_MAC_WRITE2, 2, AXEN_PHYPWR_RSTCTL, &wval);
 		usbd_delay_ms(sc->axen_udev, 200);
-		printf("enable auto detach (0x%04x)\n", ctl);
+		printf("%s: enable auto detach (0x%04x)\n",
+		    sc->axen_dev.dv_xname, ctl);
 	}
 
 	/* bulkin queue setting */
@@ -493,7 +494,8 @@ axen_ax88179_init(struct axen_softc *sc)
 		qctrl.ifg	= 0xff;
 		break;
 	default:
-		printf("unknown uplink bus:0x%02x\n", val);
+		printf("%s: unknown uplink bus:0x%02x\n",
+		    sc->axen_dev.dv_xname, val);
 		axen_unlock_mii(sc);
 		return;
 	}
@@ -927,14 +929,14 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	pkt_count  = (u_int16_t)(rx_hdr & 0xffff);
 
 	if (total_len > sc->axen_bufsz) {
-		printf("rxeof: too large transfer\n");
+		printf("%s: rxeof: too large transfer\n",
+		    sc->axen_dev.dv_xname);
 		goto done;
 	}
 
 	/* sanity check */
 	if (hdr_offset > total_len) {
 		ifp->if_ierrors++;
-		usbd_delay_ms(sc->axen_udev, 100);
 		goto done;
 	}
 
@@ -957,7 +959,8 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	do {
 		if ((buf[0] != 0xee) || (buf[1] != 0xee)){
-			printf("invalid buffer(pkt#%d), continue\n", pkt_count);
+			printf("%s: invalid buffer(pkt#%d), continue\n",
+			    sc->axen_dev.dv_xname, pkt_count);
 	    		ifp->if_ierrors += pkt_count;
 			goto done;
 		}
@@ -991,7 +994,8 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		/* cheksum err */
 		if ((pkt_hdr & AXEN_RXHDR_L3CSUM_ERR) || 
 		    (pkt_hdr & AXEN_RXHDR_L4CSUM_ERR)) {
-			printf("checksum err (pkt#%d)\n", pkt_count);
+			printf("%s: checksum err (pkt#%d)\n",
+			    sc->axen_dev.dv_xname, pkt_count);
 			goto nextpkt;
 		} else {
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;

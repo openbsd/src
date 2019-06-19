@@ -21,6 +21,7 @@ class TestRealDefinition(TestBase):
         if self.getArchitecture() == 'i386':
             self.skipTest("requires modern objc runtime")
         self.build()
+        self.shlib_names = ["libTestExt.dylib", "libTest.dylib"]
         self.common_setup()
 
         line = line_number('TestExt/TestExt.m', '// break here')
@@ -45,5 +46,8 @@ class TestRealDefinition(TestBase):
                 "42"])
 
     def common_setup(self):
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = self.getBuildArtifact("a.out")
+        target = self.dbg.CreateTarget(exe)
+        self.registerSharedLibrariesWithTarget(target, self.shlib_names)
+
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)

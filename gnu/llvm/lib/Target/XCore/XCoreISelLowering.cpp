@@ -91,10 +91,6 @@ XCoreTargetLowering::XCoreTargetLowering(const TargetMachine &TM,
   // XCore does not have the NodeTypes below.
   setOperationAction(ISD::BR_CC,     MVT::i32,   Expand);
   setOperationAction(ISD::SELECT_CC, MVT::i32,   Expand);
-  setOperationAction(ISD::ADDC, MVT::i32, Expand);
-  setOperationAction(ISD::ADDE, MVT::i32, Expand);
-  setOperationAction(ISD::SUBC, MVT::i32, Expand);
-  setOperationAction(ISD::SUBE, MVT::i32, Expand);
 
   // 64bit
   setOperationAction(ISD::ADD, MVT::i64, Custom);
@@ -1046,7 +1042,7 @@ XCoreTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   switch (CallConv)
   {
     default:
-      llvm_unreachable("Unsupported calling convention");
+      report_fatal_error("Unsupported calling convention");
     case CallingConv::Fast:
     case CallingConv::C:
       return LowerCCCCallTo(Chain, Callee, CallConv, isVarArg, isTailCall,
@@ -1243,7 +1239,7 @@ SDValue XCoreTargetLowering::LowerFormalArguments(
   switch (CallConv)
   {
     default:
-      llvm_unreachable("Unsupported calling convention");
+      report_fatal_error("Unsupported calling convention");
     case CallingConv::C:
     case CallingConv::Fast:
       return LowerCCCArguments(Chain, CallConv, isVarArg,
@@ -1889,7 +1885,8 @@ static inline bool isImmUs4(int64_t val)
 /// by AM is legal for this target, for a load/store of the specified type.
 bool XCoreTargetLowering::isLegalAddressingMode(const DataLayout &DL,
                                                 const AddrMode &AM, Type *Ty,
-                                                unsigned AS) const {
+                                                unsigned AS,
+                                                Instruction *I) const {
   if (Ty->getTypeID() == Type::VoidTyID)
     return AM.Scale == 0 && isImmUs(AM.BaseOffs) && isImmUs4(AM.BaseOffs);
 

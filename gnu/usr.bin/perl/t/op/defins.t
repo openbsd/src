@@ -6,10 +6,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
+    require './test.pl';
+    set_up_inc( qw(. ../lib) );
     $SIG{__WARN__} = sub { $warns++; warn $_[0] };
 }
-require './test.pl';
+
 plan( tests => 27 );
 
 my $unix_mode = 1;

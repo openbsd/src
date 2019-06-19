@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statfs.2,v 1.25 2015/01/19 15:54:12 millert Exp $
+.\"	$OpenBSD: statfs.2,v 1.26 2018/04/27 13:42:08 guenther Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: April 27 2018 $
 .Dt STATFS 2
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Nm fstatfs
 .Nd get file system statistics
 .Sh SYNOPSIS
-.In sys/param.h
+.In sys/types.h
 .In sys/mount.h
 .Ft int
 .Fn statfs "const char *path" "struct statfs *buf"

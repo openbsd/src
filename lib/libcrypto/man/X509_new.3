@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_new.3,v 1.15 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: X509_new.3,v 1.17 2019/06/10 14:58:48 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 10 2019 $
 .Dt X509_NEW 3
 .Os
 .Sh NAME
@@ -144,13 +144,31 @@ if an error occurs.
 .Xr BASIC_CONSTRAINTS_new 3 ,
 .Xr crypto 3 ,
 .Xr d2i_X509 3 ,
-.Xr ERR_get_error 3 ,
+.Xr PKCS8_PRIV_KEY_INFO_new 3 ,
 .Xr X509_ALGOR_new 3 ,
+.Xr X509_ATTRIBUTE_new 3 ,
+.Xr X509_check_ca 3 ,
+.Xr X509_check_host 3 ,
+.Xr X509_check_issued 3 ,
+.Xr X509_check_private_key 3 ,
+.Xr X509_CINF_new 3 ,
 .Xr X509_CRL_new 3 ,
+.Xr X509_digest 3 ,
 .Xr X509_EXTENSION_new 3 ,
+.Xr X509_get0_notBefore 3 ,
+.Xr X509_get0_signature 3 ,
+.Xr X509_get_ex_new_index 3 ,
+.Xr X509_get_pubkey 3 ,
+.Xr X509_get_serialNumber 3 ,
+.Xr X509_get_subject_name 3 ,
+.Xr X509_get_version 3 ,
 .Xr X509_NAME_new 3 ,
+.Xr X509_PUBKEY_new 3 ,
 .Xr X509_REQ_new 3 ,
-.Xr X509_SIG_new 3
+.Xr X509_SIG_new 3 ,
+.Xr X509_sign 3 ,
+.Xr X509_STORE_CTX_new 3 ,
+.Xr X509_STORE_new 3
 .Sh STANDARDS
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
 Certificate Revocation List (CRL) Profile

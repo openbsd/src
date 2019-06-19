@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.7 2013/11/13 20:41:14 deraadt Exp $	*/
+/*	$OpenBSD: list.c,v 1.9 2019/05/16 12:44:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>

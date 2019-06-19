@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.9 2014/05/31 06:30:16 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.10 2018/06/21 07:33:30 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -26,7 +26,7 @@ void	hibernate_enter_resume_mapping(vaddr_t, paddr_t, int);
 int	hibernate_inflate_skip(union hibernate_info *, paddr_t);
 int	hibernate_suspend(void);
 void	hibernate_switch_stack_machdep(void);
-void	hibernate_resume_machdep(void);
+void	hibernate_resume_machdep(vaddr_t);
 void	hibernate_activate_resume_pt_machdep(void);
 void	hibernate_enable_intr_machdep(void);
 void	hibernate_disable_intr_machdep(void);

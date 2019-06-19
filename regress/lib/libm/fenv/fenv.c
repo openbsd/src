@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.3 2017/08/07 20:56:46 bluhm Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.5 2018/07/10 20:21:53 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.org>
@@ -132,6 +132,10 @@ test_dfl_env(void)
 	fenv_t env;
 
 	fegetenv(&env);
+#ifdef __amd64
+	/* Some early amd64 CPUs set fip+fdp for non-x87 instructions */
+	memset(&env.__x87.__others[0], 0, 14);
+#endif /* __amd64 */
 	assert(memcmp(&env, FE_DFL_ENV, sizeof(env)) == 0);
 #endif
 	assert(fetestexcept(FE_ALL_EXCEPT) == 0);
@@ -424,7 +428,7 @@ test_feholdupdate(void)
 				 * We don't want to cause a fatal exception in
 				 * the child until the second pass, so we can
 				 * check other properties of feupdateenv().
-				 */				
+				 */
 				if (pass == 1)
 					assert((feenableexcept(except) &
 						   ALL_STD_EXCEPT) == 0);

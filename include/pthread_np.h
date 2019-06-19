@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_np.h,v 1.1 2017/10/15 23:40:33 guenther Exp $	*/
+/*	$OpenBSD: pthread_np.h,v 1.3 2019/05/28 10:33:03 jca Exp $	*/
 /*
  * Copyright (c) 1996-98 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -34,6 +34,8 @@
 #ifndef _PTHREAD_NP_H_
 #define _PTHREAD_NP_H_
 
+#include <pthread.h>
+
 /*
  * Non-POSIX type definitions:
  */
@@ -45,6 +47,7 @@ typedef void	(*pthread_switch_routine_t)(pthread_t, pthread_t);
 __BEGIN_DECLS
 int pthread_mutexattr_getkind_np(pthread_mutexattr_t);
 int pthread_mutexattr_setkind_np(pthread_mutexattr_t *, int);
+void pthread_get_name_np(pthread_t, char *, size_t);
 void pthread_set_name_np(pthread_t, const char *);
 int pthread_stackseg_np(pthread_t, stack_t *);
 int pthread_main_np(void);

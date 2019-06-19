@@ -1,3 +1,3 @@
-SUBDIR+= simple libbar foo
+SUBDIR+= simple simple2 libbar foo
 
 .include <bsd.subdir.mk>

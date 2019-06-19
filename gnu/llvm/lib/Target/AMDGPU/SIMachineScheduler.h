@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 /// \file
-/// \brief SI Machine Scheduler interface
+/// SI Machine Scheduler interface
 //
 //===----------------------------------------------------------------------===//
 
@@ -301,6 +301,9 @@ private:
   // Put in one group all instructions with no users in this scheduling region
   // (we'd want these groups be at the end).
   void regroupNoUserInstructions();
+
+  // Give Reserved color to export instructions
+  void colorExports();
 
   void createBlocksForVariant(SISchedulerBlockCreatorVariant BlockVariant);
 

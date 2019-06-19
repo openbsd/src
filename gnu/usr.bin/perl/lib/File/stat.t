@@ -144,7 +144,7 @@ for (split //, "tTB") {
 
 SKIP: {
 	local *STAT;
-	skip("Could not open file: $!", 2) unless open(STAT, $file);
+	skip("Could not open file: $!", 2) unless open(STAT, '<', $file);
 	isa_ok(File::stat::stat('STAT'), 'File::stat',
 	       '... should be able to find filehandle');
 

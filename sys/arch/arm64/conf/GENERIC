@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.52 2018/02/24 13:46:57 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.104 2019/06/07 04:03:04 jmatthew Exp $
 #
 # GENERIC machine description file
 #
@@ -36,7 +36,19 @@ config		bsd	swap generic
 # The main bus device
 mainbus0	at root
 cpu0		at mainbus?
+apm0		at mainbus?
 efi0		at mainbus?
+acpi0		at mainbus?
+acpibtn*	at acpi?
+acpiec*		at acpi?
+acpimcfg*	at acpi?
+acpipci*	at acpi?
+pci*		at acpipci?
+ahci*		at acpi?
+ccp*		at acpi?		# AMD Cryptographic Co-processor
+com*		at acpi?
+pluart*		at acpi?
+xhci*		at acpi?
 simplebus*	at fdt?
 
 scsibus*	at scsi?
@@ -48,23 +60,31 @@ uk*		at scsibus?
 
 ampintc*	at fdt? early 1
 ampintcmsi*	at fdt? early 1
-agintc*		at fdt?
+agintc*		at fdt? early 1
+agintcmsi*	at fdt? early 1
 agtimer*	at fdt?
 ahci*		at fdt?
 dwge*		at fdt?
+dwpcie*		at fdt?
+pci*		at dwpcie?
+ohci*		at fdt?
 ehci*		at fdt?
 pciecam*	at fdt?
 pci*		at pciecam?
 sdhc*		at fdt?
 sdmmc*		at sdhc?
+bwfm*		at sdmmc?	# Broadcom FullMAC
 xhci*		at fdt?
+ccp*		at fdt?		# AMD Cryptographic Co-processor
 
 # NS16550 compatible serial ports
 com*		at fdt?
 
-# Virt on-chip devices
-pluart*		at fdt?		# onboard uarts
+# Generic devices
+pinctrl*	at fdt? early 1
+plgpio*		at fdt? early 1
 plrtc*		at fdt?
+pluart*		at fdt?
 psci*		at fdt? early 1
 syscon*		at fdt? early 1
 
@@ -83,6 +103,28 @@ option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
 
+radeondrm*	at pci?
+drm*		at radeondrm?
+wsdisplay*	at radeondrm?
+
+# iMX
+imxccm*		at fdt? early 1
+imxiomuxc*	at fdt? early 1
+imxanatop*	at fdt? early 1
+imxgpc*		at fdt?
+imxgpio*	at fdt?
+fec*		at fdt?
+imxuart*	at fdt?
+imxiic*		at fdt?
+iic*		at imxiic?
+imxesdhc*	at fdt?
+sdmmc*		at imxesdhc?
+imxsrc*		at fdt?
+imxspi*		at fdt?
+ssdfb*		at iic?
+ssdfb*		at spi?
+wsdisplay*	at ssdfb?
+
 # Raspberry Pi 3
 bcmaux*		at fdt?
 bcmintc*	at fdt?
@@ -91,6 +133,25 @@ bcmrng*		at fdt?
 bcmtemp*	at fdt?
 dwctwo*		at fdt?
 usb*		at dwctwo?
+
+# HiSilicon SoCs
+hiclock*	at fdt? early 1
+hidwusb*	at fdt?
+hireset*	at fdt? early 1
+hitemp*		at fdt?
+
+# Marvell SoCs
+mvclock*	at fdt? early 1
+mvgicp*		at fdt? early 1
+mvicu*		at fdt? early 1
+mvpinctrl*	at fdt? early 1
+mvgpio*		at fdt?
+mvmdio*		at fdt?
+mvneta*		at fdt?
+mvrng*		at fdt?
+mvrtc*		at fdt?
+mvtemp*		at fdt?
+mvuart*		at fdt?
 
 # Rockchip SoCs
 rkclock*	at fdt? early 1
@@ -118,7 +179,6 @@ sdmmc*		at sximmc?	# SD/MMC bus
 sxitemp*	at fdt?		# Temperature sensor
 sxitwi*		at fdt?		# I2C controller
 iic*		at sxitwi?	# I2C bus
-sypwr*		at iic?		# Silergy SY8106A
 dwxe*		at fdt?
 
 # PCI
@@ -126,8 +186,10 @@ ppb*		at pci?			# PCI-PCI bridges
 pci*		at ppb?
 
 # PCI Ethernet
+bnxt*		at pci?			# Broadcom BCM573xx, BCM574xx
 em*		at pci?			# Intel Pro/1000 Ethernet
 ix*		at pci?			# Intel 82598EB 10Gb Ethernet
+mcx*		at pci?			# Mellanox ConnectX-4/5 Ethernet
 mskc*		at pci?			# Marvell Yukon-2
 msk*		at mskc?		#  each port of above
 re*		at pci?			# Realtek 8169/8169S/8110S
@@ -170,6 +232,10 @@ umct*		at uhub?		# MCT USB-RS232 serial adapter
 ucom*		at umct?
 uslcom*		at uhub?		# Silicon Laboratories CP210x serial
 ucom*		at uslcom?
+uscom*		at uhub?		# Simple USB serial adapters
+ucom*		at uscom?
+ucrcom*		at uhub?		# Chromebook serial
+ucom*		at ucrcom?
 uark*		at uhub?		# Arkmicro ARK3116 serial
 ucom*		at uark?
 moscom*		at uhub?		# MosChip MCS7703 serial
@@ -184,6 +250,8 @@ uchcom*		at uhub?		# WinChipHead CH341/340 serial
 ucom*		at uchcom?
 uticom*		at uhub?		# TI serial
 ucom*		at uticom?
+uxrcom*		at uhub?		# Exar XR21V1410 serial
+ucom*		at uxrcom?
 uaudio*		at uhub?		# USB Audio
 audio*		at uaudio?
 umidi*		at uhub?		# USB MIDI
@@ -218,6 +286,7 @@ upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
+mue*		at uhub?		# Microchip LAN75xx/LAN78xx Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
@@ -253,6 +322,7 @@ video*		at utvfu?
 audio*		at utvfu?
 udl*		at uhub?		# DisplayLink USB displays
 wsdisplay*	at udl?
+bwfm*		at uhub?		# Broadcom FullMAC
 
 amphy*		at mii?			# AMD 79C873 PHYs
 atphy*		at mii?			# Attansic F1 PHYs
@@ -270,7 +340,18 @@ ch*		at scsibus?
 uk*		at scsibus?
 
 # I2C devices
+abcrtc*		at iic?			# Abracon x80x RTC
+fanpwr*		at iic?			# FAN53555 regulator
+islrtc*		at iic?			# ISL1208 RTC
 rkpmic*		at iic?			# RK808 PMIC
+sypwr*		at iic?			# SY8106A regulator
+fusbtc*		at iic?			# USB Type-C controller
+
+# GPIO "pin bus" drivers
+gpioiic*	at gpio?		# I2C bus bit-banging
+iic*		at gpioiic?
+gpioow*		at gpio?		# 1-Wire bus bit-banging
+onewire*	at gpioow?
 
 # 1-Wire devices
 option	ONEWIREVERBOSE

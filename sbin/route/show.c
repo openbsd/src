@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.108 2016/12/13 08:40:54 mpi Exp $	*/
+/*	$OpenBSD: show.c,v 1.114 2018/08/31 15:18:02 yasuoka Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -107,17 +107,39 @@ char	*routename6(struct sockaddr_in6 *);
 char	*netname4(in_addr_t, struct sockaddr_in *);
 char	*netname6(struct sockaddr_in6 *, struct sockaddr_in6 *);
 
+size_t
+get_sysctl(const int *mib, u_int mcnt, char **buf)
+{
+	size_t needed;
+
+	while (1) {
+		if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) == -1)
+			err(1, "sysctl-estimate");
+		if (needed == 0)
+			break;
+		if ((*buf = realloc(*buf, needed)) == NULL)
+			err(1, NULL);
+		if (sysctl(mib, mcnt, *buf, &needed, NULL, 0) == -1) {
+			if (errno == ENOMEM)
+				continue;
+			err(1, "sysctl");
+		}
+		break;
+	}
+
+	return needed;
+}
+
 /*
  * Print routing tables.
  */
 void
-p_rttables(int af, u_int tableid, int hastable, char prio)
+p_rttables(int af, u_int tableid, char prio)
 {
 	struct rt_msghdr *rtm;
 	char *buf = NULL, *next, *lim = NULL;
 	size_t needed;
 	int mib[7], mcnt;
-	struct sockaddr *sa;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -125,29 +147,13 @@ p_rttables(int af, u_int tableid, int hastable, char prio)
 	mib[3] = af;
 	mib[4] = NET_RT_DUMP;
 	mib[5] = prio;
-	if (hastable) {
-		mib[6] = tableid;
-		mcnt = 7;
-	} else
-		mcnt = 6;
+	mib[6] = tableid;
+	mcnt = 7;
 
-	while (1) {
-		if (sysctl(mib, mcnt, NULL, &needed, NULL, 0) == -1)
-			err(1, "route-sysctl-estimate");
-		if (needed == 0)
-			break;
-		if ((buf = realloc(buf, needed)) == NULL)
-			err(1, NULL);
-		if (sysctl(mib, mcnt, buf, &needed, NULL, 0) == -1) {
-			if (errno == ENOMEM)
-				continue;
-			err(1, "sysctl of routing table");
-		}
-		lim = buf + needed;
-		break;
-	}
+	needed = get_sysctl(mib, mcnt, &buf);
+	lim = buf + needed;
 
-	if (pledge("stdio rpath dns", NULL) == -1)
+	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
 
 	printf("Routing tables\n");
@@ -157,12 +163,10 @@ p_rttables(int af, u_int tableid, int hastable, char prio)
 			rtm = (struct rt_msghdr *)next;
 			if (rtm->rtm_version != RTM_VERSION)
 				continue;
-			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			p_rtentry(rtm);
 		}
-		free(buf);
-		buf = NULL;
 	}
+	free(buf);
 }
 
 /*
@@ -488,8 +492,6 @@ routename4(in_addr_t in)
 	struct in_addr	 ina;
 	struct hostent	*hp;
 
-	if (in == INADDR_ANY)
-		cp = "default";
 	if (!cp && !nflag) {
 		if ((hp = gethostbyaddr((char *)&in,
 		    sizeof(in), AF_INET)) != NULL) {
@@ -522,27 +524,24 @@ routename6(struct sockaddr_in6 *sin6)
 	return (line);
 }
 
-/*
- * Return the name of the network whose address is given.
- * The address is assumed to be that of a net or subnet, not a host.
- */
 char *
 netname4(in_addr_t in, struct sockaddr_in *maskp)
 {
 	char *cp = NULL;
-	struct netent *np = NULL;
+	struct hostent *hp;
 	in_addr_t mask;
 	int mbits;
 
-	in = ntohl(in);
 	mask = maskp && maskp->sin_len != 0 ? ntohl(maskp->sin_addr.s_addr) : 0;
 	if (!nflag && in != INADDR_ANY) {
-		if ((np = getnetbyaddr(in, AF_INET)) != NULL)
-			cp = np->n_name;
+		if ((hp = gethostbyaddr((char *)&in,
+		    sizeof(in), AF_INET)) != NULL)
+			cp = hp->h_name;
 	}
 	if (in == INADDR_ANY && mask == INADDR_ANY)
 		cp = "default";
 	mbits = mask ? 33 - ffs(mask) : 0;
+	in = ntohl(in);
 	if (cp)
 		strlcpy(line, cp, sizeof(line));
 #define C(x)	((x) & 0xff)

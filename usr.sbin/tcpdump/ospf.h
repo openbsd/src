@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.10 2010/08/04 16:47:01 sthen Exp $	*/
+/*	$OpenBSD: ospf.h,v 1.11 2019/04/14 00:37:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -219,6 +219,13 @@ struct ospfhdr {
 	} un_lsa ;
     } ospf_un ;
 } ;
+
+struct ospf_md5_authdata {
+	uint16_t	auth_md5_offset;
+	uint8_t		auth_keyid;
+	uint8_t		auth_len;
+	uint32_t	auth_seq;
+};
 
 #define	ospf_hello	ospf_un.un_hello
 #define	ospf_db		ospf_un.un_db

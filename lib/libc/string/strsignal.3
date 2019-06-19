@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strsignal.3,v 1.8 2013/06/05 03:39:23 tedu Exp $
+.\"	$OpenBSD: strsignal.3,v 1.9 2019/05/16 13:35:16 schwarze Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: May 16 2019 $
 .Dt STRSIGNAL 3
 .Os
 .Sh NAME
@@ -44,8 +44,8 @@
 .Sh DESCRIPTION
 The
 .Fn strsignal
-function returns a pointer to the language-dependent string describing
-a signal.
+function returns a pointer to the string describing the signal
+.Fa sig .
 .Pp
 The array pointed to is not to be modified by the program, but may be
 overwritten by subsequent calls to
@@ -66,3 +66,13 @@ function first appeared in
 .At V.4
 and was reimplemented for
 .Nx 1.0 .
+.Sh CAVEATS
+On systems other than
+.Ox ,
+the
+.Dv LC_MESSAGES
+.Xr locale 1
+category can cause different strings to be returned instead of the
+normal signal descriptions; see CAVEATS in
+.Xr setlocale 3
+for details.

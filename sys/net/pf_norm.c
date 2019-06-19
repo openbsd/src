@@ -1,9 +1,9 @@
-/*	$OpenBSD: pf_norm.c,v 1.209 2018/02/06 09:16:11 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.218 2019/02/28 20:20:47 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * Copyright 2009 Henning Brauer <henning@openbsd.org>
- * Copyright 2011 Alexander Bluhm <bluhm@openbsd.org>
+ * Copyright 2011-2018 Alexander Bluhm <bluhm@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,14 +91,18 @@ struct pf_frnode {
 };
 
 struct pf_fragment {
-	u_int32_t	fr_id;		/* fragment id for reassemble */
-
+	struct pf_frent	*fr_firstoff[PF_FRAG_ENTRY_POINTS];
+					/* pointers to queue element */
+	u_int8_t	fr_entries[PF_FRAG_ENTRY_POINTS];
+					/* count entries between pointers */
 	RB_ENTRY(pf_fragment) fr_entry;
 	TAILQ_ENTRY(pf_fragment) frag_next;
 	TAILQ_HEAD(pf_fragq, pf_frent) fr_queue;
+	u_int32_t	fr_id;		/* fragment id for reassemble */
 	int32_t		fr_timeout;
 	u_int32_t	fr_gen;		/* generation number (per pf_frnode) */
 	u_int16_t	fr_maxlen;	/* maximum length of single fragment */
+	u_int16_t	fr_holes;	/* number of holes in the queue */
 	struct pf_frnode *fr_node;	/* ip src/dst/proto/af for fragments */
 };
 
@@ -126,9 +130,16 @@ void			 pf_flush_fragments(void);
 void			 pf_free_fragment(struct pf_fragment *);
 struct pf_fragment	*pf_find_fragment(struct pf_frnode *, u_int32_t);
 struct pf_frent		*pf_create_fragment(u_short *);
+int			 pf_frent_holes(struct pf_frent *);
+static inline int	 pf_frent_index(struct pf_frent *);
+int			 pf_frent_insert(struct pf_fragment *,
+			    struct pf_frent *, struct pf_frent *);
+void			 pf_frent_remove(struct pf_fragment *,
+			    struct pf_frent *);
+struct pf_frent		*pf_frent_previous(struct pf_fragment *,
+			    struct pf_frent *);
 struct pf_fragment	*pf_fillup_fragment(struct pf_frnode *, u_int32_t,
 			    struct pf_frent *, u_short *);
-int			 pf_isfull_fragment(struct pf_fragment *);
 struct mbuf		*pf_join_fragment(struct pf_fragment *);
 int			 pf_reassemble(struct mbuf **, int, u_short *);
 #ifdef INET6
@@ -328,6 +339,188 @@ pf_create_fragment(u_short *reason)
 	return (frent);
 }
 
+/*
+ * Calculate the additional holes that were created in the fragment
+ * queue by inserting this fragment.  A fragment in the middle
+ * creates one more hole by splitting.  For each connected side,
+ * it loses one hole.
+ * Fragment entry must be in the queue when calling this function.
+ */
+int
+pf_frent_holes(struct pf_frent *frent)
+{
+	struct pf_frent *prev = TAILQ_PREV(frent, pf_fragq, fr_next);
+	struct pf_frent *next = TAILQ_NEXT(frent, fr_next);
+	int holes = 1;
+
+	if (prev == NULL) {
+		if (frent->fe_off == 0)
+			holes--;
+	} else {
+		KASSERT(frent->fe_off != 0);
+		if (frent->fe_off == prev->fe_off + prev->fe_len)
+			holes--;
+	}
+	if (next == NULL) {
+		if (!frent->fe_mff)
+			holes--;
+	} else {
+		KASSERT(frent->fe_mff);
+		if (next->fe_off == frent->fe_off + frent->fe_len)
+			holes--;
+	}
+	return holes;
+}
+
+static inline int
+pf_frent_index(struct pf_frent *frent)
+{
+	/*
+	 * We have an array of 16 entry points to the queue.  A full size
+	 * 65535 octet IP packet can have 8192 fragments.  So the queue
+	 * traversal length is at most 512 and at most 16 entry points are
+	 * checked.  We need 128 additional bytes on a 64 bit architecture.
+	 */
+	CTASSERT(((u_int16_t)0xffff &~ 7) / (0x10000 / PF_FRAG_ENTRY_POINTS) ==
+	    16 - 1);
+	CTASSERT(((u_int16_t)0xffff >> 3) / PF_FRAG_ENTRY_POINTS == 512 - 1);
+
+	return frent->fe_off / (0x10000 / PF_FRAG_ENTRY_POINTS);
+}
+
+int
+pf_frent_insert(struct pf_fragment *frag, struct pf_frent *frent,
+    struct pf_frent *prev)
+{
+	CTASSERT(PF_FRAG_ENTRY_LIMIT <= 0xff);
+	int index;
+
+	/*
+	 * A packet has at most 65536 octets.  With 16 entry points, each one
+	 * spawns 4096 octets.  We limit these to 64 fragments each, which
+	 * means on average every fragment must have at least 64 octets.
+	 */
+	index = pf_frent_index(frent);
+	if (frag->fr_entries[index] >= PF_FRAG_ENTRY_LIMIT)
+		return ENOBUFS;
+	frag->fr_entries[index]++;
+
+	if (prev == NULL) {
+		TAILQ_INSERT_HEAD(&frag->fr_queue, frent, fr_next);
+	} else {
+		KASSERT(prev->fe_off + prev->fe_len <= frent->fe_off);
+		TAILQ_INSERT_AFTER(&frag->fr_queue, prev, frent, fr_next);
+	}
+
+	if (frag->fr_firstoff[index] == NULL) {
+		KASSERT(prev == NULL || pf_frent_index(prev) < index);
+		frag->fr_firstoff[index] = frent;
+	} else {
+		if (frent->fe_off < frag->fr_firstoff[index]->fe_off) {
+			KASSERT(prev == NULL || pf_frent_index(prev) < index);
+			frag->fr_firstoff[index] = frent;
+		} else {
+			KASSERT(prev != NULL);
+			KASSERT(pf_frent_index(prev) == index);
+		}
+	}
+
+	frag->fr_holes += pf_frent_holes(frent);
+
+	return 0;
+}
+
+void
+pf_frent_remove(struct pf_fragment *frag, struct pf_frent *frent)
+{
+#ifdef DIAGNOSTIC
+	struct pf_frent *prev = TAILQ_PREV(frent, pf_fragq, fr_next);
+#endif
+	struct pf_frent *next = TAILQ_NEXT(frent, fr_next);
+	int index;
+
+	frag->fr_holes -= pf_frent_holes(frent);
+
+	index = pf_frent_index(frent);
+	KASSERT(frag->fr_firstoff[index] != NULL);
+	if (frag->fr_firstoff[index]->fe_off == frent->fe_off) {
+		if (next == NULL) {
+			frag->fr_firstoff[index] = NULL;
+		} else {
+			KASSERT(frent->fe_off + frent->fe_len <= next->fe_off);
+			if (pf_frent_index(next) == index) {
+				frag->fr_firstoff[index] = next;
+			} else {
+				frag->fr_firstoff[index] = NULL;
+			}
+		}
+	} else {
+		KASSERT(frag->fr_firstoff[index]->fe_off < frent->fe_off);
+		KASSERT(prev != NULL);
+		KASSERT(prev->fe_off + prev->fe_len <= frent->fe_off);
+		KASSERT(pf_frent_index(prev) == index);
+	}
+
+	TAILQ_REMOVE(&frag->fr_queue, frent, fr_next);
+
+	KASSERT(frag->fr_entries[index] > 0);
+	frag->fr_entries[index]--;
+}
+
+struct pf_frent *
+pf_frent_previous(struct pf_fragment *frag, struct pf_frent *frent)
+{
+	struct pf_frent *prev, *next;
+	int index;
+
+	/*
+	 * If there are no fragments after frag, take the final one.  Assume
+	 * that the global queue is not empty.
+	 */
+	prev = TAILQ_LAST(&frag->fr_queue, pf_fragq);
+	KASSERT(prev != NULL);
+	if (prev->fe_off <= frent->fe_off)
+		return prev;
+	/*
+	 * We want to find a fragment entry that is before frag, but still
+	 * close to it.  Find the first fragment entry that is in the same
+	 * entry point or in the first entry point after that.  As we have
+	 * already checked that there are entries behind frag, this will
+	 * succeed.
+	 */
+	for (index = pf_frent_index(frent); index < PF_FRAG_ENTRY_POINTS;
+	    index++) {
+		prev = frag->fr_firstoff[index];
+		if (prev != NULL)
+			break;
+	}
+	KASSERT(prev != NULL);
+	/*
+	 * In prev we may have a fragment from the same entry point that is
+	 * before frent, or one that is just one position behind frent.
+	 * In the latter case, we go back one step and have the predecessor.
+	 * There may be none if the new fragment will be the first one.
+	 */
+	if (prev->fe_off > frent->fe_off) {
+		prev = TAILQ_PREV(prev, pf_fragq, fr_next);
+		if (prev == NULL)
+			return NULL;
+		KASSERT(prev->fe_off <= frent->fe_off);
+		return prev;
+	}
+	/*
+	 * In prev is the first fragment of the entry point.  The offset
+	 * of frag is behind it.  Find the closest previous fragment.
+	 */
+	for (next = TAILQ_NEXT(prev, fr_next); next != NULL;
+	    next = TAILQ_NEXT(next, fr_next)) {
+		if (next->fe_off > frent->fe_off)
+			break;
+		prev = next;
+	}
+	return prev;
+}
+
 struct pf_fragment *
 pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
     struct pf_frent *frent, u_short *reason)
@@ -392,11 +585,14 @@ pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
 			frnode->fn_fragments = 0;
 			frnode->fn_gen = 0;
 		}
+		memset(frag->fr_firstoff, 0, sizeof(frag->fr_firstoff));
+		memset(frag->fr_entries, 0, sizeof(frag->fr_entries));
 		TAILQ_INIT(&frag->fr_queue);
+		frag->fr_id = id;
 		frag->fr_timeout = time_uptime;
 		frag->fr_gen = frnode->fn_gen++;
 		frag->fr_maxlen = frent->fe_len;
-		frag->fr_id = id;
+		frag->fr_holes = 1;
 		frag->fr_node = frnode;
 		/* RB_INSERT cannot fail as pf_find_fragment() found nothing */
 		RB_INSERT(pf_frag_tree, &frnode->fn_tree, frag);
@@ -405,8 +601,8 @@ pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
 			RB_INSERT(pf_frnode_tree, &pf_frnode_tree, frnode);
 		TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
 
-		/* We do not have a previous fragment */
-		TAILQ_INSERT_HEAD(&frag->fr_queue, frent, fr_next);
+		/* We do not have a previous fragment, cannot fail. */
+		pf_frent_insert(frag, frent, NULL);
 
 		return (frag);
 	}
@@ -436,22 +632,21 @@ pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
 			goto free_ipv6_fragment;
 	}
 
-	/* Find a fragment after the current one */
-	prev = NULL;
-	TAILQ_FOREACH(after, &frag->fr_queue, fr_next) {
-		if (after->fe_off > frent->fe_off)
-			break;
-		prev = after;
+	/* Find neighbors for newly inserted fragment */
+	prev = pf_frent_previous(frag, frent);
+	if (prev == NULL) {
+		after = TAILQ_FIRST(&frag->fr_queue);
+		KASSERT(after != NULL);
+	} else {
+		after = TAILQ_NEXT(prev, fr_next);
 	}
-
-	KASSERT(prev != NULL || after != NULL);
 
 	if (prev != NULL && prev->fe_off + prev->fe_len > frent->fe_off) {
 		u_int16_t	precut;
 
 #ifdef INET6
 		if (frag->fr_node->fn_af == AF_INET6)
-			goto free_fragment;
+			goto free_ipv6_fragment;
 #endif /* INET6 */
 
 		precut = prev->fe_off + prev->fe_len - frent->fe_off;
@@ -471,7 +666,7 @@ pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
 
 #ifdef INET6
 		if (frag->fr_node->fn_af == AF_INET6)
-			goto free_fragment;
+			goto free_ipv6_fragment;
 #endif /* INET6 */
 
 		aftercut = frent->fe_off + frent->fe_len - after->fe_off;
@@ -486,24 +681,23 @@ pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
 		/* This fragment is completely overlapped, lose it */
 		DPFPRINTF(LOG_NOTICE, "old frag overlapped");
 		next = TAILQ_NEXT(after, fr_next);
-		TAILQ_REMOVE(&frag->fr_queue, after, fr_next);
+		pf_frent_remove(frag, after);
 		m_freem(after->fe_m);
 		pool_put(&pf_frent_pl, after);
 		pf_nfrents--;
 	}
 
-	if (prev == NULL)
-		TAILQ_INSERT_HEAD(&frag->fr_queue, frent, fr_next);
-	else
-		TAILQ_INSERT_AFTER(&frag->fr_queue, prev, frent, fr_next);
+	/* If part of the queue gets too long, there is not way to recover. */
+	if (pf_frent_insert(frag, frent, prev)) {
+		DPFPRINTF(LOG_WARNING, "fragment queue limit exceeded");
+		goto free_fragment;
+	}
 
 	return (frag);
 
 free_ipv6_fragment:
-#ifdef INET6
 	if (frag->fr_node->fn_af == AF_INET)
 		goto bad_fragment;
-free_fragment:
 	/*
 	 * RFC 5722, Errata 3089:  When reassembling an IPv6 datagram, if one
 	 * or more its constituent fragments is determined to be an overlapping
@@ -511,50 +705,14 @@ free_fragment:
 	 * be silently discarded.
 	 */
 	DPFPRINTF(LOG_NOTICE, "flush overlapping fragments");
+free_fragment:
 	pf_free_fragment(frag);
-#endif /* INET6 */
 bad_fragment:
 	REASON_SET(reason, PFRES_FRAG);
 drop_fragment:
 	pool_put(&pf_frent_pl, frent);
 	pf_nfrents--;
 	return (NULL);
-}
-
-int
-pf_isfull_fragment(struct pf_fragment *frag)
-{
-	struct pf_frent		*frent, *next;
-	u_int16_t		 off, total;
-
-	KASSERT(!TAILQ_EMPTY(&frag->fr_queue));
-
-	/* Check if we are completely reassembled */
-	if (TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_mff)
-		return (0);
-
-	/* Maximum data we have seen already */
-	total = TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_off +
-	    TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_len;
-
-	/* Check if we have all the data */
-	off = 0;
-	for (frent = TAILQ_FIRST(&frag->fr_queue); frent; frent = next) {
-		next = TAILQ_NEXT(frent, fr_next);
-		off += frent->fe_len;
-		if (off < total && (next == NULL || next->fe_off != off)) {
-			DPFPRINTF(LOG_NOTICE,
-			    "missing fragment at %d, next %d, total %d",
-			    off, next == NULL ? -1 : next->fe_off, total);
-			return (0);
-		}
-	}
-	DPFPRINTF(LOG_INFO, "%d < %d?", off, total);
-	if (off < total)
-		return (0);
-	KASSERT(off == total);
-
-	return (1);
 }
 
 struct mbuf *
@@ -587,6 +745,7 @@ pf_join_fragment(struct pf_fragment *frag)
 			m_adj(m2, frent->fe_len - m2->m_pkthdr.len);
 		pool_put(&pf_frent_pl, frent);
 		pf_nfrents--;
+		m_removehdr(m2);
 		m_cat(m, m2);
 	}
 
@@ -633,7 +792,9 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 	/* The mbuf is part of the fragment entry, no direct free or access */
 	m = *m0 = NULL;
 
-	if (!pf_isfull_fragment(frag)) {
+	if (frag->fr_holes) {
+		DPFPRINTF(LOG_DEBUG, "frag %d, holes %d",
+		    frag->fr_id, frag->fr_holes);
 		PF_FRAG_UNLOCK();
 		return (PF_PASS);  /* drop because *m0 is NULL, no error */
 	}
@@ -646,14 +807,7 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 	hdrlen = frent->fe_hdrlen;
 	m = *m0 = pf_join_fragment(frag);
 	frag = NULL;
-
-	if (m->m_flags & M_PKTHDR) {
-		int plen = 0;
-		for (m = *m0; m; m = m->m_next)
-			plen += m->m_len;
-		m = *m0;
-		m->m_pkthdr.len = plen;
-	}
+	m_calchdrlen(m);
 
 	ip = mtod(m, struct ip *);
 	ip->ip_len = htons(hdrlen + total);
@@ -717,16 +871,18 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 	/* The mbuf is part of the fragment entry, no direct free or access */
 	m = *m0 = NULL;
 
-	if (!pf_isfull_fragment(frag)) {
+	if (frag->fr_holes) {
+		DPFPRINTF(LOG_DEBUG, "frag %#08x, holes %d",
+		    frag->fr_id, frag->fr_holes);
 		PF_FRAG_UNLOCK();
 		return (PF_PASS);  /* drop because *m0 is NULL, no error */
 	}
 
 	/* We have all the data */
-	extoff = frent->fe_extoff;
-	maxlen = frag->fr_maxlen;
 	frent = TAILQ_FIRST(&frag->fr_queue);
 	KASSERT(frent != NULL);
+	extoff = frent->fe_extoff;
+	maxlen = frag->fr_maxlen;
 	total = TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_off +
 	    TAILQ_LAST(&frag->fr_queue, pf_fragq)->fe_len;
 	hdrlen = frent->fe_hdrlen - sizeof(struct ip6_frag);
@@ -744,13 +900,7 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 	if (frag6_deletefraghdr(m, hdrlen) != 0)
 		goto fail;
 
-	if (m->m_flags & M_PKTHDR) {
-		int plen = 0;
-		for (m = *m0; m; m = m->m_next)
-			plen += m->m_len;
-		m = *m0;
-		m->m_pkthdr.len = plen;
-	}
+	m_calchdrlen(m);
 
 	if ((mtag = m_tag_get(PACKET_TAG_PF_REASSEMBLED, sizeof(struct
 	    pf_fragment_tag), M_NOWAIT)) == NULL)
@@ -1008,8 +1158,9 @@ pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src)
 {
 	struct tcphdr	*th = &pd->hdr.tcp;
 	u_int32_t	 tsval, tsecr;
-	u_int8_t	 hdr[60];
-	u_int8_t	*opt;
+	int		 olen;
+	u_int8_t	 opts[MAX_TCPOPTLEN], *opt;
+
 
 	KASSERT(src->scrub == NULL);
 
@@ -1042,44 +1193,26 @@ pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src)
 	if ((th->th_flags & TH_SYN) == 0)
 		return (0);
 
-	if (th->th_off > (sizeof(struct tcphdr) >> 2) && src->scrub &&
-	    pf_pull_hdr(pd->m, pd->off, hdr, th->th_off << 2, NULL, NULL,
-	    pd->af)) {
-		/* Diddle with TCP options */
-		int	hlen;
+	olen = (th->th_off << 2) - sizeof(*th);
+	if (olen < TCPOLEN_TIMESTAMP || !pf_pull_hdr(pd->m,
+	    pd->off + sizeof(*th), opts, olen, NULL, NULL, pd->af))
+		return (0);
 
-		opt = hdr + sizeof(struct tcphdr);
-		hlen = (th->th_off << 2) - sizeof(struct tcphdr);
-		while (hlen >= TCPOLEN_TIMESTAMP) {
-			switch (*opt) {
-			case TCPOPT_EOL:	/* FALLTHROUGH */
-			case TCPOPT_NOP:
-				opt++;
-				hlen--;
-				break;
-			case TCPOPT_TIMESTAMP:
-				if (opt[1] >= TCPOLEN_TIMESTAMP) {
-					src->scrub->pfss_flags |=
-					    PFSS_TIMESTAMP;
-					src->scrub->pfss_ts_mod = arc4random();
+	opt = opts;
+	while ((opt = pf_find_tcpopt(opt, opts, olen,
+		    TCPOPT_TIMESTAMP, TCPOLEN_TIMESTAMP)) != NULL) {
 
-					/* note PFSS_PAWS not set yet */
-					memcpy(&tsval, &opt[2],
-					    sizeof(u_int32_t));
-					memcpy(&tsecr, &opt[6],
-					    sizeof(u_int32_t));
-					src->scrub->pfss_tsval0 = ntohl(tsval);
-					src->scrub->pfss_tsval = ntohl(tsval);
-					src->scrub->pfss_tsecr = ntohl(tsecr);
-					getmicrouptime(&src->scrub->pfss_last);
-				}
-				/* FALLTHROUGH */
-			default:
-				hlen -= MAX(opt[1], 2);
-				opt += MAX(opt[1], 2);
-				break;
-			}
-		}
+		src->scrub->pfss_flags |= PFSS_TIMESTAMP;
+		src->scrub->pfss_ts_mod = arc4random();
+		/* note PFSS_PAWS not set yet */
+		memcpy(&tsval, &opt[2], sizeof(u_int32_t));
+		memcpy(&tsecr, &opt[6], sizeof(u_int32_t));
+		src->scrub->pfss_tsval0 = ntohl(tsval);
+		src->scrub->pfss_tsval = ntohl(tsval);
+		src->scrub->pfss_tsecr = ntohl(tsecr);
+		getmicrouptime(&src->scrub->pfss_last);
+
+		opt += opt[1];
 	}
 
 	return (0);
@@ -1103,12 +1236,12 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 {
 	struct tcphdr	*th = &pd->hdr.tcp;
 	struct timeval	 uptime;
-	u_int32_t	 tsval, tsecr;
 	u_int		 tsval_from_last;
-	u_int8_t	 hdr[60];
-	u_int8_t	*opts, *opt;
+	u_int32_t	 tsval, tsecr;
 	int		 copyback = 0;
 	int		 got_ts = 0;
+	int		 olen;
+	u_int8_t	 opts[MAX_TCPOPTLEN], *opt;
 
 	KASSERT(src->scrub || dst->scrub);
 
@@ -1140,87 +1273,68 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 		unhandled_af(pd->af);
 	}
 
-	if (th->th_off > (sizeof(struct tcphdr) >> 2) &&
+	olen = (th->th_off << 2) - sizeof(*th);
+
+	if (olen >= TCPOLEN_TIMESTAMP &&
 	    ((src->scrub && (src->scrub->pfss_flags & PFSS_TIMESTAMP)) ||
 	    (dst->scrub && (dst->scrub->pfss_flags & PFSS_TIMESTAMP))) &&
-	    pf_pull_hdr(pd->m, pd->off, hdr, th->th_off << 2, NULL, NULL,
+	    pf_pull_hdr(pd->m, pd->off + sizeof(*th), opts, olen, NULL, NULL,
 	    pd->af)) {
-		/* Diddle with TCP options */
-		int hlen;
-		opt = opts = hdr + sizeof(struct tcphdr);
-		hlen = (th->th_off << 2) - sizeof(struct tcphdr);
-		while (hlen >= TCPOLEN_TIMESTAMP) {
-			switch (*opt) {
-			case TCPOPT_EOL:	/* FALLTHROUGH */
-			case TCPOPT_NOP:
-				opt++;
-				hlen--;
-				break;
-			case TCPOPT_TIMESTAMP:
-				/* Modulate the timestamps.  Can be used for
-				 * NAT detection, OS uptime determination or
-				 * reboot detection.
-				 */
 
-				if (got_ts) {
-					/* Huh?  Multiple timestamps!? */
-					if (pf_status.debug >= LOG_NOTICE) {
-						log(LOG_NOTICE,
-						    "pf: %s: multiple TS??",
-						    __func__);
-						pf_print_state(state);
-						addlog("\n");
-					}
-					REASON_SET(reason, PFRES_TS);
-					return (PF_DROP);
+		/* Modulate the timestamps.  Can be used for NAT detection, OS
+		 * uptime determination or reboot detection.
+		 */
+		opt = opts;
+		while ((opt = pf_find_tcpopt(opt, opts, olen,
+			    TCPOPT_TIMESTAMP, TCPOLEN_TIMESTAMP)) != NULL) {
+
+			u_int8_t *ts = opt + 2;
+			u_int8_t *tsr = opt + 6;
+
+			if (got_ts) {
+				/* Huh?  Multiple timestamps!? */
+				if (pf_status.debug >= LOG_NOTICE) {
+					log(LOG_NOTICE,
+					    "pf: %s: multiple TS??", __func__);
+					pf_print_state(state);
+					addlog("\n");
 				}
-				if (opt[1] >= TCPOLEN_TIMESTAMP) {
-					u_int8_t *ts = opt + 2;
-					u_int8_t *tsr = opt + 6;
-
-					memcpy(&tsval, ts, sizeof(u_int32_t));
-					memcpy(&tsecr, tsr, sizeof(u_int32_t));
-
-					/* modulate TS */
-					if (tsval && src->scrub &&
-					    (src->scrub->pfss_flags &
-					    PFSS_TIMESTAMP)) {
-						/* tsval used further on */
-						tsval = ntohl(tsval);
-						pf_patch_32_unaligned(pd, ts,
-						    htonl(tsval +
-						    src->scrub->pfss_ts_mod),
-						    PF_ALGNMNT(ts - opts));
-						copyback = 1;
-					}
-
-					/* modulate TS reply if any (!0) */
-					if (tsecr && dst->scrub &&
-					    (dst->scrub->pfss_flags &
-					    PFSS_TIMESTAMP)) {
-						/* tsecr used further on */
-						tsecr = ntohl(tsecr)
-						    - dst->scrub->pfss_ts_mod;
-						pf_patch_32_unaligned(pd, tsr,
-						    htonl(tsecr),
-						    PF_ALGNMNT(tsr - opts));
-						copyback = 1;
-					}
-					got_ts = 1;
-				}
-				/* FALLTHROUGH */
-			default:
-				hlen -= MAX(opt[1], 2);
-				opt += MAX(opt[1], 2);
-				break;
+				REASON_SET(reason, PFRES_TS);
+				return (PF_DROP);
 			}
+
+			memcpy(&tsval, ts, sizeof(u_int32_t));
+			memcpy(&tsecr, tsr, sizeof(u_int32_t));
+
+			/* modulate TS */
+			if (tsval && src->scrub &&
+			    (src->scrub->pfss_flags & PFSS_TIMESTAMP)) {
+				/* tsval used further on */
+				tsval = ntohl(tsval);
+				pf_patch_32_unaligned(pd,
+				    ts, htonl(tsval + src->scrub->pfss_ts_mod),
+				    PF_ALGNMNT(ts - opts));
+				copyback = 1;
+			}
+
+			/* modulate TS reply if any (!0) */
+			if (tsecr && dst->scrub &&
+			    (dst->scrub->pfss_flags & PFSS_TIMESTAMP)) {
+				/* tsecr used further on */
+				tsecr = ntohl(tsecr) - dst->scrub->pfss_ts_mod;
+				pf_patch_32_unaligned(pd,
+				    tsr, htonl(tsecr), PF_ALGNMNT(tsr - opts));
+				copyback = 1;
+			}
+
+			got_ts = 1;
+			opt += opt[1];
 		}
+
 		if (copyback) {
 			/* Copyback the options, caller copys back header */
 			*writeback = 1;
-			m_copyback(pd->m, pd->off + sizeof(struct tcphdr),
-			    (th->th_off << 2) - sizeof(struct tcphdr), hdr +
-			    sizeof(struct tcphdr), M_NOWAIT);
+			m_copyback(pd->m, pd->off + sizeof(*th), olen, opts, M_NOWAIT);
 		}
 	}
 
@@ -1492,47 +1606,32 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 int
 pf_normalize_mss(struct pf_pdesc *pd, u_int16_t maxmss)
 {
-	struct tcphdr	*th = &pd->hdr.tcp;
-	u_int16_t	 mss;
-	int		 thoff;
-	int		 opt, cnt, optlen = 0;
-	u_int8_t	 opts[MAX_TCPOPTLEN];
-	u_int8_t	*optp = opts;
+	int		 olen, optsoff;
+	u_int8_t	 opts[MAX_TCPOPTLEN], *opt;
 
-	thoff = th->th_off << 2;
-	cnt = thoff - sizeof(struct tcphdr);
-
-	if (cnt <= 0 || cnt > MAX_TCPOPTLEN || !pf_pull_hdr(pd->m,
-	    pd->off + sizeof(*th), opts, cnt, NULL, NULL, pd->af))
+	olen = (pd->hdr.tcp.th_off << 2) - sizeof(struct tcphdr);
+	optsoff = pd->off + sizeof(struct tcphdr);
+	if (olen < TCPOLEN_MAXSEG ||
+	    !pf_pull_hdr(pd->m, optsoff, opts, olen, NULL, NULL, pd->af))
 		return (0);
 
-	for (; cnt > 0; cnt -= optlen, optp += optlen) {
-		opt = optp[0];
-		if (opt == TCPOPT_EOL)
-			break;
-		if (opt == TCPOPT_NOP)
-			optlen = 1;
-		else {
-			if (cnt < 2)
-				break;
-			optlen = optp[1];
-			if (optlen < 2 || optlen > cnt)
-				break;
+	opt = opts;
+	while ((opt = pf_find_tcpopt(opt, opts, olen,
+		    TCPOPT_MAXSEG, TCPOLEN_MAXSEG)) != NULL) {
+		u_int16_t	mss;
+		u_int8_t       *mssp = opt + 2;
+		memcpy(&mss, mssp, sizeof(mss));
+		if (ntohs(mss) > maxmss) {
+			size_t mssoffopts = mssp - opts;
+			pf_patch_16_unaligned(pd, &mss,
+			    htons(maxmss), PF_ALGNMNT(mssoffopts));
+			m_copyback(pd->m, optsoff + mssoffopts,
+			    sizeof(mss), &mss, M_NOWAIT);
+			m_copyback(pd->m, pd->off,
+			    sizeof(struct tcphdr), &pd->hdr.tcp, M_NOWAIT);
 		}
-		if (opt == TCPOPT_MAXSEG) {
-			u_int8_t *mssp = optp + 2;
-			memcpy(&mss, mssp, sizeof(mss));
-			if (ntohs(mss) > maxmss) {
-				size_t mssoffopts = mssp - opts;
-				pf_patch_16_unaligned(pd, &mss,
-				    htons(maxmss), PF_ALGNMNT(mssoffopts));
-				m_copyback(pd->m,
-				    pd->off + sizeof(*th) + mssoffopts,
-				    sizeof(mss), &mss, M_NOWAIT);
-				m_copyback(pd->m, pd->off, sizeof(*th), th,
-				    M_NOWAIT);
-			}
-		}
+
+		opt += opt[1];
 	}
 
 	return (0);

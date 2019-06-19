@@ -1,13 +1,17 @@
 ESC-ONE(1)                  General Commands Manual                 ESC-ONE(1)
 
+
+
 NNAAMMEE
-     eesscc--oonnee - roff one-character escape sequences
+       esc-one - roff one-character escape sequences
 
 DDEESSCCRRIIPPTTIIOONN
-     backslash: >\<
-     minus: >-<
-     acute: >'<
-     grave: >`<
-     normal character: >q<
+       backslash: >\<
+       minus: >-|-<
+       acute: >'<
+       grave: >`<
+       normal character: >q<
 
-OpenBSD                          July 4, 2017                          OpenBSD
+
+
+OpenBSD                        December 15, 2018                    ESC-ONE(1)

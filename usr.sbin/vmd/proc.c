@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.16 2017/11/04 07:40:31 mlarkin Exp $	*/
+/*	$OpenBSD: proc.c,v 1.18 2018/09/10 10:36:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -29,13 +29,14 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <paths.h>
 #include <pwd.h>
 #include <event.h>
 #include <imsg.h>
 
 #include "proc.h"
 
-void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int,
+void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int, int,
 	    int, char **);
 void	 proc_setup(struct privsep *, struct privsep_proc *, unsigned int);
 void	 proc_open(struct privsep *, int, int);
@@ -80,7 +81,7 @@ proc_getid(struct privsep_proc *procs, unsigned int nproc,
 
 void
 proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
-    int argc, char **argv)
+    int debug, int argc, char **argv)
 {
 	unsigned int		 proc, nargc, i, proc_i;
 	char			**nargv;
@@ -141,6 +142,16 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 				} else if (fcntl(fd, F_SETFD, 0) == -1)
 					fatal("fcntl");
 
+				/* Daemons detach from terminal. */
+				if (!debug && (fd =
+				    open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+					(void)dup2(fd, STDIN_FILENO);
+					(void)dup2(fd, STDOUT_FILENO);
+					(void)dup2(fd, STDERR_FILENO);
+					if (fd > 2)
+						(void)close(fd);
+				}
+
 				execvp(argv[0], nargv);
 				fatal("%s: execvp", __func__);
 				break;
@@ -191,7 +202,7 @@ proc_connect(struct privsep *ps)
 
 void
 proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
-    int argc, char **argv, enum privsep_procid proc_id)
+    int debug, int argc, char **argv, enum privsep_procid proc_id)
 {
 	struct privsep_proc	*p = NULL;
 	struct privsep_pipes	*pa, *pb;
@@ -231,7 +242,7 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 		}
 
 		/* Engage! */
-		proc_exec(ps, procs, nproc, argc, argv);
+		proc_exec(ps, procs, nproc, debug, argc, argv);
 		return;
 	}
 
@@ -474,9 +485,6 @@ void
 proc_shutdown(struct privsep_proc *p)
 {
 	struct privsep	*ps = p->p_ps;
-
-	if (p->p_id == PROC_CONTROL && ps)
-		control_cleanup(&ps->ps_csock);
 
 	if (p->p_shutdown != NULL)
 		(*p->p_shutdown)();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.108 2018/01/06 06:30:11 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.111 2018/10/22 17:31:25 krw Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1030,22 +1030,68 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		("pmap_enter(%p, %p, %p, 0x%x, 0x%x)\n",
 		    pmap, (void *)va, (void *)pa, prot, flags));
 
+	pg = PHYS_TO_VM_PAGE(pa);
+
 	pmap_lock(pmap);
 
-#ifdef DIAGNOSTIC
+	/*
+	 * Get the PTE. Allocate page directory and page table pages
+	 * if necessary.
+	 */
 	if (pmap == pmap_kernel()) {
-		stat_count(enter_stats.kernel);
+#ifdef DIAGNOSTIC
 		if (va < VM_MIN_KERNEL_ADDRESS ||
 		    va >= VM_MAX_KERNEL_ADDRESS)
-			panic("pmap_enter: kva %p", (void *)va);
-	} else {
-		stat_count(enter_stats.user);
-		if (va >= VM_MAXUSER_ADDRESS)
-			panic("pmap_enter: uva %p", (void *)va);
-	}
+			panic("%s: kva %p", __func__, (void *)va);
 #endif
+		stat_count(enter_stats.kernel);
+		pte = kvtopte(va);
+	} else {
+#ifdef DIAGNOSTIC
+		if (va >= VM_MAXUSER_ADDRESS)
+			panic("%s: uva %p", __func__, (void *)va);
+#endif
+		stat_count(enter_stats.user);
+		if ((pde = pmap_segmap(pmap, va)) == NULL) {
+			pde = pool_get(&pmap_pg_pool, PR_NOWAIT | PR_ZERO);
+			if (pde == NULL) {
+				if (flags & PMAP_CANFAIL) {
+					pmap_unlock(pmap);
+					return ENOMEM;
+				}
+				panic("%s: out of memory", __func__);
+			}
+			pmap_segmap(pmap, va) = pde;
+		}
+		if ((pte = pde[uvtopde(va)]) == NULL) {
+			pte = pool_get(&pmap_pg_pool, PR_NOWAIT | PR_ZERO);
+			if (pte == NULL) {
+				if (flags & PMAP_CANFAIL) {
+					pmap_unlock(pmap);
+					return ENOMEM;
+				}
+				panic("%s: out of memory", __func__);
+			}
+			pde[uvtopde(va)] = pte;
+		}
+		pte += uvtopte(va);
+	}
 
-	pg = PHYS_TO_VM_PAGE(pa);
+	if ((*pte & PG_V) && pa != pfn_to_pad(*pte)) {
+		pmap_do_remove(pmap, va, va + PAGE_SIZE);
+		stat_count(enter_stats.mchange);
+	}
+
+	if ((*pte & PG_V) == 0) {
+		atomic_inc_long(&pmap->pm_stats.resident_count);
+		if (wired)
+			atomic_inc_long(&pmap->pm_stats.wired_count);
+	} else {
+		if ((*pte & PG_WIRED) != 0 && wired == 0)
+			atomic_dec_long(&pmap->pm_stats.wired_count);
+		else if ((*pte & PG_WIRED) == 0 && wired != 0)
+			atomic_inc_long(&pmap->pm_stats.wired_count);
+	}
 
 	if (pg != NULL) {
 		mtx_enter(&pg->mdpage.pv_mtx);
@@ -1097,6 +1143,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		npte |= pg_xi;
 
 	if (pmap == pmap_kernel()) {
+		/*
+		 * Enter kernel space mapping.
+		 */
+
 		if (pg != NULL) {
 			if (pmap_enter_pv(pmap, va, pg, &npte) != 0) {
 				if (flags & PMAP_CANFAIL) {
@@ -1108,21 +1158,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			}
 		}
 
-		pte = kvtopte(va);
-		if ((*pte & PG_V) && pa != pfn_to_pad(*pte)) {
-			pmap_do_remove(pmap, va, va + PAGE_SIZE);
-			stat_count(enter_stats.mchange);
-		}
-		if ((*pte & PG_V) == 0) {
-			atomic_inc_long(&pmap->pm_stats.resident_count);
-			if (wired)
-				atomic_inc_long(&pmap->pm_stats.wired_count);
-		} else {
-			if ((*pte & PG_WIRED) != 0 && wired == 0)
-				atomic_dec_long(&pmap->pm_stats.wired_count);
-			else if ((*pte & PG_WIRED) == 0 && wired != 0)
-				atomic_inc_long(&pmap->pm_stats.wired_count);
-		}
 		npte |= vad_to_pfn(pa) | PG_G;
 		if (wired)
 			npte |= PG_WIRED;
@@ -1142,34 +1177,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	/*
-	 *  User space mapping. Do table build.
+	 * Enter user space mapping.
 	 */
-	if ((pde = pmap_segmap(pmap, va)) == NULL) {
-		pde = pool_get(&pmap_pg_pool, PR_NOWAIT | PR_ZERO);
-		if (pde == NULL) {
-			if (flags & PMAP_CANFAIL) {
-				if (pg != NULL)
-					mtx_leave(&pg->mdpage.pv_mtx);
-				pmap_unlock(pmap);
-				return ENOMEM;
-			}
-			panic("%s: out of memory", __func__);
-		}
-		pmap_segmap(pmap, va) = pde;
-	}
-	if ((pte = pde[uvtopde(va)]) == NULL) {
-		pte = pool_get(&pmap_pg_pool, PR_NOWAIT | PR_ZERO);
-		if (pte == NULL) {
-			if (flags & PMAP_CANFAIL) {
-				if (pg != NULL)
-					mtx_leave(&pg->mdpage.pv_mtx);
-				pmap_unlock(pmap);
-				return ENOMEM;
-			}
-			panic("%s: out of memory", __func__);
-		}
-		pde[uvtopde(va)] = pte;
-	}
 
 	if (pg != NULL) {
 		if (pmap_enter_pv(pmap, va, pg, &npte) != 0) {
@@ -1180,28 +1189,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			}
 			panic("pmap_enter: pmap_enter_pv() failed");
 		}
-	}
-
-	pte += uvtopte(va);
-
-	/*
-	 * Now validate mapping with desired protection/wiring.
-	 * Assume uniform modified and referenced status for all
-	 * MIPS pages in a OpenBSD page.
-	 */
-	if ((*pte & PG_V) && pa != pfn_to_pad(*pte)) {
-		pmap_do_remove(pmap, va, va + PAGE_SIZE);
-		stat_count(enter_stats.mchange);
-	}
-	if ((*pte & PG_V) == 0) {
-		atomic_inc_long(&pmap->pm_stats.resident_count);
-		if (wired)
-			atomic_inc_long(&pmap->pm_stats.wired_count);
-	} else {
-		if ((*pte & PG_WIRED) != 0 && wired == 0)
-			atomic_dec_long(&pmap->pm_stats.wired_count);
-		else if ((*pte & PG_WIRED) == 0 && wired != 0)
-			atomic_inc_long(&pmap->pm_stats.wired_count);
 	}
 
 	npte |= vad_to_pfn(pa);
@@ -1869,7 +1856,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, pt_entry_t *npte)
 		if ((pg->pg_flags & PGF_CACHED) == 0) {
 			/*
 			 * If page is not mapped cached it's either because
-			 * an uncached mapping was explicitely requested or
+			 * an uncached mapping was explicitly requested or
 			 * we have a VAC situation.
 			 * Map this page uncached as well.
 			 */

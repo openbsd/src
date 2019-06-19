@@ -1,0 +1,2 @@
+mandoc: outof.in:15:1: UNSUPP: end of scope with open .while loop
+mandoc: outof.in:17:4: UNSUPP: cannot continue this .while loop

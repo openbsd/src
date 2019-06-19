@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.106 2017/12/01 10:33:33 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.115 2018/10/04 17:33:41 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 #define _NETINET_IN_PCB_H_
 
 #include <sys/queue.h>
+#include <sys/refcnt.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet/icmp6.h>
@@ -90,10 +91,10 @@ union inpaddru {
  * control block.
  */
 struct inpcb {
-	LIST_ENTRY(inpcb) inp_hash;
-	LIST_ENTRY(inpcb) inp_lhash;		/* extra hash for lport */
-	TAILQ_ENTRY(inpcb) inp_queue;
-	struct	  inpcbtable *inp_table;
+	LIST_ENTRY(inpcb) inp_hash;		/* local and foreign hash */
+	LIST_ENTRY(inpcb) inp_lhash;		/* local port hash */
+	TAILQ_ENTRY(inpcb) inp_queue;		/* inet PCB queue */
+	struct	  inpcbtable *inp_table;	/* inet queue/hash table */
 	union	  inpaddru inp_faddru;		/* Foreign address. */
 	union	  inpaddru inp_laddru;		/* Local address. */
 #define	inp_faddr	inp_faddru.iau_a4u.inaddr
@@ -110,6 +111,7 @@ struct inpcb {
 	} inp_ru;
 #define	inp_route	inp_ru.ru_route
 #define	inp_route6	inp_ru.ru_route6
+	struct    refcnt inp_refcnt;	/* refcount PCB, delay memory free */
 	int	  inp_flags;		/* generic IP/datagram flags */
 	union {				/* Header prototype. */
 		struct ip hu_ip;
@@ -148,11 +150,12 @@ struct inpcb {
 LIST_HEAD(inpcbhead, inpcb);
 
 struct inpcbtable {
-	TAILQ_HEAD(inpthead, inpcb) inpt_queue;
-	struct inpcbhead *inpt_hashtbl, *inpt_lhashtbl;
-	SIPHASH_KEY inpt_key;
-	u_long	  inpt_hash, inpt_lhash;
-	int	  inpt_count;
+	TAILQ_HEAD(inpthead, inpcb) inpt_queue;	/* inet PCB queue */
+	struct	inpcbhead *inpt_hashtbl;	/* local and foreign hash */
+	struct	inpcbhead *inpt_lhashtbl;	/* local port hash */
+	SIPHASH_KEY inpt_key, inpt_lkey;	/* secrets for hashes */
+	u_long	inpt_mask, inpt_lmask;		/* hash masks */
+	int	inpt_count, inpt_size;		/* queue count, hash size */
 };
 
 /* flags in inp_flags: */
@@ -246,8 +249,10 @@ struct baddynamicports {
 
 #ifdef _KERNEL
 
+extern struct inpcbtable rawcbtable, rawin6pcbtable;
 extern struct baddynamicports baddynamicports;
 extern struct baddynamicports rootonlyports;
+extern int in_pcbnotifymiss;
 
 #define sotopf(so)  (so->so_proto->pr_domain->dom_family)
 
@@ -258,6 +263,9 @@ int	 in_pcbaddrisavail(struct inpcb *, struct sockaddr_in *, int,
 	    struct proc *);
 int	 in_pcbconnect(struct inpcb *, struct mbuf *);
 void	 in_pcbdetach(struct inpcb *);
+struct inpcb *
+	 in_pcbref(struct inpcb *);
+void	 in_pcbunref(struct inpcb *);
 void	 in_pcbdisconnect(struct inpcb *);
 struct inpcb *
 	 in_pcbhashlookup(struct inpcbtable *, struct in_addr,
@@ -266,6 +274,9 @@ struct inpcb *
 	 in_pcblookup_listen(struct inpcbtable *, struct in_addr, u_int,
 	    struct mbuf *, u_int);
 #ifdef INET6
+struct inpcbhead *
+	 in6_pcbhash(struct inpcbtable *, int, const struct in6_addr *,
+	    u_short, const struct in6_addr *, u_short);
 struct inpcb *
 	 in6_pcbhashlookup(struct inpcbtable *, const struct in6_addr *,
 			       u_int, const struct in6_addr *, u_int, u_int);

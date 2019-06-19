@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_pci.c,v 1.19 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: if_athn_pci.c,v 1.20 2019/04/23 01:17:09 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -137,17 +137,23 @@ athn_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_disable_aspm = athn_pci_disable_aspm;
 		sc->flags |= ATHN_FLAG_PCIE;
 	}
-	/*
-	 * Noone knows why this shit is necessary but there are claims that
-	 * not doing this may cause very frequent PCI FATAL interrupts from
-	 * the card: http://bugzilla.kernel.org/show_bug.cgi?id=13483
+	/* 
+	 * Clear device-specific "PCI retry timeout" register (41h) to prevent
+	 * PCI Tx retries from interfering with C3 CPU state.
 	 */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
 	if (reg & 0xff00)
 		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, reg & ~0xff00);
 
-	/* Change latency timer; default value yields poor results. */
+	/* 
+	 * Set the cache line size to a reasonable value if it is 0.
+	 * Change latency timer; default value yields poor results.
+	 */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
+	if (PCI_CACHELINE(reg) == 0) {
+		reg &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
+		reg |= 8 << PCI_CACHELINE_SHIFT;
+	}
 	reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 	reg |= 168 << PCI_LATTIMER_SHIFT;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, reg);

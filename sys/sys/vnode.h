@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.143 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.150 2019/02/17 22:17:28 tedu Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ struct vnode {
 	enum	vtagtype v_tag;			/* type of underlying data */
 	u_int	v_flag;				/* vnode flags (see below) */
 	u_int   v_usecount;			/* reference count of users */
+	u_int   v_uvcount;			/* unveil references */
 	/* reference count of writers */
 	u_int   v_writecount;
 	/* Flags that can be read/written in interrupts */
@@ -148,6 +149,7 @@ struct vnode {
 #define	VBIOWAIT	0x0001	/* waiting for output to complete */
 #define VBIOONSYNCLIST	0x0002	/* Vnode is on syncer worklist */
 #define VBIOONFREELIST  0x0004  /* Vnode is on a free list */
+#define VBIOERROR	0x0008  /* A write failed */
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -514,15 +516,13 @@ int VOP_RECLAIM(struct vnode *, struct proc *);
 struct vop_lock_args {
 	struct vnode *a_vp;
 	int a_flags;
-	struct proc *a_p;
 };
-int VOP_LOCK(struct vnode *, int, struct proc *);
+int VOP_LOCK(struct vnode *, int);
 
 struct vop_unlock_args {
 	struct vnode *a_vp;
-	struct proc *a_p;
 };
-int VOP_UNLOCK(struct vnode *, struct proc *);
+int VOP_UNLOCK(struct vnode *);
 
 struct vop_bmap_args {
 	struct vnode *a_vp;
@@ -587,13 +587,14 @@ struct vnode *checkalias(struct vnode *, dev_t, struct mount *);
 int	getnewvnode(enum vtagtype, struct mount *, struct vops *,
 	    struct vnode **);
 int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *);
+int	vnoperm(struct vnode *);
 void	vattr_null(struct vattr *);
 void	vdevgone(int, int, int, enum vtype);
 int	vcount(struct vnode *);
 int	vfinddev(dev_t, enum vtype, struct vnode **);
 void	vflushbuf(struct vnode *, int);
 int	vflush(struct mount *, struct vnode *, int);
-int	vget(struct vnode *, int, struct proc *);
+int	vget(struct vnode *, int);
 void	vgone(struct vnode *);
 void	vgonel(struct vnode *, struct proc *);
 int	vinvalbuf(struct vnode *, int, struct ucred *, struct proc *,
@@ -635,14 +636,14 @@ int	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t,
 	    enum uio_seg, int, struct ucred *, size_t *, struct proc *);
 int	vn_stat(struct vnode *, struct stat *, struct proc *);
 int	vn_statfile(struct file *, struct stat *, struct proc *);
-int	vn_lock(struct vnode *, int, struct proc *);
+int	vn_lock(struct vnode *, int);
 int	vn_writechk(struct vnode *);
 int	vn_fsizechk(struct vnode *, struct uio *, int, ssize_t *);
 int	vn_ioctl(struct file *, u_long, caddr_t, struct proc *);
 void	vn_marktext(struct vnode *);
 
 /* vfs_sync.c */
-void	sched_sync(struct proc *);
+void	syncer_thread(void *);
 void	vn_initialize_syncerd(void);
 void	vn_syncer_add_to_worklist(struct vnode *, int);
 

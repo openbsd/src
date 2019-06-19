@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.26 2017/12/10 01:03:46 deraadt Exp $ */
+/* $OpenBSD: cu.c,v 1.27 2019/03/22 07:03:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -41,6 +41,7 @@ FILE			*record_file;
 struct termios		 saved_tio;
 struct bufferevent	*input_ev;
 struct bufferevent	*output_ev;
+int			 escape_char = '~';
 int			 is_direct = -1;
 int			 restricted = 0;
 const char		*line_path = NULL;
@@ -53,7 +54,7 @@ struct event		 sighup_ev;
 enum {
 	STATE_NONE,
 	STATE_NEWLINE,
-	STATE_TILDE
+	STATE_ESCAPE
 } last_state = STATE_NEWLINE;
 
 __dead void	usage(void);
@@ -67,8 +68,8 @@ void		try_remote(const char *, const char *, const char *);
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-dr] [-l line] [-s speed | -speed]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-dr] [-E escape_char] [-l line] "
+	    "[-s speed | -speed]\n", __progname);
 	fprintf(stderr, "       %s [host]\n", __progname);
 	exit(1);
 }
@@ -94,14 +95,14 @@ main(int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		if (strcmp("--", argv[i]) == 0)
 			break;
-		if (argv[i][0] != '-' || !isdigit((unsigned char)argv[i][1]))
+		if (argv[i][0] != '-' || !isdigit((u_char)argv[i][1]))
 			continue;
 
 		if (asprintf(&argv[i], "-s%s", &argv[i][1]) == -1)
 			errx(1, "speed asprintf");
 	}
 
-	while ((opt = getopt(argc, argv, "drl:s:")) != -1) {
+	while ((opt = getopt(argc, argv, "drE:l:s:")) != -1) {
 		switch (opt) {
 		case 'd':
 			is_direct = 1;
@@ -110,6 +111,15 @@ main(int argc, char **argv)
 			if (pledge("stdio rpath wpath tty", NULL) == -1)
 				err(1, "pledge");
 			restricted = 1;
+			break;
+		case 'E':
+			if (optarg[0] == '^' && optarg[2] == '\0' &&
+			    (u_char)optarg[1] >= 64 && (u_char)optarg[1] < 128)
+				escape_char = (u_char)optarg[1] & 31;
+			else if (strlen(optarg) == 1)
+				escape_char = (u_char)optarg[0];
+			else
+				errx(1, "invalid escape character: %s", optarg);
 			break;
 		case 'l':
 			line_path = optarg;
@@ -308,14 +318,14 @@ stream_read(struct bufferevent *bufev, void *data)
 				last_state = STATE_NEWLINE;
 			break;
 		case STATE_NEWLINE:
-			if (state_change && *ptr == '~') {
-				last_state = STATE_TILDE;
+			if (state_change && (u_char)*ptr == escape_char) {
+				last_state = STATE_ESCAPE;
 				continue;
 			}
 			if (*ptr != '\r')
 				last_state = STATE_NONE;
 			break;
-		case STATE_TILDE:
+		case STATE_ESCAPE:
 			do_command(*ptr);
 			last_state = STATE_NEWLINE;
 			continue;

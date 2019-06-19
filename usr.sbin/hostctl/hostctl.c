@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostctl.c,v 1.3 2016/01/27 16:01:36 jmc Exp $	*/
+/*	$OpenBSD: hostctl.c,v 1.4 2018/07/03 16:42:51 sf Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -59,8 +59,7 @@ kvsetstr(char *dst, const char *src, size_t dstlen)
 		return (-1);
 
 	/* Remove trailing newline */
-	if (dst[sz - 1] == '\n')
-		dst[sz - 1] = '\0';
+	dst[strcspn(dst, "\n")] = '\0';
 
 	return (0);
 }

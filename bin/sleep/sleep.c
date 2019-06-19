@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.26 2018/02/04 02:18:15 cheloha Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.27 2019/01/10 16:41:10 cheloha Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/time.h>
 
 #include <ctype.h>
 #include <signal.h>
@@ -101,24 +103,14 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while (secs > 0 || nsecs > 0) {
-		/*
-		 * nanosleep(2) supports a maximum of 100 million
-		 * seconds, so we break the nap up into multiple
-		 * calls if we have more than that.
-		 */
-		if (secs > 100000000) {
-			rqtp.tv_sec = 100000000;
-			rqtp.tv_nsec = 0;
-		} else {
-			rqtp.tv_sec = secs;
-			rqtp.tv_nsec = nsecs;
-		}
-		if (nanosleep(&rqtp, NULL))
+	rqtp.tv_sec = secs;
+	rqtp.tv_nsec = nsecs;
+
+	if (timespecisset(&rqtp)) {
+		if (nanosleep(&rqtp, NULL) == -1)
 			err(1, NULL);
-		secs -= rqtp.tv_sec;
-		nsecs -= rqtp.tv_nsec;
 	}
+
 	return (0);
 }
 

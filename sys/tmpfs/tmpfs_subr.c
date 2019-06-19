@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.19 2018/03/28 16:34:28 visa Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.22 2018/05/28 16:02:08 visa Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -281,7 +281,7 @@ again:
 		/* atomic_or_ulong(&node->tn_gen, TMPFS_RECLAIMING_BIT); */
 		node->tn_gen |= TMPFS_RECLAIMING_BIT;
 		rw_exit_write(&node->tn_nlock);
-		error = vget(vp, LK_EXCLUSIVE, curproc);
+		error = vget(vp, LK_EXCLUSIVE);
 		if (error == ENOENT) {
 			rw_enter_write(&node->tn_nlock);
 			goto again;
@@ -352,7 +352,7 @@ again:
 	uvm_vnp_setsize(vp, node->tn_size);
 	vp->v_data = node;
 	node->tn_vnode = vp;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, curproc);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	rw_exit_write(&node->tn_nlock);
 
 	KASSERT(VOP_ISLOCKED(vp));
@@ -426,7 +426,6 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 out:
 	if (error == 0 && (cnp->cn_flags & SAVESTART) == 0)
 		pool_put(&namei_pool, cnp->cn_pnbuf);
-	vput(dvp);
 	return error;
 }
 

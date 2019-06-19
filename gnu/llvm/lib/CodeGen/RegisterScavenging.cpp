@@ -16,30 +16,33 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/RegisterScavenging.h"
-
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/LiveRegUnits.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/PassSupport.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetFrameLowering.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
 #include <cassert>
 #include <iterator>
 #include <limits>
 #include <string>
+#include <utility>
 
 using namespace llvm;
 
@@ -108,7 +111,7 @@ void RegScavenger::determineKillsAndDefs() {
   assert(Tracking && "Must be tracking to determine kills and defs");
 
   MachineInstr &MI = *MBBI;
-  assert(!MI.isDebugValue() && "Debug values have no kills or defs");
+  assert(!MI.isDebugInstr() && "Debug values have no kills or defs");
 
   // Find out which registers are early clobbered, killed, defined, and marked
   // def-dead in this instruction.
@@ -155,12 +158,12 @@ void RegScavenger::unprocess() {
   assert(Tracking && "Cannot unprocess because we're not tracking");
 
   MachineInstr &MI = *MBBI;
-  if (!MI.isDebugValue()) {
+  if (!MI.isDebugInstr()) {
     determineKillsAndDefs();
 
     // Commit the changes.
-    setUsed(KillRegUnits);
     setUnused(DefRegUnits);
+    setUsed(KillRegUnits);
   }
 
   if (MBBI == MBB->begin()) {
@@ -192,7 +195,7 @@ void RegScavenger::forward() {
     I->Restore = nullptr;
   }
 
-  if (MI.isDebugValue())
+  if (MI.isDebugInstr())
     return;
 
   determineKillsAndDefs();
@@ -210,7 +213,7 @@ void RegScavenger::forward() {
         continue;
       if (!isRegUsed(Reg)) {
         // Check if it's partial live: e.g.
-        // D0 = insert_subreg D0<undef>, S0
+        // D0 = insert_subreg undef D0, S0
         // ... D0
         // The problem is the insert_subreg could be eliminated. The use of
         // D0 is using a partially undef value. This is not *incorrect* since
@@ -285,8 +288,8 @@ bool RegScavenger::isRegUsed(unsigned Reg, bool includeReserved) const {
 unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RC) const {
   for (unsigned Reg : *RC) {
     if (!isRegUsed(Reg)) {
-      DEBUG(dbgs() << "Scavenger found unused reg: " << TRI->getName(Reg) <<
-            "\n");
+      LLVM_DEBUG(dbgs() << "Scavenger found unused reg: " << printReg(Reg, TRI)
+                        << "\n");
       return Reg;
     }
   }
@@ -315,7 +318,7 @@ unsigned RegScavenger::findSurvivorReg(MachineBasicBlock::iterator StartMI,
 
   bool inVirtLiveRange = false;
   for (++MI; InstrLimit > 0 && MI != ME; ++MI, --InstrLimit) {
-    if (MI->isDebugValue()) {
+    if (MI->isDebugInstr()) {
       ++InstrLimit; // Don't count debug instructions
       continue;
     }
@@ -460,7 +463,7 @@ RegScavenger::spill(unsigned Reg, const TargetRegisterClass &RC, int SPAdj,
                     MachineBasicBlock::iterator &UseMI) {
   // Find an available scavenging slot with size and alignment matching
   // the requirements of the class RC.
-  const MachineFunction &MF = *Before->getParent()->getParent();
+  const MachineFunction &MF = *Before->getMF();
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   unsigned NeedSize = TRI->getSpillSize(RC);
   unsigned NeedAlign = TRI->getSpillAlignment(RC);
@@ -533,7 +536,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
                                         MachineBasicBlock::iterator I,
                                         int SPAdj) {
   MachineInstr &MI = *I;
-  const MachineFunction &MF = *MI.getParent()->getParent();
+  const MachineFunction &MF = *MI.getMF();
   // Consider all allocatable registers in the register class initially
   BitVector Candidates = TRI->getAllocatableSet(MF, RC);
 
@@ -558,15 +561,15 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
 
   // If we found an unused register there is no reason to spill it.
   if (!isRegUsed(SReg)) {
-    DEBUG(dbgs() << "Scavenged register: " << TRI->getName(SReg) << "\n");
+    LLVM_DEBUG(dbgs() << "Scavenged register: " << printReg(SReg, TRI) << "\n");
     return SReg;
   }
 
   ScavengedInfo &Scavenged = spill(SReg, *RC, SPAdj, I, UseMI);
   Scavenged.Restore = &*std::prev(UseMI);
 
-  DEBUG(dbgs() << "Scavenged register (with spill): " << TRI->getName(SReg) <<
-        "\n");
+  LLVM_DEBUG(dbgs() << "Scavenged register (with spill): "
+                    << printReg(SReg, TRI) << "\n");
 
   return SReg;
 }
@@ -591,14 +594,16 @@ unsigned RegScavenger::scavengeRegisterBackwards(const TargetRegisterClass &RC,
     MachineBasicBlock::iterator ReloadAfter =
       RestoreAfter ? std::next(MBBI) : MBBI;
     MachineBasicBlock::iterator ReloadBefore = std::next(ReloadAfter);
-    DEBUG(dbgs() << "Reload before: " << *ReloadBefore << '\n');
+    if (ReloadBefore != MBB.end())
+      LLVM_DEBUG(dbgs() << "Reload before: " << *ReloadBefore << '\n');
     ScavengedInfo &Scavenged = spill(Reg, RC, SPAdj, SpillBefore, ReloadBefore);
     Scavenged.Restore = &*std::prev(SpillBefore);
     LiveUnits.removeReg(Reg);
-    DEBUG(dbgs() << "Scavenged register with spill: " << PrintReg(Reg, TRI)
-          << " until " << *SpillBefore);
+    LLVM_DEBUG(dbgs() << "Scavenged register with spill: " << printReg(Reg, TRI)
+                      << " until " << *SpillBefore);
   } else {
-    DEBUG(dbgs() << "Scavenged free register: " << PrintReg(Reg, TRI) << '\n');
+    LLVM_DEBUG(dbgs() << "Scavenged free register: " << printReg(Reg, TRI)
+                      << '\n');
   }
   return Reg;
 }
@@ -754,8 +759,8 @@ void llvm::scavengeFrameVirtualRegs(MachineFunction &MF, RegScavenger &RS) {
 
     bool Again = scavengeFrameVirtualRegsInBlock(MRI, RS, MBB);
     if (Again) {
-      DEBUG(dbgs() << "Warning: Required two scavenging passes for block "
-            << MBB.getName() << '\n');
+      LLVM_DEBUG(dbgs() << "Warning: Required two scavenging passes for block "
+                        << MBB.getName() << '\n');
       Again = scavengeFrameVirtualRegsInBlock(MRI, RS, MBB);
       // The target required a 2nd run (because it created new vregs while
       // spilling). Refuse to do another pass to keep compiletime in check.
@@ -769,13 +774,16 @@ void llvm::scavengeFrameVirtualRegs(MachineFunction &MF, RegScavenger &RS) {
 }
 
 namespace {
+
 /// This class runs register scavenging independ of the PrologEpilogInserter.
 /// This is used in for testing.
 class ScavengerTest : public MachineFunctionPass {
 public:
   static char ID;
+
   ScavengerTest() : MachineFunctionPass(ID) {}
-  bool runOnMachineFunction(MachineFunction &MF) {
+
+  bool runOnMachineFunction(MachineFunction &MF) override {
     const TargetSubtargetInfo &STI = MF.getSubtarget();
     const TargetFrameLowering &TFL = *STI.getFrameLowering();
 
@@ -792,9 +800,10 @@ public:
     return true;
   }
 };
-char ScavengerTest::ID;
 
 } // end anonymous namespace
+
+char ScavengerTest::ID;
 
 INITIALIZE_PASS(ScavengerTest, "scavenger-test",
                 "Scavenge virtual registers inside basic blocks", false, false)

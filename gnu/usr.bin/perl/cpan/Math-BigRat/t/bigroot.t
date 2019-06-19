@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!perl
 
 # Test broot function (and bsqrt() function, since it is used by broot()).
 

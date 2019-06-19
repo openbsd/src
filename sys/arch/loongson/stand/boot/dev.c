@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.8 2015/10/01 20:28:12 krw Exp $	*/
+/*	$OpenBSD: dev.c,v 1.9 2018/04/20 14:08:12 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -103,6 +103,7 @@ pmon_iostrategy(void *f, int rw, daddr32_t dblk, size_t size, void *buf,
 int
 pmon_ioopen(struct open_file *f, ...)
 {
+	static const u_char zero[8] = { 0 };
 	struct pmon_iodata *pi;
 	int rc;
 	va_list ap;
@@ -143,6 +144,15 @@ pmon_ioopen(struct open_file *f, ...)
 	if (part >= pi->label.d_npartitions) {
 		pmon_ioclose(f);
 		return EPART;
+	}
+
+	if (memcmp(pi->label.d_uid, zero, sizeof(pi->label.d_uid)) != 0) {
+		const u_char *duid = pi->label.d_uid;
+
+		snprintf(pmon_bootdev, sizeof(pmon_bootdev),
+		    "bootduid=%02x%02x%02x%02x%02x%02x%02x%02x",
+		    duid[0], duid[1], duid[2], duid[3],
+		    duid[4], duid[5], duid[6], duid[7]);
 	}
 
 	pi->partoff = DL_GETPOFFSET(&pi->label.d_partitions[part]);

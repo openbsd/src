@@ -1,4 +1,4 @@
-/*	$OpenBSD: irrfilter.h,v 1.9 2009/09/08 16:11:36 sthen Exp $ */
+/*	$OpenBSD: irrfilter.h,v 1.10 2018/09/17 13:35:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -61,8 +61,8 @@ enum qtype {
 	QTYPE_ROUTE6
 };
 
-struct as_set {
-	RB_ENTRY(as_set)	  entry;
+struct irr_as_set {
+	RB_ENTRY(irr_as_set)	  entry;
 	char			 *name;
 	char			**members;		/* direct members */
 	char			**as_set;		/* members as-set */
@@ -105,7 +105,7 @@ __dead void		 irr_main(u_int32_t, int, char *);
 int			 whois(const char *, enum qtype);
 int			 parse_response(FILE *, enum qtype);
 int			 write_filters(char *);
-struct as_set		*asset_expand(char *);
+struct irr_as_set	*asset_expand(char *);
 int			 asset_addmember(char *);
 struct prefix_set	*prefixset_get(char *);
 int			 prefixset_addmember(char *);

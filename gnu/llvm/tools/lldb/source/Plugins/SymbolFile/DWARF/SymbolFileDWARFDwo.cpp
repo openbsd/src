@@ -14,14 +14,14 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Utility/LLDBAssert.h"
 
-#include "DWARFCompileUnit.h"
+#include "DWARFUnit.h"
 #include "DWARFDebugInfo.h"
 
 using namespace lldb;
 using namespace lldb_private;
 
 SymbolFileDWARFDwo::SymbolFileDWARFDwo(ObjectFileSP objfile,
-                                       DWARFCompileUnit *dwarf_cu)
+                                       DWARFUnit *dwarf_cu)
     : SymbolFileDWARF(objfile.get()), m_obj_file_sp(objfile),
       m_base_dwarf_cu(dwarf_cu) {
   SetID(((lldb::user_id_t)dwarf_cu->GetOffset()) << 32);
@@ -52,7 +52,7 @@ void SymbolFileDWARFDwo::LoadSectionData(lldb::SectionType sect_type,
 }
 
 lldb::CompUnitSP
-SymbolFileDWARFDwo::ParseCompileUnit(DWARFCompileUnit *dwarf_cu,
+SymbolFileDWARFDwo::ParseCompileUnit(DWARFUnit *dwarf_cu,
                                      uint32_t cu_idx) {
   assert(GetCompileUnit() == dwarf_cu && "SymbolFileDWARFDwo::ParseCompileUnit "
                                          "called with incompatible compile "
@@ -60,7 +60,15 @@ SymbolFileDWARFDwo::ParseCompileUnit(DWARFCompileUnit *dwarf_cu,
   return GetBaseSymbolFile()->ParseCompileUnit(m_base_dwarf_cu, UINT32_MAX);
 }
 
-DWARFCompileUnit *SymbolFileDWARFDwo::GetCompileUnit() {
+DWARFUnit *SymbolFileDWARFDwo::GetCompileUnit() {
+  // A clang module is found via a skeleton CU, but is not a proper DWO.
+  // Clang modules have a .debug_info section instead of the *_dwo variant.
+  if (auto *section_list = m_obj_file->GetSectionList(false))
+    if (auto section_sp =
+            section_list->FindSectionByType(eSectionTypeDWARFDebugInfo, true))
+      if (!section_sp->GetName().GetStringRef().endswith("dwo"))
+        return nullptr;
+
   // Only dwo files with 1 compile unit is supported
   if (GetNumCompileUnits() == 1)
     return DebugInfo()->GetCompileUnitAtIndex(0);
@@ -68,7 +76,7 @@ DWARFCompileUnit *SymbolFileDWARFDwo::GetCompileUnit() {
     return nullptr;
 }
 
-DWARFCompileUnit *
+DWARFUnit *
 SymbolFileDWARFDwo::GetDWARFCompileUnit(lldb_private::CompileUnit *comp_unit) {
   return GetCompileUnit();
 }
@@ -91,6 +99,12 @@ SymbolFileDWARFDwo::GetForwardDeclClangTypeToDie() {
   return GetBaseSymbolFile()->GetForwardDeclClangTypeToDie();
 }
 
+size_t SymbolFileDWARFDwo::GetObjCMethodDIEOffsets(
+    lldb_private::ConstString class_name, DIEArray &method_die_offsets) {
+  return GetBaseSymbolFile()->GetObjCMethodDIEOffsets(
+      class_name, method_die_offsets);
+}
+
 UniqueDWARFASTTypeMap &SymbolFileDWARFDwo::GetUniqueDWARFASTTypeMap() {
   return GetBaseSymbolFile()->GetUniqueDWARFASTTypeMap();
 }
@@ -99,6 +113,17 @@ lldb::TypeSP SymbolFileDWARFDwo::FindDefinitionTypeForDWARFDeclContext(
     const DWARFDeclContext &die_decl_ctx) {
   return GetBaseSymbolFile()->FindDefinitionTypeForDWARFDeclContext(
       die_decl_ctx);
+}
+
+lldb::TypeSP SymbolFileDWARFDwo::FindCompleteObjCDefinitionTypeForDIE(
+    const DWARFDIE &die, const lldb_private::ConstString &type_name,
+    bool must_be_implementation) {
+  return GetBaseSymbolFile()->FindCompleteObjCDefinitionTypeForDIE(
+      die, type_name, must_be_implementation);
+}
+
+DWARFUnit *SymbolFileDWARFDwo::GetBaseCompileUnit() {
+  return m_base_dwarf_cu;
 }
 
 SymbolFileDWARF *SymbolFileDWARFDwo::GetBaseSymbolFile() {

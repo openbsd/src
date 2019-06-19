@@ -1,4 +1,4 @@
-/*	$OpenBSD: structs.h,v 1.8 2016/01/11 14:23:50 millert Exp $	*/
+/*	$OpenBSD: structs.h,v 1.9 2018/06/13 11:27:30 job Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -38,6 +38,7 @@ typedef	struct _entry {
 #define	DOW_STAR	0x08
 #define	WHEN_REBOOT	0x10
 #define	DONT_LOG	0x20
+#define	MAIL_WHEN_ERR	0x40
 } entry;
 
 			/* the crontab database will be a list of the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.110 2018/03/10 07:55:49 otto Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.111 2018/11/25 17:12:10 krw Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -443,9 +443,6 @@ main(int argc, char *argv[])
 		if (DL_GETPSIZE(pp) == 0)
 			fatal("%s: `%c' partition is unavailable",
 			    argv[0], *cp);
-		if (pp->p_fstype == FS_BOOT)
-			fatal("%s: `%c' partition overlaps boot program",
-			      argv[0], *cp);
 	}
 havelabel:
 	if (sectorsize == 0) {

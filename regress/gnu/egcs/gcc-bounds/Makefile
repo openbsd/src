@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2016/09/25 21:35:12 bluhm Exp $
+# $OpenBSD: Makefile,v 1.17 2019/02/12 21:31:16 bluhm Exp $
 
 C_MODULES?=	strlcpy strlcat getcwd memcpy fread memcpy declare \
 		sscanf vararray md builtins
@@ -52,9 +52,16 @@ generate:
 
 NOOBJ= Yes
 
-.include <bsd.regress.mk>
-.if ${COMPILER_VERSION:L} == "gcc3" 
+.include <bsd.own.mk>
+
+.if ${BUILD_GCC3:L} == "yes" 
 EXP=		.exp.gcc3
-.else
+.elif ${BUILD_GCC4:L} == "yes" 
 EXP=		.exp.gcc4
+.else
+regress:
+	@echo neither gcc3 nor gcc4 exists on ${MACHINE_ARCH}
+	@echo SKIPPED
 .endif
+
+.include <bsd.regress.mk>

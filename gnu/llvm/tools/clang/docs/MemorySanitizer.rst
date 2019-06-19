@@ -165,6 +165,13 @@ to:
 #. Set environment variable `MSAN_OPTIONS=poison_in_dtor=1` before running
    the program.
 
+Writable/Executable paging detection
+====================================
+
+You can eable writable-executable page detection in MemorySanitizer by
+setting the environment variable `MSAN_OPTIONS=detect_write_exec=1` before
+running the program.
+
 Handling external code
 ======================
 
@@ -185,7 +192,11 @@ self-built instrumented libc++ (as a replacement for libstdc++).
 Supported Platforms
 ===================
 
-MemorySanitizer is supported on Linux x86\_64/MIPS64/AArch64.
+MemorySanitizer is supported on the following OS:
+
+* Linux
+* NetBSD
+* FreeBSD
 
 Limitations
 ===========

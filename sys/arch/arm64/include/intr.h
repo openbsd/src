@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2018/01/31 10:52:12 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.12 2018/08/20 15:02:07 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -118,7 +118,6 @@ extern struct arm_intr_func arm_intr_func;
 #define	splstatclock()	splraise(IPL_STATCLOCK)
 #define	splhigh()	splraise(IPL_HIGH)
 
-#define	spllock()	splhigh()
 #define	spl0()		spllower(IPL_NONE)
 
 void	 intr_barrier(void *);
@@ -142,6 +141,8 @@ struct interrupt_controller {
 	void	*(*ic_establish_msi)(void *, uint64_t *, uint64_t *, int,
 		    int (*)(void *), void *, char *);
 	void	 (*ic_disestablish)(void *);
+	void	 (*ic_enable)(void *);
+	void	 (*ic_disable)(void *);
 	void	 (*ic_route)(void *, int, struct cpu_info *);
 	void	 (*ic_cpu_enable)(void);
 
@@ -156,11 +157,13 @@ void	*arm_intr_establish_fdt(int, int, int (*)(void *),
 	    void *, char *);
 void	*arm_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, char *);
-void	*arm_intr_establish_fdt_imap(int, int *, int, int, int, int (*)(void *),
+void	*arm_intr_establish_fdt_imap(int, int *, int, int, int (*)(void *),
 	    void *, char *);
 void	*arm_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int ,
 	    int (*)(void *), void *, char *);
 void	 arm_intr_disestablish_fdt(void *);
+void	 arm_intr_enable(void *);
+void	 arm_intr_disable(void *);
 void	 arm_intr_route(void *, int, struct cpu_info *);
 void	 arm_intr_cpu_enable(void);
 void	*arm_intr_parent_establish_fdt(void *, int *, int,

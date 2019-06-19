@@ -11,8 +11,8 @@
 #define LLD_READER_WRITER_MACHO_NORMALIZED_FILE_BINARY_UTILS_H
 
 #include "MachONormalizedFile.h"
+#include "lld/Common/LLVM.h"
 #include "lld/Core/Error.h"
-#include "lld/Core/LLVM.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/BinaryFormat/MachO.h"
 #include "llvm/Support/Casting.h"
@@ -186,11 +186,10 @@ packRelocation(const Relocation &r, bool swap, bool isBigEndian) {
 }
 
 inline StringRef getString16(const char s[16]) {
-  StringRef x = s;
-  if ( x.size() > 16 )
-    return x.substr(0, 16);
-  else
-    return x;
+  // The StringRef(const char *) constructor passes the const char * to
+  // strlen(), so we can't use this constructor here, because if there is no
+  // null terminator in s, then strlen() will read past the end of the array.
+  return StringRef(s, strnlen(s, 16));
 }
 
 inline void setString16(StringRef str, char s[16]) {

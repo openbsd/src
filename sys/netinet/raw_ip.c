@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.108 2017/12/04 13:40:34 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.119 2019/02/04 21:40:52 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -114,6 +114,8 @@ rip_init(void)
 }
 
 struct sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
+
+struct mbuf	*rip_chkhdr(struct mbuf *, struct mbuf *);
 
 int
 rip_input(struct mbuf **mp, int *offp, int proto, int af)
@@ -252,24 +254,15 @@ rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 			m_freem(m);
 			return (EMSGSIZE);
 		}
-		if (m->m_pkthdr.len < sizeof(struct ip)) {
-			m_freem(m);
+
+		m = rip_chkhdr(m, inp->inp_options);
+		if (m == NULL)
 			return (EINVAL);
-		}
+
 		ip = mtod(m, struct ip *);
-		/*
-		 * don't allow both user specified and setsockopt options,
-		 * and don't allow packet length sizes that will crash
-		 */
-		if ((ip->ip_hl != (sizeof (*ip) >> 2) && inp->inp_options) ||
-		    ntohs(ip->ip_len) > m->m_pkthdr.len ||
-		    ntohs(ip->ip_len) < ip->ip_hl << 2) {
-			m_freem(m);
-			return (EINVAL);
-		}
-		if (ip->ip_id == 0) {
+		if (ip->ip_id == 0)
 			ip->ip_id = htons(ip_randomid());
-		}
+
 		/* XXX prevent ip_output from overwriting header fields */
 		flags |= IP_RAWOUTPUT;
 		ipstat_inc(ips_rawout);
@@ -287,14 +280,85 @@ rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 #if NPF > 0
 	if (inp->inp_socket->so_state & SS_ISCONNECTED &&
 	    ip->ip_p != IPPROTO_ICMP)
-		m->m_pkthdr.pf.inp = inp;
+		pf_mbuf_link_inpcb(m, inp);
 #endif
 
 	error = ip_output(m, inp->inp_options, &inp->inp_route, flags,
 	    inp->inp_moptions, inp, 0);
-	if (error == EACCES)	/* translate pf(4) error for userland */
-		error = EHOSTUNREACH;
 	return (error);
+}
+
+struct mbuf *
+rip_chkhdr(struct mbuf *m, struct mbuf *options)
+{
+	struct ip *ip;
+	int hlen, opt, optlen, cnt;
+	u_char *cp;
+
+	if (m->m_pkthdr.len < sizeof(struct ip)) {
+		m_freem(m);
+		return NULL;
+	}
+
+	m = m_pullup(m, sizeof (struct ip));
+	if (m == NULL)
+		return NULL;
+
+	ip = mtod(m, struct ip *);
+	hlen = ip->ip_hl << 2;
+
+	/* Don't allow packet length sizes that will crash. */
+	if (hlen < sizeof (struct ip) ||
+	    ntohs(ip->ip_len) < hlen ||
+	    ntohs(ip->ip_len) != m->m_pkthdr.len) {
+		m_freem(m);
+		return NULL;
+	}
+	m = m_pullup(m, hlen);
+	if (m == NULL)
+		return NULL;
+
+	ip = mtod(m, struct ip *);
+
+	if (ip->ip_v != IPVERSION) {
+		m_freem(m);
+		return NULL;
+	}
+
+	/*
+	 * Don't allow both user specified and setsockopt options.
+	 * If options are present verify them.
+	 */
+	if (hlen != sizeof(struct ip)) {
+		if (options) {
+			m_freem(m);
+			return NULL;
+		} else {
+			cp = (u_char *)(ip + 1);
+			cnt = hlen - sizeof(struct ip);
+			for (; cnt > 0; cnt -= optlen, cp += optlen) {
+				opt = cp[IPOPT_OPTVAL];
+				if (opt == IPOPT_EOL)
+					break;
+				if (opt == IPOPT_NOP)
+					optlen = 1;
+				else {
+					if (cnt < IPOPT_OLEN + sizeof(*cp)) {
+						m_freem(m);
+						return NULL;
+					}
+					optlen = cp[IPOPT_OLEN];
+					if (optlen < IPOPT_OLEN + sizeof(*cp) ||
+					    optlen > cnt) {
+						m_freem(m);
+						return NULL;
+					}
+				}
+			}
+		}
+	}
+
+	return m;
 }
 
 /*
@@ -365,15 +429,16 @@ int
 rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
 {
-	struct inpcb *inp = sotoinpcb(so);
+	struct inpcb *inp;
 	int error = 0;
-
-	soassertlocked(so);
 
 	if (req == PRU_CONTROL)
 		return (in_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control));
 
+	soassertlocked(so);
+
+	inp = sotoinpcb(so);
 	if (inp == NULL) {
 		error = EINVAL;
 		goto release;
@@ -386,7 +451,9 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			error = ENOTCONN;
 			break;
 		}
-		/* FALLTHROUGH */
+		soisdisconnected(so);
+		inp->inp_faddr.s_addr = INADDR_ANY;
+		break;
 	case PRU_ABORT:
 		soisdisconnected(so);
 		if (inp == NULL)
@@ -477,16 +544,16 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/*
 		 * stat: don't bother with a blocksize.
 		 */
-		return (0);
+		break;
 
 	/*
 	 * Not supported.
 	 */
-	case PRU_RCVOOB:
-	case PRU_RCVD:
 	case PRU_LISTEN:
 	case PRU_ACCEPT:
 	case PRU_SENDOOB:
+	case PRU_RCVD:
+	case PRU_RCVOOB:
 		error = EOPNOTSUPP;
 		break;
 
@@ -502,7 +569,10 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		panic("rip_usrreq");
 	}
 release:
-	m_freem(m);
+	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
+		m_freem(control);
+		m_freem(m);
+	}
 	return (error);
 }
 

@@ -188,9 +188,9 @@ $OWD =~ s!/!\\!g;
 chdir($tempdir) or die "$0: chdir('$tempdir')\n";
 
 if (@SisPl) {
-  if (open(my $fi, "default.pl")) {
+  if (open(my $fi, "<", "default.pl")) {
     my $fn = "default.pl.new";
-    if (open(my $fo, ">$fn")) {
+    if (open(my $fo, ">", $fn)) {
       while (<$fi>) {
 	last unless /^\#/;
 	print $fo $_;
@@ -254,7 +254,7 @@ unless ($Library) {
 
   my $cmd = "uidcrc $uids |";
 
-  if (open(my $fh, $cmd)) {
+  if (open(my $fh, '<', $cmd)) {
     my $line = <$fh>;
     close($fh);
     # 0x10000079 0x100039ce 0x0acebabe 0xc82b1900
@@ -285,7 +285,7 @@ unless ($Library) {
   my $UID_OFFSET = 0x0C7C; # This is where the uid is in the $app.
   substr($app, $UID_OFFSET, 4) = substr($app, 8, 4); # Copy the uid also here.
 
-  if (open(my $fh, ">$AppName.app")) {
+  if (open(my $fh, '>', "$AppName.app")) {
     binmode($fh);
     print $fh $app;
     close($fh);
@@ -295,7 +295,7 @@ unless ($Library) {
 
   push @pkg, qq["$AppName.app"-"!:\\system\\apps\\$AppName\\$AppName.app"];
 
-  if (open(my $fh, ">$AppName.rsc")) {
+  if (open(my $fh, '>', "$AppName.rsc")) {
     binmode($fh);
     print $fh hex2data($RSCHEX);
     close($fh);
@@ -311,7 +311,7 @@ if ($ShowPkg) {
   }
 } else {
   my $fn = "$AppName.pkg";
-  if (open(my $fh, ">$fn")) {
+  if (open(my $fh, '>', $fn)) {
     for my $l (@pkg) {
       print $fh "$l\r\n"; # Note CRLF!
     }

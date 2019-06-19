@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpithinkpad.4,v 1.2 2008/05/31 22:02:03 sobrado Exp $
+.\"	$OpenBSD: acpithinkpad.4,v 1.5 2018/05/22 06:29:53 jmc Exp $
 .\"
 .\" Copyright (c) 2008 joshua stein <jcs@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2008 $
+.Dd $Mdocdate: May 22 2018 $
 .Dt ACPITHINKPAD 4
 .Os
 .Sh NAME
@@ -28,9 +28,22 @@ The
 driver provides ACPI support for IBM/Lenovo ThinkPad laptops.
 It responds to various hotkey button presses such as the brightness adjustment
 and wireless toggle keys.
+.Pp
+The
+.Nm
+driver sets up various sensors that indicate the current state of
+certain hardware devices present on ThinkPad laptops.
+These include temperature sensors and fan rotational speed sensors, as well as a
+sensor indicating the current state of the port replicator device.
+These sensors can be used with
+.Xr sensorsd 8
+to perform events on sensor state changes.
+Note that the port replicator indicator will report a state of UNKNOWN
+until the first port replicator connect/disconnect event is received.
 .Sh SEE ALSO
 .Xr acpi 4 ,
-.Xr intro 4
+.Xr intro 4 ,
+.Xr sensorsd 8
 .Sh HISTORY
 The
 .Nm

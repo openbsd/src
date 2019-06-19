@@ -563,13 +563,13 @@ EOT
 EXPECT
 ok
 ########
-# [ID 20001202.002] and change #8066 added 'at -e line 1';
+# [ID 20001202.002 (#4821)] and change #8066 added 'at -e line 1';
 # reversed again as a result of [perl #17763]
 die qr(x)
 EXPECT
 (?^:x)
 ########
-# 20001210.003 mjd@plover.com
+# 20001210.003 (#4893) mjd@plover.com
 format REMITOUT_TOP =
 FOO
 .
@@ -615,11 +615,11 @@ new_pmop "abcdef"; reset;
 close STDERR; die;
 EXPECT
 ########
-# core dump in 20000716.007
+# core dump in 20000716.007 (#3516)
 -w
 "x" =~ /(\G?x)?/;
 ########
-# Bug 20010515.004
+# Bug 20010515.004 (#6998)
 my @h = 1 .. 10;
 bad(@h);
 sub bad {
@@ -632,7 +632,7 @@ EXPECT
 O
 Use of freed value in iteration at - line 7.
 ########
-# Bug 20010506.041
+# Bug 20010506.041 (#6952)
 "abcd\x{1234}" =~ /(a)(b[c])(d+)?/i and print "ok\n";
 EXPECT
 ok
@@ -663,13 +663,13 @@ Bar=ARRAY(0x...)
 BEGIN { print "ok\n" }
 EXPECT
 ok
-######## scalar ref to file test operator segfaults on 5.6.1 [ID 20011127.155]
+######## scalar ref to file test operator segfaults on 5.6.1 [ID 20011127.155 (#7947)]
 # This only happens if the filename is 11 characters or less.
 $foo = \-f "blah";
 print "ok" if ref $foo && !$$foo;
 EXPECT
 ok
-######## [ID 20011128.159] 'X' =~ /\X/ segfault in 5.6.1
+######## [ID 20011128.159 (#7951)] 'X' =~ /\X/ segfault in 5.6.1
 print "ok" if 'X' =~ /\X/;
 EXPECT
 ok
@@ -725,7 +725,7 @@ $code = eval q[
 print $x;
 EXPECT
 ok 1
-######## [ID 20020623.009] nested eval/sub segfaults
+######## [ID 20020623.009 (#9728)] nested eval/sub segfaults
 $eval = eval 'sub { eval "sub { %S }" }';
 $eval->({});
 ######## [perl #17951] Strange UTF error

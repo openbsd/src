@@ -17,7 +17,7 @@ use Carp;
 );
 
 # Given an object, dump its transitive data closure
-sub main'dump {
+sub main::dump {
 	my ($object) = @_;
 	croak "Not a reference!" unless ref($object);
 	local %dumped;

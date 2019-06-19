@@ -75,6 +75,8 @@ public:
 
   lldb::SBProcess GetProcess();
 
+  lldb::SBStructuredData GetStatistics();
+
   //------------------------------------------------------------------
   /// Return the platform object associated with the target.
   ///
@@ -163,6 +165,7 @@ public:
                          bool stop_at_entry, lldb::SBError &error);
 
   SBProcess LoadCore(const char *core_file);
+  SBProcess LoadCore(const char *core_file, lldb::SBError &error);
 
   //------------------------------------------------------------------
   /// Launch a new process with sensible defaults.
@@ -217,14 +220,6 @@ public:
   //------------------------------------------------------------------
   lldb::SBProcess AttachToProcessWithID(SBListener &listener, lldb::pid_t pid,
                                         lldb::SBError &error);
-
-#if defined(__APPLE__)
-  // We need to keep this around for a build or two since Xcode links
-  // to the 32 bit version of this function. We will take it out soon.
-  lldb::SBProcess AttachToProcessWithID(SBListener &listener,
-                                        ::pid_t pid, // 32 bit int process ID
-                                        lldb::SBError &error); // DEPRECATED
-#endif
 
   //------------------------------------------------------------------
   /// Attach to process with name.
@@ -296,6 +291,21 @@ public:
   lldb::SBDebugger GetDebugger() const;
 
   lldb::SBModule FindModule(const lldb::SBFileSpec &file_spec);
+
+  //------------------------------------------------------------------
+  /// Find compile units related to *this target and passed source
+  /// file.
+  ///
+  /// @param[in] sb_file_spec
+  ///     A lldb::SBFileSpec object that contains source file
+  ///     specification.
+  ///
+  /// @return
+  ///     A lldb::SBSymbolContextList that gets filled in with all of
+  ///     the symbol contexts for all the matches.
+  //------------------------------------------------------------------
+  lldb::SBSymbolContextList
+  FindCompileUnits(const lldb::SBFileSpec &sb_file_spec);
 
   lldb::ByteOrder GetByteOrder();
 
@@ -725,6 +735,10 @@ public:
   // false if the name is not a valid breakpoint name, true otherwise.
   bool FindBreakpointsByName(const char *name, SBBreakpointList &bkpt_list);
 
+  void GetBreakpointNames(SBStringList &names);
+
+  void DeleteBreakpointName(const char *name);
+
   bool EnableAllBreakpoints();
 
   bool DisableAllBreakpoints();
@@ -777,8 +791,7 @@ public:
                                           const void *buf, size_t size);
 
   // The "WithFlavor" is necessary to keep SWIG from getting confused about
-  // overloaded arguments when
-  // using the buf + size -> Python Object magic.
+  // overloaded arguments when using the buf + size -> Python Object magic.
 
   lldb::SBInstructionList GetInstructionsWithFlavor(lldb::SBAddress base_addr,
                                                     const char *flavor_string,
@@ -818,6 +831,7 @@ protected:
   friend class SBAddress;
   friend class SBBlock;
   friend class SBBreakpointList;
+  friend class SBBreakpointNameImpl;
   friend class SBDebugger;
   friend class SBExecutionContext;
   friend class SBFunction;
@@ -830,8 +844,8 @@ protected:
   friend class SBValue;
 
   //------------------------------------------------------------------
-  // Constructors are private, use static Target::Create function to
-  // create an instance of this class.
+  // Constructors are private, use static Target::Create function to create an
+  // instance of this class.
   //------------------------------------------------------------------
 
   lldb::TargetSP GetSP() const;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ahci_fdt.c,v 1.3 2017/07/28 14:54:13 visa Exp $ */
+/* $OpenBSD: ahci_fdt.c,v 1.5 2018/12/04 11:25:48 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -74,10 +74,10 @@ ahci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("ahci_fdt_attach: bus_space_map failed!");
 
-	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
 	    ahci_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": unable to establish interrupt\n");
+		printf(": can't establish interrupt\n");
 		goto unmap;
 	}
 
@@ -90,7 +90,7 @@ ahci_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 irq:
-	arm_intr_disestablish_fdt(sc->sc_ih);
+	fdt_intr_disestablish(sc->sc_ih);
 unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 }

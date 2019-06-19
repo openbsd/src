@@ -18,21 +18,29 @@
 #ifndef LLVM_ANALYSIS_DOMINANCEFRONTIERIMPL_H
 #define LLVM_ANALYSIS_DOMINANCEFRONTIERIMPL_H
 
+#include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GenericDomTree.h"
+#include "llvm/Support/raw_ostream.h"
+#include <cassert>
+#include <set>
+#include <utility>
+#include <vector>
 
 namespace llvm {
 
 template <class BlockT>
 class DFCalculateWorkObject {
 public:
-  typedef DomTreeNodeBase<BlockT> DomTreeNodeT;
+  using DomTreeNodeT = DomTreeNodeBase<BlockT>;
 
   DFCalculateWorkObject(BlockT *B, BlockT *P, const DomTreeNodeT *N,
                         const DomTreeNodeT *PN)
       : currentBB(B), parentBB(P), Node(N), parentNode(PN) {}
+
   BlockT *currentBB;
   BlockT *parentBB;
   const DomTreeNodeT *Node;
@@ -219,6 +227,6 @@ ForwardDominanceFrontierBase<BlockT>::calculate(const DomTreeT &DT,
   return *Result;
 }
 
-} // End llvm namespace
+} // end namespace llvm
 
-#endif
+#endif // LLVM_ANALYSIS_DOMINANCEFRONTIERIMPL_H

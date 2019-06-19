@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.23 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.27 2019/01/20 01:56:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -75,8 +75,8 @@ dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	const unsigned char *p, *pm;
 	int pklen, pmlen;
 	int ptype;
-	void *pval;
-	ASN1_STRING *pstr;
+	const void *pval;
+	const ASN1_STRING *pstr;
 	X509_ALGOR *palg;
 	ASN1_INTEGER *public_key = NULL;
 
@@ -179,14 +179,14 @@ err:
  * AlgorithmIdentifier the pubkey must be recalculated.
  */
 static int
-dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+dsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
 	const unsigned char *p, *pm;
 	int pklen, pmlen;
 	int ptype;
-	void *pval;
-	ASN1_STRING *pstr;
-	X509_ALGOR *palg;
+	const void *pval;
+	const ASN1_STRING *pstr;
+	const X509_ALGOR *palg;
 	ASN1_INTEGER *privkey = NULL;
 	BN_CTX *ctx = NULL;
 	DSA *dsa = NULL;
@@ -515,7 +515,7 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	 * Check that q is not a composite number.
 	 */
 
-	if (BN_is_prime_ex(dsa->q, BN_prime_checks, ctx, NULL) == 0) {
+	if (BN_is_prime_ex(dsa->q, BN_prime_checks, ctx, NULL) <= 0) {
 		DSAerror(DSA_R_BAD_Q_VALUE);
 		goto err;
 	}
@@ -525,7 +525,7 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	EVP_PKEY_assign_DSA(pkey, dsa);
 	return 1;
 
-err:
+ err:
 	BN_CTX_free(ctx);
 	DSA_free(dsa);
 	return 0;

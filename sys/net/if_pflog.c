@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.81 2018/01/09 15:24:24 bluhm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.83 2019/06/13 21:12:52 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -124,8 +124,7 @@ pflogifs_resize(size_t n)
 		else
 			p[i] = NULL;
 
-	if (pflogifs)
-		free(pflogifs, M_DEVBUF, 0);
+	free(pflogifs, M_DEVBUF, npflogifs * sizeof(*pflogifs));
 	pflogifs = p;
 	npflogifs = n;
 	return (0);
@@ -183,7 +182,7 @@ pflog_clone_destroy(struct ifnet *ifp)
 	NET_UNLOCK();
 
 	if_detach(ifp);
-	free(pflogif, M_DEVBUF, 0);
+	free(pflogif, M_DEVBUF, sizeof(*pflogif));
 	return (0);
 }
 
@@ -267,8 +266,8 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 	hdr.rule_pid = rm->cpid;
 	hdr.dir = pd->dir;
 
-	PF_ACPY(&hdr.saddr, &pd->nsaddr, pd->naf);
-	PF_ACPY(&hdr.daddr, &pd->ndaddr, pd->naf);
+	pf_addrcpy(&hdr.saddr, &pd->nsaddr, pd->naf);
+	pf_addrcpy(&hdr.daddr, &pd->ndaddr, pd->naf);
 	hdr.af = pd->af;
 	hdr.naf = pd->naf;
 	hdr.sport = pd->nsport;
@@ -402,8 +401,8 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		goto copy;
 	pd.naf = pfloghdr->naf;
 
-	PF_ACPY(&osaddr, pd.src, pd.af);
-	PF_ACPY(&odaddr, pd.dst, pd.af);
+	pf_addrcpy(&osaddr, pd.src, pd.af);
+	pf_addrcpy(&odaddr, pd.dst, pd.af);
 	if (pd.sport)
 		osport = *pd.sport;
 	if (pd.dport)
@@ -417,12 +416,12 @@ pflog_bpfcopy(const void *src_arg, void *dst_arg, size_t len)
 		    &pd.hdr, M_NOWAIT);
 #ifdef INET6
 		if (afto) {
-			PF_ACPY(&pd.nsaddr, &pfloghdr->saddr, pd.naf);
-			PF_ACPY(&pd.ndaddr, &pfloghdr->daddr, pd.naf);
+			pf_addrcpy(&pd.nsaddr, &pfloghdr->saddr, pd.naf);
+			pf_addrcpy(&pd.ndaddr, &pfloghdr->daddr, pd.naf);
 		}
 #endif /* INET6 */
-		PF_ACPY(&pfloghdr->saddr, &osaddr, pd.af);
-		PF_ACPY(&pfloghdr->daddr, &odaddr, pd.af);
+		pf_addrcpy(&pfloghdr->saddr, &osaddr, pd.af);
+		pf_addrcpy(&pfloghdr->daddr, &odaddr, pd.af);
 		pfloghdr->sport = osport;
 		pfloghdr->dport = odport;
 	}

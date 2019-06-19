@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.92 2017/11/14 10:02:56 kettenis Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.100 2019/04/02 12:55:05 deraadt Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -33,8 +33,6 @@ CFLAGS+=	${NOPIE_FLAGS}
 CXXFLAGS+=	${NOPIE_FLAGS}
 AFLAGS+=	${NOPIE_FLAGS}
 .endif
-
-DIST_CFLAGS+=	-Oz
 
 .c.o:
 	@echo "${COMPILE.c} ${.IMPSRC} -o ${.TARGET}"
@@ -125,9 +123,9 @@ DIST_CFLAGS+=	-Oz
 	@rm -f ${.TARGET}.o
 
 .S.so .s.so:
-	@echo "${COMPILE.S} ${PICFLAG} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} \
+	@echo "${COMPILE.S} ${PICFLAG} -DSOLIB ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} \
 	    -o ${.TARGET}"
-	@${COMPILE.S} ${DFLAGS} -MF $@.d ${PICFLAG} ${CFLAGS:M-[IDM]*} \
+	@${COMPILE.S} ${DFLAGS} -MF $@.d ${PICFLAG} -DSOLIB ${CFLAGS:M-[IDM]*} \
 	    ${AINC} ${.IMPSRC} -o ${.TARGET}.o
 	@-mv $@.d $*.d
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
@@ -207,6 +205,13 @@ lib${LIB}_p.a: ${POBJS}
 SOBJS+=	${OBJS:.o=.so}
 BUILDAFTER += ${SOBJS}
 
+# exclude from readelf(1) output for syspatch building
+EXCLUDE_REGEX:=	"(cmll-586|(comparetf|libgcc|unwind-dw)2| 		\
+		mul(t|d|s|x)(c|f)3|crt(begin|end)S|			\
+		(div|umod|mod)di3|emutls|(add|div|sub)tf3|		\
+		(fixtf|float|extend|trunctf)(d|s)(ftf2|i|itf|f2)|	\
+		floatunsitf)"
+
 ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f ${.TARGET}
@@ -214,7 +219,7 @@ ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	${CC} -shared -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} -o ${.TARGET} \
 	    `readelf -Ws ${SYSPATCH_PATH}${LIBDIR}/${.TARGET} | \
 	    awk '/ FILE/{sub(".*/", "", $$NF); gsub(/\..*/, ".so", $$NF); print $$NF}' | \
-	    egrep -v "(cmll-586|libgcc2|unwind-dw2|mul(d|s|x)c3)" | awk '!x[$$0]++'` ${LDADD}
+	    egrep -v ${EXCLUDE_REGEX:C/[[:blank:]]//g} | awk '!x[$$0]++'` ${LDADD}
 .else
 	${CC} -shared -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} -o ${.TARGET} \
 	    `echo ${SOBJS} | tr ' ' '\n' | sort -R` ${LDADD}
@@ -268,16 +273,16 @@ beforeinstall:
 .endif
 
 realinstall:
-#	ranlib lib${LIB}.a
-	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
+.if !defined(NOLIBSTATIC)
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if (${INSTALL_COPY} != "-p")
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
+.endif
 .if !defined(NOPROFILE)
-#	ranlib lib${LIB}_p.a
-	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m 600 \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
 .if (${INSTALL_COPY} != "-p")
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
@@ -285,12 +290,16 @@ realinstall:
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
-	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${FULLSHLIBNAME} ${DESTDIR}${LIBDIR}
 .if defined(LIBREBUILD)
+.if !defined(DESTDIR)
+	@echo cleaning out old relink libraries to conserve disk space
+	rm -f /usr/share/relink/${LIBDIR}/lib${LIB}.*.a
+.endif	
 	${INSTALL} -d -o ${LIBOWN} -g ${LIBGRP} -m 755 \
 	   ${DESTDIR}/usr/share/relink/${LIBDIR}
-	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${FULLSHLIBNAME}.a ${DESTDIR}/usr/share/relink/${LIBDIR}
 .endif
 .endif

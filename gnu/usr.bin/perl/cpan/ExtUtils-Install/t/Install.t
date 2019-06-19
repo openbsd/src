@@ -12,7 +12,7 @@ use File::Path;
 use File::Spec;
 use File::Temp qw[tempdir];
 
-use Test::More tests => 60;
+use Test::More tests => 62;
 
 use MakeMaker::Test::Setup::BFD;
 
@@ -269,3 +269,15 @@ SKIP: {
     ok(compare("$bigdir/Dummy.pm", "$bigdir/DummyOrig.pm"),
         "orig file should be different");
 }
+
+pm_to_blib( { 'lib/Dummy/Split.pm' => 'blib/lib/Dummy/Split.pm' },
+            'blib/lib/auto'
+          );
+
+ok( -r 'blib/lib/auto/Dummy/Split/split.al',
+  'pm_to_blib does autosplit on appropriate files',
+);
+eval {
+  pm_to_blib( { 'lib/Dummy/Split.pm' => 'blib/lib/Dummy/Split.pm' } );
+};
+is $@, '', 'pm_to_blib with no autodir works';

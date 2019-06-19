@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.33 2016/05/04 14:30:01 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.34 2019/06/11 00:45:31 dlg Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -43,7 +43,17 @@ struct pci_attach_args;
 
 typedef struct sparc_pci_chipset *pci_chipset_tag_t;
 
+#define PCI_INTR_INTX		0x00000000
 #define PCI_INTR_MSI		0x80000000
+#define PCI_INTR_MSIX		0x40000000
+#define PCI_INTR_TYPE_MASK	0xc0000000
+#define PCI_INTR_TYPE(_ih)	((_ih) & PCI_INTR_TYPE_MASK)
+
+#define PCI_INTR_TAG_MASK	0x00ffff00
+#define PCI_INTR_TAG(_ih)	((_ih) & PCI_INTR_TAG_MASK)
+
+#define PCI_INTR_VEC_MASK	0x000000ff
+#define PCI_INTR_VEC(_ih)	((_ih) & PCI_INTR_VEC_MASK)
 typedef u_int pci_intr_handle_t;
 
 /* 
@@ -88,7 +98,8 @@ void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 				    pcireg_t);
 int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int		pci_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
-#define		pci_intr_map_msix(pa, vec, ihp)	(-1)
+int		pci_intr_map_msix(struct pci_attach_args *, int,
+		    pci_intr_handle_t *);
 int		pci_intr_line(pci_chipset_tag_t, pci_intr_handle_t);
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
@@ -96,6 +107,8 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
 void		pci_msi_enable(pci_chipset_tag_t, pcitag_t, bus_addr_t, int);
+void		pci_msix_enable(pci_chipset_tag_t, pcitag_t, bus_space_tag_t,
+		    int, bus_addr_t, uint32_t);
 
 int		sparc64_pci_enumerate_bus(struct pci_softc *,
 		    int (*match)(struct pci_attach_args *),

@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.h,v 1.8 2017/12/10 01:03:46 deraadt Exp $ */
+/* $OpenBSD: cu.h,v 1.9 2019/03/22 07:03:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -23,6 +23,7 @@
 void				 do_command(char);
 
 /* cu.c */
+extern int			 escape_char;
 extern int			 restricted;
 extern FILE			*record_file;
 extern struct termios		 saved_tio;

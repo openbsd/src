@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.2 2012/12/07 08:04:58 ratchov Exp $	*/
+/*	$OpenBSD: defs.h,v 1.3 2019/06/16 13:45:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,7 +23,8 @@
 #define MIDI_BUFSZ		3125	/* 1 second at 31.25kbit/s */
 
 /*
- * units used for MTC clock.
+ * units used for MTC clock. Must allow a quarter of frame to be
+ * represented at any of the standard 24, 25, or 30 fps.
  */
 #define MTC_SEC			2400	/* 1 second is 2400 ticks */
 

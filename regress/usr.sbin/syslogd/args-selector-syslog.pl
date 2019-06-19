@@ -43,7 +43,7 @@ our %args = (
 		IO::Handle::flush(\*STDOUT);
 		${$self->{syslogd}}->loggrep(get_testgrep(), 2);
 		setsockopt(STDOUT, SOL_SOCKET, SO_LINGER, pack('ii', 1, 0))
-		    or die "set socket linger failed: $!";
+		    or die ref($self), " set socket linger failed: $!";
 		write_shutdown($self);
 	    }
 	},

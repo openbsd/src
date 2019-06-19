@@ -27,9 +27,11 @@ to mean just the bracketed form.  Certainly, most Perl documentation does that.
 The dot (or period), C<.> is probably the most used, and certainly
 the most well-known character class. By default, a dot matches any
 character, except for the newline. That default can be changed to
-add matching the newline by using the I<single line> modifier: either
+add matching the newline by using the I<single line> modifier:
 for the entire regular expression with the C</s> modifier, or
-locally with C<(?s)>.  (The C<L</\N>> backslash sequence, described
+locally with C<(?s)>  (and even globally within the scope of
+L<C<use re '/s'>|re/'E<sol>flags' mode>).  (The C<L</\N>> backslash
+sequence, described
 below, matches any character except newline without regard to the
 I<single line> modifier.)
 
@@ -176,7 +178,7 @@ are generally used to add auxiliary markings to letters.
 C<\w> matches the platform's native underscore character plus whatever
 the locale considers to be alphanumeric.
 
-=item if Unicode rules are in effect ...
+=item if, instead, Unicode rules are in effect ...
 
 C<\w> matches exactly what C<\p{Word}> matches.
 
@@ -234,7 +236,7 @@ in the table below.
 
 C<\s> matches whatever the locale considers to be whitespace.
 
-=item if Unicode rules are in effect ...
+=item if, instead, Unicode rules are in effect ...
 
 C<\s> matches exactly the characters shown with an "s" column in the
 table below.
@@ -498,10 +500,11 @@ consisting of the two characters matched against.  Like the other
 instance where a bracketed class can match multiple characters, and for
 similar reasons, the class must not be inverted, and the named sequence
 may not appear in a range, even one where it is both endpoints.  If
-these happen, it is a fatal error if the character class is within an
-extended L<C<(?[...])>|/Extended Bracketed Character Classes>
-class; and only the first code point is used (with
-a C<regexp>-type warning raised) otherwise.
+these happen, it is a fatal error if the character class is within the
+scope of L<C<use re 'strict>|re/'strict' mode>, or within an extended
+L<C<(?[...])>|/Extended Bracketed Character Classes> class; otherwise
+only the first code point is used (with a C<regexp>-type warning
+raised).
 
 =back
 
@@ -512,7 +515,14 @@ is, characters that carry a special meaning like C<.>, C<*>, or C<(>) lose
 their special meaning and can be used inside a character class without
 the need to escape them. For instance, C<[()]> matches either an opening
 parenthesis, or a closing parenthesis, and the parens inside the character
-class don't group or capture.
+class don't group or capture.  Be aware that, unless the pattern is
+evaluated in single-quotish context, variable interpolation will take
+place before the bracketed class is parsed:
+
+ $, = "\t| ";
+ $a =~ m'[$,]';        # single-quotish: matches '$' or ','
+ $a =~ q{[$,]}'        # same
+ $a =~ m/[$,]/;        # double-quotish: matches "\t", "|", or " "
 
 Characters that may carry a special meaning inside a character class are:
 C<\>, C<^>, C<->, C<[> and C<]>, and are discussed below. They can be
@@ -569,6 +579,29 @@ Examples:
                       #  containing just [, and the character class is
                       #  followed by a ].
 
+=head3 Bracketed Character Classes and the C</xx> pattern modifier
+
+Normally SPACE and TAB characters have no special meaning inside a
+bracketed character class; they are just added to the list of characters
+matched by the class.  But if the L<C</xx>|perlre/E<sol>x and E<sol>xx>
+pattern modifier is in effect, they are generally ignored and can be
+added to improve readability.  They can't be added in the middle of a
+single construct:
+
+ / [ \x{10 FFFF} ] /xx  # WRONG!
+
+The SPACE in the middle of the hex constant is illegal.
+
+To specify a literal SPACE character, you can escape it with a
+backslash, like:
+
+ /[ a e i o u \  ]/xx
+
+This matches the English vowels plus the SPACE character.
+
+For clarity, you should already have been using C<\t> to specify a
+literal tab, and C<\t> is unaffected by C</xx>.
+
 =head3 Character Ranges
 
 It is not uncommon to want to match a range of characters. Luckily, instead
@@ -608,7 +641,7 @@ Examples:
              #  even on an EBCDIC platform.
  [\N{U+27}-\N{U+3F}] # Same. (U+27 is "'", and U+3F is "?")
 
-As the final two examples above show, you can achieve portablity to
+As the final two examples above show, you can achieve portability to
 non-ASCII platforms by using the C<\N{...}> form for the range
 endpoints.  These indicate that the specified range is to be interpreted
 using Unicode values, so C<[\N{U+27}-\N{U+3F}]> means to match
@@ -916,7 +949,7 @@ just the platform's native tab and space characters.
 
 =back
 
-=item if Unicode rules are in effect ...
+=item if, instead, Unicode rules are in effect ...
 
 The POSIX class matches the same as the Full-range counterpart.
 
@@ -1009,7 +1042,7 @@ We can extend the example above:
 This matches digits that are in either the Thai or Laotian scripts.
 
 Notice the white space in these examples.  This construct always has
-the C<E<sol>x> modifier turned on within it.
+the C<E<sol>xx> modifier turned on within it.
 
 The available binary operators are:
 
@@ -1054,24 +1087,18 @@ C<\N{...}>, etc.)
 
 This last example shows the use of this construct to specify an ordinary
 bracketed character class without additional set operations.  Note the
-white space within it; a limited version of C<E<sol>x> is turned on even
-within bracketed character classes, with only the SPACE and TAB (C<\t>)
-characters allowed, and no comments.  Hence,
+white space within it.  This is allowed because C<E<sol>xx> is
+automatically turned on within this construct.
 
- (?[ [#] ])
-
-matches the literal character "#".  To specify a literal white space character,
-you can escape it with a backslash, like:
-
- /(?[ [ a e i o u \  ] ])/
-
-This matches the English vowels plus the SPACE character.
 All the other escapes accepted by normal bracketed character classes are
-accepted here as well; but unrecognized escapes that generate warnings
-in normal classes are fatal errors here.
+accepted here as well.
 
-All warnings from these class elements are fatal, as well as some
-practices that don't currently warn.  For example you cannot say
+Because this construct compiles under
+L<C<use re 'strict>|re/'strict' mode>,  unrecognized escapes that
+generate warnings in normal classes are fatal errors here, as well as
+all other warnings from these class elements, as well as some
+practices that don't currently warn outside C<re 'strict'>.  For example
+you cannot say
 
  /(?[ [ \xF ] ])/     # Syntax error!
 
@@ -1101,8 +1128,8 @@ hence both of the following work:
 Any contained POSIX character classes, including things like C<\w> and C<\D>
 respect the C<E<sol>a> (and C<E<sol>aa>) modifiers.
 
-C<< (?[ ]) >> is a regex-compile-time construct.  Any attempt to use
-something which isn't knowable at the time the containing regular
+Note that C<< (?[ ]) >> is a regex-compile-time construct.  Any attempt
+to use something which isn't knowable at the time the containing regular
 expression is compiled is a fatal error.  In practice, this means
 just three limitations:
 

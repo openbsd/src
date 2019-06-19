@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.41 2016/03/19 22:10:49 guenther Exp $
+.\"	$OpenBSD: socket.2,v 1.43 2019/05/26 09:47:28 krw Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)socket.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 19 2016 $
+.Dd $Mdocdate: May 26 2019 $
 .Dt SOCKET 2
 .Os
 .Sh NAME
@@ -57,9 +57,9 @@ The currently understood formats are:
 .It AF_UNIX
 UNIX internal protocols
 .It AF_INET
-ARPA Internet protocols
+Internet Protocol version 4 (IPv4) protocol family
 .It AF_INET6
-IPv6 (Internet Protocol version 6) protocols
+Internet Protocol version 6 (IPv6) protocol family
 .El
 .Pp
 The socket has the indicated
@@ -219,8 +219,12 @@ and
 .Xr getsockopt 2
 are used to set and get options, respectively.
 .Sh RETURN VALUES
-A \-1 is returned if an error occurs, otherwise the return
-value is a descriptor referencing the socket.
+If successful,
+.Fn socket
+returns a non-negative integer, the socket file descriptor.
+Otherwise, a value of \-1 is returned and
+.Va errno
+is set to indicate the error.
 .Sh ERRORS
 The
 .Fn socket

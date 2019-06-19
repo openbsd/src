@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.206 2017/11/21 12:20:34 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.228 2019/06/14 19:55:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,7 +57,9 @@
 #define RELAY_ONHOLD		0x01
 #define RELAY_HOLDQ		0x02
 
-static void mta_handle_envelope(struct envelope *);
+static void mta_handle_envelope(struct envelope *, const char *);
+static void mta_query_smarthost(struct envelope *);
+static void mta_on_smarthost(struct envelope *, const char *);
 static void mta_query_mx(struct mta_relay *);
 static void mta_query_secret(struct mta_relay *);
 static void mta_query_preference(struct mta_relay *);
@@ -79,7 +81,7 @@ static void mta_log(const struct mta_envelope *, const char *, const char *,
     const char *, const char *);
 
 SPLAY_HEAD(mta_relay_tree, mta_relay);
-static struct mta_relay *mta_relay(struct envelope *);
+static struct mta_relay *mta_relay(struct envelope *, struct relayhost *);
 static void mta_relay_ref(struct mta_relay *);
 static void mta_relay_unref(struct mta_relay *);
 static void mta_relay_show(struct mta_relay *, struct mproc *, uint32_t, time_t);
@@ -146,6 +148,7 @@ static struct mta_block_tree		blocks;
 static struct tree wait_mx;
 static struct tree wait_preference;
 static struct tree wait_secret;
+static struct tree wait_smarthost;
 static struct tree wait_source;
 static struct tree flush_evp;
 static struct event ev_flush_evp;
@@ -173,7 +176,6 @@ void mta_hoststat_uncache(const char *, uint64_t);
 void mta_hoststat_reschedule(const char *);
 static void mta_hoststat_remove_entry(struct hoststat *);
 
-
 void
 mta_imsg(struct mproc *p, struct imsg *imsg)
 {
@@ -186,11 +188,12 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 	struct mta_source	*source;
 	struct hoststat		*hs;
 	struct sockaddr_storage	 ss;
-	struct envelope		 evp;
+	struct envelope		 evp, *e;
 	struct msg		 m;
 	const char		*secret;
 	const char		*hostname;
 	const char		*dom;
+	const char		*smarthost;
 	uint64_t		 reqid;
 	time_t			 t;
 	char			 buf[LINE_MAX];
@@ -203,7 +206,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		m_msg(&m, imsg);
 		m_get_envelope(&m, &evp);
 		m_end(&m);
-		mta_handle_envelope(&evp);
+		mta_handle_envelope(&evp, NULL);
 		return;
 
 	case IMSG_MTA_OPEN_MESSAGE:
@@ -232,6 +235,19 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		    mta_source((struct sockaddr *)&ss) : NULL);
 		return;
 
+	case IMSG_MTA_LOOKUP_SMARTHOST:
+		m_msg(&m, imsg);
+		m_get_id(&m, &reqid);
+		m_get_int(&m, &status);
+		smarthost = NULL;
+		if (status == LKA_OK)
+			m_get_string(&m, &smarthost);
+		m_end(&m);
+
+		e = tree_xpop(&wait_smarthost, reqid);
+		mta_on_smarthost(e, smarthost);
+		return;
+
 	case IMSG_MTA_LOOKUP_HELO:
 		mta_session_imsg(p, imsg);
 		return;
@@ -243,7 +259,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_int(&m, &preference);
 		m_end(&m);
 		domain = tree_xget(&wait_mx, reqid);
-		mx = xcalloc(1, sizeof *mx, "mta: mx");
+		mx = xcalloc(1, sizeof *mx);
 		mx->host = mta_host((struct sockaddr*)&ss);
 		mx->preference = preference;
 		TAILQ_FOREACH(imx, &domain->mxs, entry) {
@@ -296,18 +312,6 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 		mta_on_preference(relay, preference);
 		return;
 
-	case IMSG_MTA_DNS_PTR:
-		mta_session_imsg(p, imsg);
-		return;
-
-	case IMSG_MTA_TLS_INIT:
-		mta_session_imsg(p, imsg);
-		return;
-
-	case IMSG_MTA_TLS_VERIFY:
-		mta_session_imsg(p, imsg);
-		return;
-
 	case IMSG_CTL_RESUME_ROUTE:
 		u64 = *((uint64_t *)imsg->data);
 		if (u64)
@@ -322,7 +326,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 			if (route->flags & ROUTE_DISABLED) {
 				log_info("smtp-out: Enabling route %s per admin request",
 				    mta_route_to_text(route));
-				if (!runq_cancel(runq_route, NULL, route)) {
+				if (!runq_cancel(runq_route, route)) {
 					log_warnx("warn: route not on runq");
 					fatalx("exiting");
 				}
@@ -366,7 +370,7 @@ mta_imsg(struct mproc *p, struct imsg *imsg)
 
 	case IMSG_CTL_MTA_SHOW_ROUTES:
 		SPLAY_FOREACH(route, mta_route_tree, &routes) {
-			v = runq_pending(runq_route, NULL, route, &t);
+			v = runq_pending(runq_route, route, &t);
 			(void)snprintf(buf, sizeof(buf),
 			    "%llu. %s %c%c%c%c nconn=%zu nerror=%d penalty=%d timeout=%s",
 			    (unsigned long long)route->id,
@@ -470,6 +474,7 @@ mta_postprivdrop(void)
 	SPLAY_INIT(&blocks);
 
 	tree_init(&wait_secret);
+	tree_init(&wait_smarthost);
 	tree_init(&wait_mx);
 	tree_init(&wait_preference);
 	tree_init(&wait_source);
@@ -605,14 +610,63 @@ mta_route_next_task(struct mta_relay *relay, struct mta_route *route)
 }
 
 static void
-mta_handle_envelope(struct envelope *evp)
+mta_handle_envelope(struct envelope *evp, const char *smarthost)
 {
 	struct mta_relay	*relay;
 	struct mta_task		*task;
 	struct mta_envelope	*e;
+	struct dispatcher	*dispatcher;
+	struct mailaddr		 maddr;
+	struct relayhost	 relayh;
 	char			 buf[LINE_MAX];
 
-	relay = mta_relay(evp);
+	dispatcher = dict_xget(env->sc_dispatchers, evp->dispatcher);
+	if (dispatcher->u.remote.smarthost && smarthost == NULL) {
+		mta_query_smarthost(evp);
+		return;
+	}
+
+	memset(&relayh, 0, sizeof(relayh));
+	relayh.tls = RELAY_TLS_OPPORTUNISTIC;
+	if (smarthost && !text_to_relayhost(&relayh, smarthost)) {
+		log_warnx("warn: Failed to parse smarthost %s", smarthost);
+		m_create(p_queue, IMSG_MTA_DELIVERY_TEMPFAIL, 0, 0, -1);
+		m_add_evpid(p_queue, evp->id);
+		m_add_string(p_queue, "Cannot parse smarthost");
+		m_add_int(p_queue, ESC_OTHER_STATUS);
+		m_close(p_queue);
+		return;
+	}
+
+	if (relayh.flags & RELAY_AUTH && dispatcher->u.remote.auth == NULL) {
+		log_warnx("warn: No auth table on action \"%s\" for relay %s",
+		    evp->dispatcher, smarthost);
+		m_create(p_queue, IMSG_MTA_DELIVERY_TEMPFAIL, 0, 0, -1);
+		m_add_evpid(p_queue, evp->id);
+		m_add_string(p_queue, "No auth table for relaying");
+		m_add_int(p_queue, ESC_OTHER_STATUS);
+		m_close(p_queue);
+		return;
+	}
+
+	if (dispatcher->u.remote.tls_required) {
+		/* Reject relay if smtp+notls:// is requested */
+		if (relayh.tls == RELAY_TLS_NO) {
+			log_warnx("warn: TLS required for action \"%s\"",
+			    evp->dispatcher);
+			m_create(p_queue, IMSG_MTA_DELIVERY_TEMPFAIL, 0, 0, -1);
+			m_add_evpid(p_queue, evp->id);
+			m_add_string(p_queue, "TLS required for relaying");
+			m_add_int(p_queue, ESC_OTHER_STATUS);
+			m_close(p_queue);
+			return;
+		}
+		/* Update smtp:// to smtp+tls:// */
+		if (relayh.tls == RELAY_TLS_OPPORTUNISTIC)
+			relayh.tls = RELAY_TLS_STARTTLS;
+	}
+
+	relay = mta_relay(evp, &relayh);
 	/* ignore if we don't know the limits yet */
 	if (relay->limits &&
 	    relay->ntask >= (size_t)relay->limits->task_hiwat) {
@@ -643,7 +697,7 @@ mta_handle_envelope(struct envelope *evp)
 			break;
 
 	if (task == NULL) {
-		task = xmalloc(sizeof *task, "mta_task");
+		task = xmalloc(sizeof *task);
 		TAILQ_INIT(&task->envelopes);
 		task->relay = relay;
 		relay->ntask += 1;
@@ -654,26 +708,37 @@ mta_handle_envelope(struct envelope *evp)
 			    evp->sender.user, evp->sender.domain);
 		else
 			buf[0] = '\0';
-		task->sender = xstrdup(buf, "mta_task:sender");
+
+		if (dispatcher->u.remote.mail_from && evp->sender.user[0]) {
+			memset(&maddr, 0, sizeof (maddr));
+			if (text_to_mailaddr(&maddr,
+				dispatcher->u.remote.mail_from)) {
+				(void)snprintf(buf, sizeof buf, "%s@%s",
+				    maddr.user[0] ? maddr.user : evp->sender.user,
+				    maddr.domain[0] ? maddr.domain : evp->sender.domain);
+			}
+		}
+
+		task->sender = xstrdup(buf);
 		stat_increment("mta.task", 1);
 	}
 
-	e = xcalloc(1, sizeof *e, "mta_envelope");
+	e = xcalloc(1, sizeof *e);
 	e->id = evp->id;
 	e->creation = evp->creation;
+	e->smtpname = xstrdup(evp->smtpname);
 	(void)snprintf(buf, sizeof buf, "%s@%s",
 	    evp->dest.user, evp->dest.domain);
-	e->dest = xstrdup(buf, "mta_envelope:dest");
+	e->dest = xstrdup(buf);
 	(void)snprintf(buf, sizeof buf, "%s@%s",
 	    evp->rcpt.user, evp->rcpt.domain);
 	if (strcmp(buf, e->dest))
-		e->rcpt = xstrdup(buf, "mta_envelope:rcpt");
+		e->rcpt = xstrdup(buf);
 	e->task = task;
 	if (evp->dsn_orcpt.user[0] && evp->dsn_orcpt.domain[0]) {
 		(void)snprintf(buf, sizeof buf, "%s@%s",
 	    	    evp->dsn_orcpt.user, evp->dsn_orcpt.domain);
-		e->dsn_orcpt = xstrdup(buf,
-		    "mta_envelope:dsn_orcpt");
+		e->dsn_orcpt = xstrdup(buf);
 	}
 	(void)strlcpy(e->dsn_envid, evp->dsn_envid,
 	    sizeof e->dsn_envid);
@@ -730,6 +795,7 @@ mta_delivery_flush_event(int fd, short event, void *arg)
 
 		log_debug("debug: mta: flush for %016"PRIx64" (-> %s)", e->id, e->dest);
 
+		free(e->smtpname);
 		free(e->dest);
 		free(e->rcpt);
 		free(e->dsn_orcpt);
@@ -791,7 +857,7 @@ mta_query_mx(struct mta_relay *relay)
 	if (waitq_wait(&relay->domain->mxs, mta_on_mx, relay)) {
 		id = generate_uid();
 		tree_xset(&wait_mx, id, relay->domain);
-		if (relay->domain->flags)
+		if (relay->domain->as_host)
 			m_create(p_lka,  IMSG_MTA_DNS_HOST, 0, 0, -1);
 		else
 			m_create(p_lka,  IMSG_MTA_DNS_MX, 0, 0, -1);
@@ -838,6 +904,30 @@ mta_query_secret(struct mta_relay *relay)
 	m_close(p_lka);
 
 	mta_relay_ref(relay);
+}
+
+static void
+mta_query_smarthost(struct envelope *evp0)
+{
+	struct dispatcher *dispatcher;
+	struct envelope *evp;
+
+	evp = malloc(sizeof(*evp));
+	memmove(evp, evp0, sizeof(*evp));
+
+	dispatcher = dict_xget(env->sc_dispatchers, evp->dispatcher);
+
+	log_debug("debug: mta: querying smarthost for %s:%s...",
+	    evp->dispatcher, dispatcher->u.remote.smarthost);
+
+	tree_xset(&wait_smarthost, evp->id, evp);
+
+	m_create(p_lka, IMSG_MTA_LOOKUP_SMARTHOST, 0, 0, -1);
+	m_add_id(p_lka, evp->id);
+	m_add_string(p_lka, dispatcher->u.remote.smarthost);
+	m_close(p_lka);
+
+	log_debug("debug: mta: querying smarthost");
 }
 
 static void
@@ -953,6 +1043,26 @@ mta_on_secret(struct mta_relay *relay, const char *secret)
 }
 
 static void
+mta_on_smarthost(struct envelope *evp, const char *smarthost)
+{
+	if (smarthost == NULL) {
+		log_warnx("warn: Failed to retrieve smarthost "
+			    "for envelope %"PRIx64, evp->id);
+		m_create(p_queue, IMSG_MTA_DELIVERY_TEMPFAIL, 0, 0, -1);
+		m_add_evpid(p_queue, evp->id);
+		m_add_string(p_queue, "Cannot retrieve smarthost");
+		m_add_int(p_queue, ESC_OTHER_STATUS);
+		m_close(p_queue);
+		return;
+	}
+
+	log_debug("debug: mta: ... got smarthost for %016"PRIx64": %s",
+	    evp->id, smarthost);
+	mta_handle_envelope(evp, smarthost);
+	free(evp);
+}
+
+static void
 mta_on_preference(struct mta_relay *relay, int preference)
 {
 	log_debug("debug: mta: ... got preference for %s: %d",
@@ -1055,7 +1165,7 @@ mta_connect(struct mta_connector *c)
 
 	if (c->flags & CONNECTOR_WAIT) {
 		log_debug("debug: mta: cancelling connector timeout");
-		runq_cancel(runq_connector, NULL, c);
+		runq_cancel(runq_connector, c);
 		c->flags &= ~CONNECTOR_WAIT;
 	}
 
@@ -1147,7 +1257,7 @@ mta_connect(struct mta_connector *c)
 		    mta_connector_to_text(c),
 		    (unsigned long long) nextconn - time(NULL));
 		c->flags |= CONNECTOR_WAIT;
-		runq_schedule(runq_connector, nextconn, NULL, c);
+		runq_schedule_at(runq_connector, nextconn, c);
 		return;
 	}
 
@@ -1226,12 +1336,12 @@ mta_route_disable(struct mta_route *route, int penalty, int reason)
 	    mta_route_to_text(route), delay);
 
 	if (route->flags & ROUTE_DISABLED)
-		runq_cancel(runq_route, NULL, route);
+		runq_cancel(runq_route, route);
 	else
 		mta_route_ref(route);
 
 	route->flags |= reason & ROUTE_DISABLED;
-	runq_schedule(runq_route, time(NULL) + delay, NULL, route);
+	runq_schedule(runq_route, delay, route);
 }
 
 static void
@@ -1324,7 +1434,7 @@ mta_drain(struct mta_relay *r)
 		log_debug("debug: mta: scheduling relay %s in %llus...",
 		    mta_relay_to_text(r),
 		    (unsigned long long) r->nextsource - time(NULL));
-		runq_schedule(runq_relay, r->nextsource, NULL, r);
+		runq_schedule_at(runq_relay, r->nextsource, r);
 		r->status |= RELAY_WAIT_CONNECTOR;
 		mta_relay_ref(r);
 	}
@@ -1587,7 +1697,7 @@ static void
 mta_log(const struct mta_envelope *evp, const char *prefix, const char *source,
     const char *relay, const char *status)
 {
-	log_info("%016"PRIx64" mta event=delivery evpid=%016"PRIx64" "
+	log_info("%016"PRIx64" mta delivery evpid=%016"PRIx64" "
 	    "from=<%s> to=<%s> rcpt=<%s> source=\"%s\" "
 	    "relay=\"%s\" delay=%s result=\"%s\" stat=\"%s\"",
 	    evp->session,
@@ -1603,73 +1713,68 @@ mta_log(const struct mta_envelope *evp, const char *prefix, const char *source,
 }
 
 static struct mta_relay *
-mta_relay(struct envelope *e)
+mta_relay(struct envelope *e, struct relayhost *relayh)
 {
+	struct dispatcher	*dispatcher;
 	struct mta_relay	 key, *r;
+
+	dispatcher = dict_xget(env->sc_dispatchers, e->dispatcher);
 
 	memset(&key, 0, sizeof key);
 
-	if (e->agent.mta.relay.flags & RELAY_BACKUP) {
+	key.pki_name = dispatcher->u.remote.pki;
+	key.ca_name = dispatcher->u.remote.ca;
+	key.authtable = dispatcher->u.remote.auth;
+	key.sourcetable = dispatcher->u.remote.source;
+	key.helotable = dispatcher->u.remote.helo_source;
+	key.heloname = dispatcher->u.remote.helo;
+
+	if (relayh->hostname[0]) {
+		key.domain = mta_domain(relayh->hostname, 1);
+	}
+	else {
 		key.domain = mta_domain(e->dest.domain, 0);
-		key.backupname = e->agent.mta.relay.hostname;
-	} else if (e->agent.mta.relay.hostname[0]) {
-		key.domain = mta_domain(e->agent.mta.relay.hostname, 1);
-		key.flags |= RELAY_MX;
-	} else {
-		key.domain = mta_domain(e->dest.domain, 0);
-		if (!(e->agent.mta.relay.flags & RELAY_STARTTLS))
-			key.flags |= RELAY_TLS_OPTIONAL;
+		if (dispatcher->u.remote.backup) {
+			key.backupname = dispatcher->u.remote.backupmx;
+			if (key.backupname == NULL)
+				key.backupname = e->smtpname;
+		}
 	}
 
-	key.flags |= e->agent.mta.relay.flags;
-	key.port = e->agent.mta.relay.port;
-	key.pki_name = e->agent.mta.relay.pki_name;
-	if (!key.pki_name[0])
-		key.pki_name = NULL;
-	key.ca_name = e->agent.mta.relay.ca_name;
-	if (!key.ca_name[0])
-		key.ca_name = NULL;
-	key.authtable = e->agent.mta.relay.authtable;
-	if (!key.authtable[0])
-		key.authtable = NULL;
-	key.authlabel = e->agent.mta.relay.authlabel;
+	key.tls = relayh->tls;
+	key.flags |= relayh->flags;
+	key.port = relayh->port;
+	key.authlabel = relayh->authlabel;
 	if (!key.authlabel[0])
 		key.authlabel = NULL;
-	key.sourcetable = e->agent.mta.relay.sourcetable;
-	if (!key.sourcetable[0])
-		key.sourcetable = NULL;
-	key.helotable = e->agent.mta.relay.helotable;
-	if (!key.helotable[0])
-		key.helotable = NULL;
-	key.heloname = e->agent.mta.relay.heloname;
-	if (!key.heloname[0])
-		key.heloname = NULL;
+
+	if ((key.tls == RELAY_TLS_STARTTLS || key.tls == RELAY_TLS_SMTPS) &&
+	    dispatcher->u.remote.tls_noverify == 0)
+		key.flags |= RELAY_TLS_VERIFY;
 
 	if ((r = SPLAY_FIND(mta_relay_tree, &relays, &key)) == NULL) {
-		r = xcalloc(1, sizeof *r, "mta_relay");
+		r = xcalloc(1, sizeof *r);
 		TAILQ_INIT(&r->tasks);
 		r->id = generate_uid();
+		r->tls = key.tls;
 		r->flags = key.flags;
 		r->domain = key.domain;
 		r->backupname = key.backupname ?
-		    xstrdup(key.backupname, "mta: backupname") : NULL;
+		    xstrdup(key.backupname) : NULL;
 		r->backuppref = -1;
 		r->port = key.port;
-		r->pki_name = key.pki_name ? xstrdup(key.pki_name, "mta: pki_name") : NULL;
-		r->ca_name = key.ca_name ? xstrdup(key.ca_name, "mta: ca_name") : NULL;
+		r->pki_name = key.pki_name ? xstrdup(key.pki_name) : NULL;
+		r->ca_name = key.ca_name ? xstrdup(key.ca_name) : NULL;
 		if (key.authtable)
-			r->authtable = xstrdup(key.authtable, "mta: authtable");
+			r->authtable = xstrdup(key.authtable);
 		if (key.authlabel)
-			r->authlabel = xstrdup(key.authlabel, "mta: authlabel");
+			r->authlabel = xstrdup(key.authlabel);
 		if (key.sourcetable)
-			r->sourcetable = xstrdup(key.sourcetable,
-			    "mta: sourcetable");
+			r->sourcetable = xstrdup(key.sourcetable);
 		if (key.helotable)
-			r->helotable = xstrdup(key.helotable,
-			    "mta: helotable");
+			r->helotable = xstrdup(key.helotable);
 		if (key.heloname)
-			r->heloname = xstrdup(key.heloname,
-			    "mta: heloname");
+			r->heloname = xstrdup(key.heloname);
 		SPLAY_INSERT(mta_relay_tree, &relays, r);
 		stat_increment("mta.relay", 1);
 	} else {
@@ -1738,14 +1843,25 @@ mta_relay_to_text(struct mta_relay *relay)
 		(void)strlcat(buf, tmp, sizeof buf);
 	}
 
-	if (relay->flags & RELAY_STARTTLS) {
-		(void)strlcat(buf, sep, sizeof buf);
-		(void)strlcat(buf, "starttls", sizeof buf);
-	}
-
-	if (relay->flags & RELAY_SMTPS) {
-		(void)strlcat(buf, sep, sizeof buf);
+	(void)strlcat(buf, sep, sizeof buf);
+	switch(relay->tls) {
+	case RELAY_TLS_OPPORTUNISTIC:
+		(void)strlcat(buf, "smtp", sizeof buf);
+		break;
+	case RELAY_TLS_STARTTLS:
+		(void)strlcat(buf, "smtp+tls", sizeof buf);
+		break;
+	case RELAY_TLS_SMTPS:
 		(void)strlcat(buf, "smtps", sizeof buf);
+		break;
+	case RELAY_TLS_NO:
+		if (relay->flags & RELAY_LMTP)
+			(void)strlcat(buf, "lmtp", sizeof buf);
+		else
+			(void)strlcat(buf, "smtp+notls", sizeof buf);
+		break;
+	default:
+		(void)strlcat(buf, "???", sizeof buf);
 	}
 
 	if (relay->flags & RELAY_AUTH) {
@@ -1762,7 +1878,7 @@ mta_relay_to_text(struct mta_relay *relay)
 		(void)strlcat(buf, relay->pki_name, sizeof buf);
 	}
 
-	if (relay->flags & RELAY_MX) {
+	if (relay->domain->as_host) {
 		(void)strlcat(buf, sep, sizeof buf);
 		(void)strlcat(buf, "mx", sizeof buf);
 	}
@@ -1822,7 +1938,7 @@ mta_relay_show(struct mta_relay *r, struct mproc *p, uint32_t id, time_t t)
 	SHOWSTATUS(RELAY_WAIT_CONNECTOR, "connector");
 #undef SHOWSTATUS
 
-	if (runq_pending(runq_relay, NULL, r, &to))
+	if (runq_pending(runq_relay, r, &to))
 		(void)snprintf(dur, sizeof(dur), "%s", duration_to_text(to - t));
 	else
 		(void)strlcpy(dur, "-", sizeof(dur));
@@ -1841,7 +1957,7 @@ mta_relay_show(struct mta_relay *r, struct mproc *p, uint32_t id, time_t t)
 	iter = NULL;
 	while (tree_iter(&r->connectors, &iter, NULL, (void **)&c)) {
 
-		if (runq_pending(runq_connector, NULL, c, &to))
+		if (runq_pending(runq_connector, c, &to))
 			(void)snprintf(dur, sizeof(dur), "%s", duration_to_text(to - t));
 		else
 			(void)strlcpy(dur, "-", sizeof(dur));
@@ -1897,6 +2013,11 @@ mta_relay_cmp(const struct mta_relay *a, const struct mta_relay *b)
 	if (a->domain < b->domain)
 		return (-1);
 	if (a->domain > b->domain)
+		return (1);
+
+	if (a->tls < b->tls)
+		return (-1);
+	if (a->tls > b->tls)
 		return (1);
 
 	if (a->flags < b->flags)
@@ -1969,8 +2090,8 @@ mta_host(const struct sockaddr *sa)
 	h = SPLAY_FIND(mta_host_tree, &hosts, &key);
 
 	if (h == NULL) {
-		h = xcalloc(1, sizeof(*h), "mta_host");
-		h->sa = xmemdup(sa, sa->sa_len, "mta_host");
+		h = xcalloc(1, sizeof(*h));
+		h->sa = xmemdup(sa, sa->sa_len);
 		SPLAY_INSERT(mta_host_tree, &hosts, h);
 		stat_increment("mta.host", 1);
 	}
@@ -2025,18 +2146,18 @@ mta_host_cmp(const struct mta_host *a, const struct mta_host *b)
 SPLAY_GENERATE(mta_host_tree, mta_host, entry, mta_host_cmp);
 
 static struct mta_domain *
-mta_domain(char *name, int flags)
+mta_domain(char *name, int as_host)
 {
 	struct mta_domain	key, *d;
 
 	key.name = name;
-	key.flags = flags;
+	key.as_host = as_host;
 	d = SPLAY_FIND(mta_domain_tree, &domains, &key);
 
 	if (d == NULL) {
-		d = xcalloc(1, sizeof(*d), "mta_domain");
-		d->name = xstrdup(name, "mta_domain");
-		d->flags = flags;
+		d = xcalloc(1, sizeof(*d));
+		d->name = xstrdup(name);
+		d->as_host = as_host;
 		TAILQ_INIT(&d->mxs);
 		SPLAY_INSERT(mta_domain_tree, &domains, d);
 		stat_increment("mta.domain", 1);
@@ -2077,9 +2198,9 @@ mta_domain_unref(struct mta_domain *d)
 static int
 mta_domain_cmp(const struct mta_domain *a, const struct mta_domain *b)
 {
-	if (a->flags < b->flags)
+	if (a->as_host < b->as_host)
 		return (-1);
-	if (a->flags > b->flags)
+	if (a->as_host > b->as_host)
 		return (1);
 	return (strcasecmp(a->name, b->name));
 }
@@ -2100,9 +2221,9 @@ mta_source(const struct sockaddr *sa)
 	s = SPLAY_FIND(mta_source_tree, &sources, &key);
 
 	if (s == NULL) {
-		s = xcalloc(1, sizeof(*s), "mta_source");
+		s = xcalloc(1, sizeof(*s));
 		if (sa)
-			s->sa = xmemdup(sa, sa->sa_len, "mta_source");
+			s->sa = xmemdup(sa, sa->sa_len);
 		SPLAY_INSERT(mta_source_tree, &sources, s);
 		stat_increment("mta.source", 1);
 	}
@@ -2163,7 +2284,7 @@ mta_connector(struct mta_relay *relay, struct mta_source *source)
 
 	c = tree_get(&relay->connectors, (uintptr_t)(source));
 	if (c == NULL) {
-		c = xcalloc(1, sizeof(*c), "mta_connector");
+		c = xcalloc(1, sizeof(*c));
 		c->relay = relay;
 		c->source = source;
 		c->flags |= CONNECTOR_NEW;
@@ -2185,7 +2306,7 @@ mta_connector_free(struct mta_connector *c)
 	if (c->flags & CONNECTOR_WAIT) {
 		log_debug("debug: mta: cancelling timeout for %s",
 		    mta_connector_to_text(c));
-		runq_cancel(runq_connector, NULL, c);
+		runq_cancel(runq_connector, c);
 	}
 	mta_source_unref(c->source); /* from constructor */
 	free(c);
@@ -2216,7 +2337,7 @@ mta_route(struct mta_source *src, struct mta_host *dst)
 	r = SPLAY_FIND(mta_route_tree, &routes, &key);
 
 	if (r == NULL) {
-		r = xcalloc(1, sizeof(*r), "mta_route");
+		r = xcalloc(1, sizeof(*r));
 		r->src = src;
 		r->dst = dst;
 		r->flags |= ROUTE_NEW;
@@ -2230,7 +2351,7 @@ mta_route(struct mta_source *src, struct mta_host *dst)
 		log_debug("debug: mta: mta_route_ref(): cancelling runq for route %s",
 		    mta_route_to_text(r));
 		r->flags &= ~(ROUTE_RUNQ | ROUTE_KEEPALIVE);
-		runq_cancel(runq_route, NULL, r);
+		runq_cancel(runq_route, r);
 		r->refcount--; /* from mta_route_unref() */
 	}
 
@@ -2285,7 +2406,7 @@ mta_route_unref(struct mta_route *r)
 
 	if (sched > now) {
 		r->flags |= ROUTE_RUNQ;
-		runq_schedule(runq_route, sched, NULL, r);
+		runq_schedule_at(runq_route, sched, r);
 		r->refcount++;
 		return;
 	}
@@ -2342,9 +2463,9 @@ mta_block(struct mta_source *src, char *dom)
 	if (b != NULL)
 		return;
 
-	b = xcalloc(1, sizeof(*b), "mta_block");
+	b = xcalloc(1, sizeof(*b));
 	if (dom)
-		b->domain = xstrdup(dom, "mta_block");
+		b->domain = xstrdup(dom);
 	b->source = src;
 	mta_source_ref(src);
 	SPLAY_INSERT(mta_block_tree, &blocks, b);
@@ -2410,26 +2531,24 @@ mta_hoststat_update(const char *host, const char *error)
 {
 	struct hoststat	*hs = NULL;
 	char		 buf[HOST_NAME_MAX+1];
-	time_t		 tm;
 
 	if (!lowercase(buf, host, sizeof buf))
 		return;
 
-	tm = time(NULL);
 	hs = dict_get(&hoststat, buf);
 	if (hs == NULL) {
 		if ((hs = calloc(1, sizeof *hs)) == NULL)
 			return;
 		tree_init(&hs->deferred);
-		runq_schedule(runq_hoststat, tm+HOSTSTAT_EXPIRE_DELAY, NULL, hs);
+		runq_schedule(runq_hoststat, HOSTSTAT_EXPIRE_DELAY, hs);
 	}
 	(void)strlcpy(hs->name, buf, sizeof hs->name);
 	(void)strlcpy(hs->error, error, sizeof hs->error);
 	hs->tm = time(NULL);
 	dict_set(&hoststat, buf, hs);
 
-	runq_cancel(runq_hoststat, NULL, hs);
-	runq_schedule(runq_hoststat, tm+HOSTSTAT_EXPIRE_DELAY, NULL, hs);
+	runq_cancel(runq_hoststat, hs);
+	runq_schedule(runq_hoststat, HOSTSTAT_EXPIRE_DELAY, hs);
 }
 
 void
@@ -2493,5 +2612,5 @@ mta_hoststat_remove_entry(struct hoststat *hs)
 	while (tree_poproot(&hs->deferred, NULL, NULL))
 		;
 	dict_pop(&hoststat, hs->name);
-	runq_cancel(runq_hoststat, NULL, hs);
+	runq_cancel(runq_hoststat, hs);
 }

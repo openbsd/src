@@ -19,13 +19,13 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetOpcodes.h"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 
 #include <algorithm> // For std::max.
 
@@ -73,7 +73,7 @@ bool RegisterBankInfo::verify(const TargetRegisterInfo &TRI) const {
     const RegisterBank &RegBank = getRegBank(Idx);
     assert(Idx == RegBank.getID() &&
            "ID does not match the index in the array");
-    DEBUG(dbgs() << "Verify " << RegBank << '\n');
+    LLVM_DEBUG(dbgs() << "Verify " << RegBank << '\n');
     assert(RegBank.verify(TRI) && "RegBank is invalid");
   }
 #endif // NDEBUG
@@ -84,7 +84,7 @@ const RegisterBank *
 RegisterBankInfo::getRegBank(unsigned Reg, const MachineRegisterInfo &MRI,
                              const TargetRegisterInfo &TRI) const {
   if (TargetRegisterInfo::isPhysicalRegister(Reg))
-    return &getRegBankFromRegClass(*TRI.getMinimalPhysRegClass(Reg));
+    return &getRegBankFromRegClass(getMinimalPhysRegClass(Reg, TRI));
 
   assert(Reg && "NoRegister does not have a register bank");
   const RegClassOrRegBank &RegClassOrBank = MRI.getRegClassOrRegBank(Reg);
@@ -93,6 +93,19 @@ RegisterBankInfo::getRegBank(unsigned Reg, const MachineRegisterInfo &MRI,
   if (auto *RC = RegClassOrBank.dyn_cast<const TargetRegisterClass *>())
     return &getRegBankFromRegClass(*RC);
   return nullptr;
+}
+
+const TargetRegisterClass &
+RegisterBankInfo::getMinimalPhysRegClass(unsigned Reg,
+                                         const TargetRegisterInfo &TRI) const {
+  assert(TargetRegisterInfo::isPhysicalRegister(Reg) &&
+         "Reg must be a physreg");
+  const auto &RegRCIt = PhysRegMinimalRCs.find(Reg);
+  if (RegRCIt != PhysRegMinimalRCs.end())
+    return *RegRCIt->second;
+  const TargetRegisterClass *PhysRC = TRI.getMinimalPhysRegClass(Reg);
+  PhysRegMinimalRCs[Reg] = PhysRC;
+  return *PhysRC;
 }
 
 const RegisterBank *RegisterBankInfo::getRegBankFromConstraints(
@@ -151,7 +164,7 @@ RegisterBankInfo::getInstrMappingImpl(const MachineInstr &MI) const {
   // is important. The rest is not constrained.
   unsigned NumOperandsForMapping = IsCopyLike ? 1 : MI.getNumOperands();
 
-  const MachineFunction &MF = *MI.getParent()->getParent();
+  const MachineFunction &MF = *MI.getMF();
   const TargetSubtargetInfo &STI = MF.getSubtarget();
   const TargetRegisterInfo &TRI = *STI.getRegisterInfo();
   const MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -391,18 +404,18 @@ RegisterBankInfo::getInstrAlternativeMappings(const MachineInstr &MI) const {
 void RegisterBankInfo::applyDefaultMapping(const OperandsMapper &OpdMapper) {
   MachineInstr &MI = OpdMapper.getMI();
   MachineRegisterInfo &MRI = OpdMapper.getMRI();
-  DEBUG(dbgs() << "Applying default-like mapping\n");
+  LLVM_DEBUG(dbgs() << "Applying default-like mapping\n");
   for (unsigned OpIdx = 0,
                 EndIdx = OpdMapper.getInstrMapping().getNumOperands();
        OpIdx != EndIdx; ++OpIdx) {
-    DEBUG(dbgs() << "OpIdx " << OpIdx);
+    LLVM_DEBUG(dbgs() << "OpIdx " << OpIdx);
     MachineOperand &MO = MI.getOperand(OpIdx);
     if (!MO.isReg()) {
-      DEBUG(dbgs() << " is not a register, nothing to be done\n");
+      LLVM_DEBUG(dbgs() << " is not a register, nothing to be done\n");
       continue;
     }
     if (!MO.getReg()) {
-      DEBUG(dbgs() << " is %%noreg, nothing to be done\n");
+      LLVM_DEBUG(dbgs() << " is %%noreg, nothing to be done\n");
       continue;
     }
     assert(OpdMapper.getInstrMapping().getOperandMapping(OpIdx).NumBreakDowns !=
@@ -414,52 +427,48 @@ void RegisterBankInfo::applyDefaultMapping(const OperandsMapper &OpdMapper) {
     iterator_range<SmallVectorImpl<unsigned>::const_iterator> NewRegs =
         OpdMapper.getVRegs(OpIdx);
     if (NewRegs.begin() == NewRegs.end()) {
-      DEBUG(dbgs() << " has not been repaired, nothing to be done\n");
+      LLVM_DEBUG(dbgs() << " has not been repaired, nothing to be done\n");
       continue;
     }
     unsigned OrigReg = MO.getReg();
     unsigned NewReg = *NewRegs.begin();
-    DEBUG(dbgs() << " changed, replace " << PrintReg(OrigReg, nullptr));
+    LLVM_DEBUG(dbgs() << " changed, replace " << printReg(OrigReg, nullptr));
     MO.setReg(NewReg);
-    DEBUG(dbgs() << " with " << PrintReg(NewReg, nullptr));
+    LLVM_DEBUG(dbgs() << " with " << printReg(NewReg, nullptr));
 
     // The OperandsMapper creates plain scalar, we may have to fix that.
     // Check if the types match and if not, fix that.
     LLT OrigTy = MRI.getType(OrigReg);
     LLT NewTy = MRI.getType(NewReg);
     if (OrigTy != NewTy) {
-      assert(OrigTy.getSizeInBits() == NewTy.getSizeInBits() &&
+      // The default mapping is not supposed to change the size of
+      // the storage. However, right now we don't necessarily bump all
+      // the types to storage size. For instance, we can consider
+      // s16 G_AND legal whereas the storage size is going to be 32.
+      assert(OrigTy.getSizeInBits() <= NewTy.getSizeInBits() &&
              "Types with difference size cannot be handled by the default "
              "mapping");
-      DEBUG(dbgs() << "\nChange type of new opd from " << NewTy << " to "
-                   << OrigTy);
+      LLVM_DEBUG(dbgs() << "\nChange type of new opd from " << NewTy << " to "
+                        << OrigTy);
       MRI.setType(NewReg, OrigTy);
     }
-    DEBUG(dbgs() << '\n');
+    LLVM_DEBUG(dbgs() << '\n');
   }
 }
 
 unsigned RegisterBankInfo::getSizeInBits(unsigned Reg,
                                          const MachineRegisterInfo &MRI,
-                                         const TargetRegisterInfo &TRI) {
-  const TargetRegisterClass *RC = nullptr;
+                                         const TargetRegisterInfo &TRI) const {
   if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
     // The size is not directly available for physical registers.
     // Instead, we need to access a register class that contains Reg and
     // get the size of that register class.
-    RC = TRI.getMinimalPhysRegClass(Reg);
-  } else {
-    LLT Ty = MRI.getType(Reg);
-    unsigned RegSize = Ty.isValid() ? Ty.getSizeInBits() : 0;
-    // If Reg is not a generic register, query the register class to
-    // get its size.
-    if (RegSize)
-      return RegSize;
-    // Since Reg is not a generic register, it must have a register class.
-    RC = MRI.getRegClass(Reg);
+    // Because this is expensive, we'll cache the register class by calling
+    auto *RC = &getMinimalPhysRegClass(Reg, TRI);
+    assert(RC && "Expecting Register class");
+    return TRI.getRegSizeInBits(*RC);
   }
-  assert(RC && "Unable to deduce the register class");
-  return TRI.getRegSizeInBits(*RC);
+  return TRI.getRegSizeInBits(Reg, MRI);
 }
 
 //------------------------------------------------------------------------------
@@ -543,10 +552,11 @@ bool RegisterBankInfo::InstructionMapping::verify(
   // For PHI, we only care about mapping the definition.
   assert(NumOperands == (isCopyLike(MI) ? 1 : MI.getNumOperands()) &&
          "NumOperands must match, see constructor");
-  assert(MI.getParent() && MI.getParent()->getParent() &&
+  assert(MI.getParent() && MI.getMF() &&
          "MI must be connected to a MachineFunction");
-  const MachineFunction &MF = *MI.getParent()->getParent();
-  (void)MF;
+  const MachineFunction &MF = *MI.getMF();
+  const RegisterBankInfo *RBI = MF.getSubtarget().getRegBankInfo();
+  (void)RBI;
 
   for (unsigned Idx = 0; Idx < NumOperands; ++Idx) {
     const MachineOperand &MO = MI.getOperand(Idx);
@@ -564,7 +574,7 @@ bool RegisterBankInfo::InstructionMapping::verify(
     (void)MOMapping;
     // Register size in bits.
     // This size must match what the mapping expects.
-    assert(MOMapping.verify(getSizeInBits(
+    assert(MOMapping.verify(RBI->getSizeInBits(
                Reg, MF.getRegInfo(), *MF.getSubtarget().getRegisterInfo())) &&
            "Value mapping is invalid");
   }
@@ -725,8 +735,8 @@ void RegisterBankInfo::OperandsMapper::print(raw_ostream &OS,
   // If we have a function, we can pretty print the name of the registers.
   // Otherwise we will print the raw numbers.
   const TargetRegisterInfo *TRI =
-      getMI().getParent() && getMI().getParent()->getParent()
-          ? getMI().getParent()->getParent()->getSubtarget().getRegisterInfo()
+      getMI().getParent() && getMI().getMF()
+          ? getMI().getMF()->getSubtarget().getRegisterInfo()
           : nullptr;
   bool IsFirst = true;
   for (unsigned Idx = 0; Idx != NumOpds; ++Idx) {
@@ -735,13 +745,13 @@ void RegisterBankInfo::OperandsMapper::print(raw_ostream &OS,
     if (!IsFirst)
       OS << ", ";
     IsFirst = false;
-    OS << '(' << PrintReg(getMI().getOperand(Idx).getReg(), TRI) << ", [";
+    OS << '(' << printReg(getMI().getOperand(Idx).getReg(), TRI) << ", [";
     bool IsFirstNewVReg = true;
     for (unsigned VReg : getVRegs(Idx)) {
       if (!IsFirstNewVReg)
         OS << ", ";
       IsFirstNewVReg = false;
-      OS << PrintReg(VReg, TRI);
+      OS << printReg(VReg, TRI);
     }
     OS << "])";
   }

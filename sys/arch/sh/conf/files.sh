@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sh,v 1.6 2018/02/11 09:30:12 mpi Exp $
+#	$OpenBSD: files.sh,v 1.7 2019/04/25 21:47:53 deraadt Exp $
 #	$NetBSD: files.sh3,v 1.32 2005/12/11 12:18:58 christos Exp $
 
 file	arch/sh/sh/cache.c
@@ -52,6 +52,6 @@ file	lib/libkern/umoddi3.c
 file	lib/libkern/xordi3.c
 
 file	lib/libkern/arch/sh/movstr_i4.S
+file	lib/libkern/arch/sh/movstrSI12_i4.S
 file	lib/libkern/arch/sh/sdivsi3.S
 file	lib/libkern/arch/sh/udivsi3.S
-

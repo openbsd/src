@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.126 2018/02/01 21:11:33 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.136 2019/04/23 11:01:54 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -142,7 +142,6 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 
-		/* XXX rdomain support */
 		divert = pf_find_divert(m);
 		KASSERT(divert != NULL);
 		switch (divert->type) {
@@ -185,7 +184,16 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 		if (proto != IPPROTO_ICMPV6 && in6p->inp_cksum6 != -1) {
 			rip6stat_inc(rip6s_isum);
-			if (in6_cksum(m, proto, *offp,
+			/*
+			 * Although in6_cksum() does not need the position of
+			 * the checksum field for verification, enforce that it
+			 * is located within the packet.  Userland has given
+			 * a checksum offset, a packet too short for that is
+			 * invalid.  Avoid overflow with user supplied offset.
+			 */
+			if (m->m_pkthdr.len < *offp + 2 ||
+			    m->m_pkthdr.len - *offp - 2 < in6p->inp_cksum6 ||
+			    in6_cksum(m, proto, *offp,
 			    m->m_pkthdr.len - *offp)) {
 				rip6stat_inc(rip6s_badsum);
 				continue;
@@ -440,7 +448,7 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 			off = offsetof(struct icmp6_hdr, icmp6_cksum);
 		else
 			off = in6p->inp_cksum6;
-		if (plen < off + 1) {
+		if (plen < 2 || plen - 2 < off) {
 			error = EINVAL;
 			goto bad;
 		}
@@ -467,7 +475,7 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 #if NPF > 0
 	if (in6p->inp_socket->so_state & SS_ISCONNECTED &&
 	    so->so_proto->pr_protocol != IPPROTO_ICMPV6)
-		m->m_pkthdr.pf.inp = in6p;
+		pf_mbuf_link_inpcb(m, in6p);
 #endif
 
 	error = ip6_output(m, optp, &in6p->inp_route6, flags,
@@ -544,14 +552,20 @@ int
 rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct proc *p)
 {
-	struct inpcb *in6p = sotoinpcb(so);
+	struct inpcb *in6p;
 	int error = 0;
-
-	soassertlocked(so);
 
 	if (req == PRU_CONTROL)
 		return (in6_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control));
+
+	soassertlocked(so);
+
+	in6p = sotoinpcb(so);
+	if (in6p == NULL) {
+		error = EINVAL;
+		goto release;
+	}
 
 	switch (req) {
 	case PRU_DISCONNECT:
@@ -654,6 +668,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			dst.sin6_scope_id = addr6->sin6_scope_id;
 		}
 		error = rip6_output(m, so, sin6tosa(&dst), control);
+		control = NULL;
 		m = NULL;
 		break;
 	}
@@ -662,15 +677,15 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/*
 		 * stat: don't bother with a blocksize
 		 */
-		return (0);
+		break;
 	/*
 	 * Not supported.
 	 */
-	case PRU_RCVOOB:
-	case PRU_RCVD:
 	case PRU_LISTEN:
 	case PRU_ACCEPT:
 	case PRU_SENDOOB:
+	case PRU_RCVD:
+	case PRU_RCVOOB:
 		error = EOPNOTSUPP;
 		break;
 
@@ -685,7 +700,11 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	default:
 		panic("rip6_usrreq");
 	}
-	m_freem(m);
+release:
+	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
+		m_freem(control);
+		m_freem(m);
+	}
 	return (error);
 }
 
@@ -749,7 +768,7 @@ rip6_sysctl_rip6stat(void *oldp, size_t *oldplen, void *newp)
 	struct rip6stat rip6stat;
 
 	CTASSERT(sizeof(rip6stat) == rip6s_ncounters * sizeof(uint64_t));
-	counters_read(ip6counters, (uint64_t *)&rip6stat, rip6s_ncounters);
+	counters_read(rip6counters, (uint64_t *)&rip6stat, rip6s_ncounters);
 
 	return (sysctl_rdstruct(oldp, oldplen, newp,
 	    &rip6stat, sizeof(rip6stat)));

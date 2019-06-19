@@ -155,14 +155,15 @@ typedef enum {
 /* *** any alterations to the SV types above need to be reflected in
  * SVt_MASK and the various PL_valid_types_* tables.  As of this writing those
  * tables are in perl.h.  There are also two affected names tables in dump.c,
- * one in B.xs, and 'bodies_by_type[]' in sv.c */
+ * one in B.xs, and 'bodies_by_type[]' in sv.c.
+ *
+ * The bits that match 0xf0 are CURRENTLY UNUSED, except that 0xFF means a
+ * freed SV.  The bits above that are for flags, like SVf_IOK */
 
 #define SVt_MASK 0xf	/* smallest bitmask that covers all types */
 
 #ifndef PERL_CORE
-/* Although Fast Boyer Moore tables are now being stored in PVGVs, for most
-   purposes external code wanting to consider PVBM probably needs to think of
-   PVMG instead.  */
+/* Fast Boyer Moore tables are now stored in magic attached to PVMGs */
 #  define SVt_PVBM	SVt_PVMG
 /* Anything wanting to create a reference from clean should ensure that it has
    a scalar of type SVt_IV now:  */
@@ -207,7 +208,6 @@ typedef struct hek HEK;
 	UV      svu_uv;			\
 	_NV_BODYLESS_UNION		\
 	SV*     svu_rv;		/* pointer to another SV */		\
-	struct regexp* svu_rx;		\
 	SV**    svu_array;		\
 	HE**	svu_hash;		\
 	GP*	svu_gp;			\
@@ -269,7 +269,8 @@ struct p5rx {
 =head1 SV Manipulation Functions
 
 =for apidoc Am|U32|SvREFCNT|SV* sv
-Returns the value of the object's reference count.
+Returns the value of the object's reference count. Exposed
+to perl code via Internals::SvREFCNT().
 
 =for apidoc Am|SV*|SvREFCNT_inc|SV* sv
 Increments the reference count of the given SV, returning the SV.
@@ -368,14 +369,22 @@ perform the upgrade if necessary.  See C<L</svtype>>.
 #define SVp_IOK		0x00001000  /* has valid non-public integer value */
 #define SVp_NOK		0x00002000  /* has valid non-public numeric value */
 #define SVp_POK		0x00004000  /* has valid non-public pointer value */
-#define SVp_SCREAM	0x00008000  /* method name is DOES */
-                                    /* eval cx text is ref counted */
+#define SVp_SCREAM	0x00008000  /* currently unused on plain scalars */
 #define SVphv_CLONEABLE	SVp_SCREAM  /* PVHV (stashes) clone its objects */
 #define SVpgv_GP	SVp_SCREAM  /* GV has a valid GP */
 #define SVprv_PCS_IMPORTED  SVp_SCREAM  /* RV is a proxy for a constant
 				       subroutine in another package. Set the
 				       GvIMPORTED_CV_on() if it needs to be
 				       expanded to a real GV */
+
+/* SVf_PROTECT is what SVf_READONLY should have been: i.e. modifying
+ * this SV is completely illegal. However, SVf_READONLY (via
+ * Internals::SvREADONLY()) has come to be seen as a flag that can be
+ * temporarily set and unset by the user to indicate e.g. whether a hash
+ * is "locked". Now, Hash::Util et al only set SVf_READONLY, while core
+ * sets both (SVf_READONLY|SVf_PROTECT) to indicate both to core and user
+ * code that this SV should not be messed with.
+ */
 #define SVf_PROTECT	0x00010000  /* very read-only */
 #define SVs_PADTMP	0x00020000  /* in use as tmp */
 #define SVs_PADSTALE	0x00040000  /* lexical has gone out of scope;
@@ -392,7 +401,12 @@ perform the upgrade if necessary.  See C<L</svtype>>.
 					  refers to an eval or once only
 					  [CvEVAL(cv), CvSPECIAL(cv)]
                                        3: HV: informally reserved by DAPM
-                                          for vtables */
+                                          for vtables
+                                       4: Together with other flags (or
+                                           lack thereof) indicates a regex,
+                                           including PVLV-as-regex. See
+                                           isREGEXP().
+                                       */
 #define SVf_OOK		0x02000000  /* has valid offset value. For a PVHV this
 				       means that a hv_aux struct is present
 				       after the main array */
@@ -415,7 +429,12 @@ perform the upgrade if necessary.  See C<L</svtype>>.
 
 #define PRIVSHIFT 4	/* (SVp_?OK >> PRIVSHIFT) == SVf_?OK */
 
-/* Note that SVf_AMAGIC is now only set on stashes.  */
+/* SVf_AMAGIC means that the stash *may* have have overload methods. It's
+ * set each time a function is compiled into a stash, and is reset by the
+ * overload code when called for the first time and finds that there are
+ * no overload methods. Note that this used to be set on the object; but
+ * is now only set on stashes.
+ */
 #define SVf_AMAGIC	0x10000000  /* has magical overloaded methods */
 #define SVf_IsCOW	0x10000000  /* copy on write (shared hash key if
 				       SvLEN == 0) */
@@ -437,28 +456,10 @@ perform the upgrade if necessary.  See C<L</svtype>>.
 /* Some private flags. */
 
 
-/* The SVp_SCREAM|SVpbm_VALID (0x40008000) combination is up for grabs.
-   Formerly it was used for pad names, but now it is available.  The core
-   is careful to avoid setting both flags.
-
-   SVf_POK, SVp_POK also set:
-   0x00004400   Normal
-   0x0000C400   method name for DOES (SvSCREAM)
-   0x40004400   FBM compiled (SvVALID)
-   0x4000C400   *** Formerly used for pad names ***
-
-   0x00008000   GV with GP
-   0x00008800   RV with PCS imported
-*/
 /* PVAV */
 #define SVpav_REAL	0x40000000  /* free old entries */
 /* PVHV */
 #define SVphv_LAZYDEL	0x40000000  /* entry in xhv_eiter must be deleted */
-/* This is only set true on a PVGV when it's playing "PVBM", but is tested for
-   on any regular scalar (anything <= PVLV) */
-#define SVpbm_VALID	0x40000000
-/* Only used in toke.c on an SV stored in PL_lex_repl */
-#define SVrepl_EVAL	0x40000000  /* Replacement part of s///e */
 
 /* IV, PVIV, PVNV, PVMG, PVGV and (I assume) PVLV  */
 #define SVf_IVisUV	0x80000000  /* use XPVUV instead of XPVIV */
@@ -466,8 +467,6 @@ perform the upgrade if necessary.  See C<L</svtype>>.
 #define SVpav_REIFY 	0x80000000  /* can become real */
 /* PVHV */
 #define SVphv_HASKFLAGS	0x80000000  /* keys have flag byte after hash */
-/* PVGV when SVpbm_VALID is true */
-#define SVpbm_TAIL	0x80000000  /* string has a fake "\n" appended */
 /* RV upwards. However, SVf_ROK and SVp_IOK are exclusive  */
 #define SVprv_WEAKREF   0x80000000  /* Weak reference */
 /* pad name vars only */
@@ -478,7 +477,7 @@ perform the upgrade if necessary.  See C<L</svtype>>.
     STRLEN	xpv_cur;	/* length of svu_pv as a C string */    \
     union {								\
 	STRLEN	xpvlenu_len; 	/* allocated size */			\
-	char *	xpvlenu_pv;	/* regexp string */			\
+        struct regexp* xpvlenu_rx; /* regex when SV body is XPVLV */    \
     } xpv_len_u	
 
 #define xpv_len	xpv_len_u.xpvlenu_len
@@ -486,16 +485,16 @@ perform the upgrade if necessary.  See C<L</svtype>>.
 union _xnvu {
     NV	    xnv_nv;		/* numeric value, if any */
     HV *    xgv_stash;
-    struct {
-	U32 xlow;
-	U32 xhigh;
-    }	    xpad_cop_seq;	/* used by pad.c for cop_sequence */
+    line_t  xnv_lines;           /* used internally by S_scan_subst() */
+    bool    xnv_bm_tail;        /* an SvVALID (BM) SV has an implicit "\n" */
 };
 
 union _xivu {
     IV	    xivu_iv;		/* integer value */
     UV	    xivu_uv;
     HEK *   xivu_namehek;	/* xpvlv, xpvgv: GvNAME */
+    bool    xivu_eval_seen;     /* used internally by S_scan_subst() */
+
 };
 
 union _xmgu {
@@ -546,7 +545,8 @@ struct xpvlv {
     SV*		xlv_targ;
     char	xlv_type;	/* k=keys .=pos x=substr v=vec /=join/re
 				 * y=alem/helem/iter t=tie T=tied HE */
-    char	xlv_flags;	/* 1 = negative offset  2 = negative len */
+    char	xlv_flags;	/* 1 = negative offset  2 = negative len
+                                   4 = out of range (vec) */
 };
 
 #define xlv_targoff xlv_targoff_u.xlvu_targoff
@@ -563,8 +563,8 @@ struct xpvinvlist {
                                    the list, merely toggle this flag  */
 };
 
-/* This structure works in 3 ways - regular scalar, GV with GP, or fast
-   Boyer-Moore.  */
+/* This structure works in 2 ways - regular scalar, or GV with GP */
+
 struct xpvgv {
     _XPV_HEAD;
     union _xivu xiv_u;
@@ -617,7 +617,7 @@ struct xpvio {
      * Perl_filter_add() tries to do with the dirp), hence the
      *  following union trick (as suggested by Gurusamy Sarathy).
      * For further information see Geir Johansen's problem report
-     * titled [ID 20000612.002] Perl problem on Cray system
+     * titled [ID 20000612.002 (#3366)] Perl problem on Cray system
      * The any pointer (known as IoANY()) will also be a good place
      * to hang any IO disciplines to.
      */
@@ -851,7 +851,7 @@ Set the size of the string buffer for the SV. See C<L</SvLEN>>.
 #define assert_not_ROK(sv)	assert_(!SvROK(sv) || !SvRV(sv))
 #define assert_not_glob(sv)	assert_(!isGV_with_GP(sv))
 
-#define SvOK(sv)		(SvFLAGS(sv) & SVf_OK || isREGEXP(sv))
+#define SvOK(sv)		(SvFLAGS(sv) & SVf_OK)
 #define SvOK_off(sv)		(assert_not_ROK(sv) assert_not_glob(sv)	\
 				 SvFLAGS(sv) &=	~(SVf_OK|		\
 						  SVf_IVisUV|SVf_UTF8),	\
@@ -1089,6 +1089,22 @@ C<sv_force_normal> does nothing.
 #define SvOBJECT_on(sv)		(SvFLAGS(sv) |= SVs_OBJECT)
 #define SvOBJECT_off(sv)	(SvFLAGS(sv) &= ~SVs_OBJECT)
 
+/*
+=for apidoc Am|U32|SvREADONLY|SV* sv
+Returns true if the argument is readonly, otherwise returns false.
+Exposed to to perl code via Internals::SvREADONLY().
+
+=for apidoc Am|U32|SvREADONLY_on|SV* sv
+Mark an object as readonly. Exactly what this means depends on the object
+type. Exposed to perl code via Internals::SvREADONLY().
+
+=for apidoc Am|U32|SvREADONLY_off|SV* sv
+Mark an object as not-readonly. Exactly what this mean depends on the
+object type. Exposed to perl code via Internals::SvREADONLY().
+
+=cut
+*/
+
 #define SvREADONLY(sv)		(SvFLAGS(sv) & (SVf_READONLY|SVf_PROTECT))
 #ifdef PERL_CORE
 # define SvREADONLY_on(sv)	(SvFLAGS(sv) |= (SVf_READONLY|SVf_PROTECT))
@@ -1108,44 +1124,28 @@ C<sv_force_normal> does nothing.
 #  define SvCOMPILED_off(sv)
 #endif
 
-#define SvEVALED(sv)		(SvFLAGS(sv) & SVrepl_EVAL)
-#define SvEVALED_on(sv)		(SvFLAGS(sv) |= SVrepl_EVAL)
-#define SvEVALED_off(sv)	(SvFLAGS(sv) &= ~SVrepl_EVAL)
 
 #if defined (DEBUGGING) && defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
-#  define SvVALID(sv)		({ const SV *const _svvalid = (const SV*)(sv); \
-				   if (SvFLAGS(_svvalid) & SVpbm_VALID && !SvSCREAM(_svvalid)) \
-				       assert(!isGV_with_GP(_svvalid));	\
-				   (SvFLAGS(_svvalid) & SVpbm_VALID);	\
-				})
-#  define SvVALID_on(sv)	({ SV *const _svvalid = MUTABLE_SV(sv);	\
-				   assert(!isGV_with_GP(_svvalid));	\
-				   assert(!SvSCREAM(_svvalid));		\
-				   (SvFLAGS(_svvalid) |= SVpbm_VALID);	\
-				})
-#  define SvVALID_off(sv)	({ SV *const _svvalid = MUTABLE_SV(sv);	\
-				   assert(!isGV_with_GP(_svvalid));	\
-				   assert(!SvSCREAM(_svvalid));		\
-				   (SvFLAGS(_svvalid) &= ~SVpbm_VALID);	\
-				})
-
 #  define SvTAIL(sv)	({ const SV *const _svtail = (const SV *)(sv);	\
 			    assert(SvTYPE(_svtail) != SVt_PVAV);	\
 			    assert(SvTYPE(_svtail) != SVt_PVHV);	\
-			    assert(!SvSCREAM(_svtail));			\
-			    (SvFLAGS(sv) & (SVpbm_TAIL|SVpbm_VALID))	\
-				== (SVpbm_TAIL|SVpbm_VALID);		\
+			    assert(!(SvFLAGS(_svtail) & (SVf_NOK|SVp_NOK))); \
+			    assert(SvVALID(_svtail));                        \
+                            ((XPVNV*)SvANY(_svtail))->xnv_u.xnv_bm_tail;     \
 			})
 #else
-#  define SvVALID(sv)		((SvFLAGS(sv) & SVpbm_VALID) && !SvSCREAM(sv))
-#  define SvVALID_on(sv)	(SvFLAGS(sv) |= SVpbm_VALID)
-#  define SvVALID_off(sv)	(SvFLAGS(sv) &= ~SVpbm_VALID)
-#  define SvTAIL(sv)	    ((SvFLAGS(sv) & (SVpbm_TAIL|SVpbm_VALID))	\
-			     == (SVpbm_TAIL|SVpbm_VALID))
-
+#  define SvTAIL(_svtail)  (((XPVNV*)SvANY(_svtail))->xnv_u.xnv_bm_tail)
 #endif
-#define SvTAIL_on(sv)		(SvFLAGS(sv) |= SVpbm_TAIL)
-#define SvTAIL_off(sv)		(SvFLAGS(sv) &= ~SVpbm_TAIL)
+
+/* Does the SV have a Boyer-Moore table attached as magic?
+ * 'VALID' is a poor name, but is kept for historical reasons.  */
+#define SvVALID(_svvalid) (                                  \
+               SvPOKp(_svvalid)                              \
+            && SvSMAGICAL(_svvalid)                          \
+            && SvMAGIC(_svvalid)                             \
+            && (SvMAGIC(_svvalid)->mg_type == PERL_MAGIC_bm  \
+                || mg_find(_svvalid, PERL_MAGIC_bm))         \
+        )
 
 #define SvRVx(sv) SvRV(sv)
 
@@ -1185,8 +1185,7 @@ C<sv_force_normal> does nothing.
 	 }))
 #    define SvCUR(sv)							\
 	(*({ const SV *const _svcur = (const SV *)(sv);			\
-	    assert(PL_valid_types_PVX[SvTYPE(_svcur) & SVt_MASK]	\
-		|| SvTYPE(_svcur) == SVt_REGEXP);			\
+	    assert(PL_valid_types_PVX[SvTYPE(_svcur) & SVt_MASK]);	\
 	    assert(!isGV_with_GP(_svcur));				\
 	    assert(!(SvTYPE(_svcur) == SVt_PVIO				\
 		     && !(IoFLAGS(_svcur) & IOf_FAKE_DIRP)));		\
@@ -1316,8 +1315,7 @@ C<sv_force_normal> does nothing.
                 (((XPVMG*)  SvANY(sv))->xmg_stash = (val)); } STMT_END
 #define SvCUR_set(sv, val) \
 	STMT_START { \
-		assert(PL_valid_types_PVX[SvTYPE(sv) & SVt_MASK]	\
-			|| SvTYPE(sv) == SVt_REGEXP);	\
+		assert(PL_valid_types_PVX[SvTYPE(sv) & SVt_MASK]);	\
 		assert(!isGV_with_GP(sv));		\
 		assert(!(SvTYPE(sv) == SVt_PVIO		\
 		     && !(IoFLAGS(sv) & IOf_FAKE_DIRP))); \
@@ -1405,6 +1403,10 @@ C<sv_force_normal> does nothing.
 #define LvSTARGOFF(sv)	((XPVLV*)  SvANY(sv))->xlv_targoff_u.xlvu_stargoff
 #define LvTARGLEN(sv)	((XPVLV*)  SvANY(sv))->xlv_targlen
 #define LvFLAGS(sv)	((XPVLV*)  SvANY(sv))->xlv_flags
+
+#define LVf_NEG_OFF      0x1
+#define LVf_NEG_LEN      0x2
+#define LVf_OUT_OF_RANGE 0x4
 
 #define IoIFP(sv)	(sv)->sv_u.svu_fp
 #define IoOFP(sv)	((XPVIO*)  SvANY(sv))->xio_ofp
@@ -1525,43 +1527,58 @@ Like C<SvPV> but doesn't set a length variable.
 Like C<SvPV_nolen> but doesn't process magic.
 
 =for apidoc Am|IV|SvIV|SV* sv
-Coerces the given SV to an integer and returns it.  See C<L</SvIVx>> for a
-version which guarantees to evaluate C<sv> only once.
+Coerces the given SV to IV and returns it.  The returned value in many
+circumstances will get stored in C<sv>'s IV slot, but not in all cases.  (Use
+C<L</sv_setiv>> to make sure it does).
+
+See C<L</SvIVx>> for a version which guarantees to evaluate C<sv> only once.
 
 =for apidoc Am|IV|SvIV_nomg|SV* sv
 Like C<SvIV> but doesn't process magic.
 
 =for apidoc Am|IV|SvIVx|SV* sv
-Coerces the given SV to an integer and returns it.
-Guarantees to evaluate C<sv> only once.  Only use
-this if C<sv> is an expression with side effects,
-otherwise use the more efficient C<SvIV>.
+Coerces the given SV to IV and returns it.  The returned value in many
+circumstances will get stored in C<sv>'s IV slot, but not in all cases.  (Use
+C<L</sv_setiv>> to make sure it does).
+
+This form guarantees to evaluate C<sv> only once.  Only use this if C<sv> is an
+expression with side effects, otherwise use the more efficient C<SvIV>.
 
 =for apidoc Am|NV|SvNV|SV* sv
-Coerce the given SV to a double and return it.  See C<L</SvNVx>> for a version
-which guarantees to evaluate C<sv> only once.
+Coerces the given SV to NV and returns it.  The returned value in many
+circumstances will get stored in C<sv>'s NV slot, but not in all cases.  (Use
+C<L</sv_setnv>> to make sure it does).
+
+See C<L</SvNVx>> for a version which guarantees to evaluate C<sv> only once.
 
 =for apidoc Am|NV|SvNV_nomg|SV* sv
 Like C<SvNV> but doesn't process magic.
 
 =for apidoc Am|NV|SvNVx|SV* sv
-Coerces the given SV to a double and returns it.
-Guarantees to evaluate C<sv> only once.  Only use
-this if C<sv> is an expression with side effects,
-otherwise use the more efficient C<SvNV>.
+Coerces the given SV to NV and returns it.  The returned value in many
+circumstances will get stored in C<sv>'s NV slot, but not in all cases.  (Use
+C<L</sv_setnv>> to make sure it does).
+
+This form guarantees to evaluate C<sv> only once.  Only use this if C<sv> is an
+expression with side effects, otherwise use the more efficient C<SvNV>.
 
 =for apidoc Am|UV|SvUV|SV* sv
-Coerces the given SV to an unsigned integer and returns it.  See C<L</SvUVx>>
-for a version which guarantees to evaluate C<sv> only once.
+Coerces the given SV to UV and returns it.  The returned value in many
+circumstances will get stored in C<sv>'s UV slot, but not in all cases.  (Use
+C<L</sv_setuv>> to make sure it does).
+
+See C<L</SvUVx>> for a version which guarantees to evaluate C<sv> only once.
 
 =for apidoc Am|UV|SvUV_nomg|SV* sv
 Like C<SvUV> but doesn't process magic.
 
 =for apidoc Am|UV|SvUVx|SV* sv
-Coerces the given SV to an unsigned integer and
-returns it.  Guarantees to evaluate C<sv> only once.  Only
-use this if C<sv> is an expression with side effects,
-otherwise use the more efficient C<SvUV>.
+Coerces the given SV to UV and returns it.  The returned value in many
+circumstances will get stored in C<sv>'s UV slot, but not in all cases.  (Use
+C<L</sv_setuv>> to make sure it does).
+
+This form guarantees to evaluate C<sv> only once.  Only use this if C<sv> is an
+expression with side effects, otherwise use the more efficient C<SvUV>.
 
 =for apidoc Am|bool|SvTRUE|SV* sv
 Returns a boolean indicating whether Perl would evaluate the SV as true or
@@ -1632,7 +1649,7 @@ Like C<sv_setsv> but doesn't process magic.
 =for apidoc Am|void|sv_catsv_nomg|SV* dsv|SV* ssv
 Like C<sv_catsv> but doesn't process magic.
 
-=for apidoc Amdb|STRLEN|sv_utf8_upgrade_nomg|NN SV *sv
+=for apidoc Amdb|STRLEN|sv_utf8_upgrade_nomg|SV *sv
 
 Like C<sv_utf8_upgrade>, but doesn't do magic on C<sv>.
 
@@ -1745,18 +1762,23 @@ Like C<sv_utf8_upgrade>, but doesn't do magic on C<sv>.
 #define SvPVutf8x_force(sv, lp) sv_pvutf8n_force(sv, &lp)
 #define SvPVbytex_force(sv, lp) sv_pvbyten_force(sv, &lp)
 
-#define SvTRUE(sv)        (LIKELY(sv) && (UNLIKELY(SvGMAGICAL(sv)) ? sv_2bool(sv) : SvTRUE_common(sv, sv_2bool_nomg(sv))))
-#define SvTRUE_nomg(sv)   (LIKELY(sv) && (                                SvTRUE_common(sv, sv_2bool_nomg(sv))))
-#define SvTRUE_NN(sv)              (UNLIKELY(SvGMAGICAL(sv)) ? sv_2bool(sv) : SvTRUE_common(sv, sv_2bool_nomg(sv)))
-#define SvTRUE_nomg_NN(sv) (                                        SvTRUE_common(sv, sv_2bool_nomg(sv)))
+#define SvTRUE(sv)         (LIKELY(sv) && SvTRUE_NN(sv))
+#define SvTRUE_nomg(sv)    (LIKELY(sv) && SvTRUE_nomg_NN(sv))
+#define SvTRUE_NN(sv)      (SvGETMAGIC(sv), SvTRUE_nomg_NN(sv))
+#define SvTRUE_nomg_NN(sv) (SvTRUE_common(sv, sv_2bool_nomg(sv)))
+
 #define SvTRUE_common(sv,fallback) (			\
-      !SvOK(sv)						\
+      SvIMMORTAL_INTERP(sv)                             \
+        ? SvIMMORTAL_TRUE(sv)                           \
+    : !SvOK(sv)						\
 	? 0						\
     : SvPOK(sv)						\
 	? SvPVXtrue(sv)					\
-    : (SvFLAGS(sv) & (SVf_IOK|SVf_NOK))			\
-	? (   (SvIOK(sv) && SvIVX(sv) != 0)		\
-	   || (SvNOK(sv) && SvNVX(sv) != 0.0))		\
+    : SvIOK(sv)                			        \
+        ? (SvIVX(sv) != 0 /* cast to bool */)           \
+    : (SvROK(sv) && !(   SvOBJECT(SvRV(sv))             \
+                      && HvAMAGIC(SvSTASH(SvRV(sv)))))  \
+        ? TRUE                                          \
     : (fallback))
 
 #if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
@@ -1814,10 +1836,10 @@ Like C<sv_utf8_upgrade>, but doesn't do magic on C<sv>.
 #define SvSHARED_HASH(sv) (0 + SvSHARED_HEK_FROM_PV(SvPVX_const(sv))->hek_hash)
 
 /* flag values for sv_*_flags functions */
+#define SV_UTF8_NO_ENCODING	0       /* No longer used */
 #define SV_IMMEDIATE_UNREF	1
 #define SV_GMAGIC		2
 #define SV_COW_DROP_PV		4
-#define SV_UTF8_NO_ENCODING	8
 #define SV_NOSTEAL		16
 #define SV_CONST_RETURN		32
 #define SV_MUTABLE_RETURN	64
@@ -2021,9 +2043,17 @@ Returns a pointer to the character
 buffer.  SV must be of type >= C<SVt_PV>.  One
 alternative is to call C<sv_grow> if you are not sure of the type of SV.
 
+You might mistakenly think that C<len> is the number of bytes to add to the
+existing size, but instead it is the total size C<sv> should be.
+
+=for apidoc Am|char *|SvPVCLEAR|SV* sv
+Ensures that sv is a SVt_PV and that its SvCUR is 0, and that it is
+properly null terminated. Equivalent to sv_setpvs(""), but more efficient.
+
 =cut
 */
 
+#define SvPVCLEAR(sv) sv_setpv_bufsize(sv,0,0)
 #define SvSHARE(sv) PL_sharehook(aTHX_ sv)
 #define SvLOCK(sv) PL_lockhook(aTHX_ sv)
 #define SvUNLOCK(sv) PL_unlockhook(aTHX_ sv)
@@ -2064,7 +2094,20 @@ alternative is to call C<sv_grow> if you are not sure of the type of SV.
 #define SvPEEK(sv) ""
 #endif
 
-#define SvIMMORTAL(sv) (SvREADONLY(sv) && ((sv)==&PL_sv_undef || (sv)==&PL_sv_yes || (sv)==&PL_sv_no || (sv)==&PL_sv_placeholder))
+/* Is this a per-interpreter immortal SV (rather than global)?
+ * These should either occupy adjacent entries in the interpreter struct
+ * (MULTIPLICITY) or adjacent elements of PL_sv_immortals[] otherwise.
+ * The unsigned (Size_t) cast avoids the need for a second < 0 condition.
+ */
+#define SvIMMORTAL_INTERP(sv) ((Size_t)((sv) - &PL_sv_yes) < 4)
+
+/* Does this immortal have a true value? Currently only PL_sv_yes does. */
+#define SvIMMORTAL_TRUE(sv)   ((sv) == &PL_sv_yes)
+
+/* the SvREADONLY() test is to quickly reject most SVs */
+#define SvIMMORTAL(sv) \
+                (  SvREADONLY(sv) \
+                && (SvIMMORTAL_INTERP(sv) || (sv) == &PL_sv_placeholder))
 
 #ifdef DEBUGGING
    /* exercise the immortal resurrection code in sv_free2() */
@@ -2103,9 +2146,13 @@ See also C<L</PL_sv_yes>> and C<L</PL_sv_no>>.
 	assert (!SvIOKp(sv));					       \
 	(SvFLAGS(sv) &= ~SVpgv_GP);				       \
     } STMT_END
+#ifdef PERL_CORE
+# define isGV_or_RVCV(kadawp) \
+    (isGV(kadawp) || (SvROK(kadawp) && SvTYPE(SvRV(kadawp)) == SVt_PVCV))
+#endif
 #define isREGEXP(sv) \
     (SvTYPE(sv) == SVt_REGEXP				      \
-     || (SvFLAGS(sv) & (SVTYPEMASK|SVp_POK|SVpgv_GP|SVf_FAKE)) \
+     || (SvFLAGS(sv) & (SVTYPEMASK|SVpgv_GP|SVf_FAKE))        \
 	 == (SVt_PVLV|SVf_FAKE))
 
 
@@ -2133,7 +2180,7 @@ struct clone_params {
 };
 
 /*
-=for apidoc Am|SV*|newSVpvn_utf8|NULLOK const char* s|STRLEN len|U32 utf8
+=for apidoc Am|SV*|newSVpvn_utf8|const char* s|STRLEN len|U32 utf8
 
 Creates a new SV and copies a string (which may contain C<NUL> (C<\0>)
 characters) into it.  If C<utf8> is true, calls
@@ -2155,7 +2202,7 @@ Creates a new SV containing the pad name.
 #define newSVpadname(pn) newSVpvn_utf8(PadnamePV(pn), PadnameLEN(pn), TRUE)
 
 /*
-=for apidoc Am|void|SvOOK_offset|NN SV*sv|STRLEN len
+=for apidoc Am|void|SvOOK_offset|SV*sv|STRLEN len
 
 Reads into C<len> the offset from C<SvPVX> back to the true start of the
 allocated buffer, which will be non-zero if C<sv_chop> has been used to

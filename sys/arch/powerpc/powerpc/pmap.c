@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.167 2017/05/16 20:52:54 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.169 2019/01/02 23:08:35 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1086,7 +1086,7 @@ pmap_zero_page(struct vm_page *pg)
 
 	/*
 	 * Loop over & zero cache lines.  This code assumes that 64-bit
-	 * CPUs have 128-byte cache lines.  We explicitely use ``dcbzl''
+	 * CPUs have 128-byte cache lines.  We explicitly use ``dcbzl''
 	 * here because we do not clear the DCBZ_SIZE bit of the HID5
 	 * register in order to be compatible with code using ``dcbz''
 	 * and assuming that cache line size is 32.
@@ -2067,7 +2067,9 @@ void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	struct pte_desc *pted;
+	void *pte;
 	pmap_t pm;
+	int s;
 
 	if (prot == PROT_NONE) {
 		mtx_enter(&pg->mdpage.pv_mtx);
@@ -2097,6 +2099,11 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				mtx_enter(&pg->mdpage.pv_mtx);
 				continue;
 			}
+
+			PMAP_HASH_LOCK(s);
+			if ((pte = pmap_ptedinhash(pted)) != NULL)
+				pte_zap(pte, pted);
+			PMAP_HASH_UNLOCK(s);
 
 			pted->pted_va &= ~PTED_VA_MANAGED_M;
 			LIST_REMOVE(pted, pted_pv_list);

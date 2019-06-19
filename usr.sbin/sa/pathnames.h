@@ -1,3 +1,4 @@
+/*	$OpenBSD: pathnames.h,v 1.2 2019/01/17 06:21:46 tedu Exp $ */
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -27,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pathnames.h,v 1.1.1.1 1995/10/18 08:48:07 deraadt Exp $
  */
 
 #define	_PATH_ACCT	"/var/account/acct"

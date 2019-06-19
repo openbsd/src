@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.30 2018/03/24 04:13:59 visa Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.36 2019/05/13 19:21:31 bluhm Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -67,24 +67,30 @@ struct	sigacts {
 
 /*
  * Check if process p has an unmasked signal pending.
+ * Return mask of pending signals.
  */
-#define	SIGPENDING(p)	(((p)->p_siglist & ~(p)->p_sigmask) != 0)
+#define SIGPENDING(p)							\
+	(((p)->p_siglist | (p)->p_p->ps_siglist) & ~(p)->p_sigmask)
 
 /*
  * Determine signal that should be delivered to process p, the current
  * process, 0 if none.  If there is a pending stop signal with default
  * action, the process stops in issignal().
  */
-#define	CURSIG(p)							\
-	(((p)->p_siglist == 0 ||					\
+#define CURSIG(p)							\
+	((((p)->p_siglist | (p)->p_p->ps_siglist) == 0 ||		\
 	    (((p)->p_p->ps_flags & PS_TRACED) == 0 &&			\
-	    ((p)->p_siglist & ~(p)->p_sigmask) == 0)) ?			\
+	    SIGPENDING(p) == 0)) ?					\
 	    0 : issignal(p))
 
 /*
  * Clear a pending signal from a process.
  */
-#define	CLRSIG(p, sig)	atomic_clearbits_int(&(p)->p_siglist, sigmask(sig))
+#define CLRSIG(p, sig)	do {						\
+	int _mask = sigmask(sig);					\
+	atomic_clearbits_int(&(p)->p_siglist, _mask);			\
+	atomic_clearbits_int(&(p)->p_p->ps_siglist, _mask);		\
+} while (0)
 
 /*
  * Signal properties and actions.
@@ -147,14 +153,16 @@ int sigprop[NSIG + 1] = {
 #ifdef _KERNEL
 enum signal_type { SPROCESS, STHREAD, SPROPAGATED };
 
+struct sigio_ref;
+
 /*
  * Machine-independent functions:
  */
 int	coredump(struct proc *p);
 void	execsigs(struct proc *p);
-void	gsignal(int pgid, int sig);
 void	csignal(pid_t pgid, int signum, uid_t uid, uid_t euid);
 int	issignal(struct proc *p);
+void	pgsigio(struct sigio_ref *sir, int sig, int checkctty);
 void	pgsignal(struct pgrp *pgrp, int sig, int checkctty);
 void	psignal(struct proc *p, int sig);
 void	ptsignal(struct proc *p, int sig, enum signal_type type);
@@ -178,7 +186,6 @@ void	sigactsfree(struct process *);
 /*
  * Machine-dependent functions:
  */
-void	sendsig(sig_t action, int sig, int returnmask, u_long code,
-	    int type, union sigval val);
+void	sendsig(sig_t _catcher, int _sig, sigset_t _mask, const siginfo_t *_si);
 #endif	/* _KERNEL */
 #endif	/* !_SYS_SIGNALVAR_H_ */

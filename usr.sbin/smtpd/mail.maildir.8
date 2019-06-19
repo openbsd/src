@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.maildir.8,v 1.1 2017/02/14 16:48:30 gilles Exp $
+.\"	$OpenBSD: mail.maildir.8,v 1.5 2018/05/30 12:37:57 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Gilles Chehade <gilles@poolp.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2017 $
+.Dd $Mdocdate: May 30 2018 $
 .Dt MAIL.MAILDIR 8
 .Os
 .Sh NAME
@@ -22,16 +22,21 @@
 .Nd store mail in a maildir
 .Sh SYNOPSIS
 .Nm mail.maildir
-.Op Fl d Ar maildir
+.Op Fl j
+.Op Ar pathname
 .Sh DESCRIPTION
 .Nm
 reads the standard input up to an end-of-file and adds it to the
-provided mail directory.
+mail directory located in
+.Ar pathname
+or to the mail directory
+.Pa Maildir
+located in the user's home directory.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl d Ar maildir
-Specify the path to user mail directory.
+.It Fl j
+Scan message for X-Spam and move to Junk folder if result is positive.
 .El
 .Sh EXIT STATUS
 .Ex -std mail.maildir

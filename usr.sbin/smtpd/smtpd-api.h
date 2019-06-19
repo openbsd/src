@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd-api.h,v 1.32 2017/09/08 16:51:22 eric Exp $	*/
+/*	$OpenBSD: smtpd-api.h,v 1.36 2018/12/23 16:06:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -20,22 +20,12 @@
 #ifndef	_SMTPD_API_H_
 #define	_SMTPD_API_H_
 
+#include "dict.h"
+#include "tree.h"
+
 struct mailaddr {
 	char	user[SMTPD_MAXLOCALPARTSIZE];
 	char	domain[SMTPD_MAXDOMAINPARTSIZE];
-};
-
-SPLAY_HEAD(_dict, dictentry);
-SPLAY_HEAD(_tree, treeentry);
-
-struct tree {
-	struct _tree	tree;
-	size_t		count;
-};
-
-struct dict {
-	struct _dict	dict;
-	size_t		count;
 };
 
 #define PROC_QUEUE_API_VERSION	2
@@ -49,8 +39,6 @@ enum {
 	PROC_QUEUE_MESSAGE_DELETE,
 	PROC_QUEUE_MESSAGE_COMMIT,
 	PROC_QUEUE_MESSAGE_FD_R,
-	PROC_QUEUE_MESSAGE_CORRUPT,
-	PROC_QUEUE_MESSAGE_UNCORRUPT,
 	PROC_QUEUE_ENVELOPE_CREATE,
 	PROC_QUEUE_ENVELOPE_DELETE,
 	PROC_QUEUE_ENVELOPE_LOAD,
@@ -113,7 +101,7 @@ struct scheduler_info {
 	enum delivery_type	type;
 	uint16_t		retry;
 	time_t			creation;
-	time_t			expire;
+	time_t			ttl;
 	time_t			lasttry;
 	time_t			lastbounce;
 	time_t			nexttry;
@@ -144,6 +132,9 @@ enum table_service {
 	K_MAILADDR	= 0x040,	/* returns struct mailaddr	*/
 	K_ADDRNAME	= 0x080,	/* returns struct addrname	*/
 	K_MAILADDRMAP	= 0x100,	/* returns struct maddrmap	*/
+	K_RELAYHOST	= 0x200,	/* returns struct relayhost	*/
+	K_STRING	= 0x400,
+	K_REGEX		= 0x800,
 };
 #define K_ANY		  0xfff
 
@@ -243,23 +234,6 @@ msgid_to_evpid(uint32_t msgid)
         return ((uint64_t)msgid << 32);
 }
 
-/* dict.c */
-#define dict_init(d) do { SPLAY_INIT(&((d)->dict)); (d)->count = 0; } while(0)
-#define dict_empty(d) SPLAY_EMPTY(&((d)->dict))
-#define dict_count(d) ((d)->count)
-int dict_check(struct dict *, const char *);
-void *dict_set(struct dict *, const char *, void *);
-void dict_xset(struct dict *, const char *, void *);
-void *dict_get(struct dict *, const char *);
-void *dict_xget(struct dict *, const char *);
-void *dict_pop(struct dict *, const char *);
-void *dict_xpop(struct dict *, const char *);
-int dict_poproot(struct dict *, void **);
-int dict_root(struct dict *, const char **, void **);
-int dict_iter(struct dict *, void **, const char **, void **);
-int dict_iterfrom(struct dict *, void **, const char *, const char **, void **);
-void dict_merge(struct dict *, struct dict *);
-
 
 /* esc.c */
 const char *esc_code(enum enhanced_status_class, enum enhanced_status_code);
@@ -272,8 +246,6 @@ void queue_api_on_message_create(int(*)(uint32_t *));
 void queue_api_on_message_commit(int(*)(uint32_t, const char*));
 void queue_api_on_message_delete(int(*)(uint32_t));
 void queue_api_on_message_fd_r(int(*)(uint32_t));
-void queue_api_on_message_corrupt(int(*)(uint32_t));
-void queue_api_on_message_uncorrupt(int(*)(uint32_t));
 void queue_api_on_envelope_create(int(*)(uint32_t, const char *, size_t, uint64_t *));
 void queue_api_on_envelope_delete(int(*)(uint64_t));
 void queue_api_on_envelope_update(int(*)(uint64_t, const char *, size_t));
@@ -314,22 +286,5 @@ void table_api_on_lookup(int(*)(int, struct dict *, const char *, char *, size_t
 void table_api_on_fetch(int(*)(int, struct dict *, char *, size_t));
 int table_api_dispatch(void);
 const char *table_api_get_name(void);
-
-/* tree.c */
-#define tree_init(t) do { SPLAY_INIT(&((t)->tree)); (t)->count = 0; } while(0)
-#define tree_empty(t) SPLAY_EMPTY(&((t)->tree))
-#define tree_count(t) ((t)->count)
-int tree_check(struct tree *, uint64_t);
-void *tree_set(struct tree *, uint64_t, void *);
-void tree_xset(struct tree *, uint64_t, void *);
-void *tree_get(struct tree *, uint64_t);
-void *tree_xget(struct tree *, uint64_t);
-void *tree_pop(struct tree *, uint64_t);
-void *tree_xpop(struct tree *, uint64_t);
-int tree_poproot(struct tree *, uint64_t *, void **);
-int tree_root(struct tree *, uint64_t *, void **);
-int tree_iter(struct tree *, void **, uint64_t *, void **);
-int tree_iterfrom(struct tree *, void **, uint64_t, uint64_t *, void **);
-void tree_merge(struct tree *, struct tree *);
 
 #endif

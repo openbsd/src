@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.7 2016/08/06 18:21:34 patrick Exp $ */
+/* $OpenBSD: intc.c,v 1.8 2019/05/06 03:45:58 mlarkin Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -231,7 +231,7 @@ intc_calc_mask(void)
 		for (; i <= IPL_HIGH; i++)
 			intc_imask[INTC_IRQ_TO_REG(irq)][i] |=
 			    1 << INTC_IRQ_TO_REGi(irq);
-		/* XXX - set enable/disable, priority */ 
+		/* XXX - set enable/disable, priority */
 		bus_space_write_4(intc_iot, intc_ioh, INTC_ILRn(irq),
 		    INTC_ILR_PRIs(NIPL-max)|INTC_ILR_IRQ);
 	}
@@ -276,7 +276,7 @@ intc_splraise(int new)
 		new = old;
 
 	intc_setipl(new);
-  
+ 
 	return (old);
 }
 
@@ -295,7 +295,7 @@ intc_setipl(int new)
 		volatile static int recursed = 0;
 		if (recursed == 0) {
 			recursed = 1;
-			if (new != 12) 
+			if (new != 12)
 				printf("setipl %d\n", new);
 			recursed = 0;
 		}
@@ -342,7 +342,7 @@ intc_irq_handler(void *frame)
 		else
 			arg = frame;
 
-		if (ih->ih_func(arg)) 
+		if (ih->ih_func(arg))
 			ih->ih_count.ec_count++;
 
 	}

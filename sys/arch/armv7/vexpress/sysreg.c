@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysreg.c,v 1.3 2016/10/09 01:40:43 jsg Exp $	*/
+/*	$OpenBSD: sysreg.c,v 1.4 2019/05/06 03:50:48 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -16,10 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h> 
-#include <sys/systm.h> 
-#include <sys/device.h> 
-#include <machine/bus.h> 
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include <machine/bus.h>
 #include <machine/fdt.h>
 
 #include <armv7/armv7/armv7var.h>

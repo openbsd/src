@@ -1,4 +1,4 @@
-.\" $OpenBSD: mio_open.3,v 1.17 2017/10/17 22:47:58 schwarze Exp $
+.\" $OpenBSD: mio_open.3,v 1.18 2018/12/18 20:37:27 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2017 $
+.Dd $Mdocdate: December 18 2018 $
 .Dt MIO_OPEN 3
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ library allows user processes to access
 hardware and
 .Xr sndiod 8
 MIDI thru boxes and control ports in a uniform way.
-.Ss Opening and closing an MIDI stream
+.Ss Opening and closing a MIDI stream
 First the application must call the
 .Fn mio_open
 function to obtain a handle representing the newly created stream;

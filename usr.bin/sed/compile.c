@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.47 2017/12/13 16:07:54 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.50 2018/12/07 14:45:40 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -284,7 +284,7 @@ nonsel:		/* Now parse the command */
 		case BRANCH:			/* b t */
 			p++;
 			EATSPACE();
-			if (*p == '\0')
+			if (*p == '\0' || *p == ';')
 				cmd->t = NULL;
 			else
 				cmd->t = duptoeol(p, "branch", &p);
@@ -362,28 +362,40 @@ compile_delimited(char *p, char *d)
 		error(COMPILE, "\\ can not be used as a string delimiter");
 	else if (c == '\n')
 		error(COMPILE, "newline can not be used as a string delimiter");
-	while (*p) {
-		if (*p == '[' && *p != c) {
-			if ((d = compile_ccl(&p, d)) == NULL)
-				error(COMPILE, "unbalanced brackets ([])");
-			continue;
-		} else if (*p == '\\' && p[1] == '[') {
-			*d++ = *p++;
-		} else if (*p == '\\' && p[1] == c) {
-			p++;
-		} else if (*p == '\\' && p[1] == 'n') {
-			*d++ = '\n';
-			p += 2;
-			continue;
-		} else if (*p == '\\' && p[1] == '\\') {
-			*d++ = *p++;
-		} else if (*p == c) {
+
+	while (p[0]) {
+		/* Unescaped delimiter: We are done. */
+		if (p[0] == c) {
 			*d = '\0';
-			return (p + 1);
+			return p + 1;
 		}
-		*d++ = *p++;
+		if (p[0] == '\\') {
+			/* Escaped delimiter: Skip the backslash. */
+			if (p[1] == c) {
+				p++;
+			} else {
+				/* Backslash-n: Match linefeed. */
+				if (p[1] == 'n') {
+					*d++ = '\n';
+					p += 2;
+				/* Other escapes remain unchanged. */
+				} else {
+					*d++ = *p++;
+					*d++ = *p++;
+				}
+				continue;
+			}
+		}
+		if (p[0] != '[')
+			*d++ = *p++;
+		/*
+		 * Bracket expression:
+		 * It may contain the delimiter without escaping.
+		 */
+		else if ((d = compile_ccl(&p, d)) == NULL)
+			error(COMPILE, "unbalanced brackets ([])");
 	}
-	return (NULL);
+	return NULL;
 }
 
 

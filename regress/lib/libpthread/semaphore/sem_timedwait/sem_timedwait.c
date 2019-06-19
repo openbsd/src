@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem_timedwait.c,v 1.2 2014/01/22 04:31:45 guenther Exp $	*/
+/*	$OpenBSD: sem_timedwait.c,v 1.3 2018/04/27 11:31:17 pirofti Exp $	*/
 /*
  * Martin Pieuchot <mpi@openbsd.org>, 2011. Public Domain.
  */
@@ -55,7 +55,7 @@ main(int argc, char **argv)
 	memset(&sa, 0, sizeof sa);
 	sa.sa_handler = &handler;
 	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = 0;
+	sa.sa_flags = SA_RESTART;
 	if (sigaction(SIGUSR1, &sa, NULL))
 		err(1, "sigaction");
 	posted = 0;

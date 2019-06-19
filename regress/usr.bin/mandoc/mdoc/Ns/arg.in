@@ -1,0 +1,13 @@
+.\" $OpenBSD: arg.in,v 1.1 2018/12/21 16:58:49 schwarze Exp $
+.Dd $Mdocdate: December 21 2018 $
+.Dt NS-ARG 1
+.Os
+.Sh NAME
+.Nm Ns-arg
+.Nd escape sequences in the arguments of in-line macros with an argument limit
+.Sh DESCRIPTION
+.ds a \(at
+.No unquoted unescaped Ns \*a
+.No quoted unescaped Ns "\*a"
+.No unquoted escaped Ns \\*a
+.No quoted escaped Ns "\\*a"

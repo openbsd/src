@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.41 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.42 2018/07/05 14:42:30 visa Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -60,6 +60,8 @@ kthread_create(void (*func)(void *), void *arg,
 	struct proc *p;
 	int error;
 
+	KERNEL_LOCK();
+
 	/*
 	 * First, create the new process.  Share the memory, file
 	 * descriptors and don't leave the exit status around for the
@@ -67,11 +69,15 @@ kthread_create(void (*func)(void *), void *arg,
 	 */
 	error = fork1(&proc0, FORK_SHAREVM|FORK_SHAREFILES|FORK_NOZOMBIE|
 	    FORK_SYSTEM|FORK_SIGHAND, func, arg, NULL, &p);
-	if (error)
+	if (error) {
+		KERNEL_UNLOCK();
 		return (error);
+	}
 
 	/* Name it as specified. */
 	strlcpy(p->p_p->ps_comm, name, sizeof p->p_p->ps_comm);
+
+	KERNEL_UNLOCK();
 
 	/* All done! */
 	if (newpp != NULL)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tvtohz.9,v 1.9 2015/06/11 16:04:55 mikeb Exp $
+.\"	$OpenBSD: tvtohz.9,v 1.11 2019/01/18 03:34:58 schwarze Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 11 2015 $
+.Dd $Mdocdate: January 18 2019 $
 .Dt TVTOHZ 9
 .Os
 .Sh NAME
@@ -43,13 +43,18 @@ The
 .Fn tvtohz
 and
 .Fn tstohz
-functions compute the number of
-.Va hz
-in the specified amount of time.
-They are mainly used to translate a timeval or timespec,
+functions return the number of ticks in the specified amount of time.
+If the return value would exceed the maximum value representable by an
+.Vt int ,
+it is capped at
+.Dv INT_MAX .
+They are mainly used to translate a
+.Vt timeval
+or
+.Vt timespec ,
 respectively,
 into a suitable argument for
-.Xr timeout 9 .
+.Xr tsleep 9 .
 .Sh CODE REFERENCES
 These functions are implemented in the file
 .Pa sys/kern/kern_clock.c .

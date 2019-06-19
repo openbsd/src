@@ -30,7 +30,7 @@ foreach $DirItem(@Dirs)
 		# Open once in write mode since later files are opened in append mode,
 		# and if there already exists a file with the same name, all further opens
 		# will append to that file!!
-		open(FHW, "> $IntAutoScript") or die "Unable to open the file,  $IntAutoScript  for writing.\n";
+		open(FHW, '>', $IntAutoScript) or die "Unable to open the file,  $IntAutoScript  for writing.\n";
 		seek(FHW, 0, 0);	# seek to the beginning of the file.
 		close FHW;			# close the file.
 	}
@@ -39,7 +39,7 @@ foreach $DirItem(@Dirs)
 
 print "Generating  t/nwauto.pl ...\n\n\n";
 
-open(FHWA, "> t/nwauto.pl") or die "Unable to open the file,  t/nwauto.pl  for writing.\n";
+open(FHWA, '>', 't/nwauto.pl') or die "Unable to open the file,  t/nwauto.pl  for writing.\n";
 seek(FHWA, 0, 0);	# seek to the beginning of the file.
 
 $version = sprintf("%vd",$^V);
@@ -67,7 +67,7 @@ foreach $FileName(@DirNames)
 		}
 
 		# Write into the intermediary auto script.
-		open(FHW, ">> $IntAutoScript") or die "Unable to open the file,  $IntAutoScript  for appending.\n";
+		open(FHW, '>>', $IntAutoScript) or die "Unable to open the file,  $IntAutoScript  for appending.\n";
 		seek(FHW, 0, 2);	# seek to the end of the file.
 
 		$pos = tell(FHW);
@@ -164,7 +164,7 @@ foreach $DirItem(@Dirs)
 			$IntAutoScript = "t/".$DirItem.".pl";
 
 			# Write into the intermediary auto script.
-			open(FHW, ">> $IntAutoScript") or die "Unable to open the file,  $IntAutoScript  for appending.\n";
+			open(FHW, '>>', $IntAutoScript) or die "Unable to open the file,  $IntAutoScript  for appending.\n";
 			seek(FHW, 0, 2);	# seek to the end of the file.
 
 			# Write into the intermediary auto script.

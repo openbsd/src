@@ -1,4 +1,4 @@
-/* $OpenBSD: nxphdmi.c,v 1.5 2017/09/11 05:44:22 jsg Exp $ */
+/* $OpenBSD: nxphdmi.c,v 1.6 2019/05/06 03:45:58 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  * All rights reserved.
@@ -229,11 +229,11 @@
 #define		CEC_FRO_IM_CLK_CTRL_GHOST_DIS	(1 << 7)
 #define		CEC_FRO_IM_CLK_CTRL_IMCLK_SEL	(1 << 1)
 
-/*  EDID reading */ 
+/* EDID reading */
 #define	EDID_LENGTH		0x80
 #define	MAX_READ_ATTEMPTS	100
 
-/*  EDID fields */
+/* EDID fields */
 #define	EDID_MODES0		35
 #define	EDID_MODES1		36
 #define	EDID_TIMING_START	38

@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_prn.c,v 1.19 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_prn.c,v 1.20 2018/05/19 10:41:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -152,8 +152,8 @@ err:
 }
 
 int
-X509V3_extensions_print(BIO *bp, char *title, STACK_OF(X509_EXTENSION) *exts,
-    unsigned long flag, int indent)
+X509V3_extensions_print(BIO *bp, const char *title,
+    const STACK_OF(X509_EXTENSION) *exts, unsigned long flag, int indent)
 {
 	int i, j;
 

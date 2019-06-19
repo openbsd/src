@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.bigram.c,v 1.15 2015/12/09 01:58:34 jsg Exp $
+ *	$OpenBSD: locate.bigram.c,v 1.16 2019/01/17 06:15:44 tedu Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -31,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * 	$Id: locate.bigram.c,v 1.15 2015/12/09 01:58:34 jsg Exp $
  */
 
 /*

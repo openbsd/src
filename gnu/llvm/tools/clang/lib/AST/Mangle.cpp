@@ -44,7 +44,7 @@ static void mangleFunctionBlock(MangleContext &Context,
   if (discriminator == 0)
     Out << "__" << Outer << "_block_invoke";
   else
-    Out << "__" << Outer << "_block_invoke_" << discriminator+1; 
+    Out << "__" << Outer << "_block_invoke_" << discriminator+1;
 }
 
 void MangleContext::anchor() { }
@@ -101,6 +101,11 @@ bool MangleContext::shouldMangleDeclName(const NamedDecl *D) {
 
   CCMangling CC = getCallingConvMangling(ASTContext, D);
   if (CC != CCM_Other)
+    return true;
+
+  // If the declaration has an owning module for linkage purposes that needs to
+  // be mangled, we must mangle its name.
+  if (!D->hasExternalFormalLinkage() && D->getOwningModuleForLinkage())
     return true;
 
   // In C, functions with no attributes never need to be mangled. Fastpath them.

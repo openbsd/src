@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.21 2015/10/10 20:35:01 deraadt Exp $ */
+/*	$OpenBSD: stat.c,v 1.23 2018/09/18 15:14:06 tb Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -490,10 +490,9 @@ format1(const struct stat *st,
     int hilo, int what)
 {
 	u_int64_t data;
-	char *sdata, lfmt[24], tmp[20];
+	char lfmt[24], tmp[20];
 	char smode[12], sid[12], path[PATH_MAX + 4];
-	struct passwd *pw;
-	struct group *gr;
+	const char *sdata;
 	struct tm *tm;
 	time_t secs;
 	long nsecs;
@@ -546,26 +545,30 @@ format1(const struct stat *st,
 		small = (sizeof(st->st_mode) == 4);
 		data = st->st_mode;
 		strmode(st->st_mode, smode);
-		sdata = smode;
-		l = strlen(sdata);
-		if (sdata[l - 1] == ' ')
-			sdata[--l] = '\0';
-		if (hilo == HIGH_PIECE) {
+		l = strlen(smode);
+		if (smode[l - 1] == ' ')
+			smode[--l] = '\0';
+		switch (hilo) {
+		case HIGH_PIECE:
 			data >>= 12;
-			sdata += 1;
-			sdata[3] = '\0';
-			hilo = 0;
-		} else if (hilo == MIDDLE_PIECE) {
+			smode[4] = '\0';
+			sdata = smode + 1;
+			break;
+		case MIDDLE_PIECE:
 			data = (data >> 9) & 07;
-			sdata += 4;
-			sdata[3] = '\0';
-			hilo = 0;
-		} else if (hilo == LOW_PIECE) {
+			smode[7] = '\0';
+			sdata = smode + 4;
+			break;
+		case LOW_PIECE:
 			data &= 0777;
-			sdata += 7;
-			sdata[3] = '\0';
-			hilo = 0;
+			smode[10] = '\0';
+			sdata = smode + 7;
+			break;
+		default:
+			sdata = smode;
+			break;
 		}
+		hilo = 0;
 		formats = FMTF_DECIMAL | FMTF_OCTAL | FMTF_UNSIGNED | FMTF_HEX |
 		    FMTF_STRING;
 		if (ofmt == 0)
@@ -582,9 +585,8 @@ format1(const struct stat *st,
 	case SHOW_st_uid:
 		small = (sizeof(st->st_uid) == 4);
 		data = st->st_uid;
-		if ((pw = getpwuid(st->st_uid)) != NULL)
-			sdata = pw->pw_name;
-		else {
+		sdata = user_from_uid(st->st_uid, 1);
+		if (sdata == NULL) {
 			snprintf(sid, sizeof(sid), "(%ld)", (long)st->st_uid);
 			sdata = sid;
 		}
@@ -596,9 +598,8 @@ format1(const struct stat *st,
 	case SHOW_st_gid:
 		small = (sizeof(st->st_gid) == 4);
 		data = st->st_gid;
-		if ((gr = getgrgid(st->st_gid)) != NULL)
-			sdata = gr->gr_name;
-		else {
+		sdata = group_from_gid(st->st_gid, 1);
+		if (sdata == NULL) {
 			snprintf(sid, sizeof(sid), "(%ld)", (long)st->st_gid);
 			sdata = sid;
 		}
@@ -706,25 +707,25 @@ format1(const struct stat *st,
 		small = 0;
 		data = 0;
 		sdata = smode;
-		sdata[0] = '\0';
+		smode[0] = '\0';
 		if (hilo == 0 || hilo == LOW_PIECE) {
 			switch (st->st_mode & S_IFMT) {
 			case S_IFIFO:
-				(void)strlcat(sdata, "|", sizeof(smode));
+				(void)strlcat(smode, "|", sizeof(smode));
 				break;
 			case S_IFDIR:
-				(void)strlcat(sdata, "/", sizeof(smode));
+				(void)strlcat(smode, "/", sizeof(smode));
 				break;
 			case S_IFREG:
 				if (st->st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))
-					(void)strlcat(sdata, "*",
+					(void)strlcat(smode, "*",
 					    sizeof(smode));
 				break;
 			case S_IFLNK:
-				(void)strlcat(sdata, "@", sizeof(smode));
+				(void)strlcat(smode, "@", sizeof(smode));
 				break;
 			case S_IFSOCK:
-				(void)strlcat(sdata, "=", sizeof(smode));
+				(void)strlcat(smode, "=", sizeof(smode));
 				break;
 			}
 			hilo = 0;

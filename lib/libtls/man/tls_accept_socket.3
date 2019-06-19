@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_accept_socket.3,v 1.3 2017/01/28 00:59:36 schwarze Exp $
+.\" $OpenBSD: tls_accept_socket.3,v 1.4 2018/05/26 12:35:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 28 2017 $
+.Dd $Mdocdate: May 26 2018 $
 .Dt TLS_ACCEPT_SOCKET 3
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ and can contain a pointer to any caller-specified data.
 .Pp
 All these functions create a new context suitable for reading and writing
 and return it in
-.Fa *cctx .
+.Pf * Fa cctx .
 .Sh RETURN VALUES
 These functions return 0 on success or -1 on error.
 .Sh SEE ALSO

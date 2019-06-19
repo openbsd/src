@@ -3,13 +3,13 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 use strict;
 
-plan tests => 124;
+plan tests => 164;
 
 # Before loading feature.pm, test it with CORE::
 ok eval 'CORE::state $x = 1;', 'CORE::state outside of feature.pm scope';
@@ -135,6 +135,16 @@ is( $xsize, 0, 'uninitialized state array' );
 $xsize = stateful_array();
 is( $xsize, 1, 'uninitialized state array after one iteration' );
 
+sub stateful_init_array {
+    state @x = qw(a b c);
+    push @x, "x";
+    return join(",", @x);
+}
+
+is stateful_init_array(), "a,b,c,x";
+is stateful_init_array(), "a,b,c,x,x";
+is stateful_init_array(), "a,b,c,x,x,x";
+
 # hash state vars
 
 sub stateful_hash {
@@ -147,6 +157,46 @@ is( $xhval, 0, 'uninitialized state hash' );
 
 $xhval = stateful_hash();
 is( $xhval, 1, 'uninitialized state hash after one iteration' );
+
+sub stateful_init_hash {
+    state %x = qw(a b c d);
+    $x{foo}++;
+    return join(",", map { ($_, $x{$_}) } sort keys %x);
+}
+
+is stateful_init_hash(), "a,b,c,d,foo,1";
+is stateful_init_hash(), "a,b,c,d,foo,2";
+is stateful_init_hash(), "a,b,c,d,foo,3";
+
+# declarations with attributes
+
+SKIP: {
+skip "no attributes in miniperl", 3, if is_miniperl;
+
+eval q{
+sub stateful_attr {
+    state $a :shared;
+    state $b :shared = 3;
+    state @c :shared;
+    state @d :shared = qw(a b c);
+    state %e :shared;
+    state %f :shared = qw(a b c d);
+    $a++;
+    $b++;
+    push @c, "x";
+    push @d, "x";
+    $e{e}++;
+    $f{e}++;
+    return join(",", $a, $b, join(":", @c), join(":", @d), join(":", %e),
+	    join(":", map { ($_, $f{$_}) } sort keys %f));
+}
+};
+
+is stateful_attr(), "1,4,x,a:b:c:x,e:1,a:b:c:d:e:1";
+is stateful_attr(), "2,5,x:x,a:b:c:x:x,e:2,a:b:c:d:e:2";
+is stateful_attr(), "3,6,x:x:x,a:b:c:x:x:x,e:3,a:b:c:d:e:3";
+}
+
 
 # Recursion
 
@@ -341,10 +391,17 @@ foreach my $spam (@spam) {
 
 
 foreach my $forbidden (<DATA>) {
-    chomp $forbidden;
-    no strict 'vars';
-    eval $forbidden;
-    like $@, qr/Initialization of state variables in list context currently forbidden/, "Currently forbidden: $forbidden";
+    SKIP: {
+        skip_if_miniperl("miniperl can't load attributes.pm", 1)
+                if $forbidden =~ /:shared/;
+
+        chomp $forbidden;
+        no strict 'vars';
+        eval $forbidden;
+        like $@,
+            qr/Initialization of state variables in list currently forbidden/,
+            "Currently forbidden: $forbidden";
+    }
 }
 
 # [perl #49522] state variable not available
@@ -439,17 +496,53 @@ sub rt_123029 {
 }
 ok(rt_123029(), "state variables don't surprisingly disappear when accessed");
 
+# make sure multiconcat doesn't break state
+
+for (1,2) {
+    state $s = "-$_-";
+    is($s, "-1-", "state with multiconcat pass $_");
+}
+
 __DATA__
-state ($a) = 1;
 (state $a) = 1;
-state @a = 1;
-state (@a) = 1;
 (state @a) = 1;
-state %a = ();
-state (%a) = ();
+(state @a :shared) = 1;
 (state %a) = ();
+(state %a :shared) = ();
+state ($a) = 1;
+(state ($a)) = 1;
+state (@a) = 1;
+(state (@a)) = 1;
+state (@a) :shared = 1;
+(state (@a) :shared) = 1;
+state (%a) = ();
+(state (%a)) = ();
+state (%a) :shared = ();
+(state (%a) :shared) = ();
+state (undef, $a) = ();
+(state (undef, $a)) = ();
+state (undef, @a) = ();
+(state (undef, @a)) = ();
+state ($a, undef) = ();
+(state ($a, undef)) = ();
 state ($a, $b) = ();
+(state ($a, $b)) = ();
+state ($a, $b) :shared = ();
+(state ($a, $b) :shared) = ();
 state ($a, @b) = ();
+(state ($a, @b)) = ();
+state ($a, @b) :shared = ();
+(state ($a, @b) :shared) = ();
+state (@a, undef) = ();
+(state (@a, undef)) = ();
+state (@a, $b) = ();
+(state (@a, $b)) = ();
+state (@a, $b) :shared = ();
+(state (@a, $b) :shared) = ();
+state (@a, @b) = ();
+(state (@a, @b)) = ();
+state (@a, @b) :shared = ();
+(state (@a, @b) :shared) = ();
 (state $a, state $b) = ();
 (state $a, $b) = ();
 (state $a, my $b) = ();

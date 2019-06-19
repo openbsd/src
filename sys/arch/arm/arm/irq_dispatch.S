@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.14 2018/01/26 16:22:19 kettenis Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.15 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -71,8 +71,8 @@
 #include "assym.h"
 
 #include <machine/asm.h>
+#include <arm/armreg.h>
 #include <arm/sysreg.h>
-#include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
 

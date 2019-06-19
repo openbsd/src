@@ -108,7 +108,7 @@ sub SKIP_TEST {
   ++$TNUM; print "ok $TNUM # skip $reason\n";
 }
 
-$TMAX = 450;
+$TMAX = 468;
 
 # Force Data::Dumper::Dump to use perl. We test Dumpxs explicitly by calling
 # it direct. Out here it lets us knobble the next if to test that the perl
@@ -1739,4 +1739,67 @@ EOT
         local $Data::Dumper::Useqq = 1;
         TEST (qq(Dumper("\n")), '\n alone');
         TEST (qq(Data::Dumper::DumperX("\n")), '\n alone') if $XS;
+}
+#############
+our @globs = map { $_, \$_ } map { *$_ } map { $_, "s::$_" }
+		"foo", "\1bar", "L\x{e9}on", "m\x{100}cron", "snow\x{2603}";
+$WANT = <<'EOT';
+#$globs = [
+#  *::foo,
+#  \*::foo,
+#  *s::foo,
+#  \*s::foo,
+#  *{"::\1bar"},
+#  \*{"::\1bar"},
+#  *{"s::\1bar"},
+#  \*{"s::\1bar"},
+#  *{"::L\351on"},
+#  \*{"::L\351on"},
+#  *{"s::L\351on"},
+#  \*{"s::L\351on"},
+#  *{"::m\x{100}cron"},
+#  \*{"::m\x{100}cron"},
+#  *{"s::m\x{100}cron"},
+#  \*{"s::m\x{100}cron"},
+#  *{"::snow\x{2603}"},
+#  \*{"::snow\x{2603}"},
+#  *{"s::snow\x{2603}"},
+#  \*{"s::snow\x{2603}"}
+#];
+EOT
+{
+  local $Data::Dumper::Useqq = 1;
+  TEST (q(Data::Dumper->Dump([\@globs], ["globs"])), 'globs: Dump()');
+  TEST (q(Data::Dumper->Dumpxs([\@globs], ["globs"])), 'globs: Dumpxs()')
+    if $XS;
+}
+#############
+$WANT = <<'EOT';
+#$v = {
+#  a => \*::ppp,
+#  b => \*{'::a/b'},
+#  c => \*{"::a\x{2603}b"}
+#};
+#*::ppp = {
+#  a => 1
+#};
+#*{'::a/b'} = {
+#  b => 3
+#};
+#*{"::a\x{2603}b"} = {
+#  c => 5
+#};
+EOT
+{
+  *ppp = { a => 1 };
+  *{"a/b"} = { b => 3 };
+  *{"a\x{2603}b"} = { c => 5 };
+  our $v = { a => \*ppp, b => \*{"a/b"}, c => \*{"a\x{2603}b"} };
+  local $Data::Dumper::Purity = 1;
+  TEST (q(Data::Dumper->Dump([$v], ["v"])), 'glob purity: Dump()');
+  TEST (q(Data::Dumper->Dumpxs([$v], ["v"])), 'glob purity: Dumpxs()') if $XS;
+  $WANT =~ tr/'/"/;
+  local $Data::Dumper::Useqq = 1;
+  TEST (q(Data::Dumper->Dump([$v], ["v"])), 'glob purity: Dump()');
+  TEST (q(Data::Dumper->Dumpxs([$v], ["v"])), 'glob purity: Dumpxs()') if $XS;
 }

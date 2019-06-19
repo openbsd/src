@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.31 2015/02/28 21:51:56 bentley Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.33 2019/02/04 20:18:11 jasper Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"	ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"	OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: February 4 2019 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -130,6 +130,8 @@ Return the compiler and/or linker flags required for static linking.
 Allow packages not controlled by
 .Nm
 to be used.
+.It Cm --validate
+Validate the package without processing its dependencies.
 .It Cm --variable Ar name
 Fetch the value of the named variable.
 .It Cm --version
@@ -180,6 +182,8 @@ If set
 uses the specified value for
 .Em pc_top_builddir
 instead of $(top_builddir).
+.It Ev PKG_CONFIG_$PACKAGE_$VARIABLE
+Override the $VARIABLE in $PACKAGE with the given value.
 .El
 .Sh EXIT STATUS
 .Ex -std pkg-config

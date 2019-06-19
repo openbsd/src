@@ -11,9 +11,9 @@ our $hex_fmt= "0x%02X";
 sub DEBUG () { 0 }
 $|=1 if DEBUG;
 
-require 'regen/regen_lib.pl';
-require 'regen/charset_translations.pl';
-require "regen/regcharclass_multi_char_folds.pl";
+require './regen/regen_lib.pl';
+require './regen/charset_translations.pl';
+require "./regen/regcharclass_multi_char_folds.pl";
 
 =head1 NAME
 
@@ -505,7 +505,7 @@ sub _optree {
     # can return the "else" value.
     return $else if !@conds;
 
-    my $test = $test_type =~ /^cp/ ? "cp" : "((U8*)s)[$depth]";
+    my $test = $test_type =~ /^cp/ ? "cp" : "((const U8*)s)[$depth]";
 
     # First we loop over the possible keys/conditions and find out what they
     # look like; we group conditions with the same optree together.
@@ -1364,7 +1364,7 @@ WARNING: These macros are for internal Perl core use only, and may be
 changed or removed without notice.
 EOF
     );
-    print $out_fh "\n#ifndef H_REGCHARCLASS   /* Guard against nested #includes */\n#define H_REGCHARCLASS 1\n";
+    print $out_fh "\n#ifndef PERL_REGCHARCLASS_H_ /* Guard against nested #includes */\n#define PERL_REGCHARCLASS_H_\n";
 
     my ( $op, $title, @txt, @types, %mods );
     my $doit= sub ($) {
@@ -1452,7 +1452,7 @@ EOF
         print $out_fh get_conditional_compile_line_end();
     }
 
-    print $out_fh "\n#endif /* H_REGCHARCLASS */\n";
+    print $out_fh "\n#endif /* PERL_REGCHARCLASS_H_ */\n";
 
     if($path eq '-') {
 	print $out_fh "/* ex: set ro: */\n";
@@ -1467,7 +1467,7 @@ EOF
         {
             # Depend on mktables’ own sources.  It’s a shorter list of files than
             # those that Unicode::UCD uses.
-            if (! open my $mktables_list, $sources_list) {
+            if (! open my $mktables_list, '<', $sources_list) {
 
                 # This should force a rebuild once $sources_list exists
                 push @sources, $sources_list;
@@ -1630,42 +1630,89 @@ REPLACEMENT: Unicode REPLACEMENT CHARACTER
 0xFFFD
 
 NONCHAR: Non character code points
-=> UTF8 :fast
+=> UTF8 :safe
 \p{_Perl_Nchar}
 
-SURROGATE: Surrogate characters
-=> UTF8 :fast
+SURROGATE: Surrogate code points
+=> UTF8 :safe
 \p{_Perl_Surrogate}
 
-# This program was run with this enabled, and the results copied to utf8.h;
-# then this was commented out because it takes so long to figure out these 2
-# million code points.  The results would not change unless utf8.h decides it
-# wants a maximum other than 4 bytes, or this program creates better
+# This program was run with this enabled, and the results copied to utf8.h and
+# utfebcdic.h; then this was commented out because it takes so long to figure
+# out these 2 million code points.  The results would not change unless utf8.h
+# decides it wants a different maximum, or this program creates better
 # optimizations.  Trying with 5 bytes used too much memory to calculate.
 #
 # We don't generate code for invariants here because the EBCDIC form is too
 # complicated and would slow things down; instead the user should test for
 # invariants first.
 #
-# NOTE: The number of bytes generated here must match the value in
-# IS_UTF8_CHAR_FAST in utf8.h
+# 0x1FFFFF was chosen because for both UTF-8 and UTF-EBCDIC, its start byte
+# is the same as 0x10FFFF, and it includes all the above-Unicode code points
+# that have that start byte.  In other words, it is the natural stopping place
+# that includes all Unicode code points.
 #
-#UTF8_CHAR: Matches legal UTF-8 encoded characters from 2 through 4 bytes
+#UTF8_CHAR: Matches legal UTF-8 variant code points up through the 0x1FFFFFF
 #=> UTF8 :no_length_checks only_ascii_platform
 #0x80 - 0x1FFFFF
 
-# This hasn't been commented out, but the number of bytes it works on has been
-# cut down to 3, so it doesn't cover the full legal Unicode range.  Making it
-# 5 bytes would cover beyond the full range, but takes quite a bit of time and
-# memory to calculate.  The generated table varies depending on the EBCDIC
-# code page.
+#UTF8_CHAR: Matches legal UTF-EBCDIC variant code points up through 0x1FFFFFF
+#=> UTF8 :no_length_checks only_ebcdic_platform
+#0xA0 - 0x1FFFFF
 
-# NOTE: The number of bytes generated here must match the value in
-# IS_UTF8_CHAR_FAST in utf8.h
+#STRICT_UTF8_CHAR: Matches legal Unicode UTF-8 variant code points, no surrrogates nor non-character code points
+#=> UTF8 :no_length_checks only_ascii_platform
+#0x0080 - 0xD7FF
+#0xE000 - 0xFDCF
+#0xFDF0 - 0xFFFD
+#0x10000 - 0x1FFFD
+#0x20000 - 0x2FFFD
+#0x30000 - 0x3FFFD
+#0x40000 - 0x4FFFD
+#0x50000 - 0x5FFFD
+#0x60000 - 0x6FFFD
+#0x70000 - 0x7FFFD
+#0x80000 - 0x8FFFD
+#0x90000 - 0x9FFFD
+#0xA0000 - 0xAFFFD
+#0xB0000 - 0xBFFFD
+#0xC0000 - 0xCFFFD
+#0xD0000 - 0xDFFFD
+#0xE0000 - 0xEFFFD
+#0xF0000 - 0xFFFFD
+#0x100000 - 0x10FFFD
 #
-UTF8_CHAR: Matches legal UTF-EBCDIC encoded characters from 2 through 3 bytes
-=> UTF8 :no_length_checks only_ebcdic_platform
-0xA0 - 0x3FFF
+#STRICT_UTF8_CHAR: Matches legal Unicode UTF-8 variant code points, no surrrogates nor non-character code points
+#=> UTF8 :no_length_checks only_ebcdic_platform
+#0x00A0 - 0xD7FF
+#0xE000 - 0xFDCF
+#0xFDF0 - 0xFFFD
+#0x10000 - 0x1FFFD
+#0x20000 - 0x2FFFD
+#0x30000 - 0x3FFFD
+#0x40000 - 0x4FFFD
+#0x50000 - 0x5FFFD
+#0x60000 - 0x6FFFD
+#0x70000 - 0x7FFFD
+#0x80000 - 0x8FFFD
+#0x90000 - 0x9FFFD
+#0xA0000 - 0xAFFFD
+#0xB0000 - 0xBFFFD
+#0xC0000 - 0xCFFFD
+#0xD0000 - 0xDFFFD
+#0xE0000 - 0xEFFFD
+#0xF0000 - 0xFFFFD
+#0x100000 - 0x10FFFD
+
+#C9_STRICT_UTF8_CHAR: Matches legal Unicode UTF-8 variant code points, no surrogates
+#=> UTF8 :no_length_checks only_ascii_platform
+#0x0080 - 0xD7FF
+#0xE000 - 0x10FFFF
+#
+#C9_STRICT_UTF8_CHAR: Matches legal Unicode UTF-8 variant code points including non-character code points, no surrogates
+#=> UTF8 :no_length_checks only_ebcdic_platform
+#0x00A0 - 0xD7FF
+#0xE000 - 0x10FFFF
 
 QUOTEMETA: Meta-characters that \Q should quote
 => high :fast

@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ht.c,v 1.24 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ocsp_ht.c,v 1.25 2018/05/13 10:42:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -149,7 +149,7 @@ OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx, const char *name,
 }
 
 OCSP_REQ_CTX *
-OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req, int maxline)
+OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req, int maxline)
 {
 	OCSP_REQ_CTX *rctx;
 
@@ -440,7 +440,7 @@ next_line:
 
 /* Blocking OCSP request handler: now a special case of non-blocking I/O */
 OCSP_RESPONSE *
-OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req)
+OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
 {
 	OCSP_RESPONSE *resp = NULL;
 	OCSP_REQ_CTX *ctx;

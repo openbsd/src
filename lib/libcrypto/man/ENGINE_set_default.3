@@ -1,0 +1,186 @@
+.\" $OpenBSD: ENGINE_set_default.3,v 1.4 2019/06/03 14:43:15 schwarze Exp $
+.\" content checked up to:
+.\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
+.\"
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 3 2019 $
+.Dt ENGINE 3
+.Os
+.Sh NAME
+.Nm ENGINE_set_default ,
+.Nm ENGINE_set_default_string ,
+.Nm ENGINE_set_default_RSA ,
+.Nm ENGINE_set_default_DSA ,
+.Nm ENGINE_set_default_ECDH ,
+.Nm ENGINE_set_default_ECDSA ,
+.Nm ENGINE_set_default_DH ,
+.Nm ENGINE_set_default_RAND ,
+.Nm ENGINE_set_default_ciphers ,
+.Nm ENGINE_set_default_digests
+.Nd register an ENGINE as the default for an algorithm
+.Sh SYNOPSIS
+.In openssl/engine.h
+.Ft int
+.Fo ENGINE_set_default_RSA
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_default_DSA
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_default_ECDH
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_default_ECDSA
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_default_DH
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_default_RAND
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_default_ciphers
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_default_digests
+.Fa "ENGINE *e"
+.Fc
+.Ft int
+.Fo ENGINE_set_default
+.Fa "ENGINE *e"
+.Fa "unsigned int flags"
+.Fc
+.Ft int
+.Fo ENGINE_set_default_string
+.Fa "ENGINE *e"
+.Fa "const char *list"
+.Fc
+.Sh DESCRIPTION
+These functions register
+.Fa e
+as implementing the respective algorithm
+like the functions described in the
+.Xr ENGINE_register_RSA 3
+manual page do it.
+In addition, they call
+.Xr ENGINE_init 3
+on
+.Fa e
+and select
+.Fa e
+as the default implementation of the respective algorithm to be
+returned by the functions described in
+.Xr ENGINE_get_default_RSA 3
+in the future.
+If another engine was previously selected
+as the default implementation of the respective algorithm,
+.Xr ENGINE_finish 3
+is called on that previous engine.
+.Pp
+If
+.Fa e
+implements more than one cipher or digest,
+.Fn ENGINE_set_default_ciphers
+and
+.Fn ENGINE_set_default_digests
+register and select it for all these ciphers and digests, respectively.
+.Pp
+.Fn ENGINE_set_default
+registers
+.Fa e
+as the default implementation of all algorithms specified by the
+.Fa flags
+by calling the appropriate ones among the other functions.
+Algorithms can be selected by combining any number of the
+following constants with bitwise OR:
+.Dv ENGINE_METHOD_ALL ,
+.Dv ENGINE_METHOD_RSA ,
+.Dv ENGINE_METHOD_DSA ,
+.Dv ENGINE_METHOD_ECDH ,
+.Dv ENGINE_METHOD_ECDSA ,
+.Dv ENGINE_METHOD_DH ,
+.Dv ENGINE_METHOD_RAND ,
+.Dv ENGINE_METHOD_CIPHERS ,
+.Dv ENGINE_METHOD_DIGESTS ,
+.Dv ENGINE_METHOD_PKEY_METHS ,
+and
+.Dv ENGINE_METHOD_PKEY_ASN1_METHS .
+.Pp
+.Fn ENGINE_set_default_string
+is similar except that it selects the algorithms according to the string
+.Fa def_list ,
+which contains an arbitrary number of comma-separated keywords from
+the following list: ALL, RSA, DSA, ECDH, ECDSA, DH, RAND, CIPHERS,
+DIGESTS, PKEY_CRYPTO, PKEY_ASN1, and PKEY.
+PKEY_CRYPTO corresponds to
+.Dv ENGINE_METHOD_PKEY_METHS ,
+PKEY_ASN1 to
+.Dv ENGINE_METHOD_PKEY_ASN1_METHS ,
+and PKEY selects both.
+.Sh RETURN VALUES
+These functions return 1 on success or 0 on error.
+They fail if
+.Xr ENGINE_init 3
+fails or if insufficient memory is available.
+.Sh SEE ALSO
+.Xr ENGINE_get_default_RSA 3 ,
+.Xr ENGINE_init 3 ,
+.Xr ENGINE_new 3 ,
+.Xr ENGINE_register_RSA 3 ,
+.Xr ENGINE_set_RSA 3 ,
+.Xr ENGINE_unregister_RSA 3
+.Sh HISTORY
+.Fn ENGINE_set_default ,
+.Fn ENGINE_set_default_RSA ,
+.Fn ENGINE_set_default_DSA ,
+.Fn ENGINE_set_default_DH ,
+and
+.Fn ENGINE_set_default_RAND
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 2.9 .
+.Pp
+.Fn ENGINE_set_default_string ,
+.Fn ENGINE_set_default_ciphers ,
+and
+.Fn ENGINE_set_default_digests
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+.Fn ENGINE_set_default_ECDH
+and
+.Fn ENGINE_set_default_ECDSA
+first appeared in OpenSSL 0.9.8 and have been available since
+.Ox 4.5 .
+.Sh CAVEATS
+Failure of
+.Xr ENGINE_finish 3
+is ignored.
+.Sh BUGS
+Even when
+.Fn ENGINE_set_default
+or
+.Fn ENGINE_set_default_string
+fail, they typically still register
+.Fa e
+for some algorithms, but usually not for all it could be registered
+for by calling the individual functions.

@@ -38,10 +38,6 @@ case "$cc" in
     *4.2*)	ccflags="$ccflags -DLANGUAGE_C -Olimit 3800"
 		# Prototypes sometimes cause compilation errors in 4.2.
 		prototype=undef   
-		case "$myuname" in
-		*risc*)  d_volatile=undef ;;
-		esac
-		;;
     *4.3*)	ccflags="$ccflags -std1 -DLANGUAGE_C -Olimit 3800" ;;
     *)	ccflags="$ccflags -std -Olimit 3800" ;;
     esac

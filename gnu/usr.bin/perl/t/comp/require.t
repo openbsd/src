@@ -34,7 +34,7 @@ if (grep -e, @files_to_delete) {
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
-my $total_tests = 57;
+my $total_tests = 58;
 if ($Is_EBCDIC || $Is_UTF8) { $total_tests -= 3; }
 print "1..$total_tests\n";
 
@@ -203,7 +203,11 @@ $foo = eval q{require bleah}; delete $INC{"bleah.pm"}; ++$::i;
        eval q{return require bleah}; delete $INC{"bleah.pm"}; ++$::i;
 $foo = eval  {require bleah}; delete $INC{"bleah.pm"}; ++$::i;
 @foo = eval  {require bleah}; delete $INC{"bleah.pm"}; ++$::i;
-       eval  {require bleah};
+       eval  {require bleah}; delete $INC{"bleah.pm"}; ++$::i;
+
+eval 'require ::bleah;';
+print "# $@\nnot " unless $@ =~ /^Bareword in require must not start with a double-colon:/;
+print "ok ", $i," - require ::bleah is banned\n";
 
 # Test for fix of RT #24404 : "require $scalar" may load a directory
 my $r = "threads";

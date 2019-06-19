@@ -1,0 +1,17 @@
+.\" $OpenBSD: paragraph.in,v 1.1 2019/01/06 04:41:15 schwarze Exp $
+.TH SH-PARAGRAPH 1 "January 6, 2019"
+.SH NAME
+SH-paragraph \- interaction of section headers with paragraphs
+.SH SYNOPSIS
+BEGINTEST
+.SH DESCRIPTION
+This text
+immediately follows
+a section header.
+.PP
+This is
+a paragraph.
+.SH EXAMPLES
+ENDTEST
+.PP
+end of file

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.22 2017/09/08 06:24:31 mlarkin Exp $	*/
+/*	$OpenBSD: control.c,v 1.30 2018/12/04 08:15:09 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -67,12 +67,11 @@ control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	/*
 	 * pledge in the control process:
 	 * stdio - for malloc and basic I/O including events.
-	 * cpath - for managing the control socket.
 	 * unix - for the control socket.
 	 * recvfd - for the proc fd exchange.
 	 * sendfd - for send and receive.
 	 */
-	if (pledge("stdio cpath unix recvfd sendfd", NULL) == -1)
+	if (pledge("stdio unix recvfd sendfd", NULL) == -1)
 		fatal("pledge");
 }
 
@@ -103,6 +102,7 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_VMDOP_CONFIG:
 		config_getconfig(ps->ps_env, imsg);
+		proc_compose(ps, PROC_PARENT, IMSG_VMDOP_DONE, NULL, 0);
 		break;
 	case IMSG_CTL_RESET:
 		config_getreset(ps->ps_env, imsg);
@@ -170,6 +170,18 @@ control_init(struct privsep *ps, struct control_sock *cs)
 	cs->cs_fd = fd;
 	cs->cs_env = ps;
 
+	proc_compose(ps, PROC_PARENT, IMSG_VMDOP_DONE, NULL, 0);
+
+	return (0);
+}
+
+int
+control_reset(struct control_sock *cs)
+{
+	/* Updating owner of the control socket */
+	if (chown(cs->cs_name, cs->cs_uid, cs->cs_gid) == -1)
+		return (-1);
+
 	return (0);
 }
 
@@ -190,15 +202,6 @@ control_listen(struct control_sock *cs)
 	evtimer_set(&cs->cs_evt, control_accept, cs);
 
 	return (0);
-}
-
-void
-control_cleanup(struct control_sock *cs)
-{
-	if (cs->cs_name == NULL)
-		return;
-	event_del(&cs->cs_ev);
-	event_del(&cs->cs_evt);
 }
 
 /* ARGSUSED */
@@ -338,8 +341,11 @@ control_dispatch_imsg(int fd, short event, void *arg)
 
 		switch (imsg.hdr.type) {
 		case IMSG_VMDOP_GET_INFO_VM_REQUEST:
+		case IMSG_VMDOP_WAIT_VM_REQUEST:
 		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
 		case IMSG_VMDOP_START_VM_REQUEST:
+		case IMSG_VMDOP_PAUSE_VM:
+		case IMSG_VMDOP_UNPAUSE_VM:
 			break;
 		default:
 			if (c->peercred.uid != 0) {
@@ -373,8 +379,6 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			/* FALLTHROUGH */
 		case IMSG_VMDOP_RECEIVE_VM_REQUEST:
 		case IMSG_VMDOP_SEND_VM_REQUEST:
-		case IMSG_VMDOP_PAUSE_VM:
-		case IMSG_VMDOP_UNPAUSE_VM:
 		case IMSG_VMDOP_LOAD:
 		case IMSG_VMDOP_RELOAD:
 		case IMSG_CTL_RESET:
@@ -387,8 +391,8 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			if (IMSG_DATA_SIZE(&imsg) < sizeof(vmc))
 				goto fail;
 			memcpy(&vmc, imsg.data, sizeof(vmc));
-			vmc.vmc_uid = c->peercred.uid;
-			vmc.vmc_gid = -1;
+			vmc.vmc_owner.uid = c->peercred.uid;
+			vmc.vmc_owner.gid = -1;
 
 			if (proc_compose_imsg(ps, PROC_PARENT, -1,
 			    imsg.hdr.type, fd, -1, &vmc, sizeof(vmc)) == -1) {
@@ -396,14 +400,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				return;
 			}
 			break;
+		case IMSG_VMDOP_WAIT_VM_REQUEST:
 		case IMSG_VMDOP_TERMINATE_VM_REQUEST:
 			if (IMSG_DATA_SIZE(&imsg) < sizeof(vid))
 				goto fail;
 			memcpy(&vid, imsg.data, sizeof(vid));
 			vid.vid_uid = c->peercred.uid;
-			log_debug("%s id: %d, name: %s, uid: %d",
-			    __func__, vid.vid_id, vid.vid_name,
-			    vid.vid_uid);
 
 			if (proc_compose_imsg(ps, PROC_PARENT, -1,
 			    imsg.hdr.type, fd, -1, &vid, sizeof(vid)) == -1) {
@@ -421,6 +423,21 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				control_close(fd, cs);
 				return;
 			}
+			break;
+		case IMSG_VMDOP_PAUSE_VM:
+		case IMSG_VMDOP_UNPAUSE_VM:
+			if (IMSG_DATA_SIZE(&imsg) < sizeof(vid))
+				goto fail;
+			memcpy(&vid, imsg.data, sizeof(vid));
+			vid.vid_uid = c->peercred.uid;
+			log_debug("%s id: %d, name: %s, uid: %d",
+			    __func__, vid.vid_id, vid.vid_name,
+			    vid.vid_uid);
+
+			if (proc_compose_imsg(ps, PROC_PARENT, -1,
+			    imsg.hdr.type, fd, imsg.fd,
+			    &vid, sizeof(vid)) == -1)
+				goto fail;
 			break;
 		default:
 			log_debug("%s: error handling imsg %d",

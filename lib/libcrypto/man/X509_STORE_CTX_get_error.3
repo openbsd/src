@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_get_error.3,v 1.11 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_get_error.3,v 1.12 2019/06/04 12:31:29 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL crypto/X509_STORE_CTX_get_error f0e0fd51 Apr 14 23:59:26 2016 -0400
 .\" selective merge up to:
@@ -53,7 +53,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 4 2019 $
 .Dt X509_STORE_CTX_GET_ERROR 3
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@
 .Nm X509_verify_cert_error_string
 .Nd get or set certificate verification status information
 .Sh SYNOPSIS
-.In openssl/x509.h
+.In openssl/x509_vfy.h
 .Ft int
 .Fo X509_STORE_CTX_get_error
 .Fa "X509_STORE_CTX *ctx"
@@ -97,6 +97,7 @@
 .Fo X509_STORE_CTX_get1_chain
 .Fa "X509_STORE_CTX *ctx"
 .Fc
+.In openssl/x509.h
 .Ft const char *
 .Fo X509_verify_cert_error_string
 .Fa "long n"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.31 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.32 2019/06/11 00:45:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -611,9 +611,9 @@ pyro_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	int ino;
 
-	if (ihandle & PCI_INTR_MSI) {
+	if (PCI_INTR_TYPE(ihandle) != PCI_INTR_INTX) {
 		pci_chipset_tag_t pc = pbm->pp_pc;
-		pcitag_t tag = ihandle & ~PCI_INTR_MSI;
+		pcitag_t tag = PCI_INTR_TAG(ihandle);
 		int msinum = pbm->pp_msinum++;
 		u_int64_t reg;
 
@@ -632,7 +632,15 @@ pyro_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		if (flags & BUS_INTR_ESTABLISH_MPSAFE)
 			ih->ih_mpsafe = 1;
 
-		pci_msi_enable(pc, tag, pbm->pp_msiaddr, msinum);
+		switch (PCI_INTR_TYPE(ihandle)) {
+		case PCI_INTR_MSI:
+			pci_msi_enable(pc, tag, pbm->pp_msiaddr, msinum);
+			break;
+		case PCI_INTR_MSIX:
+			pci_msix_enable(pc, tag, pbm->pp_memt,
+			    PCI_INTR_VEC(ihandle), pbm->pp_msiaddr, msinum);
+			break;
+		}
 
 		/* Map MSI to the right EQ and mark it as valid. */
 		reg = bus_space_read_8(sc->sc_bust, sc->sc_csrh,

@@ -61,6 +61,8 @@ public:
 
   uint32_t GetPluginVersion() override;
 
+  SystemRuntime *GetSystemRuntime() override { return nullptr; }
+
   Status DoDestroy() override;
 
   void RefreshStateAfterStop() override;
@@ -81,6 +83,14 @@ public:
                              MemoryRegionInfo &range_info) override;
 
   bool GetProcessInfo(ProcessInstanceInfo &info) override;
+
+  Status WillResume() override {
+    Status error;
+    error.SetErrorStringWithFormat(
+        "error: %s does not support resuming processes",
+        GetPluginName().GetCString());
+    return error;
+  }
 
   MinidumpParser m_minidump_parser;
 

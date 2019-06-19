@@ -1,0 +1,43 @@
+mandoc: invalid.in:7:11: WARNING: invalid escape sequence: \[+]
+mandoc: invalid.in:7:8: WARNING: undefined escape, printing literally: \+
+mandoc: invalid.in:8:16: WARNING: invalid escape sequence: \[;]
+mandoc: invalid.in:8:13: WARNING: undefined escape, printing literally: \;
+mandoc: invalid.in:9:16: WARNING: invalid escape sequence: \[<]
+mandoc: invalid.in:9:13: WARNING: undefined escape, printing literally: \<
+mandoc: invalid.in:10:15: WARNING: invalid escape sequence: \[=]
+mandoc: invalid.in:10:12: WARNING: undefined escape, printing literally: \=
+mandoc: invalid.in:11:19: WARNING: invalid escape sequence: \[>]
+mandoc: invalid.in:11:16: WARNING: undefined escape, printing literally: \>
+mandoc: invalid.in:12:9: WARNING: invalid escape sequence: \[@]
+mandoc: invalid.in:12:6: WARNING: undefined escape, printing literally: \@
+mandoc: invalid.in:13:18: WARNING: undefined escape, printing literally: \]
+mandoc: invalid.in:14:21: WARNING: invalid escape sequence: \[}]
+mandoc: invalid.in:14:16: WARNING: invalid escape sequence: \[{]
+mandoc: invalid.in:15:12: WARNING: invalid escape sequence: \[1]
+mandoc: invalid.in:15:9: WARNING: undefined escape, printing literally: \1
+mandoc: invalid.in:16:8: WARNING: invalid escape sequence: \[G]
+mandoc: invalid.in:16:5: WARNING: undefined escape, printing literally: \G
+mandoc: invalid.in:17:8: WARNING: invalid escape sequence: \[I]
+mandoc: invalid.in:17:5: WARNING: undefined escape, printing literally: \I
+mandoc: invalid.in:18:8: WARNING: invalid escape sequence: \[i]
+mandoc: invalid.in:18:5: WARNING: undefined escape, printing literally: \i
+mandoc: invalid.in:19:8: WARNING: invalid escape sequence: \[J]
+mandoc: invalid.in:19:5: WARNING: undefined escape, printing literally: \J
+mandoc: invalid.in:20:8: WARNING: invalid escape sequence: \[j]
+mandoc: invalid.in:20:5: WARNING: undefined escape, printing literally: \j
+mandoc: invalid.in:21:8: WARNING: invalid escape sequence: \[K]
+mandoc: invalid.in:21:5: WARNING: undefined escape, printing literally: \K
+mandoc: invalid.in:22:8: WARNING: invalid escape sequence: \[P]
+mandoc: invalid.in:22:5: WARNING: undefined escape, printing literally: \P
+mandoc: invalid.in:23:8: WARNING: invalid escape sequence: \[Q]
+mandoc: invalid.in:23:5: WARNING: undefined escape, printing literally: \Q
+mandoc: invalid.in:24:8: WARNING: invalid escape sequence: \[q]
+mandoc: invalid.in:24:5: WARNING: undefined escape, printing literally: \q
+mandoc: invalid.in:25:8: WARNING: invalid escape sequence: \[T]
+mandoc: invalid.in:25:5: WARNING: undefined escape, printing literally: \T
+mandoc: invalid.in:26:8: WARNING: invalid escape sequence: \[U]
+mandoc: invalid.in:26:5: WARNING: undefined escape, printing literally: \U
+mandoc: invalid.in:27:8: WARNING: invalid escape sequence: \[W]
+mandoc: invalid.in:27:5: WARNING: undefined escape, printing literally: \W
+mandoc: invalid.in:28:8: WARNING: invalid escape sequence: \[y]
+mandoc: invalid.in:28:5: WARNING: undefined escape, printing literally: \y

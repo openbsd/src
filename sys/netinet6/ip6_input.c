@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.214 2018/02/19 08:59:53 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.217 2019/06/10 23:48:22 dlg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -245,8 +245,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	}
 
 #if NCARP > 0
-	if (ifp->if_type == IFT_CARP &&
-	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
+	if (carp_lsdrop(ifp, m, AF_INET6, ip6->ip6_src.s6_addr32,
 	    ip6->ip6_dst.s6_addr32, (ip6->ip6_nxt == IPPROTO_ICMPV6 ? 0 : 1)))
 		goto bad;
 #endif
@@ -495,8 +494,8 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	}
 
 #if NCARP > 0
-	if (ifp->if_type == IFT_CARP && ip6->ip6_nxt == IPPROTO_ICMPV6 &&
-	    carp_lsdrop(m, AF_INET6, ip6->ip6_src.s6_addr32,
+	if (ip6->ip6_nxt == IPPROTO_ICMPV6 &&
+	    carp_lsdrop(ifp, m, AF_INET6, ip6->ip6_src.s6_addr32,
 	    ip6->ip6_dst.s6_addr32, 1))
 		goto bad;
 #endif
@@ -948,7 +947,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 	if (in6p->inp_socket->so_options & SO_TIMESTAMP) {
 		struct timeval tv;
 
-		microtime(&tv);
+		m_microtime(m, &tv);
 		*mp = sbcreatecontrol((caddr_t) &tv, sizeof(tv),
 		    SCM_TIMESTAMP, SOL_SOCKET);
 		if (*mp)
@@ -1181,7 +1180,7 @@ ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 		return NULL;
 
 	n->m_len = 0;
-	if (elen >= M_TRAILINGSPACE(n)) {
+	if (elen >= m_trailingspace(n)) {
 		m_free(n);
 		return NULL;
 	}

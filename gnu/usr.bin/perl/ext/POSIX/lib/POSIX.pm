@@ -4,7 +4,7 @@ use warnings;
 
 our ($AUTOLOAD, %SIGRT);
 
-our $VERSION = '1.65_01';
+our $VERSION = '1.84';
 
 require XSLoader;
 
@@ -18,24 +18,13 @@ use Fcntl qw(FD_CLOEXEC F_DUPFD F_GETFD F_GETFL F_GETLK F_RDLCK F_SETFD
 
 my $loaded;
 
-sub import {
-    my $pkg = shift;
-
-    load_imports() unless $loaded++;
-
-    # Grandfather old foo_h form to new :foo_h form
-    s/^(?=\w+_h$)/:/ for my @list = @_;
-
-    local $Exporter::ExportLevel = 1;
-    Exporter::import($pkg,@list);
-}
-
 sub croak { require Carp;  goto &Carp::croak }
 sub usage { croak "Usage: POSIX::$_[0]" }
 
 XSLoader::load();
 
 my %replacement = (
+    L_tmpnam    => undef,
     atexit      => 'END {}',
     atof        => undef,
     atoi        => undef,
@@ -110,6 +99,7 @@ my %replacement = (
     strspn      => undef,
     strtok      => undef,
     tmpfile     => 'IO::File::new_tmpfile',
+    tmpnam      => 'use File::Temp',
     ungetc      => 'IO::Handle::ungetc',
     vfprintf    => undef,
     vprintf     => undef,
@@ -117,73 +107,102 @@ my %replacement = (
 );
 
 my %reimpl = (
+    abs       => 'x => CORE::abs($_[0])',
+    alarm     => 'seconds => CORE::alarm($_[0])',
     assert    => 'expr => croak "Assertion failed" if !$_[0]',
-    tolower   => 'string => lc($_[0])',
-    toupper   => 'string => uc($_[0])',
-    closedir  => 'dirhandle => CORE::closedir($_[0])',
-    opendir   => 'directory => my $dh; CORE::opendir($dh, $_[0]) ? $dh : undef',
-    readdir   => 'dirhandle => CORE::readdir($_[0])',
-    rewinddir => 'dirhandle => CORE::rewinddir($_[0])',
-    errno     => '$! + 0',
-    creat     => 'filename, mode => &open($_[0], &O_WRONLY | &O_CREAT | &O_TRUNC, $_[1])',
-    fcntl     => 'filehandle, cmd, arg => CORE::fcntl($_[0], $_[1], $_[2])',
-    getgrgid  => 'gid => CORE::getgrgid($_[0])',
-    getgrnam  => 'name => CORE::getgrnam($_[0])',
     atan2     => 'x, y => CORE::atan2($_[0], $_[1])',
+    chdir     => 'directory => CORE::chdir($_[0])',
+    chmod     => 'mode, filename => CORE::chmod($_[0], $_[1])',
+    chown     => 'uid, gid, filename => CORE::chown($_[0], $_[1], $_[2])',
+    closedir  => 'dirhandle => CORE::closedir($_[0])',
     cos       => 'x => CORE::cos($_[0])',
+    creat     => 'filename, mode => &open($_[0], &O_WRONLY | &O_CREAT | &O_TRUNC, $_[1])',
+    errno     => '$! + 0',
+    exit      => 'status => CORE::exit($_[0])',
     exp       => 'x => CORE::exp($_[0])',
     fabs      => 'x => CORE::abs($_[0])',
-    log       => 'x => CORE::log($_[0])',
-    pow       => 'x, exponent => $_[0] ** $_[1]',
-    sin       => 'x => CORE::sin($_[0])',
-    sqrt      => 'x => CORE::sqrt($_[0])',
-    getpwnam  => 'name => CORE::getpwnam($_[0])',
-    getpwuid  => 'uid => CORE::getpwuid($_[0])',
-    kill      => 'pid, sig => CORE::kill $_[1], $_[0]',
-    raise     => 'sig => CORE::kill $_[0], $$;	# Is this good enough',
+    fcntl     => 'filehandle, cmd, arg => CORE::fcntl($_[0], $_[1], $_[2])',
+    fork      => 'CORE::fork',
+    fstat     => 'fd => CORE::open my $dup, "<&", $_[0]; CORE::stat($dup)', # Gross.
     getc      => 'handle => CORE::getc($_[0])',
     getchar   => 'CORE::getc(STDIN)',
-    gets      => 'scalar <STDIN>',
-    remove    => 'filename => (-d $_[0]) ? CORE::rmdir($_[0]) : CORE::unlink($_[0])',
-    rename    => 'oldfilename, newfilename => CORE::rename($_[0], $_[1])',
-    rewind    => 'filehandle => CORE::seek($_[0],0,0)',
-    abs       => 'x => CORE::abs($_[0])',
-    exit      => 'status => CORE::exit($_[0])',
-    getenv    => 'name => $ENV{$_[0]}',
-    system    => 'command => CORE::system($_[0])',
-    strerror  => 'errno => BEGIN { local $!; require locale; locale->import} my $e = $_[0] + 0; local $!; $! = $e; "$!"',
-    strstr    => 'big, little => CORE::index($_[0], $_[1])',
-    chmod     => 'mode, filename => CORE::chmod($_[0], $_[1])',
-    fstat     => 'fd => CORE::open my $dup, "<&", $_[0]; CORE::stat($dup)', # Gross.
-    mkdir     => 'directoryname, mode => CORE::mkdir($_[0], $_[1])',
-    stat      => 'filename => CORE::stat($_[0])',
-    umask     => 'mask => CORE::umask($_[0])',
-    wait      => 'CORE::wait()',
-    waitpid   => 'pid, options => CORE::waitpid($_[0], $_[1])',
-    gmtime    => 'time => CORE::gmtime($_[0])',
-    localtime => 'time => CORE::localtime($_[0])',
-    time      => 'CORE::time',
-    alarm     => 'seconds => CORE::alarm($_[0])',
-    chdir     => 'directory => CORE::chdir($_[0])',
-    chown     => 'uid, gid, filename => CORE::chown($_[0], $_[1], $_[2])',
-    fork      => 'CORE::fork',
     getegid   => '$) + 0',
+    getenv    => 'name => $ENV{$_[0]}',
     geteuid   => '$> + 0',
     getgid    => '$( + 0',
+    getgrgid  => 'gid => CORE::getgrgid($_[0])',
+    getgrnam  => 'name => CORE::getgrnam($_[0])',
     getgroups => 'my %seen; grep !$seen{$_}++, split " ", $)',
     getlogin  => 'CORE::getlogin()',
     getpgrp   => 'CORE::getpgrp',
     getpid    => '$$',
     getppid   => 'CORE::getppid',
+    getpwnam  => 'name => CORE::getpwnam($_[0])',
+    getpwuid  => 'uid => CORE::getpwuid($_[0])',
+    gets      => 'scalar <STDIN>',
     getuid    => '$<',
+    gmtime    => 'time => CORE::gmtime($_[0])',
     isatty    => 'filehandle => -t $_[0]',
+    kill      => 'pid, sig => CORE::kill $_[1], $_[0]',
     link      => 'oldfilename, newfilename => CORE::link($_[0], $_[1])',
+    localtime => 'time => CORE::localtime($_[0])',
+    log       => 'x => CORE::log($_[0])',
+    mkdir     => 'directoryname, mode => CORE::mkdir($_[0], $_[1])',
+    opendir   => 'directory => my $dh; CORE::opendir($dh, $_[0]) ? $dh : undef',
+    pow       => 'x, exponent => $_[0] ** $_[1]',
+    raise     => 'sig => CORE::kill $_[0], $$;	# Is this good enough',
+    readdir   => 'dirhandle => CORE::readdir($_[0])',
+    remove    => 'filename => (-d $_[0]) ? CORE::rmdir($_[0]) : CORE::unlink($_[0])',
+    rename    => 'oldfilename, newfilename => CORE::rename($_[0], $_[1])',
+    rewind    => 'filehandle => CORE::seek($_[0],0,0)',
+    rewinddir => 'dirhandle => CORE::rewinddir($_[0])',
     rmdir     => 'directoryname => CORE::rmdir($_[0])',
+    sin       => 'x => CORE::sin($_[0])',
+    sqrt      => 'x => CORE::sqrt($_[0])',
+    stat      => 'filename => CORE::stat($_[0])',
+    strerror  => 'errno => BEGIN { local $!; require locale; locale->import} my $e = $_[0] + 0; local $!; $! = $e; "$!"',
+    strstr    => 'big, little => CORE::index($_[0], $_[1])',
+    system    => 'command => CORE::system($_[0])',
+    time      => 'CORE::time',
+    umask     => 'mask => CORE::umask($_[0])',
     unlink    => 'filename => CORE::unlink($_[0])',
     utime     => 'filename, atime, mtime => CORE::utime($_[1], $_[2], $_[0])',
+    wait      => 'CORE::wait()',
+    waitpid   => 'pid, options => CORE::waitpid($_[0], $_[1])',
 );
 
+sub import {
+    my $pkg = shift;
+
+    load_imports() unless $loaded++;
+
+    # Grandfather old foo_h form to new :foo_h form
+    s/^(?=\w+_h$)/:/ for my @list = @_;
+
+    my @unimpl = sort grep { exists $replacement{$_} } @list;
+    if (@unimpl) {
+      for my $u (@unimpl) {
+        warn "Unimplemented: POSIX::$u(): ", unimplemented_message($u);
+      }
+      croak(sprintf("Unimplemented: %s",
+                    join(" ", map { "POSIX::$_()" } @unimpl)));
+    }
+
+    local $Exporter::ExportLevel = 1;
+    Exporter::import($pkg,@list);
+}
+
 eval join ';', map "sub $_", keys %replacement, keys %reimpl;
+
+sub unimplemented_message {
+  my $func = shift;
+  my $how = $replacement{$func};
+  return "C-specific, stopped" unless defined $how;
+  return "$$how" if ref $how;
+  return "$how instead" if $how =~ /^use /;
+  return "Use method $how() instead" if $how =~ /::/;
+  return "C-specific: use $how instead";
+}
 
 sub AUTOLOAD {
     my ($func) = ($AUTOLOAD =~ /.*::(.*)/);
@@ -207,12 +226,7 @@ sub AUTOLOAD {
 	goto &$AUTOLOAD;
     }
     if (exists $replacement{$func}) {
-	my $how = $replacement{$func};
-	croak "Unimplemented: POSIX::$func() is C-specific, stopped"
-	    unless defined $how;
-	croak "Unimplemented: POSIX::$func() is $$how" if ref $how;
-	croak "Use method $how() instead of POSIX::$func()" if $how =~ /::/;
-	croak "Unimplemented: POSIX::$func() is C-specific: use $how instead";
+      croak "Unimplemented: POSIX::$func(): ", unimplemented_message($func);
     }
 
     constant($func);
@@ -238,8 +252,7 @@ my %default_export_tags = ( # cf. exports policy below
 
     assert_h =>	[qw(assert NDEBUG)],
 
-    ctype_h =>	[qw(isalnum isalpha iscntrl isdigit isgraph islower
-		isprint ispunct isspace isupper isxdigit tolower toupper)],
+    ctype_h =>	        [],
 
     dirent_h =>	[],
 
@@ -293,7 +306,8 @@ my %default_export_tags = ( # cf. exports policy below
 		_POSIX_STREAM_MAX _POSIX_TZNAME_MAX)],
 
     locale_h =>	[qw(LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES
-		    LC_MONETARY LC_NUMERIC LC_TIME NULL
+		    LC_MONETARY LC_NUMERIC LC_TIME LC_IDENTIFICATION
+                    LC_MEASUREMENT LC_PAPER LC_TELEPHONE LC_ADDRESS NULL
 		    localeconv setlocale)],
 
     math_h =>   [qw(FP_ILOGB0 FP_ILOGBNAN FP_INFINITE FP_NAN FP_NORMAL
@@ -322,7 +336,7 @@ my %default_export_tags = ( # cf. exports policy below
     stddef_h =>	[qw(NULL offsetof)],
 
     stdio_h =>	[qw(BUFSIZ EOF FILENAME_MAX L_ctermid L_cuserid
-		L_tmpname NULL SEEK_CUR SEEK_END SEEK_SET
+		NULL SEEK_CUR SEEK_END SEEK_SET
 		STREAM_MAX TMP_MAX stderr stdin stdout
 		clearerr fclose fdopen feof ferror fflush fgetc fgetpos
 		fgets fopen fprintf fputc fputs fread freopen
@@ -413,11 +427,22 @@ my %other_export_tags = ( # cf. exports policy below
         Inf NaN acosh asinh atanh cbrt copysign erf erfc exp2 expm1 fdim fma
         fmax fmin fpclassify hypot ilogb isfinite isgreater isgreaterequal
         isinf isless islessequal islessgreater isnan isnormal isunordered j0 j1
-        jn lgamma log1p log2 logb lrint nan nearbyint nextafter nexttoward
+        jn lgamma log1p log2 logb lrint lround nan nearbyint nextafter nexttoward
         remainder remquo rint round scalbn signbit tgamma trunc y0 y1 yn
     )],
 
+    netdb_h => [qw(EAI_AGAIN    EAI_BADFLAGS EAI_FAIL
+                   EAI_FAMILY   EAI_MEMORY   EAI_NONAME
+                   EAI_OVERFLOW EAI_SERVICE  EAI_SOCKTYPE
+                   EAI_SYSTEM)],
+
     stdlib_h_c99 => [ @{$default_export_tags{stdlib_h}}, 'strtold' ],
+
+    sys_resource_h => [qw(PRIO_PROCESS PRIO_PGRP PRIO_USER)],
+
+    sys_socket_h => [qw(
+        MSG_CTRUNC MSG_DONTROUTE MSG_EOR MSG_OOB MSG_PEEK MSG_TRUNC MSG_WAITALL
+    )],
 
     nan_payload => [ qw(getpayload setpayload setpayloadsig issignaling) ],
 
@@ -450,10 +475,7 @@ my %other_export_tags = ( # cf. exports policy below
 
   # you do not want to add symbols to the following list. add a new tag instead
   our @EXPORT_OK = (qw(close lchown nice open pipe read sleep times write
-		       printf sprintf lround),
-                    # lround() should really be in the :math_h_c99 tag, but
-                    # we're too far into the 5.24 code freeze for that to be
-                    # done now. This can be revisited in the 5.25.x cycle.
+		       printf sprintf),
 		    grep {!exists $export{$_}} keys %reimpl, keys %replacement, keys %export_ok);
 
   our %EXPORT_TAGS = ( %default_export_tags, %other_export_tags );

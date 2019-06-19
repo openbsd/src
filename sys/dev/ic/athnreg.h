@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.21 2017/11/28 04:35:39 stsp Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.23 2019/05/17 01:05:20 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1276,6 +1276,7 @@
 /*
  * AR9271 specific registers.
  */
+#define AR9271_CLOCK_CONTROL		0x050040
 #define AR9271_RESET_POWER_DOWN_CONTROL	0x050044
 #define AR9271_FIRMWARE			0x501000
 #define AR9271_FIRMWARE_TEXT		0x903000
@@ -1449,7 +1450,7 @@
 #define AR_CTL_2GHT40	7
 #define AR_CTL_5GHT40	8
 
-#define AR_DEFAULT_NOISE_FLOOR (-95)
+#define AR_DEFAULT_NOISE_FLOOR (-100)
 
 /*
  * Macros to access registers.

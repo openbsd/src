@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.158 2016/10/21 06:20:58 mlarkin Exp $	*/
+/*	$OpenBSD: conf.c,v 1.162 2019/01/18 01:34:50 pd Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -105,15 +105,6 @@ int	nblkdev = nitems(bdevsw);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev, 0 }
 
-/* open, close, ioctl */
-#define cdev_vmm_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), \
-	(dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, \
-	dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
-
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
@@ -170,6 +161,7 @@ cdev_decl(drm);
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
+#include "kcov.h"
 
 #ifdef USER_PCICONF
 #include "pci.h"
@@ -186,8 +178,6 @@ cdev_decl(pci);
 #include "pvbus.h"
 #include "ipmi.h"
 #include "switch.h"
-#include "vmm.h"
-cdev_decl(vmm);
 
 struct cdevsw	cdevsw[] =
 {
@@ -201,7 +191,7 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 7: /dev/klog */
 	cdev_tty_init(NCOM,com),	/* 8: serial port */
 	cdev_disk_init(NFD,fd),		/* 9: floppy disk */
-	cdev_vmm_init(NVMM,vmm),	/* 10: vmm */
+	cdev_notdef(),			/* 10 */
 	cdev_notdef(),			/* 11 */
 	cdev_wsdisplay_init(NWSDISPLAY,	/* 12: frame buffers, etc. */
 	    wsdisplay),
@@ -211,7 +201,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lpt_init(NLPT,lpt),	/* 16: parallel printer */
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_notdef(),			/* 18: was: concatenated disk driver */
-	cdev_notdef(),			/* 19 */
+	cdev_kcov_init(NKCOV,kcov),	/* 19: kcov */
 	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
 	cdev_acpiapm_init(1,acpiapm),	/* 21: Power Management stuff */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */

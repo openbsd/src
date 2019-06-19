@@ -57,9 +57,9 @@ Perl 自身は Unicode で動作します。Perl スクリプト内の文字列�
 
 =head2 About (jcode.pl|Jcode.pm|JPerl)
 
-5.8以前の、スクリプトがEUC-JPであればリテラルだけは扱うことができました。また、入出力を扱うモジュールとしてはJcode.pmが( http://openlab.ring.gr.jp/Jcode/ )、perl4用のユーティリティとしてはjcode.plがそれぞれ存在し、日本語の扱えるCGIでよく利用されていることを御存じの方も少なくないかと思われます。ただし、日本語による正規表現をうまく扱うことは不可能でした。
+5.8以前の、スクリプトがEUC-JPであればリテラルだけは扱うことができました。また、入出力を扱うモジュールとしてはJcode.pmが( L<http://openlab.ring.gr.jp/Jcode/> )、perl4用のユーティリティとしてはjcode.plがそれぞれ存在し、日本語の扱えるCGIでよく利用されていることを御存じの方も少なくないかと思われます。ただし、日本語による正規表現をうまく扱うことは不可能でした。
 
-5.005以前のPerlには、日本語に特化したローカライズ版、Jperlが存在しました( http://homepage2.nifty.com/kipp/perl/jperl/index.html )。また、Mac OS 9.x/Classic用のPerl、MacPerlの日本語版もMacJPerlとして存在してました。( http://habilis.net/macjperl/ ).これらでは文字コードとしてEUC-JPに加えShift_JISもそのまま扱うことができ、また日本語による正規表現を扱うことも可能でした。
+5.005以前のPerlには、日本語に特化したローカライズ版、Jperlが存在しました( L<http://homepage2.nifty.com/kipp/perl/jperl/index.html> )。また、Mac OS 9.x/Classic用のPerl、MacPerlの日本語版もMacJPerlとして存在してました。( L<http://habilis.net/macjperl/> ).これらでは文字コードとしてEUC-JPに加えShift_JISもそのまま扱うことができ、また日本語による正規表現を扱うことも可能でした。
 
 Perl5.8では、これらの機能がすべてPerl本体だけで実現できる上に、日本語のみならず上記114の文字コードをすべて、しかも同時に扱うことができます。さらに、CPANなどから新しい文字コード用のモジュールを入手することも簡単にできるようになっています。
 

@@ -5,7 +5,7 @@ use warnings;
 
 BEGIN {
     use Test::More;
-    my $tests = 94;
+    my $tests = 98;
     unless ($ENV{PERL_CORE}) {
 	require Test::NoWarnings;
 	Test::NoWarnings->import ();
@@ -28,6 +28,11 @@ my $opt = Config::Perl::V::plv2hash ("")->{build}{options};
 foreach my $o (sort keys %$opt) {
     is ($conf->{build}{options}{$o}, 0, "Runtime option $o unset");
     }
+
+eval { require Digest::MD5; };
+my $md5 = $@ ? "0" x 32 : "ce0a7871dfddbbed0a6c685c0f52dbf9";
+ok (my $sig = Config::Perl::V::signature ($conf), "Get signature");
+is ($sig, $md5, "MD5");
 
 __END__
 Summary of my perl5 (revision 5 version 10 subversion 0) configuration:

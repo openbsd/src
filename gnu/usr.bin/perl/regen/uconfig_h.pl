@@ -10,7 +10,7 @@
 
 use strict;
 use Config;
-require 'regen/regen_lib.pl';
+require './regen/regen_lib.pl';
 
 my ($uconfig_h, $uconfig_h_new, $config_h_sh)
     = ('uconfig.h', 'uconfig.h-new', 'config_h.SH');

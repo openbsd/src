@@ -3,7 +3,6 @@ cpan/podlators/blib/script/pod2text
 cpan/Pod-Usage/blib/script/pod2usage
 cpan/Pod-Checker/blib/script/podchecker
 cpan/Pod-Parser/blib/script/podselect
-utils/c2ph      # link = utils/pstruct
 utils/cpan
 utils/corelist
 utils/enc2xs

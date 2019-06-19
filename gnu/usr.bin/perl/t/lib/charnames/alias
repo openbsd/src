@@ -416,12 +416,6 @@ use utf8;
 use open qw( :utf8 :std );
 use charnames ":alias" => { "NBSP SEPARATED SPACE" => "BLACK SMILING FACE" };
 print "ok\n" if "\N{NBSP SEPARATED SPACE}" eq "\x{263B}";
-print "ok\n" if "\N{NBSP SEPARATED SPACE}" eq "\x{263B}";
-no warnings 'deprecated';
-print "ok\n" if "\N{NBSP SEPARATED SPACE}" eq "\x{263B}";
 EXPECT
-OPTIONS regex
-NO-BREAK SPACE in a charnames alias definition is deprecated; marked by <-- HERE in 'NBSP SEPARATED  <-- HERE SPACE' at - line \d+.
-ok
-ok
-ok
+OPTIONS regex fatal
+Invalid character in charnames alias definition; marked by <-- HERE in 'NBSP <-- HERE SEPARATED SPACE' at - line 3

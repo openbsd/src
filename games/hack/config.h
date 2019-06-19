@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.13 2015/10/16 07:37:46 tobias Exp $ */
+/*	$OpenBSD: config.h,v 1.14 2019/04/05 09:02:27 bentley Exp $ */
 /* *	$NetBSD: config.h,v 1.3 1995/03/23 08:29:15 cgd Exp $*/
 
 /*
@@ -77,10 +77,10 @@
 #define WIZARD  "bruno"	/* the person allowed to use the -D option */
 #define RECORD	"record"/* the file containing the list of topscorers */
 #define	NEWS	"news"	/* the file containing the latest hack news */
-#define	HELP	"help"	/* the file containing a description of the commands */
-#define	SHELP	"hh"	/* abbreviated form of the same */
-#define	RUMORFILE	"rumors"	/* a file with fortune cookies */
-#define	DATAFILE	"data"	/* a file giving the meaning of symbols used */
+#define	HELP	"/usr/share/games/hack/help"	/* the file containing a description of the commands */
+#define	SHELP	"/usr/share/games/hack/hh"	/* abbreviated form of the same */
+#define	RUMORFILE	"/usr/share/games/hack/rumors"	/* a file with fortune cookies */
+#define	DATAFILE	"/usr/share/games/hack/data"	/* a file giving the meaning of symbols used */
 #define	FMASK	0660	/* file creation mask */
 #define	HLOCK	"perm"	/* an empty file used for locking purposes */
 #define LLOCK	"safelock"	/* link to previous */
@@ -93,7 +93,7 @@
  * (This might be preferable for security reasons.)
  * #define DEF_PAGER	".../mydir/mypager"
  */
-#define	DEF_PAGER	_PATH_PAGER
+/* #define	DEF_PAGER	_PATH_PAGER */
 
 /*
  * If you define MAIL, then the player will be notified of new mail
@@ -120,7 +120,7 @@
 #ifdef QUEST
 #define HACKDIR _PATH_QUEST
 #else /* QUEST */
-#define HACKDIR	_PATH_HACK
+/* #define HACKDIR	_PATH_HACK */
 #endif /* QUEST */
 
 /*
@@ -130,7 +130,7 @@
  * since the user might create files in a directory of his choice.
  * Of course SECURE is meaningful only if HACKDIR is defined.
  */
-#define SECURE			/* do setuid(getuid()) after chdir() */
+/* #define SECURE */			/* do setuid(getuid()) after chdir() */
 
 /*
  * If it is desirable to limit the number of people that can play Hack

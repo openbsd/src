@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.19 2018/03/12 13:14:21 inoguchi Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.25 2018/08/24 20:22:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -126,7 +126,7 @@ eckey_pub_encode(X509_PUBKEY * pk, const EVP_PKEY * pkey)
 	if (X509_PUBKEY_set0_param(pk, OBJ_nid2obj(EVP_PKEY_EC),
 		ptype, pval, penc, penclen))
 		return 1;
-err:
+ err:
 	if (ptype == V_ASN1_OBJECT)
 		ASN1_OBJECT_free(pval);
 	else
@@ -136,12 +136,12 @@ err:
 }
 
 static EC_KEY *
-eckey_type2param(int ptype, void *pval)
+eckey_type2param(int ptype, const void *pval)
 {
 	EC_KEY *eckey = NULL;
 
 	if (ptype == V_ASN1_SEQUENCE) {
-		ASN1_STRING *pstr = pval;
+		const ASN1_STRING *pstr = pval;
 		const unsigned char *pm = NULL;
 		int pmlen;
 
@@ -152,7 +152,7 @@ eckey_type2param(int ptype, void *pval)
 			goto ecerr;
 		}
 	} else if (ptype == V_ASN1_OBJECT) {
-		ASN1_OBJECT *poid = pval;
+		const ASN1_OBJECT *poid = pval;
 		EC_GROUP *group;
 
 		/*
@@ -177,7 +177,7 @@ eckey_type2param(int ptype, void *pval)
 
 	return eckey;
 
-ecerr:
+ ecerr:
 	if (eckey)
 		EC_KEY_free(eckey);
 	return NULL;
@@ -187,7 +187,7 @@ static int
 eckey_pub_decode(EVP_PKEY * pkey, X509_PUBKEY * pubkey)
 {
 	const unsigned char *p = NULL;
-	void *pval;
+	const void *pval;
 	int ptype, pklen;
 	EC_KEY *eckey = NULL;
 	X509_ALGOR *palg;
@@ -210,7 +210,7 @@ eckey_pub_decode(EVP_PKEY * pkey, X509_PUBKEY * pubkey)
 	EVP_PKEY_assign_EC_KEY(pkey, eckey);
 	return 1;
 
-ecerr:
+ ecerr:
 	if (eckey)
 		EC_KEY_free(eckey);
 	return 0;
@@ -232,13 +232,13 @@ eckey_pub_cmp(const EVP_PKEY * a, const EVP_PKEY * b)
 }
 
 static int 
-eckey_priv_decode(EVP_PKEY * pkey, PKCS8_PRIV_KEY_INFO * p8)
+eckey_priv_decode(EVP_PKEY * pkey, const PKCS8_PRIV_KEY_INFO * p8)
 {
 	const unsigned char *p = NULL;
-	void *pval;
+	const void *pval;
 	int ptype, pklen;
 	EC_KEY *eckey = NULL;
-	X509_ALGOR *palg;
+	const X509_ALGOR *palg;
 
 	if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8))
 		return 0;
@@ -290,9 +290,9 @@ eckey_priv_decode(EVP_PKEY * pkey, PKCS8_PRIV_KEY_INFO * p8)
 	EVP_PKEY_assign_EC_KEY(pkey, eckey);
 	return 1;
 
-ecliberr:
+ ecliberr:
 	ECerror(ERR_R_EC_LIB);
-ecerr:
+ ecerr:
 	if (eckey)
 		EC_KEY_free(eckey);
 	return 0;
@@ -483,7 +483,7 @@ do_EC_KEY_print(BIO * bp, const EC_KEY * x, int off, int ktype)
 	if (!ECPKParameters_print(bp, group, off))
 		goto err;
 	ret = 1;
-err:
+ err:
 	if (!ret)
 		ECerror(reason);
 	BN_free(pub_key);

@@ -3,7 +3,7 @@ package Tie::Array;
 use 5.006_001;
 use strict;
 use Carp;
-our $VERSION = '1.06';
+our $VERSION = '1.07';
 
 # Pod documentation after __END__ below.
 
@@ -83,8 +83,7 @@ sub DELETE {
 }
 
 package Tie::StdArray;
-use vars qw(@ISA);
-@ISA = 'Tie::Array';
+our @ISA = 'Tie::Array';
 
 sub TIEARRAY  { bless [], $_[0] }
 sub FETCHSIZE { scalar @{$_[0]} }

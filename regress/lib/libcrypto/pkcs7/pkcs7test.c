@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkcs7test.c,v 1.3 2014/11/26 05:48:00 bcook Exp $	*/
+/*	$OpenBSD: pkcs7test.c,v 1.4 2018/11/10 02:23:28 jsing Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -203,10 +203,12 @@ main(int argc, char **argv)
 		fatal("PEM_read_bio_PKCS7");
 	if (PKCS7_decrypt(p7, pkey, cert, bio_out, 0) != 1)
 		fatal("PKCS7_decrypt");
+	PKCS7_free(p7);
 
 	len = BIO_get_mem_data(bio_out, &out);
 	message_compare(out, len);
 
+	BIO_free(bio_in);
 	BIO_free(bio_out);
 
 	/*
@@ -235,6 +237,7 @@ main(int argc, char **argv)
 		fatal("PEM_read_bio_PKCS7");
 	if (PKCS7_verify(p7, certs, store, NULL, bio_out, 0) != 1)
 		fatal("PKCS7_verify");
+	PKCS7_free(p7);
 
 	len = BIO_get_mem_data(bio_out, &out);
 	message_compare(out, len);
@@ -277,6 +280,7 @@ main(int argc, char **argv)
 		fatal("PEM_read_bio_PKCS7");
 	if (PKCS7_verify(p7, certs, store, bio_content, bio_out, flags) != 1)
 		fatal("PKCS7_verify");
+	PKCS7_free(p7);
 
 	len = BIO_get_mem_data(bio_out, &out);
 	message_compare(out, len);
@@ -284,6 +288,14 @@ main(int argc, char **argv)
 	BIO_free(bio_in);
 	BIO_free(bio_out);
 	BIO_free(bio_content);
+	BIO_free(bio_cert);
+	BIO_free(bio_pkey);
+
+	EVP_PKEY_free(pkey);
+
+	X509_free(cert);
+	X509_STORE_free(store);
+	sk_X509_free(certs);
 
 	return 0;
 }

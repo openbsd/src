@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_alt.c,v 1.27 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_alt.c,v 1.30 2019/04/22 17:10:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -69,8 +69,8 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
 static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
-static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
-static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
+static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
+static int do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
 
 const X509V3_EXT_METHOD v3_alt[] = {
 	{
@@ -127,57 +127,83 @@ STACK_OF(CONF_VALUE) *
 i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, GENERAL_NAMES *gens,
     STACK_OF(CONF_VALUE) *ret)
 {
-	int i;
+	STACK_OF(CONF_VALUE) *free_ret = NULL;
 	GENERAL_NAME *gen;
+	int i;
+
+	if (ret == NULL) {
+		if ((free_ret = ret = sk_CONF_VALUE_new_null()) == NULL)
+			return NULL;
+	}
 
 	for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
-		gen = sk_GENERAL_NAME_value(gens, i);
-		ret = i2v_GENERAL_NAME(method, gen, ret);
+		if ((gen = sk_GENERAL_NAME_value(gens, i)) == NULL)
+			goto err;
+		if ((ret = i2v_GENERAL_NAME(method, gen, ret)) == NULL)
+			goto err;
 	}
-	if (!ret)
-		return sk_CONF_VALUE_new_null();
+
 	return ret;
+
+ err:
+	sk_CONF_VALUE_pop_free(free_ret, X509V3_conf_free);
+
+	return NULL;
 }
 
 STACK_OF(CONF_VALUE) *
 i2v_GENERAL_NAME(X509V3_EXT_METHOD *method, GENERAL_NAME *gen,
     STACK_OF(CONF_VALUE) *ret)
 {
+	STACK_OF(CONF_VALUE) *free_ret = NULL;
 	unsigned char *p;
 	char oline[256], htmp[5];
 	int i;
 
+	if (ret == NULL) {
+		if ((free_ret = ret = sk_CONF_VALUE_new_null()) == NULL)
+			return NULL;
+	}
+
 	switch (gen->type) {
 	case GEN_OTHERNAME:
-		X509V3_add_value("othername", "<unsupported>", &ret);
+		if (!X509V3_add_value("othername", "<unsupported>", &ret))
+			goto err;
 		break;
 
 	case GEN_X400:
-		X509V3_add_value("X400Name", "<unsupported>", &ret);
+		if (!X509V3_add_value("X400Name", "<unsupported>", &ret))
+			goto err;
 		break;
 
 	case GEN_EDIPARTY:
-		X509V3_add_value("EdiPartyName", "<unsupported>", &ret);
+		if (!X509V3_add_value("EdiPartyName", "<unsupported>", &ret))
+			goto err;
 		break;
 
 	case GEN_EMAIL:
-		X509V3_add_value_uchar("email", gen->d.ia5->data, &ret);
+		if (!X509V3_add_value_uchar("email", gen->d.ia5->data, &ret))
+			goto err;
 		break;
 
 	case GEN_DNS:
-		X509V3_add_value_uchar("DNS", gen->d.ia5->data, &ret);
+		if (!X509V3_add_value_uchar("DNS", gen->d.ia5->data, &ret))
+			goto err;
 		break;
 
 	case GEN_URI:
-		X509V3_add_value_uchar("URI", gen->d.ia5->data, &ret);
+		if (!X509V3_add_value_uchar("URI", gen->d.ia5->data, &ret))
+			goto err;
 		break;
 
 	case GEN_DIRNAME:
-		X509_NAME_oneline(gen->d.dirn, oline, 256);
-		X509V3_add_value("DirName", oline, &ret);
+		if (X509_NAME_oneline(gen->d.dirn, oline, 256) == NULL)
+			goto err;
+		if (!X509V3_add_value("DirName", oline, &ret))
+			goto err;
 		break;
 
-	case GEN_IPADD:
+	case GEN_IPADD: /* XXX */
 		p = gen->d.ip->data;
 		if (gen->d.ip->length == 4)
 			(void) snprintf(oline, sizeof oline,
@@ -193,18 +219,28 @@ i2v_GENERAL_NAME(X509V3_EXT_METHOD *method, GENERAL_NAME *gen,
 					strlcat(oline, ":", sizeof(oline));
 			}
 		} else {
-			X509V3_add_value("IP Address", "<invalid>", &ret);
+			if (!X509V3_add_value("IP Address", "<invalid>", &ret))
+				goto err;
 			break;
 		}
-		X509V3_add_value("IP Address", oline, &ret);
+		if (!X509V3_add_value("IP Address", oline, &ret))
+			goto err;
 		break;
 
 	case GEN_RID:
-		i2t_ASN1_OBJECT(oline, 256, gen->d.rid);
-		X509V3_add_value("Registered ID", oline, &ret);
+		if (!i2t_ASN1_OBJECT(oline, 256, gen->d.rid))
+			goto err;
+		if (!X509V3_add_value("Registered ID", oline, &ret))
+			goto err;
 		break;
 	}
+
 	return ret;
+
+ err:
+	sk_CONF_VALUE_pop_free(free_ret, X509V3_conf_free);
+
+	return NULL;
 }
 
 int
@@ -481,7 +517,7 @@ v2i_GENERAL_NAME(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 
 GENERAL_NAME *
 a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
-    X509V3_CTX *ctx, int gen_type, char *value, int is_nc)
+    X509V3_CTX *ctx, int gen_type, const char *value, int is_nc)
 {
 	char is_string = 0;
 	GENERAL_NAME *gen = NULL;
@@ -553,8 +589,7 @@ a2i_GENERAL_NAME(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 
 	if (is_string) {
 		if (!(gen->d.ia5 = ASN1_IA5STRING_new()) ||
-		    !ASN1_STRING_set(gen->d.ia5, (unsigned char*)value,
-			strlen(value))) {
+		    !ASN1_STRING_set(gen->d.ia5, value, strlen(value))) {
 			X509V3error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
@@ -609,7 +644,7 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 }
 
 static int
-do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
+do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
 {
 	char *objtmp = NULL, *p;
 	int objlen;
@@ -638,7 +673,7 @@ do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
 }
 
 static int
-do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx)
+do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
 {
 	int ret;
 	STACK_OF(CONF_VALUE) *sk;

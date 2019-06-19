@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file implements a sort operation for JavaScript ES6 imports.
+/// This file implements a sort operation for JavaScript ES6 imports.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -123,13 +123,12 @@ public:
       : TokenAnalyzer(Env, Style),
         FileContents(Env.getSourceManager().getBufferData(Env.getFileID())) {}
 
-  tooling::Replacements
+  std::pair<tooling::Replacements, unsigned>
   analyze(TokenAnnotator &Annotator,
           SmallVectorImpl<AnnotatedLine *> &AnnotatedLines,
           FormatTokenLexer &Tokens) override {
     tooling::Replacements Result;
-    AffectedRangeMgr.computeAffectedLines(AnnotatedLines.begin(),
-                                          AnnotatedLines.end());
+    AffectedRangeMgr.computeAffectedLines(AnnotatedLines);
 
     const AdditionalKeywords &Keywords = Tokens.getKeywords();
     SmallVector<JsModuleReference, 16> References;
@@ -138,7 +137,7 @@ public:
         parseModuleReferences(Keywords, AnnotatedLines);
 
     if (References.empty())
-      return Result;
+      return {Result, 0};
 
     SmallVector<unsigned, 16> Indices;
     for (unsigned i = 0, e = References.size(); i != e; ++i)
@@ -168,7 +167,7 @@ public:
     }
 
     if (ReferencesInOrder && SymbolsInOrder)
-      return Result;
+      return {Result, 0};
 
     SourceRange InsertionPoint = References[0].Range;
     InsertionPoint.setEnd(References[References.size() - 1].Range.getEnd());
@@ -189,9 +188,9 @@ public:
     if (FirstNonImportLine && FirstNonImportLine->First->NewlinesBefore < 2)
       ReferencesText += "\n";
 
-    DEBUG(llvm::dbgs() << "Replacing imports:\n"
-                       << getSourceText(InsertionPoint) << "\nwith:\n"
-                       << ReferencesText << "\n");
+    LLVM_DEBUG(llvm::dbgs() << "Replacing imports:\n"
+                            << getSourceText(InsertionPoint) << "\nwith:\n"
+                            << ReferencesText << "\n");
     auto Err = Result.add(tooling::Replacement(
         Env.getSourceManager(), CharSourceRange::getCharRange(InsertionPoint),
         ReferencesText));
@@ -202,7 +201,7 @@ public:
       assert(false);
     }
 
-    return Result;
+    return {Result, 0};
   }
 
 private:
@@ -277,7 +276,7 @@ private:
   // Parses module references in the given lines. Returns the module references,
   // and a pointer to the first "main code" line if that is adjacent to the
   // affected lines of module references, nullptr otherwise.
-  std::pair<SmallVector<JsModuleReference, 16>, AnnotatedLine*>
+  std::pair<SmallVector<JsModuleReference, 16>, AnnotatedLine *>
   parseModuleReferences(const AdditionalKeywords &Keywords,
                         SmallVectorImpl<AnnotatedLine *> &AnnotatedLines) {
     SmallVector<JsModuleReference, 16> References;
@@ -308,7 +307,7 @@ private:
       FirstNonImportLine = nullptr;
       AnyImportAffected = AnyImportAffected || Line->Affected;
       Reference.Range.setEnd(LineEnd->Tok.getEndLoc());
-      DEBUG({
+      LLVM_DEBUG({
         llvm::dbgs() << "JsModuleReference: {"
                      << "is_export: " << Reference.IsExport
                      << ", cat: " << Reference.Category
@@ -413,7 +412,7 @@ private:
       nextToken();
       if (Current->is(tok::r_brace))
         break;
-      if (Current->isNot(tok::identifier))
+      if (!Current->isOneOf(tok::identifier, tok::kw_default))
         return false;
 
       JsImportedSymbol Symbol;
@@ -425,7 +424,7 @@ private:
 
       if (Current->is(Keywords.kw_as)) {
         nextToken();
-        if (Current->isNot(tok::identifier))
+        if (!Current->isOneOf(tok::identifier, tok::kw_default))
           return false;
         Symbol.Alias = Current->TokenText;
         nextToken();
@@ -446,10 +445,9 @@ tooling::Replacements sortJavaScriptImports(const FormatStyle &Style,
                                             ArrayRef<tooling::Range> Ranges,
                                             StringRef FileName) {
   // FIXME: Cursor support.
-  std::unique_ptr<Environment> Env =
-      Environment::CreateVirtualEnvironment(Code, FileName, Ranges);
-  JavaScriptImportSorter Sorter(*Env, Style);
-  return Sorter.process();
+  return JavaScriptImportSorter(Environment(Code, FileName, Ranges), Style)
+      .process()
+      .first;
 }
 
 } // end namespace format

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.21 2017/04/18 01:45:35 deraadt Exp $	*/
+/*	$OpenBSD: vi.c,v 1.22 2019/01/24 15:09:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -395,6 +395,8 @@ intr:			CLR_INTERRUPT(sp);
 		/* If the last command switched files, change focus. */
 		if (F_ISSET(sp, SC_FSWITCH)) {
 			F_CLR(sp, SC_FSWITCH);
+			F_CLR(sp, SC_SCR_TOP);
+			F_SET(sp, SC_SCR_CENTER);
 			(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 		}
 

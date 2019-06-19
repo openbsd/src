@@ -11,7 +11,6 @@
 
 #include "lldb/Core/Address.h"      // for Address
 #include "lldb/Core/AddressRange.h" // for AddressRange
-#include "lldb/Core/ArchSpec.h"     // for ArchSpec
 #include "lldb/Core/Module.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h" // for Scalar, operator!=
@@ -156,9 +155,8 @@ bool ValueObjectVariable::UpdateValue() {
                 target);
     }
     Value old_value(m_value);
-    if (expr.Evaluate(&exe_ctx, nullptr, nullptr, nullptr,
-                      loclist_base_load_addr, nullptr, nullptr, m_value,
-                      &m_error)) {
+    if (expr.Evaluate(&exe_ctx, nullptr, loclist_base_load_addr, nullptr,
+                      nullptr, m_value, &m_error)) {
       m_resolved_value = m_value;
       m_value.SetContext(Value::eContextTypeVariable, variable);
 
@@ -177,9 +175,8 @@ bool ValueObjectVariable::UpdateValue() {
       switch (value_type) {
       case Value::eValueTypeFileAddress:
         // If this type is a pointer, then its children will be considered load
-        // addresses
-        // if the pointer or reference is dereferenced, but only if the process
-        // is alive.
+        // addresses if the pointer or reference is dereferenced, but only if
+        // the process is alive.
         //
         // There could be global variables like in the following code:
         // struct LinkedListNode { Foo* foo; LinkedListNode* next; };
@@ -189,14 +186,11 @@ bool ValueObjectVariable::UpdateValue() {
         // LinkedListNode g_first_node = { &g_foo1, &g_second_node };
         //
         // When we aren't running, we should be able to look at these variables
-        // using
-        // the "target variable" command. Children of the "g_first_node" always
-        // will
-        // be of the same address type as the parent. But children of the "next"
-        // member of
-        // LinkedListNode will become load addresses if we have a live process,
-        // or remain
-        // what a file address if it what a file address.
+        // using the "target variable" command. Children of the "g_first_node"
+        // always will be of the same address type as the parent. But children
+        // of the "next" member of LinkedListNode will become load addresses if
+        // we have a live process, or remain what a file address if it what a
+        // file address.
         if (process_is_alive && is_pointer_or_ref)
           SetAddressTypeOfChildren(eAddressTypeLoad);
         else
@@ -204,12 +198,10 @@ bool ValueObjectVariable::UpdateValue() {
         break;
       case Value::eValueTypeHostAddress:
         // Same as above for load addresses, except children of pointer or refs
-        // are always
-        // load addresses. Host addresses are used to store freeze dried
-        // variables. If this
-        // type is a struct, the entire struct contents will be copied into the
-        // heap of the
-        // LLDB process, but we do not currrently follow any pointers.
+        // are always load addresses. Host addresses are used to store freeze
+        // dried variables. If this type is a struct, the entire struct
+        // contents will be copied into the heap of the
+        // LLDB process, but we do not currently follow any pointers.
         if (is_pointer_or_ref)
           SetAddressTypeOfChildren(eAddressTypeLoad);
         else
@@ -226,8 +218,8 @@ bool ValueObjectVariable::UpdateValue() {
       case Value::eValueTypeVector:
       // fall through
       case Value::eValueTypeScalar:
-        // The variable value is in the Scalar value inside the m_value.
-        // We can point our m_data right to it.
+        // The variable value is in the Scalar value inside the m_value. We can
+        // point our m_data right to it.
         m_error =
             m_value.GetValueAsData(&exe_ctx, m_data, 0, GetModule().get());
         break;
@@ -235,44 +227,26 @@ bool ValueObjectVariable::UpdateValue() {
       case Value::eValueTypeFileAddress:
       case Value::eValueTypeLoadAddress:
       case Value::eValueTypeHostAddress:
-        // The DWARF expression result was an address in the inferior
-        // process. If this variable is an aggregate type, we just need
-        // the address as the main value as all child variable objects
-        // will rely upon this location and add an offset and then read
-        // their own values as needed. If this variable is a simple
-        // type, we read all data for it into m_data.
-        // Make sure this type has a value before we try and read it
+        // The DWARF expression result was an address in the inferior process.
+        // If this variable is an aggregate type, we just need the address as
+        // the main value as all child variable objects will rely upon this
+        // location and add an offset and then read their own values as needed.
+        // If this variable is a simple type, we read all data for it into
+        // m_data. Make sure this type has a value before we try and read it
 
         // If we have a file address, convert it to a load address if we can.
-        if (value_type == Value::eValueTypeFileAddress && process_is_alive) {
-          lldb::addr_t file_addr =
-              m_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-          if (file_addr != LLDB_INVALID_ADDRESS) {
-            SymbolContext var_sc;
-            variable->CalculateSymbolContext(&var_sc);
-            if (var_sc.module_sp) {
-              ObjectFile *objfile = var_sc.module_sp->GetObjectFile();
-              if (objfile) {
-                Address so_addr(file_addr, objfile->GetSectionList());
-                lldb::addr_t load_addr = so_addr.GetLoadAddress(target);
-                if (load_addr != LLDB_INVALID_ADDRESS) {
-                  m_value.SetValueType(Value::eValueTypeLoadAddress);
-                  m_value.GetScalar() = load_addr;
-                }
-              }
-            }
-          }
-        }
+        if (value_type == Value::eValueTypeFileAddress && process_is_alive)
+          m_value.ConvertToLoadAddress(GetModule().get(), target);
 
         if (!CanProvideValue()) {
-          // this value object represents an aggregate type whose
-          // children have values, but this object does not. So we
-          // say we are changed if our location has changed.
+          // this value object represents an aggregate type whose children have
+          // values, but this object does not. So we say we are changed if our
+          // location has changed.
           SetValueDidChange(value_type != old_value.GetValueType() ||
                             m_value.GetScalar() != old_value.GetScalar());
         } else {
-          // Copy the Value and set the context to use our Variable
-          // so it can extract read its value into m_data appropriately
+          // Copy the Value and set the context to use our Variable so it can
+          // extract read its value into m_data appropriately
           Value value(m_value);
           value.SetContext(Value::eContextTypeVariable, variable);
           m_error =
@@ -301,14 +275,13 @@ bool ValueObjectVariable::IsInScope() {
     if (frame) {
       return m_variable_sp->IsInScope(frame);
     } else {
-      // This ValueObject had a frame at one time, but now we
-      // can't locate it, so return false since we probably aren't
-      // in scope.
+      // This ValueObject had a frame at one time, but now we can't locate it,
+      // so return false since we probably aren't in scope.
       return false;
     }
   }
-  // We have a variable that wasn't tied to a frame, which
-  // means it is a global and is always in scope.
+  // We have a variable that wasn't tied to a frame, which means it is a global
+  // and is always in scope.
   return true;
 }
 

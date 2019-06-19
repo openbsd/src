@@ -1,0 +1,16 @@
+WHILE-BASIC(1)              General Commands Manual             WHILE-BASIC(1)
+
+NNAAMMEE
+     wwhhiillee--bbaassiicc - the while request
+
+DDEESSCCRRIIPPTTIIOONN
+     Loop with single-line scope: 10 9 8 7 6 5 4 3 2 1 0
+
+     Loop with multi-line scope, text line closure: 10, 9, 8, 7, 6, 5, 4, 3,
+     2, 1, 0, boom.
+
+     Loop with multi-line scope, macro line closure: 10 9 8 7 6 5 4 3 2 1 0
+
+     final text
+
+OpenBSD                         August 24, 2018                        OpenBSD

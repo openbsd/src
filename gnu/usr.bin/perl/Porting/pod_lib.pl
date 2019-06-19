@@ -403,7 +403,7 @@ sub __prime_state {
     my $filename = "pod/$source";
     my $contents = slurp_or_die($filename);
     my @want =
-        $contents =~ /perldelta - what is new for perl v(5)\.(\d+)\.(\d+)\n/;
+        $contents =~ /perldelta - what is new for perl v(5)\.(\d+)\.(\d+)\r?\n/;
     die "Can't extract version from $filename" unless @want;
     my $delta_leaf = join '', 'perl', @want, 'delta';
     $state{delta_target} = "$delta_leaf.pod";

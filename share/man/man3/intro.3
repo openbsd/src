@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.3,v 1.82 2018/01/27 08:38:06 anton Exp $
+.\"	$OpenBSD: intro.3,v 1.90 2019/05/15 19:00:47 jmc Exp $
 .\"	$NetBSD: intro.3,v 1.5 1995/05/10 22:46:24 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.3	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: January 27 2018 $
+.Dd $Mdocdate: May 15 2019 $
 .Dt INTRO 3
 .Os
 .Sh NAME
@@ -55,6 +55,9 @@ option of the compiler.
 The various libraries (followed by the loader flag):
 .Pp
 .Bl -tag -width "libkvm" -compact
+.It libLLVM Pq Fl lLLVM
+LLVM components in a single library.
+.Pp
 .It libc Pq Fl lc
 Standard C library functions.
 When using the C compiler
@@ -69,7 +72,7 @@ database routines,
 bit operators,
 string operators,
 character tests and character operators,
-DES encryption routines,
+cryptographic routines,
 storage allocation,
 time functions,
 signal handling,
@@ -132,6 +135,11 @@ library, i.e.\&
 .Fl ledit lcurses .
 See
 .Xr editline 3 .
+.Pp
+.It libelf Pq Fl lelf
+Library routines for manipulating ELF objects.
+See
+.Xr elf 3 .
 .Pp
 .It libevent Pq Fl levent
 Provides a mechanism to execute a function when a specific event on a
@@ -342,29 +350,6 @@ See
 .Pp
 .It libutil Pq Fl lutil
 System utility functions.
-These are currently
-.Xr bcrypt_pbkdf 3 ,
-.Xr check_expire 3 ,
-.Xr fmt_scaled 3 ,
-.Xr fparseln 3 ,
-.Xr getmaxpartitions 3 ,
-.Xr getrawpartition 3 ,
-.Xr imsg_init 3 ,
-.Xr isduid 3 ,
-.Xr login 3 ,
-.Xr login_fbtab 3 ,
-.Xr ohash_init 3 ,
-.Xr ohash_interval 3 ,
-.Xr opendev 3 ,
-.Xr opendisk 3 ,
-.Xr openpty 3 ,
-.Xr pidfile 3 ,
-.Xr pkcs5_pbkdf2 3 ,
-.Xr pw_init 3 ,
-.Xr pw_lock 3 ,
-.Xr readlabelfs 3
-and
-.Xr uucplock 3 .
 .Pp
 .It liby Pq Fl ly
 The library for
@@ -391,9 +376,7 @@ See
 .It libi386 Pq Fl li386
 i386 I/O and memory access functions.
 See
-.Xr i386_iopl 2
-and
-.Xr i386_vm86 2 .
+.Xr i386_iopl 2 .
 .El
 .Sh LIBRARY TYPES
 The system libraries are located in
@@ -528,5 +511,5 @@ for more details.
 .Sh HISTORY
 An
 .Nm
-manual appeared in
+manual for section 3 first appeared in
 .At v7 .

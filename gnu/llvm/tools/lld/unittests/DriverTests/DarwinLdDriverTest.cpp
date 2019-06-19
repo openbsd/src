@@ -8,11 +8,11 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief Darwin's ld driver tests.
+/// Darwin's ld driver tests.
 ///
 //===----------------------------------------------------------------------===//
 
-#include "lld/Driver/Driver.h"
+#include "lld/Common/Driver.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 #include "llvm/BinaryFormat/MachO.h"
 #include "llvm/Support/raw_ostream.h"
@@ -23,8 +23,7 @@ using namespace lld;
 
 namespace lld {
 namespace mach_o {
-bool parse(llvm::ArrayRef<const char *> args, MachOLinkingContext &ctx,
-           raw_ostream &diagnostics);
+bool parse(llvm::ArrayRef<const char *> args, MachOLinkingContext &ctx);
 }
 }
 
@@ -42,9 +41,7 @@ protected:
 
   bool parse(std::vector<const char *> args) {
     args.insert(args.begin(), "ld");
-    std::string errorMessage;
-    raw_string_ostream os(errorMessage);
-    return mach_o::parse(args, _ctx, os);
+    return mach_o::parse(args, _ctx);
   }
 
   MachOLinkingContext _ctx;

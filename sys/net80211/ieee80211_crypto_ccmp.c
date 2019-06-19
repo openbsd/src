@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.20 2017/05/02 17:07:06 mikeb Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.21 2018/11/09 14:14:31 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -277,7 +277,7 @@ ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 		AES_Encrypt(&ctx->aesctx, b, b);
 
 	/* reserve trailing space for MIC */
-	if (M_TRAILINGSPACE(n) < IEEE80211_CCMP_MICLEN) {
+	if (m_trailingspace(n) < IEEE80211_CCMP_MICLEN) {
 		MGET(n->m_next, M_DONTWAIT, n->m_type);
 		if (n->m_next == NULL)
 			goto nospace;

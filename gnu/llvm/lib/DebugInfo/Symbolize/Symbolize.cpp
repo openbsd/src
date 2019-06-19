@@ -21,8 +21,8 @@
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/PDB/PDB.h"
 #include "llvm/DebugInfo/PDB/PDBContext.h"
+#include "llvm/Demangle/Demangle.h"
 #include "llvm/Object/COFF.h"
-#include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/MachOUniversal.h"
 #include "llvm/Support/Casting.h"
@@ -53,10 +53,11 @@
 namespace llvm {
 namespace symbolize {
 
-Expected<DILineInfo> LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
-                                                  uint64_t ModuleOffset) {
+Expected<DILineInfo>
+LLVMSymbolizer::symbolizeCode(const std::string &ModuleName,
+                              uint64_t ModuleOffset, StringRef DWPName) {
   SymbolizableModule *Info;
-  if (auto InfoOrErr = getOrCreateModuleInfo(ModuleName))
+  if (auto InfoOrErr = getOrCreateModuleInfo(ModuleName, DWPName))
     Info = InfoOrErr.get();
   else
     return InfoOrErr.takeError();
@@ -80,9 +81,9 @@ Expected<DILineInfo> LLVMSymbolizer::symbolizeCode(const std::string &ModuleName
 
 Expected<DIInliningInfo>
 LLVMSymbolizer::symbolizeInlinedCode(const std::string &ModuleName,
-                                     uint64_t ModuleOffset) {
+                                     uint64_t ModuleOffset, StringRef DWPName) {
   SymbolizableModule *Info;
-  if (auto InfoOrErr = getOrCreateModuleInfo(ModuleName))
+  if (auto InfoOrErr = getOrCreateModuleInfo(ModuleName, DWPName))
     Info = InfoOrErr.get();
   else
     return InfoOrErr.takeError();
@@ -185,14 +186,19 @@ bool findDebugBinary(const std::string &OrigPath,
     return true;
   }
   // Try /path/to/original_binary/.debug/debuglink_name
-  DebugPath = OrigRealPath;
+  DebugPath = OrigDir;
   llvm::sys::path::append(DebugPath, ".debug", DebuglinkName);
   if (checkFileCRC(DebugPath, CRCHash)) {
     Result = DebugPath.str();
     return true;
   }
+#if defined(__NetBSD__)
+  // Try /usr/libdata/debug/path/to/original_binary/debuglink_name
+  DebugPath = "/usr/libdata/debug";
+#else
   // Try /usr/lib/debug/path/to/original_binary/debuglink_name
   DebugPath = "/usr/lib/debug";
+#endif
   llvm::sys::path::append(DebugPath, llvm::sys::path::relative_path(OrigDir),
                           DebuglinkName);
   if (checkFileCRC(DebugPath, CRCHash)) {
@@ -364,7 +370,8 @@ LLVMSymbolizer::getOrCreateObject(const std::string &Path,
 }
 
 Expected<SymbolizableModule *>
-LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
+LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName,
+                                      StringRef DWPName) {
   const auto &I = Modules.find(ModuleName);
   if (I != Modules.end()) {
     return I->second.get();
@@ -409,7 +416,8 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
     }
   }
   if (!Context)
-    Context.reset(new DWARFContextInMemory(*Objects.second));
+    Context = DWARFContext::create(*Objects.second, nullptr,
+                                   DWARFContext::defaultErrorHandler, DWPName);
   assert(Context);
   auto InfoOrErr =
       SymbolizableObjectFile::create(Objects.first, std::move(Context));
@@ -457,28 +465,22 @@ StringRef demanglePE32ExternCFunc(StringRef SymbolName) {
 
 } // end anonymous namespace
 
-#if !defined(_MSC_VER)
-// Assume that __cxa_demangle is provided by libcxxabi (except for Windows).
-extern "C" char *__cxa_demangle(const char *mangled_name, char *output_buffer,
-                                size_t *length, int *status);
-#endif
-
 std::string
 LLVMSymbolizer::DemangleName(const std::string &Name,
                              const SymbolizableModule *DbiModuleDescriptor) {
-#if !defined(_MSC_VER)
   // We can spoil names of symbols with C linkage, so use an heuristic
   // approach to check if the name should be demangled.
   if (Name.substr(0, 2) == "_Z") {
     int status = 0;
-    char *DemangledName = __cxa_demangle(Name.c_str(), nullptr, nullptr, &status);
+    char *DemangledName = itaniumDemangle(Name.c_str(), nullptr, nullptr, &status);
     if (status != 0)
       return Name;
     std::string Result = DemangledName;
     free(DemangledName);
     return Result;
   }
-#else
+
+#if defined(_MSC_VER)
   if (!Name.empty() && Name.front() == '?') {
     // Only do MSVC C++ demangling on symbols starting with '?'.
     char DemangledName[1024] = {0};

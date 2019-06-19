@@ -43,6 +43,7 @@
 #include "config.h"
 #ifdef USE_CACHEDB
 #include "cachedb/cachedb.h"
+#include "cachedb/redis.h"
 #include "util/regional.h"
 #include "util/net_help.h"
 #include "util/config_file.h"
@@ -56,7 +57,20 @@
 #include "sldns/wire2str.h"
 #include "sldns/sbuffer.h"
 
-#define CACHEDB_HASHSIZE 256 /* bit hash */
+/* header file for htobe64 */
+#ifdef HAVE_ENDIAN_H
+#  include <endian.h>
+#endif
+#ifdef HAVE_SYS_ENDIAN_H
+#  include <sys/endian.h>
+#endif
+#ifdef HAVE_LIBKERN_OSBYTEORDER_H
+/* In practice this is specific to MacOS X.  We assume it doesn't have
+* htobe64/be64toh but has alternatives with a different name. */
+#  include <libkern/OSByteOrder.h>
+#  define htobe64(x) OSSwapHostToBigInt64(x)
+#  define be64toh(x) OSSwapBigToHostInt64(x)
+#endif
 
 /** the unit test testframe for cachedb, its module state contains
  * a cache for a couple queries (in memory). */
@@ -176,6 +190,10 @@ static struct cachedb_backend testframe_backend = { "testframe",
 static struct cachedb_backend*
 cachedb_find_backend(const char* str)
 {
+#ifdef USE_REDIS
+	if(strcmp(str, redis_backend.name) == 0)
+		return &redis_backend;
+#endif
 	if(strcmp(str, testframe_backend.name) == 0)
 		return &testframe_backend;
 	/* TODO add more backends here */
@@ -428,6 +446,7 @@ adjust_msg_ttl(struct dns_msg* msg, time_t adjust)
 		msg->rep->ttl -= adjust;
 	else	msg->rep->ttl = 0;
 	msg->rep->prefetch_ttl = PREFETCH_TTL_CALC(msg->rep->ttl);
+	msg->rep->serve_expired_ttl = msg->rep->ttl + SERVE_EXPIRED_TTL;
 
 	for(i=0; i<msg->rep->rrset_count; i++) {
 		packed_rrset_ttl_subtract((struct packed_rrset_data*)msg->
@@ -568,14 +587,18 @@ cachedb_intcache_lookup(struct module_qstate* qstate)
 	msg = dns_cache_lookup(qstate->env, qstate->qinfo.qname,
 		qstate->qinfo.qname_len, qstate->qinfo.qtype,
 		qstate->qinfo.qclass, qstate->query_flags,
-		qstate->region, qstate->env->scratch);
-	if(!msg && qstate->env->neg_cache) {
+		qstate->region, qstate->env->scratch,
+		1 /* no partial messages with only a CNAME */
+		);
+	if(!msg && qstate->env->neg_cache &&
+		iter_qname_indicates_dnssec(qstate->env, &qstate->qinfo)) {
 		/* lookup in negative cache; may result in 
 		 * NOERROR/NODATA or NXDOMAIN answers that need validation */
 		msg = val_neg_getmsg(qstate->env->neg_cache, &qstate->qinfo,
 			qstate->region, qstate->env->rrset_cache,
 			qstate->env->scratch_buffer,
-			*qstate->env->now, 1/*add SOA*/, NULL);
+			*qstate->env->now, 1/*add SOA*/, NULL,
+			qstate->env->cfg);
 	}
 	if(!msg)
 		return 0;

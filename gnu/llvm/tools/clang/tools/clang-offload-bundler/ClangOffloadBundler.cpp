@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file implements a clang-offload-bundler that bundles different
+/// This file implements a clang-offload-bundler that bundles different
 /// files that relate with the same source code but different targets into a
 /// single one. Also the implements the opposite functionality, i.e. unbundle
 /// files previous created by this tool.
@@ -412,7 +412,7 @@ class ObjectFileHandler final : public FileHandler {
   /// read from the buffers.
   unsigned NumberOfProcessedInputs = 0;
 
-  /// LLVM context used to to create the auxiliary modules.
+  /// LLVM context used to create the auxiliary modules.
   LLVMContext VMContext;
 
   /// LLVM module used to create an object with all the bundle
@@ -536,23 +536,22 @@ public:
     // close it and use the name to pass down to clang.
     OS.close();
     SmallString<128> TargetName = getTriple(TargetNames[HostInputIndex]);
-    const char *ClangArgs[] = {"clang",
-                               "-r",
-                               "-target",
-                               TargetName.c_str(),
-                               "-o",
-                               OutputFileNames.front().c_str(),
-                               InputFileNames[HostInputIndex].c_str(),
-                               BitcodeFileName.c_str(),
-                               "-nostdlib",
-                               nullptr};
+    std::vector<StringRef> ClangArgs = {"clang",
+                                        "-r",
+                                        "-target",
+                                        TargetName.c_str(),
+                                        "-o",
+                                        OutputFileNames.front().c_str(),
+                                        InputFileNames[HostInputIndex].c_str(),
+                                        BitcodeFileName.c_str(),
+                                        "-nostdlib"};
 
     // If the user asked for the commands to be printed out, we do that instead
     // of executing it.
     if (PrintExternalCommands) {
       errs() << "\"" << ClangBinary.get() << "\"";
-      for (unsigned I = 1; ClangArgs[I]; ++I)
-        errs() << " \"" << ClangArgs[I] << "\"";
+      for (StringRef Arg : ClangArgs)
+        errs() << " \"" << Arg << "\"";
       errs() << "\n";
     } else {
       // Write the bitcode contents to the temporary file.
@@ -563,7 +562,7 @@ public:
           errs() << "error: unable to open temporary file.\n";
           return true;
         }
-        WriteBitcodeToFile(AuxModule.get(), BitcodeFile);
+        WriteBitcodeToFile(*AuxModule, BitcodeFile);
       }
 
       bool Failed = sys::ExecuteAndWait(ClangBinary.get(), ClangArgs);
@@ -915,8 +914,7 @@ static bool UnbundleFiles() {
   return false;
 }
 
-static void PrintVersion() {
-  raw_ostream &OS = outs();
+static void PrintVersion(raw_ostream &OS) {
   OS << clang::getClangToolFullVersion("clang-offload-bundler") << '\n';
 }
 
@@ -932,8 +930,10 @@ int main(int argc, const char **argv) {
       "one. The resulting file can also be unbundled into different files by \n"
       "this tool if -unbundle is provided.\n");
 
-  if (Help)
+  if (Help) {
     cl::PrintHelpMessage();
+    return 0;
+  }
 
   bool Error = false;
   if (Unbundle) {
@@ -968,11 +968,11 @@ int main(int argc, const char **argv) {
     getOffloadKindAndTriple(Target, Kind, Triple);
 
     bool KindIsValid = !Kind.empty();
-    KindIsValid = KindIsValid &&
-                  StringSwitch<bool>(Kind)
-                      .Case("host", true)
-                      .Case("openmp", true)
-                      .Default(false);
+    KindIsValid = KindIsValid && StringSwitch<bool>(Kind)
+                                     .Case("host", true)
+                                     .Case("openmp", true)
+                                     .Case("hip", true)
+                                     .Default(false);
 
     bool TripleIsValid = !Triple.empty();
     llvm::Triple T(Triple);

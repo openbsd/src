@@ -19,7 +19,7 @@ chdir dirname($0);
 $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
 
-open OUT,">$file" or die "Can't create $file: $!";
+open OUT, '>', $file or die "Can't create $file: $!";
 
 print "Extracting $file (with variable substitutions)\n";
 
@@ -119,8 +119,8 @@ while (defined (my $file = next_file())) {
 	    }
 	}
 
-	open(IN,"$file") || (($Exit = 1),(warn "Can't open $file: $!\n"),next);
-	open(OUT,">$Dest_dir/$outfile") || die "Can't create $outfile: $!\n";
+	open(IN, "<", "$file") || (($Exit = 1),(warn "Can't open $file: $!\n"),next);
+	open(OUT, ">", "$Dest_dir/$outfile") || die "Can't create $outfile: $!\n";
     }
 
     print OUT
@@ -737,7 +737,7 @@ sub queue_includes_from
 
     return if ($file eq "-");
 
-    open HEADER, $file or return;
+    open HEADER, "<", $file or return;
         while (defined($line = <HEADER>)) {
             while (/\\$/) { # Handle continuation lines
                 chop $line;
@@ -777,7 +777,7 @@ sub build_preamble_if_necessary
     # Can we skip building the preamble file?
     if (-r $preamble) {
         # Extract version number from first line of preamble:
-        open  PREAMBLE, $preamble or die "Cannot open $preamble:  $!";
+        open  PREAMBLE, "<", $preamble or die "Cannot open $preamble:  $!";
             my $line = <PREAMBLE>;
             $line =~ /(\b\d+\b)/;
         close PREAMBLE            or die "Cannot close $preamble:  $!";
@@ -788,7 +788,7 @@ sub build_preamble_if_necessary
 
     my (%define) = _extract_cc_defines();
 
-    open  PREAMBLE, ">$preamble" or die "Cannot open $preamble:  $!";
+    open  PREAMBLE, ">", $preamble or die "Cannot open $preamble:  $!";
 	print PREAMBLE "# This file was created by h2ph version $VERSION\n";
         # Prevent non-portable hex constants from warning.
         #

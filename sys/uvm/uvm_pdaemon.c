@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.79 2018/01/18 18:08:51 bluhm Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.82 2019/05/10 02:33:57 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -186,6 +186,13 @@ uvmpd_tune(void)
 }
 
 /*
+ * Indicate to the page daemon that a nowait call failed and it should
+ * recover at least some memory in the most restricted region (assumed
+ * to be dma_constraint).
+ */
+volatile int uvm_nowait_failed;
+
+/*
  * uvm_pageout: the main loop for the pagedaemon
  */
 void
@@ -209,8 +216,7 @@ uvm_pageout(void *arg)
 	  	work_done = 0; /* No work done this iteration. */
 
 		uvm_lock_fpageq();
-
-		if (TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
+		if (!uvm_nowait_failed && TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
 			msleep(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
 			    "pgdaemon", 0);
 			uvmexp.pdwoke++;
@@ -219,8 +225,17 @@ uvm_pageout(void *arg)
 		if ((pma = TAILQ_FIRST(&uvm.pmr_control.allocs)) != NULL) {
 			pma->pm_flags |= UVM_PMA_BUSY;
 			constraint = pma->pm_constraint;
-		} else
-			constraint = no_constraint;
+		} else {
+			if (uvm_nowait_failed) {
+				/*
+				 * XXX realisticly, this is what our
+				 * nowait callers probably care about
+				 */
+				constraint = dma_constraint;
+				uvm_nowait_failed = 0;
+			} else
+				constraint = no_constraint;
+		}
 
 		uvm_unlock_fpageq();
 
@@ -243,6 +258,8 @@ uvm_pageout(void *arg)
 		if (uvmexp.free - BUFPAGES_DEFICIT < uvmexp.freetarg)
 			size += uvmexp.freetarg - (uvmexp.free -
 			    BUFPAGES_DEFICIT);
+		if (size == 0)
+			size = 16; /* XXX */
 		uvm_unlock_pageq();
 		(void) bufbackoff(&constraint, size * 2);
 		uvm_lock_pageq();

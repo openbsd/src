@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vfsops.c,v 1.33 2018/03/28 16:34:28 visa Exp $ */
+/* $OpenBSD: fuse_vfsops.c,v 1.42 2018/07/17 13:12:08 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -68,6 +68,8 @@ const struct vfsops fusefs_vfsops = {
 
 struct pool fusefs_fbuf_pool;
 
+#define PENDING 2	/* FBT_INIT reply not yet received */
+
 int
 fusefs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
@@ -84,7 +86,6 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 
 	if ((fp = fd_getfile(p->p_fd, args->fd)) == NULL)
 		return (EBADF);
-	FREF(fp);
 
 	if (fp->f_type != DTYPE_VNODE) {
 		error = EINVAL;
@@ -97,24 +98,30 @@ fusefs_mount(struct mount *mp, const char *path, void *data,
 		goto bad;
 	}
 
+	/* Only root may specify allow_other. */
+	if (args->allow_other && (error = suser_ucred(p->p_ucred)))
+		goto bad;
+
 	fmp = malloc(sizeof(*fmp), M_FUSEFS, M_WAITOK | M_ZERO);
 	fmp->mp = mp;
-	fmp->sess_init = 0;
+	fmp->sess_init = PENDING;
 	fmp->dev = vp->v_rdev;
 	if (args->max_read > 0)
 		fmp->max_read = MIN(args->max_read, FUSEBUFMAXSIZE);
 	else
 		fmp->max_read = FUSEBUFMAXSIZE;
 
+	fmp->allow_other = args->allow_other;
+
 	mp->mnt_data = fmp;
 	mp->mnt_flag |= MNT_LOCAL;
 	vfs_getnewfsid(mp);
 
-	bzero(mp->mnt_stat.f_mntonname, MNAMELEN);
+	memset(mp->mnt_stat.f_mntonname, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntonname, path, MNAMELEN);
-	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
+	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromname, "fusefs", MNAMELEN);
-	bzero(mp->mnt_stat.f_mntfromspec, MNAMELEN);
+	memset(mp->mnt_stat.f_mntfromspec, 0, MNAMELEN);
 	strlcpy(mp->mnt_stat.f_mntfromspec, "fusefs", MNAMELEN);
 
 	fuse_device_set_fmp(fmp, 1);
@@ -150,8 +157,7 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if ((error = vflush(mp, NULLVP, flags)))
 		return (error);
 
-	if (fmp->sess_init) {
-		fmp->sess_init = 0;
+	if (fmp->sess_init && fmp->sess_init != PENDING) {
 		fbuf = fb_setup(0, 0, FBT_DESTROY, p);
 
 		error = fb_queue(fmp->dev, fbuf);
@@ -161,10 +167,11 @@ fusefs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 		fb_delete(fbuf);
 	}
+	fmp->sess_init = 0;
 
-	fuse_device_cleanup(fmp->dev, NULL);
+	fuse_device_cleanup(fmp->dev);
 	fuse_device_set_fmp(fmp, 0);
-	free(fmp, M_FUSEFS, 0);
+	free(fmp, M_FUSEFS, sizeof(*fmp));
 	mp->mnt_data = NULL;
 
 	return (0);
@@ -201,9 +208,30 @@ fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 
 	fmp = VFSTOFUSEFS(mp);
 
+	/* Deny other users unless allow_other mount option was specified. */
+	if (!fmp->allow_other && p->p_ucred->cr_uid != mp->mnt_stat.f_owner)
+		return (EPERM);
+
 	copy_statfs_info(sbp, mp);
 
-	if (fmp->sess_init) {
+	/*
+	 * Both FBT_INIT and FBT_STATFS are sent to the FUSE file system
+	 * daemon when it is mounted. However, the daemon is the process
+	 * that called mount(2) so to prevent a deadlock return dummy
+	 * values until the response to FBT_INIT init is received. All
+	 * other VFS syscalls are queued.
+	 */
+	if (!fmp->sess_init || fmp->sess_init == PENDING) {
+		sbp->f_bavail = 0;
+		sbp->f_bfree = 0;
+		sbp->f_blocks = 0;
+		sbp->f_ffree = 0;
+		sbp->f_favail = 0;
+		sbp->f_files = 0;
+		sbp->f_bsize = 0;
+		sbp->f_iosize = 0;
+		sbp->f_namemax = 0;
+	} else {
 		fbuf = fb_setup(0, FUSE_ROOTINO, FBT_STATFS, p);
 
 		error = fb_queue(fmp->dev, fbuf);
@@ -223,16 +251,6 @@ fusefs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 		sbp->f_iosize = fbuf->fb_stat.f_bsize;
 		sbp->f_namemax = fbuf->fb_stat.f_namemax;
 		fb_delete(fbuf);
-	} else {
-		sbp->f_bavail = 0;
-		sbp->f_bfree = 0;
-		sbp->f_blocks = 0;
-		sbp->f_ffree = 0;
-		sbp->f_favail = 0;
-		sbp->f_files = 0;
-		sbp->f_bsize = 0;
-		sbp->f_iosize = 0;
-		sbp->f_namemax = 0;
 	}
 
 	return (0);
@@ -248,6 +266,7 @@ fusefs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred,
 int
 fusefs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
+	struct vattr vattr;
 	struct fusefs_mnt *fmp;
 	struct fusefs_node *ip;
 	struct vnode *nvp;
@@ -295,6 +314,18 @@ retry:
 
 	if (ino == FUSE_ROOTINO)
 		nvp->v_flag |= VROOT;
+	else {
+		/*
+		 * Initialise the file size so that file size changes can be
+		 * detected during file operations.
+		 */
+		error = VOP_GETATTR(nvp, &vattr, curproc->p_ucred, curproc);
+		if (error) {
+			vrele(nvp);
+			return (error);
+		}
+		ip->filesize = vattr.va_size;
+	}
 
 	*vpp = nvp;
 

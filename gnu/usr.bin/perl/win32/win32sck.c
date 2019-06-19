@@ -694,10 +694,15 @@ int my_close(int fd)
 	int err;
 	err = closesocket(osf);
 	if (err == 0) {
+#ifdef _set_osfhnd
 	    assert(_osfhnd(fd) == osf); /* catch a bad ioinfo struct def */
 	    /* don't close freed handle */
 	    _set_osfhnd(fd, INVALID_HANDLE_VALUE);
 	    return close(fd);
+#else
+	    (void)close(fd);    /* handle already closed, ignore error */
+	    return 0;
+#endif
 	}
 	else if (err == SOCKET_ERROR) {
 	    int wsaerr = WSAGetLastError();
@@ -726,10 +731,15 @@ my_fclose (FILE *pf)
 	win32_fflush(pf);
 	err = closesocket(osf);
 	if (err == 0) {
+#ifdef _set_osfhnd
 	    assert(_osfhnd(win32_fileno(pf)) == osf); /* catch a bad ioinfo struct def */
 	    /* don't close freed handle */
 	    _set_osfhnd(win32_fileno(pf), INVALID_HANDLE_VALUE);
 	    return fclose(pf);
+#else
+	    (void)fclose(pf);   /* handle already closed, ignore error */
+	    return 0;
+#endif
 	}
 	else if (err == SOCKET_ERROR) {
 	    int wsaerr = WSAGetLastError();

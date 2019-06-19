@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.228 2018/02/23 15:58:37 markus Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.235 2019/06/14 03:51:47 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -81,6 +81,8 @@
 
 /* Maximum accepted message length */
 #define AGENT_MAX_LEN	(256*1024)
+/* Maximum bytes to read from client socket */
+#define AGENT_RBUF_LEN	(4096)
 
 typedef enum {
 	AUTH_UNUSED,
@@ -252,6 +254,11 @@ agent_decode_alg(struct sshkey *key, u_int flags)
 			return "rsa-sha2-256";
 		else if (flags & SSH_AGENT_RSA_SHA2_512)
 			return "rsa-sha2-512";
+	} else if (key->type == KEY_RSA_CERT) {
+		if (flags & SSH_AGENT_RSA_SHA2_256)
+			return "rsa-sha2-256-cert-v01@openssh.com";
+		else if (flags & SSH_AGENT_RSA_SHA2_512)
+			return "rsa-sha2-512-cert-v01@openssh.com";
 	}
 	return NULL;
 }
@@ -694,7 +701,7 @@ process_message(u_int socknum)
 
 	debug("%s: socket %u (fd=%d) type %d", __func__, socknum, e->fd, type);
 
-	/* check wheter agent is locked */
+	/* check whether agent is locked */
 	if (locked && type != SSH_AGENTC_UNLOCK) {
 		sshbuf_reset(e->request);
 		switch (type) {
@@ -824,7 +831,7 @@ handle_socket_read(u_int socknum)
 static int
 handle_conn_read(u_int socknum)
 {
-	char buf[1024];
+	char buf[AGENT_RBUF_LEN];
 	ssize_t len;
 	int r;
 
@@ -871,10 +878,10 @@ handle_conn_write(u_int socknum)
 }
 
 static void
-after_poll(struct pollfd *pfd, size_t npfd)
+after_poll(struct pollfd *pfd, size_t npfd, u_int maxfds)
 {
 	size_t i;
-	u_int socknum;
+	u_int socknum, activefds = npfd;
 
 	for (i = 0; i < npfd; i++) {
 		if (pfd[i].revents == 0)
@@ -894,19 +901,30 @@ after_poll(struct pollfd *pfd, size_t npfd)
 		/* Process events */
 		switch (sockets[socknum].type) {
 		case AUTH_SOCKET:
-			if ((pfd[i].revents & (POLLIN|POLLERR)) != 0 &&
-			    handle_socket_read(socknum) != 0)
-				close_socket(&sockets[socknum]);
+			if ((pfd[i].revents & (POLLIN|POLLERR)) == 0)
+				break;
+			if (npfd > maxfds) {
+				debug3("out of fds (active %u >= limit %u); "
+				    "skipping accept", activefds, maxfds);
+				break;
+			}
+			if (handle_socket_read(socknum) == 0)
+				activefds++;
 			break;
 		case AUTH_CONNECTION:
 			if ((pfd[i].revents & (POLLIN|POLLERR)) != 0 &&
 			    handle_conn_read(socknum) != 0) {
-				close_socket(&sockets[socknum]);
-				break;
+				goto close_sock;
 			}
 			if ((pfd[i].revents & (POLLOUT|POLLHUP)) != 0 &&
-			    handle_conn_write(socknum) != 0)
+			    handle_conn_write(socknum) != 0) {
+ close_sock:
+				if (activefds == 0)
+					fatal("activefds == 0 at close_sock");
 				close_socket(&sockets[socknum]);
+				activefds--;
+				break;
+			}
 			break;
 		default:
 			break;
@@ -915,11 +933,12 @@ after_poll(struct pollfd *pfd, size_t npfd)
 }
 
 static int
-prepare_poll(struct pollfd **pfdp, size_t *npfdp, int *timeoutp)
+prepare_poll(struct pollfd **pfdp, size_t *npfdp, int *timeoutp, u_int maxfds)
 {
 	struct pollfd *pfd = *pfdp;
 	size_t i, j, npfd = 0;
 	time_t deadline;
+	int r;
 
 	/* Count active sockets */
 	for (i = 0; i < sockets_alloc; i++) {
@@ -944,11 +963,32 @@ prepare_poll(struct pollfd **pfdp, size_t *npfdp, int *timeoutp)
 	for (i = j = 0; i < sockets_alloc; i++) {
 		switch (sockets[i].type) {
 		case AUTH_SOCKET:
+			if (npfd > maxfds) {
+				debug3("out of fds (active %zu >= limit %u); "
+				    "skipping arming listener", npfd, maxfds);
+				break;
+			}
+			pfd[j].fd = sockets[i].fd;
+			pfd[j].revents = 0;
+			pfd[j].events = POLLIN;
+			j++;
+			break;
 		case AUTH_CONNECTION:
 			pfd[j].fd = sockets[i].fd;
 			pfd[j].revents = 0;
-			/* XXX backoff when input buffer full */
-			pfd[j].events = POLLIN;
+			/*
+			 * Only prepare to read if we can handle a full-size
+			 * input read buffer and enqueue a max size reply..
+			 */
+			if ((r = sshbuf_check_reserve(sockets[i].input,
+			    AGENT_RBUF_LEN)) == 0 &&
+			    (r = sshbuf_check_reserve(sockets[i].output,
+			     AGENT_MAX_LEN)) == 0)
+				pfd[j].events = POLLIN;
+			else if (r != SSH_ERR_NO_BUFFER_SPACE) {
+				fatal("%s: buffer error: %s",
+				    __func__, ssh_err(r));
+			}
 			if (sshbuf_len(sockets[i].output) > 0)
 				pfd[j].events |= POLLOUT;
 			j++;
@@ -1042,14 +1082,17 @@ main(int ac, char **av)
 	int timeout = -1; /* INFTIM */
 	struct pollfd *pfd = NULL;
 	size_t npfd = 0;
+	u_int maxfds;
 
-	ssh_malloc_init();	/* must be called before any mallocs */
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 
 	/* drop */
 	setegid(getgid());
 	setgid(getgid());
+
+	if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
+		fatal("%s: getrlimit: %s", __progname, strerror(errno));
 
 #ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();
@@ -1144,6 +1187,18 @@ main(int ac, char **av)
 		printf("echo Agent pid %ld killed;\n", (long)pid);
 		exit(0);
 	}
+
+	/*
+	 * Minimum file descriptors:
+	 * stdio (3) + listener (1) + syslog (1 maybe) + connection (1) +
+	 * a few spare for libc / stack protectors / sanitisers, etc.
+	 */
+#define SSH_AGENT_MIN_FDS (3+1+1+1+4)
+	if (rlim.rlim_cur < SSH_AGENT_MIN_FDS)
+		fatal("%s: file descriptor rlimit %lld too low (minimum %u)",
+		    __progname, (long long)rlim.rlim_cur, SSH_AGENT_MIN_FDS);
+	maxfds = rlim.rlim_cur - SSH_AGENT_MIN_FDS;
+
 	parent_pid = getpid();
 
 	if (agentsocket == NULL) {
@@ -1260,7 +1315,7 @@ skip:
 		fatal("%s: pledge: %s", __progname, strerror(errno));
 
 	while (1) {
-		prepare_poll(&pfd, &npfd, &timeout);
+		prepare_poll(&pfd, &npfd, &timeout, maxfds);
 		result = poll(pfd, npfd, timeout);
 		saved_errno = errno;
 		if (parent_alive_interval != 0)
@@ -1271,7 +1326,7 @@ skip:
 				continue;
 			fatal("poll: %s", strerror(saved_errno));
 		} else if (result > 0)
-			after_poll(pfd, npfd);
+			after_poll(pfd, npfd, maxfds);
 	}
 	/* NOTREACHED */
 }

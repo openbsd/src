@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.16 2018/02/28 06:53:25 pd Exp $ */
+/* $OpenBSD: mc146818.c,v 1.19 2019/05/27 19:21:43 jasper Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -129,6 +129,7 @@ rtc_fireper(int fd, short type, void *arg)
 	rtc.regs[MC_REGC] |= MC_REGC_PF;
 
 	vcpu_assert_pic_irq((ptrdiff_t)arg, 0, 8);
+	vcpu_deassert_pic_irq((ptrdiff_t)arg, 0, 8);
 
 	evtimer_add(&rtc.per, &rtc.per_tv);
 }
@@ -215,7 +216,7 @@ rtc_update_rega(uint32_t data)
 		    __func__);
 
 	rtc.regs[MC_REGA] = data;
-	if (rtc.regs[MC_REGB] & MC_REGB_PIE)
+	if ((rtc.regs[MC_REGA] ^ data) & 0x0f)
 		rtc_reschedule_per();
 }
 
@@ -258,7 +259,7 @@ rtc_update_regb(uint32_t data)
 uint8_t
 vcpu_exit_mc146818(struct vm_run_params *vrp)
 {
-	union vm_exit *vei = vrp->vrp_exit;
+	struct vm_exit *vei = vrp->vrp_exit;
 	uint16_t port = vei->vei.vei_port;
 	uint8_t dir = vei->vei.vei_dir;
 	uint32_t data = 0;

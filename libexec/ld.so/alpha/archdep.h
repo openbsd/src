@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.21 2017/10/27 16:47:08 mpi Exp $ */
+/*	$OpenBSD: archdep.h,v 1.22 2018/11/22 21:37:30 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -42,7 +42,7 @@ static inline void
 RELOC_DYN(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)
 {
 	if (ELF64_R_TYPE(r->r_info) == RELOC_RELATIVE) {
-		/* handled by _reloc_alpha_got */
+		*p += v;
 	} else if (ELF64_R_TYPE(r->r_info) == RELOC_NONE) {
 		/* nothing to do */
 	} else if (ELF64_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {

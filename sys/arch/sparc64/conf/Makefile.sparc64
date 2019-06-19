@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.97 2018/02/09 03:59:15 tb Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.100 2019/04/14 14:07:07 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -21,13 +21,19 @@ S!=	cd ../../../..; pwd
 _machdir?=	$S/arch/${_mach}
 _archdir?=	$S/arch/${_arch}
 
-INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch
+INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
+		-I$S/dev/pci/drm/include \
+		-I$S/dev/pci/drm/include/uapi
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
 		-Wframe-larger-than=2047
 
+.if ${COMPILER_VERSION:Mclang}
+CMACHFLAGS=	-Wa,-Av9b -msoft-float
+.else
 CMACHFLAGS=	-Wa,-Av9b, -mno-fpu
+.endif
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
 SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
@@ -35,6 +41,11 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
+COPTS?=		-Oz
+.endif
+.if ${COMPILER_VERSION:Mclang}
+CWARNFLAGS+=	-Wno-unused-command-line-argument
+CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion
 .endif
 
 DEBUG?=		-g

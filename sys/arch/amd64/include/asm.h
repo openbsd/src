@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.9 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.18 2019/04/02 03:35:08 mortimer Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -61,25 +61,51 @@
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
-#define _ALIGN_TEXT .align 16, 0x90
+#define _ALIGN_TEXT	.align	16, 0x90
 #endif
+#define _ALIGN_TRAPS	.align	16, 0xcc
 
+#define	_GENTRY(x)	.globl x; .type x,@function; x:
 #define _ENTRY(x) \
-	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
+	.text; _ALIGN_TRAPS; _GENTRY(x)
+#define _NENTRY(x) \
+	.text; _ALIGN_TEXT; _GENTRY(x)
 
 #ifdef _KERNEL
-#define	KUTEXT	.section .kutext, "ax"
-/*#define	KUTEXT	.text */
+#define	KUTEXT	.section .kutext, "ax", @progbits
 
-/* XXX Can't use __CONCAT() here, as it would be evaluated incorrectly. */
+#define	KUTEXT_PAGE_START	.pushsection .kutext.page, "a", @progbits
+#define	KTEXT_PAGE_START	.pushsection .ktext.page, "ax", @progbits
+#define	KUTEXT_PAGE_END		.popsection
+#define	KTEXT_PAGE_END		.popsection
+
 #define	IDTVEC(name) \
-	KUTEXT; ALIGN_TEXT; \
-	.globl X ## name; .type X ## name,@function; X ## name:
+	KUTEXT; _ALIGN_TRAPS; IDTVEC_NOALIGN(name)
+#define	IDTVEC_NOALIGN(name)	_GENTRY(X ## name)
+#define	GENTRY(x)		_GENTRY(x)
 #define	KIDTVEC(name) \
-	.text; ALIGN_TEXT; \
-	.globl X ## name; .type X ## name,@function; X ## name:
+	.text; _ALIGN_TRAPS; IDTVEC_NOALIGN(name)
+#define	KIDTVEC_FALLTHROUGH(name) \
+	_ALIGN_TEXT; IDTVEC_NOALIGN(name)
 #define KUENTRY(x) \
-	KUTEXT; _ALIGN_TEXT; .globl x; .type x,@function; x:
+	KUTEXT; _ALIGN_TRAPS; _GENTRY(x)
+
+/* Return stack refill, to prevent speculation attacks on natural returns */
+#define	RET_STACK_REFILL_WITH_RCX	\
+		mov	$8,%rcx		; \
+		_ALIGN_TEXT		; \
+	3:	call	5f		; \
+	4:	pause			; \
+		lfence			; \
+		call	4b		; \
+		_ALIGN_TRAPS		; \
+	5:	call	7f		; \
+	6:	pause			; \
+		lfence			; \
+		call	6b		; \
+		_ALIGN_TRAPS		; \
+	7:	loop	3b		; \
+		add	$(16*8),%rsp
 
 #endif /* _KERNEL */
 
@@ -97,9 +123,48 @@
 # define _PROF_PROLOGUE
 #endif
 
+#if defined(_RET_PROTECTOR)
+# define RETGUARD_SETUP_OFF(x, reg, off) \
+	RETGUARD_SYMBOL(x); \
+	movq (__retguard_ ## x)(%rip), %reg; \
+	xorq off(%rsp), %reg
+# define RETGUARD_SETUP(x, reg) \
+	RETGUARD_SETUP_OFF(x, reg, 0)
+# define RETGUARD_CHECK(x, reg) \
+	xorq (%rsp), %reg; \
+	cmpq (__retguard_ ## x)(%rip), %reg; \
+	je 66f; \
+	int3; int3; \
+	.zero (0xf - ((. - x) & 0xf)), 0xcc; \
+66:
+# define RETGUARD_PUSH(reg) \
+	pushq %reg
+# define RETGUARD_POP(reg) \
+	popq %reg
+# define RETGUARD_SYMBOL(x) \
+	.ifndef __retguard_ ## x; \
+	.hidden __retguard_ ## x; \
+	.type   __retguard_ ## x,@object; \
+	.pushsection .openbsd.randomdata.retguard,"aw",@progbits; \
+	.weak   __retguard_ ## x; \
+	.p2align 3; \
+	__retguard_ ## x: ; \
+	.quad 0; \
+	.size __retguard_ ## x, 8; \
+	.popsection; \
+	.endif
+#else
+# define RETGUARD_SETUP_OFF(x, reg, off)
+# define RETGUARD_SETUP(x, reg)
+# define RETGUARD_CHECK(x, reg)
+# define RETGUARD_PUSH(reg)
+# define RETGUARD_POP(reg)
+# define RETGUARD_SYMBOL(x)
+#endif
+
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
-#define	NENTRY(y)	_ENTRY(_C_LABEL(y))
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	NENTRY(y)	_NENTRY(_C_LABEL(y))
+#define	ASENTRY(y)	_NENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	END(y)		.size y, . - y
 
 #define	STRONG_ALIAS(alias,sym)						\
@@ -119,5 +184,15 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(sym),1,0,0,0
 #endif /* __STDC__ */
+
+/* generic retpoline ("return trampoline") generator */
+#define	JMP_RETPOLINE(reg)		\
+		call	69f		; \
+	68:	pause			; \
+		lfence			; \
+		jmp	68b		; \
+		_ALIGN_TRAPS		; \
+	69:	mov	%reg,(%rsp)	; \
+		ret
 
 #endif /* !_MACHINE_ASM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2015/09/18 13:30:56 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2018/07/11 18:08:05 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -31,6 +31,9 @@
 #include "biosdev.h"
 #include <machine/apmvar.h>
 #include <machine/biosvar.h>
+#include <machine/psl.h>
+#include <machine/specialreg.h>
+#include <machine/vmmvar.h>
 
 #ifdef EFIBOOT
 #include "efiboot.h"
@@ -44,11 +47,15 @@ volatile struct BIOS_regs	BIOS_regs;
 #define CKPT(c) /* c */
 #endif
 
+const char *vmm_hv_signature = VMM_HV_SIGNATURE;
+
 void
 machdep(void)
 {
-	int i, j;
+	int i, j, vmm = 0, psl_check;
 	struct i386_boot_probes *pr;
+	uint32_t dummy, ebx, ecx, edx;
+	dev_t dev;
 
 	/*
 	 * The list of probe routines is now in conf.c.
@@ -64,6 +71,55 @@ machdep(void)
 
 			printf("\n");
 		}
+	}
+
+	/*
+	 * The following is a simple check to see if cpuid is supported.
+	 * We try to toggle bit 21 (PSL_ID) in eflags.  If it works, then
+	 * cpuid is supported.  If not, there's no cpuid, and we don't
+	 * try it (don't want /boot to get an invalid opcode exception).
+	 *
+	 * XXX The NexGen Nx586 does not support this bit, so this is not
+	 *     a good method to detect the presence of cpuid on this
+	 *     processor.  That's fine: the purpose here is to detect the
+	 *     absence of cpuid.  We don't mind if the instruction's not
+	 *     there - this is not intended to determine exactly what
+	 *     processor is there, just whether it's i386 or amd64.
+	 *
+	 *     The only thing that would cause us grief is a processor which
+	 *     does not support cpuid but which does allow the PSL_ID bit
+	 *     in eflags to be toggled.
+	 */
+	__asm volatile(
+	    "pushfl\n\t"
+	    "popl	%2\n\t"
+	    "xorl	%2, %0\n\t"
+	    "pushl	%0\n\t"
+	    "popfl\n\t"
+	    "pushfl\n\t"
+	    "popl	%0\n\t"
+	    "xorl	%2, %0\n\t"		/* If %2 == %0, no cpuid */
+	    : "=r" (psl_check)
+	    : "0" (PSL_ID), "r" (0)
+	    : "cc");
+
+	if (psl_check != PSL_ID)
+		return;
+
+	CPUID(0x1, dummy, dummy, ecx, dummy);
+	if (ecx & CPUIDECX_HV) {
+		CPUID(0x40000000, dummy, ebx, ecx, edx);
+		if (memcmp(&ebx, &vmm_hv_signature[0], sizeof(uint32_t)) == 0 &&
+		   memcmp(&ecx, &vmm_hv_signature[4], sizeof(uint32_t)) == 0 &&
+		   memcmp(&edx, &vmm_hv_signature[8], sizeof(uint32_t)) == 0)
+			vmm = 1;
+	}
+
+	/* Set console to com0/115200 by default in vmm */
+	if (vmm) {
+		dev = ttydev("com0");
+		cnspeed(dev, 115200);
+		cnset(dev);
 	}
 }
 

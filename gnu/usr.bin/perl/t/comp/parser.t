@@ -8,7 +8,7 @@ BEGIN {
     chdir 't' if -d 't';
 }
 
-print "1..173\n";
+print "1..188\n";
 
 sub failed {
     my ($got, $expected, $name) = @_;
@@ -58,11 +58,11 @@ sub is {
 eval '%@x=0;';
 like( $@, qr/^Can't modify hash dereference in repeat \(x\)/, '%@x=0' );
 
-# Bug 20010422.005
+# Bug 20010422.005 (#6874)
 eval q{{s//${}/; //}};
 like( $@, qr/syntax error/, 'syntax error, used to dump core' );
 
-# Bug 20010528.007
+# Bug 20010528.007 (#7052)
 eval q/"\x{"/;
 like( $@, qr/^Missing right brace on \\x/,
     'syntax error in string, used to dump core' );
@@ -85,7 +85,7 @@ eval "a.b.c.d.e.f;sub";
 like( $@, qr/^Illegal declaration of anonymous subroutine/,
     'found by Markov chain stress testing' );
 
-# Bug 20010831.001
+# Bug 20010831.001 (#7605)
 eval '($a, b) = (1, 2);';
 like( $@, qr/^Can't modify constant item in list assignment/,
     'bareword in list assignment' );
@@ -96,11 +96,11 @@ like( $@, qr/^Can't modify constant item in tie /,
 
 eval 'undef foo';
 like( $@, qr/^Can't modify constant item in undef operator /,
-    'undefing constant causes a segfault in 5.6.1 [ID 20010906.019]' );
+    'undefing constant causes a segfault in 5.6.1 [ID 20010906.019 (#7642)]' );
 
 eval 'read($bla, FILE, 1);';
 like( $@, qr/^Can't modify constant item in read /,
-    'read($var, FILE, 1) segfaults on 5.6.1 [ID 20011025.054]' );
+    'read($var, FILE, 1) segfaults on 5.6.1 [ID 20011025.054 (#7847)]' );
 
 # This used to dump core (bug #17920)
 eval q{ sub { sub { f1(f2();); my($a,$b,$c) } } };
@@ -444,7 +444,7 @@ is prototype "Hello::_he_said", '_', 'initial tick in sub declaration';
 	'literal -> after an array subscript within ""');
     @x = ['string'];
     # this used to give "string"
-    like("$x[0]-> [0]", qr/^ARRAY\([^)]*\)-> \[0]\z/,
+    like("$x[0]-> [0]", qr/^ARRAY\([^)]*\)-> \[0\]\z/,
 	'literal -> [0] after an array subscript within ""');
 }
 
@@ -540,12 +540,73 @@ eval "grep+grep";
  eval 'my $_; m// ~~ 0';
 }
 
+# Used to crash [perl #125679]
+eval 'BEGIN {$^H=-1} \eval=time';
+
+# Used to fail an assertion [perl #129073]
+{
+ local $SIG{__WARN__} = sub{};
+ eval '${p{};sub p}()';
+}
+
 # RT #124207 syntax error during stringify can leave stringify op
 # with multiple children and assertion failures
 
 eval 'qq{@{0]}${}},{})';
 is(1, 1, "RT #124207");
 
+# RT #127993 version control conflict markers
+" this should keep working
+<<<<<<<
+" =~ /
+>>>>>>>
+/;
+for my $marker (qw(
+<<<<<<<
+=======
+>>>>>>>
+)) {
+    eval "$marker";
+    like $@, qr/^Version control conflict marker at \(eval \d+\) line 1, near "$marker"/, "VCS marker '$marker' at beginning";
+    eval "\$_\n$marker";
+    like $@, qr/^Version control conflict marker at \(eval \d+\) line 2, near "$marker"/, "VCS marker '$marker' after value";
+    eval "\n\$_ =\n$marker";
+    like $@, qr/^Version control conflict marker at \(eval \d+\) line 3, near "$marker"/, "VCS marker '$marker' after operator";
+}
+
+# keys assignments in weird contexts (mentioned in perl #128260)
+eval 'keys(%h) .= "00"';
+is $@, "", 'keys .=';
+eval 'sub { read $fh, keys %h, 0 }';
+is $@, "", 'read into keys';
+eval 'substr keys(%h),0,=3';
+is $@, "", 'substr keys assignment';
+
+{ # very large utf8 char in error message was overflowing buffer
+    if (length sprintf("%x", ~0) <= 8) {
+        is 1, 1, "skip because overflows on 32-bit machine";
+    }
+    else {
+        no warnings;
+        eval "q" . chr(100000000064);
+        like $@, qr/Can't find string terminator "." anywhere before EOF/,
+            'RT 128952';
+    }
+}
+
+# RT #130311: many parser shifts before a reduce
+
+{
+    eval '[' . ('{' x 300);
+    like $@, qr/Missing right curly or square bracket/, 'RT #130311';
+}
+
+# RT #130815: crash in ck_return for malformed code
+{
+    eval 'm(@{if(0){sub d{]]])}return';
+    like $@, qr/^syntax error at \(eval \d+\) line 1, near "\{\]"/,
+        'RT #130815: null pointer deref';
+}
 
 # Add new tests HERE (above this line)
 

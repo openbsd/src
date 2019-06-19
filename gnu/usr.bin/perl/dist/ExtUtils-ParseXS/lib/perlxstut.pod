@@ -1143,9 +1143,9 @@ Mytest.xs:
 		hv_store(rh, "f_files",  7, newSVnv(buf.f_files),  0);
 		hv_store(rh, "f_type",   6, newSVnv(buf.f_type),   0);
 
-		av_push(results, newRV((SV *)rh));
+		av_push(results, newRV_inc((SV *)rh));
 	    }
-	    RETVAL = newRV((SV *)results);
+	    RETVAL = newRV_inc((SV *)results);
 	OUTPUT:
 	    RETVAL
 
@@ -1216,7 +1216,7 @@ for details.
 
 =item *
 
-To create a reference, we use the C<newRV> function.  Note that you can
+To create a reference, we use the C<newRV_inc> function.  Note that you can
 cast an AV* or an HV* to type SV* in this case (and many others).  This
 allows you to take references to arrays, hashes and scalars with the same
 function.  Conversely, the C<SvRV> function always returns an SV*, which may

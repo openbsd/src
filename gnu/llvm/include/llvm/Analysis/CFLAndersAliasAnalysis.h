@@ -1,4 +1,4 @@
-//=- CFLAndersAliasAnalysis.h - Unification-based Alias Analysis ---*- C++-*-=//
+//==- CFLAndersAliasAnalysis.h - Unification-based Alias Analysis -*- C++-*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,25 +19,31 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CFLAliasAnalysisUtils.h"
-#include "llvm/IR/Function.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
 #include <forward_list>
+#include <memory>
 
 namespace llvm {
 
+class Function;
+class MemoryLocation;
 class TargetLibraryInfo;
 
 namespace cflaa {
+
 struct AliasSummary;
-}
+
+} // end namespace cflaa
 
 class CFLAndersAAResult : public AAResultBase<CFLAndersAAResult> {
   friend AAResultBase<CFLAndersAAResult>;
+
   class FunctionInfo;
 
 public:
-  explicit CFLAndersAAResult(const TargetLibraryInfo &);
-  CFLAndersAAResult(CFLAndersAAResult &&);
+  explicit CFLAndersAAResult(const TargetLibraryInfo &TLI);
+  CFLAndersAAResult(CFLAndersAAResult &&RHS);
   ~CFLAndersAAResult();
 
   /// Handle invalidation events from the new pass manager.
@@ -46,10 +52,11 @@ public:
                   FunctionAnalysisManager::Invalidator &) {
     return false;
   }
+
   /// Evict the given function from cache
   void evict(const Function *Fn);
 
-  /// \brief Get the alias summary for the given function
+  /// Get the alias summary for the given function
   /// Return nullptr if the summary is not found or not available
   const cflaa::AliasSummary *getAliasSummary(const Function &);
 
@@ -57,19 +64,19 @@ public:
   AliasResult alias(const MemoryLocation &, const MemoryLocation &);
 
 private:
-  /// \brief Ensures that the given function is available in the cache.
+  /// Ensures that the given function is available in the cache.
   /// Returns the appropriate entry from the cache.
   const Optional<FunctionInfo> &ensureCached(const Function &);
 
-  /// \brief Inserts the given Function into the cache.
+  /// Inserts the given Function into the cache.
   void scan(const Function &);
 
-  /// \brief Build summary for a given function
+  /// Build summary for a given function
   FunctionInfo buildInfoFrom(const Function &);
 
   const TargetLibraryInfo &TLI;
 
-  /// \brief Cached mapping of Functions to their StratifiedSets.
+  /// Cached mapping of Functions to their StratifiedSets.
   /// If a function's sets are currently being built, it is marked
   /// in the cache as an Optional without a value. This way, if we
   /// have any kind of recursion, it is discernable from a function
@@ -85,10 +92,11 @@ private:
 /// in particular to leverage invalidation to trigger re-computation.
 class CFLAndersAA : public AnalysisInfoMixin<CFLAndersAA> {
   friend AnalysisInfoMixin<CFLAndersAA>;
+
   static AnalysisKey Key;
 
 public:
-  typedef CFLAndersAAResult Result;
+  using Result = CFLAndersAAResult;
 
   CFLAndersAAResult run(Function &F, FunctionAnalysisManager &AM);
 };
@@ -109,12 +117,10 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
-//===--------------------------------------------------------------------===//
-//
 // createCFLAndersAAWrapperPass - This pass implements a set-based approach to
 // alias analysis.
-//
 ImmutablePass *createCFLAndersAAWrapperPass();
-}
 
-#endif
+} // end namespace llvm
+
+#endif // LLVM_ANALYSIS_CFLANDERSALIASANALYSIS_H

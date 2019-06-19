@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.12 2016/03/14 23:08:06 krw Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.13 2018/12/16 08:31:50 otto Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1997/02/04 18:36:33 thorpej Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ alloc(unsigned int size)
 	}
 
 	/* no match in freelist if bestsize unchanged */
-	failed = (bestsize == 0xffffffff);
+	failed = (bestsize == 0xffffffff || bestsize >= size * 2);
 #endif
 
 	if (failed) { /* nothing found */

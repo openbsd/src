@@ -47,7 +47,7 @@ print {$out} <<'SCRIPT_BODY' or die "Cannot write to $file: $!\n";
 # pod2text -- Convert POD data to formatted ASCII text.
 #
 # Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2012, 2013, 2014, 2015,
-#     2016 Russ Allbery <rra@cpan.org>
+#     2016, 2017 Russ Allbery <rra@cpan.org>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -123,7 +123,11 @@ do {
     $parser->parse_from_file ($input, $output);
     if ($parser->{CONTENTLESS}) {
         $status = 1;
-        warn "$0: unable to format $input\n";
+        if (defined $input) {
+            warn "$0: unable to format $input\n";
+        } else {
+            warn "$0: unable to format standard input\n";
+        }
         if (defined ($output) and $output ne '-') {
             unlink $output unless (-s $output);
         }
@@ -358,7 +362,7 @@ Russ Allbery <rra@cpan.org>.
 =head1 COPYRIGHT AND LICENSE
 
 Copyright 1999, 2000, 2001, 2004, 2006, 2008, 2010, 2012, 2013, 2014, 2015,
-2016 Russ Allbery <rra@cpan.org>
+2016, 2017 Russ Allbery <rra@cpan.org>
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

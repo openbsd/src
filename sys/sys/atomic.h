@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.5 2017/05/27 19:47:08 kettenis Exp $ */
+/*	$OpenBSD: atomic.h,v 1.6 2019/03/09 06:14:21 visa Exp $ */
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
  *
@@ -226,5 +226,33 @@ atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 #ifndef membar_exit_before_atomic
 #define membar_exit_before_atomic() membar_exit()
 #endif
+
+#ifdef _KERNEL
+
+/*
+ * Force any preceding reads to happen before any subsequent reads that
+ * depend on the value returned by the preceding reads.
+ */
+static inline void
+membar_datadep_consumer(void)
+{
+#ifdef __alpha__
+	membar_consumer();
+#endif
+}
+
+#define READ_ONCE(x) ({							\
+	typeof(x) __tmp = *(volatile typeof(x) *)&(x);			\
+	membar_datadep_consumer();					\
+	__tmp;								\
+})
+
+#define WRITE_ONCE(x, val) ({						\
+	typeof(x) __tmp = (val);					\
+	*(volatile typeof(x) *)&(x) = __tmp;				\
+	__tmp;								\
+})
+
+#endif /* _KERNEL */
 
 #endif /* _SYS_ATOMIC_H_ */

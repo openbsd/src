@@ -118,7 +118,7 @@ Execute this statement for a hint about where to find CORE:
     perl -MConfig -e 'print $Config{archlib}'
 
 Here's how you'd compile the example in the next section,
-L<Adding a Perl interpreter to your C program>, on my Linux box:
+L</Adding a Perl interpreter to your C program>, on my Linux box:
 
     % gcc -O2 -Dbool=char -DHAS_BOOL -I/usr/local/include
     -I/usr/local/lib/perl5/i586-linux/5.003/CORE
@@ -128,7 +128,7 @@ L<Adding a Perl interpreter to your C program>, on my Linux box:
 (That's all one line.)  On my DEC Alpha running old 5.003_05, the
 incantation is a bit different:
 
-    % cc -O2 -Olimit 2900 -DSTANDARD_C -I/usr/local/include
+    % cc -O2 -Olimit 2900 -I/usr/local/include
     -I/usr/local/lib/perl5/alpha-dec_osf/5.00305/CORE
     -L/usr/local/lib/perl5/alpha-dec_osf/5.00305/CORE -L/usr/local/lib
     -D__LANGUAGE_C__ -D_NO_PROTO -o interp interp.c -lperl -lm
@@ -161,7 +161,7 @@ you:
 
 If the B<ExtUtils::Embed> module isn't part of your Perl distribution,
 you can retrieve it from
-http://www.perl.com/perl/CPAN/modules/by-module/ExtUtils/
+L<http://www.perl.com/perl/CPAN/modules/by-module/ExtUtils/>
 (If this documentation came from your Perl distribution, then you're
 running 5.004 or better and you already have it.)
 
@@ -192,6 +192,7 @@ version of I<miniperlmain.c> containing the essentials of embedding:
         perl_destruct(my_perl);
         perl_free(my_perl);
 	PERL_SYS_TERM();
+	exit(EXIT_SUCCESS);
  }
 
 Notice that we don't use the C<env> pointer.  Normally handed to
@@ -210,6 +211,9 @@ provide C<env> as an argument to perl_parse().
 Also notice that no matter what arguments you pass to perl_parse(),
 PERL_SYS_INIT3() must be invoked on the C main() argc, argv and env and
 only once.
+
+Mind that argv[argc] must be NULL, same as those passed to a main
+function in C.
 
 Now compile this program (I'll call it I<interp.c>) into an executable:
 
@@ -264,6 +268,7 @@ That's shown below, in a program I'll call I<showtime.c>.
         perl_destruct(my_perl);
         perl_free(my_perl);
 	PERL_SYS_TERM();
+	exit(EXIT_SUCCESS);
     }
 
 where I<showtime> is a Perl subroutine that takes no arguments (that's the
@@ -297,7 +302,7 @@ If you want to pass arguments to the Perl subroutine, you can add
 strings to the C<NULL>-terminated C<args> list passed to
 I<call_argv>.  For other data types, or to examine return values,
 you'll need to manipulate the Perl stack.  That's demonstrated in
-L<Fiddling with the Perl stack from your C program>.
+L</Fiddling with the Perl stack from your C program>.
 
 =head2 Evaluating a Perl statement from your C program
 
@@ -322,7 +327,7 @@ the first, a C<float> from the second, and a C<char *> from the third.
 
  main (int argc, char **argv, char **env)
  {
-     char *embedding[] = { "", "-e", "0" };
+     char *embedding[] = { "", "-e", "0", NULL };
 
      PERL_SYS_INIT3(&argc,&argv,&env);
      my_perl = perl_alloc();
@@ -426,7 +431,7 @@ been wrapped here):
      PUTBACK;
 
      if (croak_on_error && SvTRUE(ERRSV))
- 	croak(SvPVx_nolen(ERRSV));
+        croak_sv(ERRSV);
 
      return retval;
  }
@@ -501,7 +506,7 @@ been wrapped here):
 
  main (int argc, char **argv, char **env)
  {
-     char *embedding[] = { "", "-e", "0" };
+     char *embedding[] = { "", "-e", "0", NULL };
      AV *match_list;
      I32 num_matches, i;
      SV *text;
@@ -642,7 +647,7 @@ deep breath...
 
  int main (int argc, char **argv, char **env)
  {
-   char *my_argv[] = { "", "power.pl" };
+   char *my_argv[] = { "", "power.pl", NULL };
 
    PERL_SYS_INIT3(&argc,&argv,&env);
    my_perl = perl_alloc();
@@ -657,6 +662,7 @@ deep breath...
    perl_destruct(my_perl);
    perl_free(my_perl);
    PERL_SYS_TERM();
+   exit(EXIT_SUCCESS);
  }
 
 
@@ -791,25 +797,25 @@ with L<perlfunc/my> whenever possible.
  int
  main(int argc, char **argv, char **env)
  {
-     char *embedding[] = { "", "persistent.pl" };
+     char *embedding[] = { "", "persistent.pl", NULL };
      char *args[] = { "", DO_CLEAN, NULL };
      char filename[BUFFER_SIZE];
-     int exitstatus = 0;
+     int failing, exitstatus;
 
      PERL_SYS_INIT3(&argc,&argv,&env);
      if((my_perl = perl_alloc()) == NULL) {
         fprintf(stderr, "no memory!");
-        exit(1);
+        exit(EXIT_FAILURE);
      }
      perl_construct(my_perl);
 
      PL_origalen = 1; /* don't let $0 assignment update the
                          proctitle or embedding[0] */
-     exitstatus = perl_parse(my_perl, NULL, 2, embedding, NULL);
+     failing = perl_parse(my_perl, NULL, 2, embedding, NULL);
      PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
-     if(!exitstatus) {
-        exitstatus = perl_run(my_perl);
-
+     if(!failing)
+	failing = perl_run(my_perl);
+     if(!failing) {
         while(printf("Enter file name: ") &&
               fgets(filename, BUFFER_SIZE, stdin)) {
 
@@ -827,7 +833,7 @@ with L<perlfunc/my> whenever possible.
      }
 
      PL_perl_destruct_level = 0;
-     perl_destruct(my_perl);
+     exitstatus = perl_destruct(my_perl);
      perl_free(my_perl);
      PERL_SYS_TERM();
      exit(exitstatus);
@@ -948,8 +954,8 @@ Let's give it a try:
  int main(int argc, char **argv, char **env)
  {
      PerlInterpreter *one_perl, *two_perl;
-     char *one_args[] = { "one_perl", SAY_HELLO };
-     char *two_args[] = { "two_perl", SAY_HELLO };
+     char *one_args[] = { "one_perl", SAY_HELLO, NULL };
+     char *two_args[] = { "two_perl", SAY_HELLO, NULL };
 
      PERL_SYS_INIT3(&argc,&argv,&env);
      one_perl = perl_alloc();
@@ -980,6 +986,7 @@ Let's give it a try:
      PERL_SET_CONTEXT(two_perl);
      perl_free(two_perl);
      PERL_SYS_TERM();
+     exit(EXIT_SUCCESS);
  }
 
 Note the calls to PERL_SET_CONTEXT().  These are necessary to initialize
@@ -1090,16 +1097,21 @@ to use the system's default locale.  This is often, but not necessarily,
 the "C" or "POSIX" locale.  Absent a S<C<"use locale">> within the perl
 code, this mostly has no effect (but see L<perllocale/Not within the
 scope of "use locale">).  Also, there is not a problem if the
-locale you want to use in your embedded Perl is the same as the system
+locale you want to use in your embedded perl is the same as the system
 default.  However, this doesn't work if you have set up and want to use
 a locale that isn't the system default one.  Starting in Perl v5.20, you
 can tell the embedded Perl interpreter that the locale is already
 properly set up, and to skip doing its own normal initialization.  It
 skips if the environment variable C<PERL_SKIP_LOCALE_INIT> is set (even
-if set to 0 or C<"">).  A Perl that has this capability will define the
+if set to 0 or C<"">).  A perl that has this capability will define the
 C pre-processor symbol C<HAS_SKIP_LOCALE_INIT>.  This allows code that
 has to work with multiple Perl versions to do some sort of work-around
 when confronted with an earlier Perl.
+
+If your program is using the POSIX 2008 multi-thread locale
+functionality, you should switch into the global locale and set that up
+properly before starting the Perl interpreter.  It will then properly
+switch back to using the thread-safe functions.
 
 =head1 Hiding Perl_
 
@@ -1134,7 +1146,7 @@ Christiansen, Guy Decoux, Hallvard Furuseth, Dov Grobgeld, and Ilya
 Zakharevich.
 
 Doug MacEachern has an article on embedding in Volume 1, Issue 4 of
-The Perl Journal ( http://www.tpj.com/ ).  Doug is also the developer of the
+The Perl Journal ( L<http://www.tpj.com/> ).  Doug is also the developer of the
 most widely-used Perl embedding: the mod_perl system
 (perl.apache.org), which embeds Perl in the Apache web server.
 Oracle, Binary Evolution, ActiveState, and Ben Sugars's nsapi_perl

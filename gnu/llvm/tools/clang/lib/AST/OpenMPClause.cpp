@@ -1,4 +1,4 @@
-//===--- OpenMPClause.cpp - Classes for OpenMP clauses --------------------===//
+//===- OpenMPClause.cpp - Classes for OpenMP clauses ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/OpenMPClause.h"
-
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/Basic/LLVM.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/ErrorHandling.h"
+#include <algorithm>
+#include <cassert>
 
 using namespace clang;
 
@@ -48,6 +54,8 @@ const OMPClauseWithPreInit *OMPClauseWithPreInit::get(const OMPClause *C) {
     return static_cast<const OMPReductionClause *>(C);
   case OMPC_task_reduction:
     return static_cast<const OMPTaskReductionClause *>(C);
+  case OMPC_in_reduction:
+    return static_cast<const OMPInReductionClause *>(C);
   case OMPC_linear:
     return static_cast<const OMPLinearClause *>(C);
   case OMPC_if:
@@ -58,6 +66,8 @@ const OMPClauseWithPreInit *OMPClauseWithPreInit::get(const OMPClause *C) {
     return static_cast<const OMPNumTeamsClause *>(C);
   case OMPC_thread_limit:
     return static_cast<const OMPThreadLimitClause *>(C);
+  case OMPC_device:
+    return static_cast<const OMPDeviceClause *>(C);
   case OMPC_default:
   case OMPC_proc_bind:
   case OMPC_final:
@@ -81,7 +91,6 @@ const OMPClauseWithPreInit *OMPClauseWithPreInit::get(const OMPClause *C) {
   case OMPC_capture:
   case OMPC_seq_cst:
   case OMPC_depend:
-  case OMPC_device:
   case OMPC_threads:
   case OMPC_simd:
   case OMPC_map:
@@ -116,6 +125,8 @@ const OMPClauseWithPostUpdate *OMPClauseWithPostUpdate::get(const OMPClause *C) 
     return static_cast<const OMPReductionClause *>(C);
   case OMPC_task_reduction:
     return static_cast<const OMPTaskReductionClause *>(C);
+  case OMPC_in_reduction:
+    return static_cast<const OMPInReductionClause *>(C);
   case OMPC_linear:
     return static_cast<const OMPLinearClause *>(C);
   case OMPC_schedule:
@@ -168,6 +179,57 @@ const OMPClauseWithPostUpdate *OMPClauseWithPostUpdate::get(const OMPClause *C) 
   }
 
   return nullptr;
+}
+
+OMPOrderedClause *OMPOrderedClause::Create(const ASTContext &C, Expr *Num,
+                                           unsigned NumLoops,
+                                           SourceLocation StartLoc,
+                                           SourceLocation LParenLoc,
+                                           SourceLocation EndLoc) {
+  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(2 * NumLoops));
+  auto *Clause =
+      new (Mem) OMPOrderedClause(Num, NumLoops, StartLoc, LParenLoc, EndLoc);
+  for (unsigned I = 0; I < NumLoops; ++I) {
+    Clause->setLoopNumIterations(I, nullptr);
+    Clause->setLoopCounter(I, nullptr);
+  }
+  return Clause;
+}
+
+OMPOrderedClause *OMPOrderedClause::CreateEmpty(const ASTContext &C,
+                                                unsigned NumLoops) {
+  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(2 * NumLoops));
+  auto *Clause = new (Mem) OMPOrderedClause(NumLoops);
+  for (unsigned I = 0; I < NumLoops; ++I) {
+    Clause->setLoopNumIterations(I, nullptr);
+    Clause->setLoopCounter(I, nullptr);
+  }
+  return Clause;
+}
+
+void OMPOrderedClause::setLoopNumIterations(unsigned NumLoop,
+                                            Expr *NumIterations) {
+  assert(NumLoop < NumberOfLoops && "out of loops number.");
+  getTrailingObjects<Expr *>()[NumLoop] = NumIterations;
+}
+
+ArrayRef<Expr *> OMPOrderedClause::getLoopNumIterations() const {
+  return llvm::makeArrayRef(getTrailingObjects<Expr *>(), NumberOfLoops);
+}
+
+void OMPOrderedClause::setLoopCounter(unsigned NumLoop, Expr *Counter) {
+  assert(NumLoop < NumberOfLoops && "out of loops number.");
+  getTrailingObjects<Expr *>()[NumberOfLoops + NumLoop] = Counter;
+}
+
+Expr *OMPOrderedClause::getLoopCunter(unsigned NumLoop) {
+  assert(NumLoop < NumberOfLoops && "out of loops number.");
+  return getTrailingObjects<Expr *>()[NumberOfLoops + NumLoop];
+}
+
+const Expr *OMPOrderedClause::getLoopCunter(unsigned NumLoop) const {
+  assert(NumLoop < NumberOfLoops && "out of loops number.");
+  return getTrailingObjects<Expr *>()[NumberOfLoops + NumLoop];
 }
 
 void OMPPrivateClause::setPrivateCopies(ArrayRef<Expr *> VL) {
@@ -562,6 +624,69 @@ OMPTaskReductionClause *OMPTaskReductionClause::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPTaskReductionClause(N);
 }
 
+void OMPInReductionClause::setPrivates(ArrayRef<Expr *> Privates) {
+  assert(Privates.size() == varlist_size() &&
+         "Number of private copies is not the same as the preallocated buffer");
+  std::copy(Privates.begin(), Privates.end(), varlist_end());
+}
+
+void OMPInReductionClause::setLHSExprs(ArrayRef<Expr *> LHSExprs) {
+  assert(
+      LHSExprs.size() == varlist_size() &&
+      "Number of LHS expressions is not the same as the preallocated buffer");
+  std::copy(LHSExprs.begin(), LHSExprs.end(), getPrivates().end());
+}
+
+void OMPInReductionClause::setRHSExprs(ArrayRef<Expr *> RHSExprs) {
+  assert(
+      RHSExprs.size() == varlist_size() &&
+      "Number of RHS expressions is not the same as the preallocated buffer");
+  std::copy(RHSExprs.begin(), RHSExprs.end(), getLHSExprs().end());
+}
+
+void OMPInReductionClause::setReductionOps(ArrayRef<Expr *> ReductionOps) {
+  assert(ReductionOps.size() == varlist_size() && "Number of in reduction "
+                                                  "expressions is not the same "
+                                                  "as the preallocated buffer");
+  std::copy(ReductionOps.begin(), ReductionOps.end(), getRHSExprs().end());
+}
+
+void OMPInReductionClause::setTaskgroupDescriptors(
+    ArrayRef<Expr *> TaskgroupDescriptors) {
+  assert(TaskgroupDescriptors.size() == varlist_size() &&
+         "Number of in reduction descriptors is not the same as the "
+         "preallocated buffer");
+  std::copy(TaskgroupDescriptors.begin(), TaskgroupDescriptors.end(),
+            getReductionOps().end());
+}
+
+OMPInReductionClause *OMPInReductionClause::Create(
+    const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
+    SourceLocation EndLoc, SourceLocation ColonLoc, ArrayRef<Expr *> VL,
+    NestedNameSpecifierLoc QualifierLoc, const DeclarationNameInfo &NameInfo,
+    ArrayRef<Expr *> Privates, ArrayRef<Expr *> LHSExprs,
+    ArrayRef<Expr *> RHSExprs, ArrayRef<Expr *> ReductionOps,
+    ArrayRef<Expr *> TaskgroupDescriptors, Stmt *PreInit, Expr *PostUpdate) {
+  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(6 * VL.size()));
+  OMPInReductionClause *Clause = new (Mem) OMPInReductionClause(
+      StartLoc, LParenLoc, EndLoc, ColonLoc, VL.size(), QualifierLoc, NameInfo);
+  Clause->setVarRefs(VL);
+  Clause->setPrivates(Privates);
+  Clause->setLHSExprs(LHSExprs);
+  Clause->setRHSExprs(RHSExprs);
+  Clause->setReductionOps(ReductionOps);
+  Clause->setTaskgroupDescriptors(TaskgroupDescriptors);
+  Clause->setPreInitStmt(PreInit);
+  Clause->setPostUpdateExpr(PostUpdate);
+  return Clause;
+}
+
+OMPInReductionClause *OMPInReductionClause::CreateEmpty(const ASTContext &C,
+                                                        unsigned N) {
+  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(6 * N));
+  return new (Mem) OMPInReductionClause(N);
+}
+
 OMPFlushClause *OMPFlushClause::Create(const ASTContext &C,
                                        SourceLocation StartLoc,
                                        SourceLocation LParenLoc,
@@ -579,44 +704,58 @@ OMPFlushClause *OMPFlushClause::CreateEmpty(const ASTContext &C, unsigned N) {
   return new (Mem) OMPFlushClause(N);
 }
 
-OMPDependClause *OMPDependClause::Create(
-    const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
-    SourceLocation EndLoc, OpenMPDependClauseKind DepKind,
-    SourceLocation DepLoc, SourceLocation ColonLoc, ArrayRef<Expr *> VL) {
-  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(VL.size() + 1));
-  OMPDependClause *Clause =
-      new (Mem) OMPDependClause(StartLoc, LParenLoc, EndLoc, VL.size());
+OMPDependClause *
+OMPDependClause::Create(const ASTContext &C, SourceLocation StartLoc,
+                        SourceLocation LParenLoc, SourceLocation EndLoc,
+                        OpenMPDependClauseKind DepKind, SourceLocation DepLoc,
+                        SourceLocation ColonLoc, ArrayRef<Expr *> VL,
+                        unsigned NumLoops) {
+  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(VL.size() + NumLoops));
+  OMPDependClause *Clause = new (Mem)
+      OMPDependClause(StartLoc, LParenLoc, EndLoc, VL.size(), NumLoops);
   Clause->setVarRefs(VL);
   Clause->setDependencyKind(DepKind);
   Clause->setDependencyLoc(DepLoc);
   Clause->setColonLoc(ColonLoc);
-  Clause->setCounterValue(nullptr);
+  for (unsigned I = 0 ; I < NumLoops; ++I)
+    Clause->setLoopData(I, nullptr);
   return Clause;
 }
 
-OMPDependClause *OMPDependClause::CreateEmpty(const ASTContext &C, unsigned N) {
-  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(N + 1));
-  return new (Mem) OMPDependClause(N);
+OMPDependClause *OMPDependClause::CreateEmpty(const ASTContext &C, unsigned N,
+                                              unsigned NumLoops) {
+  void *Mem = C.Allocate(totalSizeToAlloc<Expr *>(N + NumLoops));
+  return new (Mem) OMPDependClause(N, NumLoops);
 }
 
-void OMPDependClause::setCounterValue(Expr *V) {
-  assert(getDependencyKind() == OMPC_DEPEND_sink ||
-         getDependencyKind() == OMPC_DEPEND_source || V == nullptr);
-  *getVarRefs().end() = V;
+void OMPDependClause::setLoopData(unsigned NumLoop, Expr *Cnt) {
+  assert((getDependencyKind() == OMPC_DEPEND_sink ||
+          getDependencyKind() == OMPC_DEPEND_source) &&
+         NumLoop < NumLoops &&
+         "Expected sink or source depend + loop index must be less number of "
+         "loops.");
+  auto It = std::next(getVarRefs().end(), NumLoop);
+  *It = Cnt;
 }
 
-const Expr *OMPDependClause::getCounterValue() const {
-  auto *V = *getVarRefs().end();
-  assert(getDependencyKind() == OMPC_DEPEND_sink ||
-         getDependencyKind() == OMPC_DEPEND_source || V == nullptr);
-  return V;
+Expr *OMPDependClause::getLoopData(unsigned NumLoop) {
+  assert((getDependencyKind() == OMPC_DEPEND_sink ||
+          getDependencyKind() == OMPC_DEPEND_source) &&
+         NumLoop < NumLoops &&
+         "Expected sink or source depend + loop index must be less number of "
+         "loops.");
+  auto It = std::next(getVarRefs().end(), NumLoop);
+  return *It;
 }
 
-Expr *OMPDependClause::getCounterValue() {
-  auto *V = *getVarRefs().end();
-  assert(getDependencyKind() == OMPC_DEPEND_sink ||
-         getDependencyKind() == OMPC_DEPEND_source || V == nullptr);
-  return V;
+const Expr *OMPDependClause::getLoopData(unsigned NumLoop) const {
+  assert((getDependencyKind() == OMPC_DEPEND_sink ||
+          getDependencyKind() == OMPC_DEPEND_source) &&
+         NumLoop < NumLoops &&
+         "Expected sink or source depend + loop index must be less number of "
+         "loops.");
+  auto It = std::next(getVarRefs().end(), NumLoop);
+  return *It;
 }
 
 unsigned OMPClauseMappableExprCommon::getComponentsTotalNumber(
@@ -628,10 +767,10 @@ unsigned OMPClauseMappableExprCommon::getComponentsTotalNumber(
 }
 
 unsigned OMPClauseMappableExprCommon::getUniqueDeclarationsTotalNumber(
-    ArrayRef<ValueDecl *> Declarations) {
+    ArrayRef<const ValueDecl *> Declarations) {
   unsigned TotalNum = 0u;
   llvm::SmallPtrSet<const ValueDecl *, 8> Cache;
-  for (auto *D : Declarations) {
+  for (const ValueDecl *D : Declarations) {
     const ValueDecl *VD = D ? cast<ValueDecl>(D->getCanonicalDecl()) : nullptr;
     if (Cache.count(VD))
       continue;
@@ -648,7 +787,6 @@ OMPMapClause::Create(const ASTContext &C, SourceLocation StartLoc,
                      MappableExprComponentListsRef ComponentLists,
                      OpenMPMapClauseKind TypeModifier, OpenMPMapClauseKind Type,
                      bool TypeIsImplicit, SourceLocation TypeLoc) {
-
   unsigned NumVars = Vars.size();
   unsigned NumUniqueDeclarations =
       getUniqueDeclarationsTotalNumber(Declarations);

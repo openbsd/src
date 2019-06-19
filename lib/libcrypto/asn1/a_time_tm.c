@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.14 2017/08/28 17:42:47 jsing Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.15 2018/04/25 11:48:21 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -337,7 +337,7 @@ ASN1_TIME_adj(ASN1_TIME *s, time_t t, int offset_day, long offset_sec)
 }
 
 int
-ASN1_TIME_check(ASN1_TIME *t)
+ASN1_TIME_check(const ASN1_TIME *t)
 {
 	if (t->type != V_ASN1_GENERALIZEDTIME && t->type != V_ASN1_UTCTIME)
 		return (0);
@@ -345,7 +345,7 @@ ASN1_TIME_check(ASN1_TIME *t)
 }
 
 ASN1_GENERALIZEDTIME *
-ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out)
+ASN1_TIME_to_generalizedtime(const ASN1_TIME *t, ASN1_GENERALIZEDTIME **out)
 {
 	ASN1_GENERALIZEDTIME *tmp = NULL;
 	struct tm tm;
@@ -386,7 +386,7 @@ ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
  */
 
 int
-ASN1_UTCTIME_check(ASN1_UTCTIME *d)
+ASN1_UTCTIME_check(const ASN1_UTCTIME *d)
 {
 	if (d->type != V_ASN1_UTCTIME)
 		return (0);
@@ -442,7 +442,7 @@ ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t2)
  */
 
 int
-ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
+ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *d)
 {
 	if (d->type != V_ASN1_GENERALIZEDTIME)
 		return (0);

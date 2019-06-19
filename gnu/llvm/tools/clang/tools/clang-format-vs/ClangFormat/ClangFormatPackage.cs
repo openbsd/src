@@ -38,7 +38,7 @@ namespace LLVM.ClangFormat
         private string style = "file";
         private bool formatOnSave = false;
         private string formatOnSaveFileExtensions =
-            ".c;.cpp;.cxx;.cc;.tli;.tlh;.h;.hh;.hpp;.hxx;.hh;.inl" +
+            ".c;.cpp;.cxx;.cc;.tli;.tlh;.h;.hh;.hpp;.hxx;.hh;.inl;" +
             ".java;.js;.ts;.m;.mm;.proto;.protodevel;.td";
 
         public OptionPageGrid Clone()
@@ -326,7 +326,13 @@ namespace LLVM.ClangFormat
 
             string filePath = Vsix.GetDocumentPath(view);
             var path = Path.GetDirectoryName(filePath);
+
             string text = view.TextBuffer.CurrentSnapshot.GetText();
+            if (!text.EndsWith(Environment.NewLine))
+            {
+                view.TextBuffer.Insert(view.TextBuffer.CurrentSnapshot.Length, Environment.NewLine);
+                text += Environment.NewLine;
+            }
 
             RunClangFormatAndApplyReplacements(text, 0, text.Length, path, filePath, options, view);
         }

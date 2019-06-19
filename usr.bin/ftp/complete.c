@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.31 2017/08/01 15:04:44 anton Exp $	*/
+/*	$OpenBSD: complete.c,v 1.33 2019/05/16 12:44:17 florian Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-

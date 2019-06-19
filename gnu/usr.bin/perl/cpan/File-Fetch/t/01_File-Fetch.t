@@ -65,10 +65,10 @@ my @map = (
         path	=> '/CPAN/',
         file	=> 'MIRRORING.FROM',
     },
-    {	uri	    => 'git://github.com/jib/file-fetch.git',
+    {	uri	    => 'git://github.com/Perl-Toolchain-Gang/file-fetch.git',
         scheme	=> 'git',
         host	=> 'github.com',
-        path	=> '/jib/',
+        path	=> '/Perl-Toolchain-Gang/',
         file	=> 'file-fetch.git',
     },
     {   uri     => 'http://localhost/tmp/index.txt',
@@ -176,13 +176,13 @@ for my $entry (@map) {
 ### Heuristics
 {
   require IO::Socket::INET;
-  my $sock = IO::Socket::INET->new( PeerAddr => 'ftp.funet.fi', PeerPort => 21, Timeout => 20 )
+  my $sock = IO::Socket::INET->new( PeerAddr => 'mirror.bytemark.co.uk', PeerPort => 21, Timeout => 20 )
      or $heuristics{ftp} = 0;
 }
 
 ### ftp:// tests ###
-{   my $uri = 'ftp://ftp.funet.fi/pub/CPAN/index.html';
-    for (qw[lwp netftp wget curl lftp fetch ncftp]) {
+{   my $uri = 'ftp://mirror.bytemark.co.uk/CPAN/index.html';
+    for (qw[wget curl lftp fetch ncftp]) {
 
         ### STUPID STUPID warnings ###
         next if $_ eq 'ncftp' and $File::Fetch::FTP_PASSIVE
@@ -195,14 +195,16 @@ for my $entry (@map) {
 ### Heuristics
 {
   require IO::Socket::INET;
-  my $sock = IO::Socket::INET->new( PeerAddr => 'www.cpan.org', PeerPort => 80, Timeout => 20 )
+  my $sock = IO::Socket::INET->new( PeerAddr => 'httpbin.org', PeerPort => 80, Timeout => 20 )
      or $heuristics{http} = 0;
 }
 
 ### http:// tests ###
-{   for my $uri ( 'http://www.cpan.org/index.html',
-                  'http://www.cpan.org/index.html?q=1',
-                  'http://www.cpan.org/index.html?q=1&y=2',
+{   for my $uri ( 'http://httpbin.org/html',
+                  'http://httpbin.org/response-headers?q=1',
+                  'http://httpbin.org/response-headers?q=1&y=2',
+                  #'http://www.cpan.org/index.html?q=1&y=2',
+                  #'http://user:passwd@httpbin.org/basic-auth/user/passwd',
     ) {
         for (qw[lwp httptiny wget curl lftp fetch lynx httplite iosock]) {
             _fetch_uri( http => $uri, $_ );
@@ -233,9 +235,12 @@ for my $entry (@map) {
 }
 
 ### git:// tests ###
-{   my $uri = 'git://github.com/jib/file-fetch.git';
+{   my $uri = 'git://github.com/Perl-Toolchain-Gang/file-fetch.git';
 
     for (qw[git]) {
+        local $ENV{GIT_CONFIG_NOSYSTEM} = 1;
+        local $ENV{XDG_CONFIG_HOME};
+        local $ENV{HOME};
         _fetch_uri( git => $uri, $_ );
     }
 }

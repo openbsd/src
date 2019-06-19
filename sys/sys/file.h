@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.40 2018/02/10 05:24:23 deraadt Exp $	*/
+/*	$OpenBSD: file.h,v 1.53 2018/08/20 16:00:22 mpi Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 
 #else /* _KERNEL */
 #include <sys/queue.h>
+#include <sys/mutex.h>
 
 struct proc;
 struct uio;
@@ -46,67 +47,70 @@ struct file;
 struct ucred;
 
 struct	fileops {
-	int	(*fo_read)(struct file *, off_t *, struct uio *,
-		    struct ucred *);
-	int	(*fo_write)(struct file *, off_t *, struct uio *,
-		    struct ucred *);
-	int	(*fo_ioctl)(struct file *, u_long, caddr_t,
-		    struct proc *);
+	int	(*fo_read)(struct file *, struct uio *, int);
+	int	(*fo_write)(struct file *, struct uio *, int);
+	int	(*fo_ioctl)(struct file *, u_long, caddr_t, struct proc *);
 	int	(*fo_poll)(struct file *, int, struct proc *);
 	int	(*fo_kqfilter)(struct file *, struct knote *);
 	int	(*fo_stat)(struct file *, struct stat *, struct proc *);
 	int	(*fo_close)(struct file *, struct proc *);
+	int	(*fo_seek)(struct file *, off_t *, int, struct proc *);
 };
+#define FO_POSITION 0x01	/* positioned read/write */
+
 
 /*
  * Kernel descriptor table.
  * One entry for each open kernel vnode and socket.
+ *
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	F	global `fhdlk' mutex
+ *	a	atomic operations
+ *	f	per file `f_mtx'
+ *	k	kernel lock
  */
 struct file {
-	LIST_ENTRY(file) f_list;/* list of active files */
-	short	f_flag;		/* see fcntl.h */
+	LIST_ENTRY(file) f_list;/* [F] list of active files */
+	struct mutex f_mtx;
+	short	f_flag;		/* [k] see fcntl.h */
 #define	DTYPE_VNODE	1	/* file */
 #define	DTYPE_SOCKET	2	/* communications endpoint */
 #define	DTYPE_PIPE	3	/* pipe */
 #define	DTYPE_KQUEUE	4	/* event queue */
-	short	f_type;		/* descriptor type */
-	long	f_count;	/* reference count */
-	struct	ucred *f_cred;	/* credentials associated with descriptor */
-	struct	fileops *f_ops;
-	off_t	f_offset;
-	void 	*f_data;	/* private data */
-	int	f_iflags;	/* internal flags */
-	u_int64_t f_rxfer;	/* total number of read transfers */
-	u_int64_t f_wxfer;	/* total number of write transfers */
-	u_int64_t f_seek;	/* total independent seek operations */
-	u_int64_t f_rbytes;	/* total bytes read */
-	u_int64_t f_wbytes;	/* total bytes written */
+#define	DTYPE_DMABUF	5	/* DMA buffer (for DRM) */
+	short	f_type;		/* [I] descriptor type */
+	u_int	f_count;	/* [a] reference count */
+	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */
+	struct	fileops *f_ops; /* [I] file operation pointers */
+	off_t	f_offset;	/* [k] */
+	void 	*f_data;	/* [I] private data */
+	int	f_iflags;	/* [k] internal flags */
+	uint64_t f_rxfer;	/* [f] total number of read transfers */
+	uint64_t f_wxfer;	/* [f] total number of write transfers */
+	uint64_t f_seek;	/* [f] total independent seek operations */
+	uint64_t f_rbytes;	/* [f] total bytes read */
+	uint64_t f_wbytes;	/* [f] total bytes written */
 };
 
 #define FIF_HASLOCK		0x01	/* descriptor holds advisory lock */
-#define FIF_LARVAL		0x02	/* not fully constructed, don't use */
-
-#define FILE_IS_USABLE(fp) \
-	(((fp)->f_iflags & FIF_LARVAL) == 0)
+#define FIF_INSERTED		0x80	/* present in `filehead' */
 
 #define FREF(fp) \
 	do { \
-		extern struct rwlock vfs_stall_lock; \
-		rw_enter_read(&vfs_stall_lock); \
-		rw_exit_read(&vfs_stall_lock); \
-		(fp)->f_count++; \
+		extern void vfs_stall_barrier(void); \
+		vfs_stall_barrier(); \
+		atomic_inc_int(&(fp)->f_count); \
 	} while (0)
-#define FRELE(fp,p)	(--(fp)->f_count == 0 ? fdrop(fp, p) : 0)
 
-#define FILE_SET_MATURE(fp,p) do {				\
-	(fp)->f_iflags &= ~FIF_LARVAL;				\
-	FRELE(fp, p);						\
-} while (0)
+#define FRELE(fp,p) \
+	(atomic_dec_int_nv(&fp->f_count) == 0 ? fdrop(fp, p) : 0)
+
+#define FDUP_MAX_COUNT		(UINT_MAX - 2 * MAXCPUS)
 
 int	fdrop(struct file *, struct proc *);
 
 LIST_HEAD(filelist, file);
-extern struct filelist filehead;	/* head of list of open files */
 extern int maxfiles;			/* kernel limit on number of open files */
 extern int numfiles;			/* actual number of open files */
 extern struct fileops vnops;		/* vnode operations for files */

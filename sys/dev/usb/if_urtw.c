@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.67 2018/01/23 02:53:26 kevlo Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.68 2019/06/14 11:57:16 kn Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -1835,8 +1835,6 @@ fail:
 usbd_status
 urtw_led_mode0(struct urtw_softc *sc, int mode)
 {
-	struct timeval t;
-
 	switch (mode) {
 	case URTW_LED_CTL_POWER_ON:
 		sc->sc_gpio_ledstate = URTW_LED_POWER_ON_BLINK;
@@ -1867,10 +1865,8 @@ urtw_led_mode0(struct urtw_softc *sc, int mode)
 		sc->sc_gpio_ledinprogress = 1;
 		sc->sc_gpio_blinkstate = (sc->sc_gpio_ledon != 0) ?
 			URTW_LED_OFF : URTW_LED_ON;
-		t.tv_sec = 0;
-		t.tv_usec = 100 * 1000L;
 		if (!usbd_is_dying(sc->sc_udev))
-			timeout_add(&sc->sc_led_ch, tvtohz(&t));
+			timeout_add_msec(&sc->sc_led_ch, 100);
 		break;
 	case URTW_LED_POWER_ON_BLINK:
 		urtw_led_on(sc, URTW_LED_GPIO);
@@ -1952,7 +1948,6 @@ urtw_led_ctl(struct urtw_softc *sc, int mode)
 usbd_status
 urtw_led_blink(struct urtw_softc *sc)
 {
-	struct timeval t;
 	uint8_t ing = 0;
 	usbd_status error;
 
@@ -1987,10 +1982,8 @@ urtw_led_blink(struct urtw_softc *sc)
 
 	switch (sc->sc_gpio_ledstate) {
 	case URTW_LED_BLINK_NORMAL:
-		t.tv_sec = 0;
-		t.tv_usec = 100 * 1000L;
 		if (!usbd_is_dying(sc->sc_udev))
-			timeout_add(&sc->sc_led_ch, tvtohz(&t));
+			timeout_add_msec(&sc->sc_led_ch, 100);
 		break;
 	default:
 		break;

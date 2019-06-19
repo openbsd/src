@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.33 2017/10/24 17:06:51 kettenis Exp $	*/
+/*	$OpenBSD: psl.h,v 1.34 2018/08/20 15:02:07 visa Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -58,7 +58,6 @@
 #define PIL_STATCLOCK	14
 #define PIL_HIGH	15
 #define PIL_SCHED	PIL_STATCLOCK
-#define PIL_LOCK	PIL_HIGH
 
 /* 
  * SPARC V9 CCR register

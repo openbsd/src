@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.16 2018/01/22 09:40:45 mpi Exp $ */
+/*	$OpenBSD: intr.h,v 1.20 2019/03/21 16:51:21 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -126,7 +126,6 @@ void	 softintr_schedule(void *);
 #define splsoftnet()	splsoft()
 #define splstatclock()	splhigh()
 
-#define spllock()	splhigh()
 #define spl0()		spllower(0)
 
 void	splinit(void);
@@ -138,26 +137,6 @@ void	register_splx_handler(void (*)(int));
 int	splraise(int);
 void	splx(int);
 int	spllower(int);
-
-/*
- * Interrupt control struct used by interrupt dispatchers
- * to hold interrupt handler info.
- */
-
-#include <sys/evcount.h>
-
-struct intrhand {
-	struct	intrhand	*ih_next;
-	int			(*ih_fun)(void *);
-	void			*ih_arg;
-	int			 ih_level;
-	int			 ih_irq;
-	struct evcount		 ih_count;
-	int			 ih_flags;
-#define	IH_ALLOCATED		0x01
-#define	IH_MPSAFE		0x02
-	cpuid_t			 ih_cpuid;
-};
 
 void	intr_barrier(void *);
 
@@ -188,6 +167,7 @@ struct intr_controller {
 	void	*(*ic_establish_fdt_idx)(void *, int, int, int,
 		    int (*)(void *), void *, const char *);
 	void	 (*ic_disestablish)(void *);
+	void	 (*ic_intr_barrier)(void *);
 
 #ifdef MULTIPROCESSOR
 	int	 (*ic_ipi_establish)(int (*)(void *), cpuid_t);
@@ -215,10 +195,6 @@ void	*octeon_intr_establish_fdt(int, int, int (*)(void *),
 void	*octeon_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, const char *);
 void	 octeon_intr_disestablish_fdt(void *);
-
-/* XXX Needed by 'MI' code in sys/dev/fdt. */
-#define arm_intr_establish_fdt		octeon_intr_establish_fdt
-#define arm_intr_disestablish_fdt	octeon_intr_disestablish_fdt
 
 #endif /* _LOCORE */
 

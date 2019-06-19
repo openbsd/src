@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 use strict;
@@ -188,8 +188,11 @@ cmp_ok($a, '==', 2147483647, "postdecrement properly downgrades from double");
 
 SKIP: {
     if ($Config{uselongdouble} &&
-        ($Config{longdblkind} == 6 || $Config{longdblkind} == 5)) {
+        ($Config{long_double_style_ieee_doubledouble})) {
         skip "the double-double format is weird", 1;
+    }
+    unless ($Config{double_style_ieee}) {
+        skip "the doublekind $Config{doublekind} is not IEEE", 1;
     }
 
 # I'm sure that there's an IBM format with a 48 bit mantissa

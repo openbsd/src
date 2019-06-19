@@ -1,11 +1,10 @@
-#	$OpenBSD: files.acpi,v 1.40 2018/03/27 21:11:16 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.51 2019/06/17 18:28:18 patrick Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
 
 define	acpi {}
 device	acpi
-attach	acpi at bios
 file	dev/acpi/acpi.c			acpi needs-flag
 file	dev/acpi/acpiutil.c		acpi
 file	dev/acpi/dsdt.c			acpi
@@ -117,6 +116,11 @@ device	aibs
 attach	aibs at acpi
 file	dev/acpi/atk0110.c		aibs
 
+# Intel Apollo Lake GPIO
+device	aplgpio
+attach	aplgpio at acpi
+file	dev/acpi/aplgpio.c		aplgpio
+
 # Intel Bay Trail GPIO
 device	bytgpio
 attach	bytgpio at acpi
@@ -127,9 +131,35 @@ device	chvgpio
 attach	chvgpio at acpi
 file	dev/acpi/chvgpio.c		chvgpio
 
+# "Intel" Dollar Cove TI PMIC
+device	tipmic
+attach	tipmic at i2c
+file	dev/acpi/tipmic.c		tipmic
+
+# "Intel" Crystal Cove PMIC
+device	ccpmic
+attach	ccpmic at i2c
+file	dev/acpi/ccpmic.c		ccpmic
+
+# AHCI
+attach	ahci at acpi with ahci_acpi
+file	dev/acpi/ahci_acpi.c		ahci_acpi
+
+# NS16550 compatible UART
+attach	com at acpi with com_acpi
+file	dev/acpi/com_acpi.c		com_acpi
+
+# PL011 UART
+attach	pluart at acpi with pluart_acpi
+file	dev/acpi/pluart_acpi.c		pluart_acpi
+
 # SD Host Controller
 attach	sdhc at acpi with sdhc_acpi
 file	dev/acpi/sdhc_acpi.c		sdhc_acpi
+
+# XHCI
+attach	xhci at acpi with xhci_acpi
+file	dev/acpi/xhci_acpi.c		xhci_acpi
 
 # Synopsys DesignWare I2C controller
 attach	dwiic at acpi with dwiic_acpi
@@ -160,6 +190,15 @@ device	acpisbs
 attach	acpisbs at acpi
 file	dev/acpi/acpisbs.c		acpisbs
 
+# MSHW0040 Surface/Surface Book media buttons
+device	acpisurface
+attach	acpisurface at acpi
+file	dev/acpi/acpisurface.c		acpisurface
+
 # IPMI
 attach	ipmi at acpi with ipmi_acpi
 file	dev/acpi/ipmi_acpi.c		ipmi_acpi
+
+# AMD Cryptographic Co-processor
+attach	ccp at acpi with ccp_acpi
+file	dev/acpi/ccp_acpi.c		ccp_acpi

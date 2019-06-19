@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.46 2015/05/25 15:19:22 miod Exp $	*/
+/*	$OpenBSD: isa.c,v 1.47 2019/05/09 17:38:23 semarie Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ isascan(parent, match)
 		if (autoconf_verbose)
 			printf(">>> probing for %s* finished\n",
 			    cf->cf_driver->cd_name);
-		free(dev, M_DEVBUF, 0);
+		free(dev, M_DEVBUF, cf->cf_attach->ca_devsize);
 		return;
 	}
 
@@ -270,7 +270,7 @@ isascan(parent, match)
 		    !isa_intr_check(sc->sc_ic, ia.ia_irq, IST_EDGE)) {
 			printf("%s%d: irq %d already in use\n",
 			    cf->cf_driver->cd_name, cf->cf_unit, ia.ia_irq);
-			free(dev, M_DEVBUF, 0);
+			free(dev, M_DEVBUF, cf->cf_attach->ca_devsize);
 		} else {
 #endif
 			if (autoconf_verbose)
@@ -291,7 +291,7 @@ isascan(parent, match)
 		if (autoconf_verbose)
 			printf(">>> probing for %s%d failed\n",
 			    cf->cf_driver->cd_name, cf->cf_unit);
-		free(dev, M_DEVBUF, 0);
+		free(dev, M_DEVBUF, cf->cf_attach->ca_devsize);
 	}
 }
 

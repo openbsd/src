@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.30 2015/09/12 15:59:36 deraadt Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.31 2018/09/13 15:23:32 millert Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -255,7 +255,7 @@ showpigs(int k)
 {
 	struct kinfo_proc *kp;
 	double value;
-	char *uname, *pname;
+	const char *uname, *pname;
 
 	if (procbase == NULL)
 		return;

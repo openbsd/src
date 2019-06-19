@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.19 2016/02/05 16:58:39 canacar Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.20 2018/04/26 16:22:40 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -1991,7 +1991,8 @@ convert_code_r(p)
 	    {
 		int i;
 		int jt, jf;
-		char *ljerr = "%s for block-local relative jump: off=%d";
+		static const char ljerr[] =
+		    "%s for block-local relative jump: off=%d";
 
 #if 0
 		printf("code=%x off=%d %x %x\n", src->s.code,

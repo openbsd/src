@@ -43,12 +43,17 @@ struct he {
 
 /* hash key -- defined separately for use as shared pointer */
 struct hek {
-    U32		hek_hash;	/* hash of key */
-    I32		hek_len;	/* length of hash key */
-    char	hek_key[1];	/* variable-length hash key */
+    U32         hek_hash;        /* computed hash of key */
+    I32         hek_len;        /* length of the hash key */
+    /* Be careful! Sometimes we store a pointer in the hek_key
+     * buffer, which means it must be 8 byte aligned or things
+     * dont work on aligned platforms like HPUX
+     * Also beware, the last byte of the hek_key buffer is a
+     * hidden flags byte about the key. */
+     char       hek_key[1];        /* variable-length hash key */
     /* the hash-key is \0-terminated */
     /* after the \0 there is a byte for flags, such as whether the key
-       is UTF-8 */
+       is UTF-8 or WAS-UTF-8, or an SV */
 };
 
 struct shared_he {
@@ -119,7 +124,6 @@ struct xpvhv_aux {
     U32         xhv_last_rand;  /* last random value for hash traversal,
                                    used to detect each() after insert for warnings */
 #endif
-    U32         xhv_fill_lazy;
     U32         xhv_aux_flags;      /* assorted extra flags */
 };
 
@@ -321,7 +325,7 @@ C<SV*>.
    ((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvAUX(hv)->xhv_name_count != -1) \
 				 ? HEK_UTF8(HvENAME_HEK_NN(hv)) : 0)
 
-/* the number of keys (including any placeholders) */
+/* the number of keys (including any placeholders) - NOT PART OF THE API */
 #define XHvTOTALKEYS(xhv)	((xhv)->xhv_keys)
 
 /*
@@ -457,8 +461,7 @@ C<SV*>.
 		      (val), (hash)))
 
 #define hv_exists_ent(hv, keysv, hash)					\
-    (hv_common((hv), (keysv), NULL, 0, 0, HV_FETCH_ISEXISTS, 0, (hash))	\
-     ? TRUE : FALSE)
+    cBOOL(hv_common((hv), (keysv), NULL, 0, 0, HV_FETCH_ISEXISTS, 0, (hash)))
 #define hv_fetch_ent(hv, keysv, lval, hash)				\
     ((HE *) hv_common((hv), (keysv), NULL, 0, 0,			\
 		      ((lval) ? HV_FETCH_LVALUE : 0), NULL, (hash)))
@@ -476,9 +479,10 @@ C<SV*>.
 			      (HV_FETCH_ISSTORE|HV_FETCH_JUST_SV),	\
 			      (val), (hash)))
 
+
+
 #define hv_exists(hv, key, klen)					\
-    (hv_common_key_len((hv), (key), (klen), HV_FETCH_ISEXISTS, NULL, 0) \
-     ? TRUE : FALSE)
+    cBOOL(hv_common_key_len((hv), (key), (klen), HV_FETCH_ISEXISTS, NULL, 0))
 
 #define hv_fetch(hv, key, klen, lval)					\
     ((SV**) hv_common_key_len((hv), (key), (klen), (lval)		\
@@ -488,6 +492,24 @@ C<SV*>.
 #define hv_delete(hv, key, klen, flags)					\
     (MUTABLE_SV(hv_common_key_len((hv), (key), (klen),			\
 				  (flags) | HV_DELETE, NULL, 0)))
+
+/* Provide 's' suffix subs for constant strings (and avoid needing to count
+ * chars). See STR_WITH_LEN in handy.h - because these are macros we cant use
+ * STR_WITH_LEN to do the work, we have to unroll it. */
+#define hv_existss(hv, key) \
+    hv_exists((hv), ("" key ""), (sizeof(key)-1))
+
+#define hv_fetchs(hv, key, lval) \
+    hv_fetch((hv), ("" key ""), (sizeof(key)-1), (lval))
+
+#define hv_deletes(hv, key, flags) \
+    hv_delete((hv), ("" key ""), (sizeof(key)-1), (flags))
+
+#define hv_name_sets(hv, name, flags) \
+    hv_name_set((hv),("" name ""),(sizeof(name)-1), flags)
+
+#define hv_stores(hv, key, val) \
+    hv_store((hv), ("" key ""), (sizeof(key)-1), (val), 0)
 
 #ifdef PERL_CORE
 # define hv_storehek(hv, hek, val) \
@@ -543,9 +565,9 @@ struct refcounted_he {
 };
 
 /*
-=for apidoc m|SV *|refcounted_he_fetch_pvs|const struct refcounted_he *chain|const char *key|U32 flags
+=for apidoc m|SV *|refcounted_he_fetch_pvs|const struct refcounted_he *chain|"literal string" key|U32 flags
 
-Like L</refcounted_he_fetch_pvn>, but takes a C<NUL>-terminated literal string
+Like L</refcounted_he_fetch_pvn>, but takes a literal string
 instead of a string/length pair, and no precomputed hash.
 
 =cut
@@ -555,9 +577,9 @@ instead of a string/length pair, and no precomputed hash.
     Perl_refcounted_he_fetch_pvn(aTHX_ chain, STR_WITH_LEN(key), 0, flags)
 
 /*
-=for apidoc m|struct refcounted_he *|refcounted_he_new_pvs|struct refcounted_he *parent|const char *key|SV *value|U32 flags
+=for apidoc m|struct refcounted_he *|refcounted_he_new_pvs|struct refcounted_he *parent|"literal string" key|SV *value|U32 flags
 
-Like L</refcounted_he_new_pvn>, but takes a C<NUL>-terminated literal string
+Like L</refcounted_he_new_pvn>, but takes a literal string
 instead of a string/length pair, and no precomputed hash.
 
 =cut

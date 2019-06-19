@@ -1,4 +1,4 @@
-//===---- DemandedBits.cpp - Determine demanded bits ----------------------===//
+//===- DemandedBits.cpp - Determine demanded bits -------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -20,30 +20,41 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/DemandedBits.h"
-#include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/CFG.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/InstIterator.h"
-#include "llvm/IR/Instructions.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Use.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <cstdint>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "demanded-bits"
 
 char DemandedBitsWrapperPass::ID = 0;
+
 INITIALIZE_PASS_BEGIN(DemandedBitsWrapperPass, "demanded-bits",
                       "Demanded bits analysis", false, false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
@@ -261,7 +272,7 @@ void DemandedBits::performAnalysis() {
     // Analysis already completed for this function.
     return;
   Analyzed = true;
-  
+
   Visited.clear();
   AliveBits.clear();
 
@@ -272,7 +283,7 @@ void DemandedBits::performAnalysis() {
     if (!isAlwaysLive(&I))
       continue;
 
-    DEBUG(dbgs() << "DemandedBits: Root: " << I << "\n");
+    LLVM_DEBUG(dbgs() << "DemandedBits: Root: " << I << "\n");
     // For integer-valued instructions, set up an initial empty set of alive
     // bits and add the instruction to the work list. For other instructions
     // add their operands to the work list (for integer values operands, mark
@@ -302,13 +313,13 @@ void DemandedBits::performAnalysis() {
   while (!Worklist.empty()) {
     Instruction *UserI = Worklist.pop_back_val();
 
-    DEBUG(dbgs() << "DemandedBits: Visiting: " << *UserI);
+    LLVM_DEBUG(dbgs() << "DemandedBits: Visiting: " << *UserI);
     APInt AOut;
     if (UserI->getType()->isIntegerTy()) {
       AOut = AliveBits[UserI];
-      DEBUG(dbgs() << " Alive Out: " << AOut);
+      LLVM_DEBUG(dbgs() << " Alive Out: " << AOut);
     }
-    DEBUG(dbgs() << "\n");
+    LLVM_DEBUG(dbgs() << "\n");
 
     if (!UserI->getType()->isIntegerTy())
       Visited.insert(UserI);
@@ -356,8 +367,8 @@ void DemandedBits::performAnalysis() {
 
 APInt DemandedBits::getDemandedBits(Instruction *I) {
   performAnalysis();
-  
-  const DataLayout &DL = I->getParent()->getModule()->getDataLayout();
+
+  const DataLayout &DL = I->getModule()->getDataLayout();
   auto Found = AliveBits.find(I);
   if (Found != AliveBits.end())
     return Found->second;
@@ -374,8 +385,8 @@ bool DemandedBits::isInstructionDead(Instruction *I) {
 void DemandedBits::print(raw_ostream &OS) {
   performAnalysis();
   for (auto &KV : AliveBits) {
-    OS << "DemandedBits: 0x" << utohexstr(KV.second.getLimitedValue()) << " for "
-       << *KV.first << "\n";
+    OS << "DemandedBits: 0x" << Twine::utohexstr(KV.second.getLimitedValue())
+       << " for " << *KV.first << '\n';
   }
 }
 

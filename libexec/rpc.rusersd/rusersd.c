@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.19 2016/09/04 15:03:13 jca Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.20 2018/04/26 12:42:51 guenther Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,8 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/file.h>
+
+#include <fcntl.h>
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>

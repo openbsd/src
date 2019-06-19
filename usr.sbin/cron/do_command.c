@@ -1,8 +1,9 @@
-/*	$OpenBSD: do_command.c,v 1.57 2017/10/23 08:39:26 friehm Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.59 2018/06/13 13:30:03 tb Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
+ * Copyright (c) 2018 Job Snijders <job@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -80,7 +81,6 @@ child_process(entry *e, user *u)
 	char **p, *input_data, *usernm;
 	auth_session_t *as;
 	login_cap_t *lc;
-	int children = 0;
 	extern char **environ;
 
 	/* mark ourselves as different to PS command watchers */
@@ -146,7 +146,9 @@ child_process(entry *e, user *u)
 
 	/* fork again, this time so we can exec the user's command.
 	 */
-	switch (fork()) {
+
+	pid_t	jobpid;
+	switch (jobpid = fork()) {
 	case -1:
 		syslog(LOG_ERR, "(CRON) CAN'T FORK (%m)");
 		_exit(EXIT_FAILURE);
@@ -260,8 +262,6 @@ child_process(entry *e, user *u)
 		break;
 	}
 
-	children++;
-
 	/* middle process, child of original cron, parent of process running
 	 * the user's command.
 	 */
@@ -283,7 +283,8 @@ child_process(entry *e, user *u)
 	 * we would block here.  thus we must fork again.
 	 */
 
-	if (*input_data && fork() == 0) {
+	pid_t	stdinjob;
+	if (*input_data && (stdinjob = fork()) == 0) {
 		FILE *out = fdopen(stdin_pipe[WRITE_PIPE], "w");
 		int need_newline = FALSE;
 		int escaped = FALSE;
@@ -331,8 +332,6 @@ child_process(entry *e, user *u)
 	 */
 	close(stdin_pipe[WRITE_PIPE]);
 
-	children++;
-
 	/*
 	 * read output from the grandchild.  it's stderr has been redirected to
 	 * it's stdout, which has been redirected to our pipe.  if there is any
@@ -342,15 +341,17 @@ child_process(entry *e, user *u)
 
 	(void) signal(SIGPIPE, SIG_IGN);
 	in = fdopen(stdout_pipe[READ_PIPE], "r");
+
+	char	*mailto;
+	FILE	*mail = NULL;
+	int	status = 0;
+	pid_t	mailpid;
+	size_t	bytes = 1;
+
 	if (in != NULL) {
 		int	ch = getc(in);
 
 		if (ch != EOF) {
-			FILE	*mail = NULL;
-			char	*mailto;
-			size_t	bytes = 1;
-			int	status = 0;
-			pid_t	mailpid;
 
 			/* get name of recipient.  this is MAILTO if set to a
 			 * valid local username; USER otherwise.
@@ -415,30 +416,6 @@ child_process(entry *e, user *u)
 					fputc(ch, mail);
 			}
 
-			/* only close pipe if we opened it -- i.e., we're
-			 * mailing...
-			 */
-
-			if (mail) {
-				/* Note: the pclose will probably see
-				 * the termination of the grandchild
-				 * in addition to the mail process, since
-				 * it (the grandchild) is likely to exit
-				 * after closing its stdout.
-				 */
-				status = cron_pclose(mail, mailpid);
-			}
-
-			/* if there was output and we could not mail it,
-			 * log the facts so the poor user can figure out
-			 * what's going on.
-			 */
-			if (mail && status) {
-				syslog(LOG_NOTICE, "(%s) MAIL (mailed %zu byte"
-				"%s of output but got status 0x%04x)", usernm,
-				bytes, (bytes == 1) ? "" : "s", status);
-			}
-
 		} /*if data from grandchild*/
 
 		fclose(in);	/* also closes stdout_pipe[READ_PIPE] */
@@ -446,20 +423,47 @@ child_process(entry *e, user *u)
 
 	/* wait for children to die.
 	 */
-	for (; children > 0; children--) {
-		int waiter;
-		pid_t pid;
-
-		while ((pid = wait(&waiter)) < 0 && errno == EINTR)
+	int waiter;
+	if (jobpid > 0) {
+		while (waitpid(jobpid, &waiter, 0) < 0 && errno == EINTR)
 			;
-		if (pid < 0) {
-			break;
+
+		/* If everything went well, and -n was set, _and_ we have mail,
+		 * we won't be mailing... so shoot the messenger!
+		 */
+		if (WIFEXITED(waiter) && WEXITSTATUS(waiter) == 0
+		    && (e->flags & MAIL_WHEN_ERR) == MAIL_WHEN_ERR
+		    && mail) {
+			kill(mailpid, SIGKILL);
+			(void)fclose(mail);
+			mail = NULL;
 		}
-		/*
-		if (WIFSIGNALED(waiter) && WCOREDUMP(waiter))
-			Debug(DPROC, (", dumped core"))
-		*/
+
+		/* only close pipe if we opened it -- i.e., we're mailing... */
+		if (mail) {
+			/*
+			 * Note: the pclose will probably see the termination
+			 * of the grandchild in addition to the mail process,
+			 * since it (the grandchild) is likely to exit after
+			 * closing its stdout.
+			 */
+			status = cron_pclose(mail, mailpid);
+		}
+
+		/* if there was output and we could not mail it,
+		 * log the facts so the poor user can figure out
+		 * what's going on.
+		 */
+		if (mail && status) {
+			syslog(LOG_NOTICE, "(%s) MAIL (mailed %zu byte"
+			    "%s of output but got status 0x%04x)", usernm,
+			    bytes, (bytes == 1) ? "" : "s", status);
+		}
 	}
+
+	if (stdinjob > 0)
+		while (waitpid(stdinjob, &waiter, 0) < 0 && errno == EINTR)
+			;
 }
 
 int

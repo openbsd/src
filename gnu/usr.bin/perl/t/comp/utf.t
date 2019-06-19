@@ -34,11 +34,11 @@ sub bytes_to_utf {
 
 sub test {
     my ($enc, $write, $expect, $bom, $nl, $name) = @_;
-    open my $fh, ">", "utf$$.pl" or die "utf.pl: $!";
+    open my $fh, ">", "tmputf$$.pl" or die "tmputf$$.pl: $!";
     binmode $fh;
     print $fh bytes_to_utf($enc, $write . ($nl ? "\n" : ''), $bom);
     close $fh or die $!;
-    my $got = do "./utf$$.pl";
+    my $got = do "./tmputf$$.pl";
     $test = $test + 1;
     if (!defined $got) {
 	if ($@ =~ /^(Unsupported script encoding \Q$enc\E)/) {
@@ -100,5 +100,5 @@ for my $bom (0, 1) {
 }
 
 END {
-    1 while unlink "utf$$.pl";
+    1 while unlink "tmputf$$.pl";
 }

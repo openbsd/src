@@ -38,7 +38,7 @@ my $debug = $ENV{'GEN_SHRFLS_DEBUG'};
 print "gen_shrfls.pl Rev. 8-Jul-2011\n" if $debug;
 
 if ($ARGV[0] eq '-f') {
-  open(INP,$ARGV[1]) or die "Can't read input file $ARGV[1]: $!\n";
+  open(INP,'<',$ARGV[1]) or die "Can't read input file $ARGV[1]: $!\n";
   print "Input taken from file $ARGV[1]\n" if $debug;
   @ARGV = ();
   while (<INP>) {
@@ -205,7 +205,7 @@ elsif (@symfiles) { $incstr .= ',' . join(',',@symfiles); }
 # Linker wants /Include and /Library on different lines
 print OPTBLD "$libperl/Include=($incstr)\n";
 print OPTBLD "$libperl/Library\n";
-open(RTLOPT,$rtlopt) or die "$0: Can't read options file $rtlopt: $!\n";
+open(RTLOPT,'<',$rtlopt) or die "$0: Can't read options file $rtlopt: $!\n";
 while (<RTLOPT>) { print OPTBLD; }
 close RTLOPT;
 close OPTBLD;

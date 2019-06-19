@@ -1,4 +1,4 @@
-/* $OpenBSD: i686_mem.c,v 1.18 2016/04/26 15:27:32 mlarkin Exp $ */
+/* $OpenBSD: i686_mem.c,v 1.19 2018/07/30 14:19:12 kettenis Exp $ */
 /*
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * All rights reserved.
@@ -275,12 +275,14 @@ mrt2mtrr(u_int64_t flags)
 void
 mrstore(struct mem_range_softc *sc)
 {
-	disable_intr();				/* disable interrupts */
+	u_long s;
+
+	s = intr_disable();			/* disable interrupts */
 #ifdef MULTIPROCESSOR
 	i386_broadcast_ipi(I386_IPI_MTRR);
 #endif
 	mrstoreone(sc);
-	enable_intr();
+	intr_restore(s);
 }
 
 /*
@@ -618,7 +620,9 @@ mrinit_cpu(struct mem_range_softc *sc)
 void
 mrreload_cpu(struct mem_range_softc *sc)
 {
-	disable_intr();
+	u_long s;
+
+	s = intr_disable();
 	mrstoreone(sc); /* set MTRRs to match BSP */
-	enable_intr();
+	intr_restore(s);
 }

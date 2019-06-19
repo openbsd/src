@@ -2,7 +2,7 @@
 
 use FileCache;
 
-use vars qw(@files);
+our @files;
 BEGIN { @files = qw(foo bar baz quux Foo_Bar) }
 END   { 1 while unlink @files }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.36 2016/09/17 20:20:25 guenther Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.37 2018/06/29 17:39:18 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -52,7 +52,7 @@ struct cfdriver acpimadt_cd = {
 };
 
 int acpimadt_validate(struct acpi_madt *);
-int acpimadt_cfg_intr(int, u_int32_t *);
+int acpimadt_cfg_intr(int, uint32_t *);
 int acpimadt_print(void *, const char *);
 
 int
@@ -84,7 +84,7 @@ acpimadt_validate(struct acpi_madt *madt)
 
 	while (addr < (caddr_t)madt + madt->hdr.length) {
 		union acpi_madt_entry *entry = (union acpi_madt_entry *)addr;
-		u_int8_t length = entry->madt_lapic.length;
+		uint8_t length = entry->madt_lapic.length;
 
 		if (length < 2)
 			return (0);
@@ -149,7 +149,7 @@ struct mp_bus acpimadt_busses[256];
 struct mp_bus acpimadt_isa_bus;
 
 int
-acpimadt_cfg_intr(int flags, u_int32_t *redir)
+acpimadt_cfg_intr(int flags, uint32_t *redir)
 {
 	int mpspo = (flags >> MPS_INTPO_SHIFT) & MPS_INTPO_MASK;
 	int mpstrig = (flags >> MPS_INTTR_SHIFT) & MPS_INTTR_MASK;
@@ -184,7 +184,7 @@ acpimadt_cfg_intr(int flags, u_int32_t *redir)
 	return (1);
 }
 
-static u_int8_t lapic_map[256];
+static uint8_t lapic_map[256];
 
 void
 acpimadt_attach(struct device *parent, struct device *self, void *aux)

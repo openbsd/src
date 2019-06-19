@@ -2,9 +2,9 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(../lib);
     require './test.pl';
-    plan (tests => 22);
+    set_up_inc( qw(../lib) );
+    plan (tests => 22); # some tests are run in BEGIN block
 }
 
 is __SUB__, "__SUB__", '__SUB__ is a bareword outside of use feature';

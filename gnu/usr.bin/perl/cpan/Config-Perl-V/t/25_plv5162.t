@@ -5,7 +5,7 @@ use warnings;
 
 BEGIN {
     use Test::More;
-    my $tests = 153;
+    my $tests = 157;
     unless ($ENV{PERL_CORE}) {
 	require Test::NoWarnings;
 	Test::NoWarnings->import ();
@@ -41,6 +41,11 @@ foreach my $o (sort qw(
 foreach my $o (sort keys %$opt) {
     is ($conf->{build}{options}{$o}, 0, "Runtime option $o unset");
     }
+
+eval { require Digest::MD5; };
+my $md5 = $@ ? "0" x 32 : "2917ca2a97b6db1ab8fb08798f53c0bb";
+ok (my $sig = Config::Perl::V::signature ($conf), "Get signature");
+is ($sig, $md5, "MD5");
 
 is_deeply ($conf->{build}{patches}, [
     "/Library/Perl/Updates/<version> comes before system perl directories",

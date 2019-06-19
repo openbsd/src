@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: syslogd.pl,v 1.9 2016/05/03 19:13:04 bluhm Exp $
+#	$OpenBSD: syslogd.pl,v 1.10 2018/05/22 15:01:16 bluhm Exp $
 
 # Copyright (c) 2010-2014 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -100,7 +100,11 @@ $c = Client->new(
 ) unless $args{client}{noclient};
 ($rc, $c) = ($c, $rc) if $rc;  # chain client -> rsyslogd -> syslogd
 
-$c->run->up if !$args{client}{noclient} && $c->{early};
+if (!$args{client}{noclient} && $c->{early}) {
+	$c->run->up;
+	$c->loggrep(get_firstlog(), 10)
+	   or die ref($c), " no first log during early startup";
+}
 $r->run unless $r->{late};
 $s->run->up unless $args{server}{noserver};
 $r->run if $r->{late};

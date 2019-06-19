@@ -11,7 +11,7 @@ sub cooked {
 sub set_cbreak {
     local($on) = @_;
 
-    require 'sys/ioctl.pl';
+    require './sys/ioctl.pl';
 
     ioctl(STDIN,$TIOCGETP,$sgttyb)
         || die "Can't ioctl TIOCGETP: $!";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.5 2018/02/27 08:44:58 mpi Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.12 2019/05/26 15:22:31 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -68,25 +68,29 @@
 #define VIRTIO_NET_CONFIG_STATUS	6 /* 16bit */
 
 /* Feature bits */
-#define VIRTIO_NET_F_CSUM		(1<<0)
-#define VIRTIO_NET_F_GUEST_CSUM		(1<<1)
-#define VIRTIO_NET_F_MAC		(1<<5)
-#define VIRTIO_NET_F_GSO		(1<<6)
-#define VIRTIO_NET_F_GUEST_TSO4		(1<<7)
-#define VIRTIO_NET_F_GUEST_TSO6		(1<<8)
-#define VIRTIO_NET_F_GUEST_ECN		(1<<9)
-#define VIRTIO_NET_F_GUEST_UFO		(1<<10)
-#define VIRTIO_NET_F_HOST_TSO4		(1<<11)
-#define VIRTIO_NET_F_HOST_TSO6		(1<<12)
-#define VIRTIO_NET_F_HOST_ECN		(1<<13)
-#define VIRTIO_NET_F_HOST_UFO		(1<<14)
-#define VIRTIO_NET_F_MRG_RXBUF		(1<<15)
-#define VIRTIO_NET_F_STATUS		(1<<16)
-#define VIRTIO_NET_F_CTRL_VQ		(1<<17)
-#define VIRTIO_NET_F_CTRL_RX		(1<<18)
-#define VIRTIO_NET_F_CTRL_VLAN		(1<<19)
-#define VIRTIO_NET_F_CTRL_RX_EXTRA	(1<<20)
-#define VIRTIO_NET_F_GUEST_ANNOUNCE	(1<<21)
+#define VIRTIO_NET_F_CSUM			(1ULL<<0)
+#define VIRTIO_NET_F_GUEST_CSUM			(1ULL<<1)
+#define VIRTIO_NET_F_CTRL_GUEST_OFFLOADS        (1ULL<<2)
+#define VIRTIO_NET_F_MTU                        (1ULL<<3)
+#define VIRTIO_NET_F_MAC			(1ULL<<5)
+#define VIRTIO_NET_F_GSO			(1ULL<<6)
+#define VIRTIO_NET_F_GUEST_TSO4			(1ULL<<7)
+#define VIRTIO_NET_F_GUEST_TSO6			(1ULL<<8)
+#define VIRTIO_NET_F_GUEST_ECN			(1ULL<<9)
+#define VIRTIO_NET_F_GUEST_UFO			(1ULL<<10)
+#define VIRTIO_NET_F_HOST_TSO4			(1ULL<<11)
+#define VIRTIO_NET_F_HOST_TSO6			(1ULL<<12)
+#define VIRTIO_NET_F_HOST_ECN			(1ULL<<13)
+#define VIRTIO_NET_F_HOST_UFO			(1ULL<<14)
+#define VIRTIO_NET_F_MRG_RXBUF			(1ULL<<15)
+#define VIRTIO_NET_F_STATUS			(1ULL<<16)
+#define VIRTIO_NET_F_CTRL_VQ			(1ULL<<17)
+#define VIRTIO_NET_F_CTRL_RX			(1ULL<<18)
+#define VIRTIO_NET_F_CTRL_VLAN			(1ULL<<19)
+#define VIRTIO_NET_F_CTRL_RX_EXTRA		(1ULL<<20)
+#define VIRTIO_NET_F_GUEST_ANNOUNCE		(1ULL<<21)
+#define VIRTIO_NET_F_MQ				(1ULL<<22)
+#define VIRTIO_NET_F_CTRL_MAC_ADDR		(1ULL<<23)
 
 /*
  * Config(8) flags. The lowest byte is reserved for generic virtio stuff.
@@ -96,25 +100,31 @@
 #define CONFFLAG_QEMU_VLAN_BUG		(1<<8)
 
 static const struct virtio_feature_name virtio_net_feature_names[] = {
-	{ VIRTIO_NET_F_CSUM,		"CSum" },
-	{ VIRTIO_NET_F_GUEST_CSUM,	"GuestCSum" },
-	{ VIRTIO_NET_F_MAC,		"MAC" },
-	{ VIRTIO_NET_F_GSO,		"GSO" },
-	{ VIRTIO_NET_F_GUEST_TSO4,	"GuestTSO4" },
-	{ VIRTIO_NET_F_GUEST_TSO6,	"GuestTSO6" },
-	{ VIRTIO_NET_F_GUEST_ECN,	"GuestECN" },
-	{ VIRTIO_NET_F_GUEST_UFO,	"GuestUFO" },
-	{ VIRTIO_NET_F_HOST_TSO4,	"HostTSO4" },
-	{ VIRTIO_NET_F_HOST_TSO6,	"HostTSO6" },
-	{ VIRTIO_NET_F_HOST_ECN, 	"HostECN" },
-	{ VIRTIO_NET_F_HOST_UFO, 	"HostUFO" },
-	{ VIRTIO_NET_F_MRG_RXBUF,	"MrgRXBuf" },
-	{ VIRTIO_NET_F_STATUS,		"Status" },
-	{ VIRTIO_NET_F_CTRL_VQ,		"CtrlVQ" },
-	{ VIRTIO_NET_F_CTRL_RX,		"CtrlRX" },
-	{ VIRTIO_NET_F_CTRL_VLAN,	"CtrlVLAN" },
-	{ VIRTIO_NET_F_CTRL_RX_EXTRA,	"CtrlRXExtra" },
-	{ VIRTIO_NET_F_GUEST_ANNOUNCE,	"GuestAnnounce" },
+#if VIRTIO_DEBUG
+	{ VIRTIO_NET_F_CSUM,			"CSum" },
+	{ VIRTIO_NET_F_GUEST_CSUM,		"GuestCSum" },
+	{ VIRTIO_NET_F_CTRL_GUEST_OFFLOADS,	"CtrlGuestOffl" },
+	{ VIRTIO_NET_F_MTU,			"MTU", },
+	{ VIRTIO_NET_F_MAC,			"MAC" },
+	{ VIRTIO_NET_F_GSO,			"GSO" },
+	{ VIRTIO_NET_F_GUEST_TSO4,		"GuestTSO4" },
+	{ VIRTIO_NET_F_GUEST_TSO6,		"GuestTSO6" },
+	{ VIRTIO_NET_F_GUEST_ECN,		"GuestECN" },
+	{ VIRTIO_NET_F_GUEST_UFO,		"GuestUFO" },
+	{ VIRTIO_NET_F_HOST_TSO4,		"HostTSO4" },
+	{ VIRTIO_NET_F_HOST_TSO6,		"HostTSO6" },
+	{ VIRTIO_NET_F_HOST_ECN, 		"HostECN" },
+	{ VIRTIO_NET_F_HOST_UFO, 		"HostUFO" },
+	{ VIRTIO_NET_F_MRG_RXBUF,		"MrgRXBuf" },
+	{ VIRTIO_NET_F_STATUS,			"Status" },
+	{ VIRTIO_NET_F_CTRL_VQ,			"CtrlVQ" },
+	{ VIRTIO_NET_F_CTRL_RX,			"CtrlRX" },
+	{ VIRTIO_NET_F_CTRL_VLAN,		"CtrlVLAN" },
+	{ VIRTIO_NET_F_CTRL_RX_EXTRA,		"CtrlRXExtra" },
+	{ VIRTIO_NET_F_GUEST_ANNOUNCE,		"GuestAnnounce" },
+	{ VIRTIO_NET_F_MQ,			"MQ" },
+	{ VIRTIO_NET_F_CTRL_MAC_ADDR,		"CtrlMAC" },
+#endif
 	{ 0, 				NULL }
 };
 
@@ -505,7 +515,6 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vio_softc *sc = (struct vio_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
-	uint32_t features;
 	int i;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
@@ -521,23 +530,13 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_NET;
 	vsc->sc_vqs = &sc->sc_vq[0];
 	vsc->sc_config_change = 0;
-
-	features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
+	vsc->sc_driver_features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
 	    VIRTIO_NET_F_CTRL_VQ | VIRTIO_NET_F_CTRL_RX |
-	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM;
-	/*
-	 * VIRTIO_F_RING_EVENT_IDX can be switched off by setting bit 2 in the
-	 * driver flags, see config(8)
-	 */
-	if (!(sc->sc_dev.dv_cfdata->cf_flags & 2) &&
-	    !(vsc->sc_dev.dv_cfdata->cf_flags & 2))
-		features |= VIRTIO_F_RING_EVENT_IDX;
-	else
-		printf(": RingEventIdx disabled by UKC");
+	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM |
+	    VIRTIO_F_RING_EVENT_IDX;
 
-	features = virtio_negotiate_features(vsc, features,
-	    virtio_net_feature_names);
-	if (features & VIRTIO_NET_F_MAC) {
+	virtio_negotiate_features(vsc, virtio_net_feature_names);
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MAC)) {
 		vio_get_lladr(&sc->sc_ac, vsc);
 	} else {
 		ether_fakeaddr(ifp);
@@ -545,13 +544,16 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	if (features & VIRTIO_NET_F_MRG_RXBUF) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF) ||
+	    vsc->sc_version_1) {
 		sc->sc_hdr_size = sizeof(struct virtio_net_hdr);
-		ifp->if_hardmtu = 16000; /* arbitrary limit */
 	} else {
 		sc->sc_hdr_size = offsetof(struct virtio_net_hdr, num_buffers);
-		ifp->if_hardmtu = MCLBYTES - sc->sc_hdr_size - ETHER_HDR_LEN;
 	}
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF))
+		ifp->if_hardmtu = 16000; /* arbitrary limit */
+	else
+		ifp->if_hardmtu = MCLBYTES - sc->sc_hdr_size - ETHER_HDR_LEN;
 
 	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQRX], 0, MCLBYTES, 2, "rx") != 0)
 		goto err;
@@ -565,12 +567,12 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_nvqs = 2;
 	sc->sc_vq[VQTX].vq_done = vio_tx_intr;
 	virtio_start_vq_intr(vsc, &sc->sc_vq[VQRX]);
-	if (features & VIRTIO_F_RING_EVENT_IDX)
+	if (virtio_has_feature(vsc, VIRTIO_F_RING_EVENT_IDX))
 		virtio_postpone_intr_far(&sc->sc_vq[VQTX]);
 	else
 		virtio_stop_vq_intr(vsc, &sc->sc_vq[VQTX]);
-	if ((features & VIRTIO_NET_F_CTRL_VQ)
-	    && (features & VIRTIO_NET_F_CTRL_RX)) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ)
+	    && virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_RX)) {
 		if (virtio_alloc_vq(vsc, &sc->sc_vq[VQCTL], 2, NBPG, 1,
 		    "control") == 0) {
 			sc->sc_vq[VQCTL].vq_done = vio_ctrleof;
@@ -588,7 +590,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = vio_start;
 	ifp->if_ioctl = vio_ioctl;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
-	if (features & VIRTIO_NET_F_CSUM)
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CSUM))
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
 	IFQ_SET_MAXLEN(&ifp->if_snd, vsc->sc_vqs[1].vq_num - 1);
 	ifmedia_init(&sc->sc_media, 0, vio_media_change, vio_media_status);
@@ -619,7 +621,7 @@ vio_link_state(struct ifnet *ifp)
 	struct virtio_softc *vsc = sc->sc_virtio;
 	int link_state = LINK_STATE_FULL_DUPLEX;
 
-	if (vsc->sc_features & VIRTIO_NET_F_STATUS) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_STATUS)) {
 		int status = virtio_read_device_config_2(vsc,
 		    VIRTIO_NET_CONFIG_STATUS);
 		if (!(status & VIRTIO_NET_S_LINK_UP))
@@ -696,7 +698,6 @@ vio_stop(struct ifnet *ifp, int disable)
 		vio_rx_drain(sc);
 
 	virtio_reinit_start(vsc);
-	virtio_negotiate_features(vsc, vsc->sc_features, NULL);
 	virtio_start_vq_intr(vsc, &sc->sc_vq[VQRX]);
 	virtio_stop_vq_intr(vsc, &sc->sc_vq[VQTX]);
 	if (vsc->sc_nvqs >= 3)
@@ -805,7 +806,7 @@ again:
 	}
 	if (ifq_is_oactive(&ifp->if_snd)) {
 		int r;
-		if (vsc->sc_features & VIRTIO_F_RING_EVENT_IDX)
+		if (virtio_has_feature(vsc, VIRTIO_F_RING_EVENT_IDX))
 			r = virtio_postpone_intr_smart(&sc->sc_vq[VQTX]);
 		else
 			r = virtio_start_vq_intr(vsc, &sc->sc_vq[VQTX]);
@@ -1059,7 +1060,7 @@ again:
 	if (r) {
 		vio_populate_rx_mbufs(sc);
 		/* set used event index to the next slot */
-		if (vsc->sc_features & VIRTIO_F_RING_EVENT_IDX) {
+		if (virtio_has_feature(vsc, VIRTIO_F_RING_EVENT_IDX)) {
 			if (virtio_start_vq_intr(vq->vq_owner, vq))
 				goto again;
 		}
@@ -1270,14 +1271,28 @@ out:
 	return r;
 }
 
+/*
+ * XXXSMP As long as some per-ifp ioctl(2)s are executed with the
+ * NET_LOCK() deadlocks are possible.  So release it here.
+ */
+static inline int
+vio_sleep(struct vio_softc *sc, const char *wmesg)
+{
+	int status = rw_status(&netlock);
+
+	if (status != RW_WRITE && status != RW_READ)
+		return tsleep(&sc->sc_ctrl_inuse, PRIBIO|PCATCH, wmesg, 0);
+
+	return rwsleep(&sc->sc_ctrl_inuse, &netlock, PRIBIO|PCATCH, wmesg, 0);
+}
+
 int
 vio_wait_ctrl(struct vio_softc *sc)
 {
 	int r = 0;
 
 	while (sc->sc_ctrl_inuse != FREE) {
-		r = rwsleep(&sc->sc_ctrl_inuse, &netlock, PRIBIO|PCATCH,
-		    "viowait", 0);
+		r = vio_sleep(sc, "viowait");
 		if (r == EINTR)
 			return r;
 	}
@@ -1296,8 +1311,7 @@ vio_wait_ctrl_done(struct vio_softc *sc)
 			r = 1;
 			break;
 		}
-		r = rwsleep(&sc->sc_ctrl_inuse, &netlock, PRIBIO|PCATCH,
-		    "viodone", 0);
+		r = vio_sleep(sc, "viodone");
 		if (r == EINTR)
 			break;
 	}

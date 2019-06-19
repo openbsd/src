@@ -1,0 +1,14 @@
+.\" $OpenBSD: badargs.in,v 1.1 2018/08/24 22:56:37 schwarze Exp $
+.Dd $Mdocdate: August 24 2018 $
+.Dt WHILE-BADARGS 1
+.Os
+.Sh NAME
+.Nm while-badargs
+.Nd dubious arguments for the while request
+.Sh DESCRIPTION
+while does not support next line scope:
+.nr cnt 2 1
+.while \n-[cnt]
+\n[cnt]
+.Pp
+final text

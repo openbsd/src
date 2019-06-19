@@ -14,13 +14,14 @@ BEGIN {
 }
 
 use Test::More tests => 43;
+BEGIN { push @INC, '.' }
 use t::Watchdog;
 
 my @atime;
 my @mtime;
 for (1..5) {
     Time::HiRes::sleep(rand(0.1) + 0.1);
-    open(X, ">$$");
+    open(X, '>', $$);
     print X $$;
     close(X);
     my($a, $stat, $b) = ("a", [Time::HiRes::stat($$)], "b");
@@ -33,7 +34,7 @@ for (1..5) {
     is $b, "b";
     is_deeply $lstat, $stat;
     Time::HiRes::sleep(rand(0.1) + 0.1);
-    open(X, "<$$");
+    open(X, '<', $$);
     <X>;
     close(X);
     $stat = [Time::HiRes::stat($$)];
@@ -75,7 +76,7 @@ SKIP: {
 my $targetname = "tgt$$";
 my $linkname = "link$$";
 SKIP: {
-    open(X, ">$targetname");
+    open(X, '>', $targetname);
     print X $$;
     close(X);
     eval { symlink $targetname, $linkname or die "can't symlink: $!"; };

@@ -1,10 +1,10 @@
 package Config::Extensions;
 use strict;
-use vars qw(%Extensions $VERSION @ISA @EXPORT_OK);
+our (%Extensions, $VERSION, @ISA, @EXPORT_OK);
 use Config;
 require Exporter;
 
-$VERSION = '0.01';
+$VERSION = '0.02';
 @ISA = 'Exporter';
 @EXPORT_OK = '%Extensions';
 

@@ -1,0 +1,5 @@
+mandoc: unsupp.in:7:23: WARNING: invalid escape sequence: \[!]
+mandoc: unsupp.in:7:20: UNSUPP: unsupported escape sequence: \!
+mandoc: unsupp.in:8:24: WARNING: invalid escape sequence: \[?]
+mandoc: unsupp.in:8:21: UNSUPP: unsupported escape sequence: \?
+mandoc: unsupp.in:8:17: UNSUPP: unsupported escape sequence: \?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.7 2017/01/31 05:53:08 jsg Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.9 2018/10/24 18:06:21 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2007-2015 Reyk Floeter <reyk@openbsd.org>
@@ -122,11 +122,13 @@ main(int argc, char *argv[])
 	/*
 	 * pledge in switchctl:
 	 * stdio - for malloc and basic I/O including events.
-	 * dns - for parsehostport() in the device spec.
+	 * rpath - for reading from the /dev/switch device.
+	 * wpath - for accessing the /dev/switch device.
 	 * inet - for handling tcp connections with OpenFlow peers.
 	 * unix - for opening the control socket.
+	 * dns - for parsehostport() in the device spec.
 	 */
-	if (pledge("stdio dns inet unix", NULL) == -1)
+	if (pledge("stdio rpath wpath inet unix dns", NULL) == -1)
 		err(1, "pledge");
 
 	log_init(quiet ? 0 : 2, LOG_USER);
@@ -178,6 +180,9 @@ main(int argc, char *argv[])
 		}
 		err(1, "connect: %s", sock);
 	}
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	if (res->ibuf != NULL)
 		ibuf = res->ibuf;

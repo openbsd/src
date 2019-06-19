@@ -1,4 +1,4 @@
-/*	$OpenBSD: octohci.c,v 1.3 2017/08/13 14:46:04 visa Exp $ */
+/*	$OpenBSD: octohci.c,v 1.4 2019/01/07 03:41:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Jonathan Matthew  <jmatthew@openbsd.org>
@@ -95,6 +95,8 @@ octohci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB, ohci_intr,
 	    (void *)&sc->sc_ohci, sc->sc_ohci.sc_bus.bdev.dv_xname);
 	KASSERT(sc->sc_ih != NULL);
+
+	printf(", ");
 
 	if ((ohci_checkrev(&sc->sc_ohci) != USBD_NORMAL_COMPLETION) ||
 	    (ohci_handover(&sc->sc_ohci) != USBD_NORMAL_COMPLETION))

@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.129 2016/07/10 20:18:56 kettenis Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.130 2018/04/09 21:34:35 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.126 2016/07/10 20:18:15 kettenis Exp 
+ *	OpenBSD: miidevs,v 1.127 2018/04/09 21:33:27 kettenis Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -370,6 +370,8 @@
 #define	MII_STR_MARVELL_E1149	"88E1149 Gigabit PHY"
 #define	MII_MODEL_MARVELL_E1111	0x000c
 #define	MII_STR_MARVELL_E1111	"88E1111 Gigabit PHY"
+#define	MII_MODEL_MARVELL_E1512	0x001d
+#define	MII_STR_MARVELL_E1512	"88E1512 10/100/1000 PHY"
 #define	MII_MODEL_MARVELL_E1116	0x0021
 #define	MII_STR_MARVELL_E1116	"88E1116 Gigabit PHY"
 #define	MII_MODEL_MARVELL_E1118	0x0022

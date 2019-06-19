@@ -106,7 +106,7 @@
 #define BIT_BUCKET "/dev/null"
 #define PERL_SYS_INIT_BODY(c,v)				    \
 	MALLOC_CHECK_TAINT2(*c,*v) PERLIO_INIT; MALLOC_INIT
-#define dXSUB_SYS
+#define dXSUB_SYS dNOOP
 #define PERL_SYS_TERM_BODY()	PERLIO_TERM; MALLOC_TERM
 
 /*

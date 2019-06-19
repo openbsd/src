@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.14 2018/03/27 08:32:29 mpi Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.18 2019/04/23 13:35:12 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -104,15 +104,15 @@ void __mtx_init(struct mutex *, int);
 #define __MTX_NAME __FILE__ ":" __MTX_S(__LINE__)
 
 #define MTX_LO_INITIALIZER(name, flags) \
-	{ .lo_type = &(struct lock_type){ .lt_name = __MTX_NAME }, \
-	  .lo_name = (name) != NULL ? (name) : __MTX_NAME, \
+	{ .lo_type = &(const struct lock_type){ .lt_name = __MTX_NAME }, \
+	  .lo_name = (name), \
 	  .lo_flags = MTX_LO_FLAGS(flags) }
 
 #define MTX_NOWITNESS	0x01
 #define MTX_DUPOK	0x02
 
 #define MUTEX_INITIALIZER(ipl) \
-	MUTEX_INITIALIZER_FLAGS(ipl, NULL, 0)
+	MUTEX_INITIALIZER_FLAGS(ipl, __MTX_NAME, 0)
 
 /*
  * Some architectures need to do magic for the ipl, so they need a macro.
@@ -121,26 +121,19 @@ void __mtx_init(struct mutex *, int);
 void _mtx_init(struct mutex *, int);
 #endif
 
-void	__mtx_enter(struct mutex *);
-int	__mtx_enter_try(struct mutex *);
-void	__mtx_leave(struct mutex *);
+void	mtx_enter(struct mutex *);
+int	mtx_enter_try(struct mutex *);
+void	mtx_leave(struct mutex *);
 
 #define mtx_init(m, ipl)	mtx_init_flags(m, ipl, NULL, 0)
-#define mtx_enter(m)		_mtx_enter(m LOCK_FILE_LINE)
-#define mtx_enter_try(m)	_mtx_enter_try(m LOCK_FILE_LINE)
-#define mtx_leave(m)		_mtx_leave(m LOCK_FILE_LINE)
 
 #ifdef WITNESS
 
 void	_mtx_init_flags(struct mutex *, int, const char *, int,
-	    struct lock_type *);
-
-void	_mtx_enter(struct mutex *, const char *, int);
-int	_mtx_enter_try(struct mutex *, const char *, int);
-void	_mtx_leave(struct mutex *, const char *, int);
+	    const struct lock_type *);
 
 #define mtx_init_flags(m, ipl, name, flags) do {			\
-	static struct lock_type __lock_type = { .lt_name = #m };	\
+	static const struct lock_type __lock_type = { .lt_name = #m };	\
 	_mtx_init_flags(m, ipl, name, flags, &__lock_type);		\
 } while (0)
 
@@ -152,10 +145,21 @@ void	_mtx_leave(struct mutex *, const char *, int);
 } while (0)
 
 #define _mtx_init_flags(m,i,n,f,t)	_mtx_init(m,i)
-#define _mtx_enter(m)			__mtx_enter(m)
-#define _mtx_enter_try(m)		__mtx_enter_try(m)
-#define _mtx_leave(m)			__mtx_leave(m)
 
 #endif /* WITNESS */
+
+#if defined(_KERNEL) && defined(DDB)
+
+struct db_mutex {
+	struct cpu_info	*mtx_owner;
+	unsigned long	 mtx_intr_state;
+};
+
+#define DB_MUTEX_INITIALIZER	{ NULL, 0 }
+
+void	db_mtx_enter(struct db_mutex *);
+void	db_mtx_leave(struct db_mutex *);
+
+#endif /* _KERNEL && DDB */
 
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_md.c,v 1.14 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: bio_md.c,v 1.15 2018/05/02 15:51:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,7 +74,7 @@ static int md_new(BIO *h);
 static int md_free(BIO *data);
 static long md_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 
-static BIO_METHOD methods_md = {
+static const BIO_METHOD methods_md = {
 	.type = BIO_TYPE_MD,
 	.name = "message digest",
 	.bwrite = md_write,
@@ -86,7 +86,7 @@ static BIO_METHOD methods_md = {
 	.callback_ctrl = md_callback_ctrl
 };
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_f_md(void)
 {
 	return (&methods_md);

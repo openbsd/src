@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.40 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.42 2018/11/22 21:37:30 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -53,12 +53,8 @@
  */
 
 #include <machine/asm.h>
-#include <machine/pal.h>
-#include <sys/syscall.h>
 
 #define AUX_entry 9
-
-	.extern _GLOBAL_OFFSET_TABLE_
 
 /* Not really a leaf... but we are special.  */
 LEAF_NOPROFILE(_dl_start, 0)
@@ -74,15 +70,11 @@ L1:
 L2:	ldiq	s3, L2		/* get where the linker thought we were */
 
 	subq	s2, s3, s2
-	mov	s2, a1
 	lda	t5, _DYNAMIC
-	addq	s2, t5, a0
-	mov	a0, s6
-
-	bsr	ra, _reloc_alpha_got
+	addq	s2, t5, s6
 
 	/* allocate stack */
-	lda	sp, (-8 - ((AUX_entry) * 8))(sp)
+	lda	sp, -((AUX_entry + 1) * 8)(sp)
 
 	mov	s0, a0
 	mov	s2, s1		/* relocation displacement */
@@ -97,7 +89,11 @@ L2:	ldiq	s3, L2		/* get where the linker thought we were */
 	lda	s2, 0(sp)
 	mov	s2, a1
 	mov	s6, a2		/* &_DYNAMIC */
-	CALL(_dl_boot_bind)
+	/* we can't use CALL here as gp would not be set correctly by ldgp,
+	   due to the GOT not being relocated yet. */
+	lda	pv, _dl_boot_bind
+	addq	s1, pv, pv
+	bsr	ra, _dl_boot_bind
 	mov	s3, a0		/* **argv  */
 	mov	s4, a1		/* **envp  */
 	mov	s1, a2		/* loff    */
@@ -110,94 +106,9 @@ L2:	ldiq	s3, L2		/* get where the linker thought we were */
 END(_dl_start)
 
 /*
- * Lazy binding entry point, called via PLT.
- */
-NESTED_NOPROFILE(_dl_bind_start, 0, 168, ra, 0, 0)
-	.set	noat
-	/* at_reg already used by PLT code. */
-
-	/*
-	 * Allocate stack frame and preserve all registers that the caller
-	 * would have normally saved themselves.
-	 */
-	lda	sp, -168(sp)
-	stq	ra, 0(sp)
-	stq	v0, 8(sp)
-	stq	t0, 16(sp)
-	stq	t1, 24(sp)
-	stq	t2, 32(sp)
-	stq	t3, 40(sp)
-	stq	t4, 48(sp)
-	stq	t5, 56(sp)
-	stq	t6, 64(sp)
-	stq	t7, 72(sp)
-	stq	a0, 80(sp)
-	stq	a1, 88(sp)
-	stq	a2, 96(sp)
-	stq	a3, 104(sp)
-	stq	a4, 112(sp)
-	stq	a5, 120(sp)
-	stq	t8, 128(sp)
-	stq	t9, 136(sp)
-	stq	t10, 144(sp)
-	stq	t11, 152(sp)
-	stq	gp, 160(sp)
-
-	/*
-	 * Load our global pointer.  Note, can't use pv, since it is
-	 * already used by the PLT code.
-	 */
-	br	t0, 1f
-1:	LDGP(t0)
-
-	/* Set up the arguments for _dl_bind. */
-	subq	at_reg, t12, a1
-	ldq	a0, 8(t12)
-	subq	a1, 20, a1
-	addq	a1, a1, a1
-	CALL(_dl_bind)
-
-	/* Move the destination address into position. */
-	mov	v0, pv
-
-	/* Restore program registers. */
-	ldq	ra, 0(sp)
-	ldq	v0, 8(sp)
-	ldq	t0, 16(sp)
-	ldq	t1, 24(sp)
-	ldq	t2, 32(sp)
-	ldq	t3, 40(sp)
-	ldq	t4, 48(sp)
-	ldq	t5, 56(sp)
-	ldq	t6, 64(sp)
-	ldq	t7, 72(sp)
-	ldq	a0, 80(sp)
-	ldq	a1, 88(sp)
-	ldq	a2, 96(sp)
-	ldq	a3, 104(sp)
-	ldq	a4, 112(sp)
-	ldq	a5, 120(sp)
-	ldq	t8, 128(sp)
-	ldq	t9, 136(sp)
-	ldq	t10, 144(sp)
-	ldq	t11, 152(sp)
-	ldq	gp, 160(sp)
-	/* XXX LDGP? */
-
-	/*
-	 * We've patched the PLT; sync the I-stream.
-	 */
-	imb
-
-	/* Pop the stack frame and turn control to the destination. */
-	lda	sp, 168(sp)
-	jmp	zero, (pv)
-END(_dl_bind_start)
-
-/*
  * Lazy binding entry point, called via secure (read-only) PLT.
  */
-NESTED_NOPROFILE(_dl_bind_secureplt, 0, 168, ra, 0, 0)
+NESTED_NOPROFILE(_dl_bind_start, 0, 160, ra, 0, 0)
 	.set	noat
 	/* at_reg and t11 already used by PLT code. */
 
@@ -268,4 +179,4 @@ NESTED_NOPROFILE(_dl_bind_secureplt, 0, 168, ra, 0, 0)
 	/* Pop the stack frame and turn control to the destination. */
 	lda	sp, 160(sp)
 	jmp	zero, (pv)
-END(_dl_bind_secureplt)
+END(_dl_bind_start)

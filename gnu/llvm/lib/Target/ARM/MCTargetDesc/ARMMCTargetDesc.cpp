@@ -16,9 +16,12 @@
 #include "ARMMCAsmInfo.h"
 #include "InstPrinter/ARMInstPrinter.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -131,27 +134,28 @@ static bool getARMLoadDeprecationInfo(MCInst &MI, const MCSubtargetInfo &STI,
 #include "ARMGenSubtargetInfo.inc"
 
 std::string ARM_MC::ParseARMTriple(const Triple &TT, StringRef CPU) {
-  bool isThumb =
-      TT.getArch() == Triple::thumb || TT.getArch() == Triple::thumbeb;
-
   std::string ARMArchFeature;
 
-  unsigned ArchID = ARM::parseArch(TT.getArchName());
-  if (ArchID != ARM::AK_INVALID &&  (CPU.empty() || CPU == "generic"))
+  ARM::ArchKind ArchID = ARM::parseArch(TT.getArchName());
+  if (ArchID != ARM::ArchKind::INVALID &&  (CPU.empty() || CPU == "generic"))
     ARMArchFeature = (ARMArchFeature + "+" + ARM::getArchName(ArchID)).str();
 
-  if (isThumb) {
-    if (ARMArchFeature.empty())
-      ARMArchFeature = "+thumb-mode,+v4t";
-    else
-      ARMArchFeature += ",+thumb-mode,+v4t";
+  if (TT.isThumb()) {
+    if (!ARMArchFeature.empty())
+      ARMArchFeature += ",";
+    ARMArchFeature += "+thumb-mode,+v4t";
   }
 
   if (TT.isOSNaCl()) {
-    if (ARMArchFeature.empty())
-      ARMArchFeature = "+nacl-trap";
-    else
-      ARMArchFeature += ",+nacl-trap";
+    if (!ARMArchFeature.empty())
+      ARMArchFeature += ",";
+    ARMArchFeature += "+nacl-trap";
+  }
+
+  if (TT.isOSWindows()) {
+    if (!ARMArchFeature.empty())
+      ARMArchFeature += ",";
+    ARMArchFeature += "+noarm";
   }
 
   return ARMArchFeature;
@@ -201,18 +205,22 @@ static MCAsmInfo *createARMMCAsmInfo(const MCRegisterInfo &MRI,
 }
 
 static MCStreamer *createELFStreamer(const Triple &T, MCContext &Ctx,
-                                     MCAsmBackend &MAB, raw_pwrite_stream &OS,
-                                     MCCodeEmitter *Emitter, bool RelaxAll) {
-  return createARMELFStreamer(Ctx, MAB, OS, Emitter, false,
-                              (T.getArch() == Triple::thumb ||
-                               T.getArch() == Triple::thumbeb));
+                                     std::unique_ptr<MCAsmBackend> &&MAB,
+                                     std::unique_ptr<MCObjectWriter> &&OW,
+                                     std::unique_ptr<MCCodeEmitter> &&Emitter,
+                                     bool RelaxAll) {
+  return createARMELFStreamer(
+      Ctx, std::move(MAB), std::move(OW), std::move(Emitter), false,
+      (T.getArch() == Triple::thumb || T.getArch() == Triple::thumbeb));
 }
 
-static MCStreamer *createARMMachOStreamer(MCContext &Ctx, MCAsmBackend &MAB,
-                                          raw_pwrite_stream &OS,
-                                          MCCodeEmitter *Emitter, bool RelaxAll,
-                                          bool DWARFMustBeAtTheEnd) {
-  return createMachOStreamer(Ctx, MAB, OS, Emitter, false, DWARFMustBeAtTheEnd);
+static MCStreamer *
+createARMMachOStreamer(MCContext &Ctx, std::unique_ptr<MCAsmBackend> &&MAB,
+                       std::unique_ptr<MCObjectWriter> &&OW,
+                       std::unique_ptr<MCCodeEmitter> &&Emitter, bool RelaxAll,
+                       bool DWARFMustBeAtTheEnd) {
+  return createMachOStreamer(Ctx, std::move(MAB), std::move(OW),
+                             std::move(Emitter), false, DWARFMustBeAtTheEnd);
 }
 
 static MCInstPrinter *createARMMCInstPrinter(const Triple &T,
@@ -335,19 +343,12 @@ extern "C" void LLVMInitializeARMTargetMC() {
   for (Target *T : {&getTheThumbLETarget(), &getTheThumbBETarget()})
     TargetRegistry::RegisterMCInstrAnalysis(*T, createThumbMCInstrAnalysis);
 
-  // Register the MC Code Emitter
-  for (Target *T : {&getTheARMLETarget(), &getTheThumbLETarget()})
+  for (Target *T : {&getTheARMLETarget(), &getTheThumbLETarget()}) {
     TargetRegistry::RegisterMCCodeEmitter(*T, createARMLEMCCodeEmitter);
-  for (Target *T : {&getTheARMBETarget(), &getTheThumbBETarget()})
+    TargetRegistry::RegisterMCAsmBackend(*T, createARMLEAsmBackend);
+  }
+  for (Target *T : {&getTheARMBETarget(), &getTheThumbBETarget()}) {
     TargetRegistry::RegisterMCCodeEmitter(*T, createARMBEMCCodeEmitter);
-
-  // Register the asm backend.
-  TargetRegistry::RegisterMCAsmBackend(getTheARMLETarget(),
-                                       createARMLEAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(getTheARMBETarget(),
-                                       createARMBEAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(getTheThumbLETarget(),
-                                       createThumbLEAsmBackend);
-  TargetRegistry::RegisterMCAsmBackend(getTheThumbBETarget(),
-                                       createThumbBEAsmBackend);
+    TargetRegistry::RegisterMCAsmBackend(*T, createARMBEAsmBackend);
+  }
 }

@@ -22,12 +22,12 @@
 #include <unordered_set>
 
 // Other libraries and framework includes
-#include "lldb/Core/ArchSpec.h"
 #include "lldb/Host/Debug.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/Pipe.h"
 #include "lldb/Host/common/NativeProcessProtocol.h"
 #include "lldb/Target/MemoryRegionInfo.h"
+#include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/lldb-types.h"
 
@@ -43,10 +43,10 @@ class Scalar;
 namespace process_darwin {
 
 /// @class NativeProcessDarwin
-/// @brief Manages communication with the inferior (debugee) process.
+/// Manages communication with the inferior (debugee) process.
 ///
-/// Upon construction, this class prepares and launches an inferior
-/// process for debugging.
+/// Upon construction, this class prepares and launches an inferior process
+/// for debugging.
 ///
 /// Changes in the inferior process state are broadcasted.
 class NativeProcessDarwin : public NativeProcessProtocol {
@@ -197,20 +197,6 @@ private:
   // waitpid reader callback handle.
   MainLoop::ReadHandleUP m_waitpid_reader_handle;
 
-#if 0
-            ArchSpec m_arch;
-
-            LazyBool m_supports_mem_region;
-            std::vector<MemoryRegionInfo> m_mem_region_cache;
-
-            lldb::tid_t m_pending_notification_tid;
-
-            // List of thread ids stepping with a breakpoint with the address of
-            // the relevan breakpoint
-            std::map<lldb::tid_t, lldb::addr_t>
-            m_threads_stepping_with_breakpoint;
-#endif
-
   // -----------------------------------------------------------------
   // Private Instance Methods
   // -----------------------------------------------------------------
@@ -219,10 +205,10 @@ private:
   // -----------------------------------------------------------------
   /// Finalize the launch.
   ///
-  /// This method associates the NativeProcessDarwin instance with
-  /// the host process that was just launched.  It peforms actions
-  /// like attaching a listener to the inferior exception port,
-  /// ptracing the process, and the like.
+  /// This method associates the NativeProcessDarwin instance with the host
+  /// process that was just launched.  It peforms actions like attaching a
+  /// listener to the inferior exception port, ptracing the process, and the
+  /// like.
   ///
   /// @param[in] launch_flavor
   ///     The launch flavor that was used to launch the process.
@@ -277,8 +263,8 @@ private:
 
   task_t TaskPortForProcessID(Status &error, bool force = false) const;
 
-  /// Attaches to an existing process.  Forms the
-  /// implementation of Process::DoAttach.
+  /// Attaches to an existing process.  Forms the implementation of
+  /// Process::DoAttach.
   void AttachToInferior(MainLoop &mainloop, lldb::pid_t pid, Status &error);
 
   ::pid_t Attach(lldb::pid_t pid, Status &error);
@@ -322,20 +308,6 @@ private:
 
   Status SetupSoftwareSingleStepping(NativeThreadDarwin &thread);
 
-#if 0
-            static ::ProcessMessage::CrashReason
-            GetCrashReasonForSIGSEGV(const siginfo_t *info);
-
-            static ::ProcessMessage::CrashReason
-            GetCrashReasonForSIGILL(const siginfo_t *info);
-
-            static ::ProcessMessage::CrashReason
-            GetCrashReasonForSIGFPE(const siginfo_t *info);
-
-            static ::ProcessMessage::CrashReason
-            GetCrashReasonForSIGBUS(const siginfo_t *info);
-#endif
-
   bool HasThreadNoLock(lldb::tid_t thread_id);
 
   bool StopTrackingThread(lldb::tid_t thread_id);
@@ -351,8 +323,8 @@ private:
   Status GetSignalInfo(lldb::tid_t tid, void *siginfo);
 
   /// Writes the raw event message code (vis-a-vis PTRACE_GETEVENTMSG)
-  /// corresponding to the given thread ID to the memory pointed to
-  /// by @p message.
+  /// corresponding to the given thread ID to the memory pointed to by @p
+  /// message.
   Status GetEventMessage(lldb::tid_t tid, unsigned long *message);
 
   void NotifyThreadDeath(lldb::tid_t tid);

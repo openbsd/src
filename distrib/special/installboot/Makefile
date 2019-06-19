@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2017/01/23 00:59:26 patrick Exp $
+#	$OpenBSD: Makefile,v 1.11 2019/05/11 07:18:15 deraadt Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -62,10 +62,6 @@ SRCS += stubs.c
 .endif
 
 .if ${MACHINE} == "sgi"
-SRCS += stubs.c
-.endif
-
-.if ${MACHINE} == "socppc"
 SRCS += stubs.c
 .endif
 

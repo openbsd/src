@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.h,v 1.12 2017/03/10 02:12:46 phessler Exp $	*/
+/*	$OpenBSD: bfd.h,v 1.13 2018/04/28 07:45:47 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016 Peter Hessler <phessler@openbsd.org>
@@ -77,10 +77,10 @@ struct sockaddr_bfd {
 
 	uint16_t	bs_multiplier;
 	uint16_t	bs_pad0;
-	int		bs_state;
-	int		bs_remotestate;
-	int		bs_laststate;
-	int		bs_error;
+	unsigned int	bs_state;
+	unsigned int	bs_remotestate;
+	unsigned int	bs_laststate;
+	unsigned int	bs_error;
 
 	/* add padding to reach a power of two */
 	uint64_t	bs_pad1;
@@ -118,11 +118,11 @@ struct bfd_neighbor {
 	uint32_t	bn_rminrx;		/* RemoteMinRxInterval */
 	uint32_t	bn_demand;		/* DemandMode */
 	uint32_t	bn_rdemand;		/* RemoteDemandMode */
-	uint32_t	bn_mult;		/* DetectMult */
 	uint32_t	bn_authtype;		/* AuthType */
 	uint32_t	bn_rauthseq;		/* RcvAuthSeq */
 	uint32_t	bn_lauthseq;		/* XmitAuthSeq */
 	uint32_t	bn_authseqknown;	/* AuthSeqKnown */
+	uint16_t	bn_mult;		/* DetectMult */
 };
 
 struct bfd_config {
@@ -141,15 +141,15 @@ struct bfd_config {
 	struct timeout		 bc_timo_rx;
 	struct timeout		 bc_timo_tx;
 	time_t			 bc_lastuptime;
-	int			 bc_laststate;
-	int			 bc_state;
-	int			 bc_mode;
-	int			 bc_poll;
-	int			 bc_error;
-	int			 bc_minrx;
-	int			 bc_mintx;
-	int			 bc_minecho;
-	int			 bc_multiplier;
+	unsigned int		 bc_laststate;
+	unsigned int		 bc_state;
+	unsigned int		 bc_poll;
+	unsigned int		 bc_error;
+	uint32_t		 bc_minrx;
+	uint32_t		 bc_mintx;
+	uint32_t		 bc_minecho;
+	uint16_t		 bc_multiplier;
+	uint16_t		 bc_mode;
 };
 
 struct sockaddr *bfd2sa(struct rtentry *, struct sockaddr_bfd *);

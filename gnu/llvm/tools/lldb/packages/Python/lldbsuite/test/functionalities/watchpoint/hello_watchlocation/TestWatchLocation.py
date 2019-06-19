@@ -33,28 +33,20 @@ class HelloWatchLocationTestCase(TestBase):
         self.exe_name = self.testMethodName
         self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
-    # Watchpoints not supported
-    @expectedFailureAndroid(archs=['arm', 'aarch64'])
     @expectedFailureAll(
         oslist=["windows"],
         bugnumber="llvm.org/pr24446: WINDOWS XFAIL TRIAGE - Watchpoints not supported on Windows")
     # Most of the MIPS boards provide only one H/W watchpoints, and S/W
     # watchpoints are not supported yet
     @expectedFailureAll(triple=re.compile('^mips'))
-    # SystemZ also currently supports only one H/W watchpoint
-    @expectedFailureAll(archs=['s390x'])
-    @expectedFailureAll(
-        oslist=["linux"],
-        archs=[
-            "arm",
-            "aarch64"],
-        bugnumber="llvm.org/pr27795")
+    # SystemZ and PowerPC also currently supports only one H/W watchpoint
+    @expectedFailureAll(archs=['powerpc64le', 's390x'])
     @skipIfDarwin
     def test_hello_watchlocation(self):
         """Test watching a location with '-s size' option."""
         self.build(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
-        exe = os.path.join(os.getcwd(), self.exe_name)
+        exe = self.getBuildArtifact(self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
 
         # Add a breakpoint to set a watchpoint when stopped on the breakpoint.

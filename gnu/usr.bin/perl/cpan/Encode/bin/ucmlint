@@ -1,19 +1,18 @@
 #!/usr/local/bin/perl
 #
-# $Id: ucmlint,v 2.2 2008/03/12 09:51:11 dankogai Exp $
+# $Id: ucmlint,v 2.4 2017/06/10 17:23:50 dankogai Exp $
 #
 
 BEGIN { pop @INC if $INC[-1] eq '.' }
 use strict;
-our  $VERSION = do { my @r = (q$Revision: 2.2 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our  $VERSION = do { my @r = (q$Revision: 2.4 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 use Getopt::Std;
 our %Opt;
 getopts("Dehfv", \%Opt);
 
 if ($Opt{e}){
-   eval{ require Encode; };
-   $@ and die "can't load Encode : $@";
+   eval { require Encode } or die "can't load Encode : $@";
 }
 
 $Opt{h} and help();

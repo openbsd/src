@@ -4,7 +4,7 @@ use strict;
 # This needs to be able to run from a clean checkout, hence assume only system
 # perl, which may be too old to have autodie
 
-require 'Porting/pod_lib.pl';
+require './Porting/pod_lib.pl';
 
 my $state = get_pod_metadata(1);
 my (undef, $old_major, $old_minor) = @{$state->{delta_version}};

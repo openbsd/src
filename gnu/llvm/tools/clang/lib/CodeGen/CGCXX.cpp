@@ -109,19 +109,8 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
       D->getType()->getAs<FunctionType>()->getCallConv())
     return true;
 
-  return TryEmitDefinitionAsAlias(GlobalDecl(D, Dtor_Base),
-                                  GlobalDecl(BaseD, Dtor_Base),
-                                  false);
-}
-
-/// Try to emit a definition as a global alias for another definition.
-/// If \p InEveryTU is true, we know that an equivalent alias can be produced
-/// in every translation unit.
-bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
-                                             GlobalDecl TargetDecl,
-                                             bool InEveryTU) {
-  if (!getCodeGenOpts().CXXCtorDtorAliases)
-    return true;
+  GlobalDecl AliasDecl(D, Dtor_Base);
+  GlobalDecl TargetDecl(BaseD, Dtor_Base);
 
   // The alias will use the linkage of the referent.  If we can't
   // support aliases with that linkage, fail.
@@ -133,11 +122,6 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
 
   llvm::GlobalValue::LinkageTypes TargetLinkage =
       getFunctionLinkage(TargetDecl);
-
-  // available_externally definitions aren't real definitions, so we cannot
-  // create an alias to one.
-  if (TargetLinkage == llvm::GlobalValue::AvailableExternallyLinkage)
-    return true;
 
   // Check if we have it already.
   StringRef MangledName = getMangledName(AliasDecl);
@@ -161,7 +145,14 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
 
   // Instead of creating as alias to a linkonce_odr, replace all of the uses
   // of the aliasee.
-  if (llvm::GlobalValue::isDiscardableIfUnused(Linkage)) {
+  if (llvm::GlobalValue::isDiscardableIfUnused(Linkage) &&
+      !(TargetLinkage == llvm::GlobalValue::AvailableExternallyLinkage &&
+        TargetDecl.getDecl()->hasAttr<AlwaysInlineAttr>())) {
+    // FIXME: An extern template instantiation will create functions with
+    // linkage "AvailableExternally". In libc++, some classes also define
+    // members with attribute "AlwaysInline" and expect no reference to
+    // be generated. It is desirable to reenable this optimisation after
+    // corresponding LLVM changes.
     addReplacement(MangledName, Aliasee);
     return false;
   }
@@ -176,13 +167,11 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
     return true;
   }
 
-  if (!InEveryTU) {
-    // If we don't have a definition for the destructor yet, don't
-    // emit.  We can't emit aliases to declarations; that's just not
-    // how aliases work.
-    if (Ref->isDeclaration())
-      return true;
-  }
+  // If we don't have a definition for the destructor yet or the definition is
+  // avaialable_externally, don't emit an alias.  We can't emit aliases to
+  // declarations; that's just not how aliases work.
+  if (Ref->isDeclarationForLinker())
+    return true;
 
   // Don't create an alias to a linker weak symbol. This avoids producing
   // different COMDATs in different TUs. Another option would be to
@@ -194,6 +183,9 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   // Create the alias with no name.
   auto *Alias = llvm::GlobalAlias::create(AliasValueType, 0, Linkage, "",
                                           Aliasee, &getModule());
+
+  // Destructors are always unnamed_addr.
+  Alias->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
 
   // Switch any previous uses to the alias.
   if (Entry) {
@@ -207,7 +199,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   }
 
   // Finally, set up the alias with its proper name and attributes.
-  setAliasAttributes(cast<NamedDecl>(AliasDecl.getDecl()), Alias);
+  SetCommonAttributes(AliasDecl, Alias);
 
   return false;
 }
@@ -229,10 +221,9 @@ llvm::Function *CodeGenModule::codegenCXXStructor(const CXXMethodDecl *MD,
   }
 
   setFunctionLinkage(GD, Fn);
-  setFunctionDLLStorageClass(GD, Fn);
 
   CodeGenFunction(*this).GenerateCode(GD, Fn, FnInfo);
-  setFunctionDefinitionAttributes(MD, Fn);
+  setNonAliasAttributes(GD, Fn);
   SetLLVMFunctionAttributesForDefinition(MD, Fn);
   return Fn;
 }
@@ -245,6 +236,11 @@ llvm::Constant *CodeGenModule::getAddrOfCXXStructor(
   if (auto *CD = dyn_cast<CXXConstructorDecl>(MD)) {
     GD = GlobalDecl(CD, toCXXCtorType(Type));
   } else {
+    // Always alias equivalent complete destructors to base destructors in the
+    // MS ABI.
+    if (getTarget().getCXXABI().isMicrosoft() &&
+        Type == StructorType::Complete && MD->getParent()->getNumVBases() == 0)
+      Type = StructorType::Base;
     GD = GlobalDecl(cast<CXXDestructorDecl>(MD), toCXXDtorType(Type));
   }
 
@@ -265,7 +261,6 @@ static CGCallee BuildAppleKextVirtualCall(CodeGenFunction &CGF,
                                           const CXXRecordDecl *RD) {
   assert(!CGF.CGM.getTarget().getCXXABI().isMicrosoft() &&
          "No kext in Microsoft ABI");
-  GD = GD.getCanonicalDecl();
   CodeGenModule &CGM = CGF.CGM;
   llvm::Value *VTable = CGM.getCXXABI().getAddrOfVTable(RD, CharUnits());
   Ty = Ty->getPointerTo()->getPointerTo();
@@ -281,7 +276,7 @@ static CGCallee BuildAppleKextVirtualCall(CodeGenFunction &CGF,
     CGF.Builder.CreateConstInBoundsGEP1_64(VTable, VTableIndex, "vfnkxt");
   llvm::Value *VFunc =
     CGF.Builder.CreateAlignedLoad(VFuncPtr, CGF.PointerAlignInBytes);
-  CGCallee Callee(GD.getDecl(), VFunc);
+  CGCallee Callee(GD.getDecl()->getCanonicalDecl(), VFunc);
   return Callee;
 }
 
@@ -289,12 +284,12 @@ static CGCallee BuildAppleKextVirtualCall(CodeGenFunction &CGF,
 /// indirect call to virtual functions. It makes the call through indexing
 /// into the vtable.
 CGCallee
-CodeGenFunction::BuildAppleKextVirtualCall(const CXXMethodDecl *MD, 
+CodeGenFunction::BuildAppleKextVirtualCall(const CXXMethodDecl *MD,
                                            NestedNameSpecifier *Qual,
                                            llvm::Type *Ty) {
   assert((Qual->getKind() == NestedNameSpecifier::TypeSpec) &&
          "BuildAppleKextVirtualCall - bad Qual kind");
-  
+
   const Type *QTy = Qual->getAsType();
   QualType T = QualType(QTy, 0);
   const RecordType *RT = T->getAs<RecordType>();

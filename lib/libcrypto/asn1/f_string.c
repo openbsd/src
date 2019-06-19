@@ -1,4 +1,4 @@
-/* $OpenBSD: f_string.c,v 1.17 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: f_string.c,v 1.18 2018/04/25 11:48:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,7 @@
 #include <openssl/err.h>
 
 int
-i2a_ASN1_STRING(BIO *bp, ASN1_STRING *a, int type)
+i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)
 {
 	int i, n = 0;
 	static const char h[] = "0123456789ABCDEF";

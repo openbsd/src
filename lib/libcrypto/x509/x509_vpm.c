@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.17 2018/03/22 15:54:46 beck Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.18 2018/04/06 07:08:20 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -125,7 +125,7 @@ sk_deep_copy(void *sk_void, void *copy_func_void, void *free_func_void)
 }
 
 static int
-int_x509_param_set_hosts(X509_VERIFY_PARAM_ID *id, int mode,
+x509_param_set_hosts_internal(X509_VERIFY_PARAM_ID *id, int mode,
     const char *name, size_t namelen)
 {
 	char *copy;
@@ -134,7 +134,6 @@ int_x509_param_set_hosts(X509_VERIFY_PARAM_ID *id, int mode,
 		namelen = strlen(name);
 	/*
 	 * Refuse names with embedded NUL bytes.
-	 * XXX: Do we need to push an error onto the error stack?
 	 */
 	if (name && memchr(name, '\0', namelen))
 		return 0;
@@ -197,6 +196,7 @@ x509_verify_param_zero(X509_VERIFY_PARAM *param)
 	free(paramid->ip);
 	paramid->ip = NULL;
 	paramid->iplen = 0;
+	paramid->poisoned = 0;
 }
 
 X509_VERIFY_PARAM *
@@ -367,24 +367,28 @@ X509_VERIFY_PARAM_set1(X509_VERIFY_PARAM *to, const X509_VERIFY_PARAM *from)
 }
 
 static int
-int_x509_param_set1(char **pdest, size_t *pdestlen,  const char *src,
-    size_t srclen)
+x509_param_set1_internal(char **pdest, size_t *pdestlen,  const char *src,
+    size_t srclen, int nonul)
 {
 	char *tmp;
-	if (src) {
-		if (srclen == 0) {
-			if ((tmp = strdup(src)) == NULL)
-				return 0;
-			srclen = strlen(src);
-		} else {
-			if ((tmp = malloc(srclen)) == NULL)
-				return 0;
-			memcpy(tmp, src, srclen);
-		}
+
+	if (src == NULL)
+		return 0;
+
+	if (srclen == 0) {
+		srclen = strlen(src);
+		if (srclen == 0)
+			return 0;
+		if ((tmp = strdup(src)) == NULL)
+			return 0;
 	} else {
-		tmp = NULL;
-		srclen = 0;
+		if (nonul && memchr(src, '\0', srclen))
+			return 0;
+		if ((tmp = malloc(srclen)) == NULL)
+			return 0;
+		memcpy(tmp, src, srclen);
 	}
+
 	if (*pdest)
 		free(*pdest);
 	*pdest = tmp;
@@ -505,14 +509,20 @@ int
 X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
     const char *name, size_t namelen)
 {
-	return int_x509_param_set_hosts(param->id, SET_HOST, name, namelen);
+	if (x509_param_set_hosts_internal(param->id, SET_HOST, name, namelen))
+		return 1;
+	param->id->poisoned = 1;
+	return 0;
 }
 
 int
 X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
     const char *name, size_t namelen)
 {
-	return int_x509_param_set_hosts(param->id, ADD_HOST, name, namelen);
+	if (x509_param_set_hosts_internal(param->id, ADD_HOST, name, namelen))
+		return 1;
+	param->id->poisoned = 1;
+	return 0;
 }
 
 void
@@ -531,18 +541,25 @@ int
 X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,  const char *email,
     size_t emaillen)
 {
-	return int_x509_param_set1(&param->id->email, &param->id->emaillen,
-	    email, emaillen);
+	if (x509_param_set1_internal(&param->id->email, &param->id->emaillen,
+	    email, emaillen, 1))
+		return 1;
+	param->id->poisoned = 1;
+	return 0;
 }
 
 int
 X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param, const unsigned char *ip,
     size_t iplen)
 {
-	if (iplen != 0 && iplen != 4 && iplen != 16)
-		return 0;
-	return int_x509_param_set1((char **)&param->id->ip, &param->id->iplen,
-	    (char *)ip, iplen);
+	if (iplen != 4 && iplen != 16)
+		goto err;
+	if (x509_param_set1_internal((char **)&param->id->ip, &param->id->iplen,
+		(char *)ip, iplen, 0))
+		return 1;
+ err:
+	param->id->poisoned = 1;
+	return 0;
 }
 
 int
@@ -552,8 +569,6 @@ X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc)
 	size_t iplen;
 
 	iplen = (size_t)a2i_ipadd(ipout, ipasc);
-	if (iplen == 0)
-		return 0;
 	return X509_VERIFY_PARAM_set1_ip(param, ipout, iplen);
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.29 2016/06/14 15:41:31 espie Exp $
+# $OpenBSD: Search.pm,v 1.30 2018/04/25 09:45:30 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -239,8 +239,14 @@ sub {
 			if ($f->pkgname->flavor_string ne $e->pkgname->flavor_string) {
 				next;
 			}
+			# unsigned packages will break here
+			my $u = $e->update_info;
+			if (!defined $u) {
+				$keep = 0;
+				last;
+			}
 			# okay, now we need to prove there's a common pkgpath
-			if (!$e->update_info->match_pkgpath($f->update_info)) {
+			if (!$u->match_pkgpath($f->update_info)) {
 				next;
 			}
 

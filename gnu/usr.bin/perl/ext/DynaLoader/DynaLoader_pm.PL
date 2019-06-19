@@ -65,7 +65,7 @@ sub expand_os_specific {
 }
 
 unlink "DynaLoader.pm" if -f "DynaLoader.pm";
-open OUT, ">DynaLoader.pm" or die $!;
+open OUT, '>', "DynaLoader.pm" or die $!;
 print OUT <<'EOT';
 
 # Generated from DynaLoader_pm.PL, this file is unique for every OS
@@ -85,7 +85,7 @@ package DynaLoader;
 # Tim.Bunce@ig.co.uk, August 1994
 
 BEGIN {
-    $VERSION = '1.38';
+    $VERSION = '1.45';
 }
 
 EOT
@@ -373,7 +373,7 @@ sub bootstrap {
     $bs =~ s/(\.\w+)?(;\d*)?$/\.bs/; # look for .bs 'beside' the library
     if (-s $bs) { # only read file if it's not empty
         print STDERR "BS: $bs ($^O, $dlsrc)\n" if $dl_debug;
-        eval { do $bs; };
+        eval { local @INC = ('.'); do $bs; };
         warn "$bs: $@\n" if $@;
     }
 
@@ -454,7 +454,7 @@ sub dl_findfile {
 
         # Deal with directories first:
         #  Using a -L prefix is the preferred option (faster and more robust)
-        if (m:^-L:) { s/^-L//; push(@dirs, $_); next; }
+        if ( s{^-L}{} ) { push(@dirs, $_); next; }
 
         #  Otherwise we try to try to spot directories by a heuristic
         #  (this is a more complicated issue than it first appears)
@@ -468,10 +468,8 @@ sub dl_findfile {
 
         #  Only files should get this far...
         my(@names, $name);    # what filenames to look for
-        if (m:-l: ) {          # convert -lname to appropriate library name
-            s/-l//;
-            push(@names,"lib$_.$dl_so");
-            push(@names,"lib$_.a");
+        if ( s{^-l}{} ) {          # convert -lname to appropriate library name
+            push(@names, "lib$_.$dl_so", "lib$_.a");
         } else {                # Umm, a bare name. Try various alternatives:
             # these should be ordered with the most likely first
             push(@names,"$_.$dl_dlext")    unless m/\.$dl_dlext$/o;
@@ -566,7 +564,7 @@ DynaLoader - Dynamically load C libraries into Perl code
     package YourPackage;
     require DynaLoader;
     @ISA = qw(... DynaLoader ...);
-    bootstrap YourPackage;
+    __PACKAGE__->bootstrap;
 
     # optional method for 'global' loading
     sub dl_load_flags { 0x01 }     

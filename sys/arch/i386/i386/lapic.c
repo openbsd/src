@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.43 2018/03/22 19:30:18 bluhm Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.47 2018/07/30 14:19:12 kettenis Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -55,6 +55,14 @@
 
 #include <dev/ic/i8253reg.h>
 
+/* #define LAPIC_DEBUG */
+
+#ifdef LAPIC_DEBUG
+#define DPRINTF(x...)	do { printf(x); } while(0)
+#else
+#define DPRINTF(x...)
+#endif /* LAPIC_DEBUG */
+
 struct evcount clk_count;
 #ifdef MULTIPROCESSOR
 struct evcount ipi_count;
@@ -69,15 +77,16 @@ void	lapic_map(paddr_t);
 void
 lapic_map(paddr_t lapic_base)
 {
-	int s;
 	vaddr_t va = (vaddr_t)&local_apic;
+	u_long s;
+	int tpr;
 
-	disable_intr();
-	s = lapic_tpr;
+	s = intr_disable();
+	tpr = lapic_tpr;
 
 	/*
 	 * Map local apic.  If we have a local apic, it's safe to assume
-	 * we're on a 486 or better and can use invlpg and non-cacheable PTE's
+	 * we're on a 486 or better and can use invlpg and non-cacheable PTEs
 	 *
 	 * Whap the PTE "by hand" rather than calling pmap_kenter_pa because
 	 * the latter will attempt to invoke TLB shootdown code just as we
@@ -87,12 +96,16 @@ lapic_map(paddr_t lapic_base)
 	pmap_pte_set(va, lapic_base, PG_RW | PG_V | PG_N);
 	invlpg(va);
 
+	pmap_enter_special(va, lapic_base, PROT_READ | PROT_WRITE, PG_N);
+	DPRINTF("%s: entered lapic page va 0x%08lx pa 0x%08lx\n", __func__,
+	    va, lapic_base);
+
 #ifdef MULTIPROCESSOR
 	cpu_init_first();
 #endif
 
-	lapic_tpr = s;
-	enable_intr();
+	lapic_tpr = tpr;
+	intr_restore(s);
 }
 
 /*
@@ -127,9 +140,9 @@ lapic_set_lvt(void)
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
-		apic_format_redir(ci->ci_dev.dv_xname, "prelint", 0, 0,
+		apic_format_redir(ci->ci_dev->dv_xname, "prelint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir(ci->ci_dev.dv_xname, "prelint", 1, 0,
+		apic_format_redir(ci->ci_dev->dv_xname, "prelint", 1, 0,
 		    i82489_readreg(LAPIC_LVINT1));
 	}
 #endif
@@ -177,15 +190,15 @@ lapic_set_lvt(void)
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
-		apic_format_redir(ci->ci_dev.dv_xname, "timer", 0, 0,
+		apic_format_redir(ci->ci_dev->dv_xname, "timer", 0, 0,
 		    i82489_readreg(LAPIC_LVTT));
-		apic_format_redir(ci->ci_dev.dv_xname, "pcint", 0, 0,
+		apic_format_redir(ci->ci_dev->dv_xname, "pcint", 0, 0,
 		    i82489_readreg(LAPIC_PCINT));
-		apic_format_redir(ci->ci_dev.dv_xname, "lint", 0, 0,
+		apic_format_redir(ci->ci_dev->dv_xname, "lint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir(ci->ci_dev.dv_xname, "lint", 1, 0,
+		apic_format_redir(ci->ci_dev->dv_xname, "lint", 1, 0,
 		    i82489_readreg(LAPIC_LVINT1));
-		apic_format_redir(ci->ci_dev.dv_xname, "err", 0, 0,
+		apic_format_redir(ci->ci_dev->dv_xname, "err", 0, 0,
 		    i82489_readreg(LAPIC_LVERR));
 	}
 #endif
@@ -304,10 +317,11 @@ lapic_calibrate_timer(struct cpu_info *ci)
 {
 	unsigned int startapic, endapic;
 	u_int64_t dtick, dapic, tmp;
-	int i, ef = read_eflags();
+	u_long s;
+	int i;
 
 	if (mp_verbose)
-		printf("%s: calibrating local timer\n", ci->ci_dev.dv_xname);
+		printf("%s: calibrating local timer\n", ci->ci_dev->dv_xname);
 
 	/*
 	 * Configure timer to one-shot, interrupt masked,
@@ -317,7 +331,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
 	i82489_writereg(LAPIC_ICR_TIMER, 0x80000000);
 
-	disable_intr();
+	s = intr_disable();
 
 	/* wait for current cycle to finish */
 	wait_next_cycle();
@@ -329,7 +343,8 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		wait_next_cycle();
 
 	endapic = lapic_gettick();
-	write_eflags(ef);
+
+	intr_restore(s);
 
 	dtick = hz * TIMER_DIV(hz);
 	dapic = startapic-endapic;
@@ -343,7 +358,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	lapic_per_second = tmp;
 
 	printf("%s: apic clock running at %lldMHz\n",
-	    ci->ci_dev.dv_xname, tmp / (1000 * 1000));
+	    ci->ci_dev->dv_xname, tmp / (1000 * 1000));
 
 	if (lapic_per_second != 0) {
 		/*

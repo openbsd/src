@@ -1,0 +1,28 @@
+.\" $OpenBSD: invalid.in,v 1.1 2018/12/15 19:30:20 schwarze Exp $
+.TH ESC-INVALID 1 "December 15, 2018"
+.SH NAME
+esc-invalid \- invalid roff escape sequences
+.SH DESCRIPTION
+.nf
+plus: a\+b\[+]c
+semicolon: a\;b\[;]c
+less than: a\<b\[<]c
+equal to: a\=b\[=]c
+greater than: a\>b\[>]c
+at: a\@b\[@]c
+square bracket: a\]b
+curly braces: a\[{]b\[}]c
+digit: a\1b\[1]c
+G: a\Gb\[G]c
+I: a\Ib\[I]c
+i: a\ib\[i]c
+J: a\Jb\[J]c
+j: a\jb\[j]c
+K: a\Kb\[K]c
+P: a\Pb\[P]c
+Q: a\Qb\[Q]c
+q: a\qb\[q]c
+T: a\Tb\[T]c
+U: a\Ub\[U]c
+W: a\Wb\[W]c
+y: a\yb\[y]c

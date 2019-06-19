@@ -1,4 +1,4 @@
-#	$OpenBSD: regress.t,v 1.3 2016/09/27 15:35:34 bluhm Exp $
+#	$OpenBSD: regress.t,v 1.4 2018/04/24 10:27:25 kn Exp $
 
 #
 # The first 39 of these tests are from the old Bugs script.
@@ -1109,4 +1109,15 @@ expected-stdout:
 	there
 expected-stderr-pattern:
 	/^YYXXY$/m
+---
+
+name: regression-64
+description:
+	Check whether time keeps the pipeline's stack intact.
+stdin:
+	time for i in _ ; do echo body ; done
+expected-stdout:
+	body
+expected-stderr-pattern:
+	!/^\s*0\.0[\s\d]+real|^\s*real[\s]+0+\.0/
 ---

@@ -15,7 +15,7 @@
 #define LLVM_LIB_TARGET_BPF_BPFINSTRINFO_H
 
 #include "BPFRegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "BPFGenInstrInfo.inc"
@@ -33,6 +33,8 @@ public:
   void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                    const DebugLoc &DL, unsigned DestReg, unsigned SrcReg,
                    bool KillSrc) const override;
+
+  bool expandPostRAPseudo(MachineInstr &MI) const override;
 
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI, unsigned SrcReg,
@@ -55,6 +57,9 @@ public:
                         MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
                         const DebugLoc &DL,
                         int *BytesAdded = nullptr) const override;
+private:
+  void expandMEMCPY(MachineBasicBlock::iterator) const;
+
 };
 }
 

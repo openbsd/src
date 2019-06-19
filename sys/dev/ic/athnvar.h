@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.37 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.39 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -408,6 +408,9 @@ struct athn_ops {
 	void	(*disable_phy)(struct athn_softc *);
 	void	(*set_rxchains)(struct athn_softc *);
 	void	(*noisefloor_calib)(struct athn_softc *);
+	void	(*init_noisefloor_calib)(struct athn_softc *);
+	int	(*get_noisefloor)(struct athn_softc *);
+	void	(*apply_noisefloor)(struct athn_softc *);
 	void	(*do_calib)(struct athn_softc *);
 	void	(*next_calib)(struct athn_softc *);
 	void	(*hw_init)(struct athn_softc *, struct ieee80211_channel *,
@@ -494,6 +497,7 @@ struct athn_softc {
 	int8_t				pdadc;
 	int8_t				tcomp;
 	int				olpc_ticks;
+	int				iqcal_ticks;
 
 	/* PA predistortion. */
 	uint16_t			gain1[AR_MAX_CHAINS];
@@ -549,14 +553,16 @@ struct athn_softc {
 	int16_t				cca_max_2g;
 	int16_t				cca_min_5g;
 	int16_t				cca_max_5g;
-	int16_t				def_nf;
 	struct {
 		int16_t	nf[AR_MAX_CHAINS];
 		int16_t	nf_ext[AR_MAX_CHAINS];
 	}				nf_hist[ATHN_NF_CAL_HIST_MAX];
 	int				nf_hist_cur;
+	int				nf_hist_nvalid;
 	int16_t				nf_priv[AR_MAX_CHAINS];
 	int16_t				nf_ext_priv[AR_MAX_CHAINS];
+	int				nf_calib_pending;
+	int				nf_calib_ticks;
 	int				pa_calib_ticks;
 
 	struct athn_calib		calib;

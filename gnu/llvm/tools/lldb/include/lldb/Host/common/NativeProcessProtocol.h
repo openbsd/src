@@ -10,8 +10,12 @@
 #ifndef liblldb_NativeProcessProtocol_h_
 #define liblldb_NativeProcessProtocol_h_
 
+#include "NativeBreakpointList.h"
+#include "NativeThreadProtocol.h"
+#include "NativeWatchpointList.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/MainLoop.h"
+#include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/Status.h"
 #include "lldb/Utility/TraceOptions.h"
 #include "lldb/lldb-private-forward.h"
@@ -22,9 +26,6 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <vector>
-
-#include "NativeBreakpointList.h"
-#include "NativeWatchpointList.h"
 
 namespace lldb_private {
 class MemoryRegionInfo;
@@ -68,8 +69,8 @@ public:
   virtual Status Kill() = 0;
 
   //------------------------------------------------------------------
-  // Tells a process not to stop the inferior on given signals
-  // and just reinject them back.
+  // Tells a process not to stop the inferior on given signals and just
+  // reinject them back.
   //------------------------------------------------------------------
   virtual Status IgnoreSignals(llvm::ArrayRef<int> signals);
 
@@ -100,7 +101,7 @@ public:
 
   virtual size_t UpdateThreads() = 0;
 
-  virtual bool GetArchitecture(ArchSpec &arch) const = 0;
+  virtual const ArchSpec &GetArchitecture() const = 0;
 
   //----------------------------------------------------------------------
   // Breakpoint functions
@@ -151,7 +152,9 @@ public:
 
   bool CanResume() const { return m_state == lldb::eStateStopped; }
 
-  bool GetByteOrder(lldb::ByteOrder &byte_order) const;
+  lldb::ByteOrder GetByteOrder() const {
+    return GetArchitecture().GetByteOrder();
+  }
 
   virtual llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>>
   GetAuxvData() const = 0;
@@ -166,15 +169,15 @@ public:
   //----------------------------------------------------------------------
   // Access to threads
   //----------------------------------------------------------------------
-  NativeThreadProtocolSP GetThreadAtIndex(uint32_t idx);
+  NativeThreadProtocol *GetThreadAtIndex(uint32_t idx);
 
-  NativeThreadProtocolSP GetThreadByID(lldb::tid_t tid);
+  NativeThreadProtocol *GetThreadByID(lldb::tid_t tid);
 
   void SetCurrentThreadID(lldb::tid_t tid) { m_current_thread_id = tid; }
 
   lldb::tid_t GetCurrentThreadID() { return m_current_thread_id; }
 
-  NativeThreadProtocolSP GetCurrentThread() {
+  NativeThreadProtocol *GetCurrentThread() {
     return GetThreadByID(m_current_thread_id);
   }
 
@@ -401,7 +404,7 @@ public:
 protected:
   lldb::pid_t m_pid;
 
-  std::vector<NativeThreadProtocolSP> m_threads;
+  std::vector<std::unique_ptr<NativeThreadProtocol>> m_threads;
   lldb::tid_t m_current_thread_id = LLDB_INVALID_THREAD_ID;
   mutable std::recursive_mutex m_threads_mutex;
 
@@ -418,33 +421,30 @@ protected:
   int m_terminal_fd;
   uint32_t m_stop_id = 0;
 
-  // Set of signal numbers that LLDB directly injects back to inferior
-  // without stopping it.
+  // Set of signal numbers that LLDB directly injects back to inferior without
+  // stopping it.
   llvm::DenseSet<int> m_signals_to_ignore;
 
   // lldb_private::Host calls should be used to launch a process for debugging,
-  // and
-  // then the process should be attached to. When attaching to a process
-  // lldb_private::Host calls should be used to locate the process to attach to,
-  // and then this function should be called.
+  // and then the process should be attached to. When attaching to a process
+  // lldb_private::Host calls should be used to locate the process to attach
+  // to, and then this function should be called.
   NativeProcessProtocol(lldb::pid_t pid, int terminal_fd,
                         NativeDelegate &delegate);
 
-  // -----------------------------------------------------------
-  // Internal interface for state handling
+  // ----------------------------------------------------------- Internal
+  // interface for state handling
   // -----------------------------------------------------------
   void SetState(lldb::StateType state, bool notify_delegates = true);
 
-  // Derived classes need not implement this.  It can be used as a
-  // hook to clear internal caches that should be invalidated when
-  // stop ids change.
+  // Derived classes need not implement this.  It can be used as a hook to
+  // clear internal caches that should be invalidated when stop ids change.
   //
-  // Note this function is called with the state mutex obtained
-  // by the caller.
+  // Note this function is called with the state mutex obtained by the caller.
   virtual void DoStopIDBumped(uint32_t newBumpId);
 
-  // -----------------------------------------------------------
-  // Internal interface for software breakpoints
+  // ----------------------------------------------------------- Internal
+  // interface for software breakpoints
   // -----------------------------------------------------------
   Status SetSoftwareBreakpoint(lldb::addr_t addr, uint32_t size_hint);
 
@@ -461,12 +461,7 @@ protected:
   // -----------------------------------------------------------
   void NotifyDidExec();
 
-  NativeThreadProtocolSP GetThreadByIDUnlocked(lldb::tid_t tid);
-
-  // -----------------------------------------------------------
-  // Static helper methods for derived classes.
-  // -----------------------------------------------------------
-  static Status ResolveProcessArchitecture(lldb::pid_t pid, ArchSpec &arch);
+  NativeThreadProtocol *GetThreadByIDUnlocked(lldb::tid_t tid);
 
 private:
   void SynchronouslyNotifyProcessStateChanged(lldb::StateType state);

@@ -20,11 +20,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "MapFile.h"
-#include "Error.h"
 #include "SymbolTable.h"
 #include "Symbols.h"
 #include "Writer.h"
-
+#include "lld/Common/ErrorHandler.h"
 #include "llvm/Support/Parallel.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -37,20 +36,21 @@ using namespace lld::coff;
 typedef DenseMap<const SectionChunk *, SmallVector<DefinedRegular *, 4>>
     SymbolMapTy;
 
+static const std::string Indent8 = "        ";          // 8 spaces
+static const std::string Indent16 = "                "; // 16 spaces
+
 // Print out the first three columns of a line.
 static void writeHeader(raw_ostream &OS, uint64_t Addr, uint64_t Size,
                         uint64_t Align) {
   OS << format("%08llx %08llx %5lld ", Addr, Size, Align);
 }
 
-static std::string indent(int Depth) { return std::string(Depth * 8, ' '); }
-
 // Returns a list of all symbols that we want to print out.
 static std::vector<DefinedRegular *> getSymbols() {
   std::vector<DefinedRegular *> V;
-  for (coff::ObjectFile *File : Symtab->ObjectFiles)
-    for (SymbolBody *B : File->getSymbols())
-      if (auto *Sym = dyn_cast<DefinedRegular>(B))
+  for (ObjFile *File : ObjFile::Instances)
+    for (Symbol *B : File->getSymbols())
+      if (auto *Sym = dyn_cast_or_null<DefinedRegular>(B))
         if (Sym && !Sym->getCOFFSymbol().isSectionDefinition())
           V.push_back(Sym);
   return V;
@@ -79,7 +79,7 @@ getSymbolStrings(ArrayRef<DefinedRegular *> Syms) {
   for_each_n(parallel::par, (size_t)0, Syms.size(), [&](size_t I) {
     raw_string_ostream OS(Str[I]);
     writeHeader(OS, Syms[I]->getRVA(), 0, 0);
-    OS << indent(2) << toString(*Syms[I]);
+    OS << Indent16 << toString(*Syms[I]);
   });
 
   DenseMap<DefinedRegular *, std::string> Ret;
@@ -108,15 +108,15 @@ void coff::writeMapFile(ArrayRef<OutputSection *> OutputSections) {
   // Print out file contents.
   for (OutputSection *Sec : OutputSections) {
     writeHeader(OS, Sec->getRVA(), Sec->getVirtualSize(), /*Align=*/PageSize);
-    OS << Sec->getName() << '\n';
+    OS << Sec->Name << '\n';
 
     for (Chunk *C : Sec->getChunks()) {
       auto *SC = dyn_cast<SectionChunk>(C);
       if (!SC)
         continue;
 
-      writeHeader(OS, SC->getRVA(), SC->getSize(), SC->getAlign());
-      OS << indent(1) << SC->File->getName() << ":(" << SC->getSectionName()
+      writeHeader(OS, SC->getRVA(), SC->getSize(), SC->Alignment);
+      OS << Indent8 << SC->File->getName() << ":(" << SC->getSectionName()
          << ")\n";
       for (DefinedRegular *Sym : SectionSyms[SC])
         OS << SymStr[Sym] << '\n';

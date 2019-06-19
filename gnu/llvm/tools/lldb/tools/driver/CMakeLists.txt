@@ -1,5 +1,3 @@
-include(${LLDB_PROJECT_ROOT}/cmake/LLDBDependencies.cmake)
-
 if ((CMAKE_SYSTEM_NAME MATCHES "Windows") OR
     (CMAKE_SYSTEM_NAME MATCHES "NetBSD" ))
   # These targets do not have getopt support, so they rely on the one provided by
@@ -26,12 +24,4 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
   add_definitions( -DIMPORT_LIBLLDB )
 endif()
 
-# Add lldb dependency on lldb-server if we can use it.
-if ( LLDB_CAN_USE_LLDB_SERVER )
-  add_dependencies(lldb lldb-server)
-endif()
-
-# Add lldb dependency on debugserver if we can use it.
-if ( LLDB_CAN_USE_DEBUGSERVER )
-  add_dependencies(lldb debugserver)
-endif()
+add_dependencies(lldb ${LLDB_SUITE_TARGET})

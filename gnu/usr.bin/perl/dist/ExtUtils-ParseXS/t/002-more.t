@@ -17,6 +17,7 @@ require_ok( 'ExtUtils::ParseXS' );
 ExtUtils::ParseXS->import('process_file');
 
 chdir 't' if -d 't';
+push @INC, '.';
 
 use Carp; $SIG{__WARN__} = \&Carp::cluck;
 

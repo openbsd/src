@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf6.c,v 1.9 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-ospf6.c,v 1.10 2018/10/22 16:12:45 kn Exp $	*/
 
 
 /*
@@ -23,8 +23,6 @@
  *
  * OSPF support contributed by Jeffrey Honig (jch@mitchell.cit.cornell.edu)
  */
-
-#ifdef INET6
 
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -657,5 +655,3 @@ ospf6_print(const u_char *bp, u_int length)
 trunc:
 	fputs(tstr, stdout);
 }
-
-#endif /* INET6 */

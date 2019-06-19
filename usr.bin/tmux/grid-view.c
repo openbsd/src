@@ -1,4 +1,4 @@
-/* $OpenBSD: grid-view.c,v 1.30 2017/08/30 18:13:47 nicm Exp $ */
+/* $OpenBSD: grid-view.c,v 1.31 2018/07/04 09:44:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -64,7 +64,7 @@ grid_view_clear_history(struct grid *gd, u_int bg)
 	/* Find the last used line. */
 	last = 0;
 	for (yy = 0; yy < gd->sy; yy++) {
-		gl = &gd->linedata[grid_view_y(gd, yy)];
+		gl = grid_get_line(gd, grid_view_y(gd, yy));
 		if (gl->cellused != 0)
 			last = yy + 1;
 	}

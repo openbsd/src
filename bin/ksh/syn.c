@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.38 2015/12/30 09:07:00 tedu Exp $	*/
+/*	$OpenBSD: syn.c,v 1.39 2018/04/24 08:25:16 kn Exp $	*/
 
 /*
  * shell parser (C version)
@@ -365,9 +365,13 @@ get_command(int cf)
 		syniocf &= ~(KEYWORD|ALIAS);
 		t = pipeline(0);
 		if (t) {
-			t->str = alloc(2, ATEMP);
-			t->str[0] = '\0'; /* TF_* flags */
-			t->str[1] = '\0';
+			if (t->str) {
+				t->str = str_save(t->str, ATEMP);
+			} else {
+				t->str = alloc(2, ATEMP);
+				t->str[0] = '\0'; /* TF_* flags */
+				t->str[1] = '\0';
+			}
 		}
 		t = block(TTIME, t, NULL, NULL);
 		break;

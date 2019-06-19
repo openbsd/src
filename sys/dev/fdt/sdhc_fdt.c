@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.2 2017/05/06 16:25:48 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.3 2018/08/06 10:52:30 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -84,7 +84,7 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 	clock_enable_all(faa->fa_node);
 	reset_deassert_all(faa->fa_node);
 
-	sc->sc_ih = arm_intr_establish_fdt(faa->fa_node, IPL_BIO,
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
 	    sdhc_intr, sc, sc->sc.sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt\n");

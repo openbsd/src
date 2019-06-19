@@ -242,23 +242,22 @@ RunPerl(int argc, char **argv, char **env)
     if (use_environ)
         env = environ;
 
-    exitstatus = perl_parse(my_perl, xs_init, argc, argv, env);
-    if (!exitstatus) {
+    if (!perl_parse(my_perl, xs_init, argc, argv, env)) {
 #if defined(TOP_CLONE) && defined(USE_ITHREADS)		/* XXXXXX testing */
 	new_perl = perl_clone(my_perl, 1);
-	exitstatus = perl_run(new_perl);
+	(void) perl_run(new_perl);
 	PERL_SET_THX(my_perl);
 #else
-	exitstatus = perl_run(my_perl);
+	(void) perl_run(my_perl);
 #endif
     }
 
-    perl_destruct(my_perl);
+    exitstatus = perl_destruct(my_perl);
     perl_free(my_perl);
 #ifdef USE_ITHREADS
     if (new_perl) {
 	PERL_SET_THX(new_perl);
-	perl_destruct(new_perl);
+	exitstatus = perl_destruct(new_perl);
 	perl_free(new_perl);
     }
 #endif

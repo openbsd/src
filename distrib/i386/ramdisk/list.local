@@ -1,8 +1,0 @@
-# $OpenBSD: list.local,v 1.2 2016/12/30 22:32:25 deraadt Exp $
-
-LINK	instbin					sbin/fsck_msdos
-LINK	instbin					sbin/mount_msdos
-
-LINK	instbin					usr/bin/ftp
-
-#TZ

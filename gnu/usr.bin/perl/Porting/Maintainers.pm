@@ -13,16 +13,15 @@ use lib "Porting";
 use 5.008;
 
 require "Maintainers.pl";
-use vars qw(%Modules %Maintainers);
+our (%Modules, %Maintainers);
 
-use vars qw(@ISA @EXPORT_OK $VERSION);
-@ISA = qw(Exporter);
-@EXPORT_OK = qw(%Modules %Maintainers
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(%Modules %Maintainers
 		get_module_files get_module_pat
 		show_results process_options files_to_modules
 		finish_tap_output
 		reload_manifest);
-$VERSION = 0.10;
+our $VERSION = 0.13;
 
 require Exporter;
 
@@ -41,7 +40,7 @@ sub reload_manifest {
         $manifest_path = "../MANIFEST";
     }
 
-    if (open(my $manfh,  $manifest_path )) {
+    if (open(my $manfh,  '<', $manifest_path )) {
 	while (<$manfh>) {
 	    if (/^(\S+)/) {
 		$MANIFEST{$1}++;
@@ -356,7 +355,7 @@ sub duplicated_maintainers {
 
 sub warn_maintainer {
     my $name = shift;
-    ok($files{$name}, "$name has a maintainer");
+    ok($files{$name}, "$name has a maintainer (see Porting/Maintainer.pl)");
 }
 
 sub missing_maintainers {

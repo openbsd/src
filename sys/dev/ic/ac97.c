@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.83 2017/08/22 10:41:59 mestre Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.84 2018/04/11 04:48:31 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -337,7 +337,6 @@ void	ac97_unlock(struct ac97_codec_if *);
 int	ac97_query_devinfo(struct ac97_codec_if *, mixer_devinfo_t *);
 int	ac97_get_portnum_by_name(struct ac97_codec_if *, char *, char *,
 	    char *);
-void	ac97_restore_shadow(struct ac97_codec_if *);
 int	ac97_set_rate(struct ac97_codec_if *codec_if, int target, u_long *rate);
 void	ac97_set_clock(struct ac97_codec_if *codec_if, unsigned int clock);
 u_int16_t ac97_get_extcaps(struct ac97_codec_if *codec_if);
@@ -355,7 +354,6 @@ struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_set_port,
 	ac97_query_devinfo,
 	ac97_get_portnum_by_name,
-	ac97_restore_shadow,
 	ac97_get_extcaps,
 	ac97_set_rate,
 	ac97_set_clock,
@@ -643,19 +641,6 @@ ac97_setup_defaults(struct ac97_softc *as)
 		const struct ac97_source_info *si = &source_info[idx];
 
 		ac97_write(as, si->reg, si->default_value);
-	}
-}
-
-void
-ac97_restore_shadow(struct ac97_codec_if *self)
-{
-	struct ac97_softc *as = (struct ac97_softc *)self;
-	int idx;
-
-	for (idx = 0; idx < nitems(source_info); idx++) {
-		const struct ac97_source_info *si = &source_info[idx];
-
-		ac97_write(as, si->reg, as->shadow_reg[si->reg >> 1]);
 	}
 }
 
@@ -966,8 +951,6 @@ ac97_resume(struct ac97_host_if *host_if, struct ac97_codec_if *codec_if)
 	host_if->write(host_if->arg, AC97_REG_POWER, 0);
 	host_if->write(host_if->arg, AC97_REG_RESET, 0);
 	DELAY(10000);
-
-	codec_if->vtbl->restore_ports(codec_if);
 
 	if (as->ext_id & (AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_DRA
 			  | AC97_EXT_AUDIO_SPDIF | AC97_EXT_AUDIO_VRM

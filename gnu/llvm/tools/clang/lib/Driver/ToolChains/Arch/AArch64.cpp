@@ -20,14 +20,12 @@ using namespace clang;
 using namespace llvm::opt;
 
 /// getAArch64TargetCPU - Get the (LLVM) name of the AArch64 cpu we are
-/// targeting. Set \p A to the Arg corresponding to the -mcpu or -mtune
-/// arguments if they are provided, or to nullptr otherwise.
+/// targeting. Set \p A to the Arg corresponding to the -mcpu argument if it is
+/// provided, or to nullptr otherwise.
 std::string aarch64::getAArch64TargetCPU(const ArgList &Args, Arg *&A) {
   std::string CPU;
-  // If we have -mtune or -mcpu, use that.
-  if ((A = Args.getLastArg(clang::driver::options::OPT_mtune_EQ))) {
-    CPU = StringRef(A->getValue()).lower();
-  } else if ((A = Args.getLastArg(options::OPT_mcpu_EQ))) {
+  // If we have -mcpu, use that.
+  if ((A = Args.getLastArg(options::OPT_mcpu_EQ))) {
     StringRef Mcpu = A->getValue();
     CPU = Mcpu.split("+").first.lower();
   }
@@ -71,10 +69,13 @@ static bool DecodeAArch64Mcpu(const Driver &D, StringRef Mcpu, StringRef &CPU,
   std::pair<StringRef, StringRef> Split = Mcpu.split("+");
   CPU = Split.first;
 
+  if (CPU == "native")
+    CPU = llvm::sys::getHostCPUName();
+
   if (CPU == "generic") {
     Features.push_back("+neon");
   } else {
-    unsigned ArchKind = llvm::AArch64::parseCPUArch(CPU);
+    llvm::AArch64::ArchKind ArchKind = llvm::AArch64::parseCPUArch(CPU);
     if (!llvm::AArch64::getArchFeatures(ArchKind, Features))
       return false;
 
@@ -96,8 +97,8 @@ getAArch64ArchFeaturesFromMarch(const Driver &D, StringRef March,
   std::string MarchLowerCase = March.lower();
   std::pair<StringRef, StringRef> Split = StringRef(MarchLowerCase).split("+");
 
-  unsigned ArchKind = llvm::AArch64::parseArch(Split.first);
-  if (ArchKind == static_cast<unsigned>(llvm::AArch64::ArchKind::AK_INVALID) ||
+  llvm::AArch64::ArchKind ArchKind = llvm::AArch64::parseArch(Split.first);
+  if (ArchKind == llvm::AArch64::ArchKind::INVALID ||
       !llvm::AArch64::getArchFeatures(ArchKind, Features) ||
       (Split.second.size() && !DecodeAArch64Features(D, Split.second, Features)))
     return false;
@@ -122,6 +123,12 @@ getAArch64MicroArchFeaturesFromMtune(const Driver &D, StringRef Mtune,
                                      const ArgList &Args,
                                      std::vector<StringRef> &Features) {
   std::string MtuneLowerCase = Mtune.lower();
+  // Check CPU name is valid
+  std::vector<StringRef> MtuneFeatures;
+  StringRef Tune;
+  if (!DecodeAArch64Mcpu(D, MtuneLowerCase, Tune, MtuneFeatures))
+    return false;
+
   // Handle CPU name is 'native'.
   if (MtuneLowerCase == "native")
     MtuneLowerCase = llvm::sys::getHostCPUName();
@@ -197,6 +204,9 @@ void aarch64::getAArch64TargetFeatures(const Driver &D,
 
   if (Args.hasArg(options::OPT_ffixed_x18))
     Features.push_back("+reserve-x18");
+
+  if (Args.hasArg(options::OPT_ffixed_x20))
+    Features.push_back("+reserve-x20");
 
   if (Args.hasArg(options::OPT_mno_neg_immediates))
     Features.push_back("+no-neg-immediates");

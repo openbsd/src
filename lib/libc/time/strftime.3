@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strftime.3,v 1.37 2017/09/05 03:16:14 schwarze Exp $
+.\"	$OpenBSD: strftime.3,v 1.38 2019/05/16 13:35:17 schwarze Exp $
 .\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
 .\"
-.Dd $Mdocdate: September 5 2017 $
+.Dd $Mdocdate: May 16 2019 $
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -219,12 +219,6 @@ NUL character, is not more than
 returns the number of characters placed in the array, not counting the
 terminating NUL.
 Otherwise, zero is returned.
-.Sh ENVIRONMENT
-On other operating systems, the behaviour of
-.Fn strftime
-may depend on the
-.Dv LC_TIME
-.Xr locale 1 .
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr printf 1 ,
@@ -295,6 +289,15 @@ implemented the
 version of
 .Fn strftime
 in 1989.
+.Sh CAVEATS
+On systems other than
+.Ox ,
+the
+.Dv LC_TIME
+.Xr locale 1
+category can cause erratic output; see CAVEATS in
+.Xr setlocale 3
+for details.
 .Sh BUGS
 There is no conversion specification for the phase of the moon.
 .Pp

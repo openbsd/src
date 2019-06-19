@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.21 2017/12/16 10:27:21 anton Exp $	*/
+/*	$OpenBSD: dol.c,v 1.25 2018/10/26 14:36:03 miko Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -762,12 +762,8 @@ setDolp(Char *cp)
 	}
     }
 
-    if (dp) {
-	addla(dp);
-	free(dp);
-    }
-    else
-	addla(cp);
+    addla(cp);
+    free(cp);
 
     dolp = STRNULL;
     if (seterr)
@@ -952,7 +948,7 @@ heredoc(Char *term)
 		ocnt = BUFSIZ;
 	    }
 	}
-	if (pargv)
-	    blkfree(pargv), pargv = 0;
+	blkfree(pargv);
+	pargv = NULL;
     }
 }

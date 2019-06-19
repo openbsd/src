@@ -5,9 +5,31 @@
 # without using 'eval' as much as possible, which might cloud the issue,  the
 # crucial parts of the code are duplicated in a block for each pragma.
 
+# Unfortunately, many systems have defective locale definitions.  This test
+# file looks for both perl bugs and bugs in the system's locale definitions.
+# It can be difficult to tease apart which is which.  For the latter, there
+# are tests that are based on the POSIX standard.  A character isn't supposed
+# to be both a space and graphic, for example.  Another example is if a
+# character is the uppercase of another, that other should be the lowercase of
+# the first.  Including tests for these allows you to test for defective
+# locales, as described in perllocale.  The way this file distinguishes
+# between defective locales, and perl bugs is to see what percentage of
+# locales fail a given test.  If it's a lot, then it's more likely to be a
+# perl bug; only a few, those particular locales are likely defective.  In
+# that case the failing tests are marked TODO.  (They should be reported to
+# the vendor, however; but it's not perl's problem.)  In some cases, this
+# script has caused tickets to be filed against perl which turn out to be the
+# platform's bug, but a higher percentage of locales are failing than the
+# built-in cut-off point.  For those platforms, code has been added to
+# increase the cut-off, so those platforms don't trigger failing test reports.
+# Ideally, the platforms would get fixed and that code would be changed to
+# only kick-in when run on versions that are earlier than the fixed one.  But,
+# this rarely happens in practice.
+
 # To make a TODO test, add the string 'TODO' to its %test_names value
 
 my $is_ebcdic = ord("A") == 193;
+my $os = lc $^O;
 
 no warnings 'locale';  # We test even weird locales; and do some scary things
                        # in ok locales
@@ -29,18 +51,22 @@ BEGIN {
 }
 
 use strict;
-use feature 'fc', 'postderef';
+use feature 'fc';
 
 # =1 adds debugging output; =2 increases the verbosity somewhat
-my $debug = $ENV{PERL_DEBUG_FULL_TEST} // 0;
+our $debug = $ENV{PERL_DEBUG_FULL_TEST} // 0;
 
 # Certain tests have been shown to be problematical for a few locales.  Don't
 # fail them unless at least this percentage of the tested locales fail.
 # On AIX machines, many locales call a no-break space a graphic.
 # (There aren't 1000 locales currently in existence, so 99.9 works)
-my $acceptable_failure_percentage = ($^O =~ / ^ ( AIX ) $ /ix)
+# EBCDIC os390 has more locales fail than normal, because it has locales that
+# move various critical characters like '['.
+my $acceptable_failure_percentage = ($os =~ / ^ ( aix ) $ /x)
                                      ? 99.9
-                                     : 5;
+                                     : ($os =~ / ^ ( os390 ) $ /x)
+                                       ? 10
+                                       : 5;
 
 # The list of test numbers of the problematic tests.
 my %problematical_tests;
@@ -51,11 +77,17 @@ my %known_bad_locales = (
                           irix => qr/ ^ (?: cs | hu | sk ) $/x,
                           darwin => qr/ ^ lt_LT.ISO8859 /ix,
                           os390 => qr/ ^ italian /ix,
+                          netbsd => qr/\bISO8859-2\b/i,
+
+                          # This may be the same bug as the cygwin below; it's
+                          # generating malformed UTF-8 on the radix being
+                          # mulit-byte
+                          solaris => qr/ ^ ( ar_ | pa_ ) /x,
                         );
 
 # cygwin isn't returning proper radix length in this locale, but supposedly to
 # be fixed in later versions.
-if ($^O eq 'cygwin' && version->new(($Config{osvers} =~ /^(\d+(?:\.\d+)+)/)[0]) le v2.4.1) {
+if ($os eq 'cygwin' && version->new(($Config{osvers} =~ /^(\d+(?:\.\d+)+)/)[0]) le v2.4.1) {
     $known_bad_locales{'cygwin'} = qr/ ^ ps_AF /ix;
 }
 
@@ -66,11 +98,17 @@ my $dumper = Dumpvalue->new(
                             quoteHighBit => 0,
                             unctrl => "quote"
                            );
+
 sub debug {
   return unless $debug;
   my($mess) = join "", '# ', @_;
   chomp $mess;
   print STDERR $dumper->stringify($mess,1), "\n";
+}
+
+sub note {
+    local $debug = 1;
+    debug @_;
 }
 
 sub debug_more {
@@ -95,6 +133,14 @@ sub ok {
     print " $message";
     print "\n";
     return ($result) ? 1 : 0;
+}
+
+sub skip {
+    return ok 1, "skipped: " . shift;
+}
+
+sub fail {
+    return ok 0, shift;
 }
 
 # First we'll do a lot of taint checking for locales.
@@ -736,7 +782,54 @@ debug "Scanning for locales...\n";
 
 require POSIX; import POSIX ':locale_h';
 
-my @Locale = find_locales([ &POSIX::LC_CTYPE, &POSIX::LC_NUMERIC, &POSIX::LC_ALL ]);
+my $categories = [ 'LC_CTYPE', 'LC_NUMERIC', 'LC_ALL' ];
+debug "Scanning for just compatible";
+my @Locale = find_locales($categories);
+debug "Scanning for even incompatible";
+my @include_incompatible_locales = find_locales($categories,
+                                                'even incompatible locales');
+
+# The locales included in the incompatible list that aren't in the compatible
+# one.
+my @incompatible_locales;
+
+if (@Locale < @include_incompatible_locales) {
+    my %seen;
+    @seen{@Locale} = ();
+
+    foreach my $item (@include_incompatible_locales) {
+        push @incompatible_locales, $item unless exists $seen{$item};
+    }
+
+    # For each bad locale, switch into it to find out why it's incompatible
+    for my $bad_locale (@incompatible_locales) {
+        my @warnings;
+
+        use warnings 'locale';
+
+        local $SIG{__WARN__} = sub {
+            my $warning = $_[0];
+            chomp $warning;
+            push @warnings, ($warning =~ s/\n/\n# /sgr);
+        };
+
+        debug "Trying incompatible $bad_locale";
+        my $ret = setlocale(&POSIX::LC_CTYPE, $bad_locale);
+
+        my $message = "testing of locale '$bad_locale' is skipped";
+        if (@warnings) {
+            skip $message . ":\n# " . join "\n# ", @warnings;
+        }
+        elsif (! $ret) {
+            skip("$message:\n#"
+               . " setlocale(&POSIX::LC_CTYPE, '$bad_locale') failed");
+        }
+        else {
+            fail $message . ", because it is was found to be incompatible with"
+                          . " Perl, but could not discern reason";
+        }
+    }
+}
 
 debug "Locales =\n";
 for ( @Locale ) {
@@ -900,14 +993,14 @@ sub disp_str ($) {
 
 sub report_result {
     my ($Locale, $i, $pass_fail, $message) = @_;
-    $message //= "";
-    $message = "  ($message)" if $message;
     if ($pass_fail) {
 	push @{$Okay{$i}}, $Locale;
     }
     else {
-	$Known_bad_locale{$i}{$Locale} = 1 if exists $known_bad_locales{$^O}
-                                         && $Locale =~ $known_bad_locales{$^O};
+        $message //= "";
+        $message = "  ($message)" if $message;
+	$Known_bad_locale{$i}{$Locale} = 1 if exists $known_bad_locales{$os}
+                                         && $Locale =~ $known_bad_locales{$os};
 	$Problem{$i}{$Locale} = 1;
 	debug "failed $i ($test_names{$i}) with locale '$Locale'$message\n";
     }
@@ -926,7 +1019,8 @@ sub report_multi_result {
     report_result($Locale, $i, @$results_ref == 0, $message);
 }
 
-my $first_locales_test_number = $final_without_setlocale + 1;
+my $first_locales_test_number = $final_without_setlocale
+                              + 1 + @incompatible_locales;
 my $locales_test_number;
 my $not_necessarily_a_problem_test_number;
 my $first_casing_test_number;
@@ -973,7 +1067,7 @@ foreach my $Locale (@Locale) {
         @{$posixes{'punct'}} = grep /[[:punct:]]/, map {chr } 0..255;
         @{$posixes{'upper'}} = grep /[[:upper:]]/, map {chr } 0..255;
         @{$posixes{'xdigit'}} = grep /[[:xdigit:]]/, map {chr } 0..255;
-        @{$posixes{'cased'}} = grep /[[:upper:]]/i, map {chr } 0..255;
+        @{$posixes{'cased'}} = grep /[[:upper:][:lower:]]/i, map {chr } 0..255;
 
         # Sieve the uppercase and the lowercase.
 
@@ -1004,7 +1098,7 @@ foreach my $Locale (@Locale) {
         @{$posixes{'punct'}} = grep /[[:punct:]]/, map {chr } 0..255;
         @{$posixes{'upper'}} = grep /[[:upper:]]/, map {chr } 0..255;
         @{$posixes{'xdigit'}} = grep /[[:xdigit:]]/, map {chr } 0..255;
-        @{$posixes{'cased'}} = grep /[[:upper:]]/i, map {chr } 0..255;
+        @{$posixes{'cased'}} = grep /[[:upper:][:lower:]]/i, map {chr } 0..255;
         for (@{$posixes{'word'}}) {
             if (/[^\d_]/) { # skip digits and the _
                 if (uc($_) eq $_) {
@@ -1024,13 +1118,13 @@ foreach my $Locale (@Locale) {
     debug ":cased:  = ", disp_chars(@{$posixes{'cased'}}), "\n";
     debug ":alpha:  = ", disp_chars(@{$posixes{'alpha'}}), "\n";
     debug ":alnum:  = ", disp_chars(@{$posixes{'alnum'}}), "\n";
-    debug " w       = ", disp_chars(@{$posixes{'word'}}), "\n";
+    debug ' \w      = ', disp_chars(@{$posixes{'word'}}), "\n";
     debug ":graph:  = ", disp_chars(@{$posixes{'graph'}}), "\n";
     debug ":print:  = ", disp_chars(@{$posixes{'print'}}), "\n";
-    debug " d       = ", disp_chars(@{$posixes{'digit'}}), "\n";
+    debug ' \d      = ', disp_chars(@{$posixes{'digit'}}), "\n";
     debug ":xdigit: = ", disp_chars(@{$posixes{'xdigit'}}), "\n";
     debug ":blank:  = ", disp_chars(@{$posixes{'blank'}}), "\n";
-    debug " s       = ", disp_chars(@{$posixes{'space'}}), "\n";
+    debug ' \s      = ', disp_chars(@{$posixes{'space'}}), "\n";
     debug ":punct:  = ", disp_chars(@{$posixes{'punct'}}), "\n";
     debug ":cntrl:  = ", disp_chars(@{$posixes{'cntrl'}}), "\n";
     debug ":ascii:  = ", disp_chars(@{$posixes{'ascii'}}), "\n";
@@ -1198,7 +1292,7 @@ foreach my $Locale (@Locale) {
                     (/[[:xdigit:]]/ xor /[[:^xdigit:]]/) ||
 
                     # effectively is what [:cased:] would be if it existed.
-                    (/[[:upper:]]/i xor /[[:^upper:]]/i);
+                    (/[[:upper:][:lower:]]/i xor /[^[:upper:][:lower:]]/i);
         }
         else {
             push @f, $_ unless   (/[[:alpha:]]/ xor /[[:^alpha:]]/)   ||
@@ -1214,7 +1308,7 @@ foreach my $Locale (@Locale) {
                     (/[[:upper:]]/ xor /[[:^upper:]]/)   ||
                     (/[[:word:]]/  xor /[[:^word:]]/)    ||
                     (/[[:xdigit:]]/ xor /[[:^xdigit:]]/) ||
-                    (/[[:upper:]]/i xor /[[:^upper:]]/i);
+                    (/[[:upper:][:lower:]]/i xor /[^[:upper:][:lower:]]/i);
         }
     }
     report_multi_result($Locale, $locales_test_number, \@f);
@@ -1735,6 +1829,121 @@ foreach my $Locale (@Locale) {
                 last;
             }
         }
+
+        use locale;
+
+        my @sorted_controls;
+
+        ++$locales_test_number;
+        $test_names{$locales_test_number}
+                = 'Skip in locales where there are no controls;'
+                . ' otherwise verify that \0 sorts before any (other) control';
+        if (! $posixes{'cntrl'}) {
+            report_result($Locale, $locales_test_number, 1);
+
+            # We use all code points for the tests below since there aren't
+            # any controls
+            push @sorted_controls, chr $_ for 1..255;
+            @sorted_controls = sort @sorted_controls;
+        }
+        else {
+            @sorted_controls = @{$posixes{'cntrl'}};
+            push @sorted_controls, "\0",
+                                unless grep { $_ eq "\0" } @sorted_controls;
+            @sorted_controls = sort @sorted_controls;
+            my $output = "";
+            for my $control (@sorted_controls) {
+                $output .= " " . disp_chars($control);
+            }
+            debug "sorted :cntrl: (plus NUL) = $output\n";
+            my $ok = $sorted_controls[0] eq "\0";
+            report_result($Locale, $locales_test_number, $ok);
+
+            shift @sorted_controls if $ok;
+        }
+
+        my $lowest_control = $sorted_controls[0];
+
+        ++$locales_test_number;
+        $test_names{$locales_test_number}
+            = 'Skip in locales where all controls have primary sorting weight; '
+            . 'otherwise verify that \0 doesn\'t have primary sorting weight';
+        if ("a${lowest_control}c" lt "ab") {
+            report_result($Locale, $locales_test_number, 1);
+        }
+        else {
+            my $ok = "ab" lt "a\0c";
+            report_result($Locale, $locales_test_number, $ok);
+        }
+
+        ++$locales_test_number;
+        $test_names{$locales_test_number}
+                            = 'Verify that strings with embedded NUL collate';
+        my $ok = "a\0a\0a" lt "a${lowest_control}a${lowest_control}a";
+        report_result($Locale, $locales_test_number, $ok);
+
+        ++$locales_test_number;
+        $test_names{$locales_test_number}
+                            = 'Verify that strings with embedded NUL and '
+                            . 'extra trailing NUL collate';
+        $ok = "a\0a\0" lt "a${lowest_control}a${lowest_control}";
+        report_result($Locale, $locales_test_number, $ok);
+
+        ++$locales_test_number;
+        $test_names{$locales_test_number}
+                            = 'Verify that empty strings collate';
+        $ok = "" le "";
+        report_result($Locale, $locales_test_number, $ok);
+
+        ++$locales_test_number;
+        $test_names{$locales_test_number}
+            = "Skip in non-UTF-8 locales; otherwise verify that UTF8ness "
+            . "doesn't matter with collation";
+        if (! $is_utf8_locale) {
+            report_result($Locale, $locales_test_number, 1);
+        }
+        else {
+
+            # khw can't think of anything better.  Start with a string that is
+            # higher than its UTF-8 representation in both EBCDIC and ASCII
+            my $string = chr utf8::unicode_to_native(0xff);
+            my $utf8_string = $string;
+            utf8::upgrade($utf8_string);
+
+            # 8 should be lt 9 in all locales (except ones that aren't
+            # ASCII-based, which might fail this)
+            $ok = ("a${string}8") lt ("a${utf8_string}9");
+            report_result($Locale, $locales_test_number, $ok);
+        }
+
+        ++$locales_test_number;
+        $test_names{$locales_test_number}
+            = "Skip in UTF-8 locales; otherwise verify that single byte "
+            . "collates before 0x100 and above";
+        if ($is_utf8_locale) {
+            report_result($Locale, $locales_test_number, 1);
+        }
+        else {
+            my $max_collating = chr 0;  # Find byte that collates highest
+            for my $i (0 .. 255) {
+                my $char = chr $i;
+                $max_collating = $char if $char gt $max_collating;
+            }
+            $ok = $max_collating lt chr 0x100;
+            report_result($Locale, $locales_test_number, $ok);
+        }
+
+        ++$locales_test_number;
+        $test_names{$locales_test_number}
+            = "Skip in UTF-8 locales; otherwise verify that 0x100 and "
+            . "above collate in code point order";
+        if ($is_utf8_locale) {
+            report_result($Locale, $locales_test_number, 1);
+        }
+        else {
+            $ok = chr 0x100 lt chr 0x101;
+            report_result($Locale, $locales_test_number, $ok);
+        }
     }
 
     my $ok1;
@@ -1884,11 +2093,15 @@ foreach my $Locale (@Locale) {
                 foreach my $err (keys %!) {
                     use Errno;
                     $! = eval "&Errno::$err";   # Convert to strerror() output
+                    my $errnum = 0+$!;
                     my $strerror = "$!";
                     if ("$strerror" =~ /\P{ASCII}/) {
                         $ok14 = utf8::is_utf8($strerror);
                         no locale;
                         $ok14_5 = "$!" !~ /\P{ASCII}/;
+                        debug( disp_str(
+                        "non-ASCII \$! for error $errnum='$strerror'"))
+                                                                   if ! $ok14_5;
                         last;
                     }
                 }
@@ -1934,8 +2147,9 @@ foreach my $Locale (@Locale) {
             use Errno;
             $! = eval "&Errno::$err";   # Convert to strerror() output
             my $strerror = "$!";
-            if ("$strerror" =~ /\P{ASCII}/) {
+            if ($strerror =~ /\P{ASCII}/) {
                 $ok21 = 0;
+                debug(disp_str("non-ASCII strerror=$strerror"));
                 last;
             }
         }
@@ -2028,6 +2242,7 @@ foreach my $Locale (@Locale) {
 
     report_result($Locale, ++$locales_test_number, $ok15);
     $test_names{$locales_test_number} = 'Verify that a number with a UTF-8 radix has a UTF-8 stringification';
+    $problematical_tests{$locales_test_number} = 1;
 
     report_result($Locale, ++$locales_test_number, $ok16);
     $test_names{$locales_test_number} = 'Verify that a sprintf of a number with a UTF-8 radix yields UTF-8';
@@ -2049,12 +2264,12 @@ foreach my $Locale (@Locale) {
                                                       # OS X 10.9.3
 
     report_result($Locale, ++$locales_test_number, $ok21);
-    $test_names{$locales_test_number} = '"$!" is ASCII only outside of locale scope';
+    $test_names{$locales_test_number} = '"$!" is ASCII-only outside of locale scope';
 
     debug "$first_f_test..$locales_test_number: \$f = $f, \$g = $g, back to locale = $Locale\n";
 
     # Does taking lc separately differ from taking
-    # the lc "in-line"?  (This was the bug 19990704.002, change #3568.)
+    # the lc "in-line"?  (This was the bug 19990704.002 (#965), change #3568.)
     # The bug was in the caching of the 'o'-magic.
     if (! $is_utf8_locale) {
 	use locale;
@@ -2268,28 +2483,30 @@ my $final_locales_test_number = $locales_test_number;
 
 TEST_NUM:
 foreach $test_num ($first_locales_test_number..$final_locales_test_number) {
-    if (%setlocale_failed) {
-        print "not ";
+    my $has_non_global_failure = $Problem{$test_num}
+                            || ! defined $Okay{$test_num}
+                            || ! @{$Okay{$test_num}};
+    print "not " if %setlocale_failed || $has_non_global_failure;
+    print "ok $test_num";
+    $test_names{$test_num} = "" unless defined $test_names{$test_num};
+
+    # If TODO is in the test name, make it thus
+    my $todo = $test_names{$test_num} =~ s/\s*TODO\s*//;
+    print " $test_names{$test_num}";
+    if ($todo) {
+        print " # TODO\n";
     }
-    elsif ($Problem{$test_num}
-           || ! defined $Okay{$test_num}
-           || ! @{$Okay{$test_num}})
-    {
-	if (defined $not_necessarily_a_problem_test_number
-            && $test_num == $not_necessarily_a_problem_test_number)
-        {
-	    print "# The failure of test $not_necessarily_a_problem_test_number is not necessarily fatal.\n";
-	    print "# It usually indicates a problem in the environment,\n";
-	    print "# not in Perl itself.\n";
-	}
+    elsif (%setlocale_failed || ! $has_non_global_failure) {
+        print "\n";
+    }
+    elsif ($has_non_global_failure) {
 
         # If there are any locales that pass this test, or are known-bad, it
-        # may be that there are enough passes that we TODO the failure.
-        if (($Okay{$test_num} || $Known_bad_locale{$test_num})
+        # may be that there are enough passes that we TODO the failure, but
+        # only for tests that we have decided can be problematical.
+        if (  ($Okay{$test_num} || $Known_bad_locale{$test_num})
             && grep { $_ == $test_num } keys %problematical_tests)
         {
-            no warnings 'experimental::postderef';
-
             # Don't count the known-bad failures when calculating the
             # percentage that fail.
             my $known_failures = (exists $Known_bad_locale{$test_num})
@@ -2301,8 +2518,7 @@ foreach $test_num ($first_locales_test_number..$final_locales_test_number) {
             # Specially handle failures where only known-bad locales fail.
             # This makes the diagnositics clearer.
             if ($adjusted_failures <= 0) {
-                print "not ok $test_num $test_names{$test_num} # TODO fails only on ",
-                                                                "known bad locales: ",
+                print " # TODO fails only on known bad locales: ",
                       join " ", keys $Known_bad_locale{$test_num}->%*, "\n";
                 next TEST_NUM;
             }
@@ -2311,15 +2527,10 @@ foreach $test_num ($first_locales_test_number..$final_locales_test_number) {
             my $percent_fail = (int(.5 + (1000 * $adjusted_failures
                                           / scalar(@Locale))))
                                / 10;
-            if ($percent_fail < $acceptable_failure_percentage) {
-                if (! $debug) {
-                    $test_names{$test_num} .= 'TODO';
-                    print "# ", 100 - $percent_fail, "% of locales not known to be problematic on this platform\n";
-                    print "# pass the following test, so it is likely that the failures\n";
-                    print "# are errors in the locale definitions.  The test is marked TODO, as the\n";
-                    print "# problem is not likely to be Perl's\n";
-                }
-            }
+            $todo = $percent_fail < $acceptable_failure_percentage;
+            print " # TODO" if $todo;
+            print "\n";
+
             if ($debug) {
                 print "# $percent_fail% of locales (",
                       scalar(keys $Problem{$test_num}->%*),
@@ -2329,8 +2540,14 @@ foreach $test_num ($first_locales_test_number..$final_locales_test_number) {
                       $acceptable_failure_percentage,
                       "%)\n";
             }
+            elsif ($todo) {
+                print "# ", 100 - $percent_fail, "% of locales not known to be problematic on this platform\n";
+                print "# pass the above test, so it is likely that the failures\n";
+                print "# are errors in the locale definitions.  The test is marked TODO, as the\n";
+                print "# problem is not likely to be Perl's\n";
+            }
         }
-        print "#\n";
+
         if ($debug) {
             print "# The code points that had this failure are given above.  Look for lines\n";
             print "# that match 'failed $test_num'\n";
@@ -2339,21 +2556,19 @@ foreach $test_num ($first_locales_test_number..$final_locales_test_number) {
             print "# For more details, rerun, with environment variable PERL_DEBUG_FULL_TEST=1.\n";
             print "# Then look at that output for lines that match 'failed $test_num'\n";
         }
-	print "not ";
+	if (defined $not_necessarily_a_problem_test_number
+            && $test_num == $not_necessarily_a_problem_test_number)
+        {
+	    print "# The failure of test $not_necessarily_a_problem_test_number is not necessarily fatal.\n";
+	    print "# It usually indicates a problem in the environment,\n";
+	    print "# not in Perl itself.\n";
+	}
     }
-    print "ok $test_num";
-    if (defined $test_names{$test_num}) {
-        # If TODO is in the test name, make it thus
-        my $todo = $test_names{$test_num} =~ s/TODO\s*//;
-        print " $test_names{$test_num}";
-        print " # TODO" if $todo;
-    }
-    print "\n";
 }
 
 $test_num = $final_locales_test_number;
 
-unless ( $^O =~ m!^(dragonfly|openbsd|bitrig|mirbsd)$! ) {
+unless ( $os =~ m!^(dragonfly|openbsd|bitrig|mirbsd)$! ) {
     # perl #115808
     use warnings;
     my $warned = 0;
@@ -2498,8 +2713,8 @@ foreach ($first_locales_test_number..$final_locales_test_number) {
 	my @f = sort keys %{ $Problem{$_} };
 
         # Don't list the failures caused by known-bad locales.
-        if (exists $known_bad_locales{$^O}) {
-            @f = grep { $_ !~ $known_bad_locales{$^O} } @f;
+        if (exists $known_bad_locales{$os}) {
+            @f = grep { $_ !~ $known_bad_locales{$os} } @f;
             next unless @f;
         }
 	my $f = join(" ", @f);
@@ -2515,7 +2730,7 @@ foreach ($first_locales_test_number..$final_locales_test_number) {
 	print <<EOW;
 #
 # If your users are not using these locales you are safe for the moment,
-# but please report this failure first to perlbug\@perl.com using the
+# but please report this failure first to perlbug\@perl.org using the
 # perlbug script (as described in the INSTALL file) so that the exact
 # details of the failures can be sorted out first and then your operating
 # system supplier can be alerted about these anomalies.
@@ -2580,7 +2795,7 @@ if ($didwarn) {
     }
 }
 
-if (exists $known_bad_locales{$^O} && ! %Known_bad_locale) {
+if (exists $known_bad_locales{$os} && ! %Known_bad_locale) {
     $test_num++;
     print "ok $test_num $^O no longer has known bad locales # TODO\n";
 }

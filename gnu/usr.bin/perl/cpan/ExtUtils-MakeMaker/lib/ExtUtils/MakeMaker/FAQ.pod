@@ -1,6 +1,7 @@
 package ExtUtils::MakeMaker::FAQ;
 
-our $VERSION = '7.10_01';
+our $VERSION = '7.34';
+$VERSION = eval $VERSION;
 
 1;
 __END__
@@ -21,8 +22,12 @@ FAQs, tricks and tips for C<ExtUtils::MakeMaker>.
 =item How do I install a module into my home directory?
 
 If you're not the Perl administrator you probably don't have
-permission to install a module to its default location.  Then you
-should install it for your own use into your home directory like so:
+permission to install a module to its default location. Ways of handling
+this with a B<lot> less manual effort on your part are L<perlbrew>
+and L<local::lib>.
+
+Otherwise, you can install it for your own use into your home directory
+like so:
 
     # Non-unix folks, replace ~ with /path/to/your/home/dir
     perl Makefile.PL INSTALL_BASE=~
@@ -40,7 +45,6 @@ or if $ENV{HOME} isn't set and you don't want to set it for some
 reason, do it the long way.
 
     use lib "/path/to/your/home/dir/lib/perl5";
-
 
 =item How do I get MakeMaker and Module::Build to install to the same place?
 
@@ -99,8 +103,10 @@ Two ways.  One is to build the module normally...
         make
         make test
 
-...and then set the PERL5LIB environment variable to point at the
-blib/lib and blib/arch directories.
+...and then use L<blib> to point Perl at the built but uninstalled module:
+
+	perl -Mblib script.pl
+	perl -Mblib -e '...'
 
 The other is to install the module in a temporary location.
 
@@ -112,20 +118,89 @@ The other is to install the module in a temporary location.
 And then set PERL5LIB to F<~/tmp/lib/perl5>.  This works well when you
 have multiple modules to work with.  It also ensures that the module
 goes through its full installation process which may modify it.
+Again, L<local::lib> may assist you here.
+
+=item How can I organize tests into subdirectories and have them run?
+
+Let's take the following test directory structure:
+
+    t/foo/sometest.t
+    t/bar/othertest.t
+    t/bar/baz/anothertest.t
+
+Now, inside of the C<WriteMakeFile()> function in your F<Makefile.PL>, specify
+where your tests are located with the C<test> directive:
+
+    test => {TESTS => 't/*.t t/*/*.t t/*/*/*.t'}
+
+The first entry in the string will run all tests in the top-level F<t/> 
+directory. The second will run all test files located in any subdirectory under
+F<t/>. The third, runs all test files within any subdirectory within any other
+subdirectory located under F<t/>.
+
+Note that you do not have to use wildcards. You can specify explicitly which
+subdirectories to run tests in:
+
+    test => {TESTS => 't/*.t t/foo/*.t t/bar/baz/*.t'}
 
 =item PREFIX vs INSTALL_BASE from Module::Build::Cookbook
 
 The behavior of PREFIX is complicated and depends closely on how your
-Perl is configured. The resulting installation locations will vary from
-machine to machine and even different installations of Perl on the same machine.
-Because of this, its difficult to document where prefix will place your modules.
+Perl is configured. The resulting installation locations will vary
+from machine to machine and even different installations of Perl on the
+same machine.  Because of this, its difficult to document where prefix
+will place your modules.
 
-In contrast, INSTALL_BASE has predictable, easy to explain installation locations.
-Now that Module::Build and MakeMaker both have INSTALL_BASE there is little reason
-to use PREFIX other than to preserve your existing installation locations. If you
-are starting a fresh Perl installation we encourage you to use INSTALL_BASE. If
-you have an existing installation installed via PREFIX, consider moving it to an
-installation structure matching INSTALL_BASE and using that instead.
+In contrast, INSTALL_BASE has predictable, easy to explain installation
+locations.  Now that Module::Build and MakeMaker both have INSTALL_BASE
+there is little reason to use PREFIX other than to preserve your existing
+installation locations. If you are starting a fresh Perl installation we
+encourage you to use INSTALL_BASE. If you have an existing installation
+installed via PREFIX, consider moving it to an installation structure
+matching INSTALL_BASE and using that instead.
+
+=item Generating *.pm files with substitutions eg of $VERSION
+
+If you want to configure your module files for local conditions, or to
+automatically insert a version number, you can use EUMM's C<PL_FILES>
+capability, where it will automatically run each F<*.PL> it finds to
+generate its basename. For instance:
+
+    # Makefile.PL:
+    require 'common.pl';
+    my $version = get_version();
+    my @pms = qw(Foo.pm);
+    WriteMakefile(
+      NAME => 'Foo',
+      VERSION => $version,
+      PM => { map { ($_ => "\$(INST_LIB)/$_") } @pms },
+      clean => { FILES => join ' ', @pms },
+    );
+
+    # common.pl:
+    sub get_version { '0.04' }
+    sub process { my $v = get_version(); s/__VERSION__/$v/g; }
+    1;
+
+    # Foo.pm.PL:
+    require 'common.pl';
+    $_ = join '', <DATA>;
+    process();
+    my $file = shift;
+    open my $fh, '>', $file or die "$file: $!";
+    print $fh $_;
+    __DATA__
+    package Foo;
+    our $VERSION = '__VERSION__';
+    1;
+
+You may notice that C<PL_FILES> is not specified above, since the default
+of mapping each .PL file to its basename works well.
+
+If the generated module were architecture-specific, you could replace
+C<$(INST_LIB)> above with C<$(INST_ARCHLIB)>, although if you locate
+modules under F<lib>, that would involve ensuring any C<lib/> in front
+of the module location were removed.
 
 =back
 
@@ -184,15 +259,15 @@ Its primary advantages are:
 
 =back
 
-Module::Build was long the official heir apparent to MakeMaker.  The rate of
-both its development and adoption has slowed in recent years, though, and it is
-unclear what the future holds for it.  That said, Module::Build set the stage
-for I<something> to become the heir to MakeMaker.  MakeMaker's maintainers have
-long said that it is a dead end and should be kept functioning, but not
-extended with new features.  It's complicated enough as it is!
+Module::Build was long the official heir apparent to MakeMaker.  The
+rate of both its development and adoption has slowed in recent years,
+though, and it is unclear what the future holds for it.  That said,
+Module::Build set the stage for I<something> to become the heir to
+MakeMaker.  MakeMaker's maintainers have long said that it is a dead
+end and should be kept functioning, while being cautious about extending
+with new features.
 
 =back
-
 
 =head2 Module Writing
 
@@ -207,8 +282,14 @@ modules in your dist, $VERSION is really just bookkeeping and all that's
 important is it goes up every time the module is changed.  Doing this
 by hand is a pain and you often forget.
 
-Simplest way to do it automatically is to use your version control
-system's revision number (you are using version control, right?).
+Probably the easiest way to do this is using F<perl-reversion> in
+L<Perl::Version>:
+
+  perl-reversion -bump
+
+If your version control system supports revision numbers (git doesn't
+easily), the simplest way to do it automatically is to use its revision
+number (you are using version control, right?).
 
 In CVS, RCS and SVN you use $Revision$ (see the documentation of your
 version control system for details).  Every time the file is checked
@@ -300,7 +381,7 @@ do that.  Use at your own risk.  Have fun blowing holes in your foot.
 
 We recommend ptar from Archive::Tar not older than 1.66 with '-C' option.
 
-=item Which zip should I use on Windows for '[nd]make zipdist'?
+=item Which zip should I use on Windows for '[ndg]make zipdist'?
 
 We recommend InfoZIP: L<http://www.info-zip.org/Zip.html>
 
@@ -329,9 +410,27 @@ WriteMakefile() arguments.
 =item How do I make two or more XS files coexist in the same directory?
 
 Sometimes you need to have two and more XS files in the same package.
-One way to go is to put them into separate directories, but sometimes
-this is not the most suitable solution. The following technique allows
-you to put two (and more) XS files in the same directory.
+There are three ways: C<XSMULTI>, separate directories, and bootstrapping
+one XS from another.
+
+=over 8
+
+=item XSMULTI
+
+Structure your modules so they are all located under F<lib>, such that
+C<Foo::Bar> is in F<lib/Foo/Bar.pm> and F<lib/Foo/Bar.xs>, etc. Have your
+top-level C<WriteMakefile> set the variable C<XSMULTI> to a true value.
+
+Er, that's it.
+
+=item Separate directories
+
+Put each XS files into separate directories, each with their own
+F<Makefile.PL>. Make sure each of those F<Makefile.PL>s has the correct
+C<CFLAGS>, C<INC>, C<LIBS> etc. You will need to make sure the top-level
+F<Makefile.PL> refers to each of these using C<DIR>.
+
+=item Bootstrapping
 
 Let's assume that we have a package C<Cool::Foo>, which includes
 C<Cool::Foo> and C<Cool::Bar> modules each having a separate XS
@@ -446,12 +545,115 @@ And of course a very basic test:
 
 This tip has been brought to you by Nick Ing-Simmons and Stas Bekman.
 
+An alternative way to achieve this can be seen in L<Gtk2::CodeGen>
+and L<Glib::CodeGen>.
+
 =back
+
+=back
+
+=head1 DESIGN
+
+=head2 MakeMaker object hierarchy (simplified)
+
+What most people need to know (superclasses on top.)
+
+        ExtUtils::MM_Any
+                |
+        ExtUtils::MM_Unix
+                |
+        ExtUtils::MM_{Current OS}
+                |
+        ExtUtils::MakeMaker
+                |
+               MY
+
+The object actually used is of the class MY which allows you to
+override bits of MakeMaker inside your Makefile.PL by declaring
+MY::foo() methods.
+
+=head2 MakeMaker object hierarchy (real)
+
+Here's how it really works:
+
+                                    ExtUtils::MM_Any
+                                            |
+                                    ExtUtils::MM_Unix
+                                            |
+    ExtUtils::Liblist::Kid          ExtUtils::MM_{Current OS} (if necessary)
+          |                                          |
+    ExtUtils::Liblist     ExtUtils::MakeMaker        |
+                    |     |                          |   
+                    |     |   |-----------------------
+                   ExtUtils::MM
+                   |          |
+        ExtUtils::MY         MM (created by ExtUtils::MM)
+        |                                   |
+        MY (created by ExtUtils::MY)        |
+                    .                       |
+                 (mixin)                    |
+                    .                       |
+               PACK### (created each call to ExtUtils::MakeMaker->new)
+
+NOTE: Yes, this is a mess.  See
+L<http://archive.develooper.com/makemaker@perl.org/msg00134.html>
+for some history.
+
+NOTE: When ExtUtils::MM is loaded it chooses a superclass for MM from
+amongst the ExtUtils::MM_* modules based on the current operating
+system.
+
+NOTE: ExtUtils::MM_{Current OS} represents one of the ExtUtils::MM_*
+modules except ExtUtils::MM_Any chosen based on your operating system.
+
+NOTE: The main object used by MakeMaker is a PACK### object, *not*
+ExtUtils::MakeMaker.  It is, effectively, a subclass of MY,
+ExtUtils::Makemaker, ExtUtils::Liblist and ExtUtils::MM_{Current OS}
+
+NOTE: The methods in MY are simply copied into PACK### rather than
+MY being a superclass of PACK###.  I don't remember the rationale.
+
+NOTE: ExtUtils::Liblist should be removed from the inheritance hiearchy
+and simply be called as functions.
+
+NOTE: Modules like File::Spec and Exporter have been omitted for clarity.
+
+
+=head2 The MM_* hierarchy
+
+                                MM_Win95   MM_NW5
+                                     \      /
+ MM_BeOS  MM_Cygwin  MM_OS2  MM_VMS  MM_Win32  MM_DOS  MM_UWIN
+       \        |      |         |        /      /      /
+        ------------------------------------------------
+                           |       |
+                        MM_Unix    |
+                              |    |
+                              MM_Any
+
+NOTE: Each direct MM_Unix subclass is also an MM_Any subclass.  This
+is a temporary hack because MM_Unix overrides some MM_Any methods with
+Unix specific code.  It allows the non-Unix modules to see the
+original MM_Any implementations.
+
+NOTE: Modules like File::Spec and Exporter have been omitted for clarity.
 
 =head1 PATCHING
 
 If you have a question you'd like to see added to the FAQ (whether or
-not you have the answer) please send it to makemaker@perl.org.
+not you have the answer) please either:
+
+=over 2
+
+=item * make a pull request on the MakeMaker github repository
+
+=item * raise a issue on the MakeMaker github repository
+
+=item * file an RT ticket
+
+=item * email makemaker@perl.org
+
+=back
 
 =head1 AUTHOR
 

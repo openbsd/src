@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bootp.c,v 1.22 2015/12/22 21:01:07 mmcc Exp $	*/
+/*	$OpenBSD: print-bootp.c,v 1.23 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -63,17 +63,17 @@ bootp_print(const u_char *cp, u_int length,
 	case BOOTREQUEST:
 		/* Usually, a request goes from a client to a server */
 		if (sport != IPPORT_BOOTPC || dport != IPPORT_BOOTPS)
-			printf(" (request)");
+			printf("(request)");
 		break;
 
 	case BOOTREPLY:
 		/* Usually, a reply goes from a server to a client */
 		if (sport != IPPORT_BOOTPS || dport != IPPORT_BOOTPC)
-			printf(" (reply)");
+			printf("(reply)");
 		break;
 
 	default:
-		printf(" bootp-#%d", bp->bp_op);
+		printf("bootp-#%d", bp->bp_op);
 	}
 
 	TCHECK(bp->bp_flags);

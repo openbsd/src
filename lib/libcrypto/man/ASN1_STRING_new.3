@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_STRING_new.3,v 1.15 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: ASN1_STRING_new.3,v 1.17 2019/06/14 13:59:32 schwarze Exp $
 .\"	OpenSSL 99d63d46 Tue Mar 24 07:52:24 2015 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt ASN1_STRING_NEW 3
 .Os
 .Sh NAME
@@ -184,7 +184,7 @@ and which ASN.1 type it represents.
 .El
 .Pp
 All the
-.Fa *_free
+.Fn *_free
 functions free
 .Fa a
 including any data contained in it.
@@ -195,17 +195,26 @@ is a
 pointer, no action occurs.
 .Sh RETURN VALUES
 All the
-.Fa *_new
+.Fn *_new
 functions return the new
 .Vt ASN1_STRING
-object or
+object if successful; otherwise
 .Dv NULL
-if an error occurs.
+is returned and an error code can be retrieved with
+.Xr ERR_get_error 3 .
 .Sh SEE ALSO
+.Xr ASN1_INTEGER_get 3 ,
+.Xr ASN1_STRING_length 3 ,
+.Xr ASN1_STRING_print_ex 3 ,
 .Xr ASN1_time_parse 3 ,
 .Xr ASN1_TIME_set 3 ,
+.Xr ASN1_TYPE_get 3 ,
+.Xr d2i_ASN1_OBJECT 3 ,
 .Xr d2i_ASN1_OCTET_STRING 3 ,
-.Xr ERR_get_error 3
+.Xr X509_cmp_time 3 ,
+.Xr X509_EXTENSION_get_object 3 ,
+.Xr X509_get_ext_by_OBJ 3 ,
+.Xr X509_NAME_ENTRY_get_object 3
 .Sh HISTORY
 .Fn ASN1_OCTET_STRING_new ,
 .Fn ASN1_OCTET_STRING_free ,

@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.24 2018/02/16 07:24:26 jmc Exp $
+.\" $OpenBSD: starttls.8,v 1.26 2018/06/27 05:39:02 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 16 2018 $
+.Dd $Mdocdate: June 27 2018 $
 .Dt STARTTLS 8
 .Os
 .Sh NAME
@@ -128,7 +128,7 @@ You can generate a new certificate based on this key using the command:
 .Bd -literal -offset indent
 # openssl req -x509 -new -key /etc/ssl/private/mail.example.com.key \e
   -out /etc/ssl/mail.example.com.crt -days 365
-# chmod 600 /etc/ssl/mycert.pem
+# chmod 600 /etc/ssl/mail.example.com.crt
 .Ed
 .Pp
 You may adjust the lifetime of the certificate via the
@@ -143,7 +143,7 @@ For
 it's as simple as adding pki configuration to
 .Xr smtpd.conf 5 :
 .Bd -literal -offset indent
-pki mail.example.com certificate "/etc/ssl/mail.example.com.crt"
+pki mail.example.com cert "/etc/ssl/mail.example.com.crt"
 pki mail.example.com key "/etc/ssl/private/mail.example.com.key"
 
 listen on [...] tls pki mail.example.com auth

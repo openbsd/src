@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.35 2017/07/24 11:00:01 friehm Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.38 2019/01/22 09:25:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -171,7 +171,7 @@ kr_init(void)
 	    &opt, sizeof(opt)) == -1)
 		log_warn("%s: SO_USELOOPBACK", __func__);	/* not fatal */
 
-	if (snmpd_env->sc_rtfilter && setsockopt(kr_state.ks_fd, PF_ROUTE,
+	if (snmpd_env->sc_rtfilter && setsockopt(kr_state.ks_fd, AF_ROUTE,
 	    ROUTE_MSGFILTER, &snmpd_env->sc_rtfilter,
 	    sizeof(snmpd_env->sc_rtfilter)) == -1)
 		log_warn("%s: ROUTE_MSGFILTER", __func__);
@@ -211,7 +211,7 @@ ktable_init(void)
 {
 	u_int		 i;
 
-	for (i = 0; i < RT_TABLEID_MAX; i++)
+	for (i = 0; i <= RT_TABLEID_MAX; i++)
 		if (ktable_exists(i, NULL))
 			ktable_update(i);
 }
@@ -1009,7 +1009,8 @@ prefixlen2mask(u_int8_t prefixlen)
 u_int8_t
 mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 {
-	u_int8_t	 l = 0, *ap, *ep;
+	unsigned int	 l = 0;
+	u_int8_t	*ap, *ep;
 
 	/*
 	 * sin6_len is the size of the sockaddr so substract the offset of
@@ -1025,32 +1026,35 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 			break;
 		case 0xfe:
 			l += 7;
-			return (l);
+			goto done;
 		case 0xfc:
 			l += 6;
-			return (l);
+			goto done;
 		case 0xf8:
 			l += 5;
-			return (l);
+			goto done;
 		case 0xf0:
 			l += 4;
-			return (l);
+			goto done;
 		case 0xe0:
 			l += 3;
-			return (l);
+			goto done;
 		case 0xc0:
 			l += 2;
-			return (l);
+			goto done;
 		case 0x80:
 			l += 1;
-			return (l);
+			goto done;
 		case 0x00:
-			return (l);
+			goto done;
 		default:
 			fatalx("non contiguous inet6 netmask");
 		}
 	}
 
+done:
+	if (l > sizeof(struct in6_addr) * 8)
+		fatalx("inet6 prefixlen out of bound");
 	return (l);
 }
 

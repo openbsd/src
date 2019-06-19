@@ -24,7 +24,9 @@
 
 namespace llvm {
 
+class Function;
 class GlobalValue;
+class MachineModuleInfo;
 class Mangler;
 class MCAsmInfo;
 class MCContext;
@@ -37,6 +39,7 @@ class PassManagerBuilder;
 class Target;
 class TargetIntrinsicInfo;
 class TargetIRAnalysis;
+class TargetTransformInfo;
 class TargetLoweringObjectFile;
 class TargetPassConfig;
 class TargetSubtargetInfo;
@@ -77,7 +80,7 @@ protected: // Can only create subclasses.
   std::string TargetFS;
 
   Reloc::Model RM = Reloc::Static;
-  CodeModel::Model CMModel = CodeModel::Default;
+  CodeModel::Model CMModel = CodeModel::Small;
   CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
 
   /// Contains target specific asm information.
@@ -135,9 +138,23 @@ public:
   /// Get the pointer size for this target.
   ///
   /// This is the only time the DataLayout in the TargetMachine is used.
-  unsigned getPointerSize() const { return DL.getPointerSize(); }
+  unsigned getPointerSize(unsigned AS) const {
+    return DL.getPointerSize(AS);
+  }
 
-  /// \brief Reset the target options based on the function's attributes.
+  unsigned getPointerSizeInBits(unsigned AS) const {
+    return DL.getPointerSizeInBits(AS);
+  }
+
+  unsigned getProgramPointerSize() const {
+    return DL.getPointerSize(DL.getProgramAddressSpace());
+  }
+
+  unsigned getAllocaPointerSize() const {
+    return DL.getPointerSize(DL.getAllocaAddrSpace());
+  }
+
+  /// Reset the target options based on the function's attributes.
   // FIXME: Remove TargetOptions that affect per-function code generation
   // from TargetMachine.
   void resetTargetOptions(const Function &F) const;
@@ -169,18 +186,28 @@ public:
 
   bool shouldAssumeDSOLocal(const Module &M, const GlobalValue *GV) const;
 
+  /// Returns true if this target uses emulated TLS.
+  bool useEmulatedTLS() const;
+
   /// Returns the TLS model which should be used for the given global variable.
   TLSModel::Model getTLSModel(const GlobalValue *GV) const;
 
   /// Returns the optimization level: None, Less, Default, or Aggressive.
   CodeGenOpt::Level getOptLevel() const;
 
-  /// \brief Overrides the optimization level.
+  /// Overrides the optimization level.
   void setOptLevel(CodeGenOpt::Level Level);
 
   void setFastISel(bool Enable) { Options.EnableFastISel = Enable; }
   bool getO0WantsFastISel() { return O0WantsFastISel; }
   void setO0WantsFastISel(bool Enable) { O0WantsFastISel = Enable; }
+  void setGlobalISel(bool Enable) { Options.EnableGlobalISel = Enable; }
+  void setMachineOutliner(bool Enable) {
+    Options.EnableMachineOutliner = Enable;
+  }
+  void setSupportsDefaultOutlining(bool Enable) {
+    Options.SupportsDefaultOutlining = Enable;
+  }
 
   bool shouldPrintMachineCode() const { return Options.PrintMachineCode; }
 
@@ -198,12 +225,18 @@ public:
     return Options.FunctionSections;
   }
 
-  /// \brief Get a \c TargetIRAnalysis appropriate for the target.
+  /// Get a \c TargetIRAnalysis appropriate for the target.
   ///
   /// This is used to construct the new pass manager's target IR analysis pass,
   /// set up appropriately for this target machine. Even the old pass manager
   /// uses this to answer queries about the IR.
-  virtual TargetIRAnalysis getTargetIRAnalysis();
+  TargetIRAnalysis getTargetIRAnalysis();
+
+  /// Return a TargetTransformInfo for a given function.
+  ///
+  /// The returned TargetTransformInfo is specialized to the subtarget
+  /// corresponding to \p F.
+  virtual TargetTransformInfo getTargetTransformInfo(const Function &F);
 
   /// Allow the target to modify the pass manager, e.g. by calling
   /// PassManagerBuilder::addExtension.
@@ -222,11 +255,12 @@ public:
   /// emitted.  Typically this will involve several steps of code generation.
   /// This method should return true if emission of this file type is not
   /// supported, or false on success.
-  virtual bool addPassesToEmitFile(
-      PassManagerBase &, raw_pwrite_stream &, CodeGenFileType,
-      bool /*DisableVerify*/ = true, AnalysisID /*StartBefore*/ = nullptr,
-      AnalysisID /*StartAfter*/ = nullptr, AnalysisID /*StopBefore*/ = nullptr,
-      AnalysisID /*StopAfter*/ = nullptr) {
+  /// \p MMI is an optional parameter that, if set to non-nullptr,
+  /// will be used to set the MachineModuloInfo for this PM.
+  virtual bool addPassesToEmitFile(PassManagerBase &, raw_pwrite_stream &,
+                                   raw_pwrite_stream *, CodeGenFileType,
+                                   bool /*DisableVerify*/ = true,
+                                   MachineModuleInfo *MMI = nullptr) {
     return true;
   }
 
@@ -257,6 +291,12 @@ public:
   /// PEI. If false (virtual-register machines), then callee-save register
   /// spilling and scavenging are not needed or used.
   virtual bool usesPhysRegsForPEI() const { return true; }
+
+  /// True if the target wants to use interprocedural register allocation by
+  /// default. The -enable-ipra flag can be used to override this.
+  virtual bool useIPRA() const {
+    return false;
+  }
 };
 
 /// This class describes a target machine that is implemented with the LLVM
@@ -265,17 +305,18 @@ public:
 class LLVMTargetMachine : public TargetMachine {
 protected: // Can only create subclasses.
   LLVMTargetMachine(const Target &T, StringRef DataLayoutString,
-                    const Triple &TargetTriple, StringRef CPU, StringRef FS,
+                    const Triple &TT, StringRef CPU, StringRef FS,
                     const TargetOptions &Options, Reloc::Model RM,
                     CodeModel::Model CM, CodeGenOpt::Level OL);
 
   void initAsmInfo();
+
 public:
-  /// \brief Get a TargetIRAnalysis implementation for the target.
+  /// Get a TargetTransformInfo implementation for the target.
   ///
-  /// This analysis will produce a TTI result which uses the common code
-  /// generator to answer queries about the IR.
-  TargetIRAnalysis getTargetIRAnalysis() override;
+  /// The TTI returned uses the common code generator to answer queries about
+  /// the IR.
+  TargetTransformInfo getTargetTransformInfo(const Function &F) override;
 
   /// Create a pass configuration object to be used by addPassToEmitX methods
   /// for generating a pipeline of CodeGen passes.
@@ -283,18 +324,19 @@ public:
 
   /// Add passes to the specified pass manager to get the specified file
   /// emitted.  Typically this will involve several steps of code generation.
-  bool addPassesToEmitFile(
-      PassManagerBase &PM, raw_pwrite_stream &Out, CodeGenFileType FileType,
-      bool DisableVerify = true, AnalysisID StartBefore = nullptr,
-      AnalysisID StartAfter = nullptr, AnalysisID StopBefore = nullptr,
-      AnalysisID StopAfter = nullptr) override;
+  /// \p MMI is an optional parameter that, if set to non-nullptr,
+  /// will be used to set the MachineModuloInfofor this PM.
+  bool addPassesToEmitFile(PassManagerBase &PM, raw_pwrite_stream &Out,
+                           raw_pwrite_stream *DwoOut, CodeGenFileType FileType,
+                           bool DisableVerify = true,
+                           MachineModuleInfo *MMI = nullptr) override;
 
   /// Add passes to the specified pass manager to get machine code emitted with
   /// the MCJIT. This method returns true if machine code is not supported. It
   /// fills the MCContext Ctx pointer which can be used to build custom
   /// MCStreamer.
   bool addPassesToEmitMC(PassManagerBase &PM, MCContext *&Ctx,
-                         raw_pwrite_stream &OS,
+                         raw_pwrite_stream &Out,
                          bool DisableVerify = true) override;
 
   /// Returns true if the target is expected to pass all machine verifier
@@ -303,10 +345,11 @@ public:
   /// EXPENSIVE_CHECKS is enabled.
   virtual bool isMachineVerifierClean() const { return true; }
 
-  /// \brief Adds an AsmPrinter pass to the pipeline that prints assembly or
+  /// Adds an AsmPrinter pass to the pipeline that prints assembly or
   /// machine code from the MI representation.
   bool addAsmPrinter(PassManagerBase &PM, raw_pwrite_stream &Out,
-                     CodeGenFileType FileTYpe, MCContext &Context);
+                     raw_pwrite_stream *DwoOut, CodeGenFileType FileTYpe,
+                     MCContext &Context);
 };
 
 } // end namespace llvm

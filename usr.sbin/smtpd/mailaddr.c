@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailaddr.c,v 1.2 2015/12/28 22:08:30 jung Exp $	*/
+/*	$OpenBSD: mailaddr.c,v 1.3 2018/05/31 21:06:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2015 Gilles Chehade <gilles@poolp.org>
@@ -116,7 +116,7 @@ maddrmap_insert(struct maddrmap *maddrmap, struct maddrnode *maddrnode)
 {
 	struct maddrnode	*mn;
 
-	mn = xmemdup(maddrnode, sizeof *maddrnode, "maddrmap_insert");
+	mn = xmemdup(maddrnode, sizeof *maddrnode);
 	TAILQ_INSERT_TAIL(&maddrmap->queue, mn, entries);
 }
 

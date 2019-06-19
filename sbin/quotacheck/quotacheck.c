@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.39 2015/12/10 17:27:00 mmcc Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.40 2018/09/26 03:03:39 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -138,6 +138,8 @@ main(int argc, char *argv[])
 	u_int64_t done = 0;	/* XXX supports maximum 64 filesystems */
 	const char *errstr;
 	char *name;
+
+	checkroot();
 
 	errs = maxrun = 0;
 	while ((ch = getopt(argc, argv, "adguvl:")) != -1) {

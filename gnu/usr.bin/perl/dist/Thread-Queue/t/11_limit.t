@@ -19,7 +19,7 @@ use Thread::Queue;
 
 use Test::More;
 
-plan tests => 8;
+plan tests => 13;
 
 my $q = Thread::Queue->new();
 my $rpt = Thread::Queue->new();
@@ -82,12 +82,12 @@ $rpt->enqueue($q->pending);
 # q = (4, 5, 'foo'); r = (4, 3, 4, 3)
 
 # Read all items from queue
-my @item = $q->dequeue(3);
-is_deeply(\@item, [4, 5, 'foo'], 'Dequeued 3 items');
+my @items = $q->dequeue(3);
+is_deeply(\@items, [4, 5, 'foo'], 'Dequeued 3 items');
 # Thread is now unblocked
 
-@item = $q->dequeue(2);
-is_deeply(\@item, [6, 7], 'Dequeued 2 items');
+@items = $q->dequeue(2);
+is_deeply(\@items, [6, 7], 'Dequeued 2 items');
 
 # Thread is now unblocked
 # Handshake with thread
@@ -95,6 +95,37 @@ $rpt->enqueue('go');
 
 # (7) - Done
 $th->join;
+
+# It's an error to call dequeue methods with COUNT > LIMIT
+eval { $q->dequeue(5); };
+like($@, qr/exceeds queue size limit/, $@);
+
+# Bug #120157
+#  Fix deadlock from combination of dequeue_nb, enqueue and queue size limit
+
+# (1) Fill queue
+$q->enqueue(1..3);
+is($q->pending, 3, 'Queue loaded');
+
+# (2) Thread will block trying to add to full queue
+$th = threads->create( sub {
+    $q->enqueue(99);
+    return('OK');
+});
+threads->yield();
+
+# (3) Dequeue an item so that thread can unblock
+is($q->dequeue_nb(), 1, 'Dequeued item');
+
+# (4) Thread unblocks
+is($th->join(), 'OK', 'Thread exited');
+
+# (5) Fetch queue to show thread's item was enqueued
+@items = ();
+while (my $item = $q->dequeue_nb()) {
+    push(@items, $item);
+}
+is_deeply(\@items, [2,3,99], 'Dequeued remaining');
 
 exit(0);
 

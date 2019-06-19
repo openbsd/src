@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.13 2015/07/03 12:47:30 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.14 2018/08/22 11:25:58 aoyama Exp $	*/
 
 /* Public Domain */
 
@@ -151,5 +151,53 @@ __sync_synchronize(void)
 	__asm__ volatile ("tb1 0, %%r0, 0" ::: "memory");
 }
 
+#else /* _KERNEL */
+
+#if !defined(__GNUC__) || (__GNUC__ < 4)
+
+/*
+ * Atomic routines are not available to userland, but we need to prevent
+ * <sys/atomic.h> from declaring them as inline wrappers of __sync_* functions,
+ * which are not available with gcc 3.
+ */
+
+#define	atomic_cas_uint		UNIMPLEMENTED
+#define	atomic_cas_ulong	UNIMPLEMENTED
+#define	atomic_cas_ptr		UNIMPLEMENTED
+
+#define	atomic_swap_uint	UNIMPLEMENTED
+#define	atomic_swap_ulong	UNIMPLEMENTED
+#define	atomic_swap_ptr		UNIMPLEMENTED
+
+#define	atomic_add_int_nv	UNIMPLEMENTED
+#define	atomic_add_long_nv	UNIMPLEMENTED
+#define	atomic_add_int		UNIMPLEMENTED
+#define	atomic_add_long		UNIMPLEMENTED
+
+#define	atomic_inc_int		UNIMPLEMENTED
+#define	atomic_inc_long		UNIMPLEMENTED
+
+#define	atomic_sub_int_nv	UNIMPLEMENTED
+#define	atomic_sub_long_nv	UNIMPLEMENTED
+#define	atomic_sub_int		UNIMPLEMENTED
+#define	atomic_sub_long		UNIMPLEMENTED
+
+#define	atomic_dec_int		UNIMPLEMENTED
+#define	atomic_dec_long		UNIMPLEMENTED
+
+/* trap numbers below 128 would cause a privileged instruction fault */
+#define	__membar() do {						\
+	__asm __volatile("tb1 0, %%r0, 128" ::: "memory");	\
+} while (0)
+
+#endif	/* gcc < 4 */
+
+#define	membar_enter()		__membar()
+#define	membar_exit()		__membar()
+#define	membar_producer()	__membar()
+#define	membar_consumer()	__membar()
+#define	membar_sync()		__membar()
+
 #endif /* defined(_KERNEL) */
+
 #endif /* _M88K_ATOMIC_H_ */

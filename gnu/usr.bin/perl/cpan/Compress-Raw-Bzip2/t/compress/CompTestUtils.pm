@@ -70,8 +70,8 @@ BEGIN {
 
     our ($index);
     $index = '00000';
-    our ($useTempFile) = defined &File::Temp::tempdir;
-    our ($useTempDir) = defined &File::Temp::newdir;
+    our ($useTempFile);
+    our ($useTempDir);
     
     sub new
     {
@@ -115,7 +115,12 @@ BEGIN {
                 # autogenerate the name if none supplied
                 $_ = "tmpdir" . $$ . "X" . $index ++ . ".tmp" ;
             }
-            foreach (@_) { rmtree $_; mkdir $_, 0777 }
+            foreach (@_) 
+            { 
+                rmtree $_, {verbose => 0, safe => 1}
+                    if -d $_; 
+                mkdir $_, 0777 
+            }
             bless [ @_ ], $self ;
         }
 
@@ -126,7 +131,11 @@ BEGIN {
         if (! $useTempFile)
         {
             my $self = shift ;
-            foreach (@$self) { rmtree $_ }
+            foreach (@$self) 
+            { 
+                rmtree $_, {verbose => 0, safe => 1}
+                    if -d $_ ; 
+            }
         }
     }
 }

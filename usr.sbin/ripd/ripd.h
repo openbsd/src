@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.25 2018/02/08 00:19:54 claudio Exp $ */
+/*	$OpenBSD: ripd.h,v 1.26 2018/12/31 20:34:16 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -244,6 +244,7 @@ struct ripd_conf {
 	int			 options;
 	int			 rip_socket;
 	int			 redistribute;
+	u_int8_t		 fib_priority;
 	u_int			 rdomain;
 	char			*csock;
 };
@@ -319,7 +320,7 @@ struct demote_msg {
 };
 
 int		 kif_init(void);
-int		 kr_init(int, u_int);
+int		 kr_init(int, u_int, u_int8_t);
 int		 kr_change(struct kroute *);
 int		 kr_delete(struct kroute *);
 void		 kr_shutdown(void);

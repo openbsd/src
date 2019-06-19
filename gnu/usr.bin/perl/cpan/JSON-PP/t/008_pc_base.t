@@ -1,7 +1,7 @@
 use Test::More;
 
-# copied over from JSON::PP::PC and modified to use JSON::PP
-# copied over from JSON::PP::XS and modified to use JSON::PP
+# copied over from JSON::PC and modified to use JSON::PP
+# copied over from JSON::XS and modified to use JSON::PP
 
 use strict;
 BEGIN { plan tests => 20 };

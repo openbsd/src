@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.h,v 1.26 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: ac97.h,v 1.27 2018/04/11 04:48:31 ratchov Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -62,14 +62,6 @@ struct ac97_codec_if_vtbl {
 	int (*query_devinfo)(struct ac97_codec_if *addr, mixer_devinfo_t *cp);
 	int (*get_portnum_by_name)(struct ac97_codec_if *addr, char *class,
 	    char *device, char *qualifier);
-
-	/*
-	 *     The AC97 codec driver records the various port settings.
-	 * This function can be used to restore the port settings, e.g.
-	 * after resume from a laptop suspend to disk.
-	 */
-	void (*restore_ports)(struct ac97_codec_if *addr);
-
 	u_int16_t (*get_caps)(struct ac97_codec_if *codec_if);
 	int (*set_rate)(struct ac97_codec_if *codec_if, int target,
 	    u_long *rate);

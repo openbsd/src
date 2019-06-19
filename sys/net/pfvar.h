@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.476 2018/02/09 09:35:03 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.490 2019/02/18 13:11:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -68,7 +68,7 @@ enum	{ PF_INOUT, PF_IN, PF_OUT, PF_FWD };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
 	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP, PF_DEFER,
 	  PF_MATCH, PF_DIVERT, PF_RT, PF_AFRT };
-enum	{ PF_TRANS_RULESET, PF_TRANS_ALTQ, PF_TRANS_TABLE };
+enum	{ PF_TRANS_RULESET, PF_TRANS_TABLE };
 enum	{ PF_OP_NONE, PF_OP_IRG, PF_OP_EQ, PF_OP_NE, PF_OP_LT,
 	  PF_OP_LE, PF_OP_GT, PF_OP_GE, PF_OP_XRG, PF_OP_RRG };
 enum	{ PF_CHANGE_NONE, PF_CHANGE_ADD_HEAD, PF_CHANGE_ADD_TAIL,
@@ -119,9 +119,23 @@ enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
  */
 #define PF_FRAG_STALE			200
 
+/*
+ * Limit the length of the fragment queue traversal.  Remember
+ * search entry points based on the fragment offset.
+ */
+#define PF_FRAG_ENTRY_POINTS		16
+
+/*
+ * The number of entries in the fragment queue must be limited
+ * to avoid DoS by linear seaching.  Instead of a global limit,
+ * use a limit per entry point.  For large packets these sum up.
+ */
+#define PF_FRAG_ENTRY_LIMIT		64
+
 enum	{ PF_NOPFROUTE, PF_ROUTETO, PF_DUPTO, PF_REPLYTO };
 enum	{ PF_LIMIT_STATES, PF_LIMIT_SRC_NODES, PF_LIMIT_FRAGS,
-	  PF_LIMIT_TABLES, PF_LIMIT_TABLE_ENTRIES, PF_LIMIT_MAX };
+	  PF_LIMIT_TABLES, PF_LIMIT_TABLE_ENTRIES, PF_LIMIT_PKTDELAY_PKTS,
+	  PF_LIMIT_MAX };
 #define PF_POOL_IDMASK		0x0f
 enum	{ PF_POOL_NONE, PF_POOL_BITMASK, PF_POOL_RANDOM,
 	  PF_POOL_SRCHASH, PF_POOL_ROUNDROBIN, PF_POOL_LEASTSTATES };
@@ -264,19 +278,6 @@ struct pfi_dynaddr {
 	!(a)->addr32[0] && !(a)->addr32[1] && \
 	!(a)->addr32[2] && !(a)->addr32[3] )) \
 
-#define PF_MATCHA(n, a, m, b, f) \
-	pf_match_addr(n, a, m, b, f)
-
-#define PF_ACPY(a, b, f) \
-	pf_addrcpy(a, b, f)
-
-#define PF_AINC(a, f) \
-	pf_addr_inc(a, f)
-
-#define PF_POOLMASK(a, b, c, d, f) \
-	pf_poolmask(a, b, c, d, f)
-
-
 #define	PF_MISMATCHAW(aw, x, af, neg, ifp, rtid)			\
 	(								\
 		(((aw)->type == PF_ADDR_NOROUTE &&			\
@@ -294,7 +295,7 @@ struct pfi_dynaddr {
 		    &(aw)->v.a.mask, (x), (af))) ||			\
 		((aw)->type == PF_ADDR_ADDRMASK &&			\
 		    !PF_AZERO(&(aw)->v.a.mask, (af)) &&			\
-		    !PF_MATCHA(0, &(aw)->v.a.addr,			\
+		    !pf_match_addr(0, &(aw)->v.a.addr,			\
 		    &(aw)->v.a.mask, (x), (af))))) !=			\
 		(neg)							\
 	)
@@ -459,11 +460,12 @@ struct pf_rule_actions {
 	u_int16_t	pqid;
 	u_int16_t	max_mss;
 	u_int16_t	flags;
+	u_int16_t	delay;
 	u_int8_t	log;
 	u_int8_t	set_tos;
 	u_int8_t	min_ttl;
 	u_int8_t	set_prio[2];
-	u_int8_t	pad[3];
+	u_int8_t	pad[1];
 };
 
 union pf_rule_ptr {
@@ -546,6 +548,7 @@ struct pf_rule {
 	u_int16_t		 tag;
 	u_int16_t		 match_tag;
 	u_int16_t		 scrub_flags;
+	u_int16_t		 delay;
 
 	struct pf_rule_uid	 uid;
 	struct pf_rule_gid	 gid;
@@ -605,8 +608,9 @@ struct pf_rule {
 #define	PFRULE_RETURNICMP	0x0004
 #define	PFRULE_RETURN		0x0008
 #define	PFRULE_NOSYNC		0x0010
-#define PFRULE_SRCTRACK		0x0020  /* track source states */
-#define PFRULE_RULESRCTRACK	0x0040  /* per rule */
+#define	PFRULE_SRCTRACK		0x0020  /* track source states */
+#define	PFRULE_RULESRCTRACK	0x0040  /* per rule */
+#define	PFRULE_SETDELAY		0x0080
 
 /* rule flags again */
 #define PFRULE_IFBOUND		0x00010000	/* if-bound */
@@ -616,10 +620,10 @@ struct pf_rule {
 #define PFRULE_AFTO		0x00200000	/* af-to rule */
 #define	PFRULE_EXPIRED		0x00400000	/* one shot rule hit by pkt */
 
-#define PFSTATE_HIWAT		10000	/* default state table size */
-#define PFSTATE_ADAPT_START	6000	/* default adaptive timeout start */
-#define PFSTATE_ADAPT_END	12000	/* default adaptive timeout end */
-
+#define PFSTATE_HIWAT		100000	/* default state table size */
+#define PFSTATE_ADAPT_START	60000	/* default adaptive timeout start */
+#define PFSTATE_ADAPT_END	120000	/* default adaptive timeout end */
+#define	PF_PKTDELAY_MAXPKTS	10000	/* max # of pkts held in delay queue */
 
 struct pf_rule_item {
 	SLIST_ENTRY(pf_rule_item)	 entry;
@@ -744,6 +748,7 @@ struct pf_state {
 
 	TAILQ_ENTRY(pf_state)	 sync_list;
 	TAILQ_ENTRY(pf_state)	 entry_list;
+	SLIST_ENTRY(pf_state)	 gc_list;
 	RB_ENTRY(pf_state)	 entry_id;
 	struct pf_state_peer	 src;
 	struct pf_state_peer	 dst;
@@ -761,6 +766,7 @@ struct pf_state {
 	int32_t			 creation;
 	int32_t			 expire;
 	int32_t			 pfsync_time;
+	int			 rtableid[2];	/* rtables stack and wire */
 	u_int16_t		 qid;
 	u_int16_t		 pqid;
 	u_int16_t		 tag;
@@ -781,14 +787,14 @@ struct pf_state {
 	u_int8_t		 timeout;
 	u_int8_t		 sync_state; /* PFSYNC_S_x */
 	u_int8_t		 sync_updates;
-	int			 rtableid[2];	/* rtables stack and wire */
 	u_int8_t		 min_ttl;
 	u_int8_t		 set_tos;
 	u_int8_t		 set_prio[2];
 	u_int16_t		 max_mss;
 	u_int16_t		 if_index_in;
 	u_int16_t		 if_index_out;
-	u_int8_t		 pad2[2];
+	pf_refcnt_t		 refcnt;
+	u_int16_t		 delay;
 };
 
 /*
@@ -1423,6 +1429,12 @@ enum pf_divert_types {
 	PF_DIVERT_PACKET
 };
 
+struct pf_pktdelay {
+	struct timeout	*to;
+	struct mbuf	*m;
+	u_int		 ifidx;
+};
+
 /* Fragment entries reference mbuf clusters, so base the default on that. */
 #define PFFRAG_FRENT_HIWAT	(NMBCLUSTERS / 16) /* Number of entries */
 #define PFFRAG_FRAG_HIWAT	(NMBCLUSTERS / 32) /* Number of packets */
@@ -1484,7 +1496,7 @@ struct pfioc_state_kill {
 };
 
 struct pfioc_states {
-	int	ps_len;
+	size_t	ps_len;
 	union {
 		caddr_t			 psu_buf;
 		struct pfsync_state	*psu_states;
@@ -1494,7 +1506,7 @@ struct pfioc_states {
 };
 
 struct pfioc_src_nodes {
-	int	psn_len;
+	size_t	psn_len;
 	union {
 		caddr_t		 psu_buf;
 		struct pf_src_node	*psu_src_nodes;
@@ -1676,7 +1688,8 @@ extern struct pf_queuehead		 *pf_queues_active, *pf_queues_inactive;
 extern u_int32_t		 ticket_pabuf;
 extern struct pool		 pf_src_tree_pl, pf_sn_item_pl, pf_rule_pl;
 extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
-				    pf_rule_item_pl, pf_queue_pl;
+				    pf_rule_item_pl, pf_queue_pl,
+				    pf_pktdelay_pl;
 extern struct pool		 pf_state_scrub_pl;
 extern struct ifnet		*sync_ifp;
 extern struct pf_rule		 pf_default_rule;
@@ -1686,9 +1699,9 @@ extern int			 pf_tbladdr_setup(struct pf_ruleset *,
 extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
-extern void			 pf_purge_expired_src_nodes();
+extern void			 pf_purge_expired_src_nodes(void);
 extern void			 pf_purge_expired_states(u_int32_t);
-extern void			 pf_purge_expired_rules();
+extern void			 pf_purge_expired_rules(void);
 extern void			 pf_remove_state(struct pf_state *);
 extern void			 pf_remove_divert_state(struct pf_state_key *);
 extern void			 pf_free_state(struct pf_state *);
@@ -1785,6 +1798,7 @@ int	pf_translate_af(struct pf_pdesc *);
 void	pf_route(struct pf_pdesc *, struct pf_rule *, struct pf_state *);
 void	pf_route6(struct pf_pdesc *, struct pf_rule *, struct pf_state *);
 void	pf_init_threshold(struct pf_threshold *, u_int32_t, u_int32_t);
+int	pf_delay_pkt(struct mbuf *, u_int);
 
 void	pfr_initialize(void);
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
@@ -1841,6 +1855,7 @@ void		 pfi_detach_ifnet(struct ifnet *);
 void		 pfi_attach_ifgroup(struct ifg_group *);
 void		 pfi_detach_ifgroup(struct ifg_group *);
 void		 pfi_group_change(const char *);
+void		 pfi_group_addmember(const char *, struct ifnet *);
 int		 pfi_match_addr(struct pfi_dynaddr *, struct pf_addr *,
 		    sa_family_t);
 int		 pfi_dynaddr_setup(struct pf_addr_wrap *, sa_family_t);
@@ -1888,7 +1903,7 @@ int			 pf_anchor_setup(struct pf_rule *,
 			    const struct pf_ruleset *, const char *);
 int			 pf_anchor_copyout(const struct pf_ruleset *,
 			    const struct pf_rule *, struct pfioc_rule *);
-void			 pf_anchor_remove(struct pf_rule *);
+void			 pf_remove_anchor(struct pf_rule *);
 void			 pf_remove_if_empty_ruleset(struct pf_ruleset *);
 struct pf_anchor	*pf_find_anchor(const char *);
 struct pf_ruleset	*pf_find_ruleset(const char *);
@@ -1896,12 +1911,6 @@ struct pf_ruleset 	*pf_get_leaf_ruleset(char *, char **);
 struct pf_anchor 	*pf_create_anchor(struct pf_anchor *, const char *);
 struct pf_ruleset	*pf_find_or_create_ruleset(const char *);
 void			 pf_rs_initialize(void);
-
-#ifdef _KERNEL
-int			 pf_anchor_copyout(const struct pf_ruleset *,
-			    const struct pf_rule *, struct pfioc_rule *);
-void			 pf_anchor_remove(struct pf_rule *);
-#endif /* _KERNEL */
 
 /* The fingerprint functions can be linked into userland programs (tcpdump) */
 int	pf_osfp_add(struct pf_osfp_ioctl *);
@@ -1933,7 +1942,11 @@ int			 pf_postprocess_addr(struct pf_state *);
 void			 pf_mbuf_link_state_key(struct mbuf *,
 			    struct pf_state_key *);
 void			 pf_mbuf_unlink_state_key(struct mbuf *);
+void			 pf_mbuf_link_inpcb(struct mbuf *, struct inpcb *);
+void			 pf_mbuf_unlink_inpcb(struct mbuf *);
 
+u_int8_t*		 pf_find_tcpopt(u_int8_t *, u_int8_t *, size_t,
+			    u_int8_t, u_int8_t);
 u_int8_t		 pf_get_wscale(struct pf_pdesc *);
 u_int16_t		 pf_get_mss(struct pf_pdesc *);
 struct mbuf *		 pf_build_tcp(const struct pf_rule *, sa_family_t,

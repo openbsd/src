@@ -441,6 +441,15 @@ the program where they can be handled appropriately. Handling the error may be
 as simple as reporting the issue to the user, or it may involve attempts at
 recovery.
 
+.. note::
+
+   While it would be ideal to use this error handling scheme throughout
+   LLVM, there are places where this hasn't been practical to apply. In
+   situations where you absolutely must emit a non-programmatic error and
+   the ``Error`` model isn't workable you can call ``report_fatal_error``,
+   which will call installed error handlers, print a message, and exit the
+   program.
+
 Recoverable errors are modeled using LLVM's ``Error`` scheme. This scheme
 represents errors using function return values, similar to classic C integer
 error codes, or C++'s ``std::error_code``. However, the ``Error`` class is
@@ -486,7 +495,7 @@ that inherits from the ErrorInfo utility, E.g.:
 
   Error printFormattedFile(StringRef Path) {
     if (<check for valid format>)
-      return make_error<InvalidObjectFile>(Path);
+      return make_error<BadFileFormat>(Path);
     // print file contents.
     return Error::success();
   }
@@ -1011,8 +1020,8 @@ be passed by value.
 
 .. _DEBUG:
 
-The ``DEBUG()`` macro and ``-debug`` option
--------------------------------------------
+The ``LLVM_DEBUG()`` macro and ``-debug`` option
+------------------------------------------------
 
 Often when working on your pass you will put a bunch of debugging printouts and
 other code into your pass.  After you get it working, you want to remove it, but
@@ -1024,14 +1033,14 @@ them out, allowing you to enable them if you need them in the future.
 
 The ``llvm/Support/Debug.h`` (`doxygen
 <http://llvm.org/doxygen/Debug_8h_source.html>`__) file provides a macro named
-``DEBUG()`` that is a much nicer solution to this problem.  Basically, you can
-put arbitrary code into the argument of the ``DEBUG`` macro, and it is only
+``LLVM_DEBUG()`` that is a much nicer solution to this problem.  Basically, you can
+put arbitrary code into the argument of the ``LLVM_DEBUG`` macro, and it is only
 executed if '``opt``' (or any other tool) is run with the '``-debug``' command
 line argument:
 
 .. code-block:: c++
 
-  DEBUG(errs() << "I am here!\n");
+  LLVM_DEBUG(dbgs() << "I am here!\n");
 
 Then you can run your pass like this:
 
@@ -1042,13 +1051,13 @@ Then you can run your pass like this:
   $ opt < a.bc > /dev/null -mypass -debug
   I am here!
 
-Using the ``DEBUG()`` macro instead of a home-brewed solution allows you to not
+Using the ``LLVM_DEBUG()`` macro instead of a home-brewed solution allows you to not
 have to create "yet another" command line option for the debug output for your
-pass.  Note that ``DEBUG()`` macros are disabled for non-asserts builds, so they
+pass.  Note that ``LLVM_DEBUG()`` macros are disabled for non-asserts builds, so they
 do not cause a performance impact at all (for the same reason, they should also
 not contain side-effects!).
 
-One additional nice thing about the ``DEBUG()`` macro is that you can enable or
+One additional nice thing about the ``LLVM_DEBUG()`` macro is that you can enable or
 disable it directly in gdb.  Just use "``set DebugFlag=0``" or "``set
 DebugFlag=1``" from the gdb if the program is running.  If the program hasn't
 been started yet, you can always just run it with ``-debug``.
@@ -1067,10 +1076,10 @@ follows:
 .. code-block:: c++
 
   #define DEBUG_TYPE "foo"
-  DEBUG(errs() << "'foo' debug type\n");
+  LLVM_DEBUG(dbgs() << "'foo' debug type\n");
   #undef  DEBUG_TYPE
   #define DEBUG_TYPE "bar"
-  DEBUG(errs() << "'bar' debug type\n"));
+  LLVM_DEBUG(dbgs() << "'bar' debug type\n");
   #undef  DEBUG_TYPE
 
 Then you can run your pass like this:
@@ -1111,8 +1120,8 @@ preceding example could be written as:
 
 .. code-block:: c++
 
-  DEBUG_WITH_TYPE("foo", errs() << "'foo' debug type\n");
-  DEBUG_WITH_TYPE("bar", errs() << "'bar' debug type\n"));
+  DEBUG_WITH_TYPE("foo", dbgs() << "'foo' debug type\n");
+  DEBUG_WITH_TYPE("bar", dbgs() << "'bar' debug type\n");
 
 .. _Statistic:
 
@@ -1224,7 +1233,7 @@ Define your DebugCounter like this:
 .. code-block:: c++
 
   DEBUG_COUNTER(DeleteAnInstruction, "passname-delete-instruction",
-		"Controls which instructions get delete").
+		"Controls which instructions get delete");
 
 The ``DEBUG_COUNTER`` macro defines a static variable, whose name
 is specified by the first argument.  The name of the counter
@@ -1426,7 +1435,7 @@ order (so you can do pointer arithmetic between elements), supports efficient
 push_back/pop_back operations, supports efficient random access to its elements,
 etc.
 
-The advantage of SmallVector is that it allocates space for some number of
+The main advantage of SmallVector is that it allocates space for some number of
 elements (N) **in the object itself**.  Because of this, if the SmallVector is
 dynamically smaller than N, no malloc is performed.  This can be a big win in
 cases where the malloc/free call is far more expensive than the code that
@@ -1440,6 +1449,21 @@ SmallVectors are most useful when on the stack.
 
 SmallVector also provides a nice portable and efficient replacement for
 ``alloca``.
+
+SmallVector has grown a few other minor advantages over std::vector, causing
+``SmallVector<Type, 0>`` to be preferred over ``std::vector<Type>``.
+
+#. std::vector is exception-safe, and some implementations have pessimizations
+   that copy elements when SmallVector would move them.
+
+#. SmallVector understands ``isPodLike<Type>`` and uses realloc aggressively.
+
+#. Many LLVM APIs take a SmallVectorImpl as an out parameter (see the note
+   below).
+
+#. SmallVector with N equal to 0 is smaller than std::vector on 64-bit
+   platforms, since it uses ``unsigned`` (instead of ``void*``) for its size
+   and capacity.
 
 .. note::
 
@@ -1473,12 +1497,10 @@ SmallVector also provides a nice portable and efficient replacement for
 <vector>
 ^^^^^^^^
 
-``std::vector`` is well loved and respected.  It is useful when SmallVector
-isn't: when the size of the vector is often large (thus the small optimization
-will rarely be a benefit) or if you will be allocating many instances of the
-vector itself (which would waste space for elements that aren't in the
-container).  vector is also useful when interfacing with code that expects
-vectors :).
+``std::vector<T>`` is well loved and respected.  However, ``SmallVector<T, 0>``
+is often a better option due to the advantages listed above.  std::vector is
+still useful when you need to store more than ``UINT32_MAX`` elements or when
+interfacing with code that expects vectors :).
 
 One worthwhile note about std::vector: avoid code like this:
 
@@ -1823,7 +1845,7 @@ A sorted 'vector'
 ^^^^^^^^^^^^^^^^^
 
 If you intend to insert a lot of elements, then do a lot of queries, a great
-approach is to use a vector (or other sequential container) with
+approach is to use an std::vector (or other sequential container) with
 std::sort+std::unique to remove duplicates.  This approach works really well if
 your usage pattern has these two distinct phases (insert then query), and can be
 coupled with a good choice of :ref:`sequential container <ds_sequential>`.
@@ -2105,7 +2127,7 @@ is stored in the same allocation as the Value of a pair).
 StringMap also provides query methods that take byte ranges, so it only ever
 copies a string if a value is inserted into the table.
 
-StringMap iteratation order, however, is not guaranteed to be deterministic, so
+StringMap iteration order, however, is not guaranteed to be deterministic, so
 any uses which require that should instead use a std::map.
 
 .. _dss_indexmap:
@@ -2975,7 +2997,7 @@ Conceptually, ``LLVMContext`` provides isolation.  Every LLVM entity
 in-memory IR belongs to an ``LLVMContext``.  Entities in different contexts
 *cannot* interact with each other: ``Module``\ s in different contexts cannot be
 linked together, ``Function``\ s cannot be added to ``Module``\ s in different
-contexts, etc.  What this means is that is is safe to compile on multiple
+contexts, etc.  What this means is that is safe to compile on multiple
 threads simultaneously, as long as no two threads operate on entities within the
 same context.
 
@@ -3712,7 +3734,7 @@ Important Subclasses of the ``Instruction`` class
 
 * ``CmpInst``
 
-  This subclass respresents the two comparison instructions,
+  This subclass represents the two comparison instructions,
   `ICmpInst <LangRef.html#i_icmp>`_ (integer opreands), and
   `FCmpInst <LangRef.html#i_fcmp>`_ (floating point operands).
 

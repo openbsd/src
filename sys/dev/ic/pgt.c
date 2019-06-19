@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.90 2017/10/26 15:00:28 mpi Exp $  */
+/*	$OpenBSD: pgt.c,v 1.93 2018/04/28 16:05:56 phessler Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -2250,13 +2250,6 @@ pgt_ioctl(struct ifnet *ifp, u_long cmd, caddr_t req)
 		/*
 		 * This chip scans always as soon as it gets initialized.
 		 */
-
-		/*
-		 * Give us a bit time to scan in case we were not
-		 * initialized before and let the userland process wait.
-		 */
-		tsleep(&sc->sc_flags, 0, "pgtsca", hz * SCAN_TIMEOUT);
-
 		break;
 	case SIOCG80211ALLNODES: {
 		struct ieee80211_nodereq *nr = NULL;
@@ -2943,7 +2936,8 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			ic->ic_if.if_timer = 0;
 		ic->ic_mgt_timer = 0;
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
-		ieee80211_free_allnodes(ic);
+		ieee80211_free_allnodes(ic, 1);
+		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
 		break;
 	case IEEE80211_S_SCAN:
 		ic->ic_if.if_timer = 1;
@@ -2951,8 +2945,9 @@ pgt_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		if (sc->sc_flags & SC_NOFREE_ALLNODES)
 			sc->sc_flags &= ~SC_NOFREE_ALLNODES;
 		else
-			ieee80211_free_allnodes(ic);
+			ieee80211_free_allnodes(ic, 1);
 
+		ieee80211_set_link_state(ic, LINK_STATE_DOWN);
 #ifndef IEEE80211_STA_ONLY
 		/* Just use any old channel; we override it anyway. */
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)

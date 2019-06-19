@@ -1,4 +1,4 @@
-//===--- VTTBuilder.cpp - C++ VTT layout builder --------------------------===//
+//===- VTTBuilder.cpp - C++ VTT layout builder ----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,12 +14,16 @@
 
 #include "clang/AST/VTTBuilder.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/CXXInheritance.h"
+#include "clang/AST/BaseSubobject.h"
+#include "clang/AST/CharUnits.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 #include "clang/AST/RecordLayout.h"
-#include "clang/Basic/TargetInfo.h"
-#include "llvm/Support/Format.h"
-#include <algorithm>
-#include <cstdio>
+#include "clang/AST/Type.h"
+#include "clang/Basic/LLVM.h"
+#include "llvm/Support/Casting.h"
+#include <cassert>
+#include <cstdint>
 
 using namespace clang;
 
@@ -28,11 +32,11 @@ using namespace clang;
 VTTBuilder::VTTBuilder(ASTContext &Ctx,
                        const CXXRecordDecl *MostDerivedClass,
                        bool GenerateDefinition)
-  : Ctx(Ctx), MostDerivedClass(MostDerivedClass), 
-  MostDerivedClassLayout(Ctx.getASTRecordLayout(MostDerivedClass)),
-    GenerateDefinition(GenerateDefinition) {
+    : Ctx(Ctx), MostDerivedClass(MostDerivedClass),
+      MostDerivedClassLayout(Ctx.getASTRecordLayout(MostDerivedClass)),
+      GenerateDefinition(GenerateDefinition) {
   // Lay out this VTT.
-  LayoutVTT(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 
+  LayoutVTT(BaseSubobject(MostDerivedClass, CharUnits::Zero()),
             /*BaseIsVirtual=*/false);
 }
 
@@ -56,7 +60,7 @@ void VTTBuilder::AddVTablePointer(BaseSubobject Base, uint64_t VTableIndex,
 void VTTBuilder::LayoutSecondaryVTTs(BaseSubobject Base) {
   const CXXRecordDecl *RD = Base.getBase();
 
-  for (const auto &I : RD->bases()) {    
+  for (const auto &I : RD->bases()) {
     // Don't layout virtual bases.
     if (I.isVirtual())
         continue;
@@ -65,22 +69,22 @@ void VTTBuilder::LayoutSecondaryVTTs(BaseSubobject Base) {
       cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
 
     const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
-    CharUnits BaseOffset = Base.getBaseOffset() + 
+    CharUnits BaseOffset = Base.getBaseOffset() +
       Layout.getBaseClassOffset(BaseDecl);
-   
+
     // Layout the VTT for this base.
     LayoutVTT(BaseSubobject(BaseDecl, BaseOffset), /*BaseIsVirtual=*/false);
   }
 }
 
 void
-VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base, 
+VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
                                            bool BaseIsMorallyVirtual,
                                            uint64_t VTableIndex,
                                            const CXXRecordDecl *VTableClass,
                                            VisitedVirtualBasesSetTy &VBases) {
   const CXXRecordDecl *RD = Base.getBase();
-  
+
   // We're not interested in bases that don't have virtual bases, and not
   // morally virtual bases.
   if (!RD->getNumVBases() && !BaseIsMorallyVirtual)
@@ -92,14 +96,14 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
 
     // Itanium C++ ABI 2.6.2:
     //   Secondary virtual pointers are present for all bases with either
-    //   virtual bases or virtual function declarations overridden along a 
+    //   virtual bases or virtual function declarations overridden along a
     //   virtual path.
     //
     // If the base class is not dynamic, we don't want to add it, nor any
     // of its base classes.
     if (!BaseDecl->isDynamicClass())
       continue;
-    
+
     bool BaseDeclIsMorallyVirtual = BaseIsMorallyVirtual;
     bool BaseDeclIsNonVirtualPrimaryBase = false;
     CharUnits BaseOffset;
@@ -107,15 +111,15 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
       // Ignore virtual bases that we've already visited.
       if (!VBases.insert(BaseDecl).second)
         continue;
-      
+
       BaseOffset = MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
       BaseDeclIsMorallyVirtual = true;
     } else {
       const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
-      
-      BaseOffset = Base.getBaseOffset() + 
+
+      BaseOffset = Base.getBaseOffset() +
         Layout.getBaseClassOffset(BaseDecl);
-      
+
       if (!Layout.isPrimaryBaseVirtual() &&
           Layout.getPrimaryBase() == BaseDecl)
         BaseDeclIsNonVirtualPrimaryBase = true;
@@ -129,19 +133,19 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
     if (!BaseDeclIsNonVirtualPrimaryBase &&
         (BaseDecl->getNumVBases() || BaseDeclIsMorallyVirtual)) {
       // Add the vtable pointer.
-      AddVTablePointer(BaseSubobject(BaseDecl, BaseOffset), VTableIndex, 
+      AddVTablePointer(BaseSubobject(BaseDecl, BaseOffset), VTableIndex,
                        VTableClass);
     }
 
     // And lay out the secondary virtual pointers for the base class.
     LayoutSecondaryVirtualPointers(BaseSubobject(BaseDecl, BaseOffset),
-                                   BaseDeclIsMorallyVirtual, VTableIndex, 
+                                   BaseDeclIsMorallyVirtual, VTableIndex,
                                    VTableClass, VBases);
   }
 }
 
-void 
-VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base, 
+void
+VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
                                            uint64_t VTableIndex) {
   VisitedVirtualBasesSetTy VBases;
   LayoutSecondaryVirtualPointers(Base, /*BaseIsMorallyVirtual=*/false,
@@ -151,21 +155,21 @@ VTTBuilder::LayoutSecondaryVirtualPointers(BaseSubobject Base,
 void VTTBuilder::LayoutVirtualVTTs(const CXXRecordDecl *RD,
                                    VisitedVirtualBasesSetTy &VBases) {
   for (const auto &I : RD->bases()) {
-    const CXXRecordDecl *BaseDecl = 
+    const CXXRecordDecl *BaseDecl =
       cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
-    
+
     // Check if this is a virtual base.
     if (I.isVirtual()) {
       // Check if we've seen this base before.
       if (!VBases.insert(BaseDecl).second)
         continue;
-    
-      CharUnits BaseOffset = 
+
+      CharUnits BaseOffset =
         MostDerivedClassLayout.getVBaseClassOffset(BaseDecl);
-      
+
       LayoutVTT(BaseSubobject(BaseDecl, BaseOffset), /*BaseIsVirtual=*/true);
     }
-    
+
     // We only need to layout virtual VTTs for this base if it actually has
     // virtual bases.
     if (BaseDecl->getNumVBases())
@@ -177,7 +181,7 @@ void VTTBuilder::LayoutVTT(BaseSubobject Base, bool BaseIsVirtual) {
   const CXXRecordDecl *RD = Base.getBase();
 
   // Itanium C++ ABI 2.6.2:
-  //   An array of virtual table addresses, called the VTT, is declared for 
+  //   An array of virtual table addresses, called the VTT, is declared for
   //   each class type that has indirect or direct virtual base classes.
   if (RD->getNumVBases() == 0)
     return;
@@ -197,10 +201,10 @@ void VTTBuilder::LayoutVTT(BaseSubobject Base, bool BaseIsVirtual) {
 
   // Add the secondary VTTs.
   LayoutSecondaryVTTs(Base);
-  
+
   // Add the secondary virtual pointers.
   LayoutSecondaryVirtualPointers(Base, VTableIndex);
-  
+
   // If this is the primary VTT, we want to lay out virtual VTTs as well.
   if (IsPrimaryVTT) {
     VisitedVirtualBasesSetTy VBases;

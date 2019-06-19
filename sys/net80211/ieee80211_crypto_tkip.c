@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.29 2017/06/03 11:58:10 tb Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.30 2018/11/09 14:14:31 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -277,7 +277,7 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	}
 
 	/* reserve trailing space for TKIP MIC and WEP ICV */
-	if (M_TRAILINGSPACE(n) < IEEE80211_TKIP_TAILLEN) {
+	if (m_trailingspace(n) < IEEE80211_TKIP_TAILLEN) {
 		MGET(n->m_next, M_DONTWAIT, n->m_type);
 		if (n->m_next == NULL)
 			goto nospace;

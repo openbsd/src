@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.15 2017/01/09 22:51:04 kettenis Exp $ */
+/*	$OpenBSD: boot.c,v 1.17 2019/05/10 13:29:21 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -74,7 +74,7 @@ struct boot_dyn {
 /*
  * Local decls.
  */
-void _dl_boot_bind(const long, long *, Elf_Dyn *);
+void _dl_boot_bind(const long, long *, Elf_Dyn *) __boot;
 
 void
 _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
@@ -87,8 +87,6 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 	long		loff;
 	Elf_Addr	i;
 	RELOC_TYPE	*rp;
-	Elf_Ehdr	*ehdp;
-	Elf_Phdr	*phdp;
 
 	/*
 	 * Scan argument and environment vectors. Find dynamic
@@ -186,35 +184,4 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 	}
 
 	RELOC_GOT(&dynld, loff);
-
-	/*
-	 * we have been fully relocated here, so most things no longer
-	 * need the loff adjustment
-	 */
-
-	/*
-	 * No further changes to the PLT and/or GOT are needed so make
-	 * them read-only.
-	 */
-
-	/* do any RWX -> RX fixups for executable PLTs and apply GNU_RELRO */
-	ehdp = (Elf_Ehdr *)loff;
-	phdp = (Elf_Phdr *)(loff + ehdp->e_phoff);
-	for (i = 0; i < ehdp->e_phnum; i++, phdp++) {
-		switch (phdp->p_type) {
-#if defined(__alpha__) || defined(__hppa__) || defined(__powerpc__) || \
-    defined(__sparc64__)
-		case PT_LOAD:
-			if ((phdp->p_flags & (PF_X | PF_W)) != (PF_X | PF_W))
-				break;
-			_dl_mprotect((void *)(phdp->p_vaddr + loff),
-			    phdp->p_memsz, PROT_READ);
-			break;
-#endif
-		case PT_GNU_RELRO:
-			_dl_mprotect((void *)(phdp->p_vaddr + loff),
-			    phdp->p_memsz, PROT_READ);
-			break;
-		}
-	}
 }

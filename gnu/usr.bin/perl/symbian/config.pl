@@ -67,7 +67,7 @@ sub create_mmp {
     my $mmp        = "$target.mmp";
     my $targetpath = $miniperl
       || $perl ? "TARGETPATH\t\\System\\Apps\\Perl" : "";
-    if ( open( my $fh, ">$mmp" ) ) {
+    if ( open( my $fh, '>', $mmp ) ) {
         print "\t$mmp\n";
         push @mmp,     $mmp;
         push @unclean, $mmp;
@@ -209,7 +209,7 @@ __EOF__
 }
 
 sub create_bld_inf {
-    if ( open( BLD_INF, ">bld.inf" ) ) {
+    if ( open( BLD_INF, '>', 'bld.inf' ) ) {
         print "\tbld.inf\n";
         push @unclean, "bld.inf";
         print BLD_INF <<__EOF__;
@@ -228,7 +228,7 @@ __EOF__
 my %config;
 
 sub load_config_sh {
-    if ( open( CONFIG_SH, "symbian/config.sh" ) ) {
+    if ( open( CONFIG_SH, '<', 'symbian/config.sh' ) ) {
         while (<CONFIG_SH>) {
             if (/^(\w+)=['"]?(.*?)["']?$/) {
                 my ( $var, $val ) = ( $1, $2 );
@@ -249,10 +249,10 @@ sub load_config_sh {
 
 sub create_config_h {
     load_config_sh();
-    if ( open( CONFIG_H, ">config.h" ) ) {
+    if ( open( CONFIG_H, '>', 'config.h' ) ) {
         print "\tconfig.h\n";
         push @unclean, "config.h";
-        if ( open( CONFIG_H_SH, "config_h.SH" ) ) {
+        if ( open( CONFIG_H_SH, '<', 'config_h.SH' ) ) {
             while (<CONFIG_H_SH>) {
                 last if /\#ifndef _config_h_/;
             }
@@ -298,7 +298,7 @@ q[xsubpp ext\DynaLoader\dl_symbian.xs >ext\DynaLoader\DynaLoader.cpp]
 
 sub create_symbian_port_h {
     print "\tsymbian\\symbian_port.h\n";
-    if ( open( SYMBIAN_PORT_H, ">symbian/symbian_port.h" ) ) {
+    if ( open( SYMBIAN_PORT_H, '>', 'symbian/symbian_port.h' ) ) {
 	my ($sdkmajor, $sdkminor);
         if ($SDK_VARIANT eq 'S60') {
 	    $S60SDK =~ /^(\d+)\.(\d+)$/;
@@ -351,7 +351,7 @@ q[perl -ne "print qq[    char *file = __FILE__;\n] if /dXSUB_SYS/;print unless /
 
 sub create_PerlApp_pkg {
     print "\tsymbian\\PerlApp.pkg\n";
-    if ( open( PERLAPP_PKG, ">symbian\\PerlApp.pkg" ) ) {
+    if ( open( PERLAPP_PKG, '>', 'symbian\\PerlApp.pkg' ) ) {
 	my $ProductId =
 	    defined $S60SDK ?
 qq[;Supports Series 60 v0.9\n(0x101F6F88), 0, 0, 0, {"Series60ProductID"}\n] :
@@ -392,7 +392,7 @@ $mdl
 "$APPS\\PerlApp.rsc"-"!:\\system\\apps\\PerlApp\\PerlApp.rsc"
 $AIF
 __EOF__
-        if ( open( DEMOS, "perl symbian\\demo_pl list |" ) ) {
+        if ( open( DEMOS, '-|', "perl symbian\\demo_pl list" ) ) {
             while (<DEMOS>) {
                 chomp;
 		if (defined $S90SDK) {
@@ -447,7 +447,7 @@ create_symbian_port_h();
 create_DynaLoader_cpp();
 create_PerlApp_pkg();
 
-if ( open( PERLAPP_MMP, ">symbian/PerlApp.mmp" ) ) {
+if ( open( PERLAPP_MMP, '>', 'symbian/PerlApp.mmp' ) ) {
     my @MACRO;
     my @LIB;
     push @MACRO, 'PERL_IMPLICIT_CONTEXT';
@@ -543,7 +543,7 @@ else {
     warn "$0: failed to create symbian\\PerlApp.mmp";
 }
 
-if ( open( MAKEFILE, ">Makefile" ) ) {
+if ( open( MAKEFILE, '>', 'Makefile' ) ) {
     my $perl = "perl$VERSION";
     my $windef1 = "$SYMBIAN_ROOT\\Epoc32\\Build$CWD\\$perl\\$WIN\\$perl.def";
     my $windef2 = "..\\BWINS\\${perl}u.def";
@@ -895,7 +895,7 @@ else {
     warn "$0: failed to create Makefile: $!\n";
 }
 
-if ( open( MAKEFILE, ">symbian/Makefile")) {
+if ( open( MAKEFILE, '>', 'symbian/Makefile')) {
     my $wrap = defined $S60SDK && $S60SDK eq '1.2' && $WIN ne '${WIN}cw';
     my $ABLD = $wrap ? 'perl b.pl': 'abld';
     print "\tsymbian/Makefile\n";
@@ -951,7 +951,7 @@ distclean: clean
 __EOF__
     close(MAKEFILE);
     if ($wrap) {
-	if ( open( B_PL, ">symbian/b.pl")) {
+	if ( open( B_PL, '>', 'symbian/b.pl')) {
 	    print B_PL <<'__EOF__';
 # abld.pl wrapper.
 

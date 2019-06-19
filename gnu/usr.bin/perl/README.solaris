@@ -484,20 +484,20 @@ malloc. [XXX further investigation is needed here.]
 
 If you have problems with dynamic loading using gcc on SunOS or
 Solaris, and you are using GNU as and GNU ld, see the section
-L<"GNU as and GNU ld"> above.
+L</"GNU as and GNU ld"> above.
 
 =item ld.so.1: ./perl: fatal: relocation error:
 
 If you get this message on SunOS or Solaris, and you're using gcc,
 it's probably the GNU as or GNU ld problem in the previous item
-L<"GNU as and GNU ld">.
+L</"GNU as and GNU ld">.
 
 =item dlopen: stub interception failed
 
 The primary cause of the 'dlopen: stub interception failed' message is
 that the LD_LIBRARY_PATH environment variable includes a directory
 which is a symlink to /usr/lib (such as /lib).  See
-L<"LD_LIBRARY_PATH"> above.
+L</"LD_LIBRARY_PATH"> above.
 
 =item #error "No DATAMODEL_NATIVE specified"
 
@@ -564,7 +564,7 @@ through 255 can be used in a stream.  Since perl calls open() and
 then fdopen(3C) with the resulting file descriptor, perl is limited
 to 255 simultaneous open files, even if sysopen() is used.  If this
 proves to be an insurmountable problem, you can compile perl as a
-LP64 application, see L<Building an LP64 perl> for details.  Note
+LP64 application, see L</Building an LP64 perl> for details.  Note
 also that the default resource limit for open file descriptors on
 Solaris is 255, so you will have to modify your ulimit or rctl
 (Solaris 9 onwards) appropriately.

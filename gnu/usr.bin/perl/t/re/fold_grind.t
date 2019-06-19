@@ -4,13 +4,17 @@ binmode STDOUT, ":utf8";
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
     require Config; import Config;
     skip_all_if_miniperl("no dynamic loading on miniperl, no Encode nor POSIX");
     if ($^O eq 'dec_osf') {
       skip_all("$^O cannot handle this test");
     }
+    my $time_out_factor = $ENV{PERL_TEST_TIME_OUT_FACTOR} || 1;
+    $time_out_factor = 1 if $time_out_factor < 1;
+
+    watchdog(5 * 60 * $time_out_factor);
     require './loc_tools.pl';
 }
 

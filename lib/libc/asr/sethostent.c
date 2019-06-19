@@ -1,4 +1,4 @@
-/*	$OpenBSD: sethostent.c,v 1.1 2012/09/08 11:08:21 eric Exp $	*/
+/*	$OpenBSD: sethostent.c,v 1.2 2018/04/28 15:09:35 schwarze Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -15,13 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <netinet/in.h>
-
 #include <netdb.h>
-#include <resolv.h>
-
-/* XXX these functions do nothing for now */
+#include <stddef.h>
 
 void
 sethostent(int stayopen)
@@ -37,5 +32,5 @@ struct hostent *
 gethostent(void)
 {
 	h_errno = NETDB_INTERNAL;
-	return (NULL);
+	return NULL;
 }

@@ -4,7 +4,7 @@ use strict;
 
 BEGIN {
     # Get function prototypes
-    require 'regen/regen_lib.pl';
+    require './regen/regen_lib.pl';
     unshift @INC, 'ext/ExtUtils-Miniperl/lib';
 }
 

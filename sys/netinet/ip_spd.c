@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.96 2017/11/20 10:56:52 mpi Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.99 2018/10/22 15:32:19 cheloha Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -437,7 +437,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		if (ipo->ipo_last_searched <= ipsec_last_added)	{
 			/* "Touch" the entry. */
 			if (dignore == 0)
-				ipo->ipo_last_searched = time_second;
+				ipo->ipo_last_searched = time_uptime;
 
 			/* Find an appropriate SA from the existing ones. */
 			ipo->ipo_tdb =
@@ -541,7 +541,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		/* Find whether there exists an appropriate SA. */
 		if (ipo->ipo_last_searched <= ipsec_last_added)	{
 			if (dignore == 0)
-				ipo->ipo_last_searched = time_second;
+				ipo->ipo_last_searched = time_uptime;
 
 			ipo->ipo_tdb =
 			    gettdbbysrc(rdomain,
@@ -794,7 +794,9 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		return 0;
 	}
 
+#ifdef IPSEC
 	timeout_add_sec(&ipa->ipa_timeout, ipsec_expire_acquire);
+#endif
 
 	TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);
 	TAILQ_INSERT_TAIL(&ipo->ipo_acquires, ipa, ipa_ipo_next);
@@ -845,6 +847,8 @@ struct ipsec_acquire *
 ipsec_get_acquire(u_int32_t seq)
 {
 	struct ipsec_acquire *ipa;
+
+	NET_ASSERT_LOCKED();
 
 	TAILQ_FOREACH (ipa, &ipsec_acquire_head, ipa_next)
 		if (ipa->ipa_seq == seq)

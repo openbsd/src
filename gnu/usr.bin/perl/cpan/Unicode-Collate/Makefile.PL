@@ -5,9 +5,9 @@ my $clean = {};
 
 if (-f "Collate.xs") {
     print "Making header files for XS...\n";
-
-    do 'mkheader' or die $@ || "mkheader: $!";
-
+    # Should $mkh be File::Spec->catfile(File::Spec->curdir(), 'mkheader') ?
+    my $mkh = './mkheader';
+    do $mkh or die $@ || "mkheader: $!";
     $clean = { FILES => 'ucatbl.h' };
 }
 
@@ -22,9 +22,9 @@ WriteMakefile(
     'clean'             => $clean,
     'PREREQ_PM'         => {
         Carp            => 0,
-        constant        => 0,
-        DynaLoader      => 0,
         File::Spec      => 0,
+        XSLoader        => 0,
+        constant        => 0,
         strict          => 0,
         warnings        => 0,
     },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.17 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: namespace.c,v 1.18 2018/05/15 11:19:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -472,7 +472,8 @@ int
 namespace_queue_request(struct namespace *ns, struct request *req)
 {
 	if (ns->queued_requests > MAX_REQUEST_QUEUE) {
-		log_warn("%u requests alreay queued, sorry");
+		log_warn("%u requests already queued, sorry",
+		    ns->queued_requests);
 		return -1;
 	}
 

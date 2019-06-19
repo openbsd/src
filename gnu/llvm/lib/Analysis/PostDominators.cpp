@@ -12,22 +12,27 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/PostDominators.h"
-#include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/SetOperations.h"
-#include "llvm/IR/CFG.h"
-#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/GenericDomTreeConstruction.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/raw_ostream.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "postdomtree"
+
+#ifdef EXPENSIVE_CHECKS
+static constexpr bool ExpensiveChecksEnabled = true;
+#else
+static constexpr bool ExpensiveChecksEnabled = false;
+#endif
 
 //===----------------------------------------------------------------------===//
 //  PostDominatorTree Implementation
 //===----------------------------------------------------------------------===//
 
 char PostDominatorTreeWrapperPass::ID = 0;
+
 INITIALIZE_PASS(PostDominatorTreeWrapperPass, "postdomtree",
                 "Post-Dominator Tree Construction", true, true)
 
@@ -45,6 +50,13 @@ bool PostDominatorTreeWrapperPass::runOnFunction(Function &F) {
   return false;
 }
 
+void PostDominatorTreeWrapperPass::verifyAnalysis() const {
+  if (VerifyDomInfo)
+    assert(DT.verify(PostDominatorTree::VerificationLevel::Full));
+  else if (ExpensiveChecksEnabled)
+    assert(DT.verify(PostDominatorTree::VerificationLevel::Basic));
+}
+
 void PostDominatorTreeWrapperPass::print(raw_ostream &OS, const Module *) const {
   DT.print(OS);
 }
@@ -57,8 +69,7 @@ AnalysisKey PostDominatorTreeAnalysis::Key;
 
 PostDominatorTree PostDominatorTreeAnalysis::run(Function &F,
                                                  FunctionAnalysisManager &) {
-  PostDominatorTree PDT;
-  PDT.recalculate(F);
+  PostDominatorTree PDT(F);
   return PDT;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-pipe-pane.c,v 1.47 2018/01/16 09:00:38 nicm Exp $ */
+/* $OpenBSD: cmd-pipe-pane.c,v 1.51 2019/03/14 23:14:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -110,7 +110,7 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 	/* Expand the command. */
 	ft = format_create(item->client, item, FORMAT_NONE, 0);
 	format_defaults(ft, c, s, wl, wp);
-	cmd = format_expand_time(ft, args->argv[0], time(NULL));
+	cmd = format_expand_time(ft, args->argv[0]);
 	format_free(ft);
 
 	/* Fork the child. */
@@ -158,7 +158,10 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 		close(pipe_fd[1]);
 
 		wp->pipe_fd = pipe_fd[0];
-		wp->pipe_off = EVBUFFER_LENGTH(wp->event->input);
+		if (wp->fd != -1)
+			wp->pipe_off = EVBUFFER_LENGTH(wp->event->input);
+		else
+			wp->pipe_off = 0;
 
 		setblocking(wp->pipe_fd, 0);
 		wp->pipe_event = bufferevent_new(wp->pipe_fd,
@@ -166,6 +169,8 @@ cmd_pipe_pane_exec(struct cmd *self, struct cmdq_item *item)
 		    cmd_pipe_pane_write_callback,
 		    cmd_pipe_pane_error_callback,
 		    wp);
+		if (wp->pipe_event == NULL)
+			fatalx("out of memory");
 		if (out)
 			bufferevent_enable(wp->pipe_event, EV_WRITE);
 		if (in)

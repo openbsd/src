@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ERR_load_crypto_strings.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: ERR_load_crypto_strings.3,v 1.8 2019/06/14 13:41:31 schwarze Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file is a derived work.
@@ -65,13 +65,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt ERR_LOAD_CRYPTO_STRINGS 3
 .Os
 .Sh NAME
 .Nm ERR_load_crypto_strings ,
 .Nm ERR_free_strings ,
-.Nm ERR_load_BN_strings ,
 .Nm SSL_load_error_strings
 .Nd load and free OpenSSL error strings
 .Sh SYNOPSIS
@@ -80,13 +79,14 @@
 .Fn ERR_load_crypto_strings void
 .Ft void
 .Fn ERR_free_strings void
-.In openssl/bn.h
-.Ft void
-.Fn ERR_load_BN_strings void
 .In openssl/ssl.h
 .Ft void
 .Fn SSL_load_error_strings void
 .Sh DESCRIPTION
+These functions are deprecated.
+It is never useful for any application program to call any of them explicitly.
+The library automatically calls them internally whenever needed.
+.Pp
 .Fn ERR_load_crypto_strings
 registers the error strings for all
 .Xr crypto 3
@@ -96,22 +96,7 @@ does the same, but also registers the
 .Xr ssl 3
 error strings.
 .Pp
-.Fn ERR_load_BN_strings
-only registers the error strings for the
-.Vt BIGNUM
-part of the library, i.e. the functions documented in
-.Xr BN_new 3
-and in the manual pages referenced from there.
-That may be useful if no other parts of the crypto library
-are used by the program.
-Similar functions exist for other parts of the crypto library,
-but they are not yet documented.
-.Pp
 If the error strings were already loaded before, no action occurs.
-.Pp
-One of these functions should be called before generating textual error
-messages.
-However, this is not required when memory usage is an issue.
 .Pp
 .Fn ERR_free_strings
 frees all previously loaded error strings.
@@ -124,8 +109,6 @@ and
 .Fn SSL_load_error_strings
 first appeared in SSLeay 0.4.4.
 .Fn ERR_free_strings
-and
-.Fn ERR_load_BN_strings
 first appeared in SSLeay 0.5.1.
 These functions been available since
 .Ox 2.4 .

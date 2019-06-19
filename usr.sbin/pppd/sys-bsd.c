@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.27 2015/09/12 12:42:36 miod Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.28 2019/01/22 09:25:29 krw Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -1117,7 +1117,7 @@ dodefaultroute(g, cmd)
 	struct sockaddr_in	mask;
     } rtmsg;
 
-    if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
+    if ((routes = socket(AF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
 	syslog(LOG_ERR, "Couldn't %s default route: socket: %m",
 	       cmd=='s'? "add": "delete");
 	return 0;
@@ -1181,7 +1181,7 @@ sifproxyarp(unit, hisaddr)
 	return 0;
     }
 
-    if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
+    if ((routes = socket(AF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
 	syslog(LOG_ERR, "Couldn't add proxy arp entry: socket: %m");
 	return 0;
     }
@@ -1228,7 +1228,7 @@ cifproxyarp(unit, hisaddr)
     arpmsg.hdr.rtm_type = RTM_DELETE;
     arpmsg.hdr.rtm_seq = ++rtm_seq;
 
-    if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
+    if ((routes = socket(AF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
 	syslog(LOG_ERR, "Couldn't delete proxy arp entry: socket: %m");
 	return 0;
     }

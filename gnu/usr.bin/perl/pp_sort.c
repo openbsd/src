@@ -45,7 +45,7 @@
 /* Flags for qsortsv and mergesortsv */
 #define SORTf_DESC   1
 #define SORTf_STABLE 2
-#define SORTf_QSORT  4
+#define SORTf_UNSTABLE 8
 
 /*
  * The mergesort implementation is by Peter M. Mcilroy <pmcilroy@lucent.com>.
@@ -350,8 +350,16 @@ cmp_desc(pTHX_ gptr const a, gptr const b)
     return -PL_sort_RealCmp(aTHX_ a, b);
 }
 
-STATIC void
-S_mergesortsv(pTHX_ gptr *base, size_t nmemb, SVCOMPARE_t cmp, U32 flags)
+/*
+=for apidoc sortsv_flags
+
+In-place sort an array of SV pointers with the given comparison routine,
+with various SORTf_* flag options.
+
+=cut
+*/
+void
+Perl_sortsv_flags(pTHX_ gptr *base, size_t nmemb, SVCOMPARE_t cmp, U32 flags)
 {
     IV i, run, offset;
     I32 sense, level;
@@ -364,6 +372,7 @@ S_mergesortsv(pTHX_ gptr *base, size_t nmemb, SVCOMPARE_t cmp, U32 flags)
     off_runs stack[60], *stackp;
     SVCOMPARE_t savecmp = NULL;
 
+    PERL_ARGS_ASSERT_SORTSV_FLAGS;
     if (nmemb <= 1) return;			/* sorted trivially */
 
     if ((flags & SORTf_DESC) != 0) {
@@ -557,7 +566,7 @@ S_mergesortsv(pTHX_ gptr *base, size_t nmemb, SVCOMPARE_t cmp, U32 flags)
     }
   done:
     if (aux != small) Safefree(aux);	/* free iff allocated */
-    if (flags) {
+    if (savecmp != NULL) {
 	 PL_sort_RealCmp = savecmp;	/* Restore current comparison routine, if any */
     }
     return;
@@ -759,678 +768,12 @@ doqsort_all_asserts(
 
 #endif
 
-/* ****************************************************************** qsort */
-
-STATIC void /* the standard unstable (u) quicksort (qsort) */
-S_qsortsvu(pTHX_ SV ** array, size_t num_elts, SVCOMPARE_t compare)
-{
-   SV * temp;
-   struct partition_stack_entry partition_stack[QSORT_MAX_STACK];
-   int next_stack_entry = 0;
-   int part_left;
-   int part_right;
-#ifdef QSORT_ORDER_GUESS
-   int qsort_break_even;
-   int swapped;
-#endif
-
-    PERL_ARGS_ASSERT_QSORTSVU;
-
-   /* Make sure we actually have work to do.
-   */
-   if (num_elts <= 1) {
-      return;
-   }
-
-   /* Inoculate large partitions against quadratic behavior */
-   if (num_elts > QSORT_PLAY_SAFE) {
-      size_t n;
-      SV ** const q = array;
-      for (n = num_elts; n > 1; ) {
-         const size_t j = (size_t)(n-- * Drand01());
-         temp = q[j];
-         q[j] = q[n];
-         q[n] = temp;
-      }
-   }
-
-   /* Setup the initial partition definition and fall into the sorting loop
-   */
-   part_left = 0;
-   part_right = (int)(num_elts - 1);
-#ifdef QSORT_ORDER_GUESS
-   qsort_break_even = QSORT_BREAK_EVEN;
-#else
-#define qsort_break_even QSORT_BREAK_EVEN
-#endif
-   for ( ; ; ) {
-      if ((part_right - part_left) >= qsort_break_even) {
-         /* OK, this is gonna get hairy, so lets try to document all the
-            concepts and abbreviations and variables and what they keep
-            track of:
-
-            pc: pivot chunk - the set of array elements we accumulate in the
-                middle of the partition, all equal in value to the original
-                pivot element selected. The pc is defined by:
-
-                pc_left - the leftmost array index of the pc
-                pc_right - the rightmost array index of the pc
-
-                we start with pc_left == pc_right and only one element
-                in the pivot chunk (but it can grow during the scan).
-
-            u:  uncompared elements - the set of elements in the partition
-                we have not yet compared to the pivot value. There are two
-                uncompared sets during the scan - one to the left of the pc
-                and one to the right.
-
-                u_right - the rightmost index of the left side's uncompared set
-                u_left - the leftmost index of the right side's uncompared set
-
-                The leftmost index of the left sides's uncompared set
-                doesn't need its own variable because it is always defined
-                by the leftmost edge of the whole partition (part_left). The
-                same goes for the rightmost edge of the right partition
-                (part_right).
-
-                We know there are no uncompared elements on the left once we
-                get u_right < part_left and no uncompared elements on the
-                right once u_left > part_right. When both these conditions
-                are met, we have completed the scan of the partition.
-
-                Any elements which are between the pivot chunk and the
-                uncompared elements should be less than the pivot value on
-                the left side and greater than the pivot value on the right
-                side (in fact, the goal of the whole algorithm is to arrange
-                for that to be true and make the groups of less-than and
-                greater-then elements into new partitions to sort again).
-
-            As you marvel at the complexity of the code and wonder why it
-            has to be so confusing. Consider some of the things this level
-            of confusion brings:
-
-            Once I do a compare, I squeeze every ounce of juice out of it. I
-            never do compare calls I don't have to do, and I certainly never
-            do redundant calls.
-
-            I also never swap any elements unless I can prove there is a
-            good reason. Many sort algorithms will swap a known value with
-            an uncompared value just to get things in the right place (or
-            avoid complexity :-), but that uncompared value, once it gets
-            compared, may then have to be swapped again. A lot of the
-            complexity of this code is due to the fact that it never swaps
-            anything except compared values, and it only swaps them when the
-            compare shows they are out of position.
-         */
-         int pc_left, pc_right;
-         int u_right, u_left;
-
-         int s;
-
-         pc_left = ((part_left + part_right) / 2);
-         pc_right = pc_left;
-         u_right = pc_left - 1;
-         u_left = pc_right + 1;
-
-         /* Qsort works best when the pivot value is also the median value
-            in the partition (unfortunately you can't find the median value
-            without first sorting :-), so to give the algorithm a helping
-            hand, we pick 3 elements and sort them and use the median value
-            of that tiny set as the pivot value.
-
-            Some versions of qsort like to use the left middle and right as
-            the 3 elements to sort so they can insure the ends of the
-            partition will contain values which will stop the scan in the
-            compare loop, but when you have to call an arbitrarily complex
-            routine to do a compare, its really better to just keep track of
-            array index values to know when you hit the edge of the
-            partition and avoid the extra compare. An even better reason to
-            avoid using a compare call is the fact that you can drop off the
-            edge of the array if someone foolishly provides you with an
-            unstable compare function that doesn't always provide consistent
-            results.
-
-            So, since it is simpler for us to compare the three adjacent
-            elements in the middle of the partition, those are the ones we
-            pick here (conveniently pointed at by u_right, pc_left, and
-            u_left). The values of the left, center, and right elements
-            are referred to as l c and r in the following comments.
-         */
-
-#ifdef QSORT_ORDER_GUESS
-         swapped = 0;
-#endif
-         s = qsort_cmp(u_right, pc_left);
-         if (s < 0) {
-            /* l < c */
-            s = qsort_cmp(pc_left, u_left);
-            /* if l < c, c < r - already in order - nothing to do */
-            if (s == 0) {
-               /* l < c, c == r - already in order, pc grows */
-               ++pc_right;
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            } else if (s > 0) {
-               /* l < c, c > r - need to know more */
-               s = qsort_cmp(u_right, u_left);
-               if (s < 0) {
-                  /* l < c, c > r, l < r - swap c & r to get ordered */
-                  qsort_swap(pc_left, u_left);
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               } else if (s == 0) {
-                  /* l < c, c > r, l == r - swap c&r, grow pc */
-                  qsort_swap(pc_left, u_left);
-                  --pc_left;
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               } else {
-                  /* l < c, c > r, l > r - make lcr into rlc to get ordered */
-                  qsort_rotate(pc_left, u_right, u_left);
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               }
-            }
-         } else if (s == 0) {
-            /* l == c */
-            s = qsort_cmp(pc_left, u_left);
-            if (s < 0) {
-               /* l == c, c < r - already in order, grow pc */
-               --pc_left;
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            } else if (s == 0) {
-               /* l == c, c == r - already in order, grow pc both ways */
-               --pc_left;
-               ++pc_right;
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            } else {
-               /* l == c, c > r - swap l & r, grow pc */
-               qsort_swap(u_right, u_left);
-               ++pc_right;
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            }
-         } else {
-            /* l > c */
-            s = qsort_cmp(pc_left, u_left);
-            if (s < 0) {
-               /* l > c, c < r - need to know more */
-               s = qsort_cmp(u_right, u_left);
-               if (s < 0) {
-                  /* l > c, c < r, l < r - swap l & c to get ordered */
-                  qsort_swap(u_right, pc_left);
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               } else if (s == 0) {
-                  /* l > c, c < r, l == r - swap l & c, grow pc */
-                  qsort_swap(u_right, pc_left);
-                  ++pc_right;
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               } else {
-                  /* l > c, c < r, l > r - rotate lcr into crl to order */
-                  qsort_rotate(u_right, pc_left, u_left);
-                  qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-               }
-            } else if (s == 0) {
-               /* l > c, c == r - swap ends, grow pc */
-               qsort_swap(u_right, u_left);
-               --pc_left;
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            } else {
-               /* l > c, c > r - swap ends to get in order */
-               qsort_swap(u_right, u_left);
-               qsort_all_asserts(pc_left, pc_right, u_left + 1, u_right - 1);
-            }
-         }
-         /* We now know the 3 middle elements have been compared and
-            arranged in the desired order, so we can shrink the uncompared
-            sets on both sides
-         */
-         --u_right;
-         ++u_left;
-         qsort_all_asserts(pc_left, pc_right, u_left, u_right);
-
-         /* The above massive nested if was the simple part :-). We now have
-            the middle 3 elements ordered and we need to scan through the
-            uncompared sets on either side, swapping elements that are on
-            the wrong side or simply shuffling equal elements around to get
-            all equal elements into the pivot chunk.
-         */
-
-         for ( ; ; ) {
-            int still_work_on_left;
-            int still_work_on_right;
-
-            /* Scan the uncompared values on the left. If I find a value
-               equal to the pivot value, move it over so it is adjacent to
-               the pivot chunk and expand the pivot chunk. If I find a value
-               less than the pivot value, then just leave it - its already
-               on the correct side of the partition. If I find a greater
-               value, then stop the scan.
-            */
-            while ((still_work_on_left = (u_right >= part_left))) {
-               s = qsort_cmp(u_right, pc_left);
-               if (s < 0) {
-                  --u_right;
-               } else if (s == 0) {
-                  --pc_left;
-                  if (pc_left != u_right) {
-                     qsort_swap(u_right, pc_left);
-                  }
-                  --u_right;
-               } else {
-                  break;
-               }
-               qsort_assert(u_right < pc_left);
-               qsort_assert(pc_left <= pc_right);
-               qsort_assert(qsort_cmp(u_right + 1, pc_left) <= 0);
-               qsort_assert(qsort_cmp(pc_left, pc_right) == 0);
-            }
-
-            /* Do a mirror image scan of uncompared values on the right
-            */
-            while ((still_work_on_right = (u_left <= part_right))) {
-               s = qsort_cmp(pc_right, u_left);
-               if (s < 0) {
-                  ++u_left;
-               } else if (s == 0) {
-                  ++pc_right;
-                  if (pc_right != u_left) {
-                     qsort_swap(pc_right, u_left);
-                  }
-                  ++u_left;
-               } else {
-                  break;
-               }
-               qsort_assert(u_left > pc_right);
-               qsort_assert(pc_left <= pc_right);
-               qsort_assert(qsort_cmp(pc_right, u_left - 1) <= 0);
-               qsort_assert(qsort_cmp(pc_left, pc_right) == 0);
-            }
-
-            if (still_work_on_left) {
-               /* I know I have a value on the left side which needs to be
-                  on the right side, but I need to know more to decide
-                  exactly the best thing to do with it.
-               */
-               if (still_work_on_right) {
-                  /* I know I have values on both side which are out of
-                     position. This is a big win because I kill two birds
-                     with one swap (so to speak). I can advance the
-                     uncompared pointers on both sides after swapping both
-                     of them into the right place.
-                  */
-                  qsort_swap(u_right, u_left);
-                  --u_right;
-                  ++u_left;
-                  qsort_all_asserts(pc_left, pc_right, u_left, u_right);
-               } else {
-                  /* I have an out of position value on the left, but the
-                     right is fully scanned, so I "slide" the pivot chunk
-                     and any less-than values left one to make room for the
-                     greater value over on the right. If the out of position
-                     value is immediately adjacent to the pivot chunk (there
-                     are no less-than values), I can do that with a swap,
-                     otherwise, I have to rotate one of the less than values
-                     into the former position of the out of position value
-                     and the right end of the pivot chunk into the left end
-                     (got all that?).
-                  */
-                  --pc_left;
-                  if (pc_left == u_right) {
-                     qsort_swap(u_right, pc_right);
-                     qsort_all_asserts(pc_left, pc_right-1, u_left, u_right-1);
-                  } else {
-                     qsort_rotate(u_right, pc_left, pc_right);
-                     qsort_all_asserts(pc_left, pc_right-1, u_left, u_right-1);
-                  }
-                  --pc_right;
-                  --u_right;
-               }
-            } else if (still_work_on_right) {
-               /* Mirror image of complex case above: I have an out of
-                  position value on the right, but the left is fully
-                  scanned, so I need to shuffle things around to make room
-                  for the right value on the left.
-               */
-               ++pc_right;
-               if (pc_right == u_left) {
-                  qsort_swap(u_left, pc_left);
-                  qsort_all_asserts(pc_left+1, pc_right, u_left+1, u_right);
-               } else {
-                  qsort_rotate(pc_right, pc_left, u_left);
-                  qsort_all_asserts(pc_left+1, pc_right, u_left+1, u_right);
-               }
-               ++pc_left;
-               ++u_left;
-            } else {
-               /* No more scanning required on either side of partition,
-                  break out of loop and figure out next set of partitions
-               */
-               break;
-            }
-         }
-
-         /* The elements in the pivot chunk are now in the right place. They
-            will never move or be compared again. All I have to do is decide
-            what to do with the stuff to the left and right of the pivot
-            chunk.
-
-            Notes on the QSORT_ORDER_GUESS ifdef code:
-
-            1. If I just built these partitions without swapping any (or
-               very many) elements, there is a chance that the elements are
-               already ordered properly (being properly ordered will
-               certainly result in no swapping, but the converse can't be
-               proved :-).
-
-            2. A (properly written) insertion sort will run faster on
-               already ordered data than qsort will.
-
-            3. Perhaps there is some way to make a good guess about
-               switching to an insertion sort earlier than partition size 6
-               (for instance - we could save the partition size on the stack
-               and increase the size each time we find we didn't swap, thus
-               switching to insertion sort earlier for partitions with a
-               history of not swapping).
-
-            4. Naturally, if I just switch right away, it will make
-               artificial benchmarks with pure ascending (or descending)
-               data look really good, but is that a good reason in general?
-               Hard to say...
-         */
-
-#ifdef QSORT_ORDER_GUESS
-         if (swapped < 3) {
-#if QSORT_ORDER_GUESS == 1
-            qsort_break_even = (part_right - part_left) + 1;
-#endif
-#if QSORT_ORDER_GUESS == 2
-            qsort_break_even *= 2;
-#endif
-#if QSORT_ORDER_GUESS == 3
-            const int prev_break = qsort_break_even;
-            qsort_break_even *= qsort_break_even;
-            if (qsort_break_even < prev_break) {
-               qsort_break_even = (part_right - part_left) + 1;
-            }
-#endif
-         } else {
-            qsort_break_even = QSORT_BREAK_EVEN;
-         }
-#endif
-
-         if (part_left < pc_left) {
-            /* There are elements on the left which need more processing.
-               Check the right as well before deciding what to do.
-            */
-            if (pc_right < part_right) {
-               /* We have two partitions to be sorted. Stack the biggest one
-                  and process the smallest one on the next iteration. This
-                  minimizes the stack height by insuring that any additional
-                  stack entries must come from the smallest partition which
-                  (because it is smallest) will have the fewest
-                  opportunities to generate additional stack entries.
-               */
-               if ((part_right - pc_right) > (pc_left - part_left)) {
-                  /* stack the right partition, process the left */
-                  partition_stack[next_stack_entry].left = pc_right + 1;
-                  partition_stack[next_stack_entry].right = part_right;
-#ifdef QSORT_ORDER_GUESS
-                  partition_stack[next_stack_entry].qsort_break_even = qsort_break_even;
-#endif
-                  part_right = pc_left - 1;
-               } else {
-                  /* stack the left partition, process the right */
-                  partition_stack[next_stack_entry].left = part_left;
-                  partition_stack[next_stack_entry].right = pc_left - 1;
-#ifdef QSORT_ORDER_GUESS
-                  partition_stack[next_stack_entry].qsort_break_even = qsort_break_even;
-#endif
-                  part_left = pc_right + 1;
-               }
-               qsort_assert(next_stack_entry < QSORT_MAX_STACK);
-               ++next_stack_entry;
-            } else {
-               /* The elements on the left are the only remaining elements
-                  that need sorting, arrange for them to be processed as the
-                  next partition.
-               */
-               part_right = pc_left - 1;
-            }
-         } else if (pc_right < part_right) {
-            /* There is only one chunk on the right to be sorted, make it
-               the new partition and loop back around.
-            */
-            part_left = pc_right + 1;
-         } else {
-            /* This whole partition wound up in the pivot chunk, so
-               we need to get a new partition off the stack.
-            */
-            if (next_stack_entry == 0) {
-               /* the stack is empty - we are done */
-               break;
-            }
-            --next_stack_entry;
-            part_left = partition_stack[next_stack_entry].left;
-            part_right = partition_stack[next_stack_entry].right;
-#ifdef QSORT_ORDER_GUESS
-            qsort_break_even = partition_stack[next_stack_entry].qsort_break_even;
-#endif
-         }
-      } else {
-         /* This partition is too small to fool with qsort complexity, just
-            do an ordinary insertion sort to minimize overhead.
-         */
-         int i;
-         /* Assume 1st element is in right place already, and start checking
-            at 2nd element to see where it should be inserted.
-         */
-         for (i = part_left + 1; i <= part_right; ++i) {
-            int j;
-            /* Scan (backwards - just in case 'i' is already in right place)
-               through the elements already sorted to see if the ith element
-               belongs ahead of one of them.
-            */
-            for (j = i - 1; j >= part_left; --j) {
-               if (qsort_cmp(i, j) >= 0) {
-                  /* i belongs right after j
-                  */
-                  break;
-               }
-            }
-            ++j;
-            if (j != i) {
-               /* Looks like we really need to move some things
-               */
-	       int k;
-	       temp = array[i];
-	       for (k = i - 1; k >= j; --k)
-		  array[k + 1] = array[k];
-               array[j] = temp;
-            }
-         }
-
-         /* That partition is now sorted, grab the next one, or get out
-            of the loop if there aren't any more.
-         */
-
-         if (next_stack_entry == 0) {
-            /* the stack is empty - we are done */
-            break;
-         }
-         --next_stack_entry;
-         part_left = partition_stack[next_stack_entry].left;
-         part_right = partition_stack[next_stack_entry].right;
-#ifdef QSORT_ORDER_GUESS
-         qsort_break_even = partition_stack[next_stack_entry].qsort_break_even;
-#endif
-      }
-   }
-
-   /* Believe it or not, the array is sorted at this point! */
-}
-
-/* Stabilize what is, presumably, an otherwise unstable sort method.
- * We do that by allocating (or having on hand) an array of pointers
- * that is the same size as the original array of elements to be sorted.
- * We initialize this parallel array with the addresses of the original
- * array elements.  This indirection can make you crazy.
- * Some pictures can help.  After initializing, we have
- *
- *  indir                  list1
- * +----+                 +----+
- * |    | --------------> |    | ------> first element to be sorted
- * +----+                 +----+
- * |    | --------------> |    | ------> second element to be sorted
- * +----+                 +----+
- * |    | --------------> |    | ------> third element to be sorted
- * +----+                 +----+
- *  ...
- * +----+                 +----+
- * |    | --------------> |    | ------> n-1st element to be sorted
- * +----+                 +----+
- * |    | --------------> |    | ------> n-th element to be sorted
- * +----+                 +----+
- *
- * During the sort phase, we leave the elements of list1 where they are,
- * and sort the pointers in the indirect array in the same order determined
- * by the original comparison routine on the elements pointed to.
- * Because we don't move the elements of list1 around through
- * this phase, we can break ties on elements that compare equal
- * using their address in the list1 array, ensuring stability.
- * This leaves us with something looking like
- *
- *  indir                  list1
- * +----+                 +----+
- * |    | --+       +---> |    | ------> first element to be sorted
- * +----+   |       |     +----+
- * |    | --|-------|---> |    | ------> second element to be sorted
- * +----+   |       |     +----+
- * |    | --|-------+ +-> |    | ------> third element to be sorted
- * +----+   |         |   +----+
- *  ...
- * +----+    | |   | |    +----+
- * |    | ---|-+   | +--> |    | ------> n-1st element to be sorted
- * +----+    |     |      +----+
- * |    | ---+     +----> |    | ------> n-th element to be sorted
- * +----+                 +----+
- *
- * where the i-th element of the indirect array points to the element
- * that should be i-th in the sorted array.  After the sort phase,
- * we have to put the elements of list1 into the places
- * dictated by the indirect array.
- */
-
-
-static I32
-cmpindir(pTHX_ gptr const a, gptr const b)
-{
-    gptr * const ap = (gptr *)a;
-    gptr * const bp = (gptr *)b;
-    const I32 sense = PL_sort_RealCmp(aTHX_ *ap, *bp);
-
-    if (sense)
-	return sense;
-    return (ap > bp) ? 1 : ((ap < bp) ? -1 : 0);
-}
-
-static I32
-cmpindir_desc(pTHX_ gptr const a, gptr const b)
-{
-    gptr * const ap = (gptr *)a;
-    gptr * const bp = (gptr *)b;
-    const I32 sense = PL_sort_RealCmp(aTHX_ *ap, *bp);
-
-    /* Reverse the default */
-    if (sense)
-	return -sense;
-    /* But don't reverse the stability test.  */
-    return (ap > bp) ? 1 : ((ap < bp) ? -1 : 0);
-
-}
-
-STATIC void
-S_qsortsv(pTHX_ gptr *list1, size_t nmemb, SVCOMPARE_t cmp, U32 flags)
-{
-    if ((flags & SORTf_STABLE) != 0) {
-	 gptr **pp, *q;
-	 size_t n, j, i;
-	 gptr *small[SMALLSORT], **indir, tmp;
-	 SVCOMPARE_t savecmp;
-	 if (nmemb <= 1) return;     /* sorted trivially */
-
-	 /* Small arrays can use the stack, big ones must be allocated */
-	 if (nmemb <= SMALLSORT) indir = small;
-	 else { Newx(indir, nmemb, gptr *); }
-
-	 /* Copy pointers to original array elements into indirect array */
-	 for (n = nmemb, pp = indir, q = list1; n--; ) *pp++ = q++;
-
-	 savecmp = PL_sort_RealCmp;	/* Save current comparison routine, if any */
-	 PL_sort_RealCmp = cmp;	/* Put comparison routine where cmpindir can find it */
-
-	 /* sort, with indirection */
-	 if (flags & SORTf_DESC)
-	    qsortsvu((gptr *)indir, nmemb, cmpindir_desc);
-	else
-	    qsortsvu((gptr *)indir, nmemb, cmpindir);
-
-	 pp = indir;
-	 q = list1;
-	 for (n = nmemb; n--; ) {
-	      /* Assert A: all elements of q with index > n are already
-	       * in place.  This is vacuously true at the start, and we
-	       * put element n where it belongs below (if it wasn't
-	       * already where it belonged). Assert B: we only move
-	       * elements that aren't where they belong,
-	       * so, by A, we never tamper with elements above n.
-	       */
-	      j = pp[n] - q;		/* This sets j so that q[j] is
-					 * at pp[n].  *pp[j] belongs in
-					 * q[j], by construction.
-					 */
-	      if (n != j) {		/* all's well if n == j */
-		   tmp = q[j];		/* save what's in q[j] */
-		   do {
-			q[j] = *pp[j];	/* put *pp[j] where it belongs */
-			i = pp[j] - q;	/* the index in q of the element
-					 * just moved */
-			pp[j] = q + j;	/* this is ok now */
-		   } while ((j = i) != n);
-		   /* There are only finitely many (nmemb) addresses
-		    * in the pp array.
-		    * So we must eventually revisit an index we saw before.
-		    * Suppose the first revisited index is k != n.
-		    * An index is visited because something else belongs there.
-		    * If we visit k twice, then two different elements must
-		    * belong in the same place, which cannot be.
-		    * So j must get back to n, the loop terminates,
-		    * and we put the saved element where it belongs.
-		    */
-		   q[n] = tmp;		/* put what belongs into
-					 * the n-th element */
-	      }
-	 }
-
-	/* free iff allocated */
-	 if (indir != small) { Safefree(indir); }
-	 /* restore prevailing comparison routine */
-	 PL_sort_RealCmp = savecmp;
-    } else if ((flags & SORTf_DESC) != 0) {
-	 const SVCOMPARE_t savecmp = PL_sort_RealCmp;	/* Save current comparison routine, if any */
-	 PL_sort_RealCmp = cmp;	/* Put comparison routine where cmp_desc can find it */
-	 cmp = cmp_desc;
-	 qsortsvu(list1, nmemb, cmp);
-	 /* restore prevailing comparison routine */
-	 PL_sort_RealCmp = savecmp;
-    } else {
-	 qsortsvu(list1, nmemb, cmp);
-    }
-}
-
 /*
 =head1 Array Manipulation Functions
 
 =for apidoc sortsv
 
-Sort an array.  Here is an example:
-
-    sortsv(AvARRAY(av), av_top_index(av)+1, Perl_sv_cmp_locale);
+In-place sort an array of SV pointers with the given comparison routine.
 
 Currently this always uses mergesort.  See C<L</sortsv_flags>> for a more
 flexible routine.
@@ -1444,24 +787,6 @@ Perl_sortsv(pTHX_ SV **array, size_t nmemb, SVCOMPARE_t cmp)
     PERL_ARGS_ASSERT_SORTSV;
 
     sortsv_flags(array, nmemb, cmp, 0);
-}
-
-/*
-=for apidoc sortsv_flags
-
-Sort an array, with various options.
-
-=cut
-*/
-void
-Perl_sortsv_flags(pTHX_ SV **array, size_t nmemb, SVCOMPARE_t cmp, U32 flags)
-{
-    PERL_ARGS_ASSERT_SORTSV_FLAGS;
-
-    if (flags & SORTf_QSORT)
-	S_qsortsv(aTHX_ array, nmemb, cmp, flags);
-    else
-	S_mergesortsv(aTHX_ array, nmemb, cmp, flags);
 }
 
 #define SvNSIOK(sv) ((SvFLAGS(sv) & SVf_NOK) || ((SvFLAGS(sv) & (SVf_IOK|SVf_IVisUV)) == SVf_IOK))
@@ -1482,7 +807,6 @@ PP(pp_sort)
     bool hasargs = FALSE;
     bool copytmps;
     I32 is_xsub = 0;
-    I32 sorting_av = 0;
     const U8 priv = PL_op->op_private;
     const U8 flags = PL_op->op_flags;
     U32 sort_flags = 0;
@@ -1492,10 +816,10 @@ PP(pp_sort)
 
     if ((priv & OPpSORT_DESCEND) != 0)
 	sort_flags |= SORTf_DESC;
-    if ((priv & OPpSORT_QSORT) != 0)
-	sort_flags |= SORTf_QSORT;
     if ((priv & OPpSORT_STABLE) != 0)
 	sort_flags |= SORTf_STABLE;
+    if ((priv & OPpSORT_UNSTABLE) != 0)
+	sort_flags |= SORTf_UNSTABLE;
 
     if (gimme != G_ARRAY) {
 	SP = MARK;
@@ -1544,7 +868,7 @@ PP(pp_sort)
 		  else {
 		    SV *tmpstr = sv_newmortal();
 		    gv_efullname3(tmpstr, gv, NULL);
-		    DIE(aTHX_ "Undefined sort subroutine \"%"SVf"\" called",
+		    DIE(aTHX_ "Undefined sort subroutine \"%" SVf "\" called",
 			SVfARG(tmpstr));
 		  }
 		}
@@ -1563,34 +887,31 @@ PP(pp_sort)
 	PL_sortcop = NULL;
     }
 
-    /* optimiser converts "@a = sort @a" to "sort \@a";
-     * in case of tied @a, pessimise: push (@a) onto stack, then assign
-     * result back to @a at the end of this function */
+    /* optimiser converts "@a = sort @a" to "sort \@a".  In this case,
+     * push (@a) onto stack, then assign result back to @a at the end of
+     * this function */
     if (priv & OPpSORT_INPLACE) {
 	assert( MARK+1 == SP && *SP && SvTYPE(*SP) == SVt_PVAV);
 	(void)POPMARK; /* remove mark associated with ex-OP_AASSIGN */
 	av = MUTABLE_AV((*SP));
+        if (SvREADONLY(av))
+            Perl_croak_no_modify();
 	max = AvFILL(av) + 1;
+        MEXTEND(SP, max);
 	if (SvMAGICAL(av)) {
-	    MEXTEND(SP, max);
 	    for (i=0; i < max; i++) {
 		SV **svp = av_fetch(av, i, FALSE);
 		*SP++ = (svp) ? *svp : NULL;
 	    }
-	    SP--;
-	    p1 = p2 = SP - (max-1);
 	}
-	else {
-	    if (SvREADONLY(av))
-		Perl_croak_no_modify();
-	    else
-	    {
-		SvREADONLY_on(av);
-		save_pushptr((void *)av, SAVEt_READONLY_OFF);
-	    }
-	    p1 = p2 = AvARRAY(av);
-	    sorting_av = 1;
+        else {
+            SV **svp = AvARRAY(av);
+            assert(svp || max == 0);
+	    for (i = 0; i < max; i++)
+                *SP++ = *svp++;
 	}
+        SP--;
+        p1 = p2 = SP - (max-1);
     }
     else {
 	p2 = MARK+1;
@@ -1600,7 +921,7 @@ PP(pp_sort)
     /* shuffle stack down, removing optional initial cv (p1!=p2), plus
      * any nulls; also stringify or converting to integer or number as
      * required any args */
-    copytmps = !sorting_av && PL_sortcop;
+    copytmps = cBOOL(PL_sortcop);
     for (i=max; i > 0 ; i--) {
 	if ((*p1 = *p2++)) {			/* Weed out nulls. */
 	    if (copytmps && SvPADTMP(*p1)) {
@@ -1633,9 +954,6 @@ PP(pp_sort)
 	else
 	    max--;
     }
-    if (sorting_av)
-	AvFILLp(av) = max-1;
-
     if (max > 1) {
 	SV **start;
 	if (PL_sortcop) {
@@ -1663,8 +981,10 @@ PP(pp_sort)
                 /* we don't want modifications localized */
                 GvINTRO_off(PL_firstgv);
                 GvINTRO_off(PL_secondgv);
-		SAVESPTR(GvSV(PL_firstgv));
-		SAVESPTR(GvSV(PL_secondgv));
+		SAVEGENERICSV(GvSV(PL_firstgv));
+		SvREFCNT_inc(GvSV(PL_firstgv));
+		SAVEGENERICSV(GvSV(PL_secondgv));
+		SvREFCNT_inc(GvSV(PL_secondgv));
 	    }
 
             gimme = G_SCALAR;
@@ -1716,7 +1036,7 @@ PP(pp_sort)
 	}
 	else {
 	    MEXTEND(SP, 20);	/* Can't afford stack realloc on signal. */
-	    start = sorting_av ? AvARRAY(av) : ORIGMARK+1;
+	    start = ORIGMARK+1;
 	    sortsvp(aTHX_ start, max,
 		    (priv & OPpSORT_NUMERIC)
 		        ? ( ( ( priv & OPpSORT_INTEGER) || all_SIVs)
@@ -1742,27 +1062,51 @@ PP(pp_sort)
 	    }
 	}
     }
-    if (sorting_av)
-	SvREADONLY_off(av);
-    else if (av && !sorting_av) {
-	/* simulate pp_aassign of tied AV */
-	SV** const base = MARK+1;
-	for (i=0; i < max; i++) {
-	    base[i] = newSVsv(base[i]);
-	}
-	av_clear(av);
-	av_extend(av, max);
-	for (i=0; i < max; i++) {
-	    SV * const sv = base[i];
-	    SV ** const didstore = av_store(av, i, sv);
-	    if (SvSMAGICAL(sv))
-		mg_set(sv);
-	    if (!didstore)
-		sv_2mortal(sv);
-	}
+
+    if (av) {
+        /* copy back result to the array */
+        SV** const base = MARK+1;
+        if (SvMAGICAL(av)) {
+            for (i = 0; i < max; i++)
+                base[i] = newSVsv(base[i]);
+            av_clear(av);
+            av_extend(av, max);
+            for (i=0; i < max; i++) {
+                SV * const sv = base[i];
+                SV ** const didstore = av_store(av, i, sv);
+                if (SvSMAGICAL(sv))
+                    mg_set(sv);
+                if (!didstore)
+                    sv_2mortal(sv);
+            }
+        }
+        else {
+            /* the elements of av are likely to be the same as the
+             * (non-refcounted) elements on the stack, just in a different
+             * order. However, its possible that someone's messed with av
+             * in the meantime. So bump and unbump the relevant refcounts
+             * first.
+             */
+            for (i = 0; i < max; i++) {
+                SV *sv = base[i];
+                assert(sv);
+                if (SvREFCNT(sv) > 1)
+                    base[i] = newSVsv(sv);
+                else
+                    SvREFCNT_inc_simple_void_NN(sv);
+            }
+            av_clear(av);
+            if (max > 0) {
+                av_extend(av, max);
+                Copy(base, AvARRAY(av), max, SV*);
+            }
+            AvFILLp(av) = max - 1;
+            AvREIFY_off(av);
+            AvREAL_on(av);
+        }
     }
     LEAVE;
-    PL_stack_sp = ORIGMARK + (sorting_av ? 0 : max);
+    PL_stack_sp = ORIGMARK +  max;
     return nextop;
 }
 
@@ -1773,11 +1117,16 @@ S_sortcv(pTHX_ SV *const a, SV *const b)
     I32 result;
     PMOP * const pm = PL_curpm;
     COP * const cop = PL_curcop;
+    SV *olda, *oldb;
  
     PERL_ARGS_ASSERT_SORTCV;
 
-    GvSV(PL_firstgv) = a;
-    GvSV(PL_secondgv) = b;
+    olda = GvSV(PL_firstgv);
+    GvSV(PL_firstgv) = SvREFCNT_inc_simple_NN(a);
+    SvREFCNT_dec(olda);
+    oldb = GvSV(PL_secondgv);
+    GvSV(PL_secondgv) = SvREFCNT_inc_simple_NN(b);
+    SvREFCNT_dec(oldb);
     PL_stack_sp = PL_stack_base;
     PL_op = PL_sortcop;
     CALLRUNOPS(aTHX);
@@ -1815,8 +1164,8 @@ S_sortcv_stacked(pTHX_ SV *const a, SV *const b)
 	    AvARRAY(av) = ary;
 	}
 	if (AvMAX(av) < 1) {
-	    AvMAX(av) = 1;
 	    Renew(ary,2,SV*);
+	    AvMAX(av) = 1;
 	    AvARRAY(av) = ary;
 	    AvALLOC(av) = ary;
 	}
@@ -1871,20 +1220,16 @@ S_sortcv_xsub(pTHX_ SV *const a, SV *const b)
 static I32
 S_sv_ncmp(pTHX_ SV *const a, SV *const b)
 {
-    const NV nv1 = SvNSIV(a);
-    const NV nv2 = SvNSIV(b);
+    I32 cmp = do_ncmp(a, b);
 
     PERL_ARGS_ASSERT_SV_NCMP;
 
-#if defined(NAN_COMPARE_BROKEN) && defined(Perl_isnan)
-    if (Perl_isnan(nv1) || Perl_isnan(nv2)) {
-#else
-    if (nv1 != nv1 || nv2 != nv2) {
-#endif
+    if (cmp == 2) {
 	if (ckWARN(WARN_UNINITIALIZED)) report_uninit(NULL);
 	return 0;
     }
-    return nv1 < nv2 ? -1 : nv1 > nv2 ? 1 : 0;
+
+    return cmp;
 }
 
 static I32

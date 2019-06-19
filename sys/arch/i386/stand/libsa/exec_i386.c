@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.44 2016/09/11 17:52:47 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.50 2019/06/08 02:52:20 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -33,8 +33,11 @@
 #include <dev/cons.h>
 #include <lib/libsa/loadfile.h>
 #include <machine/biosvar.h>
+#include <machine/specialreg.h>
+#include <machine/psl.h>
 #include <stand/boot/bootarg.h>
 
+#include "cmd.h"
 #include "disk.h"
 #include "libsa.h"
 
@@ -51,10 +54,13 @@
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
     __attribute__ ((noreturn));
 
+void ucode_load(void);
+extern struct cmd_state cmd;
+
 char *bootmac = NULL;
 
 void
-run_loadfile(u_long *marks, int howto)
+run_loadfile(uint64_t *marks, int howto)
 {
 	u_long entry;
 #ifdef EXEC_DEBUG
@@ -98,6 +104,8 @@ run_loadfile(u_long *marks, int howto)
 
 	bcopy(bootdev_dip->disklabel.d_uid, &bootduid.duid, sizeof(bootduid));
 	addbootarg(BOOTARG_BOOTDUID, sizeof(bootduid), &bootduid);
+
+	ucode_load();
 
 #ifdef SOFTRAID
 	if (bootdev_dip->sr_vol != NULL) {
@@ -143,4 +151,94 @@ run_loadfile(u_long *marks, int howto)
 	    extmem, cnvmem, ac, (int)av);
 	/* not reached */
 #endif
+}
+
+void
+ucode_load(void)
+{
+	uint32_t model, family, stepping;
+	uint32_t dummy, signature;
+	uint32_t vendor[4];
+	bios_ucode_t uc;
+	struct stat sb;
+	char path[128];
+	size_t buflen;
+	char *buf;
+	int fd, psl_check;
+
+	/*
+	 * The following is a simple check to see if cpuid is supported.
+	 * We try to toggle bit 21 (PSL_ID) in eflags.  If it works, then
+	 * cpuid is supported.  If not, there's no cpuid, and we don't
+	 * try it (don't want /boot to get an invalid opcode exception).
+	 *
+	 * XXX The NexGen Nx586 does not support this bit, so this is not
+	 *     a good method to detect the presence of cpuid on this
+	 *     processor.  That's fine: the purpose here is to detect the
+	 *     absence of cpuid.  We don't mind if the instruction's not
+	 *     there - this is not intended to determine exactly what
+	 *     processor is there, just whether it's i386 or amd64.
+	 *
+	 *     The only thing that would cause us grief is a processor which
+	 *     does not support cpuid but which does allow the PSL_ID bit
+	 *     in eflags to be toggled.
+	 */
+	__asm volatile(
+	    "pushfl\n\t"
+	    "popl	%2\n\t"
+	    "xorl	%2, %0\n\t"
+	    "pushl	%0\n\t"
+	    "popfl\n\t"
+	    "pushfl\n\t"
+	    "popl	%0\n\t"
+	    "xorl	%2, %0\n\t"		/* If %2 == %0, no cpuid */
+	    : "=r" (psl_check)
+	    : "0" (PSL_ID), "r" (0)
+	    : "cc");
+
+	if (psl_check != PSL_ID)
+		return;
+
+	CPUID(0, dummy, vendor[0], vendor[2], vendor[1]);
+	vendor[3] = 0; /* NULL-terminate */
+	if (strcmp((char *)vendor, "GenuineIntel") != 0)
+		return;
+
+	CPUID(1, signature, dummy, dummy, dummy);
+	family = (signature >> 8) & 0x0f;
+	model = (signature >> 4) & 0x0f;
+	if (family == 0x6 || family == 0xf) {
+		family += (signature >> 20) & 0xff;
+		model += ((signature >> 16) & 0x0f) << 4;
+	}
+	stepping = (signature >> 0) & 0x0f;
+
+	snprintf(path, sizeof(path), "%s:/etc/firmware/intel/%02x-%02x-%02x",
+	    cmd.bootdev, family, model, stepping);
+
+	fd = open(path, 0);
+	if (fd == -1)
+		return;
+
+	if (fstat(fd, &sb) == -1)
+		return;
+
+	buflen = sb.st_size;
+	if (buflen > 256*1024) {
+		printf("ucode too large\n");
+		return;
+	}
+
+	buf = (char *)(1*1024*1024);
+
+	if (read(fd, buf, buflen) != buflen) {
+		close(fd);
+		return;
+	}
+
+	uc.uc_addr = (uint64_t)buf;
+	uc.uc_size = (uint64_t)buflen;
+	addbootarg(BOOTARG_UCODE, sizeof(uc), &uc);
+
+	close(fd);
 }

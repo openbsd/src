@@ -2,23 +2,25 @@
 #
 # Copyright (c) 1995-2011 Paul Marquess. All rights reserved.
 # Copyright (c) 2011-2014 Reini Urban. All rights reserved.
+# Copyright (c) 2014-2017 cPanel Inc. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
  
 package Filter::Util::Call ;
 
-require 5.005 ;
-require DynaLoader;
+require 5.006 ; # our
 require Exporter;
-use Carp ;
+
+use XSLoader ();
 use strict;
 use warnings;
-use vars qw($VERSION @ISA @EXPORT) ;
 
-@ISA = qw(Exporter DynaLoader);
-@EXPORT = qw( filter_add filter_del filter_read filter_read_exact) ;
-$VERSION = "1.55" ;
+our @ISA = qw(Exporter);
+our @EXPORT = qw( filter_add filter_del filter_read filter_read_exact) ;
+our $VERSION = "1.58" ;
+our $XS_VERSION = $VERSION;
+$VERSION = eval $VERSION;
 
 sub filter_read_exact($)
 {
@@ -26,8 +28,10 @@ sub filter_read_exact($)
     my ($left)   = $size ;
     my ($status) ;
 
-    croak ("filter_read_exact: size parameter must be > 0")
-	unless $size > 0 ;
+    unless ( $size > 0 ) {
+        require Carp;
+        Carp::croak("filter_read_exact: size parameter must be > 0");
+    }
 
     # try to read a block which is exactly $size bytes long
     while ($left and ($status = filter_read($left)) > 0) {
@@ -56,7 +60,7 @@ sub filter_add($)
     Filter::Util::Call::real_import($obj, (caller)[0], $coderef) ;
 }
 
-bootstrap Filter::Util::Call ;
+XSLoader::load('Filter::Util::Call');
 
 1;
 __END__
@@ -525,6 +529,7 @@ Paul Marquess
 
 Copyright (c) 1995-2011 Paul Marquess. All rights reserved.
 Copyright (c) 2011-2014 Reini Urban. All rights reserved.
+Copyright (c) 2014-2017 cPanel Inc. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

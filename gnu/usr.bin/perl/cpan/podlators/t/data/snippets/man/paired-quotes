@@ -1,0 +1,20 @@
+[name]
+Paired quotes
+
+[input]
+=head1 SEQS
+
+"=over ... Z<>=back"
+
+"SE<lt>...E<gt>"
+
+The quotes should be converted in the above to paired quotes.
+
+[output]
+.SH "SEQS"
+.IX Header "SEQS"
+\&\*(L"=over ... =back\*(R"
+.PP
+\&\*(L"S<...>\*(R"
+.PP
+The quotes should be converted in the above to paired quotes.

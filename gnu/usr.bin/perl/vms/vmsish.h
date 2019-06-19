@@ -100,12 +100,6 @@
  * we'll use ours, since it gives us the full VMS exit status. */
 #define waitpid my_waitpid
 
-/* Don't redeclare standard RTL routines in Perl's header files;
- * VMS history or extensions makes some of the formal protoypes
- * differ from the common Unix forms.
- */
-#define DONT_DECLARE_STD 1
-
 /* Our own contribution to PerlShr's global symbols . . . */
 
 #if !defined(PERL_IMPLICIT_CONTEXT)
@@ -317,7 +311,7 @@ struct interp_intern {
 #define PERL_SYS_INIT_BODY(c,v)	MALLOC_CHECK_TAINT2(*c,*v) vms_image_init((c),(v)); PERLIO_INIT; MALLOC_INIT
 #define PERL_SYS_TERM_BODY()    HINTS_REFCNT_TERM; OP_REFCNT_TERM;      \
                                 PERLIO_TERM; MALLOC_TERM; LOCALE_TERM
-#define dXSUB_SYS
+#define dXSUB_SYS dNOOP
 #define HAS_KILL
 #define HAS_WAIT
 
@@ -591,7 +585,7 @@ struct passwd {
 #endif
 
 typedef unsigned mydev_t;
-#ifndef _LARGEFILE
+#if !defined(_USE_STD_STAT) && !defined(_LARGEFILE)
 typedef unsigned myino_t;
 #else
 typedef __ino64_t myino_t;
@@ -601,7 +595,7 @@ struct mystat
 {
     struct stat crtl_stat;
     myino_t st_ino;
-#ifndef _LARGEFILE
+#if !defined(_USE_STD_STAT) && !defined(_LARGEFILE)
     unsigned rvn; /* FID (num,seq,rvn) + pad */
 #endif
     mydev_t st_dev;
@@ -622,7 +616,7 @@ struct mystat
 #define st_fab_fsz crtl_stat.st_fab_fsz
 #define st_fab_mrs crtl_stat.st_fab_mrs
 
-#ifdef _USE_STD_STAT
+#if defined(_USE_STD_STAT) || defined(_LARGEFILE)
 #define VMS_INO_T_COMPARE(__a, __b) (__a != __b)
 #define VMS_INO_T_COPY(__a, __b) __a = __b
 #else

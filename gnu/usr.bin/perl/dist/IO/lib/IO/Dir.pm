@@ -6,22 +6,21 @@
 
 package IO::Dir;
 
-use 5.006;
+use 5.008_001;
 
 use strict;
 use Carp;
 use Symbol;
 use Exporter;
 use IO::File;
-our(@ISA, $VERSION, @EXPORT_OK);
 use Tie::Hash;
 use File::stat;
 use File::Spec;
 
-@ISA = qw(Tie::Hash Exporter);
-$VERSION = "1.10";
-$VERSION = eval $VERSION;
-@EXPORT_OK = qw(DIR_UNLINK);
+our @ISA = qw(Tie::Hash Exporter);
+our $VERSION = "1.39";
+
+our @EXPORT_OK = qw(DIR_UNLINK);
 
 sub DIR_UNLINK () { 1 }
 

@@ -17,9 +17,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.34 2016/10/12 17:27:08 schwarze Exp $
+.\" $OpenBSD: crontab.5,v 1.36 2018/06/13 13:27:37 jmc Exp $
 .\"
-.Dd $Mdocdate: October 12 2016 $
+.Dd $Mdocdate: June 13 2018 $
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -193,14 +193,20 @@ will be changed into newline characters, and all data
 after the first
 .Ql %
 will be sent to the command as standard input.
-If the
-.Ar command
-field begins with
-.Ql -q ,
-execution will not be logged.
-Use whitespace to separate
-.Ql -q
-from the command.
+.Pp
+Commands may be modified as follows:
+.Bl -tag -width Ds
+.It Fl n Ar command
+No mail is sent after a successful run.
+The execution output will only be mailed if the command exits with a non-zero
+exit code.
+The
+.Fl n
+option is an attempt to cure potentially copious volumes of mail coming from
+.Xr cron 8 .
+.It Fl q Ar command
+Execution will not be logged.
+.El
 .Pp
 Commands are executed by
 .Xr cron 8
@@ -328,6 +334,9 @@ Ranges may include
 .Dq steps .
 .It
 Months or days of the week can be specified by name.
+.It
+Mailing after a successful run can be suppressed with
+.Fl n .
 .It
 Logging can be suppressed with
 .Ql -q .

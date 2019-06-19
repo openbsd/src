@@ -1,4 +1,4 @@
-/*	$OpenBSD: strchr.S,v 1.8 2015/11/14 21:53:03 guenther Exp $	*/
+/*	$OpenBSD: strchr.S,v 1.9 2018/07/03 23:14:05 mortimer Exp $	*/
 /*	$NetBSD: strchr.S,v 1.7 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*-
@@ -44,6 +44,8 @@ WEAK_ALIAS(index, strchr)
  */
 
 ENTRY(strchr)
+	RETGUARD_SETUP(strchr, r8)
+	RETGUARD_PUSH(r8)
 	movabsq	$0x0101010101010101,%r8
 
 	movzbq	%sil,%rdx	/* value to search for (c) */
@@ -85,7 +87,7 @@ ENTRY(strchr)
 	bsf	%r11,%r11	/* 7, 15, 23 ... 63 */
 8:	shr	$3,%r11		/* 0, 1, 2 .. 7 */
 	lea	-8(%r11,%rdi),%rax
-	ret
+	jmp 12f
 
 /* End of string, check whether char is before NUL */
 	_ALIGN_TEXT		/* adds three byte nop */
@@ -97,6 +99,8 @@ ENTRY(strchr)
 	cmp	%r11,%rax
 	jae	8b		/* return 'found' if same - searching for NUL */
 11:	xor	%eax,%eax	/* char not found */
+12:	RETGUARD_POP(r11)
+	RETGUARD_CHECK(strchr, r11)
 	ret
 
 /* Source misaligned: read aligned word and make low bytes invalid */

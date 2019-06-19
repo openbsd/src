@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.10 2017/07/03 22:21:47 espie Exp $
+# $OpenBSD: Makefile,v 1.11 2019/05/11 17:46:02 rob Exp $
 
 PROG=		ypldap
 SRCS=		parse.y ypldap.c log.c	\
 		ldapclient.c entries.c yp.c \
-		aldap.c ber.c \
+		aldap.c \
 		ypldap_dns.c
 
 MAN=		ypldap.8 ypldap.conf.5

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.3 2015/08/21 06:16:13 deraadt Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.5 2019/04/01 11:05:41 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 #define	MODULE_IO_TIMEOUT	2000
 
 #define	CONFFILE			"/etc/radiusd.conf"
-struct radius_query;	/* XXX */
+struct radius_query;	/* forward declaration */
 
 struct radiusd_addr {
 	union {
@@ -120,7 +120,6 @@ struct radius_query {
 	RADIUS_PACKET			*req;
 	RADIUS_PACKET			*res;
 	int				 req_modified;
-	int				 res_modified;
 	char				 username[256]; /* original username */
 	TAILQ_ENTRY(radius_query)	 next;
 };

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.10 2017/07/03 22:21:47 espie Exp $
+#	$OpenBSD: Makefile,v 1.11 2019/01/17 06:21:46 tedu Exp $
 
 PROG=	sasyncd
 SRCS=	sasyncd.c carp.c conf.y log.c monitor.c net.c net_ctl.c pfkey.c timer.c

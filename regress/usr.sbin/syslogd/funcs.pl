@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.34 2017/11/27 16:53:04 sthen Exp $
+#	$OpenBSD: funcs.pl,v 1.35 2018/05/22 15:01:16 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -87,8 +87,8 @@ sub write_message {
 		my $msg = join("", @_);
 		if ($self->{connectdomain} eq "sendsyslog") {
 			my $flags = $self->{connect}{flags} || 0;
-			sendsyslog($msg, $flags) or die ref($self),
-			    " sendsyslog failed: $!";
+			sendsyslog($msg, $flags)
+			    or die ref($self), " sendsyslog failed: $!";
 		} elsif ($self->{connectproto} eq "udp") {
 			# writing UDP packets works only with syswrite()
 			defined(my $n = syswrite(STDOUT, $msg))

@@ -2247,7 +2247,7 @@ Introduced by
 L<perl #113536|https://rt.perl.org/Public/Bug/Display.html?id=113536>, a memory
 leak on every call to C<system> and backticks (C< `` >), on most Win32 Perls
 starting from 5.18.0 has been fixed.  The memory leak only occurred if you
-enabled psuedo-fork in your build of Win32 Perl, and were running that build on
+enabled pseudo-fork in your build of Win32 Perl, and were running that build on
 Server 2003 R2 or newer OS.  The leak does not appear on WinXP SP3.
 [L<perl #121676|https://rt.perl.org/Public/Bug/Display.html?id=121676>]
 
@@ -2736,7 +2736,7 @@ don't depend on the locale. [perl #120675]
 
 =item *
 
-Under certain conditions, Perl would throw an error if in an lookbehind
+Under certain conditions, Perl would throw an error if in a lookbehind
 assertion in a regexp, the assertion referred to a named subpattern,
 complaining the lookbehind was variable when it wasn't. This has been
 fixed. [perl #120600], [perl #120618]. The current fix may be improved

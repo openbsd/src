@@ -1,4 +1,4 @@
-/*	$OpenBSD: domacro.c,v 1.19 2017/01/21 08:33:07 krw Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.21 2019/05/16 12:44:17 florian Exp $	*/
 /*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*

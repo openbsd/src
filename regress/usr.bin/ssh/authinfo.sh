@@ -1,4 +1,4 @@
-#	$OpenBSD: authinfo.sh,v 1.2 2017/10/25 20:08:36 millert Exp $
+#	$OpenBSD: authinfo.sh,v 1.3 2018/04/10 00:13:27 djm Exp $
 #	Placed in the Public Domain.
 
 tid="authinfo"
@@ -6,7 +6,7 @@ tid="authinfo"
 # Ensure the environment variable doesn't leak when ExposeAuthInfo=no.
 verbose "ExposeAuthInfo=no"
 env SSH_USER_AUTH=blah ${SSH} -F $OBJ/ssh_proxy x \
-	'printenv SSH_USER_AUTH >/dev/null' && fail "SSH_USER_AUTH present"
+	'env | grep SSH_USER_AUTH >/dev/null' && fail "SSH_USER_AUTH present"
 
 verbose "ExposeAuthInfo=yes"
 echo ExposeAuthInfo=yes >> $OBJ/sshd_proxy

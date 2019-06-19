@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.35 2017/12/13 08:27:06 patrick Exp $	*/
+/*	$OpenBSD: util.c,v 1.37 2018/12/07 08:42:13 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -553,7 +553,8 @@ uint8_t
 mask2prefixlen6(struct sockaddr *sa)
 {
 	struct sockaddr_in6	*sa_in6 = (struct sockaddr_in6 *)sa;
-	uint8_t			 l = 0, *ap, *ep;
+	uint8_t			*ap, *ep;
+	unsigned int		 l = 0;
 
 	/*
 	 * sin6_len is the size of the sockaddr so substract the offset of
@@ -569,32 +570,35 @@ mask2prefixlen6(struct sockaddr *sa)
 			break;
 		case 0xfe:
 			l += 7;
-			return (l);
+			goto done;
 		case 0xfc:
 			l += 6;
-			return (l);
+			goto done;
 		case 0xf8:
 			l += 5;
-			return (l);
+			goto done;
 		case 0xf0:
 			l += 4;
-			return (l);
+			goto done;
 		case 0xe0:
 			l += 3;
-			return (l);
+			goto done;
 		case 0xc0:
 			l += 2;
-			return (l);
+			goto done;
 		case 0x80:
 			l += 1;
-			return (l);
+			goto done;
 		case 0x00:
-			return (l);
+			goto done;
 		default:
-			return (0);
+			fatalx("non contiguous inet6 netmask");
 		}
 	}
 
+done:
+	if (l > sizeof(struct in6_addr) * 8)
+		fatalx("%s: prefixlen %d out of bound", __func__, l);
 	return (l);
 }
 
@@ -703,7 +707,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 	char *p, *q;
 
 	if ((tmp = calloc(1, len)) == NULL) {
-		log_debug("expand_string: calloc");
+		log_debug("%s: calloc", __func__);
 		return (-1);
 	}
 	p = q = label;
@@ -711,7 +715,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		*q = '\0';
 		if ((strlcat(tmp, p, len) >= len) ||
 		    (strlcat(tmp, repl, len) >= len)) {
-			log_debug("expand_string: string too long");
+			log_debug("%s: string too long", __func__);
 			free(tmp);
 			return (-1);
 		}
@@ -719,7 +723,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		p = q;
 	}
 	if (strlcat(tmp, p, len) >= len) {
-		log_debug("expand_string: string too long");
+		log_debug("%s: string too long", __func__);
 		free(tmp);
 		return (-1);
 	}

@@ -15,8 +15,10 @@ DDEESSCCRRIIPPTTIIOONN
        OEOE LATIN CAPITAL LIGATURE OE
        oeoe LATIN SMALL LIGATURE OE
        ,f,f   LATIN SMALL LETTER F WITH HOOK
+       jj   LATIN SMALL LETTER DOTLESS J
        vv   CARON
        '`'`   BREVE
+       ..   DOT ABOVE
        oo   RING ABOVE
        ,,   OGONEK
        ""   DOUBLE ACUTE ACCENT
@@ -93,6 +95,7 @@ DDEESSCCRRIIPPTTIIOONN
        //   FRACTION SLASH
        EUREUREUR EURO SIGN
        <Im><Im>  BLACK-LETTER CAPITAL I
+       pp   SCRIPT CAPITAL P
        <Re><Re>  BLACK-LETTER CAPITAL R
        tmtm TRADE MARK SIGN
        <Aleph><Aleph> ALEF SYMBOL
@@ -119,6 +122,9 @@ DDEESSCCRRIIPPTTIIOONN
        <element of><element of> ELEMENT OF
        <not element of><not element of>   NOT AN ELEMENT OF
        <such that><such that>   CONTAINS AS MEMBER
+       <product><product>  N-ARY PRODUCT
+       <coproduct><coproduct>   N-ARY COPRODUCT
+       <sum><sum>     N-ARY SUMMATION
        --   MINUS SIGN
        -+-+ MINUS-OR-PLUS SIGN
        **   ASTERISK OPERATOR
@@ -143,6 +149,8 @@ DDEESSCCRRIIPPTTIIOONN
        >=>= GREATER-THAN OR EQUAL TO
        <proper subset><proper subset>     SUBSET OF
        <proper superset><proper superset> SUPERSET OF
+       <not subset><not subset> NOT A SUBSET OF
+       <not superset><not superset>  NOT A SUPERSET OF
        <subset or equal><subset or equal> SUBSET OF OR EQUAL TO
        <superset or equal><superset or equal>  SUPERSET OF OR EQUAL TO
        O+O+   CIRCLED PLUS
@@ -161,10 +169,14 @@ DDEESSCCRRIIPPTTIIOONN
        OO   WHITE CIRCLE
        <=<= WHITE LEFT POINTING INDEX
        =>=> WHITE RIGHT POINTING INDEX
+       SS   BLACK SPADE SUIT
+       CC   BLACK CLUB SUIT
+       HH   BLACK HEART SUIT
+       DD   BLACK DIAMOND SUIT
        <<   MATHEMATICAL LEFT ANGLE BRACKET
        >>   MATHEMATICAL RIGHT ANGLE BRACKET
        ENDTEST
 
 
 
-OpenBSD                        October 27, 2014          CHAR-UNICODE-NAMED(1)
+OpenBSD                         August 21, 2018          CHAR-UNICODE-NAMED(1)

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.6 2015/10/26 18:08:44 jasper Exp $
+# $OpenBSD: PkgConfig.pm,v 1.7 2018/05/18 17:01:57 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -24,11 +24,24 @@ package OpenBSD::PkgConfig;
 
 my $parse = {
 	Requires => sub {
-	    [split qr{
-	    	(?<![<=>]) 	# not preceded by <=>
-		[,\s]+ 		#    delimiter
-		(?![<=>])	# not followed by <=>
-		}x, shift ] }
+	    my @l = split(/[,\s]+/, shift);
+	    my @r = ();
+	    while (@l > 0) {
+		    my $n = shift @l;
+		    if ($n =~ m/[<=>]+$/) {
+			    if (@l > 0) {
+				    $n .= shift @l;
+			    }
+		    }
+		    if ($n =~ m/^[<=>]+/) {
+			    if (@r > 0) {
+				    $n = (pop @r).$n;
+			    }
+		    }
+		    push(@r, $n);
+	    }
+	    return \@r;
+	},
 };
 
 

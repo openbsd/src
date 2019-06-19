@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.h,v 1.8 2017/08/13 02:06:42 tedu Exp $	*/
+/*	$OpenBSD: dd.h,v 1.9 2019/02/16 10:54:00 bluhm Exp $	*/
 /*	$NetBSD: dd.h,v 1.4 1995/03/21 09:04:08 cgd Exp $	*/
 
 /*-
@@ -96,3 +96,4 @@ typedef struct {
 #define	C_STATUS	0x200000
 #define	C_NOXFER	0x400000
 #define	C_NOINFO	0x800000
+#define	C_FSYNC		0x1000000

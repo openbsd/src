@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.31 2016/04/16 18:32:29 krw Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.32 2019/05/10 01:29:31 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.31 2016/04/16 18:32:29 krw Exp $ */
+/* $Id: pptpd.c,v 1.32 2019/05/10 01:29:31 guenther Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.31 2016/04/16 18:32:29 krw Exp $
+ * $Id: pptpd.c,v 1.32 2019/05/10 01:29:31 guenther Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -51,7 +51,6 @@
 #include <errno.h>
 #include <string.h>
 #include <event.h>
-#include <ifaddrs.h>
 
 #ifdef USE_LIBSOCKUTIL
 #include <seil/sockfromto.h>

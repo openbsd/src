@@ -33,7 +33,7 @@ ok $b->have_compiler, "have_compiler";
 $source_file = File::Spec->catfile('t', 'basict.c');
 {
   local *FH;
-  open FH, "> $source_file" or die "Can't create $source_file: $!";
+  open FH, '>', $source_file or die "Can't create $source_file: $!";
   print FH "int boot_basict(void) { return 1; }\n";
   close FH;
 }
@@ -75,8 +75,7 @@ SKIP: {
 # include_dirs should be settable as string or list
 {
   package Sub;
-  use vars '@ISA';
-  @ISA = ('ExtUtils::CBuilder');
+  our @ISA = ('ExtUtils::CBuilder');
   my $saw = 0;
   sub do_system {
     if ($^O eq "MSWin32") {

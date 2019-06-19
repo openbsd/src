@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.20 2017/09/05 02:40:54 guenther Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.21 2019/02/04 17:18:08 tedu Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -41,6 +41,12 @@ void
 pthread_set_name_np(pthread_t thread, const char *name)
 {
 	strlcpy(thread->name, name, sizeof(thread->name));
+}
+
+void
+pthread_get_name_np(pthread_t thread, char *name, size_t len)
+{
+	strlcpy(name, thread->name, len);
 }
 
 int

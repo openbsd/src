@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_add.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p12_add.c,v 1.17 2018/05/13 14:24:07 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -232,7 +232,7 @@ PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass, int passlen)
 }
 
 PKCS8_PRIV_KEY_INFO *
-PKCS12_decrypt_skey(PKCS12_SAFEBAG *bag, const char *pass, int passlen)
+PKCS12_decrypt_skey(const PKCS12_SAFEBAG *bag, const char *pass, int passlen)
 {
 	return PKCS8_decrypt(bag->value.shkeybag, pass, passlen);
 }
@@ -247,7 +247,7 @@ PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
 }
 
 STACK_OF(PKCS7) *
-PKCS12_unpack_authsafes(PKCS12 *p12)
+PKCS12_unpack_authsafes(const PKCS12 *p12)
 {
 	if (!PKCS7_type_is_data(p12->authsafes)) {
 		PKCS12error(PKCS12_R_CONTENT_TYPE_NOT_DATA);

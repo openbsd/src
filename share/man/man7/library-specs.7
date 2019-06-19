@@ -1,4 +1,4 @@
-.\" $OpenBSD: library-specs.7,v 1.12 2016/04/17 18:56:18 jmc Exp $
+.\" $OpenBSD: library-specs.7,v 1.13 2018/07/09 15:34:10 jmc Exp $
 .\"
 .\" Copyright (c) 2001-2010 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 17 2016 $
+.Dd $Mdocdate: July 9 2018 $
 .Dt LIBRARY-SPECS 7
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ Removing functions is an interface change.
 .Pp
 The major.minor components of the library specification are used only as a
 build-time check, the run-time checks are computed by
-.Xr resolve-lib 1 .
+.Xr port-resolve-lib-helper 1 .
 For
 .Sq libname>=major[.minor] ,
 any library which is more recent than the given major.minor version will
@@ -94,7 +94,7 @@ If both components are left empty, any version will do.
 .Pp
 Most specifications won't mention a
 .Pa path :
-.Xr resolve-lib 1
+.Xr port-resolve-lib-helper 1
 will look in the default
 .Xr ldconfig 8
 path automatically, namely
@@ -126,7 +126,7 @@ one would use
 .Xr ld 1 ,
 .Xr ld.so 1 ,
 .Xr pkg_add 1 ,
-.Xr resolve-lib 1 ,
+.Xr port-resolve-lib-helper 1 ,
 .Xr bsd.port.mk 5 ,
 .Xr packages 7 ,
 .Xr packages-specs 7 ,

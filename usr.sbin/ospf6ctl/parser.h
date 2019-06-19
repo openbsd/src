@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.8 2010/09/04 21:31:04 tedu Exp $ */
+/*	$OpenBSD: parser.h,v 1.9 2019/05/26 09:27:09 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -55,6 +55,7 @@ enum actions {
 
 struct parse_result {
 	struct in6_addr	addr;
+	struct in_addr	area;
 	char		ifname[IF_NAMESIZE];
 	int		flags;
 	enum actions	action;
@@ -63,6 +64,7 @@ struct parse_result {
 
 struct parse_result	*parse(int, char *[]);
 int			 parse_addr(const char *, struct in6_addr *);
+int			 parse_area(const char *, struct in_addr *);
 int			 parse_prefix(const char *, struct in6_addr *,
 			     u_int8_t *);
 

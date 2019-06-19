@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.24 2016/09/22 18:19:59 guenther Exp $*/
+/*	$OpenBSD: SYS.h,v 1.25 2018/06/16 16:06:03 guenther Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -73,8 +73,10 @@
 	ld	%r11, %r25, __CONCAT(sym,#got_rel);			\
 	st	reg,  %r11, %r0
 #endif
-#endif
+#define	CERROR	__cerror#plt
+#else	/* __PIC__ */
 #define	CERROR	__cerror
+#endif	/* __PIC__ */
 
 #define	__DO_SYSCALL(x)							\
 	or %r13, %r0, __SYSCALLNAME(SYS_,x);				\
@@ -127,5 +129,3 @@
 #define	SYSCALL_END(x)		SYSCALL_END_HIDDEN(x); END(x)
 
 #define	ASMSTR		.asciz
-
-	.globl	__cerror

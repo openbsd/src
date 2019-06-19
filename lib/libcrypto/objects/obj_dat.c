@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.39 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.41 2018/09/08 13:49:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -328,12 +328,12 @@ OBJ_add_object(const ASN1_OBJECT *obj)
 
 	return (o->nid);
 
-err2:
+ err2:
 	OBJerror(ERR_R_MALLOC_FAILURE);
-err:
+ err:
 	for (i = ADDED_DATA; i <= ADDED_NID; i++)
 		free(ao[i]);
-	free(o);
+	ASN1_OBJECT_free(o);
 	return (NID_undef);
 }
 
@@ -632,11 +632,11 @@ OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 		}
 	}
 
-out:
+ out:
 	BN_free(bl);
 	return ret;
 
-err:
+ err:
 	ret = 0;
 	goto out;
 }
@@ -810,7 +810,7 @@ OBJ_create(const char *oid, const char *sn, const char *ln)
 		goto err;
 	ok = OBJ_add_object(op);
 
-err:
+ err:
 	ASN1_OBJECT_free(op);
 	free(buf);
 	return (ok);

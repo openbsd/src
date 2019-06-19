@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.23 2018/01/02 06:56:41 guenther Exp $	*/
+/*	$OpenBSD: paste.c,v 1.26 2018/08/04 19:19:37 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -46,7 +46,7 @@ char *delim;
 int delimcnt;
 
 int	tr(char *);
-void	usage(void);
+__dead void usage(void);
 void	parallel(char **);
 void	sequential(char **);
 
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
-	if (!delim) {
+	if (delim == NULL) {
 		delimcnt = 1;
 		delim = "\t";
 	}
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 		sequential(argv);
 	else
 		parallel(argv);
-	exit(0);
+	return 0;
 }
 
 struct list {
@@ -104,55 +104,54 @@ parallel(char **argv)
 {
 	SIMPLEQ_HEAD(, list) head = SIMPLEQ_HEAD_INITIALIZER(head);
 	struct list *lp;
+	char *line, *p;
+	size_t linesize;
+	ssize_t len;
 	int cnt;
-	char ch, *p;
 	int opencnt, output;
-	char *buf, *lbuf;
-	size_t len;
+	char ch;
 
-	for (cnt = 0; (p = *argv); ++argv, ++cnt) {
-		if (!(lp = malloc(sizeof(struct list))))
-			err(1, "malloc");
+	for (cnt = 0; (p = *argv) != NULL; ++argv, ++cnt) {
+		if ((lp = malloc(sizeof(*lp))) == NULL)
+			err(1, NULL);
 
-		if (p[0] == '-' && !p[1])
+		if (p[0] == '-' && p[1] == '\0')
 			lp->fp = stdin;
-		else if (!(lp->fp = fopen(p, "r")))
+		else if ((lp->fp = fopen(p, "r")) == NULL)
 			err(1, "%s", p);
 		lp->cnt = cnt;
 		lp->name = p;
 		SIMPLEQ_INSERT_TAIL(&head, lp, entries);
 	}
 
+	line = NULL;
+	linesize = 0;
+
 	for (opencnt = cnt; opencnt;) {
 		output = 0;
 		SIMPLEQ_FOREACH(lp, &head, entries) {
-			lbuf = NULL;
-			if (!lp->fp) {
+			if (lp->fp == NULL) {
 				if (output && lp->cnt &&
 				    (ch = delim[(lp->cnt - 1) % delimcnt]))
 					putchar(ch);
 				continue;
 			}
-			if (!(buf = fgetln(lp->fp, &len))) {
-				if (!--opencnt)
+			if ((len = getline(&line, &linesize, lp->fp)) == -1) {
+				if (ferror(lp->fp))
+					err(1, "%s", lp->fp == stdin ?
+					    "getline" : lp->name);
+				if (--opencnt == 0)
 					break;
 				if (lp->fp != stdin)
-					(void)fclose(lp->fp);
+					fclose(lp->fp);
 				lp->fp = NULL;
 				if (output && lp->cnt &&
 				    (ch = delim[(lp->cnt - 1) % delimcnt]))
 					putchar(ch);
 				continue;
 			}
-			if (buf[len - 1] == '\n')
-				buf[len - 1] = '\0';
-			else {
-				if ((lbuf = malloc(len + 1)) == NULL)
-					err(1, "malloc");
-				memcpy(lbuf, buf, len);
-				lbuf[len] = '\0';
-				buf = lbuf;
-			}
+			if (line[len - 1] == '\n')
+				line[len - 1] = '\0';
 			/*
 			 * make sure that we don't print any delimiters
 			 * unless there's a non-empty file.
@@ -164,59 +163,50 @@ parallel(char **argv)
 						putchar(ch);
 			} else if ((ch = delim[(lp->cnt - 1) % delimcnt]))
 				putchar(ch);
-			(void)printf("%s", buf);
-			if (lbuf)
-				free(lbuf);
+			fputs(line, stdout);
 		}
 		if (output)
 			putchar('\n');
 	}
+	free(line);
 }
 
 void
 sequential(char **argv)
 {
 	FILE *fp;
+	char *line, *p;
+	size_t linesize;
+	ssize_t len;
 	int cnt;
-	char ch, *p, *dp;
-	char *buf, *lbuf;
-	size_t len;
 
-	for (; (p = *argv); ++argv) {
-		lbuf = NULL;
-		if (p[0] == '-' && !p[1])
+	line = NULL;
+	linesize = 0;
+	for (; (p = *argv) != NULL; ++argv) {
+		if (p[0] == '-' && p[1] == '\0')
 			fp = stdin;
-		else if (!(fp = fopen(p, "r"))) {
+		else if ((fp = fopen(p, "r")) == NULL) {
 			warn("%s", p);
 			continue;
 		}
-		if ((buf = fgetln(fp, &len))) {
-			for (cnt = 0, dp = delim;;) {
-				if (buf[len - 1] == '\n')
-					buf[len - 1] = '\0';
-				else {
-					if ((lbuf = malloc(len + 1)) == NULL)
-						err(1, "malloc");
-					memcpy(lbuf, buf, len);
-					lbuf[len] = '\0';
-					buf = lbuf;
-				}
-				(void)printf("%s", buf);
-				if (!(buf = fgetln(fp, &len)))
-					break;
-				if ((ch = *dp++))
-					putchar(ch);
-				if (++cnt == delimcnt) {
-					dp = delim;
-					cnt = 0;
-				}
-			}
-			putchar('\n');
+		cnt = -1;
+		while ((len = getline(&line, &linesize, fp)) != -1) {
+			if (line[len - 1] == '\n')
+				line[len - 1] = '\0';
+			if (cnt >= 0)
+				putchar(delim[cnt]);
+			if (++cnt == delimcnt)
+				cnt = 0;
+			fputs(line, stdout);
 		}
+		if (ferror(fp))
+			err(1, "%s", fp == stdin ? "getline" : p);
+		if (cnt >= 0)
+			putchar('\n');
 		if (fp != stdin)
-			(void)fclose(fp);
-		free(lbuf);
+			fclose(fp);
 	}
+	free(line);
 }
 
 int
@@ -225,7 +215,7 @@ tr(char *arg)
 	int cnt;
 	char ch, *p;
 
-	for (p = arg, cnt = 0; (ch = *p++); ++arg, ++cnt) {
+	for (p = arg, cnt = 0; (ch = *p++) != '\0'; ++arg, ++cnt) {
 		if (ch == '\\') {
 			switch (ch = *p++) {
 			case 'n':
@@ -245,16 +235,15 @@ tr(char *arg)
 			*arg = ch;
 	}
 
-	if (!cnt)
+	if (cnt == 0)
 		errx(1, "no delimiters specified");
-	return (cnt);
+	return cnt;
 }
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;
-	(void)fprintf(stderr, "usage: %s [-s] [-d list] file ...\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-s] [-d list] file ...\n", __progname);
 	exit(1);
 }

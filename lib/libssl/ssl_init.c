@@ -1,3 +1,4 @@
+/* $OpenBSD: ssl_init.c,v 1.2 2018/03/30 14:59:46 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *

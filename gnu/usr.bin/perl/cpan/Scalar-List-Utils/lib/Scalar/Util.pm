@@ -7,6 +7,7 @@
 package Scalar::Util;
 
 use strict;
+use warnings;
 require Exporter;
 
 our @ISA       = qw(Exporter);
@@ -16,7 +17,7 @@ our @EXPORT_OK = qw(
   dualvar isdual isvstring looks_like_number openhandle readonly set_prototype
   tainted
 );
-our $VERSION    = "1.42_02";
+our $VERSION    = "1.50";
 $VERSION   = eval $VERSION;
 
 require List::Util; # List::Util loads the XS
@@ -74,8 +75,8 @@ Scalar::Util - A selection of general-utility scalar subroutines
 
 C<Scalar::Util> contains a selection of subroutines that people have expressed
 would be nice to have in the perl core, but the usage would not really be high
-enough to warrant the use of a keyword, and the size so small such that being
-individual extensions would be wasteful.
+enough to warrant the use of a keyword, and the size would be so small that 
+being individual extensions would be wasteful.
 
 By default C<Scalar::Util> does not export any subroutines.
 
@@ -89,7 +90,7 @@ The following functions all perform some useful activity on reference values.
 
     my $pkg = blessed( $ref );
 
-If C<$ref> is a blessed reference the name of the package that it is blessed
+If C<$ref> is a blessed reference, the name of the package that it is blessed
 into is returned. Otherwise C<undef> is returned.
 
     $scalar = "foo";
@@ -108,7 +109,7 @@ C<if(blessed $ref)...>) because the package name C<"0"> is defined yet false.
 
     my $addr = refaddr( $ref );
 
-If C<$ref> is reference the internal memory address of the referenced value is
+If C<$ref> is reference, the internal memory address of the referenced value is
 returned as a plain integer. Otherwise C<undef> is returned.
 
     $addr = refaddr "string";           # undef
@@ -122,7 +123,7 @@ returned as a plain integer. Otherwise C<undef> is returned.
 
     my $type = reftype( $ref );
 
-If C<$ref> is a reference the basic Perl type of the variable referenced is
+If C<$ref> is a reference, the basic Perl type of the variable referenced is
 returned as a plain string (such as C<ARRAY> or C<HASH>). Otherwise C<undef>
 is returned.
 
@@ -138,7 +139,7 @@ is returned.
     weaken( $ref );
 
 The lvalue C<$ref> will be turned into a weak reference. This means that it
-will not hold a reference count on the object it references. Also when the
+will not hold a reference count on the object it references. Also, when the
 reference count on that object reaches zero, the reference will be set to
 undef. This function mutates the lvalue passed as its argument and returns no
 value.
@@ -242,8 +243,8 @@ numeric operations:
     $bar = $foo + 0;
     $dual = isdual($foo);               # true
 
-Note that although C<$!> appears to be dual-valued variable, it is actually
-implemented using a tied scalar:
+Note that although C<$!> appears to be a dual-valued variable, it is
+actually implemented as a magical variable inside the interpreter:
 
     $! = 1;
     print("$!\n");                      # "Operation not permitted"
@@ -258,7 +259,7 @@ You can capture its numeric and string content using:
 
     my $vstring = isvstring( $var );
 
-If C<$var> is a scalar which was coded as a vstring the result is true.
+If C<$var> is a scalar which was coded as a vstring, the result is true.
 
     $vs   = v49.46.48;
     $fmt  = isvstring($vs) ? "%vd" : "%s"; #true
@@ -327,15 +328,6 @@ use L</isweak> or L</weaken> you will need to use a newer release of perl.
 
 The version of perl that you are using does not implement Vstrings, to use
 L</isvstring> you will need to use a newer release of perl.
-
-=item C<NAME> is only available with the XS version of Scalar::Util
-
-C<Scalar::Util> contains both perl and C implementations of many of its
-functions so that those without access to a C compiler may still use it.
-However some of the functions are only available when a C compiler was
-available to compile the XS version of the extension.
-
-At present that list is: weaken, isweak, dualvar, isvstring, set_prototype
 
 =back
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ospf.c,v 1.20 2015/11/16 00:16:39 mmcc Exp $	*/
+/*	$OpenBSD: print-ospf.c,v 1.21 2019/04/14 00:37:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -32,6 +32,7 @@
 
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -554,9 +555,20 @@ ospf_print(const u_char *bp, u_int length, const u_char *bp2)
 			printf("\"");
 			break;
 
-		case OSPF_AUTH_MD5:
-			printf(" auth MD5");
+		case OSPF_AUTH_MD5: {
+			struct ospf_md5_authdata auth;
+			memcpy(&auth, op->ospf_authdata, sizeof(auth));
+
+			printf(" auth MD5 key-id %u", auth.auth_keyid);
+			if (vflag)
+				printf(" seq %u", ntohl(auth.auth_seq));
+			if (vflag > 1) {
+				printf(" off %u len %u",
+				    ntohs(auth.auth_md5_offset),
+				    auth.auth_len);
+			}
 			break;
+		}
 
 		default:
 			printf(" ??authtype-%d??", ntohs(op->ospf_authtype));

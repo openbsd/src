@@ -22,9 +22,14 @@ these kinds of matters is called B<internationalization> (often
 abbreviated as B<i18n>); telling such an application about a particular
 set of preferences is known as B<localization> (B<l10n>).
 
-Perl has been extended to support the locale system.  This
-is controlled per application by using one pragma, one function call,
-and several environment variables.
+Perl has been extended to support certain types of locales available in
+the locale system.  This is controlled per application by using one
+pragma, one function call, and several environment variables.
+
+Perl supports single-byte locales that are supersets of ASCII, such as
+the ISO 8859 ones, and one multi-byte-type locale, UTF-8 ones, described
+in the next paragraph.  Perl doesn't support any other multi-byte
+locales, such as the ones for East Asian languages.
 
 Unfortunately, there are quite a few deficiencies with the design (and
 often, the implementations) of locales.  Unicode was invented (see
@@ -33,9 +38,11 @@ design deficiencies, and nowadays, there is a series of "UTF-8
 locales", based on Unicode.  These are locales whose character set is
 Unicode, encoded in UTF-8.  Starting in v5.20, Perl fully supports
 UTF-8 locales, except for sorting and string comparisons like C<lt> and
-C<ge>.  (Use L<Unicode::Collate> for these.)  Perl continues to support
-the old non UTF-8 locales as well.  There are currently no UTF-8 locales
-for EBCDIC platforms.
+C<ge>.  Starting in v5.26, Perl can handle these reasonably as well,
+depending on the platform's implementation.  However, for earlier
+releases or for better control, use L<Unicode::Collate>.  Perl continues to
+support the old non UTF-8 locales as well.  There are currently no UTF-8
+locales for EBCDIC platforms.
 
 (Unicode is also creating C<CLDR>, the "Common Locale Data Repository",
 L<http://cldr.unicode.org/> which includes more types of information than
@@ -142,7 +149,7 @@ C<define>.
 
 If you want a Perl application to process and present your data
 according to a particular locale, the application code should include
-the S<C<use locale>> pragma (see L<The "use locale" pragma>) where
+the S<C<use locale>> pragma (see L</The "use locale" pragma>) where
 appropriate, and B<at least one> of the following must be true:
 
 =over 4
@@ -156,7 +163,7 @@ by yourself or by whomever set up your system account; or
 =item 2
 
 B<The application must set its own locale> using the method described in
-L<The setlocale function>.
+L</The setlocale function>.
 
 =back
 
@@ -164,14 +171,17 @@ L<The setlocale function>.
 
 =head2 The C<"use locale"> pragma
 
-WARNING!  Do NOT use this pragma in scripts that have multiple
-L<threads|threads> active.  The locale is not local to a single thread.
-Another thread may change the locale at any time, which could cause at a
-minimum that a given thread is operating in a locale it isn't expecting
-to be in.  On some platforms, segfaults can also occur.  The locale
-change need not be explicit; some operations cause perl to change the
-locale itself.  You are vulnerable simply by having done a C<"use
-locale">.
+Starting in Perl 5.28, this pragma may be used in
+L<multi-threaded|threads> applications on systems that have thread-safe
+locale ability.  Some caveats apply, see L</Multi-threaded> below.  On
+systems without this capability, or in earlier Perls, do NOT use this
+pragma in scripts that have multiple L<threads|threads> active.  The
+locale in these cases is not local to a single thread.  Another thread
+may change the locale at any time, which could cause at a minimum that a
+given thread is operating in a locale it isn't expecting to be in.  On
+some platforms, segfaults can also occur.  The locale change need not be
+explicit; some operations cause perl to change the locale itself.  You
+are vulnerable simply by having done a S<C<"use locale">>.
 
 By default, Perl itself (outside the L<POSIX> module)
 ignores the current locale.  The S<C<use locale>>
@@ -196,8 +206,8 @@ The operations that are affected by locale are:
 
 =item B<Not within the scope of C<"use locale">>
 
-Only certain operations originating outside Perl should be affected, as
-follows:
+Only certain operations (all originating outside Perl) should be
+affected, as follows:
 
 =over 4
 
@@ -217,6 +227,8 @@ C<POSIX::strtod()> uses C<LC_NUMERIC>; C<POSIX::strcoll()> and
 C<POSIX::strxfrm()> use C<LC_COLLATE>.  All such functions
 will behave according to the current underlying locale, even if that
 locale isn't exposed to Perl space.
+
+This applies as well to L<I18N::Langinfo>.
 
 =item *
 
@@ -334,7 +346,7 @@ the outer scope's rules at the end of the inner scope.
 
 The string result of any operation that uses locale
 information is tainted, as it is possible for a locale to be
-untrustworthy.  See L<"SECURITY">.
+untrustworthy.  See L</"SECURITY">.
 
 Starting in Perl v5.16 in a very limited way, and more generally in
 v5.22, you can restrict which category or categories are enabled by this
@@ -359,8 +371,8 @@ will be locale aware.  Everything else is unaffected.
 
 Since Perl doesn't currently do anything with the C<LC_MONETARY>
 category, specifying C<:monetary> does effectively nothing.  Some
-systems have other categories, such as C<LC_PAPER_SIZE>, but Perl
-also doesn't know anything about them, and there is no way to specify
+systems have other categories, such as C<LC_PAPER>, but Perl
+also doesn't do anything with them, and there is no way to specify
 them in this pragma's arguments.
 
 You can also easily say to use all categories but one, by either, for
@@ -398,12 +410,13 @@ this, as described in L</Unicode and UTF-8>.
 
 =head2 The setlocale function
 
-WARNING!  Do NOT use this function in a L<thread|threads>.  The locale
-will change in all other threads at the same time, and should your
-thread get paused by the operating system, and another started, that
-thread will not have the locale it is expecting.  On some platforms,
-there can be a race leading to segfaults if two threads call this
-function nearly simultaneously.
+WARNING!  Prior to Perl 5.28 or on a system that does not support
+thread-safe locale operations, do NOT use this function in a
+L<thread|threads>.  The locale will change in all other threads at the
+same time, and should your thread get paused by the operating system,
+and another started, that thread will not have the locale it is
+expecting.  On some platforms, there can be a race leading to segfaults
+if two threads call this function nearly simultaneously.
 
 You can switch locales as often as you wish at run time with the
 C<POSIX::setlocale()> function:
@@ -476,8 +489,58 @@ If C<set_locale()> fails for some reason (for example, an attempt to set
 to a locale unknown to the system), the locale for the category is not
 changed, and the function returns C<undef>.
 
+Starting in Perl 5.28, on multi-threaded perls compiled on systems that
+implement POSIX 2008 thread-safe locale operations, this function
+doesn't actually call the system C<setlocale>.  Instead those
+thread-safe operations are used to emulate the C<setlocale> function,
+but in a thread-safe manner.
 
 For further information about the categories, consult L<setlocale(3)>.
+
+=head2 Multi-threaded operation
+
+Beginning in Perl 5.28, multi-threaded locale operation is supported on
+systems that implement either the POSIX 2008 or Windows-specific
+thread-safe locale operations.  Many modern systems, such as various
+Unix variants and Darwin do have this.
+
+You can tell if using locales is safe on your system by looking at the
+read-only boolean variable C<${^SAFE_LOCALES}>.  The value is 1 if the
+perl is not threaded, or if it is using thread-safe locale operations.
+
+Thread-safe operations are supported in Windows starting in Visual Studio
+2005, and in systems compatible with POSIX 2008.  Some platforms claim
+to support POSIX 2008, but have buggy implementations, so that the hints
+files for compiling to run on them turn off attempting to use
+thread-safety.  C<${^SAFE_LOCALES}> will be 0 on them.
+
+Be aware that writing a multi-threaded application will not be portable
+to a platform which lacks the native thread-safe locale support.  On
+systems that do have it, you automatically get this behavior for
+threaded perls, without having to do anything.  If for some reason, you
+don't want to use this capability (perhaps the POSIX 2008 support is
+buggy on your system), you can manually compile Perl to use the old
+non-thread-safe implementation by passing the argument
+C<-Accflags='-DNO_THREAD_SAFE_LOCALE'> to F<Configure>.
+Except on Windows, this will continue to use certain of the POSIX 2008
+functions in some situations.  If these are buggy, you can pass the
+following to F<Configure> instead or additionally:
+C<-Accflags='-DNO_POSIX_2008_LOCALE'>.  This will also keep the code
+from using thread-safe locales.
+C<${^SAFE_LOCALES}> will be 0 on systems that turn off the thread-safe
+operations.
+
+The initial program is started up using the locale specified from the
+environment, as currently, described in L</ENVIRONMENT>.   All newly
+created threads start with C<LC_ALL> set to C<"C">>.  Each thread may
+use C<POSIX::setlocale()> to query or switch its locale at any time,
+without affecting any other thread.  All locale-dependent operations
+automatically use their thread's locale.
+
+This should be completely transparent to any applications written
+entirely in Perl (minus a few rarely encountered caveats given in the
+L</Multi-threaded> section).  Information for XS module writers is given
+in L<perlxs/Locale-aware XS code>.
 
 =head2 Finding locales
 
@@ -590,8 +653,8 @@ than the C<PERL_BADLANG> approach, but setting C<LC_ALL> (or
 other locale variables) may affect other programs as well, not just
 Perl.  In particular, external programs run from within Perl will see
 these changes.  If you make the new settings permanent (read on), all
-programs you run see the changes.  See L<"ENVIRONMENT"> for
-the full list of relevant environment variables and L<USING LOCALES>
+programs you run see the changes.  See L</"ENVIRONMENT"> for
+the full list of relevant environment variables and L</"USING LOCALES">
 for their effects in Perl.  Effects in other programs are
 easily deducible.  For example, the variable C<LC_COLLATE> may well affect
 your B<sort> program (or whatever the program that arranges "records"
@@ -625,7 +688,7 @@ fix the misconfiguration of your own environment variables.  The
 mis(sing)configuration of the whole system's locales usually requires
 the help of your friendly system administrator.
 
-First, see earlier in this document about L<Finding locales>.  That tells
+First, see earlier in this document about L</Finding locales>.  That tells
 how to find which locales are really supported--and more importantly,
 installed--on your system.  In our example error message, environment
 variables affecting the locale are listed in the order of decreasing
@@ -637,7 +700,7 @@ Second, if using the listed commands you see something B<exactly>
 (prefix matches do not count and case usually counts) like "En_US"
 without the quotes, then you should be okay because you are using a
 locale name that should be installed and available in your system.
-In this case, see L<Permanently fixing your system's locale configuration>.
+In this case, see L</Permanently fixing your system's locale configuration>.
 
 =head2 Permanently fixing your system's locale configuration
 
@@ -654,14 +717,14 @@ the same.  In this case, try running under a locale
 that you can list and which somehow matches what you tried.  The
 rules for matching locale names are a bit vague because
 standardization is weak in this area.  See again the
-L<Finding locales> about general rules.
+L</Finding locales> about general rules.
 
 =head2 Fixing system locale configuration
 
 Contact a system administrator (preferably your own) and report the exact
 error message you get, and ask them to read this same documentation you
 are now reading.  They should be able to check whether there is something
-wrong with the locale configuration of the system.  The L<Finding locales>
+wrong with the locale configuration of the system.  The L</Finding locales>
 section is unfortunately a bit vague about the exact commands and places
 because these things are not that standardized.
 
@@ -673,7 +736,7 @@ underlying C<LC_NUMERIC> and C<LC_MONETARY> locales (regardless of
 whether called from within the scope of C<S<use locale>> or not).  (If
 you just want the name of
 the current locale for a particular category, use C<POSIX::setlocale()>
-with a single parameter--see L<The setlocale function>.)
+with a single parameter--see L</The setlocale function>.)
 
         use POSIX qw(locale_h);
 
@@ -739,8 +802,7 @@ hash will be missing.
 =head2 I18N::Langinfo
 
 Another interface for querying locale-dependent information is the
-C<I18N::Langinfo::langinfo()> function, available at least in Unix-like
-systems and VMS.
+C<I18N::Langinfo::langinfo()> function.
 
 The following example will import the C<langinfo()> function itself and
 three constants to be used as arguments to C<langinfo()>: a constant for
@@ -766,9 +828,9 @@ See L<I18N::Langinfo> for more information.
 
 The following subsections describe basic locale categories.  Beyond these,
 some combination categories allow manipulation of more than one
-basic category at a time.  See L<"ENVIRONMENT"> for a discussion of these.
+basic category at a time.  See L</"ENVIRONMENT"> for a discussion of these.
 
-=head2 Category C<LC_COLLATE>: Collation
+=head2 Category C<LC_COLLATE>: Collation: Text Comparisons and Sorting
 
 In the scope of a S<C<use locale>> form that includes collation, Perl
 looks to the C<LC_COLLATE>
@@ -802,7 +864,7 @@ locale>> has appeared earlier in the same block) must be used for
 sorting raw binary data, whereas the locale-dependent collation of the
 first example is useful for natural text.
 
-As noted in L<USING LOCALES>, C<cmp> compares according to the current
+As noted in L</USING LOCALES>, C<cmp> compares according to the current
 collation locale when C<use locale> is in effect, but falls back to a
 char-by-char comparison for strings that the locale says are equal. You
 can use C<POSIX::strcoll()> if you don't want this fall-back:
@@ -815,10 +877,31 @@ C<$equal_in_locale> will be true if the collation locale specifies a
 dictionary-like ordering that ignores space characters completely and
 which folds case.
 
-Perl currently only supports single-byte locales for C<LC_COLLATE>.  This means
-that a UTF-8 locale likely will just give you machine-native ordering.
-Use L<Unicode::Collate> for the full implementation of the Unicode
-Collation Algorithm.
+Perl uses the platform's C library collation functions C<strcoll()> and
+C<strxfrm()>.  That means you get whatever they give.  On some
+platforms, these functions work well on UTF-8 locales, giving
+a reasonable default collation for the code points that are important in
+that locale.  (And if they aren't working well, the problem may only be
+that the locale definition is deficient, so can be fixed by using a
+better definition file.  Unicode's definitions (see L</Freely available
+locale definitions>) provide reasonable UTF-8 locale collation
+definitions.)  Starting in Perl v5.26, Perl's use of these functions has
+been made more seamless.  This may be sufficient for your needs.  For
+more control, and to make sure strings containing any code point (not
+just the ones important in the locale) collate properly, the
+L<Unicode::Collate> module is suggested.
+
+In non-UTF-8 locales (hence single byte), code points above 0xFF are
+technically invalid.  But if present, again starting in v5.26, they will
+collate to the same position as the highest valid code point does.  This
+generally gives good results, but the collation order may be skewed if
+the valid code point gets special treatment when it forms particular
+sequences with other characters as defined by the locale.
+When two strings collate identically, the code point order is used as a
+tie breaker.
+
+If Perl detects that there are problems with the locale collation order,
+it reverts to using non-locale collation rules for that locale.
 
 If you have a single string that you want to check for "equality in
 locale" against several others, you might think you could gain a little
@@ -845,7 +928,7 @@ string the first time it's needed in a comparison, then keeps this version aroun
 in case it's needed again.  An example rewritten the easy way with
 C<cmp> runs just about as fast.  It also copes with null characters
 embedded in strings; if you call C<strxfrm()> directly, it treats the first
-null it finds as a terminator.  don't expect the transformed strings
+null it finds as a terminator.  Don't expect the transformed strings
 it produces to be portable across systems--or even from one revision
 of your operating system to the next.  In short, don't call C<strxfrm()>
 directly: let Perl do it for you.
@@ -877,17 +960,18 @@ characters between lower and uppercase.  This affects the case-mapping
 functions--C<fc()>, C<lc()>, C<lcfirst()>, C<uc()>, and C<ucfirst()>;
 case-mapping
 interpolation with C<\F>, C<\l>, C<\L>, C<\u>, or C<\U> in double-quoted
-strings and C<s///> substitutions; and case-independent regular expression
+strings and C<s///> substitutions; and case-insensitive regular expression
 pattern matching using the C<i> modifier.
 
 Starting in v5.20, Perl supports UTF-8 locales for C<LC_CTYPE>, but
 otherwise Perl only supports single-byte locales, such as the ISO 8859
 series.  This means that wide character locales, for example for Asian
-languages, are not well-supported.  (If the platform has the capability
-for Perl to detect such a locale, starting in Perl v5.22,
-L<Perl will warn, default enabled|warnings/Category Hierarchy>,
-using the C<locale> warning category, whenever such a locale is switched
-into.)  The UTF-8 locale support is actually a
+languages, are not well-supported.  Use of these locales may cause core
+dumps.  If the platform has the capability for Perl to detect such a
+locale, starting in Perl v5.22, L<Perl will warn, default
+enabled|warnings/Category Hierarchy>, using the C<locale> warning
+category, whenever such a locale is switched into.  The UTF-8 locale
+support is actually a
 superset of POSIX locales, because it is really full Unicode behavior
 as if no C<LC_CTYPE> locale were in effect at all (except for tainting;
 see L</SECURITY>).  POSIX locales, even UTF-8 ones,
@@ -926,7 +1010,7 @@ B<Note:> A broken or malicious C<LC_CTYPE> locale definition may result
 in clearly ineligible characters being considered to be alphanumeric by
 your application.  For strict matching of (mundane) ASCII letters and
 digits--for example, in command strings--locale-aware applications
-should use C<\w> with the C</a> regular expression modifier.  See L<"SECURITY">.
+should use C<\w> with the C</a> regular expression modifier.  See L</"SECURITY">.
 
 =head2 Category C<LC_NUMERIC>: Numeric Formatting
 
@@ -937,7 +1021,7 @@ of how numbers should be formatted for human readability.
 In most implementations the only effect is to
 change the character used for the decimal point--perhaps from "."  to ",".
 The functions aren't aware of such niceties as thousands separation and
-so on. (See L<The localeconv function> if you care about these things.)
+so on. (See L</The localeconv function> if you care about these things.)
 
  use POSIX qw(strtod setlocale LC_NUMERIC);
  use locale;
@@ -964,7 +1048,7 @@ that is affected by its contents.  (Those with experience of standards
 committees will recognize that the working group decided to punt on the
 issue.)  Consequently, Perl essentially takes no notice of it.  If you
 really want to use C<LC_MONETARY>, you can query its contents--see
-L<The localeconv function>--and use the information that it returns in your
+L</The localeconv function>--and use the information that it returns in your
 application's own formatting of currency amounts.  However, you may well
 find that the information, voluminous and complex though it may be, still
 does not quite meet your requirements: currency formatting is a hard nut
@@ -972,7 +1056,7 @@ to crack.
 
 See also L<I18N::Langinfo> and C<CRNCYSTR>.
 
-=head2 C<LC_TIME>
+=head2 Category C<LC_TIME>: Respresentation of time
 
 Output produced by C<POSIX::strftime()>, which builds a formatted
 human-readable date/time string, is affected by the current C<LC_TIME>
@@ -1337,10 +1421,10 @@ You could also exclude C<LC_NUMERIC>, if you don't need it, by
 Versions of Perl prior to 5.004 B<mostly> ignored locale information,
 generally behaving as if something similar to the C<"C"> locale were
 always in force, even if the program environment suggested otherwise
-(see L<The setlocale function>).  By default, Perl still behaves this
+(see L</The setlocale function>).  By default, Perl still behaves this
 way for backward compatibility.  If you want a Perl application to pay
 attention to locale information, you B<must> use the S<C<use locale>>
-pragma (see L<The "use locale" pragma>) or, in the unlikely event
+pragma (see L</The "use locale" pragma>) or, in the unlikely event
 that you want to do so for just pattern matching, the
 C</l> regular expression modifier (see L<perlre/Character set
 modifiers>) to instruct it to do so.
@@ -1402,21 +1486,22 @@ the same way, "localization" is often abbreviated to B<l10n>.
 =head2 An imperfect standard
 
 Internationalization, as defined in the C and POSIX standards, can be
-criticized as incomplete, ungainly, and having too large a granularity.
-(Locales apply to a whole process, when it would arguably be more useful
-to have them apply to a single thread, window group, or whatever.)  They
-also have a tendency, like standards groups, to divide the world into
-nations, when we all know that the world can equally well be divided
-into bankers, bikers, gamers, and so on.
+criticized as incomplete and ungainly.  They also have a tendency, like
+standards groups, to divide the world into nations, when we all know
+that the world can equally well be divided into bankers, bikers, gamers,
+and so on.
 
 =head1 Unicode and UTF-8
 
 The support of Unicode is new starting from Perl version v5.6, and more fully
 implemented in versions v5.8 and later.  See L<perluniintro>.
 
-Starting in Perl v5.20, UTF-8 locales are supported in Perl, except for
-C<LC_COLLATE> (use L<Unicode::Collate> instead).  If you have Perl v5.16
-or v5.18 and can't upgrade, you can use
+Starting in Perl v5.20, UTF-8 locales are supported in Perl, except
+C<LC_COLLATE> is only partially supported; collation support is improved
+in Perl v5.26 to a level that may be sufficient for your needs
+(see L</Category C<LC_COLLATE>: Collation: Text Comparisons and Sorting>).
+
+If you have Perl v5.16 or v5.18 and can't upgrade, you can use
 
     use locale ':not_characters';
 
@@ -1442,10 +1527,7 @@ command line switch.
 
 This form of the pragma allows essentially seamless handling of locales
 with Unicode.  The collation order will be by Unicode code point order.
-It is strongly
-recommended that when you need to order and sort strings that you use
-the standard module L<Unicode::Collate> which gives much better results
-in many instances than you can get with the old-style locale handling.
+L<Unicode::Collate> can be used to get Unicode rules collation.
 
 All the modules and switches just described can be used in v5.20 with
 just plain C<use locale>, and, should the input locales not be UTF-8,
@@ -1499,7 +1581,7 @@ for Unicode only, such as C<\p{Alpha}>.  They assume that 0xD7 always has its
 Unicode meaning (or the equivalent on EBCDIC platforms).  Since Latin1 is a
 subset of Unicode and 0xD7 is the multiplication sign in both Latin1 and
 Unicode, C<\p{Alpha}> will never match it, regardless of locale.  A similar
-issue occurs with C<\N{...}>.  Prior to v5.20, It is therefore a bad
+issue occurs with C<\N{...}>.  Prior to v5.20, it is therefore a bad
 idea to use C<\p{}> or
 C<\N{}> under plain C<use locale>--I<unless> you can guarantee that the
 locale will be ISO8859-1.  Use POSIX character classes instead.
@@ -1561,9 +1643,66 @@ consistently to regular expression matching except for bracketed
 character classes; in v5.14 it was extended to all regex matches; and in
 v5.16 to the casing operations such as C<\L> and C<uc()>.  For
 collation, in all releases so far, the system's C<strxfrm()> function is
-called, and whatever it does is what you get.
+called, and whatever it does is what you get.  Starting in v5.26, various
+bugs are fixed with the way perl uses this function.
 
 =head1 BUGS
+
+=head2 Collation of strings containing embedded C<NUL> characters
+
+C<NUL> characters will sort the same as the lowest collating control
+character does, or to C<"\001"> in the unlikely event that there are no
+control characters at all in the locale.  In cases where the strings
+don't contain this non-C<NUL> control, the results will be correct, and
+in many locales, this control, whatever it might be, will rarely be
+encountered.  But there are cases where a C<NUL> should sort before this
+control, but doesn't.  If two strings do collate identically, the one
+containing the C<NUL> will sort to earlier.  Prior to 5.26, there were
+more bugs.
+
+=head2 Multi-threaded
+
+XS code or C-language libraries called from it that use the system
+L<C<setlocale(3)>> function (except on Windows) likely will not work
+from a multi-threaded application without changes.  See
+L<perlxs/Locale-aware XS code>.
+
+An XS module that is locale-dependent could have been written under the
+assumption that it will never be called in a multi-threaded environment,
+and so uses other non-locale constructs that aren't multi-thread-safe.
+See L<perlxs/Thread-aware system interfaces>.
+
+POSIX does not define a way to get the name of the current per-thread
+locale.  Some systems, such as Darwin and NetBSD do implement a
+function, L<querylocale(3)> to do this.  On non-Windows systems without
+it, such as Linux, there are some additional caveats:
+
+=over
+
+=item *
+
+An embedded perl needs to be started up while the global locale is in
+effect.  See L<perlembed/Using embedded Perl with POSIX locales>.
+
+=item *
+
+It becomes more important for perl to know about all the possible
+locale categories on the platform, even if they aren't apparently used
+in your program.  Perl knows all of the Linux ones.  If your platform
+has others, you can send email to L<mailto:perlbug@perl.org> for
+inclusion of it in the next release.  In the meantime, it is possible to
+edit the Perl source to teach it about the category, and then recompile.
+Search for instances of, say, C<LC_PAPER> in the source, and use that as
+a template to add the omitted one.
+
+=item *
+
+It is possible, though hard to do, to call C<POSIX::setlocale> with a
+locale that it doesn't recognize as syntactically legal, but actually is
+legal on that system.  This should happen only with embedded perls, or
+if you hand-craft a locale name yourself.
+
+=back
 
 =head2 Broken systems
 
@@ -1581,10 +1720,7 @@ for broken locales>.
 =head1 SEE ALSO
 
 L<I18N::Langinfo>, L<perluniintro>, L<perlunicode>, L<open>,
-L<POSIX/isalnum>, L<POSIX/isalpha>,
-L<POSIX/isdigit>, L<POSIX/isgraph>, L<POSIX/islower>,
-L<POSIX/isprint>, L<POSIX/ispunct>, L<POSIX/isspace>,
-L<POSIX/isupper>, L<POSIX/isxdigit>, L<POSIX/localeconv>,
+L<POSIX/localeconv>,
 L<POSIX/setlocale>, L<POSIX/strcoll>, L<POSIX/strftime>,
 L<POSIX/strtod>, L<POSIX/strxfrm>.
 
@@ -1595,4 +1731,4 @@ see L<perlembed/Using embedded Perl with POSIX locales>.
 
 Jarkko Hietaniemi's original F<perli18n.pod> heavily hacked by Dominic
 Dunlop, assisted by the perl5-porters.  Prose worked over a bit by
-Tom Christiansen, and updated by Perl 5 porters.
+Tom Christiansen, and now maintained by Perl 5 porters.

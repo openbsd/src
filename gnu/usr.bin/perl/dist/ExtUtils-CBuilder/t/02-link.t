@@ -33,7 +33,7 @@ ok $b, "created EU::CB object";
 
 $source_file = File::Spec->catfile('t', 'linkt.c');
 {
-  open my $FH, "> $source_file" or die "Can't create $source_file: $!";
+  open my $FH, '>', $source_file or die "Can't create $source_file: $!";
   print $FH "int main(void) { return 11; }\n";
   close $FH;
 }

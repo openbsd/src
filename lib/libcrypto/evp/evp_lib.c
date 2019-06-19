@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.17 2018/09/12 06:35:38 djm Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -207,6 +207,12 @@ EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 	return ctx->cipher;
 }
 
+int
+EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)
+{
+	return ctx->encrypt;
+}
+
 unsigned long
 EVP_CIPHER_flags(const EVP_CIPHER *cipher)
 {
@@ -265,6 +271,44 @@ int
 EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->nid;
+}
+
+int
+EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
+{
+	if (ctx == NULL || len != EVP_CIPHER_CTX_iv_length(ctx))
+		return 0;
+	if (len > EVP_MAX_IV_LENGTH)
+		return 0; /* sanity check; shouldn't happen */
+	/*
+	 * Skip the memcpy entirely when the requested IV length is zero,
+	 * since the iv pointer may be NULL or invalid.
+	 */
+	if (len != 0) {
+		if (iv == NULL)
+			return 0;
+		memcpy(iv, ctx->iv, len);
+	}
+	return 1;
+}
+
+int
+EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx, const unsigned char *iv, size_t len)
+{
+	if (ctx == NULL || len != EVP_CIPHER_CTX_iv_length(ctx))
+		return 0;
+	if (len > EVP_MAX_IV_LENGTH)
+		return 0; /* sanity check; shouldn't happen */
+	/*
+	 * Skip the memcpy entirely when the requested IV length is zero,
+	 * since the iv pointer may be NULL or invalid.
+	 */
+	if (len != 0) {
+		if (iv == NULL)
+			return 0;
+		memcpy(ctx->iv, iv, len);
+	}
+	return 1;
 }
 
 int

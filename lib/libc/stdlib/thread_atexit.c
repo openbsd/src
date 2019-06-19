@@ -1,4 +1,4 @@
-/*	$OpenBSD: thread_atexit.c,v 1.1 2017/12/16 20:06:56 guenther Exp $ */
+/*	$OpenBSD: thread_atexit.c,v 1.2 2019/06/02 01:03:01 guenther Exp $ */
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -16,14 +16,10 @@
  */
 
 #include <dlfcn.h>
-#include <elf.h>
-#pragma weak _DYNAMIC
 #include <stdlib.h>
 #include <tib.h>
 
 #include "atexit.h"
-
-typeof(dlctl) dlctl asm("_dlctl") __attribute__((weak));
 
 __weak_alias(__cxa_thread_atexit, __cxa_thread_atexit_impl);
 
@@ -37,8 +33,7 @@ __cxa_thread_atexit_impl(void (*func)(void *), void *arg, void *dso)
 	if (fnp == NULL)
 		return -1;
 
-	if (_DYNAMIC)
-		dlctl(NULL, DL_REFERENCE, dso);
+	dlctl(NULL, DL_REFERENCE, dso);
 
 	fnp->func = func;
 	fnp->arg = arg;

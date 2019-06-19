@@ -4180,6 +4180,9 @@ using_cgen=no
 
 
 GCC_WARN_CFLAGS="-W -Wall -Wstrict-prototypes -Wmissing-prototypes"
+if cc -v 2>&1 | grep "OpenBSD clang version"; then
+	GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wno-null-pointer-arithmetic"
+fi
 
 # Check whether --enable-werror or --disable-werror was given.
 if test "${enable_werror+set}" = set; then

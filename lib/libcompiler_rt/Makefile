@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2018/01/16 23:04:42 kettenis Exp $
+# $OpenBSD: Makefile,v 1.14 2018/12/25 09:20:49 claudio Exp $
 
 .include <bsd.own.mk>
 
@@ -253,6 +253,27 @@ SRCS+=	aeabi_cdcmp.S \
 	sync_synchronize.S
 .endif
 
+.if ${RTARCH} == "mips64" || ${RTARCH} == "mips64el"
+SRCS+=	comparetf2.c \
+	extenddftf2.c \
+	extendsftf2.c \
+	fixtfdi.c \
+	fixtfsi.c \
+	fixtfti.c \
+	fixunstfdi.c \
+	fixunstfsi.c \
+	fixunstfti.c \
+	floatditf.c \
+	floatsitf.c \
+	floattitf.c \
+	floatunditf.c \
+	floatunsitf.c \
+	floatuntitf.c \
+	multc3.c \
+	trunctfdf2.c \
+	trunctfsf2.c
+.endif
+
 .if ${RTARCH} == "ppc"
 SRCS+=	divtc3.c \
 	fixtfdi.c \
@@ -264,6 +285,27 @@ SRCS+=	divtc3.c \
 	gcc_qmul.c \
 	gcc_qsub.c \
 	multc3.c
+.endif
+
+.if ${RTARCH} == "sparc64"
+SRCS+=	comparetf2.c \
+	extenddftf2.c \
+	extendsftf2.c \
+	fixtfdi.c \
+	fixtfsi.c \
+	fixtfti.c \
+	fixunstfdi.c \
+	fixunstfsi.c \
+	fixunstfti.c \
+	floatditf.c \
+	floatsitf.c \
+	floattitf.c \
+	floatunditf.c \
+	floatunsitf.c \
+	floatuntitf.c \
+	multc3.c \
+	trunctfdf2.c \
+	trunctfsf2.c
 .endif
 
 .include <bsd.lib.mk>

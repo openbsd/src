@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w                                         # -*- perl -*-
 
 BEGIN {
-    require "t/pod2html-lib.pl";
+    require "./t/pod2html-lib.pl";
 }
 
 use strict;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.68 2017/05/29 14:19:50 mpi Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.69 2018/10/22 17:31:24 krw Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -188,7 +188,7 @@ setregs(p, pack, stack, retval)
 		/*
 		 * ... unless we are starting init, in which case we
 		 * won't be returning through the regular path, and
-		 * need to explicitely set up nip and fip (note that
+		 * need to explicitly set up nip and fip (note that
 		 * 88110 do not need such a test).
 		 * Note that this isn't 100% correct, as it mishandles
 		 * a real execve() from userspace by process 1.  However

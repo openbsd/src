@@ -1,0 +1,18 @@
+.\" $OpenBSD: empty.in,v 1.1 2019/04/21 23:45:50 schwarze Exp $
+.Dd $Mdocdate: April 21 2019 $
+.Dt DE-EMPTY 1
+.Os
+.Sh NAME
+.Nm de-empty
+.Nd empty user-defined macro with arguments
+.Sh DESCRIPTION
+initial text
+.de empty
+..
+.de real
+arg=\\$1
+.empty wrong
+arg=\\$1
+..
+.real right
+final text

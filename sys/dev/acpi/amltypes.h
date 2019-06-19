@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.45 2016/05/08 11:08:01 kettenis Exp $ */
+/* $OpenBSD: amltypes.h,v 1.48 2019/01/10 18:50:32 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -265,34 +265,34 @@ struct aml_value {
 	union {
 		int64_t		vinteger;
 		char		*vstring;
-		u_int8_t	*vbuffer;
+		uint8_t		*vbuffer;
 		struct aml_value **vpackage;
 		struct {
-			u_int8_t	iospace;
-			u_int64_t	iobase;
-			u_int32_t	iolen;
+			uint8_t		iospace;
+			uint64_t	iobase;
+			uint32_t	iolen;
 			int		flag;
 		} vopregion;
 		struct {
 			int		flags;
-			u_int8_t	*start;
-			u_int8_t	*end;
+			uint8_t		*start;
+			uint8_t		*end;
 			struct aml_value *(*fneval)(struct aml_scope *, struct aml_value *);
-			u_int8_t        *base;
+			uint8_t	        *base;
 		} vmethod;
 		struct {
-			u_int16_t	 type;
-			u_int16_t	 flags;
-			u_int32_t	 bitpos;
-			u_int32_t	 bitlen;
+			uint16_t	 type;
+			uint16_t	 flags;
+			uint32_t	 bitpos;
+			uint32_t	 bitlen;
 			struct aml_value *ref1;
 			struct aml_value *ref2;
 			int		 ref3;
 		} vfield;
 		struct {
-			u_int8_t	proc_id;
-			u_int32_t	proc_addr;
-			u_int8_t	proc_len;
+			uint8_t		proc_id;
+			uint32_t	proc_addr;
+			uint8_t		proc_len;
 		} vprocessor;
 		struct {
 			int		type;
@@ -300,12 +300,12 @@ struct aml_value {
 			struct aml_value *ref;
 		} vobjref;
 		struct {
-			u_int8_t	pwr_level;
-			u_int16_t	pwr_order;
+			uint8_t		pwr_level;
+			uint16_t	pwr_order;
 		} vpowerrsrc;
 		struct acpi_mutex	*vmutex;
 		struct {
-			u_int8_t         *name;
+			uint8_t	         *name;
 			struct aml_node  *node;
 		} vnameref;
 		struct {
@@ -371,6 +371,8 @@ struct acpi_gpio {
 	void	(*intr_establish)(void *, int, int, int (*)(void *), void *);
 };
 
+struct i2c_controller;
+
 struct aml_node {
 	struct aml_node *parent;
 
@@ -380,13 +382,14 @@ struct aml_node {
 	int		attached;
 
 	char		name[5];
-	u_int16_t	opcode;
-	u_int8_t	*start;
-	u_int8_t	*end;
+	uint16_t	opcode;
+	uint8_t		*start;
+	uint8_t		*end;
 
 	struct aml_value *value;
-	struct acpi_pci  *pci;
+	struct acpi_pci *pci;
 	struct acpi_gpio *gpio;
+	struct i2c_controller *i2c;
 };
 
 #define aml_bitmask(n)		(1L << ((n) & 0x7))
@@ -394,5 +397,7 @@ struct aml_node {
 #define aml_bytepos(n)		((n)>>3)
 #define aml_bytelen(n)		(((n)+7)>>3)
 #define aml_bytealigned(x)	!((x)&0x7)
+
+#define AML_NO_TIMEOUT		0xffff
 
 #endif /* __DEV_ACPI_AMLTYPES_H__ */

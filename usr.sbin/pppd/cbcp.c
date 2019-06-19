@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbcp.c,v 1.8 2010/05/01 08:14:26 mk Exp $	*/
+/*	$OpenBSD: cbcp.c,v 1.9 2018/07/28 22:57:27 deraadt Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -83,8 +83,7 @@ static void cbcp_send(cbcp_state *us, u_char code, u_char *buf, int len);
 
 /* init state */
 static void
-cbcp_init(iface)
-    int iface;
+cbcp_init(int iface)
 {
     cbcp_state *us;
 
@@ -96,8 +95,7 @@ cbcp_init(iface)
 
 /* lower layer is up */
 static void
-cbcp_lowerup(iface)
-    int iface;
+cbcp_lowerup(int iface)
 {
     cbcp_state *us = &cbcp[iface];
 
@@ -109,18 +107,14 @@ cbcp_lowerup(iface)
 }
 
 static void
-cbcp_open(unit)
-    int unit;
+cbcp_open(int unit)
 {
     syslog(LOG_DEBUG, "cbcp_open");
 }
 
 /* process an incoming packet */
 static void
-cbcp_input(unit, inpacket, pktlen)
-    int unit;
-    u_char *inpacket;
-    int pktlen;
+cbcp_input(int unit, u_char *inpacket, int pktlen)
 {
     u_char *inp;
     u_char code, id;
@@ -186,11 +180,8 @@ char *cbcp_optionnames[] = {
 
 /* pretty print a packet */
 static int
-cbcp_printpkt(p, plen, printer, arg)
-    u_char *p;
-    int plen;
-    void (*printer)(void *, char *, ...);
-    void *arg;
+cbcp_printpkt(u_char *p, int plen, void (*printer)(void *, char *, ...),
+    void *arg)
 {
     int code, opt, id, len, olen, delay;
     u_char *pstart;
@@ -264,10 +255,7 @@ cbcp_printpkt(p, plen, printer, arg)
 
 /* received CBCP request */
 static void
-cbcp_recvreq(us, pckt, pcktlen)
-    cbcp_state *us;
-    char *pckt;
-    int pcktlen;
+cbcp_recvreq(cbcp_state *us, char *pckt, int pcktlen)
 {
     u_char type, opt_len, delay, addr_type;
     char address[256];
@@ -319,8 +307,7 @@ cbcp_recvreq(us, pckt, pcktlen)
 }
 
 static void
-cbcp_resp(us)
-    cbcp_state *us;
+cbcp_resp(cbcp_state *us)
 {
     u_char cb_type;
     u_char buf[256];
@@ -371,11 +358,7 @@ cbcp_resp(us)
 }
 
 static void
-cbcp_send(us, code, buf, len)
-    cbcp_state *us;
-    u_char code;
-    u_char *buf;
-    int len;
+cbcp_send(cbcp_state *us, u_char code, u_char *buf, int len)
 {
     u_char *outp;
     int outlen;
@@ -397,10 +380,7 @@ cbcp_send(us, code, buf, len)
 }
 
 static void
-cbcp_recvack(us, pckt, len)
-    cbcp_state *us;
-    char *pckt;
-    int len;
+cbcp_recvack(cbcp_state *us, char *pckt, int len)
 {
     u_char type, delay, addr_type;
     int opt_len;
@@ -432,8 +412,7 @@ extern int persist;
 
 /* ok peer will do callback */
 static void
-cbcp_up(us)
-    cbcp_state *us;
+cbcp_up(cbcp_state *us)
 {
     persist = 0;
     lcp_close(0, "Call me back, please");

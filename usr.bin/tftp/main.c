@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2017/01/21 11:32:04 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 2018/09/20 11:42:42 jsg Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
  */
 
 #include <sys/socket.h>
-#include <sys/file.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -46,6 +45,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <poll.h>
 #include <signal.h>
@@ -252,7 +252,7 @@ setpeer(char *host, char *port)
 			    sizeof(hostname));
 		} else
 			(void)strlcpy(hostname, host, sizeof(hostname));
-			connected = 1;
+		connected = 1;
 	}
 	freeaddrinfo(res0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.46 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.52 2019/01/23 15:27:44 mpi Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 
-#include <dev/usb/uaudioreg.h>
 #include <dev/usb/umidireg.h>
 #include <dev/usb/umidivar.h>
 #include <dev/usb/umidi_quirks.h>
@@ -205,8 +204,10 @@ umidi_attach(struct device *parent, struct device *self, void *aux)
 	}
 	err = attach_all_mididevs(sc);
 	if (err!=USBD_NORMAL_COMPLETION) {
+		unbind_all_jacks(sc);
 		free_all_jacks(sc);
 		free_all_endpoints(sc);
+		goto error;
 	}
 
 #ifdef UMIDI_DEBUG
@@ -315,7 +316,7 @@ umidi_flush(void *addr)
 	if (!mididev->out_jack || !mididev->opened)
 		return;
 
-	return out_jack_flush(mididev->out_jack);
+	out_jack_flush(mididev->out_jack);
 }
 
 void
@@ -385,6 +386,8 @@ alloc_all_endpoints(struct umidi_softc *sc)
 	struct umidi_endpoint *ep;
 	int i;
 
+	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
+
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_FIXED_EP))
 		err = alloc_all_endpoints_fixed_ep(sc);
 	else if (UMQ_ISTYPE(sc, UMQ_TYPE_YAMAHA))
@@ -402,7 +405,9 @@ alloc_all_endpoints(struct umidi_softc *sc)
 				ep--;
 				free_pipe(ep);
 			}
-			free(sc->sc_endpoints, M_USBDEV, 0);
+			free(sc->sc_endpoints, M_USBDEV,
+			    (sc->sc_out_num_endpoints + sc->sc_in_num_endpoints)
+			    * sizeof(*sc->sc_endpoints));
 			sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 			break;
 		}
@@ -418,15 +423,14 @@ free_all_endpoints(struct umidi_softc *sc)
 
 	for (i=0; i<sc->sc_in_num_endpoints+sc->sc_out_num_endpoints; i++)
 	    free_pipe(&sc->sc_endpoints[i]);
-	if (sc->sc_endpoints != NULL)
-		free(sc->sc_endpoints, M_USBDEV, 0);
+	free(sc->sc_endpoints, M_USBDEV, (sc->sc_out_num_endpoints +
+	    sc->sc_in_num_endpoints) * sizeof(*sc->sc_endpoints));
 	sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 }
 
 static usbd_status
 alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 {
-	usbd_status err;
 	struct umq_fixed_ep_desc *fp;
 	struct umidi_endpoint *ep;
 	usb_endpoint_descriptor_t *epd;
@@ -434,12 +438,10 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 
 	fp = umidi_get_quirk_data_from_type(sc->sc_quirk,
 					    UMQ_TYPE_FIXED_EP);
-	sc->sc_out_num_jacks = 0;
-	sc->sc_in_num_jacks = 0;
 	sc->sc_out_num_endpoints = fp->num_out_ep;
 	sc->sc_in_num_endpoints = fp->num_in_ep;
 	sc->sc_endpoints = mallocarray(sc->sc_out_num_endpoints +
-	    sc->sc_in_num_endpoints, sizeof(*sc->sc_out_ep), M_USBDEV,
+	    sc->sc_in_num_endpoints, sizeof(*sc->sc_endpoints), M_USBDEV,
 	    M_WAITOK | M_CANFAIL);
 	if (!sc->sc_endpoints)
 		return USBD_NOMEM;
@@ -456,14 +458,12 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		if (!epd) {
 			DPRINTF(("%s: cannot get endpoint descriptor(out:%d)\n",
 			       sc->sc_dev.dv_xname, fp->out_ep[i].ep));
-			err = USBD_INVAL;
 			goto error;
 		}
 		if (UE_GET_XFERTYPE(epd->bmAttributes)!=UE_BULK ||
 		    UE_GET_DIR(epd->bEndpointAddress)!=UE_DIR_OUT) {
 			printf("%s: illegal endpoint(out:%d)\n",
 			       sc->sc_dev.dv_xname, fp->out_ep[i].ep);
-			err = USBD_INVAL;
 			goto error;
 		}
 		ep->sc = sc;
@@ -483,14 +483,12 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		if (!epd) {
 			DPRINTF(("%s: cannot get endpoint descriptor(in:%d)\n",
 			       sc->sc_dev.dv_xname, fp->in_ep[i].ep));
-			err = USBD_INVAL;
 			goto error;
 		}
 		if (UE_GET_XFERTYPE(epd->bmAttributes)!=UE_BULK ||
 		    UE_GET_DIR(epd->bEndpointAddress)!=UE_DIR_IN) {
 			printf("%s: illegal endpoint(in:%d)\n",
 			       sc->sc_dev.dv_xname, fp->in_ep[i].ep);
-			err = USBD_INVAL;
 			goto error;
 		}
 		ep->sc = sc;
@@ -505,9 +503,10 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 
 	return USBD_NORMAL_COMPLETION;
 error:
-	free(sc->sc_endpoints, M_USBDEV, 0);
+	free(sc->sc_endpoints, M_USBDEV, (sc->sc_out_num_endpoints +
+	    sc->sc_in_num_endpoints) * sizeof(*sc->sc_endpoints));
 	sc->sc_endpoints = NULL;
-	return err;
+	return USBD_INVAL;
 }
 
 static usbd_status
@@ -519,7 +518,6 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 	int out_addr, in_addr, in_packetsize, i, dir;
 	size_t remain, descsize;
 
-	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
 	out_addr = in_addr = 0;
 
 	/* detect endpoints */
@@ -625,7 +623,6 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 	if (!p)
 		return USBD_NOMEM;
 
-	sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
 	sc->sc_out_num_endpoints = sc->sc_in_num_endpoints = 0;
 	epaddr = -1;
 
@@ -778,6 +775,7 @@ free_all_jacks(struct umidi_softc *sc)
 	if (sc->sc_out_jacks) {
 		free(sc->sc_jacks, M_USBDEV, jacks * sizeof(*sc->sc_out_jacks));
 		sc->sc_jacks = sc->sc_in_jacks = sc->sc_out_jacks = NULL;
+		sc->sc_out_num_jacks = sc->sc_in_num_jacks = 0;
 	}
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetmask.S,v 1.2 2015/05/29 08:50:12 uebayasi Exp $	*/
+/*	$OpenBSD: fpsetmask.S,v 1.3 2018/07/03 23:14:05 mortimer Exp $	*/
 /*	$NetBSD: fpsetmask.S,v 1.3 2002/06/12 19:17:22 fvdl Exp $	*/
 
 /*
@@ -21,6 +21,7 @@ ENTRY(_fpsetmask)
 #else
 ENTRY(fpsetmask)
 #endif
+	RETGUARD_SETUP(fpsetmask, r11)
 	fnstcw	-4(%rsp)
 	stmxcsr	-8(%rsp)
 	andl	$63,%edi
@@ -39,6 +40,7 @@ ENTRY(fpsetmask)
 	fldcw	-4(%rsp)
 	ldmxcsr	-8(%rsp)
 	andl	$63,%eax
+	RETGUARD_CHECK(fpsetmask, r11)
 	ret
 #ifdef WEAK_ALIAS
 END(_fpsetmask)

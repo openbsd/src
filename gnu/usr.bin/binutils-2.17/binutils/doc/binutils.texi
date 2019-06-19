@@ -952,6 +952,7 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{-N} @var{symbolname}|@option{--strip-symbol=}@var{symbolname}]
         [@option{--strip-unneeded-symbol=}@var{symbolname}]
         [@option{-G} @var{symbolname}|@option{--keep-global-symbol=}@var{symbolname}]
+        [@option{--localize-hidden}]
         [@option{-L} @var{symbolname}|@option{--localize-symbol=}@var{symbolname}]
         [@option{--globalize-symbol=}@var{symbolname}]
         [@option{-W} @var{symbolname}|@option{--weaken-symbol=}@var{symbolname}]
@@ -1123,6 +1124,11 @@ by a relocation.  This option may be given more than once.
 Keep only symbol @var{symbolname} global.  Make all other symbols local
 to the file, so that they are not visible externally.  This option may
 be given more than once.
+
+@item --localize-hidden
+In an ELF object, mark all symbols that have hidden or internal visibility
+as local.  This option applies on top of symbol-specific localization options
+such as @option{-L}.
 
 @item -L @var{symbolname}
 @itemx --localize-symbol=@var{symbolname}
@@ -2596,7 +2602,8 @@ c++filt @var{option} @var{symbol}
 
 @smallexample
 @c man begin SYNOPSIS addr2line
-addr2line [@option{-b} @var{bfdname}|@option{--target=}@var{bfdname}]
+addr2line [@option{-a}|@option{--addresses}]
+          [@option{-b} @var{bfdname}|@option{--target=}@var{bfdname}]
           [@option{-C}|@option{--demangle}[=@var{style}]]
           [@option{-e} @var{filename}|@option{--exe=}@var{filename}]
           [@option{-f}|@option{--functions}] [@option{-s}|@option{--basename}]
@@ -2647,6 +2654,11 @@ The long and short forms of options, shown here as alternatives, are
 equivalent.
 
 @table @env
+@item -a
+@itemx --addresses
+Display the address before the function name, file and line number information.
+The address is printed with a @samp{0x} prefix to easily identify it.
+
 @item -b @var{bfdname}
 @itemx --target=@var{bfdname}
 @cindex object code format

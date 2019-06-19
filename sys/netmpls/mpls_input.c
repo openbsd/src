@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.68 2018/01/12 06:57:56 jca Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.75 2019/02/08 20:28:54 procter Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -45,12 +45,8 @@
 #define MPLS_TTL_GET(l)		(ntohl((l) & MPLS_TTL_MASK))
 #endif
 
-struct mbuf	*mpls_ip_adjttl(struct mbuf *, u_int8_t);
-#ifdef INET6
-struct mbuf	*mpls_ip6_adjttl(struct mbuf *, u_int8_t);
-#endif
-
 struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
+void		 mpls_input_local(struct rtentry *, struct mbuf *);
 
 void
 mpls_input(struct ifnet *ifp, struct mbuf *m)
@@ -90,7 +86,7 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 
 	/* check and decrement TTL */
 	ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
-	if (--ttl == 0) {
+	if (ttl <= 1) {
 		/* TTL exceeded */
 		m = mpls_do_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, 0);
 		if (m == NULL)
@@ -98,7 +94,8 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 
 		shim = mtod(m, struct shim_hdr *);
 		ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
-	}
+	} else
+		ttl--;
 	hasbos = MPLS_BOS_ISSET(shim->shim_label);
 
 	bzero(&sa_mpls, sizeof(sa_mpls));
@@ -126,15 +123,21 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 			switch (ntohl(smpls->smpls_label)) {
 			case MPLS_LABEL_IPV4NULL:
 do_v4:
-				if ((m = mpls_ip_adjttl(m, ttl)) == NULL)
-					return;
+				if (mpls_mapttl_ip) {
+					m = mpls_ip_adjttl(m, ttl);
+					if (m == NULL)
+						return;
+				}
 				ipv4_input(ifp, m);
 				return;
 #ifdef INET6
 			case MPLS_LABEL_IPV6NULL:
 do_v6:
-				if ((m = mpls_ip6_adjttl(m, ttl)) == NULL)
-					return;
+				if (mpls_mapttl_ip6) {
+					m = mpls_ip6_adjttl(m, ttl);
+					if (m == NULL)
+						return;
+				}
 				ipv6_input(ifp, m);
 				return;
 #endif	/* INET6 */
@@ -164,7 +167,7 @@ do_v6:
 	ifp = NULL;
 
 	rt = rtalloc(smplstosa(smpls), RT_RESOLVE, m->m_pkthdr.ph_rtableid);
-	if (rt == NULL) {
+	if (!rtisvalid(rt)) {
 		/* no entry for this label */
 #ifdef MPLS_DEBUG
 		printf("MPLS_DEBUG: label not found\n");
@@ -184,6 +187,11 @@ do_v6:
 
 	switch (rt_mpls->mpls_operation) {
 	case MPLS_OP_POP:
+		if (ISSET(rt->rt_flags, RTF_LOCAL)) {
+			mpls_input_local(rt, m);
+			goto done;
+		}
+
 		m = mpls_shim_pop(m);
 		if (m == NULL)
 			goto done;
@@ -195,17 +203,6 @@ do_v6:
 		ifp = if_get(rt->rt_ifidx);
 		if (ifp == NULL) {
 			m_freem(m);
-			goto done;
-		}
-#if NMPE > 0
-		if (ifp->if_type == IFT_MPLS) {
-			smpls = satosmpls(rt_key(rt));
-			mpe_input(m, ifp, smpls, ttl);
-			goto done;
-		}
-#endif
-		if (ifp->if_type == IFT_MPLSTUNNEL) {
-			ifp->if_output(ifp, m, rt_key(rt), rt);
 			goto done;
 		}
 
@@ -222,6 +219,8 @@ do_v6:
 				goto done;
 			break;
 #endif
+		case AF_LINK:
+			break;
 		default:
 			m_freem(m);
 			goto done;
@@ -280,56 +279,67 @@ done:
 	rtfree(rt);
 }
 
+void
+mpls_input_local(struct rtentry *rt, struct mbuf *m)
+{
+	struct ifnet *ifp;
+
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL) {
+		m_freem(m);
+		return;
+	}
+
+	/* shortcut sending out the packet */
+	if (!ISSET(ifp->if_xflags, IFXF_MPLS))
+		(*ifp->if_output)(ifp, m, rt->rt_gateway, rt);
+	else
+		(*ifp->if_ll_output)(ifp, m, rt->rt_gateway, rt);
+
+	if_put(ifp);
+}
+
 struct mbuf *
 mpls_ip_adjttl(struct mbuf *m, u_int8_t ttl)
 {
 	struct ip *ip;
-	int hlen;
+	uint16_t old, new;
+	uint32_t x;
 
-	if (mpls_mapttl_ip) {
-		if (m->m_len < sizeof(struct ip) &&
-		    (m = m_pullup(m, sizeof(struct ip))) == NULL)
-			return NULL;
-		ip = mtod(m, struct ip *);
-		hlen = ip->ip_hl << 2;
-		if (m->m_len < hlen) {
-			if ((m = m_pullup(m, hlen)) == NULL)
-				return NULL;
-			ip = mtod(m, struct ip *);
-		}
-		/* make sure we have a valid header */
-		if (in_cksum(m, hlen) != 0) {
-			m_freem(m);
-			return NULL;
-		}
-
-		/* set IP ttl from MPLS ttl */
-		ip->ip_ttl = ttl;
-
-		/* recalculate checksum */
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(m, hlen);
+	if (m->m_len < sizeof(*ip)) {
+		m = m_pullup(m, sizeof(*ip));
+		if (m == NULL)
+			return (NULL);
 	}
-	return m;
+	ip = mtod(m, struct ip *);
+
+	old = htons(ip->ip_ttl << 8);
+	new = htons(ttl << 8);
+	x = ip->ip_sum + old - new;
+
+	ip->ip_ttl = ttl;
+	/* see pf_cksum_fixup() */
+	ip->ip_sum = (x) + (x >> 16);
+
+	return (m);
 }
 
 #ifdef INET6
 struct mbuf *
 mpls_ip6_adjttl(struct mbuf *m, u_int8_t ttl)
 {
-	struct ip6_hdr *ip6hdr;
+	struct ip6_hdr *ip6;
 
-	if (mpls_mapttl_ip6) {
-		if (m->m_len < sizeof(struct ip6_hdr) &&
-		    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL)
-			return NULL;
-
-		ip6hdr = mtod(m, struct ip6_hdr *);
-
-		/* set IPv6 ttl from MPLS ttl */
-		ip6hdr->ip6_hlim = ttl;
+	if (m->m_len < sizeof(*ip6)) {
+		m = m_pullup(m, sizeof(*ip6));
+		if (m == NULL)
+			return (NULL);
 	}
-	return m;
+	ip6 = mtod(m, struct ip6_hdr *);
+
+	ip6->ip6_hlim = ttl;
+
+	return (m);
 }
 #endif	/* INET6 */
 
@@ -381,7 +391,8 @@ mpls_do_error(struct mbuf *m, int type, int code, int destmtu)
 		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
 
 		rt = rtalloc(smplstosa(smpls), RT_RESOLVE, 0);
-		if (rt == NULL) {
+		if (!rtisvalid(rt)) {
+			rtfree(rt);
 			/* no entry for this label */
 			m_freem(m);
 			return (NULL);

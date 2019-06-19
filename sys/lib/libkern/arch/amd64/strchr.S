@@ -1,4 +1,4 @@
-/*	$OpenBSD: strchr.S,v 1.3 2014/12/09 15:13:57 reyk Exp $	*/
+/*	$OpenBSD: strchr.S,v 1.5 2018/07/13 05:56:57 guenther Exp $	*/
 /*	$NetBSD: strchr.S,v 1.7 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*-
@@ -44,6 +44,8 @@ STRONG_ALIAS(index, strchr)
  */
 
 ENTRY(strchr)
+	RETGUARD_SETUP(strchr, r9)
+	RETGUARD_PUSH(r9)
 	movabsq	$0x0101010101010101,%r8
 
 	movzbq	%sil,%rdx	/* value to search for (c) */
@@ -85,10 +87,10 @@ ENTRY(strchr)
 	bsf	%r11,%r11	/* 7, 15, 23 ... 63 */
 8:	shr	$3,%r11		/* 0, 1, 2 .. 7 */
 	lea	-8(%r11,%rdi),%rax
-	ret
+	jmp 12f
 
 /* End of string, check whether char is before NUL */
-	_ALIGN_TEXT		/* adds three byte nop */
+	_ALIGN_TRAPS
 10:
 	bsf	%rax,%rax	/* count to NUL */
 	andq	%rsi,%r11	/* check for char in last 8 bytes */
@@ -97,10 +99,12 @@ ENTRY(strchr)
 	cmp	%r11,%rax
 	jae	8b		/* return 'found' if same - searching for NUL */
 11:	xor	%eax,%eax	/* char not found */
+12:	RETGUARD_POP(r9)
+	RETGUARD_CHECK(strchr, r9)
 	ret
 
 /* Source misaligned: read aligned word and make low bytes invalid */
-/* I (dsl) think a _ALIGN_TEXT here will slow things down! */
+/* I (dsl) think aligning the text here will slow things down! */
 20:
 	xor	%rcx,%rcx
 	sub	%dil,%cl	/* Convert low address values 1..7 ... */

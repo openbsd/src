@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwstring.h,v 1.2 2015/12/31 16:09:31 millert Exp $	*/
+/*	$OpenBSD: bwstring.h,v 1.3 2019/05/15 09:07:46 schwarze Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -37,8 +37,7 @@
 
 #include "mem.h"
 
-extern bool byte_sort;
-extern size_t sort_mb_cur_max;
+static const size_t sort_mb_cur_max = 1;
 
 /* wchar_t is of 4 bytes: */
 #define	SIZEOF_WCHAR_STRING(LEN) ((LEN)*sizeof(wchar_t))

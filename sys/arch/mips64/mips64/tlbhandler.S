@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.47 2016/12/22 15:33:36 visa Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.50 2019/01/05 12:18:13 visa Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -337,7 +337,7 @@ sys_stk_chk:
 	GET_CPU_INFO(k1, k0)
 	PTR_L	k1, CI_CURPROCPADDR(k1)
 	PTR_SUBU k0, sp, k1			# check to see if we have a
-	sltiu	k0, 2048			#  valid kernel stack
+	sltiu	k0, k0, 2048			#  valid kernel stack
 	beqz	k0, go_k_general		# yes, handle.
 	nop
 
@@ -414,7 +414,8 @@ LEAF(tlb_flush, 0)
 	mtc0	ta1, COP_0_TLB_INDEX	# Set the index register.
 #ifdef CPU_OCTEON
 	dmtc0	v0, COP_0_TLB_HI	# Mark entry high as invalid
-	PTR_ADDU v0, v0, 2 * PAGE_SIZE
+	li	ta2, 2 * PAGE_SIZE
+	PTR_ADDU v0, v0, ta2
 #endif
 	addu	ta1, ta1, 1		# Increment index.
 	TLB_HAZARD
@@ -685,6 +686,18 @@ LEAF(tlb_set_wired, 0)
 	j	ra
 	nop
 END(tlb_set_wired)
+
+#ifdef CPU_RM7000
+/*
+ * Similar to tlb_set_wired() above, but returns the value of the random
+ * register.
+ */
+LEAF(tlb_set_wired_get_random, 0)
+	mtc0	a0, COP_0_TLB_WIRED
+	j	ra
+	 mfc0	v0, COP_0_TLB_RANDOM
+END(tlb_set_wired_get_random)
+#endif
 
 /*
  *	Initialize the TLB page mask.

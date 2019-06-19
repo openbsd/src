@@ -6,7 +6,7 @@
  *    License or the Artistic License, as specified in the README file.
  */
 
-#if defined(PERL_IN_UTF8_C) || defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_REGEXEC_C)
+#if defined(PERL_IN_UTF8_C) || defined(PERL_IN_REGCOMP_C) || defined(PERL_IN_REGEXEC_C) || defined(PERL_IN_TOKE_C)
 
 /* An element is in an inversion list iff its index is even numbered: 0, 2, 4,
  * etc */

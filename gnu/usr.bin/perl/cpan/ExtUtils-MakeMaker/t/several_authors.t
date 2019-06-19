@@ -11,37 +11,68 @@ use strict;
 
 use TieOut;
 use MakeMaker::Test::Utils;
-use MakeMaker::Test::Setup::SAS;
 use Config;
-use Test::More;
 use ExtUtils::MM;
-plan !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
+use Test::More
+    !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
     ? (skip_all => "cross-compiling and make not available")
-    : (tests => 20);
+    : (tests => 19);
 use File::Path;
 use File::Temp qw[tempdir];
 
 use ExtUtils::MakeMaker;
+my $CM = eval { require CPAN::Meta; };
+
+my $DIRNAME = 'Multiple-Authors';
+my %FILES = (
+    'Makefile.PL'   => <<'END',
+use ExtUtils::MakeMaker;
+WriteMakefile(
+    NAME             => 'Multiple::Authors',
+    AUTHOR           => ['John Doe <jd@example.com>', 'Jane Doe <jd@example.com>'],
+    VERSION_FROM     => 'lib/Multiple/Authors.pm',
+    PREREQ_PM        => { strict => 0 },
+);
+END
+
+    'lib/Multiple/Authors.pm'    => <<'END',
+package Multiple::Authors;
+
+$VERSION = 0.05;
+
+=head1 NAME
+
+Multiple::Authors - several authors
+
+=cut
+
+1;
+END
+
+);
 
 # avoid environment variables interfering with our make runs
-delete @ENV{qw(LIB MAKEFLAGS)};
+delete @ENV{qw(PERL_JSON_BACKEND CPAN_META_JSON_BACKEND PERL_YAML_BACKEND)} if $ENV{PERL_CORE};
+delete @ENV{qw(LIB MAKEFLAGS PERL_CORE)};
 
 my $perl     = which_perl();
 my $make     = make_run();
 my $makefile = makefile_name();
 
-my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
+chdir 't';
+perl_lib; # sets $ENV{PERL5LIB} relative to t/
+
+my $tmpdir = tempdir( DIR => '../t', CLEANUP => 1 );
+use Cwd; my $cwd = getcwd; END { chdir $cwd } # so File::Temp can cleanup
 chdir $tmpdir;
 
-perl_lib();
-
-ok( setup_recurs(), 'setup' );
+hash2files($DIRNAME, \%FILES);
 END {
     ok( chdir(File::Spec->updir), 'leaving dir' );
-    ok( teardown_recurs(), 'teardown' );
+    ok( rmtree($DIRNAME), 'teardown' );
 }
 
-ok( chdir $MakeMaker::Test::Setup::SAS::dirname, "entering dir $MakeMaker::Test::Setup::SAS::dirname" ) ||
+ok( chdir $DIRNAME, "entering dir $DIRNAME" ) ||
     diag("chdir failed: $!");
 
 note "argument verification"; {
@@ -111,14 +142,15 @@ note "ppd output"; {
 }
 
 
-note "META.yml output"; {
+note "META.yml output"; SKIP: {
+    skip 'Failed to load CPAN::Meta', 5 unless $CM;
     my $distdir  = 'Multiple-Authors-0.05';
     $distdir =~ s{\.}{_}g if $Is_VMS;
 
     my $meta_yml = "$distdir/META.yml";
     my $meta_json = "$distdir/META.json";
     my @make_out    = run(qq{$make metafile});
-    END { rmtree $distdir }
+    END { rmtree $distdir if defined $distdir }
 
     cmp_ok( $?, '==', 0, 'Make metafile exiting normally' ) || diag(@make_out);
 

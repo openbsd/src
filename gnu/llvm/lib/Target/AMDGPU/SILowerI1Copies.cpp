@@ -17,7 +17,9 @@
 #include "AMDGPU.h"
 #include "AMDGPUSubtarget.h"
 #include "SIInstrInfo.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
+#include "Utils/AMDGPULaneDominator.h"
+#include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -64,7 +66,7 @@ FunctionPass *llvm::createSILowerI1CopiesPass() {
 
 bool SILowerI1Copies::runOnMachineFunction(MachineFunction &MF) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  const SISubtarget &ST = MF.getSubtarget<SISubtarget>();
+  const GCNSubtarget &ST = MF.getSubtarget<GCNSubtarget>();
   const SIInstrInfo *TII = ST.getInstrInfo();
   const TargetRegisterInfo *TRI = &TII->getRegisterInfo();
 
@@ -121,11 +123,14 @@ bool SILowerI1Copies::runOnMachineFunction(MachineFunction &MF) {
           }
         }
 
+        unsigned int TmpSrc = MRI.createVirtualRegister(&AMDGPU::SReg_64_XEXECRegClass);
+        BuildMI(MBB, &MI, DL, TII->get(AMDGPU::COPY), TmpSrc)
+            .add(Src);
         BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CNDMASK_B32_e64))
             .add(Dst)
             .addImm(0)
             .addImm(-1)
-            .add(Src);
+            .addReg(TmpSrc);
         MI.eraseFromParent();
       } else if (TRI->getCommonSubClass(DstRC, &AMDGPU::SGPR_64RegClass) &&
                  SrcRC == &AMDGPU::VReg_1RegClass) {
@@ -138,7 +143,8 @@ bool SILowerI1Copies::runOnMachineFunction(MachineFunction &MF) {
               DefInst->getOperand(3).getReg()) &&
             TRI->getCommonSubClass(
               MRI.getRegClass(DefInst->getOperand(3).getReg()),
-              &AMDGPU::SGPR_64RegClass)) {
+              &AMDGPU::SGPR_64RegClass) &&
+            AMDGPU::laneDominates(DefInst->getParent(), &MBB)) {
           BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_AND_B64))
               .add(Dst)
               .addReg(AMDGPU::EXEC)

@@ -1,0 +1,17 @@
+.\" $OpenBSD: tab.in,v 1.1 2019/02/06 20:54:28 schwarze Exp $
+.TH NR-TAB 1 "February 6, 2019"
+.SH NAME
+nr-tab \- tab characters in register definition lines
+.SH DESCRIPTION
+with tab:
+.nr testreg	1
+>>\n[testreg]<<
+.br
+with space:
+.nr testreg 2
+.nr test2 42
+>>\n[testreg]<<
+.br
+rr with tab:
+.rr testreg	test2
+>>\n[myr]:\n[test2]<<

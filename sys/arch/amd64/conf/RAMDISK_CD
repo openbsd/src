@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.169 2017/11/16 18:12:27 jcs Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.180 2019/06/17 18:28:18 patrick Exp $
 
 machine		amd64
 maxusers	4
@@ -37,10 +37,12 @@ acpi0		at bios?
 #acpibat*	at acpi?
 #acpibtn*	at acpi?
 #acpicpu*	at acpi?
+acpicmos*	at acpi?
 acpiec*		at acpi?
 acpiprt*	at acpi?
 acpimadt0	at acpi?
 #acpitz*	at acpi?
+aplgpio*	at acpi?
 bytgpio*	at acpi?
 sdhc*		at acpi?
 acpihve*	at acpi?
@@ -70,6 +72,7 @@ ppb*		at pci?			# PCI-PCI bridges
 pci*		at ppb?
 pci*		at pchb?
 #pcib*		at pci?			# PCI-ISA bridge
+ccp*		at pci?			# AMD Cryptographic Co-processor
 
 dwiic*		at acpi?
 dwiic*		at pci?
@@ -111,6 +114,7 @@ smsc*		at uhub?		# SMSC LAN95xx Ethernet
 cdce*		at uhub?		# CDC Ethernet
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
+mue*		at uhub?		# Microchip LAN75xx/LAN78xx Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 ure*		at uhub?		# Realtek RTL8152 based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
@@ -127,6 +131,7 @@ rsu*		at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 uath*		at uhub?		# Atheros AR5005UG/AR5005UX
 otus*		at uhub?		# Atheros AR9001U
 athn*		at uhub?		# Atheros AR9002U
+bwfm*		at uhub?		# Broadcom FullMAC
 
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
@@ -188,6 +193,7 @@ sdhc*		at pci?			# SD Host Controller
 sdmmc*		at sdhc?		# SD/MMC bus
 rtsx*		at pci?			# Realtek SD Card Reader
 sdmmc*		at rtsx?		# SD/MMC bus
+bwfm*		at sdmmc?		# Broadcom FullMAC
 
 de*		at pci?			# DC21X4X-based ethernet
 fxp*		at pci?			# EtherExpress 10/100B ethernet
@@ -216,6 +222,7 @@ msk*		at mskc?		#  each port of above
 em*		at pci?			# Intel Pro/1000 ethernet
 ixgb*		at pci?			# Intel Pro/10Gb ethernet
 ix*		at pci?			# Intel 82598EB 10Gb ethernet
+myx*		at pci?			# Myricom Myri-10G 10Gb ethernet
 oce*		at pci?			# Emulex OneConnect 10Gb ethernet
 sf*		at pci?			# Adaptec AIC-6915 ethernet
 bge*		at pci?			# Broadcom BCM57xx (aka Tigon3)
@@ -236,6 +243,10 @@ alc*		at pci?			# Attansic L1C/L1D/L2C Ethernet
 ale*		at pci?			# Attansic L1E Ethernet
 lii*		at pci?			# Attansic L2 Ethernet
 jme*		at pci?			# JMicron JMC250/JMC260 Ethernet
+bnxt*		at pci?			# Broadcom BCM573xx, BCM574xx
+bwfm*		at pci?			# Broadcom FullMAC
+ixl*		at pci?			# Intel Ethernet 700 Series
+mcx*		at pci?			# Mellanox ConnectX-4
 
 acx*		at pci?			# TI ACX100/ACX111 (802.11b/g)
 acx*		at cardbus?		# TI ACX100/ACX111 (802.11b/g)
@@ -299,6 +310,7 @@ vioblk*		at virtio?		# Virtio block device
 vio*		at virtio?		# Virtio network device
 viornd*		at virtio?		# Virtio entropy device
 vioscsi*	at virtio?		# Virtio SCSI device
+vmmci*		at virtio?		# VMM control interface
 
 pseudo-device	loop 1
 pseudo-device	vlan

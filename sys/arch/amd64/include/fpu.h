@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.12 2017/04/27 06:16:39 mlarkin Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.16 2018/10/07 22:43:06 guenther Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_MACHINE_FPU_H_
@@ -7,10 +7,11 @@
 #include <sys/types.h>
 
 /*
- * amd64 only uses the extended save/restore format used
- * by fxsave/fsrestore, to always deal with the SSE registers,
- * which are part of the ABI to pass floating point values.
- * Must be stored in memory on a 16-byte boundary.
+ * If the CPU supports xsave/xrstor then we use them so that we can provide
+ * AVX support.  Otherwise we require fxsave/fxrstor, as the SSE registers
+ * are part of the ABI for passing floating point values.
+ * While fxsave/fxrstor only required 16-byte alignment for the save area,
+ * xsave/xrstor requires the save area to have 64-byte alignment.
  */
 
 struct fxsave64 {
@@ -63,23 +64,23 @@ extern uint32_t	fpu_mxcsr_mask;
 extern uint64_t	xsave_mask;
 
 void fpuinit(struct cpu_info *);
-void fpudrop(void);
-void fpudiscard(struct proc *);
-void fputrap(struct trapframe *);
-void fpusave_proc(struct proc *, int);
-void fpusave_cpu(struct cpu_info *, int);
+int fputrap(int _type);
+void fpusave(struct savefpu *);
+void fpusavereset(struct savefpu *);
 void fpu_kernel_enter(void);
 void fpu_kernel_exit(void);
 
+int	xrstor_user(struct savefpu *_addr, uint64_t _mask);
+#define	fpureset() \
+	xrstor_user(&proc0.p_addr->u_pcb.pcb_savefpu, xsave_mask)
+int	xsetbv_user(uint32_t _reg, uint64_t _mask);
+
 #define fninit()		__asm("fninit")
 #define fwait()			__asm("fwait")
-#define fnclex()		__asm("fnclex")
+/* should be fxsave64, but where we use this it doesn't matter */
 #define fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
-#define fxrstor(addr)		__asm("fxrstor %0" : : "m" (*addr))
 #define ldmxcsr(addr)		__asm("ldmxcsr %0" : : "m" (*addr))
 #define fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
-#define clts()			__asm("clts")
-#define stts()			lcr0(rcr0() | CR0_TS)
 
 static inline void
 xsave(struct savefpu *addr, uint64_t mask)
@@ -88,18 +89,9 @@ xsave(struct savefpu *addr, uint64_t mask)
 
 	lo = mask;
 	hi = mask >> 32;
+	/* should be xsave64, but where we use this it doesn't matter */
 	__asm volatile("xsave %0" : "=m" (*addr) : "a" (lo), "d" (hi) :
 	    "memory");
-}
-
-static inline void
-xrstor(struct savefpu *addr, uint64_t mask)
-{
-	uint32_t lo, hi;
-
-	lo = mask;
-	hi = mask >> 32;
-	__asm volatile("xrstor %0" : : "m" (*addr), "a" (lo), "d" (hi));
 }
 
 #endif

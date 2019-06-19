@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_enqueue.9,v 1.9 2015/12/10 06:58:56 jmc Exp $
+.\"     $OpenBSD: ifq_enqueue.9,v 1.10 2018/12/11 01:33:40 dlg Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 10 2015 $
+.Dd $Mdocdate: December 11 2018 $
 .Dt IFQ_ENQUEUE 9
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm ifq_purge ,
 .Nm ifq_len ,
 .Nm ifq_empty ,
+.Nm ifq_hdatalen ,
 .Nm ifq_set_oactive ,
 .Nm ifq_clr_oactive ,
 .Nm ifq_is_oactive ,
@@ -41,6 +42,8 @@
 .Fn ifq_len "struct ifqueue *ifq"
 .Ft unsigned int
 .Fn ifq_empty "struct ifqueue *ifq"
+.Ft int
+.Fn ifq_hdatalen "struct ifqueue *ifq"
 .Ft void
 .Fn ifq_set_oactive "struct ifqueue *ifq"
 .Ft void
@@ -87,6 +90,10 @@ or
 Return if the interface send queue
 .Fa ifq
 is empty.
+.It Fn ifq_hdatalen "struct ifqueue *ifq"
+Return the number of bytes in the mbuf at the head of the interface
+send queue
+.Fa ifq .
 .It Fn ifq_set_oactive "struct ifqueue *ifq"
 .Fn ifq_set_oactive
 is called by the relevant driver to mark the hardware associated
@@ -125,6 +132,7 @@ returns.
 .Fn ifq_purge ,
 .Fn ifq_len ,
 .Fn ifq_empty ,
+.Fn ifq_hdatalen ,
 .Fn ifq_set_oactive ,
 .Fn ifq_clr_oactive ,
 .Fn ifq_is_oactive ,
@@ -152,6 +160,9 @@ returns the number of mbufs on the queue.
 .Pp
 .Fn ifq_empty
 returns a non-zero value if the queue is empty, otherwise 0.
+.Pp
+.Fn ifq_hdatalen
+returns the size of a packet on the queue, or 0 if the queue is empty;
 .Pp
 .Fn ifq_is_oactive
 returns a non-zero value if the hardware associated with the interface

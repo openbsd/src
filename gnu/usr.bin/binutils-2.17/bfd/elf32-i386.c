@@ -3873,6 +3873,18 @@ elf_i386_plt_sym_val (bfd_vma i, const asection *plt,
   return plt->vma + (i + 1) * PLT_ENTRY_SIZE;
 }
 
+/* Return TRUE if symbol should be hashed in the `.gnu.hash' section.  */
+
+static bfd_boolean
+elf_i386_hash_symbol (struct elf_link_hash_entry *h)
+{
+  if (h->plt.offset != (bfd_vma) -1
+      && !h->def_regular
+      && !h->pointer_equality_needed)
+    return FALSE;
+
+  return _bfd_elf_hash_symbol (h);
+}
 
 #define TARGET_LITTLE_SYM		bfd_elf32_i386_vec
 #define TARGET_LITTLE_NAME		"elf32-i386"
@@ -3913,6 +3925,7 @@ elf_i386_plt_sym_val (bfd_vma i, const asection *plt,
 #define elf_backend_size_dynamic_sections     elf_i386_size_dynamic_sections
 #define elf_backend_always_size_sections      elf_i386_always_size_sections
 #define elf_backend_plt_sym_val		      elf_i386_plt_sym_val
+#define elf_backend_hash_symbol		      elf_i386_hash_symbol
 
 #include "elf32-target.h"
 

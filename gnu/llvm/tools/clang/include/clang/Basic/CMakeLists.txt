@@ -9,10 +9,12 @@ clang_diag_gen(Analysis)
 clang_diag_gen(AST)
 clang_diag_gen(Comment)
 clang_diag_gen(Common)
+clang_diag_gen(CrossTU)
 clang_diag_gen(Driver)
 clang_diag_gen(Frontend)
 clang_diag_gen(Lex)
 clang_diag_gen(Parse)
+clang_diag_gen(Refactoring)
 clang_diag_gen(Sema)
 clang_diag_gen(Serialization)
 clang_tablegen(DiagnosticGroups.inc -gen-clang-diag-groups
@@ -41,6 +43,8 @@ clang_tablegen(AttrHasAttributeImpl.inc -gen-clang-attr-has-attribute-impl
 
 # ARM NEON
 clang_tablegen(arm_neon.inc -gen-arm-neon-sema
-  -I ${CMAKE_CURRENT_SOURCE_DIR}/../../
   SOURCE arm_neon.td
   TARGET ClangARMNeon)
+clang_tablegen(arm_fp16.inc -gen-arm-neon-sema
+  SOURCE arm_fp16.td
+  TARGET ClangARMFP16)

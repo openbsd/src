@@ -1,6 +1,7 @@
 use strict;
 
 use Test::More tests => 10;
+BEGIN { push @INC, '.' }
 use t::Watchdog;
 
 BEGIN { require_ok "Time::HiRes"; }
@@ -10,7 +11,7 @@ use Config;
 my $limit = 0.25; # 25% is acceptable slosh for testing timers
 
 my $xdefine = ''; 
-if (open(XDEFINE, "xdefine")) {
+if (open(XDEFINE, "<", "xdefine")) {
     chomp($xdefine = <XDEFINE> || "");
     close(XDEFINE);
 }
@@ -41,6 +42,9 @@ SKIP: {
 	# Perl's deferred signals may be too wimpy to break through
 	# a restartable select(), so use POSIX::sigaction if available.
 
+        # In perl 5.6.2 you will get a likely bogus warning of
+        # "Use of uninitialized value in subroutine entry" from
+        # the following line.
 	POSIX::sigaction(&POSIX::SIGALRM,
 			 POSIX::SigAction->new("tick"),
 			 $oldaction)

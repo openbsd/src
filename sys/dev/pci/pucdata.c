@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.106 2017/08/04 22:39:36 uaa Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.110 2019/05/08 15:23:20 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -51,175 +51,196 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 7 Series KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7SERIES_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 8 Series KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 8 Series LP KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_8SERIES_LP_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 9 Series KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 9 Series LP KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_9SERIES_LP_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 100 Series KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 100 Series LP KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+	    },
+	},
+	{	/* 200 Series KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_200SERIES_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+	    },
+	},
+	{	/* 300 Series KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+	    },
+	},
+	{	/* 300 Series U KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_U_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 82946GZ KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 82Q965 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q965_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 82G965 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G965_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 82Q35 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 82G33 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 82Q33 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 82X38 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82X38_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* GM965 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM965_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* GME965 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GME965_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* GM45 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* Q45 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* 3400 KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* Intel EG20T */
 	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_1, 0x0000, 0x0000 },
 	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* Intel EG20T */
 	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_2, 0x0000, 0x0000 },
 	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* Intel EG20T */
 	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_3, 0x0000, 0x0000 },
 	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* Intel EG20T */
 	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_SERIAL_4, 0x0000, 0x0000 },
 	    {	0xffff,	0xffff,				      0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{	/* Atom S1200 UART */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ATOM_S1200_UART, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	/*
@@ -237,8 +258,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_PLX,	PCI_PRODUCT_PLX_9050,	0xd84d,	0x6810	},
 	    {	0xffff,	0xffff,				0xffff,	0xffff	},
 	    {
-		{ PUC_LPT, 0x20, 0x0000 },
-		{ PUC_LPT, 0x24, 0x0000 },
+		{ PUC_PORT_LPT, 0x20, 0x0000 },
+		{ PUC_PORT_LPT, 0x24, 0x0000 },
 	    },
 	},
 
@@ -257,8 +278,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,	0xd84d,	0x6808	},
 	    {	0xffff,	0xffff,				0xffff,	0xffff	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -276,8 +297,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_DCI,	PCI_PRODUCT_DCI_APCI2,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0008 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0008 },
 	    },
 	},
 
@@ -286,10 +307,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_DCI,	PCI_PRODUCT_DCI_APCI4,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0008 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0010 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0018 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0008 },
+		{ PUC_PORT_COM, 0x1c, 0x0010 },
+		{ PUC_PORT_COM, 0x1c, 0x0018 },
 	    },
 	},
 
@@ -298,14 +319,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_DCI, PCI_PRODUCT_DCI_APCI8,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0008 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0010 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0018 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0020 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0028 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0030 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0038 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0008 },
+		{ PUC_PORT_COM, 0x1c, 0x0010 },
+		{ PUC_PORT_COM, 0x1c, 0x0018 },
+		{ PUC_PORT_COM, 0x1c, 0x0020 },
+		{ PUC_PORT_COM, 0x1c, 0x0028 },
+		{ PUC_PORT_COM, 0x1c, 0x0030 },
+		{ PUC_PORT_COM, 0x1c, 0x0038 },
 	    },
 	},
 	/* IBM SurePOS 300 Series (481033H) serial ports */
@@ -313,10 +334,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_IBM, PCI_PRODUCT_IBM_4810_SCC,	0, 0	},
 	    {	0xffff, 0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 }, /* Port C */
-		{ PUC_COM_POW2(0), 0x18, 0x0000 }, /* Port D */
-		{ PUC_COM_POW2(0), 0x14, 0x0000 }, /* Port E */
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 }, /* Port F */
+		{ PUC_PORT_COM, 0x10, 0x0000 }, /* Port C */
+		{ PUC_PORT_COM, 0x18, 0x0000 }, /* Port D */
+		{ PUC_PORT_COM, 0x14, 0x0000 }, /* Port E */
+		{ PUC_PORT_COM, 0x1c, 0x0000 }, /* Port F */
 	    },
 	},
 
@@ -339,7 +360,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1000,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
 	    },
 	},
 
@@ -348,7 +369,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1001,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
 	    },
 	},
 
@@ -357,7 +378,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1002,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
 	    },
 	},
 
@@ -366,8 +387,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1010,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_LPT, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -376,8 +397,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1011,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_LPT, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -386,8 +407,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1012,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_LPT, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -396,7 +417,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1020,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
 	    },
 	},
 
@@ -405,8 +426,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1021,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_LPT, 0x18, 0x0000 },
-		{ PUC_LPT, 0x20, 0x0000 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x20, 0x0000 },
 	    },
 	},
 
@@ -415,8 +436,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1030,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -425,8 +446,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1031,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -435,8 +456,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1032,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -445,9 +466,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1034,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_LPT, 0x20, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_LPT, 0x20, 0x0000 },
 	    },
 	},
 
@@ -456,9 +477,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1035,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_LPT, 0x20, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_LPT, 0x20, 0x0000 },
 	    },
 	},
 
@@ -467,9 +488,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1036,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_LPT, 0x20, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_LPT, 0x20, 0x0000 },
 	    },
 	},
 
@@ -478,10 +499,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1050,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_COM_POW2(0), 0x20, 0x0000 },
-		{ PUC_COM_POW2(0), 0x24, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x20, 0x0000 },
+		{ PUC_PORT_COM, 0x24, 0x0000 },
 	    },
 	},
 
@@ -490,10 +511,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1051,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_COM_POW2(0), 0x20, 0x0000 },
-		{ PUC_COM_POW2(0), 0x24, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x20, 0x0000 },
+		{ PUC_PORT_COM, 0x24, 0x0000 },
 	    },
 	},
 
@@ -502,10 +523,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_1052,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_COM_POW2(0), 0x20, 0x0000 },
-		{ PUC_COM_POW2(0), 0x24, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x20, 0x0000 },
+		{ PUC_PORT_COM, 0x24, 0x0000 },
 	    },
 	},
 
@@ -518,7 +539,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2020,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -527,8 +548,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2021,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
-		{ PUC_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
 	    },
 	},
 
@@ -537,9 +558,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2040,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_LPT, 0x14, 0x0000 },
-		{ PUC_LPT, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x14, 0x0000 },
+		{ PUC_PORT_LPT, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -548,9 +569,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2041,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_LPT, 0x14, 0x0000 },
-		{ PUC_LPT, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x14, 0x0000 },
+		{ PUC_PORT_LPT, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -559,9 +580,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2042,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_LPT, 0x14, 0x0000 },
-		{ PUC_LPT, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x14, 0x0000 },
+		{ PUC_PORT_LPT, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -570,7 +591,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2000,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -579,7 +600,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2001,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -588,7 +609,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2002,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -597,8 +618,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2010,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_LPT, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x14, 0x0000 },
 	    },
 	},
 
@@ -607,8 +628,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2011,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_LPT, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x14, 0x0000 },
 	    },
 	},
 
@@ -617,8 +638,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2012,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_LPT, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x14, 0x0000 },
 	    },
 	},
 
@@ -627,8 +648,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2030,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 
@@ -637,8 +658,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2031,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 
@@ -647,8 +668,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2032,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 
@@ -657,9 +678,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2060,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
 	    },
 	},
 
@@ -668,9 +689,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2061,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
 	    },
 	},
 
@@ -679,9 +700,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2062,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
 	    },
 	},
 
@@ -690,10 +711,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2050,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -702,10 +723,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2051,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -714,10 +735,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2052,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -726,14 +747,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2081,		0, 0	},
 	    {	0xffff, 0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_COM_POW2(0), 0x20, 0x0000 },
-		{ PUC_COM_POW2(0), 0x20, 0x0008 },
-		{ PUC_COM_POW2(0), 0x20, 0x0010 },
-		{ PUC_COM_POW2(0), 0x20, 0x0018 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x20, 0x0000 },
+		{ PUC_PORT_COM, 0x20, 0x0008 },
+		{ PUC_PORT_COM, 0x20, 0x0010 },
+		{ PUC_PORT_COM, 0x20, 0x0018 },
 	    },
 	},
 
@@ -743,10 +764,10 @@ const struct puc_device_description puc_devs[] = {
 		PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2082	},
 	    {	0xffff, 0xffff,	0xffff, 0xffff	},
 	    {
-		{ PUC_COM_MUL(10), 0x10, 0x0000 },
-		{ PUC_COM_MUL(10), 0x10, 0x0008 },
-		{ PUC_COM_MUL(10), 0x10, 0x0010 },
-		{ PUC_COM_MUL(10), 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0018 },
 	    },
 	},
 
@@ -756,10 +777,10 @@ const struct puc_device_description puc_devs[] = {
 		PCI_VENDOR_OXFORD2, 0	},
 	    {	0xffff, 0xffff,	0xffff, 0xffff	},
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x10, 0x0010 },
-		{ PUC_COM_POW2(3), 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0018 },
 	    },
 	},
 
@@ -768,7 +789,7 @@ const struct puc_device_description puc_devs[] = {
 		{ PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_EXSYS_EX41092,0x0000,0x0000},
 		{ 0xffff, 0xffff,                                       0x0000,0x0000},
 		{
-			{ PUC_COM_MUL(10), 0x10, 0x0000 },
+			{ PUC_PORT_COM_MUL10, 0x10, 0x0000 },
 		},
 	},
 
@@ -778,10 +799,10 @@ const struct puc_device_description puc_devs[] = {
 		PCI_VENDOR_OXFORD2, 0	},
 	    {	0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x10, 0x0010 },
-		{ PUC_COM_POW2(3), 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0018 },
 	    },
 	},
 
@@ -791,10 +812,10 @@ const struct puc_device_description puc_devs[] = {
 		PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2082	},
 	    {	0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_MUL(10), 0x10, 0x0000 },
-		{ PUC_COM_MUL(10), 0x10, 0x0008 },
-		{ PUC_COM_MUL(10), 0x10, 0x0010 },
-		{ PUC_COM_MUL(10), 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0018 },
 	    },
 	},
 
@@ -805,10 +826,10 @@ const struct puc_device_description puc_devs[] = {
 	    { PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1077, 0x10b5, 0x1077 },
 	    { 0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0008 },
-		{ PUC_COM_POW2(3), 0x18, 0x0010 },
-		{ PUC_COM_POW2(3), 0x18, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0018 },
 	    },
 	},
 
@@ -823,14 +844,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_PLX,	PCI_PRODUCT_PLX_1076,	0x10b5,	0x1076	},
 	    {	0xffff,	0xffff,				0xffff,	0xffff	},
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0008 },
-		{ PUC_COM_POW2(0), 0x18, 0x0010 },
-		{ PUC_COM_POW2(0), 0x18, 0x0018 },
-		{ PUC_COM_POW2(0), 0x18, 0x0020 },
-		{ PUC_COM_POW2(0), 0x18, 0x0028 },
-		{ PUC_COM_POW2(0), 0x18, 0x0030 },
-		{ PUC_COM_POW2(0), 0x18, 0x0038 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0008 },
+		{ PUC_PORT_COM, 0x18, 0x0010 },
+		{ PUC_PORT_COM, 0x18, 0x0018 },
+		{ PUC_PORT_COM, 0x18, 0x0020 },
+		{ PUC_PORT_COM, 0x18, 0x0028 },
+		{ PUC_PORT_COM, 0x18, 0x0030 },
+		{ PUC_PORT_COM, 0x18, 0x0038 },
 	    },
 	},
 
@@ -841,7 +862,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_VSCOM_PCI011H,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -853,7 +874,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCIx10H,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -867,7 +888,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI100H,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
 	    },
 	},
 
@@ -882,8 +903,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200H,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
 	    },
 	},
 
@@ -900,20 +921,20 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_0,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x10, 0x0010 },
-		{ PUC_COM_POW2(3), 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0018 },
 	    },
 	},
 	{   /* "VScom PCI-400H/800H", */
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x10, 0x0010 },
-		{ PUC_COM_POW2(3), 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0018 },
 	    },
 	},
 
@@ -925,8 +946,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200HV2,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
 	    },
 	},
 
@@ -939,7 +960,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI010L,    0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_LPT, 0x1c, 0x0000 },
+		{ PUC_PORT_LPT, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -953,7 +974,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI100L,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
 	    },
 	},
 
@@ -966,8 +987,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI110L,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
-		{ PUC_LPT, 0x1c, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
+		{ PUC_PORT_LPT, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -981,8 +1002,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200L,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
 	    },
 	},
 
@@ -995,9 +1016,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI210L,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_LPT, 0x1c, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -1011,10 +1032,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_MOLEX, PCI_PRODUCT_MOLEX_VSCOM_PCI400L,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x20, 0x0000 },
-		{ PUC_COM_POW2(3), 0x20, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x20, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x20, 0x0008 },
 	    },
 	},
 
@@ -1026,14 +1047,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI800L,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x20, 0x0000 },
-		{ PUC_COM_POW2(3), 0x20, 0x0008 },
-		{ PUC_COM_POW2(3), 0x20, 0x0010 },
-		{ PUC_COM_POW2(3), 0x20, 0x0018 },
-		{ PUC_COM_POW2(3), 0x20, 0x0020 },
-		{ PUC_COM_POW2(3), 0x20, 0x0028 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x20, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x20, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x20, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x20, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x20, 0x0020 },
+		{ PUC_PORT_COM_MUL8, 0x20, 0x0028 },
 	    },
 	},
 
@@ -1044,10 +1065,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_EXSYS_EX41098,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x10, 0x0008 },
-		{ PUC_COM_POW2(0), 0x10, 0x0010 },
-		{ PUC_COM_POW2(0), 0x10, 0x0018 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0008 },
+		{ PUC_PORT_COM, 0x10, 0x0010 },
+		{ PUC_PORT_COM, 0x10, 0x0018 },
 	    },
 	},
 
@@ -1067,8 +1088,8 @@ const struct puc_device_description puc_devs[] = {
 		PCI_VENDOR_OXFORD2, 0x0001 },
 	    {   0xffff, 0xffff,	0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1077,8 +1098,8 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI952,	0, 0 },
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1087,7 +1108,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI952P,	0, 0 },
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1096,7 +1117,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXPCIE952,	0, 0 },
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1106,10 +1127,10 @@ const struct puc_device_description puc_devs[] = {
 		PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_2050 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_MUL(10), 0x10, 0x0000 },
-		{ PUC_COM_MUL(10), 0x10, 0x0008 },
-		{ PUC_COM_MUL(10), 0x10, 0x0010 },
-		{ PUC_COM_MUL(10), 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL10, 0x10, 0x0018 },
 	    },
 	},
 
@@ -1119,8 +1140,8 @@ const struct puc_device_description puc_devs[] = {
 		PCI_VENDOR_IODATA, 0xc070 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
 	    },
 	},
 
@@ -1129,10 +1150,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954,	0, 0 },
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x10, 0x0008 },
-		{ PUC_COM_POW2(0), 0x10, 0x0010 },
-		{ PUC_COM_POW2(0), 0x10, 0x0018 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0008 },
+		{ PUC_PORT_COM, 0x10, 0x0010 },
+		{ PUC_PORT_COM, 0x10, 0x0018 },
 	    },
 	},
 
@@ -1141,9 +1162,9 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXMPCI954,	0, 0 },
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(2), 0x10, 0x0000 },
-		{ PUC_COM_POW2(2), 0x10, 0x0008 },
-		{ PUC_COM_POW2(2), 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0010 },
 	    },
 	},
 
@@ -1152,10 +1173,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954K,	0, 0 },
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -1164,7 +1185,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954P,	0, 0 },
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1173,7 +1194,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXPCIE952S,	0, 0 },
 	    {   0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1186,8 +1207,8 @@ const struct puc_device_description puc_devs[] = {
 		    							0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0008 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0008 },
 	    },
 	},
 
@@ -1199,7 +1220,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_NEC,	PCI_PRODUCT_NEC_MARTH,	0x1033,	0x8014	},
 	    {	0xffff,	0xffff,				0xffff,	0xffff	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1208,7 +1229,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_NEC,	PCI_PRODUCT_NEC_PKUG,	0x1033,	0x8012	},
 	    {	0xffff,	0xffff,				0xffff,	0xffff	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1217,7 +1238,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_1P,	0, 0	},
 	    {	0xffff,	0xfffc,					0, 0	},
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1226,8 +1247,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_TWOSP_2S,	0, 0	},
 	    {	0xffff,	0xfffc,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1239,8 +1260,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_QUATTRO_AB2,	0, 0	},
 	    {	0xffff,	0xfffe,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1252,8 +1273,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_LAVAPORT_0,	0, 0	},
 	    {	0xffff,	0xfffc,					0, 0	},
 	    {
-		{ PUC_COM_POW2(2), 0x10, 0x0000 },
-		{ PUC_COM_POW2(2), 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL4, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1264,7 +1285,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_LAVAPORT_2,	0, 0	},
 	    {	0xffff,	0xfffc,					0, 0	},
 	    {
-		{ PUC_COM_POW2(2), 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1273,7 +1294,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_650,		0, 0	},
 	    {	0xffff,	0xfffc,					0, 0	},
 	    {
-		{ PUC_COM_POW2(2), 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1282,7 +1303,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_0,	0, 0	},
 	    {	0xffff,	0xfffc,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1291,7 +1312,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_1,	0, 0	},
 	    {	0xffff,	0xfffc,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1300,10 +1321,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS550_0,	0, 0	},
 	    {   0xffff, 0xfffc,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -1312,10 +1333,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS550_1,	0, 0	},
 	    {   0xffff, 0xfffc,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -1324,7 +1345,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5610,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1334,7 +1355,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_VENUSMODEM,	0, 0 },
 	    {	0xffff,	0xffff,						0, 0 },
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0008 },
+		{ PUC_PORT_COM, 0x18, 0x0008 },
 	    },
 	},
 
@@ -1343,7 +1364,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_TOPIC, PCI_PRODUCT_TOPIC_5634PCV,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1352,10 +1373,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SYBA, PCI_PRODUCT_SYBA_4S,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x03e8 },
-		{ PUC_COM_POW2(0), 0x10, 0x02e8 },
-		{ PUC_COM_POW2(0), 0x10, 0x03f8 },
-		{ PUC_COM_POW2(0), 0x10, 0x02f8 },
+		{ PUC_PORT_COM, 0x10, 0x03e8 },
+		{ PUC_PORT_COM, 0x10, 0x02e8 },
+		{ PUC_PORT_COM, 0x10, 0x03f8 },
+		{ PUC_PORT_COM, 0x10, 0x02f8 },
 	    },
 	},
 
@@ -1364,12 +1385,12 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SYBA, PCI_PRODUCT_SYBA_4S2P,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x02e8 },
-		{ PUC_COM_POW2(0), 0x10, 0x02f8 },
-		{ PUC_LPT, 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x10, 0x03e8 },
-		{ PUC_COM_POW2(0), 0x10, 0x03f8 },
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x02e8 },
+		{ PUC_PORT_COM, 0x10, 0x02f8 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x03e8 },
+		{ PUC_PORT_COM, 0x10, 0x03f8 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1378,10 +1399,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP114,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0008 },
-		{ PUC_COM_POW2(3), 0x18, 0x0010 },
-		{ PUC_COM_POW2(3), 0x18, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0018 },
 	    },
 	},
 
@@ -1390,10 +1411,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C104H,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0008 },
-		{ PUC_COM_POW2(3), 0x18, 0x0010 },
-		{ PUC_COM_POW2(3), 0x18, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0018 },
 	    },
 	},
 
@@ -1402,10 +1423,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP104UL,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0008 },
-		{ PUC_COM_POW2(3), 0x18, 0x0010 },
-		{ PUC_COM_POW2(3), 0x18, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0018 },
 	    },
 	},
 
@@ -1414,10 +1435,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP104JU,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0008 },
-		{ PUC_COM_POW2(3), 0x18, 0x0010 },
-		{ PUC_COM_POW2(3), 0x18, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0018 },
 	    },
 	},
 
@@ -1426,10 +1447,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP104EL,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0008 },
-		{ PUC_COM_POW2(3), 0x18, 0x0010 },
-		{ PUC_COM_POW2(3), 0x18, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0018 },
 	    },
 	},
 
@@ -1438,14 +1459,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C168H,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0008 },
-		{ PUC_COM_POW2(3), 0x18, 0x0010 },
-		{ PUC_COM_POW2(3), 0x18, 0x0018 },
-		{ PUC_COM_POW2(3), 0x18, 0x0020 },
-		{ PUC_COM_POW2(3), 0x18, 0x0028 },
-		{ PUC_COM_POW2(3), 0x18, 0x0030 },
-		{ PUC_COM_POW2(3), 0x18, 0x0038 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0020 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0028 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0030 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0038 },
 	    },
 	},
 
@@ -1454,14 +1475,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP168U,	0, 0	},
 	    {	0xffff, 0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x18, 0x0008 },
-		{ PUC_COM_POW2(3), 0x18, 0x0010 },
-		{ PUC_COM_POW2(3), 0x18, 0x0018 },
-		{ PUC_COM_POW2(3), 0x18, 0x0020 },
-		{ PUC_COM_POW2(3), 0x18, 0x0028 },
-		{ PUC_COM_POW2(3), 0x18, 0x0030 },
-		{ PUC_COM_POW2(3), 0x18, 0x0038 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0020 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0028 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0030 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0038 },
 	    },
 	},
 
@@ -1470,7 +1491,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9805,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1479,7 +1500,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,	0x1000, 0x0001	},
 	    {	0xffff,	0xffff,					0xffff, 0xffff	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1488,9 +1509,9 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
 	    },
 	},
 
@@ -1499,10 +1520,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0x1000, 0x0004 },
 	    {	0xffff,	0xffff,				      0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -1511,11 +1532,11 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0x1000, 0x0014 },
 	    {	0xffff,	0xffff,				      0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_LPT, 0x20, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_LPT, 0x20, 0x0000 },
 	    },
 	},
 
@@ -1524,12 +1545,12 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 0x1000, 0x0006 },
 	    {	0xffff,	0xffff,				      0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_COM_POW2(0), 0x20, 0x0000 },
-		{ PUC_COM_POW2(0), 0x24, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x20, 0x0000 },
+		{ PUC_PORT_COM, 0x24, 0x0000 },
 	    },
 	},
 
@@ -1538,8 +1559,8 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1552,17 +1573,17 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x1000 },
 	    {	0xffff,	0xffff,				      0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "NetMos NM9865 6 UART: 4 UART ISA" */
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9865, 0xa000, 0x3004 },
 	    {	0xffff,	0xffff,				      0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -1571,7 +1592,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901, 0xa000, 0x1000 },
 	    {	0xffff,	0xffff,				      0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1580,7 +1601,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901, 0xa000, 0x2000 },
 	    {	0xffff,	0xffff,				      0xffff, 0xffff },
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1588,7 +1609,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9922, 0xa000, 0x1000 },
 	    {	0xffff,	0xffff,				      0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1603,10 +1624,10 @@ const struct puc_device_description puc_devs[] = {
 		PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OX16PCI954   },
 	    {   0xffff, 0xffff, 0xffff, 0xffff   },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x10, 0x0010 },
-		{ PUC_COM_POW2(3), 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0018 },
 	     },
 	},
 	{   /* OX16PCI954 8-bit pass-through Local Bus */
@@ -1614,10 +1635,10 @@ const struct puc_device_description puc_devs[] = {
 		PCI_VENDOR_OXFORD2, 0x9511   },
 	    {   0xffff, 0xffff, 0xffff, 0xffff   },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x10, 0x0010 },
-		{ PUC_COM_POW2(3), 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0018 },
 	    },
 	},
 
@@ -1625,8 +1646,8 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_4018A,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
-		{ PUC_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
 	    },
 	},
 
@@ -1638,7 +1659,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4000 },
 	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1646,8 +1667,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4010 },
 	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
 	    {
-		{ PUC_LPT, 0x10, 0x0000 },
-		{ PUC_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
 	    },
 	},
 
@@ -1655,7 +1676,7 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4020 },
 	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1663,8 +1684,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4030 },
 	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
 	    },
 	},
 
@@ -1672,8 +1693,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x0002 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
 	    },
 	},
 
@@ -1681,10 +1702,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4050 },
 	    {	0xffff,	0xffff,	0xffff,	0xe0f0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0008 },
 	    },
 	},
 
@@ -1692,14 +1713,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x5066 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0008 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
-		{ PUC_COM_POW2(0), 0x20, 0x0000 },
-		{ PUC_COM_POW2(0), 0x24, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0008 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x20, 0x0000 },
+		{ PUC_PORT_COM, 0x24, 0x0000 },
 	    },
 	},
 
@@ -1707,14 +1728,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4060 },
 	    {	0xffff,	0xffff,	0xffff,	0xe0f0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
-		{ PUC_COM_POW2(3), 0x14, 0x0008 },
-		{ PUC_COM_POW2(3), 0x18, 0x0000 },
-		{ PUC_COM_POW2(3), 0x1c, 0x0000 },
-		{ PUC_COM_POW2(3), 0x20, 0x0000 },
-		{ PUC_COM_POW2(3), 0x24, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x1c, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x20, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x24, 0x0000 },
 	    },
 	},
 
@@ -1722,9 +1743,9 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4070 },
 	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
 	    },
 	},
 
@@ -1732,10 +1753,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4080 },
 	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_LPT, 0x18, 0x0000 },
-		{ PUC_LPT, 0x20, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x20, 0x0000 },
 	    },
 	},
 
@@ -1743,12 +1764,12 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_SUNIX, PCI_PRODUCT_SUNIX_40XX, 0x1409, 0x4090 },
 	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0008 },
-		{ PUC_LPT, 0x18, 0x0000 },
-		{ PUC_LPT, 0x20, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0008 },
+		{ PUC_PORT_LPT, 0x18, 0x0000 },
+		{ PUC_PORT_LPT, 0x20, 0x0000 },
 	    },
 	},
 
@@ -1760,7 +1781,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SUNIX2, PCI_PRODUCT_SUNIX2_50XX, 0x1fd4, 0x0100 },
 	    {   0xffff, 0xffff, 0xffff, 0xeff0 },
 	    {
-		{ PUC_LPT, 0x14, 0x0000 },
+		{ PUC_PORT_LPT, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1768,22 +1789,22 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SUNIX2, PCI_PRODUCT_SUNIX2_50XX, 0x1fd4, 0x0010 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x10, 0x0010 },
-		{ PUC_COM_POW2(3), 0x10, 0x0018 },
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
-		{ PUC_COM_POW2(3), 0x14, 0x0008 },
-		{ PUC_COM_POW2(3), 0x14, 0x0010 },
-		{ PUC_COM_POW2(3), 0x14, 0x0018 },
-		{ PUC_COM_POW2(3), 0x14, 0x0020 },
-		{ PUC_COM_POW2(3), 0x14, 0x0028 },
-		{ PUC_COM_POW2(3), 0x14, 0x0030 },
-		{ PUC_COM_POW2(3), 0x14, 0x0038 },
-		{ PUC_COM_POW2(3), 0x14, 0x0040 },
-		{ PUC_COM_POW2(3), 0x14, 0x0048 },
-		{ PUC_COM_POW2(3), 0x14, 0x0050 },
-		{ PUC_COM_POW2(3), 0x14, 0x0058 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0020 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0028 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0030 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0038 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0040 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0048 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0050 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0058 },
 	    },
 	},
 
@@ -1791,7 +1812,7 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SUNIX2, PCI_PRODUCT_SUNIX2_50XX, 0x1fd4, 0x0001 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
 	    },
 	},
 
@@ -1799,8 +1820,8 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SUNIX2, PCI_PRODUCT_SUNIX2_50XX, 0x1fd4, 0x0002 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
 	    },
 	},
 
@@ -1808,10 +1829,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SUNIX2, PCI_PRODUCT_SUNIX2_50XX, 0x1fd4, 0x0004 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x10, 0x0010 },
-		{ PUC_COM_POW2(3), 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0018 },
 	    },
 	},
 
@@ -1819,14 +1840,14 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SUNIX2, PCI_PRODUCT_SUNIX2_50XX, 0x1fd4, 0x0008 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x10, 0x0010 },
-		{ PUC_COM_POW2(3), 0x10, 0x0018 },
-		{ PUC_COM_POW2(3), 0x14, 0x0000 },
-		{ PUC_COM_POW2(3), 0x14, 0x0008 },
-		{ PUC_COM_POW2(3), 0x14, 0x0010 },
-		{ PUC_COM_POW2(3), 0x14, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x14, 0x0018 },
 	    },
 	},
 
@@ -1834,8 +1855,8 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SUNIX2, PCI_PRODUCT_SUNIX2_50XX, 0x1fd4, 0x0101 },
 	    {   0xffff, 0xffff, 0xffff, 0xeff0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_LPT, 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_LPT, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1843,9 +1864,9 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SUNIX2, PCI_PRODUCT_SUNIX2_50XX, 0x1fd4, 0x0102 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_LPT, 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_LPT, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1853,11 +1874,11 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_SUNIX2, PCI_PRODUCT_SUNIX2_50XX, 0x1fd4, 0x0104 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0008 },
-		{ PUC_COM_POW2(3), 0x10, 0x0010 },
-		{ PUC_COM_POW2(3), 0x10, 0x0018 },
-		{ PUC_LPT, 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0018 },
+		{ PUC_PORT_LPT, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1870,10 +1891,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,	0x12e0, 0x0031  },
 	    {   0xffff, 0xffff,				0xffff, 0xffff  },
 	    {
-		{ PUC_COM_POW2(2), 0x18, 0x0000 },
-		{ PUC_COM_POW2(2), 0x18, 0x0008 },
-		{ PUC_COM_POW2(2), 0x18, 0x0010 },
-		{ PUC_COM_POW2(2), 0x18, 0x0018 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0008 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0010 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0018 },
 	    },
 	},
 
@@ -1886,14 +1907,14 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,	0x12e0, 0x0021  },
 	    {   0xffff, 0xffff,				0xffff, 0xffff  },
 	    {
-		{ PUC_COM_POW2(2), 0x18, 0x0000 },
-		{ PUC_COM_POW2(2), 0x18, 0x0008 },
-		{ PUC_COM_POW2(2), 0x18, 0x0010 },
-		{ PUC_COM_POW2(2), 0x18, 0x0018 },
-		{ PUC_COM_POW2(2), 0x18, 0x0020 },
-		{ PUC_COM_POW2(2), 0x18, 0x0028 },
-		{ PUC_COM_POW2(2), 0x18, 0x0030 },
-		{ PUC_COM_POW2(2), 0x18, 0x0038 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0000 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0008 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0010 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0018 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0020 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0028 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0030 },
+		{ PUC_PORT_COM_MUL4, 0x18, 0x0038 },
 	    },
 	},
 
@@ -1902,14 +1923,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_PLX,	PCI_PRODUCT_PLX_CRONYX_OMEGA,	0, 0 },
 	    {	0xffff,	0xffff,					0, 0 },
 	    {
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0008 },
-		{ PUC_COM_POW2(0), 0x18, 0x0010 },
-		{ PUC_COM_POW2(0), 0x18, 0x0018 },
-		{ PUC_COM_POW2(0), 0x18, 0x0020 },
-		{ PUC_COM_POW2(0), 0x18, 0x0028 },
-		{ PUC_COM_POW2(0), 0x18, 0x0030 },
-		{ PUC_COM_POW2(0), 0x18, 0x0038 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0008 },
+		{ PUC_PORT_COM, 0x18, 0x0010 },
+		{ PUC_PORT_COM, 0x18, 0x0018 },
+		{ PUC_PORT_COM, 0x18, 0x0020 },
+		{ PUC_PORT_COM, 0x18, 0x0028 },
+		{ PUC_PORT_COM, 0x18, 0x0030 },
+		{ PUC_PORT_COM, 0x18, 0x0038 },
 	    },
 	},
 
@@ -1918,14 +1939,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_PLX,	PCI_PRODUCT_PLX_9016,	0, 0 },
 	    {	0xffff,	0xffff,					0, 0 },
 	    {
-		{ PUC_COM_POW2(2), 0x10, 0x0000 },
-		{ PUC_COM_POW2(2), 0x10, 0x0008 },
-		{ PUC_COM_POW2(2), 0x10, 0x0010 },
-		{ PUC_COM_POW2(2), 0x10, 0x0018 },
-		{ PUC_COM_POW2(2), 0x10, 0x0020 },
-		{ PUC_COM_POW2(2), 0x10, 0x0028 },
-		{ PUC_COM_POW2(2), 0x10, 0x0030 },
-		{ PUC_COM_POW2(2), 0x10, 0x0038 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0008 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0010 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0018 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0020 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0028 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0030 },
+		{ PUC_PORT_COM_MUL4, 0x10, 0x0038 },
 	    },
 	},
 
@@ -1934,10 +1955,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_LPPCI4S_2,	0, 0  },
 	    {	0xffff,	0xffff,					0, 0  },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -1946,10 +1967,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_LPPCI4S,	0, 0  },
 	    {	0xffff,	0xffff,					0, 0  },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 
@@ -1958,8 +1979,8 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_PCI2S,	0, 0  },
 	    {	0xffff,	0xffff,					0, 0  },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 
@@ -1968,10 +1989,10 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO4,		0, 0  },
 	    {	0xffff, 0xffff,					0, 0  },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0200 },
-		{ PUC_COM_POW2(3), 0x10, 0x0400 },
-		{ PUC_COM_POW2(3), 0x10, 0x0600 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0200 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0400 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0600 },
 	    },
 	},
 
@@ -1980,14 +2001,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8,		0, 0  },
 	    {	0xffff, 0xffff,					0, 0  },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0200 },
-		{ PUC_COM_POW2(3), 0x10, 0x0400 },
-		{ PUC_COM_POW2(3), 0x10, 0x0600 },
-		{ PUC_COM_POW2(3), 0x10, 0x0800 },
-		{ PUC_COM_POW2(3), 0x10, 0x0a00 },
-		{ PUC_COM_POW2(3), 0x10, 0x0c00 },
-		{ PUC_COM_POW2(3), 0x10, 0x0e00 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0200 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0400 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0600 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0800 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0a00 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0c00 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0e00 },
 	    },
 	},
 
@@ -1996,14 +2017,14 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8_PCIE,	0, 0  },
 	    {	0xffff, 0xffff,					0, 0  },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0200 },
-		{ PUC_COM_POW2(3), 0x10, 0x0400 },
-		{ PUC_COM_POW2(3), 0x10, 0x0600 },
-		{ PUC_COM_POW2(3), 0x10, 0x0800 },
-		{ PUC_COM_POW2(3), 0x10, 0x0a00 },
-		{ PUC_COM_POW2(3), 0x10, 0x0c00 },
-		{ PUC_COM_POW2(3), 0x10, 0x0e00 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0200 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0400 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0600 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0800 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0a00 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0c00 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0e00 },
 	    },
 	},
 
@@ -2016,10 +2037,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C158, 0x2205, 0x2003 },
 	    {	0xffff,	0xffff,				    0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0200 },
-		{ PUC_COM_POW2(3), 0x10, 0x0400 },
-		{ PUC_COM_POW2(3), 0x10, 0x0600 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0200 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0400 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0600 },
 	    },
 	},
 
@@ -2027,8 +2048,8 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C152,	0, 0 },
 	    {   0xffff, 0xffff,					0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0200 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0200 },
 	    },
 	},
 
@@ -2036,10 +2057,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C154,	0, 0 },
 	    {   0xffff, 0xffff,					0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0200 },
-		{ PUC_COM_POW2(3), 0x10, 0x0400 },
-		{ PUC_COM_POW2(3), 0x10, 0x0600 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0200 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0400 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0600 },
 	    },
 	},
 
@@ -2047,14 +2068,14 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17C158,	0, 0 },
 	    {   0xffff, 0xffff,					0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0200 },
-		{ PUC_COM_POW2(3), 0x10, 0x0400 },
-		{ PUC_COM_POW2(3), 0x10, 0x0600 },
-		{ PUC_COM_POW2(3), 0x10, 0x0800 },
-		{ PUC_COM_POW2(3), 0x10, 0x0a00 },
-		{ PUC_COM_POW2(3), 0x10, 0x0c00 },
-		{ PUC_COM_POW2(3), 0x10, 0x0e00 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0200 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0400 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0600 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0800 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0a00 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0c00 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0e00 },
 	    },
 	},
 
@@ -2062,10 +2083,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17V354,	0, 0 },
 	    {   0xffff, 0xffff,					0, 0 },
 	    {
-		{ PUC_COM_POW2(3), 0x10, 0x0000 },
-		{ PUC_COM_POW2(3), 0x10, 0x0400 },
-		{ PUC_COM_POW2(3), 0x10, 0x0800 },
-		{ PUC_COM_POW2(3), 0x10, 0x0C00 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0400 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0800 },
+		{ PUC_PORT_COM_MUL8, 0x10, 0x0C00 },
 	    },
 	},
 
@@ -2073,14 +2094,14 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DRAC_3_VUART,	0, 0 },
 	    {   0xffff, 0xffff,					0, 0 },
 	    {
-		{ PUC_COM_POW2(7), 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL128, 0x14, 0x0000 },
 	    },
 	},
 	{   /* Dell DRAC 4 Virtual UART */
 	    {   PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DRAC_4_VUART,	0, 0 },
 	    {   0xffff, 0xffff,					0, 0 },
 	    {
-		{ PUC_COM_POW2(7), 0x14, 0x0000 },
+		{ PUC_PORT_COM_MUL128, 0x14, 0x0000 },
 	    },
 	},
 
@@ -2094,174 +2115,174 @@ const struct puc_device_description puc_devs[] = {
 	    {	PCI_VENDOR_3COM, PCI_PRODUCT_3COM_GLOBALMODEM56,0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "", */
 	    {	PCI_VENDOR_3COM, PCI_PRODUCT_3COM_MODEM56,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "", */
 	    {	PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_SERIAL,0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "", */
 	    {	PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_SERIAL_2,0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "", */
 	    {	PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_SERIAL_GC,0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "", */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "", */
 	    {	PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_OXCB950,0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "Xircom Cardbus 56K Modem", */
 	    {	PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM_56K,0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "Xircom CBEM56G Modem", */
 	    {	PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_CBEM56G,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "Xircom 56k Modem", */
 	    {	PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "WinChipHead CH351 (2S)", */
 	    {	PCI_VENDOR_WCH2, PCI_PRODUCT_WCH2_CH351,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 	{   /* "WinChipHead CH352", */
 	    {	PCI_VENDOR_WCH, PCI_PRODUCT_WCH_CH352,		0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 	{   /* "WinChipHead CH382 (2S)", */
 	    {	PCI_VENDOR_WCH2, PCI_PRODUCT_WCH2_CH382_1,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x00c0 },
-		{ PUC_COM_POW2(0), 0x10, 0x00c8 },
+		{ PUC_PORT_COM, 0x10, 0x00c0 },
+		{ PUC_PORT_COM, 0x10, 0x00c8 },
 	    },
 	},
 	{   /* "WinChipHead CH382 (2S1P)", */
 	    {	PCI_VENDOR_WCH2, PCI_PRODUCT_WCH2_CH382_2,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x00c0 },
-		{ PUC_COM_POW2(0), 0x10, 0x00c8 },
+		{ PUC_PORT_COM, 0x10, 0x00c0 },
+		{ PUC_PORT_COM, 0x10, 0x00c8 },
 	    },
 	},
 	{   /* "TXIC TX382B (2S)", */
 	    {	PCI_VENDOR_TXIC, PCI_PRODUCT_TXIC_TX382B,	0, 0	},
 	    {	0xffff, 0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    }
 	},
 	{   /* "ASIX AX99100", */
 	    {	PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX99100,	0, 0	},
 	    {	0xffff, 0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    }
 	},
 	{   /* "NetMos NM9820 UART" */
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9820,	0, 0	},
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "MosChip MCS9865 Quad Serial Port" */
 	    {   PCI_VENDOR_MOSCHIP, PCI_PRODUCT_MOSCHIP_MCS9865, 0x1000, 0x4 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
-		{ PUC_COM_POW2(0), 0x18, 0x0000 },
-		{ PUC_COM_POW2(0), 0x1c, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x18, 0x0000 },
+		{ PUC_PORT_COM, 0x1c, 0x0000 },
 	    },
 	},
 	{   /* "MosChip MCS9865 Dual Serial Port" */
 	    {   PCI_VENDOR_MOSCHIP, PCI_PRODUCT_MOSCHIP_MCS9865, 0x1000, 0x2 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x14, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x14, 0x0000 },
 	    },
 	},
 	{   /* "MosChip MCS9865 Single Serial Port" */
 	    {   PCI_VENDOR_MOSCHIP, PCI_PRODUCT_MOSCHIP_MCS9865, 0x1000, 0x1 },
 	    {   0xffff, 0xffff, 0xffff, 0xffff },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "Redhat QEMU PCI Serial" */
 	    {   PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SERIAL, 0x0000, 0x0000 },
 	    {   0xffff, 0xffff, 0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
 	    },
 	},
 	{   /* "Redhat QEMU PCI Serial 2x" */
 	    {   PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SERIAL2, 0x0000, 0x0000 },
 	    {   0xffff, 0xffff, 0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x10, 0x0008 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0008 },
 	    },
 	},
 	{   /* "Redhat QEMU PCI Serial 4x" */
 	    {   PCI_VENDOR_REDHAT, PCI_PRODUCT_REDHAT_SERIAL4, 0x0000, 0x0000 },
 	    {   0xffff, 0xffff, 0x0000, 0x0000 },
 	    {
-		{ PUC_COM_POW2(0), 0x10, 0x0000 },
-		{ PUC_COM_POW2(0), 0x10, 0x0008 },
-		{ PUC_COM_POW2(0), 0x10, 0x0010 },
-		{ PUC_COM_POW2(0), 0x10, 0x0018 },
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+		{ PUC_PORT_COM, 0x10, 0x0008 },
+		{ PUC_PORT_COM, 0x10, 0x0010 },
+		{ PUC_PORT_COM, 0x10, 0x0018 },
 	    },
 	},
 };

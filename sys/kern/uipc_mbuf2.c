@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.42 2015/11/13 10:12:39 mpi Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.43 2018/11/09 14:14:31 claudio Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -81,7 +81,7 @@ static struct mbuf *m_dup1(struct mbuf *, int, int, int);
  *
  * on error return (NULL return value), original "m" will be freed.
  *
- * XXX M_TRAILINGSPACE/M_LEADINGSPACE on shared cluster (sharedcluster)
+ * XXX m_trailingspace/m_leadingspace on shared cluster (sharedcluster)
  */
 struct mbuf *
 m_pulldown(struct mbuf *m, int off, int len, int *offp)
@@ -156,14 +156,14 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	 * easy cases first.
 	 * we need to use m_copydata() to get data from <n->m_next, 0>.
 	 */
-	if ((off == 0 || offp) && M_TRAILINGSPACE(n) >= tlen &&
+	if ((off == 0 || offp) && m_trailingspace(n) >= tlen &&
 	    !sharedcluster) {
 		m_copydata(n->m_next, 0, tlen, mtod(n, caddr_t) + n->m_len);
 		n->m_len += tlen;
 		m_adj(n->m_next, tlen);
 		goto ok;
 	}
-	if ((off == 0 || offp) && M_LEADINGSPACE(n->m_next) >= hlen &&
+	if ((off == 0 || offp) && m_leadingspace(n->m_next) >= hlen &&
 	    !sharedcluster && n->m_next->m_len >= tlen) {
 		n->m_next->m_data -= hlen;
 		n->m_next->m_len += hlen;

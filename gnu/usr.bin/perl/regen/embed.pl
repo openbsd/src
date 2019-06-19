@@ -26,11 +26,10 @@ use strict;
 
 BEGIN {
     # Get function prototypes
-    require 'regen/regen_lib.pl';
-    require 'regen/embed_lib.pl';
+    require './regen/regen_lib.pl';
+    require './regen/embed_lib.pl';
 }
 
-my $SPLINT = 0; # Turn true for experimental splint support http://www.splint.org
 my $unflagged_pointers;
 
 #
@@ -40,12 +39,19 @@ my $unflagged_pointers;
 # implicit interpreter context argument.
 #
 
+my $error_count = 0;
+sub die_at_end ($) { # Keeps going for now, but makes sure the regen doesn't
+                     # succeed.
+    warn shift;
+    $error_count++;
+}
+
 sub full_name ($$) { # Returns the function name with potentially the
 		     # prefixes 'S_' or 'Perl_'
     my ($func, $flags) = @_;
 
+    return "Perl_$func" if $flags =~ /p/;
     return "S_$func" if $flags =~ /[si]/;
-    return "Perl_$func" if $flags =~ /[bp]/;
     return $func;
 }
 
@@ -75,13 +81,17 @@ my ($embed, $core, $ext, $api) = setup_embed();
 	}
 
 	my ($flags,$retval,$plain_func,@args) = @$_;
+        if ($flags =~ / ( [^AabDdEfiMmnOoPpRrsUWXx] ) /x) {
+	    die_at_end "flag $1 is not legal (for function $plain_func)";
+	}
 	my @nonnull;
+        my $has_depth = ( $flags =~ /W/ );
 	my $has_context = ( $flags !~ /n/ );
 	my $never_returns = ( $flags =~ /r/ );
-	my $commented_out = ( $flags =~ /m/ );
 	my $binarycompat = ( $flags =~ /b/ );
+	my $commented_out = ( ! $binarycompat && $flags =~ /m/ );
 	my $is_malloc = ( $flags =~ /a/ );
-	my $can_ignore = ( $flags !~ /R/ ) && !$is_malloc;
+	my $can_ignore = ( $flags !~ /R/ ) && ( $flags !~ /P/ ) && !$is_malloc;
 	my @names_of_nn;
 	my $func;
 
@@ -89,20 +99,10 @@ my ($embed, $core, $ext, $api) = setup_embed();
 	    warn "It is nonsensical to require the return value of a void function ($plain_func) to be checked";
 	}
 
-	my $scope_type_flag_count = 0;
-	$scope_type_flag_count++ if $flags =~ /s/;
-	$scope_type_flag_count++ if $flags =~ /i/;
-	$scope_type_flag_count++ if $flags =~ /p/;
-	warn "$plain_func: i, p, and s flags are all mutually exclusive"
-						   if $scope_type_flag_count > 1;
-	my $splint_flags = "";
-	if ( $SPLINT && !$commented_out ) {
-	    $splint_flags .= '/*@noreturn@*/ ' if $never_returns;
-	    if ($can_ignore && ($retval ne 'void') && ($retval !~ /\*/)) {
-		$retval .= " /*\@alt void\@*/";
-	    }
-	}
+	die_at_end "$plain_func: s flag is mutually exclusive from the i and p plags"
+					    if $flags =~ /s/ && $flags =~ /[ip]/;
 
+	my $static_inline = 0;
 	if ($flags =~ /([si])/) {
 	    my $type;
 	    if ($never_returns) {
@@ -111,18 +111,23 @@ my ($embed, $core, $ext, $api) = setup_embed();
 	    else {
 		$type = $1 eq 's' ? "STATIC" : "PERL_STATIC_INLINE";
 	    }
-	    $retval = "$type $splint_flags$retval";
+	    $retval = "$type $retval";
+	    die_at_end "Don't declare static function '$plain_func' pure" if $flags =~ /P/;
+	    $static_inline = $type eq 'PERL_STATIC_INLINE';
 	}
 	else {
 	    if ($never_returns) {
-		$retval = "PERL_CALLCONV_NO_RET $splint_flags$retval";
+		$retval = "PERL_CALLCONV_NO_RET $retval";
 	    }
 	    else {
-		$retval = "PERL_CALLCONV $splint_flags$retval";
+		$retval = "PERL_CALLCONV $retval";
 	    }
 	}
 	$func = full_name($plain_func, $flags);
-	$ret = "$retval\t$func(";
+	$ret = "";
+	$ret .= "#ifndef NO_MATHOMS\n" if $binarycompat;
+	$ret .= "#ifndef PERL_NO_INLINE_FUNCTIONS\n" if $static_inline;
+	$ret .= "$retval\t$func(";
 	if ( $has_context ) {
 	    $ret .= @args ? "pTHX_ " : "pTHX";
 	}
@@ -146,10 +151,7 @@ my ($embed, $core, $ext, $api) = setup_embed();
 		$temp_arg =~ s/\s*\bstruct\b\s*/ /g;
 		if ( ($temp_arg ne "...")
 		     && ($temp_arg !~ /\w+\s+(\w+)(?:\[\d+\])?\s*$/) ) {
-		    warn "$func: $arg ($n) doesn't have a name\n";
-		}
-		if ( $SPLINT && $nullok && !$commented_out ) {
-		    $arg = '/*@null@*/ ' . $arg;
+		    die_at_end "$func: $arg ($n) doesn't have a name\n";
 		}
 		if (defined $1 && $nn && !($commented_out && !$binarycompat)) {
 		    push @names_of_nn, $1;
@@ -160,6 +162,7 @@ my ($embed, $core, $ext, $api) = setup_embed();
 	else {
 	    $ret .= "void" if !$has_context;
 	}
+        $ret .= " _pDEPTH" if $has_depth;
 	$ret .= ")";
 	my @attrs;
 	if ( $flags =~ /r/ ) {
@@ -216,6 +219,8 @@ my ($embed, $core, $ext, $api) = setup_embed();
 	    $ret .= "\n#define PERL_ARGS_ASSERT_\U$plain_func\E\t\\\n\t"
 		. join '; ', map "assert($_)", @names_of_nn;
 	}
+	$ret .= "\n#endif" if $static_inline;
+	$ret .= "\n#endif" if $binarycompat;
 	$ret .= @attrs ? "\n\n" : "\n";
 
 	print $pr $ret;
@@ -228,21 +233,21 @@ my ($embed, $core, $ext, $api) = setup_embed();
 END_EXTERN_C
 EOF
 
-    read_only_bottom_close_and_rename($pr);
+    read_only_bottom_close_and_rename($pr) if ! $error_count;
 }
 
-warn "$unflagged_pointers pointer arguments to clean up\n" if $unflagged_pointers;
+die_at_end "$unflagged_pointers pointer arguments to clean up\n" if $unflagged_pointers;
 
 sub readvars {
     my ($file, $pre) = @_;
     local (*FILE, $_);
     my %seen;
-    open(FILE, "< $file")
+    open(FILE, '<', $file)
 	or die "embed.pl: Can't open $file: $!\n";
     while (<FILE>) {
 	s/[ \t]*#.*//;		# Delete comments.
 	if (/PERLVARA?I?C?\($pre,\s*(\w+)/) {
-	    warn "duplicate symbol $1 while processing $file line $.\n"
+	    die_at_end "duplicate symbol $1 while processing $file line $.\n"
 		if $seen{$1}++;
 	}
     }
@@ -300,7 +305,9 @@ sub embed_h {
 	unless ($flags =~ /[om]/) {
 	    my $args = scalar @args;
 	    if ($flags =~ /n/) {
-		$ret = hide($func, full_name($func, $flags));
+		my $full_name = full_name($func, $flags);
+		next if $full_name eq $func;	# Don't output a no-op.
+		$ret = hide($func, $full_name);
 	    }
 	    elsif ($args and $args[$args-1] =~ /\.\.\./) {
 		if ($flags =~ /p/) {
@@ -317,8 +324,17 @@ sub embed_h {
 		$ret .=  "\t" x ($t < 4 ? 4 - $t : 1);
 		$ret .= full_name($func, $flags) . "(aTHX";
 		$ret .= "_ " if $alist;
-		$ret .= $alist . ")\n";
+                $ret .= $alist;
+                if ($flags =~ /W/) {
+                    if ($alist) {
+                        $ret .= " _aDEPTH";
+                    } else {
+                        die "Can't use W without other args (currently)";
+                    }
+                }
+                $ret .= ")\n";
 	    }
+	    $ret = "#ifndef NO_MATHOMS\n$ret#endif\n" if $flags =~ /b/;
 	}
 	$lines .= $ret;
     }
@@ -423,7 +439,7 @@ print $em <<'END';
 #endif
 END
 
-read_only_bottom_close_and_rename($em);
+read_only_bottom_close_and_rename($em) if ! $error_count;
 
 $em = open_print_header('embedvar.h');
 
@@ -476,9 +492,11 @@ END
 
 for $sym (@globvar) {
     print $em "#ifdef OS2\n" if $sym eq 'sh_path';
+    print $em "#ifdef __VMS\n" if $sym eq 'perllib_sep';
     print $em multon($sym,   'G','my_vars->');
     print $em multon("G$sym",'', 'my_vars->');
     print $em "#endif\n" if $sym eq 'sh_path';
+    print $em "#endif\n" if $sym eq 'perllib_sep';
 }
 
 print $em <<'END';
@@ -486,7 +504,7 @@ print $em <<'END';
 #endif /* PERL_GLOBAL_STRUCT */
 END
 
-read_only_bottom_close_and_rename($em);
+read_only_bottom_close_and_rename($em) if ! $error_count;
 
 my $capih = open_print_header('perlapi.h');
 
@@ -589,7 +607,7 @@ print $capih <<'EOT';
 #endif /* __perlapi_h__ */
 EOT
 
-read_only_bottom_close_and_rename($capih);
+read_only_bottom_close_and_rename($capih) if ! $error_count;
 
 my $capi = open_print_header('perlapi.c', <<'EOQ');
  *
@@ -638,6 +656,8 @@ END_EXTERN_C
 #endif /* MULTIPLICITY && PERL_GLOBAL_STRUCT */
 EOT
 
-read_only_bottom_close_and_rename($capi);
+read_only_bottom_close_and_rename($capi) if ! $error_count;
+
+die "$error_count errors found" if $error_count;
 
 # ex: set ts=8 sts=4 sw=4 noet:

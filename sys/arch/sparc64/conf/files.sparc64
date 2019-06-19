@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.151 2018/02/19 09:18:50 mpi Exp $
+#	$OpenBSD: files.sparc64,v 1.152 2019/03/24 16:48:37 visa Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -337,7 +337,7 @@ file	arch/sparc64/sparc64/sys_machdep.c
 file	arch/sparc64/sparc64/trap.c
 file	arch/sparc64/sparc64/vm_machdep.c
 
-file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
+file	arch/sparc64/sparc64/db_interface.c	ddb
 file	arch/sparc64/sparc64/db_trace.c		ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
 

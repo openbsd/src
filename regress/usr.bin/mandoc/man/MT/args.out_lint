@@ -1,5 +1,5 @@
-mandoc: args.in:22:11: ERROR: skipping excess arguments: MT ... second
-mandoc: args.in:27:11: ERROR: skipping excess arguments: MT ... second
-mandoc: args.in:13:2: WARNING: empty block: MT
-mandoc: args.in:17:2: WARNING: missing resource identifier, using "": MT
-mandoc: args.in:27:2: WARNING: empty block: MT
+mandoc: args.in:28:11: ERROR: skipping excess arguments: MT ... second
+mandoc: args.in:33:11: ERROR: skipping excess arguments: MT ... second
+mandoc: args.in:19:2: WARNING: empty block: MT
+mandoc: args.in:23:2: WARNING: missing resource identifier, using "": MT
+mandoc: args.in:33:2: WARNING: empty block: MT

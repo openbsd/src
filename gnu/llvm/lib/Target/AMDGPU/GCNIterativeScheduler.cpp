@@ -1,4 +1,4 @@
-//===--------------------- GCNIterativeScheduler.cpp - --------------------===//
+//===- GCNIterativeScheduler.cpp ------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,21 +6,42 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-/// \file
-//
-//===----------------------------------------------------------------------===//
 
 #include "GCNIterativeScheduler.h"
+#include "AMDGPUSubtarget.h"
+#include "GCNRegPressure.h"
 #include "GCNSchedStrategy.h"
 #include "SIMachineFunctionInfo.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/LiveIntervals.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/RegisterPressure.h"
+#include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/Config/llvm-config.h"
+#include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <cassert>
+#include <iterator>
+#include <limits>
+#include <memory>
+#include <type_traits>
+#include <vector>
 
 using namespace llvm;
 
 #define DEBUG_TYPE "machine-scheduler"
 
 namespace llvm {
-  std::vector<const SUnit*> makeMinRegSchedule(ArrayRef<const SUnit*> TopRoots,
+
+std::vector<const SUnit *> makeMinRegSchedule(ArrayRef<const SUnit *> TopRoots,
+                                              const ScheduleDAG &DAG);
+
+  std::vector<const SUnit*> makeGCNILPScheduler(ArrayRef<const SUnit*> BotRoots,
     const ScheduleDAG &DAG);
 }
 
@@ -44,19 +65,19 @@ static void printRegion(raw_ostream &OS,
                         unsigned MaxInstNum =
                           std::numeric_limits<unsigned>::max()) {
   auto BB = Begin->getParent();
-  OS << BB->getParent()->getName() << ":BB#" << BB->getNumber()
-     << ' ' << BB->getName() << ":\n";
+  OS << BB->getParent()->getName() << ":" << printMBBReference(*BB) << ' '
+     << BB->getName() << ":\n";
   auto I = Begin;
   MaxInstNum = std::max(MaxInstNum, 1u);
   for (; I != End && MaxInstNum; ++I, --MaxInstNum) {
-    if (!I->isDebugValue() && LIS)
+    if (!I->isDebugInstr() && LIS)
       OS << LIS->getInstructionIndex(*I);
     OS << '\t' << *I;
   }
   if (I != End) {
     OS << "\t...\n";
     I = std::prev(End);
-    if (!I->isDebugValue() && LIS)
+    if (!I->isDebugInstr() && LIS)
       OS << LIS->getInstructionIndex(*I);
     OS << '\t' << *I;
   }
@@ -87,7 +108,7 @@ static void printLivenessInfo(raw_ostream &OS,
 
 LLVM_DUMP_METHOD
 void GCNIterativeScheduler::printRegions(raw_ostream &OS) const {
-  const auto &ST = MF.getSubtarget<SISubtarget>();
+  const auto &ST = MF.getSubtarget<GCNSubtarget>();
   for (const auto R : Regions) {
     OS << "Region to schedule ";
     printRegion(OS, R->Begin, R->End, LIS, 1);
@@ -111,19 +132,20 @@ LLVM_DUMP_METHOD
 void GCNIterativeScheduler::printSchedRP(raw_ostream &OS,
                                          const GCNRegPressure &Before,
                                          const GCNRegPressure &After) const {
-  const auto &ST = MF.getSubtarget<SISubtarget>();
+  const auto &ST = MF.getSubtarget<GCNSubtarget>();
   OS << "RP before: ";
   Before.print(OS, &ST);
   OS << "RP after:  ";
   After.print(OS, &ST);
 }
-
 #endif
 
 // DAG builder helper
 class GCNIterativeScheduler::BuildDAG {
   GCNIterativeScheduler &Sch;
-  SmallVector<SUnit*, 8> TopRoots;
+  SmallVector<SUnit *, 8> TopRoots;
+
+  SmallVector<SUnit*, 8> BotRoots;
 public:
   BuildDAG(const Region &R, GCNIterativeScheduler &_Sch)
     : Sch(_Sch) {
@@ -134,16 +156,19 @@ public:
     Sch.buildSchedGraph(Sch.AA, nullptr, nullptr, nullptr,
                         /*TrackLaneMask*/true);
     Sch.Topo.InitDAGTopologicalSorting();
-
-    SmallVector<SUnit*, 8> BotRoots;
     Sch.findRootsAndBiasEdges(TopRoots, BotRoots);
   }
+
   ~BuildDAG() {
     Sch.BaseClass::exitRegion();
     Sch.BaseClass::finishBlock();
   }
-  ArrayRef<const SUnit*> getTopRoots() const {
+
+  ArrayRef<const SUnit *> getTopRoots() const {
     return TopRoots;
+  }
+  ArrayRef<SUnit*> getBottomRoots() const {
+    return BotRoots;
   }
 };
 
@@ -152,6 +177,7 @@ class GCNIterativeScheduler::OverrideLegacyStrategy {
   Region &Rgn;
   std::unique_ptr<MachineSchedStrategy> SaveSchedImpl;
   GCNRegPressure SaveMaxRP;
+
 public:
   OverrideLegacyStrategy(Region &R,
                          MachineSchedStrategy &OverrideStrategy,
@@ -165,16 +191,18 @@ public:
     Sch.BaseClass::startBlock(BB);
     Sch.BaseClass::enterRegion(BB, R.Begin, R.End, R.NumRegionInstrs);
   }
+
   ~OverrideLegacyStrategy() {
     Sch.BaseClass::exitRegion();
     Sch.BaseClass::finishBlock();
     Sch.SchedImpl.release();
     Sch.SchedImpl = std::move(SaveSchedImpl);
   }
+
   void schedule() {
     assert(Sch.RegionBegin == Rgn.Begin && Sch.RegionEnd == Rgn.End);
-    DEBUG(dbgs() << "\nScheduling ";
-      printRegion(dbgs(), Rgn.Begin, Rgn.End, Sch.LIS, 2));
+    LLVM_DEBUG(dbgs() << "\nScheduling ";
+               printRegion(dbgs(), Rgn.Begin, Rgn.End, Sch.LIS, 2));
     Sch.BaseClass::schedule();
 
     // Unfortunatelly placeDebugValues incorrectly modifies RegionEnd, restore
@@ -183,6 +211,7 @@ public:
     Rgn.Begin = Sch.RegionBegin;
     Rgn.MaxPressure.clear();
   }
+
   void restoreOrder() {
     assert(Sch.RegionBegin == Rgn.Begin && Sch.RegionEnd == Rgn.End);
     // DAG SUnits are stored using original region's order
@@ -192,6 +221,7 @@ public:
 };
 
 namespace {
+
 // just a stub to make base class happy
 class SchedStrategyStub : public MachineSchedStrategy {
 public:
@@ -203,7 +233,8 @@ public:
   void releaseTopNode(SUnit *SU) override {}
   void releaseBottomNode(SUnit *SU) override {}
 };
-} // namespace
+
+} // end anonymous namespace
 
 GCNIterativeScheduler::GCNIterativeScheduler(MachineSchedContext *C,
                                              StrategyKind S)
@@ -281,14 +312,13 @@ void GCNIterativeScheduler::enterRegion(MachineBasicBlock *BB, // overriden
 
 void GCNIterativeScheduler::schedule() { // overriden
   // do nothing
-  DEBUG(
-    printLivenessInfo(dbgs(), RegionBegin, RegionEnd, LIS);
-    if (!Regions.empty() && Regions.back()->Begin == RegionBegin) {
-      dbgs() << "Max RP: ";
-      Regions.back()->MaxPressure.print(dbgs(), &MF.getSubtarget<SISubtarget>());
-    }
-    dbgs() << '\n';
-  );
+  LLVM_DEBUG(printLivenessInfo(dbgs(), RegionBegin, RegionEnd, LIS);
+             if (!Regions.empty() && Regions.back()->Begin == RegionBegin) {
+               dbgs() << "Max RP: ";
+               Regions.back()->MaxPressure.print(
+                   dbgs(), &MF.getSubtarget<GCNSubtarget>());
+             } dbgs()
+             << '\n';);
 }
 
 void GCNIterativeScheduler::finalizeSchedule() { // overriden
@@ -298,6 +328,7 @@ void GCNIterativeScheduler::finalizeSchedule() { // overriden
   case SCHEDULE_MINREGONLY: scheduleMinReg(); break;
   case SCHEDULE_MINREGFORCED: scheduleMinReg(true); break;
   case SCHEDULE_LEGACYMAXOCCUPANCY: scheduleLegacyMaxOccupancy(); break;
+  case SCHEDULE_ILP: scheduleILP(false); break;
   }
 }
 
@@ -353,10 +384,10 @@ void GCNIterativeScheduler::scheduleRegion(Region &R, Range &&Schedule,
     if (MI != &*Top) {
       BB->remove(MI);
       BB->insert(Top, MI);
-      if (!MI->isDebugValue())
+      if (!MI->isDebugInstr())
         LIS->handleMove(*MI, true);
     }
-    if (!MI->isDebugValue()) {
+    if (!MI->isDebugInstr()) {
       // Reset read - undef flags and update them later.
       for (auto &Op : MI->operands())
         if (Op.isReg() && Op.isDef())
@@ -387,7 +418,7 @@ void GCNIterativeScheduler::scheduleRegion(Region &R, Range &&Schedule,
 
 #ifndef NDEBUG
   const auto RegionMaxRP = getRegionPressure(R);
-  const auto &ST = MF.getSubtarget<SISubtarget>();
+  const auto &ST = MF.getSubtarget<GCNSubtarget>();
 #endif
   assert((SchedMaxRP == RegionMaxRP && (MaxRP.empty() || SchedMaxRP == MaxRP))
   || (dbgs() << "Max RP mismatch!!!\n"
@@ -402,8 +433,8 @@ void GCNIterativeScheduler::scheduleRegion(Region &R, Range &&Schedule,
 
 // Sort recorded regions by pressure - highest at the front
 void GCNIterativeScheduler::sortRegionsByPressure(unsigned TargetOcc) {
-  const auto &ST = MF.getSubtarget<SISubtarget>();
-  std::sort(Regions.begin(), Regions.end(),
+  const auto &ST = MF.getSubtarget<GCNSubtarget>();
+  llvm::sort(Regions.begin(), Regions.end(),
     [&ST, TargetOcc](const Region *R1, const Region *R2) {
     return R2->MaxPressure.less(ST, R1->MaxPressure, TargetOcc);
   });
@@ -420,24 +451,24 @@ void GCNIterativeScheduler::sortRegionsByPressure(unsigned TargetOcc) {
 // BestSchedules aren't deleted on fail.
 unsigned GCNIterativeScheduler::tryMaximizeOccupancy(unsigned TargetOcc) {
   // TODO: assert Regions are sorted descending by pressure
-  const auto &ST = MF.getSubtarget<SISubtarget>();
+  const auto &ST = MF.getSubtarget<GCNSubtarget>();
   const auto Occ = Regions.front()->MaxPressure.getOccupancy(ST);
-  DEBUG(dbgs() << "Trying to to improve occupancy, target = " << TargetOcc
-               << ", current = " << Occ << '\n');
+  LLVM_DEBUG(dbgs() << "Trying to improve occupancy, target = " << TargetOcc
+                    << ", current = " << Occ << '\n');
 
   auto NewOcc = TargetOcc;
   for (auto R : Regions) {
     if (R->MaxPressure.getOccupancy(ST) >= NewOcc)
       break;
 
-    DEBUG(printRegion(dbgs(), R->Begin, R->End, LIS, 3);
-          printLivenessInfo(dbgs(), R->Begin, R->End, LIS));
+    LLVM_DEBUG(printRegion(dbgs(), R->Begin, R->End, LIS, 3);
+               printLivenessInfo(dbgs(), R->Begin, R->End, LIS));
 
     BuildDAG DAG(*R, *this);
     const auto MinSchedule = makeMinRegSchedule(DAG.getTopRoots(), *this);
     const auto MaxRP = getSchedulePressure(*R, MinSchedule);
-    DEBUG(dbgs() << "Occupancy improvement attempt:\n";
-          printSchedRP(dbgs(), R->MaxPressure, MaxRP));
+    LLVM_DEBUG(dbgs() << "Occupancy improvement attempt:\n";
+               printSchedRP(dbgs(), R->MaxPressure, MaxRP));
 
     NewOcc = std::min(NewOcc, MaxRP.getOccupancy(ST));
     if (NewOcc <= Occ)
@@ -445,15 +476,21 @@ unsigned GCNIterativeScheduler::tryMaximizeOccupancy(unsigned TargetOcc) {
 
     setBestSchedule(*R, MinSchedule, MaxRP);
   }
-  DEBUG(dbgs() << "New occupancy = " << NewOcc
-               << ", prev occupancy = " << Occ << '\n');
+  LLVM_DEBUG(dbgs() << "New occupancy = " << NewOcc
+                    << ", prev occupancy = " << Occ << '\n');
+  if (NewOcc > Occ) {
+    SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+    MFI->increaseOccupancy(MF, NewOcc);
+  }
+
   return std::max(NewOcc, Occ);
 }
 
 void GCNIterativeScheduler::scheduleLegacyMaxOccupancy(
   bool TryMaximizeOccupancy) {
-  const auto &ST = MF.getSubtarget<SISubtarget>();
-  auto TgtOcc = ST.getOccupancyWithLocalMemSize(MF);
+  const auto &ST = MF.getSubtarget<GCNSubtarget>();
+  SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+  auto TgtOcc = MFI->getMinAllowedOccupancy();
 
   sortRegionsByPressure(TgtOcc);
   auto Occ = Regions.front()->MaxPressure.getOccupancy(ST);
@@ -466,9 +503,11 @@ void GCNIterativeScheduler::scheduleLegacyMaxOccupancy(
   const int NumPasses = Occ < TgtOcc ? 2 : 1;
 
   TgtOcc = std::min(Occ, TgtOcc);
-  DEBUG(dbgs() << "Scheduling using default scheduler, "
-                  "target occupancy = " << TgtOcc << '\n');
+  LLVM_DEBUG(dbgs() << "Scheduling using default scheduler, "
+                       "target occupancy = "
+                    << TgtOcc << '\n');
   GCNMaxOccupancySchedStrategy LStrgy(Context);
+  unsigned FinalOccupancy = std::min(Occ, MFI->getOccupancy());
 
   for (int I = 0; I < NumPasses; ++I) {
     // running first pass with TargetOccupancy = 0 mimics previous scheduling
@@ -479,30 +518,33 @@ void GCNIterativeScheduler::scheduleLegacyMaxOccupancy(
 
       Ovr.schedule();
       const auto RP = getRegionPressure(*R);
-      DEBUG(printSchedRP(dbgs(), R->MaxPressure, RP));
+      LLVM_DEBUG(printSchedRP(dbgs(), R->MaxPressure, RP));
 
       if (RP.getOccupancy(ST) < TgtOcc) {
-        DEBUG(dbgs() << "Didn't fit into target occupancy O" << TgtOcc);
+        LLVM_DEBUG(dbgs() << "Didn't fit into target occupancy O" << TgtOcc);
         if (R->BestSchedule.get() &&
             R->BestSchedule->MaxPressure.getOccupancy(ST) >= TgtOcc) {
-          DEBUG(dbgs() << ", scheduling minimal register\n");
+          LLVM_DEBUG(dbgs() << ", scheduling minimal register\n");
           scheduleBest(*R);
         } else {
-          DEBUG(dbgs() << ", restoring\n");
+          LLVM_DEBUG(dbgs() << ", restoring\n");
           Ovr.restoreOrder();
           assert(R->MaxPressure.getOccupancy(ST) >= TgtOcc);
         }
       }
+      FinalOccupancy = std::min(FinalOccupancy, RP.getOccupancy(ST));
     }
   }
+  MFI->limitOccupancy(FinalOccupancy);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Minimal Register Strategy
 
 void GCNIterativeScheduler::scheduleMinReg(bool force) {
-  const auto &ST = MF.getSubtarget<SISubtarget>();
-  const auto TgtOcc = ST.getOccupancyWithLocalMemSize(MF);
+  const auto &ST = MF.getSubtarget<GCNSubtarget>();
+  const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+  const auto TgtOcc = MFI->getOccupancy();
   sortRegionsByPressure(TgtOcc);
 
   auto MaxPressure = Regions.front()->MaxPressure;
@@ -514,7 +556,7 @@ void GCNIterativeScheduler::scheduleMinReg(bool force) {
     const auto MinSchedule = makeMinRegSchedule(DAG.getTopRoots(), *this);
 
     const auto RP = getSchedulePressure(*R, MinSchedule);
-    DEBUG(if (R->MaxPressure.less(ST, RP, TgtOcc)) {
+    LLVM_DEBUG(if (R->MaxPressure.less(ST, RP, TgtOcc)) {
       dbgs() << "\nWarning: Pressure becomes worse after minreg!";
       printSchedRP(dbgs(), R->MaxPressure, RP);
     });
@@ -523,8 +565,52 @@ void GCNIterativeScheduler::scheduleMinReg(bool force) {
       break;
 
     scheduleRegion(*R, MinSchedule, RP);
-    DEBUG(printSchedResult(dbgs(), R, RP));
+    LLVM_DEBUG(printSchedResult(dbgs(), R, RP));
 
     MaxPressure = RP;
   }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// ILP scheduler port
+
+void GCNIterativeScheduler::scheduleILP(
+  bool TryMaximizeOccupancy) {
+  const auto &ST = MF.getSubtarget<GCNSubtarget>();
+  SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+  auto TgtOcc = MFI->getMinAllowedOccupancy();
+
+  sortRegionsByPressure(TgtOcc);
+  auto Occ = Regions.front()->MaxPressure.getOccupancy(ST);
+
+  if (TryMaximizeOccupancy && Occ < TgtOcc)
+    Occ = tryMaximizeOccupancy(TgtOcc);
+
+  TgtOcc = std::min(Occ, TgtOcc);
+  LLVM_DEBUG(dbgs() << "Scheduling using default scheduler, "
+                       "target occupancy = "
+                    << TgtOcc << '\n');
+
+  unsigned FinalOccupancy = std::min(Occ, MFI->getOccupancy());
+  for (auto R : Regions) {
+    BuildDAG DAG(*R, *this);
+    const auto ILPSchedule = makeGCNILPScheduler(DAG.getBottomRoots(), *this);
+
+    const auto RP = getSchedulePressure(*R, ILPSchedule);
+    LLVM_DEBUG(printSchedRP(dbgs(), R->MaxPressure, RP));
+
+    if (RP.getOccupancy(ST) < TgtOcc) {
+      LLVM_DEBUG(dbgs() << "Didn't fit into target occupancy O" << TgtOcc);
+      if (R->BestSchedule.get() &&
+        R->BestSchedule->MaxPressure.getOccupancy(ST) >= TgtOcc) {
+        LLVM_DEBUG(dbgs() << ", scheduling minimal register\n");
+        scheduleBest(*R);
+      }
+    } else {
+      scheduleRegion(*R, ILPSchedule, RP);
+      LLVM_DEBUG(printSchedResult(dbgs(), R, RP));
+      FinalOccupancy = std::min(FinalOccupancy, RP.getOccupancy(ST));
+    }
+  }
+  MFI->limitOccupancy(FinalOccupancy);
 }

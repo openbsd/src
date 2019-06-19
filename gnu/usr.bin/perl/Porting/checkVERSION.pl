@@ -24,7 +24,7 @@ sub parse_file {
 
     my $result;
 
-    open(FH,$parsefile) or warn "Could not open '$parsefile': $!";
+    open(FH,'<',$parsefile) or warn "Could not open '$parsefile': $!";
 
     my $inpod = 0;
     while (<FH>) {

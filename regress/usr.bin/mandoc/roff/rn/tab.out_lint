@@ -1,0 +1,2 @@
+mandoc: tab.in:19:2: ERROR: skipping unknown macro: .test2
+mandoc: tab.in:25:2: ERROR: skipping unknown macro: .test1

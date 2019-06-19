@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.90 2018/01/13 15:56:02 millert Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.93 2018/12/23 10:46:51 natano Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -315,7 +315,7 @@ ffs_write(void *v)
 			panic("ffs_write: nonsync dir write");
 		break;
 	default:
-		panic("ffs_write: type");
+		panic("ffs_write: type %d", vp->v_type);
 	}
 
 	fs = ip->i_fs;
@@ -391,7 +391,7 @@ ffs_write(void *v)
 	 * tampering.
 	 */
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0 &&
-	    (vp->v_mount->mnt_flag & MNT_NOPERM) == 0)
+	    !vnoperm(vp))
 		DIP_ASSIGN(ip, mode, DIP(ip, mode) & ~(ISUID | ISGID));
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
@@ -435,11 +435,10 @@ ffs_fsync(void *v)
 		skipmeta = 1;
 	s = splbio();
 loop:
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp;
-	     bp = LIST_NEXT(bp, b_vnbufs))
+	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
 		bp->b_flags &= ~B_SCANNED;
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
-		nbp = LIST_NEXT(bp, b_vnbufs);
+	}
+	LIST_FOREACH_SAFE(bp, &vp->v_dirtyblkhd, b_vnbufs, nbp) {
 		/* 
 		 * Reasons to skip this buffer: it has already been considered
 		 * on this pass, this pass is the first time through on a

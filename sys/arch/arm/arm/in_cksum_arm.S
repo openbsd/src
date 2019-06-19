@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum_arm.S,v 1.5 2015/06/08 14:22:05 jsg Exp $	*/
+/*	$OpenBSD: in_cksum_arm.S,v 1.7 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: in_cksum_arm.S,v 1.3 2003/11/26 10:31:53 rearnsha Exp $ */
 
 /*
@@ -40,8 +40,9 @@
  * Hand-optimised in_cksum() and in4_cksum() implementations for ARM/Xscale
  */
 
-#include <machine/asm.h>
 #include "assym.h"
+
+#include <machine/asm.h>
 
 .syntax unified
 
@@ -111,9 +112,6 @@ ENTRY(in4_cksum)
 	cmp	r1, #0x00
 	beq	.Lin4_cksum_skip_entry
 
-#ifdef __XSCALE__
-	pld	[r6, #(IP_SRC)]
-#endif
 	add	r4, r6, #(IP_SRC)
 	ands	r4, r4, #0x03
 	add	r8, r1, r3		/* sum = nxt + len */
@@ -141,16 +139,6 @@ ENTRY(in4_cksum)
 	b	.Lin4_cksum_add_ips
 
 	/* 0x02: Data 16-bit aligned */
-#ifdef __XSCALE__
-	ldrh	r5, [r6, #(IP_SRC)]	/* BE:r5 = ..01  LE:r5 = ..10 */
-	ldrh	r7, [r6, #(IP_DST + 2)]	/* BE:r7 = ..67  LE:r7 = ..76 */
-	ldr	r4, [r6, #(IP_SRC + 2)]	/* BE:r4 = 2345  LE:r4 = 5432 */
-	orr	r5, r7, r5, lsl #16	/* BE:r5 = 0167  LE:r5 = 1076 */
-	b	.Lin4_cksum_add_ips
-	nop
-	nop
-	nop
-#else
 	ldr	r4, [r6, #(IP_SRC - 2)]	/* r4 = 10xx */
 	ldr	r7, [r6, #(IP_DST - 2)]	/* r7 = xx76 */
 	ldr	r5, [r6, #(IP_SRC + 2)]	/* r5 = 5432 */
@@ -159,7 +147,6 @@ ENTRY(in4_cksum)
 	b	.Lin4_cksum_add_ips
 	nop
 	nop
-#endif
 
 	/* 0x03: Data 8-bit aligned */
 	ldrb	r4, [r6, #(IP_SRC)]	/* r4 = ...0 */
@@ -220,9 +207,6 @@ ENTRY(in4_cksum)
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(L_cksumdata)
-#ifdef __XSCALE__
-	pld	[r0]			/* Pre-fetch the start of the buffer */
-#endif
 	mov	r2, #0
 
 	/* We first have to word-align the buffer.  */
@@ -247,63 +231,6 @@ ASENTRY_NP(L_cksumdata)
 
 	/* Buffer is now word aligned */
 .Lcksumdata_wordaligned:
-#ifdef __XSCALE__
-	cmp	r1, #0x04		/* Less than 4 bytes left? */
-	blt	.Lcksumdata_endgame	/* Yup */
-
-	/* Now quad-align, if necessary */
-	ands	r7, r0, #0x04
-	ldrne	r7, [r0], #0x04
-	subne	r1, r1, #0x04
-	subs	r1, r1, #0x40
-	blt	.Lcksumdata_bigloop_end	/* Note: C flag clear if branch taken */
-
-	/*
-	 * Buffer is now quad aligned. Sum 64 bytes at a time.
-	 * Note: First ldrd is hoisted above the loop, together with
-	 * setting r6 to zero to avoid stalling for results in the
-	 * loop. (r7 is live, from above).
-	 */
-	ldrd	r4, [r0], #0x08
-	mov	r6, #0x00
-.Lcksumdata_bigloop:
-	pld	[r0, #0x18]
-	adds	r2, r2, r6
-	adcs	r2, r2, r7
-	ldrd	r6, [r0], #0x08
-	adcs	r2, r2, r4
-	adcs	r2, r2, r5
-	ldrd	r4, [r0], #0x08
-	adcs	r2, r2, r6
-	adcs	r2, r2, r7
-	ldrd	r6, [r0], #0x08
-	adcs	r2, r2, r4
-	adcs	r2, r2, r5
-	ldrd	r4, [r0], #0x08
-	adcs	r2, r2, r6
-	adcs	r2, r2, r7
-	pld	[r0, #0x18]
-	ldrd	r6, [r0], #0x08
-	adcs	r2, r2, r4
-	adcs	r2, r2, r5
-	ldrd	r4, [r0], #0x08
-	adcs	r2, r2, r6
-	adcs	r2, r2, r7
-	ldrd	r6, [r0], #0x08
-	adcs	r2, r2, r4
-	adcs	r2, r2, r5
-	adc	r2, r2, #0x00
-	subs	r1, r1, #0x40
-	ldrged	r4, [r0], #0x08
-	bge	.Lcksumdata_bigloop
-
-	adds	r2, r2, r6		/* r6/r7 still need summing */
-.Lcksumdata_bigloop_end:
-	adcs	r2, r2, r7
-	adc	r2, r2, #0x00
-
-#else	/* !__XSCALE__ */
-
 	subs	r1, r1, #0x40
 	blt	.Lcksumdata_bigloop_end
 
@@ -332,28 +259,11 @@ ASENTRY_NP(L_cksumdata)
 	subs	r1, r1, #0x40
 	bge	.Lcksumdata_bigloop
 .Lcksumdata_bigloop_end:
-#endif
 
 	adds	r1, r1, #0x40
 	moveq	pc, lr
 	cmp	r1, #0x20
 
-#ifdef __XSCALE__
-	ldrged	r4, [r0], #0x08		/* Avoid stalling pld and result */
-	blt	.Lcksumdata_less_than_32
-	pld	[r0, #0x18]
-	ldrd	r6, [r0], #0x08
-	adds	r2, r2, r4
-	adcs	r2, r2, r5
-	ldrd	r4, [r0], #0x08
-	adcs	r2, r2, r6
-	adcs	r2, r2, r7
-	ldrd	r6, [r0], #0x08
-	adcs	r2, r2, r4
-	adcs	r2, r2, r5
-	adcs	r2, r2, r6		/* XXX: Unavoidable result stall */
-	adcs	r2, r2, r7
-#else
 	blt	.Lcksumdata_less_than_32
 	ldmia	r0!, {r3, r4, r5, r6}
 	adds	r2, r2, r3
@@ -365,7 +275,6 @@ ASENTRY_NP(L_cksumdata)
 	adcs	r2, r2, r4
 	adcs	r2, r2, r5
 	adcs	r2, r2, r7
-#endif
 	adc	r2, r2, #0x00
 	subs	r1, r1, #0x20
 	moveq	pc, lr

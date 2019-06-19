@@ -2,11 +2,10 @@ package Pod::Html;
 use strict;
 require Exporter;
 
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-$VERSION = 1.2201;
-@ISA = qw(Exporter);
-@EXPORT = qw(pod2html htmlify);
-@EXPORT_OK = qw(anchorify);
+our $VERSION = 1.24;
+our @ISA = qw(Exporter);
+our @EXPORT = qw(pod2html htmlify);
+our @EXPORT_OK = qw(anchorify relativize_url);
 
 use Carp;
 use Config;
@@ -16,6 +15,7 @@ use File::Spec;
 use File::Spec::Unix;
 use Getopt::Long;
 use Pod::Simple::Search;
+use Pod::Simple::SimpleTree ();
 use locale; # make \w work right in non-ASCII lands
 
 =head1 NAME
@@ -223,6 +223,19 @@ This program is distributed under the Artistic License.
 
 =cut
 
+# This sub duplicates the guts of Pod::Simple::FromTree.  We could have
+# used that module, except that it would have been a non-core dependency.
+sub feed_tree_to_parser {
+    my($parser, $tree) = @_;
+    if(ref($tree) eq "") {
+	$parser->_handle_text($tree);
+    } elsif(!($tree->[0] eq "X" && $parser->nix_X_codes)) {
+	$parser->_handle_element_start($tree->[0], $tree->[1]);
+	feed_tree_to_parser($parser, $_) foreach @{$tree}[2..$#$tree];
+	$parser->_handle_element_end($tree->[0]);
+    }
+}
+
 my $Cachedir; 
 my $Dircache;
 my($Htmlroot, $Htmldir, $Htmlfile, $Htmlfileurl);
@@ -274,7 +287,7 @@ sub init_globals {
     $Doindex = 1;               # non-zero if we should generate an index
     $Backlink = 0;              # no backlinks added by default
     $Header = 0;                # produce block header/footer
-    $Title = '';                # title to give the pod(s)
+    $Title = undef;             # title to give the pod(s)
 }
 
 sub pod2html {
@@ -340,24 +353,59 @@ sub pod2html {
         close $cache or die "error closing $Dircache: $!";
     }
 
-    # set options for the parser
-    my $parser = Pod::Simple::XHTML::LocalPodLinks->new();
+    my $input;
+    unless (@ARGV && $ARGV[0]) {
+        if ($Podfile and $Podfile ne '-') {
+            $input = $Podfile;
+        } else {
+            $input = '-'; # XXX: make a test case for this
+        }
+    } else {
+        $Podfile = $ARGV[0];
+        $input = *ARGV;
+    }
+
+    # set options for input parser
+    my $parser = Pod::Simple::SimpleTree->new;
+    $parser->codes_in_verbatim(0);
+    $parser->accept_targets(qw(html HTML));
+    $parser->no_errata_section(!$Poderrors); # note the inverse
+
+    warn "Converting input file $Podfile\n" if $Verbose;
+    my $podtree = $parser->parse_file($input)->root;
+
+    unless(defined $Title) {
+	if($podtree->[0] eq "Document" && ref($podtree->[2]) eq "ARRAY" &&
+		$podtree->[2]->[0] eq "head1" && @{$podtree->[2]} == 3 &&
+		ref($podtree->[2]->[2]) eq "" && $podtree->[2]->[2] eq "NAME" &&
+		ref($podtree->[3]) eq "ARRAY" && $podtree->[3]->[0] eq "Para" &&
+		@{$podtree->[3]} >= 3 &&
+		!(grep { ref($_) ne "" }
+		    @{$podtree->[3]}[2..$#{$podtree->[3]}]) &&
+		(@$podtree == 4 ||
+		    (ref($podtree->[4]) eq "ARRAY" &&
+			$podtree->[4]->[0] eq "head1"))) {
+	    $Title = join("", @{$podtree->[3]}[2..$#{$podtree->[3]}]);
+	}
+    }
+
+    $Title //= "";
+    $Title = html_escape($Title);
+
+    # set options for the HTML generator
+    $parser = Pod::Simple::XHTML::LocalPodLinks->new();
     $parser->codes_in_verbatim(0);
     $parser->anchor_items(1); # the old Pod::Html always did
     $parser->backlink($Backlink); # linkify =head1 directives
+    $parser->force_title($Title);
     $parser->htmldir($Htmldir);
     $parser->htmlfileurl($Htmlfileurl);
     $parser->htmlroot($Htmlroot);
     $parser->index($Doindex);
-    $parser->no_errata_section(!$Poderrors); # note the inverse
     $parser->output_string(\my $output); # written to file later
     $parser->pages(\%Pages);
     $parser->quiet($Quiet);
     $parser->verbose($Verbose);
-
-    # XXX: implement default title generator in pod::simple::xhtml
-    # copy the way the old Pod::Html did it
-    $Title = html_escape($Title);
 
     # We need to add this ourselves because we use our own header, not
     # ::XHTML's header. We need to set $parser->backlink to linkify
@@ -405,20 +453,7 @@ $block
 </html>
 HTMLFOOT
 
-    my $input;
-    unless (@ARGV && $ARGV[0]) {
-        if ($Podfile and $Podfile ne '-') {
-            $input = $Podfile;
-        } else {
-            $input = '-'; # XXX: make a test case for this
-        }
-    } else {
-        $Podfile = $ARGV[0];
-        $input = *ARGV;
-    }
-
-    warn "Converting input file $Podfile\n" if $Verbose;
-    $parser->parse_file($input);
+    feed_tree_to_parser($parser, $podtree);
 
     # Write output to file
     $Htmlfile = "-" unless $Htmlfile; # stdout
@@ -486,7 +521,7 @@ sub parse_command_line {
     my ($opt_backlink,$opt_cachedir,$opt_css,$opt_flush,$opt_header,
         $opt_help,$opt_htmldir,$opt_htmlroot,$opt_index,$opt_infile,
         $opt_outfile,$opt_poderrors,$opt_podpath,$opt_podroot,
-        $opt_quiet,$opt_recurse,$opt_title,$opt_verbose,$opt_libpods);
+        $opt_quiet,$opt_recurse,$opt_title,$opt_verbose);
 
     unshift @ARGV, split ' ', $Config{pod2html} if $Config{pod2html};
     my $result = GetOptions(
@@ -500,7 +535,6 @@ sub parse_command_line {
                        'htmlroot=s' => \$opt_htmlroot,
                        'index!'     => \$opt_index,
                        'infile=s'   => \$opt_infile,
-                       'libpods=s'  => \$opt_libpods, # deprecated
                        'outfile=s'  => \$opt_outfile,
                        'poderrors!' => \$opt_poderrors,
                        'podpath=s'  => \$opt_podpath,
@@ -516,7 +550,6 @@ sub parse_command_line {
     $opt_help = "";                     # just to make -w shut-up.
 
     @Podpath  = split(":", $opt_podpath) if defined $opt_podpath;
-    warn "--libpods is no longer supported" if defined $opt_libpods;
 
     $Backlink  =          $opt_backlink   if defined $opt_backlink;
     $Cachedir  = _unixify($opt_cachedir)  if defined $opt_cachedir;
@@ -622,26 +655,18 @@ sub html_escape {
     $rest   =~ s/</&lt;/g;
     $rest   =~ s/>/&gt;/g;
     $rest   =~ s/"/&quot;/g;
-    # &apos; is only in XHTML, not HTML4.  Be conservative
-    #$rest   =~ s/'/&apos;/g;
+    $rest =~ s/([[:^print:]])/sprintf("&#x%x;", ord($1))/aeg;
     return $rest;
 }
 
 #
 # htmlify - converts a pod section specification to a suitable section
-# specification for HTML. Note that we keep spaces and special characters
-# except ", ? (Netscape problem) and the hyphen (writer's problem...).
+# specification for HTML.  We adopt the mechanism used by the formatter
+# that we use.
 #
 sub htmlify {
     my( $heading) = @_;
-    $heading =~ s/(\s+)/ /g;
-    $heading =~ s/\s+\Z//;
-    $heading =~ s/\A\s+//;
-    # The hyphen is a disgrace to the English language.
-    # $heading =~ s/[-"?]//g;
-    $heading =~ s/["?]//g;
-    $heading = lc( $heading );
-    return $heading;
+    return Pod::Simple::XHTML->can("idify")->(undef, $heading, 1);
 }
 
 #
@@ -769,7 +794,7 @@ sub resolve_pod_page_link {
         # then $self->htmlroot eq '' (by definition of htmlfileurl) so
         # $self->htmldir needs to be prepended to link to get the absolute path
         # that will be relativized
-        $url = relativize_url(
+        $url = Pod::Html::relativize_url(
             File::Spec::Unix->catdir(Pod::Html::_unixify($self->htmldir), $url),
             $self->htmlfileurl # already unixified
         );
@@ -777,6 +802,8 @@ sub resolve_pod_page_link {
 
     return $url . ".html$section";
 }
+
+package Pod::Html;
 
 #
 # relativize_url - convert an absolute URL to one relative to a base URL.

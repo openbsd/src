@@ -43,7 +43,8 @@ void DWARFDebugAranges::generate(DWARFContext *CTX) {
     return;
 
   // Extract aranges from .debug_aranges section.
-  DataExtractor ArangesData(CTX->getARangeSection(), CTX->isLittleEndian(), 0);
+  DataExtractor ArangesData(CTX->getDWARFObj().getARangeSection(),
+                            CTX->isLittleEndian(), 0);
   extract(ArangesData);
 
   // Generate aranges from DIEs: even if .debug_aranges section is present,
@@ -79,7 +80,7 @@ void DWARFDebugAranges::appendRange(uint32_t CUOffset, uint64_t LowPC,
 void DWARFDebugAranges::construct() {
   std::multiset<uint32_t> ValidCUs;  // Maintain the set of CUs describing
                                      // a current address range.
-  std::sort(Endpoints.begin(), Endpoints.end());
+  llvm::sort(Endpoints.begin(), Endpoints.end());
   uint64_t PrevAddress = -1ULL;
   for (const auto &E : Endpoints) {
     if (PrevAddress < E.Address && !ValidCUs.empty()) {
@@ -106,8 +107,8 @@ void DWARFDebugAranges::construct() {
   assert(ValidCUs.empty());
 
   // Endpoints are not needed now.
-  std::vector<RangeEndpoint> EmptyEndpoints;
-  EmptyEndpoints.swap(Endpoints);
+  Endpoints.clear();
+  Endpoints.shrink_to_fit();
 }
 
 uint32_t DWARFDebugAranges::findAddress(uint64_t Address) const {

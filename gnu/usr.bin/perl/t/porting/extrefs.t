@@ -70,13 +70,14 @@ sub try_compile_and_link {
 	    return 0;
 	}
 
-	my $COREincdir = File::Spec->catdir(File::Spec->updir);
+	my $COREincdir =
+	    File::Spec->catdir(File::Spec->updir, File::Spec->updir);
 
 	my $ccflags = $Config{'ccflags'} . ' ' . "-I$COREincdir"
 	 . ' -DPERL_NO_INLINE_FUNCTIONS';
 
 	if ($^O eq "MSWin32") {
-	    $ccflags .= " -I../win32 -I../win32/include";
+	    $ccflags .= " -I../../win32 -I../../win32/include";
 	}
 
 	my $libs = '';

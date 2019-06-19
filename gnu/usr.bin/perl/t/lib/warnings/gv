@@ -3,11 +3,6 @@
      Can't locate package %s for @%s::ISA
 	@ISA = qw(Fred); joe()
 
-     Use of inherited AUTOLOAD for non-method %s::%.*s() is deprecated
-	sub Other::AUTOLOAD { 1 } sub Other::fred {}
-	@ISA = qw(Other) ;
-	fred() ;
-
      $# is no longer supported
      $* is no longer supported
 
@@ -37,32 +32,14 @@ EXPECT
 Undefined subroutine &main::joe called at - line 3.
 ########
 # gv.c
-sub Other::AUTOLOAD { 1 } sub Other::fred {}
-@ISA = qw(Other) ;
-use warnings 'deprecated' ;
-fred() ;
-EXPECT
-Use of inherited AUTOLOAD for non-method main::fred() is deprecated at - line 5.
-########
-# gv.c
-use utf8;
-use open qw( :utf8 :std );
-sub Oᕞʀ::AUTOLOAD { 1 } sub Oᕞʀ::fᕃƌ {}
-@ISA = qw(Oᕞʀ) ;
-use warnings 'deprecated' ;
-fᕃƌ() ;
-EXPECT
-Use of inherited AUTOLOAD for non-method main::fᕃƌ() is deprecated at - line 7.
-########
-# gv.c
 $a = ${"#"};
 $a = ${"*"};
 no warnings 'deprecated' ;
 $a = ${"#"};
 $a = ${"*"};
 EXPECT
-$# is no longer supported at - line 2.
-$* is no longer supported at - line 3.
+$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 2.
+$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 3.
 ########
 # gv.c
 $a = ${#};
@@ -71,8 +48,8 @@ no warnings 'deprecated' ;
 $a = ${#};
 $a = ${*};
 EXPECT
-$# is no longer supported at - line 2.
-$* is no longer supported at - line 3.
+$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 2.
+$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 3.
 ########
 # gv.c
 $a = $#;
@@ -89,12 +66,12 @@ $* = $a;
 $a = \$#;
 $a = \$*;
 EXPECT
-$# is no longer supported at - line 2.
-$* is no longer supported at - line 3.
-$# is no longer supported at - line 4.
-$* is no longer supported at - line 5.
-$# is no longer supported at - line 6.
-$* is no longer supported at - line 7.
+$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 2.
+$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 3.
+$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 4.
+$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 5.
+$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 6.
+$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 7.
 ########
 # gv.c
 @a = @#;
@@ -102,8 +79,8 @@ $* is no longer supported at - line 7.
 $a = $#;
 $a = $*;
 EXPECT
-$# is no longer supported at - line 4.
-$* is no longer supported at - line 5.
+$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 4.
+$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 5.
 ########
 # gv.c
 $a = $#;
@@ -111,8 +88,14 @@ $a = $*;
 @a = @#;
 @a = @*;
 EXPECT
-$# is no longer supported at - line 2.
-$* is no longer supported at - line 3.
+$# is no longer supported. Its use will be fatal in Perl 5.30 at - line 2.
+$* is no longer supported. Its use will be fatal in Perl 5.30 at - line 3.
+########
+# gv.c
+$a = ${^ENCODING};
+$a = ${^E_NCODING};
+${^E_NCODING} = 1; # We pretend this variable never existed.
+EXPECT
 ########
 # gv.c
 use warnings 'syntax' ;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.12 2017/03/27 00:28:04 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.16 2018/09/10 10:36:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -62,15 +62,12 @@ struct control_sock {
 	int		 cs_fd;
 	int		 cs_restricted;
 	void		*cs_env;
+	uid_t		 cs_uid;
+	gid_t		 cs_gid;
 
 	TAILQ_ENTRY(control_sock) cs_entry;
 };
 TAILQ_HEAD(control_socks, control_sock);
-
-struct {
-	struct event	 ev;
-	int		 fd;
-} control_state;
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
@@ -96,6 +93,7 @@ enum privsep_procid {
 #define CONFIG_RELOAD		0x00
 #define CONFIG_VMS		0x01
 #define CONFIG_SWITCHES		0x02
+#define CONFIG_USERS		0x04
 #define CONFIG_ALL		0xff
 
 struct privsep_pipes {
@@ -158,7 +156,7 @@ struct privsep_fd {
 #define PROC_MAX_INSTANCES	32
 
 /* proc.c */
-void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int,
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
 	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
 void	 proc_connect(struct privsep *ps);
@@ -192,8 +190,8 @@ int	 proc_flush_imsg(struct privsep *, enum privsep_procid, int);
 /* control.c */
 void	 control(struct privsep *, struct privsep_proc *);
 int	 control_init(struct privsep *, struct control_sock *);
+int	 control_reset(struct control_sock *);
 int	 control_listen(struct control_sock *);
-void	 control_cleanup(struct control_sock *);
 
 /* log.c */
 void	log_init(int, int);

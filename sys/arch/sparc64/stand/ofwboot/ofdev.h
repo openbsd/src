@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.h,v 1.5 2014/11/26 20:30:41 stsp Exp $	*/
+/*	$OpenBSD: ofdev.h,v 1.6 2018/12/31 11:44:57 claudio Exp $	*/
 /*	$NetBSD: ofdev.h,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -65,5 +65,8 @@ extern int floppyboot;
 
 int load_disklabel(struct of_dev *, struct disklabel *);
 int strategy(void *, int, daddr32_t, size_t, void *, size_t *);
+
+int net_open(struct of_dev *);
+void net_close(struct of_dev *);
 
 #endif

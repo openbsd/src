@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostnamadr_async.c,v 1.43 2017/02/23 17:04:02 eric Exp $	*/
+/*	$OpenBSD: gethostnamadr_async.c,v 1.44 2018/04/28 15:16:49 schwarze Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -44,6 +44,13 @@ struct hostent_ext {
 	char		*pos;
 };
 
+struct netent_ext {
+	struct netent	 n;
+	char		*aliases[MAXALIASES + 1];
+	char		*end;
+	char		*pos;
+};
+
 static int gethostnamadr_async_run(struct asr_query *, struct asr_result *);
 static struct hostent_ext *hostent_alloc(int);
 static int hostent_set_cname(struct hostent_ext *, const char *, int);
@@ -53,6 +60,7 @@ static struct hostent_ext *hostent_from_addr(int, const char *, const char *);
 static struct hostent_ext *hostent_file_match(FILE *, int, int, const char *,
     int);
 static struct hostent_ext *hostent_from_packet(int, int, char *, size_t);
+static void netent_from_hostent(struct asr_result *ar);
 
 struct asr_query *
 gethostbyname_async(const char *name, void *asr)
@@ -344,9 +352,13 @@ gethostnamadr_async_run(struct asr_query *as, struct asr_result *ar)
 		break;
 
 	case ASR_STATE_HALT:
-		if (ar->ar_h_errno)
+		if (ar->ar_h_errno == NETDB_SUCCESS &&
+		    as->as_flags & ASYNC_GETNET)
+			netent_from_hostent(ar);
+		if (ar->ar_h_errno) {
 			ar->ar_hostent = NULL;
-		else
+			ar->ar_netent = NULL;
+		} else
 			ar->ar_errno = 0;
 		return (ASYNC_DONE);
 
@@ -606,4 +618,56 @@ hostent_add_addr(struct hostent_ext *h, const void *addr, size_t size)
 	memmove(h->pos, addr, size);
 	h->pos += size;
 	return (0);
+}
+
+static void
+netent_from_hostent(struct asr_result *ar)
+{
+	struct in_addr		 *addr;
+	struct netent_ext	 *n;
+	struct hostent_ext	 *h;
+	char			**na, **ha;
+	size_t			  sz;
+
+	/* Allocate and initialize the output. */
+	if ((n = calloc(1, sizeof(*n) + 1024)) == NULL) {
+		ar->ar_h_errno = NETDB_INTERNAL;
+		ar->ar_errno = errno;
+		goto out;
+	}
+	n->pos = (char *)(n) + sizeof(*n);
+	n->end = n->pos + 1024;
+	n->n.n_name = n->pos;
+	n->n.n_aliases = n->aliases;
+
+	/* Copy the fixed-size data. */
+	h = (struct hostent_ext *)ar->ar_hostent;
+	addr = (struct in_addr *)h->h.h_addr;
+	n->n.n_net = ntohl(addr->s_addr);
+	n->n.n_addrtype = h->h.h_addrtype;
+
+	/* Copy the network name. */
+	sz = strlen(h->h.h_name) + 1;
+	memcpy(n->pos, h->h.h_name, sz);
+	n->pos += sz;
+
+	/*
+	 * Copy the aliases.
+	 * No overflow check is needed because we are merely copying
+	 * a part of the data from a structure of the same size.
+	 */
+	na = n->aliases;
+	for (ha = h->aliases; *ha != NULL; ha++) {
+		sz = strlen(*ha) + 1;
+		memcpy(n->pos, *ha, sz);
+		*na++ = n->pos;
+		n->pos += sz;
+	}
+	*na = NULL;
+
+	/* Handle the return values. */
+	ar->ar_netent = &n->n;
+out:
+	free(ar->ar_hostent);
+	ar->ar_hostent = NULL;
 }

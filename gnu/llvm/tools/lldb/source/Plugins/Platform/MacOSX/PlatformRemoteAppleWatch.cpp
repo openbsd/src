@@ -17,7 +17,6 @@
 #include "PlatformRemoteAppleWatch.h"
 
 #include "lldb/Breakpoint/BreakpointLocation.h"
-#include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/ModuleSpec.h"
@@ -25,6 +24,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/FileSpec.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/Status.h"
@@ -94,8 +94,8 @@ PlatformSP PlatformRemoteAppleWatch::CreateInstance(bool force,
 
 #if defined(__APPLE__)
       // Only accept "unknown" for the vendor if the host is Apple and
-      // it "unknown" wasn't specified (it was just returned because it
-      // was NOT specified)
+      // "unknown" wasn't specified (it was just returned because it was NOT
+      // specified)
       case llvm::Triple::UnknownArch:
         create = !arch->TripleVendorWasSpecified();
         break;
@@ -123,8 +123,8 @@ PlatformSP PlatformRemoteAppleWatch::CreateInstance(bool force,
 
 #if defined(__APPLE__) &&                                                      \
     (defined(__arm__) || defined(__arm64__) || defined(__aarch64__))
-  // If lldb is running on a watch, this isn't a RemoteWatch environment; it's a
-  // local system environment.
+  // If lldb is running on a watch, this isn't a RemoteWatch environment; it's
+  // a local system environment.
   if (force == false) {
     create = false;
   }

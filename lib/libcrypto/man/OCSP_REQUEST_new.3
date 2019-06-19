@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_REQUEST_new.3,v 1.8 2018/03/22 21:08:22 schwarze Exp $
+.\"	$OpenBSD: OCSP_REQUEST_new.3,v 1.10 2019/06/10 09:49:48 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: June 10 2019 $
 .Dt OCSP_REQUEST_NEW 3
 .Os
 .Sh NAME
@@ -308,7 +308,12 @@ OCSP_REQUEST_free(req);
 .Ed
 .Sh SEE ALSO
 .Xr ACCESS_DESCRIPTION_new 3 ,
+.Xr crypto 3 ,
+.Xr d2i_OCSP_REQUEST 3 ,
+.Xr d2i_OCSP_RESPONSE 3 ,
+.Xr EVP_DigestInit 3 ,
 .Xr OCSP_cert_to_id 3 ,
+.Xr OCSP_CRLID_new 3 ,
 .Xr OCSP_request_add1_nonce 3 ,
 .Xr OCSP_resp_find_status 3 ,
 .Xr OCSP_response_status 3 ,

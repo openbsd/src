@@ -116,16 +116,6 @@ C<do {}> that I<look> like compound statements, but aren't--they're just
 TERMs in an expression--and thus need an explicit termination when used
 as the last item in a statement.
 
-=head2 Truth and Falsehood
-X<truth> X<falsehood> X<true> X<false> X<!> X<not> X<negation> X<0>
-
-The number 0, the strings C<'0'> and C<"">, the empty list C<()>, and
-C<undef> are all false in a boolean context.  All other values are true.
-Negation of a true value by C<!> or C<not> returns a special false value.
-When evaluated as a string it is treated as C<"">, but as a number, it
-is treated as 0.  Most Perl operators
-that return true or false behave this way.
-
 =head2 Statement Modifiers
 X<statement modifier> X<modifier> X<if> X<unless> X<while>
 X<until> X<when> X<foreach> X<for>
@@ -158,6 +148,8 @@ for each item in the LIST (with C<$_> aliased to each item in turn).
     print "Hello $_!\n" for qw(world Dolly nurse);
 
 C<while> repeats the statement I<while> the condition is true.
+Postfix C<while> has the same magic treatment of some kinds of condition
+that prefix C<while> has.
 C<until> does the opposite, it repeats the statement I<until> the
 condition is true (or while the condition is false):
 
@@ -231,8 +223,8 @@ a C<next> from inside a C<foreach> and C<break> from inside a C<given>.
 
 Under the current implementation, the C<foreach> loop can be
 anywhere within the C<when> modifier's dynamic scope, but must be
-within the C<given> block's lexical scope.  This restricted may
-be relaxed in a future release.  See L<"Switch Statements"> below.
+within the C<given> block's lexical scope.  This restriction may
+be relaxed in a future release.  See L</"Switch Statements"> below.
 
 =head2 Compound Statements
 X<statement, compound> X<block> X<bracket, curly> X<curly bracket> X<brace>
@@ -243,8 +235,16 @@ Sometimes a block is delimited by the file containing it (in the case
 of a required file, or the program as a whole), and sometimes a block
 is delimited by the extent of a string (in the case of an eval).
 
-But generally, a block is delimited by curly brackets, also known as braces.
-We will call this syntactic construct a BLOCK.
+But generally, a block is delimited by curly brackets, also known as
+braces.  We will call this syntactic construct a BLOCK.  Because enclosing
+braces are also the syntax for hash reference constructor expressions
+(see L<perlref>), you may occasionally need to disambiguate by placing a
+C<;> immediately after an opening brace so that Perl realises the brace
+is the start of a block.  You will more frequently need to disambiguate
+the other way, by placing a C<+> immediately before an opening brace to
+force it to be interpreted as a hash reference constructor expression.
+It is considered good style to use these disambiguating mechanisms
+liberally, not only when Perl would otherwise guess incorrectly.
 
 The following compound statements may be used to control flow:
 
@@ -304,7 +304,7 @@ language construct, as everyone reading your code will have to think at least
 twice before they can understand what's going on.
 
 The C<while> statement executes the block as long as the expression is
-L<true|/"Truth and Falsehood">.
+true.
 The C<until> statement executes the block as long as the expression is
 false.
 The LABEL is optional, and if present, consists of an identifier followed
@@ -315,6 +315,20 @@ refers to the innermost enclosing loop.  This may include dynamically
 looking back your call-stack at run time to find the LABEL.  Such
 desperate behavior triggers a warning if you use the C<use warnings>
 pragma or the B<-w> flag.
+
+If the condition expression of a C<while> statement is based
+on any of a group of iterative expression types then it gets
+some magic treatment.  The affected iterative expression types
+are L<C<readline>|perlfunc/readline EXPR>, the L<C<< <FILEHANDLE>
+>>|perlop/"I/O Operators"> input operator, L<C<readdir>|perlfunc/readdir
+DIRHANDLE>, L<C<glob>|perlfunc/glob EXPR>, the L<C<< <PATTERN>
+>>|perlop/"I/O Operators"> globbing operator, and L<C<each>|perlfunc/each
+HASH>.  If the condition expression is one of these expression types, then
+the value yielded by the iterative operator will be implicitly assigned
+to C<$_>.  If the condition expression is one of these expression types
+or an explicit assignment of one of them to a scalar, then the condition
+actually tests for definedness of the expression's value, not for its
+regular truth value.
 
 If there is a C<continue> BLOCK, it is always executed just before the
 conditional is about to be evaluated again.  Thus it can be used to
@@ -411,7 +425,7 @@ they aren't loops.  You can double the braces to make them such, though.
     }}
 
 This is caused by the fact that a block by itself acts as a loop that
-executes once, see L<"Basic BLOCKs">.
+executes once, see L</"Basic BLOCKs">.
 
 The form C<while/if BLOCK BLOCK>, available in Perl 4, is no longer
 available.   Replace any occurrence of C<if BLOCK> by C<if (do BLOCK)>.
@@ -469,14 +483,8 @@ X<eof> X<end-of-file> X<end of file>
         # do something
     }
 
-Using C<readline> (or the operator form, C<< <EXPR> >>) as the
-conditional of a C<for> loop is shorthand for the following.  This
-behaviour is the same as a C<while> loop conditional.
-X<readline> X<< <> >>
-
-    for ( prompt(); defined( $_ = <STDIN> ); prompt() ) {
-        # do something
-    }
+The condition expression of a C<for> loop gets the same magic treatment of
+C<readline> et al that the condition expression of a C<while> loop gets.
 
 =head2 Foreach Loops
 X<for> X<foreach>
@@ -638,8 +646,8 @@ Starting from Perl 5.16, one can prefix the switch
 keywords with C<CORE::> to access the feature without a C<use feature>
 statement.  The keywords C<given> and
 C<when> are analogous to C<switch> and
-C<case> in other languages, so the code in the previous section could be
-rewritten as
+C<case> in other languages -- though C<continue> is not -- so the code
+in the previous section could be rewritten as
 
     use v5.10.1;
     for ($var) {
@@ -754,12 +762,7 @@ X<whatever operator>
 X<triple-dot operator>
 
 Beginning in Perl 5.12, Perl accepts an ellipsis, "C<...>", as a
-placeholder for code that you haven't implemented yet.  This form of
-ellipsis, the unimplemented statement, should not be confused with the
-binary flip-flop C<...> operator.  One is a statement and the other an
-operator.  (Perl doesn't usually confuse them because usually Perl can tell
-whether it wants an operator or a statement, but see below for exceptions.)
-
+placeholder for code that you haven't implemented yet.
 When Perl 5.12 or later encounters an ellipsis statement, it parses this
 without error, but if and when you should actually try to execute it, Perl
 throws an exception with the text C<Unimplemented>:
@@ -771,8 +774,11 @@ throws an exception with the text C<Unimplemented>:
         say "I found an ellipsis!";
     }
 
-You can only use the elliptical statement to stand in for a
-complete statement.  These examples of how the ellipsis works:
+You can only use the elliptical statement to stand in for a complete
+statement.  Syntactically, "C<...;>" is a complete statement, but,
+as with other kinds of semicolon-terminated statement, the semicolon
+may be omitted if "C<...>" appears immediately before a closing brace.
+These examples show how the ellipsis works:
 
     use v5.12;
     { ... }
@@ -791,9 +797,7 @@ complete statement.  These examples of how the ellipsis works:
     };
 
 The elliptical statement cannot stand in for an expression that
-is part of a larger statement, since the C<...> is also the three-dot
-version of the flip-flop operator (see L<perlop/"Range Operators">).
-
+is part of a larger statement.
 These examples of attempts to use an ellipsis are syntax errors:
 
     use v5.12;
@@ -801,22 +805,17 @@ These examples of attempts to use an ellipsis are syntax errors:
     print ...;
     open(my $fh, ">", "/dev/passwd") or ...;
     if ($condition && ... ) { say "Howdy" };
+    ... if $a > $b;
+    say "Cromulent" if ...;
+    $flub = 5 + ...;
 
 There are some cases where Perl can't immediately tell the difference
 between an expression and a statement.  For instance, the syntax for a
 block and an anonymous hash reference constructor look the same unless
 there's something in the braces to give Perl a hint.  The ellipsis is a
-syntax error if Perl doesn't guess that the C<{ ... }> is a block.  In that
-case, it doesn't think the C<...> is an ellipsis because it's expecting an
-expression instead of a statement:
-
-    @transformed = map { ... } @input;    # syntax error
-
+syntax error if Perl doesn't guess that the C<{ ... }> is a block.
 Inside your block, you can use a C<;> before the ellipsis to denote that the
-C<{ ... }> is a block and not a hash reference constructor.  Now the ellipsis
-works:
-
-    @transformed = map {; ... } @input;   # ';' disambiguates
+C<{ ... }> is a block and not a hash reference constructor.
 
 Note: Some folks colloquially refer to this bit of punctuation as a
 "yada-yada" or "triple-dot", but its true name
@@ -993,7 +992,7 @@ the form C<!/REGEX/>, C<$foo !~ /REGEX/>, or C<$foo !~ EXPR>.
 A smart match that uses an explicit C<~~> operator, such as C<EXPR ~~ EXPR>.
 
 B<NOTE:> You will often have to use C<$c ~~ $_> because the default case
-uses C<$_ ~~ $c> , which is frequentlythe opposite of what you want.
+uses C<$_ ~~ $c> , which is frequently the opposite of what you want.
 
 =item Z<>4.
 
@@ -1118,7 +1117,7 @@ a C<break>.
 =head3 Fall-through
 
 You can use the C<continue> keyword to fall through from one
-case to the next:
+case to the next immediate C<when> or C<default>:
 
     given($foo) {
         when (/x/) { say '$foo contains an x'; continue }

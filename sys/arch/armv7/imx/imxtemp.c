@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxtemp.c,v 1.4 2017/10/23 17:37:51 kettenis Exp $	*/
+/*	$OpenBSD: imxtemp.c,v 1.5 2018/03/30 20:31:01 patrick Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -29,9 +29,6 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
-
-#include <armv7/armv7/armv7var.h>
-#include <armv7/imx/imxccmvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>

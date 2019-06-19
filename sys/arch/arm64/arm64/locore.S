@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.22 2018/01/28 13:17:45 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.25 2019/05/28 20:32:30 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -35,6 +35,7 @@
 #include <machine/param.h>
 
 #define	VIRT_BITS	39
+#define	NUM_L1_TTBR0	2
 
 /*
  * If we are started in EL2, configure the required hypervisor
@@ -42,10 +43,12 @@
  */
 	.globl drop_to_el1
 drop_to_el1:
+	RETGUARD_SETUP(drop_to_el1, x15)
 	mrs	x1, CurrentEL
 	lsr	x1, x1, #2
 	cmp	x1, #0x2
 	b.eq	1f
+	RETGUARD_CHECK(drop_to_el1, x15)
 	ret
 1:
 	/* Configure the Hypervisor */
@@ -144,6 +147,7 @@ hyp_vectors:
  */
 	.globl get_virt_delta
 get_virt_delta:
+	RETGUARD_SETUP(get_virt_delta, x15)
 	/* Load the physical address of virt_map */
 	adr	x28, virt_map
 	/* Load the virtual address of virt_map stored in virt_map */
@@ -157,6 +161,7 @@ get_virt_delta:
 	sub	x28, x28, x27
 	and	x28, x28, #~0x001fffff
 
+	RETGUARD_CHECK(get_virt_delta, x15)
 	ret
 
 	.align 3
@@ -166,6 +171,7 @@ virt_map:
 
 	.globl start_mmu
 start_mmu:
+	RETGUARD_SETUP(start_mmu, x15)
 	dsb	sy
 
 	/* Load the exception vectors */
@@ -206,16 +212,19 @@ start_mmu:
 	msr	sctlr_el1, x1
 	isb
 
+	RETGUARD_CHECK(start_mmu, x15)
 	ret
 
 	.globl switch_mmu_kernel
 switch_mmu_kernel:
+	RETGUARD_SETUP(switch_mmu_kernel, x15)
 	dsb	sy
 	/* Invalidate the TLB */
 	tlbi	vmalle1is
 	/* Load ttbr1 (kernel) */
 	msr	ttbr1_el1, x0
 	isb
+	RETGUARD_CHECK(switch_mmu_kernel, x15)
 	ret
 
 	.align 3
@@ -262,12 +271,21 @@ pagetable_l1_ttbr1:
 	.space	PAGE_SIZE * 2	// allocate 2 pages for pmapvp1
 	.globl pagetable_l1_ttbr0
 pagetable_l1_ttbr0:
-	.space	PAGE_SIZE * 2	// allocate 2 pages, reused later in pmap
+	.space	PAGE_SIZE * NUM_L1_TTBR0
 	.globl pagetable_l0_ttbr0
 pagetable_l0_ttbr0:
 	.space	PAGE_SIZE
 	.globl	pagetable_end
 pagetable_end:
+	.globl pagetable_l1_ttbr0_pa
+pagetable_l1_ttbr0_pa:
+	.xword	0
+	.globl pagetable_l1_ttbr0_num
+pagetable_l1_ttbr0_num:
+	.xword	NUM_L1_TTBR0
+	.globl pagetable_l1_ttbr0_idx
+pagetable_l1_ttbr0_idx: /* uint64_t[NUM_L1_TTBR0] */
+	.fill	NUM_L1_TTBR0 * 8, 1, 0xff
 	.bss
 	.align	4
 	.globl initstack
@@ -277,7 +295,9 @@ initstack:
 initstack_end:
 
 	.text
-ENTRY(sigcode)
+	.globl	_C_LABEL(sigcode)
+	.type	_C_LABEL(sigcode),@function
+_C_LABEL(sigcode):
 	sub	sp, sp, #17 * 32
 	mov	x3, sp
 	stp	q0, q1, [x3], #32

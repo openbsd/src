@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.38 2016/03/07 19:33:26 mmcc Exp $	*/
+/*	$OpenBSD: mib.h,v 1.40 2018/06/20 09:20:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -439,6 +439,7 @@
 #define MIB_netflix			MIB_enterprises, 10949
 #define MIB_google			MIB_enterprises, 11129
 #define MIB_f5Networks			MIB_enterprises, 12276
+#define MIB_bsws			MIB_enterprises, 13635
 #define MIB_sFlow			MIB_enterprises, 14706
 #define MIB_microSystems		MIB_enterprises, 18623
 #define MIB_paloAltoNetworks		MIB_enterprises, 25461
@@ -449,6 +450,7 @@
 #define MIB_openBSD			MIB_enterprises, OIDVAL_openBSD_eid
 #define MIB_nicira			MIB_enterprises, 39961
 #define MIB_esdenera			MIB_enterprises, 42459
+#define MIB_arcaTrust			MIB_enterprises, 52198
 
 /* UCD-DISKIO-MIB */
 #define MIB_ucdExperimental		MIB_ucDavis, 13
@@ -722,6 +724,12 @@
 #define MIB_carpIp6PktsSent		MIB_carpStats, 13
 #define MIB_carpNoMemory		MIB_carpStats, 14
 #define MIB_carpTransitionsToMaster	MIB_carpStats, 15
+#define MIB_carpGroupTable		MIB_carpMIBObjects, 4
+#define MIB_carpGroupEntry		MIB_carpGroupTable, 1
+#define OIDIDX_carpGroupEntry		10
+#define OIDIDX_carpGroupIndex		11
+#define MIB_carpGroupName		MIB_carpGroupEntry, 2
+#define MIB_carpGroupDemote		MIB_carpGroupEntry, 3
 #define MIB_localSystem			MIB_openBSD, 23
 #define MIB_SYSOID_DEFAULT		MIB_openBSD, 23, 1
 #define MIB_localTest			MIB_openBSD, 42
@@ -1012,6 +1020,7 @@
 	{ MIBDECL(netflix) },				\
 	{ MIBDECL(google) },				\
 	{ MIBDECL(f5Networks) },			\
+	{ MIBDECL(bsws) },				\
 	{ MIBDECL(sFlow) },				\
 	{ MIBDECL(microSystems) },			\
 	{ MIBDECL(paloAltoNetworks) },			\
@@ -1021,6 +1030,7 @@
 	{ MIBDECL(openBSD) },				\
 	{ MIBDECL(nicira) },				\
 	{ MIBDECL(esdenera) },				\
+	{ MIBDECL(arcaTrust) },				\
 							\
 	{ MIBDECL(ucdExperimental) },			\
 	{ MIBDECL(ucdDiskIOMIB) },			\
@@ -1272,6 +1282,10 @@
 	{ MIBDECL(carpIp6PktsSent) },			\
 	{ MIBDECL(carpNoMemory) },			\
 	{ MIBDECL(carpTransitionsToMaster) },		\
+	{ MIBDECL(carpGroupTable) },			\
+	{ MIBDECL(carpGroupEntry) },			\
+	{ MIBDECL(carpGroupName) },			\
+	{ MIBDECL(carpGroupDemote) },			\
 	{ MIBDECL(localSystem) },			\
 	{ MIBDECL(localTest) },				\
 							\

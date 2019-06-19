@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.9 2014/11/19 22:07:13 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.10 2018/06/17 15:00:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ int	 demi_print(char *, int);
 void	 enter_lastlog(PERSON *);
 PERSON	*enter_person(struct passwd *);
 void	 enter_where(struct utmp *, PERSON *);
-void	 expandusername(char *, char *, char *, int);
+void	 expandusername(char *, char *, char *, size_t);
 PERSON	*find_person(char *);
 int	 hash(char *);
 void	 lflag_print(void);

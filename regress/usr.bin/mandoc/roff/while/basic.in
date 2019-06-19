@@ -1,0 +1,30 @@
+.\" $OpenBSD: basic.in,v 1.1 2018/08/24 22:56:37 schwarze Exp $
+.Dd $Mdocdate: August 24 2018 $
+.Dt WHILE-BASIC 1
+.Os
+.Sh NAME
+.Nm while-basic
+.Nd the while request
+.Sh DESCRIPTION
+Loop with single-line scope:
+.nr cnt 11 1
+.de mym
+\\n-[cnt]
+..
+.while \n[cnt] .mym
+.Pp
+Loop with multi-line scope, text line closure:
+.nr cnt 11
+.while \n[cnt] \{\
+.nr cnt -1
+\n[cnt]\},
+boom.
+.Pp
+Loop with multi-line scope, macro line closure:
+.nr cnt 11
+.while \n[cnt] \{\
+.nr cnt -1
+\n[cnt]
+.\}
+.Pp
+final text

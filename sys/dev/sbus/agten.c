@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.10 2013/10/20 20:07:30 miod Exp $	*/
+/*	$OpenBSD: agten.c,v 1.11 2018/12/27 11:09:17 claudio Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -221,12 +221,7 @@ agtenattach(struct device *parent, struct device *self, void *args)
 }
 
 int
-agten_ioctl(dev, cmd, data, flags, p)
-	void *dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+agten_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct agten_softc *sc = dev;
 	struct wsdisplay_cmap *cm;
@@ -287,10 +282,7 @@ agten_ioctl(dev, cmd, data, flags, p)
  * offset, allowing for the given protection, or return -1 for error.
  */
 paddr_t
-agten_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+agten_mmap(void *v, off_t offset, int prot)
 {
 	struct agten_softc *sc = v;
 
@@ -307,10 +299,7 @@ agten_mmap(v, offset, prot)
 }
 
 void
-agten_setcolor(v, index, r, g, b)
-	void *v;
-	u_int index;
-	u_int8_t r, g, b;
+agten_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct agten_softc *sc = v;
 

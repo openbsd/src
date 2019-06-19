@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.16 2015/12/31 23:38:16 guenther Exp $
+.\"	$OpenBSD: chflags.1,v 1.18 2018/08/25 15:18:34 anton Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chflags.1	8.4 (Berkeley) 5/2/95
 .\"
-.Dd $Mdocdate: December 31 2015 $
+.Dd $Mdocdate: August 25 2018 $
 .Dt CHFLAGS 1
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ Only the superuser can change the user flags on block and
 character devices.
 .Pp
 You can use
-.Ic ls -lo
+.Sy ls Fl lo
 to see the flags of existing files.
 .Pp
 The options are as follows:
@@ -100,22 +100,29 @@ in the file hierarchy below it.
 .Pp
 Flags are a comma separated list of keywords.
 The following keywords are currently defined:
-.Bd -literal -offset indent
-arch	set the archived flag (superuser only)
-nodump	set the nodump flag (owner or superuser only)
-sappnd	set the system append-only flag (superuser only)
-schg	set the system immutable flag (superuser only)
-uappnd	set the user append-only flag (owner or superuser only)
-uchg	set the user immutable flag (owner or superuser only)
-.Ed
+.Pp
+.Bl -tag -width "nodump" -compact -offset indent
+.It Cm arch
+set the archived flag (superuser only)
+.It Cm nodump
+set the nodump flag (owner or superuser only)
+.It Cm sappnd
+set the system append-only flag (superuser only)
+.It Cm schg
+set the system immutable flag (superuser only)
+.It Cm uappnd
+set the user append-only flag (owner or superuser only)
+.It Cm uchg
+set the user immutable flag (owner or superuser only)
+.El
 .Pp
 The
-.Dq arch
+.Cm arch
 flag is for compatibility only,
 and currently has no effect.
 .Pp
 A file with the
-.Dq nodump
+.Cm nodump
 flag set will by default only be backed up by
 .Xr dump 8
 during full backups.
@@ -130,9 +137,9 @@ An append-only file is immutable except that data may be appended to it.
 .Pp
 The
 superuser-settable
-.Dq sappnd
+.Cm sappnd
 and
-.Dq schg
+.Cm schg
 flags can be set at any time, but may only be cleared when the system is
 running at security level 0 or \-1
 (insecure or permanently insecure mode, respectively).
@@ -141,11 +148,14 @@ see
 .Xr securelevel 7 .
 .Pp
 Putting the letters
-.Dq no
+.Cm no
 before a flag name causes the flag to be turned off.
 For example:
 .Pp
-.Dl nouchg	the immutable bit should be cleared
+.Bl -tag -width "nouchg" -compact -offset indent
+.It Cm nouchg
+the immutable bit should be cleared
+.El
 .Pp
 The
 .Fl H ,

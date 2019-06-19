@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.35 2016/09/19 06:46:43 ratchov Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.36 2018/12/27 11:06:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -184,9 +184,7 @@ struct cfdriver audioce_cd = {
 };
 
 int
-ce4231_match(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+ce4231_match(struct device *parent, void *vcf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -197,9 +195,7 @@ ce4231_match(parent, vcf, aux)
 }
 
 void    
-ce4231_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ce4231_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 	struct ce4231_softc *sc = (struct ce4231_softc *)self;
@@ -313,9 +309,7 @@ ce4231_attach(parent, self, aux)
  * Write to one of the indexed registers of cs4231.
  */
 void
-ce4231_write(sc, r, v)
-	struct ce4231_softc *sc;
-	u_int8_t r, v;
+ce4231_write(struct ce4231_softc *sc, u_int8_t r, u_int8_t v)
 {
 	CS_WRITE(sc, AD1848_IADDR, r);
 	CS_WRITE(sc, AD1848_IDATA, v);
@@ -325,19 +319,14 @@ ce4231_write(sc, r, v)
  * Read from one of the indexed registers of cs4231.
  */
 u_int8_t
-ce4231_read(sc, r)
-	struct ce4231_softc *sc;
-	u_int8_t r;
+ce4231_read(struct ce4231_softc *sc, u_int8_t r)
 {
 	CS_WRITE(sc, AD1848_IADDR, r);
 	return (CS_READ(sc, AD1848_IDATA));
 }
 
 int
-ce4231_set_speed(sc, argp)
-	struct ce4231_softc *sc;
-	u_long *argp;
-
+ce4231_set_speed(struct ce4231_softc *sc, u_long *argp)
 {
 	/*
 	 * The available speeds are in the following table. Keep the speeds in
@@ -405,9 +394,7 @@ ce4231_set_speed(sc, argp)
  * Audio interface functions
  */
 int
-ce4231_open(addr, flags)
-	void *addr;
-	int flags;
+ce4231_open(void *addr, int flags)
 {
 	struct ce4231_softc *sc = addr;
 	int tries;
@@ -443,8 +430,7 @@ ce4231_open(addr, flags)
 }
 
 void
-ce4231_close(addr)
-	void *addr;
+ce4231_close(void *addr)
 {
 	struct ce4231_softc *sc = addr;
 
@@ -456,10 +442,8 @@ ce4231_close(addr)
 }
 
 int
-ce4231_set_params(addr, setmode, usemode, p, r)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *p, *r;
+ce4231_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
+    struct audio_params *r)
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
 	int err, bits, enc = p->encoding;
@@ -510,16 +494,13 @@ ce4231_set_params(addr, setmode, usemode, p, r)
 }
 
 int
-ce4231_round_blocksize(addr, blk)
-	void *addr;
-	int blk;
+ce4231_round_blocksize(void *addr, int blk)
 {
 	return ((blk + 3) & (-4));
 }
 
 int
-ce4231_commit_settings(addr)
-	void *addr;
+ce4231_commit_settings(void *addr)
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
 	int tries;
@@ -588,8 +569,7 @@ ce4231_commit_settings(addr)
 }
 
 int
-ce4231_halt_output(addr)
-	void *addr;
+ce4231_halt_output(void *addr)
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
 
@@ -601,8 +581,7 @@ ce4231_halt_output(addr)
 }
 
 int
-ce4231_halt_input(addr)
-	void *addr;
+ce4231_halt_input(void *addr)
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
 
@@ -1080,8 +1059,7 @@ onoff:
 }
 
 int
-ce4231_get_props(addr)
-	void *addr;
+ce4231_get_props(void *addr)
 {
 	return (AUDIO_PROP_FULLDUPLEX);
 }
@@ -1102,8 +1080,7 @@ ce4231_get_props(addr)
  */
 
 int
-ce4231_pintr(v)
-	void *v;
+ce4231_pintr(void *v)
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)v;
 	u_int32_t csr;
@@ -1155,8 +1132,7 @@ ce4231_pintr(v)
 }
 
 int
-ce4231_cintr(v)
-	void *v;
+ce4231_cintr(void *v)
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)v;
 	u_int32_t csr;
@@ -1208,12 +1184,7 @@ ce4231_cintr(v)
 }
 
 void *
-ce4231_alloc(addr, direction, size, pool, flags)
-	void *addr;
-	int direction;
-	size_t size;
-	int pool;
-	int flags;
+ce4231_alloc(void *addr, int direction, size_t size, int pool, int flags)
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
 	bus_dma_tag_t dmat = sc->sc_dmatag;
@@ -1258,10 +1229,7 @@ fail:
 }
 
 void
-ce4231_free(addr, ptr, pool)
-	void *addr;
-	void *ptr;
-	int pool;
+ce4231_free(void *addr, void *ptr, int pool)
 {
 	struct ce4231_softc *sc = addr;
 	bus_dma_tag_t dmat = sc->sc_dmatag;
@@ -1282,12 +1250,8 @@ ce4231_free(addr, ptr, pool)
 }
 
 int
-ce4231_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr, *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+ce4231_trigger_output(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct ce4231_softc *sc = addr;
 	struct cs_dma *p;
@@ -1348,12 +1312,8 @@ ce4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-ce4231_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr, *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+ce4231_trigger_input(void *addr, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct ce4231_softc *sc = addr;
 	struct cs_dma *p;

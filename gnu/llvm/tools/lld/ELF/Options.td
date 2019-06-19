@@ -4,56 +4,91 @@ include "llvm/Option/OptParser.td"
 // two can precede the option name except those that start with 'o'.
 class F<string name>: Flag<["--", "-"], name>;
 class J<string name>: Joined<["--", "-"], name>;
-class S<string name>: Separate<["--", "-"], name>;
-class JS<string name>: JoinedOrSeparate<["--", "-"], name>;
 
-def auxiliary: S<"auxiliary">, HelpText<"Set DT_AUXILIARY field to the specified name">;
+multiclass Eq<string name, string help> {
+  def NAME: Separate<["--", "-"], name>;
+  def NAME # _eq: Joined<["--", "-"], name # "=">, Alias<!cast<Separate>(NAME)>,
+    HelpText<help>;
+}
+
+multiclass B<string name, string help1, string help2> {
+  def NAME: Flag<["--", "-"], name>, HelpText<help1>;
+  def no_ # NAME: Flag<["--", "-"], "no-" # name>, HelpText<help2>;
+}
+
+defm auxiliary: Eq<"auxiliary", "Set DT_AUXILIARY field to the specified name">;
 
 def Bsymbolic: F<"Bsymbolic">, HelpText<"Bind defined symbols locally">;
 
 def Bsymbolic_functions: F<"Bsymbolic-functions">,
   HelpText<"Bind defined function symbols locally">;
 
-def Bdynamic: F<"Bdynamic">, HelpText<"Link against shared libraries">;
+def Bdynamic: F<"Bdynamic">, HelpText<"Link against shared libraries (default)">;
 
 def Bstatic: F<"Bstatic">, HelpText<"Do not link against shared libraries">;
 
-def build_id: F<"build-id">, HelpText<"Generate build ID note">;
+def build_id: F<"build-id">, HelpText<"Alias for --build-id=fast">;
 
-def build_id_eq: J<"build-id=">, HelpText<"Generate build ID note">;
+def build_id_eq: J<"build-id=">, HelpText<"Generate build ID note">,
+  MetaVarName<"[fast,md5,sha,uuid,0x<hexstring>]">;
 
-def compress_debug_sections : J<"compress-debug-sections=">,
-  HelpText<"Compress DWARF debug sections">;
+defm check_sections: B<"check-sections",
+    "Check section addresses for overlaps (default)",
+    "Do not check section addresses for overlaps">;
 
-def defsym: J<"defsym=">, HelpText<"Define a symbol alias">;
+defm compress_debug_sections:
+  Eq<"compress-debug-sections", "Compress DWARF debug sections">,
+  MetaVarName<"[none,zlib]">;
 
-def L: JoinedOrSeparate<["-"], "L">, MetaVarName<"<dir>">,
-  HelpText<"Add a directory to the library search path">;
+defm defsym: Eq<"defsym", "Define a symbol alias">, MetaVarName<"<symbol>=<value>">;
 
-def O: Joined<["-"], "O">, HelpText<"Optimize output file size">;
+defm library_path:
+  Eq<"library-path", "Add a directory to the library search path">, MetaVarName<"<dir>">;
 
-def Tbss: S<"Tbss">, HelpText<"Same as --section-start with .bss as the sectionname">;
+def O: JoinedOrSeparate<["-"], "O">, HelpText<"Optimize output file size">;
 
-def Tdata: S<"Tdata">, HelpText<"Same as --section-start with .data as the sectionname">;
+defm Tbss: Eq<"Tbss", "Same as --section-start with .bss as the sectionname">;
 
-def Ttext: S<"Ttext">, HelpText<"Same as --section-start with .text as the sectionname">;
+defm Tdata: Eq<"Tdata", "Same as --section-start with .data as the sectionname">;
 
-def allow_multiple_definition: F<"allow-multiple-definition">,
-  HelpText<"Allow multiple definitions">;
+defm Ttext: Eq<"Ttext", "Same as --section-start with .text as the sectionname">;
 
-def as_needed: F<"as-needed">,
-  HelpText<"Only set DT_NEEDED for shared libraries if used">;
+defm allow_multiple_definition: B<"allow-multiple-definition",
+    "Allow multiple definitions",
+    "Do not allow multiple definitions (default)">;
+
+defm apply_dynamic_relocs: B<"apply-dynamic-relocs",
+    "Apply link-time values for dynamic relocations",
+    "Do not apply link-time values for dynamic relocations (default)">;
+
+defm as_needed: B<"as-needed",
+    "Only set DT_NEEDED for shared libraries if used",
+    "Always set DT_NEEDED for shared libraries (default)">;
+
+defm call_graph_ordering_file:
+  Eq<"call-graph-ordering-file", "Layout sections to optimize the given callgraph">;
+
+// -chroot doesn't have a help text because it is an internal option.
+def chroot: Separate<["--", "-"], "chroot">;
 
 def color_diagnostics: F<"color-diagnostics">,
-  HelpText<"Use colors in diagnostics">;
+  HelpText<"Alias for --color-diagnostics=always">;
 
 def color_diagnostics_eq: J<"color-diagnostics=">,
-  HelpText<"Use colors in diagnostics">;
+  HelpText<"Use colors in diagnostics">,
+  MetaVarName<"[auto,always,never]">;
 
-def define_common: F<"define-common">,
-  HelpText<"Assign space to common symbols">;
+defm cref: B<"cref",
+    "Output cross reference table",
+    "Do not output cross reference table">;
 
-def demangle: F<"demangle">, HelpText<"Demangle symbol names">;
+defm define_common: B<"define-common",
+    "Assign space to common symbols",
+    "Do not assign space to common symbols">;
+
+defm demangle: B<"demangle",
+    "Demangle symbol names (default)",
+    "Do not demangle symbol names">;
 
 def disable_new_dtags: F<"disable-new-dtags">,
   HelpText<"Disable new dynamic tags">;
@@ -66,130 +101,130 @@ def discard_locals: F<"discard-locals">,
 def discard_none: F<"discard-none">,
   HelpText<"Keep all symbols in the symbol table">;
 
-def dynamic_linker: S<"dynamic-linker">,
-  HelpText<"Which dynamic linker to use">;
+defm dynamic_linker: Eq<"dynamic-linker", "Which dynamic linker to use">;
 
-def dynamic_list: S<"dynamic-list">,
-  HelpText<"Read a list of dynamic symbols">;
+defm dynamic_list: Eq<"dynamic-list", "Read a list of dynamic symbols">;
 
-def eh_frame_hdr: F<"eh-frame-hdr">,
-  HelpText<"Request creation of .eh_frame_hdr section and PT_GNU_EH_FRAME segment header">;
+defm eh_frame_hdr: B<"eh-frame-hdr",
+    "Request creation of .eh_frame_hdr section and PT_GNU_EH_FRAME segment header",
+    "Do not create .eh_frame_hdr section">;
 
 def emit_relocs: F<"emit-relocs">, HelpText<"Generate relocations in output">;
 
 def enable_new_dtags: F<"enable-new-dtags">,
-  HelpText<"Enable new dynamic tags">;
+  HelpText<"Enable new dynamic tags (default)">;
+
+def end_group: F<"end-group">,
+  HelpText<"Ignored for compatibility with GNU unless you pass --warn-backrefs">;
 
 def end_lib: F<"end-lib">,
   HelpText<"End a grouping of objects that should be treated as if they were together in an archive">;
 
-def entry: S<"entry">, MetaVarName<"<entry>">,
-  HelpText<"Name of entry point symbol">;
+defm entry: Eq<"entry", "Name of entry point symbol">,
+  MetaVarName<"<entry>">;
 
-def error_limit: S<"error-limit">,
-  HelpText<"Maximum number of errors to emit before stopping (0 = no limit)">;
+defm error_limit:
+  Eq<"error-limit", "Maximum number of errors to emit before stopping (0 = no limit)">;
 
 def error_unresolved_symbols: F<"error-unresolved-symbols">,
   HelpText<"Report unresolved symbols as errors">;
 
-def exclude_libs: S<"exclude-libs">,
-  HelpText<"Exclude static libraries from automatic export">;
+defm exclude_libs: Eq<"exclude-libs", "Exclude static libraries from automatic export">;
 
-def export_dynamic: F<"export-dynamic">,
-  HelpText<"Put symbols in the dynamic symbol table">;
+defm execute_only: B<"execute-only",
+    "Do not mark executable sections readable",
+    "Mark executable sections readable (default)">;
 
-def export_dynamic_symbol: S<"export-dynamic-symbol">,
-  HelpText<"Put a symbol in the dynamic symbol table">;
+defm export_dynamic: B<"export-dynamic",
+    "Put symbols in the dynamic symbol table",
+    "Do not put symbols in the dynamic symbol table (default)">;
 
-def fatal_warnings: F<"fatal-warnings">,
-  HelpText<"Treat warnings as errors">;
+defm export_dynamic_symbol:
+  Eq<"export-dynamic-symbol", "Put a symbol in the dynamic symbol table">;
 
-def filter: J<"filter=">, HelpText<"Set DT_FILTER field to the specified name">;
+defm fatal_warnings: B<"fatal-warnings",
+    "Treat warnings as errors",
+    "Do not treat warnings as errors (default)">;
 
-def fini: S<"fini">, MetaVarName<"<symbol>">,
-  HelpText<"Specify a finalizer function">;
+defm filter: Eq<"filter", "Set DT_FILTER field to the specified name">;
 
-def full_shutdown : F<"full-shutdown">,
-  HelpText<"Perform a full shutdown instead of calling _exit">;
+defm fini: Eq<"fini", "Specify a finalizer function">, MetaVarName<"<symbol>">;
 
-def format: J<"format=">, MetaVarName<"<input-format>">,
-  HelpText<"Change the input format of the inputs following this option">;
+def fix_cortex_a53_843419: F<"fix-cortex-a53-843419">,
+  HelpText<"Apply fixes for AArch64 Cortex-A53 erratum 843419">;
 
-def gc_sections: F<"gc-sections">,
-  HelpText<"Enable garbage collection of unused sections">;
+defm format: Eq<"format", "Change the input format of the inputs following this option">,
+  MetaVarName<"[default,elf,binary]">;
 
-def gdb_index: F<"gdb-index">,
-  HelpText<"Generate .gdb_index section">;
+defm gc_sections: B<"gc-sections",
+    "Enable garbage collection of unused sections",
+    "Disable garbage collection of unused sections (default)">;
 
-def hash_style: S<"hash-style">,
-  HelpText<"Specify hash style (sysv, gnu or both)">;
+defm gdb_index: B<"gdb-index",
+    "Generate .gdb_index section",
+    "Do not generate .gdb_index section (default)">;
+
+defm gnu_unique: B<"gnu-unique",
+  "Enable STB_GNU_UNIQUE symbol binding (default)",
+  "Disable STB_GNU_UNIQUE symbol binding">;
+
+defm hash_style: Eq<"hash-style", "Specify hash style (sysv, gnu or both)">;
 
 def help: F<"help">, HelpText<"Print option help">;
 
 def icf_all: F<"icf=all">, HelpText<"Enable identical code folding">;
 
-def icf_none: F<"icf=none">, HelpText<"Disable identical code folding">;
+def icf_safe: F<"icf=safe">, HelpText<"Enable safe identical code folding">;
 
-def image_base : J<"image-base=">, HelpText<"Set the base address">;
+def icf_none: F<"icf=none">, HelpText<"Disable identical code folding (default)">;
 
-def init: S<"init">, MetaVarName<"<symbol>">,
-  HelpText<"Specify an initializer function">;
+defm ignore_function_address_equality: B<"ignore-function-address-equality",
+  "lld can break the address equality of functions",
+  "lld cannot break the address equality of functions">;
 
-def l: JoinedOrSeparate<["-"], "l">, MetaVarName<"<libName>">,
-  HelpText<"Root name of library to use">;
+def ignore_data_address_equality: F<"ignore-data-address-equality">,
+  HelpText<"lld can break the address equality of data">;
 
-def lto_O: J<"lto-O">, MetaVarName<"<opt-level>">,
-  HelpText<"Optimization level for LTO">;
+defm image_base: Eq<"image-base", "Set the base address">;
+
+defm init: Eq<"init", "Specify an initializer function">,
+  MetaVarName<"<symbol>">;
+
+defm just_symbols: Eq<"just-symbols", "Just link symbols">;
+
+defm keep_unique: Eq<"keep-unique", "Do not fold this symbol during ICF">;
+
+defm library: Eq<"library", "Root name of library to use">,
+  MetaVarName<"<libName>">;
 
 def m: JoinedOrSeparate<["-"], "m">, HelpText<"Set target emulation">;
 
-def Map: JS<"Map">, HelpText<"Print a link map to the specified file">;
+defm Map: Eq<"Map", "Print a link map to the specified file">;
+
+defm merge_exidx_entries: B<"merge-exidx-entries",
+    "Enable merging .ARM.exidx entries (default)",
+    "Disable merging .ARM.exidx entries">;
 
 def nostdlib: F<"nostdlib">,
   HelpText<"Only search directories specified on the command line">;
 
-def no_as_needed: F<"no-as-needed">,
-  HelpText<"Always DT_NEEDED for shared libraries">;
-
 def no_color_diagnostics: F<"no-color-diagnostics">,
   HelpText<"Do not use colors in diagnostics">;
-
-def no_define_common: F<"no-define-common">,
-  HelpText<"Do not assign space to common symbols">;
-
-def no_demangle: F<"no-demangle">,
-  HelpText<"Do not demangle symbol names">;
 
 def no_dynamic_linker: F<"no-dynamic-linker">,
   HelpText<"Inhibit output of .interp section">;
 
-def no_export_dynamic: F<"no-export-dynamic">;
-def no_fatal_warnings: F<"no-fatal-warnings">;
-
-def no_gc_sections: F<"no-gc-sections">,
-  HelpText<"Disable garbage collection of unused sections">;
-
-def no_gnu_unique: F<"no-gnu-unique">,
-  HelpText<"Disable STB_GNU_UNIQUE symbol binding">;
-
-def no_threads: F<"no-threads">,
-  HelpText<"Do not run the linker multi-threaded">;
-
-def no_whole_archive: F<"no-whole-archive">,
-  HelpText<"Restores the default behavior of loading archive members">;
-
 def noinhibit_exec: F<"noinhibit-exec">,
   HelpText<"Retain the executable output file whenever it is still usable">;
 
-def nopie: F<"nopie">, HelpText<"Do not create a position independent executable">;
+def no_omagic: F<"no-omagic">, MetaVarName<"<magic>">,
+  HelpText<"Do not set the text data sections to be writable">;
 
-def no_rosegment: F<"no-rosegment">, HelpText<"Do not put read-only non-executable sections in their own segment">;
+def no_rosegment: F<"no-rosegment">,
+  HelpText<"Do not put read-only non-executable sections in their own segment">;
 
 def no_undefined: F<"no-undefined">,
   HelpText<"Report unresolved symbols even if the linker is creating a shared library">;
-
-def no_undefined_version: F<"no-undefined-version">,
-  HelpText<"Report version scripts that refer undefined symbols">;
 
 def o: JoinedOrSeparate<["-"], "o">, MetaVarName<"<path>">,
   HelpText<"Path to file to write output">;
@@ -200,34 +235,62 @@ def oformat: Separate<["--"], "oformat">, MetaVarName<"<format>">,
 def omagic: Flag<["--"], "omagic">, MetaVarName<"<magic>">,
   HelpText<"Set the text and data sections to be readable and writable">;
 
-def pie: F<"pie">, HelpText<"Create a position independent executable">;
+defm orphan_handling:
+  Eq<"orphan-handling", "Control how orphan sections are handled when linker script used">;
 
-def print_gc_sections: F<"print-gc-sections">,
-  HelpText<"List removed unused sections">;
+defm pack_dyn_relocs:
+  Eq<"pack-dyn-relocs", "Pack dynamic relocations in the given format">,
+  MetaVarName<"[none,android,relr,android+relr]">;
+
+defm use_android_relr_tags: B<"use-android-relr-tags",
+    "Use SHT_ANDROID_RELR / DT_ANDROID_RELR* tags instead of SHT_RELR / DT_RELR*",
+    "Use SHT_RELR / DT_RELR* tags (default)">;
+
+defm pie: B<"pie",
+    "Create a position independent executable",
+    "Do not create a position independent executable (default)">;
+
+defm print_gc_sections: B<"print-gc-sections",
+    "List removed unused sections",
+    "Do not list removed unused sections (default)">;
+
+defm print_icf_sections: B<"print-icf-sections",
+    "List identical folded sections",
+    "Do not list identical folded sections (default)">;
+
+def pop_state: F<"pop-state">,
+  HelpText<"Undo the effect of -push-state">;
+
+def push_state: F<"push-state">,
+  HelpText<"Save the current state of -as-needed, -static and -whole-archive">;
 
 def print_map: F<"print-map">,
   HelpText<"Print a link map to the standard output">;
 
-def reproduce: S<"reproduce">,
-  HelpText<"Dump linker invocation and input files for debugging">;
+defm reproduce: Eq<"reproduce", "Dump linker invocation and input files for debugging">;
 
-def rpath: S<"rpath">, HelpText<"Add a DT_RUNPATH to the output">;
+defm rpath: Eq<"rpath", "Add a DT_RUNPATH to the output">;
 
 def relocatable: F<"relocatable">, HelpText<"Create relocatable object file">;
 
-def retain_symbols_file: J<"retain-symbols-file=">, MetaVarName<"<file>">,
-  HelpText<"Retain only the symbols listed in the file">;
+defm retain_symbols_file:
+  Eq<"retain-symbols-file", "Retain only the symbols listed in the file">,
+  MetaVarName<"<file>">;
 
-def script: S<"script">, HelpText<"Read linker script">;
+defm script: Eq<"script", "Read linker script">;
 
-def section_start: S<"section-start">, MetaVarName<"<address>">,
-  HelpText<"Set address of section">;
+defm section_start: Eq<"section-start", "Set address of section">,
+  MetaVarName<"<address>">;
 
 def shared: F<"shared">, HelpText<"Build a shared object">;
 
-def soname: J<"soname=">, HelpText<"Set DT_SONAME">;
+defm soname: Eq<"soname", "Set DT_SONAME">;
 
-def sort_section: S<"sort-section">, HelpText<"Specifies sections sorting rule when linkerscript is used">;
+defm sort_section:
+  Eq<"sort-section", "Specifies sections sorting rule when linkerscript is used">;
+
+def start_group: F<"start-group">,
+  HelpText<"Ignored for compatibility with GNU unless you pass --warn-backrefs">;
 
 def start_lib: F<"start-lib">,
   HelpText<"Start a grouping of objects that should be treated as if they were together in an archive">;
@@ -236,31 +299,39 @@ def strip_all: F<"strip-all">, HelpText<"Strip all symbols">;
 
 def strip_debug: F<"strip-debug">, HelpText<"Strip debugging information">;
 
-def symbol_ordering_file: S<"symbol-ordering-file">,
-  HelpText<"Layout sections in the order specified by symbol file">;
+defm symbol_ordering_file:
+  Eq<"symbol-ordering-file", "Layout sections to place symbols in the order specified by symbol ordering file">;
 
-def sysroot: J<"sysroot=">, HelpText<"Set the system root">;
+defm sysroot: Eq<"sysroot", "Set the system root">;
 
 def target1_rel: F<"target1-rel">, HelpText<"Interpret R_ARM_TARGET1 as R_ARM_REL32">;
 
-def target1_abs: F<"target1-abs">, HelpText<"Interpret R_ARM_TARGET1 as R_ARM_ABS32">;
+def target1_abs: F<"target1-abs">, HelpText<"Interpret R_ARM_TARGET1 as R_ARM_ABS32 (default)">;
 
-def target2: J<"target2=">, MetaVarName<"<type>">, HelpText<"Interpret R_ARM_TARGET2 as <type>, where <type> is one of rel, abs, or got-rel">;
+defm target2:
+  Eq<"target2", "Interpret R_ARM_TARGET2 as <type>, where <type> is one of rel, abs, or got-rel">,
+  MetaVarName<"<type>">;
 
-def threads: F<"threads">, HelpText<"Run the linker multi-threaded">;
+defm threads: B<"threads",
+    "Run the linker multi-threaded (default)",
+    "Do not run the linker multi-threaded">;
 
 def trace: F<"trace">, HelpText<"Print the names of the input files">;
 
-def trace_symbol : S<"trace-symbol">, HelpText<"Trace references to symbols">;
+defm trace_symbol: Eq<"trace-symbol", "Trace references to symbols">;
 
-def undefined: S<"undefined">,
-  HelpText<"Force undefined symbol during linking">;
+defm undefined: Eq<"undefined", "Force undefined symbol during linking">,
+  MetaVarName<"<symbol>">;
 
-def unresolved_symbols: J<"unresolved-symbols=">,
-  HelpText<"Determine how to handle unresolved symbols">;
+defm unresolved_symbols:
+  Eq<"unresolved-symbols", "Determine how to handle unresolved symbols">;
 
-def rsp_quoting: J<"rsp-quoting=">,
-  HelpText<"Quoting style for response files. Values supported: windows|posix">;
+defm undefined_version: B<"undefined-version",
+  "Allow unused version in version script (default)",
+  "Report version scripts that refer undefined symbols">;
+
+defm rsp_quoting: Eq<"rsp-quoting", "Quoting style for response files">,
+  MetaVarName<"[posix,windows]">;
 
 def v: Flag<["-"], "v">, HelpText<"Display the version number">;
 
@@ -268,113 +339,123 @@ def verbose: F<"verbose">, HelpText<"Verbose mode">;
 
 def version: F<"version">, HelpText<"Display the version number and exit">;
 
-def version_script: S<"version-script">,
-  HelpText<"Read a version script">;
+defm version_script: Eq<"version-script", "Read a version script">;
 
-def warn_common: F<"warn-common">,
-  HelpText<"Warn about duplicate common symbols">;
+defm warn_backrefs: B<"warn-backrefs",
+    "Warn about backward symbol references to fetch archive members",
+    "Do not warn about backward symbol references to fetch archive members (default)">;
+
+defm warn_common: B<"warn-common",
+    "Warn about duplicate common symbols",
+    "Do not warn about duplicate common symbols (default)">;
+
+defm warn_symbol_ordering: B<"warn-symbol-ordering",
+    "Warn about problems with the symbol ordering file (default)",
+    "Do not warn about problems with the symbol ordering file">;
 
 def warn_unresolved_symbols: F<"warn-unresolved-symbols">,
   HelpText<"Report unresolved symbols as warnings">;
 
-def whole_archive: F<"whole-archive">,
-  HelpText<"Force load of all members in a static library">;
+defm whole_archive: B<"whole-archive",
+    "Force load of all members in a static library",
+    "Do not force load of all members in a static library (default)">;
 
-def wrap: S<"wrap">, MetaVarName<"<symbol>">,
-  HelpText<"Use wrapper functions for symbol">;
+defm wrap: Eq<"wrap", "Use wrapper functions for symbol">,
+  MetaVarName<"<symbol>=<symbol>">;
 
 def z: JoinedOrSeparate<["-"], "z">, MetaVarName<"<option>">,
   HelpText<"Linker option extensions">;
 
 // Aliases
-def alias_auxiliary: Separate<["-"], "f">, Alias<auxiliary>;
-def alias_Bdynamic_call_shared: F<"call_shared">, Alias<Bdynamic>;
-def alias_Bdynamic_dy: F<"dy">, Alias<Bdynamic>;
-def alias_Bstatic_dn: F<"dn">, Alias<Bstatic>;
-def alias_Bstatic_non_shared: F<"non_shared">, Alias<Bstatic>;
-def alias_Bstatic_static: F<"static">, Alias<Bstatic>;
-def alias_L__library_path: J<"library-path=">, Alias<L>;
-def alias_define_common_d: Flag<["-"], "d">, Alias<define_common>;
-def alias_define_common_dc: F<"dc">, Alias<define_common>;
-def alias_define_common_dp: F<"dp">, Alias<define_common>;
-def alias_defsym: S<"defsym">, Alias<defsym>;
-def alias_discard_all_x: Flag<["-"], "x">, Alias<discard_all>;
-def alias_discard_locals_X: Flag<["-"], "X">, Alias<discard_locals>;
-def alias_dynamic_list: J<"dynamic-list=">, Alias<dynamic_list>;
-def alias_emit_relocs: Flag<["-"], "q">, Alias<emit_relocs>;
-def alias_entry_e: JoinedOrSeparate<["-"], "e">, Alias<entry>;
-def alias_entry_entry: J<"entry=">, Alias<entry>;
-def alias_error_limit: J<"error-limit=">, Alias<error_limit>;
-def alias_exclude_libs: J<"exclude-libs=">, Alias<exclude_libs>;
-def alias_export_dynamic_E: Flag<["-"], "E">, Alias<export_dynamic>;
-def alias_export_dynamic_symbol: J<"export-dynamic-symbol=">,
-  Alias<export_dynamic_symbol>;
-def alias_filter: Separate<["-"], "F">, Alias<filter>;
-def alias_fini_fini: J<"fini=">, Alias<fini>;
-def alias_format_b: S<"b">, Alias<format>;
-def alias_hash_style_hash_style: J<"hash-style=">, Alias<hash_style>;
-def alias_init_init: J<"init=">, Alias<init>;
-def alias_l__library: J<"library=">, Alias<l>;
-def alias_Map_eq: J<"Map=">, Alias<Map>;
-def alias_omagic: Flag<["-"], "N">, Alias<omagic>;
-def alias_o_output: Joined<["--"], "output=">, Alias<o>;
-def alias_o_output2 : Separate<["--"], "output">, Alias<o>;
-def alias_pie_pic_executable: F<"pic-executable">, Alias<pie>;
-def alias_print_map_M: Flag<["-"], "M">, Alias<print_map>;
-def alias_relocatable_r: Flag<["-"], "r">, Alias<relocatable>;
-def alias_reproduce_eq: J<"reproduce=">, Alias<reproduce>;
-def alias_retain_symbols_file: S<"retain-symbols-file">, Alias<retain_symbols_file>;
-def alias_rpath_R: JoinedOrSeparate<["-"], "R">, Alias<rpath>;
-def alias_rpath_rpath: J<"rpath=">, Alias<rpath>;
-def alias_script_T: JoinedOrSeparate<["-"], "T">, Alias<script>;
-def alias_shared_Bshareable: F<"Bshareable">, Alias<shared>;
-def alias_soname_h: JoinedOrSeparate<["-"], "h">, Alias<soname>;
-def alias_soname_soname: S<"soname">, Alias<soname>;
-def alias_sort_section: J<"sort-section=">, Alias<sort_section>;
-def alias_script: J<"script=">, Alias<script>;
-def alias_strip_all: Flag<["-"], "s">, Alias<strip_all>;
-def alias_strip_debug_S: Flag<["-"], "S">, Alias<strip_debug>;
-def alias_Tbss: J<"Tbss=">, Alias<Tbss>;
-def alias_Tdata: J<"Tdata=">, Alias<Tdata>;
-def alias_trace: Flag<["-"], "t">, Alias<trace>;
-def trace_trace_symbol_eq : J<"trace-symbol=">, Alias<trace_symbol>;
-def alias_trace_symbol_y : JoinedOrSeparate<["-"], "y">, Alias<trace_symbol>;
-def alias_Ttext: J<"Ttext=">, Alias<Ttext>;
-def alias_Ttext_segment: S<"Ttext-segment">, Alias<Ttext>;
-def alias_Ttext_segment_eq: J<"Ttext-segment=">, Alias<Ttext>;
-def alias_undefined_eq: J<"undefined=">, Alias<undefined>;
-def alias_undefined_u: JoinedOrSeparate<["-"], "u">, Alias<undefined>;
-def alias_version_script_eq: J<"version-script=">, Alias<version_script>;
-def alias_version_V: Flag<["-"], "V">, Alias<version>;
-def alias_wrap_wrap: J<"wrap=">, Alias<wrap>;
-
-// Our symbol resolution algorithm handles symbols in archive files differently
-// than traditional linkers, so we don't need --start-group and --end-group.
-// These options are recongized for compatibility but ignored.
-def end_group: F<"end-group">;
-def end_group_paren: Flag<["-"], ")">;
-def start_group: F<"start-group">;
-def start_group_paren: Flag<["-"], "(">;
+def: Separate<["-"], "f">, Alias<auxiliary>, HelpText<"Alias for --auxiliary">;
+def: F<"call_shared">, Alias<Bdynamic>, HelpText<"Alias for --Bdynamic">;
+def: F<"dy">, Alias<Bdynamic>, HelpText<"Alias for --Bdynamic">;
+def: F<"dn">, Alias<Bstatic>, HelpText<"Alias for --Bstatic">;
+def: F<"non_shared">, Alias<Bstatic>, HelpText<"Alias for --Bstatic">;
+def: F<"static">, Alias<Bstatic>, HelpText<"Alias for --Bstatic">;
+def: Flag<["-"], "d">, Alias<define_common>, HelpText<"Alias for --define-common">;
+def: F<"dc">, Alias<define_common>, HelpText<"Alias for --define-common">;
+def: F<"dp">, Alias<define_common>, HelpText<"Alias for --define-common">;
+def: Flag<["-"], "x">, Alias<discard_all>, HelpText<"Alias for --discard-all">;
+def: Flag<["-"], "X">, Alias<discard_locals>, HelpText<"Alias for --discard-locals">;
+def: Flag<["-"], "q">, Alias<emit_relocs>, HelpText<"Alias for --emit-relocs">;
+def: Flag<["-"], ")">, Alias<end_group>, HelpText<"Alias for --end-group">;
+def: JoinedOrSeparate<["-"], "e">, Alias<entry>, HelpText<"Alias for --entry">;
+def: Flag<["-"], "E">, Alias<export_dynamic>, HelpText<"Alias for --export-dynamic">;
+def: Separate<["-"], "F">, Alias<filter>, HelpText<"Alias for --filter">;
+def: Separate<["-"], "b">, Alias<format>, HelpText<"Alias for --format">;
+def: JoinedOrSeparate<["-"], "l">, Alias<library>, HelpText<"Alias for --library">;
+def: JoinedOrSeparate<["-"], "L">, Alias<library_path>, HelpText<"Alias for --library-path">;
+def: F<"nopie">, Alias<no_pie>, HelpText<"Alias for --no-pie">;
+def: F<"no-pic-executable">, Alias<no_pie>, HelpText<"Alias for --no-pie">;
+def: Flag<["-"], "N">, Alias<omagic>, HelpText<"Alias for --omagic">;
+def: Joined<["--"], "output=">, Alias<o>, HelpText<"Alias for -o">;
+def: Separate<["--"], "output">, Alias<o>, HelpText<"Alias for -o">;
+def: F<"pic-executable">, Alias<pie>, HelpText<"Alias for --pie">;
+def: Flag<["-"], "M">, Alias<print_map>, HelpText<"Alias for --print-map">;
+def: Flag<["-"], "r">, Alias<relocatable>, HelpText<"Alias for --relocatable">;
+def: JoinedOrSeparate<["-"], "R">, Alias<rpath>, HelpText<"Alias for --rpath">;
+def: JoinedOrSeparate<["-"], "T">, Alias<script>, HelpText<"Alias for --script">;
+def: F<"Bshareable">, Alias<shared>, HelpText<"Alias for --shared">;
+def: JoinedOrSeparate<["-"], "h">, Alias<soname>, HelpText<"Alias for --soname">;
+def: Flag<["-"], "(">, Alias<start_group>, HelpText<"Alias for --start-group">;
+def: Flag<["-"], "s">, Alias<strip_all>, HelpText<"Alias for --strip-all">;
+def: Flag<["-"], "S">, Alias<strip_debug>, HelpText<"Alias for --strip-debug">;
+def: Flag<["-"], "t">, Alias<trace>, HelpText<"Alias for --trace">;
+def: JoinedOrSeparate<["-"], "y">, Alias<trace_symbol>, HelpText<"Alias for --trace-symbol">;
+def: Separate<["-", "--"], "Ttext-segment">, Alias<Ttext>, HelpText<"Alias for --Ttext">;
+def: Joined<["-", "--"], "Ttext-segment=">, Alias<Ttext>, HelpText<"Alias for --Ttext">;
+def: JoinedOrSeparate<["-"], "u">, Alias<undefined>, HelpText<"Alias for --undefined">;
+def: Flag<["-"], "V">, Alias<version>, HelpText<"Alias for --version">;
 
 // LTO-related options.
 def lto_aa_pipeline: J<"lto-aa-pipeline=">,
   HelpText<"AA pipeline to run during LTO. Used in conjunction with -lto-newpm-passes">;
+def lto_debug_pass_manager: F<"lto-debug-pass-manager">,
+  HelpText<"Debug new pass manager">;
+def lto_new_pass_manager: F<"lto-new-pass-manager">,
+  HelpText<"Use new pass manager">;
 def lto_newpm_passes: J<"lto-newpm-passes=">,
   HelpText<"Passes to run during LTO">;
+def lto_O: J<"lto-O">, MetaVarName<"<opt-level>">,
+  HelpText<"Optimization level for LTO">;
 def lto_partitions: J<"lto-partitions=">,
   HelpText<"Number of LTO codegen partitions">;
+def lto_sample_profile: J<"lto-sample-profile=">,
+  HelpText<"Sample profile file path">;
 def disable_verify: F<"disable-verify">;
-def mllvm: S<"mllvm">;
+defm mllvm: Eq<"mllvm", "Additional arguments to forward to LLVM's option processing">;
 def opt_remarks_filename: Separate<["--"], "opt-remarks-filename">,
   HelpText<"YAML output file for optimization remarks">;
 def opt_remarks_with_hotness: Flag<["--"], "opt-remarks-with-hotness">,
-  HelpText<"Include hotness informations in the optimization remarks file">;
+  HelpText<"Include hotness information in the optimization remarks file">;
+defm plugin_opt: Eq<"plugin-opt", "specifies LTO options for compatibility with GNU linkers">;
 def save_temps: F<"save-temps">;
 def thinlto_cache_dir: J<"thinlto-cache-dir=">,
   HelpText<"Path to ThinLTO cached object file directory">;
-def thinlto_cache_policy: S<"thinlto-cache-policy">,
-  HelpText<"Pruning policy for the ThinLTO cache">;
+defm thinlto_cache_policy: Eq<"thinlto-cache-policy", "Pruning policy for the ThinLTO cache">;
 def thinlto_jobs: J<"thinlto-jobs=">, HelpText<"Number of ThinLTO jobs">;
+
+def: J<"plugin-opt=O">, Alias<lto_O>, HelpText<"Alias for -lto-O">;
+def: F<"plugin-opt=debug-pass-manager">,
+  Alias<lto_debug_pass_manager>, HelpText<"Alias for -lto-debug-pass-manager">;
+def: F<"plugin-opt=disable-verify">, Alias<disable_verify>, HelpText<"Alias for -disable-verify">;
+def plugin_opt_dwo_dir_eq: J<"plugin-opt=dwo_dir=">,
+  HelpText<"Directory to store .dwo files when LTO and debug fission are used">;
+def: J<"plugin-opt=jobs=">, Alias<thinlto_jobs>, HelpText<"Alias for -thinlto-jobs">;
+def: J<"plugin-opt=lto-partitions=">, Alias<lto_partitions>, HelpText<"Alias for -lto-partitions">;
+def plugin_opt_mcpu_eq: J<"plugin-opt=mcpu=">;
+def: F<"plugin-opt=new-pass-manager">,
+  Alias<lto_new_pass_manager>, HelpText<"Alias for -lto-new-pass-manager">;
+def plugin_opt_obj_path_eq: J<"plugin-opt=obj-path=">;
+def: J<"plugin-opt=sample-profile=">,
+  Alias<lto_sample_profile>, HelpText<"Alias for -lto-sample-profile">;
+def: F<"plugin-opt=save-temps">, Alias<save_temps>, HelpText<"Alias for -save-temps">;
+def plugin_opt_thinlto_emit_imports_files: F<"plugin-opt=thinlto-emit-imports-files">;
+def plugin_opt_thinlto_index_only: F<"plugin-opt=thinlto-index-only">;
+def plugin_opt_thinlto_index_only_eq: J<"plugin-opt=thinlto-index-only=">;
+def plugin_opt_thinlto_object_suffix_replace_eq: J<"plugin-opt=thinlto-object-suffix-replace=">;
+def plugin_opt_thinlto_prefix_replace_eq: J<"plugin-opt=thinlto-prefix-replace=">;
 
 // Ignore LTO plugin-related options.
 // clang -flto passes -plugin and -plugin-opt to the linker. This is required
@@ -383,32 +464,38 @@ def thinlto_jobs: J<"thinlto-jobs=">, HelpText<"Number of ThinLTO jobs">;
 // just ignore the option on lld side as it's easier. In fact, the linker could
 // be called 'ld' and understanding which linker is used would require parsing of
 // --version output.
-def plugin: S<"plugin">;
-def plugin_eq: J<"plugin=">;
-def plugin_opt: S<"plugin-opt">;
-def plugin_opt_eq: J<"plugin-opt=">;
+defm plugin: Eq<"plugin", "Ignored for compatibility with GNU linkers">;
+
+def plugin_opt_fresolution_eq: J<"plugin-opt=-fresolution=">;
+def plugin_opt_pass_through_eq: J<"plugin-opt=-pass-through=">;
+def plugin_opt_thinlto: J<"plugin-opt=thinlto">;
+def plugin_opt_slash: J<"plugin-opt=/">;
 
 // Options listed below are silently ignored for now for compatibility.
-def allow_shlib_undefined: F<"allow-shlib-undefined">;
-def cref: Flag<["--"], "cref">;
-def detect_odr_violations: F<"detect-odr-violations">;
-def g: Flag<["-"], "g">;
-def no_add_needed: F<"no-add-needed">;
-def no_allow_shlib_undefined: F<"no-allow-shlib-undefined">;
-def no_copy_dt_needed_entries: F<"no-copy-dt-needed-entries">,
-  Alias<no_add_needed>;
-def no_keep_memory: F<"no-keep-memory">;
-def no_mmap_output_file: F<"no-mmap-output-file">;
-def no_warn_common: F<"no-warn-common">;
-def no_warn_mismatch: F<"no-warn-mismatch">;
-def rpath_link: S<"rpath-link">;
-def rpath_link_eq: J<"rpath-link=">;
-def sort_common: F<"sort-common">;
-def stats: F<"stats">;
-def warn_execstack: F<"warn-execstack">;
-def warn_shared_textrel: F<"warn-shared-textrel">;
-def EB : F<"EB">;
-def EL : F<"EL">;
-def G: JoinedOrSeparate<["-"], "G">;
-def Qy : F<"Qy">;
+def: F<"allow-shlib-undefined">;
+def: F<"detect-odr-violations">;
+def: Flag<["-"], "g">;
+def: F<"long-plt">;
+def: F<"no-add-needed">;
+def: F<"no-allow-shlib-undefined">;
+def: F<"no-copy-dt-needed-entries">;
+def: F<"no-ctors-in-init-array">;
+def: F<"no-keep-memory">;
+def: F<"no-mmap-output-file">;
+def: F<"no-warn-mismatch">;
+def: Separate<["--", "-"], "rpath-link">;
+def: J<"rpath-link=">;
+def: F<"sort-common">;
+def: F<"stats">;
+def: F<"warn-execstack">;
+def: F<"warn-once">;
+def: F<"warn-shared-textrel">;
+def: F<"EB">;
+def: F<"EL">;
+def: JoinedOrSeparate<["-"], "G">;
+def: F<"Qy">;
 
+// Hidden option used for testing MIPS multi-GOT implementation.
+defm mips_got_size:
+  Eq<"mips-got-size", "Max size of a single MIPS GOT. 0x10000 by default.">,
+  Flags<[HelpHidden]>;

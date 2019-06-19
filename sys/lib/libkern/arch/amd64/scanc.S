@@ -36,6 +36,7 @@
 #include <machine/asm.h>
 
 ENTRY(scanc)
+	RETGUARD_SETUP(scanc, r10)
 	movq	%rdx,%r11
 	movb	%cl,%dl
 	movl	%edi,%ecx
@@ -51,4 +52,5 @@ ENTRY(scanc)
 	jnz	1b
 2:
 	movl	%ecx,%eax
+	RETGUARD_CHECK(scanc, r10)
 	ret

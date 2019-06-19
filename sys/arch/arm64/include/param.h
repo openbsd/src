@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 2018/01/05 17:42:35 kettenis Exp $	*/
+/*	$OpenBSD: param.h,v 1.6 2018/09/14 13:58:20 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,7 +63,7 @@
 #define	USPACE		(UPAGES * PAGE_SIZE)	/* total size of u-area */
 #define	USPACE_ALIGN	0			/* u-area alignment 0-none */
 
-#define	NMBCLUSTERS	4096			/* max cluster allocation */
+#define	NMBCLUSTERS	(64 * 1024)		/* max cluster allocation */
 
 #ifndef	MSGBUFSIZE
 #define	MSGBUFSIZE	(16 * PAGE_SIZE)	/* default message buffer size */
@@ -77,6 +77,9 @@
 
 #define	STACKALIGNBYTES		(16 - 1)
 #define	STACKALIGN(p)		((u_long)(p) &~ STACKALIGNBYTES)
+
+#define __HAVE_ACPI
+#define __HAVE_FDT
 
 #endif /* _KERNEL */
 

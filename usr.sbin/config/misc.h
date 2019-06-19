@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.4 2003/06/03 00:52:35 weingart Exp $	*/
+/*	$OpenBSD: misc.h,v 1.5 2019/05/14 13:44:25 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,6 +33,7 @@
 
 /* Prototypes */
 int ask_cmd(cmd_t *);
+int parse_cmd(cmd_t *, char *);
 int ask_yn(const char *);
 
 #endif /* _MISC_H */

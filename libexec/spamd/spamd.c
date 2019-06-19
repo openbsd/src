@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.153 2017/10/18 17:31:01 millert Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.155 2018/10/22 17:31:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2015 Henning Brauer <henning@openbsd.org>
@@ -471,7 +471,7 @@ spamd_tls_init()
 	if (tls_configure(tlsctx, tlscfg) != 0)
 		errx(1, "failed to configure TLS - %s", tls_error(tlsctx));
 
-	/* set hostname to cert's CN unless explicitely given? */
+	/* set hostname to cert's CN unless explicitly given? */
 }
 
 int
@@ -978,7 +978,7 @@ nextstate(struct con *cp)
 			cp->laststate = cp->state;
 			cp->state = 98;
 			goto done;
-		}	
+		}
 		goto tlsinitdone;
 
 	case 50:
@@ -1522,7 +1522,7 @@ main(int argc, char *argv[])
 			if (chroot("/var/empty") == -1) {
 				syslog(LOG_ERR, "cannot chroot to /var/empty.");
 				exit(1);
-			}			
+			}
  			if (chdir("/") == -1) {
 				syslog(LOG_ERR, "cannot chdir to /");
 				exit(1);

@@ -19,17 +19,28 @@ def GPRIdxMode : Operand<i32> {
   let OperandType = "OPERAND_IMMEDIATE";
 }
 
+class SOP_Pseudo<string opName, dag outs, dag ins, string asmOps,
+                  list<dag> pattern=[]> :
+    InstSI<outs, ins, "", pattern>,
+    SIMCInstr<opName, SIEncodingFamily.NONE> {
+
+  let isPseudo = 1;
+  let isCodeGenOnly = 1;
+  let SubtargetPredicate = isGCN;
+
+  string Mnemonic = opName;
+  string AsmOperands = asmOps;
+
+  bits<1> has_sdst = 0;
+}
+
 //===----------------------------------------------------------------------===//
 // SOP1 Instructions
 //===----------------------------------------------------------------------===//
 
 class SOP1_Pseudo <string opName, dag outs, dag ins,
                    string asmOps, list<dag> pattern=[]> :
-  InstSI <outs, ins, "", pattern>,
-  SIMCInstr<opName, SIEncodingFamily.NONE> {
-  let isPseudo = 1;
-  let isCodeGenOnly = 1;
-  let SubtargetPredicate = isGCN;
+  SOP_Pseudo<opName, outs, ins, asmOps, pattern> {
 
   let mayLoad = 0;
   let mayStore = 0;
@@ -39,9 +50,6 @@ class SOP1_Pseudo <string opName, dag outs, dag ins,
   let SchedRW = [WriteSALU];
   let Size = 4;
   let UseNamedOperandTable = 1;
-
-  string Mnemonic = opName;
-  string AsmOperands = asmOps;
 
   bits<1> has_src0 = 1;
   bits<1> has_sdst = 1;
@@ -139,7 +147,9 @@ let Defs = [SCC] in {
     [(set i64:$sdst, (not i64:$src0))]
   >;
   def S_WQM_B32 : SOP1_32 <"s_wqm_b32">;
-  def S_WQM_B64 : SOP1_64 <"s_wqm_b64">;
+  def S_WQM_B64 : SOP1_64 <"s_wqm_b64",
+    [(set i1:$sdst, (int_amdgcn_wqm_vote i1:$src0))]
+  >;
 } // End Defs = [SCC]
 
 
@@ -159,10 +169,11 @@ def S_BCNT1_I32_B64 : SOP1_32_64 <"s_bcnt1_i32_b64">;
 
 def S_FF0_I32_B32 : SOP1_32 <"s_ff0_i32_b32">;
 def S_FF0_I32_B64 : SOP1_32_64 <"s_ff0_i32_b64">;
-def S_FF1_I32_B32 : SOP1_32 <"s_ff1_i32_b32",
-  [(set i32:$sdst, (cttz_zero_undef i32:$src0))]
->;
 def S_FF1_I32_B64 : SOP1_32_64 <"s_ff1_i32_b64">;
+
+def S_FF1_I32_B32 : SOP1_32 <"s_ff1_i32_b32",
+  [(set i32:$sdst, (AMDGPUffbl_b32 i32:$src0))]
+>;
 
 def S_FLBIT_I32_B32 : SOP1_32 <"s_flbit_i32_b32",
   [(set i32:$sdst, (AMDGPUffbh_u32 i32:$src0))]
@@ -244,17 +255,25 @@ def S_SET_GPR_IDX_IDX : SOP1_0_32<"s_set_gpr_idx_idx"> {
 }
 }
 
+let SubtargetPredicate = isGFX9 in {
+  let hasSideEffects = 1, Defs = [EXEC, SCC], Uses = [EXEC] in {
+    def S_ANDN1_SAVEEXEC_B64 : SOP1_64<"s_andn1_saveexec_b64">;
+    def S_ORN1_SAVEEXEC_B64  : SOP1_64<"s_orn1_saveexec_b64">;
+    def S_ANDN1_WREXEC_B64   : SOP1_64<"s_andn1_wrexec_b64">;
+    def S_ANDN2_WREXEC_B64   : SOP1_64<"s_andn2_wrexec_b64">;
+  } // End hasSideEffects = 1, Defs = [EXEC, SCC], Uses = [EXEC]
+
+  def S_BITREPLICATE_B64_B32 : SOP1_64_32<"s_bitreplicate_b64_b32">;
+} // End SubtargetPredicate = isGFX9
+
 //===----------------------------------------------------------------------===//
 // SOP2 Instructions
 //===----------------------------------------------------------------------===//
 
 class SOP2_Pseudo<string opName, dag outs, dag ins,
                   string asmOps, list<dag> pattern=[]> :
-  InstSI<outs, ins, "", pattern>,
-  SIMCInstr<opName, SIEncodingFamily.NONE> {
-  let isPseudo = 1;
-  let isCodeGenOnly = 1;
-  let SubtargetPredicate = isGCN;
+  SOP_Pseudo<opName, outs, ins, asmOps, pattern> {
+
   let mayLoad = 0;
   let mayStore = 0;
   let hasSideEffects = 0;
@@ -263,10 +282,7 @@ class SOP2_Pseudo<string opName, dag outs, dag ins,
   let SchedRW = [WriteSALU];
   let UseNamedOperandTable = 1;
 
-  string Mnemonic = opName;
-  string AsmOperands = asmOps;
-
-  bits<1> has_sdst = 1;
+  let has_sdst = 1;
 
   // Pseudo instructions have no encodings, but adding this field here allows
   // us to do:
@@ -276,7 +292,7 @@ class SOP2_Pseudo<string opName, dag outs, dag ins,
   // let Size = 4; // Do we need size here?
 }
 
-class SOP2_Real<bits<7> op, SOP2_Pseudo ps> :
+class SOP2_Real<bits<7> op, SOP_Pseudo ps> :
   InstSI <ps.OutOperandList, ps.InOperandList,
           ps.Mnemonic # " " # ps.AsmOperands, []>,
   Enc32 {
@@ -391,6 +407,14 @@ def S_XOR_B32 : SOP2_32 <"s_xor_b32",
 def S_XOR_B64 : SOP2_64 <"s_xor_b64",
   [(set i64:$sdst, (xor i64:$src0, i64:$src1))]
 >;
+
+def S_XNOR_B32 : SOP2_32 <"s_xnor_b32",
+  [(set i32:$sdst, (not (xor_oneuse i32:$src0, i32:$src1)))]
+>;
+
+def S_XNOR_B64 : SOP2_64 <"s_xnor_b64",
+  [(set i64:$sdst, (not (xor_oneuse i64:$src0, i64:$src1)))]
+>;
 } // End isCommutable = 1
 
 def S_ANDN2_B32 : SOP2_32 <"s_andn2_b32">;
@@ -401,8 +425,6 @@ def S_NAND_B32 : SOP2_32 <"s_nand_b32">;
 def S_NAND_B64 : SOP2_64 <"s_nand_b64">;
 def S_NOR_B32 : SOP2_32 <"s_nor_b32">;
 def S_NOR_B64 : SOP2_64 <"s_nor_b64">;
-def S_XNOR_B32 : SOP2_32 <"s_xnor_b32">;
-def S_XNOR_B64 : SOP2_64 <"s_xnor_b64">;
 } // End Defs = [SCC]
 
 // Use added complexity so these patterns are preferred to the VALU patterns.
@@ -473,6 +495,16 @@ let SubtargetPredicate = isGFX9 in {
   def S_PACK_LL_B32_B16 : SOP2_32<"s_pack_ll_b32_b16">;
   def S_PACK_LH_B32_B16 : SOP2_32<"s_pack_lh_b32_b16">;
   def S_PACK_HH_B32_B16 : SOP2_32<"s_pack_hh_b32_b16">;
+
+  let Defs = [SCC] in {
+    def S_LSHL1_ADD_U32 : SOP2_32<"s_lshl1_add_u32">;
+    def S_LSHL2_ADD_U32 : SOP2_32<"s_lshl2_add_u32">;
+    def S_LSHL3_ADD_U32 : SOP2_32<"s_lshl3_add_u32">;
+    def S_LSHL4_ADD_U32 : SOP2_32<"s_lshl4_add_u32">;
+  } // End Defs = [SCC]
+
+  def S_MUL_HI_U32 : SOP2_32<"s_mul_hi_u32">;
+  def S_MUL_HI_I32 : SOP2_32<"s_mul_hi_i32">;
 }
 
 //===----------------------------------------------------------------------===//
@@ -650,6 +682,16 @@ def S_SETREG_IMM32_B32 : SOPK_Pseudo <
 
 } // End hasSideEffects = 1
 
+let SubtargetPredicate = isGFX9 in {
+  def S_CALL_B64 : SOPK_Pseudo<
+      "s_call_b64",
+      (outs SReg_64:$sdst),
+      (ins s16imm:$simm16),
+      "$sdst, $simm16"> {
+    let isCall = 1;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // SOPC Instructions
 //===----------------------------------------------------------------------===//
@@ -797,6 +839,13 @@ def S_ENDPGM_SAVED : SOPP <0x0000001B, (ins), "s_endpgm_saved"> {
 }
 }
 
+let SubtargetPredicate = isGFX9 in {
+  let isBarrier = 1, isReturn = 1, simm16 = 0 in {
+    def S_ENDPGM_ORDERED_PS_DONE :
+      SOPP<0x01e, (ins), "s_endpgm_ordered_ps_done">;
+  } // End isBarrier = 1, isReturn = 1, simm16 = 0
+} // End SubtargetPredicate = isGFX9
+
 let isBranch = 1, SchedRW = [WriteBranch] in {
 def S_BRANCH : SOPP <
   0x00000002, (ins sopp_brtarget:$simm16), "s_branch $simm16",
@@ -811,8 +860,7 @@ def S_CBRANCH_SCC0 : SOPP <
 >;
 def S_CBRANCH_SCC1 : SOPP <
   0x00000005, (ins sopp_brtarget:$simm16),
-  "s_cbranch_scc1 $simm16",
-  [(si_uniform_br_scc SCC, bb:$simm16)]
+  "s_cbranch_scc1 $simm16"
 >;
 } // End Uses = [SCC]
 
@@ -942,12 +990,10 @@ def S_SET_GPR_IDX_MODE : SOPP<0x1d, (ins GPRIdxMode:$simm16),
 }
 }
 
-let Predicates = [isGCN] in {
-
 //===----------------------------------------------------------------------===//
 // S_GETREG_B32 Intrinsic Pattern.
 //===----------------------------------------------------------------------===//
-def : Pat <
+def : GCNPat <
   (int_amdgcn_s_getreg imm:$simm16),
   (S_GETREG_B32 (as_i16imm $simm16))
 >;
@@ -956,25 +1002,25 @@ def : Pat <
 // SOP1 Patterns
 //===----------------------------------------------------------------------===//
 
-def : Pat <
+def : GCNPat <
   (i64 (ctpop i64:$src)),
     (i64 (REG_SEQUENCE SReg_64,
      (i32 (COPY_TO_REGCLASS (S_BCNT1_I32_B64 $src), SReg_32)), sub0,
      (S_MOV_B32 (i32 0)), sub1))
 >;
 
-def : Pat <
+def : GCNPat <
   (i32 (smax i32:$x, (i32 (ineg i32:$x)))),
   (S_ABS_I32 $x)
 >;
 
-def : Pat <
+def : GCNPat <
   (i16 imm:$imm),
   (S_MOV_B32 imm:$imm)
 >;
 
 // Same as a 32-bit inreg
-def : Pat<
+def : GCNPat<
   (i32 (sext i16:$src)),
   (S_SEXT_I32_I16 $src)
 >;
@@ -986,7 +1032,7 @@ def : Pat<
 
 // V_ADD_I32_e32/S_ADD_U32 produces carry in VCC/SCC. For the vector
 // case, the sgpr-copies pass will fix this to use the vector version.
-def : Pat <
+def : GCNPat <
   (i32 (addc i32:$src0, i32:$src1)),
   (S_ADD_U32 $src0, $src1)
 >;
@@ -994,20 +1040,20 @@ def : Pat <
 // FIXME: We need to use COPY_TO_REGCLASS to work-around the fact that
 // REG_SEQUENCE patterns don't support instructions with multiple
 // outputs.
-def : Pat<
+def : GCNPat<
   (i64 (zext i16:$src)),
     (REG_SEQUENCE SReg_64,
       (i32 (COPY_TO_REGCLASS (S_AND_B32 $src, (S_MOV_B32 (i32 0xffff))), SGPR_32)), sub0,
       (S_MOV_B32 (i32 0)), sub1)
 >;
 
-def : Pat <
+def : GCNPat <
   (i64 (sext i16:$src)),
     (REG_SEQUENCE SReg_64, (i32 (S_SEXT_I32_I16 $src)), sub0,
     (i32 (COPY_TO_REGCLASS (S_ASHR_I32 (i32 (S_SEXT_I32_I16 $src)), (S_MOV_B32 (i32 31))), SGPR_32)), sub1)
 >;
 
-def : Pat<
+def : GCNPat<
   (i32 (zext i16:$src)),
   (S_AND_B32 (S_MOV_B32 (i32 0xffff)), $src)
 >;
@@ -1018,12 +1064,10 @@ def : Pat<
 // SOPP Patterns
 //===----------------------------------------------------------------------===//
 
-def : Pat <
+def : GCNPat <
   (int_amdgcn_s_waitcnt i32:$simm16),
   (S_WAITCNT (as_i16imm $simm16))
 >;
-
-} // End isGCN predicate
 
 
 //===----------------------------------------------------------------------===//
@@ -1308,3 +1352,26 @@ def S_SETREG_B32_vi        : SOPK_Real_vi <0x12, S_SETREG_B32>;
 //def S_GETREG_REGRD_B32_vi  : SOPK_Real_vi <0x13, S_GETREG_REGRD_B32>; // see pseudo for comments
 def S_SETREG_IMM32_B32_vi  : SOPK_Real64<0x14, S_SETREG_IMM32_B32>,
                              Select_vi<S_SETREG_IMM32_B32.Mnemonic>;
+
+def S_CALL_B64_vi          : SOPK_Real_vi <0x15, S_CALL_B64>;
+
+//===----------------------------------------------------------------------===//
+// SOP1 - GFX9.
+//===----------------------------------------------------------------------===//
+
+def S_ANDN1_SAVEEXEC_B64_vi   : SOP1_Real_vi<0x33, S_ANDN1_SAVEEXEC_B64>;
+def S_ORN1_SAVEEXEC_B64_vi    : SOP1_Real_vi<0x34, S_ORN1_SAVEEXEC_B64>;
+def S_ANDN1_WREXEC_B64_vi     : SOP1_Real_vi<0x35, S_ANDN1_WREXEC_B64>;
+def S_ANDN2_WREXEC_B64_vi     : SOP1_Real_vi<0x36, S_ANDN2_WREXEC_B64>;
+def S_BITREPLICATE_B64_B32_vi : SOP1_Real_vi<0x37, S_BITREPLICATE_B64_B32>;
+
+//===----------------------------------------------------------------------===//
+// SOP2 - GFX9.
+//===----------------------------------------------------------------------===//
+
+def S_LSHL1_ADD_U32_vi   : SOP2_Real_vi<0x2e, S_LSHL1_ADD_U32>;
+def S_LSHL2_ADD_U32_vi   : SOP2_Real_vi<0x2f, S_LSHL2_ADD_U32>;
+def S_LSHL3_ADD_U32_vi   : SOP2_Real_vi<0x30, S_LSHL3_ADD_U32>;
+def S_LSHL4_ADD_U32_vi   : SOP2_Real_vi<0x31, S_LSHL4_ADD_U32>;
+def S_MUL_HI_U32_vi      : SOP2_Real_vi<0x2c, S_MUL_HI_U32>;
+def S_MUL_HI_I32_vi      : SOP2_Real_vi<0x2d, S_MUL_HI_I32>;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.39 2017/10/25 22:29:41 mikeb Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.41 2018/06/24 00:49:25 guenther Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -36,9 +36,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/signalvar.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -48,33 +45,12 @@
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
 
-int	xrstor_user(struct savefpu *_addr, uint64_t _mask);
-void	trap(struct trapframe *);
-
-/*
- * We do lazy initialization and switching using the TS bit in cr0 and the
- * MDP_USEDFPU bit in mdproc.
- *
- * DNA exceptions are handled like this:
- *
- * 1) If there is no FPU, return and go to the emulator.
- * 2) If someone else has used the FPU, save its state into that process' PCB.
- * 3a) If MDP_USEDFPU is not set, set it and initialize the FPU.
- * 3b) Otherwise, reload the process' previous FPU state.
- *
- * When a process is created or exec()s, its saved cr0 image has the TS bit
- * set and the MDP_USEDFPU bit clear.  The MDP_USEDFPU bit is set when the
- * process first gets a DNA and the FPU is initialized.  The TS bit is turned
- * off when the FPU is used, and turned on again later when the process' FPU
- * state is saved.
- */
 
 /*
  * The mask of enabled XSAVE features.
  */
 uint64_t	xsave_mask;
 
-void fpudna(struct cpu_info *, struct trapframe *);
 static int x86fpflags_to_siginfo(u_int32_t);
 
 /*
@@ -94,7 +70,6 @@ uint32_t	fpu_mxcsr_mask;
 void
 fpuinit(struct cpu_info *ci)
 {
-	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
 	fninit();
 	if (fpu_mxcsr_mask == 0) {
 		struct fxsave64 fx __attribute__((aligned(16)));
@@ -106,37 +81,29 @@ fpuinit(struct cpu_info *ci)
 		else
 			fpu_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 	}
-	lcr0(rcr0() | (CR0_TS));
 }
 
 /*
  * Record the FPU state and reinitialize it all except for the control word.
- * Then generate a SIGFPE.
+ * Returns the code to include in an SIGFPE.
  *
  * Reinitializing the state allows naive SIGFPE handlers to longjmp without
  * doing any fixups.
  */
-void
-fputrap(struct trapframe *frame)
+int
+fputrap(int type)
 {
-	struct proc *p = curcpu()->ci_fpcurproc;
+	struct cpu_info *ci = curcpu();
+	struct proc *p = curproc;
 	struct savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
 	u_int32_t mxcsr, statbits;
 	u_int16_t cw;
-	int code;
-	union sigval sv;
 
-#ifdef DIAGNOSTIC
-	/*
-	 * At this point, fpcurproc should be curproc.  If it wasn't,
-	 * the TS bit should be set, and we should have gotten a DNA exception.
-	 */
-	if (p != curproc)
-		panic("fputrap: wrong proc");
-#endif
+	KASSERT(ci->ci_flags & CPUF_USERXSTATE);
+	ci->ci_flags &= ~CPUF_USERXSTATE;
+	fpusavereset(sfp);
 
-	fxsave(sfp);
-	if (frame->tf_trapno == T_XMM) {
+	if (type == T_XMM) {
 		mxcsr = sfp->fp_fxsave.fx_mxcsr;
 	  	statbits = mxcsr;
 		mxcsr &= ~0x3f;
@@ -151,11 +118,7 @@ fputrap(struct trapframe *frame)
 	}
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
-	code = x86fpflags_to_siginfo (statbits);
-	sv.sival_ptr = (void *)frame->tf_rip;	/* XXX - ? */
-	KERNEL_LOCK();
-	trapsignal(p, SIGFPE, frame->tf_err, code, sv);
-	KERNEL_UNLOCK();
+	return x86fpflags_to_siginfo(statbits);
 }
 
 static int
@@ -180,212 +143,21 @@ x86fpflags_to_siginfo(u_int32_t flags)
         return (FPE_FLTINV);
 }
 
-/*
- * Implement device not available (DNA) exception
- *
- * If we were the last process to use the FPU, we can simply return.
- * Otherwise, we save the previous state, if necessary, and restore our last
- * saved state.
- */
-void
-fpudna(struct cpu_info *ci, struct trapframe *frame)
-{
-	struct savefpu *sfp;
-	struct proc *p;
-	int s;
-
-	if (ci->ci_fpsaving) {
-		printf("recursive fpu trap; cr0=%x\n", rcr0());
-		return;
-	}
-
-	s = splipi();
-
-#ifdef MULTIPROCESSOR
-	p = ci->ci_curproc;
-#else
-	p = curproc;
-#endif
-
-	/*
-	 * Initialize the FPU state to clear any exceptions.  If someone else
-	 * was using the FPU, save their state.
-	 */
-	if (ci->ci_fpcurproc != NULL && ci->ci_fpcurproc != p) {
-		fpusave_cpu(ci, ci->ci_fpcurproc != &proc0);
-		uvmexp.fpswtch++;
-	}
-	splx(s);
-
-	if (p == NULL) {
-		clts();
-		return;
-	}
-
-	KDASSERT(ci->ci_fpcurproc == NULL);
-#ifndef MULTIPROCESSOR
-	KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
-#else
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 1);
-#endif
-
-	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
-	clts();
-
-	s = splipi();
-	ci->ci_fpcurproc = p;
-	p->p_addr->u_pcb.pcb_fpcpu = ci;
-	splx(s);
-
-	sfp = &p->p_addr->u_pcb.pcb_savefpu;
-
-	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		fninit();
-		bzero(&sfp->fp_fxsave, sizeof(sfp->fp_fxsave));
-		sfp->fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
-		sfp->fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
-		fxrstor(&sfp->fp_fxsave);
-		p->p_md.md_flags |= MDP_USEDFPU;
-	} else {
-		if (xsave_mask) {
-			if (xrstor_user(sfp, xsave_mask)) {
-				fpusave_proc(p, 0);	/* faulted */
-				frame->tf_trapno = T_PROTFLT;
-				trap(frame);
-				return;
-			}
-		} else {
-			static double	zero = 0.0;
-
-			/*
-			 * amd fpu does not restore fip, fdp, fop on fxrstor
-			 * thus leaking other process's execution history.
-			 */
-			fnclex();
-			__asm volatile("ffree %%st(7)\n\tfldl %0" : : "m" (zero));
-			fxrstor(sfp);
-		}
-	}
-}
-
-
-void
-fpusave_cpu(struct cpu_info *ci, int save)
-{
-	struct proc *p;
-	int s;
-
-	KDASSERT(ci == curcpu());
-
-	p = ci->ci_fpcurproc;
-	if (p == NULL)
-		return;
-
-	if (save) {
-#ifdef DIAGNOSTIC
-		if (ci->ci_fpsaving != 0)
-			panic("fpusave_cpu: recursive save!");
-#endif
-		/*
-		 * Set ci->ci_fpsaving, so that any pending exception will be
-		 * thrown away.  (It will be caught again if/when the FPU
-		 * state is restored.)
-		 */
-		clts();
-		ci->ci_fpsaving = 1;
-		if (xsave_mask)
-			xsave(&p->p_addr->u_pcb.pcb_savefpu, xsave_mask);
-		else
-			fxsave(&p->p_addr->u_pcb.pcb_savefpu);
-		ci->ci_fpsaving = 0;
-	}
-
-	stts();
-	p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
-
-	s = splipi();
-	p->p_addr->u_pcb.pcb_fpcpu = NULL;
-	ci->ci_fpcurproc = NULL;
-	splx(s);
-}
-
-/*
- * Save p's FPU state, which may be on this processor or another processor.
- */
-void
-fpusave_proc(struct proc *p, int save)
-{
-	struct cpu_info *ci = curcpu();
-	struct cpu_info *oci;
-
-	KDASSERT(p->p_addr != NULL);
-
-	oci = p->p_addr->u_pcb.pcb_fpcpu;
-	if (oci == NULL)
-		return;
-
-#if defined(MULTIPROCESSOR)
-	if (oci == ci) {
-		int s = splipi();
-		fpusave_cpu(ci, save);
-		splx(s);
-	} else {
-		oci->ci_fpsaveproc = p;
-		x86_send_ipi(oci,
-	    	    save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
-		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-			CPU_BUSY_CYCLE();
-	}
-#else
-	KASSERT(ci->ci_fpcurproc == p);
-	fpusave_cpu(ci, save);
-#endif
-}
-
 void
 fpu_kernel_enter(void)
 {
-	struct cpu_info	*ci = curcpu();
-	struct savefpu	*sfp;
-	int		 s;
+	struct cpu_info *ci = curcpu();
 
-	/*
-	 * Fast path.  If the kernel was using the FPU before, there
-	 * is no work to do besides clearing TS.
-	 */
-	if (ci->ci_fpcurproc == &proc0) {
-		clts();
-		return;
+	/* save curproc's FPU state if we haven't already */
+	if (ci->ci_flags & CPUF_USERXSTATE) {
+		ci->ci_flags &= ~CPUF_USERXSTATE;
+		fpusavereset(&curproc->p_addr->u_pcb.pcb_savefpu);
 	}
-
-	s = splipi();
-
-	if (ci->ci_fpcurproc != NULL) {
-		fpusave_cpu(ci, 1);
-		uvmexp.fpswtch++;
-	}
-
-	/* Claim the FPU */
-	ci->ci_fpcurproc = &proc0;
-
-	splx(s);
-
-	/* Disable DNA exceptions */
-	clts();
-
-	/* Initialize the FPU */
-	fninit();
-	sfp = &proc0.p_addr->u_pcb.pcb_savefpu;
-	memset(&sfp->fp_fxsave, 0, sizeof(sfp->fp_fxsave));
-	sfp->fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
-	sfp->fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
-	fxrstor(&sfp->fp_fxsave);
 }
 
 void
 fpu_kernel_exit(void)
 {
-	/* Enable DNA exceptions */
-	stts();
+	/* make sure we don't leave anything in the registers */
+	fpureset();
 }

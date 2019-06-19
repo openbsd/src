@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpw.4,v 1.3 2015/07/21 15:19:34 jmc Exp $
+.\"	$OpenBSD: mpw.4,v 1.8 2019/04/03 06:24:07 jmc Exp $
 .\"
 .\" Copyright (C) 2015 Rafael Zalamena <rzalamena@openbsd.org>
 .\"
@@ -14,23 +14,21 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2015 $
+.Dd $Mdocdate: April 3 2019 $
 .Dt MPW 4
 .Os
 .Sh NAME
 .Nm mpw
-.Nd MPLS pseudowire
+.Nd MPLS Ethernet pseudowire
 .Sh SYNOPSIS
 .Cd "pseudo-device mpw"
-.Pp
-.In sys/types.h
-.In netmpls/mpls.h
 .Sh DESCRIPTION
 The
 .Nm
-interface is used to create an MPLS layer 2 tunnel between two points.
+interface is used to create an MPLS Ethernet layer 2 tunnel between
+two points.
 .Pp
-A
+An
 .Nm
 interface can be created at runtime using the
 .Sy ifconfig Nm Ns Ar N Cm create
@@ -41,66 +39,85 @@ configuration file for
 The interface itself can be configured with
 .Xr ifconfig 8 .
 .Pp
-The supported pseudowire operation modes are
-.Ql ethernet
-and
-.Ql ethernet-tagged .
-The
-.Ql ethernet
-operating mode passes all Ethernet packets transparently through the
-interface, meanwhile the
-.Ql ethernet-tagged
-requires that the client uses at least one VLAN to pass the traffic.
-The
-.Nm
-interface labels, neighbor, encapsulation and administrative state are normally
-configured by
+The local MPLS label, the remote MPLS label and neighbor, use of
+pseudowire control words, or flow-aware transport are normally
+configured after negotiation with a remote system using
 .Xr ldpd 8 ,
-but it is also possible to configure them manually.
-The configuration information that will be used by the ioctl are
-defined below:
-.Bd -literal
-#define IMR_TYPE_NONE                   0
-#define IMR_TYPE_ETHERNET               1
-#define IMR_TYPE_ETHERNET_TAGGED        2
-
-#define IMR_FLAG_CONTROLWORD            0x1
-
-struct ifmpwreq {
-        uint32_t        imr_flags;
-        uint32_t        imr_type; /* pseudowire type */
-        struct          shim_hdr imr_lshim; /* local label */
-        struct          shim_hdr imr_rshim; /* remote label */
-        struct          sockaddr_storage imr_nexthop;
-};
-.Ed
-.Pp
-.Nm
-interfaces support the following unique ioctls:
-.Bl -tag -width "SIOCSETMPWCFG" -offset 3n
-.It Dv SIOCSETMPWCFG
-Configure mpw using the supplied configuration.
-.It Dv SIOCGETMPWCFG
-Report the mpw configuration.
-.El
+but it is also possible to configure them manually using
+.Xr ifconfig 8 .
 .Sh EXAMPLES
-Create a pseudowire to neighbor 10.254.0.1 using Ethernet encapsulation
-with local label 20 and encapsulate MPLS packets with label 21:
+Create a pseudowire with local label 20 and remote label 21 on
+neighbor 10.254.0.1:
 .Bd -literal -offset indent
-# ifconfig mpw5 neighbor 10.254.0.1 encap ethernet mpwlabel 20 21 up
+# ifconfig mpw5 create
+# ifconfig mpw5 mplslabel 20 pweneighbor 21 10.254.0.1
+# ifconfig mpw5 up
 .Ed
 .Pp
-Create a pseudowire to neighbor 10.254.0.3 using Ethernet encapsulation
-with local label 30 and encapsulate MPLS packets with label 31 and
-control-word:
+Enable the use of the Pseudowire Emulation Edge-to-Edge (PWE3)
+Control Word, and disable the use of a Flow label for Flow-Aware
+Transport of Pseudowires:
 .Bd -literal -offset indent
-# ifconfig mpw5 neighbor 10.254.0.3 encap ethernet mpwlabel 30 31 controlword
+# ifconfig mpw5 pwecw -pwefat
+.Ed
+.Pp
+.Nm mpw
+interfaces may be used to build a Virtual Private LAN Service
+(VPLS) with
+.Xr bridge 4 .
+A VPLS is constructed with a full mesh of MPLS pseudowire tunnels
+between all peers, but this introduces loops in the topology.
+To prevent broadcast packets received from the VPLS being forwarded
+to its peers, all the pseudowire interfaces can be configured to
+enforce the split-horizon forwarding rule by adding them to the
+same protected bridge domain.
+Different VPLS meshes can be joined together on the same bridge
+using different identifiers for their protected domains:
+.Bd -literal -offset indent
+# ifconfig mpw10 create up
+# ifconfig mpw11 create up
+# ifconfig mpw12 create up
+# ifconfig bridge0 create
+# ifconfig bridge0 add em2
+# ifconfig bridge0 add mpw10 add mpw11 add mpw12
+# ifconfig bridge0 protected mpw10 1
+# ifconfig bridge0 protected mpw11 1
+# ifconfig bridge0 protected mpw12 1
 .Ed
 .Sh SEE ALSO
 .Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr ldpd 8 ,
 .Xr netstart 8
+.Rs
+.%A S. Bryant
+.%A P. Pate
+.%D March 2005
+.%R RFC 3985
+.%T Pseudo Wire Emulation Edge-to-Edge (PWE3) Architecture
+.Re
+.Pp
+.Rs
+.%A S. Bryant
+.%A G. Swallow
+.%A L. Martini
+.%D February 2005
+.%R RFC 4385
+.%T Pseudowire Emulation Edge-to-Edge (PWE3) Control Word \
+for Use over an MPLS PSN
+.Re
+.Pp
+.Rs
+.%A S. Bryant
+.%A C. Filsfils
+.%A U. Drafz
+.%A V. Kompella
+.%A J. Regan
+.%A S. Amante
+.%D November 2011
+.%R RFC 6391
+.%T Flow-Aware Transport of Pseudowires over an MPLS Packet Switched Network
+.Re
 .Sh HISTORY
 The
 .Nm

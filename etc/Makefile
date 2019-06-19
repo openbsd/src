@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.461 2017/11/05 10:29:24 rpe Exp $
+#	$OpenBSD: Makefile,v 1.469 2019/05/11 07:18:15 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -39,16 +39,16 @@ kernels: ${ALL_KERNELS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-MUTABLE=acme-client.conf changelist daily etc.${MACHINE}/disktab \
+MUTABLE=changelist daily etc.${MACHINE}/disktab \
 	etc.${MACHINE}/login.conf ftpusers gettytab group ksh.kshrc locate.rc \
-	mailer.conf moduli monthly netstart networks newsyslog.conf ntpd.conf \
+	mailer.conf moduli monthly netstart newsyslog.conf ntpd.conf \
 	pf.os protocols rc rc.conf rpc services shells syslog.conf weekly
 
 # -rw-r--r--
-EXAMPLES=chio.conf dhclient.conf dhcpd.conf exports \
+EXAMPLES=acme-client.conf chio.conf dhclient.conf dhcpd.conf exports \
 	httpd.conf ifstated.conf inetd.conf man.conf mixerctl.conf \
-	mrouted.conf ntpd.conf printcap rbootd.conf \
-	remote sensorsd.conf wsconsctl.conf
+	mrouted.conf ntpd.conf printcap rad.conf rbootd.conf \
+	remote unwind.conf sensorsd.conf wsconsctl.conf
 
 # -rw-------
 EXAMPLES_600=bgpd.conf doas.conf dvmrpd.conf eigrpd.conf hostapd.conf \
@@ -61,10 +61,10 @@ RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcrelay dhcrelay6 dvmrpd \
 	eigrpd ftpd ftpproxy ftpproxy6 hostapd hotplugd httpd identd ifstated \
 	iked inetd isakmpd iscsid ldapd ldattach ldomd ldpd lockd \
 	lpd mopd mountd mrouted nfsd npppd nsd ntpd ospf6d ospfd \
-	pflogd portmap radiusd rarpd rbootd rebound relayd ripd route6d \
-	rtadvd sasyncd sensorsd slowcgi slaacd smtpd sndiod snmpd spamd \
+	pflogd portmap rad radiusd rarpd rbootd rebound relayd ripd route6d \
+	sasyncd sensorsd slowcgi slaacd smtpd sndiod snmpd spamd \
 	spamlogd sshd statd switchd syslogd tftpd tftpproxy unbound \
-	vmd watchdogd wsmoused xenodm ypbind ypldap ypserv
+	unwind vmd watchdogd wsmoused xenodm ypbind ypldap ypserv
 
 MISETS=	base${OSrev}.tgz comp${OSrev}.tgz man${OSrev}.tgz game${OSrev}.tgz
 
@@ -298,7 +298,7 @@ distrib:
 SUBDIR+= etc.alpha etc.amd64 etc.arm64 etc.armv7
 SUBDIR+= etc.hppa etc.i386 etc.landisk etc.loongson etc.luna88k
 SUBDIR+= etc.macppc etc.octeon
-SUBDIR+= etc.sgi etc.socppc etc.sparc64
+SUBDIR+= etc.sgi etc.sparc64
 
 .include <bsd.subdir.mk>
 .include <bsd.prog.mk>

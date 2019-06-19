@@ -404,15 +404,19 @@ use warnings 'uninitialized';
 my ($m1);
 
 local $/ =\$m1;
+EXPECT
+Use of uninitialized value $m1 in scalar assignment at - line 4.
+Setting $/ to a reference to zero is forbidden at - line 4.
+########
+use warnings 'uninitialized';
+
 my $x = "abc";
 chomp $x; chop $x;
 my $y;
 chomp ($x, $y); chop ($x, $y);
 EXPECT
-Use of uninitialized value $m1 in scalar assignment at - line 4.
-Use of uninitialized value $m1 in scalar assignment at - line 4.
-Setting $/ to a reference to zero as a form of slurp is deprecated, treating as undef at - line 4.
-Use of uninitialized value $y in chop at - line 8.
+Use of uninitialized value $y in chomp at - line 6.
+Use of uninitialized value $y in chop at - line 6.
 ########
 use warnings 'uninitialized';
 my ($m1, @ma, %mh);
@@ -651,8 +655,8 @@ Use of uninitialized value $m1 in sort at - line 6.
 Use of uninitialized value $g1 in sort at - line 6.
 Use of uninitialized value $m1 in sort at - line 7.
 Use of uninitialized value $g1 in sort at - line 7.
-Use of uninitialized value $m1 in sort at - line 7.
 Use of uninitialized value $g1 in sort at - line 7.
+Use of uninitialized value $m1 in sort at - line 7.
 Use of uninitialized value $a in subtraction (-) at - line 8.
 Use of uninitialized value $b in subtraction (-) at - line 8.
 Use of uninitialized value $m1 in sort at - line 9.
@@ -668,7 +672,15 @@ Use of uninitialized value in sort at - line 14.
 Use of uninitialized value in sort at - line 21.
 Use of uninitialized value in sort at - line 22.
 ########
-my $nan = sin 9**9**9;
+use Config;
+unless ($Config{d_double_has_inf} && $Config{d_double_has_nan}) {
+    print <<EOM ;
+SKIPPED
+# No inf/nan support
+EOM
+    exit ;
+}
+my $nan = eval 'sin 9**9**9';
 if ($nan == $nan) {
     print <<EOM ;
 SKIPPED
@@ -681,8 +693,8 @@ use warnings 'uninitialized';
 @sort = sort { ($a)[0] <=> $b } 1, $nan;
 @sort = sort {  $a     <=> $b } 1, $nan;
 EXPECT
-Use of uninitialized value in sort at - line 11.
-Use of uninitialized value in sort at - line 12.
+Use of uninitialized value in sort at - line 19.
+Use of uninitialized value in sort at - line 20.
 ########
 use warnings 'uninitialized';
 my ($m1, $m2, $v);
@@ -2138,3 +2150,59 @@ Use of uninitialized value $i in array element at - line 12.
 Use of uninitialized value $k in hash element at - line 12.
 Use of uninitialized value $i in array element at - line 13.
 Use of uninitialized value $k in hash element at - line 13.
+########
+# perl #127877
+use warnings 'uninitialized';
+my ($p, $q, $r, $s, $t, $u, $v, $w, $x, $y);
+$p = $p . "a";
+$q .= "a";
+$r = $r + 17;
+$s += 17;
+$t = $t - 17;
+$u -= 17;
+use integer;
+$v = $v + 17;
+$w += 17;
+$x = $x - 17;
+$y -= 17;
+EXPECT
+Use of uninitialized value $p in concatenation (.) or string at - line 4.
+Use of uninitialized value $r in addition (+) at - line 6.
+Use of uninitialized value $t in subtraction (-) at - line 8.
+Use of uninitialized value $v in integer addition (+) at - line 11.
+Use of uninitialized value $x in integer subtraction (-) at - line 13.
+########
+# NAME 64-bit array subscripts
+# SKIP ? length(pack "p", "") < 8
+use warnings 'uninitialized';
+
+# aelem + const
+use constant foo => \0;
+$SIG{__WARN__} = sub {
+ print STDERR
+   $_[0] =~ /\$a\[([^]]+)]/ && $1 == foo
+       ? "ok\n"
+       : ("$1 != ",0+foo,"\n")
+};
+() = "$a[foo]";
+undef $SIG{__WARN__};
+
+# Multideref
+() = "$a[140688675223280]";
+EXPECT
+ok
+Use of uninitialized value $a[140688675223280] in string at - line 15.
+########
+# RT #128940
+use warnings 'uninitialized';
+my $x = "" . open my $fh, "<", "no / such / file";
+EXPECT
+Use of uninitialized value in concatenation (.) or string at - line 3.
+########
+# RT #123910
+# undef's arg being undef doesn't trigger warnings - any warning will be
+# from tied/magic vars
+use warnings 'uninitialized';
+undef $0;
+EXPECT
+Use of uninitialized value in undef operator at - line 5.

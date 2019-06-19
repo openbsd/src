@@ -1,4 +1,4 @@
-//===-- SIAnnotateControlFlow.cpp -  ------------------===//
+//===- SIAnnotateControlFlow.cpp ------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -14,16 +14,32 @@
 
 #include "AMDGPU.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/DivergenceAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Dominators.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Pass.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/SSAUpdater.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/CFG.h"
+#include "llvm/IR/Constant.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Dominators.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/ValueHandle.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <cassert>
+#include <utility>
 
 using namespace llvm;
 
@@ -32,8 +48,8 @@ using namespace llvm;
 namespace {
 
 // Complex types used in this pass
-typedef std::pair<BasicBlock *, Value *> StackEntry;
-typedef SmallVector<StackEntry, 16> StackVector;
+using StackEntry = std::pair<BasicBlock *, Value *>;
+using StackVector = SmallVector<StackEntry, 16>;
 
 class SIAnnotateControlFlow : public FunctionPass {
   DivergenceAnalysis *DA;
@@ -89,8 +105,7 @@ class SIAnnotateControlFlow : public FunctionPass {
 public:
   static char ID;
 
-  SIAnnotateControlFlow():
-    FunctionPass(ID) { }
+  SIAnnotateControlFlow() : FunctionPass(ID) {}
 
   bool doInitialization(Module &M) override;
 
@@ -105,7 +120,6 @@ public:
     AU.addPreserved<DominatorTreeWrapperPass>();
     FunctionPass::getAnalysisUsage(AU);
   }
-
 };
 
 } // end anonymous namespace
@@ -119,7 +133,7 @@ INITIALIZE_PASS_END(SIAnnotateControlFlow, DEBUG_TYPE,
 
 char SIAnnotateControlFlow::ID = 0;
 
-/// \brief Initialize all the types and constants used in the pass
+/// Initialize all the types and constants used in the pass
 bool SIAnnotateControlFlow::doInitialization(Module &M) {
   LLVMContext &Context = M.getContext();
 
@@ -143,29 +157,29 @@ bool SIAnnotateControlFlow::doInitialization(Module &M) {
   return false;
 }
 
-/// \brief Is the branch condition uniform or did the StructurizeCFG pass
+/// Is the branch condition uniform or did the StructurizeCFG pass
 /// consider it as such?
 bool SIAnnotateControlFlow::isUniform(BranchInst *T) {
   return DA->isUniform(T->getCondition()) ||
          T->getMetadata("structurizecfg.uniform") != nullptr;
 }
 
-/// \brief Is BB the last block saved on the stack ?
+/// Is BB the last block saved on the stack ?
 bool SIAnnotateControlFlow::isTopOfStack(BasicBlock *BB) {
   return !Stack.empty() && Stack.back().first == BB;
 }
 
-/// \brief Pop the last saved value from the control flow stack
+/// Pop the last saved value from the control flow stack
 Value *SIAnnotateControlFlow::popSaved() {
   return Stack.pop_back_val().second;
 }
 
-/// \brief Push a BB and saved value to the control flow stack
+/// Push a BB and saved value to the control flow stack
 void SIAnnotateControlFlow::push(BasicBlock *BB, Value *Saved) {
   Stack.push_back(std::make_pair(BB, Saved));
 }
 
-/// \brief Can the condition represented by this PHI node treated like
+/// Can the condition represented by this PHI node treated like
 /// an "Else" block?
 bool SIAnnotateControlFlow::isElse(PHINode *Phi) {
   BasicBlock *IDom = DT->getNode(Phi->getParent())->getIDom()->getBlock();
@@ -184,14 +198,14 @@ bool SIAnnotateControlFlow::isElse(PHINode *Phi) {
   return true;
 }
 
-// \brief Erase "Phi" if it is not used any more
+// Erase "Phi" if it is not used any more
 void SIAnnotateControlFlow::eraseIfUnused(PHINode *Phi) {
-  if (llvm::RecursivelyDeleteDeadPHINode(Phi)) {
-    DEBUG(dbgs() << "Erased unused condition phi\n");
+  if (RecursivelyDeleteDeadPHINode(Phi)) {
+    LLVM_DEBUG(dbgs() << "Erased unused condition phi\n");
   }
 }
 
-/// \brief Open a new "If" block
+/// Open a new "If" block
 void SIAnnotateControlFlow::openIf(BranchInst *Term) {
   if (isUniform(Term))
     return;
@@ -201,7 +215,7 @@ void SIAnnotateControlFlow::openIf(BranchInst *Term) {
   push(Term->getSuccessor(1), ExtractValueInst::Create(Ret, 1, "", Term));
 }
 
-/// \brief Close the last "If" block and open a new "Else" block
+/// Close the last "If" block and open a new "Else" block
 void SIAnnotateControlFlow::insertElse(BranchInst *Term) {
   if (isUniform(Term)) {
     return;
@@ -211,11 +225,10 @@ void SIAnnotateControlFlow::insertElse(BranchInst *Term) {
   push(Term->getSuccessor(1), ExtractValueInst::Create(Ret, 1, "", Term));
 }
 
-/// \brief Recursively handle the condition leading to a loop
+/// Recursively handle the condition leading to a loop
 Value *SIAnnotateControlFlow::handleLoopCondition(
     Value *Cond, PHINode *Broken, llvm::Loop *L, BranchInst *Term,
     SmallVectorImpl<WeakTrackingVH> &LoopPhiConditions) {
-
   // Only search through PHI nodes which are inside the loop.  If we try this
   // with PHI nodes that are outside of the loop, we end up inserting new PHI
   // nodes outside of the loop which depend on values defined inside the loop.
@@ -223,7 +236,6 @@ Value *SIAnnotateControlFlow::handleLoopCondition(
   // 'Instruction does not dominate all users!' errors.
   PHINode *Phi = nullptr;
   if ((Phi = dyn_cast<PHINode>(Cond)) && L->contains(Phi)) {
-
     BasicBlock *Parent = Phi->getParent();
     PHINode *NewPhi = PHINode::Create(Int64, 0, "loop.phi", &Parent->front());
     Value *Ret = NewPhi;
@@ -310,7 +322,7 @@ Value *SIAnnotateControlFlow::handleLoopCondition(
   llvm_unreachable("Unhandled loop condition!");
 }
 
-/// \brief Handle a back edge (loop)
+/// Handle a back edge (loop)
 void SIAnnotateControlFlow::handleLoop(BranchInst *Term) {
   if (isUniform(Term))
     return;
@@ -333,7 +345,7 @@ void SIAnnotateControlFlow::handleLoop(BranchInst *Term) {
 
   Term->setCondition(CallInst::Create(Loop, Arg, "", Term));
 
-  for (WeakTrackingVH Val : reverse(LoopPhiConditions)) {
+  for (WeakTrackingVH Val : llvm::reverse(LoopPhiConditions)) {
     if (PHINode *Cond = cast_or_null<PHINode>(Val))
       eraseIfUnused(Cond);
   }
@@ -341,7 +353,7 @@ void SIAnnotateControlFlow::handleLoop(BranchInst *Term) {
   push(Term->getSuccessor(0), Arg);
 }
 
-/// \brief Close the last opened control flow
+/// Close the last opened control flow
 void SIAnnotateControlFlow::closeControlFlow(BasicBlock *BB) {
   llvm::Loop *L = LI->getLoopFor(BB);
 
@@ -360,7 +372,7 @@ void SIAnnotateControlFlow::closeControlFlow(BasicBlock *BB) {
         Preds.push_back(Pred);
     }
 
-    BB = llvm::SplitBlockPredecessors(BB, Preds, "endcf.split", DT, LI, false);
+    BB = SplitBlockPredecessors(BB, Preds, "endcf.split", DT, LI, false);
   }
 
   Value *Exec = popSaved();
@@ -369,7 +381,7 @@ void SIAnnotateControlFlow::closeControlFlow(BasicBlock *BB) {
     CallInst::Create(EndCf, Exec, "", FirstInsertionPt);
 }
 
-/// \brief Annotate the control flow with intrinsics so the backend can
+/// Annotate the control flow with intrinsics so the backend can
 /// recognize if/then/else and loops.
 bool SIAnnotateControlFlow::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
@@ -410,11 +422,15 @@ bool SIAnnotateControlFlow::runOnFunction(Function &F) {
     openIf(Term);
   }
 
-  assert(Stack.empty());
+  if (!Stack.empty()) {
+    // CFG was probably not structured.
+    report_fatal_error("failed to annotate CFG");
+  }
+
   return true;
 }
 
-/// \brief Create the annotation pass
+/// Create the annotation pass
 FunctionPass *llvm::createSIAnnotateControlFlowPass() {
   return new SIAnnotateControlFlow();
 }

@@ -12,7 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "RISCVMCTargetDesc.h"
+#include "InstPrinter/RISCVInstPrinter.h"
+#include "RISCVELFStreamer.h"
 #include "RISCVMCAsmInfo.h"
+#include "RISCVTargetStreamer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -28,6 +31,9 @@
 #define GET_REGINFO_MC_DESC
 #include "RISCVGenRegisterInfo.inc"
 
+#define GET_SUBTARGETINFO_MC_DESC
+#include "RISCVGenSubtargetInfo.inc"
+
 using namespace llvm;
 
 static MCInstrInfo *createRISCVMCInstrInfo() {
@@ -38,13 +44,44 @@ static MCInstrInfo *createRISCVMCInstrInfo() {
 
 static MCRegisterInfo *createRISCVMCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitRISCVMCRegisterInfo(X, RISCV::X1_32);
+  InitRISCVMCRegisterInfo(X, RISCV::X1);
   return X;
 }
 
 static MCAsmInfo *createRISCVMCAsmInfo(const MCRegisterInfo &MRI,
                                        const Triple &TT) {
   return new RISCVMCAsmInfo(TT);
+}
+
+static MCSubtargetInfo *createRISCVMCSubtargetInfo(const Triple &TT,
+                                                   StringRef CPU, StringRef FS) {
+  std::string CPUName = CPU;
+  if (CPUName.empty())
+    CPUName = TT.isArch64Bit() ? "generic-rv64" : "generic-rv32";
+  return createRISCVMCSubtargetInfoImpl(TT, CPUName, FS);
+}
+
+static MCInstPrinter *createRISCVMCInstPrinter(const Triple &T,
+                                               unsigned SyntaxVariant,
+                                               const MCAsmInfo &MAI,
+                                               const MCInstrInfo &MII,
+                                               const MCRegisterInfo &MRI) {
+  return new RISCVInstPrinter(MAI, MII, MRI);
+}
+
+static MCTargetStreamer *
+createRISCVObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
+  const Triple &TT = STI.getTargetTriple();
+  if (TT.isOSBinFormatELF())
+    return new RISCVTargetELFStreamer(S, STI);
+  return nullptr;
+}
+
+static MCTargetStreamer *createRISCVAsmTargetStreamer(MCStreamer &S,
+                                                      formatted_raw_ostream &OS,
+                                                      MCInstPrinter *InstPrint,
+                                                      bool isVerboseAsm) {
+  return new RISCVTargetAsmStreamer(S, OS);
 }
 
 extern "C" void LLVMInitializeRISCVTargetMC() {
@@ -54,5 +91,12 @@ extern "C" void LLVMInitializeRISCVTargetMC() {
     TargetRegistry::RegisterMCRegInfo(*T, createRISCVMCRegisterInfo);
     TargetRegistry::RegisterMCAsmBackend(*T, createRISCVAsmBackend);
     TargetRegistry::RegisterMCCodeEmitter(*T, createRISCVMCCodeEmitter);
+    TargetRegistry::RegisterMCInstPrinter(*T, createRISCVMCInstPrinter);
+    TargetRegistry::RegisterMCSubtargetInfo(*T, createRISCVMCSubtargetInfo);
+    TargetRegistry::RegisterObjectTargetStreamer(
+        *T, createRISCVObjectTargetStreamer);
+
+    // Register the asm target streamer.
+    TargetRegistry::RegisterAsmTargetStreamer(*T, createRISCVAsmTargetStreamer);
   }
 }

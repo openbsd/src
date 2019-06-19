@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.100 2018/01/01 16:16:23 bluhm Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.102 2018/06/15 12:21:41 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1039,10 +1039,10 @@ ipmi_cmd_poll(struct ipmi_cmd *c)
 {
 	mtx_enter(&c->c_sc->sc_cmd_mtx);
 
-	if (ipmi_sendcmd(c)) {
-		panic("%s: sendcmd fails", DEVNAME(c->c_sc));
-	}
-	c->c_ccode = ipmi_recvcmd(c);
+	if ((c->c_ccode = ipmi_sendcmd(c)))
+		printf("%s: sendcmd fails\n", DEVNAME(c->c_sc));
+	else
+		c->c_ccode = ipmi_recvcmd(c);
 
 	mtx_leave(&c->c_sc->sc_cmd_mtx);
 }
@@ -1653,7 +1653,7 @@ ipmi_match(struct device *parent, void *match, void *aux)
 
 	/* XXX local softc is wrong wrong wrong */
 	sc = malloc(sizeof(*sc), M_TEMP, M_WAITOK | M_ZERO);
-	mtx_init(&sc->sc_cmd_mtx, IPL_NONE);
+	mtx_init(&sc->sc_cmd_mtx, IPL_MPFLOOR);
 	strlcpy(sc->sc_dev.dv_xname, "ipmi0", sizeof(sc->sc_dev.dv_xname));
 
 	/* Map registers */
@@ -1726,7 +1726,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	c->c_ccode = -1;
 
 	sc->sc_cmd_taskq = taskq_create("ipmicmd", 1, IPL_NONE, TASKQ_MPSAFE);
-	mtx_init(&sc->sc_cmd_mtx, IPL_NONE);
+	mtx_init(&sc->sc_cmd_mtx, IPL_MPFLOOR);
 }
 
 int
@@ -1819,8 +1819,6 @@ ipmiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *proc)
 		c->c_txlen = req->msg.data_len;
 		c->c_rxlen = 0;
 		ipmi_cmd(c);
-
-		KASSERT(c->c_ccode != -1);
 		break;
 	case IPMICTL_RECEIVE_MSG_TRUNC:
 	case IPMICTL_RECEIVE_MSG:

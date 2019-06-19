@@ -1,4 +1,4 @@
-/* $OpenBSD: imt.c,v 1.2 2017/07/23 22:39:11 jcs Exp $ */
+/* $OpenBSD: imt.c,v 1.4 2018/08/25 20:31:31 jcs Exp $ */
 /*
  * HID-over-i2c multitouch trackpad driver for devices conforming to
  * Windows Precision Touchpad standard
@@ -154,6 +154,7 @@ imt_attach(struct device *parent, struct device *self, void *aux)
 	/* assume everything has "natural scrolling" where Y axis is reversed */
 	mt->sc_flags = HIDMT_REVY;
 
+	mt->hidev_report_type_conv = ihidev_report_type_conv;
 	mt->hidev_get_report = imt_hidev_get_report;
 	mt->hidev_set_report = imt_hidev_set_report;
 	mt->sc_rep_input = sc->sc_rep_input;
@@ -217,7 +218,7 @@ imt_enable(void *v)
 
 	rv = ihidev_open(&sc->sc_hdev);
 
-	hidmt_set_input_mode(mt, HIDMT_INPUT_MODE_MT);
+	hidmt_set_input_mode(mt, HIDMT_INPUT_MODE_MT_TOUCHPAD);
 
 	return rv;
 }

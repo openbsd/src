@@ -1,0 +1,18 @@
+.\" $OpenBSD: outof.in,v 1.1 2018/08/24 22:56:37 schwarze Exp $
+.Dd $Mdocdate: August 24 2018 $
+.Dt WHILE-OUTOF 1
+.Os
+.Sh NAME
+.Nm while-outof
+.Nd while request starting in a macro
+.Sh DESCRIPTION
+.nr cnt 10
+.de mym
+.  while \\n[cnt] \{\
+.    nop \\n[cnt]
+..
+initial text
+.mym
+.  nr cnt -1
+.\}
+final text

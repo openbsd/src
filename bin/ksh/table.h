@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.h,v 1.13 2017/12/27 13:02:57 millert Exp $	*/
+/*	$OpenBSD: table.h,v 1.15 2018/06/18 17:03:58 millert Exp $	*/
 
 /* $From: table.h,v 1.3 1994/05/31 13:34:34 michael Exp $ */
 
@@ -19,7 +19,7 @@ struct tbl {			/* table item */
 	Area	*areap;		/* area to allocate from */
 	union {
 		char *s;	/* string */
-		long i;		/* integer */
+		int64_t i;	/* integer */
 		int (*f)(char **);	/* int function */
 		struct op *t;	/* "function" tree */
 	} val;			/* value */
@@ -170,6 +170,7 @@ extern const struct builtin shbuiltins [], kshbuiltins [];
 #define	V_TMOUT			16
 #define	V_TMPDIR		17
 #define	V_LINENO		18
+#define	V_TERM			19
 
 /* values for set_prompt() */
 #define PS1	0		/* command */

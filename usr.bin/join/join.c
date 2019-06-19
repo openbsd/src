@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.27 2015/10/09 01:37:07 deraadt Exp $	*/
+/* $OpenBSD: join.c,v 1.32 2018/11/14 15:16:09 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,10 +34,14 @@
  */
 
 #include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
@@ -53,8 +57,6 @@ typedef struct {
 	char **fields;			/* line field(s) */
 	u_long fieldcnt;		/* line field(s) count */
 	u_long fieldalloc;		/* line field(s) allocated count */
-	u_long cfieldc;			/* current field count */
-	long	 fpos;			/* fpos of start of field */
 } LINE;
 
 typedef struct {
@@ -67,10 +69,9 @@ typedef struct {
 	u_long pushback;		/* line on the stack */
 	u_long setcnt;			/* set count */
 	u_long setalloc;		/* set allocated count */
-	u_long setusedc;		/* sets used  */
 } INPUT;
-INPUT input1 = { NULL, 0, 0, 1, NULL, 0, 0, 0, 0, 0 },
-      input2 = { NULL, 0, 0, 2, NULL, 0, 0, 0, 0, 0 };
+INPUT input1 = { NULL, 0, 0, 1, NULL, 0, 0, 0, 0 },
+      input2 = { NULL, 0, 0, 2, NULL, 0, 0, 0, 0 };
 
 typedef struct {
 	u_long	filenum;	/* file number */
@@ -84,17 +85,17 @@ int joinout = 1;		/* show lines with matched join fields (-v) */
 int needsep;			/* need separator character */
 int spans = 1;			/* span multiple delimiters (-t) */
 char *empty;			/* empty field replacement string (-e) */
-char *tabchar = " \t";		/* delimiter characters (-t) */
+wchar_t tabchar[] = L" \t";	/* delimiter characters (-t) */
 
 int  cmp(LINE *, u_long, LINE *, u_long);
 void fieldarg(char *);
 void joinlines(INPUT *, INPUT *);
+char *mbssep(char **, const wchar_t *);
 void obsolete(char **);
 void outfield(LINE *, u_long, int);
 void outoneline(INPUT *, LINE *);
 void outtwoline(INPUT *, LINE *, INPUT *, LINE *);
 void slurp(INPUT *);
-void slurpit(INPUT *);
 void usage(void);
 
 int
@@ -103,6 +104,8 @@ main(int argc, char *argv[])
 	INPUT *F1, *F2;
 	int aflag, ch, cval, vflag;
 	char *end;
+
+	setlocale(LC_CTYPE, "");
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
@@ -164,8 +167,10 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			spans = 0;
-			if (strlen(tabchar = optarg) != 1)
+			if (mbtowc(tabchar, optarg, MB_CUR_MAX) !=
+			    strlen(optarg))
 				errx(1, "illegal tab character specification");
+			tabchar[1] = L'\0';
 			break;
 		case 'v':
 			vflag = 1;
@@ -214,12 +219,8 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	F1->setusedc = 0;
-	F2->setusedc = 0;
 	slurp(F1);
 	slurp(F2);
-	F1->set->cfieldc = 0;
-	F2->set->cfieldc = 0;
 
 	/*
 	 * We try to let the files have the same field value, advancing
@@ -234,24 +235,16 @@ main(int argc, char *argv[])
 				joinlines(F1, F2);
 			slurp(F1);
 			slurp(F2);
-		}
-		else {
-			if (F1->unpair
-			&& (cval < 0 || F2->set->cfieldc == F2->setusedc -1)) {
+		} else if (cval < 0) {
+			/* File 1 takes the lead... */
+			if (F1->unpair)
 				joinlines(F1, NULL);
-				slurp(F1);
-			}
-			else if (cval < 0)
-				/* File 1 takes the lead... */
-				slurp(F1);
-			if (F2->unpair
-			&& (cval > 0 || F1->set->cfieldc == F1->setusedc -1)) {
+			slurp(F1);
+		} else {
+			/* File 2 takes the lead... */
+			if (F2->unpair)
 				joinlines(F2, NULL);
-				slurp(F2);
-			}
-			else if (cval > 0)
-				/* File 2 takes the lead... */
-				slurp(F2);
+			slurp(F2);
 		}
 	}
 
@@ -273,42 +266,24 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-/* wrapper around slurpit() to keep track of what field we are on */
-void slurp(INPUT *F)
-{
-	long fpos;
-	u_long cfieldc;
-
-	if (F->set == NULL) {
-		fpos = 0;
-		cfieldc = 0;
-	}
-	else {
-		fpos = F->set->fpos;
-		cfieldc = F->set->cfieldc;
-	}
-	slurpit(F);
-	if (F->set == NULL)
-		return;
-	else if (fpos != F->set->fpos)
-		F->set->cfieldc = cfieldc+1;
-}
-
 void
-slurpit(INPUT *F)
+slurp(INPUT *F)
 {
 	LINE *lp, *lastlp, tmp;
-	size_t len;
+	ssize_t len;
+	size_t linesize;
 	u_long cnt;
-	char *bp, *fieldp;
-	long fpos;
+	char *bp, *fieldp, *line;
+
 	/*
 	 * Read all of the lines from an input file that have the same
 	 * join field.
 	 */
 
 	F->setcnt = 0;
-	for (lastlp = NULL; ; ++F->setcnt, lastlp = lp) {
+	line = NULL;
+	linesize = 0;
+	for (lastlp = NULL; ; ++F->setcnt) {
 		/*
 		 * If we're out of space to hold line structures, allocate
 		 * more.  Initialize the structure so that we know that this
@@ -336,6 +311,8 @@ slurpit(INPUT *F)
 		 * level of indirection, but it's probably okay as is.
 		 */
 		lp = &F->set[F->setcnt];
+		if (F->setcnt)
+			lastlp = &F->set[F->setcnt - 1];
 		if (F->pushbool) {
 			tmp = F->set[F->setcnt];
 			F->set[F->setcnt] = F->set[F->pushback];
@@ -343,13 +320,12 @@ slurpit(INPUT *F)
 			F->pushbool = 0;
 			continue;
 		}
-		if ((bp = fgetln(F->fp, &len)) == NULL)
-			return;
-		/*
-		 * we depend on knowing on what field we are, one safe way is
-		 * the file position.
-		*/
-		fpos = ftell(F->fp) - len;
+		if ((len = getline(&line, &linesize, F->fp)) == -1)
+			break;
+
+		/* Remove trailing newline, if it exists, and copy line. */
+		if (line[len - 1] == '\n')
+			len--;
 		if (lp->linealloc <= len + 1) {
 			char *p;
 			u_long newsize = lp->linealloc +
@@ -359,19 +335,13 @@ slurpit(INPUT *F)
 			lp->line = p;
 			lp->linealloc = newsize;
 		}
-		F->setusedc++;
-		memmove(lp->line, bp, len);
-		lp->fpos = fpos;
-		/* Replace trailing newline, if it exists. */
-		if (bp[len - 1] == '\n')
-			lp->line[len - 1] = '\0';
-		else
-			lp->line[len] = '\0';
-		bp = lp->line;
+		memcpy(lp->line, line, len);
+		lp->line[len] = '\0';
 
 		/* Split the line into fields, allocate space as necessary. */
 		lp->fieldcnt = 0;
-		while ((fieldp = strsep(&bp, tabchar)) != NULL) {
+		bp = lp->line;
+		while ((fieldp = mbssep(&bp, tabchar)) != NULL) {
 			if (spans && *fieldp == '\0')
 				continue;
 			if (lp->fieldcnt == lp->fieldalloc) {
@@ -393,16 +363,47 @@ slurpit(INPUT *F)
 			break;
 		}
 	}
+	free(line);
+}
+
+char *
+mbssep(char **stringp, const wchar_t *wcdelim)
+{
+	char *s, *p;
+	size_t ndelim;
+	int i;
+	/* tabchar is never more than 2 */
+	char mbdelim[2][MB_LEN_MAX + 1];
+	size_t mblen[2];
+
+	if ((s = *stringp) == NULL)
+		return NULL;
+	ndelim = wcslen(wcdelim);
+	for (i = 0; i < ndelim; i++) {
+		/* wcdelim generated via mbtowc */
+		mblen[i] = wctomb(mbdelim[i], wcdelim[i]);
+	}
+	for (p = s; *p != '\0'; p++) {
+		for (i = 0; i < ndelim; i++) {
+			if (strncmp(p, mbdelim[i], mblen[i]) == 0) {
+				*p = '\0';
+				*stringp = p + mblen[i];
+				return s;
+			}
+		}
+	}
+	*stringp = NULL;
+	return s;
 }
 
 int
 cmp(LINE *lp1, u_long fieldno1, LINE *lp2, u_long fieldno2)
 {
 	if (lp1->fieldcnt <= fieldno1)
-		return (-1);
-	else if (lp2->fieldcnt <= fieldno2)
-		return (1);
-	return (strcmp(lp1->fields[fieldno1], lp2->fields[fieldno2]));
+		return lp2->fieldcnt <= fieldno2 ? 0 : -1;
+	if (lp2->fieldcnt <= fieldno2)
+		return 1;
+	return strcmp(lp1->fields[fieldno1], lp2->fields[fieldno2]);
 }
 
 void
@@ -500,7 +501,7 @@ void
 outfield(LINE *lp, u_long fieldno, int out_empty)
 {
 	if (needsep++)
-		putchar((int)*tabchar);
+		putwchar(*tabchar);
 	if (!ferror(stdout)) {
 		if (lp->fieldcnt <= fieldno || out_empty) {
 			if (empty != NULL)

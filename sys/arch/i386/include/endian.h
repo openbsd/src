@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.18 2014/07/12 16:25:08 guenther Exp $	*/
+/*	$OpenBSD: endian.h,v 1.19 2018/10/02 21:30:44 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -27,32 +27,33 @@
 #ifndef _MACHINE_ENDIAN_H_
 #define _MACHINE_ENDIAN_H_
 
-#ifdef __GNUC__
+#ifndef __FROM_SYS__ENDIAN
+#include <sys/_types.h>
+#endif
 
-#define	__swap32md(x) __statement({					\
-	__uint32_t __swap32md_x = (x);					\
-									\
-	__asm ("bswap %0" : "+r" (__swap32md_x));			\
-	__swap32md_x;							\
-})
+static __inline __uint16_t
+__swap16md(__uint16_t _x)
+{
+	__asm ("rorw $8, %w0" : "+r" (_x));
+	return (_x);
+}
 
-#define	__swap64md(x) __statement({					\
-	__uint64_t __swap64md_x = (x);					\
-									\
-	(__uint64_t)__swap32md(__swap64md_x >> 32) |			\
-	    (__uint64_t)__swap32md(__swap64md_x & 0xffffffff) << 32;	\
-})
-#define	__swap16md(x) __statement({					\
-	__uint16_t __swap16md_x = (x);					\
-									\
-	__asm ("rorw $8, %w0" : "+r" (__swap16md_x));			\
-	__swap16md_x;							\
-})
+static __inline __uint32_t
+__swap32md(__uint32_t _x)
+{
+	__asm ("bswap %0" : "+r" (_x));
+	return (_x);
+}
+
+static __inline __uint64_t
+__swap64md(__uint64_t _x)
+{
+	return ((__uint64_t)__swap32md(_x >> 32) |
+	    (__uint64_t)__swap32md(_x & 0xffffffff) << 32);
+}
 
 /* Tell sys/endian.h we have MD variants of the swap macros.  */
 #define __HAVE_MD_SWAP
-
-#endif	/* __GNUC__ */
 
 #define _BYTE_ORDER _LITTLE_ENDIAN
 

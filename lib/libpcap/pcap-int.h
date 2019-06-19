@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-int.h,v 1.13 2014/04/11 04:08:58 lteo Exp $	*/
+/*	$OpenBSD: pcap-int.h,v 1.14 2018/04/05 03:47:27 lteo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -48,6 +48,7 @@ struct pcap_opt {
 	char	*source;
 	int	promisc;
 	int	rfmon;
+	int	immediate;	/* immediate mode - deliver packets as soon as they arrive */
 };
 
 /*

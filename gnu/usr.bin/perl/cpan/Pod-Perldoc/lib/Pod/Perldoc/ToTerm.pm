@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use vars qw($VERSION);
-$VERSION = '3.25';
+$VERSION = '3.28';
 
 use parent qw(Pod::Perldoc::BaseTo);
 
@@ -24,6 +24,34 @@ sub width     {
     $self->_get_columns_from_manwidth  ||
 	$self->_get_columns_from_stty      ||
 	$self->_get_default_width;
+}
+
+sub pager_configuration {
+  my($self, $pager, $perldoc) = @_;
+
+  # do not modify anything on Windows or DOS
+  return if ( $perldoc->is_mswin32 || $perldoc->is_dos );
+
+  if ( $pager =~ /less/ ) {
+    $self->_maybe_modify_environment('LESS');
+  }
+  elsif ( $pager =~ /more/ ) {
+    $self->_maybe_modify_environment('MORE');
+  }
+
+  return;
+}
+
+sub _maybe_modify_environment {
+  my($self, $name) = @_;
+
+  if ( ! defined $ENV{$name} ) {
+    $ENV{$name} = "-R";
+  }
+
+  # if the environment is set, don't modify
+  # anything
+
 }
 
 sub _get_stty { `stty -a` }
@@ -89,7 +117,7 @@ sub parse_from_file {
 
 =head1 NAME
 
-Pod::Perldoc::ToTerm - render Pod with terminal escapes 
+Pod::Perldoc::ToTerm - render Pod with terminal escapes
 
 =head1 SYNOPSIS
 
@@ -107,6 +135,14 @@ For example:
 
   perldoc -o term -w indent:5 Some::Modulename
 
+=head1 PAGER FORMATTING
+
+Depending on the platform, and because this class emits terminal escapes it
+will attempt to set the C<-R> flag on your pager by injecting the flag into
+your environment variable for C<less> or C<more>.
+
+On Windows and DOS, this class will not modify any environment variables.
+
 =head1 CAVEAT
 
 This module may change to use a different text formatter class in the
@@ -118,7 +154,7 @@ L<Pod::Text>, L<Pod::Text::Termcap>, L<Pod::Perldoc>
 
 =head1 COPYRIGHT AND DISCLAIMERS
 
-Copyright (c) 2011 Mark Allen.
+Copyright (c) 2017 Mark Allen.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published

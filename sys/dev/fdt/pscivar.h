@@ -6,7 +6,7 @@
 #define PSCI_SUCCESS		0
 #define PSCI_NOT_SUPPORTED	-1
 
-uint32_t psci_version(void);
 int32_t psci_cpu_on(register_t, register_t, register_t);
+void	psci_flush_bp(void);
 
 #endif /* _SYS_DEV_FDT_PSCIVAR_H_ */

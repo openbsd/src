@@ -1,5 +1,10 @@
 Revision history for Perl extension Hash::Util.
 
+0.20
+    Add bucket_ratio, num_buckets, used_buckets as a back-compat
+    shin for 5.25 where we remove the bucket data from scalar(%hash)
+    by making it return the count of keys by default.
+
 0.17
     Add bucket_stats_formatted() as utility method to Hash::Util
     Bug fixes to hash_stats()

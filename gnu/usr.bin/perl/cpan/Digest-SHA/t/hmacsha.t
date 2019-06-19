@@ -1,21 +1,7 @@
 # HMAC-SHA-256 test vectors from draft-ietf-ipsec-ciph-sha-256-01.txt
 
 use strict;
-
-my $MODULE;
-
-BEGIN {
-	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
-	eval "require $MODULE" || die $@;
-	$MODULE->import(qw(hmac_sha256 hmac_sha256_hex));
-}
-
-BEGIN {
-	if ($ENV{PERL_CORE}) {
-		chdir 't' if -d 't';
-		@INC = '../lib';
-	}
-}
+use Digest::SHA qw(hmac_sha256 hmac_sha256_hex);
 
 my @data = map { eval } <DATA>;
 

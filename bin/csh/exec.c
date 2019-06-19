@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.19 2015/12/26 13:48:38 mestre Exp $	*/
+/*	$OpenBSD: exec.c,v 1.21 2018/09/18 06:56:09 deraadt Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-

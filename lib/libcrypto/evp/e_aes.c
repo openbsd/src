@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.34 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: e_aes.c,v 1.39 2019/05/12 15:52:46 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -49,6 +49,7 @@
  *
  */
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -833,11 +834,11 @@ aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 				return 0;
 			gctx_out->gcm.key = &gctx_out->ks;
 		}
-		if (gctx->iv == c->iv)
+
+		if (gctx->iv == c->iv) {
 			gctx_out->iv = out->iv;
-		else {
-			gctx_out->iv = malloc(gctx->ivlen);
-			if (!gctx_out->iv)
+		} else {
+			if ((gctx_out->iv = calloc(1, gctx->ivlen)) == NULL)
 				return 0;
 			memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
 		}
@@ -1395,8 +1396,7 @@ aead_aes_gcm_init(EVP_AEAD_CTX *ctx, const unsigned char *key, size_t key_len,
 		return 0;
 	}
 
-	gcm_ctx = malloc(sizeof(struct aead_aes_gcm_ctx));
-	if (gcm_ctx == NULL)
+	if ((gcm_ctx = calloc(1, sizeof(struct aead_aes_gcm_ctx))) == NULL)
 		return 0;
 
 #ifdef AESNI_CAPABLE
@@ -1547,6 +1547,149 @@ const EVP_AEAD *
 EVP_aead_aes_256_gcm(void)
 {
 	return &aead_aes_256_gcm;
+}
+
+typedef struct {
+	union {
+		double align;
+		AES_KEY ks;
+	} ks;
+	unsigned char *iv;
+} EVP_AES_WRAP_CTX;
+
+static int
+aes_wrap_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
+{
+	EVP_AES_WRAP_CTX *wctx = (EVP_AES_WRAP_CTX *)ctx->cipher_data;
+
+	if (iv == NULL && key == NULL)
+		return 1;
+
+	if (key != NULL) {
+		if (ctx->encrypt)
+			AES_set_encrypt_key(key, 8 * ctx->key_len,
+			    &wctx->ks.ks);
+		else
+			AES_set_decrypt_key(key, 8 * ctx->key_len,
+			    &wctx->ks.ks);
+
+		if (iv == NULL)
+			wctx->iv = NULL;
+	}
+
+	if (iv != NULL) {
+		memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
+		wctx->iv = ctx->iv;
+	}
+
+	return 1;
+}
+
+static int
+aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t inlen)
+{
+	EVP_AES_WRAP_CTX *wctx = ctx->cipher_data;
+	int ret;
+
+	if (in == NULL)
+		return 0;
+
+	if (inlen % 8 != 0)
+		return -1;
+	if (ctx->encrypt && inlen < 8)
+		return -1;
+	if (!ctx->encrypt && inlen < 16)
+		return -1;
+	if (inlen > INT_MAX)
+		return -1;
+
+	if (out == NULL) {
+		if (ctx->encrypt)
+			return inlen + 8;
+		else
+			return inlen - 8;
+	}
+
+	if (ctx->encrypt)
+		ret = AES_wrap_key(&wctx->ks.ks, wctx->iv, out, in,
+		    (unsigned int)inlen);
+	else
+		ret = AES_unwrap_key(&wctx->ks.ks, wctx->iv, out, in,
+		    (unsigned int)inlen);
+
+	return ret != 0 ? ret : -1;
+}
+
+#define WRAP_FLAGS \
+    ( EVP_CIPH_WRAP_MODE | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER | \
+      EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_FLAG_DEFAULT_ASN1 )
+
+static const EVP_CIPHER aes_128_wrap = {
+	.nid = NID_id_aes128_wrap,
+	.block_size = 8,
+	.key_len = 16,
+	.iv_len = 8,
+	.flags = WRAP_FLAGS,
+	.init = aes_wrap_init_key,
+	.do_cipher = aes_wrap_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_AES_WRAP_CTX),
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_aes_128_wrap(void)
+{
+	return &aes_128_wrap;
+}
+
+static const EVP_CIPHER aes_192_wrap = {
+	.nid = NID_id_aes192_wrap,
+	.block_size = 8,
+	.key_len = 24,
+	.iv_len = 8,
+	.flags = WRAP_FLAGS,
+	.init = aes_wrap_init_key,
+	.do_cipher = aes_wrap_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_AES_WRAP_CTX),
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_aes_192_wrap(void)
+{
+	return &aes_192_wrap;
+}
+
+static const EVP_CIPHER aes_256_wrap = {
+	.nid = NID_id_aes256_wrap,
+	.block_size = 8,
+	.key_len = 32,
+	.iv_len = 8,
+	.flags = WRAP_FLAGS,
+	.init = aes_wrap_init_key,
+	.do_cipher = aes_wrap_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_AES_WRAP_CTX),
+	.set_asn1_parameters = NULL,
+	.get_asn1_parameters = NULL,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_aes_256_wrap(void)
+{
+	return &aes_256_wrap;
 }
 
 #endif

@@ -1,9 +1,15 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.197 2018/03/04 10:12:26 jmc Exp $
+#	$OpenBSD: netstart,v 1.200 2018/08/29 11:30:48 krw Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
+
+# Show usage of the netstart script and exit.
+usage() {
+	print -u2 "usage: ${0##*/} [[-n] interface ...]"
+	exit 1
+}
 
 # Echo file $1 to stdout. Skip comment lines and delete everything
 # after the first '#' from other lines. Strip leading and trailing
@@ -59,7 +65,7 @@ parse_hn_line() {
 		_cmds[$_prev]="${_c[@]}"
 		;;
 	dhcp)	_c[0]=
-		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} down;dhclient $_if"
+		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} up;dhclient $_if"
 		V4_DHCPCONF=true
 		;;
 	'!'*)	_cmd=$(print -- "${_c[@]}" | sed 's/\$if/'$_if'/g')
@@ -195,28 +201,31 @@ defaultroute() {
 	done
 }
 
+# Make sure the invoking user has the right privileges.  Check for presence of
+# id(1) to avoid problems with diskless setups.
+if [[ -x /usr/bin/id ]] && (($(id -u) != 0)); then
+	echo "${0##*/}: need root privileges"
+	exit 1
+fi
+
 # Get network related vars from rc.conf using the parsing routine from rc.subr.
 FUNCS_ONLY=1 . /etc/rc.d/rc.subr
 _rc_parse_conf
 
 PRINT_ONLY=false
-USAGE="usage: ${0##*/} [[-n] interface ...]"
 V4_DHCPCONF=false
 V6_AUTOCONF=false
 
 while getopts ":n" opt; do
 	case $opt in
 	n)	PRINT_ONLY=true;;
-	*)	print -u2 "$USAGE"; exit 1;;
+	*)	usage;;
 	esac
 done
 shift $((OPTIND-1))
 
 # Option -n is only supported if interface names are specified as parameters.
-if $PRINT_ONLY && (($# == 0)); then
-	print -u2 "$USAGE"
-	exit 1
-fi
+$PRINT_ONLY && (($# == 0)) && usage
 
 # Load key material for the generation of IPv6 Semantically Opaque Interface
 # Identifiers (SOII) used for link local and SLAAC addresses.

@@ -1,4 +1,4 @@
-/* $OpenBSD: sitara_cm.h,v 1.3 2016/08/12 03:22:41 jsg Exp $ */
+/* $OpenBSD: sitara_cm.h,v 1.4 2019/05/06 03:45:58 mlarkin Exp $ */
 /* $NetBSD: sitara_cm.h,v 1.1 2013/04/17 14:31:02 bouyer Exp $ */
 /*
  * Copyright (c) 2010
@@ -64,7 +64,7 @@ struct sitara_cm_device {
 	struct sitara_cm_padconf		*padconf;
 };
 
-int sitara_cm_padconf_set(const char *padname, const char *muxmode, 
+int sitara_cm_padconf_set(const char *padname, const char *muxmode,
     unsigned int state);
 int sitara_cm_padconf_get(const char *padname, const char **muxmode,
     unsigned int *state);

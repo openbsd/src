@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.117 2017/08/17 19:44:27 tedu Exp $	*/
+/*	$OpenBSD: apm.c,v 1.119 2019/05/22 16:11:21 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -247,7 +247,7 @@ apm_suspend(int state)
 	bufq_quiesce();
 
 	s = splhigh();
-	disable_intr();
+	intr_disable();
 	cold = 2;
 	config_suspend_all(DVACT_SUSPEND);
 	suspend_randomness();
@@ -272,7 +272,7 @@ apm_suspend(int state)
 
 	config_suspend_all(DVACT_RESUME);
 	cold = 0;
-	enable_intr();
+	intr_enable();
 	splx(s);
 
 	resume_randomness(NULL, 0);	/* force RNG upper level reseed */
@@ -395,7 +395,6 @@ apm_handle_event(struct apm_softc *sc, struct apmregs *regs)
 		break;
 	case APM_UPDATE_TIME:
 		DPRINTF(("update time, please\n"));
-		inittodr(time_second);
 		apm_record_event(sc, regs->bx);
 		break;
 	case APM_CRIT_SUSPEND_REQ:

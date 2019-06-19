@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.78 2018/01/02 08:05:03 jmc Exp $
+.\"	$OpenBSD: printf.3,v 1.79 2019/01/16 12:55:49 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 2 2018 $
+.Dd $Mdocdate: January 16 2019 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -888,3 +888,12 @@ parameters, up to the
 last positionally specified parameter, are used in the format string.
 This allows for the format string to be parsed for this information.
 Failure to do this will mean the code is non-portable and liable to fail.
+.Pp
+On systems other than
+.Ox ,
+the
+.Dv LC_NUMERIC
+.Xr locale 1
+category can cause erratic output; see CAVEATS in
+.Xr setlocale 3
+for details.

@@ -131,7 +131,6 @@ delete $ENV{PATHEXT} unless $had_pathext;
         $mm_w32->{$key} = '';
     }
     my $s_PM = join( " \\\n\t", sort keys %{$mm_w32->{PM}} );
-    my $k_PM = join( " \\\n\t", %{$mm_w32->{PM}} );
 
     like( $mm_w32->constants(),
           qr|^NAME\ =\ TestMM_NW5\s+VERSION\ =\ 1\.00.+
@@ -139,7 +138,6 @@ delete $ENV{PATHEXT} unless $had_pathext;
              MM_VERSION\ =\ \Q$ExtUtils::MakeMaker::VERSION\E.+
              VERSION_FROM\ =\ TestMM_NW5.+
              TO_INST_PM\ =\ \Q$s_PM\E\s+
-             PM_TO_BLIB\ =\ \Q$k_PM\E
           |xs, 'constants()' );
 
 }

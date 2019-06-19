@@ -1,4 +1,4 @@
-/*	$OpenBSD: siphash.c,v 1.7 2017/12/25 02:11:19 tedu Exp $ */
+/*	$OpenBSD: siphash.c,v 1.8 2019/01/20 03:53:47 bcook Exp $ */
 
 /*-
  * Copyright (c) 2013 Andre Oppermann <andre@FreeBSD.org>
@@ -43,9 +43,8 @@
  * https://131002.net/siphash/
  */
 
-#include <sys/types.h>
-#include <sys/endian.h>
-
+#include <endian.h>
+#include <stdint.h>
 #include <string.h>
 #include <siphash.h>
 

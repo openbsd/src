@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips_cpu.h,v 1.7 2017/08/26 13:53:46 visa Exp $	*/
+/*	$OpenBSD: mips_cpu.h,v 1.8 2018/04/09 13:46:15 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@
 #define	SR_COP_USABILITY	0x30000000	/* CP0 and CP1 only */
 #define	SR_COP_0_BIT		0x10000000
 #define	SR_COP_1_BIT		0x20000000
+#define	SR_COP_2_BIT		0x40000000
 #define	SR_RP			0x08000000
 #define	SR_FR_32		0x04000000
 #define	SR_RE			0x02000000

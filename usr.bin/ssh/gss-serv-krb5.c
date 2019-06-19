@@ -1,4 +1,4 @@
-/* $OpenBSD: gss-serv-krb5.c,v 1.8 2013/07/20 01:55:13 djm Exp $ */
+/* $OpenBSD: gss-serv-krb5.c,v 1.9 2018/07/09 21:37:55 markus Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -30,12 +30,11 @@
 #include <sys/types.h>
 
 #include "xmalloc.h"
-#include "key.h"
+#include "sshkey.h"
 #include "hostfile.h"
 #include "auth.h"
 #include "log.h"
 
-#include "buffer.h"
 #include "ssh-gss.h"
 
 #include <krb5.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_init.c,v 1.8 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: eng_init.c,v 1.9 2018/04/14 07:09:21 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -134,10 +134,8 @@ ENGINE_finish(ENGINE *e)
 {
 	int to_return = 1;
 
-	if (e == NULL) {
-		ENGINEerror(ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
-	}
+	if (e == NULL)
+		return 1;
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	to_return = engine_unlocked_finish(e, 1);
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);

@@ -23,14 +23,15 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetLowering.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "pre-RA-sched"
@@ -243,7 +244,7 @@ void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
     return;
 
   // Sort them in increasing order.
-  std::sort(Offsets.begin(), Offsets.end());
+  llvm::sort(Offsets.begin(), Offsets.end());
 
   // Check if the loads are close enough.
   SmallVector<SDNode*, 4> Loads;
@@ -709,18 +710,17 @@ ProcessSDDbgValues(SDNode *N, SelectionDAG *DAG, InstrEmitter &Emitter,
   // source order number as N.
   MachineBasicBlock *BB = Emitter.getBlock();
   MachineBasicBlock::iterator InsertPos = Emitter.getInsertPos();
-  ArrayRef<SDDbgValue*> DVs = DAG->GetDbgValues(N);
-  for (unsigned i = 0, e = DVs.size(); i != e; ++i) {
-    if (DVs[i]->isInvalidated())
+  for (auto DV : DAG->GetDbgValues(N)) {
+    if (DV->isInvalidated())
       continue;
-    unsigned DVOrder = DVs[i]->getOrder();
+    unsigned DVOrder = DV->getOrder();
     if (!Order || DVOrder == Order) {
-      MachineInstr *DbgMI = Emitter.EmitDbgValue(DVs[i], VRBaseMap);
+      MachineInstr *DbgMI = Emitter.EmitDbgValue(DV, VRBaseMap);
       if (DbgMI) {
-        Orders.push_back(std::make_pair(DVOrder, DbgMI));
+        Orders.push_back({DVOrder, DbgMI});
         BB->insert(InsertPos, DbgMI);
       }
-      DVs[i]->setIsInvalidated();
+      DV->setIsInvalidated();
     }
   }
 }
@@ -742,16 +742,17 @@ ProcessSourceNode(SDNode *N, SelectionDAG *DAG, InstrEmitter &Emitter,
   }
 
   MachineBasicBlock *BB = Emitter.getBlock();
-  if (Emitter.getInsertPos() == BB->begin() || BB->back().isPHI() ||
+  auto IP = Emitter.getInsertPos();
+  if (IP == BB->begin() || BB->back().isPHI() ||
       // Fast-isel may have inserted some instructions, in which case the
       // BB->back().isPHI() test will not fire when we want it to.
-      std::prev(Emitter.getInsertPos())->isPHI()) {
+      std::prev(IP)->isPHI()) {
     // Did not insert any instruction.
-    Orders.push_back(std::make_pair(Order, (MachineInstr*)nullptr));
+    Orders.push_back({Order, (MachineInstr *)nullptr});
     return;
   }
 
-  Orders.push_back(std::make_pair(Order, &*std::prev(Emitter.getInsertPos())));
+  Orders.push_back({Order, &*std::prev(IP)});
   ProcessSDDbgValues(N, DAG, Emitter, Orders, VRBaseMap, Order);
 }
 
@@ -856,8 +857,13 @@ EmitSchedule(MachineBasicBlock::iterator &InsertPos) {
     MachineBasicBlock::iterator BBBegin = BB->getFirstNonPHI();
 
     // Sort the source order instructions and use the order to insert debug
-    // values.
-    std::sort(Orders.begin(), Orders.end(), less_first());
+    // values. Use stable_sort so that DBG_VALUEs are inserted in the same order
+    // regardless of the host's implementation fo std::sort.
+    std::stable_sort(Orders.begin(), Orders.end(), less_first());
+    std::stable_sort(DAG->DbgBegin(), DAG->DbgEnd(),
+                     [](const SDDbgValue *LHS, const SDDbgValue *RHS) {
+                       return LHS->getOrder() < RHS->getOrder();
+                     });
 
     SDDbgInfo::DbgIterator DI = DAG->DbgBegin();
     SDDbgInfo::DbgIterator DE = DAG->DbgEnd();
@@ -869,10 +875,12 @@ EmitSchedule(MachineBasicBlock::iterator &InsertPos) {
       // Insert all SDDbgValue's whose order(s) are before "Order".
       if (!MI)
         continue;
-      for (; DI != DE &&
-             (*DI)->getOrder() >= LastOrder && (*DI)->getOrder() < Order; ++DI) {
+      for (; DI != DE; ++DI) {
+        if ((*DI)->getOrder() < LastOrder || (*DI)->getOrder() >= Order)
+          break;
         if ((*DI)->isInvalidated())
           continue;
+
         MachineInstr *DbgMI = Emitter.EmitDbgValue(*DI, VRBaseMap);
         if (DbgMI) {
           if (!LastOrder)
@@ -891,16 +899,51 @@ EmitSchedule(MachineBasicBlock::iterator &InsertPos) {
     // Add trailing DbgValue's before the terminator. FIXME: May want to add
     // some of them before one or more conditional branches?
     SmallVector<MachineInstr*, 8> DbgMIs;
-    while (DI != DE) {
-      if (!(*DI)->isInvalidated())
-        if (MachineInstr *DbgMI = Emitter.EmitDbgValue(*DI, VRBaseMap))
-          DbgMIs.push_back(DbgMI);
-      ++DI;
+    for (; DI != DE; ++DI) {
+      if ((*DI)->isInvalidated())
+        continue;
+      assert((*DI)->getOrder() >= LastOrder &&
+             "emitting DBG_VALUE out of order");
+      if (MachineInstr *DbgMI = Emitter.EmitDbgValue(*DI, VRBaseMap))
+        DbgMIs.push_back(DbgMI);
     }
 
     MachineBasicBlock *InsertBB = Emitter.getBlock();
     MachineBasicBlock::iterator Pos = InsertBB->getFirstTerminator();
     InsertBB->insert(Pos, DbgMIs.begin(), DbgMIs.end());
+
+    SDDbgInfo::DbgLabelIterator DLI = DAG->DbgLabelBegin();
+    SDDbgInfo::DbgLabelIterator DLE = DAG->DbgLabelEnd();
+    // Now emit the rest according to source order.
+    LastOrder = 0;
+    for (const auto &InstrOrder : Orders) {
+      unsigned Order = InstrOrder.first;
+      MachineInstr *MI = InstrOrder.second;
+      if (!MI)
+        continue;
+
+      // Insert all SDDbgLabel's whose order(s) are before "Order".
+      for (; DLI != DLE &&
+             (*DLI)->getOrder() >= LastOrder && (*DLI)->getOrder() < Order;
+             ++DLI) {
+        MachineInstr *DbgMI = Emitter.EmitDbgLabel(*DLI);
+        if (DbgMI) {
+          if (!LastOrder)
+            // Insert to start of the BB (after PHIs).
+            BB->insert(BBBegin, DbgMI);
+          else {
+            // Insert at the instruction, which may be in a different
+            // block, if the block was split by a custom inserter.
+            MachineBasicBlock::iterator Pos = MI;
+            MI->getParent()->insert(Pos, DbgMI);
+          }
+        }
+      }
+      if (DLI == DLE)
+        break;
+
+      LastOrder = Order;
+    }
   }
 
   InsertPos = Emitter.getInsertPos();

@@ -10,6 +10,9 @@ using regular expressions ('regexes') in Perl.
 
 =head1 The Guide
 
+This page assumes you already know things, like what a "pattern" is, and
+the basic syntax of using them.  If you don't, see L<perlretut>.
+
 =head2 Simple word matching
 
 The simplest regex is simply a word, or more generally, a string of
@@ -64,12 +67,13 @@ Perl will always match at the earliest possible point in the string:
     "That hat is red" =~ /hat/; # matches 'hat' in 'That'
 
 Not all characters can be used 'as is' in a match.  Some characters,
-called B<metacharacters>, are reserved for use in regex notation.
-The metacharacters are
+called B<metacharacters>, are considered special, and reserved for use
+in regex notation.  The metacharacters are
 
     {}[]()^$.|*+?\
 
-A metacharacter can be matched by putting a backslash before it:
+A metacharacter can be matched literally by putting a backslash before
+it:
 
     "2+2=4" =~ /2+2/;    # doesn't match, + is a metacharacter
     "2+2=4" =~ /2\+2/;   # matches, \+ is treated like an ordinary +
@@ -79,6 +83,12 @@ A metacharacter can be matched by putting a backslash before it:
 In the last regex, the forward slash C<'/'> is also backslashed,
 because it is used to delimit the regex.
 
+Most of the metacharacters aren't always special, and other characters
+(such as the ones delimitting the pattern) become special under various
+circumstances.  This can be confusing and lead to unexpected results.
+L<S<C<use re 'strict'>>|re/'strict' mode> can notify you of potential
+pitfalls.
+
 Non-printable ASCII characters are represented by B<escape sequences>.
 Common examples are C<\t> for a tab, C<\n> for a newline, and C<\r>
 for a carriage return.  Arbitrary bytes are represented by octal
@@ -86,7 +96,7 @@ escape sequences, e.g., C<\033>, or hexadecimal escape sequences,
 e.g., C<\x1B>:
 
     "1000\t2000" =~ m(0\t2)  # matches
-    "cat" =~ /\143\x61\x74/  # matches in ASCII, but 
+    "cat" =~ /\143\x61\x74/  # matches in ASCII, but
                              # a weird way to spell cat
 
 Regexes are treated mostly as double-quoted strings, so variable
@@ -113,8 +123,13 @@ end of the string.  Some examples:
 
 A B<character class> allows a set of possible characters, rather than
 just a single character, to match at a particular point in a regex.
-Character classes are denoted by brackets C<[...]>, with the set of
-characters to be possibly matched inside.  Here are some examples:
+There are a number of different types of character classes, but usually
+when people use this term, they are referring to the type described in
+this section, which are technically called "Bracketed character
+classes", because they are denoted by brackets C<[...]>, with the set of
+characters to be possibly matched inside.  But we'll drop the "bracketed"
+below to correspond with common usage.  Here are some examples of
+(bracketed) character classes:
 
     /cat/;            # matches 'cat'
     /[bcr]at/;        # matches 'bat', 'cat', or 'rat'
@@ -378,9 +393,9 @@ no string left to it, so it matches 0 times.
 
 There are a few more things you might want to know about matching
 operators.
-The global modifier C<//g> allows the matching operator to match
+The global modifier C</g> allows the matching operator to match
 within a string as many times as possible.  In scalar context,
-successive matches against a string will have C<//g> jump from match
+successive matches against a string will have C</g> jump from match
 to match, keeping track of position in the string as it goes along.
 You can get or set the position with the C<pos()> function.
 For example,
@@ -398,9 +413,9 @@ prints
 
 A failed match or changing the target string resets the position.  If
 you don't want the position reset after failure to match, add the
-C<//c>, as in C</regex/gc>.
+C</c>, as in C</regex/gc>.
 
-In list context, C<//g> returns a list of matched groupings, or if
+In list context, C</g> returns a list of matched groupings, or if
 there are no groupings, a list of matches to the whole regex.  So
 
     @words = ($x =~ /(\w+)/g);  # matches,

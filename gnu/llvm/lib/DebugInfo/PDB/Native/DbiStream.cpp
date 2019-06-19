@@ -12,7 +12,6 @@
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/DbiModuleDescriptor.h"
 #include "llvm/DebugInfo/PDB/Native/ISectionContribVisitor.h"
-#include "llvm/DebugInfo/PDB/Native/InfoStream.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
@@ -46,12 +45,12 @@ static Error loadSectionContribs(FixedStreamArray<ContribType> &Output,
   return Error::success();
 }
 
-DbiStream::DbiStream(PDBFile &File, std::unique_ptr<MappedBlockStream> Stream)
-    : Pdb(File), Stream(std::move(Stream)), Header(nullptr) {}
+DbiStream::DbiStream(std::unique_ptr<BinaryStream> Stream)
+    : Stream(std::move(Stream)), Header(nullptr) {}
 
 DbiStream::~DbiStream() = default;
 
-Error DbiStream::reload() {
+Error DbiStream::reload(PDBFile *Pdb) {
   BinaryStreamReader Reader(*Stream);
 
   if (Stream->getLength() < sizeof(DbiStreamHeader))
@@ -124,11 +123,11 @@ Error DbiStream::reload() {
 
   if (auto EC = initializeSectionContributionData())
     return EC;
-  if (auto EC = initializeSectionHeadersData())
+  if (auto EC = initializeSectionHeadersData(Pdb))
     return EC;
   if (auto EC = initializeSectionMapData())
     return EC;
-  if (auto EC = initializeFpoRecords())
+  if (auto EC = initializeFpoRecords(Pdb))
     return EC;
 
   if (Reader.bytesRemaining() > 0)
@@ -247,7 +246,10 @@ Error DbiStream::initializeSectionContributionData() {
 }
 
 // Initializes this->SectionHeaders.
-Error DbiStream::initializeSectionHeadersData() {
+Error DbiStream::initializeSectionHeadersData(PDBFile *Pdb) {
+  if (!Pdb)
+    return Error::success();
+
   if (DbgStreams.size() == 0)
     return Error::success();
 
@@ -255,11 +257,11 @@ Error DbiStream::initializeSectionHeadersData() {
   if (StreamNum == kInvalidStreamIndex)
     return Error::success();
 
-  if (StreamNum >= Pdb.getNumStreams())
+  if (StreamNum >= Pdb->getNumStreams())
     return make_error<RawError>(raw_error_code::no_stream);
 
   auto SHS = MappedBlockStream::createIndexedStream(
-      Pdb.getMsfLayout(), Pdb.getMsfBuffer(), StreamNum, Pdb.getAllocator());
+      Pdb->getMsfLayout(), Pdb->getMsfBuffer(), StreamNum, Pdb->getAllocator());
 
   size_t StreamLen = SHS->getLength();
   if (StreamLen % sizeof(object::coff_section))
@@ -277,7 +279,10 @@ Error DbiStream::initializeSectionHeadersData() {
 }
 
 // Initializes this->Fpos.
-Error DbiStream::initializeFpoRecords() {
+Error DbiStream::initializeFpoRecords(PDBFile *Pdb) {
+  if (!Pdb)
+    return Error::success();
+
   if (DbgStreams.size() == 0)
     return Error::success();
 
@@ -287,11 +292,11 @@ Error DbiStream::initializeFpoRecords() {
   if (StreamNum == kInvalidStreamIndex)
     return Error::success();
 
-  if (StreamNum >= Pdb.getNumStreams())
+  if (StreamNum >= Pdb->getNumStreams())
     return make_error<RawError>(raw_error_code::no_stream);
 
   auto FS = MappedBlockStream::createIndexedStream(
-      Pdb.getMsfLayout(), Pdb.getMsfBuffer(), StreamNum, Pdb.getAllocator());
+      Pdb->getMsfLayout(), Pdb->getMsfBuffer(), StreamNum, Pdb->getAllocator());
 
   size_t StreamLen = FS->getLength();
   if (StreamLen % sizeof(object::FpoData))

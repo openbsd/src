@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.h,v 1.1 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: small.h,v 1.3 2019/05/16 12:44:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>

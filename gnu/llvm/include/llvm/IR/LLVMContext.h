@@ -16,6 +16,7 @@
 #define LLVM_IR_LLVMCONTEXT_H
 
 #include "llvm-c/Types.h"
+#include "llvm/IR/DiagnosticHandler.h"
 #include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Options.h"
 #include <cstdint>
@@ -30,7 +31,7 @@ class Function;
 class Instruction;
 class LLVMContextImpl;
 class Module;
-class OptBisect;
+class OptPassGate;
 template <typename T> class SmallVectorImpl;
 class SMDiagnostic;
 class StringRef;
@@ -75,7 +76,7 @@ public:
 
   // Pinned metadata names, which always have the same value.  This is a
   // compile-time performance optimization, not a correctness optimization.
-  enum {
+  enum : unsigned {
     MD_dbg = 0,                       // "dbg"
     MD_tbaa = 1,                      // "tbaa"
     MD_prof = 2,                      // "prof"
@@ -99,13 +100,15 @@ public:
     MD_section_prefix = 20,           // "section_prefix"
     MD_absolute_symbol = 21,          // "absolute_symbol"
     MD_associated = 22,               // "associated"
+    MD_callees = 23,                  // "callees"
+    MD_irr_loop = 24,                 // "irr_loop"
   };
 
   /// Known operand bundle tag IDs, which always have the same value.  All
   /// operand bundle tags that LLVM has special knowledge of are listed here.
   /// Additionally, this scheme allows LLVM to efficiently check for specific
   /// operand bundle tags without comparing strings.
-  enum {
+  enum : unsigned {
     OB_deopt = 0,         // "deopt"
     OB_funclet = 1,       // "funclet"
     OB_gc_transition = 2, // "gc-transition"
@@ -167,11 +170,6 @@ public:
   using InlineAsmDiagHandlerTy = void (*)(const SMDiagnostic&, void *Context,
                                           unsigned LocCookie);
 
-  /// Defines the type of a diagnostic handler.
-  /// \see LLVMContext::setDiagnosticHandler.
-  /// \see LLVMContext::diagnose.
-  using DiagnosticHandlerTy = void (*)(const DiagnosticInfo &DI, void *Context);
-
   /// Defines the type of a yield callback.
   /// \see LLVMContext::setYieldCallback.
   using YieldCallbackTy = void (*)(LLVMContext *Context, void *OpaqueHandle);
@@ -194,43 +192,60 @@ public:
   /// setInlineAsmDiagnosticHandler.
   void *getInlineAsmDiagnosticContext() const;
 
-  /// setDiagnosticHandler - This method sets a handler that is invoked
-  /// when the backend needs to report anything to the user.  The first
-  /// argument is a function pointer and the second is a context pointer that
-  /// gets passed into the DiagHandler.  The third argument should be set to
+  /// setDiagnosticHandlerCallBack - This method sets a handler call back
+  /// that is invoked when the backend needs to report anything to the user.
+  /// The first argument is a function pointer and the second is a context pointer
+  /// that gets passed into the DiagHandler.  The third argument should be set to
   /// true if the handler only expects enabled diagnostics.
   ///
   /// LLVMContext doesn't take ownership or interpret either of these
   /// pointers.
-  void setDiagnosticHandler(DiagnosticHandlerTy DiagHandler,
-                            void *DiagContext = nullptr,
+  void setDiagnosticHandlerCallBack(
+      DiagnosticHandler::DiagnosticHandlerTy DiagHandler,
+      void *DiagContext = nullptr, bool RespectFilters = false);
+
+  /// setDiagnosticHandler - This method sets unique_ptr to object of DiagnosticHandler
+  /// to provide custom diagnostic handling. The first argument is unique_ptr of object
+  /// of type DiagnosticHandler or a derived of that.   The third argument should be
+  /// set to true if the handler only expects enabled diagnostics.
+  ///
+  /// Ownership of this pointer is moved to LLVMContextImpl.
+  void setDiagnosticHandler(std::unique_ptr<DiagnosticHandler> &&DH,
                             bool RespectFilters = false);
 
-  /// getDiagnosticHandler - Return the diagnostic handler set by
-  /// setDiagnosticHandler.
-  DiagnosticHandlerTy getDiagnosticHandler() const;
+  /// getDiagnosticHandlerCallBack - Return the diagnostic handler call back set by
+  /// setDiagnosticHandlerCallBack.
+  DiagnosticHandler::DiagnosticHandlerTy getDiagnosticHandlerCallBack() const;
 
   /// getDiagnosticContext - Return the diagnostic context set by
   /// setDiagnosticContext.
   void *getDiagnosticContext() const;
 
-  /// \brief Return if a code hotness metric should be included in optimization
+  /// getDiagHandlerPtr - Returns const raw pointer of DiagnosticHandler set by
+  /// setDiagnosticHandler.
+  const DiagnosticHandler *getDiagHandlerPtr() const;
+
+  /// getDiagnosticHandler - transfers owenership of DiagnosticHandler unique_ptr
+  /// to caller.
+  std::unique_ptr<DiagnosticHandler> getDiagnosticHandler();
+
+  /// Return if a code hotness metric should be included in optimization
   /// diagnostics.
   bool getDiagnosticsHotnessRequested() const;
-  /// \brief Set if a code hotness metric should be included in optimization
+  /// Set if a code hotness metric should be included in optimization
   /// diagnostics.
   void setDiagnosticsHotnessRequested(bool Requested);
 
-  /// \brief Return the minimum hotness value a diagnostic would need in order
+  /// Return the minimum hotness value a diagnostic would need in order
   /// to be included in optimization diagnostics. If there is no minimum, this
   /// returns None.
   uint64_t getDiagnosticsHotnessThreshold() const;
 
-  /// \brief Set the minimum hotness value a diagnostic needs in order to be
+  /// Set the minimum hotness value a diagnostic needs in order to be
   /// included in optimization diagnostics.
   void setDiagnosticsHotnessThreshold(uint64_t Threshold);
 
-  /// \brief Return the YAML file used by the backend to save optimization
+  /// Return the YAML file used by the backend to save optimization
   /// diagnostics.  If null, diagnostics are not saved in a file but only
   /// emitted via the diagnostic handler.
   yaml::Output *getDiagnosticsOutputFile();
@@ -241,11 +256,11 @@ public:
   /// set, the handler is invoked for each diagnostic message.
   void setDiagnosticsOutputFile(std::unique_ptr<yaml::Output> F);
 
-  /// \brief Get the prefix that should be printed in front of a diagnostic of
+  /// Get the prefix that should be printed in front of a diagnostic of
   ///        the given \p Severity
   static const char *getDiagnosticMessagePrefix(DiagnosticSeverity Severity);
 
-  /// \brief Report a message to the currently installed diagnostic handler.
+  /// Report a message to the currently installed diagnostic handler.
   ///
   /// This function returns, in particular in the case of error reporting
   /// (DI.Severity == \a DS_Error), so the caller should leave the compilation
@@ -257,7 +272,7 @@ public:
   /// "warning: " for \a DS_Warning, and "note: " for \a DS_Note.
   void diagnose(const DiagnosticInfo &DI);
 
-  /// \brief Registers a yield callback with the given context.
+  /// Registers a yield callback with the given context.
   ///
   /// The yield callback function may be called by LLVM to transfer control back
   /// to the client that invoked the LLVM compilation. This can be used to yield
@@ -276,7 +291,7 @@ public:
   /// control to LLVM. Other LLVM contexts are unaffected by this restriction.
   void setYieldCallback(YieldCallbackTy Callback, void *OpaqueHandle);
 
-  /// \brief Calls the yield callback (if applicable).
+  /// Calls the yield callback (if applicable).
   ///
   /// This transfers control of the current thread back to the client, which may
   /// suspend the current thread. Only call this method when LLVM doesn't hold
@@ -292,7 +307,7 @@ public:
   void emitError(const Instruction *I, const Twine &ErrorStr);
   void emitError(const Twine &ErrorStr);
 
-  /// \brief Query for a debug option's value.
+  /// Query for a debug option's value.
   ///
   /// This function returns typed data populated from command line parsing.
   template <typename ValT, typename Base, ValT(Base::*Mem)>
@@ -300,9 +315,17 @@ public:
     return OptionRegistry::instance().template get<ValT, Base, Mem>();
   }
 
-  /// \brief Access the object which manages optimization bisection for failure
-  /// analysis.
-  OptBisect &getOptBisect();
+  /// Access the object which can disable optional passes and individual
+  /// optimizations at compile time.
+  OptPassGate &getOptPassGate() const;
+
+  /// Set the object which can disable optional passes and individual
+  /// optimizations at compile time.
+  ///
+  /// The lifetime of the object must be guaranteed to extend as long as the
+  /// LLVMContext is used by compilation.
+  void setOptPassGate(OptPassGate&);
+
 private:
   // Module needs access to the add/removeModule methods.
   friend class Module;

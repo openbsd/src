@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.10 2017/04/28 16:23:30 schwarze Exp $
+# $OpenBSD: Makefile,v 1.11 2019/01/07 06:51:37 schwarze Exp $
 
 REGRESS_TARGETS	 = badNAME before empty emptyNAME first nohead order
-REGRESS_TARGETS	+= orderNAME parbefore parborder punctNAME subbefore
+REGRESS_TARGETS	+= orderNAME paragraph parbefore parborder punctNAME subbefore
 LINT_TARGETS	 = badNAME before empty emptyNAME first nohead order
 LINT_TARGETS	+= orderNAME parbefore parborder punctNAME subbefore
+HTML_TARGETS	 = paragraph
 
 # groff-1.22.3 defects:
 # - .Pp before .Sh NAME causes a blank line before the header line

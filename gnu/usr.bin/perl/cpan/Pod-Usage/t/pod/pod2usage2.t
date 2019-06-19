@@ -8,7 +8,7 @@ BEGIN {
     plan skip_all => "Not portable on Win32 or VMS\n";
   }
   else {
-    plan tests => 34;
+    plan tests => 33;
   }
   use_ok ("Pod::Usage");
 }
@@ -217,14 +217,14 @@ ok (compare ($text, <<'EOT'), "Output test pod2usage with USAGE and verbose=99")
 # 
 EOT
 
-# test with pod_where
-use_ok('Pod::Find', qw(pod_where));
+# test with self
 
-($exit, $text) = getoutput( sub { pod2usage( -input => pod_where({-inc => 1}, 'Pod::Usage'),
+my $src = File::Spec->catfile(qw(lib Pod Usage.pm));
+($exit, $text) = getoutput( sub { pod2usage( -input => $src,
                                              -exitval => 0, -verbose => 0) } );
 $text =~ s{#Using.*/blib.*\n}{}; # older blib's emit something to STDERR
-is ($exit, 0,                 "Exit status pod2usage with Pod::Find");
-ok (compare ($text, <<'EOT'), "Output test pod2usage with Pod::Find") or diag "Got:\n$text\n";
+is ($exit, 0,                 "Exit status pod2usage with self");
+ok (compare ($text, <<'EOT'), "Output test pod2usage with self") or diag "Got:\n$text\n";
 #Usage:
 #      use Pod::Usage
 #

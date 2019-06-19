@@ -22,6 +22,11 @@
 #include "llvm/Support/FileSystem.h"
 using namespace llvm;
 
+static cl::opt<std::string> CFGFuncName(
+    "cfg-func-name", cl::Hidden,
+    cl::desc("The name of a function (or its substring)"
+             " whose CFG is viewed/printed."));
+
 namespace {
   struct CFGViewerLegacyPass : public FunctionPass {
     static char ID; // Pass identifcation, replacement for typeid
@@ -82,7 +87,9 @@ PreservedAnalyses CFGOnlyViewerPass::run(Function &F,
   return PreservedAnalyses::all();
 }
 
-static void writeCFGToDotFile(Function &F) {
+static void writeCFGToDotFile(Function &F, bool CFGOnly = false) {
+  if (!CFGFuncName.empty() && !F.getName().contains(CFGFuncName))
+     return;
   std::string Filename = ("cfg." + F.getName() + ".dot").str();
   errs() << "Writing '" << Filename << "'...";
 
@@ -90,7 +97,7 @@ static void writeCFGToDotFile(Function &F) {
   raw_fd_ostream File(Filename, EC, sys::fs::F_Text);
 
   if (!EC)
-    WriteGraph(File, (const Function*)&F);
+    WriteGraph(File, (const Function*)&F, CFGOnly);
   else
     errs() << "  error opening file for writing!";
   errs() << "\n";
@@ -117,7 +124,7 @@ namespace {
 }
 
 char CFGPrinterLegacyPass::ID = 0;
-INITIALIZE_PASS(CFGPrinterLegacyPass, "dot-cfg", "Print CFG of function to 'dot' file", 
+INITIALIZE_PASS(CFGPrinterLegacyPass, "dot-cfg", "Print CFG of function to 'dot' file",
                 false, true)
 
 PreservedAnalyses CFGPrinterPass::run(Function &F,
@@ -134,7 +141,7 @@ namespace {
     }
 
     bool runOnFunction(Function &F) override {
-      writeCFGToDotFile(F);
+      writeCFGToDotFile(F, /*CFGOnly=*/true);
       return false;
     }
     void print(raw_ostream &OS, const Module* = nullptr) const override {}
@@ -152,7 +159,7 @@ INITIALIZE_PASS(CFGOnlyPrinterLegacyPass, "dot-cfg-only",
 
 PreservedAnalyses CFGOnlyPrinterPass::run(Function &F,
                                           FunctionAnalysisManager &AM) {
-  writeCFGToDotFile(F);
+  writeCFGToDotFile(F, /*CFGOnly=*/true);
   return PreservedAnalyses::all();
 }
 
@@ -162,6 +169,8 @@ PreservedAnalyses CFGOnlyPrinterPass::run(Function &F,
 /// being a 'dot' and 'gv' program in your path.
 ///
 void Function::viewCFG() const {
+  if (!CFGFuncName.empty() && !getName().contains(CFGFuncName))
+     return;
   ViewGraph(this, "cfg" + getName());
 }
 
@@ -171,6 +180,8 @@ void Function::viewCFG() const {
 /// this can make the graph smaller.
 ///
 void Function::viewCFGOnly() const {
+  if (!CFGFuncName.empty() && !getName().contains(CFGFuncName))
+     return;
   ViewGraph(this, "cfg" + getName(), true);
 }
 

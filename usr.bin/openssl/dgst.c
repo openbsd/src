@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.12 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: dgst.c,v 1.13 2019/01/18 23:33:57 naddy Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -373,7 +373,7 @@ mac_end:
 	/* we use md as a filter, reading from 'in' */
 	else {
 		if (md == NULL)
-			md = EVP_md5();
+			md = EVP_sha256();
 		if (!BIO_set_md(bmd, md)) {
 			BIO_printf(bio_err, "Error setting digest %s\n", pname);
 			ERR_print_errors(bio_err);

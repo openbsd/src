@@ -1,3 +1,4 @@
+/* $OpenBSD: self_reloc.c,v 1.2 2018/10/20 11:57:43 kettenis Exp $ */
 /*-
  * Copyright (c) 2008-2010 Rui Paulo <rpaulo@FreeBSD.org>
  * All rights reserved.
@@ -24,11 +25,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <machine/reloc.h>
 
-#include <efi.h>
-
-#if defined(__aarch64__)
+#if defined(__aarch64__) || defined(__amd64__)
+#define	ELFSIZE		64
 #define	ElfW_Rel	Elf64_Rela
 #define	ElfW_Dyn	Elf64_Dyn
 #define	ELFW_R_TYPE	ELF64_R_TYPE
@@ -38,27 +39,25 @@
 #define	ElfW_Rel	Elf32_Rel
 #define	ElfW_Dyn	Elf32_Dyn
 #define	ELFW_R_TYPE	ELF32_R_TYPE
-#elif defined(__amd64__)
-#define	ElfW_Rel	Elf64_Rel
-#define	ElfW_Dyn	Elf64_Dyn
-#define	ELFW_R_TYPE	ELF64_R_TYPE
 #else
 #error architecture not supported
 #endif
+
+#include <sys/exec_elf.h>
+
 #if defined(__aarch64__)
 #define	RELOC_TYPE_NONE		R_AARCH64_NONE
 #define	RELOC_TYPE_RELATIVE	R_AARCH64_RELATIVE
 #elif defined(__amd64__)
-#define	RELOC_TYPE_NONE		0	/* R_X86_64_NONE */
-#define	RELOC_TYPE_RELATIVE	8	/* R_X86_64_RELATIVE */
+#define	RELOC_TYPE_NONE		R_X86_64_NONE
+#define	RELOC_TYPE_RELATIVE	R_X86_64_RELATIVE
 #elif defined(__arm__)
 #define	RELOC_TYPE_NONE		R_ARM_NONE
 #define	RELOC_TYPE_RELATIVE	R_ARM_RELATIVE
 #elif defined(__i386__)
-#define	RELOC_TYPE_NONE		0	/* R_386_NONE */
-#define	RELOC_TYPE_RELATIVE	8	/* R_386_RELATIVE */
+#define	RELOC_TYPE_NONE		R_386_NONE
+#define	RELOC_TYPE_RELATIVE	R_386_RELATIVE
 #endif
-#include <sys/exec_elf.h>
 
 /*
  * A simple elf relocator.
@@ -96,7 +95,9 @@ self_reloc(Elf_Addr baseaddr, ElfW_Dyn *dynamic)
 	}
 
 	/*
-	 * Perform the actual relocation.
+	 * Perform the actual relocation. We rely on the object having been
+	 * linked at 0, so that the difference between the load and link
+	 * address is the same as the load address.
 	 */
 	for (; relsz > 0; relsz -= relent) {
 		switch (ELFW_R_TYPE(rel->r_info)) {
@@ -105,12 +106,13 @@ self_reloc(Elf_Addr baseaddr, ElfW_Dyn *dynamic)
 			break;
 
 		case RELOC_TYPE_RELATIVE:
-			/* Address relative to the base address. */
 			newaddr = (Elf_Addr *)(rel->r_offset + baseaddr);
-			*newaddr += baseaddr;
-			/* Add the addend when the ABI uses them */
 #ifdef ELF_RELA
-			*newaddr += rel->r_addend;
+			/* Addend relative to the base address. */
+			*newaddr = baseaddr + rel->r_addend;
+#else
+			/* Address relative to the base address. */
+			*newaddr += baseaddr;
 #endif
 			break;
 		default:

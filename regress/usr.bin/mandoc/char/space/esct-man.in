@@ -1,5 +1,5 @@
-.\" $OpenBSD: esct-man.in,v 1.2 2017/07/04 14:53:23 schwarze Exp $
-.TH SPACE-ESCT-MAN 1 2013-06-20
+.\" $OpenBSD: esct-man.in,v 1.4 2018/12/20 03:38:10 schwarze Exp $
+.TH SPACE-ESCT-MAN 1 "December 20, 2018"
 .SH NAME
 SPACE-T-MAN \- the t escape sequence in pages with man macros
 .SH DESCRIPTION
@@ -9,9 +9,13 @@ single	tab
 .br
 single\tescape-t
 .br
+single\aescape-a
+.br
 double		tab
 .br
 double\t\tescape-t
+.br
+double\a\aescape-a
 .br
 \tThis line starts with escape-t and comes close to the right margin.
 \tThe next line starts with escape-t as well.
@@ -20,8 +24,10 @@ In a literal display:
 .nf
 single	tab
 single\tescape-t
+single\aescape-a
 double		tab
 double\t\tescape-t
+double\a\aescape-a
 .fi
 .sp
 After the IP macro:
@@ -29,7 +35,15 @@ After the IP macro:
 text
 .IP single\tescape-t 3n
 text
+.\" XXX not implemented
+.\" .IP single\aescape-a 3n
+.\" text
 .PP
 After font macros:
 .br
 .B single\ttab
+.\" XXX not implemented
+.\" .br
+.\" .B single\aleader
+.br
+.B double\t\ttab

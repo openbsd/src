@@ -1,4 +1,4 @@
-//===--- Compilation.cpp - Compilation Task Implementation ----------------===//
+//===- Compilation.cpp - Compilation Task Implementation ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,32 +8,48 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Compilation.h"
+#include "clang/Basic/LLVM.h"
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
+#include "clang/Driver/Job.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/ToolChain.h"
+#include "clang/Driver/Util.h"
+#include "llvm/ADT/None.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Option/ArgList.h"
+#include "llvm/Option/OptSpecifier.h"
+#include "llvm/Option/Option.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
+#include <cassert>
+#include <string>
+#include <system_error>
+#include <utility>
 
-using namespace clang::driver;
 using namespace clang;
+using namespace driver;
 using namespace llvm::opt;
 
 Compilation::Compilation(const Driver &D, const ToolChain &_DefaultToolChain,
                          InputArgList *_Args, DerivedArgList *_TranslatedArgs,
                          bool ContainsError)
-    : TheDriver(D), DefaultToolChain(_DefaultToolChain), ActiveOffloadMask(0u),
-      Args(_Args), TranslatedArgs(_TranslatedArgs), Redirects(nullptr),
-      ForDiagnostics(false), ContainsError(ContainsError) {
-  // The offloading host toolchain is the default tool chain.
+    : TheDriver(D), DefaultToolChain(_DefaultToolChain), Args(_Args),
+      TranslatedArgs(_TranslatedArgs), ContainsError(ContainsError) {
+  // The offloading host toolchain is the default toolchain.
   OrderedOffloadingToolchains.insert(
       std::make_pair(Action::OFK_Host, &DefaultToolChain));
 }
 
 Compilation::~Compilation() {
+  // Remove temporary files. This must be done before arguments are freed, as
+  // the file names might be derived from the input arguments.
+  if (!TheDriver.isSaveTempsEnabled() && !ForceKeepTempFiles)
+    CleanupFileList(TempFiles);
+
   delete TranslatedArgs;
   delete Args;
 
@@ -41,14 +57,6 @@ Compilation::~Compilation() {
   for (auto Arg : TCArgs)
     if (Arg.second != TranslatedArgs)
       delete Arg.second;
-
-  // Free redirections of stdout/stderr.
-  if (Redirects) {
-    delete Redirects[0];
-    delete Redirects[1];
-    delete Redirects[2];
-    delete [] Redirects;
-  }
 }
 
 const DerivedArgList &
@@ -59,9 +67,31 @@ Compilation::getArgsForToolChain(const ToolChain *TC, StringRef BoundArch,
 
   DerivedArgList *&Entry = TCArgs[{TC, BoundArch, DeviceOffloadKind}];
   if (!Entry) {
-    Entry = TC->TranslateArgs(*TranslatedArgs, BoundArch, DeviceOffloadKind);
-    if (!Entry)
-      Entry = TranslatedArgs;
+    SmallVector<Arg *, 4> AllocatedArgs;
+    DerivedArgList *OpenMPArgs = nullptr;
+    // Translate OpenMP toolchain arguments provided via the -Xopenmp-target flags.
+    if (DeviceOffloadKind == Action::OFK_OpenMP) {
+      const ToolChain *HostTC = getSingleOffloadToolChain<Action::OFK_Host>();
+      bool SameTripleAsHost = (TC->getTriple() == HostTC->getTriple());
+      OpenMPArgs = TC->TranslateOpenMPTargetArgs(
+          *TranslatedArgs, SameTripleAsHost, AllocatedArgs);
+    }
+
+    if (!OpenMPArgs) {
+      Entry = TC->TranslateArgs(*TranslatedArgs, BoundArch, DeviceOffloadKind);
+      if (!Entry)
+        Entry = TranslatedArgs;
+    } else {
+      Entry = TC->TranslateArgs(*OpenMPArgs, BoundArch, DeviceOffloadKind);
+      if (!Entry)
+        Entry = OpenMPArgs;
+      else
+        delete OpenMPArgs;
+    }
+
+    // Add allocated arguments to the final DAL.
+    for (auto ArgPtr : AllocatedArgs)
+      Entry->AddSynthesizedArg(ArgPtr);
   }
 
   return *Entry;
@@ -90,7 +120,7 @@ bool Compilation::CleanupFile(const char *File, bool IssueErrors) const {
     // so we don't need to check again.
 
     if (IssueErrors)
-      getDriver().Diag(clang::diag::err_drv_unable_to_remove_file)
+      getDriver().Diag(diag::err_drv_unable_to_remove_file)
         << EC.message();
     return false;
   }
@@ -100,9 +130,8 @@ bool Compilation::CleanupFile(const char *File, bool IssueErrors) const {
 bool Compilation::CleanupFileList(const ArgStringList &Files,
                                   bool IssueErrors) const {
   bool Success = true;
-  for (ArgStringList::const_iterator
-         it = Files.begin(), ie = Files.end(); it != ie; ++it)
-    Success &= CleanupFile(*it, IssueErrors);
+  for (const auto &File: Files)
+    Success &= CleanupFile(File, IssueErrors);
   return Success;
 }
 
@@ -110,14 +139,12 @@ bool Compilation::CleanupFileMap(const ArgStringMap &Files,
                                  const JobAction *JA,
                                  bool IssueErrors) const {
   bool Success = true;
-  for (ArgStringMap::const_iterator
-         it = Files.begin(), ie = Files.end(); it != ie; ++it) {
-
+  for (const auto &File : Files) {
     // If specified, only delete the files associated with the JobAction.
     // Otherwise, delete all files in the map.
-    if (JA && it->first != JA)
+    if (JA && File.first != JA)
       continue;
-    Success &= CleanupFile(it->second, IssueErrors);
+    Success &= CleanupFile(File.second, IssueErrors);
   }
   return Success;
 }
@@ -136,7 +163,7 @@ int Compilation::ExecuteCommand(const Command &C,
                                     llvm::sys::fs::F_Append |
                                         llvm::sys::fs::F_Text);
       if (EC) {
-        getDriver().Diag(clang::diag::err_drv_cc_print_options_failure)
+        getDriver().Diag(diag::err_drv_cc_print_options_failure)
             << EC.message();
         FailingCommand = &C;
         delete OS;
@@ -158,7 +185,7 @@ int Compilation::ExecuteCommand(const Command &C,
   int Res = C.Execute(Redirects, &Error, &ExecutionFailed);
   if (!Error.empty()) {
     assert(Res && "Error string set with 0 result code!");
-    getDriver().Diag(clang::diag::err_drv_command_failure) << Error;
+    getDriver().Diag(diag::err_drv_command_failure) << Error;
   }
 
   if (Res)
@@ -167,16 +194,50 @@ int Compilation::ExecuteCommand(const Command &C,
   return ExecutionFailed ? 1 : Res;
 }
 
-void Compilation::ExecuteJobs(
-    const JobList &Jobs,
-    SmallVectorImpl<std::pair<int, const Command *>> &FailingCommands) const {
+using FailingCommandList = SmallVectorImpl<std::pair<int, const Command *>>;
+
+static bool ActionFailed(const Action *A,
+                         const FailingCommandList &FailingCommands) {
+  if (FailingCommands.empty())
+    return false;
+
+  // CUDA/HIP can have the same input source code compiled multiple times so do
+  // not compiled again if there are already failures. It is OK to abort the
+  // CUDA pipeline on errors.
+  if (A->isOffloading(Action::OFK_Cuda) || A->isOffloading(Action::OFK_HIP))
+    return true;
+
+  for (const auto &CI : FailingCommands)
+    if (A == &(CI.second->getSource()))
+      return true;
+
+  for (const auto *AI : A->inputs())
+    if (ActionFailed(AI, FailingCommands))
+      return true;
+
+  return false;
+}
+
+static bool InputsOk(const Command &C,
+                     const FailingCommandList &FailingCommands) {
+  return !ActionFailed(&C.getSource(), FailingCommands);
+}
+
+void Compilation::ExecuteJobs(const JobList &Jobs,
+                              FailingCommandList &FailingCommands) const {
+  // According to UNIX standard, driver need to continue compiling all the
+  // inputs on the command line even one of them failed.
+  // In all but CLMode, execute all the jobs unless the necessary inputs for the
+  // job is missing due to previous failures.
   for (const auto &Job : Jobs) {
+    if (!InputsOk(Job, FailingCommands))
+      continue;
     const Command *FailingCommand = nullptr;
     if (int Res = ExecuteCommand(Job, FailingCommand)) {
       FailingCommands.push_back(std::make_pair(Res, FailingCommand));
-      // Bail as soon as one command fails, so we don't output duplicate error
-      // messages if we die on e.g. the same file.
-      return;
+      // Bail as soon as one command fails in cl driver mode.
+      if (TheDriver.IsCLMode())
+        return;
     }
   }
 }
@@ -188,6 +249,10 @@ void Compilation::initCompilationForDiagnostics() {
   Actions.clear();
   AllActions.clear();
   Jobs.clear();
+
+  // Remove temporary files.
+  if (!TheDriver.isSaveTempsEnabled() && !ForceKeepTempFiles)
+    CleanupFileList(TempFiles);
 
   // Clear temporary/results file lists.
   TempFiles.clear();
@@ -205,16 +270,16 @@ void Compilation::initCompilationForDiagnostics() {
   TranslatedArgs->ClaimAllArgs();
 
   // Redirect stdout/stderr to /dev/null.
-  Redirects = new const StringRef*[3]();
-  Redirects[0] = nullptr;
-  Redirects[1] = new StringRef();
-  Redirects[2] = new StringRef();
+  Redirects = {None, {""}, {""}};
+
+  // Temporary files added by diagnostics should be kept.
+  ForceKeepTempFiles = true;
 }
 
 StringRef Compilation::getSysRoot() const {
   return getDriver().SysRoot;
 }
 
-void Compilation::Redirect(const StringRef** Redirects) {
+void Compilation::Redirect(ArrayRef<Optional<StringRef>> Redirects) {
   this->Redirects = Redirects;
 }

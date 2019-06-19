@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1066 2018/03/15 17:43:54 anton Exp $
+#	$OpenBSD: install.sub,v 1.1135 2019/05/14 14:27:49 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -71,17 +71,17 @@ usage() {
 	err_exit "usage: ${0##*/} [-a] [-f filename] [-m install | upgrade]"
 }
 
-# Wait for the ftp process to finish, or be killed after the timeout and
-# extract various informations from the ftplist.cgi output.
+# Wait for the ftp(1) process started in start_cgiinfo() to end and extract
+# various informations from the ftplist.cgi output.
 wait_cgiinfo() {
 	local _l _s _key _val
 
-	# Wait for the ftp(1) process started in start_cgiinfo() to end and
-	# ensure, there is actual data to extract info from.
 	wait "$CGIPID" 2>/dev/null
+
+	# Ensure, there is actual data to extract info from.
 	[[ -s $CGI_INFO ]] || return
 
-	# Extract list of mirror servers from the ftplist.cgi output.
+	# Extract the list of mirror servers.
 	sed -En 's,^https?://([[A-Za-z0-9:_][]A-Za-z0-9:._-]*),\1,p' \
 		$CGI_INFO >$HTTP_LIST 2>/dev/null
 
@@ -179,7 +179,8 @@ quote() (
 	echo
 )
 
-# Show a list (passed via ordered arguments) in column output using ls.
+# Show a list of ordered arguments (read line by line from stdin) in column
+# output using ls.
 show_cols() {
 	local _l _cdir=/tmp/i/cdir _clist
 
@@ -262,6 +263,11 @@ lease_value() {
 	done
 }
 
+# Extract one boot's worth of dmesg.
+dmesgtail() {
+	dmesg | sed -n 'H;/^OpenBSD/h;${g;p;}'
+}
+
 # ------------------------------------------------------------------------------
 # Device related functions
 # ------------------------------------------------------------------------------
@@ -316,7 +322,8 @@ get_cddevs() {
 	echo $(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 }
 
-# Return list of disks not yet initialized.
+# Return sorted list of disks not in DISKS_DONE which contains disks already
+# initialized during installation.
 get_dkdevs_uninitialized() {
 	local _disks=$(get_dkdevs) _d
 
@@ -326,13 +333,25 @@ get_dkdevs_uninitialized() {
 	bsort $_disks
 }
 
-# Return list of network devices. Filter out dynamically created network
-# pseudo-devices except vlan.
+# Return list of valid root disks
+get_dkdevs_root() {
+	local _disks=$(get_dkdevs) _d
+
+	if [[ $MODE == upgrade ]]; then
+		for _d in $_disks; do
+			is_rootdisk "$_d" || _disks=$(rmel "$_d" $_disks)
+		done
+	fi
+	echo -n $_disks
+}
+
+# Return list of all network devices, optionally limited by parameters to
+# ifconfig. Filter out dynamically created network pseudo-devices except vlan.
 get_ifs() {
-	local _if _iflist=$(rmel vlan $(ifconfig -C))
+	local _if _if_list=$(rmel vlan $(ifconfig -C))
 
 	for _if in $(ifconfig "$@" 2>/dev/null | sed '/^[a-z]/!d;s/:.*//'); do
-		isin "${_if%%+([0-9])}" $_iflist || echo $_if
+		isin "${_if%%+([0-9])}" $_if_list || echo $_if
 	done
 }
 
@@ -393,23 +412,17 @@ disk_has() {
 	fi
 }
 
-# Handle disklabel auto-layout during interactive installation and
-# autopartitioning during unattended installation for the root disk.
-# In the latter case, ask for and download autopartitioning template.
-# Abort unattended installation if autopartitioning fails.
-#
-# Parameters:
-#
-# $1 = disk
-# $2 = /path/to/fstab
-#
+# Handle disklabel auto-layout for the root disk $1 during interactive install
+# and autopartitioning during unattended install by asking for and downloading
+# autopartitioning template. Write the resulting fstab to $2. Abort unattended
+# installation if autopartitioning fails.
 disklabel_autolayout() {
 	local _disk=$1 _f=$2 _dl=/tmp/i/disklabel.auto _op _qst
 
 	# Skip disklabel auto-layout for any disk except the root disk.
 	[[ $_disk != $ROOTDISK ]] && return
 
-	while $AUTO; do
+	while $AI; do
 		ask "URL to autopartitioning template for disklabel?" none
 		[[ $resp == none ]] && break
 		if ! $FTP_TLS && [[ $resp == https://* ]]; then
@@ -456,14 +469,14 @@ configure_disk() {
 	# Make sure a '/' mount point exists on the root disk.
 	if ! grep -qs ' / ffs ' /tmp/i/fstab.$ROOTDISK; then
 		echo "'/' must be configured!"
-		$AUTO && exit 1 || return 1
+		$AI && exit 1 || return 1
 	fi
 
 	if [[ -f $_fstab ]]; then
 		# Avoid duplicate mount points on different disks.
 		while read _pp _mp _rest; do
+			# Multiple swap partitions are ok.
 			if [[ $_mp == none ]]; then
-				# Multiple swap partitions are ok.
 				echo "$_pp $_mp $_rest" >>/tmp/i/fstab
 				continue
 			fi
@@ -475,27 +488,32 @@ configure_disk() {
 			fi
 		done <$_fstab
 
+		# Duplicate mountpoint.
 		if [[ -z $_disk ]]; then
-			# Duplicate mountpoint.
 			# Allow disklabel(8) to read back mountpoint info
 			# if it is immediately run against the same disk.
 			cat /tmp/i/fstab.$_rest >/etc/fstab
 			rm /tmp/i/fstab.$_rest
+
 			set -- $(grep -h " $_mp " /tmp/i/fstab.*[0-9])
 			echo "$_pp and $1 can't both be mounted at $_mp."
-			$AUTO && exit 1 || return 1
+			$AI && exit 1 || return 1
 		fi
 
 		# Add ffs filesystems to list after newfs'ing them. Ignore
 		# other filesystems.
 		while read _pp _mp _fstype _rest; do
 			[[ $_fstype == ffs ]] || continue
+
+			# Use machine-dependent newfs options for the root
+			# partition if defined.
 			_opt=
 			[[ $_mp == / ]] && _opt=$MDROOTFSOPT
+
 			newfs -q $_opt ${_pp##/dev/}
-			# N.B.: '!' is lexically < '/'. That is
-			#	required for correct sorting of
-			#	mount points.
+
+			# N.B.: '!' is lexically < '/'.
+			# That is required for correct sorting of mount points.
 			FSENT="$FSENT $_mp!$_pp"
 		done <$_fstab
 	fi
@@ -517,40 +535,47 @@ unlock() {
 	rm -df /tmp/i/lock 2>/dev/null
 }
 
-# Add trap to kill the listener process.
+# Add a trap to kill the dmesg listener co-process on exit of the installer.
 retrap() {
 	trap 'kill -KILL $CPPID 2>/dev/null; echo; stty echo; exit 0' \
 		INT EXIT TERM
 }
 
-# Start listener process looking for dmesg changes.
+# Start a listener process looking for dmesg changes which indicates a possible
+# plug-in/-out of devices (e.g. usb disks, cdroms, etc.). This is used to abort
+# and redraw question prompts, especially in ask_which().
 start_dmesg_listener() {
 	local _update=/tmp/i/update
 
-	# Make sure lock is initially released.
+	# Ensure the lock is initially released and that no update files exists.
 	unlock
-
-	# The dmesg listener will check for the existence of this file and sends
-	# a signal to the child process if the dmesg output differs from the
-	# contents of that file.
 	rm -f $_update
 
-	$AUTO && return
+	# Do not start the listener if in non-interactive mode.
+	$AI && return
 
+	# To ensure that only one dmesg listener instance can be active, run it
+	# in a co-process subshell of which there can always only be one active.
 	(
 	while :; do
 		lock
-		if [[ -e $_update && "$(dmesg)" != "$(<$_update)" ]]; then
-			dmesg >$_update
+		# The dmesg listener will continuously check for the existence of
+		# the update file and sends a signal to the parent process (that
+		# is the installer script) if the dmesg output differs from the
+		# contents of that file.
+		if [[ -e $_update && "$(dmesgtail)" != "$(<$_update)" ]]; then
+			dmesgtail >$_update
 			kill -TERM 2>/dev/null $$ || exit 1
 		fi
 		unlock
 		sleep .5
 	done
 	) |&
-	CPPID=$!
 
-	# Kill the child on exit.
+	# Save the co-process PID in a global variable so it can be used in
+	# the retrap() function which adds a trap to kill the co-process on
+	# exit of the installer script.
+	CPPID=$!
 	retrap
 }
 
@@ -602,7 +627,7 @@ get_responsefile() {
 		_path=${_aifile%auto_@(install|upgrade)}
 		AI_MODE=${_aifile##*?(/)auto_}
 
-		# Extract installer server ip address from lease file.
+		# Extract install server ip address from lease file.
 		AI_SERVER=$(lease_value $_lf \
 			server-name tftp-server-name next-server)
 
@@ -611,12 +636,15 @@ get_responsefile() {
 		hostname "$AI_HOSTNAME"
 	done
 
-	# Fetch response file if server and mode are known, otherwise tell which
-	# one was missing. Try to fetch mac-mode.conf, then hostname-mode.conf,
-	# and finally mode.conf.
+	# Try to fetch mac-mode.conf, then hostname-mode.conf, and finally
+	# mode.conf if install server and mode are known, otherwise tell which
+	# one was missing.
 	if [[ -n $AI_SERVER && -n $AI_MODE ]]; then
 		AI_MAC=$(ifconfig $_if | sed 's/.*lladdr \(.*\)/\1/p;d')
 		for _rf in {$AI_MAC-,${AI_HOSTNAME:+$AI_HOSTNAME-,}}$AI_MODE; do
+			# Append HTTP_SETDIR as parameter to _url which can be
+			# used by the webserver to return dynamically created
+			# response files.
 			_url="http://$AI_SERVER/$_path$_rf.conf?path=$HTTP_SETDIR"
 			echo "Fetching $_url"
 			if unpriv ftp -Vo - "$_url" \
@@ -655,27 +683,23 @@ get_responsefile() {
 	return 1
 }
 
-# Search question in $AI_RESPFILE, return answer in $resp.
+# Find a response to question $1 in $AI_RESPFILE and return it via $resp.
+# Return default answer $2 if provided and none is found in the file.
 #
-# 1) split question and answer at leftmost =
-# 2) strip leading/trailing blanks
-# 3) compare questions case insensitive
-# 4) ignore empty and comment lines and lines without =
-# 5) return default answer if provided and none is found in file
-# 6) treat empty/missing/multiple answers as error and exit
+# Move the existing ai.conf file to a tmp file, read from it line by line
+# and write a new ai.conf file skipping the line containing the response.
 #
-# Parameters:
-#
-# $1 = the question to search for
-# $2 = the default answer
+# 1) skip empty and comment lines and lines without =
+# 2) split question (_key) and answer (_val) at leftmost =
+# 3) strip leading/trailing blanks
+# 4) compare questions case insensitive (typeset -l)
 #
 _autorespond() {
 	typeset -l _q=$1 _key
 	local _def=$2 _l _val
 
-	[[ -f $AI_RESPFILE ]] || return
+	[[ -f $AI_RESPFILE && -n $_q ]] || return
 
-	# Find a suitable response in /tmp/ai/ai.conf and remove it if found.
 	mv /tmp/ai/ai.conf /tmp/ai/ai.conf.tmp
 	while IFS=' 	' read -r _l; do
 		[[ $_l == [!#=]*=?* ]] || continue
@@ -686,23 +710,22 @@ _autorespond() {
 		print -r " $_l"
 	done </tmp/ai/ai.conf.tmp >/tmp/ai/ai.conf
 	[[ -n $_def ]] && resp=$_def && return
-	err_exit "\nQuestion has no answer in response file."
+	err_exit "\nQuestion has no answer in response file: \"$_q\""
 }
 
-# Issue a read into the global variable $resp. If the dmesg output is
-# changed while inside this function, the current read will be aborted
-# and the function will return a non-zero value. Normally, the caller
-# will then reprint any prompt and call the function again.
+# Capture user response either by issuing an interactive read or by searching
+# the response file and store the response in the global variable $resp.
 #
-# Optional parameters:
+# Optionally present a question $1 and a default answer $2 shown in [].
 #
-# $1 = the question to ask the user
-# $2 = the default answer
-#
+# If the dmesg output is changed while waiting for the interactive response,
+# the current read will be aborted and the function will return a non-zero
+# value. Normally, the caller function will then reprint any prompt and call
+# the function again.
 _ask() {
 	local _q=$1 _def=$2 _int _redo=0 _pid
 
-	lock; dmesg >/tmp/i/update; unlock
+	lock; dmesgtail >/tmp/i/update; unlock
 	echo -n "${_q:+$_q }${_def:+[$_def] }"
 	_autorespond "$_q" "$_def" && echo "$resp" && return
 	trap "_int=1" INT
@@ -729,24 +752,18 @@ _ask() {
 	return $_redo
 }
 
-# Ask for user input presenting question $1 with an optional default answer $2.
-# Save the answer in the global variable $resp. Additionally write the question
-# and the answer to a logfile. Parameters $1 and $2 are passed on to _ask(),
-# which is called repeatedly until it succeds.
+# Ask for user response to question $1 with an optional default answer $2.
+# Write the question and the answer to a logfile.
 ask() {
+
+	# Prompt again in case the dmesg listener detected a change.
 	while ! _ask "$1" "$2"; do done
 	log_answers "$1" "$resp"
 }
 
-# Ask the user a yes/no question, and insist on 'y', 'yes', 'n' or 'no'.
-# Return 'y' or 'n' in $resp.
-# Exit code: (y)es => 0, (n)o => 1
-#
-# Parameters:
-#
-# $1 = the question to ask the user
-# $2 = the default answer (assumed to be 'n' if empty).
-#
+# Ask the user a yes/no question $1 with 'no' as default answer unless $2 is
+# set to 'yes' and insist on 'y', 'yes', 'n' or 'no' as response.
+# Return response via $resp as 'y' with exit code 0 or 'n' with exit code 1.
 ask_yn() {
 	local _q=$1 _a=${2:-no}
 	typeset -l _resp
@@ -759,7 +776,7 @@ ask_yn() {
 		n|no)	resp=n; return 1;;
 		esac
 		echo "'$resp' is not a valid choice."
-		$AUTO && exit 1
+		$AI && exit 1
 	done
 }
 
@@ -789,8 +806,8 @@ ask_which() {
 		set -- $_dynlist; _dynlist="$*"
 		set +o noglob
 		(($# < 1)) && resp=done && return
-
 		: ${_dyndef:=$1}
+
 		echo "Available ${_name}s are: $_dynlist."
 		_q="Which $_name $_query?"
 		echo -n "$_q (or 'done') ${_dyndef:+[$_dyndef] }"
@@ -805,36 +822,29 @@ ask_which() {
 			break
 		fi
 		echo "'$resp' is not a valid choice."
-		$AUTO && [[ -n $AI_RESPFILE ]] && exit 1
+		$AI && [[ -n $AI_RESPFILE ]] && exit 1
 	done
 }
 
-# Ask for user input until a non-empty reply is entered.
-# Save the user input (or the default) in $resp.
-#
-# Parameters:
-#
-# $1 = the question to ask the user
-# $2 = the default answer
-#
-function ask_until {
+# Ask for user response to question $1 with an optional default answer $2
+# until a non-empty reply is entered.
+ask_until() {
 	resp=
 
-	while true; do
+	while :; do
 		ask "$1" "$2"
 		[[ -n $resp ]] && break
 		echo "A response is required."
-		$AUTO && exit 1
+		$AI && exit 1
 	done
 }
 
-# Ask for a password, saving the input in $resp.
+# Capture a user password and save it in $resp, optionally showing prompt $1.
 #
-# 1) Display $1 as the prompt.
-# 2) *Don't* allow the '!' options that ask does.
-# 3) *Don't* echo input.
-# 4) *Don't* interpret "\" as escape character.
-# 5) Preserve whitespace in input
+# 1) *Don't* allow the '!' options that ask does.
+# 2) *Don't* echo input.
+# 3) *Don't* interpret "\" as escape character.
+# 4) Preserve whitespace in input
 #
 ask_pass() {
 	stty -echo
@@ -843,11 +853,12 @@ ask_pass() {
 	echo
 }
 
-# Ask for a password twice, saving the input in $_password.
+# Ask for a password twice showing prompt $1. Ensure both inputs are identical
+# and save it in $_password.
 ask_password() {
 	local _q=$1
 
-	if $AUTO; then
+	if $AI; then
 		echo -n "$_q "
 		_autorespond "$_q"
 		echo '<provided>'
@@ -871,7 +882,8 @@ ask_password() {
 # Support functions for donetconfig()
 # ------------------------------------------------------------------------------
 
-# Issue a DHCP request to configure interface $1.
+# Issue a DHCP request to configure interface $1 and add it to group 'dhcp' to
+# later be able to identify DHCP configured interfaces.
 dhcp_request() {
 	local _if=$1
 
@@ -879,26 +891,27 @@ dhcp_request() {
 
 	ifconfig $_if group dhcp >/dev/null 2>&1
 
-	dhclient -c /dev/stdin $_if <<__EOT
+	if [[ -x /sbin/dhclient ]]; then
+		/sbin/dhclient -c /dev/stdin $_if <<__EOT
 initial-interval 1;
 backoff-cutoff 2;
 reboot 5;
 timeout 10;
 __EOT
+	else
+		echo "DHCP leases not available during install - no /sbin/dhclient."
+	fi
 
 	# Move resolv.conf to where it will be copied to the installed system.
 	mv /etc/resolv.conf.tail /tmp/i/resolv.conf.tail
 }
 
 # Obtain and output the inet information related to interface $1.
-# Outputs one of:
-# DOWN
-# UP
-# UP\n<addr> <netmask> <rest of inet line>[\n<more inet lines>]
+# Outputs:
+# <flags>\n<addr> <netmask> <rest of inet line>[\n<more inet lines>]
 v4_info() {
 	ifconfig $1 inet | sed -n '
-		1s/.*<UP,.*/UP/p
-		1s/.*<.*/DOWN/p
+		1s/.*flags=.*<\(.*\)>.*/\1/p
 		/inet/s/netmask //
 		/.inet /s///p'
 }
@@ -909,14 +922,9 @@ hextodec() {
 	echo $(($1)).$(($2)).$(($3)).$(($4))
 }
 
-# Create an entry in the hosts file. If an entry with the same symbolic name and
-# address family already exists, delete it.
-#
-# Parameters:
-#
-# $1 = IP address (v6 if it contains ':', else v4)
-# $2 = symbolic name
-#
+# Create an entry in the hosts file using IP address $1 and symbolic name $2.
+# Treat $1 as IPv6 address if it contains ':', otherwise as IPv4. If an entry
+# with the same name and address family already exists, delete it first.
 add_hostent() {
 	local _addr=$1 _name=$2 _delim="."
 
@@ -929,12 +937,8 @@ add_hostent() {
 	echo "$_addr $_name" >>/tmp/i/hosts
 }
 
-# Configure VLAN interface.
-#
-# Parameters:
-#
-# $1 = name of the network device
-#
+# Configure VLAN interface $1 and create the corresponding hostname.if(5) file.
+# Ask the user what parent network interface and vnetid to use.
 vlan_config() {
 	local _if=$1 _hn=/tmp/i/hostname.$1 _hn_vd _vd _vdvi _vdvi_used _vi
 	local _sed_vdvi='s/.encap: vnetid ([[:alnum:]]+) parent ([[:alnum:]]+)/\2:\1/p'
@@ -1001,177 +1005,171 @@ vlan_config() {
 	ifconfig $_if $_vi parent $_vd
 }
 
-# Configure IPv4 interface.
-#
-# Parameters:
-#
-# $1 = name of the network device
-# $2 = hostname to add to hosts file
-# $3 = /path/to/hostname.if
-#
+# Configure IPv4 on interface $1.
 v4_config() {
-	local _if=$1 _name=$2 _hn=$3 _prompt _addr _mask
+	local _if=$1 _name=$2 _hn=$3 _addr _mask _newaddr
 
-	if ifconfig $_if | grep -q 'groups:.* dhcp'; then
-		_addr=dhcp
-	else
-		set -- $(v4_info $_if)
-		if [[ -n $2 ]]; then
-			_addr=$2; _mask=$(hextodec $3)
-			ifconfig $_if inet $_addr delete
-		fi
+	# Set default answers based on any existing configuration.
+	set -- $(v4_info $_if)
+	if [[ -n $2 ]] && ! isin $_if $(get_ifs dhcp); then
+		_addr=$2;
+		_mask=$(hextodec $3)
 	fi
 
-	if [[ -x /sbin/dhclient ]]; then
-		_prompt="or 'dhcp' "
-		# Don't make 'dhcp' the default if dhcp was already used.
-		ifconfig dhcp >/dev/null 2>&1 || _addr=dhcp
-	fi
-	_prompt="IPv4 address for $_if? (${_prompt}or 'none')"
+	# Nuke existing inet configuration.
+	ifconfig $_if -inet
+	ifconfig $_if -group dhcp >/dev/null 2>&1
 
 	while :; do
-		ask_until "$_prompt" "$_addr"
+		ask_until "IPv4 address for $_if? (or 'dhcp' or 'none')" \
+			  "${_addr:-dhcp}"
 		case $resp in
 		none)	return
 			;;
-		dhcp)	if [[ ! -x /sbin/dhclient ]]; then
-				echo "DHCP not possible - no /sbin/dhclient."
-				$AUTO && exit 1 || continue
-			else
-				dhcp_request $_if
-				echo "dhcp" >>$_hn
-				return
-			fi
-			;;
-		*)	_addr=$resp
-			ifconfig $_if -group dhcp >/dev/null 2>&1
+		dhcp)	dhcp_request $_if
+			echo "dhcp" >>$_hn
+			return
 			;;
 		esac
 
+		_newaddr=$resp
+
 		# Ask for the netmask if the user did not use CIDR notation.
-		if [[ $_addr == */* ]]; then
-			_mask=
+		if [[ $_newaddr == */* ]]; then
+			ifconfig $_if $_newaddr up
 		else
-			ask_until "Netmask for $_if?" "${_mask:=255.255.255.0}"
-			_mask=$resp
+			ask_until "Netmask for $_if?" "${_mask:-255.255.255.0}"
+			ifconfig $_if $_newaddr netmask $resp
 		fi
 
-		if ifconfig $_if inet $_addr ${_mask:+netmask $_mask} up; then
-			echo "inet $_addr $_mask" >>$_hn
-			add_hostent "${_addr%%/*}" "$_name"
-			break
-		else
-			_addr=
-			_mask=
-			$AUTO && exit 1
+		set -- $(v4_info $_if)
+		if [[ -n $2 ]]; then
+			echo "inet $2 $3" >>$_hn
+			add_hostent "$2" "$_name"
+			return
 		fi
+
+		$AI && exit 1
 	done
 }
 
 # Obtain and output the inet6 information related to interface $1.
-# Outputs one of:
-# DOWN
-# UP
-# UP\n<addr> <prefixlen> <rest of inet6 line>[\n<more inet6 lines>]
+# <flags>\n<addr> <prefixlen> <rest of inet6 line>[\n<more inet6 lines>]
 v6_info() {
 	ifconfig $1 inet6 | sed -n '
-		1s/.*<UP,.*/UP/p
-		1s/.*<.*/DOWN/p
+		1s/.*flags=.*<\(.*\)>.*/\1/p
 		/scopeid/d
 		/inet6/s/prefixlen //
 		/.inet6 /s///p'
 }
 
-# Set up IPv6 default route on interface $1.
+# Configure an IPv6 default route on interface $1 and preserve that information
+# in the /etc/mygate file. Ask the user to either select from a list of default
+# router candidates or to enter a router IPv6 address.
 v6_defroute() {
-	local _if=$1 _prompt _resp _routers PS3
+	local _if _v6ifs _prompt _resp _routers _dr PS3
 
-	route -n show -inet6 | egrep -q '^default[[:space:]]' && return
+	# Only configure a default route if an IPv6 address was manually configured.
+	for _if in $(get_ifs); do
+		set -- $(v6_info $_if)
+		[[ -z $2 || $1 == *AUTOCONF6* ]] || _v6ifs="$_v6ifs $_if"
+	done
+	[[ -n $_v6ifs ]] || return
 
-	_routers=$(bsort $(ping6 -n -c 2 ff02::2%$_if 2>/dev/null |
-		sed -En '/^[0-9]+ bytes from /{s///;s/: .*$//p;}'))
+	# Start with any existing default routes.
+	_routers=$(route -n show -inet6 |
+		sed -En 's/^default[[:space:]]+([^[:space:]]+).*/\1 /p')
 
+	# Add more default router canditates by ping6'ing
+	# the All-Routers multicast address.
+	for _if in $_v6ifs; do
+		_resp=$(ping6 -n -c 2 ff02::2%$_if 2>/dev/null |
+			sed -En '/^[0-9]+ bytes from /{s///;s/: .*$//p;}')
+		for _dr in $_resp; do
+			_routers=$(addel $_dr $_routers)
+		done
+	done
+
+	[[ -n $_routers ]] && _routers=$(bsort $_routers)
 	_prompt="IPv6 default router?"
 
-	if $AUTO; then
-		_autorespond "$_prompt" && _resp=$resp && echo "$_prompt $_resp"
+	if $AI; then
+		_autorespond "$_prompt (IPv6 address or 'none')" none &&
+			echo "$_prompt $resp"
+		[[ $resp != none ]] &&
+			route -n add -inet6 -host default $resp &&
+			echo $resp >>/tmp/i/mygate
 	else
-		PS3="$_prompt (${_routers:+list #, }IPv6 address or 'none'): "
-		select _resp in $_routers; do
-			[[ ${_resp:=$REPLY} == *:* ]] && break
-			[[ $_resp == none ]] && return
+		PS3="$_prompt (list #, IPv6 address or 'none') "
+		select _resp in none $_routers; do
+			[[ $REPLY == none || $_resp == none ]] && break
+			[[ -z $_resp ]] && _resp=$REPLY
+			# Avoid possible "file exists" errors
+			route -n -q delete -inet6 -host default $_resp
+			if route -n add -inet6 -host default $_resp; then
+				echo $_resp >>/tmp/i/mygate
+				break
+			fi
 		done
 	fi
-
-	route -n add -inet6 -host default "$_resp" &&
-		echo "$_resp" >>/tmp/i/mygate
 }
 
-# Configure IPv6 interface.
-#
-# Parameters:
-#
-# $1 = name of the network device
-# $2 = hostname to add to hosts file
-# $3 = /path/to/hostname.if
-#
+# Configure IPv6 interface $1, add hostname $2 to the hosts file,
+# create the hostname.if file $3. Ask the user for the IPv6 address
+# and prefix length if the address was not specified in CIDR notation,
+# unless he chooses 'autoconf'.
 v6_config() {
-	local _if=$1 _name=$2 _hn=$3 _addr _prefixlen _prompt
+	local _if=$1 _name=$2 _hn=$3 _addr _newaddr _prefixlen
 
 	ifconfig lo0 inet6 >/dev/null 2>&1 || return
 
+	# Preset the default answers by preserving possibly existing
+	# configuration from previous runs.
 	set -- $(v6_info $_if)
-	[[ -n $2 ]] && { _addr=$2; _prefixlen=$3; }
+	if [[ $1 == *AUTOCONF6* ]]; then
+		_addr=autoconf
+	elif [[ -n $2 ]]; then
+		_addr=$2
+		_prefixlen=$3
+	fi
 
-	ifconfig $_if inet6 >/dev/null 2>&1 && _prompt="or 'autoconf' "
-	_prompt="IPv6 address for $_if? (${_prompt}or 'none')"
+	# Nuke existing inet6 configuration.
+	ifconfig $_if -inet6
 
 	while :; do
-		ask_until "$_prompt" "${_addr:-none}"
+		ask_until "IPv6 address for $_if? (or 'autoconf' or 'none')" \
+			  "${_addr:-none}"
 		case $resp in
 		none)	return
 			;;
 		autoconf)
-			if ! ifconfig $_if inet6 >/dev/null 2>&1; then
-				echo "No INET6 support."
-				$AUTO && exit 1 || return
-			fi
-			if ifconfig $_if inet6 autoconf; then
-				echo "inet6 autoconf" >>$_hn
-				return
-			else
-				echo "inet6 autoconf failed."
-				$AUTO && exit 1 || return
-			fi
-			;;
-		*)	_addr=$resp
+			ifconfig $_if inet6 autoconf up
+			echo "inet6 autoconf" >>$_hn
+			return
 			;;
 		esac
-	
-		# Ask for prefix lenght if the user did not use CIDR notation.
-		if [[ $_addr == */* ]]; then
-			_prefixlen=
+
+		_newaddr=$resp
+		if [[ $_newaddr == */* ]]; then
+			ifconfig $_if inet6 $_newaddr up
 		else
-			ask_until "IPv6 prefix length for $_if?" "${_prefixlen:=64}"
-			_prefixlen=$resp
+			ask_until "IPv6 prefix length for $_if?" \
+				  "${_prefixlen:-64}"
+			ifconfig $_if inet6 $_newaddr/$resp up
 		fi
 
-		if ifconfig $_if inet6 $_addr ${_prefixlen:+prefixlen $_prefixlen} up; then
-			echo "inet6 $_addr $_prefixlen" >>$_hn
-			add_hostent "${_addr%%/*}" "$_name"
-			break
-		else
-			_addr=
-			_prefixlen=
-			$AUTO && exit 1
+		set -- $(v6_info $_if)
+		if [[ -n $2 ]]; then
+			echo "inet6 $2 $3" >>$_hn
+			add_hostent "$2" "$_name"
+			return
 		fi
+
+		$AI && exit 1
 	done
-
-	v6_defroute $_if
 }
 
-# Perform an 802.11 network scan on interface $1.
-# The result is cached in $WLANLIST.
+# Perform an 802.11 network scan on interface $1 and cache the result a file.
 ieee80211_scan() {
 	# N.B. Skipping quoted nwid's for now.
 	[[ -f $WLANLIST ]] ||
@@ -1181,6 +1179,7 @@ ieee80211_scan() {
 }
 
 # Configure 802.11 interface $1 and append ifconfig options to hostname.if $2.
+# Ask the user for the access point ESSID, the security protocol and a secret.
 ieee80211_config() {
 	local _if=$1 _hn=$2 _prompt _nwid _haswpa=0 _err
 
@@ -1209,29 +1208,30 @@ ieee80211_config() {
 
 	# 'any' implies that only open access points are considered.
 	if [[ $_nwid != any ]]; then
-		ifconfig $_if nwid "$_nwid"
-		quote nwid "$_nwid" >>$_hn
 
 		_prompt="Security protocol? (O)pen, (W)EP"
 		((_haswpa == 1)) && _prompt="$_prompt, WPA-(P)SK"
 		while :; do
 			ask_until "$_prompt" "O"
 			case "$_haswpa-$resp" in
-			?-[Oo])	break
+			?-[Oo]) # No further questions
+				ifconfig $_if nwid "$_nwid"
+				quote nwid "$_nwid" >>$_hn
+				break
 				;;
 			?-[Ww])	ask_until "WEP key? (will echo)"
 				# Make sure ifconfig accepts the key.
-				if _err=$(ifconfig $_if nwkey "$resp" 2>&1) &&
+				if _err=$(ifconfig $_if nwid "$_nwid" nwkey "$resp" 2>&1) &&
 					[[ -z $_err ]]; then
-					quote nwkey "$resp" >>$_hn
+					quote nwid "$_nwid" nwkey "$resp" >>$_hn
 					break
 				fi
 				echo "$_err"
 				;;
 			1-[Pp])	ask_until "WPA passphrase? (will echo)"
 				# Make sure ifconfig accepts the key.
-				if ifconfig $_if wpakey "$resp"; then
-					quote wpakey "$resp" >>$_hn
+				if ifconfig $_if nwid "$_nwid" wpakey "$resp"; then
+					quote nwid "$_nwid" wpakey "$resp" >>$_hn
 					break
 				fi
 				;;
@@ -1253,7 +1253,7 @@ configure_ifs() {
 	rm -f /tmp/i/mygate
 
 	while :; do
-		# Discover last configured vlan interface and increment it's
+		# Discover last configured vlan interface and increment its
 		# minor for the next offered vlan interface.
 		_vi=$(get_ifs vlan | sed '$!d;s/^vlan//')
 		[[ -n $_vi ]] && ((_vi++))
@@ -1281,7 +1281,7 @@ configure_ifs() {
 		# asking the user.
 		resp=$(hostname -s)
 		[[ -n $_first && $_first != $_if ]] &&
-			ask "Symbolic (host) name for $_if?" $resp
+			ask "Symbolic (host) name for $_if?" "$resp"
 		_name=$resp
 
 		v4_config $_if $_name $_hn
@@ -1297,7 +1297,9 @@ configure_ifs() {
 	done
 }
 
-# Set up IPv4 default route.
+# Set up IPv4 default route by asking the user for an IPv4 address and preserve
+# that information in /etc/mygate. If setting the default route fails, try to
+# revert to a possibly existing previous one.
 v4_defroute() {
 	local _dr _dr_if
 
@@ -1317,15 +1319,17 @@ v4_defroute() {
 		ask_until "Default IPv4 route? (IPv4 address or none)" "$_dr"
 		[[ $resp == none ]] && break
 		route delete -inet default >/dev/null 2>&1
-		route -n add -inet -host default "$resp" &&
-			{ echo "$resp" >>/tmp/i/mygate; break; }
-		# Put the old default route back. The new one did not work.
-		route -n add -inet -host default $_dr >/dev/null 2>&1
+		if route -n add -inet -host default "$resp"; then
+			echo "$resp" >>/tmp/i/mygate
+			break
+		else
+			route -n add -inet -host default $_dr >/dev/null 2>&1
+		fi
 	done
 }
 
-# Extract fully qualified domain name from current hostname. If none is
-# currently set, use 'my.domain'.
+# Extract the domain part from currently configured fully qualified domain name.
+# If none is set, use 'my.domain'.
 get_fqdn() {
 	local _dn
 
@@ -1341,29 +1345,32 @@ get_fqdn() {
 # Support functions for install_sets()
 # ------------------------------------------------------------------------------
 
-# Check that missing required sets were deliberately skipped.
-# Care is taken to make sure the return value is correct.
+# SANESETS defines the required list of set files for a sane install or upgrade.
+# During install_files(), each successfully installed set file is removed from
+# DEFAULTSETS. Check if there are SANESETS still in DEFAULTSETS and if they were
+# deliberately skipped. If $1 is not defined, ask the user about each skipped
+# set file. Care is taken to make sure the return value is correct.
 sane_install() {
 	local _q=$1 _s
 
 	for _s in $SANESETS; do
 		isin "$_s" $DEFAULTSETS || continue
 		[[ -n $_q ]] && return 1
-		# If sane_install has no argument, harass the user.
 		if ! ask_yn "Are you *SURE* your $MODE is complete without '$_s'?"; then
-			$AUTO && exit 1 || return 1
+			$AI && exit 1 || return 1
 		fi
 	done
 }
 
-# Show list of available sets and let the user select which sets to install.
-# Set $resp to list of selected sets.
+# Show list of available sets $1 and let the user select which sets to install.
+# Preselect sets listed in $2 and store the list of selected sets in $resp.
 #
-# Parameters:
-#
-# $1 = available sets
-# $2 = already selected sets
-#
+# If the list of available sets only contains kernels during an upgrade, assume
+# that the user booted into the installer using the currently installed bsd.rd
+# and specified a set location pointing to a new release. In this case, only
+# show and preselect bsd.rd. By setting UPGRADE_BSDRD the signify key for the
+# next release is used to verify the downloaded bsd.rd, the current bsd.rd is
+# preserved and no questions about missing sets are asked.
 select_sets() {
 	local _avail=$1 _selected=$2 _f _action _col=$COLUMNS
 	local _bsd_rd _no_sets=true
@@ -1459,10 +1466,10 @@ unpriv2() {
 	do_as _file "$@"
 }
 
-# Find filesystems to store prefetched sets.
-# Prefer filesystems which are not used during extraction with 512M free space.
-# Otherwise use any other filesystem with 2 GB free space to prevent overflow
-# during extraction.
+# Find and list filesystems to store the prefetched sets. Prefer filesystems
+# which are not used during extraction with 512M free space. Otherwise search
+# any other filesystem that has 2 GB free space to prevent overflow during
+# extraction.
 prefetcharea_fs_list() {
 	local _fs_list
 
@@ -1488,9 +1495,9 @@ prefetcharea_fs_list() {
 	[[ -n $_fs_list ]] && echo $_fs_list || return 1
 }
 
-# Install a user-selected subset of the files in $2 from the source
-# named in $1. Display an error message for failed installs so the
-# user will know to try again.
+# Install a user-selected subset of the files listed in $2 from the source $1.
+# Display an error message for each failed install and ask the user whether to
+# continue or not.
 install_files() {
 	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS _tmpfs \
 		_tmpfs_list _tmpsrc _cfile=/tmp/SHA256 _fsrc _unver _t _issue
@@ -1499,13 +1506,14 @@ install_files() {
 	# Fetch sets from local sources (disk, cdrom, nfs) as root.
 	[[ $_src == file://* ]] && _srclocal=true _unpriv=
 
-	# Initialize _sets to the list of sets found in _src, and initialize
-	# _get_sets to the intersection of _sets and DEFAULTSETS.
+	# Based on the file list in $_files, create two list for select_sets().
+	# _sets:     the list of files the user can select from
+	# _get_sets: the list of files that are shown as pre-selectd
 	#
-	# Sets will be installed in the order given in THESETS to ensure proper
+	# Sets will be installed in the order given in ALLSETS to ensure proper
 	# installation.  So, to minimize user confusion display the sets in the
 	# order in which they will be installed.
-	for _f in $THESETS; do
+	for _f in $ALLSETS; do
 		isin "$_f" $_files || continue
 		_sets=$(addel $_f $_sets)
 		isin "$_f" $DEFAULTSETS "site$VERSION-$(hostname -s).tgz" &&
@@ -1517,10 +1525,10 @@ install_files() {
 		echo "and found no $OBSD sets.  The set names looked for were:"
 
 		let COLUMNS=_col-8
-		for _n in $THESETS; do echo $_n; done | show_cols | sed 's/^/    /'
+		for _n in $ALLSETS; do echo $_n; done | show_cols | sed 's/^/    /'
 		COLUMNS=$_col
 
-		$AUTO && exit 1
+		$AI && exit 1
 		echo
 		return
 	fi
@@ -1535,12 +1543,12 @@ install_files() {
 	_get_sets=$resp
 
 	# Reorder $_get_sets.
-	_get_sets=$(for s in $THESETS; do isin "$s" $_get_sets && echo $s; done)
+	_get_sets=$(for s in $ALLSETS; do isin "$s" $_get_sets && echo $s; done)
 
 	# Note which sets didn't verify ok.
 	_unver=$_get_sets
 
-	# Try to prefetch and control checksum files.
+	# Try to prefetch and control checksum of the set files.
 	# Use dummy for loop as combined assignment and do { ... } while(0).
 	for _issue in ''; do
 		! isin SHA256.sig $_files &&
@@ -1557,7 +1565,7 @@ install_files() {
 				for _tmpsrc in $_tmpfs/sets.+([0-9]).+([0-9]); do
 					[[ -d $_tmpsrc ]] && rm -r $_tmpsrc
 				done
-	
+
 				# Create a download directory for the sets and
 				# check that the _sndio user can read files from
 				# it. Otherwise cleanup and skip the filesystem.
@@ -1584,6 +1592,8 @@ install_files() {
 		! $_unpriv ftp -D "$_t" -Vmo - "$_src/SHA256.sig" >"$_cfile.sig" &&
 			_issue="Cannot fetch SHA256.sig" && break
 
+		# The bsd.rd only download/verify/install assumes that the sets
+		# location of the next release. So use the right signature file.
 		$UPGRADE_BSDRD &&
 			PUB_KEY=/mnt/etc/signify/openbsd-$((VERSION + 1))-base.pub
 
@@ -1592,13 +1602,14 @@ install_files() {
 			signify -Vep $PUB_KEY -x "$_cfile.sig" -m "$_cfile" &&
 			_issue="Signature check of SHA256.sig failed" && break
 
+		# Fetch and verify the set files.
 		for _f in $_get_sets; do
 			rm -f /tmp/h /tmp/fail
 
-			# Fetch set and create checksum by pipe through sha256.
-			# Create a flag file in case ftp failed. Sets from net
-			# are written to prefetch area, the output of local sets
-			# is discarded.
+			# Fetch set file and create a checksum by piping through
+			# sha256. Create a flag file in case ftp failed. Sets
+			# from net are written to the prefetch area, the output
+			# of local sets is discarded.
 			( $_unpriv ftp -D "$_t" -Vmo - "$_src/$_f" || >/tmp/fail ) |
 			( $_srclocal && unpriv2 sha256 >/tmp/h ||
 				unpriv2 -f /tmp/h sha256 -ph /tmp/h >"$_tmpsrc/$_f" )
@@ -1608,7 +1619,7 @@ install_files() {
 				rm -f "$_tmpsrc/$_f"
 				if ! ask_yn "Fetching of $_f failed. Continue anyway?"; then
 					[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-					$AUTO && exit 1
+					$AI && exit 1
 					return
 				fi
 				_unver=$(rmel $_f $_unver)
@@ -1622,7 +1633,7 @@ install_files() {
 			else
 				if ! ask_yn "Checksum test for $_f failed. Continue anyway?"; then
 					[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-					$AUTO && exit 1
+					$AI && exit 1
 					return
 				fi
 			fi
@@ -1633,13 +1644,22 @@ install_files() {
 	if [[ -n $_issue ]] &&
 		! ask_yn "$_issue. Continue without verification?"; then
 		[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-		$AUTO && exit 1
+		$AI && exit 1
 		return
 	fi
 
+	if [[ $MODE == upgrade ]] && isin base$VERSION.tgz $_get_sets; then
+		rm -f /mnt/usr/share/relink/usr/lib/*
+	fi
+
+	# Install the set files.
 	for _f in $_get_sets; do
 		_fsrc="$_src/$_f"
+
+		# Take the set file from the prefetch area if possible.
 		[[ -f $_tmpsrc/$_f ]] && _fsrc="file://$_tmpsrc/$_f"
+
+		# Extract the set files and put the kernel files in place.
 		case $_fsrc in
 		*.tgz)	$_unpriv ftp -D Installing -Vmo - "$_fsrc" |
 				tar -zxphf - -C /mnt &&
@@ -1649,7 +1669,9 @@ install_files() {
 				tar -zxphf - -C /mnt
 			fi
 			;;
-		*)	$UPGRADE_BSDRD && [[ $_f == bsd.rd* ]] &&
+		*)	# Make a backup of the existing ramdisk kernel in the
+			# bsd.rd only download/verify/install case.
+			$UPGRADE_BSDRD && [[ $_f == bsd.rd* ]] &&
 				cp /mnt/$_f /mnt/$_f.old.$VERSION
 			$_unpriv ftp -D Installing -Vmo - "$_fsrc" >"/mnt/$_f"
 			;;
@@ -1657,16 +1679,28 @@ install_files() {
 		if (($?)); then
 			if ! ask_yn "Installation of $_f failed. Continue anyway?"; then
 				[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc"
-				$AUTO && exit 1
+				$AI && exit 1
 				return
 			fi
 		else
+			# Remove each successfully installed set file from
+			# DEFAULTSETS which is checked by sane_sets().
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
+			# Reset DEFAULTSETS to make sure that sane_sets() does
+			# not complain about missing set files in the bsd.rd
+			# only download/verify/install case,
 			$UPGRADE_BSDRD && DEFAULTSETS=
 		fi
 		[[ -d $_tmpsrc ]] && rm -f "$_tmpsrc/$_f"
 	done
 	[[ -d $_tmpsrc ]] && rm -rf "$_tmpsrc" || true
+
+	# Keep SHA256 from installed sets for sysupgrade(8).
+	if [[ -f $_cfile ]]; then
+		cp $_cfile /mnt/var/db/installed.SHA256
+	elif $_srclocal && [[ -f ${_src#file://}/SHA256 ]]; then
+		cp ${_src#file://}/SHA256 /mnt/var/db/installed.SHA256
+	fi
 }
 
 # Fetch install sets from an HTTP server possibly using a proxy.
@@ -1738,7 +1772,7 @@ install_http() {
 			esac
 			if ! $FTP_TLS && [[ $_tls == force ]]; then
 				echo "https not supported on this platform."
-				$AUTO && exit 1 || continue
+				$AI && exit 1 || continue
 			fi
 			HTTP_SERVER=${resp#*://}
 			break
@@ -1787,7 +1821,7 @@ install_http() {
 		ftp -w 15 -vMo $_sig "$_url_base/SHA256.sig" \
 			>$_ftp_stdout 2>/dev/null; then
 		case $_tls in
-		force)	$AUTO && exit 1 || return
+		force)	$AI && exit 1 || return
 			;;
 		try)	ask_yn "Unable to connect using https. Use http instead?" ||
 				return
@@ -1802,7 +1836,7 @@ install_http() {
 	# In case of URL redirection, use the final location to retrieve the
 	# rest of the files from. Redirection does not change INSTALL_MIRROR.
 	_rurl_base=$(sed -n 's/^Requesting //p' $_ftp_stdout | sed '$!d')
-	_rurl_base=${_rurl_base%/SHA256.sig}
+	_rurl_base=${_rurl_base%/SHA256.sig*}
 
 	# Verify SHA256.sig, write SHA256 and extract the list of files.
 	if unpriv -f $_sha \
@@ -1813,7 +1847,7 @@ install_http() {
 		echo "Unable to get a verified list of distribution sets."
 		# Deny this server, if it's a mirror without a valid SHA256.sig.
 		if [[ ${_rurl_base%/$HTTP_SETDIR} == "$_http_proto://$INSTALL_MIRROR" ]]; then
-			$AUTO && exit 1 || return
+			$AI && exit 1 || return
 		fi
 	fi
 
@@ -1857,7 +1891,7 @@ install_mounted_fs() {
 		# Accept a valid absolute path.
 		[[ -d /$resp ]] && { _dir=/$resp; break; }
 		echo "The directory '$resp' does not exist."
-		$AUTO && exit 1
+		$AI && exit 1
 	done
 
 	install_files "file://$_dir" "$(ls $_dir/)"
@@ -1942,7 +1976,7 @@ mount_mnt2() {
 
 
 # ------------------------------------------------------------------------------
-# Functions used in install.sh/upgrade.sh and it's associates
+# Functions used in install.sh/upgrade.sh and its associates
 # ------------------------------------------------------------------------------
 
 # Ask for terminal type if on console, otherwise ask for/set keyboard layout.
@@ -1951,7 +1985,7 @@ set_term() {
 	export TERM=${TERM:-${MDTERM:-vt220}}
 
 	if [[ -n $CONSOLE ]]; then
-		ask "Terminal type?" $TERM
+		ask "Terminal type?" "$TERM"
 		TERM=$resp
 	else
 		[[ -x /sbin/kbd ]] || return
@@ -1979,6 +2013,7 @@ donetconfig() {
 
 	configure_ifs
 	v4_defroute
+	v6_defroute
 
 	# As dhclient will populate /etc/resolv.conf, a symbolic link to
 	# /tmp/i/resolv.conf.shadow, mv any such file to /tmp/i/resolv.conf
@@ -2089,11 +2124,11 @@ user_setup() {
 			((${#resp} <= 31)) && break
 			;;
 		esac
-		echo "$resp is not a useable loginname."
+		echo "$resp is not a usable loginname."
 	done
 	ADMIN=$resp
 	while :; do
-		ask "Full name for user $ADMIN?" $ADMIN
+		ask "Full name for user $ADMIN?" "$ADMIN"
 		case $resp in
 		*[:\&,]*)
 			echo "':', '&' or ',' are not allowed."
@@ -2110,7 +2145,7 @@ user_setup() {
 	ADMIN_PASS=$_password
 
 	ADMIN_KEY=
-	$AUTO && ask "Public ssh key for user $ADMIN" none &&
+	$AI && ask "Public ssh key for user $ADMIN" none &&
 		[[ $resp != none ]] && ADMIN_KEY=$resp
 }
 
@@ -2138,7 +2173,7 @@ ask_root_sshd() {
 			SSHD_ENABLEROOT=prohibit-password
 			;;
 		*)	echo "'$resp' is not a valid choice."
-			$AUTO && exit 1
+			$AI && exit 1
 			continue
 			;;
 		esac
@@ -2222,32 +2257,35 @@ is_rootdisk() {
 
 # Get global root information. ie. ROOTDISK, ROOTDEV and SWAPDEV.
 get_rootinfo() {
-	local _default=$(get_dkdevs)
+	local _default=$(get_dkdevs_root) _dkdev
 	local _q="Which disk is the root disk? ('?' for details)"
 
 	while :; do
-		echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
+		echo "Available disks are: $(get_dkdevs_root | sed 's/^$/none/')."
 		_ask "$_q" $_default || continue
 		case $resp in
 		"?")	diskinfo $(get_dkdevs);;
 		'')	;;
-		*)	if isin "$resp" $(get_dkdevs); then
+		*)	# Translate $resp to disk dev name in case it is a DUID.
+			# get_dkdev_name bounces back the disk dev name if not.
+			_dkdev=$(get_dkdev_name "$resp")
+			if isin "$_dkdev" $(get_dkdevs); then
 				[[ $MODE == install ]] && break
-				is_rootdisk "$resp" && break
+				is_rootdisk "$_dkdev" && break
 				echo "$resp is not a valid root disk."
-				_default="$(rmel "$resp" $_default) $resp"
+				_default="$(rmel "$_dkdev" $_default) $_dkdev"
 			else
 				echo "no such disk"
 			fi
 			;;
 		esac
-		$AUTO && exit 1
+		$AI && exit 1
 	done
 	log_answers "$_q" "$resp"
 
-	make_dev $resp || exit
+	make_dev $_dkdev || exit
 
-	ROOTDISK=$resp
+	ROOTDISK=$_dkdev
 	ROOTDEV=${ROOTDISK}a
 	SWAPDEV=${ROOTDISK}b
 }
@@ -2299,7 +2337,7 @@ parse_hn_line() {
 		;;
 	dhcp)	! $_has_dhclient && return
 		_c[0]=
-		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} down;dhclient $_if"
+		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} up;dhclient $_if"
 		V4_DHCPCONF=true
 		;;
 	'!'*|bridge)
@@ -2354,6 +2392,9 @@ enable_network() {
 	# Create a minimal hosts file.
 	echo "127.0.0.1\tlocalhost" >/tmp/i/hosts
 	echo "::1\t\tlocalhost" >>/tmp/i/hosts
+
+	_f=/mnt/etc/soii.key
+	[[ -f $_f ]] && sysctl "net.inet6.ip6.soiikey=$(<$_f)"
 
 	# Set the address for the loopback interface. Bringing the
 	# interface up, automatically invokes the IPv6 address ::1.
@@ -2502,10 +2543,10 @@ check_fs() {
 		((_passno > 0)) || continue
 		echo -n "fsck -${_f}p $_dev..."
 		if ! fsck -${_f}p $_dev >/dev/null 2>&1; then
-			echo "FAILED. You must fsck $_dev manually."
+			echo " FAILED. You must fsck $_dev manually."
 			_fail=y
 		else
-			echo "OK."
+			echo " OK."
 		fi
 	done </etc/fstab
 
@@ -2602,7 +2643,7 @@ install_sets() {
 			;;
 		[nN]*)	isin nfs $_locs && install_nfs && INSTALL_METHOD=nfs
 			;;
-		*)	$AUTO && err_exit "'$resp' is not a valid choice."
+		*)	$AI && err_exit "'$resp' is not a valid choice."
 			;;
 		esac
 
@@ -2610,7 +2651,7 @@ install_sets() {
 		[[ -n $INSTALL_METHOD ]] && _d=$INSTALL_METHOD
 
 		# Set default to 'done' to leave the while-loop.
-		sane_install quiet || $AUTO && _d=done
+		sane_install quiet || $AI && _d=done
 	done
 }
 
@@ -2637,6 +2678,7 @@ apply() {
 	if [[ $DEFCONS == y ]]; then
 		cp /mnt/etc/ttys /tmp/i/ttys
 		sed	-e "/^$CTTY/s/std.9600/std.${CSPEED}/" \
+			-e "/^$CTTY/s/std.115200/std.${CSPEED}/" \
 			-e "/^$CTTY/s/unknown/vt220	/" \
 			-e "/$CTTY/s/off.*/on secure/" /tmp/i/ttys >/mnt/etc/ttys
 		[[ -n $CPROM ]] &&
@@ -2696,8 +2738,9 @@ finish_up() {
 	fi
 
 	# Create /etc/installurl if it does not yet exist.
-	if [[ -n $INSTALL_URL && ! -f /mnt/etc/installurl ]]; then
-		echo "$INSTALL_URL" >/mnt/etc/installurl
+	if [[ ! -f /mnt/etc/installurl ]]; then
+		echo "${INSTALL_URL:-https://cdn.openbsd.org/pub/OpenBSD}" \
+			>/mnt/etc/installurl
 	fi
 
 	echo -n "Making all device nodes..."
@@ -2708,7 +2751,7 @@ finish_up() {
 			sh MAKEDEV $_dev
 		done
 	)
-	echo "done."
+	echo " done."
 
 	# We may run some programs in chroot, and some of them might be
 	# dynamic.  That is highly discouraged, but let us play it safe.
@@ -2753,7 +2796,7 @@ finish_up() {
 		rm -f $_kernel_dir.tgz
 		chroot /mnt /bin/ksh -e -c "cd ${_kernel_dir#/mnt}/$_kernel; \
 			make newbsd; make newinstall"
-		) >/dev/null 2>&1 && echo "done." || echo "failed."
+		) >/dev/null 2>&1 && echo " done." || echo " failed."
 	fi
 
 	# Ensure that sysmerge in batch mode is run on reboot.
@@ -2770,17 +2813,16 @@ finish_up() {
 	# Run syspatch -c on reboot if the arch is supported and if it is a
 	# release system (not -stable or -current). List uninstalled syspatches
 	# on the console and in the rc.firsttime output mail.
-	isin $ARCH $_syspatch_archs && cat <<__EOT >>/mnt/etc/rc.firsttime
+	isin "$ARCH" $_syspatch_archs && cat <<__EOT >>/mnt/etc/rc.firsttime
 set -A _KERNV -- \$(sysctl -n kern.version |
 	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 if ((\${#_KERNV[*]} == 1)) && [[ -s /etc/installurl ]] &&
 	_CKPATCH=\$(mktemp /tmp/_ckpatch.XXXXXXXXXX); then
-	echo -n "Checking for available binary patches... "
-	syspatch -c > \$_CKPATCH && echo -n "done."
-	echo
+	echo "Checking for available binary patches..."
+	syspatch -c > \$_CKPATCH
 	if [[ -s \$_CKPATCH ]]; then
 		echo "Run syspatch(8) to install:"
-		cat \$_CKPATCH
+		column -xc 80 \$_CKPATCH
 	fi
 	rm -f \$_CKPATCH
 fi
@@ -2812,20 +2854,38 @@ using the 'mail' command.
 __EOT
 
 	md_congrats
-	$AUTO && >/tmp/ai/ai.done
+	$AI && >/tmp/ai/ai.done
 }
+
+clean_old() {
+	if [[ -f /mnt/usr/bin/gcc ]]; then
+		rm -rf -- `ls -d /mnt/usr/lib/gcc-lib/* | grep -v ${VNAME}$`
+	fi
+	if [[ -f /mnt/usr/bin/clang ]]; then
+		CVER=$(cd /mnt/usr/lib/clang && ls -r | sed -e 1q)
+		rm -rf -- `ls -d /mnt/usr/lib/clang/* | grep -v "${CVER}$"`
+	fi
+	rm -rf /var/syspatch/*
+}	
 
 do_autoinstall() {
 	rm -f /tmp/ai/ai.done
 
 	echo "Performing non-interactive $AI_MODE..."
 	/$AI_MODE -af /tmp/ai/ai.$AI_MODE.conf 2>&1 </dev/null |
-		sed "s/^.*$(echo '\r')//;w/tmp/ai/ai.log"
+		tee /dev/stderr | sed "s/^.*$(echo '\r')//" >/tmp/ai/ai.log
 
-	[[ -f /tmp/ai/ai.done ]] || err_exit "failed; check /tmp/ai/ai.log"
+	$UU || [[ -f /tmp/ai/ai.done ]] || 
+		err_exit "failed; check /tmp/ai/ai.log"
 
 	# Email autoinstall protocol to root on next boot.
 	prep_root_mail /tmp/ai/ai.log "$(hostname) $AI_MODE log"
+
+	if $UU; then
+		cat <<__EOT >>/mnt/etc/rc.firsttime
+[[ ! -e /home/_sysupgrade/keep ]] && rm -f /home/_sysupgrade/*
+__EOT
+	fi
 
 	exec reboot
 }
@@ -2840,10 +2900,10 @@ do_install() {
 			"$(hostname -s)"
 		[[ $resp != *+([[:cntrl:]]|[[:space:]])* ]] && break
 		echo "Invalid hostname."
-		$AUTO && exit 1
+		$AI && exit 1
 	done
 	[[ ${resp%%.*} != $(hostname -s) ]] && hostname "$resp"
-	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
+	ALLSETS="$ALLSETS site$VERSION-$(hostname -s).tgz"
 	export PS1='\h# '
 
 	echo
@@ -2865,7 +2925,7 @@ do_install() {
 
 	# Ask for the root user public ssh key during autoinstall.
 	_rootkey=
-	if $AUTO; then
+	if $AI; then
 		ask "Public ssh key for root account?" none
 		[[ $resp != none ]] && _rootkey=$resp
 	fi
@@ -3054,7 +3114,7 @@ do_install() {
 		[[ -f $_f && -s $_f ]] && mv $_f /mnt/etc/.
 	done)
 
-	echo "done."
+	echo " done."
 
 	# Apply configuration settings based on information from questions().
 	apply
@@ -3108,11 +3168,11 @@ do_upgrade() {
 
 	echo -n "Checking root filesystem (fsck -fp /dev/$ROOTDEV)..."
 	fsck -fp /dev/$ROOTDEV >/dev/null 2>&1 || { echo "FAILED."; exit; }
-	echo "OK."
+	echo " OK."
 
 	echo -n "Mounting root filesystem (mount -o ro /dev/$ROOTDEV /mnt)..."
 	mount -o ro /dev/$ROOTDEV /mnt || { echo "FAILED."; exit; }
-	echo "OK."
+	echo " OK."
 
 	# The fstab and myname files are required.
 	for _f in /mnt/etc/{fstab,myname}; do
@@ -3122,11 +3182,8 @@ do_upgrade() {
 
 	# Set system hostname and register hostname specific site set.
 	hostname $(stripcom /tmp/i/myname)
-	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
+	ALLSETS="$ALLSETS site$VERSION-$(hostname -s).tgz"
 	export PS1='\h# '
-
-	_f=/mnt/etc/soii.key
-	[[ ! -f $_f ]] || sysctl net.inet6.ip6.soiikey=$(<$_f)
 
 	# Configure the network.
 	enable_network
@@ -3144,6 +3201,8 @@ do_upgrade() {
 	umount /mnt || { echo "Can't umount $ROOTDEV!"; exit; }
 	mount_fs
 
+	rm -f /mnt/bsd.upgrade
+
 	# Feed the random pool some entropy before we read from it.
 	feed_random
 
@@ -3154,8 +3213,29 @@ do_upgrade() {
 	# selected.
 	install_sets
 
+	# cleanup old bits
+	clean_old
+	
 	# Perform final steps common to both an install and an upgrade.
 	finish_up
+}
+
+check_unattendedupgrade() {
+	local _d=$(get_dkdevs_root) _rc=1
+
+	_d=${_d%% *}
+	(
+		if [[ -n $_d ]]; then
+			make_dev $_d
+			if mount -t ffs -r /dev/${_d}a /mnt; then
+				ls /mnt/bsd.upgrade 
+				_rc=$?
+				umount -f /mnt
+			fi
+			rm -f /dev/{r,}$_d?
+		fi
+		return $_rc
+	) > /dev/null 2>&1
 }
 
 # ------------------------------------------------------------------------------
@@ -3166,15 +3246,17 @@ do_upgrade() {
 # ------------------------------------------------------------------------------
 
 # Parse parameters.
-AUTO=false
+AI=false
+UU=false
 MODE=
 PROGNAME=${0##*/}
 AI_RESPFILE=
-while getopts "af:m:" opt; do
+while getopts "af:m:x" opt; do
 	case $opt in
-	a)	AUTO=true;;
+	a)	AI=true;;
 	f)	AI_RESPFILE=$OPTARG;;
 	m)	MODE=$OPTARG;;
+	x)	UU=true;;
 	*)	usage;;
 	esac
 done
@@ -3182,10 +3264,10 @@ shift $((OPTIND-1))
 (($# == 0)) || usage
 
 # The installer can be started by using the symbolic links 'install', 'upgrade'
-# and 'autoinstall' pointing to this script. Set MODE and AUTO based on that.
+# and 'autoinstall' pointing to this script. Set MODE and AI based on that.
 if [[ -z $MODE ]]; then
 	case $PROGNAME in
-	autoinstall)		AUTO=true;;
+	autoinstall)		AI=true;;
 	install|upgrade)	MODE=$PROGNAME;;
 	*)			exit 1;;
 	esac
@@ -3200,13 +3282,6 @@ done
 cd /
 umount -af >/dev/null 2>&1
 
-# Make sure only successful dhcp requests retain their state.
-for _if in $(get_ifs dhcp); do
-	set -- $(v4_info $_if)
-	[[ $1 == UP && -n $2 ]] && continue
-	ifconfig $_if delete down -group dhcp 2>/dev/null
-done
-
 # Include machine-dependent functions and definitions.
 #
 # The following functions must be provided:
@@ -3218,7 +3293,7 @@ done
 # The following variables can be provided if required:
 #	MDEFI       - set to 'y' on archs that support GPT partitioning
 #	MDROOTFSOPT - newfs options for the root partition
-#	MDSETS	    - list of files to add to DEFAULT and THESETS
+#	MDSETS	    - list of files to add to DEFAULT and ALLSETS
 #	MDSANESETS  - list of files to add to SANESETS
 #	MDTERM      - 'vt220' assumed if not provided
 #	MDDKDEVS    - '/^[sw]d[0-9][0-9]* /s/ .*//p' assumed if not provided
@@ -3253,8 +3328,8 @@ V4_DHCPCONF=false
 V6_AUTOCONF=false
 WLANLIST=/tmp/i/wlanlist
 
-# Extract and save one boot's worth of dmesg.
-dmesg | sed -n '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
+# Save one boot's worth of dmesg.
+dmesgtail >/var/run/dmesg.boot
 
 # Are we in a real release, or a snapshot?  If this is a snapshot
 # install media, default us to a snapshot directory.
@@ -3280,16 +3355,16 @@ CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
 # as a console. If a suitable device is found, set CDEV, CTTY, CSPEED, CPROM.
 md_consoleinfo
 
-# Selected sets will be installed in the order they are listed in $THESETS.
+# Selected sets will be installed in the order they are listed in $ALLSETS.
 # Ensure that siteXX.tgz is the *last* set listed so its contents overwrite
 # the contents of the other sets, not the other way around.
 SETS=$(echo {base,comp,man,game,xbase,xshare,xfont,xserv}$VERSION.tgz)
 DEFAULTSETS="${MDSETS:-bsd bsd.rd} $SETS"
-THESETS="${MDSETS:-bsd bsd.rd} $SETS site$VERSION.tgz"
+ALLSETS="${MDSETS:-bsd bsd.rd} $SETS site$VERSION.tgz"
 SANESETS="${MDSANESETS:-bsd} base${VERSION}.tgz"
 if ((NCPU > 1)); then
 	DEFAULTSETS="${MDSETS:-bsd bsd.mp bsd.rd} $SETS"
-	THESETS="${MDSETS:-bsd bsd.mp bsd.rd} $SETS site$VERSION.tgz"
+	ALLSETS="${MDSETS:-bsd bsd.mp bsd.rd} $SETS site$VERSION.tgz"
 	SANESETS="${MDSANESETS:-bsd bsd.mp} base${VERSION}.tgz"
 fi
 
@@ -3299,7 +3374,7 @@ export COLUMNS=$(stty -a </dev/console |
 ((COLUMNS == 0)) && COLUMNS=80
 
 # Interactive or automatic installation?
-if ! $AUTO; then
+if ! $AI; then
 	cat <<__EOT
 At any prompt except password prompts you can escape to a shell by
 typing '!'. Default answers are shown in []'s and are selected by
@@ -3307,6 +3382,21 @@ pressing RETURN.  You can exit this program at any time by pressing
 Control-C, but this can leave your system in an inconsistent state.
 
 __EOT
+elif $UU; then
+	MODE=upgrade
+	check_unattendedupgrade || exit 1
+
+	# trigger watchdog
+	(sleep 1800 && reboot) &
+
+	cat <<__EOT > /auto_upgrade.conf
+Location of sets = disk
+Pathname to the sets = /home/_sysupgrade/
+Set name(s) = done
+Directory does not contain SHA256.sig. Continue without verification = yes
+__EOT
+	get_responsefile
+	do_autoinstall
 elif [[ -z $AI_RESPFILE ]]; then
 	get_responsefile ||
 		err_exit "No response file found; non-interactive mode aborted."
@@ -3330,7 +3420,7 @@ esac
 # In case of autoinstall, this is a second process of install.sub.
 # Exiting here returns to the original process, which handles the
 # automatic reboot in do_autoinstall().
-$AUTO && exit
+$AI && exit
 
 _d=reboot
 [[ $MODE == install && $MDHALT == y ]] && _d=halt

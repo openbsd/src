@@ -1,4 +1,4 @@
-/*	$OpenBSD: uio.h,v 1.18 2015/01/18 20:35:44 guenther Exp $	*/
+/*	$OpenBSD: uio.h,v 1.19 2018/08/20 16:00:22 mpi Exp $	*/
 /*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
 
 /*
@@ -97,10 +97,11 @@ __END_DECLS
 int	ureadc(int c, struct uio *);
 
 struct file;
-int	dofilereadv(struct proc *, int, struct file *,
-	    const struct iovec *, int, int, off_t *, register_t *);
-int	dofilewritev(struct proc *, int, struct file *,
-	    const struct iovec *, int, int, off_t *, register_t *);
+int	iovec_copyin(const struct iovec *, struct iovec **, struct iovec *,
+	    unsigned int, size_t *);
+void	iovec_free(struct iovec *, unsigned int );
+int	dofilereadv(struct proc *, int, struct uio *, int, register_t *);
+int	dofilewritev(struct proc *, int, struct uio *, int, register_t *);
 
 #endif /* !_KERNEL */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.20 2017/04/30 16:45:45 mpi Exp $ */
+/* $OpenBSD: ampintc.c,v 1.23 2018/12/07 21:33:28 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -27,6 +27,8 @@
 #include <sys/device.h>
 #include <sys/evcount.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
@@ -35,6 +37,8 @@
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+
+#include <arm/simplebus/simplebusvar.h>
 
 /* registers */
 #define	ICD_DCR			0x000
@@ -61,6 +65,7 @@
 #define IRQ_TO_REG4(i)		(((i) >> 2) & 0xff)
 #define IRQ_TO_REG4BIT(i)	((i) & 0x3)
 #define IRQ_TO_REG16(i)		(((i) >> 4) & 0x3f)
+#define IRQ_TO_REG16BIT(i)	((i) & 0xf)
 #define IRQ_TO_REGBIT_S(i)	8
 #define IRQ_TO_REG4BIT_M(i)	8
 
@@ -73,6 +78,10 @@
 #define ICD_IPRn(i)		(0x400 + (i))
 #define ICD_IPTRn(i)		(0x800 + (i))
 #define ICD_ICRn(i)		(0xC00 + (IRQ_TO_REG16(i) * 4))
+#define 	ICD_ICR_TRIG_LEVEL(i)	(0x0 << (IRQ_TO_REG16BIT(i) * 2))
+#define 	ICD_ICR_TRIG_EDGE(i)	(0x2 << (IRQ_TO_REG16BIT(i) * 2))
+#define 	ICD_ICR_TRIG_MASK(i)	(0x2 << (IRQ_TO_REG16BIT(i) * 2))
+
 /*
  * what about (ppi|spi)_status
  */
@@ -127,7 +136,7 @@
 #define IRQ_DISABLE	0
 
 struct ampintc_softc {
-	struct device		 sc_dev;
+	struct simplebus_softc	 sc_sbus;
 	struct intrq 		*sc_ampintc_handler;
 	int			 sc_nintr;
 	bus_space_tag_t		 sc_iot;
@@ -144,6 +153,7 @@ struct intrhand {
 	int (*ih_func)(void *);		/* handler */
 	void *ih_arg;			/* arg for handler */
 	int ih_ipl;			/* IPL_* */
+	int ih_flags;
 	int ih_irq;			/* IRQ number */
 	struct evcount	ih_count;
 	char *ih_name;
@@ -151,8 +161,8 @@ struct intrhand {
 
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
-	int iq_irq;			/* IRQ to mask while handling */
-	int iq_levels;			/* IPL_*'s this IRQ has */
+	int iq_irq_max;			/* IRQ to mask while handling */
+	int iq_irq_min;			/* lowest IRQ when shared */
 	int iq_ist;			/* share type */
 };
 
@@ -164,7 +174,7 @@ void		 ampintc_splx(int);
 int		 ampintc_splraise(int);
 void		 ampintc_setipl(int);
 void		 ampintc_calc_mask(void);
-void		*ampintc_intr_establish(int, int, int (*)(void *), void *,
+void		*ampintc_intr_establish(int, int, int, int (*)(void *), void *,
 		    char *);
 void		*ampintc_intr_establish_ext(int, int, int (*)(void *), void *,
 		    char *);
@@ -178,6 +188,7 @@ void		 ampintc_eoi(uint32_t);
 void		 ampintc_set_priority(int, int);
 void		 ampintc_intr_enable(int);
 void		 ampintc_intr_disable(int);
+void		 ampintc_intr_config(int, int);
 void		 ampintc_route(int, int , struct cpu_info *);
 
 struct cfattach	ampintc_ca = {
@@ -240,7 +251,7 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	nintr += 32; /* ICD_ICTR + 1, irq 0-31 is SGI, 32+ is PPI */
 	sc->sc_nintr = nintr;
 	ncpu = ((ictr >> ICD_ICTR_CPU_SH) & ICD_ICTR_CPU_M) + 1;
-	printf(" nirq %d, ncpu %d\n", nintr, ncpu);
+	printf(" nirq %d, ncpu %d", nintr, ncpu);
 
 	KASSERT(curcpu()->ci_cpuid <= ICD_ICTR_CPU_M);
 	sc->sc_cpu_mask[curcpu()->ci_cpuid] =
@@ -293,6 +304,9 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_establish = ampintc_intr_establish_fdt;
 	sc->sc_ic.ic_disestablish = ampintc_intr_disestablish;
 	arm_intr_register_fdt(&sc->sc_ic);
+
+	/* attach GICv2M frame controller */
+	simplebus_attach(parent, &sc->sc_sbus.sc_dev, faa);
 }
 
 void
@@ -351,6 +365,22 @@ ampintc_intr_disable(int irq)
 	    1 << IRQ_TO_REG32BIT(irq));
 }
 
+void
+ampintc_intr_config(int irqno, int type)
+{
+	struct ampintc_softc	*sc = ampintc;
+	uint32_t		 ctrl;
+
+	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICRn(irqno));
+
+	ctrl &= ~ICD_ICR_TRIG_MASK(irqno);
+	if (type == IST_EDGE_RISING)
+		ctrl |= ICD_ICR_TRIG_EDGE(irqno);
+	else
+		ctrl |= ICD_ICR_TRIG_LEVEL(irqno);
+
+	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICRn(irqno), ctrl);
+}
 
 void
 ampintc_calc_mask(void)
@@ -372,10 +402,12 @@ ampintc_calc_mask(void)
 				min = ih->ih_ipl;
 		}
 
-		if (sc->sc_ampintc_handler[irq].iq_irq == max) {
+		if (sc->sc_ampintc_handler[irq].iq_irq_max == max &&
+		    sc->sc_ampintc_handler[irq].iq_irq_min == min)
 			continue;
-		}
-		sc->sc_ampintc_handler[irq].iq_irq = max;
+
+		sc->sc_ampintc_handler[irq].iq_irq_max = max;
+		sc->sc_ampintc_handler[irq].iq_irq_min = min;
 
 		if (max == IPL_NONE)
 			min = IPL_NONE;
@@ -508,9 +540,21 @@ ampintc_irq_handler(void *frame)
 	if (irq >= sc->sc_nintr)
 		return;
 
-	pri = sc->sc_ampintc_handler[irq].iq_irq;
+	pri = sc->sc_ampintc_handler[irq].iq_irq_max;
 	s = ampintc_splraise(pri);
 	TAILQ_FOREACH(ih, &sc->sc_ampintc_handler[irq].iq_list, ih_list) {
+#ifdef MULTIPROCESSOR
+		int need_lock;
+
+		if (ih->ih_flags & IPL_MPSAFE)
+			need_lock = 0;
+		else
+			need_lock = s < IPL_SCHED;
+
+		if (need_lock)
+			KERNEL_LOCK();
+#endif
+
 		if (ih->ih_arg != 0)
 			arg = ih->ih_arg;
 		else
@@ -519,6 +563,10 @@ ampintc_irq_handler(void *frame)
 		if (ih->ih_func(arg)) 
 			ih->ih_count.ec_count++;
 
+#ifdef MULTIPROCESSOR
+		if (need_lock)
+			KERNEL_UNLOCK();
+#endif
 	}
 	ampintc_eoi(iack_val);
 
@@ -529,7 +577,8 @@ void *
 ampintc_intr_establish_ext(int irqno, int level, int (*func)(void *),
     void *arg, char *name)
 {
-	return ampintc_intr_establish(irqno+32, level, func, arg, name);
+	return ampintc_intr_establish(irqno+32, IST_LEVEL_HIGH, level,
+	    func, arg, name);
 }
 
 void *
@@ -538,6 +587,7 @@ ampintc_intr_establish_fdt(void *cookie, int *cell, int level,
 {
 	struct ampintc_softc	*sc = (struct ampintc_softc *)cookie;
 	int			 irq;
+	int			 type;
 
 	/* 2nd cell contains the interrupt number */
 	irq = cell[1];
@@ -548,13 +598,19 @@ ampintc_intr_establish_fdt(void *cookie, int *cell, int level,
 	else if (cell[0] == 1)
 		irq += 16;
 	else
-		panic("%s: bogus interrupt type", sc->sc_dev.dv_xname);
+		panic("%s: bogus interrupt type", sc->sc_sbus.sc_dev.dv_xname);
 
-	return ampintc_intr_establish(irq, level, func, arg, name);
+	/* SPIs are only active-high level or low-to-high edge */
+	if (cell[2] & 0x3)
+		type = IST_EDGE_RISING;
+	else
+		type = IST_LEVEL_HIGH;
+
+	return ampintc_intr_establish(irq, type, level, func, arg, name);
 }
 
 void *
-ampintc_intr_establish(int irqno, int level, int (*func)(void *),
+ampintc_intr_establish(int irqno, int type, int level, int (*func)(void *),
     void *arg, char *name)
 {
 	struct ampintc_softc	*sc = ampintc;
@@ -564,6 +620,14 @@ ampintc_intr_establish(int irqno, int level, int (*func)(void *),
 	if (irqno < 0 || irqno >= sc->sc_nintr)
 		panic("ampintc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);
+
+	if (irqno < 16) {
+		/* SGI are only EDGE */
+		type = IST_EDGE_RISING;
+	} else if (irqno < 32) {
+		/* PPI are only LEVEL */
+		type = IST_LEVEL_HIGH;
+	}
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
@@ -583,8 +647,10 @@ ampintc_intr_establish(int irqno, int level, int (*func)(void *),
 	printf("ampintc_intr_establish irq %d level %d [%s]\n", irqno, level,
 	    name);
 #endif
+
+	ampintc_intr_config(irqno, type);
 	ampintc_calc_mask();
-	
+
 	restore_interrupts(psw);
 	return (ih);
 }
@@ -621,4 +687,117 @@ ampintc_intr_string(void *cookie)
 
 	snprintf(irqstr, sizeof irqstr, "ampintc irq %d", ih->ih_irq);
 	return irqstr;
+}
+
+/*
+ * GICv2m frame controller for MSI interrupts.
+ */
+#define GICV2M_TYPER		0x008
+#define  GICV2M_TYPER_SPI_BASE(x)	(((x) >> 16) & 0x3ff)
+#define  GICV2M_TYPER_SPI_COUNT(x)	(((x) >> 0) & 0x3ff)
+#define GICV2M_SETSPI_NS	0x040
+
+int	 ampintc_msi_match(struct device *, void *, void *);
+void	 ampintc_msi_attach(struct device *, struct device *, void *);
+void	*ampintc_intr_establish_msi(void *, uint64_t *, uint64_t *,
+	    int , int (*)(void *), void *, char *);
+void	 ampintc_intr_disestablish_msi(void *);
+
+struct ampintc_msi_softc {
+	struct device			 sc_dev;
+	bus_space_tag_t			 sc_iot;
+	bus_space_handle_t		 sc_ioh;
+	paddr_t				 sc_addr;
+	int				 sc_bspi;
+	int				 sc_nspi;
+	void				**sc_spi;
+	struct interrupt_controller	 sc_ic;
+};
+
+struct cfattach	ampintcmsi_ca = {
+	sizeof (struct ampintc_msi_softc), ampintc_msi_match, ampintc_msi_attach
+};
+
+struct cfdriver ampintcmsi_cd = {
+	NULL, "ampintcmsi", DV_DULL
+};
+
+int
+ampintc_msi_match(struct device *parent, void *cfdata, void *aux)
+{
+	struct fdt_attach_args *faa = aux;
+
+	return OF_is_compatible(faa->fa_node, "arm,gic-v2m-frame");
+}
+
+void
+ampintc_msi_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct ampintc_msi_softc *sc = (struct ampintc_msi_softc *)self;
+	struct fdt_attach_args *faa = aux;
+	uint32_t typer;
+
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
+		panic("%s: bus_space_map failed!", __func__);
+
+	/* XXX: Hack to retrieve the physical address (from a CPU PoV). */
+	if (!pmap_extract(pmap_kernel(), sc->sc_ioh, &sc->sc_addr)) {
+		printf(": cannot retrieve msi addr\n");
+		return;
+	}
+
+	typer = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GICV2M_TYPER);
+	sc->sc_bspi = GICV2M_TYPER_SPI_BASE(typer);
+	sc->sc_nspi = GICV2M_TYPER_SPI_COUNT(typer);
+
+	sc->sc_bspi = OF_getpropint(faa->fa_node,
+	    "arm,msi-base-spi", sc->sc_bspi);
+	sc->sc_nspi = OF_getpropint(faa->fa_node,
+	    "arm,msi-num-spis", sc->sc_nspi);
+
+	printf(": nspi %d\n", sc->sc_nspi);
+
+	sc->sc_spi = mallocarray(sc->sc_nspi, sizeof(void *), M_DEVBUF,
+	    M_WAITOK|M_ZERO);
+
+	sc->sc_ic.ic_node = faa->fa_node;
+	sc->sc_ic.ic_cookie = sc;
+	sc->sc_ic.ic_establish_msi = ampintc_intr_establish_msi;
+	sc->sc_ic.ic_disestablish = ampintc_intr_disestablish_msi;
+	arm_intr_register_fdt(&sc->sc_ic);
+}
+
+void *
+ampintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
+    int level, int (*func)(void *), void *arg, char *name)
+{
+	struct ampintc_msi_softc *sc = (struct ampintc_msi_softc *)self;
+	void *cookie;
+	int i;
+
+	for (i = 0; i < sc->sc_nspi; i++) {
+		if (sc->sc_spi[i] != NULL)
+			continue;
+
+		cookie = ampintc_intr_establish(sc->sc_bspi + i,
+		    IST_EDGE_RISING, level, func, arg, name);
+		if (cookie == NULL)
+			return NULL;
+
+		*addr = sc->sc_addr + GICV2M_SETSPI_NS;
+		*data = sc->sc_bspi + i;
+		sc->sc_spi[i] = cookie;
+		return &sc->sc_spi[i];
+	}
+
+	return NULL;
+}
+
+void
+ampintc_intr_disestablish_msi(void *cookie)
+{
+	ampintc_intr_disestablish(*(void **)cookie);
+	*(void **)cookie = NULL;
 }

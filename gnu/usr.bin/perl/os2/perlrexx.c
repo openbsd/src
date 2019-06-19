@@ -61,7 +61,6 @@ init_perlos2(void)
 static int
 init_perl(int doparse)
 {
-    int exitstatus;
     char *argv[3] = {"perl_in_REXX", "-e", ""};
 
     if (!perlos2_is_inited) {
@@ -79,8 +78,7 @@ init_perl(int doparse)
     }
     if (!doparse)
         return 1;
-    exitstatus = perl_parse(my_perl, xs_init, 3, argv, (char **)NULL);
-    return !exitstatus;
+    return !perl_parse(my_perl, xs_init, 3, argv, (char **)NULL);
 }
 
 static char last_error[4096];
@@ -125,12 +123,10 @@ ULONG PERL (PCSZ name, LONG rargc, const RXSTRING *rargv,
     memcpy(buf, rargv[0].strptr, rargv[0].strlength);
     buf[rargv[0].strlength] = 0;
     
-    exitstatus = perl_parse(my_perl, xs_init, 3, argv, (char **)NULL);
-    if (!exitstatus) {
-	exitstatus = perl_run(my_perl);
-    }
+    if (!perl_parse(my_perl, xs_init, 3, argv, (char **)NULL))
+	perl_run(my_perl);
 
-    perl_destruct(my_perl);
+    exitstatus = perl_destruct(my_perl);
     perl_free(my_perl);
     my_perl = 0;
 

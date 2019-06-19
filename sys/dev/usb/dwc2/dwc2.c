@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.46 2017/06/29 17:36:16 deraadt Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.48 2019/03/14 04:28:10 visa Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -302,7 +302,11 @@ dwc2_allocx(struct usbd_bus *bus)
 		memset(dxfer, 0, sizeof(*dxfer));
 
 		dxfer->urb = dwc2_hcd_urb_alloc(sc->sc_hsotg,
-		    DWC2_MAXISOCPACKETS, GFP_KERNEL);
+		    DWC2_MAXISOCPACKETS, GFP_ATOMIC);
+		if (dxfer->urb == NULL) {
+			pool_put(&sc->sc_xferpool, dxfer);
+			return NULL;
+		}
 
 #ifdef DWC2_DEBUG
 		dxfer->xfer.busy_free = XFER_ONQU;
@@ -642,7 +646,7 @@ STATIC const struct dwc2_config_desc dwc2_confd = {
 		.bNumInterface = 1,
 		.bConfigurationValue = 1,
 		.iConfiguration = 0,
-		.bmAttributes = UC_SELF_POWERED,
+		.bmAttributes = UC_BUS_POWERED | UC_SELF_POWERED,
 		.bMaxPower = 0,
 	},
 	.ifcd = {

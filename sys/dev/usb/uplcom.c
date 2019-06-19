@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.70 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.73 2018/11/18 16:23:14 mpi Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -140,6 +140,7 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
 	{ USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
+	{ USB_VENDOR_HP, USB_PRODUCT_HP_LD220 },
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ5 },
 	{ USB_VENDOR_LEADTEK, USB_PRODUCT_LEADTEK_9531 },
@@ -158,7 +159,6 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_RADIOSHACK, USB_PRODUCT_RADIOSHACK_PL2303 },
 	{ USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60 },
 	{ USB_VENDOR_SAGEM, USB_PRODUCT_SAGEM_SERIAL },
-	{ USB_VENDOR_SAMSUNG2, USB_PRODUCT_SAMSUNG2_I330 },
 	{ USB_VENDOR_SIEMENS3, USB_PRODUCT_SIEMENS3_SX1 },
 	{ USB_VENDOR_SIEMENS3, USB_PRODUCT_SIEMENS3_X65 },
 	{ USB_VENDOR_SIEMENS3, USB_PRODUCT_SIEMENS3_X75 },
@@ -254,7 +254,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_type_hx = 0;
 
-#ifdef USB_DEBUG
+#ifdef UPLCOM_DEBUG
 	/* print the chip type */
 	if (sc->sc_type_hx) {
 		DPRINTF(("uplcom_attach: chiptype 2303X\n"));

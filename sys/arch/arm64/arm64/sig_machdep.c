@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.4 2017/08/08 21:52:41 drahn Exp $ */
+/*	$OpenBSD: sig_machdep.c,v 1.6 2018/07/10 04:19:59 guenther Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,6 +78,8 @@
 #include <machine/frame.h>
 #include <machine/pcb.h>
 
+#include <uvm/uvm_extern.h>
+
 static __inline struct trapframe *
 process_frame(struct proc *p)
 {
@@ -87,15 +89,13 @@ process_frame(struct proc *p)
 /*
  * Send an interrupt to process.
  *
- * Stack is set up to allow sigcode stored
- * in u. to call routine, followed by kcall
- * to sigreturn routine below.  After sigreturn
- * resets the signal mask, the stack, and the
- * frame pointer, it returns to the user specified pc.
+ * Stack is set up to allow sigcode to call routine, followed by
+ * syscall to sigreturn routine below.  After sigreturn resets the
+ * signal mask, the stack, and the frame pointer, it returns to the
+ * user specified pc.
  */
 void
-sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
-   union sigval val)
+sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
@@ -109,8 +109,8 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	/* Allocate space for the signal handler context. */
 	if ((p->p_sigstk.ss_flags & SS_DISABLE) == 0 &&
 	    !sigonstack(tf->tf_sp) && (psp->ps_sigonstack & sigmask(sig)))
-		fp = (struct sigframe *)((caddr_t)p->p_sigstk.ss_sp +
-		    p->p_sigstk.ss_size);
+		fp = (struct sigframe *)
+		    trunc_page((vaddr_t)p->p_sigstk.ss_sp + p->p_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->tf_sp;
 
@@ -133,13 +133,13 @@ sendsig(sig_t catcher, int sig, int returnmask, u_long code, int type,
 	frame.sf_sc.sc_spsr = tf->tf_spsr;
 
 	/* Save signal mask. */
-	frame.sf_sc.sc_mask = returnmask;
+	frame.sf_sc.sc_mask = mask;
 
 	/* XXX Save floating point context */
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		sip = &fp->sf_si;
-		initsiginfo(&frame.sf_si, sig, code, type, val);
+		frame.sf_si = *ksip;
 	}
 
 	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;

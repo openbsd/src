@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_fat.c,v 1.16 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: eng_fat.c,v 1.17 2019/01/19 01:07:00 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -93,6 +93,10 @@ ENGINE_set_default(ENGINE *e, unsigned int flags)
 	if ((flags & ENGINE_METHOD_ECDSA) && !ENGINE_set_default_ECDSA(e))
 		return 0;
 #endif
+#ifndef OPENSSL_NO_EC
+	if ((flags & ENGINE_METHOD_EC) && !ENGINE_set_default_EC(e))
+		return 0;
+#endif
 	if ((flags & ENGINE_METHOD_RAND) && !ENGINE_set_default_RAND(e))
 		return 0;
 	if ((flags & ENGINE_METHOD_PKEY_METHS) &&
@@ -123,6 +127,8 @@ int_def_cb(const char *alg, int len, void *arg)
 		*pflags |= ENGINE_METHOD_ECDSA;
 	else if (!strncmp(alg, "DH", len))
 		*pflags |= ENGINE_METHOD_DH;
+	else if (strncmp(alg, "EC", len) == 0)
+		*pflags |= ENGINE_METHOD_EC;
 	else if (!strncmp(alg, "RAND", len))
 		*pflags |= ENGINE_METHOD_RAND;
 	else if (!strncmp(alg, "CIPHERS", len))
@@ -173,6 +179,9 @@ ENGINE_register_complete(ENGINE *e)
 #endif
 #ifndef OPENSSL_NO_ECDSA
 	ENGINE_register_ECDSA(e);
+#endif
+#ifndef OPENSSL_NO_EC
+	ENGINE_register_EC(e);
 #endif
 	ENGINE_register_RAND(e);
 	ENGINE_register_pkey_meths(e);

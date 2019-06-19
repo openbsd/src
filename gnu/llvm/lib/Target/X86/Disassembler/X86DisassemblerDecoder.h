@@ -16,8 +16,8 @@
 #ifndef LLVM_LIB_TARGET_X86_DISASSEMBLER_X86DISASSEMBLERDECODER_H
 #define LLVM_LIB_TARGET_X86_DISASSEMBLER_X86DISASSEMBLERDECODER_H
 
-#include "X86DisassemblerDecoderCommon.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/Support/X86DisassemblerDecoderCommon.h"
 
 namespace llvm {
 namespace X86Disassembler {
@@ -400,7 +400,7 @@ namespace X86Disassembler {
   REGS_BOUND          \
   ENTRY(RIP)
 
-/// \brief All possible values of the base field for effective-address
+/// All possible values of the base field for effective-address
 /// computations, a.k.a. the Mod and R/M fields of the ModR/M byte.
 /// We distinguish between bases (EA_BASE_*) and registers that just happen
 /// to be referred to when Mod == 0b11 (EA_REG_*).
@@ -415,7 +415,7 @@ enum EABase {
   EA_max
 };
 
-/// \brief All possible values of the SIB index field.
+/// All possible values of the SIB index field.
 /// borrows entries from ALL_EA_BASES with the special case that
 /// sib is synonymous with NONE.
 /// Vector SIB: index can be XMM or YMM.
@@ -430,7 +430,7 @@ enum SIBIndex {
   SIB_INDEX_max
 };
 
-/// \brief All possible values of the SIB base field.
+/// All possible values of the SIB base field.
 enum SIBBase {
   SIB_BASE_NONE,
 #define ENTRY(x) SIB_BASE_##x,
@@ -439,7 +439,7 @@ enum SIBBase {
   SIB_BASE_max
 };
 
-/// \brief Possible displacement types for effective-address computations.
+/// Possible displacement types for effective-address computations.
 typedef enum {
   EA_DISP_NONE,
   EA_DISP_8,
@@ -447,7 +447,7 @@ typedef enum {
   EA_DISP_32
 } EADisplacement;
 
-/// \brief All possible values of the reg field in the ModR/M byte.
+/// All possible values of the reg field in the ModR/M byte.
 enum Reg {
 #define ENTRY(x) MODRM_REG_##x,
   ALL_REGS
@@ -455,7 +455,7 @@ enum Reg {
   MODRM_REG_max
 };
 
-/// \brief All possible segment overrides.
+/// All possible segment overrides.
 enum SegmentOverride {
   SEG_OVERRIDE_NONE,
   SEG_OVERRIDE_CS,
@@ -467,7 +467,7 @@ enum SegmentOverride {
   SEG_OVERRIDE_max
 };
 
-/// \brief Possible values for the VEX.m-mmmm field
+/// Possible values for the VEX.m-mmmm field
 enum VEXLeadingOpcodeByte {
   VEX_LOB_0F = 0x1,
   VEX_LOB_0F38 = 0x2,
@@ -480,7 +480,7 @@ enum XOPMapSelect {
   XOP_MAP_SELECT_A = 0xA
 };
 
-/// \brief Possible values for the VEX.pp/EVEX.pp field
+/// Possible values for the VEX.pp/EVEX.pp field
 enum VEXPrefixCode {
   VEX_PREFIX_NONE = 0x0,
   VEX_PREFIX_66 = 0x1,
@@ -496,7 +496,7 @@ enum VectorExtensionType {
   TYPE_XOP          = 0x4
 };
 
-/// \brief Type for the byte reader that the consumer must provide to
+/// Type for the byte reader that the consumer must provide to
 /// the decoder. Reads a single byte from the instruction's address space.
 /// \param arg     A baton that the consumer can associate with any internal
 ///                state that it needs.
@@ -507,7 +507,7 @@ enum VectorExtensionType {
 /// \return        -1 if the byte cannot be read for any reason; 0 otherwise.
 typedef int (*byteReader_t)(const void *arg, uint8_t *byte, uint64_t address);
 
-/// \brief Type for the logging function that the consumer can provide to
+/// Type for the logging function that the consumer can provide to
 /// get debugging output from the decoder.
 /// \param arg A baton that the consumer can associate with any internal
 ///            state that it needs.
@@ -546,23 +546,27 @@ struct InternalInstruction {
 
   // Prefix state
 
-  // 1 if the prefix byte corresponding to the entry is present; 0 if not
-  uint8_t prefixPresent[0x100];
-  // contains the location (for use with the reader) of the prefix byte
-  uint64_t prefixLocations[0x100];
+  // The possible mandatory prefix
+  uint8_t mandatoryPrefix;
   // The value of the vector extension prefix(EVEX/VEX/XOP), if present
   uint8_t vectorExtensionPrefix[4];
   // The type of the vector extension prefix
   VectorExtensionType vectorExtensionType;
   // The value of the REX prefix, if present
   uint8_t rexPrefix;
-  // The location where a mandatory prefix would have to be (i.e., right before
-  // the opcode, or right before the REX prefix if one is present).
-  uint64_t necessaryPrefixLocation;
   // The segment override type
   SegmentOverride segmentOverride;
   // 1 if the prefix byte, 0xf2 or 0xf3 is xacquire or xrelease
   bool xAcquireRelease;
+
+  // Address-size override
+  bool hasAdSize;
+  // Operand-size override
+  bool hasOpSize;
+  // Lock prefix
+  bool hasLockPrefix;
+  // The repeat prefix if any
+  uint8_t repeatPrefix;
 
   // Sizes of various critical pieces of data, in bytes
   uint8_t registerSize;
@@ -625,7 +629,6 @@ struct InternalInstruction {
 
   // These fields determine the allowable values for the ModR/M fields, which
   // depend on operand and address widths.
-  EABase                        eaBaseBase;
   EABase                        eaRegBase;
   Reg                           regBase;
 
@@ -637,14 +640,18 @@ struct InternalInstruction {
   Reg                           reg;
 
   // SIB state
+  SIBIndex                      sibIndexBase;
   SIBIndex                      sibIndex;
   uint8_t                       sibScale;
   SIBBase                       sibBase;
 
+  // Embedded rounding control.
+  uint8_t                       RC;
+
   ArrayRef<OperandSpecifier> operands;
 };
 
-/// \brief Decode one instruction and store the decoding results in
+/// Decode one instruction and store the decoding results in
 /// a buffer provided by the consumer.
 /// \param insn      The buffer to store the instruction in.  Allocated by the
 ///                  consumer.
@@ -668,7 +675,7 @@ int decodeInstruction(InternalInstruction *insn,
                       uint64_t startLoc,
                       DisassemblerMode mode);
 
-/// \brief Print a message to debugs()
+/// Print a message to debugs()
 /// \param file The name of the file printing the debug message.
 /// \param line The line number that printed the debug message.
 /// \param s    The message to print.

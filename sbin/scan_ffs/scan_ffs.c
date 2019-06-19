@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.21 2015/11/23 19:19:30 deraadt Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.22 2018/04/26 15:55:14 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -26,15 +26,16 @@
  */
 
 #include <sys/types.h>
-#include <sys/fcntl.h>
 #include <ufs/ffs/fs.h>
-#include <unistd.h>
-#include <stdlib.h>
+
+#include <err.h>
+#include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <limits.h>
-#include <err.h>
+#include <unistd.h>
 #include <util.h>
 
 #define SBCOUNT 64		/* XXX - Should be configurable */

@@ -19,6 +19,8 @@
 #include "clang/Driver/Util.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Option/ArgList.h"
+#include "llvm/Support/StringSaver.h"
 
 #include <list>
 #include <map>
@@ -26,14 +28,6 @@
 
 namespace llvm {
 class Triple;
-
-namespace opt {
-  class Arg;
-  class ArgList;
-  class DerivedArgList;
-  class InputArgList;
-  class OptTable;
-}
 }
 
 namespace clang {
@@ -129,11 +123,20 @@ public:
   /// The original path to the clang executable.
   std::string ClangExecutable;
 
+  /// Target and driver mode components extracted from clang executable name.
+  ParsedClangName ClangNameParts;
+
   /// The path to the installed clang directory, if any.
   std::string InstalledDir;
 
   /// The path to the compiler resource directory.
   std::string ResourceDir;
+
+  /// System directory for config files.
+  std::string SystemConfigDir;
+
+  /// User directory for config files.
+  std::string UserConfigDir;
 
   /// A prefix directory used to emulate a limited subset of GCC's '-Bprefix'
   /// functionality.
@@ -147,9 +150,6 @@ public:
 
   /// Dynamic loader prefix, if present
   std::string DyldPrefix;
-
-  /// If the standard library is used
-  bool UseStdLib;
 
   /// Driver title to use with help.
   std::string DriverTitle;
@@ -202,11 +202,26 @@ public:
   unsigned CCGenDiagnostics : 1;
 
 private:
-  /// Default target triple.
-  std::string DefaultTargetTriple;
+  /// Raw target triple.
+  std::string TargetTriple;
 
   /// Name to use when invoking gcc/g++.
   std::string CCCGenericGCCName;
+
+  /// Name of configuration file if used.
+  std::string ConfigFile;
+
+  /// Allocator for string saver.
+  llvm::BumpPtrAllocator Alloc;
+
+  /// Object that stores strings read from configuration file.
+  llvm::StringSaver Saver;
+
+  /// Arguments originated from configuration file.
+  std::unique_ptr<llvm::opt::InputArgList> CfgOptions;
+
+  /// Arguments originated from command line.
+  std::unique_ptr<llvm::opt::InputArgList> CLOptions;
 
   /// Whether to check that input files exist when constructing compilation
   /// jobs.
@@ -228,7 +243,7 @@ private:
   std::list<std::string> TempFiles;
   std::list<std::string> ResultFiles;
 
-  /// \brief Cache of all the ToolChains in use by the driver.
+  /// Cache of all the ToolChains in use by the driver.
   ///
   /// This maps from the string representation of a triple to a ToolChain
   /// created targeting that triple. The driver owns all the ToolChain objects
@@ -241,7 +256,7 @@ private:
   llvm::opt::DerivedArgList *
   TranslateInputArgs(const llvm::opt::InputArgList &Args) const;
 
-  // getFinalPhase - Determine which compilation mode we are in and record 
+  // getFinalPhase - Determine which compilation mode we are in and record
   // which option we used to determine the final phase.
   phases::ID getFinalPhase(const llvm::opt::DerivedArgList &DAL,
                            llvm::opt::Arg **FinalPhaseArg = nullptr) const;
@@ -252,7 +267,7 @@ private:
   void generatePrefixedToolNames(StringRef Tool, const ToolChain &TC,
                                  SmallVectorImpl<std::string> &Names) const;
 
-  /// \brief Find the appropriate .crash diagonostic file for the child crash
+  /// Find the appropriate .crash diagonostic file for the child crash
   /// under this driver and copy it out to a temporary destination with the
   /// other reproducer related files (.sh, .cache, etc). If not found, suggest a
   /// directory for the user to look at.
@@ -267,7 +282,7 @@ private:
                               SmallString<128> &CrashDiagDir);
 
 public:
-  Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
+  Driver(StringRef ClangExecutable, StringRef TargetTriple,
          DiagnosticsEngine &Diags,
          IntrusiveRefCntPtr<vfs::FileSystem> VFS = nullptr);
 
@@ -276,6 +291,8 @@ public:
 
   /// Name to use when invoking gcc/g++.
   const std::string &getCCCGenericGCCName() const { return CCCGenericGCCName; }
+
+  const std::string &getConfigFile() const { return ConfigFile; }
 
   const llvm::opt::OptTable &getOpts() const { return *Opts; }
 
@@ -287,15 +304,19 @@ public:
 
   void setCheckInputsExist(bool Value) { CheckInputsExist = Value; }
 
+  void setTargetAndMode(const ParsedClangName &TM) { ClangNameParts = TM; }
+
   const std::string &getTitle() { return DriverTitle; }
   void setTitle(std::string Value) { DriverTitle = std::move(Value); }
 
-  /// \brief Get the path to the main clang executable.
+  std::string getTargetTriple() const { return TargetTriple; }
+
+  /// Get the path to the main clang executable.
   const char *getClangProgramPath() const {
     return ClangExecutable.c_str();
   }
 
-  /// \brief Get the path to where the clang executable was installed.
+  /// Get the path to where the clang executable was installed.
   const char *getInstalledDir() const {
     if (!InstalledDir.empty())
       return InstalledDir.c_str();
@@ -344,12 +365,12 @@ public:
   llvm::opt::InputArgList ParseArgStrings(ArrayRef<const char *> Args,
                                           bool &ContainsError);
 
-  /// BuildInputs - Construct the list of inputs and their types from 
+  /// BuildInputs - Construct the list of inputs and their types from
   /// the given arguments.
   ///
   /// \param TC - The default host tool chain.
   /// \param Args - The input arguments.
-  /// \param Inputs - The list to store the resulting compilation 
+  /// \param Inputs - The list to store the resulting compilation
   /// inputs onto.
   void BuildInputs(const ToolChain &TC, llvm::opt::DerivedArgList &Args,
                    InputList &Inputs) const;
@@ -386,11 +407,19 @@ public:
   int ExecuteCompilation(Compilation &C,
      SmallVectorImpl< std::pair<int, const Command *> > &FailingCommands);
 
-  /// generateCompilationDiagnostics - Generate diagnostics information 
+  /// Contains the files in the compilation diagnostic report generated by
+  /// generateCompilationDiagnostics.
+  struct CompilationDiagnosticReport {
+    llvm::SmallVector<std::string, 4> TemporaryFiles;
+  };
+
+  /// generateCompilationDiagnostics - Generate diagnostics information
   /// including preprocessed source file(s).
-  /// 
-  void generateCompilationDiagnostics(Compilation &C,
-                                      const Command &FailingCommand);
+  ///
+  void generateCompilationDiagnostics(
+      Compilation &C, const Command &FailingCommand,
+      StringRef AdditionalInformation = "",
+      CompilationDiagnosticReport *GeneratedReport = nullptr);
 
   /// @}
   /// @name Helper Methods
@@ -423,6 +452,10 @@ public:
   // FIXME: This should be in CompilationInfo.
   std::string GetProgramPath(StringRef Name, const ToolChain &TC) const;
 
+  /// HandleAutocompletions - Handle --autocomplete by searching and printing
+  /// possible flags, descriptions, and its arguments.
+  void HandleAutocompletions(StringRef PassedFlags) const;
+
   /// HandleImmediateArgs - Handle any arguments which should be
   /// treated before building actions or binding tools.
   ///
@@ -433,8 +466,10 @@ public:
   /// ConstructAction - Construct the appropriate action to do for
   /// \p Phase on the \p Input, taking in to account arguments
   /// like -fsyntax-only or --analyze.
-  Action *ConstructPhaseAction(Compilation &C, const llvm::opt::ArgList &Args,
-                               phases::ID Phase, Action *Input) const;
+  Action *ConstructPhaseAction(
+      Compilation &C, const llvm::opt::ArgList &Args, phases::ID Phase,
+      Action *Input,
+      Action::OffloadKind TargetDeviceOffloadKind = Action::OFK_None) const;
 
   /// BuildJobsForAction - Construct the jobs to perform for the action \p A and
   /// return an InputInfo for the result of running \p A.  Will only construct
@@ -458,7 +493,7 @@ public:
   /// \param JA - The action of interest.
   /// \param BaseInput - The original input file that this action was
   /// triggered by.
-  /// \param BoundArch - The bound architecture. 
+  /// \param BoundArch - The bound architecture.
   /// \param AtTopLevel - Whether this is a "top-level" action.
   /// \param MultipleArchs - Whether multiple -arch options were supplied.
   /// \param NormalizedTriple - The normalized triple of the relevant target.
@@ -467,7 +502,7 @@ public:
                                  bool AtTopLevel, bool MultipleArchs,
                                  StringRef NormalizedTriple) const;
 
-  /// GetTemporaryPath - Return the pathname of a temporary file to use 
+  /// GetTemporaryPath - Return the pathname of a temporary file to use
   /// as part of compilation; the file will have the given prefix and suffix.
   ///
   /// GCC goes to extra lengths here to be a bit more robust.
@@ -487,6 +522,18 @@ public:
   LTOKind getLTOMode() const { return LTOMode; }
 
 private:
+
+  /// Tries to load options from configuration file.
+  ///
+  /// \returns true if error occurred.
+  bool loadConfigFile();
+
+  /// Read options from the specified file.
+  ///
+  /// \param [in] FileName File to read.
+  /// \returns true, if error occurred while reading.
+  bool readConfigFile(StringRef FileName);
+
   /// Set the driver mode (cl, gcc, etc) from an option string of the form
   /// --driver-mode=<mode>.
   void setDriverModeFromOption(StringRef Opt);
@@ -495,7 +542,7 @@ private:
   /// compilation based on which -f(no-)?lto(=.*)? option occurs last.
   void setLTOMode(const llvm::opt::ArgList &Args);
 
-  /// \brief Retrieves a ToolChain for a particular \p Target triple.
+  /// Retrieves a ToolChain for a particular \p Target triple.
   ///
   /// Will cache ToolChains for the life of the driver object, and create them
   /// on-demand.
@@ -504,7 +551,7 @@ private:
 
   /// @}
 
-  /// \brief Get bitmasks for which option flags to include and exclude based on
+  /// Get bitmasks for which option flags to include and exclude based on
   /// the driver mode.
   std::pair<unsigned, unsigned> getIncludeExcludeOptionFlagMasks() const;
 
@@ -537,6 +584,8 @@ public:
   /// no extra characters remaining at the end.
   static bool GetReleaseVersion(StringRef Str,
                                 MutableArrayRef<unsigned> Digits);
+  /// Compute the default -fmodule-cache-path.
+  static void getDefaultModuleCachePath(SmallVectorImpl<char> &Result);
 };
 
 /// \return True if the last defined optimization level is -Ofast.

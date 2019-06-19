@@ -1,7 +1,7 @@
-/*	$OpenBSD: syscall.h,v 1.28 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.29 2018/07/09 10:12:14 deraadt Exp $ */
 
 /*
- * Copyright (c) 1998-2002 Opsycon AB, Sweden.
+ * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,11 +25,12 @@
  * SUCH DAMAGE.
  *
  */
+
 #ifndef __DL_SYSCALL_H__
 #define __DL_SYSCALL_H__
 
-#include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/stat.h>
 
 #ifndef _dl_MAX_ERRNO
 #define _dl_MAX_ERRNO 512L
@@ -50,13 +51,13 @@ int	_dl_munmap(const void *, size_t);
 int	_dl_open(const char *, int);
 ssize_t	_dl_read(int, const char *, size_t);
 ssize_t	_dl_readlink(const char *, char *, size_t);
-void	_dl___set_tcb(void *);
 int	_dl_pledge(const char *, const char **);
 long	_dl___syscall(quad_t, ...);
 int	_dl_sysctl(const int *, u_int, void *, size_t *, void *, size_t);
 int	_dl_utrace(const char *, const void *, size_t);
 int	_dl_getentropy(char *, size_t);
 int	_dl_sendsyslog(const char *, size_t, int);
+void	_dl___set_tcb(void *);
 __dead
 void	_dl_thrkill(pid_t, int, void *);
 

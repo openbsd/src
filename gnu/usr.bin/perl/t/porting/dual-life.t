@@ -72,9 +72,11 @@ for my $f ( @programs ) {
   next if $f =~ $not_installed;
   my $bn = basename($f);
   if(grep { /\A(?i:$bn)\z/ } keys %dist_dir_exe) {
-    ok( -f "$dist_dir_exe{lc $bn}$ext", $f);
+    my $exe_file = "$dist_dir_exe{lc $bn}$ext";
+    ok( -f $exe_file, "Verify -f '$exe_file'");
   } else {
-    ok( -f catfile('..', 'utils', "$bn$ext"), $f );
+    my $utils_file = catfile('..', 'utils', "$bn$ext");
+    ok( -f $utils_file, "Verify -f '$utils_file'" );
   }
 }
 

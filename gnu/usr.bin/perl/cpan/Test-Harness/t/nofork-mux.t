@@ -8,4 +8,4 @@ use strict;
 use warnings;
 
 use NoFork;
-require('t/multiplexer.t');
+require('./t/multiplexer.t');

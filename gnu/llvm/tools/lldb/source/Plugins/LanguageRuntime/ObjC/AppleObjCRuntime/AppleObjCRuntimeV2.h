@@ -88,9 +88,13 @@ public:
 
   EncodingToTypeSP GetEncodingToType() override;
 
+  bool IsTaggedPointer(lldb::addr_t ptr) override;
+
   TaggedPointerVendor *GetTaggedPointerVendor() override {
     return m_tagged_pointer_vendor_ap.get();
   }
+
+  lldb::addr_t GetTaggedPointerObfuscator();
 
   void GetValuesForGlobalCFBooleans(lldb::addr_t &cf_true,
                                     lldb::addr_t &cf_false) override;
@@ -138,17 +142,32 @@ private:
 
   private:
     NonPointerISACache(AppleObjCRuntimeV2 &runtime,
+                       const lldb::ModuleSP &objc_module_sp,
                        uint64_t objc_debug_isa_class_mask,
                        uint64_t objc_debug_isa_magic_mask,
-                       uint64_t objc_debug_isa_magic_value);
+                       uint64_t objc_debug_isa_magic_value,
+                       uint64_t objc_debug_indexed_isa_magic_mask,
+                       uint64_t objc_debug_indexed_isa_magic_value,
+                       uint64_t objc_debug_indexed_isa_index_mask,
+                       uint64_t objc_debug_indexed_isa_index_shift,
+                       lldb::addr_t objc_indexed_classes);
 
     bool EvaluateNonPointerISA(ObjCISA isa, ObjCISA &ret_isa);
 
     AppleObjCRuntimeV2 &m_runtime;
     std::map<ObjCISA, ObjCLanguageRuntime::ClassDescriptorSP> m_cache;
+    lldb::ModuleWP m_objc_module_wp;
     uint64_t m_objc_debug_isa_class_mask;
     uint64_t m_objc_debug_isa_magic_mask;
     uint64_t m_objc_debug_isa_magic_value;
+
+    uint64_t m_objc_debug_indexed_isa_magic_mask;
+    uint64_t m_objc_debug_indexed_isa_magic_value;
+    uint64_t m_objc_debug_indexed_isa_index_mask;
+    uint64_t m_objc_debug_indexed_isa_index_shift;
+    lldb::addr_t m_objc_indexed_classes;
+
+    std::vector<lldb::addr_t> m_indexed_isa_cache;
 
     friend class AppleObjCRuntimeV2;
 
@@ -279,8 +298,6 @@ private:
 
   ObjCISA GetPointerISA(ObjCISA isa);
 
-  bool IsTaggedPointer(lldb::addr_t ptr);
-
   lldb::addr_t GetISAHashTablePointer();
 
   bool UpdateISAToDescriptorMapFromMemory(RemoteNXMapTable &hash_table);
@@ -315,6 +332,7 @@ private:
   std::mutex m_get_shared_cache_class_info_args_mutex;
 
   std::unique_ptr<DeclVendor> m_decl_vendor_ap;
+  lldb::addr_t m_tagged_pointer_obfuscator;
   lldb::addr_t m_isa_hash_table_ptr;
   HashTableSignature m_hash_signature;
   bool m_has_object_getClass;

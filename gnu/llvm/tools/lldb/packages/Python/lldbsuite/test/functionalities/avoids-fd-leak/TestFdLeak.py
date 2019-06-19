@@ -34,6 +34,7 @@ class AvoidsFdLeakTestCase(TestBase):
     # here.
     @skipIfWindows
     @skipIfTargetAndroid()  # Android have some other file descriptors open by the shell
+    @skipIfDarwinEmbedded # <rdar://problem/33888742>  # debugserver on ios has an extra fd open on launch
     def test_fd_leak_basic(self):
         self.do_test([])
 
@@ -45,12 +46,13 @@ class AvoidsFdLeakTestCase(TestBase):
     # here.
     @skipIfWindows
     @skipIfTargetAndroid()  # Android have some other file descriptors open by the shell
+    @skipIfDarwinEmbedded # <rdar://problem/33888742>  # debugserver on ios has an extra fd open on launch
     def test_fd_leak_log(self):
         self.do_test(["log enable -f '/dev/null' lldb commands"])
 
     def do_test(self, commands):
         self.build()
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = self.getBuildArtifact("a.out")
 
         for c in commands:
             self.runCmd(c)
@@ -76,9 +78,10 @@ class AvoidsFdLeakTestCase(TestBase):
     # here.
     @skipIfWindows
     @skipIfTargetAndroid()  # Android have some other file descriptors open by the shell
+    @skipIfDarwinEmbedded # <rdar://problem/33888742>  # debugserver on ios has an extra fd open on launch
     def test_fd_leak_multitarget(self):
         self.build()
-        exe = os.path.join(os.getcwd(), "a.out")
+        exe = self.getBuildArtifact("a.out")
 
         target = self.dbg.CreateTarget(exe)
         breakpoint = target.BreakpointCreateBySourceRegex(

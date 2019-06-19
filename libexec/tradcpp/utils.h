@@ -27,8 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdbool.h>
 #include <stddef.h>
+#include "bool.h"
 
 struct place;
 
@@ -63,9 +63,15 @@ bool is_identifier(const char *str);
 
 /* in place.c */
 void complain_init(const char *progname);
-void complain(const struct place *, const char *fmt, ...) PF(2, 3);
+PF(2, 3) void complain(const struct place *, const char *fmt, ...);
 void complain_fail(void);
 bool complain_failed(void);
+
+void debuglog_open(const struct place *p, /*const*/ char *file);
+void debuglog_close(void);
+PF(2, 3) void debuglog(const struct place *p, const char *fmt, ...);
+PF(3, 4) void debuglog2(const struct place *p, const struct place *p2,
+			const char *fmt, ...);
 
 /* in main.c */
 void freestringlater(char *s);

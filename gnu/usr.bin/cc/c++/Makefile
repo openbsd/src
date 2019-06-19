@@ -1,5 +1,5 @@
 # $FreeBSD: src/gnu/usr.bin/cc/c++/Makefile,v 1.24.8.1 2009/04/15 03:14:26 kensmith Exp $
-# $OpenBSD: Makefile,v 1.2 2017/07/24 19:22:49 robert Exp $
+# $OpenBSD: Makefile,v 1.3 2019/02/24 12:57:13 kn Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ DPADD=	${LIBCPP} ${LIBIBERTY}
 LDADD=	${LIBCPP} ${LIBIBERTY}
 
 realinstall:
-	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} \
 	    -o ${BINOWN} -g ${BINGRP} \
 	    -m ${BINMODE} ${PROG} ${DESTDIR}${BINDIR}/${PROG:S/c/g/g}
 

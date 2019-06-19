@@ -1,7 +1,7 @@
-/*	$OpenBSD: term_ascii.c,v 1.44 2017/08/23 10:50:11 schwarze Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.49 2018/11/28 14:23:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,10 +18,12 @@
 #include <sys/types.h>
 
 #include <assert.h>
+#include <langinfo.h>
 #include <locale.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <wchar.h>
 
@@ -77,7 +79,7 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 	p->setwidth = ascii_setwidth;
 	p->width = ascii_width;
 
-	if (TERMENC_ASCII != enc) {
+	if (enc != TERMENC_ASCII) {
 
 		/*
 		 * Do not change any of this to LC_ALL.  It might break
@@ -86,11 +88,21 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 		 * worst case, it might even cause buffer overflows.
 		 */
 
-		v = TERMENC_LOCALE == enc ?
+		v = enc == TERMENC_LOCALE ?
 		    setlocale(LC_CTYPE, "") :
 		    setlocale(LC_CTYPE, "en_US.UTF-8");
-		if (NULL != v && MB_CUR_MAX > 1) {
-			p->enc = enc;
+
+		/*
+		 * We only support UTF-8,
+		 * so revert to ASCII for anything else.
+		 */
+
+		if (v != NULL &&
+		    strcmp(nl_langinfo(CODESET), "UTF-8") != 0)
+			v = setlocale(LC_CTYPE, "C");
+
+		if (v != NULL && MB_CUR_MAX > 1) {
+			p->enc = TERMENC_UTF8;
 			p->advance = locale_advance;
 			p->endline = locale_endline;
 			p->letter = locale_letter;
@@ -109,6 +121,8 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 	if (outopts->synopsisonly)
 		p->synopsisonly = 1;
 
+	assert(p->defindent < UINT16_MAX);
+	assert(p->defrmargin < UINT16_MAX);
 	return p;
 }
 
@@ -147,6 +161,8 @@ ascii_setwidth(struct termp *p, int iop, int width)
 		p->defrmargin -= width;
 	else
 		p->defrmargin = 0;
+	if (p->defrmargin > 1000)
+		p->defrmargin = 1000;
 	p->lastrmargin = p->tcol->rmargin;
 	p->tcol->rmargin = p->maxrmargin = p->defrmargin;
 }
@@ -168,8 +184,7 @@ terminal_sepline(void *arg)
 static size_t
 ascii_width(const struct termp *p, int c)
 {
-
-	return 1;
+	return c != ASCII_BREAK;
 }
 
 void
@@ -215,6 +230,7 @@ ascii_advance(struct termp *p, size_t len)
 {
 	size_t		i;
 
+	assert(len < UINT16_MAX);
 	for (i = 0; i < len; i++)
 		putchar(' ');
 }
@@ -282,7 +298,7 @@ ascii_uc2str(int uc)
 	"<88>",	"<89>",	"<8A>",	"<8B>",	"<8C>",	"<8D>",	"<8E>",	"<8F>",
 	"<90>",	"<91>",	"<92>",	"<93>",	"<94>",	"<95>",	"<96>",	"<97>",
 	"<98>",	"<99>",	"<9A>",	"<9B>",	"<9C>",	"<9D>",	"<9E>",	"<9F>",
-	nbrsp,	"!",	"/\bc",	"GBP",	"o\bx",	"=\bY",	"|",	"<section>",
+	nbrsp,	"!",	"/\bc",	"-\bL",	"o\bx",	"=\bY",	"|",	"<section>",
 	"\"",	"(C)",	"_\ba",	"<<",	"~",	"",	"(R)",	"-",
 	"<degree>","+-","^2",	"^3",	"'","<micro>","<paragraph>",".",
 	",",	"^1",	"_\bo",	">>",	"1/4",	"1/2",	"3/4",	"?",
@@ -351,6 +367,7 @@ locale_advance(struct termp *p, size_t len)
 {
 	size_t		i;
 
+	assert(len < UINT16_MAX);
 	for (i = 0; i < len; i++)
 		putwchar(L' ');
 }

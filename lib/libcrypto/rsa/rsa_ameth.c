@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.19 2018/08/24 20:22:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -154,7 +154,7 @@ rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 }
 
 static int
-rsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+rsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
 	const unsigned char *p;
 	int pklen;

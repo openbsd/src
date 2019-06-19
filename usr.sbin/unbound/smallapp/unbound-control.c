@@ -73,6 +73,10 @@
 #include <sys/un.h>
 #endif
 
+static void usage(void) ATTR_NORETURN;
+static void ssl_err(const char* s) ATTR_NORETURN;
+static void ssl_path_err(const char* s, const char *path) ATTR_NORETURN;
+
 /** Give unbound-control usage, and exit (1). */
 static void
 usage(void)
@@ -142,11 +146,16 @@ usage(void)
 	printf("  ratelimit_list [+a]		list ratelimited domains\n");
 	printf("  ip_ratelimit_list [+a]	list ratelimited ip addresses\n");
 	printf("		+a		list all, also not ratelimited\n");
+	printf("  list_auth_zones		list auth zones\n");
+	printf("  auth_zone_reload zone		reload auth zone from zonefile\n");
+	printf("  auth_zone_transfer zone	transfer auth zone from master\n");
 	printf("  view_list_local_zones	view	list local-zones in view\n");
 	printf("  view_list_local_data	view	list local-data RRs in view\n");
 	printf("  view_local_zone view name type  	add local-zone in view\n");
 	printf("  view_local_zone_remove view name  	remove local-zone in view\n");
 	printf("  view_local_data view RR...		add local-data in view\n");
+	printf("  view_local_datas view 		add list of local-data to view\n");
+	printf("  					one entry per line read from stdin\n");
 	printf("  view_local_data_remove view name  	remove local-data in view\n");
 	printf("Version %s\n", PACKAGE_VERSION);
 	printf("BSD licensed, see LICENSE in source package for details.\n");
@@ -238,7 +247,8 @@ static void print_uptime(struct ub_shm_stat_info* shm_stat)
 }
 
 /** print memory usage */
-static void print_mem(struct ub_shm_stat_info* shm_stat)
+static void print_mem(struct ub_shm_stat_info* shm_stat,
+	struct ub_stats_info* s)
 {
 	PR_LL("mem.cache.rrset", shm_stat->mem.rrset);
 	PR_LL("mem.cache.message", shm_stat->mem.msg);
@@ -257,6 +267,7 @@ static void print_mem(struct ub_shm_stat_info* shm_stat)
 	PR_LL("mem.cache.dnscrypt_nonce",
 		shm_stat->mem.dnscrypt_nonce);
 #endif
+	PR_LL("mem.streamwait", s->svr.mem_stream_wait);
 }
 
 /** print histogram */
@@ -318,6 +329,8 @@ static void print_extended(struct ub_stats_info* s)
 	/* transport */
 	PR_UL("num.query.tcp", s->svr.qtcp);
 	PR_UL("num.query.tcpout", s->svr.qtcp_outgoing);
+	PR_UL("num.query.tls", s->svr.qtls);
+	PR_UL("num.query.tls_resume", s->svr.qtls_resume);
 	PR_UL("num.query.ipv6", s->svr.qipv6);
 
 	/* flags */
@@ -349,6 +362,8 @@ static void print_extended(struct ub_stats_info* s)
 	PR_UL("num.answer.secure", s->svr.ans_secure);
 	PR_UL("num.answer.bogus", s->svr.ans_bogus);
 	PR_UL("num.rrset.bogus", s->svr.rrset_bogus);
+	PR_UL("num.query.aggressive.NOERROR", s->svr.num_neg_cache_noerror);
+	PR_UL("num.query.aggressive.NXDOMAIN", s->svr.num_neg_cache_nxdomain);
 	/* threat detection */
 	PR_UL("unwanted.queries", s->svr.unwanted_queries);
 	PR_UL("unwanted.replies", s->svr.unwanted_replies);
@@ -366,6 +381,12 @@ static void print_extended(struct ub_stats_info* s)
 	PR_UL("num.query.dnscrypt.replay",
 			 s->svr.num_query_dnscrypt_replay);
 #endif /* USE_DNSCRYPT */
+	PR_UL("num.query.authzone.up", s->svr.num_query_authzone_up);
+	PR_UL("num.query.authzone.down", s->svr.num_query_authzone_down);
+#ifdef CLIENT_SUBNET
+	PR_UL("num.query.subnet", s->svr.num_query_subnet);
+	PR_UL("num.query.subnet_cache", s->svr.num_query_subnet_cache);
+#endif
 }
 
 /** print statistics out of memory structures */
@@ -381,7 +402,7 @@ static void do_stats_shm(struct config_file* cfg, struct ub_stats_info* stats,
 	pr_stats("total", &stats[0]);
 	print_uptime(shm_stat);
 	if(cfg->stat_extended) {
-		print_mem(shm_stat);
+		print_mem(shm_stat, &stats[0]);
 		print_hist(stats);
 		print_extended(stats);
 	}
@@ -439,6 +460,22 @@ static void ssl_err(const char* s)
 	exit(1);
 }
 
+/** exit with ssl error related to a file path */
+static void ssl_path_err(const char* s, const char *path)
+{
+	unsigned long err;
+	err = ERR_peek_error();
+	if (ERR_GET_LIB(err) == ERR_LIB_SYS &&
+		(ERR_GET_FUNC(err) == SYS_F_FOPEN ||
+		 ERR_GET_FUNC(err) == SYS_F_FREAD) ) {
+		fprintf(stderr, "error: %s\n%s: %s\n",
+			s, path, ERR_reason_error_string(err));
+		exit(1);
+	} else {
+		ssl_err(s);
+	}
+}
+
 /** setup SSL context */
 static SSL_CTX*
 setup_ctx(struct config_file* cfg)
@@ -446,42 +483,36 @@ setup_ctx(struct config_file* cfg)
 	char* s_cert=NULL, *c_key=NULL, *c_cert=NULL;
 	SSL_CTX* ctx;
 
-	if(cfg->remote_control_use_cert) {
-		s_cert = fname_after_chroot(cfg->server_cert_file, cfg, 1);
-		c_key = fname_after_chroot(cfg->control_key_file, cfg, 1);
-		c_cert = fname_after_chroot(cfg->control_cert_file, cfg, 1);
-		if(!s_cert || !c_key || !c_cert)
-			fatal_exit("out of memory");
-	}
+	if(!(options_remote_is_address(cfg) && cfg->control_use_cert))
+		return NULL;
+	s_cert = fname_after_chroot(cfg->server_cert_file, cfg, 1);
+	c_key = fname_after_chroot(cfg->control_key_file, cfg, 1);
+	c_cert = fname_after_chroot(cfg->control_cert_file, cfg, 1);
+	if(!s_cert || !c_key || !c_cert)
+		fatal_exit("out of memory");
 	ctx = SSL_CTX_new(SSLv23_client_method());
 	if(!ctx)
 		ssl_err("could not allocate SSL_CTX pointer");
 	if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2) & SSL_OP_NO_SSLv2)
 		!= SSL_OP_NO_SSLv2)
 		ssl_err("could not set SSL_OP_NO_SSLv2");
-	if(cfg->remote_control_use_cert) {
-		if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
-			!= SSL_OP_NO_SSLv3)
-			ssl_err("could not set SSL_OP_NO_SSLv3");
-		if(!SSL_CTX_use_certificate_chain_file(ctx,c_cert) ||
-		    !SSL_CTX_use_PrivateKey_file(ctx,c_key,SSL_FILETYPE_PEM)
-		    || !SSL_CTX_check_private_key(ctx))
-			ssl_err("Error setting up SSL_CTX client key and cert");
-		if (SSL_CTX_load_verify_locations(ctx, s_cert, NULL) != 1)
-			ssl_err("Error setting up SSL_CTX verify, server cert");
-		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+	if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
+		!= SSL_OP_NO_SSLv3)
+		ssl_err("could not set SSL_OP_NO_SSLv3");
+	if(!SSL_CTX_use_certificate_chain_file(ctx,c_cert))
+		ssl_path_err("Error setting up SSL_CTX client cert", c_cert);
+	if (!SSL_CTX_use_PrivateKey_file(ctx,c_key,SSL_FILETYPE_PEM))
+		ssl_path_err("Error setting up SSL_CTX client key", c_key);
+	if (!SSL_CTX_check_private_key(ctx))
+		ssl_err("Error setting up SSL_CTX client key");
+	if (SSL_CTX_load_verify_locations(ctx, s_cert, NULL) != 1)
+		ssl_path_err("Error setting up SSL_CTX verify, server cert",
+			     s_cert);
+	SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
-		free(s_cert);
-		free(c_key);
-		free(c_cert);
-	} else {
-		/* Use ciphers that don't require authentication  */
-#ifdef HAVE_SSL_CTX_SET_SECURITY_LEVEL
-		SSL_CTX_set_security_level(ctx, 0);
-#endif
-		if(!SSL_CTX_set_cipher_list(ctx, "aNULL, eNULL"))
-			ssl_err("Error setting NULL cipher!");
-	}
+	free(s_cert);
+	free(c_key);
+	free(c_cert);
 	return ctx;
 }
 
@@ -491,12 +522,12 @@ contact_server(const char* svr, struct config_file* cfg, int statuscmd)
 {
 	struct sockaddr_storage addr;
 	socklen_t addrlen;
-	int addrfamily = 0;
-	int fd;
+	int addrfamily = 0, proto = IPPROTO_TCP;
+	int fd, useport = 1;
 	/* use svr or the first config entry */
 	if(!svr) {
-		if(cfg->control_ifs) {
-			svr = cfg->control_ifs->str;
+		if(cfg->control_ifs.first) {
+			svr = cfg->control_ifs.first->str;
 		} else if(cfg->do_ip4) {
 			svr = "127.0.0.1";
 		} else {
@@ -524,6 +555,8 @@ contact_server(const char* svr, struct config_file* cfg, int statuscmd)
 		(void)strlcpy(usock->sun_path, svr, sizeof(usock->sun_path));
 		addrlen = (socklen_t)sizeof(struct sockaddr_un);
 		addrfamily = AF_LOCAL;
+		useport = 0;
+		proto = 0;
 #endif
 	} else {
 		if(!ipstrtoaddr(svr, cfg->control_port, &addr, &addrlen))
@@ -531,8 +564,8 @@ contact_server(const char* svr, struct config_file* cfg, int statuscmd)
 	}
 
 	if(addrfamily == 0)
-		addrfamily = addr_is_ip6(&addr, addrlen)?AF_INET6:AF_INET;
-	fd = socket(addrfamily, SOCK_STREAM, 0);
+		addrfamily = addr_is_ip6(&addr, addrlen)?PF_INET6:PF_INET;
+	fd = socket(addrfamily, SOCK_STREAM, proto);
 	if(fd == -1) {
 #ifndef USE_WINSOCK
 		fatal_exit("socket: %s", strerror(errno));
@@ -542,14 +575,18 @@ contact_server(const char* svr, struct config_file* cfg, int statuscmd)
 	}
 	if(connect(fd, (struct sockaddr*)&addr, addrlen) < 0) {
 #ifndef USE_WINSOCK
-		log_err_addr("connect", strerror(errno), &addr, addrlen);
-		if(errno == ECONNREFUSED && statuscmd) {
+		int err = errno;
+		if(!useport) log_err("connect: %s for %s", strerror(err), svr);
+		else log_err_addr("connect", strerror(err), &addr, addrlen);
+		if(err == ECONNREFUSED && statuscmd) {
 			printf("unbound is stopped\n");
 			exit(3);
 		}
 #else
-		log_err_addr("connect", wsa_strerror(WSAGetLastError()), &addr, addrlen);
-		if(WSAGetLastError() == WSAECONNREFUSED && statuscmd) {
+		int wsaerr = WSAGetLastError();
+		if(!useport) log_err("connect: %s for %s", wsa_strerror(wsaerr), svr);
+		else log_err_addr("connect", wsa_strerror(wsaerr), &addr, addrlen);
+		if(wsaerr == WSAECONNREFUSED && statuscmd) {
 			printf("unbound is stopped\n");
 			exit(3);
 		}
@@ -561,12 +598,13 @@ contact_server(const char* svr, struct config_file* cfg, int statuscmd)
 
 /** setup SSL on the connection */
 static SSL*
-setup_ssl(SSL_CTX* ctx, int fd, struct config_file* cfg)
+setup_ssl(SSL_CTX* ctx, int fd)
 {
 	SSL* ssl;
 	X509* x;
 	int r;
 
+	if(!ctx) return NULL;
 	ssl = SSL_new(ctx);
 	if(!ssl)
 		ssl_err("could not SSL_new");
@@ -587,78 +625,116 @@ setup_ssl(SSL_CTX* ctx, int fd, struct config_file* cfg)
 	/* check authenticity of server */
 	if(SSL_get_verify_result(ssl) != X509_V_OK)
 		ssl_err("SSL verification failed");
-	if(cfg->remote_control_use_cert) {
-		x = SSL_get_peer_certificate(ssl);
-		if(!x)
-			ssl_err("Server presented no peer certificate");
-		X509_free(x);
-	}
+	x = SSL_get_peer_certificate(ssl);
+	if(!x)
+		ssl_err("Server presented no peer certificate");
+	X509_free(x);
 
 	return ssl;
 }
 
+/** read from ssl or fd, fatalexit on error, 0 EOF, 1 success */
+static int
+remote_read(SSL* ssl, int fd, char* buf, size_t len)
+{
+	if(ssl) {
+		int r;
+		ERR_clear_error();
+		if((r = SSL_read(ssl, buf, (int)len-1)) <= 0) {
+			if(SSL_get_error(ssl, r) == SSL_ERROR_ZERO_RETURN) {
+				/* EOF */
+				return 0;
+			}
+			ssl_err("could not SSL_read");
+		}
+		buf[r] = 0;
+	} else {
+		ssize_t rr = recv(fd, buf, len-1, 0);
+		if(rr <= 0) {
+			if(rr == 0) {
+				/* EOF */
+				return 0;
+			}
+#ifndef USE_WINSOCK
+			fatal_exit("could not recv: %s", strerror(errno));
+#else
+			fatal_exit("could not recv: %s", wsa_strerror(WSAGetLastError()));
+#endif
+		}
+		buf[rr] = 0;
+	}
+	return 1;
+}
+
+/** write to ssl or fd, fatalexit on error */
+static void
+remote_write(SSL* ssl, int fd, const char* buf, size_t len)
+{
+	if(ssl) {
+		if(SSL_write(ssl, buf, (int)len) <= 0)
+			ssl_err("could not SSL_write");
+	} else {
+		if(send(fd, buf, len, 0) < (ssize_t)len) {
+#ifndef USE_WINSOCK
+			fatal_exit("could not send: %s", strerror(errno));
+#else
+			fatal_exit("could not send: %s", wsa_strerror(WSAGetLastError()));
+#endif
+		}
+	}
+}
+
 /** send stdin to server */
 static void
-send_file(SSL* ssl, FILE* in, char* buf, size_t sz)
+send_file(SSL* ssl, int fd, FILE* in, char* buf, size_t sz)
 {
 	while(fgets(buf, (int)sz, in)) {
-		if(SSL_write(ssl, buf, (int)strlen(buf)) <= 0)
-			ssl_err("could not SSL_write contents");
+		remote_write(ssl, fd, buf, strlen(buf));
 	}
 }
 
 /** send end-of-file marker to server */
 static void
-send_eof(SSL* ssl)
+send_eof(SSL* ssl, int fd)
 {
 	char e[] = {0x04, 0x0a};
-	if(SSL_write(ssl, e, (int)sizeof(e)) <= 0)
-		ssl_err("could not SSL_write end-of-file marker");
+	remote_write(ssl, fd, e, sizeof(e));
 }
 
 /** send command and display result */
 static int
-go_cmd(SSL* ssl, int quiet, int argc, char* argv[])
+go_cmd(SSL* ssl, int fd, int quiet, int argc, char* argv[])
 {
 	char pre[10];
 	const char* space=" ";
 	const char* newline="\n";
 	int was_error = 0, first_line = 1;
-	int r, i;
+	int i;
 	char buf[1024];
 	snprintf(pre, sizeof(pre), "UBCT%d ", UNBOUND_CONTROL_VERSION);
-	if(SSL_write(ssl, pre, (int)strlen(pre)) <= 0)
-		ssl_err("could not SSL_write");
+	remote_write(ssl, fd, pre, strlen(pre));
 	for(i=0; i<argc; i++) {
-		if(SSL_write(ssl, space, (int)strlen(space)) <= 0)
-			ssl_err("could not SSL_write");
-		if(SSL_write(ssl, argv[i], (int)strlen(argv[i])) <= 0)
-			ssl_err("could not SSL_write");
+		remote_write(ssl, fd, space, strlen(space));
+		remote_write(ssl, fd, argv[i], strlen(argv[i]));
 	}
-	if(SSL_write(ssl, newline, (int)strlen(newline)) <= 0)
-		ssl_err("could not SSL_write");
+	remote_write(ssl, fd, newline, strlen(newline));
 
 	if(argc == 1 && strcmp(argv[0], "load_cache") == 0) {
-		send_file(ssl, stdin, buf, sizeof(buf));
+		send_file(ssl, fd, stdin, buf, sizeof(buf));
 	}
-	else if(argc == 1 && (strcmp(argv[0], "local_zones") == 0 ||
+	else if(argc >= 1 && (strcmp(argv[0], "local_zones") == 0 ||
 		strcmp(argv[0], "local_zones_remove") == 0 ||
 		strcmp(argv[0], "local_datas") == 0 ||
+		strcmp(argv[0], "view_local_datas") == 0 ||
 		strcmp(argv[0], "local_datas_remove") == 0)) {
-		send_file(ssl, stdin, buf, sizeof(buf));
-		send_eof(ssl);
+		send_file(ssl, fd, stdin, buf, sizeof(buf));
+		send_eof(ssl, fd);
 	}
 
 	while(1) {
-		ERR_clear_error();
-		if((r = SSL_read(ssl, buf, (int)sizeof(buf)-1)) <= 0) {
-			if(SSL_get_error(ssl, r) == SSL_ERROR_ZERO_RETURN) {
-				/* EOF */
-				break;
-			}
-			ssl_err("could not SSL_read");
+		if(remote_read(ssl, fd, buf, sizeof(buf)) == 0) {
+			break; /* EOF */
 		}
-		buf[r] = 0;
 		if(first_line && strncmp(buf, "error", 5) == 0) {
 			printf("%s", buf);
 			was_error = 1;
@@ -693,18 +769,18 @@ go(const char* cfgfile, char* svr, int quiet, int argc, char* argv[])
 
 	/* contact server */
 	fd = contact_server(svr, cfg, argc>0&&strcmp(argv[0],"status")==0);
-	ssl = setup_ssl(ctx, fd, cfg);
+	ssl = setup_ssl(ctx, fd);
 
 	/* send command */
-	ret = go_cmd(ssl, quiet, argc, argv);
+	ret = go_cmd(ssl, fd, quiet, argc, argv);
 
-	SSL_free(ssl);
+	if(ssl) SSL_free(ssl);
 #ifndef USE_WINSOCK
 	close(fd);
 #else
 	closesocket(fd);
 #endif
-	SSL_CTX_free(ctx);
+	if(ctx) SSL_CTX_free(ctx);
 	config_delete(cfg);
 	return ret;
 }

@@ -13,6 +13,7 @@
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSymbolELF.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
@@ -55,8 +56,7 @@ raw_ostream &operator<<(raw_ostream &OS, const MipsRelocationEntry &RHS) {
 
 class MipsELFObjectWriter : public MCELFObjectTargetWriter {
 public:
-  MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI, bool _isN64,
-                      bool IsLittleEndian);
+  MipsELFObjectWriter(uint8_t OSABI, bool HasRelocationAddend, bool Is64);
 
   ~MipsELFObjectWriter() override = default;
 
@@ -115,15 +115,15 @@ static InputIt find_best(InputIt First, InputIt Last, UnaryPredicate Predicate,
   for (InputIt I = First; I != Last; ++I) {
     unsigned Matched = Predicate(*I);
     if (Matched != FindBest_NoMatch) {
-      DEBUG(dbgs() << std::distance(First, I) << " is a match (";
-            I->print(dbgs()); dbgs() << ")\n");
+      LLVM_DEBUG(dbgs() << std::distance(First, I) << " is a match (";
+                 I->print(dbgs()); dbgs() << ")\n");
       if (Best == Last || BetterThan(*I, *Best)) {
-        DEBUG(dbgs() << ".. and it beats the last one\n");
+        LLVM_DEBUG(dbgs() << ".. and it beats the last one\n");
         Best = I;
       }
     }
     if (Matched == FindBest_PerfectMatch) {
-      DEBUG(dbgs() << ".. and it is unbeatable\n");
+      LLVM_DEBUG(dbgs() << ".. and it is unbeatable\n");
       break;
     }
   }
@@ -147,7 +147,8 @@ static unsigned getMatchingLoType(const ELFRelocationEntry &Reloc) {
   if (Type == ELF::R_MIPS16_HI16)
     return ELF::R_MIPS16_LO16;
 
-  if (Reloc.OriginalSymbol->getBinding() != ELF::STB_LOCAL)
+  if (Reloc.OriginalSymbol &&
+      Reloc.OriginalSymbol->getBinding() != ELF::STB_LOCAL)
     return ELF::R_MIPS_NONE;
 
   if (Type == ELF::R_MIPS_GOT16)
@@ -209,11 +210,9 @@ static void dumpRelocs(const char *Prefix, const Container &Relocs) {
 }
 #endif
 
-MipsELFObjectWriter::MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI,
-                                         bool _isN64, bool IsLittleEndian)
-    : MCELFObjectTargetWriter(_is64Bit, OSABI, ELF::EM_MIPS,
-                              /*HasRelocationAddend*/ _isN64,
-                              /*IsN64*/ _isN64) {}
+MipsELFObjectWriter::MipsELFObjectWriter(uint8_t OSABI,
+                                         bool HasRelocationAddend, bool Is64)
+    : MCELFObjectTargetWriter(Is64, OSABI, ELF::EM_MIPS, HasRelocationAddend) {}
 
 unsigned MipsELFObjectWriter::getRelocType(MCContext &Ctx,
                                            const MCValue &Target,
@@ -225,6 +224,8 @@ unsigned MipsELFObjectWriter::getRelocType(MCContext &Ctx,
   switch (Kind) {
   case Mips::fixup_Mips_NONE:
     return ELF::R_MIPS_NONE;
+  case FK_Data_1:
+    report_fatal_error("MIPS does not support one byte relocations");
   case Mips::fixup_Mips_16:
   case FK_Data_2:
     return IsPCRel ? ELF::R_MIPS_PC16 : ELF::R_MIPS_16;
@@ -282,7 +283,7 @@ unsigned MipsELFObjectWriter::getRelocType(MCContext &Ctx,
   case FK_TPRel_8:
     return ELF::R_MIPS_TLS_TPREL64;
   case FK_GPRel_4:
-    if (isN64()) {
+    if (is64Bit()) {
       unsigned Type = (unsigned)ELF::R_MIPS_NONE;
       Type = setRType((unsigned)ELF::R_MIPS_GPREL32, Type);
       Type = setRType2((unsigned)ELF::R_MIPS_64, Type);
@@ -329,11 +330,25 @@ unsigned MipsELFObjectWriter::getRelocType(MCContext &Ctx,
     Type = setRType3((unsigned)ELF::R_MIPS_HI16, Type);
     return Type;
   }
+  case Mips::fixup_MICROMIPS_GPOFF_HI: {
+    unsigned Type = (unsigned)ELF::R_MIPS_NONE;
+    Type = setRType((unsigned)ELF::R_MICROMIPS_GPREL16, Type);
+    Type = setRType2((unsigned)ELF::R_MICROMIPS_SUB, Type);
+    Type = setRType3((unsigned)ELF::R_MICROMIPS_HI16, Type);
+    return Type;
+  }
   case Mips::fixup_Mips_GPOFF_LO: {
     unsigned Type = (unsigned)ELF::R_MIPS_NONE;
     Type = setRType((unsigned)ELF::R_MIPS_GPREL16, Type);
     Type = setRType2((unsigned)ELF::R_MIPS_SUB, Type);
     Type = setRType3((unsigned)ELF::R_MIPS_LO16, Type);
+    return Type;
+  }
+  case Mips::fixup_MICROMIPS_GPOFF_LO: {
+    unsigned Type = (unsigned)ELF::R_MIPS_NONE;
+    Type = setRType((unsigned)ELF::R_MICROMIPS_GPREL16, Type);
+    Type = setRType2((unsigned)ELF::R_MICROMIPS_SUB, Type);
+    Type = setRType3((unsigned)ELF::R_MICROMIPS_LO16, Type);
     return Type;
   }
   case Mips::fixup_Mips_HIGHER:
@@ -382,6 +397,10 @@ unsigned MipsELFObjectWriter::getRelocType(MCContext &Ctx,
     return ELF::R_MICROMIPS_TLS_TPREL_LO16;
   case Mips::fixup_MICROMIPS_SUB:
     return ELF::R_MICROMIPS_SUB;
+  case Mips::fixup_MICROMIPS_HIGHER:
+    return ELF::R_MICROMIPS_HIGHER;
+  case Mips::fixup_MICROMIPS_HIGHEST:
+    return ELF::R_MICROMIPS_HIGHEST;
   }
 
   llvm_unreachable("invalid fixup kind!");
@@ -434,15 +453,15 @@ void MipsELFObjectWriter::sortRelocs(const MCAssembler &Asm,
     return;
 
   // Sort relocations by the address they are applied to.
-  std::sort(Relocs.begin(), Relocs.end(),
-            [](const ELFRelocationEntry &A, const ELFRelocationEntry &B) {
-              return A.Offset < B.Offset;
-            });
+  llvm::sort(Relocs.begin(), Relocs.end(),
+             [](const ELFRelocationEntry &A, const ELFRelocationEntry &B) {
+               return A.Offset < B.Offset;
+             });
 
   std::list<MipsRelocationEntry> Sorted;
   std::list<ELFRelocationEntry> Remainder;
 
-  DEBUG(dumpRelocs("R: ", Relocs));
+  LLVM_DEBUG(dumpRelocs("R: ", Relocs));
 
   // Separate the movable relocations (AHL relocations using the high bits) from
   // the immobile relocations (everything else). This does not preserve high/low
@@ -453,7 +472,7 @@ void MipsELFObjectWriter::sortRelocs(const MCAssembler &Asm,
                });
 
   for (auto &R : Remainder) {
-    DEBUG(dbgs() << "Matching: " << R << "\n");
+    LLVM_DEBUG(dbgs() << "Matching: " << R << "\n");
 
     unsigned MatchingType = getMatchingLoType(R);
     assert(MatchingType != ELF::R_MIPS_NONE &&
@@ -488,7 +507,7 @@ void MipsELFObjectWriter::sortRelocs(const MCAssembler &Asm,
     Sorted.insert(InsertionPoint, R)->Matched = true;
   }
 
-  DEBUG(dumpRelocs("S: ", Sorted));
+  LLVM_DEBUG(dumpRelocs("S: ", Sorted));
 
   assert(Relocs.size() == Sorted.size() && "Some relocs were not consumed");
 
@@ -656,11 +675,11 @@ bool MipsELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
   }
 }
 
-MCObjectWriter *llvm::createMipsELFObjectWriter(raw_pwrite_stream &OS,
-                                                uint8_t OSABI,
-                                                bool IsLittleEndian,
-                                                bool Is64Bit) {
-  MCELFObjectTargetWriter *MOTW =
-      new MipsELFObjectWriter(Is64Bit, OSABI, Is64Bit, IsLittleEndian);
-  return createELFObjectWriter(MOTW, OS, IsLittleEndian);
+std::unique_ptr<MCObjectTargetWriter>
+llvm::createMipsELFObjectWriter(const Triple &TT, bool IsN32) {
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TT.getOS());
+  bool IsN64 = TT.isArch64Bit() && !IsN32;
+  bool HasRelocationAddend = TT.isArch64Bit();
+  return llvm::make_unique<MipsELFObjectWriter>(OSABI, HasRelocationAddend,
+                                                IsN64);
 }

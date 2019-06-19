@@ -38,7 +38,7 @@ EOT
 use Tie::Handle; # loads Tie::StdHandle
 use Search::Dict;
 
-open(DICT, "+>dict-$$") or die "Can't create dict-$$: $!";
+open(DICT, '+>', "dict-$$") or die "Can't create dict-$$: $!";
 binmode DICT;			# To make length expected one.
 print DICT $DICT;
 

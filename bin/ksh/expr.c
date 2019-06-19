@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.32 2015/12/30 09:07:00 tedu Exp $	*/
+/*	$OpenBSD: expr.c,v 1.34 2019/02/20 23:59:17 schwarze Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -148,7 +148,7 @@ static struct tbl *intvar(Expr_state *, struct tbl *);
  * parse and evaluate expression
  */
 int
-evaluate(const char *expr, long int *rval, int error_ok, bool arith)
+evaluate(const char *expr, int64_t *rval, int error_ok, bool arith)
 {
 	struct tbl v;
 	int ret;
@@ -170,6 +170,7 @@ v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok,
 	struct tbl *v;
 	Expr_state curstate;
 	Expr_state * const es = &curstate;
+	int save_disable_subst;
 	int i;
 
 	/* save state to allow recursive calls */
@@ -180,8 +181,10 @@ v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok,
 	curstate.val = NULL;
 
 	newenv(E_ERRH);
+	save_disable_subst = disable_subst;
 	i = sigsetjmp(genv->jbuf, 0);
 	if (i) {
+		disable_subst = save_disable_subst;
 		/* Clear EXPRINEVAL in of any variables we were playing with */
 		if (curstate.evaling)
 			curstate.evaling->flag &= ~EXPRINEVAL;
@@ -280,7 +283,7 @@ evalexpr(Expr_state *es, enum prec prec)
 {
 	struct tbl *vl, *vr = NULL, *vasn;
 	enum token op;
-	long res = 0;
+	int64_t res = 0;
 
 	if (prec == P_PRIMARY) {
 		op = es->tok;
@@ -588,7 +591,9 @@ intvar(Expr_state *es, struct tbl *vp)
 			evalerr(es, ET_RECURSIVE, vp->name);
 		es->evaling = vp;
 		vp->flag |= EXPRINEVAL;
+		disable_subst++;
 		v_evaluate(vq, str_val(vp), KSH_UNWIND_ERROR, es->arith);
+		disable_subst--;
 		vp->flag &= ~EXPRINEVAL;
 		es->evaling = NULL;
 	}

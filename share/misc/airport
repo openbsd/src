@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.66 2017/08/05 13:22:57 fcambus Exp $
+#	$OpenBSD: airport,v 1.73 2019/04/03 19:58:04 benno Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -134,10 +134,10 @@ AYQ:Connellan, Ayers Rock, Northern Territory, Australia
 AYT:Antalya, Antalya, Turkey
 AZO:Kalamazoo/Battle Creek International, Kalamazoo, Michigan, USA
 BAH:Bahrain International, Bahrain, Bahrain
-BAK:Heydar Aliyev, Baku, Azerbaijan
 BAL:Batman, Batman, Turkey
 BAQ:Ernesto Cortissoz International, Barranquilla, Colombia
 BAX:Barnaul, Russia
+BBA:Balmaceda, Aysen, Chile
 BBI:Biju Patnaik, Bhubaneswar, India
 BBK:Kasane, Kasane, Botswana
 BBU:Bucharest Aurel Vlaicu/Baneasa, Bucharest, Romania
@@ -332,8 +332,9 @@ CID:Cedar Rapids/Iowa City, Iowa, USA
 CIU:Chippewa County International, Sault Ste Marie, Michigan, USA
 CIX:Cornel Ruiz, Chiclayo, Peru
 CJB:Peelamedu, Coimbatore, India
+CJJ:Cheongju International, South Korea
 CJS:International Abraham Gonzalez, Ciudad Juarez, Chihuahua, Mexico
-CJU:Cheju, Cheju, South Korea
+CJU:Jeju International, South Korea
 CKB:North Central West Virginia, Bridgeport, West Virginia, USA
 CKC:Cherkasy International, Cherkasy, Ukraine
 CKS:International / Brasilia Brazil, Carajas, Para, Brazil
@@ -603,6 +604,7 @@ GLD:Renner Field, Goodland, Kansas, USA
 GLF:Golfito, Costa Rica
 GLS:Scholes Field, Galveston, Texas, USA
 GLV:Golovin, Alaska, USA
+GMP:Gimpo International, Seoul, South Korea
 GNB:St Geoirs, Grenoble, France
 GND:Pt Saline, St Georges/Grenada, Grenada
 GNV:Jr Alison Municipal, Gainesville, Florida, USA
@@ -642,6 +644,7 @@ GWD:Gwadar, Pakistan
 GWT:Westerland, Germany
 GWY:Carnmore, Galway, Ireland
 GXQ:Teniente Vidal, Coyhaique, Chile
+GYD:Heydar Aliyev, Baku, Azerbaijan
 GYE:Simon Bolivar, Guayaquil, Ecuador
 GYM:Guaymas, Sonora, Mexico
 GYY:Gary, Indiana, USA
@@ -667,6 +670,7 @@ HGR:Washington County Regional, Hagerstown, Maryland, USA
 HHH:Municipal, Hilton Head, South Carolina, USA
 HHN:Frankfurt-Hahn, Kirchberg, Germany
 HIJ:Hiroshima, Japan
+HIN:Sacheon, South Korea
 HIR:Henderson International, Honiara/Guadalcanal, Solomon Islands
 HIS:Hayman Island, Queensland, Australia
 HKD:Hakodate, Japan
@@ -727,6 +731,7 @@ IAD:Washington Dulles, Virginia, USA
 IAH:Houston Intercontinental, Texas, USA
 IAS:Iasi, Romania
 IBZ:Ibiza, Spain
+ICN:Incheon International, Seoul, South Korea
 ICT:Wichita Mid-Continent, Kansas, USA
 IDA:Idaho Falls, Idaho, USA
 IEV:Kyiv Zhulyany International, Kyiv, Ukraine
@@ -879,7 +884,7 @@ KOI:Kirkwall / Orkney Island, Scotland, United Kingdom
 KOJ:Kagoshima, Japan
 KOK:Kruunupyy, Kokkola/Pietarsaari, Finland
 KPN:Kipnuk, Alaska, USA
-KPO:Na, Pohang, South Korea
+KPO:Pohang, South Korea
 KRE:Kirundo, Burundi
 KRF:Kramfors, Sweden
 KRK:Balice, Krakow, Poland
@@ -907,12 +912,13 @@ KUM:Yakushima, Japan
 KUN:Kaunas, Lithuania
 KUO:Kuopio, Finland
 KUS:Kulusuk Metropolitan Area, Greenland
-KUV:Kunsan, South Korea
+KUV:Gunsan, South Korea
 KVA:Kavala, Greece
 KVB:Skovde, Sweden
 KWA:Kwajalein, Marshall Islands
 KWG:Kryvyi Rih International, Dnipropetrovs'k, Ukraine
 KWI:Kuwait International
+KWJ:Gwangju, South Korea
 KWL:Guilin, China
 KXK:Khurba, Komsomolsk-on-Amur, Russia
 KZI:Kozani, Greece
@@ -999,6 +1005,7 @@ LRH:Laleu, La Rochelle, France
 LRM:Casa De Campo, Dominican Republic
 LRS:Leros, Greece
 LRU:Las Cruces, New Mexico, USA
+LRV:El Gran Roque, Los Roques, Venezuela
 LSC:La Serena, Chile
 LSE:La Crosse Municipal, Wisconsin, USA
 LSI:Shetland Islands /Shetland Isd, Scotland, United Kingdom
@@ -1071,6 +1078,7 @@ MES:Polonia, Medan, Indonesia
 MEX:Juarez International, Mexico City, Distrito Federal, Mexico
 MEY:Meghauli, Nepal
 MFE:Mc Allen/Mission, Texas, USA
+MFM:Macau
 MFN:Milford Sound, New Zealand
 MFW:All Airports around Miami, Ft. Lauderdale and West Palm Beach, Florida, USA
 MGA:Managua, Nicaragua
@@ -1154,6 +1162,7 @@ MVD:Carrasco, Montevideo, Uruguay
 MVN:Mount Vernon Outland, Illinois, USA
 MVY:Marthas Vineyard, Massachusetts, USA
 MWA:Marion, Illinois, USA
+MWX:Muan International, South Korea
 MXL:Rodolfo Sanchez Taboada, Mexicali, Baja California, Mexico
 MXP:Malpensa, Milan, Italy
 MXX:Mora, Dalecarlia, Sweden
@@ -1181,6 +1190,7 @@ NDJ:N'djamena, N Djamena, Chad
 NEC:Necochea, Buenos Aires, Argentina
 NER:Chulman, Neryungri, Russia
 NEV:Nevis, Leeward Islands, Saint Kitts And Nevis
+NGD:Anegada, Virgin Islands (British)
 NGO:Komaki, Nagoya, Japan
 NGS:Nagasaki, Japan
 NJC:Nizhnevartovsk, Russia
@@ -1218,7 +1228,7 @@ ODS:Odessa International, Odessa, Ukraine
 ODW:Oak Harbor, Washington, USA
 OER:Ornskoldsvik, Sweden
 OFK:Norfolk Karl Stefan Memorial, Nebraska, USA
-OGG:Kahului, HI
+OGG:Kahului, Hawaii, USA
 OGS:Ogdensburg, New York, USA
 OHD:Ohrid, Ohrid, Macedonia
 OIT:Oita, Japan
@@ -1226,7 +1236,7 @@ OKA:Naha Field, Okinawa, Ryukyu Islands, Japan
 OKC:Oklahoma City Will Rogers World, Oklahoma, USA
 OKJ:Okayama, Japan
 OLF:Wolf Point, Montana, USA
-OLM:Olympia, WA
+OLM:Olympia, Washington, USA
 OMA:Omaha Eppley Airfield, Nebraska, USA
 OME:Nome, Alaska, USA
 OMR:Oradea, Romania
@@ -1347,7 +1357,7 @@ POG:Port Gentil, Gabon
 POM:Jackson, Port Moresby, Papua New Guinea
 POP:La Union, Puerto Plata, Dominican Republic
 POR:Pori, Finland
-POS:Port Of Spain, Trinidad
+POS:Port of Spain, Trinidad and Tobago
 POU:Dutchess County, Poughkeepsie, New York, USA
 POZ:Lawica, Poznan, Poland
 PPG:Pago Pago International, American Samoa
@@ -1374,7 +1384,7 @@ PUB:Pueblo, Colorado, USA
 PUF:Pau Pyrenees, Pau, France
 PUJ:Punta Cana, Dominican Republic
 PUQ:Presidente Ibanez, Punta Arenas, Chile
-PUS:Kimhae, Pusan, South Korea
+PUS:Gimhae International, Busan, South Korea
 PUW:Pullman, Washington, USA
 PUY:Pula, Croatia (Hrvatska)
 PUZ:Puerto Cabezas, Nicaragua
@@ -1451,8 +1461,8 @@ RRG:Rodrigues Island, Mauritius
 RSA:Santa Rosa, La Pampa, Argentina
 RSD:Rock Sound, Bahamas
 RST:Rochester Municipal, Minnesota, USA
-RSU:Yosu, South Korea
-RSW:Ft. Meyers Southwest Florida Regional, USA
+RSU:Yeosu, South Korea
+RSW:Southwest Florida International, Florida, USA
 RTB:Roatan, Roatan, Honduras
 RTM:Rotterdam The Hague, Rotterdam, Netherlands
 RUH:King Khaled Intl, Riyadh, Saudi Arabia
@@ -1492,7 +1502,6 @@ SDU:Santos Dumont, Rio De Janeiro, Rio De Janeiro, Brazil
 SDX:Sedona, Arizona, USA
 SDY:Sidney, Montana, USA
 SEA:Seattle-Tacoma International, Washington, USA
-SEL:Kimpo International, Seoul, South Korea
 SEN:Southend, London, England, United Kingdom
 SEZ:Mahe Island Seychelles Intl, Mahe Island, Seychelles
 SFA:Sfax, Tunisia
@@ -1628,7 +1637,7 @@ SZX:Shenzhen, China
 SZZ:Goleniow, Szczecin, Poland
 TAB:Crown Point, Tobago, Trinidad And Tobago
 TAC:Dz Romualdez, Tacloban, Philippines
-TAE:Taegu, South Korea
+TAE:Daegu International, South Korea
 TAG:Tagbilaran, Philippines
 TAM:Tampico, Tamaulipas, Mexico
 TAP:Tapachula International, Chiapas, Mexico
@@ -1750,6 +1759,7 @@ ULN:Ulan Bator, Mongolia
 ULY:Ulyanovsk, Russia
 UME:Umea-Alvik, Sweden
 UMR:Woomera, South Australia, Australia
+UNI:Union Island, St. Vincent And The Grenadines
 UNT:Unst Shetland Islands, Scotland, United Kingdom
 UPG:Hasanudin, Ujung Pandang, Indonesia
 UPN:Uruapan, Michoacan, Mexico
@@ -1818,6 +1828,7 @@ WGE:Walgett, New South Wales, Australia
 WIC:Wick, Scotland, United Kingdom
 WIL:Wilson, Nairobi, Kenya
 WIN:Winton, Queensland, Australia
+WJU:Wonju, South Korea
 WLG:Wellington International, New Zealand
 WMH:Mountain Home, Arkansas, USA
 WMI:Nowy Dwor Mazowiecki, Warsaw, Poland
@@ -1861,7 +1872,6 @@ YDL:Dease Lake, British Columbia, Canada
 YDN:Dauphin, Manitoba, Canada
 YDQ:Dawson Creek, British Columbia, Canada
 YEA:All Airports around Edmonton, Alberta, Canada
-YEC:Yechon, South Korea
 YEG:Edmonton International, Alberta, Canada
 YEL:Elliot Lake, Ontario, Canada
 YEV:Inuvik, Northwest Territories, Canada
@@ -1907,6 +1917,7 @@ YMY:Victoria STOLport, Montreal, Quebec, Canada
 YNA:Natashquan, Quebec, Canada
 YND:Gatineau, Quebec, Canada
 YNG:Youngstown, Ohio, USA
+YNY:Yangyang International, South Korea
 YOJ:Footner Lake Muncpl, High Level, Alberta, Canada
 YOO:Oshawa, Ontario, Canada
 YOP:Rainbow Lake, Rainbow Lake, Alberta, Canada
@@ -1951,7 +1962,7 @@ YTH:Thompson, Manitoba, Canada
 YTO:All Airports around Toronto, Ontario, Canada
 YTS:Timmins, Ontario, Canada
 YTZ:Toronto-City Centre, Ontario, Canada
-YUL:Montreal Dorval International, Quebec, Canada
+YUL:Montreal-Pierre Elliott Trudeau International, Quebec, Canada
 YUM:Yuma, Arizona, USA
 YUY:Rouyn, Quebec, Canada
 YVA:Moroni (Hahaya/Iconi)Comoros

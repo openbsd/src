@@ -1,12 +1,19 @@
 ESC-IGNORE(1)               General Commands Manual              ESC-IGNORE(1)
 
+
+
 NNAAMMEE
-     eesscc--iiggnnoorree - ignored roff escape sequences
+       esc-ignore - ignored roff escape sequences
 
 DDEESSCCRRIIPPTTIIOONN
-     multiform: abcd
-     quoted: abc
-     sizes: abcdef
-     signed sizes: abcdef
+       closing parenthesis: abc
+       comma: abc
+       slash: abc
+       multiform: abcd
+       quoted: abc
+       sizes: abcdef
+       signed sizes: abcdef
 
-OpenBSD                          July 4, 2017                          OpenBSD
+
+
+OpenBSD                        December 15, 2018                 ESC-IGNORE(1)

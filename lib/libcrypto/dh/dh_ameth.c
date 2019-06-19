@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.14 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.17 2018/08/24 20:22:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -78,8 +78,8 @@ dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	const unsigned char *p, *pm;
 	int pklen, pmlen;
 	int ptype;
-	void *pval;
-	ASN1_STRING *pstr;
+	const void *pval;
+	const ASN1_STRING *pstr;
 	X509_ALGOR *palg;
 	ASN1_INTEGER *public_key = NULL;
 	DH *dh = NULL;
@@ -180,14 +180,14 @@ err:
  */
 	
 static int
-dh_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
 	const unsigned char *p, *pm;
 	int pklen, pmlen;
 	int ptype;
-	void *pval;
-	ASN1_STRING *pstr;
-	X509_ALGOR *palg;
+	const void *pval;
+	const ASN1_STRING *pstr;
+	const X509_ALGOR *palg;
 	ASN1_INTEGER *privkey = NULL;
 	DH *dh = NULL;
 

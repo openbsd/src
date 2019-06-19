@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.53 2017/01/21 11:32:04 guenther Exp $	*/
+/*	$OpenBSD: show.c,v 1.55 2018/08/31 15:18:02 yasuoka Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -138,7 +138,6 @@ p_rttables(int af, u_int tableid)
 	char *buf = NULL, *next, *lim = NULL;
 	size_t needed;
 	int mib[7], mcnt;
-	struct sockaddr *sa;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
@@ -159,7 +158,6 @@ p_rttables(int af, u_int tableid)
 			rtm = (struct rt_msghdr *)next;
 			if (rtm->rtm_version != RTM_VERSION)
 				continue;
-			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			p_rtentry(rtm);
 		}
 	}
@@ -492,8 +490,6 @@ routename4(in_addr_t in)
 	struct in_addr	 ina;
 	struct hostent	*hp;
 
-	if (in == INADDR_ANY)
-		cp = "default";
 	if (!cp && !nflag) {
 		if ((hp = gethostbyaddr((char *)&in,
 		    sizeof(in), AF_INET)) != NULL) {

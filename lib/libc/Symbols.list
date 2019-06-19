@@ -35,6 +35,7 @@ _exit
 _thread_canceled
 _thread_sys___get_tcb
 _thread_sys___getcwd
+_thread_sys___realpath
 _thread_sys___semctl
 _thread_sys___set_tcb
 _thread_sys___syscall
@@ -129,7 +130,6 @@ _thread_sys_listen
 _thread_sys_lseek
 _thread_sys_lstat
 _thread_sys_madvise
-_thread_sys_mincore
 _thread_sys_minherit
 _thread_sys_mkdir
 _thread_sys_mkdirat
@@ -231,6 +231,7 @@ _thread_sys_umask
 _thread_sys_unlink
 _thread_sys_unlinkat
 _thread_sys_unmount
+_thread_sys_unveil
 _thread_sys_utimensat
 _thread_sys_utimes
 _thread_sys_utrace
@@ -324,7 +325,6 @@ listen
 lseek
 lstat
 madvise
-mincore
 minherit
 mkdir
 mkdirat
@@ -413,6 +413,7 @@ sigaltstack
 sigpending
 sigprocmask
 sigsuspend
+sigwait
 socket
 socketpair
 stat
@@ -428,12 +429,14 @@ timer_delete
 timer_getoverrun
 timer_gettime
 timer_settime
+timespec_get
 thrkill
 truncate
 umask
 unlink
 unlinkat
 unmount
+unveil
 utimensat
 utimes
 utrace
@@ -661,6 +664,7 @@ getpwuid_shadow
 getttyent
 getttynam
 getusershell
+gid_from_group
 glob
 globfree
 group_from_gid
@@ -796,6 +800,7 @@ ttyname
 ttyname_r
 ttyslot
 ualarm
+uid_from_user
 uname
 unvis
 user_from_uid
@@ -1473,6 +1478,7 @@ __isthreaded
 a64l
 abort
 abs
+aligned_alloc
 atexit
 atof
 atoi
@@ -1480,6 +1486,7 @@ atol
 atoll
 bsearch
 calloc
+calloc_conceal
 div
 ecvt
 exit
@@ -1521,6 +1528,7 @@ lldiv
 lsearch
 malloc
 malloc_options
+malloc_conceal
 _malloc_init
 mergesort
 optarg

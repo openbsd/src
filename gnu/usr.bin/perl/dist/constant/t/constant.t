@@ -1,7 +1,7 @@
 #!./perl -T
 
 use warnings;
-use vars qw{ @warnings $fagwoosh $putt $kloong};
+our ( @warnings, $fagwoosh, $putt, $kloong );
 BEGIN {				# ...and save 'em for later
     $SIG{'__WARN__'} = sub { push @warnings, @_ }
 }
@@ -92,11 +92,13 @@ is ZERO3, '0.0';
 cmp_ok(abs(PI - 3.1416), '<', 0.0001);
 is Other::PI, 3.141;
 
-use constant E2BIG => $! = 7;
-cmp_ok E2BIG, '==', 7;
-# This is something like "Arg list too long", but the actual message
-# text may vary, so we can't test much better than this.
-cmp_ok length(E2BIG), '>', 6;
+# Test that constant.pm can create a dualvar out of $!
+use constant A_DUALVAR_CONSTANT => $! = 7;
+cmp_ok A_DUALVAR_CONSTANT, '==', 7;
+# Make sure we have an error message string.  It does not
+# matter that 7 means different things on different platforms.
+# If this test fails, then either constant.pm or $! is broken:
+cmp_ok length(A_DUALVAR_CONSTANT), '>', 6;
 
 is @warnings, 0 or diag join "\n- ", "unexpected warning:", @warnings;
 @warnings = ();		# just in case

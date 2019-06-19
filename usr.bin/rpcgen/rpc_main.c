@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.33 2017/01/21 08:33:07 krw Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.34 2018/04/26 12:42:51 guenther Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 
 /*
@@ -38,8 +38,6 @@
 
 #define RPCGEN_VERSION	"199506"/* This program's version (year & month) */
 
-#include <sys/types.h>
-#include <sys/file.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

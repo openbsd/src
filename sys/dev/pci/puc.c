@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.24 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: puc.c,v 1.28 2018/12/02 21:30:21 kettenis Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -64,6 +64,8 @@
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
+
+#include "com.h"
 
 struct puc_pci_softc {
 	struct puc_softc	sc_psc;
@@ -164,6 +166,7 @@ puc_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (sc->sc_bar_mappings[i].mapped)
 			continue;
 
+#if NCOM > 0
 		/*
 		 * If a port on this card is used as serial console,
 		 * mapping the associated BAR will fail because the
@@ -183,6 +186,7 @@ puc_pci_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_bar_mappings[i].mapped = 1;
 			continue;
 		}
+#endif
 
 		printf("%s: couldn't map BAR at offset 0x%lx\n",
 		    sc->sc_dev.dv_xname, (long)bar);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmboot.c,v 1.4 2017/08/29 21:10:20 deraadt Exp $	*/
+/*	$OpenBSD: vmboot.c,v 1.7 2018/11/26 10:39:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -35,6 +35,7 @@
 
 #include "vmd.h"
 #include "vmboot.h"
+#include "virtio.h"
 
 int	 vmboot_bootconf(char *, size_t, struct vmboot_params *);
 int	 vmboot_bootcmd(char *, struct vmboot_params *);
@@ -243,21 +244,22 @@ vmboot_strategy(void *devdata, int rw,
     daddr32_t blk, size_t size, void *buf, size_t *rsize)
 {
 	struct vmboot_params	*vmboot = devdata;
+	struct virtio_backing	*vfp = vmboot->vbp_arg;
 	ssize_t			 rlen;
 
-	if (vmboot->vbp_fd == -1)
+	if (vfp == NULL)
 		return (EIO);
 
 	switch (rw) {
 	case F_READ:
-		rlen = pread(vmboot->vbp_fd, buf, size,
+		rlen = vfp->pread(vfp->p, buf, size,
 		    (blk + vmboot->vbp_partoff) * DEV_BSIZE);
 		if (rlen == -1)
 			return (errno);
 		*rsize = (size_t)rlen;
 		break;
 	case F_WRITE:
-		rlen = pwrite(vmboot->vbp_fd, buf, size,
+		rlen = vfp->pwrite(vfp->p, buf, size,
 		    (blk + vmboot->vbp_partoff) * DEV_BSIZE);
 		if (rlen == -1)
 			return (errno);
@@ -383,31 +385,54 @@ vmboot_loadfile(struct open_file *f, char *file, size_t *size)
 }
 
 FILE *
-vmboot_open(int kernel_fd, int disk_fd, struct vmboot_params *vmboot)
+vmboot_open(int kernel_fd, int *disk_fd, int nfd, unsigned int disk_type,
+    struct vmboot_params *vmboot)
 {
 	char			 file[PATH_MAX];
 	char			*buf = NULL;
 	size_t			 size;
 	FILE			*fp = NULL;
 	struct disklabel	 dl;
+	struct virtio_backing	*vfp;
+	off_t			 sz;
 
 	memset(vmboot, 0, sizeof(*vmboot));
+	memset(&vfp, 0, sizeof(vfp));
 	memset(&dl, 0, sizeof(dl));
 
 	/* First open kernel directly if specified by fd */
 	if (kernel_fd != -1)
 		return (fdopen(kernel_fd, "r"));
 
-	if (disk_fd == -1)
+	if (disk_fd == NULL || nfd < 1)
 		return (NULL);
 
-	vmboot->vbp_fd = disk_fd;
+	if ((vfp = calloc(1, sizeof(*vfp))) == NULL)
+		goto fail;
+	vmboot->vbp_type = disk_type;
+	vmboot->vbp_arg = vfp;
+
+	switch (vmboot->vbp_type) {
+	case VMDF_RAW:
+		if (virtio_raw_init(vfp, &sz, disk_fd, nfd) == -1) {
+			log_debug("%s: could not open raw disk", __func__);
+			goto fail;
+		}
+		break;
+	case VMDF_QCOW2:
+		if (virtio_qcow2_init(vfp, &sz, disk_fd, nfd) == -1) {
+			log_debug("%s: could not open qcow2 disk", __func__);
+			goto fail;
+		}
+		break;
+	}
+
 	vmboot_file.f_devdata = vmboot;
 
 	if ((vmboot->vbp_partoff =
 	    vmboot_findopenbsd(&vmboot_file, 0, &dl)) == -1) {
 		log_debug("%s: could not find openbsd partition", __func__);
-		return (NULL);
+		goto fail;
 	}
 
 	/* Set the default kernel boot device and image path */
@@ -421,7 +446,7 @@ vmboot_open(int kernel_fd, int disk_fd, struct vmboot_params *vmboot)
 	if ((buf = vmboot_loadfile(&vmboot_file, file, &size)) != NULL) {
 		if (vmboot_bootconf(buf, size, vmboot) == -1) {
 			free(buf);
-			return (NULL);
+			goto fail;
 		}
 		free(buf);
 	}
@@ -429,11 +454,11 @@ vmboot_open(int kernel_fd, int disk_fd, struct vmboot_params *vmboot)
 	/* Parse boot device and find partition in disk label */
 	if ((vmboot->vbp_bootdev =
 	    vmboot_bootdevice(vmboot->vbp_device)) == 0)
-		return (NULL);
+		goto fail;
 	if (B_PARTITION(vmboot->vbp_bootdev) > dl.d_npartitions) {
 		log_debug("%s: invalid boot partition: %s",
 		    __func__, vmboot->vbp_device);
-		return (NULL);
+		goto fail;
 	}
 	vmboot->vbp_partoff =
 	    dl.d_partitions[B_PARTITION(vmboot->vbp_bootdev)].p_offset;
@@ -443,25 +468,34 @@ vmboot_open(int kernel_fd, int disk_fd, struct vmboot_params *vmboot)
 	    vmboot->vbp_image, &size)) == NULL) {
 		log_debug("%s: failed to open kernel %s:%s", __func__,
 		    vmboot->vbp_device, vmboot->vbp_image);
-		return (NULL);
+		goto fail;
 	}
-	vmboot->vbp_arg = buf;
+	vmboot->vbp_buf = buf;
 
 	if ((fp = fmemopen(buf, size, "r")) == NULL) {
 		log_debug("%s: failed to open memory stream", __func__);
 		free(buf);
-		vmboot->vbp_arg = NULL;
+		vmboot->vbp_buf = NULL;
 	} else {
 		log_debug("%s: kernel %s:%s", __func__,
 		    vmboot->vbp_device, vmboot->vbp_image);
 	}
 
 	return (fp);
+  fail:
+	vmboot_close(fp, vmboot);
+	return (NULL);
 }
 
 void
 vmboot_close(FILE *fp, struct vmboot_params *vmboot)
 {
-	fclose(fp);
+	struct virtio_backing	*vfp = vmboot->vbp_arg;
+
+	if (fp != NULL)
+		fclose(fp);
+	if (vfp != NULL)
+		vfp->close(vfp->p, 1);
 	free(vmboot->vbp_arg);
+	free(vmboot->vbp_buf);
 }

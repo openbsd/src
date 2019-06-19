@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_init_ssl.3,v 1.2 2018/03/24 00:55:37 schwarze Exp $
+.\" $OpenBSD: OPENSSL_init_ssl.3,v 1.4 2019/06/14 13:41:31 schwarze Exp $
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 24 2018 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt OPENSSL_INIT_SSL 3
 .Os
 .Sh NAME
@@ -27,13 +27,27 @@
 .Fa "const void *dummy"
 .Fc
 .Sh DESCRIPTION
+This function is deprecated.
+It is never useful for any application program to call it explicitly.
+The library automatically calls it internally with an
+.Fa options
+argument of 0 whenever needed.
+It is safest to assume that any function may do so.
+.Pp
+To enable or disable the standard configuration file, instead use
+.Xr OPENSSL_config 3
+or
+.Xr OPENSSL_no_config 3 ,
+respectively.
+To load a non-standard configuration file, refer to
+.Xr CONF_modules_load_file 3 .
+.Pp
 .Fn OPENSSL_init_ssl
 calls
-.Xr OPENSSL_init_crypto 3
-and also allocates various resources used internally by the ssl library.
-.Pp
-Calling it is never useful because it is automatically called
-internally when needed.
+.Xr OPENSSL_init_crypto 3 ,
+.Xr SSL_load_error_strings 3 ,
+and
+.Xr SSL_library_init 3 .
 .Pp
 The
 .Fa options
@@ -50,7 +64,8 @@ none of the calls except the first one have any effect.
 is intended to return 1 on success or 0 on error.
 .Sh SEE ALSO
 .Xr CONF_modules_load_file 3 ,
-.Xr OPENSSL_init_crypto 3
+.Xr OPENSSL_config 3 ,
+.Xr ssl 3
 .Sh HISTORY
 .Fn OPENSSL_init_ssl
 first appeared in OpenSSL 1.1.0 and has been available since

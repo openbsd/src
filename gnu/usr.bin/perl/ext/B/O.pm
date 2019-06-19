@@ -1,16 +1,18 @@
 package O;
 
-our $VERSION = '1.01';
+our $VERSION = '1.03';
 
-use B qw(minus_c save_BEGINs);
-use Carp;
+use B ();
+
+our $BEGIN_output;
+our $saveout_fh;
 
 sub import {
     my ($class, @options) = @_;
     my ($quiet, $veryquiet) = (0, 0);
     if ($options[0] eq '-q' || $options[0] eq '-qq') {
 	$quiet = 1;
-	open (SAVEOUT, ">&STDOUT");
+	open ($saveout_fh, ">&", STDOUT);
 	close STDOUT;
 	open (STDOUT, ">", \$O::BEGIN_output);
 	if ($options[0] eq '-qq') {
@@ -21,15 +23,15 @@ sub import {
     my $backend = shift (@options);
     eval q[
 	BEGIN {
-	    minus_c;
-	    save_BEGINs;
+	    B::minus_c;
+	    B::save_BEGINs;
 	}
 
 	CHECK {
 	    if ($quiet) {
 		close STDOUT;
-		open (STDOUT, ">&SAVEOUT");
-		close SAVEOUT;
+		open (STDOUT, ">&", $saveout_fh);
+		close $saveout_fh;
 	    }
 
 	    # Note: if you change the code after this 'use', please
@@ -37,10 +39,6 @@ sub import {
 	    # "fragile kludge") so that its output still looks
 	    # nice. Thanks. --smcc
 	    use B::].$backend.q[ ();
-	    if ($@) {
-		croak "use of backend $backend failed: $@";
-	    }
-
 
 	    my $compilesub = &{"B::${backend}::compile"}(@options);
 	    if (ref($compilesub) ne "CODE") {
@@ -54,7 +52,11 @@ sub import {
 	    close STDERR if $veryquiet;
 	}
     ];
-    die $@ if $@;
+    if ($@) {
+        my $msg = "$@";
+        require Carp;
+        Carp::croak("Loading compiler backend 'B::$backend' failed: $msg");
+    }
 }
 
 1;

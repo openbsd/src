@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.89 2017/11/29 22:51:01 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.101 2019/06/10 14:38:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -25,7 +25,10 @@
 
 #include <sys/timeout.h>
 #include <sys/rwlock.h>
-#include <machine/biosvar.h>
+
+#include <machine/bus.h>
+
+#include <dev/pci/pcivar.h>
 
 #include "acpipwrres.h"
 
@@ -56,14 +59,16 @@ struct acpi_attach_args {
 	char		*aaa_name;
 	bus_space_tag_t	 aaa_iot;
 	bus_space_tag_t	 aaa_memt;
+	bus_dma_tag_t	 aaa_dmat;
 	void		*aaa_table;
 	struct aml_node *aaa_node;
 	const char	*aaa_dev;
+	const char	*aaa_cdev;
 };
 
 struct acpi_mem_map {
 	vaddr_t		 baseva;
-	u_int8_t	*va;
+	uint8_t		*va;
 	size_t		 vsize;
 	paddr_t		 pa;
 };
@@ -72,7 +77,7 @@ struct acpi_q {
 	SIMPLEQ_ENTRY(acpi_q)	 q_next;
 	int			 q_id;
 	void			*q_table;
-	u_int8_t		 q_data[0];
+	uint8_t			 q_data[0];
 };
 
 struct acpi_taskq {
@@ -136,9 +141,9 @@ typedef SIMPLEQ_HEAD(, acpi_wakeq) acpi_wakeqhead_t;
 #define ACPI_SST_SLEEP_CONTEXT	4
 
 struct acpi_parsestate {
-	u_int8_t		*start;
-	u_int8_t		*end;
-	u_int8_t		*pos;
+	uint8_t			*start;
+	uint8_t			*end;
+	uint8_t			*pos;
 };
 
 struct acpi_reg_map {
@@ -203,10 +208,7 @@ struct acpi_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_tag_t		sc_memt;
-#if 0
-	bus_space_tag_t		sc_pcit;
-	bus_space_tag_t		sc_smbust;
-#endif
+	bus_dma_tag_t		sc_dmat;
 
 	/*
 	 * First-level ACPI tables
@@ -242,8 +244,8 @@ struct acpi_softc {
 	struct gpe_block	*gpe_table;
 
 	int			sc_threadwaiting;
-	u_int32_t		sc_gpe_sts;
-	u_int32_t		sc_gpe_en;
+	uint32_t		sc_gpe_sts;
+	uint32_t		sc_gpe_en;
 	struct acpi_thread	*sc_thread;
 
 	struct aml_node		*sc_tts;
@@ -262,7 +264,8 @@ struct acpi_softc {
 
 	struct timeout		sc_dev_timeout;
 
-	int			sc_revision;
+	int			sc_major;
+	int			sc_minor;
 
 	int			sc_pse;		/* passive cooling enabled */
 
@@ -296,14 +299,22 @@ struct acpi_dev_rank {
 #define ACPI_IOC_SETSLEEPSTATE	_IOW('A', 2, int)
 
 #if defined(_KERNEL)
+
 struct   acpi_gas;
-int	 acpi_map_address(struct acpi_softc *, struct acpi_gas *, bus_addr_t, bus_size_t,
-			  bus_space_handle_t *, bus_space_tag_t *);
+int	 acpi_map_address(struct acpi_softc *, struct acpi_gas *, bus_addr_t,
+	     bus_size_t, bus_space_handle_t *, bus_space_tag_t *);
 
 int	 acpi_map(paddr_t, size_t, struct acpi_mem_map *);
 void	 acpi_unmap(struct acpi_mem_map *);
+
+int	 acpi_bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	     bus_space_handle_t *);
+void	 acpi_bus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+
+struct	 bios_attach_args;
 int	 acpi_probe(struct device *, struct cfdata *, struct bios_attach_args *);
 u_int	 acpi_checksum(const void *, size_t);
+void	 acpi_attach_common(struct acpi_softc *, paddr_t);
 void	 acpi_attach_machdep(struct acpi_softc *);
 int	 acpi_interrupt(void *);
 void	 acpi_powerdown(void);
@@ -333,14 +344,15 @@ void acpi_wakeup(void *);
 int acpi_gasio(struct acpi_softc *, int, int, uint64_t, int, int, void *);
 
 void	acpi_register_gpio(struct acpi_softc *, struct aml_node *);
+void	acpi_register_gsb(struct acpi_softc *, struct aml_node *);
 
 int	acpi_set_gpehandler(struct acpi_softc *, int,
 	    int (*)(struct acpi_softc *, int, void *), void *, int);
-void	acpi_enable_gpe(struct acpi_softc *, u_int32_t);
+void	acpi_enable_gpe(struct acpi_softc *, uint32_t);
 
 int	acpiec_intr(struct acpiec_softc *);
-void	acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
-void	acpiec_write(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
+void	acpiec_read(struct acpiec_softc *, uint8_t, int, uint8_t *);
+void	acpiec_write(struct acpiec_softc *, uint8_t, int, uint8_t *);
 void	acpiec_handle_events(struct acpiec_softc *);
 
 #if NACPIPWRRES > 0
@@ -354,8 +366,12 @@ void	acpi_write_pmreg(struct acpi_softc *, int, int, int);
 void	acpi_poll(void *);
 void	acpi_sleep(int, char *);
 
+int	acpi_matchcls(struct acpi_attach_args *, int, int, int);
 int	acpi_matchhids(struct acpi_attach_args *, const char *[], const char *);
 int	acpi_parsehid(struct aml_node *, void *, char *, char *, size_t);
+int64_t	acpi_getsta(struct acpi_softc *sc, struct aml_node *);
+
+uint32_t acpi_getpropint(struct aml_node *, const char *, uint32_t);
 
 int	acpi_record_event(struct acpi_softc *, u_int);
 
@@ -373,6 +389,8 @@ int	acpi_release_glk(uint32_t *);
 
 void	acpi_pciroots_attach(struct device *, void *, cfprint_t);
 void	acpi_attach_deps(struct acpi_softc *, struct aml_node *);
+
+struct aml_node *acpi_find_pci(pci_chipset_tag_t, pcitag_t);
 
 void	*acpi_intr_establish(int, int, int, int (*)(void *), void *,
 	    const char *);

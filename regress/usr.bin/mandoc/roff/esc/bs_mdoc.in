@@ -1,0 +1,30 @@
+.\" $OpenBSD: bs_mdoc.in,v 1.1 2019/01/17 06:29:14 schwarze Exp $
+.Dd $Mdocdate: January 17 2019 $
+.Dt ESC-BS_MDOC 1
+.Os
+.Sh NAME
+.Nm esc-bs_mdoc
+.Nd escaped backslashes in mdoc(7) code
+.Sh DESCRIPTION
+.ds usestr (initial)
+.de testmac
+prefix\*[usestr]suffix
+prefix\\*[usestr]suffix
+..
+.ds teststr prefix\*[usestr]middle\\*[usestr]suffix
+.ds usestr (later)
+on a text line: prefix\\suffix
+.Pp
+in a macro definition:
+.testmac
+.Pp
+in a string definition: \*[teststr]
+.Pp
+in a high-level macro argument:
+.Sy prefix\\*[usestr]suffix
+.Pp
+.de argmac
+{\\$1}
+..
+in a user-defined macro argument:
+.argmac prefix\\*[usestr]suffix

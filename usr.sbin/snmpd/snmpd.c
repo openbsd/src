@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.37 2017/08/12 04:29:57 rob Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.41 2019/01/08 15:38:36 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -230,7 +230,7 @@ main(int argc, char *argv[])
 	pf_init();
 	snmpd_generate_engineid(env);
 
-	proc_init(ps, procs, nitems(procs), argc0, argv0, proc_id);
+	proc_init(ps, procs, nitems(procs), debug, argc0, argv0, proc_id);
 	if (!debug && daemon(0, 0) == -1)
 		err(1, "failed to daemonize");
 
@@ -255,7 +255,7 @@ main(int argc, char *argv[])
 
 	proc_connect(ps);
 
-	if (pledge("stdio rpath cpath dns id proc sendfd exec", NULL) == -1)
+	if (pledge("stdio dns sendfd proc exec id", NULL) == -1)
 		fatal("pledge");
 
 	event_dispatch();
@@ -269,9 +269,6 @@ void
 snmpd_shutdown(struct snmpd *env)
 {
 	proc_kill(&env->sc_ps);
-
-	if (env->sc_ps.ps_csock.cs_name != NULL)
-		(void)unlink(env->sc_ps.ps_csock.cs_name);
 
 	free(env);
 
@@ -313,7 +310,7 @@ snmpd_dispatch_snmpe(int fd, struct privsep_proc *p, struct imsg *imsg)
 }
 
 int
-snmpd_socket_af(struct sockaddr_storage *ss, in_port_t port)
+snmpd_socket_af(struct sockaddr_storage *ss, in_port_t port, int ipproto)
 {
 	int	 s;
 
@@ -332,7 +329,13 @@ snmpd_socket_af(struct sockaddr_storage *ss, in_port_t port)
 		return (-1);
 	}
 
-	s = socket(ss->ss_family, SOCK_DGRAM, IPPROTO_UDP);
+	if (ipproto == IPPROTO_TCP)
+		s = socket(ss->ss_family,
+		    SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
+	else
+		s = socket(ss->ss_family,
+		    SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP);
+
 	return (s);
 }
 

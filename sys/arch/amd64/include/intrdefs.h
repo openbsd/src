@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.17 2018/01/13 15:18:11 mpi Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.20 2019/03/25 18:48:12 guenther Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _AMD64_INTRDEFS_H
@@ -76,9 +76,7 @@
 
 #define X86_IPI_HALT			0x00000001
 #define X86_IPI_NOP			0x00000002
-#define X86_IPI_FLUSH_FPU		0x00000004
-#define X86_IPI_SYNCH_FPU		0x00000008
-#define X86_IPI_TLB			0x00000010
+#define X86_IPI_PCTR			0x00000010
 #define X86_IPI_MTRR			0x00000020
 #define X86_IPI_SETPERF			0x00000040
 #define X86_IPI_DDB			0x00000080
@@ -86,11 +84,6 @@
 #define X86_IPI_STOP_VMM		0x00000200
 
 #define X86_NIPI			10
-
-#define X86_IPI_NAMES { "halt IPI", "nop IPI", "FPU flush IPI", \
-			 "FPU synch IPI", "TLB shootdown IPI", \
-			 "MTRR update IPI", "setperf IPI", "ddb IPI", \
-			 "VMM start IPI", "VMM stop IPI" }
 
 #define IREENT_MAGIC	0x18041969
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.17 2016/03/28 18:18:52 chl Exp $	*/
+/*	$OpenBSD: logger.c,v 1.18 2019/06/17 00:23:03 guenther Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -61,8 +61,11 @@ main(int argc, char *argv[])
 	tag = NULL;
 	pri = LOG_NOTICE;
 	logflags = 0;
-	while ((ch = getopt(argc, argv, "f:ip:st:")) != -1)
+	while ((ch = getopt(argc, argv, "cf:ip:st:")) != -1)
 		switch(ch) {
+		case 'c':		/* log to console */
+			logflags |= LOG_CONS;
+			break;
 		case 'f':		/* file to log */
 			if (freopen(optarg, "r", stdin) == NULL) {
 				(void)fprintf(stderr, "logger: %s: %s.\n",
@@ -180,6 +183,6 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: logger [-is] [-f file] [-p pri] [-t tag] [message ...]\n");
+	    "usage: logger [-cis] [-f file] [-p pri] [-t tag] [message ...]\n");
 	exit(1);
 }

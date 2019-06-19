@@ -1,14 +1,20 @@
-/*	$OpenBSD: var.c,v 1.66 2018/03/15 16:51:29 anton Exp $	*/
+/*	$OpenBSD: var.c,v 1.70 2018/06/18 21:46:05 millert Exp $	*/
 
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#ifndef SMALL
+# include <term.h>
+# include <curses.h>
+#endif
 
 #include "sh.h"
 
@@ -109,12 +115,13 @@ initvar(void)
 		{ "SECONDS",		V_SECONDS },
 		{ "TMOUT",		V_TMOUT },
 		{ "LINENO",		V_LINENO },
+		{ "TERM",		V_TERM },
 		{ NULL,	0 }
 	};
 	int i;
 	struct tbl *tp;
 
-	ktinit(&specials, APERM, 32); /* must be 2^n (currently 17 specials) */
+	ktinit(&specials, APERM, 32); /* must be 2^n (currently 19 specials) */
 	for (i = 0; names[i].name; i++) {
 		tp = ktenter(&specials, names[i].name, hash(names[i].name));
 		tp->flag = DEFINED|ISSET;
@@ -136,7 +143,7 @@ array_index_calc(const char *n, bool *arrayp, int *valp)
 	p = skip_varname(n, false);
 	if (p != n && *p == '[' && (len = array_ref_len(p))) {
 		char *sub, *tmp;
-		long rval;
+		int64_t rval;
 
 		/* Calculate the value of the subscript */
 		*arrayp = true;
@@ -146,7 +153,8 @@ array_index_calc(const char *n, bool *arrayp, int *valp)
 		n = str_nsave(n, p - n, ATEMP);
 		evaluate(sub, &rval, KSH_UNWIND_ERROR, true);
 		if (rval < 0 || rval > INT_MAX)
-			errorf("%s: subscript %ld out of range", n, rval);
+			errorf("%s: subscript %" PRIi64 " out of range",
+			    n, rval);
 		*valp = rval;
 		afree(sub, ATEMP);
 	}
@@ -295,18 +303,18 @@ str_val(struct tbl *vp)
 	else if (!(vp->flag&INTEGER))	/* string source */
 		s = vp->val.s + vp->type;
 	else {				/* integer source */
-		/* worst case number length is when base=2, so use BITS(long) */
-		/* minus base #     number    null */
-		char strbuf[1 + 2 + 1 + BITS(long) + 1];
+		/* worst case number length is when base=2, so use
+		 * minus base # number BITS(int64_t) NUL */
+		char strbuf[1 + 2 + 1 + BITS(int64_t) + 1];
 		const char *digits = (vp->flag & UCASEV_AL) ?
 		    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" :
 		    "0123456789abcdefghijklmnopqrstuvwxyz";
-		unsigned long n;
+		uint64_t n;
 		unsigned int base;
 
 		s = strbuf + sizeof(strbuf);
 		if (vp->flag & INT_U)
-			n = (unsigned long) vp->val.i;
+			n = (uint64_t) vp->val.i;
 		else
 			n = (vp->val.i < 0) ? -vp->val.i : vp->val.i;
 		base = (vp->type == 0) ? 10 : vp->type;
@@ -335,10 +343,10 @@ str_val(struct tbl *vp)
 }
 
 /* get variable integer value, with error checking */
-long
+int64_t
 intval(struct tbl *vp)
 {
-	long num;
+	int64_t num;
 	int base;
 
 	base = getint(vp, &num, false);
@@ -393,7 +401,7 @@ setstr(struct tbl *vq, const char *s, int error_ok)
 
 /* set variable to integer */
 void
-setint(struct tbl *vq, long int n)
+setint(struct tbl *vq, int64_t n)
 {
 	if (!(vq->flag&INTEGER)) {
 		struct tbl *vp = &vtemp;
@@ -411,13 +419,13 @@ setint(struct tbl *vq, long int n)
 }
 
 int
-getint(struct tbl *vp, long int *nump, bool arith)
+getint(struct tbl *vp, int64_t *nump, bool arith)
 {
 	char *s;
 	int c;
 	int base, neg;
 	int have_base = 0;
-	long num;
+	int64_t num;
 
 	if (vp->flag&SPECIAL)
 		getspec(vp);
@@ -483,7 +491,7 @@ struct tbl *
 setint_v(struct tbl *vq, struct tbl *vp, bool arith)
 {
 	int base;
-	long num;
+	int64_t num;
 
 	if ((base = getint(vp, &num, arith)) == -1)
 		return NULL;
@@ -906,7 +914,7 @@ unspecial(const char *name)
 		ktdelete(tp);
 }
 
-static	time_t	seconds;		/* time SECONDS last set */
+static	struct	timespec seconds;	/* time SECONDS last set */
 static	int	user_lineno;		/* what user set $LINENO to */
 
 static void
@@ -919,28 +927,33 @@ getspec(struct tbl *vp)
 		 * has been set - don't do anything in this case
 		 * (see initcoms[] in main.c).
 		 */
-		if (vp->flag & ISSET)
-			setint(vp, (long)(time(NULL) - seconds)); /* XXX 2038 */
+		if (vp->flag & ISSET) {
+			struct timespec difference, now;
+
+			clock_gettime(CLOCK_MONOTONIC, &now);
+			timespecsub(&now, &seconds, &difference);
+			setint(vp, (int64_t)difference.tv_sec);
+		}
 		vp->flag |= SPECIAL;
 		break;
 	case V_RANDOM:
 		vp->flag &= ~SPECIAL;
-		setint(vp, (long) (rand() & 0x7fff));
+		setint(vp, (int64_t) (rand() & 0x7fff));
 		vp->flag |= SPECIAL;
 		break;
 	case V_HISTSIZE:
 		vp->flag &= ~SPECIAL;
-		setint(vp, (long) histsize);
+		setint(vp, (int64_t) histsize);
 		vp->flag |= SPECIAL;
 		break;
 	case V_OPTIND:
 		vp->flag &= ~SPECIAL;
-		setint(vp, (long) user_opt.uoptind);
+		setint(vp, (int64_t) user_opt.uoptind);
 		vp->flag |= SPECIAL;
 		break;
 	case V_LINENO:
 		vp->flag &= ~SPECIAL;
-		setint(vp, (long) current_lineno + user_lineno);
+		setint(vp, (int64_t) current_lineno + user_lineno);
 		vp->flag |= SPECIAL;
 		break;
 	}
@@ -1004,7 +1017,7 @@ setspec(struct tbl *vp)
 		break;
 	case V_COLUMNS:
 		{
-			long l;
+			int64_t l;
 
 			if (getint(vp, &l, false) == -1) {
 				x_cols = MIN_COLS;
@@ -1034,7 +1047,8 @@ setspec(struct tbl *vp)
 		break;
 	case V_SECONDS:
 		vp->flag &= ~SPECIAL;
-		seconds = time(NULL) - intval(vp); /* XXX 2038 */
+		clock_gettime(CLOCK_MONOTONIC, &seconds);
+		seconds.tv_sec -= intval(vp);
 		vp->flag |= SPECIAL;
 		break;
 	case V_TMOUT:
@@ -1047,6 +1061,18 @@ setspec(struct tbl *vp)
 		/* The -1 is because line numbering starts at 1. */
 		user_lineno = (unsigned int) intval(vp) - current_lineno - 1;
 		vp->flag |= SPECIAL;
+		break;
+	case V_TERM:
+#ifndef SMALL
+		{
+			int ret;
+
+			vp->flag &= ~SPECIAL;
+			if (setupterm(str_val(vp), shl_out->fd, &ret) == ERR)
+				del_curterm(cur_term);
+			vp->flag |= SPECIAL;
+		}
+#endif
 		break;
 	}
 }

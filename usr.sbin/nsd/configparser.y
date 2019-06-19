@@ -71,13 +71,17 @@ extern config_parser_state_type* cfg_parser;
 %token VAR_ROUND_ROBIN VAR_ZONESTATS VAR_REUSEPORT VAR_VERSION
 %token VAR_MAX_REFRESH_TIME VAR_MIN_REFRESH_TIME
 %token VAR_MAX_RETRY_TIME VAR_MIN_RETRY_TIME
-%token VAR_MULTI_MASTER_CHECK VAR_MINIMAL_RESPONSES
+%token VAR_MULTI_MASTER_CHECK VAR_MINIMAL_RESPONSES VAR_REFUSE_ANY
+%token VAR_USE_SYSTEMD VAR_DNSTAP VAR_DNSTAP_ENABLE VAR_DNSTAP_SOCKET_PATH
+%token VAR_DNSTAP_SEND_IDENTITY VAR_DNSTAP_SEND_VERSION VAR_DNSTAP_IDENTITY
+%token VAR_DNSTAP_VERSION VAR_DNSTAP_LOG_AUTH_QUERY_MESSAGES
+%token VAR_DNSTAP_LOG_AUTH_RESPONSE_MESSAGES
 
 %%
 toplevelvars: /* empty */ | toplevelvars toplevelvar ;
 toplevelvar: serverstart contents_server | zonestart contents_zone | 
 	keystart contents_key | patternstart contents_pattern |
-	rcstart contents_rc;
+	rcstart contents_rc | dtstart contents_dt;
 
 /* server: declaration */
 serverstart: VAR_SERVER
@@ -103,7 +107,7 @@ content_server: server_ip_address | server_ip_transparent | server_debug_mode | 
 	server_zonefiles_check | server_do_ip4 | server_do_ip6 |
 	server_zonefiles_write | server_log_time_ascii | server_round_robin |
 	server_reuseport | server_version | server_ip_freebind |
-	server_minimal_responses;
+	server_minimal_responses | server_refuse_any | server_use_systemd;
 server_ip_address: VAR_IP_ADDRESS STRING 
 	{ 
 		OUTYY(("P(server_ip_address:%s)\n", $2)); 
@@ -148,6 +152,11 @@ server_debug_mode: VAR_DEBUG_MODE STRING
 		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
 			yyerror("expected yes or no.");
 		else cfg_parser->opt->debug_mode = (strcmp($2, "yes")==0);
+	}
+	;
+server_use_systemd: VAR_USE_SYSTEMD STRING 
+	{ 
+		OUTYY(("P(server_use_systemd:%s)\n", $2)); 
 	}
 	;
 server_verbosity: VAR_VERBOSITY STRING 
@@ -301,6 +310,16 @@ server_minimal_responses: VAR_MINIMAL_RESPONSES STRING
 		else {
 			cfg_parser->opt->minimal_responses = (strcmp($2, "yes")==0);
 			minimal_responses = cfg_parser->opt->minimal_responses;
+		}
+	}
+	;
+server_refuse_any: VAR_REFUSE_ANY STRING 
+	{ 
+		OUTYY(("P(server_refuse_any:%s)\n", $2)); 
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else {
+			cfg_parser->opt->refuse_any = (strcmp($2, "yes")==0);
 		}
 	}
 	;
@@ -540,11 +559,18 @@ rc_control_port: VAR_CONTROL_PORT STRING
 	;
 rc_control_interface: VAR_CONTROL_INTERFACE STRING
 	{
+		ip_address_option_type* last = NULL;
 		ip_address_option_type* o = (ip_address_option_type*)region_alloc(
 			cfg_parser->opt->region, sizeof(ip_address_option_type));
 		OUTYY(("P(control_interface:%s)\n", $2));
-		o->next = cfg_parser->opt->control_interface;
-		cfg_parser->opt->control_interface = o;
+		/* append at end */
+		last = cfg_parser->opt->control_interface;
+		while(last && last->next)
+			last = last->next;
+		if(last == NULL)
+			cfg_parser->opt->control_interface = o;
+		else	last->next = o;
+		o->next = NULL;
 		o->address = region_strdup(cfg_parser->opt->region, $2);
 	}
 	;
@@ -570,6 +596,79 @@ rc_control_cert_file: VAR_CONTROL_CERT_FILE STRING
 	{
 	OUTYY(("P(rc_control_cert_file:%s)\n", $2));
 	cfg_parser->opt->control_cert_file = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+
+/* dnstap: declaration */
+dtstart: VAR_DNSTAP
+	{
+		OUTYY(("\nP(dnstap:)\n"));
+	}
+	;
+contents_dt: contents_dt content_dt
+	| ;
+content_dt: dt_dnstap_enable | dt_dnstap_socket_path |
+	dt_dnstap_send_identity | dt_dnstap_send_version |
+	dt_dnstap_identity | dt_dnstap_version |
+	dt_dnstap_log_auth_query_messages |
+	dt_dnstap_log_auth_response_messages
+	;
+dt_dnstap_enable: VAR_DNSTAP_ENABLE STRING
+	{
+		OUTYY(("P(dt_dnstap_enable:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->opt->dnstap_enable = (strcmp($2, "yes")==0);
+	}
+	;
+dt_dnstap_socket_path: VAR_DNSTAP_SOCKET_PATH STRING
+	{
+		OUTYY(("P(dt_dnstap_socket_path:%s)\n", $2));
+		cfg_parser->opt->dnstap_socket_path = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+dt_dnstap_send_identity: VAR_DNSTAP_SEND_IDENTITY STRING
+	{
+		OUTYY(("P(dt_dnstap_send_identity:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->opt->dnstap_send_identity = (strcmp($2, "yes")==0);
+	}
+	;
+dt_dnstap_send_version: VAR_DNSTAP_SEND_VERSION STRING
+	{
+		OUTYY(("P(dt_dnstap_send_version:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->opt->dnstap_send_version = (strcmp($2, "yes")==0);
+	}
+	;
+dt_dnstap_identity: VAR_DNSTAP_IDENTITY STRING
+	{
+		OUTYY(("P(dt_dnstap_identity:%s)\n", $2));
+		cfg_parser->opt->dnstap_identity = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+dt_dnstap_version: VAR_DNSTAP_VERSION STRING
+	{
+		OUTYY(("P(dt_dnstap_version:%s)\n", $2));
+		cfg_parser->opt->dnstap_version = region_strdup(cfg_parser->opt->region, $2);
+	}
+	;
+dt_dnstap_log_auth_query_messages: VAR_DNSTAP_LOG_AUTH_QUERY_MESSAGES STRING
+	{
+		OUTYY(("P(dt_dnstap_log_auth_query_messages:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->opt->dnstap_log_auth_query_messages = (strcmp($2, "yes")==0);
+	}
+	;
+dt_dnstap_log_auth_response_messages: VAR_DNSTAP_LOG_AUTH_RESPONSE_MESSAGES STRING
+	{
+		OUTYY(("P(dt_dnstap_log_auth_response_messages:%s)\n", $2));
+		if(strcmp($2, "yes") != 0 && strcmp($2, "no") != 0)
+			yyerror("expected yes or no.");
+		else cfg_parser->opt->dnstap_log_auth_response_messages = (strcmp($2, "yes")==0);
 	}
 	;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.14 2016/09/22 18:19:59 guenther Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.15 2018/06/16 16:06:03 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,6 +50,8 @@ ASENTRY(__cerror)
 	jmp.n	%r1
 	 or	%r2, %r0, %r3
 END(__cerror)
+
+	.hidden	__cerror
 
 #if 0
 /* ahh, if only */

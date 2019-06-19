@@ -266,10 +266,9 @@ leading-v and at least 3 components.
 
 =head2 numify()
 
-Returns a value representing the object in a pure decimal form without
-trailing zeroes.
+Returns a value representing the object in a pure decimal.
 
- version->declare('v1.2')->numify;  # 1.002
+ version->declare('v1.2')->numify;  # 1.002000
  version->parse('1.2')->numify;     # 1.200
 
 =head2 stringify()
@@ -280,7 +279,7 @@ way perl would normally represent it in a string.  This method is used whenever
 a version object is interpolated into a string.
 
  version->declare('v1.2')->stringify;    # v1.2
- version->parse('1.200')->stringify;     # 1.200
+ version->parse('1.200')->stringify;     # 1.2
  version->parse(1.02_30)->stringify;     # 1.023
 
 =head1 EXPORTED FUNCTIONS

@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_wait.3,v 1.9 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: sem_wait.3,v 1.10 2018/04/24 16:28:42 pirofti Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/sem_wait.3,v 1.8 2001/10/01 16:09:09 ru Exp $
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: April 24 2018 $
 .Dt SEM_WAIT 3
 .Os
 .Sh NAME
@@ -86,9 +86,24 @@ points to an invalid semaphore.
 .El
 .Pp
 Additionally,
+.Fn sem_wait
+and
 .Fn sem_timedwait
 will fail if:
 .Bl -tag -width Er
+.It Bq Er EINTR
+The call was interrupted by a signal.
+.El
+.Pp
+Additionally,
+.Fn sem_timedwait
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa abstime
+was
+.Dv NULL
+or specified a nanosecond value less than zero or greater than 1000 million.
 .It Bq Er ETIMEDOUT
 The semaphore value was zero and could not be decremented before
 .Fa abstime

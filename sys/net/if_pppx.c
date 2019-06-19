@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.64 2018/03/29 04:53:17 jmatthew Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.67 2019/03/04 18:41:40 denis Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -144,6 +144,8 @@ struct pppx_if {
 
 	RBT_ENTRY(pppx_if)	pxi_entry;
 	LIST_ENTRY(pppx_if)	pxi_list;
+
+	int			pxi_ready;
 
 	int			pxi_unit;
 	struct ifnet		pxi_if;
@@ -646,6 +648,8 @@ pppx_if_find(struct pppx_dev *pxd, int session_id, int protocol)
 
 	rw_enter_read(&pppx_ifs_lk);
 	p = RBT_FIND(pppx_ifs, &pppx_ifs, s);
+	if (p && p->pxi_ready == 0)
+		p = NULL;
 	rw_exit_read(&pppx_ifs_lk);
 
 	free(s, M_DEVBUF, 0);
@@ -817,6 +821,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	if (unit < 0) {
 		pool_put(pppx_if_pl, pxi);
 		error = ENOMEM;
+		rw_exit_write(&pppx_ifs_lk);
 		goto out;
 	}
 
@@ -829,8 +834,14 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	if (RBT_FIND(pppx_ifs, &pppx_ifs, pxi) != NULL) {
 		pool_put(pppx_if_pl, pxi);
 		error = EADDRINUSE;
+		rw_exit_write(&pppx_ifs_lk);
 		goto out;
 	}
+
+	if (RBT_INSERT(pppx_ifs, &pppx_ifs, pxi) != NULL)
+		panic("%s: pppx_ifs modified while lock was held", __func__);
+	LIST_INSERT_HEAD(&pxd->pxd_pxis, pxi, pxi_list);
+	rw_exit_write(&pppx_ifs_lk);
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", "pppx", unit);
 	ifp->if_mtu = req->pr_peer_mru;	/* XXX */
@@ -874,10 +885,6 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 #endif
 	SET(ifp->if_flags, IFF_RUNNING);
 
-	if (RBT_INSERT(pppx_ifs, &pppx_ifs, pxi) != NULL)
-		panic("pppx_ifs modified while lock was held");
-	LIST_INSERT_HEAD(&pxd->pxd_pxis, pxi, pxi_list);
-
 	/* XXX ipv6 support?  how does the caller indicate it wants ipv6
 	 * instead of ipv4?
 	 */
@@ -914,10 +921,11 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	} else {
 		dohooks(ifp->if_addrhooks, 0);
 	}
-
-out:
+	rw_enter_write(&pppx_ifs_lk);
+	pxi->pxi_ready = 1;
 	rw_exit_write(&pppx_ifs_lk);
 
+out:
 	return (error);
 }
 
@@ -983,7 +991,7 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 
 	rw_enter_write(&pppx_ifs_lk);
 	if (RBT_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
-		panic("pppx_ifs modified while lock was held");
+		panic("%s: pppx_ifs modified while lock was held", __func__);
 	LIST_REMOVE(pxi, pxi_list);
 	rw_exit_write(&pppx_ifs_lk);
 
@@ -1039,6 +1047,11 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 #endif
 	if (pipex_enable) {
 		switch (dst->sa_family) {
+#ifdef INET6
+		case AF_INET6:
+			proto = PPP_IPV6;
+			break;
+#endif
 		case AF_INET:
 			proto = PPP_IP;
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.135 2017/05/30 23:30:48 benno Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.143 2019/06/16 07:36:25 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,6 +43,7 @@
 #define	INTERVAL_QUERY_NORMAL		30	/* sync to peers every n secs */
 #define	INTERVAL_QUERY_PATHETIC		60
 #define	INTERVAL_QUERY_AGGRESSIVE	5
+#define	INTERVAL_QUERY_ULTRA_VIOLENCE	1	/* used at startup for auto */
 
 #define	TRUSTLEVEL_BADPEER		6
 #define	TRUSTLEVEL_PATHETIC		2
@@ -66,6 +67,11 @@
 #define	MAX_DISPLAY_WIDTH	80	/* max chars in ctl_show report line */
 
 #define FILTER_ADJFREQ		0x01	/* set after doing adjfreq */
+#define AUTO_REPLIES    	4	/* # of ntp replies we want for auto */
+#define AUTO_THRESHOLD		60	/* dont bother auto setting < this */
+#define INTERVAL_AUIO_DNSFAIL	1	/* DNS tmpfail interval for auto */
+#define TRIES_AUTO_DNSFAIL	4	/* DNS tmpfail quick retries */
+
 
 #define	SENSOR_DATA_MAXAGE		(15*60)
 #define	SENSOR_QUERY_INTERVAL		15
@@ -74,13 +80,13 @@
 #define	SENSOR_DEFAULT_REFID		"HARD"
 
 #define CONSTRAINT_ERROR_MARGIN		(4)
+#define CONSTRAINT_RETRY_INTERVAL	(15)
 #define CONSTRAINT_SCAN_INTERVAL	(15*60)
 #define CONSTRAINT_SCAN_TIMEOUT		(10)
 #define CONSTRAINT_MARGIN		(2.0*60)
 #define CONSTRAINT_PORT			"443"	/* HTTPS port */
 #define	CONSTRAINT_MAXHEADERLENGTH	8192
 #define CONSTRAINT_PASSFD		(STDERR_FILENO + 1)
-#define CONSTRAINT_CA			"/etc/ssl/cert.pem"
 
 #define PARENT_SOCK_FILENO		CONSTRAINT_PASSFD
 
@@ -109,6 +115,7 @@ struct listen_addr {
 struct ntp_addr {
 	struct ntp_addr		*next;
 	struct sockaddr_storage	 ss;
+	int			 notauth;
 };
 
 struct ntp_addr_wrap {
@@ -194,6 +201,7 @@ struct constraint {
 	struct imsgbuf			 ibuf;
 	time_t				 last;
 	time_t				 constraint;
+	int				 dnstries;
 };
 
 struct ntp_conf_sensor {
@@ -228,6 +236,7 @@ struct ntpd_conf {
 	int				        	verbose;
 	u_int8_t					listen_all;
 	u_int8_t					settime;
+	u_int8_t					automatic;
 	u_int8_t					noaction;
 	u_int8_t					filters;
 	time_t						constraint_last;
@@ -235,6 +244,7 @@ struct ntpd_conf {
 	u_int						constraint_errors;
 	u_int8_t					*ca;
 	size_t						ca_len;
+	int						tmpfail;
 };
 
 struct ctl_show_status {
@@ -299,7 +309,9 @@ enum imsg_type {
 	IMSG_CTL_SHOW_SENSORS,
 	IMSG_CTL_SHOW_SENSORS_END,
 	IMSG_CTL_SHOW_ALL,
-	IMSG_CTL_SHOW_ALL_END
+	IMSG_CTL_SHOW_ALL_END,
+	IMSG_SYNCED,
+	IMSG_UNSYNCED
 };
 
 enum ctl_actions {
@@ -313,6 +325,7 @@ enum ctl_actions {
 
 /* ntp.c */
 void	 ntp_main(struct ntpd_conf *, struct passwd *, int, char **);
+void	 peer_addr_head_clear(struct ntp_peer *);
 int	 priv_adjtime(void);
 void	 priv_settime(double);
 void	 priv_dns(int, char *, u_int32_t);
@@ -328,7 +341,7 @@ int	 parse_config(const char *, struct ntpd_conf *);
 
 /* config.c */
 void			 host(const char *, struct ntp_addr **);
-int			 host_dns(const char *, struct ntp_addr **);
+int			 host_dns(const char *, int, struct ntp_addr **);
 void			 host_dns_free(struct ntp_addr *);
 struct ntp_peer		*new_peer(void);
 struct ntp_conf_sensor	*new_sensor(char *);
@@ -348,7 +361,7 @@ int	client_peer_init(struct ntp_peer *);
 int	client_addr_init(struct ntp_peer *);
 int	client_nextaddr(struct ntp_peer *);
 int	client_query(struct ntp_peer *);
-int	client_dispatch(struct ntp_peer *, u_int8_t);
+int	client_dispatch(struct ntp_peer *, u_int8_t, u_int8_t);
 void	client_log_error(struct ntp_peer *, const char *, int);
 void	set_next(struct ntp_peer *, time_t);
 
@@ -394,10 +407,10 @@ void			sensor_query(struct ntp_sensor *);
 void			ntp_dns(struct ntpd_conf *, struct passwd *);
 
 /* control.c */
+int			 control_check(char *);
 int			 control_init(char *);
 int			 control_listen(int);
 void			 control_shutdown(int);
-void			 control_cleanup(const char *);
 int			 control_accept(int);
 struct ctl_conn		*control_connbyfd(int);
 int			 control_close(int);

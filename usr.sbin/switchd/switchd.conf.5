@@ -1,4 +1,4 @@
-.\"	$OpenBSD: switchd.conf.5,v 1.6 2017/03/08 09:41:40 sobrado Exp $
+.\"	$OpenBSD: switchd.conf.5,v 1.9 2018/11/11 00:11:01 akoshibe Exp $
 .\"
 .\" Copyright (c) 2014, 2015, 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -17,7 +17,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: March 8 2017 $
+.Dd $Mdocdate: November 11 2018 $
 .Dt SWITCHD.CONF 5
 .Os
 .Sh NAME
@@ -27,12 +27,12 @@
 .Nm
 is the configuration file for the switch daemon,
 .Xr switchd 8 .
-.Sh SECTIONS
+.Pp
 .Nm
-files is divided into two main sections:
+files is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
-User-defined variables may be defined and user later, simplifying the
+User-defined variables may be defined and used later, simplifying the
 configuration file.
 .It Sy Global Configuration
 Global runtime settings for
@@ -81,6 +81,9 @@ OpenFlow switches.
 Secure connections can be enabled with the optional
 .Ic tls
 keyword.
+By default,
+.Xr switchd 8
+uses port 6653 and listen address 0.0.0.0.
 .\".It Ic device on Ar device-name Oo Ic forward to Ar uri Oc
 .\"Attach to a
 .\".Xr switch 4

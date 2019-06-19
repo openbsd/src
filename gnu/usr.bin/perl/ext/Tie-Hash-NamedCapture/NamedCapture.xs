@@ -16,31 +16,23 @@
 #define EXISTS_ALIAS (RXapif_EXISTS | (2 << EXPECT_SHIFT))
 #define SCALAR_ALIAS (RXapif_SCALAR | (1 << EXPECT_SHIFT))
 
-static void
-tie_it(pTHX_ const char name, UV flag, HV *const stash)
-{
-    GV *const gv = gv_fetchpvn(&name, 1, GV_ADDMULTI|GV_NOTQUAL, SVt_PVHV);
-    HV *const hv = GvHV(gv);
-    SV *rv = newSV_type(SVt_RV);
+MODULE = Tie::Hash::NamedCapture	PACKAGE = Tie::Hash::NamedCapture
+PROTOTYPES: DISABLE
 
-    SvRV_set(rv, newSVuv(flag));
+void
+_tie_it(SV *sv)
+  INIT:
+    GV * const gv = (GV *)sv;
+    HV * const hv = GvHVn(gv);
+    SV *rv = newSV_type(SVt_RV);
+  CODE:
+    SvRV_set(rv, newSVuv(*GvNAME(gv) == '-' ? RXapif_ALL : RXapif_ONE));
     SvROK_on(rv);
-    sv_bless(rv, stash);
+    sv_bless(rv, GvSTASH(CvGV(cv)));
 
     sv_unmagic((SV *)hv, PERL_MAGIC_tied);
     sv_magic((SV *)hv, rv, PERL_MAGIC_tied, NULL, 0);
     SvREFCNT_dec(rv); /* As sv_magic increased it by one.  */
-}
-
-MODULE = Tie::Hash::NamedCapture	PACKAGE = Tie::Hash::NamedCapture
-PROTOTYPES: DISABLE
-
-BOOT:
-	{
-	    HV *const stash = GvSTASH(CvGV(cv));
-	    tie_it(aTHX_ '-', RXapif_ALL, stash);
-	    tie_it(aTHX_ '+', RXapif_ONE, stash);
-	}
 
 SV *
 TIEHASH(package, ...)

@@ -30,8 +30,8 @@
 #include "lldb/Utility/Status.h"
 #include "lldb/Utility/StreamString.h"
 
-// Define these constants from Linux mman.h for use when targeting
-// remote linux systems even when host has different values.
+// Define these constants from Linux mman.h for use when targeting remote linux
+// systems even when host has different values.
 #define MAP_PRIVATE 2
 #define MAP_ANON 0x20
 
@@ -58,9 +58,8 @@ PlatformSP PlatformLinux::CreateInstance(bool force, const ArchSpec *arch) {
       break;
 
 #if defined(__linux__)
-    // Only accept "unknown" for the OS if the host is linux and
-    // it "unknown" wasn't specified (it was just returned because it
-    // was NOT specified)
+    // Only accept "unknown" for the OS if the host is linux and it "unknown"
+    // wasn't specified (it was just returned because it was NOT specified)
     case llvm::Triple::OSType::UnknownOS:
       create = !arch->TripleOSWasSpecified();
       break;
@@ -142,7 +141,8 @@ bool PlatformLinux::GetSupportedArchitectureAtIndex(uint32_t idx,
         arch = hostArch;
         return arch.IsValid();
       } else if (idx == 1) {
-        // If the default host architecture is 64-bit, look for a 32-bit variant
+        // If the default host architecture is 64-bit, look for a 32-bit
+        // variant
         if (hostArch.IsValid() && hostArch.GetTriple().isArch64Bit()) {
           arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
           return arch.IsValid();
@@ -192,13 +192,10 @@ bool PlatformLinux::GetSupportedArchitectureAtIndex(uint32_t idx,
       return false;
     }
     // Leave the vendor as "llvm::Triple:UnknownVendor" and don't specify the
-    // vendor by
-    // calling triple.SetVendorName("unknown") so that it is a "unspecified
-    // unknown".
-    // This means when someone calls triple.GetVendorName() it will return an
-    // empty string
-    // which indicates that the vendor can be set when two architectures are
-    // merged
+    // vendor by calling triple.SetVendorName("unknown") so that it is a
+    // "unspecified unknown". This means when someone calls
+    // triple.GetVendorName() it will return an empty string which indicates
+    // that the vendor can be set when two architectures are merged
 
     // Now set the triple into "arch" and return true
     arch.SetTriple(triple);
@@ -212,8 +209,8 @@ void PlatformLinux::GetStatus(Stream &strm) {
 
 #ifndef LLDB_DISABLE_POSIX
   // Display local kernel information only when we are running in host mode.
-  // Otherwise, we would end up printing non-Linux information (when running
-  // on Mac OS for example).
+  // Otherwise, we would end up printing non-Linux information (when running on
+  // Mac OS for example).
   if (IsHost()) {
     struct utsname un;
 
@@ -272,8 +269,8 @@ bool PlatformLinux::CanDebugProcess() {
 }
 
 // For local debugging, Linux will override the debug logic to use llgs-launch
-// rather than lldb-launch, llgs-attach.  This differs from current lldb-launch,
-// debugserver-attach approach on MacOSX.
+// rather than lldb-launch, llgs-attach.  This differs from current lldb-
+// launch, debugserver-attach approach on MacOSX.
 lldb::ProcessSP
 PlatformLinux::DebugProcess(ProcessLaunchInfo &launch_info, Debugger &debugger,
                             Target *target, // Can be NULL, if NULL create a new
@@ -297,8 +294,8 @@ PlatformLinux::DebugProcess(ProcessLaunchInfo &launch_info, Debugger &debugger,
   launch_info.GetFlags().Set(eLaunchFlagDebug);
 
   // We always launch the process we are going to debug in a separate process
-  // group, since then we can handle ^C interrupts ourselves w/o having to worry
-  // about the target getting them as well.
+  // group, since then we can handle ^C interrupts ourselves w/o having to
+  // worry about the target getting them as well.
   launch_info.SetLaunchInSeparateProcessGroup(true);
 
   // Ensure we have a target.
@@ -372,7 +369,7 @@ PlatformLinux::DebugProcess(ProcessLaunchInfo &launch_info, Debugger &debugger,
     // Hook up process PTY if we have one (which we should for local debugging
     // with llgs).
     int pty_fd = launch_info.GetPTY().ReleaseMasterFileDescriptor();
-    if (pty_fd != lldb_utility::PseudoTerminal::invalid_fd) {
+    if (pty_fd != PseudoTerminal::invalid_fd) {
       process_sp->SetSTDIOFileDescriptor(pty_fd);
       LLDB_LOG(log, "hooked up STDIO pty to process");
     } else
@@ -390,8 +387,10 @@ void PlatformLinux::CalculateTrapHandlerSymbolNames() {
   m_trap_handlers.push_back(ConstString("_sigtramp"));
 }
 
-uint64_t PlatformLinux::ConvertMmapFlagsToPlatform(const ArchSpec &arch,
-                                                   unsigned flags) {
+MmapArgList PlatformLinux::GetMmapArgumentList(const ArchSpec &arch,
+                                               addr_t addr, addr_t length,
+                                               unsigned prot, unsigned flags,
+                                               addr_t fd, addr_t offset) {
   uint64_t flags_platform = 0;
   uint64_t map_anon = MAP_ANON;
 
@@ -406,6 +405,8 @@ uint64_t PlatformLinux::ConvertMmapFlagsToPlatform(const ArchSpec &arch,
     flags_platform |= MAP_PRIVATE;
   if (flags & eMmapFlagsAnon)
     flags_platform |= map_anon;
-  return flags_platform;
+
+  MmapArgList args({addr, length, prot, flags_platform, fd, offset});
+  return args;
 }
 

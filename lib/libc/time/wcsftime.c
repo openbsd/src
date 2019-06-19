@@ -1,4 +1,4 @@
-/*	$OpenBSD: wcsftime.c,v 1.6 2015/02/09 14:52:28 tedu Exp $ */
+/*	$OpenBSD: wcsftime.c,v 1.7 2019/05/12 12:49:52 schwarze Exp $ */
 /*
 ** Based on the UCB version with the ID appearing below.
 ** This is ANSIish only when "multibyte character == plain character".
@@ -439,7 +439,7 @@ label:
 			continue;
 		case 'Z':
 			if (t->tm_zone != NULL)
-				pt = _sadd(t->TM_ZONE, pt, ptlim);
+				pt = _sadd(t->tm_zone, pt, ptlim);
 			else
 				if (t->tm_isdst >= 0)
 					pt = _sadd(tzname[t->tm_isdst != 0], 

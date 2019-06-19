@@ -1,6 +1,6 @@
-/*	$OpenBSD: ksyms.c,v 1.31 2016/01/11 17:29:43 stefan Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.32 2019/01/25 00:19:26 millert Exp $	*/
 /*
- * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
  *

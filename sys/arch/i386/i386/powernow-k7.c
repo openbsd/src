@@ -1,4 +1,4 @@
-/* $OpenBSD: powernow-k7.c,v 1.40 2018/03/22 19:30:19 bluhm Exp $ */
+/* $OpenBSD: powernow-k7.c,v 1.43 2018/07/30 14:19:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -154,6 +154,7 @@ k7_powernow_setperf(int level)
 	int cvid, cfid, vid = 0, fid = 0;
 	uint64_t status, ctl;
 	struct k7pnow_cpu_state * cstate;
+	u_long s;
 
 	cstate = k7pnow_current_state;
 
@@ -183,7 +184,7 @@ k7_powernow_setperf(int level)
 	ctl |= PN7_CTR_SGTC(cstate->sgtc);
 
 	if (cstate->flags & PN7_FLAG_ERRATA_A0)
-		disable_intr();
+		s = intr_disable();
 
 	if (k7pnow_fid_to_mult[fid] < k7pnow_fid_to_mult[cfid]) {
 		wrmsr(MSR_AMDK7_FIDVID_CTL, ctl | PN7_CTR_FIDC);
@@ -196,7 +197,7 @@ k7_powernow_setperf(int level)
 	}
 
 	if (cstate->flags & PN7_FLAG_ERRATA_A0)
-		enable_intr();
+		intr_restore(s);
 
 	status = rdmsr(MSR_AMDK7_FIDVID_STATUS);
 	cfid = PN7_STA_CFID(status);
@@ -253,11 +254,13 @@ k7pnow_states(struct k7pnow_cpu_state *cstate, uint32_t cpusig,
 
 	/*
 	 * Look in the 0xe0000 - 0x100000 physical address
-	 * range for the pst tables; 16 byte blocks
+	 * range for the pst tables; 16 byte blocks. End 10 bytes
+	 * before the end of the range to avoid memcmp across a
+	 * page boundary into unmapped memory.
 	 */
 	for (p = (u_int8_t *)ISA_HOLE_VADDR(BIOS_START);
-	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN); p+=
-	    BIOS_STEP) {
+	    p < (u_int8_t *)ISA_HOLE_VADDR(BIOS_START + BIOS_LEN) - 10;
+	    p += BIOS_STEP) {
 		if (memcmp(p, "AMDK7PNOW!", 10) == 0) {
 			psb = (struct psb_s *)p;
 			if (psb->version != PN7_PSB_VERSION)
@@ -434,7 +437,7 @@ k7_powernow_init(void)
 		else
 			techname = "PowerNow! K7";
 		printf("%s: %s %d MHz: speeds:",
-		    ci->ci_dev.dv_xname, techname, cpuspeed);
+		    ci->ci_dev->dv_xname, techname, cpuspeed);
 		for (i = cstate->n_states; i > 0; i--) {
 			state = &cstate->state_table[i-1];
 			printf(" %d", state->freq);

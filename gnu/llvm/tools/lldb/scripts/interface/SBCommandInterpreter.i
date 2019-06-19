@@ -125,18 +125,18 @@ public:
     {
         eBroadcastBitThreadShouldExit       = (1 << 0),
         eBroadcastBitResetPrompt            = (1 << 1),
-        eBroadcastBitQuitCommandReceived    = (1 << 2),           // User entered quit 
+        eBroadcastBitQuitCommandReceived    = (1 << 2),           // User entered quit
         eBroadcastBitAsynchronousOutputData = (1 << 3),
         eBroadcastBitAsynchronousErrorData  = (1 << 4)
     };
 
     SBCommandInterpreter (const lldb::SBCommandInterpreter &rhs);
-    
+
     ~SBCommandInterpreter ();
 
-    static const char * 
+    static const char *
     GetArgumentTypeAsCString (const lldb::CommandArgumentType arg_type);
-    
+
     static const char *
     GetArgumentDescriptionAsCString (const lldb::CommandArgumentType arg_type);
 
@@ -154,6 +154,15 @@ public:
 
     void
     SetPromptOnQuit(bool b);
+
+    void
+    AllowExitCodeOnQuit(bool b);
+
+    bool
+    HasCustomQuitExitCode();
+
+    int
+    GetQuitStatus();
 
     void
     ResolveCommand(const char *command_line, SBCommandReturnObject &result);
@@ -181,7 +190,7 @@ public:
 
     lldb::SBProcess
     GetProcess ();
-    
+
     lldb::SBDebugger
     GetDebugger ();
 
@@ -209,10 +218,12 @@ public:
                       int match_start_point,
                       int max_return_elements,
                       lldb::SBStringList &matches);
-    
+
     bool
     IsActive ();
 
+    bool
+    WasInterrupted () const;
 };
 
 } // namespace lldb

@@ -3,6 +3,10 @@ package MakeMaker::Test::Utils;
 use File::Spec;
 use strict;
 use Config;
+use Cwd qw(getcwd);
+use Carp qw(croak);
+use File::Path;
+use File::Basename;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -16,6 +20,8 @@ our @EXPORT = qw(which_perl perl_lib makefile_name makefile_backup
                  have_compiler slurp
                  $Is_VMS $Is_MacOS
                  run_ok
+                 hash2files
+                 in_dir
                 );
 
 
@@ -155,6 +161,9 @@ Sets up environment variables so perl can find its libraries.
 my $old5lib = $ENV{PERL5LIB};
 my $had5lib = exists $ENV{PERL5LIB};
 sub perl_lib {
+    my $basecwd = (File::Spec->splitdir(getcwd))[-1];
+    croak "Basename of cwd needs to be 't' but is '$basecwd'\n"
+        unless $basecwd eq 't';
                                # perl-src/t/
     my $lib =  $ENV{PERL_CORE} ? qq{../lib}
                                # ExtUtils-MakeMaker/t/
@@ -255,14 +264,18 @@ sub make_macro {
 
     my $is_mms = $make =~ /^MM(K|S)/i;
 
-    my $cmd = $make;
-    my $macros = '';
+    my @macros;
     while( my($key,$val) = splice(@_, 0, 2) ) {
-        if( $is_mms ) {
-            $macros .= qq{/macro="$key=$val"};
+        push @macros, qq{$key=$val};
+    }
+    my $macros = '';
+    if (scalar(@macros)) {
+        if ($is_mms) {
+            map { $_ = qq{"$_"} } @macros;
+            $macros = '/MACRO=(' . join(',', @macros) . ')';
         }
         else {
-            $macros .= qq{ $key=$val};
+            $macros = join(' ', @macros);
         }
     }
 
@@ -280,11 +293,12 @@ touched.
 =cut
 
 sub calibrate_mtime {
-    open(FILE, ">calibrate_mtime.tmp") || die $!;
+    my $file = "calibrate_mtime-$$.tmp";
+    open(FILE, ">$file") || die $!;
     print FILE "foo";
     close FILE;
-    my($mtime) = (stat('calibrate_mtime.tmp'))[9];
-    unlink 'calibrate_mtime.tmp';
+    my($mtime) = (stat($file))[9];
+    unlink $file;
     return $mtime;
 }
 
@@ -345,23 +359,11 @@ Returns true if there is a compiler available for XS builds.
 
 sub have_compiler {
     my $have_compiler = 0;
-
-    # ExtUtils::CBuilder prints its compilation lines to the screen.
-    # Shut it up.
-    use TieOut;
-    local *STDOUT = *STDOUT;
-    local *STDERR = *STDERR;
-
-    tie *STDOUT, 'TieOut';
-    tie *STDERR, 'TieOut';
-
     eval {
-	require ExtUtils::CBuilder;
-	my $cb = ExtUtils::CBuilder->new;
-
-	$have_compiler = $cb->have_compiler;
+        require ExtUtils::CBuilder;
+        my $cb = ExtUtils::CBuilder->new(quiet=>1);
+        $have_compiler = $cb->have_compiler;
     };
-
     return $have_compiler;
 }
 
@@ -384,6 +386,72 @@ sub slurp {
     close $fh;
 
     return $text;
+}
+
+=item hash2files
+
+  hash2files('dirname', { 'filename' => 'some content' });
+
+Goes through given hash-ref, treating each key as a /-separated filename
+under the specified directory, and writing the value into it. Will create
+any necessary directories.
+
+Will die if errors occur.
+
+=cut
+
+sub hash2files {
+    my ($prefix, $hashref) = @_;
+    while(my ($file, $text) = each %$hashref) {
+        # Convert to a relative, native file path.
+        $file = File::Spec->catfile(File::Spec->curdir, $prefix, split m{\/}, $file);
+        my $dir = dirname($file);
+        mkpath $dir;
+        my $utf8 = ($] < 5.008 or !$Config{useperlio}) ? "" : ":utf8";
+        open(FILE, ">$utf8", $file) || die "Can't create $file: $!";
+        print FILE $text;
+        close FILE;
+        # ensure file at least 1 second old for makes that assume
+        # files with the same time are out of date.
+        my $time = calibrate_mtime();
+        utime $time, $time - 1, $file;
+    }
+}
+
+=item in_dir
+
+  $retval = in_dir(\&coderef);
+  $retval = in_dir(\&coderef, $specified_dir);
+  $retval = in_dir { somecode(); };
+  $retval = in_dir { somecode(); } $specified_dir;
+
+Does a C<chdir> to either a directory. If none is specified, one is
+created with L<File::Temp> and then automatically deleted after. It ends
+by C<chdir>ing back to where it started.
+
+If the given code throws an exception, it will be re-thrown after the
+re-C<chdir>.
+
+Returns the return value of the given code.
+
+=cut
+
+sub in_dir(&;$) {
+    my $code = shift;
+    require File::Temp;
+    my $dir = shift || File::Temp::tempdir(TMPDIR => 1, CLEANUP => 1);
+    # chdir to the new directory
+    my $orig_dir = getcwd();
+    chdir $dir or die "Can't chdir to $dir: $!";
+    # Run the code, but trap the error so we can chdir back
+    my $return;
+    my $ok = eval { $return = $code->(); 1; };
+    my $err = $@;
+    # chdir back
+    chdir $orig_dir or die "Can't chdir to $orig_dir: $!";
+    # rethrow if necessary
+    die $err unless $ok;
+    return $return;
 }
 
 =back

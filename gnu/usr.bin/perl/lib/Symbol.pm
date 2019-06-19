@@ -9,7 +9,7 @@ Symbol - manipulate Perl symbols and their names
     use Symbol;
 
     $sym = gensym;
-    open($sym, "filename");
+    open($sym, '<', "filename");
     $_ = <$sym>;
     # etc.
 
@@ -85,7 +85,7 @@ require Exporter;
 @EXPORT = qw(gensym ungensym qualify qualify_to_ref);
 @EXPORT_OK = qw(delete_package geniosym);
 
-$VERSION = '1.07';
+$VERSION = '1.08';
 
 my $genpkg = "Symbol::";
 my $genseq = 0;

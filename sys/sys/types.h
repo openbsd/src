@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.47 2017/02/04 02:54:33 guenther Exp $	*/
+/*	$OpenBSD: types.h,v 1.48 2019/02/09 04:54:11 guenther Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -209,8 +209,8 @@ __END_DECLS
 
 #if __BSD_VISIBLE
 /* Major, minor numbers, dev_t's. */
-#define	major(x)	((int32_t)(((u_int32_t)(x) >> 8) & 0xff))
-#define	minor(x)	((int32_t)((x) & 0xff) | (((x) & 0xffff0000) >> 8))
+#define	major(x)	(((unsigned)(x) >> 8) & 0xff)
+#define	minor(x)	((unsigned)((x) & 0xff) | (((x) & 0xffff0000) >> 8))
 #define	makedev(x,y)	((dev_t)((((x) & 0xff) << 8) | ((y) & 0xff) | (((y) & 0xffff00) << 8)))
 #endif
 

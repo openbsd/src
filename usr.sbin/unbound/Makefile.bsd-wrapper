@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2017/08/12 11:22:45 sthen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2019/03/31 14:24:16 florian Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,6 @@ CONFIGURE_OPTS_UNBOUND=	--enable-allsymbols \
 			--with-ssl=/usr \
 			--with-libevent=/usr \
 			--with-libexpat=/usr \
-			--without-pthreads \
 			--without-pythonmodule \
 			--with-chroot-dir=${CHROOTDIR} \
 			--with-pidfile="" \
@@ -19,6 +18,9 @@ CONFIGURE_OPTS_UNBOUND=	--enable-allsymbols \
 			--with-conf-file=${CHROOTDIR}/etc/unbound.conf \
 			--with-username=_unbound \
 			--disable-shared
+
+# do not remove, breaks unwind(8)
+CONFIGURE_OPTS_UNBOUND+= --without-pthreads
 
 PROG=	unbound \
 	unbound-anchor \

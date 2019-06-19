@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newlocale.3,v 1.1 2017/09/05 03:16:13 schwarze Exp $
+.\"	$OpenBSD: newlocale.3,v 1.2 2019/03/29 12:34:44 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 5 2017 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt NEWLOCALE 3
 .Os
 .Sh NAME
@@ -46,11 +46,23 @@ creates a new locale object for use with
 and with many functions that accept
 .Vt locale_t
 arguments.
+Locale categories not contained in the
+.Fa mask
+are copied from
+.Fa oldloc
+to the new locale object, or from the
+.Qq C
+locale if
+.Fa oldloc
+is
+.Po Vt locale_t Pc Ns 0 .
 .Pp
 On
 .Ox ,
+.Fa locname
+only affects the return value if
 .Fa mask
-is only meaningful if it includes
+includes
 .Dv LC_CTYPE_MASK ,
 and
 .Fa locname
@@ -60,18 +72,11 @@ or
 .Qq POSIX ,
 if it ends with
 .Qq .UTF-8 ,
-or if it is an empty string; otherwise,
-.Fn newlocale
-always returns the C locale.
-.Pp
-On
-.Ox ,
-.Fn newlocale
-ignores
-.Fa oldloc ,
-and passing
-.Po Vt locale_t Pc Ns 0
-is recommended.
+or if it is an empty string.
+Other
+.Fa locname
+arguments have the same effect as
+.Qq C .
 .Pp
 The function
 .Fn duplocale
@@ -159,3 +164,11 @@ These functions conform to
 .Sh HISTORY
 These functions have been available since
 .Ox 6.2 .
+.Sh CAVEATS
+Calling
+.Fn newlocale
+with an
+.Fa oldloc
+argument of
+.Dv LC_GLOBAL_LOCALE
+results in undefined behaviour.

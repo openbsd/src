@@ -1,4 +1,4 @@
-/*	$OpenBSD: modf.S,v 1.5 2015/05/29 08:50:12 uebayasi Exp $	*/
+/*	$OpenBSD: modf.S,v 1.6 2018/07/03 23:14:05 mortimer Exp $	*/
 /*	$NetBSD: modf.S,v 1.1 2001/06/19 00:25:03 fvdl Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
 
 /* With CHOP mode on, frndint behaves as TRUNC does.  Useful. */
 ENTRY(modf)
+	RETGUARD_SETUP(modf, r11)
 
 	/*
 	 * Set chop mode.
@@ -88,5 +89,6 @@ ENTRY(modf)
 	fstpl	-8(%rsp)
 	movsd   -8(%rsp),%xmm0
 
+	RETGUARD_CHECK(modf, r11)
 	ret
 END(modf)

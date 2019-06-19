@@ -6,7 +6,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 684;
+use Test::More tests => 712;
 
 use lib 't';
 

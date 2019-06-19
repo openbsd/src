@@ -130,7 +130,7 @@ for file in `$cat .clist`; do
     */*) finc="-I`echo $file | sed 's#/[^/]*$##'`" ;;
     *)   finc= ;;
     esac
-    $echo "Finding dependencies for $filebase$_o."
+    $echo "Finding dependencies for $filebase$_o"
     # Below, we strip out all but preprocessor directives.
     # We have to take care of situations like
     #       #if defined(FOO) BAR   /* comment line 1
@@ -231,8 +231,9 @@ if $test -s .deptmp; then
         $sed 's|\.incl\.c|.h|' .deptmp >.deptmp.vos
         mv -f .deptmp.vos .deptmp
     fi
-    $sed 's|^\(.*\$(OBJ_EXT):\) *\(.*/.*\.c\) *$|\1 \2; '"$defrule \2|" .deptmp \
-       >>$mf.new
+    $sed -e 's|^\(.*\$(OBJ_EXT):\) *\(.*/.*\.c\) *$|\1 \2; '"$defrule \2|" \
+       -e 'h; s/mini\(perlmain\)/\1/p; g' \
+       .deptmp >>$mf.new
 else
     $MAKE hlist || ($echo "Searching for .h files..."; \
 	$echo *.h | $tr ' ' $trnl | $egrep -v '\*' >.hlist)

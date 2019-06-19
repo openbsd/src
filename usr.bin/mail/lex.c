@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.39 2015/10/16 17:56:07 mmcc Exp $	*/
+/*	$OpenBSD: lex.c,v 1.40 2018/09/16 02:38:57 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ setfile(char *name)
 	int i, fd;
 	struct stat stb;
 	char isedit = *name != '%';
-	char *who = name[1] ? name + 1 : myname;
+	const char *who = name[1] ? name + 1 : myname;
 	char tempname[PATHSIZE];
 	static int shudclob;
 

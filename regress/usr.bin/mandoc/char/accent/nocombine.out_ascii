@@ -7,10 +7,10 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        bare acute accent: e'e
-       escaped acute accent: e'e
+       escaped acute accent: e'ee
        acute accent sequence: e'e
        bare grave accent: e`e
-       escaped grave accent: e`e
+       escaped grave accent: e`ee
        acute grave sequence: e`e
        hungarian umlaut: e"e
        circumflex: e^e
@@ -25,4 +25,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                          March 8, 2014        CHAR-ACCENT-NOCOMBINE(1)
+OpenBSD                        December 15, 2018      CHAR-ACCENT-NOCOMBINE(1)

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des3.c,v 1.19 2015/10/12 06:05:52 guenther Exp $ */
+/* $OpenBSD: e_des3.c,v 1.20 2019/05/14 15:40:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -163,6 +163,8 @@ des_ede3_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
 	size_t n;
 	unsigned char c[1], d[1];
+	if (!(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS))
+		inl *= 8;
 
 	for (n = 0; n < inl; ++n) {
 		c[0] = (in[n/8]&(1 << (7 - n % 8))) ? 0x80 : 0;

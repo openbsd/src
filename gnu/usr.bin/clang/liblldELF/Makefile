@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2017/10/04 20:57:10 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2019/01/27 16:59:42 patrick Exp $
 
 LIB=	lldELF
 NOPROFILE=
@@ -8,15 +8,17 @@ CPPFLAGS+=	-I${LLVM_SRCS}/tools/lld/ELF
 
 .include <bsd.own.mk>
 SRCS=	AArch64.cpp \
+	AArch64ErrataFix.cpp \
 	AMDGPU.cpp \
 	ARM.cpp \
 	AVR.cpp \
+	CallGraphSort.cpp \
 	Driver.cpp \
 	DriverUtils.cpp \
 	EhFrame.cpp \
-	Error.cpp \
 	Filesystem.cpp \
 	GdbIndex.cpp \
+	Hexagon.cpp \
 	ICF.cpp \
 	InputFiles.cpp \
 	InputSection.cpp \
@@ -33,7 +35,6 @@ SRCS=	AArch64.cpp \
 	SPARCV9.cpp \
 	ScriptLexer.cpp \
 	ScriptParser.cpp \
-	Strings.cpp \
 	SymbolTable.cpp \
 	Symbols.cpp \
 	SyntheticSections.cpp \

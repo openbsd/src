@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.32 2017/06/13 18:13:18 sf Exp $	*/
+/*	$OpenBSD: denode.h,v 1.34 2019/01/21 18:09:21 anton Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -142,14 +142,13 @@ struct denode {
 	struct vnode *de_devvp;	/* vnode of blk dev we live on */
 	uint32_t de_flag;		/* flag bits */
 	dev_t de_dev;		/* device where direntry lives */
-	daddr_t de_lastr;
 	uint32_t de_dirclust;	/* cluster of the directory file containing this entry */
 	uint32_t de_diroffset;	/* offset of this entry in the directory cluster */
 	uint32_t de_fndoffset;	/* offset of found dir entry */
 	int de_fndcnt;		/* number of slots before de_fndoffset */
 	long de_refcnt;		/* reference count */
 	struct msdosfsmount *de_pmp;	/* addr of our mount struct */
-	struct lockf *de_lockf;	/* byte level lock list */
+	struct lockf_state *de_lockf;	/* byte level lock list */
 	struct rrwlock de_lock;	/* denode lock */
 	u_char de_Name[11];	/* name, from DOS directory entry */
 	u_char de_Attributes;	/* attributes, from directory entry */

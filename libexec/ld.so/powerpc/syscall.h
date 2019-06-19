@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.45 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.46 2018/07/09 10:12:14 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -25,11 +25,12 @@
  * SUCH DAMAGE.
  *
  */
+
 #ifndef __DL_SYSCALL_H__
 #define __DL_SYSCALL_H__
 
-#include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/stat.h>
 
 #ifndef _dl_MAX_ERRNO
 #define _dl_MAX_ERRNO 512L
@@ -54,7 +55,6 @@ int	_dl_pledge(const char *, const char **);
 long	_dl___syscall(quad_t, ...);
 int	_dl_sysctl(const int *, u_int, void *, size_t *, void *, size_t);
 int	_dl_utrace(const char *, const void *, size_t);
-ssize_t	_dl_write(int, const char *, size_t);
 int	_dl_getentropy(char *, size_t);
 int	_dl_sendsyslog(const char *, size_t, int);
 void	_dl___set_tcb(void *);
@@ -64,8 +64,8 @@ void	_dl_thrkill(pid_t, int, void *);
 static inline void *
 _dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
-        return (void *)_dl___syscall(SYS_mmap, addr, len, prot,
-            flags, fd, 0, offset);
+	return (void *)_dl___syscall(SYS_mmap, addr, len, prot,
+	    flags, fd, 0, offset);
 }
 
 #endif /*__DL_SYSCALL_H__*/

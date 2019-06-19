@@ -59,7 +59,7 @@ numbers.  (But realize that what we are discussing the rules for just the
 I<storage> of these numbers.  The fact that you can store such "large" numbers
 does not mean that the I<operations> over these numbers will use all
 of the significant digits.
-See L<"Numeric operators and numeric conversions"> for details.)
+See L</"Numeric operators and numeric conversions"> for details.)
 
 In fact numbers stored in the native integer format may be stored either
 in the signed native form, or in the unsigned native form.  Thus the limits

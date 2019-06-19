@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.31 2017/07/29 17:24:04 kettenis Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.32 2018/08/25 17:09:40 mestre Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -774,7 +774,7 @@ smsc_chip_init(struct smsc_softc *sc)
 	smsc_write_reg(sc, SMSC_PM_CTRL, SMSC_PM_CTRL_PHY_RST);
 
 	if ((err = smsc_wait_for_bits(sc, SMSC_PM_CTRL,
-	    SMSC_PM_CTRL_PHY_RST) != 0)) {
+	    SMSC_PM_CTRL_PHY_RST)) != 0) {
 		smsc_warn_printf(sc, "timed-out waiting for phy reset to "
 		    "complete\n");
 		goto init_failed;

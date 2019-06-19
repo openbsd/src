@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.63 2017/09/05 02:40:54 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.64 2019/02/13 13:22:14 mpi Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -51,13 +51,6 @@ struct stack {
 #define	PTHREAD_MIN_PRIORITY	0
 #define	PTHREAD_MAX_PRIORITY	31
 
-
-struct pthread_rwlock {
-	_atomic_lock_t lock;
-	pthread_t owner;
-	struct pthread_queue writers;
-	int readers;
-};
 
 struct pthread_rwlockattr {
 	int pshared;

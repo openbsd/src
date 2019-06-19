@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.7 2018/02/22 01:35:04 dlg Exp $
+.\"	$OpenBSD: vxlan.4,v 1.8 2018/11/22 17:31:11 reyk Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 22 2018 $
+.Dd $Mdocdate: November 22 2018 $
 .Dt VXLAN 4
 .Os
 .Sh NAME
@@ -123,9 +123,9 @@ endpoint policies in
 .Xr pf.conf 5 :
 .Bd -literal -offset indent
 table <vxlantep> { 192.168.1.200, 192.168.1.201 }
-block in on vmx0
-pass out on vmx0
-pass in on vmx0 proto udp from <vxlantep> to port vxlan
+block in on em0
+pass out on em0
+pass in on em0 proto udp from <vxlantep> to port vxlan
 .Ed
 .Pp
 The Time-to-Live (TTL) value of the tunnel can be set to 1 or a low

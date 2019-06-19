@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.17 2018/02/11 09:47:33 martijn Exp $	*/
+/*	$OpenBSD: pool.c,v 1.18 2018/06/20 13:09:08 krw Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -384,8 +384,6 @@ print_pool(void)
 int
 initpool(void)
 {
-	field_view *v;
-
 	add_view(&pool_view);
 	read_pool();
 

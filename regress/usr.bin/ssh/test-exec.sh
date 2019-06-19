@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.62 2018/03/16 09:06:31 dtucker Exp $
+#	$OpenBSD: test-exec.sh,v 1.65 2019/01/27 06:30:53 dtucker Exp $
 #	Placed in the Public Domain.
 
 USER=`id -un`
@@ -235,7 +235,10 @@ fail ()
 	save_debug_log "FAIL: $@"
 	RESULT=1
 	echo "$@"
-
+	if test "x$TEST_SSH_FAIL_FATAL" != "x" ; then
+		cleanup
+		exit $RESULT
+	fi
 }
 
 fatal ()
@@ -309,11 +312,11 @@ fi
 
 rm -f $OBJ/known_hosts $OBJ/authorized_keys_$USER
 
-SSH_KEYTYPES="rsa ed25519"
+SSH_KEYTYPES=`$SSH -Q key-plain`
 
-trace "generate keys"
 for t in ${SSH_KEYTYPES}; do
 	# generate user key
+	trace "generating key type $t"
 	if [ ! -f $OBJ/$t ] || [ ${SSHKEYGEN} -nt $OBJ/$t ]; then
 		rm -f $OBJ/$t
 		${SSHKEYGEN} -q -N '' -t $t  -f $OBJ/$t ||\
@@ -371,10 +374,13 @@ if test "$REGRESS_INTEROP_PUTTY" = "yes" ; then
 	    >> $OBJ/authorized_keys_$USER
 
 	# Convert rsa2 host key to PuTTY format
-	${SRC}/ssh2putty.sh 127.0.0.1 $PORT $OBJ/rsa > \
+	cp $OBJ/rsa $OBJ/rsa_oldfmt
+	${SSHKEYGEN} -p -N '' -m PEM -f $OBJ/rsa_oldfmt >/dev/null
+	${SRC}/ssh2putty.sh 127.0.0.1 $PORT $OBJ/rsa_oldfmt > \
 	    ${OBJ}/.putty/sshhostkeys
-	${SRC}/ssh2putty.sh 127.0.0.1 22 $OBJ/rsa >> \
+	${SRC}/ssh2putty.sh 127.0.0.1 22 $OBJ/rsa_oldfmt >> \
 	    ${OBJ}/.putty/sshhostkeys
+	rm -f $OBJ/rsa_oldfmt
 
 	# Setup proxied session
 	mkdir -p ${OBJ}/.putty/sessions

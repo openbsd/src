@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.66 2018/03/13 07:37:58 guenther Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.75 2019/04/01 12:45:49 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -94,7 +94,7 @@
  * The other obvious difference from i386 is that it has a direct map of all
  * physical memory in the VA range:
  *
- *     0xffffff0000000000 - 0xffffff7fffffffff
+ *     0xfffffd8000000000 - 0xffffff7fffffffff
  *
  * The direct map is used in some cases to access PTEs of non-current pmaps.
  *
@@ -104,7 +104,7 @@
  *  |         Kernel Image            |
  *  +---------------------------------+ 0xffffff8000000000
  *  |         Direct Map              |
- *  +---------------------------------+ 0xffffff0000000000
+ *  +---------------------------------+ 0xfffffd8000000000
  *  ~                                 ~
  *  |                                 |
  *  |         Kernel Space            |
@@ -141,7 +141,8 @@
 #define L4_SLOT_PTE		255
 #define L4_SLOT_KERN		256
 #define L4_SLOT_KERNBASE	511
-#define L4_SLOT_DIRECT		510
+#define NUM_L4_SLOT_DIRECT	4
+#define L4_SLOT_DIRECT		(L4_SLOT_KERNBASE - NUM_L4_SLOT_DIRECT)
 
 #define PDIR_SLOT_KERN		L4_SLOT_KERN
 #define PDIR_SLOT_PTE		L4_SLOT_PTE
@@ -157,7 +158,8 @@
 
 #define PTE_BASE  ((pt_entry_t *) (L4_SLOT_PTE * NBPD_L4))
 #define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
-#define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + 1) * NBPD_L4)))
+#define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + \
+    NUM_L4_SLOT_DIRECT) * NBPD_L4)))
 
 #define L1_BASE		PTE_BASE
 
@@ -176,8 +178,9 @@
 
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
-#define NKL2_KIMG_ENTRIES	16
+#define NKL2_KIMG_ENTRIES	64
 
+/* number of pages of direct map entries set up by locore0.S */
 #define NDML4_ENTRIES		1
 #define NDML3_ENTRIES		1
 #define NDML2_ENTRIES		4	/* 4GB */
@@ -243,7 +246,19 @@
 /* PG_AVAIL3 not used */
 
 /*
- * Number of PTE's per cache line.  8 byte pte, 64-byte cache line
+ * PCID assignments.
+ * The shootdown code assumes KERN, PROC, and PROC_INTEL are both
+ * consecutive and in that order.
+ */
+#define PCID_KERN	0	/* for pmap_kernel() */
+#define PCID_PROC	1	/* non-pmap_kernel(), U+K */
+#define PCID_PROC_INTEL	2	/* non-pmap_kernel(), U-K (meltdown) */
+#define PCID_TEMP	3	/* temp mapping of another non-pmap_kernel() */
+
+extern int pmap_use_pcid;	/* non-zero if PCID support is enabled */
+
+/*
+ * Number of PTEs per cache line.  8 byte pte, 64-byte cache line
  * Used to avoid false sharing of cache lines.
  */
 #define NPTECL		8
@@ -298,6 +313,7 @@ struct pmap {
 
 	u_int64_t pm_cpus;		/* mask of CPUs using pmap */
 	int pm_type;			/* Type of pmap this is (PMAP_TYPE_x) */
+	uint64_t eptp;			/* cached EPTP (used by vmm) */
 };
 
 /*
@@ -328,9 +344,6 @@ struct pv_entry {			/* locked by its list's pvh_lock */
 /*
  * global kernel variables
  */
-
-/* PTDpaddr: is the physical address of the kernel's PDP */
-extern u_long PTDpaddr;
 
 extern struct pmap kernel_pmap_store;	/* kernel pmap */
 
@@ -366,7 +379,10 @@ extern const long nbpd[], nkptpmax[];
  * prototypes
  */
 
+void		map_tramps(void);	/* machdep.c */
 paddr_t		pmap_bootstrap(paddr_t, paddr_t);
+void		pmap_randomize(void);
+void		pmap_randomize_level(pd_entry_t *, int);
 boolean_t	pmap_clear_attrs(struct vm_page *, unsigned long);
 static void	pmap_page_protect(struct vm_page *, vm_prot_t);
 void		pmap_page_remove (struct vm_page *);
@@ -378,8 +394,6 @@ static void	pmap_update_pg(vaddr_t);
 void		pmap_write_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
 void		pmap_fix_ept(struct pmap *, vaddr_t);
-
-vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
 paddr_t	pmap_prealloc_lowmem_ptps(paddr_t);
 

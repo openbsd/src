@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.84 2016/09/16 17:17:40 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.86 2019/06/10 06:52:44 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -21,6 +21,10 @@
 #include "funmap.h"
 #include "macro.h"
 
+#ifdef  MGLOG
+#include "log.h"
+#endif
+
 int		 thisflag;			/* flags, this command	*/
 int		 lastflag;			/* flags, last command	*/
 int		 curgoal;			/* goal column		*/
@@ -28,6 +32,7 @@ int		 startrow;			/* row to start		*/
 int		 doaudiblebell;			/* audible bell toggle	*/
 int		 dovisiblebell;			/* visible bell toggle	*/
 int		 dblspace;			/* sentence end #spaces	*/
+int		 allbro;			/* all buffs read-only	*/
 struct buffer	*curbp;				/* current buffer	*/
 struct buffer	*bheadp;			/* BUFFER list head	*/
 struct mgwin	*curwp;				/* current window	*/
@@ -54,7 +59,7 @@ main(int argc, char **argv)
 	char		*cp, *init_fcn_name = NULL;
 	PF		 init_fcn = NULL;
 	int	 	 o, i, nfiles;
-	int	  	 nobackups = 0, bro = 0;
+	int	  	 nobackups = 0;
 	struct buffer	*bp = NULL;
 
 	if (pledge("stdio rpath wpath cpath fattr chown getpw tty proc exec",
@@ -64,7 +69,7 @@ main(int argc, char **argv)
 	while ((o = getopt(argc, argv, "nRf:")) != -1)
 		switch (o) {
 		case 'R':
-			bro = 1;
+			allbro = 1;
 			break;
 		case 'n':
 			nobackups = 1;
@@ -85,6 +90,11 @@ main(int argc, char **argv)
 
 	maps_init();		/* Keymaps and modes.		*/
 	funmap_init();		/* Functions.			*/
+
+#ifdef  MGLOG
+	if (!mgloginit())
+		errx(1, "Unable to create logging environment.");
+#endif
 
 	/*
 	 * This is where we initialize standalone extensions that should
@@ -174,7 +184,7 @@ notnum:
 						init_fcn(FFOTHARG, 1);
 					nfiles++;
 				}
-				if (bro)
+				if (allbro)
 					curbp->b_flag |= BFREADONLY;
 			}
 		}

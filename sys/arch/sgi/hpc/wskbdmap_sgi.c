@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_sgi.c,v 1.3 2016/08/31 15:21:34 jca Exp $	*/
+/*	$OpenBSD: wskbdmap_sgi.c,v 1.4 2019/05/13 12:31:56 abieber Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -7,12 +7,13 @@
  *	OpenBSD: makemap.awk,v 1.1 2014/05/22 19:39:37 miod Exp 
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.44 2016/08/31 11:05:48 jca Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.46 2019/05/11 14:19:16 abieber Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
  * PLEASE DO NOT FORGET TO REGEN
  *	sys/dev/usb/ukbdmap.c
+ *	sys/arch/sgi/hpc/wskbdmap_sgi.c
  * AFTER ANY CHANGES TO THIS FILE!
  */
 
@@ -405,6 +406,8 @@ static const keysym_t zskbd_keydesc_be[] = {
 /* us_declk not applicable */
 
 /* us_dvorak not applicable */
+
+/* us_colemak not applicable */
 
 /* swapctrlcaps not applicable */
 

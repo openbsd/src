@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.40 2017/08/28 19:32:53 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.47 2019/05/08 23:54:39 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -35,6 +35,7 @@ iobus0		at mainbus0
 simplebus*	at fdt?
 simplebus*	at iobus?
 
+octcrypto0	at mainbus0
 octrtc0		at mainbus0
 
 octcf0		at iobus0
@@ -48,10 +49,11 @@ ppb*		at pci?		# PCI-PCI bridges
 pci*		at ppb?
 
 cn30xxsmi*	at fdt?		# MDIO controller
-com*		at fdt?
+com*		at fdt_octeon?
 octcib*		at fdt?		# Interrupt controller
 octcit*		at fdt?		# Interrupt controller v3
 octciu*		at fdt?		# Interrupt controller v1
+octgpio*	at fdt?		# GPIO controller
 octmmc*		at fdt?		# MMC host controller
 sdmmc*		at octmmc?	# SD/MMC bus
 
@@ -109,6 +111,10 @@ umct*		at uhub?	# MCT USB-RS232 serial adapter
 ucom*		at umct?
 uslcom*		at uhub?	# Silicon Laboratories CP210x serial
 ucom*		at uslcom?
+uscom*		at uhub?	# Simple USB serial adapters
+ucom*		at uscom?
+ucrcom*		at uhub?	# Chromebook serial
+ucom*		at ucrcom?
 uark*		at uhub?	# Arkmicro ARK3116 serial
 ucom*		at uark?
 moscom*		at uhub?	# MosChip MCS7703 serial
@@ -171,7 +177,7 @@ urtw*		at uhub?	# Realtek 8187
 rsu*		at uhub?	# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*		at uhub?	# Realtek RTL8188CU/RTL8192CU
 udcf*		at uhub?	# Gude Expert mouseCLOCK
-umbg*		at uhub?	# Meinberg Funkuhren USB5131
+umbg*		at uhub?	# Meinberg Funkuhren USB5131/DCF600USB
 uthum*		at uhidev?	# TEMPerHUM sensor
 ugold*		at uhidev?	# gold TEMPer sensor
 utrh*		at uhidev?	# USBRH sensor

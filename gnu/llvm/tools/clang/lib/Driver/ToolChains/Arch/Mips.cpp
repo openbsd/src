@@ -20,11 +20,6 @@ using namespace clang::driver::tools;
 using namespace clang;
 using namespace llvm::opt;
 
-bool tools::isMipsArch(llvm::Triple::ArchType Arch) {
-  return Arch == llvm::Triple::mips || Arch == llvm::Triple::mipsel ||
-         Arch == llvm::Triple::mips64 || Arch == llvm::Triple::mips64el;
-}
-
 // Get CPU and ABI names. They are not independent
 // so we have to calculate them together.
 void mips::getMipsCPUAndABI(const ArgList &Args, const llvm::Triple &Triple,
@@ -35,7 +30,7 @@ void mips::getMipsCPUAndABI(const ArgList &Args, const llvm::Triple &Triple,
   // MIPS32r6 is the default for mips(el)?-img-linux-gnu and MIPS64r6 is the
   // default for mips64(el)?-img-linux-gnu.
   if (Triple.getVendor() == llvm::Triple::ImaginationTechnologies &&
-      Triple.getEnvironment() == llvm::Triple::GNU) {
+      Triple.isGNUEnvironment()) {
     DefMips32CPU = "mips32r6";
     DefMips64CPU = "mips64r6";
   }
@@ -49,6 +44,13 @@ void mips::getMipsCPUAndABI(const ArgList &Args, const llvm::Triple &Triple,
   // MIPS3 is the default for mips64*-unknown-openbsd.
   if (Triple.getOS() == llvm::Triple::OpenBSD)
     DefMips64CPU = "mips3";
+
+  // MIPS2 is the default for mips(el)?-unknown-freebsd.
+  // MIPS3 is the default for mips64(el)?-unknown-freebsd.
+  if (Triple.getOS() == llvm::Triple::FreeBSD) {
+    DefMips32CPU = "mips2";
+    DefMips64CPU = "mips3";
+  }
 
   if (Arg *A = Args.getLastArg(clang::driver::options::OPT_march_EQ,
                                options::OPT_mcpu_EQ))
@@ -106,11 +108,7 @@ void mips::getMipsCPUAndABI(const ArgList &Args, const llvm::Triple &Triple,
 
   if (ABIName.empty()) {
     // Deduce ABI name from the target triple.
-    if (Triple.getArch() == llvm::Triple::mips ||
-        Triple.getArch() == llvm::Triple::mipsel)
-      ABIName = "o32";
-    else
-      ABIName = "n64";
+    ABIName = Triple.isMIPS32() ? "o32" : "n64";
   }
 
   if (CPUName.empty()) {
@@ -214,6 +212,7 @@ void mips::getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   // For case (a) we need to add +noabicalls for N64.
 
   bool IsN64 = ABIName == "64";
+  bool IsPIC = false;
   bool NonPIC = false;
 
   Arg *LastPICArg = Args.getLastArg(options::OPT_fPIC, options::OPT_fno_PIC,
@@ -225,13 +224,42 @@ void mips::getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     NonPIC =
         (O.matches(options::OPT_fno_PIC) || O.matches(options::OPT_fno_pic) ||
          O.matches(options::OPT_fno_PIE) || O.matches(options::OPT_fno_pie));
+    IsPIC =
+        (O.matches(options::OPT_fPIC) || O.matches(options::OPT_fpic) ||
+         O.matches(options::OPT_fPIE) || O.matches(options::OPT_fpie));
   }
 
-  if (IsN64 && NonPIC)
+  bool UseAbiCalls = false;
+
+  Arg *ABICallsArg =
+      Args.getLastArg(options::OPT_mabicalls, options::OPT_mno_abicalls);
+  UseAbiCalls =
+      !ABICallsArg || ABICallsArg->getOption().matches(options::OPT_mabicalls);
+
+  if (IsN64 && NonPIC && (!ABICallsArg || UseAbiCalls)) {
+    D.Diag(diag::warn_drv_unsupported_pic_with_mabicalls)
+        << LastPICArg->getAsString(Args) << (!ABICallsArg ? 0 : 1);
+    NonPIC = false;
+  }
+
+  if (ABICallsArg && !UseAbiCalls && IsPIC) {
+    D.Diag(diag::err_drv_unsupported_noabicalls_pic);
+  }
+
+  if (!UseAbiCalls)
     Features.push_back("+noabicalls");
   else
-    AddTargetFeature(Args, Features, options::OPT_mno_abicalls,
-                     options::OPT_mabicalls, "noabicalls");
+    Features.push_back("-noabicalls");
+
+  if (Arg *A = Args.getLastArg(options::OPT_mlong_calls,
+                               options::OPT_mno_long_calls)) {
+    if (A->getOption().matches(options::OPT_mno_long_calls))
+      Features.push_back("-long-calls");
+    else if (!UseAbiCalls)
+      Features.push_back("+long-calls");
+    else
+      D.Diag(diag::warn_drv_unsupported_longcalls) << (ABICallsArg ? 0 : 1);
+  }
 
   mips::FloatABI FloatABI = mips::getMipsFloatABI(D, Args);
   if (FloatABI == mips::FloatABI::Soft) {
@@ -244,14 +272,14 @@ void mips::getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   if (Arg *A = Args.getLastArg(options::OPT_mnan_EQ)) {
     StringRef Val = StringRef(A->getValue());
     if (Val == "2008") {
-      if (mips::getSupportedNanEncoding(CPUName) & mips::Nan2008)
+      if (mips::getIEEE754Standard(CPUName) & mips::Std2008)
         Features.push_back("+nan2008");
       else {
         Features.push_back("-nan2008");
         D.Diag(diag::warn_target_unsupported_nan2008) << CPUName;
       }
     } else if (Val == "legacy") {
-      if (mips::getSupportedNanEncoding(CPUName) & mips::NanLegacy)
+      if (mips::getIEEE754Standard(CPUName) & mips::Legacy)
         Features.push_back("-nan2008");
       else {
         Features.push_back("+nan2008");
@@ -260,6 +288,28 @@ void mips::getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     } else
       D.Diag(diag::err_drv_unsupported_option_argument)
           << A->getOption().getName() << Val;
+  }
+
+  if (Arg *A = Args.getLastArg(options::OPT_mabs_EQ)) {
+    StringRef Val = StringRef(A->getValue());
+    if (Val == "2008") {
+      if (mips::getIEEE754Standard(CPUName) & mips::Std2008) {
+        Features.push_back("+abs2008");
+      } else {
+        Features.push_back("-abs2008");
+        D.Diag(diag::warn_target_unsupported_abs2008) << CPUName;
+      }
+    } else if (Val == "legacy") {
+      if (mips::getIEEE754Standard(CPUName) & mips::Legacy) {
+        Features.push_back("-abs2008");
+      } else {
+        Features.push_back("+abs2008");
+        D.Diag(diag::warn_target_unsupported_abslegacy) << CPUName;
+      }
+    } else {
+      D.Diag(diag::err_drv_unsupported_option_argument)
+          << A->getOption().getName() << Val;
+    }
   }
 
   AddTargetFeature(Args, Features, options::OPT_msingle_float,
@@ -299,32 +349,59 @@ void mips::getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
                    options::OPT_modd_spreg, "nooddspreg");
   AddTargetFeature(Args, Features, options::OPT_mno_madd4, options::OPT_mmadd4,
                    "nomadd4");
-  AddTargetFeature(Args, Features, options::OPT_mlong_calls,
-                   options::OPT_mno_long_calls, "long-calls");
-  AddTargetFeature(Args, Features, options::OPT_mmt, options::OPT_mno_mt,"mt");
+  AddTargetFeature(Args, Features, options::OPT_mmt, options::OPT_mno_mt, "mt");
+  AddTargetFeature(Args, Features, options::OPT_mcrc, options::OPT_mno_crc,
+                   "crc");
+  AddTargetFeature(Args, Features, options::OPT_mvirt, options::OPT_mno_virt,
+                   "virt");
+  AddTargetFeature(Args, Features, options::OPT_mginv, options::OPT_mno_ginv,
+                   "ginv");
+
+  if (Arg *A = Args.getLastArg(options::OPT_mindirect_jump_EQ)) {
+    StringRef Val = StringRef(A->getValue());
+    if (Val == "hazard") {
+      Arg *B =
+          Args.getLastArg(options::OPT_mmicromips, options::OPT_mno_micromips);
+      Arg *C = Args.getLastArg(options::OPT_mips16, options::OPT_mno_mips16);
+
+      if (B && B->getOption().matches(options::OPT_mmicromips))
+        D.Diag(diag::err_drv_unsupported_indirect_jump_opt)
+            << "hazard" << "micromips";
+      else if (C && C->getOption().matches(options::OPT_mips16))
+        D.Diag(diag::err_drv_unsupported_indirect_jump_opt)
+            << "hazard" << "mips16";
+      else if (mips::supportsIndirectJumpHazardBarrier(CPUName))
+        Features.push_back("+use-indirect-jump-hazard");
+      else
+        D.Diag(diag::err_drv_unsupported_indirect_jump_opt)
+            << "hazard" << CPUName;
+    } else
+      D.Diag(diag::err_drv_unknown_indirect_jump_opt) << Val;
+  }
 }
 
-mips::NanEncoding mips::getSupportedNanEncoding(StringRef &CPU) {
-  // Strictly speaking, mips32r2 and mips64r2 are NanLegacy-only since Nan2008
-  // was first introduced in Release 3. However, other compilers have
-  // traditionally allowed it for Release 2 so we should do the same.
-  return (NanEncoding)llvm::StringSwitch<int>(CPU)
-      .Case("mips1", NanLegacy)
-      .Case("mips2", NanLegacy)
-      .Case("mips3", NanLegacy)
-      .Case("mips4", NanLegacy)
-      .Case("mips5", NanLegacy)
-      .Case("mips32", NanLegacy)
-      .Case("mips32r2", NanLegacy | Nan2008)
-      .Case("mips32r3", NanLegacy | Nan2008)
-      .Case("mips32r5", NanLegacy | Nan2008)
-      .Case("mips32r6", Nan2008)
-      .Case("mips64", NanLegacy)
-      .Case("mips64r2", NanLegacy | Nan2008)
-      .Case("mips64r3", NanLegacy | Nan2008)
-      .Case("mips64r5", NanLegacy | Nan2008)
-      .Case("mips64r6", Nan2008)
-      .Default(NanLegacy);
+mips::IEEE754Standard mips::getIEEE754Standard(StringRef &CPU) {
+  // Strictly speaking, mips32r2 and mips64r2 do not conform to the
+  // IEEE754-2008 standard. Support for this standard was first introduced
+  // in Release 3. However, other compilers have traditionally allowed it
+  // for Release 2 so we should do the same.
+  return (IEEE754Standard)llvm::StringSwitch<int>(CPU)
+      .Case("mips1", Legacy)
+      .Case("mips2", Legacy)
+      .Case("mips3", Legacy)
+      .Case("mips4", Legacy)
+      .Case("mips5", Legacy)
+      .Case("mips32", Legacy)
+      .Case("mips32r2", Legacy | Std2008)
+      .Case("mips32r3", Legacy | Std2008)
+      .Case("mips32r5", Legacy | Std2008)
+      .Case("mips32r6", Std2008)
+      .Case("mips64", Legacy)
+      .Case("mips64r2", Legacy | Std2008)
+      .Case("mips64r3", Legacy | Std2008)
+      .Case("mips64r5", Legacy | Std2008)
+      .Case("mips64r6", Std2008)
+      .Default(Std2008);
 }
 
 bool mips::hasCompactBranches(StringRef &CPU) {
@@ -404,4 +481,21 @@ bool mips::shouldUseFPXX(const ArgList &Args, const llvm::Triple &Triple,
       UseFPXX = false;
 
   return UseFPXX;
+}
+
+bool mips::supportsIndirectJumpHazardBarrier(StringRef &CPU) {
+  // Supporting the hazard barrier method of dealing with indirect
+  // jumps requires MIPSR2 support.
+  return llvm::StringSwitch<bool>(CPU)
+      .Case("mips32r2", true)
+      .Case("mips32r3", true)
+      .Case("mips32r5", true)
+      .Case("mips32r6", true)
+      .Case("mips64r2", true)
+      .Case("mips64r3", true)
+      .Case("mips64r5", true)
+      .Case("mips64r6", true)
+      .Case("octeon", true)
+      .Case("p5600", true)
+      .Default(false);
 }

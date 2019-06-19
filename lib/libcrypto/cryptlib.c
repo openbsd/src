@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.41 2017/04/29 21:48:43 jsing Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.45 2019/01/26 11:30:32 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -114,367 +114,172 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
-#include <limits.h>
+#include <pthread.h>
 #include <stdarg.h>
-#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include <openssl/opensslconf.h>
-
 #include <openssl/crypto.h>
-#include <openssl/buffer.h>
-#include <openssl/err.h>
-#include <openssl/safestack.h>
-#include <openssl/sha.h>
-
-DECLARE_STACK_OF(CRYPTO_dynlock)
-
-/* real #defines in crypto.h, keep these upto date */
-static const char* const lock_names[CRYPTO_NUM_LOCKS] = {
-	"<<ERROR>>",
-	"err",
-	"ex_data",
-	"x509",
-	"x509_info",
-	"x509_pkey",
-	"x509_crl",
-	"x509_req",
-	"dsa",
-	"rsa",
-	"evp_pkey",
-	"x509_store",
-	"ssl_ctx",
-	"ssl_cert",
-	"ssl_session",
-	"ssl_sess_cert",
-	"ssl",
-	"ssl_method",
-	"rand",
-	"rand2",
-	"debug_malloc",
-	"BIO",
-	"gethostbyname",
-	"getservbyname",
-	"readdir",
-	"RSA_blinding",
-	"dh",
-	"debug_malloc2",
-	"dso",
-	"dynlock",
-	"engine",
-	"ui",
-	"ecdsa",
-	"ec",
-	"ecdh",
-	"bn",
-	"ec_pre_comp",
-	"store",
-	"comp",
-	"fips",
-	"fips2",
-#if CRYPTO_NUM_LOCKS != 41
-# error "Inconsistency between crypto.h and cryptlib.c"
-#endif
-};
-
-/* This is for applications to allocate new type names in the non-dynamic
-   array of lock names.  These are numbered with positive numbers.  */
-static STACK_OF(OPENSSL_STRING) *app_locks = NULL;
-
-/* For applications that want a more dynamic way of handling threads, the
-   following stack is used.  These are externally numbered with negative
-   numbers.  */
-static STACK_OF(CRYPTO_dynlock) *dyn_locks = NULL;
 
 static void (*locking_callback)(int mode, int type,
-    const char *file, int line) = 0;
+    const char *file, int line) = NULL;
 static int (*add_lock_callback)(int *pointer, int amount,
-    int type, const char *file, int line) = 0;
-#ifndef OPENSSL_NO_DEPRECATED
-static unsigned long (*id_callback)(void) = 0;
-#endif
-static void (*threadid_callback)(CRYPTO_THREADID *) = 0;
-static struct CRYPTO_dynlock_value *(*dynlock_create_callback)(
-    const char *file, int line) = 0;
-static void (*dynlock_lock_callback)(int mode,
-    struct CRYPTO_dynlock_value *l, const char *file, int line) = 0;
-static void (*dynlock_destroy_callback)(struct CRYPTO_dynlock_value *l,
-    const char *file, int line) = 0;
-
-int
-CRYPTO_get_new_lockid(char *name)
-{
-	char *str;
-	int i;
-
-	if ((app_locks == NULL) &&
-	    ((app_locks = sk_OPENSSL_STRING_new_null()) == NULL)) {
-		CRYPTOerror(ERR_R_MALLOC_FAILURE);
-		return (0);
-	}
-	if (name == NULL || (str = strdup(name)) == NULL) {
-		CRYPTOerror(ERR_R_MALLOC_FAILURE);
-		return (0);
-	}
-	i = sk_OPENSSL_STRING_push(app_locks, str);
-	if (!i)
-		free(str);
-	else
-		i += CRYPTO_NUM_LOCKS; /* gap of one :-) */
-	return (i);
-}
+    int type, const char *file, int line) = NULL;
 
 int
 CRYPTO_num_locks(void)
 {
-	return CRYPTO_NUM_LOCKS;
+	return 1;
 }
 
-int
-CRYPTO_get_new_dynlockid(void)
+unsigned long
+(*CRYPTO_get_id_callback(void))(void)
 {
-	int i = 0;
-	CRYPTO_dynlock *pointer = NULL;
-
-	if (dynlock_create_callback == NULL) {
-		CRYPTOerror(CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK);
-		return (0);
-	}
-	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
-	if ((dyn_locks == NULL) &&
-	    ((dyn_locks = sk_CRYPTO_dynlock_new_null()) == NULL)) {
-		CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-		CRYPTOerror(ERR_R_MALLOC_FAILURE);
-		return (0);
-	}
-	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-
-	pointer = malloc(sizeof(CRYPTO_dynlock));
-	if (pointer == NULL) {
-		CRYPTOerror(ERR_R_MALLOC_FAILURE);
-		return (0);
-	}
-	pointer->references = 1;
-	pointer->data = dynlock_create_callback(__FILE__, __LINE__);
-	if (pointer->data == NULL) {
-		free(pointer);
-		CRYPTOerror(ERR_R_MALLOC_FAILURE);
-		return (0);
-	}
-
-	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
-	/* First, try to find an existing empty slot */
-	i = sk_CRYPTO_dynlock_find(dyn_locks, NULL);
-	/* If there was none, push, thereby creating a new one */
-	if (i == -1)
-		/* Since sk_push() returns the number of items on the
-		   stack, not the location of the pushed item, we need
-		   to transform the returned number into a position,
-		   by decreasing it.  */
-		i = sk_CRYPTO_dynlock_push(dyn_locks, pointer) - 1;
-	else
-		/* If we found a place with a NULL pointer, put our pointer
-		   in it.  */
-		(void)sk_CRYPTO_dynlock_set(dyn_locks, i, pointer);
-	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-
-	if (i == -1) {
-		dynlock_destroy_callback(pointer->data, __FILE__, __LINE__);
-		free(pointer);
-	} else
-		i += 1; /* to avoid 0 */
-	return -i;
-}
-
-void
-CRYPTO_destroy_dynlockid(int i)
-{
-	CRYPTO_dynlock *pointer = NULL;
-
-	if (i)
-		i = -i - 1;
-	if (dynlock_destroy_callback == NULL)
-		return;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
-
-	if (dyn_locks == NULL || i >= sk_CRYPTO_dynlock_num(dyn_locks)) {
-		CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-		return;
-	}
-	pointer = sk_CRYPTO_dynlock_value(dyn_locks, i);
-	if (pointer != NULL) {
-		--pointer->references;
-		if (pointer->references <= 0) {
-			(void)sk_CRYPTO_dynlock_set(dyn_locks, i, NULL);
-		} else
-			pointer = NULL;
-	}
-	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-
-	if (pointer) {
-		dynlock_destroy_callback(pointer->data, __FILE__, __LINE__);
-		free(pointer);
-	}
-}
-
-struct CRYPTO_dynlock_value *
-CRYPTO_get_dynlock_value(int i)
-{
-	CRYPTO_dynlock *pointer = NULL;
-
-	if (i)
-		i = -i - 1;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
-
-	if (dyn_locks != NULL && i < sk_CRYPTO_dynlock_num(dyn_locks))
-		pointer = sk_CRYPTO_dynlock_value(dyn_locks, i);
-	if (pointer)
-		pointer->references++;
-
-	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-
-	if (pointer)
-		return pointer->data;
 	return NULL;
 }
 
-struct CRYPTO_dynlock_value *
-(*CRYPTO_get_dynlock_create_callback(void))(const char *file, int line)
+void
+CRYPTO_set_id_callback(unsigned long (*func)(void))
 {
-	return (dynlock_create_callback);
+	return;
+}
+
+unsigned long
+CRYPTO_thread_id(void)
+{
+	return (unsigned long)pthread_self();
 }
 
 void
-(*CRYPTO_get_dynlock_lock_callback(void))(int mode,
-    struct CRYPTO_dynlock_value *l, const char *file, int line)
+CRYPTO_set_locking_callback(void (*func)(int mode, int lock_num,
+    const char *file, int line))
 {
-	return (dynlock_lock_callback);
+	locking_callback = func;
 }
 
 void
-(*CRYPTO_get_dynlock_destroy_callback(void))(struct CRYPTO_dynlock_value *l,
-    const char *file, int line)
+(*CRYPTO_get_locking_callback(void))(int mode, int lock_num,
+	const char *file, int line)
 {
-	return (dynlock_destroy_callback);
+	return locking_callback;
 }
 
 void
-CRYPTO_set_dynlock_create_callback(
-    struct CRYPTO_dynlock_value *(*func)(const char *file, int line))
+CRYPTO_set_add_lock_callback(int (*func)(int *num, int mount, int lock_num,
+	const char *file, int line))
 {
-	dynlock_create_callback = func;
-}
-
-void
-CRYPTO_set_dynlock_lock_callback(void (*func)(int mode,
-    struct CRYPTO_dynlock_value *l, const char *file, int line))
-{
-	dynlock_lock_callback = func;
-}
-
-void
-CRYPTO_set_dynlock_destroy_callback(
-    void (*func)(struct CRYPTO_dynlock_value *l, const char *file, int line))
-{
-	dynlock_destroy_callback = func;
-}
-
-void
-(*CRYPTO_get_locking_callback(void))(int mode, int type, const char *file,
-    int line)
-{
-	return (locking_callback);
+	add_lock_callback = func;
 }
 
 int
 (*CRYPTO_get_add_lock_callback(void))(int *num, int mount, int type,
     const char *file, int line)
 {
-	return (add_lock_callback);
+	return add_lock_callback;
+}
+
+const char *
+CRYPTO_get_lock_name(int lock_num)
+{
+	return "";
+}
+
+struct CRYPTO_dynlock_value *
+CRYPTO_get_dynlock_value(int i)
+{
+	return NULL;
+}
+
+int CRYPTO_get_new_dynlockid(void)
+{
+	return 0;
 }
 
 void
-CRYPTO_set_locking_callback(void (*func)(int mode, int type,
-    const char *file, int line))
+CRYPTO_destroy_dynlockid(int i)
 {
-	/* Calling this here ensures initialisation before any threads
-	 * are started.
-	 */
-	locking_callback = func;
+	return;
 }
 
-void
-CRYPTO_set_add_lock_callback(int (*func)(int *num, int mount, int type,
-    const char *file, int line))
+int CRYPTO_get_new_lockid(char *name)
 {
-	add_lock_callback = func;
-}
-
-/* the memset() here and in set_pointer() seem overkill, but for the sake of
- * CRYPTO_THREADID_cmp() this avoids any platform silliness that might cause two
- * "equal" THREADID structs to not be memcmp()-identical. */
-void
-CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val)
-{
-	memset(id, 0, sizeof(*id));
-	id->val = val;
-}
-
-void
-CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr)
-{
-	memset(id, 0, sizeof(*id));
-	id->ptr = ptr;
-#if ULONG_MAX >= UINTPTR_MAX
-	/*s u 'ptr' can be embedded in 'val' without loss of uniqueness */
-	id->val = (uintptr_t)id->ptr;
-#else
-	{
-		SHA256_CTX ctx;
-		uint8_t results[SHA256_DIGEST_LENGTH];
-
-		SHA256_Init(&ctx);
-		SHA256_Update(&ctx, (char *)(&id->ptr), sizeof(id->ptr));
-		SHA256_Final(results, &ctx);
-		memcpy(&id->val, results, sizeof(id->val));
-	}
-#endif
+	return 0;
 }
 
 int
 CRYPTO_THREADID_set_callback(void (*func)(CRYPTO_THREADID *))
 {
-	if (threadid_callback)
-		return 0;
-	threadid_callback = func;
 	return 1;
 }
 
-void (*CRYPTO_THREADID_get_callback(void))(CRYPTO_THREADID *)
+void
+(*CRYPTO_THREADID_get_callback(void))(CRYPTO_THREADID *)
 {
-	return threadid_callback;
+	return NULL;
+}
+
+void
+CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val)
+{
+	return;
+}
+
+void
+CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr)
+{
+	return;
+}
+
+void
+CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value *(
+    *dyn_create_function)(const char *file, int line))
+{
+	return;
+}
+
+void
+CRYPTO_set_dynlock_lock_callback(void (*dyn_lock_function)(
+    int mode, struct CRYPTO_dynlock_value *l, const char *file, int line))
+{
+	return;
+}
+
+void
+CRYPTO_set_dynlock_destroy_callback(void (*dyn_destroy_function)(
+    struct CRYPTO_dynlock_value *l, const char *file, int line))
+{
+	return;
+}
+
+struct CRYPTO_dynlock_value *
+(*CRYPTO_get_dynlock_create_callback(void))(
+    const char *file, int line)
+{
+	return NULL;
+}
+
+void
+(*CRYPTO_get_dynlock_lock_callback(void))(int mode,
+    struct CRYPTO_dynlock_value *l, const char *file, int line)
+{
+	return NULL;
+}
+
+void
+(*CRYPTO_get_dynlock_destroy_callback(void))(
+    struct CRYPTO_dynlock_value *l, const char *file, int line)
+{
+	return NULL;
 }
 
 void
 CRYPTO_THREADID_current(CRYPTO_THREADID *id)
 {
-	if (threadid_callback) {
-		threadid_callback(id);
-		return;
-	}
-#ifndef OPENSSL_NO_DEPRECATED
-	/* If the deprecated callback was set, fall back to that */
-	if (id_callback) {
-		CRYPTO_THREADID_set_numeric(id, id_callback());
-		return;
-	}
-#endif
-	/* Else pick a backup */
-	/* For everything else, default to using the address of 'errno' */
-	CRYPTO_THREADID_set_pointer(id, (void*)&errno);
+	memset(id, 0, sizeof(*id));
+	id->val = (unsigned long)pthread_self();
 }
 
 int
@@ -493,129 +298,6 @@ unsigned long
 CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
 {
 	return id->val;
-}
-
-#ifndef OPENSSL_NO_DEPRECATED
-unsigned long (*CRYPTO_get_id_callback(void))(void)
-{
-	return (id_callback);
-}
-
-void
-CRYPTO_set_id_callback(unsigned long (*func)(void))
-{
-	id_callback = func;
-}
-
-unsigned long
-CRYPTO_thread_id(void)
-{
-	unsigned long ret = 0;
-
-	if (id_callback == NULL) {
-		ret = (unsigned long)getpid();
-	} else
-		ret = id_callback();
-	return (ret);
-}
-#endif
-
-void
-CRYPTO_lock(int mode, int type, const char *file, int line)
-{
-#ifdef LOCK_DEBUG
-	{
-		CRYPTO_THREADID id;
-		char *rw_text, *operation_text;
-
-		if (mode & CRYPTO_LOCK)
-			operation_text = "lock  ";
-		else if (mode & CRYPTO_UNLOCK)
-			operation_text = "unlock";
-		else
-			operation_text = "ERROR ";
-
-		if (mode & CRYPTO_READ)
-			rw_text = "r";
-		else if (mode & CRYPTO_WRITE)
-			rw_text = "w";
-		else
-			rw_text = "ERROR";
-
-		CRYPTO_THREADID_current(&id);
-		fprintf(stderr, "lock:%08lx:(%s)%s %-18s %s:%d\n",
-		    CRYPTO_THREADID_hash(&id), rw_text, operation_text,
-		    CRYPTO_get_lock_name(type), file, line);
-	}
-#endif
-	if (type < 0) {
-		if (dynlock_lock_callback != NULL) {
-			struct CRYPTO_dynlock_value *pointer =
-			    CRYPTO_get_dynlock_value(type);
-
-			OPENSSL_assert(pointer != NULL);
-
-			dynlock_lock_callback(mode, pointer, file, line);
-
-			CRYPTO_destroy_dynlockid(type);
-		}
-	} else if (locking_callback != NULL)
-		locking_callback(mode, type, file, line);
-}
-
-int
-CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
-    int line)
-{
-	int ret = 0;
-
-	if (add_lock_callback != NULL) {
-#ifdef LOCK_DEBUG
-		int before= *pointer;
-#endif
-
-		ret = add_lock_callback(pointer, amount, type, file, line);
-#ifdef LOCK_DEBUG
-		{
-			CRYPTO_THREADID id;
-			CRYPTO_THREADID_current(&id);
-			fprintf(stderr, "ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
-			    CRYPTO_THREADID_hash(&id), before, amount, ret,
-			    CRYPTO_get_lock_name(type),
-			    file, line);
-		}
-#endif
-	} else {
-		CRYPTO_lock(CRYPTO_LOCK|CRYPTO_WRITE, type, file, line);
-
-		ret= *pointer + amount;
-#ifdef LOCK_DEBUG
-		{
-			CRYPTO_THREADID id;
-			CRYPTO_THREADID_current(&id);
-			fprintf(stderr, "ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
-			    CRYPTO_THREADID_hash(&id), *pointer, amount, ret,
-			    CRYPTO_get_lock_name(type), file, line);
-		}
-#endif
-		*pointer = ret;
-		CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE, type, file, line);
-	}
-	return (ret);
-}
-
-const char *
-CRYPTO_get_lock_name(int type)
-{
-	if (type < 0)
-		return("dynamic");
-	else if (type < CRYPTO_NUM_LOCKS)
-		return (lock_names[type]);
-	else if (type - CRYPTO_NUM_LOCKS > sk_OPENSSL_STRING_num(app_locks))
-		return("ERROR");
-	else
-		return (sk_OPENSSL_STRING_value(app_locks,
-		    type - CRYPTO_NUM_LOCKS));
 }
 
 #if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
@@ -663,10 +345,11 @@ OPENSSL_cpuid_setup(void)
 static void
 OPENSSL_showfatal(const char *fmta, ...)
 {
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 	va_list ap;
 
 	va_start(ap, fmta);
-	vfprintf(stderr, fmta, ap);
+	vsyslog_r(LOG_INFO|LOG_LOCAL2, &sdata, fmta, ap);
 	va_end(ap);
 }
 
@@ -674,9 +357,9 @@ void
 OpenSSLDie(const char *file, int line, const char *assertion)
 {
 	OPENSSL_showfatal(
-	    "%s(%d): OpenSSL internal error, assertion failed: %s\n",
-	    file, line, assertion);
-	abort();
+	    "uid %u cmd %s %s(%d): OpenSSL internal error, assertion failed: %s\n",
+	    getuid(), getprogname(), file, line, assertion);
+	_exit(1);
 }
 
 int

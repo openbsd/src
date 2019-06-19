@@ -54,9 +54,8 @@ public:
 
   lldb::OptionValueSP DeepCopy() const override;
 
-  size_t AutoComplete(CommandInterpreter &interpreter, llvm::StringRef s,
-                      int match_start_point, int max_return_elements,
-                      bool &word_complete, StringList &matches) override;
+  size_t AutoComplete(CommandInterpreter &interpreter,
+                      CompletionRequest &request) override;
 
   //---------------------------------------------------------------------
   // Subclass specific functions
@@ -77,7 +76,7 @@ public:
 
   void SetDefaultValue(const FileSpec &value) { m_default_value = value; }
 
-  const lldb::DataBufferSP &GetFileContents(bool null_terminate);
+  const lldb::DataBufferSP &GetFileContents();
 
   void SetCompletionMask(uint32_t mask) { m_completion_mask = mask; }
 

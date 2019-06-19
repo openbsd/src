@@ -36,7 +36,7 @@ $ORS = "\n";
 	if ($^O ne 'dos') {
 	    pipe(IN, OUT);
 	} else {
-	    open(OUT, ">en.tmp");
+	    open(OUT, ">", "en.tmp");
 	}
 	select(OUT);
 	$| = 1;
@@ -48,7 +48,7 @@ $ORS = "\n";
 	my $close = close OUT;
 	ok( !($close) == $CHILD_ERROR, '$CHILD_ERROR should be false' );
 
-	open(IN, "<en.tmp") if ($^O eq 'dos');
+	open(IN, "<", "en.tmp") if ($^O eq 'dos');
 	my $foo = <IN>;
 	like( $foo, qr/ok 7/, '$OFS' );
 
@@ -129,7 +129,7 @@ is( $keys[1], 'd|e|f', '$SUBSCRIPT_SEPARATOR' );
 eval { is( $EXCEPTIONS_BEING_CAUGHT, 1, '$EXCEPTIONS_BEING_CAUGHT' ) };
 ok( !$EXCEPTIONS_BEING_CAUGHT, '$EXCEPTIONS_BEING_CAUGHT should be false' );
 
-eval { local *F; my $f = 'asdasdasd'; ++$f while -e $f; open(F, $f); };
+eval { local *F; my $f = 'asdasdasd'; ++$f while -e $f; open(F, '<', $f); };
 is( $OS_ERROR, $ERRNO, '$OS_ERROR' );
 ok( $OS_ERROR{ENOENT}, '%OS_ERROR (ENOENT should be set)' );
 

@@ -14,7 +14,7 @@
 #ifndef LLVM_LIB_TARGET_BPF_BPFREGISTERINFO_H
 #define LLVM_LIB_TARGET_BPF_BPFREGISTERINFO_H
 
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 
 #define GET_REGINFO_HEADER
 #include "BPFGenRegisterInfo.inc"
@@ -28,6 +28,8 @@ struct BPFRegisterInfo : public BPFGenRegisterInfo {
   const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF) const override;
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
+
+  bool enableMultipleCopyHints() const override { return true; }
 
   void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
                            unsigned FIOperandNum,

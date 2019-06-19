@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdstore.h,v 1.3 2012/11/04 23:30:38 kettenis Exp $	*/
+/*	$OpenBSD: mdstore.h,v 1.4 2018/09/15 13:20:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -30,6 +30,8 @@ struct mdstore_set {
 };
 
 extern TAILQ_HEAD(mdstore_set_head, mdstore_set) mdstore_sets;
+
+void mdstore_register(struct ds_conn *);
 
 void mdstore_download(struct ds_conn *, const char *);
 void mdstore_select(struct ds_conn *, const char *);

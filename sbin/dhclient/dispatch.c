@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.150 2018/02/28 22:16:56 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.165 2019/05/10 01:29:31 guenther Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -55,7 +55,6 @@
 #include <arpa/inet.h>
 
 #include <errno.h>
-#include <ifaddrs.h>
 #include <imsg.h>
 #include <limits.h>
 #include <poll.h>
@@ -72,7 +71,9 @@
 #include "privsep.h"
 
 
-void packethandler(struct interface_info *ifi);
+void bpffd_handler(struct interface_info *);
+void dhcp_packet_dispatch(struct interface_info *, struct sockaddr_in *,
+    struct ether_addr *);
 void flush_unpriv_ibuf(void);
 
 /*
@@ -86,11 +87,16 @@ dispatch(struct interface_info *ifi, int routefd)
 	time_t			 cur_time, howlong;
 	int			 nfds, to_msec;
 
-	while (quit == 0 || quit == SIGHUP) {
-		if (quit == SIGHUP) {
-			sendhup();
-			to_msec = 100;
-		} else if (ifi->timeout_func != NULL) {
+	while (quit == 0 || quit == RESTART) {
+		if (quit == RESTART) {
+			quit = 0;
+			time(&ifi->startup_time);
+			free(ifi->configured);
+			ifi->configured = NULL;
+			ifi->state = S_PREBOOT;
+			state_preboot(ifi);
+		}
+		if (ifi->timeout_func != NULL) {
 			time(&cur_time);
 			if (ifi->timeout <= cur_time) {
 				func = ifi->timeout_func;
@@ -118,7 +124,7 @@ dispatch(struct interface_info *ifi, int routefd)
 		 *  fds[1] == routing socket for incoming RTM messages
 		 *  fds[2] == imsg socket to privileged process
 		 */
-		fds[0].fd = ifi->bfdesc;
+		fds[0].fd = ifi->bpffd;
 		fds[1].fd = routefd;
 		fds[2].fd = unpriv_ibuf->fd;
 		fds[0].events = fds[1].events = fds[2].events = POLLIN;
@@ -130,81 +136,83 @@ dispatch(struct interface_info *ifi, int routefd)
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
-			log_warn("%s: poll(bfdesc, routefd, unpriv_ibuf)",
+			log_warn("%s: poll(bpffd, routefd, unpriv_ibuf)",
 			    log_procname);
-			quit = INTERNALSIG;
-			continue;
+			break;
 		}
 
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("%s: bfdesc: ERR|HUP|NVAL", log_procname);
-			quit = INTERNALSIG;
-			continue;
+			log_debug("%s: bpffd: ERR|HUP|NVAL", log_procname);
+			break;
 		}
 		if ((fds[1].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("%s: routefd: ERR|HUP|NVAL", log_procname);
-			quit = INTERNALSIG;
-			continue;
+			log_debug("%s: routefd: ERR|HUP|NVAL", log_procname);
+			break;
 		}
 		if ((fds[2].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			log_warnx("%s: unpriv_ibuf: ERR|HUP|NVAL", log_procname);
-			quit = INTERNALSIG;
-			continue;
+			log_debug("%s: unpriv_ibuf: ERR|HUP|NVAL", log_procname);
+			break;
 		}
 
 		if (nfds == 0)
 			continue;
 
-		if ((fds[0].revents & POLLIN) != 0) {
-			do {
-				packethandler(ifi);
-			} while (ifi->rbuf_offset < ifi->rbuf_len);
-		}
+		if ((fds[0].revents & POLLIN) != 0)
+			bpffd_handler(ifi);
 		if ((fds[1].revents & POLLIN) != 0)
-			routehandler(ifi, routefd);
+			routefd_handler(ifi, routefd);
 		if ((fds[2].revents & POLLOUT) != 0)
 			flush_unpriv_ibuf();
 		if ((fds[2].revents & POLLIN) != 0)
-			quit = INTERNALSIG;
+			break;
 	}
-
-	if (quit != INTERNALSIG && quit != SIGHUP)
-		fatalx("%s", strsignal(quit));
 }
 
 void
-packethandler(struct interface_info *ifi)
+bpffd_handler(struct interface_info *ifi)
 {
 	struct sockaddr_in	 from;
 	struct ether_addr	 hfrom;
+	unsigned char		*next, *lim;
+	ssize_t			 n;
+
+	n = read(ifi->bpffd, ifi->rbuf, ifi->rbuf_max);
+	if (n == -1) {
+		log_warn("%s: read(bpffd)", log_procname);
+		ifi->errors++;
+		if (ifi->errors > 20)
+			fatalx("too many read(bpffd) failures");
+		return;
+	}
+	ifi->errors = 0;
+
+	lim = ifi->rbuf + n;
+	for (next = ifi->rbuf; quit == 0 && n > 0; next += n) {
+		n = receive_packet(next, lim, &from, &hfrom, &ifi->recv_packet);
+		if (n > 0)
+			dhcp_packet_dispatch(ifi, &from, &hfrom);
+	}
+}
+
+void
+dhcp_packet_dispatch(struct interface_info *ifi, struct sockaddr_in *from,
+    struct ether_addr *hfrom)
+{
 	struct in_addr		 ifrom;
 	struct dhcp_packet	*packet = &ifi->recv_packet;
 	struct reject_elem	*ap;
 	struct option_data	*options;
 	char			*src;
-	ssize_t			 result;
 	int			 i, rslt;
 
-	result = receive_packet(ifi, &from, &hfrom);
-	if (result == -1) {
-		ifi->errors++;
-		if (ifi->errors > 20)
-			fatalx("too many receive_packet failures");
-		return;
-	}
-	ifi->errors = 0;
-
-	if (result == 0)
-		return;
-
-	ifrom.s_addr = from.sin_addr.s_addr;
+	ifrom.s_addr = from->sin_addr.s_addr;
 
 	if (packet->hlen != ETHER_ADDR_LEN) {
 		log_debug("%s: discarding packet with hlen == %u", log_procname,
 		    packet->hlen);
 		return;
 	} else if (memcmp(&ifi->hw_address, packet->chaddr,
-	    sizeof(ifi->hw_address))) {
+	    sizeof(ifi->hw_address)) != 0) {
 		log_debug("%s: discarding packet with chaddr == %s",
 		    log_procname,
 		    ether_ntoa((struct ether_addr *)packet->chaddr));
@@ -240,7 +248,7 @@ packethandler(struct interface_info *ifi)
 		return;
 	}
 
-	rslt = asprintf(&src, "%s (%s)",inet_ntoa(ifrom), ether_ntoa(&hfrom));
+	rslt = asprintf(&src, "%s (%s)", inet_ntoa(ifrom), ether_ntoa(hfrom));
 	if (rslt == -1)
 		fatal("src");
 
@@ -283,7 +291,7 @@ flush_unpriv_ibuf(void)
 			if (errno == EAGAIN)
 				break;
 			if (quit == 0)
-				quit = INTERNALSIG;
+				quit = TERMINATE;
 			if (errno != EPIPE && errno != 0)
 				log_warn("%s: msgbuf_write(unpriv_ibuf)",
 				    log_procname);
@@ -307,17 +315,4 @@ cancel_timeout(struct interface_info *ifi)
 {
 	ifi->timeout = 0;
 	ifi->timeout_func = NULL;
-}
-
-/*
- * Inform the [priv] process a HUP was received.
- */
-void
-sendhup(void)
-{
-	int rslt;
-
-	rslt = imsg_compose(unpriv_ibuf, IMSG_HUP, 0, 0, -1, NULL, 0);
-	if (rslt == -1)
-		log_warn("%s: imsg_compose(IMSG_HUP)", log_procname);
 }

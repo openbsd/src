@@ -27,8 +27,15 @@ namespace llvm {
   class TargetTransformInfo;
 
   /// Return true if the given expression is safe to expand in the sense that
-  /// all materialized values are safe to speculate.
+  /// all materialized values are safe to speculate anywhere their operands are
+  /// defined.
   bool isSafeToExpand(const SCEV *S, ScalarEvolution &SE);
+
+  /// Return true if the given expression is safe to expand in the sense that
+  /// all materialized values are defined and safe to speculate at the specified
+  /// location and their operands are defined at this location.
+  bool isSafeToExpandAt(const SCEV *S, const Instruction *InsertionPoint,
+                        ScalarEvolution &SE);
 
   /// This class uses information about analyze scalars to rewrite expressions
   /// in canonical form.
@@ -40,7 +47,7 @@ namespace llvm {
     ScalarEvolution &SE;
     const DataLayout &DL;
 
-    // New instructions receive a name to identifies them with the current pass.
+    // New instructions receive a name to identify them with the current pass.
     const char* IVName;
 
     // InsertedExpressions caches Values for reuse, so must track RAUW.
@@ -314,7 +321,7 @@ namespace llvm {
 
     /// Arrange for there to be a cast of V to Ty at IP, reusing an existing
     /// cast if a suitable one exists, moving an existing cast if a suitable one
-    /// exists but isn't in the right place, or or creating a new one.
+    /// exists but isn't in the right place, or creating a new one.
     Value *ReuseOrCreateCast(Value *V, Type *Ty,
                              Instruction::CastOps Op,
                              BasicBlock::iterator IP);
@@ -328,6 +335,7 @@ namespace llvm {
     Value *expandAddToGEP(const SCEV *const *op_begin,
                           const SCEV *const *op_end,
                           PointerType *PTy, Type *Ty, Value *V);
+    Value *expandAddToGEP(const SCEV *Op, PointerType *PTy, Type *Ty, Value *V);
 
     /// Find a previous Value in ExprValueMap for expand.
     ScalarEvolution::ValueOffsetPair

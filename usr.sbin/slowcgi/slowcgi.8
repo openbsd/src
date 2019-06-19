@@ -1,4 +1,4 @@
-.\"   $OpenBSD: slowcgi.8,v 1.12 2017/10/17 22:47:58 schwarze Exp $
+.\"   $OpenBSD: slowcgi.8,v 1.14 2018/08/13 16:54:50 florian Exp $
 .\"
 .\" Copyright (c) 2013 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2017 $
+.Dd $Mdocdate: August 13 2018 $
 .Dt SLOWCGI 8
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Op Fl d
 .Op Fl p Ar path
 .Op Fl s Ar socket
+.Op Fl U Ar user
 .Op Fl u Ar user
 .Sh DESCRIPTION
 .Nm
@@ -75,10 +76,20 @@ effectively disables the chroot.
 .It Fl s Ar socket
 Create and bind to alternative local socket at
 .Ar socket .
+.It Fl U Ar user
+Change the owner of
+.Pa /var/www/run/slowcgi.sock
+to
+.Ar user
+and its primary group instead of the default www:www.
 .It Fl u Ar user
 Drop privileges to
 .Ar user
-instead of default user www.
+instead of default user www and
+.Xr chroot 8
+to
+the home directory of
+.Ar user .
 .El
 .Sh SEE ALSO
 .Xr httpd 8

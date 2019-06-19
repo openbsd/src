@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.106 2017/01/22 10:17:39 dlg Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.109 2018/10/02 19:49:10 stsp Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -509,7 +509,7 @@ aue_miibus_writereg(struct device *dev, int phy, int reg, int data)
 	}
 
 	if (i == AUE_TIMEOUT) {
-		printf("%s: MII read timed out\n",
+		printf("%s: MII write timed out\n",
 		    sc->aue_dev.dv_xname);
 	}
 	aue_unlock_mii(sc);
@@ -1396,9 +1396,8 @@ aue_ifmedia_upd(struct ifnet *ifp)
 	sc->aue_link = 0;
 	if (mii->mii_instance) {
 		struct mii_softc	*miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		    miisc = LIST_NEXT(miisc, mii_list))
-			 mii_phy_reset(miisc);
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
+			mii_phy_reset(miisc);
 	}
 	mii_mediachg(mii);
 
@@ -1429,7 +1428,7 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	int			s, error = 0;
 
 	if (usbd_is_dying(sc->aue_udev))
-		return (EIO);
+		return ENXIO;
 
 	s = splnet();
 

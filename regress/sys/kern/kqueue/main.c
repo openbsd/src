@@ -1,8 +1,9 @@
-/*	$OpenBSD: main.c,v 1.9 2016/09/20 23:05:27 bluhm Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2019/03/04 19:33:41 anton Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,10 +14,10 @@ int
 main(int argc, char **argv)
 {
 	extern char *__progname;
-	int ret, c;
+	int n, ret, c;
 
 	ret = 0;
-	while ((c = getopt(argc, argv, "fFilpPrstT")) != -1) {
+	while ((c = getopt(argc, argv, "fFiIlpPrR:stT:")) != -1) {
 		switch (c) {
 		case 'f':
 			ret |= check_inheritance();
@@ -26,6 +27,9 @@ main(int argc, char **argv)
 			break;
 		case 'i':
 			ret |= do_timer();
+			break;
+		case 'I':
+			ret |= do_invalid_timer();
 			break;
 		case 'l':
 			ret |= do_flock();
@@ -39,6 +43,10 @@ main(int argc, char **argv)
 		case 'r':
 			ret |= do_random();
 			break;
+		case 'R':
+			n = strtonum(optarg, 1, INT_MAX, NULL);
+			ret |= do_regress(n);
+			break;
 		case 's':
 			ret |= do_signal();
 			break;
@@ -46,10 +54,12 @@ main(int argc, char **argv)
 			ret |= do_tun();
 			break;
 		case 'T':
-			ret |= do_pty();
+			n = strtonum(optarg, 1, INT_MAX, NULL);
+			ret |= do_pty(n);
 			break;
 		default:
-			fprintf(stderr, "Usage: %s -[fPprTt]\n", __progname);
+			fprintf(stderr, "usage: %s -[fFiIlpPrstT] [-R n]\n",
+			    __progname);
 			exit(1);
 		}
 	}

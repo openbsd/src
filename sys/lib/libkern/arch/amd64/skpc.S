@@ -36,6 +36,7 @@
 #include <machine/asm.h>
 
 ENTRY(skpc)
+	RETGUARD_SETUP(skpc, r10)
 	movl	%edi,%eax
 	movq	%rsi,%rcx
 	movq	%rdx,%rdi
@@ -45,4 +46,5 @@ ENTRY(skpc)
 	incq	%rcx
 1:
 	movl	%ecx,%eax
+	RETGUARD_CHECK(skpc, r10)
 	ret

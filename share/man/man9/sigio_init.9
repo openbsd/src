@@ -1,0 +1,122 @@
+.\"	$OpenBSD: sigio_init.9,v 1.3 2018/11/12 18:27:31 jmc Exp $
+.\"
+.\" Copyright (c) 2018 Visa Hankala
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 12 2018 $
+.Dt SIGIO_INIT 9
+.Os
+.Sh NAME
+.Nm sigio_init ,
+.Nm sigio_free ,
+.Nm sigio_copy ,
+.Nm sigio_setown ,
+.Nm sigio_getown
+.Nd asynchronous IO signal API
+.Sh SYNOPSIS
+.In sys/sigio.h
+.Ft void
+.Fn "sigio_init" "struct sigio_ref *sir"
+.Ft void
+.Fn "sigio_free" "struct sigio_ref *sir"
+.Ft void
+.Fn "sigio_copy" "struct sigio_ref *dst" "struct sigio_ref *src"
+.Ft int
+.Fn "sigio_setown" "struct sigio_ref *sir" "pid_t pgid"
+.Ft pid_t
+.Fn "sigio_getown" "struct sigio_ref *sir"
+.Sh DESCRIPTION
+The asynchronous IO signal API provides a means to manage signal registrations.
+It associates a process or process group with a signal source.
+The association is revoked automatically when the process or process group
+is deleted.
+.Pp
+.Fn sigio_init
+initializes the sigio reference
+.Fa sir .
+.Pp
+.Fn sigio_free
+clears any process or process group associated with reference
+.Fa sir .
+.Pp
+.Fn sigio_copy
+copies registration from reference
+.Fa src
+to reference
+.Fa dst .
+.Pp
+.Fn sigio_setown
+associates the reference
+.Fa sir
+with a process or process group.
+If
+.Fa pgid
+is positive, the ID is taken as a process ID.
+If
+.Fa pgid
+is negative, the ID is taken as a process group ID.
+The reference
+.Fa sir
+is cleared if
+.Fa pgid
+is zero.
+.Pp
+When
+.Fn sigio_setown
+is called, the invoking process' credentials are stored in the reference.
+These credentials are checked when the reference is used with
+.Xr pgsigio 9 .
+.Pp
+.Fn sigio_getown
+returns the ID of the process or process group associated with the reference
+.Fa sir .
+.Sh CONTEXT
+.Fn sigio_init ,
+.Fn sigio_free ,
+.Fn sigio_copy ,
+.Fn sigio_setown
+and
+.Fn sigio_getown
+can be called during autoconf, or from process context.
+.Sh RETURN VALUES
+.Fn sigio_setown
+returns 0 on success.
+Otherwise, the following error values are returned:
+.Bl -tag -width [EPERM]
+.It Bq Er EPERM
+The invoking process belongs to another session than the process
+or process group
+.Fa pgid .
+.It Bq Er ESRCH
+The process or process group
+.Fa pgid
+does not exist.
+.It Bq Er ESRCH
+The process
+.Fa pgid
+is exiting.
+.El
+.Pp
+The function
+.Fn sigio_getown
+returns the ID of the process or process group associated with reference
+.Fa sir ,
+or zero if no signal target has been registered.
+.Sh SEE ALSO
+.Xr pgsigio 9
+.Sh HISTORY
+The sigio routines were adapted from
+.Fx
+and first appeared in
+.Ox 6.5 .

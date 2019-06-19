@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file defines an instruction selector for the WebAssembly target.
+/// This file defines an instruction selector for the WebAssembly target.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -48,9 +48,8 @@ public:
   }
 
   bool runOnMachineFunction(MachineFunction &MF) override {
-    ForCodeSize =
-        MF.getFunction()->hasFnAttribute(Attribute::OptimizeForSize) ||
-        MF.getFunction()->hasFnAttribute(Attribute::MinSize);
+    ForCodeSize = MF.getFunction().hasFnAttribute(Attribute::OptimizeForSize) ||
+                  MF.getFunction().hasFnAttribute(Attribute::MinSize);
     Subtarget = &MF.getSubtarget<WebAssemblySubtarget>();
     return SelectionDAGISel::runOnMachineFunction(MF);
   }
@@ -69,27 +68,21 @@ private:
 } // end anonymous namespace
 
 void WebAssemblyDAGToDAGISel::Select(SDNode *Node) {
-  // Dump information about the Node being selected.
-  DEBUG(errs() << "Selecting: ");
-  DEBUG(Node->dump(CurDAG));
-  DEBUG(errs() << "\n");
-
   // If we have a custom node, we already have selected!
   if (Node->isMachineOpcode()) {
-    DEBUG(errs() << "== "; Node->dump(CurDAG); errs() << "\n");
+    LLVM_DEBUG(errs() << "== "; Node->dump(CurDAG); errs() << "\n");
     Node->setNodeId(-1);
     return;
   }
 
-  // Few custom selection stuff.
-  EVT VT = Node->getValueType(0);
-
+  // Few custom selection stuff. If we need WebAssembly-specific selection,
+  // uncomment this block add corresponding case statements.
+  /*
   switch (Node->getOpcode()) {
   default:
     break;
-    // If we need WebAssembly-specific selection, it would go here.
-    (void)VT;
   }
+  */
 
   // Select the default instruction.
   SelectCode(Node);

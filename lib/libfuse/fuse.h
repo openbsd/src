@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.h,v 1.13 2017/11/17 15:45:17 helg Exp $ */
+/* $OpenBSD: fuse.h,v 1.14 2018/05/16 13:09:17 helg Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -88,19 +88,7 @@ typedef ino_t fuse_ino_t;
 typedef int (*fuse_fill_dir_t)(void *, const char *, const struct stat *,
     off_t);
 
-typedef struct fuse_dirhandle {
-	struct fuse *fuse;
-	fuse_fill_dir_t filler;
-	void *buf;
-	int filled;
-	int full;
-	int isgetdir;
-	uint32_t size;
-	uint32_t start;
-	uint32_t idx;
-	off_t off;
-} *fuse_dirh_t;
-
+typedef struct fuse_dirhandle *fuse_dirh_t;
 typedef int (*fuse_dirfil_t)(fuse_dirh_t, const char *, int, ino_t);
 
 /* 

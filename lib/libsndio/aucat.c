@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.71 2016/01/09 08:27:24 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.74 2019/03/28 11:11:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -205,7 +205,8 @@ _aucat_wdata(struct aucat *hdl, const void *buf, size_t len,
 static int
 aucat_mkcookie(unsigned char *cookie)
 {
-#define COOKIE_SUFFIX	"/.aucat_cookie"
+#define COOKIE_DIR	"/.sndio"
+#define COOKIE_SUFFIX	"/.sndio/cookie"
 #define TEMPL_SUFFIX	".XXXXXXXX"
 	struct stat sb;
 	char *home, *path = NULL, *tmp = NULL;
@@ -264,11 +265,20 @@ bad_gen:
 	/*
 	 * try to save the cookie
 	 */
+
 	if (home == NULL)
 		goto done;
 	tmp = malloc(path_len + sizeof(TEMPL_SUFFIX));
 	if (tmp == NULL)
 		goto done;
+
+	/* create ~/.sndio directory */
+	memcpy(tmp, home, home_len);
+	memcpy(tmp + home_len, COOKIE_DIR, sizeof(COOKIE_DIR));
+	if (mkdir(tmp, 0755) < 0 && errno != EEXIST)
+		goto done;
+
+	/* create cookie file in it */
 	memcpy(tmp, path, path_len);
 	memcpy(tmp + path_len, TEMPL_SUFFIX, sizeof(TEMPL_SUFFIX));
 	fd = mkstemp(tmp);
@@ -378,27 +388,6 @@ aucat_connect_un(struct aucat *hdl, unsigned int unit)
 }
 
 static const char *
-parsedev(const char *str, unsigned int *rval)
-{
-	const char *p = str;
-	unsigned int val;
-
-	for (val = 0; *p >= '0' && *p <= '9'; p++) {
-		val = 10 * val + (*p - '0');
-		if (val >= 16) {
-			DPRINTF("%s: number too large\n", str);
-			return NULL;
-		}
-	}
-	if (p == str) {
-		DPRINTF("%s: number expected\n", str);
-		return NULL;
-	}
-	*rval = val;
-	return p;
-}
-
-static const char *
 parsestr(const char *str, char *rstr, unsigned int max)
 {
 	const char *p = str;
@@ -444,7 +433,7 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode)
 	} else
 		*host = '\0';
 	if (*p == ',') {
-		p = parsedev(++p, &unit);
+		p = _sndio_parsenum(++p, &unit, 15);
 		if (p == NULL)
 			return 0;
 	} else
@@ -453,7 +442,7 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode)
 		DPRINTF("%s: '/' expected\n", str);
 		return 0;
 	}
-	p = parsedev(++p, &devnum);
+	p = _sndio_parsenum(++p, &devnum, 15);
 	if (p == NULL)
 		return 0;
 	if (*p == '.') {
@@ -523,7 +512,8 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode)
 void
 _aucat_close(struct aucat *hdl, int eof)
 {
-	char dummy[1];
+	char dummy[sizeof(struct amsg)];
+	ssize_t n;
 
 	if (!eof) {
 		AMSG_INIT(&hdl->wmsg);
@@ -531,8 +521,20 @@ _aucat_close(struct aucat *hdl, int eof)
 		hdl->wtodo = sizeof(struct amsg);
 		if (!_aucat_wmsg(hdl, &eof))
 			goto bad_close;
-		while (read(hdl->fd, dummy, 1) < 0 && errno == EINTR)
-			; /* nothing */
+
+		/*
+		 * block until the peer disconnects
+		 */
+		while (1) {
+			n = read(hdl->fd, dummy, sizeof(dummy));
+			if (n < 0) {
+				if (errno == EINTR)
+					continue;
+				break;
+			}
+			if (n == 0)
+				break;
+		}
 	}
  bad_close:
 	while (close(hdl->fd) < 0 && errno == EINTR)

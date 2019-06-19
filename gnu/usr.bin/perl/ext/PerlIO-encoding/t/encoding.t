@@ -16,7 +16,7 @@ BEGIN {
     require "../../t/charset_tools.pl";
 }
 
-use Test::More tests => 24;
+use Test::More tests => 27;
 
 my $grk = "grk$$";
 my $utf = "utf$$";
@@ -25,7 +25,7 @@ my $fail2 = "fb$$";
 my $russki = "koi8r$$";
 my $threebyte = "3byte$$";
 
-if (open(GRK, ">$grk")) {
+if (open(GRK, '>', $grk)) {
     binmode(GRK, ":bytes");
     # alpha beta gamma in ISO 8859-7
     print GRK "\xe1\xe2\xe3";
@@ -40,7 +40,7 @@ if (open(GRK, ">$grk")) {
     close($i);
 }
 
-if (open(UTF, "<$utf")) {
+if (open(UTF, '<', $utf)) {
     binmode(UTF, ":bytes");
 
     # alpha beta gamma in UTF-8 Unicode (0x3b1 0x3b2 0x3b3)
@@ -57,7 +57,7 @@ if (open(UTF, "<$utf")) {
     close($i);
 }
 
-if (open(GRK, "<$grk")) {
+if (open(GRK, '<', $grk)) {
     binmode(GRK, ":bytes");
     is(scalar <GRK>, "\xe1\xe2\xe3");
     close GRK;
@@ -68,10 +68,10 @@ $SIG{__WARN__} = sub {$warn .= $_[0]};
 is (open(FAIL, ">:encoding(NoneSuch)", $fail1), undef, 'Open should fail');
 like($warn, qr/^Cannot find encoding "NoneSuch" at/);
 
-is(open(RUSSKI, ">$russki"), 1);
+is(open(RUSSKI, '>', $russki), 1);
 print RUSSKI "\x3c\x3f\x78";
 close RUSSKI or die "Could not close: $!";
-open(RUSSKI, "$russki");
+open(RUSSKI, '<', $russki);
 binmode(RUSSKI, ":raw");
 my $buf1;
 read(RUSSKI, $buf1, 1);
@@ -230,6 +230,16 @@ is $x, "To hymn him who heard her herd herd\n",
      'no crash when assigning glob to buffer in decode';
 
 } # SKIP
+
+# decoding shouldn't mutate the original bytes [perl #132833]
+{
+    my $b = "a\0b\0\n\0";
+    open my $fh, "<:encoding(UTF16-LE)", \$b or die;
+    is scalar(<$fh>), "ab\n";
+    is $b, "a\0b\0\n\0";
+    close $fh or die;
+    is $b, "a\0b\0\n\0";
+}
 
 END {
     1 while unlink($grk, $utf, $fail1, $fail2, $russki, $threebyte);

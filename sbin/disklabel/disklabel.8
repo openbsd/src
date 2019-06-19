@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.124 2017/12/18 09:09:53 ajacoutot Exp $
+.\"	$OpenBSD: disklabel.8,v 1.135 2019/04/29 18:54:12 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 18 2017 $
+.Dd $Mdocdate: April 29 2019 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -159,9 +159,7 @@ Valid units are b(ytes), c(ylinders), k(ilobytes), m(egabytes), g(igabytes)
 and t(erabytes).
 .It Fl R
 Restore a disk label that was formatted in a prior operation and
-saved in an
-.Tn ASCII
-file.
+saved in an ASCII file.
 .It Fl T Ar file
 Read the template for automatic allocation from
 .Ar file
@@ -230,7 +228,7 @@ The optional argument is a pack
 identification string, up to 16 characters long.
 The pack ID must be quoted if it contains blanks.
 The existing label will be updated via the in-core
-copy and any bootstrap code will be unaffected.
+copy.
 .Pp
 In the third form of the command
 .Pq edit ,
@@ -243,11 +241,26 @@ environment variable,
 is used.
 When the editor terminates, the formatted label is reread and
 used to rewrite the disk label.
-Existing bootstrap code is unchanged.
 .Pp
 The built-in label editor
 .Pq fourth form
 provides a simple interactive label editor.
+The editor prompt contains information about the state of the edit
+process.
+.Pp
+.Dl Ar disk Ns *>
+.Pp
+Where
+.Ar disk
+is the name of the disk being edited,
+.Sq *
+means that the in-memory copy of the partition table has been modified but
+not yet written to disk and the
+.Sq >
+is replaced by
+.Sq #
+when the editor is in expert mode.
+.Pp
 Some commands or prompts take an optional unit.
 Available units are
 .Sq b
@@ -281,9 +294,7 @@ Commands may be aborted by entering
 .Pq Control-D .
 Entering
 .Ql ^D
-at the main
-.Ql >
-prompt will exit the editor.
+at the main prompt will exit the editor.
 .Pp
 The editor commands are as follows:
 .Bl -tag -width "p [unit] "
@@ -417,9 +428,7 @@ Recalculate free space.
 This command displays all the free areas on the disk and the total
 number of free sectors.
 .It Cm s Op Ar path
-Save the label to a file in
-.Tn ASCII
-format (suitable for loading via the
+Save the label to a file in ASCII format (suitable for loading via the
 .Fl R
 option).
 If no path is specified, the user will be prompted for one.
@@ -441,6 +450,11 @@ Toggle
 .Dq expert mode .
 By default, some settings are reserved for experts only
 (such as the block and fragment size on ffs partitions).
+While in expert mode the command line prompt will end
+with
+.Ql #
+instead of
+.Ql > .
 .It Cm x
 Exit the editor without saving any changes to the on-disk label.
 .It Cm z
@@ -456,12 +470,6 @@ as that produced when reading or editing a label.
 Comments are delimited by
 .Ar #
 and newline.
-Any existing bootstrap code will be unaffected.
-.Pp
-The final three forms of
-.Nm
-are used to install bootstrap code on machines where the bootstrap is
-part of the label.
 .Pp
 Note that when a disk has no real
 .Bx
@@ -515,29 +523,29 @@ is left unallocated.
 The sizes below are approximations,
 and may vary from architecture to architecture.
 .Pp
-.Sy Disks \*(Ge 8 Gigabytes
+.Sy Disks >= 10 Gigabytes
 .Bd -literal -offset indent -compact
 /		 5% of disk.  150M \(en 1G
 swap		10% of disk.   80M \(en 2x max physical memory
 /tmp		 8% of disk.  120M \(en 4G
 /var		13% of disk.   80M \(en 2x size of crash dump
-/usr		 5% of disk.  900M \(en 2G
+/usr		 5% of disk. 1300M \(en 2G
 /usr/X11R6	 3% of disk.  384M \(en 1G
-/usr/local	15% of disk.    1G \(en 10G
+/usr/local	15% of disk.    1G \(en 20G
 /usr/src	 2% of disk. 1300M \(en 2G
-/usr/obj	 4% of disk.    3G \(en 6G
+/usr/obj	 4% of disk.    5G \(en 6G
 /home		35% of disk.    1G \(en 300G
 .Ed
 .Pp
-.Sy Disks \*(Gt 2 Gigabytes
+.Sy Disks > 2.5 Gigabytes
 .Bd -literal -offset indent -compact
-/		 5% of disk. 800M \(en 2G
-swap		10% of disk.  80M \(en 2x max physical memory
-/usr		78% of disk. 900M \(en 3G
-/home		 7% of disk. 256M \(en 2G
+/		 5% of disk.  800M \(en 2G
+swap		10% of disk.   80M \(en 2x max physical memory
+/usr		78% of disk. 1300M \(en 3G
+/home		 7% of disk.  256M \(en 2G
 .Ed
 .Pp
-.Sy Disks \*(Gt 700 Megabytes
+.Sy Disks > 700 Megabytes
 .Bd -literal -offset indent -compact
 /		95% of disk. 700M \(en 4G
 swap		 5% of disk.   1M \(en 2x max physical memory
@@ -552,13 +560,12 @@ mountpoint, min-max size range, and percentage of disk, space-separated.
 Max can be unlimited by specifying '*'.
 If only mountpoint and min size are given, the partition is created with that
 exact size.
-.Pp
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 /		250M
 swap		80M-256M 10%
 /tmp		120M-4G	8%
 /var		80M-4G	13%
-/usr		900M-2G	5%
+/usr		1.3G-2G	5%
 /usr/X11R6	512M-1G	3%
 /usr/local	2G-10G	10%
 /usr/src	1G-2G	2%
@@ -569,10 +576,6 @@ swap		80M-256M 10%
 .Bl -tag -width Pa -compact
 .It Pa /etc/disktab
 Disk description file.
-.It Pa /usr/mdec/ Ns Em xx Ns boot
-Primary bootstrap.
-.It Pa /usr/mdec/boot Ns Em xx
-Secondary bootstrap.
 .El
 .Sh EXAMPLES
 Display the in-core label for sd0 as obtained via
@@ -583,20 +586,17 @@ Display the in-core label for sd0 as obtained via
 Create a label for sd0 based on information for
 .Dq sd2212
 found in
-.Pa /etc/disktab .
-Any existing bootstrap code will be clobbered.
+.Pa /etc/disktab :
 .Pp
 .Dl # disklabel -w /dev/rsd0c sd2212 foo
 .Pp
 Read the on-disk label from a disk with DUID 3eb7f9da875cb9ee,
-edit it and reinstall in-core as well as on-disk.
-Existing bootstrap code is unaffected.
+edit it and reinstall in-core as well as on-disk:
 .Pp
 .Dl # disklabel -E 3eb7f9da875cb9ee
 .Pp
 Restore the on-disk and in-core label for sd0 from information in
-.Pa mylabel .
-Existing bootstrap code is unaffected.
+.Pa mylabel :
 .Pp
 .Dl # disklabel -R sd0 mylabel
 .Sh DIAGNOSTICS
@@ -613,34 +613,10 @@ the first one creating at least one other partition, and the second
 setting the label on the new partition while shrinking the
 .Sq a
 partition.
-.Pp
-On some machines the bootstrap code may not fit entirely in the
-area allocated for it by some filesystems.
-As a result, it may
-not be possible to have filesystems on some partitions of a
-.Dq bootable
-disk.
-When installing bootstrap code,
-.Nm
-checks for these cases.
-If the installed boot code would overlap a partition of type
-.Dv FS_UNUSED
-it is marked as type
-.Dv FS_BOOT .
-The
-.Xr newfs 8
-utility will disallow creation of filesystems on
-.Dv FS_BOOT
-partitions.
-Conversely, if a partition has a type other than
-.Dv FS_UNUSED
-or
-.Dv FS_BOOT ,
-.Nm
-will not install bootstrap code that overlaps it.
 .Sh SEE ALSO
 .Xr disklabel 5 ,
 .Xr disktab 5 ,
+.Xr installboot 8 ,
 .Xr scan_ffs 8
 .Sh CAVEATS
 The maximum disk and partition size is 64PB.

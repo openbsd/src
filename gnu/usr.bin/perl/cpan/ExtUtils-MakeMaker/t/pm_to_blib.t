@@ -12,9 +12,9 @@ use ExtUtils::MakeMaker;
 use MakeMaker::Test::Utils;
 use MakeMaker::Test::Setup::BFD;
 use Config;
-use Test::More;
 use ExtUtils::MM;
-plan !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
+use Test::More
+    !MM->can_run(make()) && $ENV{PERL_CORE} && $Config{'usecrosscompile'}
     ? (skip_all => "cross-compiling and make not available")
     : 'no_plan';
 
@@ -26,10 +26,12 @@ local $ENV{PERL_INSTALL_QUIET};
 
 # Setup our test environment
 {
-    my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
-    chdir $tmpdir;
+    chdir 't';
+    perl_lib; # sets $ENV{PERL5LIB} relative to t/
 
-    perl_lib;
+    my $tmpdir = tempdir( DIR => '../t', CLEANUP => 1 );
+    use Cwd; my $cwd = getcwd; END { chdir $cwd } # so File::Temp can cleanup
+    chdir $tmpdir;
 
     ok( setup_recurs(), 'setup' );
     END {

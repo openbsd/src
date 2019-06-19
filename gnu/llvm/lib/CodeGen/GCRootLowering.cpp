@@ -18,17 +18,16 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
+#include "llvm/CodeGen/TargetSubtargetInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetFrameLowering.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
@@ -39,7 +38,7 @@ namespace {
 /// directed by the GCStrategy. It also performs automatic root initialization
 /// and custom intrinsic lowering.
 class LowerIntrinsics : public FunctionPass {
-  bool PerformDefaultLowering(Function &F, GCStrategy &Coll);
+  bool PerformDefaultLowering(Function &F, GCStrategy &S);
 
 public:
   static char ID;
@@ -62,7 +61,7 @@ class GCMachineCodeAnalysis : public MachineFunctionPass {
   const TargetInstrInfo *TII;
 
   void FindSafePoints(MachineFunction &MF);
-  void VisitCallPoint(MachineBasicBlock::iterator MI);
+  void VisitCallPoint(MachineBasicBlock::iterator CI);
   MCSymbol *InsertLabel(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                         const DebugLoc &DL) const;
 
@@ -329,10 +328,10 @@ void GCMachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
 
 bool GCMachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {
   // Quick exit for functions that do not use GC.
-  if (!MF.getFunction()->hasGC())
+  if (!MF.getFunction().hasGC())
     return false;
 
-  FI = &getAnalysis<GCModuleInfo>().getFunctionInfo(*MF.getFunction());
+  FI = &getAnalysis<GCModuleInfo>().getFunctionInfo(MF.getFunction());
   MMI = &getAnalysis<MachineModuleInfo>();
   TII = MF.getSubtarget().getInstrInfo();
 

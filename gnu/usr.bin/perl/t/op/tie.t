@@ -10,8 +10,8 @@
 #
 
 chdir 't' if -d 't';
-@INC = '../lib';
 require './test.pl';
+set_up_inc('../lib');
 
 $|=1;
 
@@ -284,7 +284,7 @@ EXPECT
 2
 ########
 
-#  [20020716.007] - nested FETCHES
+#  [20020716.007 (#10080)] - nested FETCHES
 
 sub F1::TIEARRAY { bless [], 'F1' }
 sub F1::FETCH { 1 }
@@ -930,7 +930,35 @@ sub IO::File::TIEARRAY {
 }
 fileno FOO; tie @a, "FOO"
 EXPECT
-Can't locate object method "TIEARRAY" via package "FOO" at - line 5.
+Can't locate object method "TIEARRAY" via package "FOO" (perhaps you forgot to load "FOO"?) at - line 5.
+########
+# tie into empty package name
+tie $foo, "";
+EXPECT
+Can't locate object method "TIESCALAR" via package "main" at - line 2.
+########
+# tie into undef package name
+tie $foo, undef;
+EXPECT
+Can't locate object method "TIESCALAR" via package "main" at - line 2.
+########
+# tie into nonexistent glob [RT#130623 assertion failure]
+tie $foo, *FOO;
+EXPECT
+Can't locate object method "TIESCALAR" via package "FOO" at - line 2.
+########
+# tie into glob when package exists but not method: no "*", no "main::"
+{ package PackageWithoutTIESCALAR }
+tie $foo, *PackageWithoutTIESCALAR;
+EXPECT
+Can't locate object method "TIESCALAR" via package "PackageWithoutTIESCALAR" at - line 3.
+########
+# tie into reference [RT#130623 assertion failure]
+eval { tie $foo, \"nope" };
+my $exn = $@ // "";
+print $exn =~ s/0x\w+/0xNNN/rg;
+EXPECT
+Can't locate object method "TIESCALAR" via package "SCALAR(0xNNN)" at - line 2.
 ########
 #
 # STORE freeing tie'd AV
@@ -1473,3 +1501,87 @@ print "b is $b\n";
 EXPECT
 a is 3
 b is 7
+########
+# when assigning to array/hash, ensure get magic is processed first
+use Tie::Hash;
+my %tied;
+tie %tied, "Tie::StdHash";
+%tied = qw(a foo);
+my @a = values %tied;
+%tied = qw(b bar); # overwrites @a's contents unless magic was called
+print "$a[0]\n";
+my %h = ("x", values %tied);
+%tied = qw(c baz); # overwrites @a's contents unless magic was called
+print "$h{x}\n";
+
+EXPECT
+foo
+bar
+########
+# keys(%tied) in bool context without SCALAR present
+my ($f,$n) = (0,0);
+my %inner = (a =>1, b => 2, c => 3);
+sub TIEHASH  { bless \%inner, $_[0] }
+sub FIRSTKEY { $f++; my $a = scalar keys %{$_[0]}; each %{$_[0]} }
+sub NEXTKEY  { $n++; each %{$_[0]} }
+tie %h, 'main';
+my $x = !keys %h;
+print "[$x][$f][$n]\n";
+%inner = ();
+$x = !keys %h;
+print "[$x][$f][$n]\n";
+EXPECT
+[][1][0]
+[1][2][0]
+########
+# keys(%tied) in bool context with SCALAR present
+my ($f,$n, $s) = (0,0,0);
+my %inner = (a =>1, b => 2, c => 3);
+sub TIEHASH  { bless \%inner, $_[0] }
+sub FIRSTKEY { $f++; my $a = scalar keys %{$_[0]}; each %{$_[0]} }
+sub NEXTKEY  { $n++; each %{$_[0]} }
+sub SCALAR   { $s++; scalar %{$_[0]} }
+tie %h, 'main';
+my $x = !keys %h;
+print "[$x][$f][$n][$s]\n";
+%inner = ();
+$x = !keys %h;
+print "[$x][$f][$n][$s]\n";
+EXPECT
+[][0][0][1]
+[1][0][0][2]
+########
+# keys(%tied) in scalar context without SCALAR present
+my ($f,$n) = (0,0);
+my %inner = (a =>1, b => 2, c => 3);
+sub TIEHASH  { bless \%inner, $_[0] }
+sub FIRSTKEY { $f++; my $a = scalar keys %{$_[0]}; each %{$_[0]} }
+sub NEXTKEY  { $n++; each %{$_[0]} }
+tie %h, 'main';
+my $x = keys %h;
+print "[$x][$f][$n]\n";
+%inner = ();
+$x = keys %h;
+print "[$x][$f][$n]\n";
+EXPECT
+[3][1][3]
+[0][2][3]
+########
+# keys(%tied) in scalar context with SCALAR present
+# XXX the behaviour of scalar(keys(%tied)) may change - it currently
+# doesn't make use of SCALAR() if present
+my ($f,$n, $s) = (0,0,0);
+my %inner = (a =>1, b => 2, c => 3);
+sub TIEHASH  { bless \%inner, $_[0] }
+sub FIRSTKEY { $f++; my $a = scalar keys %{$_[0]}; each %{$_[0]} }
+sub NEXTKEY  { $n++; each %{$_[0]} }
+sub SCALAR   { $s++; scalar %{$_[0]} }
+tie %h, 'main';
+my $x = keys %h;
+print "[$x][$f][$n][$s]\n";
+%inner = ();
+$x = keys %h;
+print "[$x][$f][$n][$s]\n";
+EXPECT
+[3][1][3][0]
+[0][2][3][0]

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.9 2017/05/30 17:49:47 mlarkin Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.16 2019/05/17 19:07:16 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -16,7 +16,9 @@
  */
 
 #include "assym.h"
+#include <machine/param.h>
 #include <machine/asm.h>
+#include <machine/codepatch.h>
 #include <machine/psl.h>
 #include <machine/specialreg.h>
 
@@ -58,85 +60,112 @@ _C_LABEL(vmm_dispatch_intr):
 	ret
 
 _C_LABEL(vmxon):
+	RETGUARD_SETUP(vmxon, r11)
 	vmxon	(%rdi)
 	jz	failed_on
 	jc	failed_on
 	xorq	%rax, %rax
+	RETGUARD_CHECK(vmxon, r11)
 	ret
 failed_on:
 	movq	$0x01, %rax
+	RETGUARD_CHECK(vmxon, r11)
 	ret
 
 _C_LABEL(vmxoff):
+	RETGUARD_SETUP(vmxoff, r11)
 	vmxoff
 	jz	failed_off
 	jc	failed_off
 	xorq	%rax, %rax
+	RETGUARD_CHECK(vmxoff, r11)
 	ret
 failed_off:
 	movq	$0x01, %rax
+	RETGUARD_CHECK(vmxoff, r11)
 	ret
 
 _C_LABEL(vmclear):
+	RETGUARD_SETUP(vmclear, r11)
 	vmclear	(%rdi)
 	jz	failed_clear
 	jc	failed_clear
 	xorq	%rax, %rax
+	RETGUARD_CHECK(vmclear, r11)
 	ret
 failed_clear:
 	movq	$0x01, %rax
+	RETGUARD_CHECK(vmclear, r11)
 	ret
 
 _C_LABEL(vmptrld):
+	RETGUARD_SETUP(vmptrld, r11)
 	vmptrld	(%rdi)
 	jz	failed_ptrld
 	jc	failed_ptrld
 	xorq	%rax, %rax
+	RETGUARD_CHECK(vmptrld, r11)
 	ret
 failed_ptrld:
 	movq	$0x01, %rax
+	RETGUARD_CHECK(vmptrld, r11)
 	ret
 
 _C_LABEL(vmptrst):
+	RETGUARD_SETUP(vmptrst, r11)
 	vmptrst	(%rdi)
 	jz	failed_ptrst
 	jc	failed_ptrst
 	xorq	%rax, %rax
+	RETGUARD_CHECK(vmptrst, r11)
 	ret
 failed_ptrst:
 	movq	$0x01, %rax
+	RETGUARD_CHECK(vmptrst, r11)
 	ret
 
 _C_LABEL(vmwrite):
+	RETGUARD_SETUP(vmwrite, r11)
 	vmwrite	%rsi, %rdi
 	jz	failed_write
 	jc	failed_write
 	xorq	%rax, %rax
+	RETGUARD_CHECK(vmwrite, r11)
 	ret
 failed_write:
 	movq	$0x01, %rax
+	RETGUARD_CHECK(vmwrite, r11)
 	ret
 
 _C_LABEL(vmread):
+	RETGUARD_SETUP(vmread, r11)
 	vmread	%rdi, (%rsi)
 	jz	failed_read
 	jc	failed_read
 	xorq	%rax, %rax
+	RETGUARD_CHECK(vmread, r11)
 	ret
 failed_read:
 	movq	$0x01, %rax
+	RETGUARD_CHECK(vmread, r11)
 	ret
 
 _C_LABEL(invvpid):
+	RETGUARD_SETUP(invvpid, r11)
 	invvpid (%rsi), %rdi
+	RETGUARD_CHECK(invvpid, r11)
 	ret
 
 _C_LABEL(invept):
+	RETGUARD_SETUP(invept, r11)
 	invept (%rsi), %rdi
+	RETGUARD_CHECK(invept, r11)
 	ret
 
 _C_LABEL(vmx_enter_guest):
+	RETGUARD_SETUP(vmx_enter_guest, r11)
 	movq	%rdx, %r8	/* resume flag */
+	movq	%rcx, %r9	/* L1DF MSR support */
 	testq	%r8, %r8
 	jnz skip_init
 
@@ -208,6 +237,8 @@ skip_init:
 	pushq	%rax
 	pushq	%rdx
 
+	RETGUARD_PUSH(r11)
+
 	/* Preserve callee-preserved registers as per AMD64 ABI */
 	pushq	%r15
 	pushq	%r14
@@ -217,14 +248,93 @@ skip_init:
 	pushq	%rbx
 	pushq	%rsi		/* Guest Regs Pointer */
 
+	/*
+	 * XXX this MDS mitigation and the L1TF mitigation are believed
+	 * XXX to overlap in some cases, but Intel hasn't provided the
+	 * XXX information yet to make the correct choices.
+	 */
+	CODEPATCH_START
+	subq	$8, %rsp
+	movw	%ds, (%rsp)
+	verw	(%rsp)
+	addq	$8, %rsp
+	CODEPATCH_END(CPTAG_MDS_VMM)
+	movq	(%rsp),%rsi	/* reload now that it's mucked with */
+
 	movq	$VMCS_HOST_IA32_RSP, %rdi
 	movq	%rsp, %rax
 	vmwrite	%rax, %rdi	/* Host RSP */
 
+	/*
+	 * Intel L1TF vulnerability fix
+	 *
+	 * Certain Intel CPUs are broken and allow guest VMs to bypass
+	 * EPT entirely as their address harvesting logic treats guest
+	 * PTEs as host physical addresses. Flush L1 Dcache to prevent
+	 * information leakage by command MSR or manually reading a
+	 * bunch of junk in order to fill sizeof(L1 Dcache)*2.
+	 *
+	 * %r9 (inherited from parameter 4 in %rcx earlier)
+	 * determines the flushing requirements
+	 *  0 - use manual "junk read" flush
+	 *  1 - use MSR command
+	 *  2 (VMX_SKIP_L1D_FLUSH) - no flush required on this CPU
+	 */
+	cmpq	$VMX_SKIP_L1D_FLUSH, %r9
+	je	done_flush
+
+	testq	%r9, %r9
+	jz	no_l1df_msr
+
+	/* CPU has command MSR */
+	movq	$MSR_FLUSH_CMD, %rcx
+	xorq	%rdx, %rdx
+	movq	$FLUSH_CMD_L1D_FLUSH, %rax
+	wrmsr
+	jmp	done_flush
+
+no_l1df_msr:
+	xorq	%r9, %r9
+l1df_tlb_loop:
+	/* XXX get the right L1 size from cpuid */
+	cmpq	$VMX_L1D_FLUSH_SIZE, %r9
+	je	l1df_tlb_done
+	movb	l1tf_flush_region(%r9), %al
+	addq	$PAGE_SIZE, %r9
+	jmp	l1df_tlb_loop
+
+l1df_tlb_done:
+	/*
+	 * Serialize: ensure previous TLB loads don't pull PTDs
+	 * or other PA-containing data into the L1D.
+	 */
+	xorq	%rax, %rax
+	cpuid
+
+	xorq	%r9, %r9
+l1df_load_cache:
+	movb	l1tf_flush_region(%r9), %al
+	/* XXX get the right cacheline size from cpuid */
+	addq	$0x40, %r9
+	cmpq	$VMX_L1D_FLUSH_SIZE, %r9
+	jne	l1df_load_cache	
+	lfence
+	
+done_flush:
 	testq	%r8, %r8
 	jnz	do_resume
 
 	/* Restore guest registers */
+	movq	0xa0(%rsi), %rax
+	movq	%rax, %dr0
+	movq	0xa8(%rsi), %rax
+	movq	%rax, %dr1
+	movq	0xb0(%rsi), %rax
+	movq	%rax, %dr2
+	movq	0xb8(%rsi), %rax
+	movq	%rax, %dr3
+	movq	0xc0(%rsi), %rax
+	movq	%rax, %dr6
 	movq	0x78(%rsi), %rax
 	movq	%rax, %cr2
 	movq	0x70(%rsi), %r15
@@ -234,6 +344,10 @@ skip_init:
 	movq	0x50(%rsi), %r11
 	movq	0x48(%rsi), %r10
 	movq	0x40(%rsi), %r9
+	movq	%rsi, %r8
+	/* XXX get the right cacheline size from cpuid */
+	addq	$0x40, %r8
+	clflush	(%r8)
 	movq	0x38(%rsi), %r8
 	movq	0x30(%rsi), %rbp
 	movq	0x28(%rsi), %rdi
@@ -241,12 +355,23 @@ skip_init:
 	movq	0x18(%rsi), %rcx
 	movq	0x10(%rsi), %rbx
 	movq	0x08(%rsi), %rax
+	clflush	(%rsi)
 	movq	0x00(%rsi), %rsi
 
 	vmlaunch
 	jmp	fail_launch_or_resume
 do_resume:
 	/* Restore guest registers */
+	movq	0xa0(%rsi), %rax
+	movq	%rax, %dr0
+	movq	0xa8(%rsi), %rax
+	movq	%rax, %dr1
+	movq	0xb0(%rsi), %rax
+	movq	%rax, %dr2
+	movq	0xb8(%rsi), %rax
+	movq	%rax, %dr3
+	movq	0xc0(%rsi), %rax
+	movq	%rax, %dr6
 	movq	0x78(%rsi), %rax
 	movq	%rax, %cr2
 	movq	0x70(%rsi), %r15
@@ -256,6 +381,10 @@ do_resume:
 	movq	0x50(%rsi), %r11
 	movq	0x48(%rsi), %r10
 	movq	0x40(%rsi), %r9
+	movq	%rsi, %r8
+	/* XXX get the right cacheline size from cpuid */
+	addq	$0x40, %r8
+	clflush	(%r8)
 	movq	0x38(%rsi), %r8
 	movq	0x30(%rsi), %rbp
 	movq	0x28(%rsi), %rdi
@@ -263,9 +392,13 @@ do_resume:
 	movq	0x18(%rsi), %rcx
 	movq	0x10(%rsi), %rbx
 	movq	0x08(%rsi), %rax
+	clflush	(%rsi)
 	movq	0x00(%rsi), %rsi
+
 	vmresume
 fail_launch_or_resume:
+	RET_STACK_REFILL_WITH_RCX
+
 	/* Failed launch/resume (fell through) */
 	jc fail_launch_invalid_vmcs	/* Invalid VMCS */
 	jz fail_launch_valid_vmcs	/* Valid VMCS, failed launch/resume */
@@ -317,9 +450,21 @@ vmx_exit_handler_asm:
 	movq	%r15, 0x70(%rsi)
 	movq	%cr2, %rax
 	movq	%rax, 0x78(%rsi)
+	movq	%dr0, %rax
+	movq	%rax, 0xa0(%rsi)
+	movq	%dr1, %rax
+	movq	%rax, 0xa8(%rsi)
+	movq	%dr2, %rax
+	movq	%rax, 0xb0(%rsi)
+	movq	%dr3, %rax
+	movq	%rax, 0xb8(%rsi)
+	movq	%dr6, %rax
+	movq	%rax, 0xc0(%rsi)
 
 	/* %rdi = 0 means we took an exit */
 	xorq	%rdi, %rdi
+
+	RET_STACK_REFILL_WITH_RCX
 
 restore_host:
 	popq	%rbx
@@ -328,6 +473,8 @@ restore_host:
 	popq	%r13
 	popq	%r14
 	popq	%r15
+
+	RETGUARD_POP(r11)
 	
 	/*
 	 * Restore saved MSRs
@@ -385,9 +532,11 @@ restore_host:
 	popfq
 
 	movq	%rdi, %rax
+	RETGUARD_CHECK(vmx_enter_guest, r11)
 	ret	
 	
 _C_LABEL(svm_enter_guest):
+	RETGUARD_SETUP(svm_enter_guest, r11)
 	clgi
 	movq	%rdi, %r8
 	pushfq
@@ -445,6 +594,8 @@ _C_LABEL(svm_enter_guest):
 	pushq	%rax
 	pushq	%rdx
 
+	RETGUARD_PUSH(r11)
+
 	/* Preserve callee-preserved registers as per AMD64 ABI */
 	pushq	%r15
 	pushq	%r14
@@ -456,6 +607,15 @@ _C_LABEL(svm_enter_guest):
 
 	/* Restore guest registers */
 	movq	%r8, %rax	/* rax = vmcb pa */
+	movq	0xa0(%rsi), %r8
+	movq	%r8, %dr0
+	movq	0xa8(%rsi), %r8
+	movq	%r8, %dr1
+	movq	0xb0(%rsi), %r8
+	movq	%r8, %dr2
+	movq	0xb8(%rsi), %r8
+	movq	%r8, %dr3
+	/* %dr6 is saved in the VMCB */
 	movq	0x78(%rsi), %r8
 	movq	%r8, %cr2
 	movq	0x70(%rsi), %r15
@@ -504,6 +664,15 @@ _C_LABEL(svm_enter_guest):
 	movq	%r15, 0x70(%rsi)
 	movq	%cr2, %rax
 	movq	%rax, 0x78(%rsi)
+	movq	%dr0, %rax
+	movq	%rax, 0xa0(%rsi)
+	movq	%dr1, %rax
+	movq	%rax, 0xa8(%rsi)
+	movq	%dr2, %rax
+	movq	%rax, 0xb0(%rsi)
+	movq	%dr3, %rax
+	movq	%rax, 0xb8(%rsi)
+	/* %dr6 is saved in the VMCB */
 
 	/* %rdi = 0 means we took an exit */
 	xorq	%rdi, %rdi
@@ -515,6 +684,8 @@ restore_host_svm:
 	popq	%r13
 	popq	%r14
 	popq	%r15
+
+	RETGUARD_POP(r11)
 	
 	/*
 	 * Restore saved MSRs
@@ -571,6 +742,8 @@ restore_host_svm:
 	movw	%ax, %es
 
 	xorq	%rax, %rax
+	lldtw	%ax		/* Host LDT is always 0 */
+
 	popw	%ax		/* ax = saved TR */
 
 	popq	%rdx
@@ -585,6 +758,6 @@ restore_host_svm:
 	popfq
 
 	movq	%rdi, %rax
-	stgi
 
+	RETGUARD_CHECK(svm_enter_guest, r11)
 	ret	

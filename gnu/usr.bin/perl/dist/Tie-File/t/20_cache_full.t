@@ -14,7 +14,7 @@ my $N = 1;
 use Tie::File;
 print "ok $N\n"; $N++;
 
-open F, "> $file" or die $!;
+open F, '>', $file or die $!;
 binmode F;
 print F $data;
 close F;
@@ -192,7 +192,7 @@ check();
 
 sub init_file {
   my $data = shift;
-  open F, "> $file" or die $!;
+  open F, '>', $file or die $!;
   binmode F;
   print F $data;
   close F;

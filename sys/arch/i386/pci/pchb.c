@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.89 2014/03/26 14:41:41 mpi Exp $ */
+/*	$OpenBSD: pchb.c,v 1.90 2018/04/28 15:44:59 jasper Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -473,7 +473,7 @@ pchb_rnd(void *v)
 
 		if (!sc->sc_rng_i--) {
 			sc->sc_rng_i = 4;
-			add_true_randomness(sc->sc_rng_ax);
+			enqueue_randomness(sc->sc_rng_ax);
 		}
 	}
 

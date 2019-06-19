@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.95 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.99 2018/08/05 14:23:57 beck Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -225,7 +225,7 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov,
 	struct ktr_header kth;
 	struct ktr_genio ktp;
 	caddr_t cp;
-	int count;
+	int count, error;
 	int buflen;
 
 	atomic_setbits_int(&p->p_flag, P_INKTR);
@@ -254,7 +254,10 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov,
 		if (copyin(iov->iov_base, cp, count))
 			break;
 
-		if (ktrwrite2(p, &kth, &ktp, sizeof(ktp), cp, count) != 0)
+		KERNEL_LOCK();
+		error = ktrwrite2(p, &kth, &ktp, sizeof(ktp), cp, count);
+		KERNEL_UNLOCK();
+		if (error != 0)
 			break;
 
 		iov->iov_len -= count;
@@ -294,13 +297,14 @@ ktrstruct(struct proc *p, const char *name, const void *data, size_t datalen)
 {
 	struct ktr_header kth;
 
-	KERNEL_ASSERT_LOCKED();
 	atomic_setbits_int(&p->p_flag, P_INKTR);
 	ktrinitheader(&kth, p, KTR_STRUCT);
-	
+
 	if (data == NULL)
 		datalen = 0;
+	KERNEL_LOCK();
 	ktrwrite2(p, &kth, name, strlen(name) + 1, data, datalen);
+	KERNEL_UNLOCK();
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -386,7 +390,9 @@ ktrpledge(struct proc *p, int error, uint64_t code, int syscall)
 	kp.code = code;
 	kp.syscall = syscall;
 
+	KERNEL_LOCK();
 	ktrwrite(p, &kth, &kp, sizeof(kp));
+	KERNEL_UNLOCK();
 	atomic_clearbits_int(&p->p_flag, P_INKTR);
 }
 
@@ -507,11 +513,12 @@ sys_ktrace(struct proc *p, void *v, register_t *retval)
 		cred = p->p_ucred;
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname, p);
 		nd.ni_pledge = PLEDGE_CPATH | PLEDGE_WPATH;
+		nd.ni_unveil = UNVEIL_CREATE | UNVEIL_WRITE;
 		if ((error = vn_open(&nd, FWRITE|O_NOFOLLOW, 0)) != 0)
 			return error;
 		vp = nd.ni_vp;
 
-		VOP_UNLOCK(vp, p);
+		VOP_UNLOCK(vp);
 	}
 
 	error = doktrace(vp, SCARG(uap, ops), SCARG(uap, facs),
@@ -623,6 +630,8 @@ ktrwriteraw(struct proc *curp, struct vnode *vp, struct ucred *cred,
 	struct process *pr;
 	int error;
 
+	KERNEL_ASSERT_LOCKED();
+
 	auio.uio_iov = &aiov[0];
 	auio.uio_offset = 0;
 	auio.uio_segflg = UIO_SYSSPACE;
@@ -640,7 +649,7 @@ ktrwriteraw(struct proc *curp, struct vnode *vp, struct ucred *cred,
 			auio.uio_iovcnt++;
 		auio.uio_resid += kth->ktr_len;
 	}
-	vget(vp, LK_EXCLUSIVE | LK_RETRY, curp);
+	vget(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_WRITE(vp, &auio, IO_UNIT|IO_APPEND, cred);
 	if (!error) {
 		vput(vp);

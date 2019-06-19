@@ -1,4 +1,4 @@
-/*	$OpenBSD: tib.h,v 1.6 2017/11/28 18:57:02 kettenis Exp $	*/
+/*	$OpenBSD: tib.h,v 1.7 2019/05/10 13:29:21 guenther Exp $	*/
 /*
  * Copyright (c) 2011,2014 Philip Guenther <guenther@openbsd.org>
  *
@@ -225,6 +225,28 @@ struct tib {
 
 
 __BEGIN_DECLS
+struct dl_info;
+struct dl_phdr_info;
+struct dl_cb_0 {
+	void	*(*dl_allocate_tib)(size_t);
+	void	 (*dl_free_tib)(void *, size_t);
+	void	 (*dl_clean_boot)(void);
+	void	*(*dlopen)(const char *, int);
+	int	 (*dlclose)(void *);
+	void	*(*dlsym)(void *, const char *);
+	int	 (*dladdr)(const void *, struct dl_info *);
+	int	 (*dlctl)(void *, int, void *);
+	char	*(*dlerror)(void);
+	int	 (*dl_iterate_phdr)(int (*)(struct dl_phdr_info *,
+		    size_t, void *), void *);
+};
+
+#define	DL_CB_CUR	0
+typedef	struct dl_cb_0	dl_cb;
+
+/* type of function passed to init functions that returns a dl_cb */
+typedef	const void *dl_cb_cb(int _version);
+
 void	*_dl_allocate_tib(size_t _extra) __dso_public;
 void	_dl_free_tib(void *_tib, size_t _extra) __dso_public;
 

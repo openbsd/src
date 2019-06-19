@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.830 2018/03/27 21:11:17 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.844 2019/05/28 08:44:27 sf Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -15,7 +15,6 @@ maxusers	80			# estimated number of users
 
 option		USER_PCICONF	# user-space PCI configuration
 
-#option		VM86		# Virtual 8086 emulation
 option		KVM86		# Kernel Virtual 8086 emulation
 option		APERTURE	# in-kernel aperture driver for XFree86
 option		MTRR		# CPU memory range attributes control
@@ -40,6 +39,7 @@ amdmsr0	at mainbus?		# MSR access for AMD Geode LX CPUs with GP
 
 pvbus0	at mainbus0		# Paravirtual device bus
 vmt0	at pvbus?		# VMware Tools
+pvclock0 at pvbus?		# KVM pvclock
 
 acpitimer*	at acpi?
 acpihpet*	at acpi?
@@ -78,7 +78,6 @@ isa0	at gscpcib?
 isa0	at glxpcib?
 eisa0	at mainbus0
 pci*	at mainbus0
-vmm0	at mainbus0
 
 pchb*	at pci?			# PCI-Host bridges
 ppb*	at pci?			# PCI-PCI bridges
@@ -247,6 +246,10 @@ umct*	at uhub?		# MCT USB-RS232 serial adapter
 ucom*	at umct?
 uslcom*	at uhub?		# Silicon Laboratories CP210x serial
 ucom*	at uslcom?
+uscom*	at uhub?		# Simple USB serial adapters
+ucom*	at uscom?
+ucrcom*	at uhub?		# Chromebook serial
+ucom*	at ucrcom?
 uark*	at uhub?		# Arkmicro ARK3116 serial
 ucom*	at uark?
 moscom*	at uhub?		# MosChip MCS7703 serial
@@ -297,6 +300,7 @@ upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 ugl*	at uhub?		# Genesys Logic GL620USB-A host-to-host `network'
 udav*	at uhub?		# Davicom DM9601 based Ethernet
 mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
+mue*	at uhub?		# Microchip LAN75xx/LAN78xx Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
 ure*	at uhub?		# Realtek RTL8152 based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
@@ -316,7 +320,7 @@ urtw*	at uhub?		# Realtek 8187
 rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*	at uhub?		# Realtek RTL8188CU/RTL8192CU
 udcf*	at uhub?		# Gude Expert mouseCLOCK
-umbg*	at uhub?		# Meinberg Funkuhren USB5131
+umbg*	at uhub?		# Meinberg Funkuhren USB5131/DCF600USB
 umb*	at uhub?		# Mobile Broadband Interface Model
 uthum*	at uhidev?		# TEMPerHUM sensor
 ugold*	at uhidev?		# gold TEMPer sensor
@@ -334,6 +338,7 @@ video*	at utvfu?
 audio*	at utvfu?
 udl*	at uhub?		# DisplayLink USB displays
 wsdisplay* at udl?
+bwfm*	at uhub?		# Broadcom FullMAC
 
 puc*	at pci?			# PCI "universal" communication device
 com*	at cardbus?
@@ -342,6 +347,7 @@ sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
 rtsx*	at pci?			# Realtek SD Card Reader
 sdmmc*	at rtsx?		# SD/MMC bus
+bwfm*	at sdmmc?		# Broadcom FullMAC
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
@@ -380,14 +386,14 @@ agp*		at viaagp?	# AGP bridges
 inteldrm*	at pci?		# Intel i915, i945 DRM driver
 intagp*		at inteldrm?
 agp*		at intagp?
-drm0		at inteldrm? console 1
+drm0		at inteldrm? primary 1
 drm*		at inteldrm?
-wsdisplay0	at inteldrm? console 1
+wsdisplay0	at inteldrm? primary 1
 wsdisplay*	at inteldrm? mux -1
 radeondrm*	at pci? 	# ATI Radeon DRM driver
-drm0		at radeondrm? console 1
+drm0		at radeondrm? primary 1
 drm*		at radeondrm?
-wsdisplay0	at radeondrm? console 1
+wsdisplay0	at radeondrm? primary 1
 wsdisplay*	at radeondrm? mux -1
 
 pcppi0		at isa?
@@ -623,6 +629,7 @@ malo*	at pci?				# Marvell Libertas
 malo*	at cardbus?			# Marvell Libertas
 malo*	at pcmcia?			# Marvell 88W8385
 mbg*	at pci?				# Meinberg Funkuhren radio clocks
+bwfm*	at pci?				# Broadcom FullMAC
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs

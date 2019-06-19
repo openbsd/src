@@ -61,7 +61,7 @@ encguess - guess character encodings of files
 
 =head1 VERSION
 
-$Id: encguess,v 0.1 2015/02/05 10:34:19 dankogai Exp $
+$Id: encguess,v 0.2 2016/08/04 03:15:58 dankogai Exp $
 
 =head1 SYNOPSIS
 

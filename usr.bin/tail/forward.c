@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.31 2016/07/05 05:06:27 jsg Exp $	*/
+/*	$OpenBSD: forward.c,v 1.32 2019/01/04 15:04:28 martijn Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -335,7 +335,8 @@ tfreopen(struct tailfile *tf) {
 	struct tailfile			**treopen, *ttf;
 	int				  i;
 
-	if (tf && ((stat(tf->fname, &sb) != 0) || sb.st_ino != tf->sb.st_ino)) {
+	if (tf && !(tf->fp == stdin) &&
+	    ((stat(tf->fname, &sb) != 0) || sb.st_ino != tf->sb.st_ino)) {
 		if (afiles < ++nfiles) {
 			afiles += AFILESINCR;
 			treopen = reallocarray(reopen, afiles, sizeof(*reopen));

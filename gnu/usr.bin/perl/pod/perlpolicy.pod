@@ -84,9 +84,9 @@ the Perl community should expect from Perl's developers:
 
 =item *
 
-We "officially" support the two most recent stable release series.  5.20.x
-and earlier are now out of support.  As of the release of 5.26.0, we will
-"officially" end support for Perl 5.22.x, other than providing security
+We "officially" support the two most recent stable release series.  5.22.x
+and earlier are now out of support.  As of the release of 5.28.0, we will
+"officially" end support for Perl 5.24.x, other than providing security
 updates as described below.
 
 =item *
@@ -359,19 +359,27 @@ be included.
 Historically, only the pumpking cherry-picked changes from bleadperl
 into maintperl.  This has scaling problems.  At the same time,
 maintenance branches of stable versions of Perl need to be treated with
-great care. To that end, as of Perl 5.12, we have a new process for
+great care.  To that end, as of Perl 5.12, we have a new process for
 maint branches.
 
-Any committer may cherry-pick any commit from blead to a maint branch if
-they send mail to perl5-porters announcing their intent to cherry-pick
-a specific commit along with a rationale for doing so and at least two
-other committers respond to the list giving their assent. (This policy
-applies to current and former pumpkings, as well as other committers.)
+Any committer may cherry-pick any commit from blead to a maint branch by
+first adding an entry to the relevant voting file in the maint-votes branch
+announcing the commit as a candidate for back-porting, and then waiting for
+at least two other committers to add their votes in support of this (i.e. a
+total of at least three votes is required before a commit may be back-ported).
 
-Other voting mechanisms may be used instead, as long as the same number of
-votes is gathered in a transparent manner.  Specifically, proposals of
-which changes to cherry-pick must be visible to everyone on perl5-porters
-so that the views of everyone interested may be heard.
+Most of the work involved in both rounding up a suitable set of candidate
+commits and cherry-picking those for which three votes have been cast will
+be done by the maint branch release manager, but anyone else is free to add
+other proposals if they're keen to ensure certain fixes don't get overlooked
+or fear they already have been.
+
+Other voting mechanisms may also be used instead (e.g. sending mail to
+perl5-porters and at least two other committers responding to the list
+giving their assent), as long as the same number of votes is gathered in a
+transparent manner.  Specifically, proposals of which changes to cherry-pick
+must be visible to everyone on perl5-porters so that the views of everyone
+interested may be heard.
 
 It is not necessary for voting to be held on cherry-picking perldelta
 entries associated with changes that have already been cherry-picked, nor
@@ -537,8 +545,9 @@ it doesn't need to fully describe how all old versions used to work.
 =head1 STANDARDS OF CONDUCT
 
 The official forum for the development of perl is the perl5-porters mailing
-list, mentioned above, and its bugtracker at rt.perl.org.  All participants in
-discussion there are expected to adhere to a standard of conduct.
+list, mentioned above, and its bugtracker at rt.perl.org.  Posting to the
+list and the bugtracker is not a right: all participants in discussion are
+expected to adhere to a standard of conduct.
 
 =over 4
 
@@ -546,15 +555,18 @@ discussion there are expected to adhere to a standard of conduct.
 
 Always be civil.
 
-=item * 
+=item *
 
 Heed the moderators.
 
 =back
 
-Civility is simple:  stick to the facts while avoiding demeaning remarks and
-sarcasm.  It is not enough to be factual.  You must also be civil.  Responding
-in kind to incivility is not acceptable.
+Civility is simple: stick to the facts while avoiding demeaning remarks,
+belittling other individuals, sarcasm, or a presumption of bad faith. It is
+not enough to be factual.  You must also be civil.  Responding in kind to
+incivility is not acceptable.  If you relay otherwise-unposted comments to
+the list from a third party, you take responsibility for the content of
+those comments, and you must therefore ensure that they are civil.
 
 While civility is required, kindness is encouraged; if you have any doubt about
 whether you are being civil, simply ask yourself, "Am I being kind?" and aspire
@@ -563,16 +575,30 @@ to that.
 If the list moderators tell you that you are not being civil, carefully
 consider how your words have appeared before responding in any way.  Were they
 kind?  You may protest, but repeated protest in the face of a repeatedly
-reaffirmed decision is not acceptable.
+reaffirmed decision is not acceptable.  Repeatedly protesting about the
+moderators' decisions regarding a third party is also unacceptable, as is
+continuing to initiate off-list contact with the moderators about their
+decisions.
 
-Unacceptable behavior will result in a public and clearly identified warning.
-Repeated unacceptable behavior will result in removal from the mailing list and
-revocation of rights to update rt.perl.org.  The first removal is for one
-month.  Subsequent removals will double in length.  After six months with no
-warning, a user's ban length is reset.  Removals, like warnings, are public.
+Unacceptable behavior will result in a public and clearly identified
+warning.  A second instance of unacceptable behavior from the same
+individual will result in removal from the mailing list and rt.perl.org,
+for a period of one calendar month.  The rationale for this is to
+provide an opportunity for the person to change the way they act.
+
+After the time-limited ban has been lifted, a third instance of
+unacceptable behavior will result in a further public warning.  A fourth
+or subsequent instance will result in an indefinite ban.  The rationale
+is that, in the face of an apparent refusal to change behavior, we must
+protect other community members from future unacceptable actions.  The
+moderators may choose to lift an indefinite ban if the person in
+question affirms they will not transgress again.
+
+Removals, like warnings, are public.
 
 The list of moderators will be public knowledge.  At present, it is:
-Aaron Crane, Andy Dougherty, Ricardo Signes, Sawyer X, Steffen Müller.
+Aaron Crane, Andy Dougherty, Karen Etheridge, Ricardo Signes, Sawyer X,
+Steffen Müller, Todd Rinaldo.
 
 =head1 CREDITS
 

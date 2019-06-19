@@ -31,22 +31,34 @@ while (@$benchmark_array) {
     $benchmarks{$key} = $hash;
 }
 
-plan keys(%benchmarks) * 3;
-
+plan keys(%benchmarks) * 4;
 
 # check the hash of hashes is minimally consistent in format
 
+my %valid_keys = map { $_=> 1 } qw(desc setup code pre post compile);
+my @required_keys = qw(code);
+
 for my $token (sort keys %benchmarks) {
-    like($token, qr/^[a-zA-Z](\w|::)+$/a, "legal token: $token");
-    my $keys = join('-', sort keys %{$benchmarks{$token}});
-    is($keys, 'code-desc-setup', "legal keys:  $token");
+    like($token, qr/^[a-zA-Z](\w|::)+$/a, "$token: legal token");
+
+    my @keys    = sort keys %{$benchmarks{$token}};
+    my @invalid = grep !exists $valid_keys{$_}, @keys;
+    ok(!@invalid, "$token: only valid keys present")
+        or diag("saw these invalid keys: (@invalid)");
+
+    my @missing = grep !exists $benchmarks{$token}{$_}, @required_keys;
+    ok(!@missing, "$token: all required keys present")
+        or diag("these keys are missing: (@missing)");
 }
 
 # check that each bit of code compiles and runs
 
 for my $token (sort keys %benchmarks) {
     my $b = $benchmarks{$token};
-    my $code = "package $token; $b->{setup}; for (1..1) { $b->{code} } 1;";
+    my $setup = $b->{setup} // '';
+    my $pre   = $b->{pre}   // '';
+    my $post  = $b->{post}  // '';
+    my $code = "package $token; $setup; for (1..1) { $pre; $b->{code}; $post; } 1;";
     no warnings;
     no strict;
     ok(eval $code, "running $token")

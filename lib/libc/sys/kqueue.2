@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.37 2018/01/13 17:13:12 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.38 2019/05/03 04:06:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: January 13 2018 $
+.Dd $Mdocdate: May 3 2019 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -67,9 +67,9 @@ is not returned.
 Multiple events which trigger the filter do not result in multiple
 kevents being placed on the kqueue; instead, the filter will aggregate
 the events into a single
-.Li struct kevent .
+.Vt struct kevent .
 Calling
-.Fn close
+.Xr close 2
 on a file descriptor will remove any kevents that reference the descriptor.
 .Pp
 .Fn kqueue
@@ -83,7 +83,7 @@ is used to register events with the queue, and return any pending
 events to the user.
 .Fa changelist
 is a pointer to an array of
-.Va kevent
+.Vt kevent
 structures, as defined in
 .In sys/event.h .
 All changes contained in the
@@ -93,7 +93,9 @@ are applied before any pending events are read from the queue.
 gives the size of
 .Fa changelist .
 .Fa eventlist
-is a pointer to an array of kevent structures.
+is a pointer to an array of
+.Vt kevent
+structures.
 .Fa nevents
 determines the size of
 .Fa eventlist .
@@ -107,19 +109,23 @@ specified unlike
 .Xr select 2 .
 If
 .Fa timeout
-is a non-null pointer, it specifies a maximum interval to wait
+is not
+.Dv NULL ,
+it specifies a maximum interval to wait
 for an event, which will be interpreted as a
-.Li struct timespec .
+.Vt struct timespec .
 If
 .Fa timeout
-is a null pointer,
+is
+.Dv NULL ,
 .Fn kevent
 waits indefinitely.
 To effect a poll, the
 .Fa timeout
-argument should be non-null, pointing to a zero-valued
-.Va timespec
-structure.
+argument should not be
+.Dv NULL ,
+pointing to a zero-valued
+.Vt struct timespec .
 The same array may be used for the
 .Fa changelist
 and
@@ -127,10 +133,11 @@ and
 .Pp
 .Fn EV_SET
 is a macro which is provided for ease of initializing a
-kevent structure.
+.Vt kevent
+structure.
 .Pp
 The
-.Va kevent
+.Vt kevent
 structure is defined as:
 .Bd -literal
 struct kevent {
@@ -144,28 +151,28 @@ struct kevent {
 .Ed
 .Pp
 The fields of
-.Li struct kevent
+.Vt struct kevent
 are:
 .Bl -tag -width XXXfilter
-.It ident
+.It Fa ident
 Value used to identify this event.
 The exact interpretation is determined by the attached filter,
 but often is a file descriptor.
-.It filter
+.It Fa filter
 Identifies the kernel filter used to process this event.
 The pre-defined system filters are described below.
-.It flags
+.It Fa flags
 Actions to perform on the event.
-.It fflags
+.It Fa fflags
 Filter-specific flags.
-.It data
+.It Fa data
 Filter-specific data value.
-.It udata
+.It Fa udata
 Opaque user-defined value passed through the kernel unchanged.
 .El
 .Pp
 The
-.Va flags
+.Fa flags
 field can contain the following values:
 .Bl -tag -width XXXEV_ONESHOT
 .It Dv EV_ADD
@@ -200,7 +207,7 @@ to return with
 .Dv EV_ERROR
 set without draining any pending events after updating events in the kqueue.
 When a filter is successfully added the
-.Va data
+.Fa data
 field will be zero.
 This flag is useful for making bulk changes to a kqueue.
 .It Dv EV_ONESHOT
@@ -222,10 +229,12 @@ below.
 .Pp
 The predefined system filters are listed below.
 Arguments may be passed to and from the filter via the
-.Va fflags
+.Fa fflags
 and
-.Va data
-fields in the kevent structure.
+.Fa data
+fields in the
+.Vt kevent
+structure.
 .Bl -tag -width EVFILT_SIGNAL
 .It Dv EVFILT_READ
 Takes a descriptor as the identifier, and returns whenever
@@ -235,9 +244,9 @@ on the descriptor type.
 .Bl -tag -width 2n
 .It Sockets
 Sockets which have previously been passed to
-.Fn listen
+.Xr listen 2
 return when there is an incoming connection pending.
-.Va data
+.Fa data
 contains the size of the listen backlog.
 .Pp
 Other socket descriptors return when there is data to be read,
@@ -248,47 +257,47 @@ This may be overridden with a per-filter low water mark at the
 time the filter is added by setting the
 .Dv NOTE_LOWAT
 flag in
-.Va fflags ,
+.Fa fflags ,
 and specifying the new low water mark in
-.Va data .
+.Fa data .
 On return,
-.Va data
+.Fa data
 contains the number of bytes in the socket buffer.
 .Pp
 If the read direction of the socket has shutdown, then the filter
 also sets
 .Dv EV_EOF
 in
-.Va flags ,
+.Fa flags ,
 and returns the socket error (if any) in
-.Va fflags .
+.Fa fflags .
 It is possible for EOF to be returned (indicating the connection is gone)
 while there is still data pending in the socket buffer.
 .It Vnodes
 Returns when the file pointer is not at the end of file.
-.Va data
+.Fa data
 contains the offset from current position to end of file,
 and may be negative.
 If
 .Dv NOTE_EOF
 is set in
-.Va fflags ,
+.Fa fflags ,
 .Fn kevent
 will also return when the file pointer is at the end of file.
 The end of file condition is indicated by the presence of
 .Dv NOTE_EOF
 in
-.Va fflags
+.Fa fflags
 on return.
 .It "FIFOs, Pipes"
 Returns when there is data to read;
-.Va data
+.Fa data
 contains the number of bytes available.
 .Pp
 When the last writer disconnects, the filter will set
 .Dv EV_EOF
 in
-.Va flags .
+.Fa flags .
 This may be cleared by passing in
 .Dv EV_CLEAR ,
 at which point the filter will resume waiting for data to become
@@ -298,14 +307,14 @@ Returns when the BPF buffer is full, the BPF timeout has expired, or
 when the BPF has
 .Dq immediate mode
 enabled and there is any data to read;
-.Va data
+.Fa data
 contains the number of bytes available.
 .El
 .It Dv EVFILT_WRITE
 Takes a descriptor as the identifier, and returns whenever
 it is possible to write to the descriptor.
 For sockets, pipes, and FIFOs,
-.Va data
+.Fa data
 will contain the amount of space remaining in the write buffer.
 The filter will set
 .Dv EV_EOF
@@ -346,12 +355,12 @@ case.
 .\"and should be considered deprecated.
 .It Dv EVFILT_VNODE
 Takes a file descriptor as the identifier and the events to watch for in
-.Va fflags ,
+.Fa fflags ,
 and returns when one or more of the requested events occurs on the descriptor.
 The events to monitor are:
 .Bl -tag -width XXNOTE_RENAME
 .It Dv NOTE_DELETE
-.Fn unlink
+.Xr unlink 2
 was called on the file referenced by the descriptor.
 .It Dv NOTE_WRITE
 A write occurred on the file referenced by the descriptor.
@@ -372,12 +381,12 @@ or the underlying file system was unmounted.
 .El
 .Pp
 On return,
-.Va fflags
+.Fa fflags
 contains the events which triggered the filter.
 .It Dv EVFILT_PROC
 Takes the process ID to monitor as the identifier and the events to watch for
 in
-.Va fflags ,
+.Fa fflags ,
 and returns when the process performs one or more of the requested events.
 If a process can normally see another process, it can attach an event to it.
 The events to monitor are:
@@ -385,51 +394,51 @@ The events to monitor are:
 .It Dv NOTE_EXIT
 The process has exited.
 The exit status will be stored in
-.Va data
+.Fa data
 in the same format as the status set by
 .Xr wait 2 .
 .It Dv NOTE_FORK
 The process has called
-.Fn fork .
+.Xr fork 2 .
 .It Dv NOTE_EXEC
 The process has executed a new process via
 .Xr execve 2
 or similar call.
 .It Dv NOTE_TRACK
 Follow a process across
-.Fn fork
+.Xr fork 2
 calls.
 The parent process will return with
 .Dv NOTE_FORK
 set in the
-.Va fflags
+.Fa fflags
 field, while the child process will return with
 .Dv NOTE_CHILD
 set in
-.Va fflags
+.Fa fflags
 and the parent PID in
-.Va data .
+.Fa data .
 .It Dv NOTE_TRACKERR
 This flag is returned if the system was unable to attach an event to
 the child process, usually due to resource limitations.
 .El
 .Pp
 On return,
-.Va fflags
+.Fa fflags
 contains the events which triggered the filter.
 .It Dv EVFILT_SIGNAL
 Takes the signal number to monitor as the identifier and returns
 when the given signal is delivered to the process.
 This coexists with the
-.Fn signal
+.Xr signal 3
 and
-.Fn sigaction
+.Xr sigaction 2
 facilities, and has a lower precedence.
 The filter will record all attempts to deliver a signal to a process,
 even if the signal has been marked as
 .Dv SIG_IGN .
 Event notification happens after normal signal delivery processing.
-.Va data
+.Fa data
 returns the number of times the signal has occurred since the last call to
 .Fn kevent .
 This filter automatically sets the
@@ -437,15 +446,15 @@ This filter automatically sets the
 flag internally.
 .It Dv EVFILT_TIMER
 Establishes an arbitrary timer identified by
-.Va ident .
+.Fa ident .
 When adding a timer,
-.Va data
+.Fa data
 specifies the timeout period in milliseconds.
 The timer will be periodic unless
 .Dv EV_ONESHOT
 is specified.
 On return,
-.Va data
+.Fa data
 contains the number of times the timeout has expired since the last call to
 .Fn kevent .
 This filter automatically sets the
@@ -453,7 +462,7 @@ This filter automatically sets the
 flag internally.
 .It Dv EVFILT_DEVICE
 Takes a descriptor as the identifier and the events to watch for in
-.Va fflags ,
+.Fa fflags ,
 and returns when one or more of the requested events occur on the
 descriptor.
 The events to monitor are:
@@ -463,14 +472,16 @@ A device change event has occurred, e.g. an HDMI cable has been plugged in to a 
 .El
 .Pp
 On return,
-.Va fflags
+.Fa fflags
 contains the events which triggered the filter.
 .El
 .Sh RETURN VALUES
 .Fn kqueue
 creates a new kernel event queue and returns a file descriptor.
 If there was an error creating the kernel event queue, a value of -1 is
-returned and errno set.
+returned and
+.Va errno
+set.
 .Pp
 .Fn kevent
 returns the number of events placed in the
@@ -486,13 +497,11 @@ then the event will be placed in the
 with
 .Dv EV_ERROR
 set in
-.Va flags
+.Fa flags
 and the system error in
-.Va data .
-Otherwise,
-.Dv -1
-will be returned, and
-.Dv errno
+.Fa data .
+Otherwise, -1 will be returned, and
+.Va errno
 will be set to indicate the error condition.
 If the time limit expires, then
 .Fn kevent
@@ -518,7 +527,7 @@ function fails if:
 The process does not have permission to register a filter.
 .It Bq Er EFAULT
 There was an error reading or writing the
-.Va kevent
+.Vt kevent
 structure.
 .It Bq Er EBADF
 The specified descriptor is invalid.
@@ -548,7 +557,9 @@ The
 and
 .Fn kevent
 functions first appeared in
-.Fx 4.1 .
+.Fx 4.1
+and have been available since
+.Ox 2.9 .
 .Sh AUTHORS
 The
 .Fn kqueue

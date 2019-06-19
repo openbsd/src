@@ -23,6 +23,7 @@ class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
 class MCInstrInfo;
+class MCObjectTargetWriter;
 class MCObjectWriter;
 class MCRegisterInfo;
 class MCSubtargetInfo;
@@ -70,32 +71,46 @@ MCCodeEmitter *createX86MCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCRegisterInfo &MRI,
                                       MCContext &Ctx);
 
-MCAsmBackend *createX86_32AsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                                     const Triple &TT, StringRef CPU,
+MCAsmBackend *createX86_32AsmBackend(const Target &T,
+                                     const MCSubtargetInfo &STI,
+                                     const MCRegisterInfo &MRI,
                                      const MCTargetOptions &Options);
-MCAsmBackend *createX86_64AsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                                     const Triple &TT, StringRef CPU,
+MCAsmBackend *createX86_64AsmBackend(const Target &T,
+                                     const MCSubtargetInfo &STI,
+                                     const MCRegisterInfo &MRI,
                                      const MCTargetOptions &Options);
+
+/// Implements X86-only directives for assembly emission.
+MCTargetStreamer *createX86AsmTargetStreamer(MCStreamer &S,
+                                             formatted_raw_ostream &OS,
+                                             MCInstPrinter *InstPrint,
+                                             bool isVerboseAsm);
+
+/// Implements X86-only directives for object files.
+MCTargetStreamer *createX86ObjectTargetStreamer(MCStreamer &OS,
+                                                const MCSubtargetInfo &STI);
 
 /// Construct an X86 Windows COFF machine code streamer which will generate
 /// PE/COFF format object files.
 ///
 /// Takes ownership of \p AB and \p CE.
-MCStreamer *createX86WinCOFFStreamer(MCContext &C, MCAsmBackend &AB,
-                                     raw_pwrite_stream &OS, MCCodeEmitter *CE,
-                                     bool RelaxAll, bool IncrementalLinkerCompatible);
+MCStreamer *createX86WinCOFFStreamer(MCContext &C,
+                                     std::unique_ptr<MCAsmBackend> &&AB,
+                                     std::unique_ptr<MCObjectWriter> &&OW,
+                                     std::unique_ptr<MCCodeEmitter> &&CE,
+                                     bool RelaxAll,
+                                     bool IncrementalLinkerCompatible);
 
 /// Construct an X86 Mach-O object writer.
-MCObjectWriter *createX86MachObjectWriter(raw_pwrite_stream &OS, bool Is64Bit,
-                                          uint32_t CPUType,
-                                          uint32_t CPUSubtype);
+std::unique_ptr<MCObjectTargetWriter>
+createX86MachObjectWriter(bool Is64Bit, uint32_t CPUType, uint32_t CPUSubtype);
 
 /// Construct an X86 ELF object writer.
-MCObjectWriter *createX86ELFObjectWriter(raw_pwrite_stream &OS, bool IsELF64,
-                                         uint8_t OSABI, uint16_t EMachine);
+std::unique_ptr<MCObjectTargetWriter>
+createX86ELFObjectWriter(bool IsELF64, uint8_t OSABI, uint16_t EMachine);
 /// Construct an X86 Win COFF object writer.
-MCObjectWriter *createX86WinCOFFObjectWriter(raw_pwrite_stream &OS,
-                                             bool Is64Bit);
+std::unique_ptr<MCObjectTargetWriter>
+createX86WinCOFFObjectWriter(bool Is64Bit);
 
 /// Returns the sub or super register of a specific X86 register.
 /// e.g. getX86SubSuperRegister(X86::EAX, 16) returns X86::AX.
@@ -119,6 +134,7 @@ unsigned getX86SubSuperRegisterOrZero(unsigned, unsigned,
 // Defines symbolic names for the X86 instructions.
 //
 #define GET_INSTRINFO_ENUM
+#define GET_GENINSTRINFO_MC_DECL
 #include "X86GenInstrInfo.inc"
 
 #define GET_SUBTARGETINFO_ENUM

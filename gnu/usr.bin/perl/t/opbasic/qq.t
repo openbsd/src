@@ -8,7 +8,7 @@ BEGIN {
 # This file uses a specially crafted is() function rather than that found in
 # t/test.pl or Test::More.  Hence, we place this file in directory t/opbasic.
 
-print q(1..29
+print q(1..28
 );
 
 # This is() function is written to avoid ""
@@ -70,11 +70,6 @@ is ("\777", chr 0x1FF);
 is ("a\o{120}b", "a" . chr(0x50) . "b");
 is ("a\o{400}b", "a" . chr(0x100) . "b");
 is ("a\o{1000}b", "a" . chr(0x200) . "b");
-
-# This caused a memory fault
-no warnings "utf8";
-no warnings 'deprecated'; # This is above IV_MAX on 32 bit machines
-is ("abc", eval qq[qq\x{8000_0000}abc\x{8000_0000}]);
 
 # Maybe \x{} should be an error, but if not it should certainly mean \x{0}
 # rather than anything else.

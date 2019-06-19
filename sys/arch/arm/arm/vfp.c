@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfp.c,v 1.2 2018/03/16 21:46:04 kettenis Exp $	*/
+/*	$OpenBSD: vfp.c,v 1.4 2019/03/13 09:28:21 patrick Exp $	*/
 
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
@@ -28,18 +28,22 @@
 static inline void
 set_vfp_fpexc(uint32_t val)
 {
-	__asm __volatile("vmsr fpexc, %0" :: "r" (val));
+	__asm __volatile(
+	    ".fpu vfpv3\n"
+	    "vmsr fpexc, %0" :: "r" (val));
 }
 
 static inline uint32_t
 get_vfp_fpexc(void)
 {
 	uint32_t val;
-	__asm __volatile("vmrs %0, fpexc" : "=r" (val));
+	__asm __volatile(
+	    ".fpu vfpv3\n"
+	    "vmrs %0, fpexc" : "=r" (val));
 	return val;
 }
 
-int vfp_fault(unsigned int, unsigned int, trapframe_t *, int);
+int vfp_fault(unsigned int, unsigned int, trapframe_t *, int, uint32_t);
 void vfp_load(struct proc *p);
 void vfp_store(struct fpreg *vfpsave);
 
@@ -64,6 +68,7 @@ vfp_store(struct fpreg *vfpsave)
 
 	if (get_vfp_fpexc() & VFPEXC_EN) {
 		__asm __volatile(
+		    ".fpu vfpv3\n"
 		    "vstmia	%1!, {d0-d15}\n"	/* d0-d15 */
 		    "vstmia	%1!, {d16-d31}\n"	/* d16-d31 */
 		    "vmrs	%0, fpscr\n"
@@ -75,23 +80,23 @@ vfp_store(struct fpreg *vfpsave)
 	set_vfp_fpexc(0);
 }
 
-void
+uint32_t
 vfp_save(void)
 {
 	struct cpu_info *ci = curcpu();
 	struct pcb *pcb = curpcb;
 	struct proc *p = curproc;
-	uint32_t cr_8;
+	uint32_t fpexc;
 
 	if (ci->ci_fpuproc == 0)
-		return;
+		return 0;
 
-	cr_8 = get_vfp_fpexc();
+	fpexc = get_vfp_fpexc();
 
-	if ((cr_8 & VFPEXC_EN) == 0)
-		return;	/* not enabled, nothing to do */
+	if ((fpexc & VFPEXC_EN) == 0)
+		return fpexc;	/* not enabled, nothing to do */
 
-	if (cr_8 & VFPEXC_EX)
+	if (fpexc & VFPEXC_EX)
 		panic("vfp exceptional data fault, time to write more code");
 
 	if (pcb->pcb_fpcpu == NULL || ci->ci_fpuproc == NULL ||
@@ -109,6 +114,7 @@ vfp_save(void)
 	 * curpcb()->pcb_fpucpu == ci && ci->ci_fpuproc == curproc()
 	 * is true FPU state is valid and can just be enabled without reload.
 	 */
+	return fpexc;
 }
 
 void
@@ -146,6 +152,7 @@ vfp_load(struct proc *p)
 	set_vfp_fpexc(VFPEXC_EN);
 
 	__asm __volatile(
+	    ".fpu vfpv3\n"
 	    "vldmia	%1!, {d0-d15}\n"		/* d0-d15 */
 	    "vldmia	%1!, {d16-d31}\n"		/* d16-d31 */
 	    "ldr	%0, [%1]\n"			/* set old vfpscr */
@@ -162,12 +169,13 @@ vfp_load(struct proc *p)
 }
 
 int
-vfp_fault(unsigned int pc, unsigned int insn, trapframe_t *tf, int fault_code)
+vfp_fault(unsigned int pc, unsigned int insn, trapframe_t *tf, int fault_code,
+    uint32_t fpexc)
 {
 	struct proc *p = curproc;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	if (get_vfp_fpexc() & VFPEXC_EN) {
+	if ((fpexc & VFPEXC_EN) != 0) {
 		/*
 		 * We probably ran into an unsupported instruction,
 		 * like NEON on a non-NEON system. Let the process know.

@@ -1,4 +1,4 @@
-/* $OpenBSD: malloc_duel.c,v 1.2 2003/07/31 21:48:04 deraadt Exp $ */
+/* $OpenBSD: malloc_duel.c,v 1.3 2019/05/15 18:53:03 otto Exp $ */
 /* PUBLIC DOMAIN Nov 2002 <marc@snafu.org> */
 
 /*
@@ -56,15 +56,19 @@ thread(void *arg)
 	return NULL;
 }
 
+#define NCHILDS	10
 int
 main(int argc, char **argv)
 {
-	pthread_t	child;
+	pthread_t	child[NCHILDS];
+	int i;
 
-	CHECKr(pthread_create(&child, NULL, thread, NULL));
+	for (i = 0; i < NCHILDS; i++)
+		CHECKr(pthread_create(&child[i], NULL, thread, NULL));
 	ASSERT(signal(SIGALRM, alarm_handler) != SIG_ERR);
 	CHECKe(alarm(20));
 	malloc_loop();
-	CHECKr(pthread_join(child, NULL));
+	for (i = 0; i < NCHILDS; i++)
+		CHECKr(pthread_join(child[i], NULL));
 	SUCCEED;
 }

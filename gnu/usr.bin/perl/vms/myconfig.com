@@ -2,7 +2,7 @@ $! #!/bin/sh  ---> MYCONFIG.COM
 
 $! # This script is designed to provide a handy summary of the configuration
 $! # information being used to build perl. This is especially useful if you
-$! # are requesting help from comp.lang.perl.misc on usenet or via mail.
+$! # are requesting help online or via email.
 
 $! DCL-ified by Peter Prymmer <pvhp@lns62.lns.cornell.edu> 22-DEC-1995
 $! DCL usage (choose one):

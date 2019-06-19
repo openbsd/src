@@ -1,4 +1,4 @@
-/* crypto/bn/exptest.c */
+/*	$OpenBSD: exptest.c,v 1.7 2018/11/08 22:20:25 jsing Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -204,33 +204,37 @@ static int test_exp_mod_zero(void)
 
 int main(int argc, char *argv[])
 {
+	BIGNUM *r_mont, *r_mont_const, *r_recp, *r_simple;
+	BIGNUM *r_mont_ct, *r_mont_nonct, *a, *b, *m;
 	BN_CTX *ctx;
 	BIO *out = NULL;
-	int i, ret;
 	unsigned char c;
-	BIGNUM *r_mont, *r_mont_const, *r_recp, *r_simple,
-	    *r_mont_ct, *r_mont_nonct, *a, *b, *m;
+	int i, ret;
 
 	ERR_load_BN_strings();
 
-	ctx = BN_CTX_new();
-	if (ctx == NULL)
-		exit(1);
-	r_mont = BN_new();
-	r_mont_const = BN_new();
-	r_mont_ct = BN_new();
-	r_mont_nonct = BN_new();
-	r_recp = BN_new();
-	r_simple = BN_new();
-	a = BN_new();
-	b = BN_new();
-	m = BN_new();
-	if ((r_mont == NULL) || (r_recp == NULL) || (a == NULL) || (b == NULL))
+	if ((ctx = BN_CTX_new()) == NULL)
+		goto err;
+	if ((r_mont = BN_new()) == NULL)
+		goto err;
+	if ((r_mont_const = BN_new()) == NULL)
+		goto err;
+	if ((r_mont_ct = BN_new()) == NULL)
+		goto err;
+	if ((r_mont_nonct = BN_new()) == NULL)
+		goto err;
+	if ((r_recp = BN_new()) == NULL)
+		goto err;
+	if ((r_simple = BN_new()) == NULL)
+		goto err;
+	if ((a = BN_new()) == NULL)
+		goto err;
+	if ((b = BN_new()) == NULL)
+		goto err;
+	if ((m = BN_new()) == NULL)
 		goto err;
 
-	out = BIO_new(BIO_s_file());
-
-	if (out == NULL)
+	if ((out = BIO_new(BIO_s_file())) == NULL)
 		exit(1);
 	BIO_set_fp(out, stdout, BIO_NOCLOSE);
 
@@ -253,48 +257,42 @@ int main(int argc, char *argv[])
 		ret = BN_mod_exp_mont(r_mont, a, b, m, ctx, NULL);
 		if (ret <= 0) {
 			printf("BN_mod_exp_mont() problems\n");
-			ERR_print_errors(out);
-			exit(1);
+			goto err;
 		}
 
 		ret = BN_mod_exp_mont_ct(r_mont_ct, a, b, m, ctx, NULL);
 		if (ret <= 0) {
 			printf("BN_mod_exp_mont_ct() problems\n");
-			ERR_print_errors(out);
-			exit(1);
+			goto err;
 		}
 
 		ret = BN_mod_exp_mont_nonct(r_mont_nonct, a, b, m, ctx, NULL);
 		if (ret <= 0) {
 			printf("BN_mod_exp_mont_nonct() problems\n");
-			ERR_print_errors(out);
-			exit(1);
+			goto err;
 		}
 
 		ret = BN_mod_exp_recp(r_recp, a, b, m, ctx);
 		if (ret <= 0) {
 			printf("BN_mod_exp_recp() problems\n");
-			ERR_print_errors(out);
-			exit(1);
+			goto err;
 		}
 
 		ret = BN_mod_exp_simple(r_simple, a, b, m, ctx);
 		if (ret <= 0) {
 			printf("BN_mod_exp_simple() problems\n");
-			ERR_print_errors(out);
-			exit(1);
+			goto err;
 		}
 
 		ret = BN_mod_exp_mont_consttime(r_mont_const, a, b, m, ctx, NULL);
 		if (ret <= 0) {
 			printf("BN_mod_exp_mont_consttime() problems\n");
-			ERR_print_errors(out);
-			exit(1);
+			goto err;
 		}
 
-		if (BN_cmp(r_simple, r_mont) == 0
-			&& BN_cmp(r_simple, r_recp) == 0
-			&& BN_cmp(r_simple, r_mont_const) == 0) {
+		if (BN_cmp(r_simple, r_mont) == 0 &&
+		    BN_cmp(r_simple, r_recp) == 0 &&
+		    BN_cmp(r_simple, r_mont_const) == 0) {
 			printf(".");
 			fflush(stdout);
 		} else {
@@ -329,6 +327,8 @@ int main(int argc, char *argv[])
 	}
 	BN_free(r_mont);
 	BN_free(r_mont_const);
+	BN_free(r_mont_ct);
+	BN_free(r_mont_nonct);
 	BN_free(r_recp);
 	BN_free(r_simple);
 	BN_free(a);
@@ -346,6 +346,7 @@ int main(int argc, char *argv[])
 	printf("done\n");
 
 	return (0);
+
  err:
 	ERR_load_crypto_strings();
 	ERR_print_errors(out);

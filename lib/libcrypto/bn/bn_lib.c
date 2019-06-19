@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.39 2018/02/20 17:13:14 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.47 2019/06/17 17:11:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,53 +151,23 @@ BN_value_one(void)
 int
 BN_num_bits_word(BN_ULONG l)
 {
-	static const unsigned char bits[256] = {
-		0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
-		5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-		6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-		6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,  8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	};
+	BN_ULONG x, mask;
+	int bits;
+	unsigned int shift;
 
-#ifdef _LP64
-	if (l & 0xffffffff00000000L) {
-		if (l & 0xffff000000000000L) {
-			if (l & 0xff00000000000000L) {
-				return (bits[(int)(l >> 56)] + 56);
-			} else
-				return (bits[(int)(l >> 48)] + 48);
-		} else {
-			if (l & 0x0000ff0000000000L) {
-				return (bits[(int)(l >> 40)] + 40);
-			} else
-				return (bits[(int)(l >> 32)] + 32);
-		}
-	} else
-#endif
-	{
-		if (l & 0xffff0000L) {
-			if (l & 0xff000000L)
-				return (bits[(int)(l >> 24L)] + 24);
-			else
-				return (bits[(int)(l >> 16L)] + 16);
-		} else {
-			if (l & 0xff00L)
-				return (bits[(int)(l >> 8)] + 8);
-			else
-				return (bits[(int)(l)]);
-		}
-	}
+	/* Constant time calculation of floor(log2(l)) + 1. */
+	bits = (l != 0);
+	shift = BN_BITS4;	/* On _LP64 this is 32, otherwise 16. */
+	do {
+		x = l >> shift;
+		/* If x is 0, set mask to 0, otherwise set it to all 1s. */
+		mask = ((~x & (x - 1)) >> (BN_BITS2 - 1)) - 1;
+		bits += shift & mask;
+		/* If x is 0, leave l alone, otherwise set l = x. */
+		l ^= (x ^ l) & mask;
+	} while ((shift /= 2) != 0);
+
+	return bits;
 }
 
 int
@@ -529,7 +499,7 @@ BN_clear(BIGNUM *a)
 {
 	bn_check_top(a);
 	if (a->d != NULL)
-		memset(a->d, 0, a->dmax * sizeof(a->d[0]));
+		explicit_bzero(a->d, a->dmax * sizeof(a->d[0]));
 	a->top = 0;
 	a->neg = 0;
 }
@@ -578,6 +548,8 @@ BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 	BN_ULONG l;
 	BIGNUM *bn = NULL;
 
+	if (len < 0)
+		return (NULL);
 	if (ret == NULL)
 		ret = bn = BN_new();
 	if (ret == NULL)
@@ -837,8 +809,10 @@ bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b, int cl, int dl)
 
 /*
  * Constant-time conditional swap of a and b.
- * a and b are swapped if condition is not 0.  The code assumes that at most one bit of condition is set.
- * nwords is the number of words to swap.  The code assumes that at least nwords are allocated in both a and b,
+ * a and b are swapped if condition is not 0.
+ * The code assumes that at most one bit of condition is set.
+ * nwords is the number of words to swap.
+ * The code assumes that at least nwords are allocated in both a and b,
  * and that no more than nwords are used by either a or b.
  * a and b cannot be the same number
  */
@@ -887,6 +861,57 @@ BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 		BN_CONSTTIME_SWAP(0);
 	}
 #undef BN_CONSTTIME_SWAP
+}
+
+/*
+ * Constant-time conditional swap of a and b.
+ * a and b are swapped if condition is not 0.
+ * nwords is the number of words to swap.
+ */
+int
+BN_swap_ct(BN_ULONG condition, BIGNUM *a, BIGNUM *b, size_t nwords)
+{
+	BN_ULONG t;
+	int i, words;
+
+	if (a == b)
+		return 1;
+	if (nwords > INT_MAX)
+		return 0;
+	words = (int)nwords;
+	if (bn_wexpand(a, words) == NULL || bn_wexpand(b, words) == NULL)
+		return 0;
+	if (a->top > words || b->top > words) {
+		BNerror(BN_R_INVALID_LENGTH);
+		return 0;
+	}
+
+	/* Set condition to 0 (if it was zero) or all 1s otherwise. */
+	condition = ((~condition & (condition - 1)) >> (BN_BITS2 - 1)) - 1;
+
+	/* swap top field */
+	t = (a->top ^ b->top) & condition;
+	a->top ^= t;
+	b->top ^= t;
+
+	/* swap neg field */
+	t = (a->neg ^ b->neg) & condition;
+	a->neg ^= t;
+	b->neg ^= t;
+
+	/* swap BN_FLG_CONSTTIME from flag field */
+	t = ((a->flags ^ b->flags) & BN_FLG_CONSTTIME) & condition;
+	a->flags ^= t;
+	b->flags ^= t;
+
+	/* swap the data */
+	for (i = 0; i < words; i++) {
+		t = (a->d[i] ^ b->d[i]) & condition;
+		a->d[i] ^= t;
+		b->d[i] ^= t;
+	}
+
+	return 1;
 }
 
 BN_GENCB *

@@ -1,0 +1,6 @@
+BEGINTEST
+numbers: <b><i>bolditalic</i></b><b>bold</b><i>italic</i>roman
+letters: <b>bold</b><i>italic</i><b>back</b><b><i>bolditalic</i></b>roman
+multiletter: <b>bold</b>empty<i>italic</i>back<b><i>bolditalic</i></b>roman
+typewriter: <span class="Li">roman</span><b>bold</b><span class="Li">roman</span><i>italic</i>roman
+ENDTEST

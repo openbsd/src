@@ -1,9 +1,7 @@
 # Net::Domain.pm
 #
-# Versions up to 2.21 Copyright (c) 1995-1998 Graham Barr <gbarr@pobox.com>.
-# All rights reserved.
-# Changes in Version 2.22 onwards Copyright (C) 2013-2014 Steve Hay.  All rights
-# reserved.
+# Copyright (C) 1995-1998 Graham Barr.  All rights reserved.
+# Copyright (C) 2013-2014 Steve Hay.  All rights reserved.
 # This module is free software; you can redistribute it and/or modify it under
 # the same terms as Perl itself, i.e. under the terms of either the GNU General
 # Public License or the Artistic License, as specified in the F<LICENCE> file.
@@ -21,7 +19,7 @@ use Net::Config;
 
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(hostname hostdomain hostfqdn domainname);
-our $VERSION = "3.08_01";
+our $VERSION = "3.11";
 
 my ($host, $domain, $fqdn) = (undef, undef, undef);
 
@@ -346,16 +344,19 @@ Returns the remainder of the FQDN after the I<hostname> has been removed.
 =head1 AUTHOR
 
 Graham Barr E<lt>F<gbarr@pobox.com>E<gt>.
-Adapted from Sys::Hostname by David Sundstrom E<lt>F<sunds@asictest.sc.ti.com>E<gt>
+
+Adapted from Sys::Hostname by David Sundstrom E<lt>F<sunds@asictest.sc.ti.com>E<gt>.
 
 Steve Hay E<lt>F<shay@cpan.org>E<gt> is now maintaining libnet as of version
-1.22_02
+1.22_02.
 
 =head1 COPYRIGHT
 
-Versions up to 2.21 Copyright (c) 1995-1998 Graham Barr. All rights reserved.
-Changes in Version 2.22 onwards Copyright (C) 2013-2014 Steve Hay.  All rights
-reserved.
+Copyright (C) 1995-1998 Graham Barr.  All rights reserved.
+
+Copyright (C) 2013-2014 Steve Hay.  All rights reserved.
+
+=head1 LICENCE
 
 This module is free software; you can redistribute it and/or modify it under the
 same terms as Perl itself, i.e. under the terms of either the GNU General Public

@@ -2,10 +2,10 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
     require './test.pl';
+    set_up_inc(  qw(. ../lib) );
 }
-plan tests => 310;
+plan tests => 319;
 
 my $list_assignment_supported = 1;
 
@@ -469,8 +469,7 @@ is($h{'c'}, 3);
 # local() should preserve the existenceness of tied hash elements
 ok(! exists $h{'y'});
 ok(! exists $h{'z'});
-TODO: {
-    todo_skip("Localize entire tied hash");
+{
     my $d = join("\n", map { "$_=>$h{$_}" } sort keys %h);
     local %h = %h;
     is(join("\n", map { "$_=>$h{$_}" } sort keys %h), $d);
@@ -671,6 +670,8 @@ is($@, "");
 
 	sub f1 { "f1" }
 	sub f2 { "f2" }
+	sub f3 { "f3" }
+	sub f4 { "f4" }
 
 	no warnings "redefine";
 	{
@@ -683,6 +684,22 @@ is($@, "");
 		::ok(f1() eq "h1", "localised sub via stash");
 	}
 	::ok(f1() eq "f1", "localised sub restored");
+	# Do that test again, but with a different glob, to make sure that
+	# localisation via multideref can handle a subref in a stash.
+	# (The local *f1 above will have ensured that we have a full glob,
+	# not a sub ref.)
+	{
+		local $Other::{"f3"} = sub { "h1" };
+		::ok(f3() eq "h1", "localised sub via stash");
+	}
+	::ok(f3() eq "f3", "localised sub restored");
+	# Also, we need to test pp_helem, which we can do by using a more
+	# complex subscript.
+	{
+		local $Other::{${\"f4"}} = sub { "h1" };
+		::ok(f4() eq "h1", "localised sub via stash");
+	}
+	::ok(f4() eq "f4", "localised sub restored");
 	{
 		local @Other::{qw/ f1 f2 /} = (sub { "j1" }, sub { "j2" });
 		::ok(f1() eq "j1", "localised sub via stash slice");
@@ -825,3 +842,25 @@ local $SIG{__WARN__};
     delete local @Grompits::{<foo bar>};
 }
 pass 'rmagic does not cause delete local to crash on nonexistent elems';
+
+TODO: {
+    my @a = (1..5);
+    {
+        local $#a = 2;
+        is($#a, 2, 'RT #7411: local($#a) should change count');
+        is("@a", '1 2 3', 'RT #7411: local($#a) should shorten array');
+    }
+
+    local $::TODO = 'RT #7411: local($#a)';
+
+    is($#a, 4, 'RT #7411: after local($#a), count should be restored');
+    is("@a", '1 2 3 4 5', 'RT #7411: after local($#a), array should be restored');
+}
+
+$a = 10;
+TODO: {
+    local $::TODO = 'RT #7615: if (local $a)';
+    if (local $a = 1){
+    }
+    is($a, 10, 'RT #7615: local in if condition should be restored');
+}

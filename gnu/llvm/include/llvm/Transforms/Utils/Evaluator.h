@@ -1,4 +1,4 @@
-//===-- Evaluator.h - LLVM IR evaluator -------------------------*- C++ -*-===//
+//===- Evaluator.h - LLVM IR evaluator --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,9 +18,11 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constant.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/GlobalVariable.h"
-
+#include "llvm/IR/Value.h"
+#include "llvm/Support/Casting.h"
+#include <cassert>
 #include <deque>
 #include <memory>
 
@@ -72,6 +74,18 @@ public:
     ValueStack.back()[V] = C;
   }
 
+  /// Given call site return callee and list of its formal arguments
+  Function *getCalleeWithFormalArgs(CallSite &CS,
+                                    SmallVector<Constant *, 8> &Formals);
+
+  /// Given call site and callee returns list of callee formal argument
+  /// values converting them when necessary
+  bool getFormalParams(CallSite &CS, Function *F,
+                       SmallVector<Constant *, 8> &Formals);
+
+  /// Casts call result to a type of bitcast call expression
+  Constant *castCallResultIfNeeded(Value *CallExpr, Constant *RV);
+
   const DenseMap<Constant*, Constant*> &getMutatedMemory() const {
     return MutatedMemory;
   }
@@ -114,6 +128,6 @@ private:
   const TargetLibraryInfo *TLI;
 };
 
-}
+} // end namespace llvm
 
-#endif
+#endif // LLVM_TRANSFORMS_UTILS_EVALUATOR_H

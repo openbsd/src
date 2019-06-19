@@ -1,0 +1,23 @@
+SH-PARAGRAPH(1)             General Commands Manual            SH-PARAGRAPH(1)
+
+
+
+NNAAMMEE
+       SH-paragraph - interaction of section headers with paragraphs
+
+SSYYNNOOPPSSIISS
+       BEGINTEST
+
+DDEESSCCRRIIPPTTIIOONN
+       This text immediately follows a section header.
+
+       This is a paragraph.
+
+EEXXAAMMPPLLEESS
+       ENDTEST
+
+       end of file
+
+
+
+OpenBSD                         January 6, 2019                SH-PARAGRAPH(1)

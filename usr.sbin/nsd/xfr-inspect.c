@@ -375,7 +375,7 @@ list_header(FILE* in)
 	time_start = (time_t)time_start_0;
 
 	/* printf("; type:		%x\n", (int)type); */
-	printf("; commited:	%d (%s)\n", (int)committed,
+	printf("; committed:	%d (%s)\n", (int)committed,
 		committed?"yes":"no");
 	printf("; num_parts:	%d\n", (int)num_parts);
 	printf("; time_end:	%d.%6.6d %s", (int)time_end_0,

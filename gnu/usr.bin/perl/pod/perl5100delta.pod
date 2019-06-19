@@ -1015,7 +1015,7 @@ The L<perlreapi> manpage describes the interface to the perl interpreter
 used to write pluggable regular expression engines (by Ævar Arnfjörð
 Bjarmason).
 
-The L<perlunitut> manpage is an tutorial for programming with Unicode and
+The L<perlunitut> manpage is a tutorial for programming with Unicode and
 string encodings in Perl, courtesy of Juerd Waalboer.
 
 A new manual page, L<perlunifaq> (the Perl Unicode FAQ), has been added
@@ -1576,7 +1576,7 @@ inherits from C<B::SV> (it used to inherit from C<B::IV>).
 
 The anonymous hash and array constructors now take 1 op in the optree
 instead of 3, now that pp_anonhash and pp_anonlist return a reference to
-an hash/array when the op is flagged with OPf_SPECIAL. (Nicholas Clark)
+a hash/array when the op is flagged with OPf_SPECIAL. (Nicholas Clark)
 
 =head1 Known Problems
 

@@ -5,7 +5,7 @@ use vars qw($VERSION);
 use Carp;
 use Text::Wrap;
 use ExtUtils::Constant::Utils qw(C_stringify perl_stringify);
-$VERSION = '0.05';
+$VERSION = '0.06';
 
 use constant is_perl56 => ($] < 5.007 && $] > 5.005_50);
 
@@ -331,7 +331,7 @@ of C code to proceed and follow the assignment. I<pre> will be at the start
 of a block, so variables may be defined in it.
 
 =cut
-# Hmm. value undef to to NOTDEF? value () to do NOTFOUND?
+# Hmm. value undef to do NOTDEF? value () to do NOTFOUND?
 
 sub assign {
   my $self = shift;
@@ -581,7 +581,8 @@ sub switch_clause {
     $body .= $indent . "case '" . C_stringify ($char) . "':\n";
     foreach my $thisone (sort {
 	# Deal with the case of an item actually being an array ref to 1 or 2
-	# hashrefs. Don't assign to $a or $b, as they're aliases to the orignal
+	# hashrefs. Don't assign to $a or $b, as they're aliases to the
+        # original
 	my $l = ref $a eq 'ARRAY' ? ($a->[0] || $->[1]) : $a;
 	my $r = ref $b eq 'ARRAY' ? ($b->[0] || $->[1]) : $b;
 	# Sort by weight first

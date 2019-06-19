@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.118 2018/03/10 20:52:58 kettenis Exp $
+#  $OpenBSD: Makefile,v 1.119 2018/07/18 20:21:12 naddy Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -67,7 +67,6 @@ ARCH_SRCS = e_sqrtl.c
 
 .PATH:	${.CURDIR}/man
 .PATH:	${.CURDIR}/src
-.PATH:	${.CURDIR}/noieee_src
 
 LIB=	m
 COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \

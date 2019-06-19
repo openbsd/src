@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_akey.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_akey.c,v 1.22 2019/04/22 17:10:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -87,36 +87,64 @@ const X509V3_EXT_METHOD v3_akey_id = {
 	.usr_data = NULL,
 };
 
-static
-STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
-    AUTHORITY_KEYID *akeyid, STACK_OF(CONF_VALUE) *extlist)
+static STACK_OF(CONF_VALUE) *
+i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, AUTHORITY_KEYID *akeyid,
+    STACK_OF(CONF_VALUE) *extlist)
 {
-	char *tmp;
+	STACK_OF(CONF_VALUE) *free_extlist = NULL;
+	char *tmpstr = NULL;
 
-	if (akeyid->keyid) {
-		tmp = hex_to_string(akeyid->keyid->data, akeyid->keyid->length);
-		X509V3_add_value("keyid", tmp, &extlist);
-		free(tmp);
+	if (extlist == NULL) {
+		if ((free_extlist = extlist = sk_CONF_VALUE_new_null()) == NULL)
+			return NULL;
 	}
-	if (akeyid->issuer)
-		extlist = i2v_GENERAL_NAMES(NULL, akeyid->issuer, extlist);
-	if (akeyid->serial) {
-		tmp = hex_to_string(akeyid->serial->data,
-		    akeyid->serial->length);
-		X509V3_add_value("serial", tmp, &extlist);
-		free(tmp);
+
+	if (akeyid->keyid != NULL) {
+		if ((tmpstr = hex_to_string(akeyid->keyid->data,
+		    akeyid->keyid->length)) == NULL)
+			goto err;
+		if (!X509V3_add_value("keyid", tmpstr, &extlist))
+			goto err;
+		free(tmpstr);
+		tmpstr = NULL;
 	}
+
+	if (akeyid->issuer != NULL) {
+		if ((extlist = i2v_GENERAL_NAMES(NULL, akeyid->issuer,
+		    extlist)) == NULL)
+			goto err;
+	}
+
+	if (akeyid->serial != NULL) {
+		if ((tmpstr = hex_to_string(akeyid->serial->data,
+		    akeyid->serial->length)) == NULL)
+			goto err;
+		if (!X509V3_add_value("serial", tmpstr, &extlist))
+			goto err;
+		free(tmpstr);
+		tmpstr = NULL;
+	}
+
+	if (sk_CONF_VALUE_num(extlist) <= 0)
+		goto err;
+
 	return extlist;
+
+ err:
+	free(tmpstr);
+	sk_CONF_VALUE_pop_free(free_extlist, X509V3_conf_free);
+
+	return NULL;
 }
 
-/* Currently two options:
+/*
+ * Currently two options:
  * keyid: use the issuers subject keyid, the value 'always' means its is
  * an error if the issuer certificate doesn't have a key id.
  * issuer: use the issuers cert issuer and serial number. The default is
  * to only use this if keyid is not present. With the option 'always'
  * this is always included.
  */
-
 static AUTHORITY_KEYID *
 v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
     STACK_OF(CONF_VALUE) *values)
@@ -139,8 +167,7 @@ v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 			keyid = 1;
 			if (cnf->value && !strcmp(cnf->value, "always"))
 				keyid = 2;
-		}
-		else if (!strcmp(cnf->name, "issuer")) {
+		} else if (!strcmp(cnf->name, "issuer")) {
 			issuer = 1;
 			if (cnf->value && !strcmp(cnf->value, "always"))
 				issuer = 2;
@@ -199,7 +226,7 @@ v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 
 	return akeyid;
 
-err:
+ err:
 	AUTHORITY_KEYID_free(akeyid);
 	GENERAL_NAME_free(gen);
 	sk_GENERAL_NAME_free(gens);

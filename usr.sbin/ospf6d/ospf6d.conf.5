@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.12 2016/02/14 20:05:55 reyk Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.19 2019/05/26 09:27:09 remi Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2016 $
+.Dd $Mdocdate: May 26 2019 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -28,10 +28,10 @@ The
 .Xr ospf6d 8
 daemon implements the Open Shortest Path First protocol version 3 as described
 in RFC 5340.
-.Sh SECTIONS
+.Pp
 The
 .Nm
-config file is divided into three main sections.
+config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Macros
 User-defined variables may be defined and used later, simplifying the
@@ -83,6 +83,11 @@ interface.
 The only settings that can be set globally and not overruled are listed below.
 .Pp
 .Bl -tag -width Ds -compact
+.It Ic fib-priority Ar prio
+Set the routing priority to
+.Ar prio .
+The default is 32.
+.Pp
 .It Xo
 .Ic fib-update
 .Pq Ic yes Ns | Ns Ic no
@@ -101,6 +106,12 @@ will implicitly set the
 .Ic stub Ic router
 option to ensure that no traffic tries to transit via this router.
 .Pp
+.It Ic rdomain Ar tableid
+Specifies the routing table
+.Xr ospfd 8
+should modify.
+Table 0 is the default table.
+.Pp
 .It Xo
 .Op Ic no
 .Ic redistribute
@@ -109,14 +120,19 @@ option to ensure that no traffic tries to transit via this router.
 .Ic default Pc
 .Sm on
 .Op Ic set ...\&
+.Bk -words
+.Op Ic depend on Ar interface
+.Ek
 .Xc
 .It Xo
 .Op Ic no
 .Ic redistribute Ar prefix Op Ic set ...\&
+.Op Ic depend on Ar interface
 .Xc
 .It Xo
 .Op Ic no
 .Ic redistribute rtlabel Ar label Op Ic set ...\&
+.Op Ic depend on Ar interface
 .Xc
 If set to
 .Ic connected ,
@@ -147,6 +163,14 @@ The only exception is
 which will be set no matter what, and additionally
 .Ic no
 cannot be used together with it.
+.Pp
+With the
+.Ic depend on
+option, redistributed routes will have a metric of 65535 if the specified
+.Ar interface
+is down or in state backup.
+This is especially useful on a carp cluster to ensure all traffic goes to
+the carp master.
 .Pp
 It is possible to set the route
 .Ic metric
@@ -213,7 +237,7 @@ Areas are used for grouping interfaces.
 All interface-specific parameters can
 be configured per area, overruling the global settings.
 .Bl -tag -width Ds
-.It Ic area Ar address
+.It Ic area Ar address Ns | Ns Ar id
 Specify an area section, grouping one or more interfaces.
 .Bd -literal -offset indent
 area 0.0.0.0 {
@@ -267,15 +291,24 @@ demotion counter by 1 on the given interface group, usually
 when the interface state is going down.
 The demotion counter will be decreased when the interface
 state is active again.
+.It Ic depend on Ar interface
+A metric of 65535 is used if the specified interface is down or in status
+backup.
 .It Ic hello-interval Ar seconds
 Set the hello interval.
 The default value is 10; valid range is 1\-65535 seconds.
 .It Ic metric Ar cost
 Set the interface metric a.k.a. cost.
 The default value is 10; valid range is 1\-65535.
+A metric of 65535 is used for
+.Xr carp 4
+interfaces with status backup.
 .It Ic passive
 Prevent transmission and reception of OSPF packets on this interface.
 The specified interface will be announced as a stub network.
+Passive mode is enforced for
+.Xr carp 4
+interfaces.
 .It Ic retransmit-interval Ar seconds
 Set retransmit interval.
 The default value is 5 seconds; valid range is 5\-3600 seconds.

@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.11 2017/10/05 15:13:43 jmc Exp $
+.\" $OpenBSD: clang-local.1,v 1.19 2019/02/22 15:28:43 mortimer Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 5 2017 $
+.Dd $Mdocdate: February 22 2019 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -52,6 +52,9 @@ This behavior can be turned off by passing
 to the compiler and
 .Fl nopie
 to the linker.
+It is also turned off when the
+.Fl pg
+flag is used.
 .It
 The
 .Fl fstrict-aliasing
@@ -64,9 +67,9 @@ does not store its version string in objects.
 There is no option to control this.
 .It
 The
-.Fl pg
+.Fl p
 flag is an alias of
-.Fl p .
+.Fl pg .
 .It
 .Nm clang
 does not warn for passing pointer arguments or assignment with
@@ -101,6 +104,28 @@ and
 .Xr free 3
 builtins are disabled to prevent undesirable optimizations of calls to
 these functions.
+.It
+.Nm clang
+includes a security pass that exchanges some ROP-friendly instructions
+for safe alternatives on i386 and amd64.
+This can be disabled with the
+.Fl fno-fixup-gadgets
+option.
+.It
+.Nm clang
+includes the retguard security feature on amd64 and arm64.
+This feature can be disabled with the
+.Fl fno-ret-protector
+or
+.Fl fno-stack-protector
+options.
+.It
+.Nm clang
+has
+.Fl mretpoline
+enabled by default on amd64 to protect against branch target injection attacks.
+It can be disabled with
+.Fl mno-retpoline .
 .El
 .Sh SEE ALSO
 .Xr clang 1

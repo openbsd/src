@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.42 2017/01/09 14:44:28 mpi Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.43 2018/11/18 16:33:26 mpi Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -59,7 +59,7 @@ usbd_get_desc(struct usbd_device *dev, int type, int index, int len, void *desc)
 {
 	usb_device_request_t req;
 
-	DPRINTFN(3,("usbd_get_desc: type=%d, index=%d, len=%d\n", type, index,
+	DPRINTFN(3,("%s: type=%d, index=%d, len=%d\n", __func__, type, index,
 	    len));
 
 	req.bmRequestType = UT_READ_DEVICE;
@@ -209,7 +209,7 @@ usbd_set_idle(struct usbd_device *dev, int ifaceno, int duration, int id)
 {
 	usb_device_request_t req;
 
-	DPRINTFN(4, ("usbd_set_idle: %d %d\n", duration, id));
+	DPRINTFN(4, ("%s: %d %d\n", __func__, duration, id));
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UR_SET_IDLE;
 	USETW2(req.wValue, duration, id);
@@ -268,15 +268,15 @@ usbd_get_config(struct usbd_device *dev, u_int8_t *conf)
 void
 usb_detach_wait(struct device *dv)
 {
-	DPRINTF(("usb_detach_wait: waiting for %s\n", dv->dv_xname));
+	DPRINTF(("%s: waiting for %s\n", __func__, dv->dv_xname));
 	if (tsleep(dv, PZERO, "usbdet", hz * 60))
-		printf("usb_detach_wait: %s didn't detach\n", dv->dv_xname);
-	DPRINTF(("usb_detach_wait: %s done\n", dv->dv_xname));
+		printf("%s: %s didn't detach\n", __func__, dv->dv_xname);
+	DPRINTF(("%s: %s done\n", __func__, dv->dv_xname));
 }
 
 void
 usb_detach_wakeup(struct device *dv)
 {
-	DPRINTF(("usb_detach_wakeup: for %s\n", dv->dv_xname));
+	DPRINTF(("%s: for %s\n", __func__, dv->dv_xname));
 	wakeup(dv);
 }

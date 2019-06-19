@@ -15,7 +15,7 @@
 #include "llvm-c/lto.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Bitcode/BitcodeReader.h"
-#include "llvm/CodeGen/CommandFlags.h"
+#include "llvm/CodeGen/CommandFlags.inc"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
@@ -75,25 +75,28 @@ static bool parsedOptions = false;
 
 static LLVMContext *LTOContext = nullptr;
 
-static void diagnosticHandler(const DiagnosticInfo &DI, void *Context) {
-  if (DI.getSeverity() != DS_Error) {
-    DiagnosticPrinterRawOStream DP(errs());
-    DI.print(DP);
-    errs() << '\n';
-    return;
+struct LTOToolDiagnosticHandler : public DiagnosticHandler {
+  bool handleDiagnostics(const DiagnosticInfo &DI) override {
+    if (DI.getSeverity() != DS_Error) {
+      DiagnosticPrinterRawOStream DP(errs());
+      DI.print(DP);
+      errs() << '\n';
+      return true;
+    }
+    sLastErrorString = "";
+    {
+      raw_string_ostream Stream(sLastErrorString);
+      DiagnosticPrinterRawOStream DP(Stream);
+      DI.print(DP);
+    }
+    return true;
   }
-  sLastErrorString = "";
-  {
-    raw_string_ostream Stream(sLastErrorString);
-    DiagnosticPrinterRawOStream DP(Stream);
-    DI.print(DP);
-  }
-}
+};
 
 // Initialize the configured targets if they have not been initialized.
 static void lto_initialize() {
   if (!initialized) {
-#ifdef LLVM_ON_WIN32
+#ifdef _WIN32
     // Dialog box on crash disabling doesn't work across DLL boundaries, so do
     // it here.
     llvm::sys::DisableSystemDialogsOnCrash();
@@ -108,7 +111,8 @@ static void lto_initialize() {
 
     static LLVMContext Context;
     LTOContext = &Context;
-    LTOContext->setDiagnosticHandler(diagnosticHandler, nullptr, true);
+    LTOContext->setDiagnosticHandler(
+        llvm::make_unique<LTOToolDiagnosticHandler>(), true);
     initialized = true;
   }
 }
@@ -274,7 +278,8 @@ lto_module_t lto_module_create_in_local_context(const void *mem, size_t length,
 
   // Create a local context. Ownership will be transferred to LTOModule.
   std::unique_ptr<LLVMContext> Context = llvm::make_unique<LLVMContext>();
-  Context->setDiagnosticHandler(diagnosticHandler, nullptr, true);
+  Context->setDiagnosticHandler(llvm::make_unique<LTOToolDiagnosticHandler>(),
+                                true);
 
   ErrorOr<std::unique_ptr<LTOModule>> M = LTOModule::createInLocalContext(
       std::move(Context), mem, length, Options, StringRef(path));
@@ -579,6 +584,16 @@ void thinlto_codegen_set_cache_entry_expiration(thinlto_code_gen_t cg,
 void thinlto_codegen_set_final_cache_size_relative_to_available_space(
     thinlto_code_gen_t cg, unsigned Percentage) {
   return unwrap(cg)->setMaxCacheSizeRelativeToAvailableSpace(Percentage);
+}
+
+void thinlto_codegen_set_cache_size_bytes(
+    thinlto_code_gen_t cg, unsigned MaxSizeBytes) {
+  return unwrap(cg)->setCacheMaxSizeBytes(MaxSizeBytes);
+}
+
+void thinlto_codegen_set_cache_size_files(
+    thinlto_code_gen_t cg, unsigned MaxSizeFiles) {
+  return unwrap(cg)->setCacheMaxSizeFiles(MaxSizeFiles);
 }
 
 void thinlto_codegen_set_savetemps_dir(thinlto_code_gen_t cg,

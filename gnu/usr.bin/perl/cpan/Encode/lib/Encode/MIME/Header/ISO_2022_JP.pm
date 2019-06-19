@@ -5,16 +5,17 @@ use warnings;
 
 use parent qw(Encode::MIME::Header);
 
-$Encode::Encoding{'MIME-Header-ISO_2022_JP'} =
-  bless { encode => 'B', bpl => 76, Name => 'MIME-Header-ISO_2022_JP' } =>
+my $obj =
+  bless { decode_b => '1', decode_q => '1', encode => 'B', bpl => 76, Name => 'MIME-Header-ISO_2022_JP' } =>
   __PACKAGE__;
+Encode::define_encoding($obj, 'MIME-Header-ISO_2022_JP');
 
 use constant HEAD => '=?ISO-2022-JP?B?';
 use constant TAIL => '?=';
 
 use Encode::CJKConstants qw(%RE);
 
-our $VERSION = do { my @r = ( q$Revision: 1.4 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 1.9 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 # I owe the below codes totally to
 #   Jcode by Dan Kogai & http://www.din.or.jp/~ohzaki/perl.htm#JP_Base64
@@ -22,6 +23,7 @@ our $VERSION = do { my @r = ( q$Revision: 1.4 $ =~ /\d+/g ); sprintf "%d." . "%0
 sub encode {
     my $self = shift;
     my $str  = shift;
+    return undef unless defined $str;
 
     utf8::encode($str) if ( Encode::is_utf8($str) );
     Encode::from_to( $str, 'utf8', 'euc-jp' );

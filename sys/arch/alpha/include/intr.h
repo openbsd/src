@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.47 2018/01/13 15:18:11 mpi Exp $ */
+/* $OpenBSD: intr.h,v 1.49 2019/03/24 06:19:26 visa Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -172,6 +172,7 @@ void splassert_check(int, const char *);
 
 /* IPL-raising functions/macros */
 int splraise(int);
+int spl0(void);
 
 #define splsoft()		splraise(IPL_SOFTINT)
 #define splsoftserial()		splsoft()
@@ -188,8 +189,6 @@ int splraise(int);
 #define splsched()		splraise(IPL_SCHED)
 #define splipi()		splraise(IPL_IPI)
 #define splhigh()		splraise(IPL_HIGH)
-
-#define spllock()		splhigh()
 
 /*
  * Interprocessor interrupts.  In order how we want them processed.

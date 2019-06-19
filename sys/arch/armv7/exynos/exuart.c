@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.14 2018/02/19 08:59:52 mpi Exp $ */
+/* $OpenBSD: exuart.c,v 1.15 2018/05/31 10:30:10 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -108,9 +108,6 @@ struct exuart_softc *exuart_sc(dev_t dev);
 
 int exuart_intr(void *);
 
-extern int comcnspeed;
-extern int comcnmode;
-
 /* XXX - we imitate 'com' serial ports and take over their entry points */
 /* XXX: These belong elsewhere */
 cdev_decl(exuart);
@@ -152,7 +149,7 @@ exuart_init_cons(void)
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	exuartcnattach(&armv7_bs_tag, reg.addr, comcnspeed, comcnmode);
+	exuartcnattach(&armv7_bs_tag, reg.addr, B115200, TTYDEF_CFLAG);
 }
 
 int

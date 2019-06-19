@@ -36,13 +36,13 @@ my $victim = sub {
     $_[0] =~ s/(a)/ $1/;
     # PMOP_pmreplroot(cPMOPo) is NULL for this
     $_[0] =~ s/(b)//;
-    # This gives an OP_PUSHRE
+    # This gives an OP_SPLIT
     split /c/;
 };
 
 is (B::walkoptree_debug, 0, 'walkoptree_debug() is 0');
 B::walkoptree(B::svref_2object($victim)->ROOT, "pie");
-foreach (qw(substcont pushre split leavesub)) {
+foreach (qw(substcont split split leavesub)) {
     is ($seen{$_}, 1, "Our victim had a $_ OP");
 }
 is_deeply ([keys %debug], [], 'walkoptree_debug was not called');
@@ -52,7 +52,7 @@ is (B::walkoptree_debug, 1, 'walkoptree_debug() is 1');
 %seen = ();
 
 B::walkoptree(B::svref_2object($victim)->ROOT, "pie");
-foreach (qw(substcont pushre split leavesub)) {
+foreach (qw(substcont split split leavesub)) {
     is ($seen{$_}, 1, "Our victim had a $_ OP");
 }
 is_deeply (\%debug, \%seen, 'walkoptree_debug was called correctly');

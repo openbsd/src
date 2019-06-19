@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ForwardDependencies.pm,v 1.13 2012/04/28 15:24:52 espie Exp $
+# $OpenBSD: ForwardDependencies.pm,v 1.15 2018/12/17 13:51:21 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -29,8 +29,7 @@ sub find
 	my $forward = {};
 	for my $old ($set->older) {
 		for my $f (OpenBSD::RequiredBy->new($old->pkgname)->list) {
-			next if defined $set->{older}->{$f};
-			next if defined $set->{kept}->{$f};
+			next if defined $set->{older}{$f};
 			$forward->{$f} = 1;
 		}
 	}
@@ -45,47 +44,52 @@ sub adjust
 	for my $f (keys %{$self->{forward}}) {
 		my $deps_f = OpenBSD::Requiring->new($f);
 		for my $check ($deps_f->list) {
-			my $h = $set->{older}->{$check};
+			my $h = $set->{older}{$check};
 			next unless defined $h;
-			if (!defined $h->{update_found}) {
+			my $r = $h->{update_found};
+			if (!defined $r) {
 				$state->errsay("XXX #1", $check);
 				$deps_f->delete($check);
-			} else {
-				# XXX proper OO wouldn't have ->is_real
-				# but it would use double dispatch to record
-				# every dependency.
-				# ETOOMUCHSCAFFOLDING, quick&dirty hack
-				# is much shorter and fairly localized.
-				my $r = $h->{update_found};
-				my $p = $r->pkgname;
-				$state->say("Adjusting #1 to #2 in #3",
-				    $check, $p, $f)
-					if $state->verbose >= 3;
-				if ($check ne $p) {
-					if ($r->is_real) {
-						$deps_f->delete($check)->add($p);
-					} else {
-						$deps_f->delete($check);
-					}
-				}
+				next;
+			}
+			# XXX is_real corresponds to actual package dependencies
+			# for stuff moving to the base system, we got 
+			# a pseudo handle which shouldn't be recorded.
+			my $p = $r->pkgname;
+			$state->say("Adjusting #1 to #2 in #3", $check, $p, $f)
+				if $state->verbose >= 3;
+			if ($check ne $p) {
 				if ($r->is_real) {
-					OpenBSD::RequiredBy->new($p)->add($f);
+					$deps_f->delete($check)->add($p);
+				} else {
+					$deps_f->delete($check);
 				}
 			}
+			if ($r->is_real) {
+				OpenBSD::RequiredBy->new($p)->add($f);
+			}
 		}
+	}
+}
+
+sub dump
+{
+	my ($self, $result, $state) = @_;
+	$state->say("#1 forward dependencies:", $self->{set}->print);
+	while (my ($pkg, $l) = each %$result) {
+		my $deps = join(',', map {$_->{pattern}} @$l);
+		$state->say("| Dependencies of #1 on #2 don't match", 
+		    $pkg, $deps);
 	}
 }
 
 sub check
 {
 	my ($self, $state) = @_;
-	my $forward = $self->{forward};
+
+	my @r = keys %{$self->{forward}};
 	my $set = $self->{set};
-
-	my @r = keys %$forward;
-
 	my $result = {};
-
 	return $result if @r == 0;
 	$state->say("Verifying dependencies still match for #1",
 	    join(', ', @r)) if $state->verbose >= 2;
@@ -97,23 +101,15 @@ sub check
 		my $p2 = OpenBSD::PackingList->from_installation(
 		    $f, \&OpenBSD::PackingList::DependOnly);
 		if (!defined $p2) {
-			$state->errsay("Error: #1 missing from installation", $f);
+			$state->errsay("Error: #1 missing from installation", 
+			    $f);
 		} else {
-			$p2->check_forward_dependency($f, \@old, \@new, $result);
+			$p2->check_forward_dependency($f, \@old, \@new, 
+			    $result);
 		}
 	}
 	if (%$result) {
-		$state->say("#1 forward dependencies:", $set->print);
-		while (my ($pkg, $l) = each %$result) {
-			my $deps = join(',', map {$_->{pattern}} @$l);
-			if (@$l == 1) {
-				$state->say("| Dependency of #1 on #2 doesn't match",
-				    $pkg, $deps);
-			} else {
-				$state->say("| Dependencies of #1 on #2 don't match",
-				    $pkg, $deps);
-			}
-		}
+		$self->dump($result, $state);
 	}
 	return $result;
 }

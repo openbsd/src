@@ -1,0 +1,10 @@
+[name]
+E<eth>
+
+[input]
+=pod
+
+E<eth>
+
+[output]
+\&\*(d-

@@ -1,9 +1,7 @@
 # Net::Time.pm
 #
-# Versions up to 2.10 Copyright (c) 1995-2004 Graham Barr <gbarr@pobox.com>.
-# All rights reserved.
-# Changes in Version 2.11 onwards Copyright (C) 2014 Steve Hay.  All rights
-# reserved.
+# Copyright (C) 1995-2004 Graham Barr.  All rights reserved.
+# Copyright (C) 2014 Steve Hay.  All rights reserved.
 # This module is free software; you can redistribute it and/or modify it under
 # the same terms as Perl itself, i.e. under the terms of either the GNU General
 # Public License or the Artistic License, as specified in the F<LICENCE> file.
@@ -24,7 +22,7 @@ use Net::Config;
 our @ISA       = qw(Exporter);
 our @EXPORT_OK = qw(inet_time inet_daytime);
 
-our $VERSION = "3.08_01";
+our $VERSION = "3.11";
 
 our $TIMEOUT = 120;
 
@@ -146,16 +144,18 @@ C<udp>. The result will be an ASCII string or I<undef> upon failure.
 
 =head1 AUTHOR
 
-Graham Barr E<lt>F<gbarr@pobox.com>E<gt>
+Graham Barr E<lt>F<gbarr@pobox.com>E<gt>.
 
 Steve Hay E<lt>F<shay@cpan.org>E<gt> is now maintaining libnet as of version
-1.22_02
+1.22_02.
 
 =head1 COPYRIGHT
 
-Versions up to 2.11 Copyright (c) 1995-2004 Graham Barr. All rights reserved.
-Changes in Version 2.11 onwards Copyright (C) 2014 Steve Hay.  All rights
-reserved.
+Copyright (C) 1995-2004 Graham Barr.  All rights reserved.
+
+Copyright (C) 2014 Steve Hay.  All rights reserved.
+
+=head1 LICENCE
 
 This module is free software; you can redistribute it and/or modify it under the
 same terms as Perl itself, i.e. under the terms of either the GNU General Public

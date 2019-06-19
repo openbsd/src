@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 2017/05/30 15:39:04 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 2018/05/04 15:43:34 visa Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -146,5 +146,23 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 				break;
 		}
 		--count;
+	}
+}
+
+void
+db_save_stack_trace(struct db_stack_trace *st)
+{
+	struct callframe *frame;
+
+	frame = __builtin_frame_address(0);
+	st->st_count = 0;
+	while (st->st_count < DB_STACK_TRACE_MAX) {
+		st->st_pc[st->st_count++] = frame->f_lr;
+
+		if (!INKERNEL(frame->f_frame) || frame->f_frame <= frame)
+			break;
+		frame = frame->f_frame;
+		if (!INKERNEL(frame->f_lr))
+			break;
 	}
 }

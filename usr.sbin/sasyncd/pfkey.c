@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.28 2017/04/18 02:29:56 deraadt Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.29 2018/06/28 02:37:26 gsoares Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -115,7 +115,6 @@ pfkey_send_flush(struct syncpeer *p)
 	static u_int32_t seq = 1;
 
 	if (m) {
-		memset(m, 0, sizeof *m);
 		m->sadb_msg_version = PF_KEY_V2;
 		m->sadb_msg_seq = seq++;
 		m->sadb_msg_type = SADB_FLUSH;

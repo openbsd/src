@@ -1,4 +1,4 @@
-//===--- HexagonBlockRanges.cpp -------------------------------------------===//
+//===- HexagonBlockRanges.cpp ---------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,8 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
-#define DEBUG_TYPE "hbr"
 
 #include "HexagonBlockRanges.h"
 #include "HexagonInstrInfo.h"
@@ -17,17 +15,22 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetRegisterInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <iterator>
 #include <map>
+#include <utility>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "hbr"
 
 bool HexagonBlockRanges::IndexRange::overlaps(const IndexRange &A) const {
   // If A contains start(), or "this" contains A.start(), then overlap.
@@ -82,7 +85,7 @@ void HexagonBlockRanges::RangeList::unionize(bool MergeAdjacent) {
   if (empty())
     return;
 
-  std::sort(begin(), end());
+  llvm::sort(begin(), end());
   iterator Iter = begin();
 
   while (Iter != end()-1) {
@@ -157,7 +160,7 @@ HexagonBlockRanges::InstrIndexMap::InstrIndexMap(MachineBasicBlock &B)
   IndexType Idx = IndexType::First;
   First = Idx;
   for (auto &In : B) {
-    if (In.isDebugValue())
+    if (In.isDebugInstr())
       continue;
     assert(getIndex(&In) == IndexType::None && "Instruction already in map");
     Map.insert(std::make_pair(Idx, &In));
@@ -311,7 +314,7 @@ void HexagonBlockRanges::computeInitialLiveRanges(InstrIndexMap &IndexMap,
   RegisterSet Defs, Clobbers;
 
   for (auto &In : B) {
-    if (In.isDebugValue())
+    if (In.isDebugInstr())
       continue;
     IndexType Index = IndexMap.getIndex(&In);
     // Process uses first.
@@ -365,7 +368,7 @@ void HexagonBlockRanges::computeInitialLiveRanges(InstrIndexMap &IndexMap,
       }
     }
     // Defs and clobbers can overlap, e.g.
-    // %D0<def,dead> = COPY %vreg5, %R0<imp-def>, %R1<imp-def>
+    // dead %d0 = COPY %5, implicit-def %r0, implicit-def %r1
     for (RegisterRef R : Defs)
       Clobbers.erase(R);
 
@@ -419,10 +422,10 @@ void HexagonBlockRanges::computeInitialLiveRanges(InstrIndexMap &IndexMap,
 HexagonBlockRanges::RegToRangeMap HexagonBlockRanges::computeLiveMap(
       InstrIndexMap &IndexMap) {
   RegToRangeMap LiveMap;
-  DEBUG(dbgs() << __func__ << ": index map\n" << IndexMap << '\n');
+  LLVM_DEBUG(dbgs() << __func__ << ": index map\n" << IndexMap << '\n');
   computeInitialLiveRanges(IndexMap, LiveMap);
-  DEBUG(dbgs() << __func__ << ": live map\n"
-               << PrintRangeMap(LiveMap, TRI) << '\n');
+  LLVM_DEBUG(dbgs() << __func__ << ": live map\n"
+                    << PrintRangeMap(LiveMap, TRI) << '\n');
   return LiveMap;
 }
 
@@ -483,8 +486,8 @@ HexagonBlockRanges::RegToRangeMap HexagonBlockRanges::computeDeadMap(
     if (TargetRegisterInfo::isVirtualRegister(P.first.Reg))
       addDeadRanges(P.first);
 
-  DEBUG(dbgs() << __func__ << ": dead map\n"
-               << PrintRangeMap(DeadMap, TRI) << '\n');
+  LLVM_DEBUG(dbgs() << __func__ << ": dead map\n"
+                    << PrintRangeMap(DeadMap, TRI) << '\n');
   return DeadMap;
 }
 
@@ -528,7 +531,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS,
                               const HexagonBlockRanges::PrintRangeMap &P) {
   for (auto &I : P.Map) {
     const HexagonBlockRanges::RangeList &RL = I.second;
-    OS << PrintReg(I.first.Reg, &P.TRI, I.first.Sub) << " -> " << RL << "\n";
+    OS << printReg(I.first.Reg, &P.TRI, I.first.Sub) << " -> " << RL << "\n";
   }
   return OS;
 }

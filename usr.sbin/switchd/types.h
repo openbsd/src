@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.10 2016/11/18 16:49:35 reyk Exp $	*/
+/*	$OpenBSD: types.h,v 1.11 2018/11/08 17:12:12 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -37,8 +37,7 @@
 #define SWITCHD_MAX_TAP		256
 #define SWITCHD_MAX_SESSIONS	0xffff
 
-#define SWITCHD_CTLR_PORT	6633	/* Previously used by OpenFlow */
-#define SWITCHD_CTLR_IANA_PORT	6653	/* Assigned by IANA for OpenFlow */
+#define SWITCHD_CTLR_PORT	6653	/* Assigned by IANA for OpenFlow */
 
 #define SWITCHD_CACHE_MAX	4096	/* Default MAC address cache limit */
 #define SWITCHD_CACHE_TIMEOUT	240	/* t/o in seconds for learned MACs */

@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.66 2018/01/15 19:45:51 brynet Exp $ */
+/* $OpenBSD: file.c,v 1.68 2019/02/05 02:17:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -167,6 +167,9 @@ main(int argc, char **argv)
 			usage();
 	} else if (argc == 0)
 		usage();
+
+	if (pledge("stdio rpath getpw recvfd sendfd id proc", NULL) == -1)
+		err(1, "pledge");
 
 	magicfp = NULL;
 	if (geteuid() != 0 && !issetugid()) {
@@ -536,12 +539,12 @@ try_stat(struct input_file *inf)
 		xasprintf(&inf->result, "socket");
 		return (1);
 	case S_IFBLK:
-		xasprintf(&inf->result, "block special (%ld/%ld)",
+		xasprintf(&inf->result, "block special (%lu/%lu)",
 		    (long)major(inf->msg->sb.st_rdev),
 		    (long)minor(inf->msg->sb.st_rdev));
 		return (1);
 	case S_IFCHR:
-		xasprintf(&inf->result, "character special (%ld/%ld)",
+		xasprintf(&inf->result, "character special (%lu/%lu)",
 		    (long)major(inf->msg->sb.st_rdev),
 		    (long)minor(inf->msg->sb.st_rdev));
 		return (1);

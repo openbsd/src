@@ -1,4 +1,4 @@
-/*	$OpenBSD: percpu.h,v 1.7 2017/02/23 00:15:12 dlg Exp $ */
+/*	$OpenBSD: percpu.h,v 1.8 2018/08/28 15:15:02 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -147,6 +147,17 @@ counters_inc(struct cpumem *cm, unsigned int c)
 
 	counters = counters_enter(&ref, cm);
 	counters[c]++;
+	counters_leave(&ref, cm);
+}
+
+static inline void
+counters_dec(struct cpumem *cm, unsigned int c)
+{
+	struct counters_ref ref;
+	uint64_t *counters;
+
+	counters = counters_enter(&ref, cm);
+	counters[c]--;
 	counters_leave(&ref, cm);
 }
 

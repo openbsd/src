@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_vnd.8,v 1.21 2014/05/30 16:53:02 tedu Exp $
+.\"	$OpenBSD: mount_vnd.8,v 1.22 2019/04/25 22:39:46 deraadt Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -49,13 +49,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 30 2014 $
+.Dd $Mdocdate: April 25 2019 $
 .Dt MOUNT_VND 8
 .Os
 .Sh NAME
-.Nm mount_vnd ,
-.Nm vnconfig
-.Nd configure vnode disks
+.Nm mount_vnd
+.Nd mount vnode disks
 .Sh SYNOPSIS
 .Nm mount_vnd
 .Bk -words
@@ -66,40 +65,17 @@
 .Op Fl t Ar disktype
 .Ar image
 .Ar vnd_dev
-.Ek
-.Nm vnconfig
-.Bk -words
-.Op Fl ckluv
-.Op Fl K Ar rounds
-.Op Fl S Ar saltfile
-.Op Fl t Ar disktype
-.Ar vnd_dev
-.Ar image
-.Ek
 .Sh DESCRIPTION
-The
-.Nm vnconfig
-command configures vnode pseudo disk devices.
-It will associate (or disassociate) the special file
-.Ar vnd_dev
-with the regular file
-.Ar image ,
-allowing the latter to be accessed as though it were a disk.
-.Pp
 .Nm mount_vnd
 works similarly to
-.Nm vnconfig ,
+.Xr vnconfig 8 ,
 but it provides an interface that can be used by the
 .Xr fstab 5
 infrastructure, so that an
 .Ar image
 file can be configured to a device
-.Ar node
+.Ar vnd_dev
 while booting.
-.Nm mount_vnd
-defaults to the
-.Pa vnd0
-device.
 .Pp
 For
 .Xr fstab 5
@@ -124,20 +100,11 @@ when using the following syntax:
 .Bd -ragged -offset 4n
 .Nm mount Op options
 -t vnd
-.Ar image Ar node
+.Ar image Ar vnd_dev
 .Ed
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl c
-.Nm vnconfig
-only.
-Configures the device.
-If successful, references to
-.Ar vnd_dev
-will access the contents of
-.Ar image .
-This is the default operation.
 .It Fl K Ar rounds
 Associate an encryption key with the device.
 All data will be encrypted using the Blowfish cipher before it is
@@ -157,16 +124,7 @@ DO NOT LOSE THE SALT FILE.
 Associate an encryption key with the device.
 All data will be encrypted using the Blowfish cipher before it is
 written to the disk.
-.It Fl l
-.Nm vnconfig
-only.
-List the vnd devices and indicate which ones are in use.
-If a specific
-.Ar vnd_dev
-is given, then only that one will be described.
 .It Fl o Ar options
-.Nm mount_vnd
-only.
 Options are specified with a
 .Fl o
 flag followed by a comma separated string of options.
@@ -196,80 +154,18 @@ of the specified
 .Ar disktype .
 The defaults are 512-byte sectors, 100 sectors per track and 1 track per
 cylinder.
-.It Fl u
-.Nm vnconfig
-only.
-Unconfigures a
-.Ar vnd_dev .
-.It Fl v
-.Nm vnconfig
-only.
-Print messages to stdout describing actions taken.
 .El
 .Sh FILES
 .Bl -tag -width /etc/rvnd?? -compact
 .It Pa /dev/{,r}vnd*
 .El
 .Sh EXAMPLES
-Configure a CD-ROM or DVD image file as vnode disk vnd0
-and mount the ISO 9660 file system contained in it:
-.Bd -literal -offset indent
-# vnconfig vnd0 /tmp/diskimage
-# mount -t cd9660 /dev/vnd0c /mnt
-.Ed
-.Pp
-Configure an encrypted image file as vnode disk vnd0 and mount the FFS
-file system contained in the
-.Sq a
-partition of the disklabel.
-The encryption key does not echo and must be entered every time
-the vnode disk is configured.
-.Bd -literal -offset indent
-# vnconfig -k vnd0 /tmp/cryptimg
-Encryption key:
-# mount /dev/vnd0a /mnt
-.Ed
-.Pp
-An equivalent
+An example
 .Xr fstab 5
 entry is:
 .Bd -literal -offset indent
 /tmp/cryptimg /dev/vnd0c vnd rw,noauto,-k       0 0
 /dev/vnd0a   /mnt        ffs rw,noauto          0 0
-.Ed
-.Pp
-Same as above, but now configure the vnode using PKCS #5 PBKDF2 and
-a salt file with 20000 rounds:
-.Bd -literal -offset indent
-# vnconfig -K 20000 vnd0 /tmp/cryptimg
-Encryption key:
-Salt file: /tmp/cryptsalt
-# mount /dev/vnd0a /mnt
-.Ed
-.Pp
-An equivalent
-.Xr fstab 5
-entry is:
-.Bd -literal -offset indent
-/tmp/cryptimg /dev/vnd0c vnd rw,noauto,-K=20000 0 0
-/dev/vnd0a   /mnt        ffs rw,noauto          0 0
-.Ed
-.Pp
-Unmount the file system and unconfigure the vnode device:
-.Bd -literal -offset indent
-# umount /mnt
-# vnconfig -u vnd0
-.Ed
-.Pp
-A sample of commands to put in
-.Xr rc.local 8
-in order to have vnd images configured at boot time is listed here:
-.Bd -literal -offset indent
-# Example for automatically configuring a vnd device on startup
-echo "configuring vnd devices:"
-mount /dev/vnd0c
-fsck -p /dev/rvnd0a
-mount /mnt
 .Ed
 .Pp
 Mounting images during the first pass of
@@ -290,22 +186,3 @@ The
 .Nm
 command first appeared in
 .Ox 4.2 .
-.Sh CAVEATS
-The
-.Sq c
-partition of a vnd image should not be used.
-When a superblock becomes damaged,
-.Xr fsck_ffs 8
-needs information contained in the disklabel
-to determine the location of alternate superblocks.
-This information is not available when directly using the
-.Sq c
-partition,
-so checking the file system image will fail.
-.Pp
-Swapping to vnd devices is no longer supported.
-.Pp
-The encryption used is obsolete.
-Consider using
-.Xr softraid 4
-instead.

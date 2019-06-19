@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.26 2017/12/24 00:11:43 tb Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.27 2018/07/31 02:55:57 deraadt Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 	if (!dflag && !uflag)
 		dflag = uflag = 1;
 
-	switch(argc) {
+	switch (argc) {
 	case 0:
 		ifp = stdin;
 		ofp = stdout;

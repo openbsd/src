@@ -12,9 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DebugInfo/PDB/IPDBDataStream.h"
+#include "llvm/DebugInfo/PDB/IPDBInjectedSource.h"
 #include "llvm/DebugInfo/PDB/IPDBLineNumber.h"
 #include "llvm/DebugInfo/PDB/IPDBRawSymbol.h"
+#include "llvm/DebugInfo/PDB/IPDBSectionContrib.h"
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
+#include "llvm/DebugInfo/PDB/IPDBTable.h"
 
 using namespace llvm;
 using namespace llvm::pdb;
@@ -26,3 +29,9 @@ IPDBDataStream::~IPDBDataStream() = default;
 IPDBRawSymbol::~IPDBRawSymbol() = default;
 
 IPDBLineNumber::~IPDBLineNumber() = default;
+
+IPDBTable::~IPDBTable() = default;
+
+IPDBInjectedSource::~IPDBInjectedSource() = default;
+
+IPDBSectionContrib::~IPDBSectionContrib() = default;

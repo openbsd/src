@@ -1,4 +1,4 @@
-.\"	$OpenBSD: Makefile.yp.8,v 1.8 2015/11/30 17:03:05 jmc Exp $
+.\"	$OpenBSD: Makefile.yp.8,v 1.9 2018/04/26 12:53:09 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2015 $
+.Dd $Mdocdate: April 26 2018 $
 .Dt MAKEFILE.YP 8
 .Os
 .Sh NAME
@@ -202,15 +202,6 @@ maps from
 .Xr ethers 5
 for use by
 .Xr ethers 3 .
-.It Ic networks
-Generates the
-.Pa networks.byname
-and
-.Pa networks.byaddr
-maps from
-.Xr networks 5
-for use by
-.Xr getnetent 3 .
 .It Ic rpc
 Generates the
 .Pa rpc.bynumber

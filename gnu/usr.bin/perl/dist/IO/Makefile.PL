@@ -1,6 +1,6 @@
 # This -*- perl -*- script makes the Makefile
 
-BEGIN { require 5.006_001 }
+BEGIN { require 5.008_001 }
 use ExtUtils::MakeMaker;
 use Config qw(%Config);
 my $PERL_CORE = grep { $_ eq 'PERL_CORE=1' } @ARGV;
@@ -19,12 +19,6 @@ unless ($PERL_CORE or exists $Config{'i_poll'}) {
   }
 }
 
-if ($] < 5.008 and !$PERL_CORE) {
-  open(FH,">typemap");
-  print FH "const char *            T_PV\n";
-  close(FH);
-}
-
 #--- Write the Makefile
 
 WriteMakefile(
@@ -35,6 +29,7 @@ WriteMakefile(
   AUTHOR       => 'Graham Barr <gbarr@cpan.org>',
   PREREQ_PM    => {
     'Test::More' => 0,
+    'File::Temp' => '0.15',
   },
   ( $PERL_CORE
     ? ()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.27 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.28 2018/07/03 14:33:43 kevlo Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -1443,8 +1443,7 @@ epic_mediachange(struct ifnet *ifp)
 	}
 
 	/* Lookup selected PHY */
-	for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-	     miisc = LIST_NEXT(miisc, mii_list)) {
+	LIST_FOREACH(miisc, &mii->mii_phys, mii_list) {
 		if (IFM_INST(media) == miisc->mii_inst)
 			break;
 	}

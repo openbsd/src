@@ -16,6 +16,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -26,14 +27,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysexits.h>
 #include <unistd.h>
-
-extern char **environ;
 
 int
 main(int argc, char *argv[])
 {
 	int ch;
+	int ret;
 
 	if (! geteuid())
 		errx(1, "mail.mda: may not be executed as root");
@@ -50,6 +51,18 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		errx(1, "mail.mda: command required");
 
-	execve(argv[0], argv, environ);
-	err(1, NULL);
+	if (argc > 1)
+		errx(1, "mail.mda: only one command is supported");
+
+	/* could not obtain a shell or could not obtain wait status,
+	 * tempfail */
+	if ((ret = system(argv[0])) == -1)
+		errx(EX_TEMPFAIL, "%s", strerror(errno));
+
+	/* not exited properly but we have no details,
+	 * tempfail */
+	if (! WIFEXITED(ret))
+		exit(EX_TEMPFAIL);
+
+	exit(WEXITSTATUS(ret));
 }

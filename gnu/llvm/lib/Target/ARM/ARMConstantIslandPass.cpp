@@ -1,4 +1,4 @@
-//===-- ARMConstantIslandPass.cpp - ARM constant islands ------------------===//
+//===- ARMConstantIslandPass.cpp - ARM constant islands -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -20,6 +20,7 @@
 #include "ARMSubtarget.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "Thumb2InstrInfo.h"
+#include "Utils/ARMBaseInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
@@ -34,9 +35,11 @@
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/MC/MCInstrDesc.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -48,7 +51,6 @@
 #include <cassert>
 #include <cstdint>
 #include <iterator>
-#include <new>
 #include <utility>
 #include <vector>
 
@@ -107,7 +109,7 @@ namespace {
     /// previous iteration by inserting unconditional branches.
     SmallSet<MachineBasicBlock*, 4> NewWaterList;
 
-    typedef std::vector<MachineBasicBlock*>::iterator water_iterator;
+    using water_iterator = std::vector<MachineBasicBlock *>::iterator;
 
     /// CPUser - One user of a constant pool, keeping the machine instruction
     /// pointer, the constant pool being referenced, and the max displacement
@@ -128,12 +130,11 @@ namespace {
       unsigned MaxDisp;
       bool NegOk;
       bool IsSoImm;
-      bool KnownAlignment;
+      bool KnownAlignment = false;
 
       CPUser(MachineInstr *mi, MachineInstr *cpemi, unsigned maxdisp,
              bool neg, bool soimm)
-        : MI(mi), CPEMI(cpemi), MaxDisp(maxdisp), NegOk(neg), IsSoImm(soimm),
-          KnownAlignment(false) {
+        : MI(mi), CPEMI(cpemi), MaxDisp(maxdisp), NegOk(neg), IsSoImm(soimm) {
         HighWaterMark = CPEMI->getParent();
       }
 
@@ -195,11 +196,9 @@ namespace {
     };
 
     /// ImmBranches - Keep track of all the immediate branch instructions.
-    ///
     std::vector<ImmBranch> ImmBranches;
 
     /// PushPopMIs - Keep track of all the Thumb push / pop instructions.
-    ///
     SmallVector<MachineInstr*, 4> PushPopMIs;
 
     /// T2JumpTables - Keep track of all the Thumb2 jumptable instructions.
@@ -290,9 +289,9 @@ namespace {
     }
   };
 
-  char ARMConstantIslands::ID = 0;
-
 } // end anonymous namespace
+
+char ARMConstantIslands::ID = 0;
 
 /// verify - check BBOffsets, BBSizes, alignment of islands
 void ARMConstantIslands::verify() {
@@ -303,7 +302,7 @@ void ARMConstantIslands::verify() {
                           return BBInfo[LHS.getNumber()].postOffset() <
                                  BBInfo[RHS.getNumber()].postOffset();
                         }));
-  DEBUG(dbgs() << "Verifying " << CPUsers.size() << " CP users.\n");
+  LLVM_DEBUG(dbgs() << "Verifying " << CPUsers.size() << " CP users.\n");
   for (unsigned i = 0, e = CPUsers.size(); i != e; ++i) {
     CPUser &U = CPUsers[i];
     unsigned UserOffset = getUserOffset(U);
@@ -311,12 +310,12 @@ void ARMConstantIslands::verify() {
     // adjustment.
     if (isCPEntryInRange(U.MI, UserOffset, U.CPEMI, U.getMaxDisp()+2, U.NegOk,
                          /* DoDump = */ true)) {
-      DEBUG(dbgs() << "OK\n");
+      LLVM_DEBUG(dbgs() << "OK\n");
       continue;
     }
-    DEBUG(dbgs() << "Out of range.\n");
+    LLVM_DEBUG(dbgs() << "Out of range.\n");
     dumpBBs();
-    DEBUG(MF->dump());
+    LLVM_DEBUG(MF->dump());
     llvm_unreachable("Constant pool entry out of range!");
   }
 #endif
@@ -325,10 +324,10 @@ void ARMConstantIslands::verify() {
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 /// print block size and offset information - debugging
 LLVM_DUMP_METHOD void ARMConstantIslands::dumpBBs() {
-  DEBUG({
+  LLVM_DEBUG({
     for (unsigned J = 0, E = BBInfo.size(); J !=E; ++J) {
       const BasicBlockInfo &BBI = BBInfo[J];
-      dbgs() << format("%08x BB#%u\t", BBI.Offset, J)
+      dbgs() << format("%08x %bb.%u\t", BBI.Offset, J)
              << " kb=" << unsigned(BBI.KnownBits)
              << " ua=" << unsigned(BBI.Unalign)
              << " pa=" << unsigned(BBI.PostAlign)
@@ -342,9 +341,9 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   MCP = mf.getConstantPool();
 
-  DEBUG(dbgs() << "***** ARMConstantIslands: "
-               << MCP->getConstants().size() << " CP entries, aligned to "
-               << MCP->getConstantPoolAlignment() << " bytes *****\n");
+  LLVM_DEBUG(dbgs() << "***** ARMConstantIslands: "
+                    << MCP->getConstants().size() << " CP entries, aligned to "
+                    << MCP->getConstantPoolAlignment() << " bytes *****\n");
 
   STI = &static_cast<const ARMSubtarget &>(MF->getSubtarget());
   TII = STI->getInstrInfo();
@@ -395,7 +394,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
   // constant pool users.
   initializeFunctionInfo(CPEMIs);
   CPEMIs.clear();
-  DEBUG(dumpBBs());
+  LLVM_DEBUG(dumpBBs());
 
   // Functions with jump tables need an alignment of 4 because they use the ADR
   // instruction, which aligns the PC to 4 bytes before adding an offset.
@@ -409,7 +408,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
   // is no change.
   unsigned NoCPIters = 0, NoBRIters = 0;
   while (true) {
-    DEBUG(dbgs() << "Beginning CP iteration #" << NoCPIters << '\n');
+    LLVM_DEBUG(dbgs() << "Beginning CP iteration #" << NoCPIters << '\n');
     bool CPChange = false;
     for (unsigned i = 0, e = CPUsers.size(); i != e; ++i)
       // For most inputs, it converges in no more than 5 iterations.
@@ -418,19 +417,19 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
       CPChange |= handleConstantPoolUser(i, NoCPIters >= CPMaxIteration / 2);
     if (CPChange && ++NoCPIters > CPMaxIteration)
       report_fatal_error("Constant Island pass failed to converge!");
-    DEBUG(dumpBBs());
+    LLVM_DEBUG(dumpBBs());
 
     // Clear NewWaterList now.  If we split a block for branches, it should
     // appear as "new water" for the next iteration of constant pool placement.
     NewWaterList.clear();
 
-    DEBUG(dbgs() << "Beginning BR iteration #" << NoBRIters << '\n');
+    LLVM_DEBUG(dbgs() << "Beginning BR iteration #" << NoBRIters << '\n');
     bool BRChange = false;
     for (unsigned i = 0, e = ImmBranches.size(); i != e; ++i)
       BRChange |= fixupImmediateBr(ImmBranches[i]);
     if (BRChange && ++NoBRIters > 30)
       report_fatal_error("Branch Fix Up pass failed to converge!");
-    DEBUG(dumpBBs());
+    LLVM_DEBUG(dumpBBs());
 
     if (!CPChange && !BRChange)
       break;
@@ -466,7 +465,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
     }
   }
 
-  DEBUG(dbgs() << '\n'; dumpBBs());
+  LLVM_DEBUG(dbgs() << '\n'; dumpBBs());
 
   BBInfo.clear();
   WaterList.clear();
@@ -481,7 +480,7 @@ bool ARMConstantIslands::runOnMachineFunction(MachineFunction &mf) {
   return MadeChange;
 }
 
-/// \brief Perform the initial placement of the regular constant pool entries.
+/// Perform the initial placement of the regular constant pool entries.
 /// To start with, we put them all at the end of the function.
 void
 ARMConstantIslands::doInitialConstPlacement(std::vector<MachineInstr*> &CPEMIs) {
@@ -512,7 +511,6 @@ ARMConstantIslands::doInitialConstPlacement(std::vector<MachineInstr*> &CPEMIs) 
   const DataLayout &TD = MF->getDataLayout();
   for (unsigned i = 0, e = CPs.size(); i != e; ++i) {
     unsigned Size = TD.getTypeAllocSize(CPs[i].getType());
-    assert(Size >= 4 && "Too small constant pool entry");
     unsigned Align = CPs[i].getAlignment();
     assert(isPowerOf2_32(Align) && "Invalid alignment");
     // Verify that all constant pool entries are a multiple of their alignment.
@@ -536,13 +534,13 @@ ARMConstantIslands::doInitialConstPlacement(std::vector<MachineInstr*> &CPEMIs) 
     // Add a new CPEntry, but no corresponding CPUser yet.
     CPEntries.emplace_back(1, CPEntry(CPEMI, i));
     ++NumCPEs;
-    DEBUG(dbgs() << "Moved CPI#" << i << " to end of function, size = "
-                 << Size << ", align = " << Align <<'\n');
+    LLVM_DEBUG(dbgs() << "Moved CPI#" << i << " to end of function, size = "
+                      << Size << ", align = " << Align << '\n');
   }
-  DEBUG(BB->dump());
+  LLVM_DEBUG(BB->dump());
 }
 
-/// \brief Do initial placement of the jump tables. Because Thumb2's TBB and TBH
+/// Do initial placement of the jump tables. Because Thumb2's TBB and TBH
 /// instructions can be made more efficient if the jump table immediately
 /// follows the instruction, it's best to place them immediately next to their
 /// jumps to begin with. In almost all cases they'll never be moved from that
@@ -566,7 +564,8 @@ void ARMConstantIslands::doInitialJumpTablePlacement(
     case ARM::BR_JTadd:
     case ARM::BR_JTr:
     case ARM::tBR_JTr:
-    case ARM::BR_JTm:
+    case ARM::BR_JTm_i12:
+    case ARM::BR_JTm_rs:
       JTOpcode = ARM::JUMPTABLE_ADDRS;
       break;
     case ARM::t2BR_JT:
@@ -629,9 +628,9 @@ bool ARMConstantIslands::BBHasFallthrough(MachineBasicBlock *MBB) {
 
 /// findConstPoolEntry - Given the constpool index and CONSTPOOL_ENTRY MI,
 /// look up the corresponding CPEntry.
-ARMConstantIslands::CPEntry
-*ARMConstantIslands::findConstPoolEntry(unsigned CPI,
-                                        const MachineInstr *CPEMI) {
+ARMConstantIslands::CPEntry *
+ARMConstantIslands::findConstPoolEntry(unsigned CPI,
+                                       const MachineInstr *CPEMI) {
   std::vector<CPEntry> &CPEs = CPEntries[CPI];
   // Number of entries per constpool index should be small, just do a
   // linear search.
@@ -702,7 +701,7 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
       WaterList.push_back(&MBB);
 
     for (MachineInstr &I : MBB) {
-      if (I.isDebugValue())
+      if (I.isDebugInstr())
         continue;
 
       unsigned Opc = I.getOpcode();
@@ -819,6 +818,11 @@ initializeFunctionInfo(const std::vector<MachineInstr*> &CPEMIs) {
           case ARM::VLDRS:
             Bits = 8;
             Scale = 4;  // +-(offset_8*4)
+            NegOk = true;
+            break;
+          case ARM::VLDRH:
+            Bits = 8;
+            Scale = 2;  // +-(offset_8*2)
             NegOk = true;
             break;
 
@@ -1067,16 +1071,16 @@ bool ARMConstantIslands::isCPEntryInRange(MachineInstr *MI, unsigned UserOffset,
   unsigned CPEOffset  = getOffsetOf(CPEMI);
 
   if (DoDump) {
-    DEBUG({
+    LLVM_DEBUG({
       unsigned Block = MI->getParent()->getNumber();
       const BasicBlockInfo &BBI = BBInfo[Block];
       dbgs() << "User of CPE#" << CPEMI->getOperand(0).getImm()
              << " max delta=" << MaxDisp
-             << format(" insn address=%#x", UserOffset)
-             << " in BB#" << Block << ": "
+             << format(" insn address=%#x", UserOffset) << " in "
+             << printMBBReference(*MI->getParent()) << ": "
              << format("%#x-%x\t", BBI.Offset, BBI.postOffset()) << *MI
              << format("CPE address=%#x offset=%+d: ", CPEOffset,
-                       int(CPEOffset-UserOffset));
+                       int(CPEOffset - UserOffset));
     });
   }
 
@@ -1126,7 +1130,6 @@ void ARMConstantIslands::adjustBBOffsetsAfter(MachineBasicBlock *BB) {
 /// and instruction CPEMI, and decrement its refcount.  If the refcount
 /// becomes 0 remove the entry and instruction.  Returns true if we removed
 /// the entry, false if we didn't.
-
 bool ARMConstantIslands::decrementCPEReferenceCount(unsigned CPI,
                                                     MachineInstr *CPEMI) {
   // Find the old entry. Eliminate it if it is no longer used.
@@ -1154,15 +1157,14 @@ unsigned ARMConstantIslands::getCombinedIndex(const MachineInstr *CPEMI) {
 /// 0 = no existing entry found
 /// 1 = entry found, and there were no code insertions or deletions
 /// 2 = entry found, and there were code insertions or deletions
-int ARMConstantIslands::findInRangeCPEntry(CPUser& U, unsigned UserOffset)
-{
+int ARMConstantIslands::findInRangeCPEntry(CPUser& U, unsigned UserOffset) {
   MachineInstr *UserMI = U.MI;
   MachineInstr *CPEMI  = U.CPEMI;
 
   // Check to see if the CPE is already in-range.
   if (isCPEntryInRange(UserMI, UserOffset, CPEMI, U.getMaxDisp(), U.NegOk,
                        true)) {
-    DEBUG(dbgs() << "In range\n");
+    LLVM_DEBUG(dbgs() << "In range\n");
     return 1;
   }
 
@@ -1178,8 +1180,8 @@ int ARMConstantIslands::findInRangeCPEntry(CPUser& U, unsigned UserOffset)
       continue;
     if (isCPEntryInRange(UserMI, UserOffset, CPEs[i].CPEMI, U.getMaxDisp(),
                      U.NegOk)) {
-      DEBUG(dbgs() << "Replacing CPE#" << CPI << " with CPE#"
-                   << CPEs[i].CPI << "\n");
+      LLVM_DEBUG(dbgs() << "Replacing CPE#" << CPI << " with CPE#"
+                        << CPEs[i].CPI << "\n");
       // Point the CPUser node to the replacement
       U.CPEMI = CPEs[i].CPEMI;
       // Change the CPI in the instruction operand to refer to the clone.
@@ -1264,8 +1266,8 @@ bool ARMConstantIslands::findAvailableWater(CPUser &U, unsigned UserOffset,
       // This is the least amount of required padding seen so far.
       BestGrowth = Growth;
       WaterIter = IP;
-      DEBUG(dbgs() << "Found water after BB#" << WaterBB->getNumber()
-                   << " Growth=" << Growth << '\n');
+      LLVM_DEBUG(dbgs() << "Found water after " << printMBBReference(*WaterBB)
+                        << " Growth=" << Growth << '\n');
 
       if (CloserWater && WaterBB == U.MI->getParent())
         return true;
@@ -1308,8 +1310,8 @@ void ARMConstantIslands::createNewWater(unsigned CPUserIndex,
     unsigned CPEOffset = UserBBI.postOffset(CPELogAlign) + Delta;
 
     if (isOffsetInRange(UserOffset, CPEOffset, U)) {
-      DEBUG(dbgs() << "Split at end of BB#" << UserMBB->getNumber()
-            << format(", expected CPE offset %#x\n", CPEOffset));
+      LLVM_DEBUG(dbgs() << "Split at end of " << printMBBReference(*UserMBB)
+                        << format(", expected CPE offset %#x\n", CPEOffset));
       NewMBB = &*++UserMBB->getIterator();
       // Add an unconditional branch from UserMBB to fallthrough block.  Record
       // it for branch lengthening; this new branch will not get out of range,
@@ -1352,18 +1354,17 @@ void ARMConstantIslands::createNewWater(unsigned CPUserIndex,
   unsigned KnownBits = UserBBI.internalKnownBits();
   unsigned UPad = UnknownPadding(LogAlign, KnownBits);
   unsigned BaseInsertOffset = UserOffset + U.getMaxDisp() - UPad;
-  DEBUG(dbgs() << format("Split in middle of big block before %#x",
-                         BaseInsertOffset));
+  LLVM_DEBUG(dbgs() << format("Split in middle of big block before %#x",
+                              BaseInsertOffset));
 
   // The 4 in the following is for the unconditional branch we'll be inserting
   // (allows for long branch on Thumb1).  Alignment of the island is handled
   // inside isOffsetInRange.
   BaseInsertOffset -= 4;
 
-  DEBUG(dbgs() << format(", adjusted to %#x", BaseInsertOffset)
-               << " la=" << LogAlign
-               << " kb=" << KnownBits
-               << " up=" << UPad << '\n');
+  LLVM_DEBUG(dbgs() << format(", adjusted to %#x", BaseInsertOffset)
+                    << " la=" << LogAlign << " kb=" << KnownBits
+                    << " up=" << UPad << '\n');
 
   // This could point off the end of the block if we've already got constant
   // pool entries following this block; only the last one is in the water list.
@@ -1376,7 +1377,7 @@ void ARMConstantIslands::createNewWater(unsigned CPUserIndex,
     BaseInsertOffset =
         std::max(UserBBI.postOffset() - UPad - 8,
                  UserOffset + TII->getInstSizeInBytes(*UserMI) + 1);
-    DEBUG(dbgs() << format("Move inside block: %#x\n", BaseInsertOffset));
+    LLVM_DEBUG(dbgs() << format("Move inside block: %#x\n", BaseInsertOffset));
   }
   unsigned EndInsertOffset = BaseInsertOffset + 4 + UPad +
     CPEMI->getOperand(2).getImm();
@@ -1420,8 +1421,8 @@ void ARMConstantIslands::createNewWater(unsigned CPUserIndex,
   }
 
   // We really must not split an IT block.
-  DEBUG(unsigned PredReg;
-        assert(!isThumb || getITInstrPredicate(*MI, PredReg) == ARMCC::AL));
+  LLVM_DEBUG(unsigned PredReg; assert(
+                 !isThumb || getITInstrPredicate(*MI, PredReg) == ARMCC::AL));
 
   NewMBB = splitBlockBeforeInstr(&*MI);
 }
@@ -1455,7 +1456,7 @@ bool ARMConstantIslands::handleConstantPoolUser(unsigned CPUserIndex,
   MachineBasicBlock *NewMBB;
   water_iterator IP;
   if (findAvailableWater(U, UserOffset, IP, CloserWater)) {
-    DEBUG(dbgs() << "Found water in range\n");
+    LLVM_DEBUG(dbgs() << "Found water in range\n");
     MachineBasicBlock *WaterBB = *IP;
 
     // If the original WaterList entry was "new water" on this iteration,
@@ -1468,7 +1469,7 @@ bool ARMConstantIslands::handleConstantPoolUser(unsigned CPUserIndex,
     NewMBB = &*++WaterBB->getIterator();
   } else {
     // No water found.
-    DEBUG(dbgs() << "No water found\n");
+    LLVM_DEBUG(dbgs() << "No water found\n");
     createNewWater(CPUserIndex, UserOffset, NewMBB);
 
     // splitBlockBeforeInstr adds to WaterList, which is important when it is
@@ -1484,6 +1485,12 @@ bool ARMConstantIslands::handleConstantPoolUser(unsigned CPUserIndex,
     // We are adding new water.  Update NewWaterList.
     NewWaterList.insert(NewIsland);
   }
+  // Always align the new block because CP entries can be smaller than 4
+  // bytes. Be careful not to decrease the existing alignment, e.g. NewMBB may
+  // be an already aligned constant pool block.
+  const unsigned Align = isThumb ? 1 : 2;
+  if (NewMBB->getAlignment() < Align)
+    NewMBB->setAlignment(Align);
 
   // Remove the original WaterList entry; we want subsequent insertions in
   // this vicinity to go after the one we're about to insert.  This
@@ -1525,8 +1532,9 @@ bool ARMConstantIslands::handleConstantPoolUser(unsigned CPUserIndex,
       break;
     }
 
-  DEBUG(dbgs() << "  Moved CPE to #" << ID << " CPI=" << CPI
-        << format(" offset=%#x\n", BBInfo[NewIsland->getNumber()].Offset));
+  LLVM_DEBUG(
+      dbgs() << "  Moved CPE to #" << ID << " CPI=" << CPI
+             << format(" offset=%#x\n", BBInfo[NewIsland->getNumber()].Offset));
 
   return true;
 }
@@ -1581,11 +1589,11 @@ bool ARMConstantIslands::isBBInRange(MachineInstr *MI,MachineBasicBlock *DestBB,
   unsigned BrOffset   = getOffsetOf(MI) + PCAdj;
   unsigned DestOffset = BBInfo[DestBB->getNumber()].Offset;
 
-  DEBUG(dbgs() << "Branch of destination BB#" << DestBB->getNumber()
-               << " from BB#" << MI->getParent()->getNumber()
-               << " max delta=" << MaxDisp
-               << " from " << getOffsetOf(MI) << " to " << DestOffset
-               << " offset " << int(DestOffset-BrOffset) << "\t" << *MI);
+  LLVM_DEBUG(dbgs() << "Branch of destination " << printMBBReference(*DestBB)
+                    << " from " << printMBBReference(*MI->getParent())
+                    << " max delta=" << MaxDisp << " from " << getOffsetOf(MI)
+                    << " to " << DestOffset << " offset "
+                    << int(DestOffset - BrOffset) << "\t" << *MI);
 
   if (BrOffset <= DestOffset) {
     // Branch before the Dest.
@@ -1632,7 +1640,7 @@ ARMConstantIslands::fixupUnconditionalBr(ImmBranch &Br) {
   HasFarJump = true;
   ++NumUBrFixed;
 
-  DEBUG(dbgs() << "  Changed B to long jump " << *MI);
+  LLVM_DEBUG(dbgs() << "  Changed B to long jump " << *MI);
 
   return true;
 }
@@ -1676,8 +1684,9 @@ ARMConstantIslands::fixupConditionalBr(ImmBranch &Br) {
       // b   L1
       MachineBasicBlock *NewDest = BMI->getOperand(0).getMBB();
       if (isBBInRange(MI, NewDest, Br.MaxDisp)) {
-        DEBUG(dbgs() << "  Invert Bcc condition and swap its destination with "
-                     << *BMI);
+        LLVM_DEBUG(
+            dbgs() << "  Invert Bcc condition and swap its destination with "
+                   << *BMI);
         BMI->getOperand(0).setMBB(DestBB);
         MI->getOperand(0).setMBB(NewDest);
         MI->getOperand(1).setImm(CC);
@@ -1693,13 +1702,19 @@ ARMConstantIslands::fixupConditionalBr(ImmBranch &Br) {
     int delta = TII->getInstSizeInBytes(MBB->back());
     BBInfo[MBB->getNumber()].Size -= delta;
     MBB->back().eraseFromParent();
+
+    // The conditional successor will be swapped between the BBs after this, so
+    // update CFG.
+    MBB->addSuccessor(DestBB);
+    std::next(MBB->getIterator())->removeSuccessor(DestBB);
+
     // BBInfo[SplitBB].Offset is wrong temporarily, fixed below
   }
   MachineBasicBlock *NextBB = &*++MBB->getIterator();
 
-  DEBUG(dbgs() << "  Insert B to BB#" << DestBB->getNumber()
-               << " also invert condition and change dest. to BB#"
-               << NextBB->getNumber() << "\n");
+  LLVM_DEBUG(dbgs() << "  Insert B to " << printMBBReference(*DestBB)
+                    << " also invert condition and change dest. to "
+                    << printMBBReference(*NextBB) << "\n");
 
   // Insert a new conditional branch and a new unconditional branch.
   // Also update the ImmBranch as well as adding a new entry for the new branch.
@@ -1792,7 +1807,7 @@ bool ARMConstantIslands::optimizeThumb2Instructions() {
 
     // FIXME: Check if offset is multiple of scale if scale is not 4.
     if (isCPEntryInRange(U.MI, UserOffset, U.CPEMI, MaxOffs, false, true)) {
-      DEBUG(dbgs() << "Shrink: " << *U.MI);
+      LLVM_DEBUG(dbgs() << "Shrink: " << *U.MI);
       U.MI->setDesc(TII->get(NewOpc));
       MachineBasicBlock *MBB = U.MI->getParent();
       BBInfo[MBB->getNumber()].Size -= 2;
@@ -1836,7 +1851,7 @@ bool ARMConstantIslands::optimizeThumb2Branches() {
       unsigned MaxOffs = ((1 << (Bits-1))-1) * Scale;
       MachineBasicBlock *DestBB = Br.MI->getOperand(0).getMBB();
       if (isBBInRange(Br.MI, DestBB, MaxOffs)) {
-        DEBUG(dbgs() << "Shrink branch: " << *Br.MI);
+        LLVM_DEBUG(dbgs() << "Shrink branch: " << *Br.MI);
         Br.MI->setDesc(TII->get(NewOpc));
         MachineBasicBlock *MBB = Br.MI->getParent();
         BBInfo[MBB->getNumber()].Size -= 2;
@@ -1880,7 +1895,7 @@ bool ARMConstantIslands::optimizeThumb2Branches() {
               CmpMI->getOperand(1).getImm() == 0 &&
               isARMLowRegister(Reg)) {
             MachineBasicBlock *MBB = Br.MI->getParent();
-            DEBUG(dbgs() << "Fold: " << *CmpMI << " and: " << *Br.MI);
+            LLVM_DEBUG(dbgs() << "Fold: " << *CmpMI << " and: " << *Br.MI);
             MachineInstr *NewBR =
               BuildMI(*MBB, CmpMI, Br.MI->getDebugLoc(), TII->get(NewOpc))
               .addReg(Reg).addMBB(DestBB,Br.MI->getOperand(0).getTargetFlags());
@@ -1915,7 +1930,7 @@ static bool isSimpleIndexCalc(MachineInstr &I, unsigned EntryReg,
   return true;
 }
 
-/// \brief While trying to form a TBB/TBH instruction, we may (if the table
+/// While trying to form a TBB/TBH instruction, we may (if the table
 /// doesn't immediately follow the BR_JT) need access to the start of the
 /// jump-table. We know one instruction that produces such a register; this
 /// function works out whether that definition can be preserved to the BR_JT,
@@ -2003,7 +2018,7 @@ bool ARMConstantIslands::preserveBaseRegister(MachineInstr *JumpMI,
   return true;
 }
 
-/// \brief Returns whether CPEMI is the first instruction in the block
+/// Returns whether CPEMI is the first instruction in the block
 /// immediately following JTMI (assumed to be a TBB or TBH terminator). If so,
 /// we can switch the first register to PC and usually remove the address
 /// calculation that preceded it.
@@ -2049,7 +2064,7 @@ static void RemoveDeadAddBetweenLEAAndJT(MachineInstr *LEAMI,
     }
   }
 
-  DEBUG(dbgs() << "Removing Dead Add: " << *RemovableAdd);
+  LLVM_DEBUG(dbgs() << "Removing Dead Add: " << *RemovableAdd);
   RemovableAdd->eraseFromParent();
   DeadSize += 4;
 }
@@ -2113,7 +2128,7 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
     unsigned DeadSize = 0;
     bool CanDeleteLEA = false;
     bool BaseRegKill = false;
-    
+
     unsigned IdxReg = ~0U;
     bool IdxRegKill = true;
     if (isThumb2) {
@@ -2128,7 +2143,7 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
       // We're in thumb-1 mode, so we must have something like:
       //   %idx = tLSLri %idx, 2
       //   %base = tLEApcrelJT
-      //   %t = tLDRr %idx, %base
+      //   %t = tLDRr %base, %idx
       unsigned BaseReg = User.MI->getOperand(0).getReg();
 
       if (User.MI->getIterator() == User.MI->getParent()->begin())
@@ -2150,9 +2165,9 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
       MachineInstr *Load = User.MI->getNextNode();
       if (Load->getOpcode() != ARM::tLDRr)
         continue;
-      if (Load->getOperand(1).getReg() != ShiftedIdxReg ||
-          Load->getOperand(2).getReg() != BaseReg ||
-          !Load->getOperand(1).isKill())
+      if (Load->getOperand(1).getReg() != BaseReg ||
+          Load->getOperand(2).getReg() != ShiftedIdxReg ||
+          !Load->getOperand(2).isKill())
         continue;
 
       // If we're in PIC mode, there should be another ADD following.
@@ -2169,9 +2184,9 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
       if (isPositionIndependentOrROPI) {
         MachineInstr *Add = Load->getNextNode();
         if (Add->getOpcode() != ARM::tADDrr ||
-            Add->getOperand(2).getReg() != Load->getOperand(0).getReg() ||
-            Add->getOperand(3).getReg() != BaseReg ||
-            !Add->getOperand(2).isKill())
+            Add->getOperand(2).getReg() != BaseReg ||
+            Add->getOperand(3).getReg() != Load->getOperand(0).getReg() ||
+            !Add->getOperand(3).isKill())
           continue;
         if (Add->getOperand(0).getReg() != MI->getOperand(0).getReg())
           continue;
@@ -2195,7 +2210,7 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
       DeadSize += 4;
     }
 
-    DEBUG(dbgs() << "Shrink JT: " << *MI);
+    LLVM_DEBUG(dbgs() << "Shrink JT: " << *MI);
     MachineInstr *CPEMI = User.CPEMI;
     unsigned Opc = ByteOk ? ARM::t2TBB_JT : ARM::t2TBH_JT;
     if (!isThumb2)
@@ -2209,7 +2224,7 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
             .addReg(IdxReg, getKillRegState(IdxRegKill))
             .addJumpTableIndex(JTI, JTOP.getTargetFlags())
             .addImm(CPEMI->getOperand(0).getImm());
-    DEBUG(dbgs() << "BB#" << MBB->getNumber() << ": " << *NewJTMI);
+    LLVM_DEBUG(dbgs() << printMBBReference(*MBB) << ": " << *NewJTMI);
 
     unsigned JTOpc = ByteOk ? ARM::JUMPTABLE_TBB : ARM::JUMPTABLE_TBH;
     CPEMI->setDesc(TII->get(JTOpc));

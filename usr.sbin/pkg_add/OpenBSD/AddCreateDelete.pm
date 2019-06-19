@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.43 2018/02/27 22:46:53 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.44 2019/06/09 18:58:06 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -169,6 +169,13 @@ sub ntogo_string
 	return $self->{wantntogo} ?
 	    $self->f(" (#1)", $self->ntodo($offset // 0)) :
 	    $self->f("");
+}
+
+sub solve_dependency
+{
+	my ($self, $solver, $dep, $package) = @_;
+	# full dependency solving with everything
+	return $solver->really_solve_dependency($self, $dep, $package);
 }
 
 package OpenBSD::AddCreateDelete;

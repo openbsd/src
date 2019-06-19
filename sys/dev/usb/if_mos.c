@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.38 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.39 2018/07/03 00:47:49 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -376,15 +376,12 @@ int
 mos_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct mos_softc	*sc = (void *)dev;
-	uWord			val;
 	int			i,res;
 
 	if (usbd_is_dying(sc->mos_udev)) {
 		DPRINTF(("mos: dying\n"));
 		return (0);
 	}
-
-	USETW(val, 0);
 
 	mos_lock_mii(sc);
 

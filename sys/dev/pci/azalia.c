@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.240 2018/01/10 09:00:40 ratchov Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.249 2019/05/09 14:50:46 bcook Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -272,9 +272,6 @@ int	azalia_params2fmt(const audio_params_t *, uint16_t *);
 int	azalia_match_format(codec_t *, int, audio_params_t *);
 int	azalia_set_params_sub(codec_t *, int, audio_params_t *);
 
-void	azalia_save_mixer(codec_t *);
-void	azalia_restore_mixer(codec_t *);
-
 int	azalia_suspend(azalia_t *);
 int	azalia_resume(azalia_t *);
 int	azalia_resume_codec(codec_t *);
@@ -459,6 +456,7 @@ azalia_configure_pci(azalia_t *az)
 	case PCI_PRODUCT_INTEL_C600_HDA:
 	case PCI_PRODUCT_INTEL_C610_HDA:
 	case PCI_PRODUCT_INTEL_BSW_HDA:
+	case PCI_PRODUCT_INTEL_APOLLOLAKE_HDA:
 		reg = azalia_pci_read(az->pc, az->tag,
 		    INTEL_PCIE_NOSNOOP_REG);
 		reg &= INTEL_PCIE_NOSNOOP_MASK;
@@ -517,6 +515,15 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 		reg = azalia_pci_read(sc->pc, sc->tag, ICH_PCI_MMC);
 		reg &= ~(ICH_PCI_MMC_ME);
 		azalia_pci_write(sc->pc, sc->tag, ICH_PCI_MMC, reg);
+	}
+
+	/* disable MSI for AMD Summit Ridge/Raven Ridge HD Audio */
+	if (PCI_VENDOR(sc->pciid) == PCI_VENDOR_AMD) {
+		switch (PCI_PRODUCT(sc->pciid)) {
+		case PCI_PRODUCT_AMD_AMD64_17_HDA:
+		case PCI_PRODUCT_AMD_AMD64_17_1X_HDA:
+			pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
+		}
 	}
 
 	/* interrupt */
@@ -1356,7 +1363,6 @@ azalia_suspend(azalia_t *az)
 
 	timeout_del(&az->unsol_to);
 
-	azalia_save_mixer(&az->codecs[az->codecno]);
 	/* azalia_halt_{corb,rirb}() only fail if the {CORB,RIRB} can't
 	 * be stopped and azalia_init_{corb,rirb}(), which starts the
 	 * {CORB,RIRB}, first calls azalia_halt_{corb,rirb}().  If halt
@@ -1401,6 +1407,9 @@ azalia_resume_codec(codec_t *this)
 	}
 	DELAY(100);
 
+	if (this->qrks & AZ_QRK_WID_DOLBY_ATMOS)
+		azalia_codec_init_dolby_atmos(this);
+
 	FOR_EACH_WIDGET(this, i) {
 		w = &this->w[i];
 		if (w->widgetcap & COP_AWCAP_POWER) {
@@ -1419,8 +1428,6 @@ azalia_resume_codec(codec_t *this)
 		if (err)
 			return err;
 	}
-
-	azalia_restore_mixer(this);
 
 	return(0);
 }
@@ -1454,74 +1461,6 @@ azalia_resume(azalia_t *az)
 		return err;
 
 	return 0;
-}
-
-void
-azalia_save_mixer(codec_t *this)
-{
-	mixer_item_t *m;
-	mixer_ctrl_t mc;
-	int i;
-
-	for (i = 0; i < this->nmixers; i++) {
-		m = &this->mixers[i];
-		if (m->nid == this->playvols.master)
-			continue;
-		mc.dev = i;
-		mc.type = m->devinfo.type;
-		azalia_mixer_get(this, m->nid, m->target, &mc);
-		switch (mc.type) {
-		case AUDIO_MIXER_ENUM:
-			m->saved.ord = mc.un.ord;
-			break;
-		case AUDIO_MIXER_SET:
-			m->saved.mask = mc.un.mask;
-			break;
-		case AUDIO_MIXER_VALUE:
-			m->saved.value = mc.un.value;
-			break;
-		case AUDIO_MIXER_CLASS:
-			break;
-		default:
-			DPRINTF(("%s: invalid mixer type in mixer %d\n",
-			    __func__, mc.dev));
-			break;
-		}
-	}
-}
-
-void
-azalia_restore_mixer(codec_t *this)
-{
-	mixer_item_t *m;
-	mixer_ctrl_t mc;
-	int i;
-
-	for (i = 0; i < this->nmixers; i++) {
-		m = &this->mixers[i];
-		if (m->nid == this->playvols.master)
-			continue;
-		mc.dev = i;
-		mc.type = m->devinfo.type;
-		switch (mc.type) {
-		case AUDIO_MIXER_ENUM:
-			mc.un.ord = m->saved.ord;
-			break;
-		case AUDIO_MIXER_SET:
-			mc.un.mask = m->saved.mask; 
-			break;
-		case AUDIO_MIXER_VALUE:
-			mc.un.value = m->saved.value;
-			break;
-		case AUDIO_MIXER_CLASS:
-			break;
-		default:
-			DPRINTF(("%s: invalid mixer type in mixer %d\n",
-			    __func__, mc.dev));
-			continue;
-		}
-		azalia_mixer_set(this, m->nid, m->target, &mc);
-	}
 }
 
 /* ================================================================
@@ -1611,6 +1550,9 @@ azalia_codec_init(codec_t *this)
 		printf("%s: out of memory\n", XNAME(this->az));
 		return ENOMEM;
 	}
+
+	if (this->qrks & AZ_QRK_WID_DOLBY_ATMOS)
+		azalia_codec_init_dolby_atmos(this);
 
 	/* query the base parameters */
 	azalia_comresp(this, this->audiofunc, CORB_GET_PARAMETER,
@@ -2192,7 +2134,7 @@ azalia_codec_select_dacs(codec_t *this)
 		}
 	}
 
-	free(convs, M_DEVBUF, 0);
+	free(convs, M_DEVBUF, this->na_dacs * sizeof(nid_t));
 	return(err);
 }
 
@@ -2605,37 +2547,43 @@ azalia_codec_delete(codec_t *this)
 	azalia_mixer_delete(this);
 
 	if (this->formats != NULL) {
-		free(this->formats, M_DEVBUF, 0);
+		free(this->formats, M_DEVBUF,
+		    this->nformats * sizeof(struct audio_format));
 		this->formats = NULL;
 	}
 	this->nformats = 0;
 
 	if (this->opins != NULL) {
-		free(this->opins, M_DEVBUF, 0);
+		free(this->opins, M_DEVBUF,
+		    this->nopins * sizeof(struct io_pin));
 		this->opins = NULL;
 	}
 	this->nopins = 0;
 
 	if (this->opins_d != NULL) {
-		free(this->opins_d, M_DEVBUF, 0);
+		free(this->opins_d, M_DEVBUF,
+		    this->nopins_d * sizeof(struct io_pin));
 		this->opins_d = NULL;
 	}
 	this->nopins_d = 0;
 
 	if (this->ipins != NULL) {
-		free(this->ipins, M_DEVBUF, 0);
+		free(this->ipins, M_DEVBUF,
+		    this->nipins * sizeof(struct io_pin));
 		this->ipins = NULL;
 	}
 	this->nipins = 0;
 
 	if (this->ipins_d != NULL) {
-		free(this->ipins_d, M_DEVBUF, 0);
+		free(this->ipins_d, M_DEVBUF,
+		    this->nipins_d * sizeof(struct io_pin));
 		this->ipins_d = NULL;
 	}
 	this->nipins_d = 0;
 
 	if (this->w != NULL) {
-		free(this->w, M_DEVBUF, 0);
+		free(this->w, M_DEVBUF,
+		    this->wend * sizeof(widget_t));
 		this->w = NULL;
 	}
 
@@ -3905,14 +3853,11 @@ azalia_match_format(codec_t *codec, int mode, audio_params_t *par)
 int
 azalia_set_params_sub(codec_t *codec, int mode, audio_params_t *par)
 {
-	char *cmode;
 	int i, j;
 	uint ochan, oenc, opre;
-
-	if (mode == AUMODE_PLAY)
-		cmode = "play";
-	else
-		cmode = "record";
+#ifdef AZALIA_DEBUG
+	char *cmode = (mode == AUMODE_PLAY) ? "play" : "record";
+#endif
 
 	ochan = par->channels;
 	oenc = par->encoding;

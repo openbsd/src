@@ -1,4 +1,4 @@
-/*	$OpenBSD: eficall.h,v 1.2 2016/12/30 09:43:17 yasuoka Exp $	*/
+/*	$OpenBSD: eficall.h,v 1.3 2018/03/31 18:19:12 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -44,10 +44,12 @@ extern uint64_t efi_call(int, void *, ...);
     efi_call(8, (_func), (_1), (_2), (_3), (_4), (_5), (_6), (_7), (_8))
 #define	_call_9(_func, _1, _2, _3, _4, _5, _6, _7, _8, _9) \
     efi_call(9, (_func), (_1), (_2), (_3), (_4), (_5), (_6), (_7), (_8), (_9))
+#define	_call_10(_func, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10) \
+    efi_call(10, (_func), (_1), (_2), (_3), (_4), (_5), (_6), (_7), (_8), (_9), (_10))
 
-#define _efi_call_fn(_func, _1, _2, _3, _4, _5, _6, _7, _8, _9, _fn, ...) _fn
+#define _efi_call_fn(_func, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10,  _fn, ...) _fn
 
 #define	EFI_CALL(...)	\
-    _efi_call_fn(__VA_ARGS__, _call_9, _call_8, _call_7, _call_6, _call_5, \
-	    _call_4, _call_3, _call_2, _call_1, _call_0)(__VA_ARGS__)
+    _efi_call_fn(__VA_ARGS__, _call_10, _call_9, _call_8,  _call_7, _call_6, \
+	    _call_5, _call_4, _call_3, _call_2, _call_1, _call_0)(__VA_ARGS__)
 #endif

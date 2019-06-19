@@ -35,6 +35,34 @@ namespace {
 /// A disassembler class for BPF.
 class BPFDisassembler : public MCDisassembler {
 public:
+  enum BPF_CLASS {
+    BPF_LD = 0x0,
+    BPF_LDX = 0x1,
+    BPF_ST = 0x2,
+    BPF_STX = 0x3,
+    BPF_ALU = 0x4,
+    BPF_JMP = 0x5,
+    BPF_RES = 0x6,
+    BPF_ALU64 = 0x7
+  };
+
+  enum BPF_SIZE {
+    BPF_W = 0x0,
+    BPF_H = 0x1,
+    BPF_B = 0x2,
+    BPF_DW = 0x3
+  };
+
+  enum BPF_MODE {
+    BPF_IMM = 0x0,
+    BPF_ABS = 0x1,
+    BPF_IND = 0x2,
+    BPF_MEM = 0x3,
+    BPF_LEN = 0x4,
+    BPF_MSH = 0x5,
+    BPF_XADD = 0x6
+  };
+
   BPFDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx)
       : MCDisassembler(STI, Ctx) {}
   ~BPFDisassembler() override = default;
@@ -43,6 +71,10 @@ public:
                               ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
+
+  uint8_t getInstClass(uint64_t Inst) const { return (Inst >> 56) & 0x7; };
+  uint8_t getInstSize(uint64_t Inst) const { return (Inst >> 59) & 0x3; };
+  uint8_t getInstMode(uint64_t Inst) const { return (Inst >> 61) & 0x7; };
 };
 
 } // end anonymous namespace
@@ -75,6 +107,21 @@ static DecodeStatus DecodeGPRRegisterClass(MCInst &Inst, unsigned RegNo,
     return MCDisassembler::Fail;
 
   unsigned Reg = GPRDecoderTable[RegNo];
+  Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static const unsigned GPR32DecoderTable[] = {
+    BPF::W0,  BPF::W1,  BPF::W2,  BPF::W3,  BPF::W4,  BPF::W5,
+    BPF::W6,  BPF::W7,  BPF::W8,  BPF::W9,  BPF::W10, BPF::W11};
+
+static DecodeStatus DecodeGPR32RegisterClass(MCInst &Inst, unsigned RegNo,
+                                             uint64_t /*Address*/,
+                                             const void * /*Decoder*/) {
+  if (RegNo > 11)
+    return MCDisassembler::Fail;
+
+  unsigned Reg = GPR32DecoderTable[RegNo];
   Inst.addOperand(MCOperand::createReg(Reg));
   return MCDisassembler::Success;
 }
@@ -126,12 +173,22 @@ DecodeStatus BPFDisassembler::getInstruction(MCInst &Instr, uint64_t &Size,
   Result = readInstruction64(Bytes, Address, Size, Insn, IsLittleEndian);
   if (Result == MCDisassembler::Fail) return MCDisassembler::Fail;
 
-  Result = decodeInstruction(DecoderTableBPF64, Instr, Insn,
-                             Address, this, STI);
+  uint8_t InstClass = getInstClass(Insn);
+  if ((InstClass == BPF_LDX || InstClass == BPF_STX) &&
+      getInstSize(Insn) != BPF_DW &&
+      getInstMode(Insn) == BPF_MEM &&
+      STI.getFeatureBits()[BPF::ALU32])
+    Result = decodeInstruction(DecoderTableBPFALU3264, Instr, Insn, Address,
+                               this, STI);
+  else
+    Result = decodeInstruction(DecoderTableBPF64, Instr, Insn, Address, this,
+                               STI);
+
   if (Result == MCDisassembler::Fail) return MCDisassembler::Fail;
 
   switch (Instr.getOpcode()) {
-  case BPF::LD_imm64: {
+  case BPF::LD_imm64:
+  case BPF::LD_pseudo: {
     if (Bytes.size() < 16) {
       Size = 0;
       return MCDisassembler::Fail;

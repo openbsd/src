@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.75 2015/10/25 23:10:53 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.76 2019/05/08 23:56:48 tedu Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 25 2015 $
+.Dd $Mdocdate: May 8 2019 $
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -385,15 +385,6 @@ subtree be constructed with care, following these rules:
 Make the home directory owned by
 .Dq root
 and unwritable by anyone (mode 555).
-.It Pa ~ftp/bin
-Make this directory owned by
-.Dq root
-and unwritable by anyone (mode 511).
-This directory is optional unless you have commands you wish
-the anonymous FTP user to be able to run (the
-.Xr ls 1
-command exists as a built-in).
-Any programs in this directory should be mode 111 (executable only).
 .It Pa ~ftp/etc
 Make this directory owned by
 .Dq root

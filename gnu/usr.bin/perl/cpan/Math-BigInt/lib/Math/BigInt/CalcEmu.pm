@@ -4,8 +4,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '1.999715';
-$VERSION = eval $VERSION;
+our $VERSION = '1.999811';
 
 package Math::BigInt;
 
@@ -15,7 +14,7 @@ my $CALC_EMU;
 
 BEGIN
   {
-  $CALC_EMU = Math::BigInt->config()->{'lib'};
+  $CALC_EMU = Math::BigInt->config('lib');
   # register us with MBI to get notified of future lib changes
   Math::BigInt::_register_callback( __PACKAGE__, sub { $CALC_EMU = $_[0]; } );
   }
@@ -25,7 +24,7 @@ sub __emu_band
   my ($self,$x,$y,$sx,$sy,@r) = @_;
 
   return $x->bzero(@r) if $y->is_zero() || $x->is_zero();
-  
+
   my $sign = 0;					# sign of result
   $sign = 1 if $sx == -1 && $sy == -1;
 
@@ -75,7 +74,7 @@ sub __emu_band
     # if $xx eq "\x00", we can cut $by, otherwise we need to padd $bx
     $bx .= $xx x abs($diff);
     }
-  
+
   # and the strings together
   my $r = $bx & $by;
 
@@ -380,7 +379,7 @@ L<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/bignum>
 =head1 LICENSE
 
 This program is free software; you may redistribute it and/or modify it under
-the same terms as Perl itself. 
+the same terms as Perl itself.
 
 =head1 AUTHORS
 

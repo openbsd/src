@@ -26,6 +26,7 @@ BEGIN {
 }
 
 use Test::More tests => 2;
+BEGIN { push @INC, '.' }
 use t::Watchdog;
 
 my $limit = 0.25; # 25% is acceptable slosh for testing timers

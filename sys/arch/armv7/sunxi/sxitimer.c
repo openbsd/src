@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.11 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.13 2019/05/06 03:49:53 mlarkin Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -32,9 +32,7 @@
 #include <machine/fdt.h>
 #include <machine/intr.h>
 
-#include <armv7/armv7/armv7var.h>
 #include <dev/fdt/sunxireg.h>
-/* #include <armv7/sunxi/sxipiovar.h> */
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
@@ -269,7 +267,7 @@ sxitimer_cpu_initclocks(void)
 	    ctrl | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
 }
 
-/* 
+/*
  * See comment in arm/xscale/i80321_clock.c
  *
  * Counter is count up, but with autoreload timers it is not possible

@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_errno.c,v 1.4 2003/12/25 18:49:57 miod Exp $	*/
+/*	$OpenBSD: malloc_errno.c,v 1.5 2019/06/11 22:16:13 bluhm Exp $	*/
 /*
  * Public domain.  2003, Otto Moerbeek
  */
@@ -6,6 +6,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* On arm64 with 2G of memory this test hangs while junking. */
+char *malloc_options = "jj";
 
 static void
 testerrno(size_t sz)
@@ -19,7 +22,7 @@ testerrno(size_t sz)
 		errx(1, "fail: %lx %p %d", (unsigned long)sz, p, errno);
 
 	/* if alloc succeeded, test if errno did not change */
-	if (p != NULL && errno != -1) 
+	if (p != NULL && errno != -1)
 		errx(1, "fail: %lx %p %d", (unsigned long)sz, p, errno);
 
 	free(p);

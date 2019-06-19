@@ -2,14 +2,14 @@
 
 BEGIN {
     chdir "t" if -d "t";
-    @INC = qw(. ../lib);
+    require "./test.pl";
+    set_up_inc( qw(. ../lib) );
 }
 
 # Test srand.
 
 use strict;
 
-require "./test.pl";
 plan(tests => 10);
 
 # Generate a load of random numbers.

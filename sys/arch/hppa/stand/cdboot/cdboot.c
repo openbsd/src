@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.13 2013/12/28 02:51:07 deraadt Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.14 2019/04/10 04:17:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -68,7 +68,7 @@ char   rnddata[BOOTRANDOM_MAX];		/* XXX dummy */
 void
 boot(dev_t dev)
 {
-	u_long marks[MARK_MAX];
+	uint64_t marks[MARK_MAX];
 	char path[128];
 
 	pdc_init();
@@ -86,8 +86,8 @@ boot(dev_t dev)
 
 		__asm("mtctl %r0, %cr17");
 		__asm("mtctl %r0, %cr17");
-		(*(startfuncp)(marks[MARK_ENTRY]))((int)pdc, 0, bootdev,
-		    marks[MARK_END], BOOTARG_APIVER, BOOTARG_LEN,
+		(*(startfuncp)((u_long)marks[MARK_ENTRY]))((int)pdc, 0, bootdev,
+		    (u_long)marks[MARK_END], BOOTARG_APIVER, BOOTARG_LEN,
 		    (caddr_t)BOOTARG_OFF);
 		/* not reached */
 	}

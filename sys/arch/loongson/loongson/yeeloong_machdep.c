@@ -1,4 +1,4 @@
-/*	$OpenBSD: yeeloong_machdep.c,v 1.27 2018/02/24 11:42:31 visa Exp $	*/
+/*	$OpenBSD: yeeloong_machdep.c,v 1.28 2018/09/26 14:58:16 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -144,7 +144,7 @@ const struct legacy_io_range yeeloong_legacy_ranges[] = {
 	{ 0x1f0,	0x1f0 + 7 },
 	{ 0x376,	0x376 },
 	{ 0x3f6,	0x3f6 },
-	/* kb3110b embedded controller */
+	/* kb3310b embedded controller */
 	{ 0x381,	0x383 },
 
 	{ 0 }

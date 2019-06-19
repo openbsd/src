@@ -15,7 +15,7 @@ our %args = (
 	func => sub {
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep("loghost .* connection error", 5)
-		or die "no connection error in syslogd.log";
+		or die ref($self), " no connection error in syslogd.log";
 	    write_log($self);
 	},
     },
@@ -33,7 +33,7 @@ our %args = (
 	    my $self = shift;
 	    print "Writing cleartext into a TLS connection is a bad idea\n";
 	    ${$self->{syslogd}}->loggrep("loghost .* connection error", 5)
-		or die "no connection error in syslogd.log";
+		or die ref($self), " no connection error in syslogd.log";
 	},
 	loggrep => {},
     },

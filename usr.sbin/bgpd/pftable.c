@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.10 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: pftable.c,v 1.12 2018/11/25 15:31:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -137,12 +137,11 @@ pftable_add(const char *name)
 		if (strcmp(pft->name, name) == 0)
 			return (0);
 
-	if ((pft = malloc(sizeof(*pft))) == NULL) {
+	if ((pft = calloc(1, sizeof(*pft))) == NULL) {
 		log_warn("pftable malloc");
 		return (-1);
 	}
 
-	bzero(pft, sizeof(*pft));
 	if (strlcpy(pft->name, name, sizeof(pft->name)) >= sizeof(pft->name)) {
 		log_warn("pf_table name too long");
 		free(pft);
@@ -258,4 +257,3 @@ pftable_commit(void)
 
 	return (ret);
 }
-

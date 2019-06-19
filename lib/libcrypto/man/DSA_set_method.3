@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DSA_set_method.3,v 1.8 2018/03/22 16:06:33 schwarze Exp $
+.\"	$OpenBSD: DSA_set_method.3,v 1.9 2018/04/18 01:09:01 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: April 18 2018 $
 .Dt DSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -60,7 +60,6 @@
 .Nd select DSA method
 .Sh SYNOPSIS
 .In openssl/dsa.h
-.In openssl/engine.h
 .Ft void
 .Fo DSA_set_default_method
 .Fa "const DSA_METHOD *meth"
@@ -81,51 +80,41 @@
 .Sh DESCRIPTION
 A
 .Vt DSA_METHOD
-specifies the functions that OpenSSL uses for DSA operations.
-By modifying the method, alternative implementations such as hardware
-accelerators may be used.
-See the
-.Sx CAVEATS
-section for how these DSA API functions are affected by the use of
-.Xr engine 3
-API calls.
-.Pp
-Initially, the default
-.Vt DSA_METHOD
-is the OpenSSL internal implementation, as returned by
-.Fn DSA_OpenSSL .
+object contains pointers to the functions used for DSA operations.
+By default, the internal implementation returned by
+.Fn DSA_OpenSSL
+is used.
+By selecting another method, alternative implementations
+such as hardware accelerators may be used.
 .Pp
 .Fn DSA_set_default_method
-makes
+selects
 .Fa meth
-the default method for all
+as the default method for all
 .Vt DSA
 structures created later.
-.Sy Note :
-this is true only whilst no
+If any
 .Vt ENGINE
-has been set as a default for DSA, so this function is no longer
-recommended.
+was registered with
+.Xr ENGINE_register_DSA 3
+that can be successfully initialized, it overrides the default.
 .Pp
 .Fn DSA_get_default_method
-returns a pointer to the current default
-.Vt DSA_METHOD .
-However, the meaningfulness of this result is dependent on whether the
-.Xr engine 3
-API is being used, so this function is no longer recommended.
+returns a pointer to the current default method,
+even if it is actually overridded by an
+.Vt ENGINE .
 .Pp
 .Fn DSA_set_method
 selects
 .Fa meth
 to perform all operations using the key
 .Fa dsa .
-This will replace the
+This replaces the
 .Vt DSA_METHOD
 used by the DSA key and if the previous method was supplied by an
 .Vt ENGINE ,
-the handle to that
-.Vt ENGINE
-will be released during the change.
+.Xr ENGINE_finish 3
+is called on it.
 It is possible to have DSA keys that only work with certain
 .Vt DSA_METHOD
 implementations (e.g. from an
@@ -140,17 +129,16 @@ allocates and initializes a
 .Vt DSA
 structure so that
 .Fa engine
-will be used for the DSA operations.
+is used for the DSA operations.
 If
 .Fa engine
 is
 .Dv NULL ,
-the default engine for DSA operations is used and, if no
-default
-.Vt ENGINE
-is set, the
-.Vt DSA_METHOD
-controlled by
+.Xr ENGINE_get_default_DSA 3
+is used.
+If that returns
+.Dv NULL ,
+the default method controlled by
 .Fn DSA_set_default_method
 is used.
 .Pp
@@ -203,17 +191,11 @@ struct
 and
 .Fn DSA_get_default_method
 return pointers to the respective
-.Vt DSA_METHOD Ns s .
+.Vt DSA_METHOD .
 .Pp
 .Fn DSA_set_method
-returns non-zero if the provided
-.Fa meth
-was successfully set as the method for
-.Fa dsa
-(including unloading the
-.Vt ENGINE
-handle if the previous method was supplied by an
-.Vt ENGINE ) .
+returns 1 on success or 0 on failure.
+Currently, it cannot fail.
 .Pp
 .Fn DSA_new_method
 returns
@@ -224,7 +206,10 @@ if the allocation fails.
 Otherwise it returns a pointer to the newly allocated structure.
 .Sh SEE ALSO
 .Xr DSA_meth_new 3 ,
-.Xr DSA_new 3
+.Xr DSA_new 3 ,
+.Xr ENGINE_get_default_DSA 3 ,
+.Xr ENGINE_register_DSA 3 ,
+.Xr ENGINE_set_default_DSA 3
 .Sh HISTORY
 .Fn DSA_set_default_method ,
 .Fn DSA_get_default_method ,
@@ -234,18 +219,3 @@ and
 .Fn DSA_OpenSSL
 first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
-.Sh CAVEATS
-As of version 0.9.7, DSA_METHOD implementations are grouped together
-with other algorithmic APIs (e.g. RSA_METHOD, EVP_CIPHER) in
-.Vt ENGINE
-modules.
-If a default
-.Vt ENGINE
-is specified for DSA functionality using an
-.Xr engine 3
-API function, that will override any DSA defaults set using the DSA API
-.Pq i.e. DSA_set_default_method .
-For this reason, the
-.Xr engine 3
-API is the recommended way to control default implementations for
-use in DSA and other cryptographic algorithms.

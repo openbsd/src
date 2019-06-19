@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.20 2017/06/13 05:40:22 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.26 2019/04/03 11:54:56 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -174,13 +174,8 @@ main(int argc, char *argv[])
 	if (radiusd_start(radiusd) != 0)
 		errx(EXIT_FAILURE, "start failed");
 
-#ifdef RADIUSD_DEBUG
-	if (pledge("stdio inet proc", NULL) == -1)
-		err(EXIT_FAILURE, "pledge");
-#else
 	if (pledge("stdio inet", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
-#endif
 
 	if (event_loop(0) < 0)
 		radiusd_stop(radiusd);
@@ -242,6 +237,8 @@ radiusd_start(struct radiusd *radiusd)
 	signal_add(&radiusd->ev_sigchld, NULL);
 
 	TAILQ_FOREACH(module, &radiusd->module, next) {
+		if (debug > 0)
+			radiusd_module_set(module, "_debug", 0, NULL);
 		radiusd_module_start(module);
 	}
 
@@ -625,15 +622,11 @@ radiusd_access_request_answer(struct radius_query *q)
 	res_id = radius_get_id(q->res);
 	res_code = radius_get_code(q->res);
 
-	/*
-	 * Reset response authenticator in the following cases:
-	 * - response is modified by decorator
-	 * - server's secret is differ from client's secret.
-	 */
-	if (q->res_modified > 0 ||
-	    (authen_secret != NULL &&
-		    strcmp(q->client->secret, authen_secret) != 0))
-		radius_set_response_authenticator(q->res, q->client->secret);
+	/* Reset response/message authenticator */
+	if (radius_has_attr(q->res, RADIUS_TYPE_MESSAGE_AUTHENTICATOR))
+		radius_del_attr_all(q->res, RADIUS_TYPE_MESSAGE_AUTHENTICATOR);
+	radius_put_message_authenticator(q->res, q->client->secret);
+	radius_set_response_authenticator(q->res, q->client->secret);
 
 	log_info("Sending %s(code=%d) to %s id=%u q=%u",
 	    radius_code_string(res_code), res_code,
@@ -739,7 +732,7 @@ radius_code_string(int code)
 	    { RADIUS_CODE_ACCOUNTING_RESPONSE,	"Accounting-Response" },
 	    { RADIUS_CODE_ACCESS_CHALLENGE,	"Access-Challenge" },
 	    { RADIUS_CODE_STATUS_SERVER,	"Status-Server" },
-	    { RADIUS_CODE_STATUS_CLIENT,	"Status-Clinet" },
+	    { RADIUS_CODE_STATUS_CLIENT,	"Status-Client" },
 	    { -1,				NULL }
 	};
 
@@ -788,18 +781,15 @@ radiusd_access_response_fixup(struct radius_query *q)
 	int		 res_id;
 	size_t		 attrlen;
 	u_char		 req_auth[16], attrbuf[256];
-	const char	*olds, *news;
 	const char	*authen_secret = q->authen->auth->module->secret;
 
-	olds = q->client->secret;
-	news = authen_secret;
-	if (news == NULL)
-		olds = news;
 	radius_get_authenticator(q->req, req_auth);
 
 	if ((authen_secret != NULL &&
 	    strcmp(authen_secret, q->client->secret) != 0) ||
 	    timingsafe_bcmp(q->req_auth, req_auth, 16) != 0) {
+		const char *olds = q->client->secret;
+		const char *news = authen_secret;
 
 		/* RFC 2865 Tunnel-Password */
 		attrlen = sizeof(attrlen);
@@ -814,7 +804,6 @@ radiusd_access_response_fixup(struct radius_query *q)
 			    RADIUS_TYPE_TUNNEL_PASSWORD);
 			radius_put_raw_attr(q->res,
 			    RADIUS_TYPE_TUNNEL_PASSWORD, attrbuf, attrlen);
-			q->res_modified++;
 		}
 
 		/* RFC 2548 Microsoft MPPE-{Send,Recv}-Key */
@@ -832,7 +821,6 @@ radiusd_access_response_fixup(struct radius_query *q)
 			    RADIUS_VTYPE_MPPE_SEND_KEY);
 			radius_put_vs_raw_attr(q->res, RADIUS_VENDOR_MICROSOFT,
 			    RADIUS_VTYPE_MPPE_SEND_KEY, attrbuf, attrlen);
-			q->res_modified++;
 		}
 		attrlen = sizeof(attrlen);
 		if (radius_get_vs_raw_attr(q->res, RADIUS_VENDOR_MICROSOFT,
@@ -848,7 +836,6 @@ radiusd_access_response_fixup(struct radius_query *q)
 			    RADIUS_VTYPE_MPPE_RECV_KEY);
 			radius_put_vs_raw_attr(q->res, RADIUS_VENDOR_MICROSOFT,
 			    RADIUS_VTYPE_MPPE_RECV_KEY, attrbuf, attrlen);
-			q->res_modified++;
 		}
 	}
 
@@ -856,7 +843,6 @@ radiusd_access_response_fixup(struct radius_query *q)
 	if (res_id != q->req_id) {
 		/* authentication server change the id */
 		radius_set_id(q->res, q->req_id);
-		q->res_modified++;
 	}
 
 	return (0);
@@ -1066,8 +1052,10 @@ radiusd_module_stop(struct radiusd_module *module)
 {
 	module->stopped = true;
 
-	freezero(module->secret, strlen(module->secret));
-	module->secret = NULL;
+	if (module->secret != NULL) {
+		freezero(module->secret, strlen(module->secret));
+		module->secret = NULL;
+	}
 
 	if (module->fd >= 0) {
 		imsg_compose(&module->ibuf, IMSG_RADIUSD_MODULE_STOP, 0, 0, -1,
@@ -1268,7 +1256,6 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 		    "ACCSREQ_ANSWER")) != NULL) {
 			q->res = radius_convert_packet(
 			    module->radpkt, module->radpktoff);
-			q->res_modified = ans->modified;
 			radiusd_access_request_answer(q);
 			module->radpktoff = 0;
 		}
@@ -1301,15 +1288,15 @@ radiusd_module_recv_radpkt(struct radiusd_module *module, struct imsg *imsg,
 
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 	ans = (struct radiusd_module_radpkt_arg *)imsg->data;
-	if (module->radpktsiz < ans->datalen) {
+	if (module->radpktsiz < ans->pktlen) {
 		u_char *nradpkt;
-		if ((nradpkt = realloc(module->radpkt, ans->datalen)) == NULL) {
+		if ((nradpkt = realloc(module->radpkt, ans->pktlen)) == NULL) {
 			log_warn("Could not handle received %s message from "
 			    "`%s'", type_str, module->name);
 			goto on_fail;
 		}
 		module->radpkt = nradpkt;
-		module->radpktsiz = ans->datalen;
+		module->radpktsiz = ans->pktlen;
 	}
 	chunklen = datalen - sizeof(struct radiusd_module_radpkt_arg);
 	if (chunklen > module->radpktsiz - module->radpktoff) {
@@ -1322,7 +1309,7 @@ radiusd_module_recv_radpkt(struct radiusd_module *module, struct imsg *imsg,
 	module->radpktoff += chunklen;
 	if (!ans->final)
 		return (NULL);	/* again */
-	if (module->radpktoff != module->radpktsiz) {
+	if (module->radpktoff != ans->pktlen) {
 		log_warnx("Could not handle received %s message from `%s': "
 		    "length is mismatch", type_str, module->name);
 		goto on_fail;
@@ -1481,22 +1468,22 @@ radiusd_module_access_request(struct radiusd_module *module,
 	len = radius_get_length(radpkt);
 	memset(&accsreq, 0, sizeof(accsreq));
 	accsreq.q_id = q->id;
+	accsreq.pktlen = len;
 	while (off < len) {
 		siz = MAX_IMSGSIZE - sizeof(accsreq);
-		if (len - off > siz) {
+		if (len - off > siz)
 			accsreq.final = false;
-			accsreq.datalen = siz;
-		} else {
+		else {
 			accsreq.final = true;
-			accsreq.datalen = len - off;
+			siz = len - off;
 		}
 		iov[0].iov_base = &accsreq;
 		iov[0].iov_len = sizeof(accsreq);
 		iov[1].iov_base = (caddr_t)pkt + off;
-		iov[1].iov_len = accsreq.datalen;
+		iov[1].iov_len = siz;
 		imsg_composev(&module->ibuf, IMSG_RADIUSD_MODULE_ACCSREQ, 0, 0,
 		    -1, iov, 2);
-		off += accsreq.datalen;
+		off += siz;
 	}
 	radiusd_module_reset_ev_handler(module);
 	radius_delete_packet(radpkt);

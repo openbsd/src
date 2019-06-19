@@ -216,3 +216,14 @@ expected-stdout:
 	64
 ---
 
+name: integer-1
+description:
+	Check that 64 bit integers get assigned
+stdin:
+	echo $(( zz = 0x7fffffffffffffff))
+	echo $zz
+expected-stdout:
+	9223372036854775807
+	9223372036854775807
+---
+

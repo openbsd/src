@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.33 2017/12/05 13:45:31 kettenis Exp $ */
+/* $OpenBSD: thread_private.h,v 1.35 2019/02/13 13:22:14 mpi Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -7,7 +7,7 @@
 
 #include <stdio.h>		/* for FILE and __isthreaded */
 
-#define _MALLOC_MUTEXES 4
+#define _MALLOC_MUTEXES 32
 void _malloc_init(int);
 #ifdef __LIBC__
 PROTO_NORMAL(_malloc_init);
@@ -298,6 +298,10 @@ struct pthread_cond {
 	struct pthread_mutex *mutex;
 };
 
+struct pthread_rwlock {
+	volatile unsigned int value;
+};
+
 #else
 
 struct pthread_mutex {
@@ -314,6 +318,13 @@ struct pthread_cond {
 	struct pthread_queue waiters;
 	struct pthread_mutex *mutex;
 	clockid_t clock;
+};
+
+struct pthread_rwlock {
+	_atomic_lock_t lock;
+	pthread_t owner;
+	struct pthread_queue writers;
+	int readers;
 };
 #endif /* FUTEX */
 

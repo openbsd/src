@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.h,v 1.10 2018/01/23 20:41:42 bluhm Exp $	*/
+/*	$OpenBSD: tcp_debug.h,v 1.11 2018/05/10 13:30:25 bluhm Exp $	*/
 /*	$NetBSD: tcp_debug.h,v 1.5 1994/06/29 06:38:38 cgd Exp $	*/
 
 /*
@@ -93,10 +93,11 @@ struct	tcp_debug {
 #define	TA_USER		2
 #define	TA_RESPOND	3
 #define	TA_DROP		4
+#define	TA_TIMER	5
 
 #ifdef TANAMES
 const char *tanames[] =
-    { "input", "output", "user", "respond", "drop" };
+    { "input", "output", "user", "respond", "drop", "timer" };
 #endif /* TANAMES */
 
 #define	TCP_NDEBUG 100

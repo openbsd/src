@@ -1,6 +1,6 @@
-.\" $OpenBSD: BIO_should_retry.3,v 1.8 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: BIO_should_retry.3,v 1.9 2018/12/19 21:12:58 schwarze Exp $
 .\" full merge up to: OpenSSL 60e24554 Apr 6 14:45:18 2010 +0000
-.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
+.\" selective merge up to: OpenSSL 57fd5170 May 13 11:24:11 2018 +0200
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2010, 2016 The OpenSSL Project.  All rights reserved.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: December 19 2018 $
 .Dt BIO_SHOULD_RETRY 3
 .Os
 .Sh NAME
@@ -107,29 +107,30 @@ or
 call.
 .Pp
 .Fn BIO_should_retry
-is true if the call that produced this condition
-should be retried at a later time.
-.Pp
-If
-.Fn BIO_should_retry
-is false, the cause is an error condition.
+returns 1 if the call that produced this condition should be retried
+at a later time, or 0 if an error occurred.
 .Pp
 .Fn BIO_should_read
-is true if the cause of the condition is that a BIO needs to read data.
+returns 1 if the cause of the retry condition is that a BIO needs
+to read data, or 0 otherwise.
 .Pp
 .Fn BIO_should_write
-is true if the cause of the condition is that a BIO needs to write data.
+returns 1 if the cause of the retry condition is that a BIO needs
+to write data, or 0 otherwise.
 .Pp
 .Fn BIO_should_io_special
-is true if some "special" condition
-(i.e. a reason other than reading or writing) is the cause of the condition.
+returns 1 if some special condition (i.e. a reason other than reading
+or writing) is the cause of the retry condition, or 0 otherwise.
 .Pp
 .Fn BIO_retry_type
-returns a mask of the cause of a retry condition consisting of the values
+returns the bitwise OR of one or more of the flags
 .Dv BIO_FLAGS_READ ,
 .Dv BIO_FLAGS_WRITE ,
+and
 .Dv BIO_FLAGS_IO_SPECIAL
-though current BIO types will only set one of these.
+representing the cause of the current retry condition,
+or 0 if there is no retry condition.
+Current BIO types only set one of the flags at a time.
 .Pp
 .Fn BIO_get_retry_BIO
 determines the precise reason for the special condition.

@@ -18,7 +18,7 @@ chdir dirname($0);
 my $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
 
-open OUT,">$file" or die "Can't create $file: $!";
+open OUT, ">", $file or die "Can't create $file: $!";
 
 print "Extracting $file (with variable substitutions)\n";
 
@@ -343,7 +343,7 @@ my %oldcfg = ();
 $Net::Config::CONFIGURE = 1; # Suppress load of user overrides
 if( -f $libnet_cfg_in )
  {
-  %oldcfg = ( %{ do $libnet_cfg_in } );
+  %oldcfg = ( %{ local @INC = '.'; do $libnet_cfg_in } );
  }
 elsif (eval { require Net::Config }) 
  {

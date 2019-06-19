@@ -61,6 +61,9 @@ my @tests = (
 [ "Unix->catfile('a', do { my \$x = 'b'.chr(0xaf); use utf8 (); utf8::upgrade(\$x); \$x })",   'a/b'.chr(0xaf)   ],
 ) : ()),
 [ "Unix->catfile(substr('foo', 2))", 'o' ],
+# https://rt.cpan.org/Ticket/Display.html?id=121633
+# https://rt.perl.org/Ticket/Display.html?id=131296
+[ "Unix->catfile('.', 'hints', 'Makefile.PL')", 'hints/Makefile.PL' ],
 
 [ "Unix->splitpath('file')",            ',,file'            ],
 [ "Unix->splitpath('/d1/d2/d3/')",      ',/d1/d2/d3/,'      ],
@@ -139,6 +142,7 @@ my @tests = (
 ($] >= 5.008 ? (
 [ "Unix->canonpath(do { my \$x = '///a'.chr(0xaf); use utf8 (); utf8::upgrade(\$x); \$x })",   '/a'.chr(0xaf)   ],
 ) : ()),
+[ "Unix->canonpath(1)",                        '1'              ],
 
 [  "Unix->abs2rel('/t1/t2/t3','/t1/t2/t3')",          '.'                  ],
 [  "Unix->abs2rel('/t1/t2/t4','/t1/t2/t3')",          '../t4'              ],
@@ -284,7 +288,7 @@ my @tests = (
 [ "Win32->canonpath('/..\\')",          '\\'                  ],
 [ "Win32->canonpath('d1/../foo')",      'foo'                 ],
 
-# FakeWin32 subclass (see below) just sets CWD to C:\one\two and getdcwd('D') to D:\alpha\beta
+# FakeWin32 subclass (see below) just sets getcwd() to C:\one\two and getdcwd('D') to D:\alpha\beta
 
 [ "FakeWin32->abs2rel('/t1/t2/t3','/t1/t2/t3')",     '.'                      ],
 [ "FakeWin32->abs2rel('/t1/t2/t4','/t1/t2/t3')",     '..\\t4'                 ],
@@ -448,6 +452,13 @@ my @tests = (
 # During the Perl 5.8 era, FS::Unix stopped eliminating redundant path elements, so mimic that here.
 [ "VMS->canonpath('a/../../b/c.dat')",                  $vms_unix_rpt ? 'a/../../b/c.dat'              : '[-.b]c.dat'                      ],
 [ "VMS->canonpath('^<test^.new.-.caret^ escapes^>')",   $vms_unix_rpt ? '/<test.new.-.caret escapes>' : '^<test^.new.-.caret^ escapes^>'                                                   ],
+# Check that directory specs with caret-dot component is treated correctly
+[ "VMS->canonpath('foo:[bar.coo.kie.--]file.txt')",     $vms_unix_rpt ? '/foo/bar/file.txt'            : "foo:[bar]file.txt" ],
+[ "VMS->canonpath('foo:[bar^.coo.kie.--]file.txt')",    $vms_unix_rpt ? '/foo/file.txt'                : "foo:[000000]file.txt" ],
+[ "VMS->canonpath('foo:[bar.coo^.kie.--]file.txt')",    $vms_unix_rpt ? '/foo/file.txt'                : "foo:[000000]file.txt" ],
+[ "VMS->canonpath('foo:[bar.coo.kie.-]file.txt')",      $vms_unix_rpt ? '/foo/bar/coo/file.txt'        : "foo:[bar.coo]file.txt" ],
+[ "VMS->canonpath('foo:[bar^.coo.kie.-]file.txt')",     $vms_unix_rpt ? '/foo/bar.coo/file.txt'        : "foo:[bar^.coo]file.txt" ],
+[ "VMS->canonpath('foo:[bar.coo^.kie.-]file.txt')",     $vms_unix_rpt ? '/foo/bar/file.txt'            : "foo:[bar]file.txt" ],
 
 [ "VMS->splitdir('')",            ''          ],
 [ "VMS->splitdir('[]')",          ''          ],
@@ -790,14 +801,9 @@ my @tests = (
 
 ) ;
 
-can_ok('File::Spec::Win32', '_cwd');
-
 {
     package File::Spec::FakeWin32;
-    use vars qw(@ISA);
-    @ISA = qw(File::Spec::Win32);
-
-    sub _cwd { 'C:\\one\\two' }
+    our @ISA = qw(File::Spec::Win32);
 
     # Some funky stuff to override Cwd::getdcwd() for testing purposes,
     # in the limited scope of the rel2abs() method.
@@ -806,6 +812,8 @@ can_ok('File::Spec::Win32', '_cwd');
 	*rel2abs = sub {
 	    my $self = shift;
 	    local $^W;
+	    local *Cwd::getcwd = sub { 'C:\\one\\two' };
+	    *Cwd::getcwd = *Cwd::getcwd; # Avoid a 'used only once' warning
 	    local *Cwd::getdcwd = sub {
 	      return 'D:\alpha\beta' if $_[0] eq 'D:';
 	      return 'C:\one\two'    if $_[0] eq 'C:';
@@ -815,6 +823,14 @@ can_ok('File::Spec::Win32', '_cwd');
 	    return $self->SUPER::rel2abs(@_);
 	};
 	*rel2abs = *rel2abs; # Avoid a 'used only once' warning
+	*abs2rel = sub {
+	    my $self = shift;
+	    local $^W;
+	    local *Cwd::getcwd = sub { 'C:\\one\\two' };
+	    *Cwd::getcwd = *Cwd::getcwd; # Avoid a 'used only once' warning
+	    return $self->SUPER::abs2rel(@_);
+	};
+	*abs2rel = *abs2rel; # Avoid a 'used only once' warning
     }
 }
 

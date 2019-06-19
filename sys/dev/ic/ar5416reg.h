@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416reg.h,v 1.6 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: ar5416reg.h,v 1.7 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -19,7 +19,10 @@
 
 #define AR5416_MAX_CHAINS	3
 
-#define AR5416_PHY_CCA_MAX_GOOD_VALUE	( -85)
+#define AR5416_PHY_CCA_MIN_GOOD_VAL_2GHZ	(-100)
+#define AR5416_PHY_CCA_MIN_GOOD_VAL_5GHZ	(-110)
+#define AR5416_PHY_CCA_MAX_GOOD_VAL_2GHZ	(-80)
+#define AR5416_PHY_CCA_MAX_GOOD_VAL_5GHZ	(-90)
 
 /*
  * ROM layout used by AR5416, AR9160 and AR9280.

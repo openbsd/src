@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.27 2014/07/11 10:53:07 uebayasi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.28 2019/03/24 06:09:09 visa Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -271,5 +271,17 @@ u_int cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
 u_int cpu_dumpsize(void);
 void dumpconf(void);
 void dumpsys(void);
+
+static inline u_long
+intr_disable(void)
+{
+	return (u_long)_cpu_intr_suspend();
+}
+
+static inline void
+intr_restore(u_long s)
+{
+	_cpu_intr_resume((int)s);
+}
 #endif /* _KERNEL */
 #endif /* !_SH_CPU_H_ */

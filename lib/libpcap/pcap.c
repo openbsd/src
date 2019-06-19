@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.c,v 1.22 2018/02/06 02:55:48 dlg Exp $	*/
+/*	$OpenBSD: pcap.c,v 1.24 2018/06/03 10:29:28 sthen Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -223,6 +223,15 @@ pcap_set_timeout(pcap_t *p, int timeout_ms)
 }
 
 int
+pcap_set_immediate_mode(pcap_t *p, int immediate)
+{
+	if (pcap_check_activated(p))
+		return PCAP_ERROR_ACTIVATED;
+	p->opt.immediate = immediate;
+	return 0;
+}
+
+int
 pcap_set_buffer_size(pcap_t *p, int buffer_size)
 {
 	if (pcap_check_activated(p))
@@ -406,7 +415,7 @@ pcap_fileno(pcap_t *p)
 }
 
 void
-pcap_perror(pcap_t *p, char *prefix)
+pcap_perror(pcap_t *p, const char *prefix)
 {
 	fprintf(stderr, "%s: %s\n", prefix, p->errbuf);
 }
@@ -522,7 +531,7 @@ pcap_statustostr(int errnum)
 /*
  * Not all systems have strerror().
  */
-char *
+const char *
 pcap_strerror(int errnum)
 {
 #ifdef HAVE_STRERROR

@@ -60,7 +60,9 @@ public:
 
   CXXStdlibType GetDefaultCXXStdlibType() const override;
 
-  std::string findLibCxxIncludePath() const override;
+  void addLibCxxIncludePaths(
+      const llvm::opt::ArgList &DriverArgs,
+      llvm::opt::ArgStringList &CC1Args) const override;
   void addLibStdCxxIncludePaths(
       const llvm::opt::ArgList &DriverArgs,
       llvm::opt::ArgStringList &CC1Args) const override;
@@ -68,6 +70,9 @@ public:
   bool IsUnwindTablesDefault(const llvm::opt::ArgList &Args) const override {
     return true;
   }
+
+  llvm::ExceptionHandling GetExceptionModel(
+      const llvm::opt::ArgList &Args) const override;
 
   SanitizerMask getSupportedSanitizers() const override;
 

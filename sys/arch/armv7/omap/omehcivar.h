@@ -1,4 +1,4 @@
-/* $OpenBSD: omehcivar.h,v 1.1 2013/09/04 14:38:31 patrick Exp $ */
+/* $OpenBSD: omehcivar.h,v 1.2 2019/05/06 03:45:58 mlarkin Exp $ */
 
 /*
  * Misc
@@ -170,7 +170,7 @@
 #define UHH_HOSTCONFIG_AUTOPPD_ON_OVERCUR_EN    (1UL << 1)
 #define UHH_HOSTCONFIG_P1_ULPI_BYPASS           (1UL << 0)
 
-/* The following are on rev2 (OMAP44xx) of the EHCI only */ 
+/* The following are on rev2 (OMAP44xx) of the EHCI only */
 #define UHH_SYSCONFIG_IDLEMODE_MASK             (3UL << 2)
 #define UHH_SYSCONFIG_IDLEMODE_NOIDLE           (1UL << 2)
 #define UHH_SYSCONFIG_STANDBYMODE_MASK          (3UL << 4)
@@ -215,7 +215,7 @@
 #define ULPI_DEBUG                              0x15
 #define ULPI_SCRATCH                            0x16
 
-/* 
+/*
  * Values of UHH_REVISION - Note: these are not given in the TRM but taken
  * from the linux OMAP EHCI driver (thanks guys).  It has been verified on
  * a Panda and Beagle board.

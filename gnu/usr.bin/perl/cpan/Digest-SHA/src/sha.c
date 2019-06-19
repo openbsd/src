@@ -3,10 +3,10 @@
  *
  * Ref: NIST FIPS PUB 180-4 Secure Hash Standard
  *
- * Copyright (C) 2003-2015 Mark Shelor, All Rights Reserved
+ * Copyright (C) 2003-2017 Mark Shelor, All Rights Reserved
  *
- * Version: 5.95
- * Sat Jan 10 12:15:36 MST 2015
+ * Version: 6.01
+ * Mon Dec 25 00:08:08 MST 2017
  *
  */
 
@@ -364,10 +364,10 @@ static ULNG shabits(UCHR *bitstr, ULNG bitcnt, SHA *s)
 
 	for (i = 0UL; i < bitcnt; i++) {
 		if (BITSET(bitstr, i))
-			SETBIT(s->block, s->blockcnt), s->blockcnt++;
+			SETBIT(s->block, s->blockcnt);
 		else
-			CLRBIT(s->block, s->blockcnt), s->blockcnt++;
-		if (s->blockcnt == s->blocksize)
+			CLRBIT(s->block, s->blockcnt);
+		if (++s->blockcnt == s->blocksize)
 			s->sha(s, s->block), s->blockcnt = 0;
 	}
 	return(bitcnt);

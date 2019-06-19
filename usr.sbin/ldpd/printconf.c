@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.27 2017/03/03 23:36:06 renato Exp $ */
+/*	$OpenBSD: printconf.c,v 1.28 2019/01/23 02:02:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -19,8 +19,11 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdio.h>
+#include <netdb.h>
+#include <err.h>
 
 #include "ldpd.h"
 #include "ldpe.h"
@@ -132,9 +135,6 @@ print_nbrp(struct nbr_params *nbrp)
 	if (nbrp->flags & F_NBRP_GTSM_HOPS)
 		printf("\tgtsm-hops %u\n", nbrp->gtsm_hops);
 
-	if (nbrp->auth.method == AUTH_MD5SIG)
-		printf("\tpassword XXXXXX\n");
-
 	printf("}\n");
 }
 
@@ -184,6 +184,31 @@ print_pw(struct l2vpn_pw *pw)
 	printf("\t}\n");
 }
 
+static void
+print_auth(struct ldpd_conf *conf)
+{
+	struct ldp_auth *auth;
+
+	printf("\n");
+
+	LIST_FOREACH(auth, &conf->auth_list, entry) {
+		if (auth->md5key_len)
+			printf("tcp md5sig key XXX");
+		else
+			printf("no tcp md5sig");
+		if (auth->idlen) {
+			char hbuf[NI_MAXHOST];
+
+			if (inet_net_ntop(AF_INET, &auth->id, auth->idlen,
+			    hbuf, sizeof(hbuf)) == NULL)
+				err(1, "inet_net_ntop");
+
+			printf(" %s", hbuf);
+		}
+		printf("\n");
+	}
+}
+
 void
 print_config(struct ldpd_conf *conf)
 {
@@ -191,6 +216,9 @@ print_config(struct ldpd_conf *conf)
 	struct l2vpn		*l2vpn;
 
 	print_mainconf(conf);
+
+	if (!LIST_EMPTY(&conf->auth_list))
+		print_auth(conf);
 
 	if (conf->ipv4.flags & F_LDPD_AF_ENABLED)
 		print_af(AF_INET, conf, &conf->ipv4);

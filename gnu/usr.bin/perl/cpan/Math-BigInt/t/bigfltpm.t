@@ -3,14 +3,15 @@
 use strict;
 use warnings;
 
-use Test::More tests => 2409            # tests in require'd file
-                        + 5;            # tests in this file
+use Test::More tests => 2482            # tests in require'd file
+                         + 19;          # tests in this file
 
-use Math::BigInt lib => 'Calc';
+use Math::BigInt only => 'Calc';
 use Math::BigFloat;
 
-our $CLASS = "Math::BigFloat";
-our $CALC  = "Math::BigInt::Calc";      # backend
+our ($CLASS, $CALC);
+$CLASS = "Math::BigFloat";
+$CALC  = Math::BigInt -> config('lib');         # backend library
 
 is($CLASS->config()->{class}, $CLASS, "$CLASS->config()->{class}");
 is($CLASS->config()->{with},  $CALC,  "$CLASS->config()->{with}");
@@ -26,6 +27,44 @@ my $d = Math::BigFloat->new(3);
 my $e = $c->bdiv(Math::BigFloat->new(3), $d);
 
 is($e, '0.00267', '0.008 / 3 = 0.0027');
+
+my $x;
+
+#############################################################################
+# bgcd() as function, class method and instance method.
+
+my $gcd0 = Math::BigFloat::bgcd(-12, 18, 27);
+isa_ok($gcd0, "Math::BigFloat", "bgcd() as function");
+is($gcd0, 3, "bgcd() as function");
+
+my $gcd1 = Math::BigFloat->bgcd(-12, 18, 27);
+isa_ok($gcd1, "Math::BigFloat", "bgcd() as class method");
+is($gcd1, 3, "bgcd() as class method");
+
+$x = Math::BigFloat -> new(-12);
+my $gcd2 = $x -> bgcd(18, 27);
+isa_ok($gcd2, "Math::BigFloat", "bgcd() as instance method");
+is($gcd2, 3, "bgcd() as instance method");
+is($x, -12, "bgcd() does not modify invocand");
+
+#############################################################################
+# blcm() as function, class method and instance method.
+
+my $lcm0 = Math::BigFloat::blcm(-12, 18, 27);
+isa_ok($lcm0, "Math::BigFloat", "blcm() as function");
+is($lcm0, 108, "blcm() as function");
+
+my $lcm1 = Math::BigFloat->blcm(-12, 18, 27);
+isa_ok($lcm1, "Math::BigFloat", "blcm() as class method");
+is($lcm1, 108, "blcm() as class method");
+
+$x = Math::BigFloat -> new(-12);
+my $lcm2 = $x -> blcm(18, 27);
+isa_ok($lcm2, "Math::BigFloat", "blcm() as instance method");
+is($lcm2, 108, "blcm() as instance method");
+is($x, -12, "blcm() does not modify invocand");
+
+#############################################################################
 
 SKIP: {
     skip("skipping test which is not for this backend", 1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.59 2018/03/13 12:25:34 jca Exp $	*/
+/*	$OpenBSD: asr.c,v 1.61 2018/10/22 17:31:24 krw Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -282,12 +282,6 @@ _asr_async_free(struct asr_query *as)
 			free(as->as.hostnamadr.name);
 		break;
 
-	case ASR_GETNETBYNAME:
-	case ASR_GETNETBYADDR:
-		if (as->as.netnamadr.name)
-			free(as->as.netnamadr.name);
-		break;
-
 	case ASR_GETADDRINFO:
 		if (as->as.ai.aifirst)
 			freeaddrinfo(as->as.ai.aifirst);
@@ -309,7 +303,7 @@ _asr_async_free(struct asr_query *as)
 
 /*
  * Get a context from the given resolver. This takes a new reference to
- * the returned context, which *must* be explicitely dropped when done
+ * the returned context, which *must* be explicitly dropped when done
  * using this context.
  */
 struct asr_ctx *

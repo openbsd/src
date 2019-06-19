@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.20 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.23 2018/08/24 20:03:21 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -77,10 +77,10 @@
 /* Convert a certificate and its issuer to an OCSP_CERTID */
 
 OCSP_CERTID *
-OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
+OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject, const X509 *issuer)
 {
 	X509_NAME *iname;
-	ASN1_INTEGER *serial;
+	const ASN1_INTEGER *serial;
 	ASN1_BIT_STRING *ikey;
 
 #ifndef OPENSSL_NO_SHA1
@@ -89,7 +89,7 @@ OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
 #endif
 	if (subject) {
 		iname = X509_get_issuer_name(subject);
-		serial = X509_get_serialNumber(subject);
+		serial = X509_get0_serialNumber(subject);
 	} else {
 		iname = X509_get_subject_name(issuer);
 		serial = NULL;
@@ -99,8 +99,8 @@ OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer)
 }
 
 OCSP_CERTID *
-OCSP_cert_id_new(const EVP_MD *dgst, X509_NAME *issuerName,
-    ASN1_BIT_STRING* issuerKey, ASN1_INTEGER *serialNumber)
+OCSP_cert_id_new(const EVP_MD *dgst, const X509_NAME *issuerName,
+    const ASN1_BIT_STRING *issuerKey, const ASN1_INTEGER *serialNumber)
 {
 	int nid;
 	unsigned int i;
@@ -180,7 +180,8 @@ OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
  * it is SSL.
  */
 int
-OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl)
+OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
+    int *pssl)
 {
 	char *host, *path, *port, *tmp;
 

@@ -15,6 +15,10 @@ class Sniff1(threading.Thread):
 	filter = None
 	captured = None
 	packet = None
+	def __init__(self):
+		# clear packets buffered by scapy bpf
+		sniff(iface=LOCAL_IF, timeout=1)
+		super(Sniff1, self).__init__()
 	def run(self):
 		self.captured = sniff(iface=LOCAL_IF, filter=self.filter,
 		    count=1, timeout=5)
@@ -97,8 +101,18 @@ if spliced_payload.len-20-20 != len(data):
 	    (len(data), spliced_payload.len-20-20)
 	exit(1)
 
+print "Expect spliced ACK retransmission"
+sniffer = Sniff1();
+sniffer.filter = "src %s and dst %s and tcp port %u " \
+    "and tcp[tcpflags] = tcp-ack" % (ip.dst, ip.src, server)
+sniffer.start()
+time.sleep(1)
+
 print "Retransmit spliced SYN+ACK packet to trigger ACK"
-spliced_ack_retrans=sr1(ip/spliced_synack, iface=LOCAL_IF)
+send(ip/spliced_synack, iface=LOCAL_IF)
+
+sniffer.join(timeout=7)
+spliced_ack_retrans = sniffer.packet
 
 if spliced_ack_retrans is None:
 	print "ERROR: No spliced ACK retransmit packet received"

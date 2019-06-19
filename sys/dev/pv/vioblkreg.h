@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblkreg.h,v 1.2 2017/03/26 21:43:31 mlarkin Exp $	*/
+/*	$OpenBSD: vioblkreg.h,v 1.4 2019/03/24 18:22:36 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -40,15 +40,18 @@
 #define VIRTIO_BLK_CONFIG_BLK_SIZE	20 /* 32bit */
 
 /* Feature bits */
-#define VIRTIO_BLK_F_BARRIER	(1<<0)
-#define VIRTIO_BLK_F_SIZE_MAX	(1<<1)
-#define VIRTIO_BLK_F_SEG_MAX	(1<<2)
-#define VIRTIO_BLK_F_GEOMETRY	(1<<4)
-#define VIRTIO_BLK_F_RO		(1<<5)
-#define VIRTIO_BLK_F_BLK_SIZE	(1<<6)
-#define VIRTIO_BLK_F_SCSI	(1<<7)
-#define VIRTIO_BLK_F_FLUSH	(1<<9)
-#define VIRTIO_BLK_F_TOPOLOGY	(1<<10)
+#define VIRTIO_BLK_F_BARRIER		(1ULL<<0)
+#define VIRTIO_BLK_F_SIZE_MAX		(1ULL<<1)
+#define VIRTIO_BLK_F_SEG_MAX		(1ULL<<2)
+#define VIRTIO_BLK_F_GEOMETRY		(1ULL<<4)
+#define VIRTIO_BLK_F_RO			(1ULL<<5)
+#define VIRTIO_BLK_F_BLK_SIZE		(1ULL<<6)
+#define VIRTIO_BLK_F_SCSI		(1ULL<<7)
+#define VIRTIO_BLK_F_FLUSH		(1ULL<<9)
+#define VIRTIO_BLK_F_TOPOLOGY		(1ULL<<10)
+#define VIRTIO_BLK_F_CONFIG_WCE		(1ULL<<11)
+#define VIRTIO_BLK_F_DISCARD		(1ULL<<12)
+#define VIRTIO_BLK_F_WRITE_ZEROES	(1ULL<<13)
 
 /* Command */
 #define VIRTIO_BLK_T_IN			0

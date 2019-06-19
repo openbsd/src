@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.11 2018/02/11 05:13:07 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.16 2018/07/17 19:44:38 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -45,6 +45,7 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
 #include <dev/usb/usbdevs.h>
 
 #include <dev/ic/bwfmvar.h>
@@ -165,6 +166,8 @@ struct bwfm_usb_softc {
 	struct usbd_interface	*sc_iface;
 	uint8_t			 sc_ifaceno;
 
+	int			 sc_initialized;
+
 	uint16_t		 sc_vendor;
 	uint16_t		 sc_product;
 
@@ -183,7 +186,6 @@ struct bwfm_usb_softc {
 };
 
 int		 bwfm_usb_match(struct device *, void *, void *);
-void		 bwfm_usb_attachhook(struct device *);
 void		 bwfm_usb_attach(struct device *, struct device *, void *);
 int		 bwfm_usb_detach(struct device *, int);
 
@@ -196,22 +198,22 @@ void		 bwfm_usb_free_rx_list(struct bwfm_usb_softc *);
 int		 bwfm_usb_alloc_tx_list(struct bwfm_usb_softc *);
 void		 bwfm_usb_free_tx_list(struct bwfm_usb_softc *);
 
+int		 bwfm_usb_preinit(struct bwfm_softc *);
 int		 bwfm_usb_txcheck(struct bwfm_softc *);
 int		 bwfm_usb_txdata(struct bwfm_softc *, struct mbuf *);
-int		 bwfm_usb_txctl(struct bwfm_softc *, char *, size_t);
-int		 bwfm_usb_rxctl(struct bwfm_softc *, char *, size_t *);
+int		 bwfm_usb_txctl(struct bwfm_softc *, void *);
+void		 bwfm_usb_txctl_cb(struct usbd_xfer *, void *, usbd_status);
 
 struct mbuf *	 bwfm_usb_newbuf(void);
 void		 bwfm_usb_rxeof(struct usbd_xfer *, void *, usbd_status);
 void		 bwfm_usb_txeof(struct usbd_xfer *, void *, usbd_status);
 
 struct bwfm_bus_ops bwfm_usb_bus_ops = {
-	.bs_init = NULL,
+	.bs_preinit = bwfm_usb_preinit,
 	.bs_stop = NULL,
 	.bs_txcheck = bwfm_usb_txcheck,
 	.bs_txdata = bwfm_usb_txdata,
 	.bs_txctl = bwfm_usb_txctl,
-	.bs_rxctl = bwfm_usb_rxctl,
 };
 
 struct cfattach bwfm_usb_ca = {
@@ -285,13 +287,14 @@ bwfm_usb_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	config_mountroot(self, bwfm_usb_attachhook);
+	bwfm_attach(&sc->sc_sc);
+	config_mountroot(self, bwfm_attachhook);
 }
 
-void
-bwfm_usb_attachhook(struct device *self)
+int
+bwfm_usb_preinit(struct bwfm_softc *bwfm)
 {
-	struct bwfm_usb_softc *sc = (struct bwfm_usb_softc *)self;
+	struct bwfm_usb_softc *sc = (void *)bwfm;
 	struct bwfm_usb_rx_data *data;
 	const char *name = NULL;
 	struct bootrom_id brom;
@@ -299,6 +302,9 @@ bwfm_usb_attachhook(struct device *self)
 	u_char *ucode;
 	size_t size;
 	int i;
+
+	if (sc->sc_initialized)
+		return 0;
 
 	/* Read chip id and chip rev to check the firmware. */
 	memset(&brom, 0, sizeof(brom));
@@ -312,14 +318,14 @@ bwfm_usb_attachhook(struct device *self)
 	if (error != 0) {
 		printf("%s: could not open rx pipe: %s\n",
 		    DEVNAME(sc), usbd_errstr(error));
-		return;
+		return 1;
 	}
 	error = usbd_open_pipe(sc->sc_iface, sc->sc_tx_no, USBD_EXCLUSIVE_USE,
 	    &sc->sc_tx_pipeh);
 	if (error != 0) {
 		printf("%s: could not open tx pipe: %s\n",
 		    DEVNAME(sc), usbd_errstr(error));
-		return;
+		goto cleanup;
 	}
 
 	/* Firmware not yet loaded? */
@@ -348,20 +354,20 @@ bwfm_usb_attachhook(struct device *self)
 
 		if (name == NULL) {
 			printf("%s: unknown firmware\n", DEVNAME(sc));
-			return;
+			goto cleanup;
 		}
 
 		if (loadfirmware(name, &ucode, &size) != 0) {
 			printf("%s: failed loadfirmware of file %s\n",
 			    DEVNAME(sc), name);
-			return;
+			goto cleanup;
 		}
 
 		if (bwfm_usb_load_microcode(sc, ucode, size) != 0) {
 			printf("%s: could not load microcode\n",
 			    DEVNAME(sc));
 			free(ucode, M_DEVBUF, size);
-			return;
+			goto cleanup;
 		}
 
 		free(ucode, M_DEVBUF, size);
@@ -377,7 +383,7 @@ bwfm_usb_attachhook(struct device *self)
 		if (letoh32(brom.chip) != BRCMF_POSTBOOT_ID) {
 			printf("%s: firmware did not start up\n",
 			    DEVNAME(sc));
-			return;
+			goto cleanup;
 		}
 
 		sc->sc_chip = letoh32(brom.chip);
@@ -388,7 +394,7 @@ bwfm_usb_attachhook(struct device *self)
 
 	if (bwfm_usb_alloc_rx_list(sc) || bwfm_usb_alloc_tx_list(sc)) {
 		printf("%s: cannot allocate rx/tx lists\n", DEVNAME(sc));
-		return;
+		goto cleanup;
 	}
 
 	for (i = 0; i < BWFM_RX_LIST_COUNT; i++) {
@@ -403,7 +409,23 @@ bwfm_usb_attachhook(struct device *self)
 			    DEVNAME(sc), usbd_errstr(error));
 	}
 
-	bwfm_attach(&sc->sc_sc);
+	sc->sc_initialized = 1;
+	return 0;
+
+cleanup:
+	if (sc->sc_rx_pipeh) {
+		usbd_abort_pipe(sc->sc_rx_pipeh);
+		usbd_close_pipe(sc->sc_rx_pipeh);
+		sc->sc_rx_pipeh = NULL;
+	}
+	if (sc->sc_tx_pipeh) {
+		usbd_abort_pipe(sc->sc_tx_pipeh);
+		usbd_close_pipe(sc->sc_tx_pipeh);
+		sc->sc_tx_pipeh = NULL;
+	}
+	bwfm_usb_free_rx_list(sc);
+	bwfm_usb_free_tx_list(sc);
+	return 1;
 }
 
 struct mbuf *
@@ -779,67 +801,81 @@ bwfm_usb_txdata(struct bwfm_softc *bwfm, struct mbuf *m)
 }
 
 int
-bwfm_usb_txctl(struct bwfm_softc *bwfm, char *buf, size_t len)
+bwfm_usb_txctl(struct bwfm_softc *bwfm, void *arg)
 {
 	struct bwfm_usb_softc *sc = (void *)bwfm;
+	struct bwfm_proto_bcdc_ctl *ctl = arg;
 	usb_device_request_t req;
+	struct usbd_xfer *xfer;
 	usbd_status error;
-	int ret = 1;
+	char *buf;
 
 	DPRINTFN(2, ("%s: %s\n", DEVNAME(sc), __func__));
 
+	/* Send out control packet. */
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = 0;
-
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, sc->sc_ifaceno);
-	USETW(req.wLength, len);
+	USETW(req.wLength, ctl->len);
 
-	error = usbd_do_request(sc->sc_udev, &req, buf);
+	error = usbd_do_request(sc->sc_udev, &req, ctl->buf);
 	if (error != 0) {
-		printf("%s: could not read ctl packet: %s\n",
+		printf("%s: could not write ctl packet: %s\n",
 		    DEVNAME(sc), usbd_errstr(error));
-		goto err;
+		free(ctl->buf, M_TEMP, ctl->len);
+		free(ctl, M_TEMP, sizeof(*ctl));
+		return 1;
 	}
 
-	ret = 0;
-err:
-	return ret;
-}
+	/* Setup asynchronous receive. */
+	if ((xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL) {
+		free(ctl->buf, M_TEMP, ctl->len);
+		free(ctl, M_TEMP, sizeof(*ctl));
+		return 1;
+	}
+	if ((buf = usbd_alloc_buffer(xfer, ctl->len)) == NULL) {
+		free(ctl->buf, M_TEMP, ctl->len);
+		free(ctl, M_TEMP, sizeof(*ctl));
+		usbd_free_xfer(xfer);
+		return 1;
+	}
 
-int
-bwfm_usb_rxctl(struct bwfm_softc *bwfm, char *buf, size_t *len)
-{
-	struct bwfm_usb_softc *sc = (void *)bwfm;
-	usb_device_request_t req;
-	usbd_status error;
-	uint32_t len32;
-	int ret = 1;
-
-	DPRINTFN(2, ("%s: %s\n", DEVNAME(sc), __func__));
-
+	memset(buf, 0, ctl->len);
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = 1;
-
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, sc->sc_ifaceno);
-	USETW(req.wLength, *len);
+	USETW(req.wLength, ctl->len);
 
-	error = usbd_do_request_flags(sc->sc_udev, &req, buf, 0,
-	    &len32, USBD_DEFAULT_TIMEOUT);
+	error = usbd_request_async(xfer, &req, sc, bwfm_usb_txctl_cb);
 	if (error != 0) {
 		printf("%s: could not read ctl packet: %s\n",
 		    DEVNAME(sc), usbd_errstr(error));
-		goto err;
+		free(ctl->buf, M_TEMP, ctl->len);
+		free(ctl, M_TEMP, sizeof(*ctl));
+		usbd_free_xfer(xfer);
+		return 1;
 	}
 
-	if (len32 > *len) {
-		printf("%s: broken length\n", DEVNAME(sc));
+	TAILQ_INSERT_TAIL(&sc->sc_sc.sc_bcdc_rxctlq, ctl, next);
+
+	return 0;
+}
+
+void
+bwfm_usb_txctl_cb(struct usbd_xfer *xfer, void *priv, usbd_status err)
+{
+	struct bwfm_usb_softc *sc = priv;
+
+	if (usbd_is_dying(xfer->pipe->device))
 		goto err;
+
+	if (err == USBD_NORMAL_COMPLETION || err == USBD_SHORT_XFER) {
+		sc->sc_sc.sc_proto_ops->proto_rxctl(&sc->sc_sc,
+		    KERNADDR(&xfer->dmabuf, 0), xfer->actlen);
 	}
 
-	*len = len32;
-	ret = 0;
 err:
-	return ret;
+	usbd_free_xfer(xfer);
 }

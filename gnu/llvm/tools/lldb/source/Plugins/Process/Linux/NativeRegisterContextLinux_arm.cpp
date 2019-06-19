@@ -11,14 +11,14 @@
 
 #include "NativeRegisterContextLinux_arm.h"
 
+#include "Plugins/Process/Linux/NativeProcessLinux.h"
+#include "Plugins/Process/Linux/Procfs.h"
+#include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
+#include "Plugins/Process/Utility/RegisterInfoPOSIX_arm.h"
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Utility/DataBufferHeap.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/Status.h"
-
-#include "Plugins/Process/Linux/Procfs.h"
-#include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
-#include "Plugins/Process/Utility/RegisterInfoPOSIX_arm.h"
 
 #include <elf.h>
 #include <sys/socket.h>
@@ -95,20 +95,18 @@ static const RegisterSet g_reg_sets_arm[k_num_register_sets] = {
 
 #if defined(__arm__)
 
-NativeRegisterContextLinux *
+std::unique_ptr<NativeRegisterContextLinux>
 NativeRegisterContextLinux::CreateHostNativeRegisterContextLinux(
-    const ArchSpec &target_arch, NativeThreadProtocol &native_thread,
-    uint32_t concrete_frame_idx) {
-  return new NativeRegisterContextLinux_arm(target_arch, native_thread,
-                                            concrete_frame_idx);
+    const ArchSpec &target_arch, NativeThreadProtocol &native_thread) {
+  return llvm::make_unique<NativeRegisterContextLinux_arm>(target_arch,
+                                                           native_thread);
 }
 
 #endif // defined(__arm__)
 
 NativeRegisterContextLinux_arm::NativeRegisterContextLinux_arm(
-    const ArchSpec &target_arch, NativeThreadProtocol &native_thread,
-    uint32_t concrete_frame_idx)
-    : NativeRegisterContextLinux(native_thread, concrete_frame_idx,
+    const ArchSpec &target_arch, NativeThreadProtocol &native_thread)
+    : NativeRegisterContextLinux(native_thread,
                                  new RegisterInfoPOSIX_arm(target_arch)) {
   switch (target_arch.GetMachine()) {
   case llvm::Triple::arm:
@@ -186,14 +184,14 @@ NativeRegisterContextLinux_arm::ReadRegister(const RegisterInfo *reg_info,
     error = ReadRegisterRaw(full_reg, reg_value);
 
     if (error.Success()) {
-      // If our read was not aligned (for ah,bh,ch,dh), shift our returned value
-      // one byte to the right.
+      // If our read was not aligned (for ah,bh,ch,dh), shift our returned
+      // value one byte to the right.
       if (is_subreg && (reg_info->byte_offset & 0x1))
         reg_value.SetUInt64(reg_value.GetAsUInt64() >> 8);
 
       // If our return byte size was greater than the return value reg size,
-      // then
-      // use the type specified by reg_info rather than the uint64_t default
+      // then use the type specified by reg_info rather than the uint64_t
+      // default
       if (reg_value.GetByteSize() > reg_info->byte_size)
         reg_value.SetType(reg_info);
     }
@@ -560,8 +558,8 @@ uint32_t NativeRegisterContextLinux_arm::SetHardwareWatchpoint(
   uint32_t control_value = 0, wp_index = 0, addr_word_offset = 0, byte_mask = 0;
   lldb::addr_t real_addr = addr;
 
-  // Check if we are setting watchpoint other than read/write/access
-  // Also update watchpoint flag to match Arm write-read bit configuration.
+  // Check if we are setting watchpoint other than read/write/access Also
+  // update watchpoint flag to match Arm write-read bit configuration.
   switch (watch_flags) {
   case 1:
     watch_flags = 2;
@@ -581,9 +579,9 @@ uint32_t NativeRegisterContextLinux_arm::SetHardwareWatchpoint(
   if (size == 0 || size > 4)
     return LLDB_INVALID_INDEX32;
 
-  // Check 4-byte alignment for hardware watchpoint target address.
-  // Below is a hack to recalculate address and size in order to
-  // make sure we can watch non 4-byte alligned addresses as well.
+  // Check 4-byte alignment for hardware watchpoint target address. Below is a
+  // hack to recalculate address and size in order to make sure we can watch
+  // non 4-byte alligned addresses as well.
   if (addr & 0x03) {
     uint8_t watch_mask = (addr & 0x03) + size;
 
@@ -876,12 +874,10 @@ Status NativeRegisterContextLinux_arm::DoReadRegisterValue(
     uint32_t offset, const char *reg_name, uint32_t size,
     RegisterValue &value) {
   // PTRACE_PEEKUSER don't work in the aarch64 linux kernel used on android
-  // devices (always return
-  // "Bad address"). To avoid using PTRACE_PEEKUSER we read out the full GPR
-  // register set instead.
-  // This approach is about 4 times slower but the performance overhead is
-  // negligible in
-  // comparision to processing time in lldb-server.
+  // devices (always return "Bad address"). To avoid using PTRACE_PEEKUSER we
+  // read out the full GPR register set instead. This approach is about 4 times
+  // slower but the performance overhead is negligible in comparision to
+  // processing time in lldb-server.
   assert(offset % 4 == 0 && "Try to write a register with unaligned offset");
   if (offset + sizeof(uint32_t) > sizeof(m_gpr_arm))
     return Status("Register isn't fit into the size of the GPR area");
@@ -897,13 +893,10 @@ Status NativeRegisterContextLinux_arm::DoReadRegisterValue(
 Status NativeRegisterContextLinux_arm::DoWriteRegisterValue(
     uint32_t offset, const char *reg_name, const RegisterValue &value) {
   // PTRACE_POKEUSER don't work in the aarch64 linux kernel used on android
-  // devices (always return
-  // "Bad address"). To avoid using PTRACE_POKEUSER we read out the full GPR
-  // register set, modify
-  // the requested register and write it back. This approach is about 4 times
-  // slower but the
-  // performance overhead is negligible in comparision to processing time in
-  // lldb-server.
+  // devices (always return "Bad address"). To avoid using PTRACE_POKEUSER we
+  // read out the full GPR register set, modify the requested register and
+  // write it back. This approach is about 4 times slower but the performance
+  // overhead is negligible in comparision to processing time in lldb-server.
   assert(offset % 4 == 0 && "Try to write a register with unaligned offset");
   if (offset + sizeof(uint32_t) > sizeof(m_gpr_arm))
     return Status("Register isn't fit into the size of the GPR area");
@@ -917,9 +910,8 @@ Status NativeRegisterContextLinux_arm::DoWriteRegisterValue(
   // will clear thumb bit of new PC if we are already in thumb mode; that is
   // CPSR thumb mode bit is set.
   if (offset / sizeof(uint32_t) == gpr_pc_arm) {
-    // Check if we are already in thumb mode and
-    // thumb bit of current PC is read out to be zero and
-    // thumb bit of next PC is read out to be one.
+    // Check if we are already in thumb mode and thumb bit of current PC is
+    // read out to be zero and thumb bit of next PC is read out to be one.
     if ((m_gpr_arm[gpr_cpsr_arm] & 0x20) && !(m_gpr_arm[gpr_pc_arm] & 0x01) &&
         (value.GetAsUInt32() & 0x01)) {
       reg_value &= (~1ull);

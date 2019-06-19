@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.4 2018/03/05 13:35:09 otto Exp $
+.\"	$OpenBSD: sysctl.2,v 1.27 2019/05/09 15:05:47 claudio Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 5 2018 $
+.Dd $Mdocdate: May 9 2019 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -229,7 +229,7 @@ Each time it runs,
 gets the list of debugging variables from the kernel and
 displays their current values.
 The system defines twenty
-.Li struct ctldebug
+.Vt struct ctldebug
 variables named
 .Va debug0
 through
@@ -256,7 +256,7 @@ privileges may change the value.
 .It Dv FS_POSIX_SETUID Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
-.It Dv FS_POSIX_SETUID Pq Va fx.posix.setuid
+.It Dv FS_POSIX_SETUID Pq Va fs.posix.setuid
 When this variable is set, ownership changes on a file will cause
 the
 .Va S_ISUID
@@ -286,6 +286,7 @@ privileges may change the value.
 .It Dv HW_MODEL Ta "string" Ta "no"
 .It Dv HW_NCPU Ta "integer" Ta "no"
 .It Dv HW_NCPUFOUND Ta "integer" Ta "no"
+.It Dv HW_NCPUONLINE Ta "integer" Ta "no"
 .It Dv HW_PAGESIZE Ta "integer" Ta "no"
 .It Dv HW_PERFPOLICY Ta "string" Ta "yes"
 .It Dv HW_PHYSMEM Ta "integer" Ta "no"
@@ -293,6 +294,7 @@ privileges may change the value.
 .It Dv HW_PRODUCT Ta "string" Ta "no"
 .It Dv HW_SENSORS Ta "node" Ta "not applicable"
 .It Dv HW_SETPERF Ta "integer" Ta "yes"
+.It Dv HW_SMT Ta "integer" Ta "yes"
 .It Dv HW_USERMEM Ta "integer" Ta "no"
 .It Dv HW_USERMEM64 Ta "int64_t" Ta "no"
 .It Dv HW_UUID Ta "string" Ta "no"
@@ -320,16 +322,18 @@ The number of disks currently attached to the system.
 A comma-separated list of disk names.
 .It Dv HW_DISKSTATS Pq Va hw.diskstats
 An array of
-.Li struct diskstats
+.Vt struct diskstats
 structures containing disk statistics.
 .It Dv HW_MACHINE Pq Va hw.machine
 The machine class.
 .It Dv HW_MODEL Pq Va hw.model
 The machine model.
 .It Dv HW_NCPU Pq Va hw.ncpu
-The number of CPUs being used.
+The number of CPUs configured.
 .It Dv HW_NCPUFOUND Pq Va hw.ncpufound
 The number of CPUs found.
+.It Dv HW_NCPUONLINE Pq Va hw.ncpuonline
+The number of CPUs online.
 .It Dv HW_PAGESIZE Pq Va hw.pagesize
 The software page size.
 .It Dv HW_PERFPOLICY Pq Va hw.perfpolicy
@@ -350,17 +354,17 @@ The total physical memory, in bytes.
 The product name of the machine.
 .It Dv HW_SENSORS Pq Va hw.sensors
 Third level comprises an array of
-.Li struct sensordev
+.Vt struct sensordev
 structures containing information about devices
 that may attach hardware monitoring sensors.
 .Pp
 Third, fourth and fifth levels together comprise an array of
-.Li struct sensor
+.Vt struct sensor
 structures containing snapshot readings of hardware monitoring sensors.
 In such usage, third level indicates the numerical representation
 of the sensor device name to which the sensor is attached
 (a device's xname and number are matched with the help of
-.Li struct sensordev
+.Vt struct sensordev
 structure above),
 fourth level indicates sensor type and
 fifth level is an ordinal sensor number (unique to
@@ -385,6 +389,10 @@ It is only modifiable if
 .Dv HW_PERFPOLICY
 is set to
 .Dq manual .
+.It Dv HW_SMT Pq Va hw.smt
+If set to 1, enable simultaneous multithreading (SMT) on CPUs that
+support it.
+Disabled by default.
 .It Dv HW_USERMEM
 The amount of available non-kernel memory in bytes.
 This variable is deprecated; use
@@ -413,6 +421,7 @@ information.
 .It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv KERN_ALLOWKMEM Ta "integer" Ta "yes"
 .It Dv KERN_ARGMAX Ta "integer" Ta "no"
+.It Dv KERN_AUDIO Ta "node" Ta "yes"
 .It Dv KERN_BOOTTIME Ta "struct timeval" Ta "no"
 .It Dv KERN_CACHEPCT Ta "integer" Ta "yes"
 .It Dv KERN_CCPU Ta "integer" Ta "no"
@@ -420,7 +429,7 @@ information.
 .It Dv KERN_CONSDEV Ta "dev_t" Ta "no"
 .It Dv KERN_CPTIME Ta "long[CPUSTATES]" Ta "no"
 .It Dv KERN_CPTIME2 Ta "u_int64_t[CPUSTATES]" Ta "no"
-.It Dv KERN_DNSJACKPORT Ta "integer" Ta "yes"
+.It Dv KERN_CPUSTATS Ta "struct cpustats" Ta "no"
 .It Dv KERN_DOMAINNAME Ta "string" Ta "yes"
 .It Dv KERN_FILE Ta "struct kinfo_file" Ta "no"
 .It Dv KERN_FORKSTAT Ta "struct forkstat" Ta "no"
@@ -454,6 +463,8 @@ information.
 .It Dv KERN_OSREV Ta "integer" Ta "no"
 .It Dv KERN_OSTYPE Ta "string" Ta "no"
 .It Dv KERN_OSVERSION Ta "string" Ta "no"
+.It Dv KERN_PFSTATUS Ta "struct pf_status" Ta "no"
+.It Dv KERN_POOL_DEBUG Ta "integer" Ta "yes"
 .It Dv KERN_POSIX1 Ta "integer" Ta "no"
 .It Dv KERN_PROC Ta "struct kinfo_proc" Ta "no"
 .It Dv KERN_PROC_ARGS Ta "node" Ta "not applicable"
@@ -479,6 +490,7 @@ information.
 .It Dv KERN_TTYCOUNT Ta "integer" Ta "no"
 .It Dv KERN_VERSION Ta "string" Ta "no"
 .It Dv KERN_WATCHDOG Ta "node" Ta "not applicable"
+.It Dv KERN_WITNESS Ta "node" Ta "not applicable"
 .It Dv KERN_WXABORT Ta "integer" Ta "yes"
 .El
 .Bl -tag -width "123456"
@@ -494,19 +506,41 @@ this variable may not be changed.
 .It Dv KERN_ARGMAX Pq Va kern.argmax
 The maximum number of bytes allowed among the arguments to
 .Xr exec 3 .
+.It Dv KERN_AUDIO Pq Va kern.audio
+Control device-independent aspects of the
+.Xr audio 4
+and
+.Xr mixer 4
+subsystem.
+Currently, there is one subnode:
+.Bl -column "KERN_AUDIO_RECORD" "integer" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv KERN_AUDIO_RECORD Ta "integer" Ta "yes"
+.El
+.Pp
+Its meaning is as follows:
+.Bl -tag -width "123456"
+.It Dv KERN_AUDIO_RECORD Pq Va kern.audio.record
+If set to the default value of 0, recording is muted by default
+for all audio devices.
+Otherwise, audio recording is enabled by default.
+For individual devices, this setting can be overridden with the
+.Xr mixerctl 1
+.Va record.enable
+variable.
+.El
 .It Dv KERN_BOOTTIME Pq Va kern.boottime
 A
-.Li struct timeval
+.Vt struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
 .It Dv KERN_CACHEPCT Pq Va kern.bufcachepercent
-The maximum percentage of physical memory the buffer cache may use;
-the default is 20%.
+The maximum percentage of DMA-reachable physical memory the buffer cache may use.
 .It Dv KERN_CCPU Pq Va kern.ccpu
 The scheduler exponential decay value.
 .It Dv KERN_CLOCKRATE Pq Va kern.clockrate
 A
-.Li struct clockinfo
+.Vt struct clockinfo
 structure is returned.
 This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
@@ -515,28 +549,33 @@ skew rate.
 The console device.
 .It Dv KERN_CPTIME Pq Va kern.cp_time
 An array of longs of size
-.Li CPUSTATES
+.Dv CPUSTATES
 is returned, containing statistics about the number of ticks spent by
 the system in interrupt processing, user processes
 .Po
 .Xr nice 1
 or normal
 .Pc ,
-system processing, or idling.
+system processing, lock spinning, or idling.
 .It Dv KERN_CPTIME2 Pq Va kern.cp_time2
 Similar to
 .Dv KERN_CPTIME ,
 but obtains information from only the single CPU specified by the
 third level name given.
-.It Dv KERN_DNSJACKPORT Pq Va kern.dnsjackport
-When non-zero, the localhost port to which all DNS sockets should be
-redirected.
+.It Dv KERN_CPUSTATS
+A
+.Vt struct cpustats
+structure is returned.
+This structure contains the array described in
+.Dv KERN_CPTIME2
+and a bit mask indicating the status of the CPU specified by the
+third level name.
 .It Dv KERN_DOMAINNAME Pq Va kern.domainname
 Get or set the YP domain name.
 .It Dv KERN_FILE Pq Va kern.file
 Return the entire file table, or a subset of it.
 An array of
-.Li struct kinfo_file
+.Vt struct kinfo_file
 structures is returned,
 whose size depends on the current number of selected files in the system.
 The third and fourth level names are as follows:
@@ -548,11 +587,11 @@ The third and fourth level names are as follows:
 .El
 .Pp
 The fifth level name is the size of the
-.Li struct kinfo_file
+.Vt struct kinfo_file
 and the sixth level name is the number of structures to return.
 .It Dv KERN_FORKSTAT Pq Va kern.forkstat
 A
-.Li struct forkstat
+.Vt struct forkstat
 structure is returned.
 This structure contains information about the number of
 .Xr fork 2 ,
@@ -596,7 +635,7 @@ A node containing the statistics for the memory bucket of the
 specified size (in decimal notation, the number of bytes per bucket
 element, e.g., 16, 32, 128).
 Each node returns a
-.Li struct kmembuckets .
+.Vt struct kmembuckets .
 .Pp
 If a value is specified that does not correspond directly to a
 bucket size, the statistics for the closest larger bucket size will be
@@ -613,7 +652,7 @@ types.
 A node containing the statistics for the memory types of the specified
 name.
 Each node returns a
-.Li struct kmemstats .
+.Vt struct kmemstats .
 .El
 .It Dv KERN_MAXCLUSTERS Pq Va kern.maxclusters
 The maximum number of
@@ -634,7 +673,7 @@ The maximum number of simultaneous threads the system will allow.
 The maximum number of vnodes available on the system.
 .It Dv KERN_MBSTAT Pq Va kern.mbstat
 A
-.Li struct mbstat
+.Vt struct mbstat
 structure is returned, containing statistics on
 .Xr mbuf 9
 usage.
@@ -646,7 +685,7 @@ see
 The size of the kernel message buffer.
 .It Dv KERN_NCHSTATS Pq Va kern.nchstats
 A
-.Li struct nchstats
+.Vt struct nchstats
 structure is returned.
 This structure contains information about the
 filename to
@@ -683,13 +722,34 @@ The system revision number.
 The system type string.
 .It Dv KERN_OSVERSION Pq Va kern.osversion
 The kernel build version.
+.It Dv KERN_PFSTATUS
+The
+.Vt struct pf_status
+structure.
+.It Dv KERN_POOL_DEBUG Pq Va kern.pool_debug
+Modify the memory pool debug level.
+Valid values are:
+.Pp
+.Bl -tag -width 3n -offset indent -compact
+.It 0
+Disable pool debugging.
+.It 1
+Enable use after free detection.
+.It 2
+In addition to 1, when calling either
+.Xr malloc 9
+or
+.Xr pool_get 9
+with flags indicating that sleeping is allowed then always yield.
+Useful to detect potential races.
+.El
 .It Dv KERN_POSIX1 Pq Va kern.posix1version
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
 .It Dv KERN_PROC Pq Va kern.proc
 Return the entire process table, or a subset of it.
 An array of
-.Li struct kinfo_proc
+.Vt struct kinfo_proc
 structures is returned,
 whose size depends on the current number of selected processes in the system.
 The third and fourth level names are as follows:
@@ -706,7 +766,7 @@ The third and fourth level names are as follows:
 .El
 .Pp
 The fifth level name is the size of the
-.Li struct kinfo_proc
+.Vt struct kinfo_proc
 and the sixth level name is the number of structures to return.
 .It Dv KERN_PROC_ARGS Pq Va kern.procargs
 Returns the arguments or environment of a process.
@@ -746,11 +806,11 @@ The third level name is the target process ID.
 .It Dv KERN_PROC_VMMAP Pq Va kern.proc_vmmap
 Return the entire process VM map entries.
 An array of
-.Li struct kinfo_vmentry
+.Vt struct kinfo_vmentry
 structures is returned,
 whose size depends on the current number of VM map entries of the selected process.
 Iteration is possible by setting the base address in the first element of
-.Li struct kinfo_vmentry .
+.Vt struct kinfo_vmentry .
 .It Dv KERN_PROF Pq Va kern.profiling
 Return profiling information about the kernel.
 If the kernel is not compiled for profiling,
@@ -787,7 +847,7 @@ or
 to show that profiling is running or stopped.
 .It Dv GPROF_TOS
 Array of
-.Li struct tostruct
+.Vt struct tostruct
 describing destination of calls and their counts.
 .El
 .It Dv KERN_RAWPARTITION Pq Va kern.rawpartition
@@ -800,14 +860,14 @@ This level may be raised by processes with appropriate privileges.
 It may only be lowered by process 1.
 .It Dv KERN_SEMINFO Pq Va kern.seminfo
 Return the elements of
-.Li struct seminfo .
+.Vt struct seminfo .
 If the kernel is not compiled with System V style semaphore support,
 attempts to retrieve any of the
 .Dv KERN_SEMINFO
 values will fail with
 .Er EOPNOTSUPP .
 The third level names for the elements of
-.Li struct seminfo
+.Vt struct seminfo
 are detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
@@ -828,11 +888,11 @@ The variables are as follows:
 .Bl -tag -width "123456"
 .It Dv KERN_SEMINFO_SEMAEM Pq Va kern.seminfo.semaem
 The adjust on exit maximum value.
-.It Dv KERN_SEMINFO_SEMMNI Pq Va kern.seminfo.semni
+.It Dv KERN_SEMINFO_SEMMNI Pq Va kern.seminfo.semmni
 The maximum number of semaphore identifiers allowed.
 .It Dv KERN_SEMINFO_SEMMNS Pq Va kern.seminfo.semmns
 The maximum number of semaphores allowed in the system.
-.It Dv KERN_SEMINFO_SEMMNU Pq Va kern.seminfo.semnu
+.It Dv KERN_SEMINFO_SEMMNU Pq Va kern.seminfo.semmnu
 The maximum number of semaphore undo structures allowed in the system.
 .It Dv KERN_SEMINFO_SEMMSL Pq Va kern.seminfo.semmsl
 The maximum number of semaphores allowed per ID.
@@ -849,14 +909,14 @@ The semaphore maximum value.
 .El
 .It Dv KERN_SHMINFO Pq Va kern.shminfo
 Return the elements of
-.Li struct shminfo .
+.Vt struct shminfo .
 If the kernel is not compiled with System V style shared memory support,
 attempts to retrieve any of the
 .Dv KERN_SHMINFO
 values will fail with
 .Er EOPNOTSUPP .
 The third level names for the elements of
-.Li struct shminfo
+.Vt struct shminfo
 are detailed below.
 The changeable column shows whether a process with appropriate
 privileges may change the value.
@@ -919,7 +979,7 @@ The random value is added to make buffer overflow exploitation slightly
 harder.
 The bigger the number, the harder it is to brute force this added protection,
 but it also means bigger waste of memory.
-.It Li KERN_SYSVIPC_INFO Pq Va kern.sysvipc_info
+.It Dv KERN_SYSVIPC_INFO Pq Va kern.sysvipc_info
 Return System V style IPC configuration and run-time information.
 The third level name selects the System V style IPC facility.
 .Bl -column "KERN_SYSVIPC_MSG_INFO" "struct shm_sysctl_info" -offset indent
@@ -1002,7 +1062,7 @@ The variables are as follows:
 .Bl -tag -width "123456"
 .It Dv KERN_TTY_INFO Pq Va kern.tty.ttyinfo
 Returns an array of
-.Li struct itty
+.Vt struct itty
 structures containing tty statistics.
 .It Dv KERN_TTY_TKCANCC Pq Va kern.tty.tk_cancc
 Returns the number of input characters in canonical mode.
@@ -1046,6 +1106,46 @@ variable.
 The period of the watchdog timer in seconds.
 Set to 0 to disable the watchdog timer.
 .El
+.It Dv KERN_WITNESS Pq Va kern.witness
+Control settings of
+.Xr witness 4 .
+.Bl -column "KERN_WITNESS_LOCKTRACE" "integer" "Changeable" -offset indent
+.It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
+.It Dv KERN_WITNESS_LOCKTRACE Ta "integer" Ta "yes"
+.It Dv KERN_WITNESS_WATCH Ta "integer" Ta "yes"
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Dv KERN_WITNESS_LOCKTRACE Pq Va kern.witness.locktrace
+When set,
+.Xr witness 4
+saves a stack trace on each lock acquisition.
+The stack traces of acquired locks can be viewed using
+.Xr ddb 4 .
+.It Dv KERN_WITNESS_WATCH Pq Va kern.witness.watch
+Control how
+.Xr witness 4
+behaves on error.
+Valid values are:
+.Pp
+.Bl -tag -width 3n -offset indent -compact
+.It -1
+Disable
+.Xr witness 4
+completely.
+System reboot is needed to re-enable it.
+.It 0
+Disable lock order checking.
+.It 1
+Print a message if an error is detected.
+.It 2
+Print a message if an error is detected,
+and a stack trace if possible.
+.It 3
+The same as 2, but also drop into the kernel debugger.
+.El
+.El
 .It Dv KERN_WXABORT Pq Va kern.wxabort
 Generate an abort,
 rather than returning an error,
@@ -1062,7 +1162,7 @@ Most architectures define at least the following variables.
 Consult the example file
 .Pa /etc/examples/sysctl.conf
 for a non-exhaustive list of
-.Li machdep
+.Va machdep
 variables.
 .Ss CTL_NET
 The string and integer information available for the
@@ -1098,9 +1198,10 @@ The fifth and sixth level names are as follows:
 .It Dv NET_RT_IFLIST Ta "None"
 .It Dv NET_RT_IFNAMES Ta "None"
 .It Dv NET_RT_STATS Ta "None"
+.It Dv NET_RT_TABLE Ta "rtableid"
 .El
 .Bl -tag -width "123456"
-.It Li NET_RT_DUMP
+.It Dv NET_RT_DUMP
 If set to 0, show all routes.
 If set to any number, show all routes with that number priority.
 If set to a negative number, show routes that do not have the positive
@@ -1321,10 +1422,10 @@ IPsec encapsulated or decapsulated by the host.
 The default value is 0.
 .It Li ip.ifq
 Fifth level comprises an array of
-.Li struct ifqueue
+.Vt struct ifqueue
 structures containing information about IP packet input queue.
 The fifth level names for the elements of
-.Li struct ifqueue
+.Vt struct ifqueue
 are detailed below.
 .Bl -column "Fifth level name" "integer" "Changeable" -offset indent
 .It Sy "Fifth level name" Ta Sy "Type" Ta Sy "Changeable"
@@ -1513,7 +1614,7 @@ This value applies to normal transport protocols, not to ICMP.
 .It Li ipcomp.enable Pq Va net.inet.ipcomp.enable
 Enable the IPComp protocol.
 See
-.Xr ipsecctl 8
+.Xr ipcomp 4
 for more information.
 .It Li ipip.allow Pq Va net.inet.ipip.allow
 If set to 0, incoming IP-in-IP packets will not be processed.
@@ -1531,7 +1632,7 @@ Returns 1 if TCP segments with the
 flag set are being acknowledged immediately, otherwise 0.
 .It Li tcp.baddynamic Pq Va net.inet.tcp.baddynamic
 An array of
-.Li in_port_t
+.Vt in_port_t
 is returned specifying the bitmask of TCP ports between 512
 and 1023 inclusive that should not be allocated dynamically
 by the kernel (i.e., they must be bound specifically by port number).
@@ -1539,7 +1640,7 @@ by the kernel (i.e., they must be bound specifically by port number).
 Returns 1 if Explicit Congestion Notifications for TCP are enabled.
 .It Li tcp.ident Pq Va net.inet.tcp.ident
 A
-.Li struct tcp_ident_mapping
+.Vt struct tcp_ident_mapping
 specifying a local and foreign endpoint of a TCP
 socket is filled in with the effective and real UIDs of the process that
 owns the socket.
@@ -1577,7 +1678,7 @@ is increased to 10 * MSS or 14600 bytes, as specified in
 RFC 6928.
 .It Li tcp.rootonly Pq Va net.inet.tcp.rootonly
 An array of
-.Li in_port_t
+.Vt in_port_t
 is returned specifying the bitmask of TCP ports
 that can only be bound by processes with root euid.
 When running with a
@@ -1782,10 +1883,10 @@ Methods for overriding this value are documented in
 .Pp
 .It Li ip6.ifq Pq Va net.inet6.ip6.ifq
 Fifth level comprises an array of
-.Li struct ifqueue
+.Vt struct ifqueue
 structures containing information about IPv6 packet input queue.
 The fifth level names for the elements of
-.Li struct ifqueue
+.Vt struct ifqueue
 are detailed above in
 .Li ip.ifq .
 .Pp
@@ -1889,10 +1990,11 @@ Set or get the default TTL value which is used for MPLS (Shim) Header.
 The default is 255.
 .It Dv MPLSCTL_IFQUEUE Pq Va net.mpls.ifq
 Fourth level comprises an array of
-.Li struct ifqueue
+.Vt struct ifqueue
 structures containing information about MPLS packet input queue.
 The forth level names for the elements of
-.Li struct ifqueue are same as described in
+.Vt struct ifqueue
+are the same as described in
 .Li ip.ifq
 in the
 .Dv PF_INET
@@ -1932,10 +2034,10 @@ If set to 1, enable PIPEX processing.
 The default is 0.
 .It Dv PIPEXCTL_INQ Pq Va net.pipex.inq
 Fourth level comprises an array of
-.Li struct ifqueue
+.Vt struct ifqueue
 structures containing information about the PIPEX packet input queue.
 The forth level names for the elements of
-.Li struct ifqueue
+.Vt struct ifqueue
 are the same as described in
 .Li ip.ifq
 in the
@@ -1943,10 +2045,11 @@ in the
 section.
 .It Dv PIPEXCTL_OUTQ Pq Va net.pipex.outq
 Fourth level comprises an array of
-.Li struct ifqueue
+.Vt struct ifqueue
 structures containing information about PIPEX packet output queue.
 The forth level names for the elements of
-.Li struct ifqueue are same as described in
+.Vt struct ifqueue
+are the same as described in
 .Li ip.ifq
 in the
 .Dv PF_INET
@@ -2079,6 +2182,7 @@ privileges may change the value.
 .It Sy "Second level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv VM_ANONMIN Ta "integer" Ta "yes"
 .It Dv VM_LOADAVG Ta "struct loadavg" Ta "no"
+.It Dv VM_MALLOC_CONF Ta "string" Ta "yes"
 .It Dv VM_MAXSLP Ta "integer" Ta "no"
 .It Dv VM_METER Ta "struct vmtotal" Ta "no"
 .It Dv VM_NKMEMPAGES Ta "integer" Ta "no"
@@ -2096,19 +2200,25 @@ pages which contain anonymous mapping.
 .It Dv VM_LOADAVG Pq Va vm.loadavg
 Return the load average history.
 The returned data consists of a
-.Li struct loadavg .
+.Vt struct loadavg .
+.It Dv VM_MALLOC_CONF Pq Va vm.malloc_conf
+String of option flags for the
+.Xr malloc 3
+family of functions
+which will be applied to all programs starting in the future.
+The string contains a maximum of 15 characters.
 .It Dv VM_MAXSLP Pq Va vm.maxslp
 The time for a process to be blocked before being swappable,
 in seconds.
 .It Dv VM_METER Pq Va vm.vmmeter
 Return the system wide virtual memory statistics.
 The returned data consists of a
-.Li struct vmtotal .
+.Vt struct vmtotal .
 .It Dv VM_NKMEMPAGES Pq Va vm.nkmempages
 Number of pages in kmem_map.
 .It Dv VM_PSSTRINGS Pq Va vm.psstrings
 Returns the address of the process
-.Li struct ps_strings .
+.Vt struct ps_strings .
 The
 .Xr ps 1
 program uses it to locate the argument and environment strings.

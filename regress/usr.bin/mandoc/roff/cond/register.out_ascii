@@ -9,6 +9,10 @@ DDEESSCCRRIIPPTTIIOONN
        not yet defined
        now defined
 
+       identifier + identifier:      myreg is defined
+
+       escape sequence after identifier: -myreg is defined
 
 
-OpenBSD                          May 31, 2015                      REGISTER(1)
+
+OpenBSD                        February 6, 2019                    REGISTER(1)

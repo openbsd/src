@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.200 2017/05/15 10:52:08 mpi Exp $ */
+/*	$OpenBSD: ehci.c,v 1.204 2019/03/31 06:16:38 mglocker Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1406,7 +1406,12 @@ ehci_open(struct usbd_pipe *pipe)
 		panic("ehci_open: bad device speed %d", dev->speed);
 	}
 
-	naks = 8;		/* XXX */
+	/*
+	 * NAK reload count:
+	 * must be zero with using periodic transfer.
+	 * Linux 4.20's driver (ehci-q.c) sets 4, we use same value.
+	 */
+	naks = ((xfertype == UE_CONTROL) || (xfertype == UE_BULK)) ? 4 : 0;
 
 	/* Allocate sqh for everything, save isoc xfers */
 	if (xfertype != UE_ISOCHRONOUS) {
@@ -1424,15 +1429,30 @@ ehci_open(struct usbd_pipe *pipe)
 		    EHCI_QH_CTL : 0) |
 		    EHCI_QH_SET_NRL(naks)
 		);
+		/*
+		 * To reduce conflict with split isochronous transfer,
+		 * schedule (split) interrupt transfer at latter half of
+		 * 1ms frame:
+		 *
+		 *         |<-------------- H-Frame -------------->|
+		 *         .H0  :H1   H2   H3   H4   H5   H6   H7  .H0" :H1"
+		 *         .    :                                  .    :
+		 * [HS]    .    :          SS        CS   CS'  CS" .    :
+		 * [FS/LS] .    :               |<== >>>> >>>|     .    :
+		 *         .    :                                  .    :
+		 *         .B7' :B0   B1   B2   B3   B4   B5   B6  .B7  :B0"
+		 *              |<-------------- B-Frame -------------->|
+		 *
+		 */
 		sqh->qh.qh_endphub = htole32(
 		    EHCI_QH_SET_MULT(1) |
-		    EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x01 : 0)
+		    EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x08 : 0)
 		);
 		if (speed != EHCI_QH_SPEED_HIGH) {
 			sqh->qh.qh_endphub |= htole32(
 			    EHCI_QH_SET_HUBA(hshubaddr) |
 			    EHCI_QH_SET_PORT(hshubport) |
-			    EHCI_QH_SET_CMASK(0x1c) /* XXX */
+			    EHCI_QH_SET_CMASK(0xe0)
 			);
 		}
 		sqh->qh.qh_curqtd = htole32(EHCI_LINK_TERMINATE);
@@ -1713,7 +1733,7 @@ usb_config_descriptor_t ehci_confd = {
 	1,
 	1,
 	0,
-	UC_SELF_POWERED,
+	UC_BUS_POWERED | UC_SELF_POWERED,
 	0			/* max power */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.18 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: search.c,v 1.24 2018/12/05 06:44:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -102,7 +102,7 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 	struct ber_element	*root, *elm, *filtered_attrs = NULL, *link, *a;
 	struct ber_element	*prev, *next;
 	char			*adesc;
-	void			*buf;
+	void			*buf, *searchdn = NULL;
 
 	if ((root = ber_add_sequence(NULL)) == NULL)
 		goto fail;
@@ -111,10 +111,20 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 		goto fail;
 	link = filtered_attrs;
 
+	if ((searchdn = strndup(dn, dnlen)) == NULL)
+		goto fail;
+
 	for (prev = NULL, a = attrs->be_sub; a; a = next) {
 		if (ber_get_string(a->be_sub, &adesc) != 0)
 			goto fail;
-		if (should_include_attribute(adesc, search, 0)) {
+		/*
+		 * Check if read access to the attribute is allowed and if it
+		 * should be included in the search result.  The attribute is
+		 * filtered out in the result if one of these conditions fails.
+		 */
+		if (authorized(search->conn, search->ns, ACI_READ,
+		    searchdn, adesc, LDAP_SCOPE_BASE) &&
+		    should_include_attribute(adesc, search, 0)) {
 			next = a->be_next;
 			if (prev != NULL)
 				prev->be_next = a->be_next;	/* unlink a */
@@ -130,7 +140,7 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 	}
 
 	elm = ber_printf_elements(root, "i{txe", search->req->msgid,
-		BER_CLASS_APP, (unsigned long)LDAP_RES_SEARCH_ENTRY,
+		BER_CLASS_APP, LDAP_RES_SEARCH_ENTRY,
 		dn, dnlen, filtered_attrs);
 	if (elm == NULL)
 		goto fail;
@@ -152,11 +162,13 @@ search_result(const char *dn, size_t dnlen, struct ber_element *attrs,
 		return -1;
 	}
 
+	free(searchdn);
 	return 0;
 fail:
 	log_warn("search result");
 	if (root)
 		ber_free_elements(root);
+	free(searchdn);
 	return -1;
 }
 
@@ -222,7 +234,7 @@ check_search_entry(struct btval *key, struct btval *val, struct search *search)
 	}
 
 	if (!authorized(search->conn, search->ns, ACI_READ, dn0,
-	    LDAP_SCOPE_BASE)) {
+	    NULL, LDAP_SCOPE_BASE)) {
 		/* LDAP_INSUFFICIENT_ACCESS */
 		free(dn0);
 		return 0;
@@ -310,7 +322,8 @@ conn_search(struct search *search)
 		if (search->plan->indexed) {
 			search->cindx = TAILQ_FIRST(&search->plan->indices);
 			key.data = search->cindx->prefix;
-			log_debug("init index scan on [%s]", key.data);
+			log_debug("init index scan on [%s]",
+			    search->cindx->prefix);
 		} else {
 			if (*search->basedn)
 				key.data = search->basedn;
@@ -330,7 +343,8 @@ conn_search(struct search *search)
 		op = BT_NEXT;
 
 		if (rc == BT_SUCCESS && search->plan->indexed) {
-			log_debug("found index %.*s", key.size, key.data);
+			log_debug("found index %.*s", (int)key.size,
+			    (char *)key.data);
 
 			if (!has_prefix(&key, search->cindx->prefix)) {
 				log_debug("scanned past index prefix [%s]",
@@ -350,7 +364,8 @@ conn_search(struct search *search)
 				memset(&key, 0, sizeof(key));
 				key.data = search->cindx->prefix;
 				key.size = strlen(key.data);
-				log_debug("re-init cursor on [%s]", key.data);
+				log_debug("re-init cursor on [%s]",
+				    search->cindx->prefix);
 				op = BT_CURSOR;
 				continue;
 			}
@@ -437,8 +452,8 @@ conn_search(struct search *search)
 
 		/* Check if we have passed the size limit. */
 		if (rc == BT_SUCCESS && search->szlim > 0 &&
-		    search->nmatched >= search->szlim) {
-			log_debug("search %d/%lld has reached size limit (%u)",
+		    search->nmatched > search->szlim) {
+			log_debug("search %d/%lld has exceeded size limit (%lld)",
 			    search->conn->fd, search->req->msgid,
 			    search->szlim);
 			reason = LDAP_SIZELIMIT_EXCEEDED;
@@ -449,8 +464,8 @@ conn_search(struct search *search)
 	/* Check if we have passed the time limit. */
 	now = time(0);
 	if (rc == 0 && search->tmlim > 0 &&
-	    search->started_at + search->tmlim <= now) {
-		log_debug("search %d/%lld has reached time limit (%u)",
+	    search->started_at + search->tmlim < now) {
+		log_debug("search %d/%lld has exceeded time limit (%lld)",
 		    search->conn->fd, search->req->msgid,
 		    search->tmlim);
 		reason = LDAP_TIMELIMIT_EXCEEDED;
@@ -666,7 +681,7 @@ static struct plan *
 search_planner(struct namespace *ns, struct ber_element *filter)
 {
 	int			 class;
-	unsigned long		 type;
+	unsigned int		 type;
 	char			*s, *attr;
 	struct ber_element	*elm;
 	struct index		*indx;
@@ -803,7 +818,7 @@ search_planner(struct namespace *ns, struct ber_element *filter)
 		break;
 
 	default:
-		log_warnx("filter type %d not implemented", filter->be_type);
+		log_warnx("filter type %u not implemented", filter->be_type);
 		plan->undefined = 1;
 		break;
 	}
@@ -875,12 +890,12 @@ ldap_search(struct request *req)
 	}
 
 	normalize_dn(search->basedn);
-	log_debug("base dn = %s, scope = %d", search->basedn, search->scope);
+	log_debug("base dn = %s, scope = %lld", search->basedn, search->scope);
 
 	if (*search->basedn == '\0') {
 		/* request for the root DSE */
 		if (!authorized(req->conn, NULL, ACI_READ, "",
-		    LDAP_SCOPE_BASE)) {
+		    NULL, LDAP_SCOPE_BASE)) {
 			reason = LDAP_INSUFFICIENT_ACCESS;
 			goto done;
 		}
@@ -897,7 +912,7 @@ ldap_search(struct request *req)
 	if (strcasecmp(search->basedn, "cn=schema") == 0) {
 		/* request for the subschema subentries */
 		if (!authorized(req->conn, NULL, ACI_READ,
-		    "cn=schema", LDAP_SCOPE_BASE)) {
+		    "cn=schema", NULL, LDAP_SCOPE_BASE)) {
 			reason = LDAP_INSUFFICIENT_ACCESS;
 			goto done;
 		}
@@ -926,7 +941,7 @@ ldap_search(struct request *req)
 	}
 
 	if (!authorized(req->conn, search->ns, ACI_READ,
-	    search->basedn, search->scope)) {
+	    search->basedn, NULL, search->scope)) {
 		reason = LDAP_INSUFFICIENT_ACCESS;
 		goto done;
 	}

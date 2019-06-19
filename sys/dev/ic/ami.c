@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.233 2017/04/08 02:57:24 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.234 2018/08/14 05:22:21 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1606,7 +1606,7 @@ ami_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	default:
 		AMI_DPRINTF(AMI_D_IOCTL, (" invalid ioctl\n"));
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	return (error);

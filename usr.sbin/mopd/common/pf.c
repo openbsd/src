@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.17 2017/04/19 05:36:13 natano Exp $ */
+/*	$OpenBSD: pf.c,v 1.18 2018/04/26 12:42:51 guenther Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,12 +28,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
-#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <net/if.h>
@@ -48,8 +45,10 @@
 #include <string.h>
 #include <err.h>
 #include <errno.h>
-
+#include <fcntl.h>
+#include <stdio.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include "common/mopdef.h"
 

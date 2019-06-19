@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.186 2018/01/12 10:22:02 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.188 2019/04/26 11:38:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,7 +39,6 @@ struct options	*global_options;	/* server options */
 struct options	*global_s_options;	/* session options */
 struct options	*global_w_options;	/* window options */
 struct environ	*global_environ;
-struct hooks	*global_hooks;
 
 struct timeval	 start_time;
 const char	*socket_path;
@@ -167,6 +166,31 @@ setblocking(int fd, int state)
 }
 
 const char *
+find_cwd(void)
+{
+	char		 resolved1[PATH_MAX], resolved2[PATH_MAX];
+	static char	 cwd[PATH_MAX];
+	const char	*pwd;
+
+	if (getcwd(cwd, sizeof cwd) == NULL)
+		return (NULL);
+	if ((pwd = getenv("PWD")) == NULL || *pwd == '\0')
+		return (cwd);
+
+	/*
+	 * We want to use PWD so that symbolic links are maintained,
+	 * but only if it matches the actual working directory.
+	 */
+	if (realpath(pwd, resolved1) == NULL)
+		return (cwd);
+	if (realpath(cwd, resolved2) == NULL)
+		return (cwd);
+	if (strcmp(resolved1, resolved2) != 0)
+		return (cwd);
+	return (pwd);
+}
+
+const char *
 find_home(void)
 {
 	struct passwd		*pw;
@@ -191,7 +215,6 @@ int
 main(int argc, char **argv)
 {
 	char					*path, *label, *cause, **var;
-	char					 tmp[PATH_MAX];
 	const char				*s, *shell, *cwd;
 	int					 opt, flags, keys;
 	const struct options_table_entry	*oe;
@@ -288,13 +311,10 @@ main(int argc, char **argv)
 			flags |= CLIENT_UTF8;
 	}
 
-	global_hooks = hooks_create(NULL);
-
 	global_environ = environ_create();
 	for (var = environ; *var != NULL; var++)
 		environ_put(global_environ, *var);
-	if ((cwd = getenv("PWD")) == NULL &&
-	    (cwd = getcwd(tmp, sizeof tmp)) != NULL)
+	if ((cwd = find_cwd()) != NULL)
 		environ_set(global_environ, "PWD", "%s", cwd);
 
 	global_options = options_create(NULL);

@@ -16,10 +16,10 @@
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Target/TargetLowering.h"
 
 using namespace llvm;
 
@@ -38,6 +38,9 @@ bool CallLowering::lowerCall(
     ArgInfo OrigArg{ArgRegs[i], Arg->getType(), ISD::ArgFlagsTy{},
                     i < NumFixedArgs};
     setArgFlags(OrigArg, i + AttributeList::FirstArgIndex, DL, CS);
+    // We don't currently support swifterror or swiftself args.
+    if (OrigArg.Flags.isSwiftError() || OrigArg.Flags.isSwiftSelf())
+      return false;
     OrigArgs.push_back(OrigArg);
     ++i;
   }
@@ -108,7 +111,7 @@ bool CallLowering::handleAssignments(MachineIRBuilder &MIRBuilder,
                                      ArrayRef<ArgInfo> Args,
                                      ValueHandler &Handler) const {
   MachineFunction &MF = MIRBuilder.getMF();
-  const Function &F = *MF.getFunction();
+  const Function &F = MF.getFunction();
   const DataLayout &DL = F.getParent()->getDataLayout();
 
   SmallVector<CCValAssign, 16> ArgLocs;
@@ -160,10 +163,11 @@ unsigned CallLowering::ValueHandler::extendRegister(unsigned ValReg,
     // FIXME: bitconverting between vector types may or may not be a
     // nop in big-endian situations.
     return ValReg;
-  case CCValAssign::AExt:
+  case CCValAssign::AExt: {
     assert(!VA.getLocVT().isVector() && "unexpected vector extend");
-    // Otherwise, it's a nop.
-    return ValReg;
+    auto MIB = MIRBuilder.buildAnyExt(LocTy, ValReg);
+    return MIB->getOperand(0).getReg();
+  }
   case CCValAssign::SExt: {
     unsigned NewReg = MRI.createGenericVirtualRegister(LocTy);
     MIRBuilder.buildSExt(NewReg, ValReg);

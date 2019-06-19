@@ -14,6 +14,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCFixupKindInfo.h"
+#include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/MC/MCWinCOFFObjectWriter.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -90,10 +91,9 @@ bool ARMWinCOFFObjectWriter::recordRelocation(const MCFixup &Fixup) const {
 
 namespace llvm {
 
-MCObjectWriter *createARMWinCOFFObjectWriter(raw_pwrite_stream &OS,
-                                             bool Is64Bit) {
-  MCWinCOFFObjectTargetWriter *MOTW = new ARMWinCOFFObjectWriter(Is64Bit);
-  return createWinCOFFObjectWriter(MOTW, OS);
+std::unique_ptr<MCObjectTargetWriter>
+createARMWinCOFFObjectWriter(bool Is64Bit) {
+  return llvm::make_unique<ARMWinCOFFObjectWriter>(Is64Bit);
 }
 
 } // end namespace llvm

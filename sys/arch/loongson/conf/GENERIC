@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.56 2017/08/28 19:32:53 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.60 2019/05/08 23:54:39 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -137,6 +137,10 @@ umct*		at uhub?	# MCT USB-RS232 serial adapter
 ucom*		at umct?
 uslcom*		at uhub?	# Silicon Laboratories CP210x serial
 ucom*		at uslcom?
+uscom*		at uhub?	# Simple USB serial adapters
+ucom*		at uscom?
+ucrcom*		at uhub?	# Chromebook serial
+ucom*		at ucrcom?
 uark*		at uhub?	# Arkmicro ARK3116 serial
 ucom*		at uark?
 moscom*		at uhub?	# MosChip MCS7703 serial
@@ -164,6 +168,7 @@ atu*		at uhub?	# Atmel AT76c50x based 802.11b
 aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet  
 axe*		at uhub?	# ASIX Electronics AX88172 USB Ethernet
 axen*		at uhub?	# ASIX Electronics AX88179 USB Ethernet
+bwfm*		at uhub?	# Broadcom FullMAC
 cdce*		at uhub?	# CDC Ethernet
 urndis*		at uhub?	# Remote NDIS Ethernet
 cue*		at uhub?	# CATC USB-EL1201A based Ethernet
@@ -212,6 +217,7 @@ udl*		at uhub?
 wsdisplay*	at udl?
 
 # NICs
+em*		at pci?		# Intel Pro/1000 ethernet
 ral*		at pci?
 re*		at pci?
 rl*		at pci?

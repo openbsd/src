@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.S,v 1.6 2018/02/06 09:25:54 patrick Exp $	*/
+/*	$OpenBSD: sigcode.S,v 1.7 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
@@ -32,10 +32,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
-
 #include "assym.h"
+
 #include <sys/syscall.h>
+
+#include <machine/asm.h>
 
 /*
  * Signal trampoline; 

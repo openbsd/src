@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.20 2014/10/09 02:44:55 deraadt Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.21 2018/09/15 13:20:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -283,7 +283,7 @@ list(int argc, char **argv)
 	struct mdstore_set *set;
 
 	dc = ds_conn_open("/dev/spds", NULL);
-	ds_conn_register_service(dc, &mdstore_service);
+	mdstore_register(dc);
 	while (TAILQ_EMPTY(&mdstore_sets))
 		ds_conn_handle(dc);
 
@@ -306,7 +306,7 @@ xselect(int argc, char **argv)
 		usage();
 
 	dc = ds_conn_open("/dev/spds", NULL);
-	ds_conn_register_service(dc, &mdstore_service);
+	mdstore_register(dc);
 	while (TAILQ_EMPTY(&mdstore_sets))
 		ds_conn_handle(dc);
 
@@ -325,7 +325,7 @@ delete(int argc, char **argv)
 		errx(1, "\"%s\" should not be deleted", argv[1]);
 
 	dc = ds_conn_open("/dev/spds", NULL);
-	ds_conn_register_service(dc, &mdstore_service);
+	mdstore_register(dc);
 	while (TAILQ_EMPTY(&mdstore_sets))
 		ds_conn_handle(dc);
 
@@ -341,7 +341,7 @@ download(int argc, char **argv)
 		usage();
 
 	dc = ds_conn_open("/dev/spds", NULL);
-	ds_conn_register_service(dc, &mdstore_service);
+	mdstore_register(dc);
 	while (TAILQ_EMPTY(&mdstore_sets))
 		ds_conn_handle(dc);
 

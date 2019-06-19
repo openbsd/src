@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.20 2017/08/28 17:41:59 jsing Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.21 2018/09/05 00:55:33 djm Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -296,7 +296,7 @@ pkey_rsa_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
 			return 0;
 	}
 
-	if (rslen != tbslen || memcmp(tbs, rctx->tbuf, rslen))
+	if (rslen != tbslen || timingsafe_bcmp(tbs, rctx->tbuf, rslen))
 		return 0;
 
 	return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.75 2017/04/08 02:57:25 deraadt Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.76 2018/08/25 18:32:05 jcs Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -636,6 +636,21 @@ uhidev_close(struct uhidev *scd)
 	if (sc->sc_ibuf != NULL) {
 		free(sc->sc_ibuf, M_USBDEV, sc->sc_isize);
 		sc->sc_ibuf = NULL;
+	}
+}
+
+int
+uhidev_report_type_conv(int hid_type_id)
+{
+	switch (hid_type_id) {
+	case hid_input:
+		return UHID_INPUT_REPORT;
+	case hid_output:
+		return UHID_OUTPUT_REPORT;
+	case hid_feature:
+		return UHID_FEATURE_REPORT;
+	default:
+		return -1;
 	}
 }
 

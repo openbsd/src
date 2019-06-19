@@ -1,4 +1,4 @@
-/* $OpenBSD: fusebuf.c,v 1.12 2016/08/30 16:45:54 natano Exp $ */
+/* $OpenBSD: fusebuf.c,v 1.16 2018/06/21 14:53:36 helg Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -16,9 +16,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/systm.h>
@@ -39,6 +41,14 @@ fb_setup(size_t len, ino_t ino, int op, struct proc *p)
 	arc4random_buf(&fbuf->fb_uuid, sizeof fbuf->fb_uuid);
 	fbuf->fb_type = op;
 	fbuf->fb_ino = ino;
+	/*
+	 * When exposed to userspace, thread IDs have THREAD_PID_OFFSET added
+	 * to keep them from overlapping the PID range.
+	 */
+	fbuf->fb_tid = p->p_tid + THREAD_PID_OFFSET;
+	fbuf->fb_uid = p->p_ucred->cr_uid;
+	fbuf->fb_gid = p->p_ucred->cr_gid;
+	fbuf->fb_umask = p->p_p->ps_fd->fd_cmask;
 	if (len == 0)
 		fbuf->fb_dat = NULL;
 	else
@@ -48,17 +58,31 @@ fb_setup(size_t len, ino_t ino, int op, struct proc *p)
 	return (fbuf);
 }
 
+/*
+ * Puts the fbuf on the queue and waits for the file system to process
+ * it. The current process will block indefinitely and cannot be
+ * interrupted or killed. This is consistent with how VFS system calls
+ * should behave. nfs supports the -ointr or -i mount option and FUSE
+ * can too but this is non-trivial. The file system daemon must be
+ * multi-threaded and also support being interrupted. Note that
+ * libfuse currently only supports single-threaded deamons.
+ *
+ * Why not timeout similar to mount_nfs -osoft?
+ * It introduces another point of failure and a possible mount option
+ * (to specify the timeout) that users need to understand and tune to
+ * avoid premature timeouts for slow file systems. More complexity,
+ * less reliability.
+ *
+ * In the case where the daemon has become unresponsive the daemon
+ * will have to be killed in order for the current process to
+ * wakeup. The FUSE device is automatically closed when the daemon
+ * terminates and any waiting fbuf is woken up.
+ */
 int
 fb_queue(dev_t dev, struct fusebuf *fbuf)
 {
-	int error = 0;
-
 	fuse_device_queue_fbuf(dev, fbuf);
-
-	if ((error = tsleep(fbuf, PWAIT, "fuse msg", TSLEEP_TIMEOUT * hz))) {
-		fuse_device_cleanup(dev, fbuf);
-		return (error);
-	}
+	tsleep(fbuf, PWAIT, "fuse", 0);
 
 	return (fbuf->fb_err);
 }
@@ -67,7 +91,7 @@ void
 fb_delete(struct fusebuf *fbuf)
 {
 	if (fbuf != NULL) {
-		free(fbuf->fb_dat, M_FUSEFS, 0);
+		free(fbuf->fb_dat, M_FUSEFS, fbuf->fb_len);
 		pool_put(&fusefs_fbuf_pool, fbuf);
 	}
 }

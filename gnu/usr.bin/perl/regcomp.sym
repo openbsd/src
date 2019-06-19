@@ -59,6 +59,7 @@ SANY        REG_ANY,    no 0 S    ; Match any one character.
 ANYOF       ANYOF,      sv 1 S    ; Match character in (or not in) this class, single char match only
 ANYOFD      ANYOF,      sv 1 S    ; Like ANYOF, but /d is in effect
 ANYOFL      ANYOF,      sv 1 S    ; Like ANYOF, but /l is in effect
+ANYOFM      ANYOFM      byte 1 S  ; Like ANYOF, but matches an invariant byte as determined by the mask and arg
 
 #* POSIX Character Classes:
 # Order of the below is important.  See ordering comment above.
@@ -71,6 +72,9 @@ NPOSIXL     NPOSIXD,    none 0 S   ; complement of POSIXL, [[:^class:]]
 NPOSIXU     NPOSIXD,    none 0 S   ; complement of POSIXU, [[:^class:]]
 NPOSIXA     NPOSIXD,    none 0 S   ; complement of POSIXA, [[:^class:]]
 # End of order is important
+
+ASCII       ASCII,      none 0 S   ; [[:ascii:]]
+NASCII      ASCII,      none 0 S   ; [[:^ascii:]]
 
 CLUMP       CLUMP,      no 0 V    ; Match any extended grapheme cluster sequence
 
@@ -95,13 +99,13 @@ EXACTL      EXACT,      str       ; Like EXACT, but /l is in effect (used so loc
 EXACTF      EXACT,      str       ; Match this non-UTF-8 string (not guaranteed to be folded) using /id rules (w/len).
 EXACTFL     EXACT,      str       ; Match this string (not guaranteed to be folded) using /il rules (w/len).
 EXACTFU     EXACT,      str	  ; Match this string (folded iff in UTF-8, length in folding doesn't change if not in UTF-8) using /iu rules (w/len).
-EXACTFA     EXACT,      str	  ; Match this string (not guaranteed to be folded) using /iaa rules (w/len).
+EXACTFAA    EXACT,      str	  ; Match this string (not guaranteed to be folded) using /iaa rules (w/len).
 
 # End of important relative ordering.
 
 EXACTFU_SS  EXACT,      str	  ; Match this string (folded iff in UTF-8, length in folding may change even if not in UTF-8) using /iu rules (w/len).
-EXACTFLU8   EXACT,      str	  ; Rare cirucmstances: like EXACTFU, but is under /l, UTF-8, folded, and everything in it is above 255.
-EXACTFA_NO_TRIE  EXACT, str	  ; Match this string (which is not trie-able; not guaranteed to be folded) using /iaa rules (w/len).
+EXACTFLU8   EXACT,      str	  ; Rare circumstances: like EXACTFU, but is under /l, UTF-8, folded, and everything in it is above 255.
+EXACTFAA_NO_TRIE  EXACT, str	  ; Match this string (which is not trie-able; not guaranteed to be folded) using /iaa rules (w/len).
 
 #*Do nothing types
 
@@ -131,7 +135,9 @@ WHILEM      WHILEM,     no 0 V    ; Do curly processing and see if rest matches.
 
 #*OPEN,CLOSE,GROUPP     ...are numbered at compile time.
 OPEN        OPEN,       num 1     ; Mark this point in input as start of #n.
-CLOSE       CLOSE,      num 1     ; Analogous to OPEN.
+CLOSE       CLOSE,      num 1     ; Close corresponding OPEN of #n.
+SROPEN      SROPEN,     none      ; Same as OPEN, but for script run
+SRCLOSE     SRCLOSE,    none      ; Close preceding SROPEN
 
 REF         REF,        num 1 V   ; Match some already matched string
 REFF        REF,        num 1 V   ; Match already matched string, folded using native charset rules for non-utf8
@@ -243,7 +249,7 @@ PSEUDO      PSEUDO,     off       ; Pseudo opcode for internal use.
 #
 #
 TRIE            next:FAIL
-EVAL            AB:FAIL
+EVAL            B,postponed_AB:FAIL
 CURLYX          end:FAIL
 WHILEM          A_pre,A_min,A_max,B_min,B_max:FAIL
 BRANCH          next:FAIL

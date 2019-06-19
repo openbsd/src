@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2014/04/19 14:22:32 henning Exp $
+#	$OpenBSD: Makefile,v 1.23 2018/05/19 17:16:33 matthieu Exp $
 
 PROG=	pfctl
 SRCS=	pfctl.c parse.y pfctl_parser.c pf_print_state.c

@@ -445,7 +445,7 @@ __func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::target_type() const
 }  // __function
 
 template<class _Rp>
-class _LIBCPP_TYPE_VIS_ONLY function<_Rp()>
+class _LIBCPP_TEMPLATE_VIS function<_Rp()>
 {
     typedef __function::__base<_Rp()> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
@@ -600,7 +600,10 @@ template<class _Rp>
 function<_Rp()>&
 function<_Rp()>::operator=(const function& __f)
 {
-    function(__f).swap(*this);
+    if (__f)
+        function(__f).swap(*this);
+    else
+        *this = nullptr;
     return *this;
 }
 
@@ -608,11 +611,12 @@ template<class _Rp>
 function<_Rp()>&
 function<_Rp()>::operator=(nullptr_t)
 {
-    if (__f_ == (__base*)&__buf_)
-        __f_->destroy();
-    else if (__f_)
-        __f_->destroy_deallocate();
+    __base* __t = __f_;
     __f_ = 0;
+    if (__t == (__base*)&__buf_)
+        __t->destroy();
+    else if (__t)
+        __t->destroy_deallocate();
     return *this;
 }
 
@@ -642,6 +646,8 @@ template<class _Rp>
 void
 function<_Rp()>::swap(function& __f)
 {
+    if (_VSTD::addressof(__f) == this)
+      return;
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
         typename aligned_storage<sizeof(__buf_)>::type __tempbuf;
@@ -679,10 +685,8 @@ template<class _Rp>
 _Rp
 function<_Rp()>::operator()() const
 {
-#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
-        throw bad_function_call();
-#endif  // _LIBCPP_NO_EXCEPTIONS
+        __throw_bad_function_call();
     return (*__f_)();
 }
 
@@ -704,7 +708,7 @@ function<_Rp()>::target()
 {
     if (__f_ == 0)
         return (_Tp*)0;
-    return (_Tp*)__f_->target(typeid(_Tp));
+    return (_Tp*) const_cast<void *>(__f_->target(typeid(_Tp)));
 }
 
 template<class _Rp>
@@ -720,7 +724,7 @@ function<_Rp()>::target() const
 #endif  // _LIBCPP_NO_RTTI
 
 template<class _Rp, class _A0>
-class _LIBCPP_TYPE_VIS_ONLY function<_Rp(_A0)>
+class _LIBCPP_TEMPLATE_VIS function<_Rp(_A0)>
     : public unary_function<_A0, _Rp>
 {
     typedef __function::__base<_Rp(_A0)> __base;
@@ -876,7 +880,10 @@ template<class _Rp, class _A0>
 function<_Rp(_A0)>&
 function<_Rp(_A0)>::operator=(const function& __f)
 {
-    function(__f).swap(*this);
+    if (__f)
+        function(__f).swap(*this);
+    else
+        *this = nullptr;
     return *this;
 }
 
@@ -884,11 +891,12 @@ template<class _Rp, class _A0>
 function<_Rp(_A0)>&
 function<_Rp(_A0)>::operator=(nullptr_t)
 {
-    if (__f_ == (__base*)&__buf_)
-        __f_->destroy();
-    else if (__f_)
-        __f_->destroy_deallocate();
+    __base* __t = __f_;
     __f_ = 0;
+    if (__t == (__base*)&__buf_)
+        __t->destroy();
+    else if (__t)
+        __t->destroy_deallocate();
     return *this;
 }
 
@@ -918,6 +926,8 @@ template<class _Rp, class _A0>
 void
 function<_Rp(_A0)>::swap(function& __f)
 {
+    if (_VSTD::addressof(__f) == this)
+      return;
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
         typename aligned_storage<sizeof(__buf_)>::type __tempbuf;
@@ -955,10 +965,8 @@ template<class _Rp, class _A0>
 _Rp
 function<_Rp(_A0)>::operator()(_A0 __a0) const
 {
-#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
-        throw bad_function_call();
-#endif  // _LIBCPP_NO_EXCEPTIONS
+        __throw_bad_function_call();
     return (*__f_)(__a0);
 }
 
@@ -980,7 +988,7 @@ function<_Rp(_A0)>::target()
 {
     if (__f_ == 0)
         return (_Tp*)0;
-    return (_Tp*)__f_->target(typeid(_Tp));
+    return (_Tp*) const_cast<void *>(__f_->target(typeid(_Tp)));
 }
 
 template<class _Rp, class _A0>
@@ -996,7 +1004,7 @@ function<_Rp(_A0)>::target() const
 #endif  // _LIBCPP_NO_RTTI
 
 template<class _Rp, class _A0, class _A1>
-class _LIBCPP_TYPE_VIS_ONLY function<_Rp(_A0, _A1)>
+class _LIBCPP_TEMPLATE_VIS function<_Rp(_A0, _A1)>
     : public binary_function<_A0, _A1, _Rp>
 {
     typedef __function::__base<_Rp(_A0, _A1)> __base;
@@ -1152,7 +1160,10 @@ template<class _Rp, class _A0, class _A1>
 function<_Rp(_A0, _A1)>&
 function<_Rp(_A0, _A1)>::operator=(const function& __f)
 {
-    function(__f).swap(*this);
+    if (__f)
+        function(__f).swap(*this);
+    else
+        *this = nullptr;
     return *this;
 }
 
@@ -1160,11 +1171,12 @@ template<class _Rp, class _A0, class _A1>
 function<_Rp(_A0, _A1)>&
 function<_Rp(_A0, _A1)>::operator=(nullptr_t)
 {
-    if (__f_ == (__base*)&__buf_)
-        __f_->destroy();
-    else if (__f_)
-        __f_->destroy_deallocate();
+    __base* __t = __f_;
     __f_ = 0;
+    if (__t == (__base*)&__buf_)
+        __t->destroy();
+    else if (__t)
+        __t->destroy_deallocate();
     return *this;
 }
 
@@ -1194,6 +1206,8 @@ template<class _Rp, class _A0, class _A1>
 void
 function<_Rp(_A0, _A1)>::swap(function& __f)
 {
+    if (_VSTD::addressof(__f) == this)
+      return;
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
         typename aligned_storage<sizeof(__buf_)>::type __tempbuf;
@@ -1231,10 +1245,8 @@ template<class _Rp, class _A0, class _A1>
 _Rp
 function<_Rp(_A0, _A1)>::operator()(_A0 __a0, _A1 __a1) const
 {
-#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
-        throw bad_function_call();
-#endif  // _LIBCPP_NO_EXCEPTIONS
+        __throw_bad_function_call();
     return (*__f_)(__a0, __a1);
 }
 
@@ -1256,7 +1268,7 @@ function<_Rp(_A0, _A1)>::target()
 {
     if (__f_ == 0)
         return (_Tp*)0;
-    return (_Tp*)__f_->target(typeid(_Tp));
+    return (_Tp*) const_cast<void *>(__f_->target(typeid(_Tp)));
 }
 
 template<class _Rp, class _A0, class _A1>
@@ -1272,7 +1284,7 @@ function<_Rp(_A0, _A1)>::target() const
 #endif  // _LIBCPP_NO_RTTI
 
 template<class _Rp, class _A0, class _A1, class _A2>
-class _LIBCPP_TYPE_VIS_ONLY function<_Rp(_A0, _A1, _A2)>
+class _LIBCPP_TEMPLATE_VIS function<_Rp(_A0, _A1, _A2)>
 {
     typedef __function::__base<_Rp(_A0, _A1, _A2)> __base;
     aligned_storage<3*sizeof(void*)>::type __buf_;
@@ -1428,7 +1440,10 @@ template<class _Rp, class _A0, class _A1, class _A2>
 function<_Rp(_A0, _A1, _A2)>&
 function<_Rp(_A0, _A1, _A2)>::operator=(const function& __f)
 {
-    function(__f).swap(*this);
+    if (__f)
+        function(__f).swap(*this);
+    else
+        *this = nullptr;
     return *this;
 }
 
@@ -1436,11 +1451,12 @@ template<class _Rp, class _A0, class _A1, class _A2>
 function<_Rp(_A0, _A1, _A2)>&
 function<_Rp(_A0, _A1, _A2)>::operator=(nullptr_t)
 {
-    if (__f_ == (__base*)&__buf_)
-        __f_->destroy();
-    else if (__f_)
-        __f_->destroy_deallocate();
+    __base* __t = __f_;
     __f_ = 0;
+    if (__t == (__base*)&__buf_)
+        __t->destroy();
+    else if (__t)
+        __t->destroy_deallocate();
     return *this;
 }
 
@@ -1470,6 +1486,8 @@ template<class _Rp, class _A0, class _A1, class _A2>
 void
 function<_Rp(_A0, _A1, _A2)>::swap(function& __f)
 {
+    if (_VSTD::addressof(__f) == this)
+      return;
     if (__f_ == (__base*)&__buf_ && __f.__f_ == (__base*)&__f.__buf_)
     {
         typename aligned_storage<sizeof(__buf_)>::type __tempbuf;
@@ -1507,10 +1525,8 @@ template<class _Rp, class _A0, class _A1, class _A2>
 _Rp
 function<_Rp(_A0, _A1, _A2)>::operator()(_A0 __a0, _A1 __a1, _A2 __a2) const
 {
-#ifndef _LIBCPP_NO_EXCEPTIONS
     if (__f_ == 0)
-        throw bad_function_call();
-#endif  // _LIBCPP_NO_EXCEPTIONS
+        __throw_bad_function_call();
     return (*__f_)(__a0, __a1, __a2);
 }
 
@@ -1532,7 +1548,7 @@ function<_Rp(_A0, _A1, _A2)>::target()
 {
     if (__f_ == 0)
         return (_Tp*)0;
-    return (_Tp*)__f_->target(typeid(_Tp));
+    return (_Tp*) const_cast<void *>(__f_->target(typeid(_Tp)));
 }
 
 template<class _Rp, class _A0, class _A1, class _A2>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.95 2017/10/26 15:00:28 mpi Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.96 2018/10/02 02:05:34 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -17,7 +17,8 @@
  */
 
 /*-
- * Ralink Technology RT2860/RT3090/RT3390/RT3562/RT5390/RT5392 chipset driver
+ * Ralink Technology RT2860/RT3090/RT3290/RT3390/RT3562/RT5390/
+ *     RT5392 chipset driver
  * http://www.ralinktech.com/
  */
 
@@ -97,6 +98,7 @@ void		rt2860_ampdu_rx_stop(struct ieee80211com *,
 int		rt2860_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 uint16_t	rt3090_efuse_read_2(struct rt2860_softc *, uint16_t);
+uint16_t	rt3290_efuse_read_2(struct rt2860_softc *, uint16_t);
 uint16_t	rt2860_eeprom_read_2(struct rt2860_softc *, uint16_t);
 void		rt2860_intr_coherent(struct rt2860_softc *);
 void		rt2860_drain_stats_fifo(struct rt2860_softc *);
@@ -147,6 +149,7 @@ const char *	rt2860_get_rf(uint16_t);
 int		rt2860_read_eeprom(struct rt2860_softc *);
 int		rt2860_bbp_init(struct rt2860_softc *);
 void		rt5390_bbp_init(struct rt2860_softc *);
+int		rt3290_wlan_enable(struct rt2860_softc *);
 int		rt2860_txrx_enable(struct rt2860_softc *);
 int		rt2860_init(struct ifnet *);
 void		rt2860_stop(struct ifnet *, int);
@@ -172,6 +175,8 @@ static const struct {
 	uint8_t	val;
 } rt2860_def_bbp[] = {
 	RT2860_DEF_BBP
+},rt3290_def_bbp[] = {
+	RT3290_DEF_BBP
 },rt5390_def_bbp[] = {
 	RT5390_DEF_BBP
 };
@@ -194,6 +199,8 @@ static const struct {
 	uint8_t	val;
 }  rt3090_def_rf[] = {
 	RT3070_DEF_RF
+}, rt3290_def_rf[] = {
+	RT3290_DEF_RF
 }, rt3572_def_rf[] = {
 	RT3572_DEF_RF
 }, rt5390_def_rf[] = {
@@ -208,14 +215,19 @@ rt2860_attach(void *xsc, int id)
 	struct rt2860_softc *sc = xsc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int qid, ntries, error;
-	uint32_t tmp;
+	uint32_t tmp, reg;
 
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 15;
 
+	if (id == PCI_PRODUCT_RALINK_RT3290)
+		reg = RT2860_PCI_CFG;
+	else
+		reg = RT2860_ASIC_VER_ID;
+
 	/* wait for NIC to initialize */
 	for (ntries = 0; ntries < 100; ntries++) {
-		tmp = RAL_READ(sc, RT2860_ASIC_VER_ID);
+		tmp = RAL_READ(sc, reg);
 		if (tmp != 0 && tmp != 0xffffffff)
 			break;
 		DELAY(10);
@@ -286,7 +298,11 @@ rt2860_attachhook(struct device *self)
 	struct ifnet *ifp = &ic->ic_if;
 	int i, error;
 
-	error = loadfirmware("ral-rt2860", &sc->ucode, &sc->ucsize);
+	if (sc->mac_ver == 0x3290) {
+		error = loadfirmware("ral-rt3290", &sc->ucode, &sc->ucsize);
+	} else {
+		error = loadfirmware("ral-rt2860", &sc->ucode, &sc->ucsize);
+	}
 	if (error != 0) {
 		printf("%s: error %d, could not read firmware file %s\n",
 		    sc->sc_dev.dv_xname, error, "ral-rt2860");
@@ -1021,6 +1037,45 @@ rt3090_efuse_read_2(struct rt2860_softc *sc, uint16_t addr)
 
 	/* determine to which 32-bit register our 16-bit word belongs */
 	reg = RT3070_EFUSE_DATA3 - (addr & 0xc);
+	tmp = RAL_READ(sc, reg);
+
+	return (addr & 2) ? tmp >> 16 : tmp & 0xffff;
+}
+
+/* Read 16 bits from eFUSE ROM (RT3290 only) */
+uint16_t
+rt3290_efuse_read_2(struct rt2860_softc *sc, uint16_t addr)
+{
+	uint32_t tmp;
+	uint16_t reg;
+	int ntries;
+
+	addr *= 2;
+	/*-
+	 * Read one 16-byte block into registers EFUSE_DATA[0-3]:
+	 * DATA3: 3 2 1 0
+	 * DATA2: 7 6 5 4
+	 * DATA1: B A 9 8
+	 * DATA0: F E D C
+	 */
+	tmp = RAL_READ(sc, RT3290_EFUSE_CTRL);
+	tmp &= ~(RT3070_EFSROM_MODE_MASK | RT3070_EFSROM_AIN_MASK);
+	tmp |= (addr & ~0xf) << RT3070_EFSROM_AIN_SHIFT | RT3070_EFSROM_KICK;
+	RAL_WRITE(sc, RT3290_EFUSE_CTRL, tmp);
+	for (ntries = 0; ntries < 500; ntries++) {
+		tmp = RAL_READ(sc, RT3290_EFUSE_CTRL);
+		if (!(tmp & RT3070_EFSROM_KICK))
+			break;
+		DELAY(2);
+	}
+	if (ntries == 500)
+		return 0xffff;
+
+	if ((tmp & RT3070_EFUSE_AOUT_MASK) == RT3070_EFUSE_AOUT_MASK)
+		return 0xffff;	/* address not found */
+
+	/* determine to which 32-bit register our 16-bit word belongs */
+	reg = RT3290_EFUSE_DATA3 + (addr & 0xc);
 	tmp = RAL_READ(sc, reg);
 
 	return (addr & 2) ? tmp >> 16 : tmp & 0xffff;
@@ -2374,6 +2429,19 @@ rt5390_set_chan(struct rt2860_softc *sc, u_int chan)
 		else
 			rf = 0x06;
 		rt3090_rf_write(sc, 59, rf);
+	} else if (sc->mac_ver == 0x3290) {
+		if (chan == 6)
+			rt2860_mcu_bbp_write(sc, 68, 0x0c);
+		else
+			rt2860_mcu_bbp_write(sc, 68, 0x0b);
+
+		if (chan >= 1 && chan < 6)
+			rf = 0x0f;
+		else if (chan >= 7 && chan <= 11)
+			rf = 0x0e;
+		else if (chan >= 12 && chan <= 14)
+			rf = 0x0d;
+		rt3090_rf_write(sc, 59, rf);
 	}
 
 	/* Tx/Rx h20M */
@@ -2525,7 +2593,12 @@ rt5390_rf_init(struct rt2860_softc *sc)
 		for (i = 0; i < nitems(rt5392_def_rf); i++) {
 			rt3090_rf_write(sc, rt5392_def_rf[i].reg,
 			    rt5392_def_rf[i].val);
-	 }
+		}
+	} else if (sc->mac_ver == 0x3290) {
+		for (i = 0; i < nitems(rt3290_def_rf); i++) {
+			rt3090_rf_write(sc, rt3290_def_rf[i].reg,
+			    rt3290_def_rf[i].val);
+		}
 	} else {
 		for (i = 0; i < nitems(rt5390_def_rf); i++) {
 			rt3090_rf_write(sc, rt5390_def_rf[i].reg,
@@ -2545,7 +2618,8 @@ rt5390_rf_init(struct rt2860_softc *sc)
 	RAL_WRITE(sc, RT2860_TX_SW_CFG1, 0);
 	RAL_WRITE(sc, RT2860_TX_SW_CFG2, 0);
 
-	if (sc->mac_ver == 0x5390)
+	if (sc->mac_ver == 0x3290 ||
+	    sc->mac_ver == 0x5390)
 		rt3090_set_rx_antenna(sc, 0);
 
 	/* Patch RSSI inaccurate issue. */
@@ -2554,7 +2628,8 @@ rt5390_rf_init(struct rt2860_softc *sc)
 	rt2860_mcu_bbp_write(sc, 81, 0x33);
 
 	/* Enable DC filter. */
-	if (sc->mac_rev >= 0x0211)
+	if (sc->mac_rev >= 0x0211 ||
+	    sc->mac_ver == 0x3290)
 		rt2860_mcu_bbp_write(sc, 103, 0xc0);
 
 	bbp = rt2860_mcu_bbp_read(sc, 138);
@@ -3095,6 +3170,7 @@ rt2860_get_rf(uint16_t rev)
 	case RT3070_RF_3052:	return "RT3052";
 	case RT3070_RF_3320:	return "RT3320";
 	case RT3070_RF_3053:	return "RT3053";
+	case RT3290_RF_3290:	return "RT3290";
 	case RT5390_RF_5360:	return "RT5360";
 	case RT5390_RF_5390:	return "RT5390";
 	case RT5390_RF_5392:	return "RT5392";
@@ -3113,7 +3189,12 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 
 	/* check whether the ROM is eFUSE ROM or EEPROM */
 	sc->sc_srom_read = rt2860_eeprom_read_2;
-	if (sc->mac_ver >= 0x3071) {
+	if (sc->mac_ver == 0x3290) {
+		tmp = RAL_READ(sc, RT3290_EFUSE_CTRL);
+		DPRINTF(("EFUSE_CTRL=0x%08x\n", tmp));
+		if (tmp & RT3070_SEL_EFUSE)
+			sc->sc_srom_read = rt3290_efuse_read_2;
+	} else if (sc->mac_ver >= 0x3071) {
 		tmp = RAL_READ(sc, RT3070_EFUSE_CTRL);
 		DPRINTF(("EFUSE_CTRL=0x%08x\n", tmp));
 		if (tmp & RT3070_SEL_EFUSE)
@@ -3179,7 +3260,8 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 
 	/* read RF information */
 	val = rt2860_srom_read(sc, RT2860_EEPROM_ANTENNA);
-	if (sc->mac_ver >= 0x5390)
+	DPRINTF(("EEPROM ANT 0x%04x\n", val));
+	if (sc->mac_ver >= 0x5390 || sc->mac_ver == 0x3290)
 		sc->rf_rev = rt2860_srom_read(sc, RT2860_EEPROM_CHIPID);
 	else
 		sc->rf_rev = (val >> 8) & 0xf;
@@ -3423,7 +3505,8 @@ rt2860_bbp_init(struct rt2860_softc *sc)
 	}
 
 	/* initialize BBP registers to default values */
-	if (sc->mac_ver >= 0x5390)
+	if (sc->mac_ver >= 0x5390 ||
+	    sc->mac_ver == 0x3290)
 		rt5390_bbp_init(sc);
 	else {
 		for (i = 0; i < nitems(rt2860_def_bbp); i++) {
@@ -3463,10 +3546,16 @@ rt5390_bbp_init(struct rt2860_softc *sc)
 	/* Avoid data lost and CRC error. */
 	bbp = rt2860_mcu_bbp_read(sc, 4);
 	rt2860_mcu_bbp_write(sc, 4, bbp | RT5390_MAC_IF_CTRL);
-
-	for (i = 0; i < nitems(rt5390_def_bbp); i++) {
-		rt2860_mcu_bbp_write(sc, rt5390_def_bbp[i].reg,
-		    rt5390_def_bbp[i].val);
+	if (sc->mac_ver == 0x3290) {
+		for (i = 0; i < nitems(rt3290_def_bbp); i++) {
+			rt2860_mcu_bbp_write(sc, rt3290_def_bbp[i].reg,
+			    rt3290_def_bbp[i].val);
+		}
+	} else {
+		for (i = 0; i < nitems(rt5390_def_bbp); i++) {
+			rt2860_mcu_bbp_write(sc, rt5390_def_bbp[i].reg,
+			    rt5390_def_bbp[i].val);
+		}
 	}
 
 	if (sc->mac_ver == 0x5392) {
@@ -3484,6 +3573,44 @@ rt5390_bbp_init(struct rt2860_softc *sc)
 	/* Disable hardware antenna diversity. */
 	if (sc->mac_ver == 0x5390)
 		rt2860_mcu_bbp_write(sc, 154, 0);
+}
+
+int
+rt3290_wlan_enable(struct rt2860_softc *sc)
+{
+	uint32_t tmp;
+	int ntries;
+
+	/* enable chip and check readiness */
+	tmp = RAL_READ(sc, RT3290_WLAN_CTRL);
+	tmp |= RT3290_WLAN_EN | RT3290_FRC_WL_ANT_SET |
+	    RT3290_GPIO_OUT_OE_ALL;
+	RAL_WRITE(sc, RT3290_WLAN_CTRL, tmp);
+
+	for (ntries = 0; ntries < 200; ntries++) {
+		tmp = RAL_READ(sc, RT3290_CMB_CTRL);
+		if ((tmp & RT3290_PLL_LD) &&
+		    (tmp & RT3290_XTAL_RDY))
+			break;
+		DELAY(20);
+	}
+	if (ntries == 200)
+		return EIO;
+
+	/* toggle reset */
+	tmp = RAL_READ(sc, RT3290_WLAN_CTRL);
+	tmp |= RT3290_WLAN_RESET | RT3290_WLAN_CLK_EN;
+	tmp &= ~RT3290_PCIE_APP0_CLK_REQ;
+	RAL_WRITE(sc, RT3290_WLAN_CTRL, tmp);
+	DELAY(20);
+	tmp &= ~RT3290_WLAN_RESET;
+	RAL_WRITE(sc, RT3290_WLAN_CTRL, tmp);
+	DELAY(1000);
+
+	/* clear garbage interrupts */
+	RAL_WRITE(sc, RT2860_INT_STATUS, 0x7fffffff);
+
+	return 0;
 }
 
 int
@@ -3550,7 +3677,22 @@ rt2860_init(struct ifnet *ifp)
 		sc->sc_flags |= RT2860_ENABLED;
 	}
 
-	if (sc->rfswitch) {
+	if (sc->mac_ver == 0x3290) {
+		if ((error = rt3290_wlan_enable(sc)) != 0) {
+			printf("%s: could not enable wlan\n",
+			    sc->sc_dev.dv_xname);
+			rt2860_stop(ifp, 1);
+			return error;	
+		}
+	}
+
+	if (sc->mac_ver == 0x3290 && sc->rfswitch){
+		/* hardware has a radio switch on GPIO pin 0 */
+		if (!(RAL_READ(sc, RT3290_WLAN_CTRL) & RT3290_RADIO_EN)) {
+			printf("%s: radio is disabled by hardware switch\n",
+ 			    sc->sc_dev.dv_xname);
+		}
+	} else if (sc->rfswitch) {
 		/* hardware has a radio switch on GPIO pin 2 */
 		if (!(RAL_READ(sc, RT2860_GPIO_CTRL) & (1 << 2))) {
 			printf("%s: radio is disabled by hardware switch\n",
@@ -3621,7 +3763,8 @@ rt2860_init(struct ifnet *ifp)
 
 	for (i = 0; i < nitems(rt2860_def_mac); i++)
 		RAL_WRITE(sc, rt2860_def_mac[i].reg, rt2860_def_mac[i].val);
-	if (sc->mac_ver >= 0x5390)
+	if (sc->mac_ver == 0x3290 ||
+	    sc->mac_ver >= 0x5390)
 		RAL_WRITE(sc, RT2860_TX_SW_CFG0, 0x00000404);
 	else if (sc->mac_ver >= 0x3071) {
 		/* set delay of PA_PE assertion to 1us (unit of 0.25us) */
@@ -3719,6 +3862,7 @@ rt2860_init(struct ifnet *ifp)
 	/* select Main antenna for 1T1R devices */
 	if (sc->rf_rev == RT3070_RF_2020 ||
 	    sc->rf_rev == RT3070_RF_3020 ||
+	    sc->rf_rev == RT3290_RF_3290 ||
 	    sc->rf_rev == RT3070_RF_3320 ||
 	    sc->rf_rev == RT5390_RF_5390)
 		rt3090_set_rx_antenna(sc, 0);
@@ -3728,7 +3872,8 @@ rt2860_init(struct ifnet *ifp)
 	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED2, sc->led[1], 0);
 	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_LED3, sc->led[2], 0);
 
-	if (sc->mac_ver >= 0x5390)
+	if (sc->mac_ver == 0x3290 ||
+	    sc->mac_ver >= 0x5390)
 		rt5390_rf_init(sc);
 	else if (sc->mac_ver >= 0x3071)
 		rt3090_rf_init(sc);
@@ -3736,7 +3881,8 @@ rt2860_init(struct ifnet *ifp)
 	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_SLEEP, 0x02ff, 1);
 	rt2860_mcu_cmd(sc, RT2860_MCU_CMD_WAKEUP, 0, 1);
 
-	if (sc->mac_ver >= 0x5390)
+	if (sc->mac_ver == 0x3290 ||
+	    sc->mac_ver >= 0x5390)
 		rt5390_rf_wakeup(sc);
 	else if (sc->mac_ver >= 0x3071)
 		rt3090_rf_wakeup(sc);
@@ -3982,7 +4128,8 @@ rt2860_switch_chan(struct rt2860_softc *sc, struct ieee80211_channel *c)
 	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
 		return;
 
-	if (sc->mac_ver >= 0x5390)
+	if (sc->mac_ver == 0x3290 ||
+	    sc->mac_ver >= 0x5390)
 		rt5390_set_chan(sc, chan);
 	else if (sc->mac_ver >= 0x3071)
 		rt3090_set_chan(sc, chan);

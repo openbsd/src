@@ -1,7 +1,7 @@
-/*	$OpenBSD: eqn.c,v 1.41 2017/07/15 15:06:31 bentley Exp $ */
+/*	$OpenBSD: eqn.c,v 1.46 2018/12/14 06:33:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,8 +28,9 @@
 #include "mandoc_aux.h"
 #include "mandoc.h"
 #include "roff.h"
+#include "eqn.h"
 #include "libmandoc.h"
-#include "libroff.h"
+#include "eqn_parse.h"
 
 #define	EQN_NEST_MAX	 128 /* maximum nesting of defines */
 #define	STRNEQ(p1, sz1, p2, sz2) \
@@ -282,6 +283,13 @@ enum	parse_mode {
 	MODE_TOK
 };
 
+struct	eqn_def {
+	char		 *key;
+	size_t		  keysz;
+	char		 *val;
+	size_t		  valsz;
+};
+
 static	struct eqn_box	*eqn_box_alloc(struct eqn_node *, struct eqn_box *);
 static	struct eqn_box	*eqn_box_makebinary(struct eqn_node *,
 				struct eqn_box *);
@@ -293,12 +301,11 @@ static	void		 eqn_undef(struct eqn_node *);
 
 
 struct eqn_node *
-eqn_alloc(struct mparse *parse)
+eqn_alloc(void)
 {
 	struct eqn_node *ep;
 
 	ep = mandoc_calloc(1, sizeof(*ep));
-	ep->parse = parse;
 	ep->gsize = EQN_DEFSIZE;
 	return ep;
 }
@@ -397,7 +404,7 @@ eqn_next(struct eqn_node *ep, enum parse_mode mode)
 			ep->end = strchr(ep->start + 1, *ep->start);
 			ep->start++;  /* Skip opening quote. */
 			if (ep->end == NULL) {
-				mandoc_msg(MANDOCERR_ARG_QUOTE, ep->parse,
+				mandoc_msg(MANDOCERR_ARG_QUOTE,
 				    ep->node->line, ep->node->pos, NULL);
 				ep->end = strchr(ep->start, '\0');
 			}
@@ -418,7 +425,7 @@ eqn_next(struct eqn_node *ep, enum parse_mode mode)
 		if ((def = eqn_def_find(ep)) == NULL)
 			break;
 		if (++lim > EQN_NEST_MAX) {
-			mandoc_msg(MANDOCERR_ROFFLOOP, ep->parse,
+			mandoc_msg(MANDOCERR_ROFFLOOP,
 			    ep->node->line, ep->node->pos, NULL);
 			return EQN_TOK_EOF;
 		}
@@ -466,6 +473,8 @@ eqn_next(struct eqn_node *ep, enum parse_mode mode)
 void
 eqn_box_free(struct eqn_box *bp)
 {
+	if (bp == NULL)
+		return;
 
 	if (bp->first)
 		eqn_box_free(bp->first);
@@ -480,6 +489,16 @@ eqn_box_free(struct eqn_box *bp)
 	free(bp);
 }
 
+struct eqn_box *
+eqn_box_new(void)
+{
+	struct eqn_box	*bp;
+
+	bp = mandoc_calloc(1, sizeof(*bp));
+	bp->expectargs = UINT_MAX;
+	return bp;
+}
+
 /*
  * Allocate a box as the last child of the parent node.
  */
@@ -488,10 +507,9 @@ eqn_box_alloc(struct eqn_node *ep, struct eqn_box *parent)
 {
 	struct eqn_box	*bp;
 
-	bp = mandoc_calloc(1, sizeof(struct eqn_box));
+	bp = eqn_box_new();
 	bp->parent = parent;
 	bp->parent->args++;
-	bp->expectargs = UINT_MAX;
 	bp->font = bp->parent->font;
 	bp->size = ep->gsize;
 
@@ -540,7 +558,7 @@ static void
 eqn_delim(struct eqn_node *ep)
 {
 	if (ep->end[0] == '\0' || ep->end[1] == '\0') {
-		mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
+		mandoc_msg(MANDOCERR_REQ_EMPTY,
 		    ep->node->line, ep->node->pos, "delim");
 		if (ep->end[0] != '\0')
 			ep->end++;
@@ -567,7 +585,7 @@ eqn_undef(struct eqn_node *ep)
 	struct eqn_def	*def;
 
 	if (eqn_next(ep, MODE_NOSUB) == EQN_TOK_EOF) {
-		mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
+		mandoc_msg(MANDOCERR_REQ_EMPTY,
 		    ep->node->line, ep->node->pos, "undef");
 		return;
 	}
@@ -586,7 +604,7 @@ eqn_def(struct eqn_node *ep)
 	int		 i;
 
 	if (eqn_next(ep, MODE_NOSUB) == EQN_TOK_EOF) {
-		mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
+		mandoc_msg(MANDOCERR_REQ_EMPTY,
 		    ep->node->line, ep->node->pos, "define");
 		return;
 	}
@@ -615,7 +633,7 @@ eqn_def(struct eqn_node *ep)
 	}
 
 	if (eqn_next(ep, MODE_QUOTED) == EQN_TOK_EOF) {
-		mandoc_vmsg(MANDOCERR_REQ_EMPTY, ep->parse,
+		mandoc_msg(MANDOCERR_REQ_EMPTY,
 		    ep->node->line, ep->node->pos, "define %s", def->key);
 		free(def->key);
 		free(def->val);
@@ -664,7 +682,7 @@ next_tok:
 	case EQN_TOK_TDEFINE:
 		if (eqn_next(ep, MODE_NOSUB) == EQN_TOK_EOF ||
 		    eqn_next(ep, MODE_QUOTED) == EQN_TOK_EOF)
-			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
+			mandoc_msg(MANDOCERR_REQ_EMPTY,
 			    ep->node->line, ep->node->pos, "tdefine");
 		break;
 	case EQN_TOK_DELIM:
@@ -672,8 +690,8 @@ next_tok:
 		break;
 	case EQN_TOK_GFONT:
 		if (eqn_next(ep, MODE_SUB) == EQN_TOK_EOF)
-			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-			    ep->node->line, ep->node->pos, eqn_toks[tok]);
+			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->node->line,
+			    ep->node->pos, "%s", eqn_toks[tok]);
 		break;
 	case EQN_TOK_MARK:
 	case EQN_TOK_LINEUP:
@@ -688,8 +706,8 @@ next_tok:
 	case EQN_TOK_DOT:
 	case EQN_TOK_DOTDOT:
 		if (parent->last == NULL) {
-			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->parse,
-			    ep->node->line, ep->node->pos, eqn_toks[tok]);
+			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->node->line,
+			    ep->node->pos, "%s", eqn_toks[tok]);
 			cur = eqn_box_alloc(ep, parent);
 			cur->type = EQN_TEXT;
 			cur->text = mandoc_strdup("");
@@ -733,8 +751,8 @@ next_tok:
 	case EQN_TOK_DOWN:
 	case EQN_TOK_UP:
 		if (eqn_next(ep, MODE_SUB) == EQN_TOK_EOF)
-			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-			    ep->node->line, ep->node->pos, eqn_toks[tok]);
+			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->node->line,
+			    ep->node->pos, "%s", eqn_toks[tok]);
 		break;
 	case EQN_TOK_FAT:
 	case EQN_TOK_ROMAN:
@@ -771,14 +789,14 @@ next_tok:
 	case EQN_TOK_GSIZE:
 		/* Accept two values: integral size and a single. */
 		if (eqn_next(ep, MODE_SUB) == EQN_TOK_EOF) {
-			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-			    ep->node->line, ep->node->pos, eqn_toks[tok]);
+			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->node->line,
+			    ep->node->pos, "%s", eqn_toks[tok]);
 			break;
 		}
 		size = mandoc_strntoi(ep->start, ep->toksz, 10);
 		if (-1 == size) {
-			mandoc_msg(MANDOCERR_IT_NONUM, ep->parse,
-			    ep->node->line, ep->node->pos, eqn_toks[tok]);
+			mandoc_msg(MANDOCERR_IT_NONUM, ep->node->line,
+			    ep->node->pos, "%s", eqn_toks[tok]);
 			break;
 		}
 		if (EQN_TOK_GSIZE == tok) {
@@ -802,8 +820,8 @@ next_tok:
 		 * and keep on reading.
 		 */
 		if (parent->last == NULL) {
-			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->parse,
-			    ep->node->line, ep->node->pos, eqn_toks[tok]);
+			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->node->line,
+			    ep->node->pos, "%s", eqn_toks[tok]);
 			cur = eqn_box_alloc(ep, parent);
 			cur->type = EQN_TEXT;
 			cur->text = mandoc_strdup("");
@@ -869,8 +887,8 @@ next_tok:
 		 * rebalance and continue reading.
 		 */
 		if (parent->last == NULL) {
-			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->parse,
-			    ep->node->line, ep->node->pos, eqn_toks[tok]);
+			mandoc_msg(MANDOCERR_EQN_NOBOX, ep->node->line,
+			    ep->node->pos, "%s", eqn_toks[tok]);
 			cur = eqn_box_alloc(ep, parent);
 			cur->type = EQN_TEXT;
 			cur->text = mandoc_strdup("");
@@ -896,16 +914,16 @@ next_tok:
 			     cur->left != NULL))
 				break;
 		if (cur == NULL) {
-			mandoc_msg(MANDOCERR_BLK_NOTOPEN, ep->parse,
-			    ep->node->line, ep->node->pos, eqn_toks[tok]);
+			mandoc_msg(MANDOCERR_BLK_NOTOPEN, ep->node->line,
+			    ep->node->pos, "%s", eqn_toks[tok]);
 			break;
 		}
 		parent = cur;
 		if (EQN_TOK_RIGHT == tok) {
 			if (eqn_next(ep, MODE_SUB) == EQN_TOK_EOF) {
 				mandoc_msg(MANDOCERR_REQ_EMPTY,
-				    ep->parse, ep->node->line,
-				    ep->node->pos, eqn_toks[tok]);
+				    ep->node->line, ep->node->pos,
+				    "%s", eqn_toks[tok]);
 				break;
 			}
 			/* Handling depends on right/left. */
@@ -939,8 +957,8 @@ next_tok:
 			parent = parent->parent;
 		if (EQN_TOK_LEFT == tok &&
 		    eqn_next(ep, MODE_SUB) == EQN_TOK_EOF) {
-			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->parse,
-			    ep->node->line, ep->node->pos, eqn_toks[tok]);
+			mandoc_msg(MANDOCERR_REQ_EMPTY, ep->node->line,
+			    ep->node->pos, "%s", eqn_toks[tok]);
 			break;
 		}
 		parent = eqn_box_alloc(ep, parent);
@@ -973,8 +991,8 @@ next_tok:
 			if (cur->type == EQN_PILE)
 				break;
 		if (cur == NULL) {
-			mandoc_msg(MANDOCERR_IT_STRAY, ep->parse,
-			    ep->node->line, ep->node->pos, eqn_toks[tok]);
+			mandoc_msg(MANDOCERR_IT_STRAY, ep->node->line,
+			    ep->node->pos, "%s", eqn_toks[tok]);
 			break;
 		}
 		parent = eqn_box_alloc(ep, cur);
@@ -1089,6 +1107,9 @@ void
 eqn_free(struct eqn_node *p)
 {
 	int		 i;
+
+	if (p == NULL)
+		return;
 
 	for (i = 0; i < (int)p->defsz; i++) {
 		free(p->defs[i].key);

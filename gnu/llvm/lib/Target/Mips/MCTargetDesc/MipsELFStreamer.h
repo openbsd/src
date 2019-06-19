@@ -26,6 +26,7 @@ class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
 class MCSubtargetInfo;
+struct MCDwarfFrameInfo;
 
 class MipsELFStreamer : public MCELFStreamer {
   SmallVector<std::unique_ptr<MipsOptionRecord>, 8> MipsOptionRecords;
@@ -33,13 +34,9 @@ class MipsELFStreamer : public MCELFStreamer {
   SmallVector<MCSymbol*, 4> Labels;
 
 public:
-  MipsELFStreamer(MCContext &Context, MCAsmBackend &MAB, raw_pwrite_stream &OS,
-                  MCCodeEmitter *Emitter)
-      : MCELFStreamer(Context, MAB, OS, Emitter) {
-    RegInfoRecord = new MipsRegInfoRecord(this, Context);
-    MipsOptionRecords.push_back(
-        std::unique_ptr<MipsRegInfoRecord>(RegInfoRecord));
-  }
+  MipsELFStreamer(MCContext &Context, std::unique_ptr<MCAsmBackend> MAB,
+                  std::unique_ptr<MCObjectWriter> OW,
+                  std::unique_ptr<MCCodeEmitter> Emitter);
 
   /// Overriding this function allows us to add arbitrary behaviour before the
   /// \p Inst is actually emitted. For example, we can inspect the operands and
@@ -58,9 +55,17 @@ public:
   void SwitchSection(MCSection *Section,
                      const MCExpr *Subsection = nullptr) override;
 
-  /// Overriding this function allows us to dismiss all labels that are
-  /// candidates for marking as microMIPS when .word directive is emitted.
+  /// Overriding these functions allows us to dismiss all labels that are
+  /// candidates for marking as microMIPS when .word/.long/.4byte etc
+  /// directives are emitted.
   void EmitValueImpl(const MCExpr *Value, unsigned Size, SMLoc Loc) override;
+  void EmitIntValue(uint64_t Value, unsigned Size) override;
+
+  // Overriding these functions allows us to avoid recording of these labels
+  // in EmitLabel and later marking them as microMIPS.
+  void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) override;
+  void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override;
+  MCSymbol *EmitCFILabel() override;
 
   /// Emits all the option records stored up until the point it's called.
   void EmitMipsOptionRecords();
@@ -69,9 +74,11 @@ public:
   void createPendingLabelRelocs();
 };
 
-MCELFStreamer *createMipsELFStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                     raw_pwrite_stream &OS,
-                                     MCCodeEmitter *Emitter, bool RelaxAll);
+MCELFStreamer *createMipsELFStreamer(MCContext &Context,
+                                     std::unique_ptr<MCAsmBackend> MAB,
+                                     std::unique_ptr<MCObjectWriter> OW,
+                                     std::unique_ptr<MCCodeEmitter> Emitter,
+                                     bool RelaxAll);
 } // end namespace llvm
 
 #endif // LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSELFSTREAMER_H

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.73 2018/02/20 12:38:58 mpi Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.75 2018/06/22 13:33:30 visa Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/acct.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/ucred.h>
 #include <sys/proc.h>
@@ -948,6 +949,17 @@ crget(void)
 }
 
 /*
+ * Increment the reference count of a cred structure.
+ * Returns the passed structure.
+ */
+struct ucred *
+crhold(struct ucred *cr)
+{
+	atomic_inc_int(&cr->cr_ref);
+	return (cr);
+}
+
+/*
  * Free a cred structure.
  * Throws away space when ref count gets to 0.
  */
@@ -955,7 +967,7 @@ void
 crfree(struct ucred *cr)
 {
 
-	if (--cr->cr_ref == 0)
+	if (atomic_dec_int_nv(&cr->cr_ref) == 0)
 		pool_put(&ucred_pool, cr);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.5 2018/01/10 23:27:18 kettenis Exp $ */
+/* $OpenBSD: exception.S,v 1.9 2019/03/15 05:42:38 kevlo Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -23,13 +23,10 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <machine/asm.h>
-#if 0
-__FBSDID("$FreeBSD: head/sys/arm64/arm64/exception.S 297028 2016-03-18 16:18:29Z andrew $");
-#endif
+#include <machine/armreg.h>
 
 #include "assym.h"
 
@@ -125,8 +122,11 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/exception.S 297028 2016-03-18 16:18:29Z
 	mrs	x18, tpidr_el1
 	ldr	x1, [x18, #CI_CURPROC]
 	cbz	x1, 2f
-	ldr	w1, [x1, #P_ASTPENDING]
-	cbz	w1, 2f
+	ldr	w2, [x1, #P_ASTPENDING]
+	cbz	w2, 2f
+
+	// clear astpending before enabling interrupts.
+	str	wzr, [x1, #P_ASTPENDING]
 
 	/* Restore interrupts */
 	msr	daif, x19
@@ -136,6 +136,23 @@ __FBSDID("$FreeBSD: head/sys/arm64/arm64/exception.S 297028 2016-03-18 16:18:29Z
 	bl	_C_LABEL(ast)
 	b	1b
 2:
+.endm
+
+.macro disable_ss
+	mrs	x2, mdscr_el1
+	and	x2, x2, #(~DBG_MDSCR_SS)
+	msr	mdscr_el1, x2
+.endm
+
+.macro allow_ss
+	mrs	x2, tpidr_el1
+	ldr	x2, [x2, #(CI_CURPCB)]
+	ldr	w2, [x2, #(PCB_FLAGS)]
+	tbz	w2, #1, 1f	/* PCB_SINGLESTEP bit */
+	mrs	x2, mdscr_el1
+	orr	x2, x2, #(DBG_MDSCR_SS)
+	msr	mdscr_el1, x2
+1:
 .endm
 
 handle_el1h_sync:
@@ -164,29 +181,37 @@ handle_el1h_error:
 .endm
 
 	.globl handle_el0_sync
+	.type handle_el0_sync,@function
 handle_el0_sync:
 	save_registers 0
+	disable_ss
 	mov	x0, sp
 	bl	do_el0_sync
 	do_ast
 	bl	_C_LABEL(vfp_enable)
+	allow_ss
 	restore_registers 0
 	return
 
 	.globl handle_el0_irq
+	.type handle_el0_irq,@function
 handle_el0_irq:
 	save_registers 0
+	disable_ss
 	bl	_C_LABEL(vfp_save)
 	mov	x0, sp
 	bl	arm_cpu_intr
 	do_ast
 	bl	_C_LABEL(vfp_enable)
+	allow_ss
 	restore_registers 0
 	return
 
 	.globl handle_el0_error
+	.type handle_el0_error,@function
 handle_el0_error:
 	save_registers 0
+	disable_ss
 	mov	x0, sp
 	bl	do_el0_error
 	brk	0xf23

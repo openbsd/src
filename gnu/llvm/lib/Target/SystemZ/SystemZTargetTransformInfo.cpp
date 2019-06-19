@@ -17,10 +17,10 @@
 #include "SystemZTargetTransformInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/CodeGen/BasicTTIImpl.h"
+#include "llvm/CodeGen/CostTable.h"
+#include "llvm/CodeGen/TargetLowering.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/CostTable.h"
-#include "llvm/Target/TargetLowering.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "systemztti"
@@ -292,6 +292,19 @@ void SystemZTTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
   UP.Force = true;
 }
 
+
+bool SystemZTTIImpl::isLSRCostLess(TargetTransformInfo::LSRCost &C1,
+                                   TargetTransformInfo::LSRCost &C2) {
+  // SystemZ specific: check instruction count (first), and don't care about
+  // ImmCost, since offsets are checked explicitly.
+  return std::tie(C1.Insns, C1.NumRegs, C1.AddRecCost,
+                  C1.NumIVMuls, C1.NumBaseAdds,
+                  C1.ScaleCost, C1.SetupCost) <
+    std::tie(C2.Insns, C2.NumRegs, C2.AddRecCost,
+             C2.NumIVMuls, C2.NumBaseAdds,
+             C2.ScaleCost, C2.SetupCost);
+}
+
 unsigned SystemZTTIImpl::getNumberOfRegisters(bool Vector) {
   if (!Vector)
     // Discount the stack pointer.  Also leave out %r0, since it can't
@@ -310,8 +323,13 @@ unsigned SystemZTTIImpl::getRegisterBitWidth(bool Vector) const {
   return 0;
 }
 
+bool SystemZTTIImpl::hasDivRemOp(Type *DataType, bool IsSigned) {
+  EVT VT = TLI->getValueType(DL, DataType);
+  return (VT.isScalarInteger() && TLI->isTypeLegal(VT));
+}
+
 int SystemZTTIImpl::getArithmeticInstrCost(
-    unsigned Opcode, Type *Ty,  
+    unsigned Opcode, Type *Ty,
     TTI::OperandValueKind Op1Info, TTI::OperandValueKind Op2Info,
     TTI::OperandValueProperties Opd1PropInfo,
     TTI::OperandValueProperties Opd2PropInfo,
@@ -451,7 +469,7 @@ int SystemZTTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
   assert (Tp->isVectorTy());
   assert (ST->hasVector() && "getShuffleCost() called.");
   unsigned NumVectors = getNumberOfParts(Tp);
-  
+
   // TODO: Since fp32 is expanded, the shuffle cost should always be 0.
 
   // FP128 values are always in scalar registers, so there is no work
@@ -629,7 +647,7 @@ int SystemZTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
         return Cost;
       }
     }
-  
+
     if (Opcode == Instruction::SIToFP || Opcode == Instruction::UIToFP ||
         Opcode == Instruction::FPToSI || Opcode == Instruction::FPToUI) {
       // TODO: Fix base implementation which could simplify things a bit here
@@ -686,7 +704,7 @@ int SystemZTTIImpl::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
 
     if (Opcode == Instruction::SIToFP || Opcode == Instruction::UIToFP)
       return (SrcScalarBits >= 32 ? 1 : 2 /*i8/i16 extend*/);
-    
+
     if ((Opcode == Instruction::ZExt || Opcode == Instruction::SExt) &&
         Src->isIntegerTy(1)) {
       // This should be extension of a compare i1 result, which is done with
@@ -719,7 +737,7 @@ int SystemZTTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondT
       unsigned PredicateExtraCost = 0;
       if (I != nullptr) {
         // Some predicates cost one or two extra instructions.
-        switch (dyn_cast<CmpInst>(I)->getPredicate()) {
+        switch (cast<CmpInst>(I)->getPredicate()) {
         case CmpInst::Predicate::ICMP_NE:
         case CmpInst::Predicate::ICMP_UGE:
         case CmpInst::Predicate::ICMP_ULE:

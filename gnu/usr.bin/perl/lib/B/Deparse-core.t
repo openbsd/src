@@ -80,21 +80,23 @@ sub testit {
 	$desc .= " (lex sub)" if $lexsub;
 
 
+        my $code;
 	my $code_ref;
 	if ($lexsub) {
 	    package lexsubtest;
 	    no warnings 'experimental::lexical_subs';
 	    use feature 'lexical_subs';
 	    no strict 'vars';
-	    $code_ref =
-		eval "sub { state sub $keyword; ${vars}() = $expr }"
-			    || die "$@ in $expr";
+            $code = "sub { state sub $keyword; ${vars}() = $expr }";
+	    $code_ref = eval $code
+			    or die "$@ in $expr";
 	}
 	else {
 	    package test;
 	    use subs ();
 	    import subs $keyword;
-	    $code_ref = eval "no strict 'vars'; sub { ${vars}() = $expr }"
+	    $code = "no strict 'vars'; sub { ${vars}() = $expr }";
+	    $code_ref = eval $code
 			    or die "$@ in $expr";
 	}
 
@@ -102,10 +104,12 @@ sub testit {
 
 	unless ($got_text =~ /
     package (?:lexsub)?test;
-    use strict 'refs', 'subs';
+(?:    BEGIN \{\$\{\^WARNING_BITS\} = "[^"]+"\}
+)?    use strict 'refs', 'subs';
     use feature [^\n]+
-    \Q$vars\E\(\) = (.*)
-}/s) {
+(?:    (?:CORE::)?state sub \w+;
+)?    \Q$vars\E\(\) = (.*)
+\}/s) {
 	    ::fail($desc);
 	    ::diag("couldn't extract line from boilerplate\n");
 	    ::diag($got_text);
@@ -113,7 +117,8 @@ sub testit {
 	}
 
 	my $got_expr = $1;
-	is $got_expr, $expected_expr, $desc;
+	is $got_expr, $expected_expr, $desc
+            or ::diag("ORIGINAL CODE:\n$code");;
     }
 }
 
@@ -637,7 +642,7 @@ sprintf          123   p
 sqrt             01    $
 srand            01    -
 stat             01    $
-state            123   p+ # skip with 0 args, as state() => ()
+state            123   p1+ # skip with 0 args, as state() => ()
 study            01    $+
 # sub handled specially
 substr           234   p

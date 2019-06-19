@@ -135,6 +135,9 @@ server:
 	# minimal-responses only emits extra data for referrals.
 	# minimal-responses: no
 
+	# refuse queries of type ANY.  For stopping floods.
+	# refuse-any: no
+
 	# check mtime of all zone files on start and sighup
 	# zonefiles-check: yes
 	
@@ -174,6 +177,18 @@ server:
 	# rrl-whitelist-ratelimit: 2000
 	# RRLend
 
+# DNSTAP config section, if compiled with that
+# dnstap:
+	# set this to yes and set one or more of dnstap-log-..-messages to yes.
+	# dnstap-enable: no
+	# dnstap-socket-path: "/var/run/dnstap.sock"
+	# dnstap-send-identity: no
+	# dnstap-send-version: no
+	# dnstap-identity: ""
+	# dnstap-version: ""
+	# dnstap-log-auth-query-messages: no
+	# dnstap-log-auth-response-messages: no
+
 # Remote control config section. 
 remote-control:
 	# Enable remote control with nsd-control(8) here.
@@ -181,6 +196,8 @@ remote-control:
 	# control-enable: no
 
 	# what interfaces are listened to for control, default is on localhost.
+	# with an absolute path, a unix local named pipe is used for control
+	# (and key and cert files are not needed, use directory permissions).
 	# control-interface: 127.0.0.1
 	# control-interface: ::1
 

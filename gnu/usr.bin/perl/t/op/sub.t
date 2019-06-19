@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan(tests => 63);
+plan(tests => 62);
 
 sub empty_sub {}
 
@@ -16,30 +16,6 @@ is(empty_sub(1,2,3),undef,"Is still empty");
 is(scalar(@test), 0, 'Didnt return anything');
 @test = empty_sub(1,2,3);
 is(scalar(@test), 0, 'Didnt return anything');
-
-# RT #63790:  calling PL_sv_yes as a sub is special-cased to silently
-# return (so Foo->import() silently fails if import() doesn't exist),
-# But make sure it correctly pops the stack and mark stack before returning.
-
-{
-    my @a;
-    push @a, 4, 5, main->import(6,7);
-    ok(eq_array(\@a, [4,5]), "import with args");
-
-    @a = ();
-    push @a, 14, 15, main->import;
-    ok(eq_array(\@a, [14,15]), "import without args");
-
-    my $x = 1;
-
-    @a = ();
-    push @a, 24, 25, &{$x == $x}(26,27);
-    ok(eq_array(\@a, [24,25]), "yes with args");
-
-    @a = ();
-    push @a, 34, 35, &{$x == $x};
-    ok(eq_array(\@a, [34,35]), "yes without args");
-}
 
 # [perl #91844] return should always copy
 {
@@ -415,3 +391,38 @@ sub curpm {
 }
 "a" =~ /(.)/;
 is(curpm(), 'c', 'return and PL_curpm');
+
+sub rt_129916 { 42 }
+is ref($main::{rt_129916}), 'CODE', 'simple sub stored as CV in stash (main::)';
+{
+    package RT129916;
+    sub foo { 42 }
+}
+{
+    local $::TODO = "disabled for now";
+    is ref($RT129916::{foo}), 'CODE', 'simple sub stored as CV in stash (non-main::)';
+}
+
+# Calling xsub via ampersand syntax when @_ has holes
+SKIP: {
+    skip "no XS::APItest on miniperl" if is_miniperl;
+    require XS::APItest;
+    local *_;
+    $_[1] = 1;
+    &XS::APItest::unshift_and_set_defav;
+    is "@_", "42 43 1"
+}
+
+# [perl #129090] Crashes and hangs
+watchdog 10;
+{ no warnings;
+  eval '$a=qq|a$a|;my sub b;%c;sub c{sub b;sub c}';
+}
+eval '
+   ()= %d;
+   {my ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k,$l,$m,$n,$o,$p,$q,$r,$s,$t,$u);}
+   {my ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k,$l,$m,$n,$o,$p,$q,$r,$s,$t,$u);}
+   {my ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k,$l,$m,$n,$o,$p,$q,$r,$s,$t,$u);}
+   CORE::state sub b; sub d { sub b {} sub d }
+ ';
+eval '()=%e; sub e { sub e; eval q|$x| } e;';

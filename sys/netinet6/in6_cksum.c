@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_cksum.c,v 1.17 2015/06/08 22:19:28 krw Exp $	*/
+/*	$OpenBSD: in6_cksum.c,v 1.18 2019/04/22 22:47:49 bluhm Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.10 2000/12/03 00:53:59 itojun Exp $	*/
 
 /*
@@ -85,34 +85,34 @@
  */
 
 int
-in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len)
+in6_cksum(struct mbuf *m, uint8_t nxt, uint32_t off, uint32_t len)
 {
-	u_int16_t *w;
+	uint16_t *w;
 	int sum = 0;
 	int mlen = 0;
 	int byte_swapped = 0;
 	struct ip6_hdr *ip6;
 	union {
-		u_int16_t phs[4];
+		uint16_t phs[4];
 		struct {
-			u_int32_t	ph_len;
-			u_int8_t	ph_zero[3];
-			u_int8_t	ph_nxt;
+			uint32_t ph_len;
+			uint8_t  ph_zero[3];
+			uint8_t  ph_nxt;
 		} ph __packed;
 	} uph;
 	union {
-		u_int8_t	c[2];
-		u_int16_t	s;
+		uint8_t  c[2];
+		uint16_t s;
 	} s_util;
 	union {
-		u_int16_t s[2];
-		u_int32_t l;
+		uint16_t s[2];
+		uint32_t l;
 	} l_util;
 
 	/* sanity check */
 	if (m->m_pkthdr.len < off + len) {
-		panic("in6_cksum: mbuf len (%d) < off+len (%d+%d)",
-			m->m_pkthdr.len, off, len);
+		panic("%s: mbuf len (%d) < off+len (%d+%d)",
+		    __func__, m->m_pkthdr.len, off, len);
 	}
 
 	/* Skip pseudo-header if nxt == 0. */
@@ -125,7 +125,7 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len)
 	 * First create IP6 pseudo header and calculate a summary.
 	 */
 	ip6 = mtod(m, struct ip6_hdr *);
-	w = (u_int16_t *)&ip6->ip6_src;
+	w = (uint16_t *)&ip6->ip6_src;
 	uph.ph.ph_len = htonl(len);
 	uph.ph.ph_nxt = nxt;
 
@@ -156,7 +156,12 @@ skip_phdr:
 			break;
 		m = m->m_next;
 	}
-	w = (u_int16_t *)(mtod(m, u_char *) + off);
+	if (m == NULL) {
+		if  (off)
+			panic("%s: out of header, off %u", __func__, off);
+		goto end;
+	}
+	w = (uint16_t *)(mtod(m, uint8_t *) + off);
 	mlen = m->m_len - off;
 	if (len < mlen)
 		mlen = len;
@@ -167,8 +172,8 @@ skip_phdr:
 	if ((1 & (long) w) && (mlen > 0)) {
 		REDUCE;
 		sum <<= 8;
-		s_util.c[0] = *(u_char *)w;
-		w = (u_int16_t *)((char *)w + 1);
+		s_util.c[0] = *(uint8_t *)w;
+		w = (uint16_t *)((uint8_t *)w + 1);
 		mlen--;
 		byte_swapped = 1;
 	}
@@ -200,13 +205,13 @@ skip_phdr:
 		sum <<= 8;
 		byte_swapped = 0;
 		if (mlen == -1) {
-			s_util.c[1] = *(char *)w;
+			s_util.c[1] = *(uint8_t *)w;
 			sum += s_util.s;
 			mlen = 0;
 		} else
 			mlen = -1;
 	} else if (mlen == -1)
-		s_util.c[0] = *(char *)w;
+		s_util.c[0] = *(uint8_t *)w;
  next:
 	m = m->m_next;
 
@@ -217,7 +222,7 @@ skip_phdr:
 	for (;m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		w = mtod(m, u_int16_t *);
+		w = mtod(m, uint16_t *);
 		if (mlen == -1) {
 			/*
 			 * The first byte of this mbuf is the continuation
@@ -227,9 +232,9 @@ skip_phdr:
 			 * s_util.c[0] is already saved when scanning previous
 			 * mbuf.
 			 */
-			s_util.c[1] = *(char *)w;
+			s_util.c[1] = *(uint8_t *)w;
 			sum += s_util.s;
-			w = (u_int16_t *)((char *)w + 1);
+			w = (uint16_t *)((uint8_t *)w + 1);
 			mlen = m->m_len - 1;
 			len--;
 		} else
@@ -243,8 +248,8 @@ skip_phdr:
 		if ((1 & (long) w) && (mlen > 0)) {
 			REDUCE;
 			sum <<= 8;
-			s_util.c[0] = *(u_char *)w;
-			w = (u_int16_t *)((char *)w + 1);
+			s_util.c[0] = *(uint8_t *)w;
+			w = (uint16_t *)((uint8_t *)w + 1);
 			mlen--;
 			byte_swapped = 1;
 		}
@@ -276,16 +281,17 @@ skip_phdr:
 			sum <<= 8;
 			byte_swapped = 0;
 			if (mlen == -1) {
-				s_util.c[1] = *(char *)w;
+				s_util.c[1] = *(uint8_t *)w;
 				sum += s_util.s;
 				mlen = 0;
 			} else
 				mlen = -1;
 		} else if (mlen == -1)
-			s_util.c[0] = *(char *)w;
+			s_util.c[0] = *(uint8_t *)w;
 	}
+ end:
 	if (len)
-		panic("in6_cksum: out of data");
+		panic("%s: out of data, len %u", __func__, len);
 	if (mlen == -1) {
 		/* The last mbuf has odd # of bytes. Follow the
 		   standard (the odd byte may be shifted left by 8 bits

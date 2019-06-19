@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.24 2018/02/19 08:59:52 mpi Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.54 2019/04/23 10:53:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -44,16 +44,28 @@
 #include <net/if_vlan_var.h>
 #endif
 
+struct mpw_neighbor {
+	struct shim_hdr		n_rshim;
+	struct sockaddr_storage	n_nexthop;
+};
+
 struct mpw_softc {
-	struct		ifnet sc_if;
+	struct arpcom		sc_ac;
+#define sc_if			sc_ac.ac_if
 
-	struct		ifaddr sc_ifa;
-	struct		sockaddr_mpls sc_smpls; /* Local label */
+	int			sc_txhprio;
+	int			sc_rxhprio;
+	unsigned int		sc_rdomain;
+	struct ifaddr		sc_ifa;
+	struct sockaddr_mpls	sc_smpls; /* Local label */
 
-	uint32_t	sc_flags;
-	uint32_t	sc_type;
-	struct		shim_hdr sc_rshim;
-	struct		sockaddr_storage sc_nexthop;
+	unsigned int		sc_cword;
+	unsigned int		sc_fword;
+	uint32_t		sc_flow;
+	uint32_t		sc_type;
+	struct mpw_neighbor	*sc_neighbor;
+
+	unsigned int		sc_dead;
 };
 
 void	mpwattach(int);
@@ -63,7 +75,6 @@ int	mpw_ioctl(struct ifnet *, u_long, caddr_t);
 int	mpw_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
 void	mpw_start(struct ifnet *);
-int	mpw_input(struct ifnet *, struct mbuf *, void *);
 #if NVLAN > 0
 struct	mbuf *mpw_vlan_handle(struct mbuf *, struct mpw_softc *);
 #endif /* NVLAN */
@@ -83,33 +94,39 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	struct mpw_softc *sc;
 	struct ifnet *ifp;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
+	if (sc == NULL)
+		return (ENOMEM);
+
+	sc->sc_flow = arc4random();
+	sc->sc_neighbor = NULL;
+
 	ifp = &sc->sc_if;
-	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "mpw%d", unit);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
+	    ifc->ifc_name, unit);
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_flags = IFF_POINTOPOINT;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_ioctl = mpw_ioctl;
 	ifp->if_output = mpw_output;
 	ifp->if_start = mpw_start;
-	ifp->if_type = IFT_MPLSTUNNEL;
-	ifp->if_hdrlen = ETHER_HDR_LEN;
+	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	ether_fakeaddr(ifp);
 
+	sc->sc_dead = 0;
+
+	if_counters_alloc(ifp);
 	if_attach(ifp);
-	if_alloc_sadl(ifp);
+	ether_ifattach(ifp);
 
+	sc->sc_txhprio = 0;
+	sc->sc_rxhprio = IF_HDRPRIO_PACKET;
+	sc->sc_rdomain = 0;
 	sc->sc_ifa.ifa_ifp = ifp;
 	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
 	sc->sc_smpls.smpls_len = sizeof(sc->sc_smpls);
 	sc->sc_smpls.smpls_family = AF_MPLS;
-
-	if_ih_insert(ifp, mpw_input, NULL);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
-#endif /* NBFILTER */
 
 	return (0);
 }
@@ -119,27 +136,261 @@ mpw_clone_destroy(struct ifnet *ifp)
 {
 	struct mpw_softc *sc = ifp->if_softc;
 
+	NET_LOCK();
 	ifp->if_flags &= ~IFF_RUNNING;
+	sc->sc_dead = 1;
 
 	if (sc->sc_smpls.smpls_label) {
-		rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
-		    smplstosa(&sc->sc_smpls));
+		rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
+		    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
 	}
+	NET_UNLOCK();
 
-	if_ih_remove(ifp, mpw_input, NULL);
+	ifq_barrier(&ifp->if_snd);
 
+	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	free(sc->sc_neighbor, M_DEVBUF, sizeof(*sc->sc_neighbor));
 	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return (0);
 }
 
 int
-mpw_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
+mpw_set_route(struct mpw_softc *sc, uint32_t label, unsigned int rdomain)
 {
-	/* Don't have local broadcast. */
-	m_freem(m);
-	return (1);
+	int error;
+
+	if (sc->sc_dead)
+		return (ENXIO);
+
+	if (sc->sc_smpls.smpls_label) {
+		rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
+		    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
+	}
+
+	sc->sc_smpls.smpls_label = label;
+	sc->sc_rdomain = rdomain;
+
+	error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
+	    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
+	if (error != 0)
+		sc->sc_smpls.smpls_label = 0;
+
+	return (error);
+}
+
+static int
+mpw_set_neighbor(struct mpw_softc *sc, const struct if_laddrreq *req)
+{
+	struct mpw_neighbor *n, *o;
+	const struct sockaddr_storage *ss;
+	const struct sockaddr_mpls *smpls;
+	uint32_t label;
+
+	smpls = (const struct sockaddr_mpls *)&req->dstaddr;
+
+	if (smpls->smpls_family != AF_MPLS)
+		return (EINVAL);
+	label = smpls->smpls_label;
+	if (label > MPLS_LABEL_MAX || label <= MPLS_LABEL_RESERVED_MAX)
+		return (EINVAL);
+
+	ss = &req->addr;
+	switch (ss->ss_family) {
+	case AF_INET: {
+		const struct sockaddr_in *sin =
+		    (const struct sockaddr_in *)ss;
+
+		if (in_nullhost(sin->sin_addr) ||
+		    IN_MULTICAST(sin->sin_addr.s_addr))
+			return (EINVAL);
+
+		break;
+	}
+#ifdef INET6
+	case AF_INET6: {
+		const struct sockaddr_in6 *sin6 =
+		    (const struct sockaddr_in6 *)ss;
+
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ||
+		    IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))
+			return (EINVAL);
+
+		/* check scope */
+
+		break;
+	}
+#endif
+	default:
+		return (EAFNOSUPPORT);
+	}
+
+	if (sc->sc_dead)
+		return (ENXIO);
+
+	n = malloc(sizeof(*n), M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
+	if (n == NULL)
+		return (ENOMEM);
+
+	n->n_rshim.shim_label = MPLS_LABEL2SHIM(label);
+	n->n_nexthop = *ss;
+
+	o = sc->sc_neighbor;
+	sc->sc_neighbor = n;
+
+	NET_UNLOCK();
+	ifq_barrier(&sc->sc_if.if_snd);
+	NET_LOCK();
+
+	free(o, M_DEVBUF, sizeof(*o));
+
+	return (0);
+}
+
+static int
+mpw_get_neighbor(struct mpw_softc *sc, struct if_laddrreq *req)
+{
+	struct sockaddr_mpls *smpls = (struct sockaddr_mpls *)&req->dstaddr;
+	struct mpw_neighbor *n = sc->sc_neighbor;
+
+	if (n == NULL)
+		return (EADDRNOTAVAIL);
+
+	smpls->smpls_len = sizeof(*smpls);
+	smpls->smpls_family = AF_MPLS;
+	smpls->smpls_label = MPLS_SHIM2LABEL(n->n_rshim.shim_label);
+
+	req->addr = n->n_nexthop;
+
+	return (0);
+}
+
+static int
+mpw_del_neighbor(struct mpw_softc *sc)
+{
+	struct mpw_neighbor *o;
+
+	if (sc->sc_dead)
+		return (ENXIO);
+
+	o = sc->sc_neighbor;
+	sc->sc_neighbor = NULL;
+
+	NET_UNLOCK();
+	ifq_barrier(&sc->sc_if.if_snd);
+	NET_LOCK();
+
+	free(o, M_DEVBUF, sizeof(*o));
+
+	return (0);
+}
+
+static int
+mpw_set_label(struct mpw_softc *sc, const struct shim_hdr *label)
+{
+	uint32_t shim;
+
+	if (label->shim_label > MPLS_LABEL_MAX ||
+	    label->shim_label <= MPLS_LABEL_RESERVED_MAX)
+		return (EINVAL);
+
+	shim = MPLS_LABEL2SHIM(label->shim_label);
+	if (sc->sc_smpls.smpls_label == shim)
+		return (0);
+
+	return (mpw_set_route(sc, shim, sc->sc_rdomain));
+}
+
+static int
+mpw_get_label(struct mpw_softc *sc, struct ifreq *ifr)
+{
+	struct shim_hdr label;
+
+	label.shim_label = MPLS_SHIM2LABEL(sc->sc_smpls.smpls_label);
+
+	if (label.shim_label == 0)
+		return (EADDRNOTAVAIL);
+
+	return (copyout(&label, ifr->ifr_data, sizeof(label)));
+}
+
+static int
+mpw_del_label(struct mpw_softc *sc)
+{
+	if (sc->sc_dead)
+		return (ENXIO);
+
+	if (sc->sc_smpls.smpls_label != MPLS_LABEL2SHIM(0)) {
+		rt_ifa_del(&sc->sc_ifa, RTF_MPLS | RTF_LOCAL,
+		    smplstosa(&sc->sc_smpls), 0);
+	}
+
+	sc->sc_smpls.smpls_label = MPLS_LABEL2SHIM(0);
+
+	return (0);
+}
+
+static int
+mpw_set_config(struct mpw_softc *sc, const struct ifreq *ifr)
+{
+	struct ifmpwreq imr;
+	struct if_laddrreq req;
+	struct sockaddr_mpls *smpls;
+	struct sockaddr_in *sin;
+	int error;
+
+	error = copyin(ifr->ifr_data, &imr, sizeof(imr));
+	if (error != 0)
+		return (error);
+
+	/* Teardown all configuration if got no nexthop */
+	sin = (struct sockaddr_in *)&imr.imr_nexthop;
+	if (sin->sin_addr.s_addr == 0) {
+		mpw_del_label(sc);
+		mpw_del_neighbor(sc);
+		sc->sc_cword = 0;
+		sc->sc_type = 0;
+		return (0);
+	}
+
+	error = mpw_set_label(sc, &imr.imr_lshim);
+	if (error != 0)
+		return (error);
+
+	smpls = (struct sockaddr_mpls *)&req.dstaddr;
+	smpls->smpls_family = AF_MPLS;
+	smpls->smpls_label = imr.imr_rshim.shim_label;
+	req.addr = imr.imr_nexthop;
+
+	error = mpw_set_neighbor(sc, &req);
+	if (error != 0)
+		return (error);
+
+	sc->sc_cword = ISSET(imr.imr_flags, IMR_FLAG_CONTROLWORD);
+	sc->sc_type = imr.imr_type;
+
+	return (0);
+}
+
+static int
+mpw_get_config(struct mpw_softc *sc, const struct ifreq *ifr)
+{
+	struct ifmpwreq imr;
+
+	memset(&imr, 0, sizeof(imr));
+	imr.imr_flags = sc->sc_cword ? IMR_FLAG_CONTROLWORD : 0;
+	imr.imr_type = sc->sc_type;
+
+	imr.imr_lshim.shim_label = MPLS_SHIM2LABEL(sc->sc_smpls.smpls_label);
+	if (sc->sc_neighbor) {
+		imr.imr_rshim.shim_label =
+		    MPLS_SHIM2LABEL(sc->sc_neighbor->n_rshim.shim_label);
+		imr.imr_nexthop = sc->sc_neighbor->n_nexthop;
+	}
+
+	return (copyout(&imr, ifr->ifr_data, sizeof(imr)));
 }
 
 int
@@ -147,20 +398,10 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct mpw_softc *sc = ifp->if_softc;
-	struct sockaddr_in *sin;
-	struct sockaddr_in *sin_nexthop;
+	struct shim_hdr shim;
 	int error = 0;
-	struct ifmpwreq imr;
 
 	switch (cmd) {
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < MPE_MTU_MIN ||
-		    ifr->ifr_mtu > MPE_MTU_MAX)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP))
 			ifp->if_flags |= IFF_RUNNING;
@@ -168,112 +409,149 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_flags &= ~IFF_RUNNING;
 		break;
 
+	case SIOCGPWE3:
+		ifr->ifr_pwe3 = IF_PWE3_ETHERNET;
+		break;
+	case SIOCSPWE3CTRLWORD:
+		sc->sc_cword = ifr->ifr_pwe3 ? 1 : 0;
+		break;
+	case SIOCGPWE3CTRLWORD:
+		ifr->ifr_pwe3 = sc->sc_cword;
+		break;
+	case SIOCSPWE3FAT:
+		sc->sc_fword = ifr->ifr_pwe3 ? 1 : 0;
+		break;
+	case SIOCGPWE3FAT:
+		ifr->ifr_pwe3 = sc->sc_fword;
+		break;
+
+	case SIOCSPWE3NEIGHBOR:
+		error = mpw_set_neighbor(sc, (struct if_laddrreq *)data);
+		break;
+	case SIOCGPWE3NEIGHBOR:
+		error = mpw_get_neighbor(sc, (struct if_laddrreq *)data);
+		break;
+	case SIOCDPWE3NEIGHBOR:
+		error = mpw_del_neighbor(sc);
+		break;
+
+	case SIOCGETLABEL:
+		error = mpw_get_label(sc, ifr);
+		break;
+	case SIOCSETLABEL:
+		error = copyin(ifr->ifr_data, &shim, sizeof(shim));
+		if (error != 0)
+			break;
+		error = mpw_set_label(sc, &shim);
+		break;
+
 	case SIOCSETMPWCFG:
-		error = suser(curproc);
-		if (error != 0)
-			break;
-
-		error = copyin(ifr->ifr_data, &imr, sizeof(imr));
-		if (error != 0)
-			break;
-
-		/* Teardown all configuration if got no nexthop */
-		sin = (struct sockaddr_in *) &imr.imr_nexthop;
-		if (sin->sin_addr.s_addr == 0) {
-			if (rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
-			    smplstosa(&sc->sc_smpls)) == 0)
-				sc->sc_smpls.smpls_label = 0;
-
-			memset(&sc->sc_rshim, 0, sizeof(sc->sc_rshim));
-			memset(&sc->sc_nexthop, 0, sizeof(sc->sc_nexthop));
-			sc->sc_flags = 0;
-			sc->sc_type = 0;
-			break;
-		}
-
-		/* Validate input */
-		if (sin->sin_family != AF_INET ||
-		    imr.imr_lshim.shim_label > MPLS_LABEL_MAX ||
-		    imr.imr_lshim.shim_label <= MPLS_LABEL_RESERVED_MAX ||
-		    imr.imr_rshim.shim_label > MPLS_LABEL_MAX ||
-		    imr.imr_rshim.shim_label <= MPLS_LABEL_RESERVED_MAX) {
-			error = EINVAL;
-			break;
-		}
-
-		/* Setup labels and create inbound route */
-		imr.imr_lshim.shim_label =
-		    htonl(imr.imr_lshim.shim_label << MPLS_LABEL_OFFSET);
-		imr.imr_rshim.shim_label =
-		    htonl(imr.imr_rshim.shim_label << MPLS_LABEL_OFFSET);
-
-		if (sc->sc_smpls.smpls_label != imr.imr_lshim.shim_label) {
-			if (sc->sc_smpls.smpls_label)
-				rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
-				    smplstosa(&sc->sc_smpls));
-
-			sc->sc_smpls.smpls_label = imr.imr_lshim.shim_label;
-			error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS,
-			    smplstosa(&sc->sc_smpls));
-			if (error != 0) {
-				sc->sc_smpls.smpls_label = 0;
-				break;
-			}
-		}
-
-		/* Apply configuration */
-		sc->sc_flags = imr.imr_flags;
-		sc->sc_type = imr.imr_type;
-		sc->sc_rshim.shim_label = imr.imr_rshim.shim_label;
-		sc->sc_rshim.shim_label |= MPLS_BOS_MASK;
-
-		memset(&sc->sc_nexthop, 0, sizeof(sc->sc_nexthop));
-		sin_nexthop = (struct sockaddr_in *) &sc->sc_nexthop;
-		sin_nexthop->sin_family = sin->sin_family;
-		sin_nexthop->sin_len = sizeof(struct sockaddr_in);
-		sin_nexthop->sin_addr.s_addr = sin->sin_addr.s_addr;
+		error = mpw_set_config(sc, ifr);
 		break;
 
 	case SIOCGETMPWCFG:
-		imr.imr_flags = sc->sc_flags;
-		imr.imr_type = sc->sc_type;
-		imr.imr_lshim.shim_label =
-		    ((ntohl(sc->sc_smpls.smpls_label & MPLS_LABEL_MASK)) >>
-			MPLS_LABEL_OFFSET);
-		imr.imr_rshim.shim_label =
-		    ((ntohl(sc->sc_rshim.shim_label & MPLS_LABEL_MASK)) >>
-			MPLS_LABEL_OFFSET);
-		memcpy(&imr.imr_nexthop, &sc->sc_nexthop,
-		    sizeof(imr.imr_nexthop));
+		error = mpw_get_config(sc, ifr);
+		break;
 
-		error = copyout(&imr, ifr->ifr_data, sizeof(imr));
+	case SIOCSLIFPHYRTABLE:
+		if (ifr->ifr_rdomainid < 0 ||
+		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
+		    !rtable_exists(ifr->ifr_rdomainid) ||
+		    ifr->ifr_rdomainid != rtable_l2(ifr->ifr_rdomainid)) {
+			error = EINVAL;
+			break;
+		}
+		if (sc->sc_rdomain != ifr->ifr_rdomainid) {
+			error = mpw_set_route(sc, sc->sc_smpls.smpls_label,
+			    ifr->ifr_rdomainid);
+		}
+		break;
+	case SIOCGLIFPHYRTABLE:
+		ifr->ifr_rdomainid = sc->sc_rdomain;
+		break;
+
+	case SIOCSTXHPRIO:
+		error = if_txhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_txhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_txhprio;
+		break;
+
+	case SIOCSRXHPRIO:
+		error = if_rxhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_rxhprio;
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
 		break;
 
 	default:
-		error = ENOTTY;
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 		break;
 	}
 
 	return (error);
 }
 
-int
-mpw_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
-    struct rtentry *rt)
+static void
+mpw_input(struct mpw_softc *sc, struct mbuf *m)
 {
-	struct mpw_softc *sc = ifp->if_softc;
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	struct ether_header *eh, ehc;
+	struct ifnet *ifp = &sc->sc_if;
 	struct shim_hdr *shim;
+	struct mbuf *n;
+	uint32_t exp;
+	int rxprio;
+	int off;
 
-	if (sc->sc_type == IMR_TYPE_NONE) {
-		m_freem(m);
-		return (EHOSTUNREACH);
-	}
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		goto drop;
 
-	if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
+	shim = mtod(m, struct shim_hdr *);
+	exp = ntohl(shim->shim_label & MPLS_EXP_MASK) >> MPLS_EXP_OFFSET;
+	if (sc->sc_fword) {
+		uint32_t flow;
+
+		if (MPLS_BOS_ISSET(shim->shim_label))
+			goto drop;
+		m_adj(m, sizeof(*shim));
+
+		if (m->m_len < sizeof(*shim)) {
+			m = m_pullup(m, sizeof(*shim));
+			if (m == NULL)
+				return;
+		}
 		shim = mtod(m, struct shim_hdr *);
-		m_adj(m, MPLS_HDRLEN);
+
+		if (!MPLS_BOS_ISSET(shim->shim_label))
+			goto drop;
+
+		flow = MPLS_SHIM2LABEL(shim->shim_label);
+		flow ^= sc->sc_flow;
+		m->m_pkthdr.ph_flowid = M_FLOWID_VALID | flow;
+	} else {
+		if (!MPLS_BOS_ISSET(shim->shim_label))
+			goto drop;
+	}
+	m_adj(m, sizeof(*shim));
+
+	if (sc->sc_cword) {
+		if (m->m_len < sizeof(*shim)) {
+			m = m_pullup(m, sizeof(*shim));
+			if (m == NULL)
+				return;
+		}
+		shim = mtod(m, struct shim_hdr *);
 
 		/*
 		 * The first 4 bits identifies that this packet is a
@@ -282,114 +560,114 @@ mpw_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		 */
 		if (shim->shim_label & CW_ZERO_MASK) {
 			ifp->if_ierrors++;
-			m_freem(m);
-			return (EINVAL);
+			goto drop;
 		}
 
 		/* We don't support fragmentation just yet. */
 		if (shim->shim_label & CW_FRAG_MASK) {
 			ifp->if_ierrors++;
-			m_freem(m);
-			return (EINVAL);
+			goto drop;
 		}
+
+		m_adj(m, MPLS_HDRLEN);
 	}
 
-	if (sc->sc_type == IMR_TYPE_ETHERNET_TAGGED) {
-		m_copydata(m, 0, sizeof(ehc), (caddr_t) &ehc);
-		m_adj(m, ETHER_HDR_LEN);
-
-		/* Ethernet tagged expects at least 2 VLANs */
-		if (ntohs(ehc.ether_type) != ETHERTYPE_QINQ) {
-			ifp->if_ierrors++;
-			m_freem(m);
-			return (EINVAL);
-		}
-
-		/* Remove dummy VLAN and update ethertype */
-		if (EVL_VLANOFTAG(*mtod(m, uint16_t *)) == 0) {
-			m_adj(m, EVL_ENCAPLEN);
-			ehc.ether_type = htons(ETHERTYPE_VLAN);
-		}
-
-		M_PREPEND(m, sizeof(*eh), M_NOWAIT);
+	if (m->m_len < sizeof(struct ether_header)) {
+		m = m_pullup(m, sizeof(struct ether_header));
 		if (m == NULL)
-			return (ENOMEM);
-
-		eh = mtod(m, struct ether_header *);
-		memcpy(eh, &ehc, sizeof(*eh));
+			return;
 	}
 
-	ml_enqueue(&ml, m);
-	if_input(ifp, &ml);
+	n = m_getptr(m, sizeof(struct ether_header), &off);
+	if (n == NULL) {
+		ifp->if_ierrors++;
+		goto drop;
+	}
+	if (!ALIGNED_POINTER(mtod(n, caddr_t) + off, uint32_t)) {
+		n = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
+		/* Dispose of the original mbuf chain */
+		m_freem(m);
+		if (n == NULL)
+			return;
+		m = n;
+	}
 
-	return (0);
+	rxprio = sc->sc_rxhprio;
+	switch (rxprio) {
+	case IF_HDRPRIO_PACKET:
+		/* nop */
+		break;
+	case IF_HDRPRIO_OUTER:
+		m->m_pkthdr.pf.prio = exp;
+		break;
+	default:
+		m->m_pkthdr.pf.prio = rxprio;
+		break;
+	}
+
+	m->m_pkthdr.ph_ifidx = ifp->if_index;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+
+#if NPF > 0
+        pf_pkt_addr_changed(m);
+#endif
+
+	if_vinput(ifp, m);
+	return;
+drop:
+	m_freem(m);
 }
 
-#if NVLAN > 0
-extern void vlan_start(struct ifqueue *);
-
-/*
- * This routine handles VLAN tag reinsertion in packets flowing through
- * the pseudowire. Also it does the necessary modifications to the VLANs
- * to respect the RFC.
- */
-struct mbuf *
-mpw_vlan_handle(struct mbuf *m, struct mpw_softc *sc)
+int
+mpw_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
-	struct ifnet *ifp;
-	struct ifvlan *ifv;
+	struct mpw_softc *sc = ifp->if_softc;
 
-	uint16_t type = ETHERTYPE_QINQ;
-	uint16_t tag = 0;
-
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp != NULL && ifp->if_qstart == vlan_start &&
-	    ISSET(ifp->if_flags, IFF_RUNNING)) {
-		ifv = ifp->if_softc;
-		type = ifv->ifv_type;
-		tag = ifv->ifv_tag;
+	if (dst->sa_family == AF_LINK &&
+	    rt != NULL && ISSET(rt->rt_flags, RTF_LOCAL)) {
+		mpw_input(sc, m);
+		return (0);
 	}
-	if_put(ifp);
 
-	return (vlan_inject(m, type, tag));
+	return (ether_output(ifp, m, dst, rt));
 }
-#endif /* NVLAN */
 
 void
 mpw_start(struct ifnet *ifp)
 {
 	struct mpw_softc *sc = ifp->if_softc;
 	struct rtentry *rt;
-	struct ifnet *p;
-	struct mbuf *m;
+	struct ifnet *ifp0;
+	struct mbuf *m, *m0;
 	struct shim_hdr *shim;
-	struct sockaddr_storage ss;
+	struct mpw_neighbor *n;
+	struct sockaddr_mpls smpls = {
+		.smpls_len = sizeof(smpls),
+		.smpls_family = AF_MPLS,
+	};
+	int txprio = sc->sc_txhprio;
+	uint8_t prio;
+	uint32_t exp, bos;
 
+	n = sc->sc_neighbor;
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
-	    sc->sc_rshim.shim_label == 0 ||
-	    sc->sc_type == IMR_TYPE_NONE) {
+	    n == NULL) {
 		IFQ_PURGE(&ifp->if_snd);
 		return;
 	}
 
-	rt = rtalloc(sstosa(&sc->sc_nexthop), RT_RESOLVE, ifp->if_rdomain);
+	rt = rtalloc(sstosa(&n->n_nexthop), RT_RESOLVE, sc->sc_rdomain);
 	if (!rtisvalid(rt)) {
 		IFQ_PURGE(&ifp->if_snd);
 		goto rtfree;
 	}
 
-	p = if_get(rt->rt_ifidx);
-	if (p == NULL) {
+	ifp0 = if_get(rt->rt_ifidx);
+	if (ifp0 == NULL) {
 		IFQ_PURGE(&ifp->if_snd);
 		goto rtfree;
 	}
-
-	/*
-	 * XXX: lie about being MPLS, so mpls_output() get the TTL from
-	 * the right place.
-	 */
-	memcpy(&ss, &sc->sc_nexthop, sizeof(sc->sc_nexthop));
-	ss.ss_family = AF_MPLS;
 
 	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
 #if NBPFILTER > 0
@@ -397,43 +675,69 @@ mpw_start(struct ifnet *ifp)
 			bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER */
 
-		if (sc->sc_type == IMR_TYPE_ETHERNET_TAGGED) {
- #if NVLAN > 0
-			m = mpw_vlan_handle(m, sc);
-			if (m == NULL) {
-				ifp->if_oerrors++;
-				continue;
-			}
- #else
-			/* Ethernet tagged doesn't work without VLANs'*/
+		m0 = m_get(M_DONTWAIT, m->m_type);
+		if (m0 == NULL) {
 			m_freem(m);
 			continue;
- #endif /* NVLAN */
 		}
 
-		if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
-			M_PREPEND(m, sizeof(*shim), M_NOWAIT);
-			if (m == NULL)
+		M_MOVE_PKTHDR(m0, m);
+		m0->m_next = m;
+		m_align(m0, 0);
+		m0->m_len = 0;
+
+		if (sc->sc_cword) {
+			m0 = m_prepend(m0, sizeof(*shim), M_NOWAIT);
+			if (m0 == NULL)
 				continue;
 
-			shim = mtod(m, struct shim_hdr *);
+			shim = mtod(m0, struct shim_hdr *);
 			memset(shim, 0, sizeof(*shim));
 		}
 
-		M_PREPEND(m, sizeof(*shim), M_NOWAIT);
-		if (m == NULL)
+		switch (txprio) {
+		case IF_HDRPRIO_PACKET:
+			prio = m->m_pkthdr.pf.prio;
+			break;
+		default:
+			prio = txprio;
+			break;
+		}
+		exp = htonl(prio << MPLS_EXP_OFFSET);
+
+		bos = MPLS_BOS_MASK;
+		if (sc->sc_fword) {
+			uint32_t flow = sc->sc_flow;
+
+			m0 = m_prepend(m0, sizeof(*shim), M_NOWAIT);
+			if (m0 == NULL)
+				continue;
+
+			if (ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID))
+				flow ^= m->m_pkthdr.ph_flowid & M_FLOWID_MASK;
+
+			shim = mtod(m0, struct shim_hdr *);
+			shim->shim_label = htonl(1) & MPLS_TTL_MASK;
+			shim->shim_label |= MPLS_LABEL2SHIM(flow) | exp | bos;
+
+			bos = 0;
+		}
+
+		m0 = m_prepend(m0, sizeof(*shim), M_NOWAIT);
+		if (m0 == NULL)
 			continue;
 
-		shim = mtod(m, struct shim_hdr *);
+		shim = mtod(m0, struct shim_hdr *);
 		shim->shim_label = htonl(mpls_defttl) & MPLS_TTL_MASK;
-		shim->shim_label |= sc->sc_rshim.shim_label;
+		shim->shim_label |= n->n_rshim.shim_label | exp | bos;
 
-		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+		m0->m_pkthdr.ph_rtableid = sc->sc_rdomain;
+		CLR(m0->m_flags, M_BCAST|M_MCAST);
 
-		mpls_output(p, m, sstosa(&ss), rt);
+		mpls_output(ifp0, m0, (struct sockaddr *)&smpls, rt);
 	}
 
-	if_put(p);
+	if_put(ifp0);
 rtfree:
 	rtfree(rt);
 }

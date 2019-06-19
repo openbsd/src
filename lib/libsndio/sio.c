@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.21 2016/01/09 08:27:24 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.23 2018/10/31 10:06:54 miko Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -295,10 +294,6 @@ sio_read(struct sio_hdl *hdl, void *buf, size_t len)
 		hdl->eof = 1;
 		return 0;
 	}
-	if (todo == 0) {
-		DPRINTF("sio_read: zero length read ignored\n");
-		return 0;
-	}
 	while (todo > 0) {
 		if (!sio_rdrop(hdl))
 			return 0;
@@ -334,10 +329,6 @@ sio_write(struct sio_hdl *hdl, const void *buf, size_t len)
 	if (!hdl->started || !(hdl->mode & SIO_PLAY)) {
 		DPRINTF("sio_write: playback not started\n");
 		hdl->eof = 1;
-		return 0;
-	}
-	if (todo == 0) {
-		DPRINTF("sio_write: zero length write ignored\n");
 		return 0;
 	}
 	while (todo > 0) {

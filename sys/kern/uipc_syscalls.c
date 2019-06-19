@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.168 2018/03/28 09:54:00 mpi Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.181 2019/03/04 07:09:54 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -68,8 +68,6 @@ extern	struct fileops socketops;
 int	copyaddrout(struct proc *, struct mbuf *, struct sockaddr *, socklen_t,
 	    socklen_t *);
 
-uint16_t dnsjackport;
-
 int
 sys_socket(struct proc *p, void *v, register_t *retval)
 {
@@ -101,26 +99,27 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 	fflag = FREAD | FWRITE | (nonblock ? FNONBLOCK : 0);
 
 	error = socreate(SCARG(uap, domain), &so, type, SCARG(uap, protocol));
-	if (error != 0)
-		goto out;
+	if (error)
+		return (error);
 
+	KERNEL_LOCK();
 	fdplock(fdp);
-	error = falloc(p, cloexec, &fp, &fd);
-	fdpunlock(fdp);
+	error = falloc(p, &fp, &fd);
 	if (error) {
-		soclose(so);
+		fdpunlock(fdp);
+		soclose(so, MSG_DONTWAIT);
 	} else {
 		fp->f_flag = fflag;
 		fp->f_type = DTYPE_SOCKET;
 		fp->f_ops = &socketops;
-		if (nonblock)
-			so->so_state |= SS_NBIO;
 		so->so_state |= ss;
 		fp->f_data = so;
-		FILE_SET_MATURE(fp, p);
+		fdinsert(fdp, fd, cloexec, fp);
+		fdpunlock(fdp);
+		FRELE(fp, p);
 		*retval = fd;
 	}
-out:
+	KERNEL_UNLOCK();
 	return (error);
 }
 
@@ -142,16 +141,6 @@ dns_portcheck(struct proc *p, struct socket *so, void *nam, u_int *namelen)
 			break;
 		if (((struct sockaddr_in *)nam)->sin_port == htons(53))
 			error = 0;
-		if (dnsjackport) {
-			struct sockaddr_in sin;
-			memset(&sin, 0, sizeof(sin));
-			sin.sin_len = sizeof(sin);
-			sin.sin_family = AF_INET;
-			sin.sin_port = htons(dnsjackport);
-			sin.sin_addr.s_addr = INADDR_LOOPBACK;
-			memcpy(nam, &sin, sizeof(sin));
-			*namelen = sizeof(sin);
-		}
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -159,16 +148,6 @@ dns_portcheck(struct proc *p, struct socket *so, void *nam, u_int *namelen)
 			break;
 		if (((struct sockaddr_in6 *)nam)->sin6_port == htons(53))
 			error = 0;
-		if (dnsjackport) {
-			struct sockaddr_in6 sin6;
-			memset(&sin6, 0, sizeof(sin6));
-			sin6.sin6_len = sizeof(sin6);
-			sin6.sin6_family = AF_INET6;
-			sin6.sin6_port = htons(dnsjackport);
-			sin6.sin6_addr = in6addr_loopback;
-			memcpy(nam, &sin6, sizeof(sin6));
-			*namelen = sizeof(sin6);
-		}
 #endif
 	}
 	if (error && p->p_p->ps_flags & PS_PLEDGE)
@@ -206,7 +185,7 @@ sys_bind(struct proc *p, void *v, register_t *retval)
 #endif
 	s = solock(so);
 	error = sobind(so, nam, p);
-	sounlock(s);
+	sounlock(so, s);
 	m_freem(nam);
 out:
 	FRELE(fp, p);
@@ -272,7 +251,9 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	socklen_t namelen;
 	int error, s, tmpfd;
 	struct socket *head, *so;
-	int nflag;
+	int cloexec, nflag;
+
+	cloexec = (flags & SOCK_CLOEXEC) ? UF_EXCLOSE : 0;
 
 	if (name && (error = copyin(anamelen, &namelen, sizeof (namelen))))
 		return (error);
@@ -282,7 +263,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	headfp = fp;
 
 	fdplock(fdp);
-	error = falloc(p, (flags & SOCK_CLOEXEC) ? UF_EXCLOSE : 0, &fp, &tmpfd);
+	error = falloc(p, &fp, &tmpfd);
 	fdpunlock(fdp);
 	if (error) {
 		FRELE(headfp, p);
@@ -297,7 +278,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 		error = EINVAL;
 		goto out;
 	}
-	if ((head->so_state & SS_NBIO) && head->so_qlen == 0) {
+	if ((headfp->f_flag & FNONBLOCK) && head->so_qlen == 0) {
 		if (head->so_state & SS_CANTRCVMORE)
 			error = ECONNABORTED;
 		else
@@ -337,27 +318,27 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_flag = FREAD | FWRITE | nflag;
 	fp->f_ops = &socketops;
+	fp->f_data = so;
 	error = soaccept(so, nam);
 	if (!error && name != NULL)
 		error = copyaddrout(p, nam, name, namelen, anamelen);
-	if (!error) {
-		if (nflag & FNONBLOCK)
-			so->so_state |= SS_NBIO;
-		else
-			so->so_state &= ~SS_NBIO;
-		fp->f_data = so;
-		FILE_SET_MATURE(fp, p);
-		*retval = tmpfd;
-	}
 out:
-	sounlock(s);
-	m_freem(nam);
-	if (error) {
+	if (!error) {
+		sounlock(head, s);
+		fdplock(fdp);
+		fdinsert(fdp, tmpfd, cloexec, fp);
+		fdpunlock(fdp);
+		FRELE(fp, p);
+		*retval = tmpfd;
+	} else {
+		sounlock(head, s);
 		fdplock(fdp);
 		fdremove(fdp, tmpfd);
-		closef(fp, p);
 		fdpunlock(fdp);
+		closef(fp, p);
 	}
+
+	m_freem(nam);
 	FRELE(headfp, p);
 	return (error);
 }
@@ -407,7 +388,7 @@ sys_connect(struct proc *p, void *v, register_t *retval)
 	error = soconnect(so, nam);
 	if (error)
 		goto bad;
-	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
+	if ((fp->f_flag & FNONBLOCK) && (so->so_state & SS_ISCONNECTING)) {
 		error = EINPROGRESS;
 		goto out;
 	}
@@ -428,7 +409,7 @@ bad:
 	if (!interrupted)
 		so->so_state &= ~SS_ISCONNECTING;
 out:
-	sounlock(s);
+	sounlock(so, s);
 	FRELE(fp, p);
 	m_freem(nam);
 	if (error == ERESTART)
@@ -474,14 +455,15 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		if (error != 0)
 			goto free2;
 	}
+	KERNEL_LOCK();
 	fdplock(fdp);
-	if ((error = falloc(p, cloexec, &fp1, &sv[0])) != 0)
+	if ((error = falloc(p, &fp1, &sv[0])) != 0)
 		goto free3;
 	fp1->f_flag = fflag;
 	fp1->f_type = DTYPE_SOCKET;
 	fp1->f_ops = &socketops;
 	fp1->f_data = so1;
-	if ((error = falloc(p, cloexec, &fp2, &sv[1])) != 0)
+	if ((error = falloc(p, &fp2, &sv[1])) != 0)
 		goto free4;
 	fp2->f_flag = fflag;
 	fp2->f_type = DTYPE_SOCKET;
@@ -493,15 +475,12 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrfds(p, sv, 2);
 #endif
-		if (nonblock) {
-			(*fp1->f_ops->fo_ioctl)(fp1, FIONBIO, (caddr_t)&type,
-			    p);
-			(*fp2->f_ops->fo_ioctl)(fp2, FIONBIO, (caddr_t)&type,
-			    p);
-		}
-		FILE_SET_MATURE(fp1, p);
-		FILE_SET_MATURE(fp2, p);
+		fdinsert(fdp, sv[0], cloexec, fp1);
+		fdinsert(fdp, sv[1], cloexec, fp2);
 		fdpunlock(fdp);
+		FRELE(fp1, p);
+		FRELE(fp2, p);
+		KERNEL_UNLOCK();
 		return (0);
 	}
 	fdremove(fdp, sv[1]);
@@ -513,12 +492,13 @@ free4:
 	so1 = NULL;
 free3:
 	fdpunlock(fdp);
+	KERNEL_UNLOCK();
 free2:
 	if (so2 != NULL)
-		(void)soclose(so2);
+		(void)soclose(so2, 0);
 free1:
 	if (so1 != NULL)
-		(void)soclose(so1);
+		(void)soclose(so1, 0);
 	return (error);
 }
 
@@ -576,7 +556,7 @@ sys_sendmsg(struct proc *p, void *v, register_t *retval)
 		iov = aiov;
 	if (msg.msg_iovlen &&
 	    (error = copyin(msg.msg_iov, iov,
-		    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)))))
+		    msg.msg_iovlen * sizeof (struct iovec))))
 		goto done;
 #ifdef KTRACE
 	if (msg.msg_iovlen && KTRPOINT(p, KTR_STRUCT))
@@ -612,6 +592,8 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	if ((error = getsock(p, s, &fp)) != 0)
 		return (error);
 	so = fp->f_data;
+	if (fp->f_flag & FNONBLOCK)
+		flags |= MSG_DONTWAIT;
 
 	error = pledge_sendit(p, mp->msg_name);
 	if (error)
@@ -677,18 +659,23 @@ sendit(struct proc *p, int s, struct msghdr *mp, int flags, register_t *retsize)
 	}
 #endif
 	len = auio.uio_resid;
-	error = sosend(fp->f_data, to, &auio, NULL, control, flags);
+	error = sosend(so, to, &auio, NULL, control, flags);
 	if (error) {
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0)
+		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0) {
+			KERNEL_LOCK();
 			ptsignal(p, SIGPIPE, STHREAD);
+			KERNEL_UNLOCK();
+		}
 	}
 	if (error == 0) {
 		*retsize = len - auio.uio_resid;
+		mtx_enter(&fp->f_mtx);
 		fp->f_wxfer++;
 		fp->f_wbytes += *retsize;
+		mtx_leave(&fp->f_mtx);
 	}
 #ifdef KTRACE
 	if (ktriov != NULL) {
@@ -830,6 +817,8 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	}
 #endif
 	len = auio.uio_resid;
+	if (fp->f_flag & FNONBLOCK)
+		mp->msg_flags |= MSG_DONTWAIT;
 	error = soreceive(fp->f_data, &from, &auio, NULL,
 			  mp->msg_control ? &control : NULL,
 			  &mp->msg_flags,
@@ -902,8 +891,10 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 		mp->msg_controllen = len;
 	}
 	if (!error) {
+		mtx_enter(&fp->f_mtx);
 		fp->f_rxfer++;
 		fp->f_rbytes += *retsize;
+		mtx_leave(&fp->f_mtx);
 	}
 out:
 	FRELE(fp, p);
@@ -977,7 +968,7 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 	so = fp->f_data;
 	s = solock(so);
 	error = sosetopt(so, SCARG(uap, level), SCARG(uap, name), m);
-	sounlock(s);
+	sounlock(so, s);
 bad:
 	m_freem(m);
 	FRELE(fp, p);
@@ -1016,7 +1007,7 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 	so = fp->f_data;
 	s = solock(so);
 	error = sogetopt(so, SCARG(uap, level), SCARG(uap, name), m);
-	sounlock(s);
+	sounlock(so, s);
 	if (error == 0 && SCARG(uap, val) && valsize && m != NULL) {
 		if (valsize > m->m_len)
 			valsize = m->m_len;
@@ -1060,7 +1051,7 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 	m = m_getclr(M_WAIT, MT_SONAME);
 	s = solock(so);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, 0, m, 0, p);
-	sounlock(s);
+	sounlock(so, s);
 	if (error)
 		goto bad;
 	error = copyaddrout(p, m, SCARG(uap, asa), len, SCARG(uap, alen));
@@ -1103,7 +1094,7 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 	m = m_getclr(M_WAIT, MT_SONAME);
 	s = solock(so);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, 0, m, 0, p);
-	sounlock(s);
+	sounlock(so, s);
 	if (error)
 		goto bad;
 	error = copyaddrout(p, m, SCARG(uap, asa), len, SCARG(uap, alen));
@@ -1158,9 +1149,9 @@ getsock(struct proc *p, int fdes, struct file **fpp)
 {
 	struct file *fp;
 
-	if ((fp = fd_getfile(p->p_fd, fdes)) == NULL)
+	fp = fd_getfile(p->p_fd, fdes);
+	if (fp == NULL)
 		return (EBADF);
-	FREF(fp);
 	if (fp->f_type != DTYPE_SOCKET) {
 		FRELE(fp, p);
 		return (ENOTSOCK);

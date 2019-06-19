@@ -1,4 +1,4 @@
-/* $OpenBSD: f_int.c,v 1.18 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: f_int.c,v 1.20 2018/05/13 13:48:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,7 @@
 #include <openssl/err.h>
 
 int
-i2a_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *a)
+i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
 {
 	int i, n = 0;
 	static const char h[] = "0123456789ABCDEF";
@@ -158,8 +158,7 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 		}
 		i /= 2;
 		if (num + i > slen) {
-			sp = OPENSSL_realloc_clean(s, slen, num + i);
-			if (sp == NULL) {
+			if ((sp = recallocarray(s, slen, num + i, 1)) == NULL) {
 				ASN1error(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}

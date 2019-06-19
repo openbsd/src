@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.30 2016/09/21 04:38:57 guenther Exp $ */
+/*	$OpenBSD: strftime.c,v 1.31 2019/05/12 12:49:52 schwarze Exp $ */
 /*
 ** Copyright (c) 1989, 1993
 **	The Regents of the University of California.  All rights reserved.
@@ -456,12 +456,9 @@ label:
 					pt, ptlim);
 				continue;
 			case 'Z':
-#ifdef TM_ZONE
-				if (t->TM_ZONE != NULL)
-					pt = _add(t->TM_ZONE, pt, ptlim);
-				else
-#endif /* defined TM_ZONE */
-				if (t->tm_isdst >= 0)
+				if (t->tm_zone != NULL)
+					pt = _add(t->tm_zone, pt, ptlim);
+				else if (t->tm_isdst >= 0)
 					pt = _add(tzname[t->tm_isdst != 0],
 						pt, ptlim);
 				/*
@@ -477,41 +474,7 @@ label:
 
 				if (t->tm_isdst < 0)
 					continue;
-#ifdef TM_GMTOFF
-				diff = t->TM_GMTOFF;
-#else /* !defined TM_GMTOFF */
-				/*
-				** C99 says that the UTC offset must
-				** be computed by looking only at
-				** tm_isdst. This requirement is
-				** incorrect, since it means the code
-				** must rely on magic (in this case
-				** altzone and timezone), and the
-				** magic might not have the correct
-				** offset. Doing things correctly is
-				** tricky and requires disobeying C99;
-				** see GNU C strftime for details.
-				** For now, punt and conform to the
-				** standard, even though it's incorrect.
-				**
-				** C99 says that %z must be replaced by the
-				** empty string if the time zone is not
-				** determinable, so output nothing if the
-				** appropriate variables are not available.
-				*/
-				if (t->tm_isdst == 0)
-#ifdef USG_COMPAT
-					diff = -timezone;
-#else /* !defined USG_COMPAT */
-					continue;
-#endif /* !defined USG_COMPAT */
-				else
-#ifdef ALTZONE
-					diff = -altzone;
-#else /* !defined ALTZONE */
-					continue;
-#endif /* !defined ALTZONE */
-#endif /* !defined TM_GMTOFF */
+				diff = t->tm_gmtoff;
 				if (diff < 0) {
 					sign = "-";
 					diff = -diff;

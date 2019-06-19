@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2017/07/27 13:34:30 mpi Exp $ */
+/*	$OpenBSD: util.c,v 1.8 2018/12/03 18:39:42 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -69,15 +69,31 @@
 struct sockaddr *rt_plen2mask(struct rtentry *, struct sockaddr_in6 *);
 
 struct domain inetdomain = {
-	AF_INET, "inet", NULL, NULL, NULL, NULL, NULL,
-	sizeof(struct sockaddr_in), offsetof(struct sockaddr_in, sin_addr),
-	32,
+  .dom_family		= AF_INET,
+  .dom_name		= "inet",
+  .dom_init		= NULL,
+  .dom_externalize	= NULL,
+  .dom_dispose		= NULL,
+  .dom_protosw		= NULL,
+  .dom_protoswNPROTOSW	= NULL,
+  .dom_rtoffset		= offsetof(struct sockaddr_in, sin_addr),
+  .dom_maxplen		= 32,
+  .dom_ifattach		= NULL,
+  .dom_ifdetach		= NULL,
 };
 
 struct domain inet6domain = {
-	AF_INET6, "inet6", NULL, NULL, NULL, NULL, NULL,
-	sizeof(struct sockaddr_in6), offsetof(struct sockaddr_in6, sin6_addr),
-	128,
+  .dom_family		= AF_INET6,
+  .dom_name		= "inet6",
+  .dom_init		= NULL,
+  .dom_externalize	= NULL,
+  .dom_dispose		= NULL,
+  .dom_protosw		= NULL,
+  .dom_protoswNPROTOSW	= NULL,
+  .dom_rtoffset		= offsetof(struct sockaddr_in6, sin6_addr),
+  .dom_maxplen		= 128,
+  .dom_ifattach		= NULL,
+  .dom_ifdetach		= NULL,
 };
 
 struct domain *domains[] = { &inetdomain, &inet6domain, NULL };
@@ -110,7 +126,7 @@ route_insert(unsigned int rid, sa_family_t af, char *string)
 	rt_maskedcopy(dst, ndst, mask);
 
 	if ((error = rtable_insert(rid, ndst, mask, NULL, 0, rt)) != 0) {
-		inet_net_satop(af, rt_key(rt), plen, ip, sizeof(ip));
+		inet_net_satop(af, ndst, plen, ip, sizeof(ip));
 		errx(1, "can't add route: %s, %s\n", ip, strerror(error));
 	}
 	nrt = rtable_lookup(rid, dst, mask, NULL, RTP_ANY);
@@ -500,4 +516,3 @@ rt_hash(struct rtentry *rt, struct sockaddr *dst, uint32_t *src)
 
 	return (c & 0xffff);
 }
-

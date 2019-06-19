@@ -1,0 +1,27 @@
+.\" $OpenBSD: bs_man.in,v 1.1 2019/01/17 06:29:14 schwarze Exp $
+.TH ESC-BS_MAN 1 "January 17, 2019"
+.SH NAME
+esc-bs_man \- escaped backslashes in man(7) code
+.SH DESCRIPTION
+.ds usestr (initial)
+.de testmac
+prefix\*[usestr]suffix
+prefix\\*[usestr]suffix
+..
+.ds teststr prefix\*[usestr]middle\\*[usestr]suffix
+.ds usestr (later)
+on a text line: prefix\\suffix
+.PP
+in a macro definition:
+.testmac
+.PP
+in a string definition: \*[teststr]
+.PP
+in a high-level macro argument:
+.IB prefix ##\\*[usestr]## suffix
+.PP
+.de argmac
+{\\$1}
+..
+in a user-defined macro argument:
+.argmac prefix\\*[usestr]suffix

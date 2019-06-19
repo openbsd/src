@@ -16,7 +16,7 @@ use warnings;
 
 use Test::More tests => 73;
 
-use Math::BigFloat;
+use Math::BigFloat only => 'Calc';
 use Math::BigInt;
 
 my $class = "Math::BigInt";

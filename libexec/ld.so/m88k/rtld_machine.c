@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.21 2017/09/09 02:22:48 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.23 2018/11/16 21:15:47 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -282,7 +282,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	int	fails = 0;
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 	Elf_Addr plt_start, plt_end;
-	size_t plt_size;
 
 	if (pltgot == NULL)
 		return (0);
@@ -295,28 +294,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	if (object->traced)
 		lazy = 1;
-
-	plt_start = object->Dyn.info[DT_88K_PLTSTART - DT_LOPROC + DT_NUM];
-	plt_end = object->Dyn.info[DT_88K_PLTEND - DT_LOPROC + DT_NUM];
-
-	/*
-	 * GOT relocation will require PLT to be writeable.
-	 */
-	if ((!lazy || object->obj_base != 0) && plt_start != 0 &&
-	    plt_end != 0) {
-		plt_start += object->obj_base;
-		plt_end += object->obj_base;
-		/*
-		 * XXX We round to page granularity, which means
-		 * the cacheflush trap handler will operate on
-		 * entire pages.  Maybe we should pass the true
-		 * start+size and let the trap handler decide whether
-		 * to do full pages or only the applicable cachelines?
-		 */
-		plt_start = ELF_TRUNC(plt_start, _dl_pagesz);
-		plt_size = ELF_ROUND(plt_end, _dl_pagesz) - plt_start;
-	} else
-		plt_size = 0;
 
 	if (!lazy) {
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
@@ -339,15 +316,18 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		}
 	}
 
-	/* mprotect the GOT */
-	_dl_protect_segment(object, 0, "__got_start", "__got_end", PROT_READ);
-
-	if (plt_size != 0) {
-		/*
-		 * Force a cache sync on the whole plt here,
-		 * otherwise I$ might have stale information.
-		 */
-		_dl_cacheflush(plt_start, plt_size);
+	/*
+	 * Force a cache sync here on the whole PLT if we updated it
+	 * (and have the DT entries to find what we need to flush),
+	 * otherwise I$ might have stale information.
+	 */
+	plt_start = object->Dyn.info[DT_88K_PLTSTART - DT_LOPROC + DT_NUM];
+	plt_end = object->Dyn.info[DT_88K_PLTEND - DT_LOPROC + DT_NUM];
+	if ((!lazy || object->obj_base != 0) && plt_start != 0 &&
+	    plt_end != 0) {
+		size_t plt_size = plt_end - plt_start;
+		if (plt_size != 0)
+			_dl_cacheflush(plt_start + object->obj_base, plt_size);
 	}
 
 	return (fails);

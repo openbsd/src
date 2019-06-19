@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_set_negative.3,v 1.4 2018/03/23 00:09:11 schwarze Exp $
+.\"	$OpenBSD: BN_set_negative.3,v 1.5 2019/06/03 14:43:15 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: June 3 2019 $
 .Dt BN_SET_NEGATIVE 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm BN_is_negative
 .Nd change and inspect the sign of a BIGNUM
 .Sh SYNOPSIS
+.In openssl/bn.h
 .Ft void
 .Fo BN_set_negative
 .Fa "BIGNUM *b"

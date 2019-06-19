@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.231 2018/03/06 20:56:36 tim Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.243 2019/06/16 09:30:15 mestre Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -94,13 +94,14 @@
 #include <ddb/db_var.h>
 #include <dev/rndvar.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <limits.h>
 #include <unistd.h>
 
 #include <machine/cpu.h>
@@ -129,6 +130,8 @@ struct ctlname *vfsname;
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
 #endif
 struct ctlname ddbname[] = CTL_DDB_NAMES;
+struct ctlname audioname[] = CTL_KERN_AUDIO_NAMES;
+struct ctlname witnessname[] = CTL_KERN_WITNESS_NAMES;
 char names[BUFSIZ];
 int lastused;
 
@@ -159,6 +162,8 @@ struct list secondlevel[] = {
 };
 
 int	Aflag, aflag, nflag, qflag;
+
+time_t boottime;
 
 /*
  * Variables requiring special processing.
@@ -212,6 +217,8 @@ void print_sensor(struct sensor *);
 #ifdef CPU_CHIPSET
 int sysctl_chipset(char *, char **, int *, int, int *);
 #endif
+int sysctl_audio(char *, char **, int *, int, int *);
+int sysctl_witness(char *, char **, int *, int, int *);
 void vfsinit(void);
 
 char *equ = "=";
@@ -250,6 +257,15 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	ctime(&boottime); /* satisfy potential $TZ expansion before unveil() */
+
+	if (unveil(_PATH_DEVDB, "r") == -1)
+		err(1,"unveil");
+	if (unveil("/dev", "r") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 	if (argc == 0 || (Aflag || aflag)) {
 		debuginit();
@@ -495,6 +511,21 @@ parse(char *string, int flags)
 		case KERN_SOMINCONN:
 			special |= UNSIGNED;
 			break;
+		case KERN_AUDIO:
+			len = sysctl_audio(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
+		case KERN_WITNESS:
+			len = sysctl_witness(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
+		case KERN_PFSTATUS:
+			if (flags == 0)
+				return;
+			warnx("use pfctl to view %s information", string);
+			return;
 		}
 		break;
 
@@ -560,7 +591,8 @@ parse(char *string, int flags)
 		} else if (mib[1] == VM_NKMEMPAGES ||
 		    mib[1] == VM_ANONMIN ||
 		    mib[1] == VM_VTEXTMIN ||
-		    mib[1] == VM_VNODEMIN) {
+		    mib[1] == VM_VNODEMIN ||
+		    mib[1] == VM_MALLOC_CONF) {
 			break;
 		}
 		if (flags == 0)
@@ -664,6 +696,10 @@ parse(char *string, int flags)
 #ifdef CPU_CONSDEV
 		if (mib[1] == CPU_CONSDEV)
 			special |= CHRDEV;
+#endif
+#ifdef CPU_CPUID
+		if (mib[1] == CPU_CPUID)
+			special |= HEX;
 #endif
 #ifdef CPU_CPUFEATURE
 		if (mib[1] == CPU_CPUFEATURE)
@@ -869,7 +905,6 @@ parse(char *string, int flags)
 	}
 	if (special & BOOTTIME) {
 		struct timeval *btp = (struct timeval *)buf;
-		time_t boottime;
 
 		if (!nflag) {
 			boottime = btp->tv_sec;
@@ -1282,11 +1317,11 @@ sysctl_vfsgen(char *string, char **bufpp, int mib[], int flags, int *typep)
 	if (flags == 0 && vfc.vfc_refcount == 0)
 		return -1;
 	if (!nflag)
-		fprintf(stdout, "%s has %d mounted instance%s\n",
+		fprintf(stdout, "%s has %u mounted instance%s\n",
 		    string, vfc.vfc_refcount,
 		    vfc.vfc_refcount != 1 ? "s" : "");
 	else
-		fprintf(stdout, "%d\n", vfc.vfc_refcount);
+		fprintf(stdout, "%u\n", vfc.vfc_refcount);
 
 	return -1;
 }
@@ -1704,6 +1739,8 @@ struct list semlist = { semname, KERN_SEMINFO_MAXID };
 struct list shmlist = { shmname, KERN_SHMINFO_MAXID };
 struct list watchdoglist = { watchdogname, KERN_WATCHDOG_MAXID };
 struct list tclist = { tcname, KERN_TIMECOUNTER_MAXID };
+struct list audiolist = { audioname, KERN_AUDIO_MAXID };
+struct list witnesslist = { witnessname, KERN_WITNESS_MAXID };
 
 /*
  * handle vfs namei cache statistics
@@ -2300,12 +2337,7 @@ sysctl_pipex(char *string, char **bufpp, int mib[], int flags, int *typep)
  * Handle SysV semaphore info requests
  */
 int
-sysctl_seminfo(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_seminfo(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx;
 
@@ -2324,12 +2356,7 @@ sysctl_seminfo(string, bufpp, mib, flags, typep)
  * Handle SysV shared memory info requests
  */
 int
-sysctl_shminfo(string, bufpp, mib, flags, typep)
-	char *string;
-	char **bufpp;
-	int mib[];
-	int flags;
-	int *typep;
+sysctl_shminfo(char *string, char **bufpp, int mib[], int flags, int *typep)
 {
 	int indx;
 
@@ -2407,6 +2434,8 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 					continue;
 				if (errno == ENOENT)
 					break;
+				warn("sensors dev %d", dev);
+				return (-1);
 			}
 			snprintf(buf, sizeof(buf), "%s.%s",
 			    string, snsrdev.xname);
@@ -2432,6 +2461,8 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 				continue;
 			if (errno == ENOENT)
 				break;
+			warn("sensors dev %d", dev);
+			return (-1);
 		}
 		if (strcmp(devname, snsrdev.xname) == 0)
 			break;
@@ -2651,13 +2682,16 @@ print_sensor(struct sensor *s)
 			printf("%3.4f degrees", s->value / 1000000.0);
 			break;
 		case SENSOR_DISTANCE:
-			printf("%.2f mm", s->value / 1000.0);
+			printf("%.3f m", s->value / 1000000.0);
 			break;
 		case SENSOR_PRESSURE:
 			printf("%.2f Pa", s->value / 1000.0);
 			break;
 		case SENSOR_ACCEL:
 			printf("%2.4f m/s^2", s->value / 1000000.0);
+			break;
+		case SENSOR_VELOCITY:
+			printf("%4.3f m/s", s->value / 1000000.0);
 			break;
 		default:
 			printf("unknown");
@@ -2692,6 +2726,44 @@ print_sensor(struct sensor *s)
 		ct[19] = '\0';
 		printf(", %s.%03ld", ct, s->tv.tv_usec / 1000);
 	}
+}
+
+/*
+ * Handle audio support
+ */
+int
+sysctl_audio(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &audiolist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &audiolist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = audiolist.list[indx].ctl_type;
+	return (3);
+}
+
+/*
+ * Handle witness support
+ */
+int
+sysctl_witness(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &witnesslist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &witnesslist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = witnesslist.list[indx].ctl_type;
+	return (3);
 }
 
 /*

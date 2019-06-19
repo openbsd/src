@@ -28,16 +28,34 @@ use Scalar::Util qw(tainted);
 
 $| = 1;
 
-plan tests => 2;
+plan tests => 4;
 
 watchdog(60);
 
+my $taint = substr($ENV{PATH}, 0, 0); # and empty tainted string
+
 {
-    my $in = substr($ENV{PATH}, 0, 0) . ( "ab" x 200_000 );
+    my $in = $taint . ( "ab" x 200_000 );
     utf8::upgrade($in);
     ok(tainted($in), "performance issue only when tainted");
     while ($in =~ /\Ga+b/g) { }
     pass("\\G on tainted string");
+}
+
+# RT #130584
+# tainted string caused the utf8 pos cache to be cleared each time
+
+{
+    my $repeat = 30_000;
+    my $in = $taint . ("abcdefghijklmnopqrstuvwxyz" x $repeat);
+    utf8::upgrade($in);
+    ok(tainted($in), "performance issue only when tainted");
+    local ${^UTF8CACHE} = 1;  # defeat debugging
+    for my $i (1..$repeat) {
+        $in =~ /abcdefghijklmnopqrstuvwxyz/g or die;
+        my $p = pos($in); # this was slow
+    }
+    pass("RT #130584 pos on tainted utf8 string");
 }
 
 1;

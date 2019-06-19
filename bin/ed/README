@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.4 2014/04/20 09:29:36 deraadt Exp $
+$OpenBSD: README,v 1.5 2018/06/15 08:46:24 martijn Exp $
 $NetBSD: README,v 1.9 1995/03/21 09:04:33 cgd Exp $
 
 ed is an 8-bit-clean, POSIX-compliant line editor.  It should work with
@@ -8,9 +8,6 @@ standard, such as GNU regex(3).
 If reliable signals are supported (e.g., POSIX sigaction(2)), it should
 compile with little trouble.  Otherwise, the macros SPL1() and SPL0()
 should be redefined to disable interrupts.
-
-The following compiler directive is recognized:
-BACKWARDS	- for backwards compatibility
 
 The file `POSIX' describes extensions to and deviations from the POSIX
 standard.

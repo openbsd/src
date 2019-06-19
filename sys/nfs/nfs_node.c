@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.66 2018/03/28 09:40:26 mpi Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.70 2018/05/27 06:02:15 visa Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -90,7 +90,6 @@ nfs_nget(struct mount *mnt, nfsfh_t *fh, int fhsize, struct nfsnode **npp)
 	struct nfsmount		*nmp;
 	struct nfsnode		*np, find, *np2;
 	struct vnode		*vp, *nvp;
-	struct proc		*p = curproc;		/* XXX */
 	int			 error;
 
 	nmp = VFSTONFS(mnt);
@@ -101,7 +100,7 @@ loop:
 	np = RBT_FIND(nfs_nodetree, &nmp->nm_ntree, &find);
 	if (np != NULL) {
 		vp = NFSTOV(np);
-		error = vget(vp, LK_EXCLUSIVE, p);
+		error = vget(vp, LK_EXCLUSIVE);
 		if (error)
 			goto loop;
 		*npp = np;
@@ -134,26 +133,20 @@ loop:
 	}
 
 	vp = nvp;
+#ifdef VFSLCKDEBUG
+	vp->v_flag |= VLOCKSWORK;
+#endif
+	rrw_init_flags(&np->n_lock, "nfsnode", RWL_DUPOK | RWL_IS_VNODE);
 	vp->v_data = np;
 	/* we now have an nfsnode on this vnode */
 	vp->v_flag &= ~VLARVAL;
 	np->n_vnode = vp;
-
 	rw_init(&np->n_commitlock, "nfs_commitlk");
-
-	/* 
-	 * Are we getting the root? If so, make sure the vnode flags
-	 * are correct 
-	 */
-	if ((fhsize == nmp->nm_fhsize) && !bcmp(fh, nmp->nm_fh, fhsize)) {
-		if (vp->v_type == VNON)
-			vp->v_type = VDIR;
-		vp->v_flag |= VROOT;
-	}
-
 	np->n_fhp = &np->n_fh;
 	bcopy(fh, np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
+	/* lock the nfsnode, then put it on the rbtree */
+	rrw_enter(&np->n_lock, RW_WRITE);
 	np2 = RBT_INSERT(nfs_nodetree, &nmp->nm_ntree, np);
 	KASSERT(np2 == NULL);
 	np->n_accstamp = -1;
@@ -195,14 +188,15 @@ nfs_inactive(void *v)
 		 * Remove the silly file that was rename'd earlier
 		 */
 		nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, curproc);
+		vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_RETRY);
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
-		vrele(sp->s_dvp);
+		vput(sp->s_dvp);
 		free(sp, M_NFSREQ, sizeof(*sp));
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT);
 
-	VOP_UNLOCK(ap->a_vp, ap->a_p);
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 

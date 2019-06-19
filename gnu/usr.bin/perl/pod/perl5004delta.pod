@@ -696,7 +696,7 @@ effect if perl is compiled with system malloc().)
 
 If this macro is defined, running out of memory need not be a fatal
 error: a memory pool can allocated by assigning to the special
-variable C<$^M>.  See L<"$^M">.
+variable C<$^M>.  See L</"$^M">.
 
 =item -DPACK_MALLOC
 

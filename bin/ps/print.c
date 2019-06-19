@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.69 2016/09/08 15:11:29 tedu Exp $	*/
+/*	$OpenBSD: print.c,v 1.72 2019/03/24 04:55:01 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	int left, wantspace = 0;
-	char **argv, **p;
+	char **p;
 
 	/*
 	 * Determine the available number of display columns.
@@ -118,8 +118,8 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 		left = INT_MAX;
 
 	if (needenv && kd != NULL) {
-		argv = kvm_getenvv(kd, kp, termwidth);
-		if ((p = argv) != NULL) {
+		char **envp = kvm_getenvv(kd, kp, termwidth);
+		if ((p = envp) != NULL) {
 			while (*p) {
 				if (wantspace) {
 					putchar(' ');
@@ -132,11 +132,12 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 				wantspace = 1;
 			}
 		}
-	} else
-		argv = NULL;
+	}
 
 	if (needcomm) {
 		if (!commandonly) {
+			char **argv = NULL;
+
 			if (kd != NULL) {
 				argv = kvm_getargv(kd, kp, termwidth);
 				if ((p = argv) != NULL) {
@@ -343,15 +344,16 @@ tdev(const struct kinfo_proc *kp, VARENT *ve)
 {
 	VAR *v;
 	dev_t dev;
-	char buff[16];
 
 	v = ve->var;
 	dev = kp->p_tdev;
 	if (dev == NODEV)
 		(void)printf("%*s", v->width, "??");
 	else {
+		char buff[10+1+10+1];
+
 		(void)snprintf(buff, sizeof(buff),
-		    "%d/%d", major(dev), minor(dev));
+		    "%u/%u", major(dev), minor(dev));
 		(void)printf("%*s", v->width, buff);
 	}
 }

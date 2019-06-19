@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lo.4,v 1.28 2013/06/02 20:23:33 tedu Exp $
+.\"	$OpenBSD: lo.4,v 1.29 2018/04/29 11:49:38 schwarze Exp $
 .\"	$NetBSD: lo.4,v 1.3 1994/11/30 16:22:23 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lo.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: June 2 2013 $
+.Dd $Mdocdate: April 29 2018 $
 .Dt LO 4
 .Os
 .Sh NAME
@@ -64,12 +64,6 @@ These addresses
 may be set or changed with the
 .Dv SIOCSIFADDR
 .Xr ioctl 2 .
-The loopback interface should be the last interface configured,
-as protocols may use the order of configuration as an indication of priority.
-The loopback should
-.Em never
-be configured first unless no hardware
-interfaces exist.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It lo0: can't handle afX.
@@ -89,8 +83,3 @@ The
 .Nm
 device appeared in
 .Bx 4.2 .
-.Sh BUGS
-Previous versions of the system enabled the loopback interface
-automatically, using a non-standard Internet address (127.1).
-Use of that address is now discouraged; a reserved host address
-for the local network should be used instead.

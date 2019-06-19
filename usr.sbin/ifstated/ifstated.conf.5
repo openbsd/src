@@ -1,4 +1,4 @@
-.\" $OpenBSD: ifstated.conf.5,v 1.12 2018/03/06 15:18:27 rob Exp $
+.\" $OpenBSD: ifstated.conf.5,v 1.14 2018/12/07 19:29:38 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Nikolay Sturm <sturm@openbsd.org>
 .\" Copyright (c) 2005 Marco Pfatschbacher <mpf@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 6 2018 $
+.Dd $Mdocdate: December 7 2018 $
 .Dt IFSTATED.CONF 5
 .Os
 .Sh NAME
@@ -28,10 +28,10 @@ daemon runs commands in response to network state changes, which it
 determines by monitoring interface link state or running external tests.
 .Nm
 is the configuration file for this daemon.
-.Sh SECTIONS
+.Pp
 The
 .Nm
-config file is divided into three main sections.
+config file is divided into the following main sections:
 .Bl -tag -width xxxx
 .It Sy Global Configuration
 Global settings for
@@ -90,7 +90,7 @@ interfaces this equals the init state.
 .Pp
 In contrast to link state tests, external tests must be run periodically to
 evaluate their status.
-The frequency at which an external test is run has to be set with the
+The frequency at which an external test is run is set, in seconds, with the
 .Ar every
 keyword.
 .Pp

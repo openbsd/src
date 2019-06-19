@@ -6,22 +6,25 @@ NNAAMMEE
        HP-literal - hanged paragraphs in literal context
 
 DDEESSCCRRIIPPTTIIOONN
-       regular text
+       BEGINTEST before hanged paragraph
 
        tag indented text
 
-       regular text
+       regular paragraph
        literal
        text
 
        tag
-                 indented
-                 text
+                 literal
+                 hanged
+                 paragraph
 
        literal
-       text
+       paragraph
        regular text
+       ENDTEST
+       end of file
 
 
 
-OpenBSD                         January 4, 2011                  HP-LITERAL(1)
+OpenBSD                         January 6, 2019                  HP-LITERAL(1)

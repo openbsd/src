@@ -1,5 +1,6 @@
-.\"	$OpenBSD: SSL_CTX_set_mode.3,v 1.4 2018/03/21 21:20:26 schwarze Exp $
-.\"	OpenSSL 8671b898 Jun 3 02:48:34 2008 +0000
+.\" $OpenBSD: SSL_CTX_set_mode.3,v 1.6 2019/06/12 09:36:30 schwarze Exp $
+.\" full merge up to: OpenSSL 8671b898 Jun 3 02:48:34 2008 +0000
+.\" selective merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org> and
 .\" Ben Laurie <ben@openssl.org>.
@@ -49,12 +50,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: June 12 2019 $
 .Dt SSL_CTX_SET_MODE 3
 .Os
 .Sh NAME
 .Nm SSL_CTX_set_mode ,
 .Nm SSL_set_mode ,
+.Nm SSL_CTX_clear_mode ,
+.Nm SSL_clear_mode ,
 .Nm SSL_CTX_get_mode ,
 .Nm SSL_get_mode
 .Nd manipulate SSL engine mode
@@ -65,33 +68,48 @@
 .Ft long
 .Fn SSL_set_mode "SSL *ssl" "long mode"
 .Ft long
+.Fn SSL_CTX_clear_mode "SSL_CTX *ctx" "long mode"
+.Ft long
+.Fn SSL_clear_mode "SSL *ssl" "long mode"
+.Ft long
 .Fn SSL_CTX_get_mode "SSL_CTX *ctx"
 .Ft long
 .Fn SSL_get_mode "SSL *ssl"
 .Sh DESCRIPTION
 .Fn SSL_CTX_set_mode
-adds the mode set via bitmask in
-.Fa mode
-to
-.Fa ctx .
-Options already set before are not cleared.
-.Pp
+and
 .Fn SSL_set_mode
-adds the mode set via bitmask in
+enable the options contained in the bitmask
 .Fa mode
-to
-.Fa ssl .
-Options already set before are not cleared.
+for the
+.Fa ctx
+or
+.Fa ssl
+object, respectively.
+Options that were already enabled before the call are not disabled.
+.Pp
+.Fn SSL_CTX_clear_mode
+and
+.Fn SSL_clear_mode
+disable the options contained in the bitmask
+.Fa mode
+for the
+.Fa ctx
+or
+.Fa ssl
+object.
 .Pp
 .Fn SSL_CTX_get_mode
-returns the mode set for
-.Fa ctx .
-.Pp
+and
 .Fn SSL_get_mode
-returns the mode set for
-.Fa ssl .
-.Sh NOTES
-The following mode changes are available:
+return a bitmask representing the options
+that are currently enabled for the
+.Fa ctx
+or
+.Fa ssl
+object.
+.Pp
+The following options are available:
 .Bl -tag -width Ds
 .It Dv SSL_MODE_ENABLE_PARTIAL_WRITE
 Allow
@@ -150,10 +168,12 @@ Using this flag can save around 34k per idle SSL connection.
 This flag has no effect on SSL v2 connections, or on DTLS connections.
 .El
 .Sh RETURN VALUES
-.Fn SSL_CTX_set_mode
+.Fn SSL_CTX_set_mode ,
+.Fn SSL_set_mode ,
+.Fn SSL_CTX_clear_mode ,
 and
-.Fn SSL_set_mode
-return the new mode bitmask after adding
+.Fn SSL_clear_mode
+return the new mode bitmask after adding or clearing
 .Fa mode .
 .Pp
 .Fn SSL_CTX_get_mode
@@ -161,6 +181,7 @@ and
 .Fn SSL_get_mode
 return the current bitmask.
 .Sh SEE ALSO
+.Xr ssl 3 ,
 .Xr SSL_CTX_ctrl 3 ,
 .Xr SSL_read 3 ,
 .Xr SSL_write 3
@@ -172,6 +193,12 @@ and
 .Fn SSL_get_mode
 first appeared in OpenSSL 0.9.4 and have been available since
 .Ox 2.6 .
+.Pp
+.Fn SSL_CTX_clear_mode
+and
+.Fn SSL_clear_mode
+first appeared in OpenSSL 0.9.8m and have been available since
+.Ox 4.9 .
 .Pp
 .Dv SSL_MODE_AUTO_RETRY
 was added in OpenSSL 0.9.6.

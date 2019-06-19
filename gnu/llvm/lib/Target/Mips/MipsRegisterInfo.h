@@ -1,4 +1,4 @@
-//===-- MipsRegisterInfo.h - Mips Register Information Impl -----*- C++ -*-===//
+//===- MipsRegisterInfo.h - Mips Register Information Impl ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,12 +15,16 @@
 #define LLVM_LIB_TARGET_MIPS_MIPSREGISTERINFO_H
 
 #include "Mips.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
+#include <cstdint>
 
 #define GET_REGINFO_HEADER
 #include "MipsGenRegisterInfo.inc"
 
 namespace llvm {
+
+class TargetRegisterClass;
+
 class MipsRegisterInfo : public MipsGenRegisterInfo {
 public:
   enum class MipsPtrClass {
@@ -53,6 +57,8 @@ public:
 
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 
+  bool enableMultipleCopyHints() const override { return true; }
+
   bool requiresRegisterScavenging(const MachineFunction &MF) const override;
 
   bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const override;
@@ -68,7 +74,7 @@ public:
   /// Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const override;
 
-  /// \brief Return GPR register class.
+  /// Return GPR register class.
   virtual const TargetRegisterClass *intRegClass(unsigned Size) const = 0;
 
 private:
@@ -79,4 +85,4 @@ private:
 
 } // end namespace llvm
 
-#endif
+#endif // LLVM_LIB_TARGET_MIPS_MIPSREGISTERINFO_H

@@ -798,7 +798,7 @@ L<ExtUtils::MakeMaker>, L<Module::Build>
 
 L<Test::Simple>, L<Test::Inline>, L<Carp::Assert>, L<Test::More>, L<Test::MockObject>
 
-=item http://pause.perl.org/
+=item L<http://pause.perl.org/>
 
 Perl Authors Upload Server.  Contains links to information for module
 authors.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.5 2014/03/29 18:09:28 guenther Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.6 2019/03/25 18:48:12 guenther Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -69,25 +69,12 @@ struct pctrst {
 
 #ifdef _KERNEL
 
-#define rdmsr(msr)						\
-({								\
-	u_int32_t hi, lo;					\
-	__asm volatile("rdmsr"					\
-	     : "=d" (hi), "=a" (lo) : "c" (msr));		\
-	((u_int64_t)hi << 32) | (u_int64_t) lo;			\
-})
-
-#define wrmsr(msr, v)						\
-({								\
-	__asm volatile("wrmsr" :				\
-	    : "a" ((u_int64_t)v & 0xffffffff),			\
-	      "d" ((u_int64_t)v >> 32), "c" (msr));		\
-})
-
 void	pctrattach(int);
 int	pctropen(dev_t, int, int, struct proc *);
 int	pctrclose(dev_t, int, int, struct proc *);
 int	pctrioctl(dev_t, u_long, caddr_t, int, struct proc *);
+void	pctr_reload(struct cpu_info *);
+void	pctr_resume(struct cpu_info *);
 
 #endif /* _KERNEL */
 #endif /* ! _MACHINE_PCTR_H_ */

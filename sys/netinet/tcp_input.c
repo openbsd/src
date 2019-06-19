@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.354 2017/12/04 13:40:34 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.359 2018/09/17 14:07:48 friehm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -176,12 +176,12 @@ do { \
 	struct ifnet *ifp = NULL; \
 	if (m && (m->m_flags & M_PKTHDR)) \
 		ifp = if_get(m->m_pkthdr.ph_ifidx); \
-	if ((tp)->t_flags & TF_DELACK || \
+	if (TCP_TIMER_ISARMED(tp, TCPT_DELACK) || \
 	    (tcp_ack_on_push && (tiflags) & TH_PUSH) || \
 	    (ifp && (ifp->if_flags & IFF_LOOPBACK))) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
-		TCP_SET_DELACK(tp); \
+		TCP_TIMER_ARM_MSEC(tp, TCPT_DELACK, tcp_delack_msecs); \
 	if_put(ifp); \
 } while (0)
 
@@ -366,12 +366,13 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 	u_int8_t *optp = NULL;
 	int optlen = 0;
 	int tlen, off;
-	struct tcpcb *tp = NULL;
+	struct tcpcb *otp = NULL, *tp = NULL;
 	int tiflags;
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked;
 	int hdroptlen = 0;
-	short ostate = 0;
+	short ostate;
+	caddr_t saveti;
 	tcp_seq iss, *reuse = NULL;
 	u_long tiwin;
 	struct tcp_opt_info opti;
@@ -635,20 +636,21 @@ findpcb:
 			dst.sin6.sin6_port = th->th_dport;
 			break;
 #endif /* INET6 */
-		default:
-			goto badsyn;	/*sanity*/
 		}
 
 		if (so->so_options & SO_DEBUG) {
+			otp = tp;
 			ostate = tp->t_state;
 			switch (af) {
 #ifdef INET6
 			case AF_INET6:
+				saveti = (caddr_t) &tcp_saveti6;
 				memcpy(&tcp_saveti6.ti6_i, ip6, sizeof(*ip6));
 				memcpy(&tcp_saveti6.ti6_t, th, sizeof(*th));
 				break;
 #endif
 			case AF_INET:
+				saveti = (caddr_t) &tcp_saveti;
 				memcpy(&tcp_saveti.ti_i, ip, sizeof(*ip));
 				memcpy(&tcp_saveti.ti_t, th, sizeof(*th));
 				break;
@@ -1268,7 +1270,9 @@ trimthenstep6:
 		} else {
 			tcpstat_pkt(tcps_rcvduppack, tcps_rcvdupbyte, tlen);
 			tcpstat_inc(tcps_pawsdrop);
-			goto dropafterack;
+			if (tlen)
+				goto dropafterack;
+			goto drop;
 		}
 	}
 
@@ -2001,20 +2005,8 @@ dodata:							/* XXX */
 			break;
 		}
 	}
-	if (so->so_options & SO_DEBUG) {
-		switch (tp->pf) {
-#ifdef INET6
-		case PF_INET6:
-			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti6,
-			    0, tlen);
-			break;
-#endif /* INET6 */
-		case PF_INET:
-			tcp_trace(TA_INPUT, ostate, tp, (caddr_t) &tcp_saveti,
-			    0, tlen);
-			break;
-		}
-	}
+	if (otp)
+		tcp_trace(TA_INPUT, ostate, tp, otp, saveti, 0, tlen);
 
 	/*
 	 * Return any desired output.
@@ -2089,20 +2081,8 @@ drop:
 	/*
 	 * Drop space held by incoming segment and return.
 	 */
-	if (tp && (tp->t_inpcb->inp_socket->so_options & SO_DEBUG)) {
-		switch (tp->pf) {
-#ifdef INET6
-		case PF_INET6:
-			tcp_trace(TA_DROP, ostate, tp, (caddr_t) &tcp_saveti6,
-			    0, tlen);
-			break;
-#endif /* INET6 */
-		case PF_INET:
-			tcp_trace(TA_DROP, ostate, tp, (caddr_t) &tcp_saveti,
-			    0, tlen);
-			break;
-		}
-	}
+	if (otp)
+		tcp_trace(TA_DROP, ostate, tp, otp, saveti, 0, tlen);
 
 	m_freem(m);
 	return IPPROTO_DONE;
@@ -3514,7 +3494,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	}
 
 #if NPF > 0
-	if (m && m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
+	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 		struct pf_divert *divert;
 
 		divert = pf_find_divert(m);
@@ -3559,27 +3539,9 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		goto resetandabort;
 	am->m_len = src->sa_len;
 	memcpy(mtod(am, caddr_t), src, src->sa_len);
-
-	switch (src->sa_family) {
-	case AF_INET:
-		/* drop IPv4 packet to AF_INET6 socket */
-		if (inp->inp_flags & INP_IPV6) {
-			(void) m_free(am);
-			goto resetandabort;
-		}
-		if (in_pcbconnect(inp, am)) {
-			(void) m_free(am);
-			goto resetandabort;
-		}
-		break;
-#ifdef INET6
-	case AF_INET6:
-		if (in6_pcbconnect(inp, am)) {
-			(void) m_free(am);
-			goto resetandabort;
-		}
-		break;
-#endif
+	if (in_pcbconnect(inp, am)) {
+		(void) m_free(am);
+		goto resetandabort;
 	}
 	(void) m_free(am);
 
@@ -3597,7 +3559,6 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if (tp->t_template == 0) {
 		tp = tcp_drop(tp, ENOBUFS);	/* destroys socket */
 		so = NULL;
-		m_freem(m);
 		goto abort;
 	}
 	tp->sack_enable = sc->sc_flags & SCF_SACK_PERMIT;
@@ -3652,8 +3613,8 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 resetandabort:
 	tcp_respond(NULL, mtod(m, caddr_t), th, (tcp_seq)0, th->th_ack, TH_RST,
 	    m->m_pkthdr.ph_rtableid);
-	m_freem(m);
 abort:
+	m_freem(m);
 	if (so != NULL)
 		(void) soabort(so);
 	syn_cache_put(sc);

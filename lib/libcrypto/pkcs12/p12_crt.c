@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_crt.c,v 1.17 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p12_crt.c,v 1.18 2018/05/13 13:46:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -80,7 +80,7 @@ copy_bag_attr(PKCS12_SAFEBAG *bag, EVP_PKEY *pkey, int nid)
 }
 
 PKCS12 *
-PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
+PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *cert,
     STACK_OF(X509) *ca, int nid_key, int nid_cert, int iter, int mac_iter,
     int keytype)
 {
@@ -221,7 +221,7 @@ err:
 
 PKCS12_SAFEBAG *
 PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags, EVP_PKEY *key, int key_usage,
-    int iter, int nid_key, char *pass)
+    int iter, int nid_key, const char *pass)
 {
 	PKCS12_SAFEBAG *bag = NULL;
 	PKCS8_PRIV_KEY_INFO *p8 = NULL;
@@ -261,7 +261,7 @@ err:
 
 int
 PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,
-    int nid_safe, int iter, char *pass)
+    int nid_safe, int iter, const char *pass)
 {
 	PKCS7 *p7 = NULL;
 	int free_safes = 0;

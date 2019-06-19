@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.81 2017/10/15 15:14:49 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.84 2018/12/04 18:00:57 tedu Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -38,6 +38,7 @@
 #include <sys/time.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <syslog.h>
 #include <fcntl.h>
@@ -75,6 +76,7 @@ void perf_status(struct apm_power_info *pinfo, int ncpu);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
 void hibernate(int ctl_fd);
+void resumed(int ctl_fd);
 void setperfpolicy(char *policy);
 void sigexit(int signo);
 void do_etc_file(const char *file);
@@ -88,6 +90,21 @@ sigexit(int signo)
 {
 	sockunlink();
 	_exit(1);
+}
+
+void
+logmsg(int prio, const char *msg, ...)
+{
+	va_list ap;
+
+	va_start(ap, msg);
+	if (debug) {
+		vfprintf(stdout, msg, ap);
+		fprintf(stdout, "\n");
+	} else {
+		vsyslog(prio, msg, ap);
+	}
+	va_end(ap);
 }
 
 void
@@ -122,7 +139,8 @@ void
 set_driver_messages(int fd, int mode)
 {
 	if (ioctl(fd, APM_IOC_PRN_CTL, &mode) == -1)
-		syslog(LOG_DEBUG, "can't disable driver messages, error: %m");
+		logmsg(LOG_DEBUG, "can't disable driver messages, error: %s",
+		    strerror(errno));
 }
 
 int
@@ -167,7 +185,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 #else
 			if ((int)bstate.minutes_left > 0)
 #endif
-				syslog(LOG_NOTICE, "battery status: %s. "
+				logmsg(LOG_NOTICE, "battery status: %s. "
 				    "external power status: %s. "
 				    "estimated battery life %d%% (%u minutes)",
 				    battstate(bstate.battery_state),
@@ -175,7 +193,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 				    bstate.battery_life,
 				    bstate.minutes_left);
 			else
-				syslog(LOG_NOTICE, "battery status: %s. "
+				logmsg(LOG_NOTICE, "battery status: %s. "
 				    "external power status: %s. "
 				    "estimated battery life %d%%",
 				    battstate(bstate.battery_state),
@@ -186,7 +204,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 		if (pinfo)
 			*pinfo = bstate;
 	} else
-		syslog(LOG_ERR, "cannot fetch power status: %m");
+		logmsg(LOG_ERR, "cannot fetch power status: %m");
 
 	return acon;
 }
@@ -247,13 +265,13 @@ handle_client(int sock_fd, int ctl_fd)
 	fromlen = sizeof(from);
 	cli_fd = accept(sock_fd, (struct sockaddr *)&from, &fromlen);
 	if (cli_fd == -1) {
-		syslog(LOG_INFO, "client accept failure: %m");
+		logmsg(LOG_INFO, "client accept failure: %s", strerror(errno));
 		return NORMAL;
 	}
 
 	if (recv(cli_fd, &cmd, sizeof(cmd), 0) != sizeof(cmd)) {
 		(void) close(cli_fd);
-		syslog(LOG_INFO, "client size botch");
+		logmsg(LOG_INFO, "client size botch");
 		return NORMAL;
 	}
 
@@ -277,20 +295,20 @@ handle_client(int sock_fd, int ctl_fd)
 	case SETPERF_LOW:
 		doperf = PERF_MANUAL;
 		reply.newstate = NORMAL;
-		syslog(LOG_NOTICE, "setting hw.perfpolicy to low");
+		logmsg(LOG_NOTICE, "setting hw.perfpolicy to low");
 		setperfpolicy("low");
 		break;
 	case SETPERF_HIGH:
 		doperf = PERF_MANUAL;
 		reply.newstate = NORMAL;
-		syslog(LOG_NOTICE, "setting hw.perfpolicy to high");
+		logmsg(LOG_NOTICE, "setting hw.perfpolicy to high");
 		setperfpolicy("high");
 		break;
 	case SETPERF_AUTO:
 	case SETPERF_COOL:
 		doperf = PERF_AUTO;
 		reply.newstate = NORMAL;
-		syslog(LOG_NOTICE, "setting hw.perfpolicy to auto");
+		logmsg(LOG_NOTICE, "setting hw.perfpolicy to auto");
 		setperfpolicy("auto");
 		break;
 	default:
@@ -299,13 +317,13 @@ handle_client(int sock_fd, int ctl_fd)
 	}
 
 	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) < 0)
-		syslog(LOG_INFO, "cannot read hw.cpuspeed");
+		logmsg(LOG_INFO, "cannot read hw.cpuspeed");
 
 	reply.cpuspeed = cpuspeed;
 	reply.perfmode = doperf;
 	reply.vno = APMD_VNO;
 	if (send(cli_fd, &reply, sizeof(reply), 0) != sizeof(reply))
-		syslog(LOG_INFO, "reply to client botched");
+		logmsg(LOG_INFO, "reply to client botched");
 	close(cli_fd);
 
 	return reply.newstate;
@@ -314,7 +332,8 @@ handle_client(int sock_fd, int ctl_fd)
 void
 suspend(int ctl_fd)
 {
-	syslog(LOG_NOTICE, "system suspending");
+	logmsg(LOG_NOTICE, "system suspending");
+	power_status(ctl_fd, 1, NULL);
 	do_etc_file(_PATH_APM_ETC_SUSPEND);
 	sync();
 	sleep(1);
@@ -324,7 +343,8 @@ suspend(int ctl_fd)
 void
 stand_by(int ctl_fd)
 {
-	syslog(LOG_NOTICE, "system entering standby");
+	logmsg(LOG_NOTICE, "system entering standby");
+	power_status(ctl_fd, 1, NULL);
 	do_etc_file(_PATH_APM_ETC_STANDBY);
 	sync();
 	sleep(1);
@@ -334,11 +354,20 @@ stand_by(int ctl_fd)
 void
 hibernate(int ctl_fd)
 {
-	syslog(LOG_NOTICE, "system hibernating");
+	logmsg(LOG_NOTICE, "system hibernating");
+	power_status(ctl_fd, 1, NULL);
 	do_etc_file(_PATH_APM_ETC_HIBERNATE);
 	sync();
 	sleep(1);
 	ioctl(ctl_fd, APM_IOC_HIBERNATE, 0);
+}
+
+void
+resumed(int ctl_fd)
+{
+	do_etc_file(_PATH_APM_ETC_RESUME);
+	logmsg(LOG_NOTICE, "system resumed from sleep");
+	power_status(ctl_fd, 1, NULL);
 }
 
 #define TIMO (10*60)			/* 10 minutes */
@@ -379,9 +408,10 @@ main(int argc, char *argv[])
 			sockname = optarg;
 			break;
 		case 't':
-			ts.tv_sec = strtoul(optarg, NULL, 0);
-			if (ts.tv_sec == 0)
-				usage();
+			ts.tv_sec = strtonum(optarg, 1, LLONG_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "number of seconds is %s: %s", errstr,
+				    optarg);
 			break;
 		case 's':	/* status only */
 			statonly = 1;
@@ -409,14 +439,14 @@ main(int argc, char *argv[])
 			autoaction = AUTO_HIBERNATE;
 			autolimit = strtonum(optarg, 1, 100, &errstr);
 			if (errstr != NULL)
-				errc(1, EINVAL, "%s percentage: %s", errstr,
+				errx(1, "battery percentage is %s: %s", errstr,
 				    optarg);
 			break;
 		case 'z':
 			autoaction = AUTO_SUSPEND;
 			autolimit = strtonum(optarg, 1, 100, &errstr);
 			if (errstr != NULL)
-				errc(1, EINVAL, "%s percentage: %s", errstr,
+				errx(1, "battery percentage is %s: %s", errstr,
 				    optarg);
 			break;
 		case '?':
@@ -433,9 +463,7 @@ main(int argc, char *argv[])
 	if (doperf == PERF_NONE)
 		doperf = PERF_MANUAL;
 
-	if (debug)
-		openlog(__progname, LOG_CONS, LOG_LOCAL1);
-	else {
+	if (debug == 0) {
 		if (daemon(0, 0) < 0)
 			error("failed to daemonize", NULL);
 		openlog(__progname, LOG_CONS, LOG_DAEMON);
@@ -500,7 +528,7 @@ main(int argc, char *argv[])
 
 			if (!powerstatus && autoaction &&
 			    autolimit > (int)pinfo.battery_life) {
-				syslog(LOG_NOTICE,
+				logmsg(LOG_NOTICE,
 				    "estimated battery life %d%%, "
 				    "autoaction limit set to %d%% .",
 				    pinfo.battery_life,
@@ -519,7 +547,7 @@ main(int argc, char *argv[])
 
 		if (ev->ident == ctl_fd) {
 			suspends = standbys = hibernates = resumes = 0;
-			syslog(LOG_DEBUG, "apmevent %04x index %d",
+			logmsg(LOG_DEBUG, "apmevent %04x index %d",
 			    (int)APM_EVENT_TYPE(ev->data),
 			    (int)APM_EVENT_INDEX(ev->data));
 
@@ -565,7 +593,7 @@ main(int argc, char *argv[])
 
 			if ((standbys || suspends) && noacsleep &&
 			    power_status(ctl_fd, 0, &pinfo))
-				syslog(LOG_DEBUG, "no! sleep! till brooklyn!");
+				logmsg(LOG_DEBUG, "no! sleep! till brooklyn!");
 			else if (suspends)
 				suspend(ctl_fd);
 			else if (standbys)
@@ -573,9 +601,7 @@ main(int argc, char *argv[])
 			else if (hibernates)
 				hibernate(ctl_fd);
 			else if (resumes) {
-				do_etc_file(_PATH_APM_ETC_RESUME);
-				syslog(LOG_NOTICE,
-				    "system resumed from sleep");
+				resumed(ctl_fd);
 			}
 
 			if (powerchange) {
@@ -620,7 +646,7 @@ setperfpolicy(char *policy)
 	}
 
 	if (sysctl(hw_perfpol_mib, 2, oldpolicy, &oldsz, policy, strlen(policy) + 1) < 0)
-		syslog(LOG_INFO, "cannot set hw.perfpolicy");
+		logmsg(LOG_INFO, "cannot set hw.perfpolicy");
 
 	if (setlo == 1) {
 		int hw_perf_mib[] = {CTL_HW, HW_SETPERF};
@@ -628,7 +654,7 @@ setperfpolicy(char *policy)
 		int new_perf = 0;
 		size_t perf_sz = sizeof(perf);
 		if (sysctl(hw_perf_mib, 2, &perf, &perf_sz, &new_perf, perf_sz) < 0)
-			syslog(LOG_INFO, "cannot set hw.setperf");
+			logmsg(LOG_INFO, "cannot set hw.setperf");
 	}
 }
 
@@ -641,7 +667,7 @@ do_etc_file(const char *file)
 
 	/* If file doesn't exist, do nothing. */
 	if (access(file, X_OK|R_OK)) {
-		syslog(LOG_DEBUG, "do_etc_file(): cannot access file %s", file);
+		logmsg(LOG_DEBUG, "do_etc_file(): cannot access file %s", file);
 		return;
 	}
 
@@ -654,21 +680,21 @@ do_etc_file(const char *file)
 	pid = fork();
 	switch (pid) {
 	case -1:
-		syslog(LOG_ERR, "failed to fork(): %m");
+		logmsg(LOG_ERR, "failed to fork(): %s", strerror(errno));
 		return;
 	case 0:
 		/* We are the child. */
 		execl(file, prog, (char *)NULL);
-		syslog(LOG_ERR, "failed to exec %s: %m", file);
+		logmsg(LOG_ERR, "failed to exec %s: %m", file, strerror(errno));
 		_exit(1);
 		/* NOTREACHED */
 	default:
 		/* We are the parent. */
 		wait4(pid, &status, 0, 0);
 		if (WIFEXITED(status))
-			syslog(LOG_DEBUG, "%s exited with status %d", file,
+			logmsg(LOG_DEBUG, "%s exited with status %d", file,
 			    WEXITSTATUS(status));
 		else
-			syslog(LOG_ERR, "%s exited abnormally.", file);
+			logmsg(LOG_ERR, "%s exited abnormally.", file);
 	}
 }

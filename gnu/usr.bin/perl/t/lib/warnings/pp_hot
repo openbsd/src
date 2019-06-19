@@ -136,7 +136,7 @@ print() on closed filehandle STDIN at - line 6.
 	(Are you trying to call print() on dirhandle STDIN?)
 ########
 # pp_hot.c [pp_print]
-# [ID 20020425.012] from Dave Steiner <steiner@bakerst.rutgers.edu>
+# [ID 20020425.012 (#9030)] from Dave Steiner <steiner@bakerst.rutgers.edu>
 # This goes segv on 5.7.3
 use warnings 'closed' ;
 my $fh = *STDOUT{IO};

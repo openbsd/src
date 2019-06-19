@@ -198,7 +198,8 @@ use strict;
 
     # find which ops use 0,1,2,3 or 4 bits of op_private for arg count info
 
-    $args0{$_} = 1 for qw(entersub); # UNOPs that usurp bit 0
+    $args0{$_} = 1 for qw(entersub avhvswitch
+                       rv2hv);                  # UNOPs that usurp bit 0
 
     $args1{$_} = 1 for (
                         qw(reverse), # ck_fun(), but most bits stolen
@@ -219,9 +220,6 @@ use strict;
                         qw(vec),
                         grep !$maxarg{$_} && !$args0{$_} && !$args1{$_},
                             ops_with_flag('2'), # BINOP
-                            # this is a binop, but special-cased as a
-                            # baseop in regen/opcodes
-                            'sassign',
                     );
 
     $args3{$_} = 1 for grep !$maxarg{$_} && !$args0{$_}
@@ -300,9 +298,10 @@ for (qw(nextstate dbstate)) {
 #   my $x
 
 addbits($_, 7 => qw(OPpLVAL_INTRO LVINTRO))
-    for qw(gvsv rv2sv rv2hv rv2gv rv2av aelem helem aslice
+    for qw(gvsv rv2sv rv2hv rv2gv rv2av aelem helem aslice split
            hslice delete padsv padav padhv enteriter entersub padrange
-           pushmark cond_expr refassign lvref lvrefslice lvavref multideref),
+           pushmark cond_expr refassign lvref lvrefslice lvavref multideref
+           multiconcat),
            'list', # this gets set in my_attrs() for some reason
            ;
 
@@ -396,12 +395,6 @@ addbits($_, 7 => qw(OPpLVALUE LV)) for qw(leave leaveloop);
 
 
 
-# Pattern coming in on the stack
-addbits($_, 6 => qw(OPpRUNTIME RTIME))
-    for qw(match subst substcont qr pushre);
-
-
-
 # autovivify: Want ref to something
 for (qw(rv2gv rv2sv padsv aelem helem entersub)) {
     addbits($_, '4..5' => {
@@ -435,19 +428,28 @@ addbits($_, 6 => qw(OPpOUR_INTRO OURINTR)) # Variable was in an our()
 
 
 # We might be an lvalue to return
+# 'values' doesn't actually use this bit, but we reserve it here as
+# pp_values may call Perl_do_kv() which is shared among several ops which
+# do.
+
 addbits($_, 3 => qw(OPpMAYBE_LVSUB LVSUB))
     for qw(aassign rv2av rv2gv rv2hv padav padhv aelem helem aslice hslice
-           av2arylen keys kvaslice kvhslice substr pos vec multideref);
+           av2arylen keys akeys avhvswitch kvaslice kvhslice substr pos vec
+           multideref values);
 
 
 
-for (qw(rv2hv padhv)) {
+for (qw(rv2hv padhv ref)) {
     addbits($_,                           # e.g. %hash in (%hash || $foo) ...
-        4 => qw(OPpMAYBE_TRUEBOOL BOOL?), # ... cx not known till run time
-        5 => qw(OPpTRUEBOOL       BOOL),  # ... in void cxt
+        4 => qw(OPpMAYBE_TRUEBOOL BOOL?), # but cx not known till run time
+        5 => qw(OPpTRUEBOOL       BOOL),
     );
 }
-
+for (qw(grepwhile index length padav pos rindex rv2av subst)) {
+    addbits($_,
+        5 => qw(OPpTRUEBOOL       BOOL),  # if (@a) {...}
+    );
+}
 
 
 addbits($_, 1 => qw(OPpHINT_STRICT_REFS STRICT))
@@ -496,6 +498,7 @@ addbits('aassign', 5 => qw(OPpASSIGN_COMMON_RC1 COM_RC1));
 # run-time checking is required for an aggregate on the LHS
 addbits('aassign', 4 => qw(OPpASSIGN_COMMON_AGG COM_AGG));
 
+addbits('aassign', 2 => qw(OPpASSIGN_TRUEBOOL BOOL));  # if (@a = (...)) {...}
 
 
 # NB: both sassign and aassign use the 'OPpASSIGN' naming convention
@@ -510,14 +513,15 @@ addbits('sassign',
 
 for (qw(trans transr)) {
     addbits($_,
-        0 => qw(OPpTRANS_FROM_UTF   <UTF),
-        1 => qw(OPpTRANS_TO_UTF     >UTF),
+        0 => qw(OPpTRANS_FROM_UTF   <UTF),    # search chars are utf8
+        1 => qw(OPpTRANS_TO_UTF     >UTF),    # replacement chars are utf8
         2 => qw(OPpTRANS_IDENTICAL  IDENT),   # right side is same as left
-        3 => qw(OPpTRANS_SQUASH     SQUASH),
+        3 => qw(OPpTRANS_SQUASH     SQUASH),  # /s
         # 4 is used for OPpTARGET_MY
-        5 => qw(OPpTRANS_COMPLEMENT COMPL),
-        6 => qw(OPpTRANS_GROWS      GROWS),
-        7 => qw(OPpTRANS_DELETE     DEL),
+        5 => qw(OPpTRANS_COMPLEMENT COMPL),   # /c
+        6 => qw(OPpTRANS_GROWS      GROWS),   # replacement chars longer than
+                                              #    src chars
+        7 => qw(OPpTRANS_DELETE     DEL),     # /d
     );
 }
 
@@ -592,7 +596,7 @@ addbits('substr', 4 => qw(OPpSUBSTR_REPL_FIRST REPL1ST));
 addbits('padrange',
     # bits 0..6 hold target range
     '0..6' =>  {
-            label         => '-',
+            label         => 'range',
             mask_def      => 'OPpPADRANGE_COUNTMASK',
             bitcount_def  => 'OPpPADRANGE_COUNTSHIFT',
           }
@@ -604,7 +608,7 @@ addbits('padrange',
 for (qw(aelemfast aelemfast_lex)) {
     addbits($_,
         '0..7' =>  {
-                label     => '-',
+                label     => 'key',
               }
     );
 }
@@ -649,9 +653,11 @@ addbits('list', 6 => qw(OPpLIST_GUESSED GUESSED));
 
 
 
-# Operating on a list of keys
-addbits('delete', 6 => qw(OPpSLICE SLICE));
-# also 7 => OPpLVAL_INTRO, already defined above
+addbits('delete',
+    5 => qw(OPpKVSLICE KVSLICE), # Operating on a list of key/value pairs
+    6 => qw(OPpSLICE   SLICE  ), # Operating on a list of keys
+   #7 => OPpLVAL_INTRO, already defined above
+);
 
 
 
@@ -666,8 +672,8 @@ addbits('sort',
     2 => qw(OPpSORT_REVERSE  REV    ), # Reversed sort
     3 => qw(OPpSORT_INPLACE  INPLACE), # sort in-place; eg @a = sort @a
     4 => qw(OPpSORT_DESCEND  DESC   ), # Descending sort
-    5 => qw(OPpSORT_QSORT    QSORT  ), # Use quicksort (not mergesort)
     6 => qw(OPpSORT_STABLE   STABLE ), # Use a stable algorithm
+    7 => qw(OPpSORT_UNSTABLE UNSTABLE),# Use an unstable algorithm
 );
 
 
@@ -730,8 +736,13 @@ addbits('coreargs',
 
 
 
-addbits('split', 7 => qw(OPpSPLIT_IMPLIM IMPLIM)); # implicit limit
-
+addbits('split',
+    # @a = split() has been replaced with  split() where split itself
+    # does the array assign
+    4 => qw(OPpSPLIT_ASSIGN ASSIGN), 
+    3 => qw(OPpSPLIT_LEX LEX),  # the OPpSPLIT_ASSIGN is a lexical array
+    2 => qw(OPpSPLIT_IMPLIM IMPLIM), # implicit limit
+);
 
 
 addbits($_,
@@ -756,6 +767,67 @@ addbits('multideref',
     4 => qw(OPpMULTIDEREF_EXISTS EXISTS), # deref is actually exists
     5 => qw(OPpMULTIDEREF_DELETE DELETE), # deref is actually delete
 );
+
+
+
+addbits('avhvswitch',
+    '0..1' => {
+                   mask_def  => 'OPpAVHVSWITCH_MASK',
+                   label     => 'offset',
+    }
+);
+
+
+addbits('argelem',
+   '1..2' =>  {
+                   mask_def  => 'OPpARGELEM_MASK',
+                   enum => [ qw(
+                               0   OPpARGELEM_SV   SV
+                               1   OPpARGELEM_AV   AV
+                               2   OPpARGELEM_HV   HV
+                           )],
+               },
+);
+
+
+# rv2hv and padhv in void/scalar context implementing 'keys %h'
+# directly, without a following OP_KEYS
+
+addbits('padhv',
+    0 => qw(OPpPADHV_ISKEYS KEYS),
+);
+addbits('rv2hv',
+    0 => qw(OPpRV2HV_ISKEYS KEYS),
+);
+
+# In conjunction with OPpTRUEBOOL, indicates that the test should be
+# inverted. This allows both (index() == -1) and (index() != -1)
+# to optimise away the const and eq/ne
+
+for (qw(index rindex)) {
+    addbits($_, 6 => qw(OPpINDEX_BOOLNEG NEG));
+}
+
+
+addbits('concat',
+    # OPf_STACKED normally indicates .=; but it also gets set to optimise
+    # $a . $b . $c into ($a . $b) .= $c
+    # so that the first concat's PADTMP (which holds the result of $a.$b)
+    # can be reused. Set a flag in this case to help deparse and warn
+    # distinguish the cases.
+    6 => qw(OPpCONCAT_NESTED NESTED),
+);
+
+
+addbits('multiconcat',
+  # 7       OPpLVAL_INTRO
+    6 => qw(OPpMULTICONCAT_APPEND APPEND), # $x .= ....
+    5 => qw(OPpMULTICONCAT_FAKE   FAKE),   # sprintf() optimised to MC.
+  # 4       OPpTARGET_MY
+    3 => qw(OPpMULTICONCAT_STRINGIFY STRINGIFY), # "$a$b..."
+);
+
+
 
 1;
 

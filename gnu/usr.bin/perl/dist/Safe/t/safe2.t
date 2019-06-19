@@ -11,8 +11,6 @@ BEGIN {
 # Tests Todo:
 #	'main' as root
 
-use vars qw($bar);
-
 use Opcode 1.00, qw(opdesc opset opset_to_ops opset_to_hex
 	opmask_add full_opset empty_opset opcodes opmask define_optag);
 
@@ -23,7 +21,7 @@ my $TB = Test::Builder->new();
 
 # Set up a package namespace of things to be visible to the unsafe code
 $Root::foo = "visible";
-$bar = "invisible";
+our $bar = "invisible";
 
 # Stop perl from moaning about identifies which are apparently only used once
 $Root::foo .= "";
@@ -131,7 +129,7 @@ like($@, qr/foo bar/);
   
 $! = 0;
 my $nosuch = '/non/existent/file.name';
-open(NOSUCH, $nosuch);
+open(NOSUCH, '<', $nosuch);
 if ($@) {
     my $errno = $!;
     die "Eek! Attempting to open $nosuch failed, but \$! is still 0" unless $!;
@@ -142,17 +140,5 @@ if ($@) {
     die "Eek! Didn't expect $nosuch to be there.";
 }
 close(NOSUCH);
-
-#my $rdo_file = "tmp_rdo.tpl";
-#if (open X,">$rdo_file") {
-#    print X "999\n";
-#    close X;
-#    $cpt->permit_only('const', 'leaveeval');
-#    $cpt->rdo($rdo_file) == 999 ? "ok $t\n" : "not ok $t\n"; $t++;
-#    unlink $rdo_file;
-#}
-#else {
-#    print "# test $t skipped, can't open file: $!\nok $t\n"; $t++;
-#}
 
 done_testing();

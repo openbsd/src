@@ -11,13 +11,15 @@ mandoc: line.in:19:2: WARNING: skipping paragraph macro: br after br
 mandoc: line.in:21:2: WARNING: skipping paragraph macro: br before Pp
 mandoc: line.in:25:2: WARNING: skipping paragraph macro: br after Pp
 mandoc: line.in:27:2: WARNING: skipping paragraph macro: Pp before Pp
+mandoc: line.in:30:2: WARNING: skipping paragraph macro: br before sp
 mandoc: line.in:34:2: WARNING: skipping paragraph macro: br after sp
 mandoc: line.in:37:2: WARNING: skipping paragraph macro: sp after Pp
 mandoc: line.in:40:2: WARNING: skipping paragraph macro: sp after Pp
+mandoc: line.in:48:2: WARNING: skipping paragraph macro: br before sp
 mandoc: line.in:52:2: WARNING: skipping paragraph macro: br after sp
 mandoc: line.in:55:1: WARNING: skipping paragraph macro: sp after Pp
 mandoc: line.in:82:2: WARNING: skipping paragraph macro: sp after Sh
 mandoc: line.in:84:2: WARNING: skipping paragraph macro: Pp at the end of Sh
-mandoc: line.in:86:2: WARNING: skipping paragraph macro: Pp after Sh
 mandoc: line.in:89:2: WARNING: skipping paragraph macro: Pp after Ss
 mandoc: line.in:91:2: WARNING: skipping paragraph macro: Pp at the end of Ss
+mandoc: line.in:86:2: WARNING: skipping paragraph macro: Pp after Sh

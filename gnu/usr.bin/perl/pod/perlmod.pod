@@ -28,23 +28,42 @@ Best practices for making a new module.
 =head2 Packages
 X<package> X<namespace> X<variable, global> X<global variable> X<global>
 
-Perl provides a mechanism for alternative namespaces to protect
-packages from stomping on each other's variables.  In fact, there's
-really no such thing as a global variable in Perl.  The package
-statement declares the compilation unit as being in the given
-namespace.  The scope of the package declaration is from the
+Unlike Perl 4, in which all the variables were dynamic and shared one
+global name space, causing maintainability problems, Perl 5 provides two
+mechanisms for protecting code from having its variables stomped on by
+other code: lexically scoped variables created with C<my> or C<state> and
+namespaced global variables, which are exposed via the C<vars> pragma,
+or the C<our> keyword. Any global variable is considered to
+be part of a namespace and can be accessed via a "fully qualified form".
+Conversely, any lexically scoped variable is considered to be part of
+that lexical-scope, and does not have a "fully qualified form".
+
+In perl namespaces are called "packages" and
+the C<package> declaration tells the compiler which
+namespace to prefix to C<our> variables and unqualified dynamic names.
+This both protects
+against accidental stomping and provides an interface for deliberately
+clobbering global dynamic variables declared and used in other scopes or
+packages, when that is what you want to do.
+
+The scope of the C<package> declaration is from the
 declaration itself through the end of the enclosing block, C<eval>,
-or file, whichever comes first (the same scope as the my() and
-local() operators).  Unqualified dynamic identifiers will be in
-this namespace, except for those few identifiers that if unqualified,
+or file, whichever comes first (the same scope as the my(), our(), state(), and
+local() operators, and also the effect
+of the experimental "reference aliasing," which may change), or until
+the next C<package> declaration.  Unqualified dynamic identifiers will be in
+this namespace, except for those few identifiers that, if unqualified,
 default to the main package instead of the current one as described
-below.  A package statement affects only dynamic variables--including
-those you've used local() on--but I<not> lexical variables created
-with my().  Typically it would be the first declaration in a file
-included by the C<do>, C<require>, or C<use> operators.  You can
-switch into a package in more than one place; it merely influences
-which symbol table is used by the compiler for the rest of that
-block.  You can refer to variables and filehandles in other packages
+below.  A C<package> statement affects only dynamic global
+symbols, including subroutine names, and variables you've used local()
+on, but I<not> lexical variables created with my(), our() or state().
+
+Typically, a C<package> statement is the first declaration in a file
+included in a program by one of the C<do>, C<require>, or C<use> operators.  You can
+switch into a package in more than one place: C<package> has no
+effect beyond specifying which symbol table the compiler will use for
+dynamic symbols for the rest of that block or until the next C<package> statement.
+You can refer to variables and filehandles in other packages
 by prefixing the identifier with the package name and a double
 colon: C<$Package::Variable>.  If the package name is null, the
 C<main> package is assumed.  That is, C<$::sail> is equivalent to
@@ -69,7 +88,8 @@ are either local to the current package, or must be fully qualified
 from the outer package name down.  For instance, there is nowhere
 within package C<OUTER> that C<$INNER::var> refers to
 C<$OUTER::INNER::var>.  C<INNER> refers to a totally
-separate global package.
+separate global package. The custom of treating package names as a
+hierarchy is very strong, but the language in no way enforces it.
 
 Only identifiers starting with letters (or underscore) are stored
 in a package's symbol table.  All other symbols are kept in package
@@ -101,7 +121,9 @@ expressions in the context of the C<main> package (or wherever you came
 from).  See L<perldebug>.
 
 The special symbol C<__PACKAGE__> contains the current package, but cannot
-(easily) be used to construct variable names.
+(easily) be used to construct variable names. After C<my($foo)> has hidden
+package variable C<$foo>, it can still be accessed, without knowing what
+package you are in, as C<${__PACKAGE__.'::foo'}>.
 
 See L<perlsub> for other scoping issues related to my() and local(),
 and L<perlref> regarding closures.

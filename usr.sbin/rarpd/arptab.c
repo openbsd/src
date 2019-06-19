@@ -1,4 +1,4 @@
-/*	$OpenBSD: arptab.c,v 1.28 2016/08/27 01:42:37 guenther Exp $ */
+/*	$OpenBSD: arptab.c,v 1.30 2019/01/22 09:25:29 krw Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -37,9 +37,7 @@
  */
 
 
-#include <sys/file.h>
 #include <sys/socket.h>
-#include <sys/sysctl.h>
 #include <sys/time.h>
 
 #include <net/if.h>
@@ -54,10 +52,10 @@
 
 #include <netdb.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <paths.h>
 #include <syslog.h>
 #include <string.h>
 #include <err.h>
@@ -74,7 +72,7 @@ int rtget(struct sockaddr_inarp **, struct sockaddr_dl **);
 void
 arptab_init(void)
 {
-	s = socket(PF_ROUTE, SOCK_RAW, 0);
+	s = socket(AF_ROUTE, SOCK_RAW, 0);
 	if (s < 0)
 		err(1, "arp: socket");
 }

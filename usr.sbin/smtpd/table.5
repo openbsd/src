@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.7 2017/04/04 14:33:44 jmc Exp $
+.\"	$OpenBSD: table.5,v 1.10 2018/09/05 07:19:35 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 4 2017 $
+.Dd $Mdocdate: September 5 2018 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -66,18 +66,18 @@ utility with no syntax change.
 Tables using a
 .Ql file
 or Berkeley DB backend will be referenced as follows:
-.Bd -literal -offset indent
-table name file:/path/to/file
-table name db:/path/to/file.db
+.Bd -unfilled -offset indent
+.Ic table Ar name Cm file : Ns Pa /path/to/file
+.Ic table Ar name Cm db : Ns Pa /path/to/file.db
 .Ed
 .Ss Aliasing tables
 Aliasing tables are mappings that associate a recipient to one or many
 destinations.
 They can be used in two contexts: primary domain aliases and virtual domain
 mapping.
-.Bd -literal -offset indent
-accept for domain example.org alias <myaliases> deliver to mbox
-accept for domain example.org virtual <myaliases> deliver to mbox
+.Bd -unfilled -offset indent
+.Ic action Ar name method Cm alias Pf < table Ns >
+.Ic action Ar name method Cm virtual Pf < table Ns >
 .Ed
 .Pp
 In a primary domain context, the key is the user part of the recipient address,
@@ -100,15 +100,23 @@ user2@example.org	otheruser1,otheruser2
 @example.org		otheruser@example.com
 @			catchall@example.com
 .Ed
+.Pp
+The following directive shares the same table format,
+but with a different meaning.
+Here, the user is allowed to send mail from the listed addresses:
+.Bd -unfilled -offset indent
+.Ic listen on Ar interface Cm auth Oo Ar ... Oc Cm senders Pf < Ar table Ns >
+.Ed
 .Ss Domain tables
-Domain tables are simple lists of domains.
-They can only be used in one context:
-.Bd -literal -offset indent
-accept for domain <mydomains> deliver to mbox
+Domain tables are simple lists of domains or hosts.
+.Bd -unfilled -offset indent
+.Ic match Cm for domain Pf < table Ns > Cm action Ar name
+.Ic match Cm helo Pf < table Ns > Oo Ar ... Oc Cm action Ar name
 .Ed
 .Pp
 In that context, the list of domains will be matched against the recipient
-domain.
+domain or against the HELO name advertised by the sending host,
+respectively.
 For
 .Ql static ,
 .Ql file
@@ -122,9 +130,9 @@ example.org
 .Ss Credentials tables
 Credentials tables are mappings of credentials.
 They can be used in two contexts:
-.Bd -literal -offset indent
-listen on tls [...] auth <credentials>
-accept for any relay tls+auth://label@host auth <credentials>
+.Bd -unfilled -offset indent
+.Ic listen on Ar interface Cm tls Oo Ar ... Oc Cm auth Pf < Ar table Ns >
+.Ic action Ar name Cm relay host Ar relay-url Cm auth Pf < Ar table Ns >
 .Ed
 .Pp
 In a listener context, the credentials are a mapping of username and encrypted
@@ -152,9 +160,8 @@ The password is not encrypted as it must be provided to the remote host.
 .Ss Netaddr tables
 Netaddr tables are lists of IPv4 and IPv6 network addresses.
 They can only be used in the following context:
-.Bd -literal -offset indent
-accept from source <netaddr> for domain example.org deliver to mbox
-.Ed
+.Pp
+.D1 Ic match Cm from src Pf < Ar table Ns > Cm action Ar name
 .Pp
 When used as a "from source", the address of a client is compared to the list
 of addresses in the table until a match is found.
@@ -167,15 +174,10 @@ ipv6:::1
 192.168.1.0/24
 .Ed
 .Ss Userinfo tables
-User info tables are used to described virtual system users.
-They are used in rule context to specify an alternate user base, mapping
-virtual users to local system UID, GID and home directory.
-.Bd -literal -offset indent
-accept for domain example.org userbase <userinfo> deliver to maildir
-.Ed
+User info tables are used in rule context to specify an alternate user base,
+mapping virtual users to local system users by UID, GID and home directory.
 .Pp
-The userinfo table is a mapping from virtual user names to a set of system user
-ID, group ID and path to home directory.
+.D1 Ic action Ar name method Cm userbase Pf < Ar table Ns >
 .Pp
 A userinfo table looks as follows:
 .Bd -literal -offset indent
@@ -188,12 +190,19 @@ system user with UID 1000 and GID 100, but different home directories.
 These directories may contain a
 .Xr forward 5
 file.
+This can be used in conjunction with an alias table
+that maps an email address or the domain part to the desired virtual
+username.
+For example:
+.Bd -literal -offset indent
+joe@example.org     joe
+jack@example.com    jack
+.Ed
 .Ss Source tables
 Source tables are lists of IPv4 and IPv6 addresses.
 They can only be used in the following context:
-.Bd -literal -offset indent
-accept for domain example.org relay source <addresses>
-.Ed
+.Pp
+.D1 Ic action Ar name Cm relay src Pf < Ar table Ns >
 .Pp
 Successive queries to the source table will return the elements one by one.
 .Pp
@@ -209,9 +218,9 @@ ipv6:::4
 .Ss Mailaddr tables
 Mailaddr tables are lists of email addresses.
 They can be used in the following contexts:
-.Bd -literal -offset indent
-accept sender <senders> for domain example.org deliver to mbox
-accept for domain example.org recipient <recipients> deliver to mbox
+.Bd -unfilled -offset indent
+.Ic match Cm mail\-from Pf < Ar table Ns > Cm action Ar name
+.Ic match Cm rcpt\-to Pf < Ar table Ns > Cm action Ar name
 .Ed
 .Pp
 A mailaddr entry is used to match an email address against a username,
@@ -228,9 +237,9 @@ user@*.domain
 .Ss Addrname tables
 Addrname tables are used to map IP addresses to hostnames.
 They can be used in both listen context and relay context:
-.Bd -literal -offset indent
-listen on 0.0.0.0 hostnames <addrname>
-accept for any relay hostnames <addrname>
+.Bd -unfilled -offset indent
+.Ic listen on Ar interface Cm hostnames Pf < Ar table Ns >
+.Ic action Ar name Cm relay helo\-src Pf < Ar table Ns >
 .Ed
 .Pp
 In listen context, the table is used to look up the server name to advertise

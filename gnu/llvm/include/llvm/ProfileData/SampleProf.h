@@ -78,11 +78,29 @@ struct is_error_code_enum<llvm::sampleprof_error> : std::true_type {};
 namespace llvm {
 namespace sampleprof {
 
-static inline uint64_t SPMagic() {
+enum SampleProfileFormat {
+  SPF_None = 0,
+  SPF_Text = 0x1,
+  SPF_Compact_Binary = 0x2,
+  SPF_GCC = 0x3,
+  SPF_Binary = 0xff
+};
+
+static inline uint64_t SPMagic(SampleProfileFormat Format = SPF_Binary) {
   return uint64_t('S') << (64 - 8) | uint64_t('P') << (64 - 16) |
          uint64_t('R') << (64 - 24) | uint64_t('O') << (64 - 32) |
          uint64_t('F') << (64 - 40) | uint64_t('4') << (64 - 48) |
-         uint64_t('2') << (64 - 56) | uint64_t(0xff);
+         uint64_t('2') << (64 - 56) | uint64_t(Format);
+}
+
+// Get the proper representation of a string in the input Format.
+static inline StringRef getRepInFormat(StringRef Name,
+                                       SampleProfileFormat Format,
+                                       std::string &GUIDBuf) {
+  if (Name.empty())
+    return Name;
+  GUIDBuf = std::to_string(Function::getGUID(Name));
+  return (Format == SPF_Compact_Binary) ? StringRef(GUIDBuf) : Name;
 }
 
 static inline uint64_t SPVersion() { return 103; }
@@ -185,7 +203,9 @@ raw_ostream &operator<<(raw_ostream &OS, const SampleRecord &Sample);
 class FunctionSamples;
 
 using BodySampleMap = std::map<LineLocation, SampleRecord>;
-using FunctionSamplesMap = StringMap<FunctionSamples>;
+// NOTE: Using a StringMap here makes parsed profiles consume around 17% more
+// memory, which is *very* significant for large profiles.
+using FunctionSamplesMap = std::map<std::string, FunctionSamples>;
 using CallsiteSampleMap = std::map<LineLocation, FunctionSamplesMap>;
 
 /// Representation of the samples collected for a function.
@@ -224,8 +244,8 @@ public:
 
   sampleprof_error addCalledTargetSamples(uint32_t LineOffset,
                                           uint32_t Discriminator,
-                                          const std::string &FName,
-                                          uint64_t Num, uint64_t Weight = 1) {
+                                          StringRef FName, uint64_t Num,
+                                          uint64_t Weight = 1) {
     return BodySamples[LineLocation(LineOffset, Discriminator)].addCalledTarget(
         FName, Num, Weight);
   }
@@ -278,7 +298,7 @@ public:
       return nullptr;
     auto FS = iter->second.find(CalleeName);
     if (FS != iter->second.end())
-      return &FS->getValue();
+      return &FS->second;
     // If we cannot find exact match of the callee name, return the FS with
     // the max total count.
     uint64_t MaxTotalSamples = 0;
@@ -296,9 +316,32 @@ public:
   /// Return the total number of samples collected inside the function.
   uint64_t getTotalSamples() const { return TotalSamples; }
 
-  /// Return the total number of samples collected at the head of the
-  /// function.
+  /// Return the total number of branch samples that have the function as the
+  /// branch target. This should be equivalent to the sample of the first
+  /// instruction of the symbol. But as we directly get this info for raw
+  /// profile without referring to potentially inaccurate debug info, this
+  /// gives more accurate profile data and is preferred for standalone symbols.
   uint64_t getHeadSamples() const { return TotalHeadSamples; }
+
+  /// Return the sample count of the first instruction of the function.
+  /// The function can be either a standalone symbol or an inlined function.
+  uint64_t getEntrySamples() const {
+    // Use either BodySamples or CallsiteSamples which ever has the smaller
+    // lineno.
+    if (!BodySamples.empty() &&
+        (CallsiteSamples.empty() ||
+         BodySamples.begin()->first < CallsiteSamples.begin()->first))
+      return BodySamples.begin()->second.getSamples();
+    if (!CallsiteSamples.empty()) {
+      uint64_t T = 0;
+      // An indirect callsite may be promoted to several inlined direct calls.
+      // We need to get the sum of them.
+      for (const auto &N_FS : CallsiteSamples.begin()->second)
+        T += N_FS.second.getEntrySamples();
+      return T;
+    }
+    return 0;
+  }
 
   /// Return all the samples collected in the body of the function.
   const BodySampleMap &getBodySamples() const { return BodySamples; }
@@ -324,24 +367,33 @@ public:
       const LineLocation &Loc = I.first;
       FunctionSamplesMap &FSMap = functionSamplesAt(Loc);
       for (const auto &Rec : I.second)
-        MergeResult(Result, FSMap[Rec.first()].merge(Rec.second, Weight));
+        MergeResult(Result, FSMap[Rec.first].merge(Rec.second, Weight));
     }
     return Result;
   }
 
-  /// Recursively traverses all children, if the corresponding function is
-  /// not defined in module \p M, and its total sample is no less than
-  /// \p Threshold, add its corresponding GUID to \p S.
-  void findImportedFunctions(DenseSet<GlobalValue::GUID> &S, const Module *M,
-                             uint64_t Threshold) const {
+  /// Recursively traverses all children, if the total sample count of the
+  /// corresponding function is no less than \p Threshold, add its corresponding
+  /// GUID to \p S. Also traverse the BodySamples to add hot CallTarget's GUID
+  /// to \p S.
+  void findInlinedFunctions(DenseSet<GlobalValue::GUID> &S, const Module *M,
+                            uint64_t Threshold, bool isCompact) const {
     if (TotalSamples <= Threshold)
       return;
-    Function *F = M->getFunction(Name);
-    if (!F || !F->getSubprogram())
-      S.insert(Function::getGUID(Name));
-    for (auto CS : CallsiteSamples)
+    S.insert(Function::getGUID(Name));
+    // Import hot CallTargets, which may not be available in IR because full
+    // profile annotation cannot be done until backend compilation in ThinLTO.
+    for (const auto &BS : BodySamples)
+      for (const auto &TS : BS.second.getCallTargets())
+        if (TS.getValue() > Threshold) {
+          Function *Callee = M->getFunction(TS.getKey());
+          if (!Callee || !Callee->getSubprogram())
+            S.insert(isCompact ? std::stol(TS.getKey().data())
+                               : Function::getGUID(TS.getKey()));
+        }
+    for (const auto &CS : CallsiteSamples)
       for (const auto &NameFS : CS.second)
-        NameFS.second.findImportedFunctions(S, M, Threshold);
+        NameFS.second.findInlinedFunctions(S, M, Threshold, isCompact);
   }
 
   /// Set the name of the function.
@@ -349,6 +401,21 @@ public:
 
   /// Return the function name.
   const StringRef &getName() const { return Name; }
+
+  /// Returns the line offset to the start line of the subprogram.
+  /// We assume that a single function will not exceed 65535 LOC.
+  static unsigned getOffset(const DILocation *DIL);
+
+  /// Get the FunctionSamples of the inline instance where DIL originates
+  /// from.
+  ///
+  /// The FunctionSamples of the instruction (Machine or IR) associated to
+  /// \p DIL is the inlined instance in which that instruction is coming from.
+  /// We traverse the inline stack of that instruction, and match it with the
+  /// tree nodes in the profile.
+  ///
+  /// \returns the FunctionSamples pointer to the inlined instance.
+  const FunctionSamples *findFunctionSamples(const DILocation *DIL) const;
 
 private:
   /// Mangled name of the function.

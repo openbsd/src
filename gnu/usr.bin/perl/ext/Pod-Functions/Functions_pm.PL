@@ -161,7 +161,7 @@ Pod::Functions - Group Perl's functions a la perlfunc.pod
 =head1 SYNOPSIS
 
     use Pod::Functions;
-    
+
     my @misc_ops = @{ $Kinds{ 'Misc' } };
     my $misc_dsc = $Type_Description{ 'Misc' };
 
@@ -207,7 +207,7 @@ L<perlfunc/"Perl Functions by Category"> section.
 
 =cut
 
-our $VERSION = '1.10';
+our $VERSION = '1.13';
 
 require Exporter;
 

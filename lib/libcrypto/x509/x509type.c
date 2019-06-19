@@ -1,4 +1,4 @@
-/* $OpenBSD: x509type.c,v 1.12 2015/06/13 08:38:10 doug Exp $ */
+/* $OpenBSD: x509type.c,v 1.13 2018/05/30 15:59:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,27 +63,22 @@
 #include <openssl/x509.h>
 
 int
-X509_certificate_type(X509 *x, EVP_PKEY *pkey)
+X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
 {
-	EVP_PKEY *pk;
+	const EVP_PKEY *pk = pkey;
 	int ret = 0, i;
 
 	if (x == NULL)
 		return (0);
 
-	if (pkey == NULL)
-		pk = X509_get_pubkey(x);
-	else
-		pk = pkey;
-
-	if (pk == NULL)
-		return (0);
+	if (pk == NULL) {
+		if ((pk = X509_get0_pubkey(x)) == NULL)
+			return (0);
+	}
 
 	switch (pk->type) {
 	case EVP_PKEY_RSA:
-		ret = EVP_PK_RSA|EVP_PKT_SIGN;
-/*		if (!sign only extension) */
-		ret |= EVP_PKT_ENC;
+		ret = EVP_PK_RSA|EVP_PKT_SIGN|EVP_PKT_ENC;
 		break;
 	case EVP_PKEY_DSA:
 		ret = EVP_PK_DSA|EVP_PKT_SIGN;
@@ -124,7 +119,5 @@ X509_certificate_type(X509 *x, EVP_PKEY *pkey)
 	/* /8 because it's 1024 bits we look for, not bytes */
 	if (EVP_PKEY_size(pk) <= 1024 / 8)
 		ret |= EVP_PKT_EXP;
-	if (pkey == NULL)
-		EVP_PKEY_free(pk);
 	return (ret);
 }

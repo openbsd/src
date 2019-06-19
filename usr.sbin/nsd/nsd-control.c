@@ -56,9 +56,16 @@
 #ifdef HAVE_OPENSSL_RAND_H
 #include <openssl/rand.h>
 #endif
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
 #include "util.h"
 #include "tsig.h"
 #include "options.h"
+
+static void usage() ATTR_NORETURN;
+static void ssl_err(const char* s) ATTR_NORETURN;
+static void ssl_path_err(const char* s, const char *path) ATTR_NORETURN;
 
 /** Give nsd-control usage, and exit (1). */
 static void
@@ -84,6 +91,7 @@ usage()
 	printf("  stats_noreset			peek at statistics\n");
 	printf("  addzone <name> <pattern>	add a new zone\n");
 	printf("  delzone <name>		remove a zone\n");
+	printf("  changezone <name> <pattern>	change zone to use pattern\n");
 	printf("  addzones			add zone list on stdin {name space pattern newline}\n");
 	printf("  delzones			remove zone list on stdin {name newline}\n");
 	printf("  write [<zone>]		write changed zonefiles to disk\n");
@@ -93,6 +101,11 @@ usage()
 	printf("  zonestatus [<zone>]		print state, serial, activity\n");
 	printf("  serverpid			get pid of server process\n");
 	printf("  verbosity <number>		change logging detail\n");
+	printf("  print_tsig [<key_name>]	print tsig with <name> the secret and algo\n");
+	printf("  update_tsig <name> <secret>	change existing tsig with <name> to a new <secret>\n");
+	printf("  add_tsig <name> <secret> [algo] add new key with the given parameters\n");
+	printf("  assoc_tsig <zone> <key_name>	associate <zone> with given tsig <key_name> name\n");
+	printf("  del_tsig <key_name>		delete tsig <key_name> from configuration\n");
 	exit(1);
 }
 
@@ -104,6 +117,22 @@ static void ssl_err(const char* s)
 	exit(1);
 }
 
+/** exit with ssl error related to a file path */
+static void ssl_path_err(const char* s, const char *path)
+{
+	unsigned long err;
+	err = ERR_peek_error();
+	if (ERR_GET_LIB(err) == ERR_LIB_SYS &&
+		(ERR_GET_FUNC(err) == SYS_F_FOPEN ||
+		 ERR_GET_FUNC(err) == SYS_F_FREAD) ) {
+		fprintf(stderr, "error: %s\n%s: %s\n",
+			s, path, ERR_reason_error_string(err));
+		exit(1);
+	} else {
+		ssl_err(s);
+	}
+}
+
 /** setup SSL context */
 static SSL_CTX*
 setup_ctx(struct nsd_options* cfg)
@@ -111,6 +140,8 @@ setup_ctx(struct nsd_options* cfg)
 	char* s_cert, *c_key, *c_cert;
 	SSL_CTX* ctx;
 
+	if(!options_remote_is_address(cfg))
+		return NULL;
 	s_cert = cfg->server_cert_file;
 	c_key = cfg->control_key_file;
 	c_cert = cfg->control_cert_file;
@@ -119,7 +150,8 @@ setup_ctx(struct nsd_options* cfg)
 	if (cfg->zonesdir && cfg->zonesdir[0] &&
 		(s_cert[0] != '/' || c_key[0] != '/' || c_cert[0] != '/')) {
 		if(chdir(cfg->zonesdir))
-			ssl_err("could not chdir to zonesdir");
+			error("could not chdir to zonesdir: %s %s",
+				cfg->zonesdir, strerror(errno));
 	}
 
         ctx = SSL_CTX_new(SSLv23_client_method());
@@ -131,12 +163,15 @@ setup_ctx(struct nsd_options* cfg)
         if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
 		!= SSL_OP_NO_SSLv3)
 		ssl_err("could not set SSL_OP_NO_SSLv3");
-	if(!SSL_CTX_use_certificate_file(ctx,c_cert,SSL_FILETYPE_PEM) ||
-		!SSL_CTX_use_PrivateKey_file(ctx,c_key,SSL_FILETYPE_PEM)
-		|| !SSL_CTX_check_private_key(ctx))
-		ssl_err("Error setting up SSL_CTX client key and cert");
+	if(!SSL_CTX_use_certificate_file(ctx,c_cert,SSL_FILETYPE_PEM))
+		ssl_path_err("Error setting up SSL_CTX client cert", c_cert);
+	if(!SSL_CTX_use_PrivateKey_file(ctx,c_key,SSL_FILETYPE_PEM))
+		ssl_path_err("Error setting up SSL_CTX client key", c_key);
+	if(!SSL_CTX_check_private_key(ctx))
+		ssl_err("Error setting up SSL_CTX client key");
 	if (SSL_CTX_load_verify_locations(ctx, s_cert, NULL) != 1)
-		ssl_err("Error setting up SSL_CTX verify, server cert");
+		ssl_path_err("Error setting up SSL_CTX verify, server cert",
+			s_cert);
 	SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
 	return ctx;
@@ -154,6 +189,7 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 	socklen_t addrlen;
 	int fd;
 	int port = cfg->control_port;
+	int addrfamily = 0;
 	/* use svr or a config entry */
 	if(!svr) {
 		if(cfg->control_interface) {
@@ -181,7 +217,19 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 			exit(1);
 		}
 	} 
-        if(strchr(svr, ':')) {
+	if(svr[0] == '/') {
+#ifdef HAVE_SYS_UN_H
+		struct sockaddr_un* usock = (struct sockaddr_un *) &addr;
+		usock->sun_family = AF_LOCAL;
+#ifdef HAVE_STRUCT_SOCKADDR_UN_SUN_LEN
+		usock->sun_len = (unsigned)sizeof(usock);
+#endif
+		(void)strlcpy(usock->sun_path, svr, sizeof(usock->sun_path));
+		addrlen = (socklen_t)sizeof(struct sockaddr_un);
+		addrfamily = AF_LOCAL;
+		port = 0;
+#endif
+	} else if(strchr(svr, ':')) {
 		struct sockaddr_in6 sa;
 		addrlen = (socklen_t)sizeof(struct sockaddr_in6);
 		memset(&sa, 0, addrlen);
@@ -192,6 +240,7 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 			exit(1);
 		}
 		memcpy(&addr, &sa, addrlen);
+		addrfamily = AF_INET6;
 	} else { /* ip4 */
 		struct sockaddr_in sa;
 		addrlen = (socklen_t)sizeof(struct sockaddr_in);
@@ -203,17 +252,21 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 			exit(1);
 		}
 		memcpy(&addr, &sa, addrlen);
+		addrfamily = AF_INET;
 	}
 
-	fd = socket(strchr(svr, ':')?AF_INET6:AF_INET, SOCK_STREAM, 0);
+	fd = socket(addrfamily, SOCK_STREAM, 0);
 	if(fd == -1) {
 		fprintf(stderr, "socket: %s\n", strerror(errno));
 		exit(1);
 	}
 	if(connect(fd, (struct sockaddr*)&addr, addrlen) < 0) {
-		fprintf(stderr, "error: connect (%s@%d): %s\n", svr, port,
-			strerror(errno));
-		if(errno == ECONNREFUSED && statuscmd) {
+		int err = errno;
+		if(!port) fprintf(stderr, "error: connect (%s): %s\n", svr,
+			strerror(err));
+		else fprintf(stderr, "error: connect (%s@%d): %s\n", svr, port,
+			strerror(err));
+		if(err == ECONNREFUSED && statuscmd) {
 			printf("nsd is stopped\n");
 			exit(3);
 		}
@@ -230,6 +283,7 @@ setup_ssl(SSL_CTX* ctx, int fd)
 	X509* x;
 	int r;
 
+	if(!ctx) return NULL;
 	ssl = SSL_new(ctx);
 	if(!ssl)
 		ssl_err("could not SSL_new");
@@ -257,58 +311,93 @@ setup_ssl(SSL_CTX* ctx, int fd)
 	return ssl;
 }
 
+/** read from ssl or fd, fatalexit on error, 0 EOF, 1 success */
+static int
+remote_read(SSL* ssl, int fd, char* buf, size_t len)
+{
+	if(ssl) {
+		int r;
+		ERR_clear_error();
+		if((r = SSL_read(ssl, buf, (int)len-1)) <= 0) {
+			if(SSL_get_error(ssl, r) == SSL_ERROR_ZERO_RETURN) {
+				/* EOF */
+				return 0;
+			}
+			ssl_err("could not SSL_read");
+		}
+		buf[r] = 0;
+	} else {
+		ssize_t rr = read(fd, buf, len-1);
+		if(rr <= 0) {
+			if(rr == 0) {
+				/* EOF */
+				return 0;
+			}
+			fprintf(stderr, "could not read: %s\n",
+				strerror(errno));
+			exit(1);
+		}
+		buf[rr] = 0;
+	}
+	return 1;
+}
+
+/** write to ssl or fd, fatalexit on error */
+static void
+remote_write(SSL* ssl, int fd, const char* buf, size_t len)
+{
+	if(ssl) {
+		if(SSL_write(ssl, buf, (int)len) <= 0)
+			ssl_err("could not SSL_write");
+	} else {
+		if(write(fd, buf, len) < (ssize_t)len) {
+			fprintf(stderr, "could not write: %s\n",
+				strerror(errno));
+			exit(1);
+		}
+	}
+}
+
 /** send stdin to server */
 static void
-send_file(SSL* ssl, FILE* in, char* buf, size_t sz)
+send_file(SSL* ssl, int fd, FILE* in, char* buf, size_t sz)
 {
 	char e[] = {0x04, 0x0a};
 	while(fgets(buf, (int)sz, in)) {
-		if(SSL_write(ssl, buf, (int)strlen(buf)) <= 0)
-			ssl_err("could not SSL_write contents");
+		remote_write(ssl, fd, buf, strlen(buf));
 	}
 	/* send end-of-file marker */
-	if(SSL_write(ssl, e, (int)sizeof(e)) <= 0)
-		ssl_err("could not SSL_write end-of-file marker");
+	remote_write(ssl, fd, e, sizeof(e));
 }
 
 /** send command and display result */
 static int
-go_cmd(SSL* ssl, int argc, char* argv[])
+go_cmd(SSL* ssl, int fd, int argc, char* argv[])
 {
 	char pre[10];
 	const char* space=" ";
 	const char* newline="\n";
 	int was_error = 0, first_line = 1;
-	int r, i;
+	int i;
 	char buf[1024];
 	snprintf(pre, sizeof(pre), "NSDCT%d ", NSD_CONTROL_VERSION);
-	if(SSL_write(ssl, pre, (int)strlen(pre)) <= 0)
-		ssl_err("could not SSL_write");
+	remote_write(ssl, fd, pre, strlen(pre));
 	for(i=0; i<argc; i++) {
-		if(SSL_write(ssl, space, (int)strlen(space)) <= 0)
-			ssl_err("could not SSL_write");
-		if(SSL_write(ssl, argv[i], (int)strlen(argv[i])) <= 0)
-			ssl_err("could not SSL_write");
+		remote_write(ssl, fd, space, strlen(space));
+		remote_write(ssl, fd, argv[i], strlen(argv[i]));
 	}
-	if(SSL_write(ssl, newline, (int)strlen(newline)) <= 0)
-		ssl_err("could not SSL_write");
+	remote_write(ssl, fd, newline, strlen(newline));
 
 	/* send contents to server */
 	if(argc == 1 && (strcmp(argv[0], "addzones") == 0 ||
 		strcmp(argv[0], "delzones") == 0)) {
-		send_file(ssl, stdin, buf, sizeof(buf));
+		send_file(ssl, fd, stdin, buf, sizeof(buf));
 	}
 
 	while(1) {
-		ERR_clear_error();
-		if((r = SSL_read(ssl, buf, (int)sizeof(buf)-1)) <= 0) {
-			if(SSL_get_error(ssl, r) == SSL_ERROR_ZERO_RETURN) {
-				/* EOF */
-				break;
-			}
-			ssl_err("could not SSL_read");
+		if(remote_read(ssl, fd, buf, sizeof(buf)) == 0) {
+			break; /* EOF */
 		}
-		buf[r] = 0;
 		printf("%s", buf);
 		if(first_line && strncmp(buf, "error", 5) == 0)
 			was_error = 1;
@@ -345,11 +434,11 @@ go(const char* cfgfile, char* svr, int argc, char* argv[])
 	ssl = setup_ssl(ctx, fd);
 
 	/* send command */
-	ret = go_cmd(ssl, argc, argv);
+	ret = go_cmd(ssl, fd, argc, argv);
 
-	SSL_free(ssl);
+	if(ssl) SSL_free(ssl);
 	close(fd);
-	SSL_CTX_free(ctx);
+	if(ctx) SSL_CTX_free(ctx);
 	region_destroy(opt->region);
 	return ret;
 }

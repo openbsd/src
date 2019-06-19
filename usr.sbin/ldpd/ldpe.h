@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.75 2017/03/04 00:21:48 renato Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.76 2019/01/23 02:02:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -94,13 +94,10 @@ struct nbr {
 	uint16_t		 keepalive;
 	uint16_t		 max_pdu_len;
 
-	struct {
-		uint8_t			established;
-		uint32_t		spi_in;
-		uint32_t		spi_out;
-		enum auth_method	method;
-		char			md5key[TCP_MD5_KEY_LEN];
-	} auth;
+	uint32_t		 auth_spi_in;
+	uint32_t		 auth_spi_out;
+	int			 auth_established;
+
 	int			 flags;
 };
 #define F_NBR_GTSM_NEGOTIATED	 0x01
@@ -276,7 +273,7 @@ char	*pkt_ptr;	/* packet buffer */
 
 /* pfkey.c */
 int	pfkey_read(int, struct sadb_msg *);
-int	pfkey_establish(struct nbr *, struct nbr_params *);
+int	pfkey_establish(struct ldpd_conf *, struct nbr *);
 int	pfkey_remove(struct nbr *);
 int	pfkey_init(void);
 

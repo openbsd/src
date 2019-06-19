@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.12 2018/03/23 14:26:40 schwarze Exp $
+.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.14 2018/04/07 13:57:43 jmc Exp $
 .\" full merge up to: OpenSSL d33def66 Feb 9 14:17:13 2016 -0500
 .\" selective merge up to: OpenSSL 48e5119a Jan 19 10:49:22 2018 +0100
 .\"
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: April 7 2018 $
 .Dt X509_VERIFY_PARAM_SET_FLAGS 3
 .Os
 .Sh NAME
@@ -344,14 +344,14 @@ is
 .Dv NULL
 or empty, the list of hostnames is cleared, and name checks are not
 performed on the peer certificate.
-If
+.Fa namelen
+should be set to the length of
+.Fa name .
+For historical compatibility, if
 .Fa name
 is NUL-terminated,
 .Fa namelen
-may be zero, otherwise
-.Fa namelen
-must be set to the length of
-.Fa name .
+may be specified as zero.
 When a hostname is specified, certificate verification automatically
 invokes
 .Xr X509_check_host 3
@@ -360,6 +360,10 @@ with flags equal to the
 argument given to
 .Fn X509_VERIFY_PARAM_set_hostflags
 (default zero).
+.Fn X509_VERIFY_PARAM_set1_host
+will fail if
+.Fa name
+contains any embedded 0 bytes.
 .Pp
 .Fn X509_VERIFY_PARAM_add1_host
 adds
@@ -376,6 +380,18 @@ No change is made if
 is
 .Dv NULL
 or empty.
+.Fa namelen
+should be set to the length of
+.Fa name .
+For historical compatibility, if
+.Fa name
+is NUL-terminated,
+.Fa namelen
+may be specified as zero.
+.Fn X509_VERIFY_PARAM_add1_host
+will fail if
+.Fa name
+contains any embedded 0 bytes.
 When multiple names are configured, the peer is considered verified when
 any name matches.
 .Pp
@@ -390,14 +406,18 @@ identifier respectively.
 .Fn X509_VERIFY_PARAM_set1_email
 sets the expected RFC822 email address to
 .Fa email .
-If
+.Fa emaillen
+should be set to the length of
+.Fa email .
+For historical compatibility, if
 .Fa email
 is NUL-terminated,
 .Fa emaillen
-may be zero, otherwise
-.Fa emaillen
-must be set to the length of
-.Fa email .
+may be specified as zero,
+.Fn X509_VERIFY_PARAM_set1_email
+will fail if
+.Fa email
+is NULL, an empty string, or contains embedded 0 bytes.
 When an email address is specified, certificate verification
 automatically invokes
 .Xr X509_check_email 3 .
@@ -410,6 +430,12 @@ The
 argument is in binary format, in network byte-order, and
 .Fa iplen
 must be set to 4 for IPv4 and 16 for IPv6.
+.Fn X509_VERIFY_PARAM_set1_ip
+will fail if
+.Fa ip
+is NULL or if
+.Fa iplen
+is not 4 or 16.
 When an IP address is specified,
 certificate verification automatically invokes
 .Xr X509_check_ip 3 .
@@ -422,6 +448,10 @@ The
 argument is a NUL-terminal ASCII string:
 dotted decimal quad for IPv4 and colon-separated hexadecimal for IPv6.
 The condensed "::" notation is supported for IPv6 addresses.
+.Fn X509_VERIFY_PARAM_set1_ip_asc
+will fail if
+.Fa ipasc
+is unparsable.
 .Pp
 .Fn X509_VERIFY_PARAM_add0_table
 adds
@@ -476,14 +506,23 @@ on allocation failure.
 .Fn X509_VERIFY_PARAM_set_trust ,
 .Fn X509_VERIFY_PARAM_add0_policy ,
 .Fn X509_VERIFY_PARAM_set1_policies ,
+and
+.Fn X509_VERIFY_PARAM_add0_table
+return 1 for success or 0 for failure.
+.Pp
 .Fn X509_VERIFY_PARAM_set1_host ,
 .Fn X509_VERIFY_PARAM_add1_host ,
 .Fn X509_VERIFY_PARAM_set1_email ,
 .Fn X509_VERIFY_PARAM_set1_ip ,
-.Fn X509_VERIFY_PARAM_set1_ip_asc ,
 and
-.Fn X509_VERIFY_PARAM_add0_table
+.Fn X509_VERIFY_PARAM_set1_ip_asc ,
 return 1 for success or 0 for failure.
+A failure from these routines will poison
+the
+.Vt X509_VERIFY_PARAM
+object so that future calls to
+.Xr X509_verify_cert 3
+using the poisoned object will fail.
 .Pp
 .Fn X509_VERIFY_PARAM_get_flags
 returns the current verification flags.

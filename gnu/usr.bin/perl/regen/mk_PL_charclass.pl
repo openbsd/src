@@ -2,8 +2,8 @@
 use v5.15.8;
 use strict;
 use warnings;
-require 'regen/regen_lib.pl';
-require 'regen/charset_translations.pl';
+require './regen/regen_lib.pl';
+require './regen/charset_translations.pl';
 
 # This program outputs l1_charclass_tab.h, which defines the guts of the
 # PL_charclass table.  Each line is a bit map of properties that the Unicode

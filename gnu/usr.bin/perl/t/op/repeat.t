@@ -2,11 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    require './test.pl';
+    set_up_inc( '../lib' );
 }
 
-require './test.pl';
-plan(tests => 48);
+plan(tests => 50);
 
 # compile time
 
@@ -152,10 +152,10 @@ is($Tiecount::Tiecount, 1,
    '(...)x... in void context in list (via scalar comma)');
 
 
-# perlbug 20011113.110 works in 5.6.1, broken in 5.7.2
+# perlbug 20011113.110 (#7902) works in 5.6.1, broken in 5.7.2
 {
     my $x= [("foo") x 2];
-    is( join('', @$x), 'foofoo', 'list repeat in anon array ref broken [ID 20011113.110]' );
+    is( join('', @$x), 'foofoo', 'list repeat in anon array ref broken [ID 20011113.110 (#7902)]' );
 }
 
 # [perl #35885]
@@ -183,3 +183,94 @@ fresh_perl_like(
   {  },
  '(1) x ~1',
 );
+
+# [perl #130247] Perl_rpeep(OP *): Assertion `oldop' failed
+# 
+# the 'x 0' optimising code in rpeep didn't expect the repeat expression
+# to occur on the op_other side of an op_next chain.
+# This used to give an assertion failure
+
+eval q{() = (() or ((0) x 0)); 1};
+is($@, "", "RT #130247");
+
+# yes, the newlines matter
+fresh_perl_is(<<'PERL', "", { stderr => 1 }, "(perl #133778) MARK mishandling");
+map{s[][];eval;0}<DATA>__END__
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+()x0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+0
+PERL

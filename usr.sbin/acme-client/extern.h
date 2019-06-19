@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.9 2017/11/27 01:58:52 florian Exp $ */
+/*	$Id: extern.h,v 1.16 2019/06/17 12:42:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,6 +32,7 @@ enum	acctop {
 	ACCT_STOP = 0,
 	ACCT_READY,
 	ACCT_SIGN,
+	ACCT_KID_SIGN,
 	ACCT_THUMBPRINT,
 	ACCT__MAX
 };
@@ -118,6 +119,8 @@ enum	comm {
 	COMM_CERT,
 	COMM_PAY,
 	COMM_NONCE,
+	COMM_KID,
+	COMM_URL,
 	COMM_TOK,
 	COMM_CHNG_OP,
 	COMM_CHNG_ACK,
@@ -146,11 +149,35 @@ enum	comm {
  * (presumably!) local machine to an ACME connection; and a URI, to
  * which we must connect to verify the token.
  */
+enum	chngstatus {
+	CHNG_INVALID = -1,
+	CHNG_PENDING = 0,
+	CHNG_PROCESSING = 1,
+	CHNG_VALID = 2
+};
+
 struct	chng {
 	char		*uri; /* uri on ACME server */
 	char		*token; /* token we must offer */
 	size_t		 retry; /* how many times have we tried */
-	int		 status; /* challenge accepted? */
+	enum chngstatus	 status; /* challenge accepted? */
+};
+
+enum	orderstatus {
+	ORDER_INVALID = -1,
+	ORDER_PENDING = 0,
+	ORDER_READY = 1,
+	ORDER_PROCESSING = 2,
+	ORDER_VALID = 3
+};
+
+struct	order {
+	char			*uri;		/* uri of the order request */
+	char			*finalize;	/* finalize uri */
+	char			*certificate;	/* uri for issued certificate */
+	enum orderstatus	 status;	/* status of order */
+	char			**auths;	/* authorization uris */
+	size_t			 authsz;
 };
 
 /*
@@ -158,11 +185,10 @@ struct	chng {
  * They must all be filled in.
  */
 struct	capaths {
-	char		*newauthz; /* new authorisation */
-	char		*newcert;  /* sign certificate */
-	char		*newreg; /* new acme account */
+	char		*newaccount;	/* new acme account */
+	char		*newnonce;	/* new nonce */
+	char		*neworder;	/* order new certificate */
 	char		*revokecert; /* revoke certificate */
-	char		*agreement; /* terms of service */
 };
 
 struct	jsmnn;
@@ -173,17 +199,17 @@ __BEGIN_DECLS
  * Start with our components.
  * These are all isolated and talk to each other using sockets.
  */
-int		 acctproc(int, const char *, int);
+int		 acctproc(int, const char *, enum keytype);
 int		 certproc(int, int);
 int		 chngproc(int, const char *);
 int		 dnsproc(int);
-int		 revokeproc(int, const char *, const char *,
-			int, int, const char *const *, size_t);
+int		 revokeproc(int, const char *, int, int, const char *const *,
+			size_t);
 int		 fileproc(int, const char *, const char *, const char *,
 			const char *);
-int		 keyproc(int, const char *,
-			const char **, size_t, int);
-int		 netproc(int, int, int, int, int, int, int, int,
+int		 keyproc(int, const char *, const char **, size_t,
+			enum keytype);
+int		 netproc(int, int, int, int, int, int, int,
 			struct authority_c *, const char *const *,
 			size_t);
 
@@ -227,20 +253,26 @@ void		 json_free(struct jsmnn *);
 int		 json_parse_response(struct jsmnn *);
 void		 json_free_challenge(struct chng *);
 int		 json_parse_challenge(struct jsmnn *, struct chng *);
+void		 json_free_order(struct order *);
+int		 json_parse_order(struct jsmnn *, struct order *);
+int		 json_parse_upd_order(struct jsmnn *, struct order *);
 void		 json_free_capaths(struct capaths *);
 int		 json_parse_capaths(struct jsmnn *, struct capaths *);
 
-char		*json_fmt_challenge(const char *, const char *);
-char		*json_fmt_newauthz(const char *);
 char		*json_fmt_newcert(const char *);
-char		*json_fmt_newreg(const char *);
+char		*json_fmt_chkacc(void);
+char		*json_fmt_newacc(void);
+char		*json_fmt_neworder(const char *const *, size_t);
 char		*json_fmt_protected_rsa(const char *,
-			const char *, const char *);
-char		*json_fmt_revokecert(const char *);
-char		*json_fmt_header_rsa(const char *, const char *);
-char		*json_fmt_thumb_rsa(const char *, const char *);
-char		*json_fmt_signed(const char *,
 			const char *, const char *, const char *);
+char		*json_fmt_protected_ec(const char *, const char *, const char *,
+			const char *);
+char		*json_fmt_protected_kid(const char*, const char *, const char *,
+			const char *);
+char		*json_fmt_revokecert(const char *);
+char		*json_fmt_thumb_rsa(const char *, const char *);
+char		*json_fmt_thumb_ec(const char *, const char *);
+char		*json_fmt_signed(const char *, const char *, const char *);
 
 /*
  * Should we print debugging messages?

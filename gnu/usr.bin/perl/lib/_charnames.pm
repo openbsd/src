@@ -6,7 +6,7 @@
 package _charnames;
 use strict;
 use warnings;
-our $VERSION = '1.43';
+our $VERSION = '1.45';
 use unicore::Name;    # mktables-generated algorithmically-defined names
 
 use bytes ();          # for $bytes::hint_bits
@@ -22,8 +22,8 @@ $Carp::Internal{ (__PACKAGE__) } = 1;
 # The official names with their code points are stored in a table in
 # lib/unicore/Name.pl which is read in as a large string (almost 3/4 Mb in
 # Unicode 6.0).  Each code point/name combination is separated by a \n in the
-# string.  (Some of the CJK and the Hangul syllable names are determined
-# instead algorithmically via subroutines stored instead in
+# string.  (Some of the CJK and the Hangul syllable names are instead
+# determined algorithmically via subroutines stored instead in
 # lib/unicore/Name.pm).  Because of the large size of this table, it isn't
 # converted into hashes for faster lookup.
 #
@@ -202,13 +202,6 @@ sub alias (@) # Set up a single alias
             }
 
             $^H{charnames_name_aliases}{$name} = $value;
-            if (warnings::enabled('deprecated')
-                && $name =~ / ( .* $nbsp ) ( .* ) $ /x)
-            {
-                  carp "NO-BREAK SPACE in a charnames alias definition is "
-                       . "deprecated; marked by <-- HERE in '$1 <-- HERE "
-                       . $2 . "'";
-            }
         }
     }
   }

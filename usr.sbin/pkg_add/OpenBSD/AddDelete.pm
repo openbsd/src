@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.78 2017/07/01 12:23:22 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.84 2019/04/07 12:30:39 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -53,6 +53,20 @@ sub do_the_main_work
 	return $dielater;
 }
 
+sub handle_end_tags
+{
+	my ($self, $state) = @_;
+	return if !defined $state->{tags}{atend};
+	$state->progress->for_list("Running tags", 
+	    [keys %{$state->{tags}{atend}}],
+	    sub {
+	    	my $k = shift;
+		return if $state->{tags}{deleted}{$k};
+		return if $state->{tags}{superseded}{$k};
+		$state->{tags}{atend}{$k}->run_tag($state);
+	    });
+}
+
 sub framework
 {
 	my ($self, $state) = @_;
@@ -63,6 +77,7 @@ sub framework
 		$self->process_parameters($state);
 		my $dielater = $self->do_the_main_work($state);
 		# cleanup various things
+		$self->handle_end_tags($state);
 		$state->{recorder}->cleanup($state);
 		$state->ldconfig->ensure;
 		OpenBSD::PackingElement->finish($state);
@@ -104,24 +119,25 @@ sub parse_and_run
 	my $state = $self->new_state($cmd);
 	$state->handle_options;
 
-	require POSIX;
-
-
-	my $termios = POSIX::Termios->new;
-	my $lflag;
-
-	if (defined $termios->getattr) {
-		$lflag = $termios->getlflag;
-	}
-
-	if (defined $lflag) {
-		my $NOKERNINFO = 0x02000000; # not defined in POSIX
-		$termios->setlflag($lflag | $NOKERNINFO);
-		$termios->setattr;
-		
-	}
-
 	local $SIG{'INFO'} = sub { $state->status->print($state); };
+
+	my ($lflag, $termios);
+	if ($self->silence_children($state)) {
+		require POSIX;
+
+		$termios = POSIX::Termios->new;
+
+		if (defined $termios->getattr) {
+			$lflag = $termios->getlflag;
+		}
+
+		if (defined $lflag) {
+			my $NOKERNINFO = 0x02000000; # not defined in POSIX
+			$termios->setlflag($lflag | $NOKERNINFO);
+			$termios->setattr;
+			
+		}
+	}
 
 	$self->framework($state);
 
@@ -129,7 +145,13 @@ sub parse_and_run
 		$termios->setlflag($lflag);
 		$termios->setattr;
 	}
+
 	return $state->{bad} != 0;
+}
+
+sub silence_children
+{
+	1
 }
 
 # nothing to do
@@ -163,7 +185,7 @@ sub is_empty
 {
 	my $self = shift;
 	return !(defined $self->{dirs} or defined $self->{users} or
-		defined $self->{groups});
+	    defined $self->{groups});
 }
 
 sub cleanup
@@ -224,6 +246,11 @@ sub handle_options
 	if (defined $ENV{PKG_CHECKSUM}) {
 		$state->{subst}->add('checksum', 1);
 	}
+	my $base = $state->opt('B') // '';
+	if ($base ne '') {
+		$base.='/' unless $base =~ m/\/$/o;
+	}
+	$state->{destdir} = $base;
 }
 
 sub init

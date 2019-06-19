@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.79 2017/01/31 17:08:51 dhill Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.80 2019/05/15 06:12:19 anton Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -342,6 +342,7 @@ amap_alloc1(int slots, int waitf, int lazyalloc)
 	    M_UVMAMAP, waitf | (lazyalloc ? M_ZERO : 0));
 	if (amap->am_buckets == NULL)
 		goto fail1;
+	amap->am_nbuckets = buckets;
 
 	if (!lazyalloc) {
 		for (i = 0; i < buckets; i++) {
@@ -422,7 +423,8 @@ amap_free(struct vm_amap *amap)
 	else {
 		TAILQ_FOREACH_SAFE(chunk, &amap->am_chunks, ac_list, tmp)
 		    pool_put(&uvm_amap_chunk_pool, chunk);
-		free(amap->am_buckets, M_UVMAMAP, 0);
+		free(amap->am_buckets, M_UVMAMAP,
+		    amap->am_nbuckets * sizeof(*amap->am_buckets));
 		pool_put(&uvm_amap_pool, amap);
 	}
 }

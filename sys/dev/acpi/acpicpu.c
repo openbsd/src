@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.81 2017/11/30 00:21:42 guenther Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.83 2018/09/19 05:23:16 guenther Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -110,7 +110,7 @@ struct acpi_cstate
 	u_short		flags;		/* CST_FLAG_* */
 	u_short		latency;
 	int		power;
-	u_int64_t	address;	/* or mwait hint */
+	uint64_t	address;	/* or mwait hint */
 };
 
 unsigned long cst_stats[4] = { 0 };
@@ -121,7 +121,7 @@ struct acpicpu_softc {
 
 	int			sc_duty_wid;
 	int			sc_duty_off;
-	u_int32_t		sc_pblk_addr;
+	uint32_t		sc_pblk_addr;
 	int			sc_pblk_len;
 	int			sc_flags;
 	unsigned long		sc_prev_sleep;
@@ -144,10 +144,10 @@ struct acpicpu_softc {
 
 	struct acpicpu_pct	sc_pct;
 	/* save compensation for pct access for lying bios' */
-	u_int32_t		sc_pct_stat_as;
-	u_int32_t		sc_pct_ctrl_as;
-	u_int32_t		sc_pct_stat_len;
-	u_int32_t		sc_pct_ctrl_len;
+	uint32_t		sc_pct_stat_as;
+	uint32_t		sc_pct_ctrl_as;
+	uint32_t		sc_pct_stat_len;
+	uint32_t		sc_pct_ctrl_len;
 	/*
 	 * XXX: _PPC Change listener
 	 * PPC changes can occur when for example a machine is disconnected
@@ -169,7 +169,7 @@ void	acpicpu_getcst_from_fadt(struct acpicpu_softc *);
 void	acpicpu_print_one_cst(struct acpi_cstate *_cx);
 void	acpicpu_print_cst(struct acpicpu_softc *_sc);
 void	acpicpu_add_cstate(struct acpicpu_softc *_sc, int _state, int _method,
-	    int _flags, int _latency, int _power, u_int64_t _address);
+	    int _flags, int _latency, int _power, uint64_t _address);
 void	acpicpu_set_pdc(struct acpicpu_softc *);
 void	acpicpu_idle(void);
 
@@ -339,7 +339,7 @@ check_mwait_hints(int state, int hints)
 
 void
 acpicpu_add_cstate(struct acpicpu_softc *sc, int state, int method,
-    int flags, int latency, int power, u_int64_t address)
+    int flags, int latency, int power, uint64_t address)
 {
 	struct acpi_cstate	*cx;
 
@@ -367,7 +367,7 @@ void
 acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 {
 	struct acpicpu_softc	*sc = arg;
-	u_int64_t addr;
+	uint64_t addr;
 	struct acpi_grd *grd;
 	int state, method, flags;
 
@@ -401,11 +401,11 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 		if (grd->grd_gas.register_bit_width == 0) {
 			method = CST_METH_HALT;
 			addr = 0;
-		} else if (grd->grd_gas.register_bit_width == 1 ||
-		           grd->grd_gas.register_bit_width == 8) {
+		} else {
 			/*
-			 * vendor 1 == Intel
-			 * vendor 8 == "AML author used the bitwidth"
+			 * In theory we should only do this for
+			 * vendor 1 == Intel but other values crop up,
+			 * presumably due to the normal ACPI spec confusion.
 			 */
 			switch (grd->grd_gas.register_bit_offset) {
 			case 0x1:
@@ -431,10 +431,6 @@ acpicpu_add_cstatepkg(struct aml_value *val, void *arg)
 				    state, grd->grd_gas.register_bit_offset);
 				return;
 			}
-		} else {
-			printf(": C%d (unknown FFH vendor %d)",
-			    state, grd->grd_gas.register_bit_width);
-			return;
 		}
 		break;
 
@@ -670,7 +666,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct aml_value	res;
 	int			i;
-	u_int32_t		status = 0;
+	uint32_t		status = 0;
 	CPU_INFO_ITERATOR	cii;
 	struct cpu_info		*ci;
 
@@ -729,7 +725,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	if (!SLIST_EMPTY(&sc->sc_cstates)) {
-		extern u_int32_t acpi_force_bm;
+		extern uint32_t acpi_force_bm;
 
 		cpu_idle_cycle_fcn = &acpicpu_idle;
 
@@ -1050,7 +1046,7 @@ acpicpu_setperf(int level)
 	struct acpicpu_softc	*sc;
 	struct acpicpu_pss	*pss = NULL;
 	int			idx, len;
-	u_int32_t		status = 0;
+	uint32_t		status = 0;
 
 	sc = acpicpu_sc[cpu_number()];
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.75 2016/09/08 20:42:58 ratchov Exp $
+.\"	$OpenBSD: audio.4,v 1.82 2018/08/05 11:46:31 ratchov Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,11 +28,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 8 2016 $
+.Dd $Mdocdate: August 5 2018 $
 .Dt AUDIO 4
 .Os
 .Sh NAME
 .Nm audio ,
+.Nm audioctl ,
 .Nm mixer
 .Nd device-independent audio driver layer
 .Sh SYNOPSIS
@@ -48,49 +49,50 @@ The
 driver provides support for various audio peripherals.
 It provides a uniform programming interface layer above different
 underlying audio hardware drivers.
-The audio layer provides full-duplex operation if the
-underlying hardware configuration supports it.
 .Pp
-There are three device files available for audio operation:
-.Pa /dev/audio ,
-.Pa /dev/audioctl ,
-and
-.Pa /dev/mixer .
-.Pa /dev/audio
-is used for recording or playback of digital samples.
-.Pa /dev/mixer
-is used to manipulate volume, recording source, or other audio mixer
-functions.
-.Pa /dev/audioctl
-accepts the same
-.Xr ioctl 2
-operations as
-.Pa /dev/audio ,
-but no other operations.
-In contrast to
-.Pa /dev/audio ,
-which has the exclusive open property,
-.Pa /dev/audioctl
-can be opened at any time and can be used to read the
-.Nm audio
-device variables while it is in use.
-.Sh SAMPLING DEVICES
-When
-.Pa /dev/audio
-is opened, it attempts to maintain the previous audio sample format and
-record/playback mode.
-In addition, if it is opened read-only
-(write-only) the device is set to half-duplex record (play) mode with
+In addition to hardware mixer controls like those
+documented in
+.Xr azalia 4 ,
+the
+.Nm
+driver exposes the
+.Va record.enable
+control.
+The superuser can change it with
+.Xr mixerctl 1 .
+It accepts the following values:
+.Pp
+.Bl -tag -offset indent -width "sysctl" -compact
+.It Cm on
+Recording is enabled.
+.It Cm off
+Silence is returned instead of the recorded samples.
+.It Cm sysctl
+Behavior is controlled by the
+.Va kern.audio.record
+.Xr sysctl 2
+variable.
+This is the default.
+.El
+.Pp
+There are three types of device files available for audio operation:
+.Bl -dash -offset indent
+.It
+Audio devices are used for recording or playback of digital samples.
+.It
+Control devices can be used to read the
+.Nm
+driver variables while it is in use.
+.It
+Mixer devices are used to manipulate volume, recording source,
+or other audio mixer functions.
+.El
+.Sh AUDIO DEVICES
+When audio devices are opened,
+they attempt to maintain the previous audio sample format and record/playback mode.
+In addition, if one is opened read-only
+(write-only) the device is set to record-only (play-only) mode with
 recording (playing) unpaused.
-.Pp
-Only one process may hold open a sampling device at a given time
-(although file descriptors may be shared between processes once the
-first open completes).
-.Pp
-On a half-duplex device, either reads or writes are allowed,
-but not both.
-On a full-duplex device, reads and writes may operate
-concurrently without interference.
 .Pp
 If a writing process does not call
 .Xr write 2
@@ -99,18 +101,6 @@ consumes them silence is inserted.
 If a reading process does not call
 .Xr read 2
 frequently enough, it will simply miss samples.
-.Pp
-The
-.Nm audio
-device is accessed with
-.Xr read 2
-or
-.Xr write 2 .
-.Pp
-The
-.Nm audio
-device, like most devices, can be used in
-.Xr poll 2 ,
 .Pp
 The following
 .Xr ioctl 2
@@ -293,24 +283,28 @@ was called, and the device is not attempting to start.
 If set, indicates that the device is playing and/or recording.
 .El
 .El
-.Sh MIXER DEVICE
-The
-.Nm mixer
-device,
-.Pa /dev/mixer ,
-may be manipulated with
+.Sh CONTROL DEVICES
+Audio control devices accept the same
 .Xr ioctl 2
-but does not support
-.Xr read 2
-or
-.Xr write 2 .
-It supports the following
+except
+.Dv AUDIO_START
+and
+.Dv AUDIO_STOP .
+In contrast to audio devices,
+which have the exclusive open property,
+control devices can be opened at any time.
+.Pp
+While the audio device is open, audio parameters
+.Dv AUDIO_SETPAR
+may not be used.
+.Sh MIXER DEVICES
+Mixer devices support the following
 .Xr ioctl 2
 commands:
 .Pp
 .Bl -tag -width Ds -compact
 .It Dv AUDIO_GETDEV Fa "audio_device_t *"
-This command is the same as described above for the sampling devices.
+This command is the same as described above for the audio devices.
 .Pp
 .It Dv AUDIO_MIXER_READ Fa "mixer_ctrl_t *"
 .It Dv AUDIO_MIXER_WRITE Fa "mixer_ctrl_t *"
@@ -501,10 +495,13 @@ mixer controls because they use a name from one of the
 .Dv AudioC*
 string values.
 .Sh FILES
-.Bl -tag -width /dev/audioctl -compact
-.It Pa /dev/audio
-.It Pa /dev/audioctl
-.It Pa /dev/mixer
+.Bl -tag -width /dev/audioctlN -compact
+.It Pa /dev/audio Ns Ar N
+Audio device.
+.It Pa /dev/audioctl Ns Ar N
+Control device.
+.It Pa /dev/mixer Ns Ar N
+Mixer device.
 .El
 .Sh SEE ALSO
 .Xr aucat 1 ,
@@ -515,5 +512,7 @@ string values.
 .Xr sio_open 3 ,
 .Xr ac97 4 ,
 .Xr uaudio 4 ,
+.Xr sndio 7 ,
+.Xr sndiod 8 ,
 .Xr audio 9
 .\" .Sh BUGS

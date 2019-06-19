@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.159 2017/11/08 11:24:24 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.162 2019/04/26 07:14:50 florian Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: November 8 2017 $
+.Dd $Mdocdate: April 26 2019 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -151,6 +151,12 @@ OpenSSL configuration files (see
 .El
 .It /home/
 Default location for user home directories.
+.Pp
+.Bl -tag -width _sysupgrade/ -compact
+.It _sysupgrade/
+Download location for
+.Xr sysupgrade 8 .
+.El
 .It /mnt/
 Empty directory commonly used by
 system administrators as a temporary mount point.
@@ -210,6 +216,8 @@ Standard C include files.
 .Bl -tag -width "libmilter/" -compact
 .It arpa/
 C include files for Internet service protocols.
+.It c++/
+Include files for the Clang C++ compiler.
 .It crypto/
 C include files for the cryptographic libraries.
 .It ddb/
@@ -407,7 +415,7 @@ Miscellaneous system-wide ASCII text files.
 Terminal characteristics database (see
 .Xr termcap 5 ) .
 .It pcvtfonts/
-Additional i386 console fonts.
+Additional console fonts.
 .El
 .Pp
 .It mk/

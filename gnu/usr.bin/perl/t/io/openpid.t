@@ -9,8 +9,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 if ($^O eq 'dos') {
@@ -23,10 +23,14 @@ watchdog(15, $^O eq 'MSWin32' ? "alarm" : '');
 use Config;
 $| = 1;
 $SIG{PIPE} = 'IGNORE';
+# reset the handler in case the shell has set a broken default
+$SIG{HUP} = 'DEFAULT';
 $SIG{HUP} = 'IGNORE' if $^O eq 'interix';
 
 my $perl = which_perl();
 $perl .= qq[ "-I../lib"];
+
+my @perl = ( which_perl(), "-I../lib" );
 
 #
 # commands run 4 perl programs.  Two of these programs write a
@@ -35,16 +39,36 @@ $perl .= qq[ "-I../lib"];
 # the other reader reads one line, waits a few seconds and then
 # exits to test the waitpid function.
 #
-$cmd1 = qq/$perl -e "\$|=1; print qq[first process\\n]; sleep 30;"/;
-$cmd2 = qq/$perl -e "\$|=1; print qq[second process\\n]; sleep 30;"/;
+# Using 4+ arg open for the children that sleep so that that we're
+# killing the perl process instead of an intermediate shell, this
+# allows harness to see the file handles closed sooner.  I didn't
+# convert them all since I wanted 3-arg open to continue to be
+# exercised here.
+#
+# VMS does not have the list form of piped open, but it also would
+# not create a separate process for an intermediate shell.
+if ($^O eq 'VMS') {
+    $cmd1 = qq/$perl -e "\$|=1; print qq[first process\\n]; sleep 30;"/;
+    $cmd2 = qq/$perl -e "\$|=1; print qq[second process\\n]; sleep 30;"/;
+}
+else {
+    @cmd1 = ( @perl, "-e", "\$|=1; print qq[first process\\n]; sleep 30;" );
+    @cmd2 = ( @perl, "-e", "\$|=1; print qq[second process\\n]; sleep 30;" );
+}
 $cmd3 = qq/$perl -e "print <>;"/; # hangs waiting for end of STDIN
 $cmd4 = qq/$perl -e "print scalar <>;"/;
 
-#warn "#$cmd1\n#$cmd2\n#$cmd3\n#$cmd4\n";
+#warn "#@cmd1\n#@cmd2\n#$cmd3\n#$cmd4\n";
 
 # start the processes
-ok( $pid1 = open(FH1, "$cmd1 |"), 'first process started');
-ok( $pid2 = open(FH2, "$cmd2 |"), '    second' );
+if ($^O eq 'VMS') {
+    ok( $pid1 = open(FH1, "$cmd1 |"), 'first process started');
+    ok( $pid2 = open(FH2, "$cmd2 |"), '    second' );
+}
+else {
+    ok( $pid1 = open(FH1, "-|", @cmd1), 'first process started');
+    ok( $pid2 = open(FH2, "-|", @cmd2), '    second' );
+}
 {
     no warnings 'once';
     ok( $pid3 = open(FH3, "| $cmd3"), '    third'  );

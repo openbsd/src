@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.72 2017/04/19 05:36:13 natano Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.75 2018/08/07 18:39:56 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -26,8 +26,6 @@
  * rarpd - Reverse ARP Daemon
  */
 
-#include <sys/time.h>
-#include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/bpf.h>
@@ -45,12 +43,12 @@
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <poll.h>
 #include <ifaddrs.h>
-#include <paths.h>
 
 /*
  * The structures for each interface.
@@ -96,6 +94,10 @@ int	dflag = 0;		/* print debugging messages */
 int	fflag = 0;		/* don't fork */
 int	lflag = 0;		/* log all replies */
 int	tflag = 0;		/* tftpboot check */
+
+#ifndef TFTP_DIR
+#define TFTP_DIR "/tftpboot"
+#endif
 
 int
 main(int argc, char *argv[])
@@ -336,6 +338,10 @@ rarp_loop(void)
 
 	arptab_init();
 
+	if (unveil(TFTP_DIR, "r") == -1)
+		error("unveil");
+	if (unveil("/etc/ethers", "r") == -1)
+		error("unveil");
 	if (pledge("stdio rpath dns", NULL) == -1)
 		error("pledge");
 
@@ -389,10 +395,6 @@ rarp_loop(void)
 	}
 	free(pfd);
 }
-
-#ifndef TFTP_DIR
-#define TFTP_DIR "/tftpboot"
-#endif
 
 /*
  * True if this server can boot the host whose IP address is 'addr'.
@@ -533,9 +535,7 @@ lookup_addrs(char *ifname, struct if_info *p)
 			ia->ia_netmask =
 			    ((struct sockaddr_in *) ifa->ifa_netmask)->
 			    sin_addr.s_addr;
-			/* If SIOCGIFNETMASK didn't work,
-			   figure out a mask from the IP
-			   address class. */
+			/* Figure out a mask from the IP address class. */
 			if (ia->ia_netmask == 0)
 				ia->ia_netmask =
 				    ipaddrtonetmask(ia->ia_ipaddr);
@@ -631,8 +631,7 @@ rarp_reply(struct if_info *ii, struct if_addr *ia, struct ether_header *ep,
 		warning("write: only %d of %d bytes written", n, len);
 }
 /*
- * Get the netmask of an IP address.  This routine is used if
- * SIOCGIFNETMASK doesn't work.
+ * Get the netmask of an IP address.
  */
 u_int32_t
 ipaddrtonetmask(u_int32_t addr)

@@ -1,4 +1,4 @@
-/* $OpenBSD: streebog.c,v 1.5 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: streebog.c,v 1.6 2019/05/09 22:54:28 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -1240,6 +1240,7 @@ static void
 streebog_single_block(STREEBOG_CTX *ctx, const unsigned char *in, size_t num)
 {
 	STREEBOG_LONG64 M[8], l;
+	STREEBOG_LONG64 CF;
 	int i;
 
 	for (i = 0; i < 8; i++)
@@ -1258,12 +1259,13 @@ streebog_single_block(STREEBOG_CTX *ctx, const unsigned char *in, size_t num)
 		}
 	}
 
+	CF = 0;
 	ctx->Sigma[0] += M[0];
-	for (i = 1; i < 8; i++)
-		if (ctx->Sigma[i-1] < M[i-1])
-			ctx->Sigma[i] += M[i] + 1;
-		else
-			ctx->Sigma[i] += M[i];
+	for (i = 1; i < 8; i++) {
+		if (ctx->Sigma[i-1] != M[i-1])
+			CF = (ctx->Sigma[i-1] < M[i-1]);
+		ctx->Sigma[i] += M[i] + CF;
+	}
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.22 2004/09/15 20:11:28 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.23 2018/05/14 13:54:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -54,27 +54,17 @@ struct lasi_hwr {
 	u_int32_t lasi_arbmask;
 };
 
-struct lasi_trs {
-	u_int32_t lasi_irr;	/* int requset register */
-	u_int32_t lasi_imr;	/* int mask register */
-	u_int32_t lasi_ipr;	/* int pending register */
-	u_int32_t lasi_icr;	/* int command? register */
-	u_int32_t lasi_iar;	/* int acquire? register */
-};
-
 struct lasi_softc {
 	struct device sc_dev;
-	struct gscbus_ic sc_ic;
 
 	struct lasi_hwr volatile *sc_hw;
-	struct lasi_trs volatile *sc_trs;
 	struct gsc_attach_args ga;	/* for deferred attach */
 };
 
 int	lasimatch(struct device *, void *, void *);
 void	lasiattach(struct device *, struct device *, void *);
 
-struct cfattach lasi_ca = {
+const struct cfattach lasi_ca = {
 	sizeof(struct lasi_softc), lasimatch, lasiattach
 };
 
@@ -91,8 +81,8 @@ lasimatch(parent, cfdata, aux)
 	void *cfdata;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	/* register struct cfdata *cf = cfdata; */
+	struct confargs *ca = aux;
+	/* struct cfdata *cf = cfdata; */
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_LASI)
@@ -109,8 +99,9 @@ lasiattach(parent, self, aux)
 {
 	struct lasi_softc *sc = (struct lasi_softc *)self;
 	struct confargs *ca = aux;
+	struct gscbus_ic *ic;
 	bus_space_handle_t ioh, ioh2;
-	int s, in;
+	int s;
 
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa,
 	    IOMOD_HPASIZE, 0, &ioh)) {
@@ -125,8 +116,8 @@ lasiattach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_trs = (struct lasi_trs *)ca->ca_hpa;
 	sc->sc_hw = (struct lasi_hwr *)(ca->ca_hpa + 0xc000);
+	ic = (struct gscbus_ic *)ca->ca_hpa;
 
 	/* XXX should we reset the chip here? */
 
@@ -135,16 +126,12 @@ lasiattach(parent, self, aux)
 
 	/* interrupts guts */
 	s = splhigh();
-	sc->sc_trs->lasi_iar = cpu_gethpa(0) | (31 - ca->ca_irq);
-	sc->sc_trs->lasi_icr = 0;
-	sc->sc_trs->lasi_imr = ~0U;
-	in = sc->sc_trs->lasi_irr;
-	sc->sc_trs->lasi_imr = 0;
+	ic->iar = 0; /* will be set up by gsc when attaching */
+	ic->icr = 0;
+	ic->imr = ~0U;
+	(void)ic->irr;
+	ic->imr = 0;
 	splx(s);
-
-	sc->sc_ic.gsc_type = gsc_lasi;
-	sc->sc_ic.gsc_dv = sc;
-	sc->sc_ic.gsc_base = sc->sc_trs;
 
 #ifdef USELEDS
 	/* figure out the leds address */
@@ -203,6 +190,10 @@ lasiattach(parent, self, aux)
 		sc->ga.ga_dp.dp_bc[5] = sc->ga.ga_dp.dp_mod;
 		sc->ga.ga_dp.dp_mod = 0;
 	}
+	sc->ga.ga_name = "gsc";
+	sc->ga.ga_hpamask = LASI_IOMASK;
+	sc->ga.ga_parent = gsc_lasi;
+	sc->ga.ga_ic = ic;
 	if (sc->sc_dev.dv_unit)
 		config_defer(self, lasi_gsc_attach);
 	else {
@@ -221,9 +212,6 @@ lasi_gsc_attach(self)
 {
 	struct lasi_softc *sc = (struct lasi_softc *)self;
 
-	sc->ga.ga_name = "gsc";
-	sc->ga.ga_hpamask = LASI_IOMASK;
-	sc->ga.ga_ic = &sc->sc_ic;
 	config_found(self, &sc->ga, gscprint);
 }
 
@@ -231,7 +219,7 @@ void
 lasi_cold_hook(on)
 	int on;
 {
-	register struct lasi_softc *sc = lasi_cd.cd_devs[0];
+	struct lasi_softc *sc = lasi_cd.cd_devs[0];
 
 	if (!sc)
 		return;

@@ -265,39 +265,33 @@ Error BugDriver::initializeExecutionEnvironment() {
   return Error::success();
 }
 
-/// compileProgram - Try to compile the specified module, returning false and
-/// setting Error if an error occurs.  This is used for code generation
-/// crash testing.
-///
-Error BugDriver::compileProgram(Module *M) const {
+/// Try to compile the specified module, returning false and setting Error if an
+/// error occurs.  This is used for code generation crash testing.
+Error BugDriver::compileProgram(Module &M) const {
   // Emit the program to a bitcode file...
-  SmallString<128> BitcodeFile;
-  int BitcodeFD;
-  std::error_code EC = sys::fs::createUniqueFile(
-      OutputPrefix + "-test-program-%%%%%%%.bc", BitcodeFD, BitcodeFile);
-  if (EC) {
-    errs() << ToolName << ": Error making unique filename: " << EC.message()
+  auto Temp =
+      sys::fs::TempFile::create(OutputPrefix + "-test-program-%%%%%%%.bc");
+  if (!Temp) {
+    errs() << ToolName
+           << ": Error making unique filename: " << toString(Temp.takeError())
            << "\n";
     exit(1);
   }
-  if (writeProgramToFile(BitcodeFile.str(), BitcodeFD, M)) {
-    errs() << ToolName << ": Error emitting bitcode to file '" << BitcodeFile
+  DiscardTemp Discard{*Temp};
+  if (writeProgramToFile(Temp->FD, M)) {
+    errs() << ToolName << ": Error emitting bitcode to file '" << Temp->TmpName
            << "'!\n";
     exit(1);
   }
 
-  // Remove the temporary bitcode file when we are done.
-  FileRemover BitcodeFileRemover(BitcodeFile.str(), !SaveTemps);
-
   // Actually compile the program!
-  return Interpreter->compileProgram(BitcodeFile.str(), Timeout, MemoryLimit);
+  return Interpreter->compileProgram(Temp->TmpName, Timeout, MemoryLimit);
 }
 
-/// executeProgram - This method runs "Program", capturing the output of the
-/// program to a file, returning the filename of the file.  A recommended
-/// filename may be optionally specified.
-///
-Expected<std::string> BugDriver::executeProgram(const Module *Program,
+/// This method runs "Program", capturing the output of the program to a file,
+/// returning the filename of the file.  A recommended filename may be
+/// optionally specified.
+Expected<std::string> BugDriver::executeProgram(const Module &Program,
                                                 std::string OutputFile,
                                                 std::string BitcodeFile,
                                                 const std::string &SharedObj,
@@ -305,31 +299,25 @@ Expected<std::string> BugDriver::executeProgram(const Module *Program,
   if (!AI)
     AI = Interpreter;
   assert(AI && "Interpreter should have been created already!");
-  bool CreatedBitcode = false;
   if (BitcodeFile.empty()) {
     // Emit the program to a bitcode file...
-    SmallString<128> UniqueFilename;
-    int UniqueFD;
-    std::error_code EC = sys::fs::createUniqueFile(
-        OutputPrefix + "-test-program-%%%%%%%.bc", UniqueFD, UniqueFilename);
-    if (EC) {
-      errs() << ToolName << ": Error making unique filename: " << EC.message()
+    auto File =
+        sys::fs::TempFile::create(OutputPrefix + "-test-program-%%%%%%%.bc");
+    if (!File) {
+      errs() << ToolName
+             << ": Error making unique filename: " << toString(File.takeError())
              << "!\n";
       exit(1);
     }
-    BitcodeFile = UniqueFilename.str();
+    DiscardTemp Discard{*File};
+    BitcodeFile = File->TmpName;
 
-    if (writeProgramToFile(BitcodeFile, UniqueFD, Program)) {
+    if (writeProgramToFile(File->FD, Program)) {
       errs() << ToolName << ": Error emitting bitcode to file '" << BitcodeFile
              << "'!\n";
       exit(1);
     }
-    CreatedBitcode = true;
   }
-
-  // Remove the temporary bitcode file when we are done.
-  std::string BitcodePath(BitcodeFile);
-  FileRemover BitcodeFileRemover(BitcodePath, CreatedBitcode && !SaveTemps);
 
   if (OutputFile.empty())
     OutputFile = OutputPrefix + "-execution-output-%%%%%%%";
@@ -382,11 +370,10 @@ Expected<std::string> BugDriver::executeProgram(const Module *Program,
   return OutputFile;
 }
 
-/// executeProgramSafely - Used to create reference output with the "safe"
-/// backend, if reference output is not provided.
-///
+/// Used to create reference output with the "safe" backend, if reference output
+/// is not provided.
 Expected<std::string>
-BugDriver::executeProgramSafely(const Module *Program,
+BugDriver::executeProgramSafely(const Module &Program,
                                 const std::string &OutputFile) const {
   return executeProgram(Program, OutputFile, "", "", SafeInterpreter);
 }
@@ -413,16 +400,14 @@ BugDriver::compileSharedObject(const std::string &BitcodeFile) {
   return SharedObjectFile;
 }
 
-/// createReferenceFile - calls compileProgram and then records the output
-/// into ReferenceOutputFile. Returns true if reference file created, false
-/// otherwise. Note: initializeExecutionEnvironment should be called BEFORE
-/// this function.
-///
-Error BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
-  if (Error E = compileProgram(Program))
+/// Calls compileProgram and then records the output into ReferenceOutputFile.
+/// Returns true if reference file created, false otherwise. Note:
+/// initializeExecutionEnvironment should be called BEFORE this function.
+Error BugDriver::createReferenceFile(Module &M, const std::string &Filename) {
+  if (Error E = compileProgram(*Program))
     return E;
 
-  Expected<std::string> Result = executeProgramSafely(Program, Filename);
+  Expected<std::string> Result = executeProgramSafely(*Program, Filename);
   if (Error E = Result.takeError()) {
     if (Interpreter != SafeInterpreter) {
       E = joinErrors(
@@ -441,12 +426,11 @@ Error BugDriver::createReferenceFile(Module *M, const std::string &Filename) {
   return Error::success();
 }
 
-/// diffProgram - This method executes the specified module and diffs the
-/// output against the file specified by ReferenceOutputFile.  If the output
-/// is different, 1 is returned.  If there is a problem with the code
-/// generator (e.g., llc crashes), this will set ErrMsg.
-///
-Expected<bool> BugDriver::diffProgram(const Module *Program,
+/// This method executes the specified module and diffs the output against the
+/// file specified by ReferenceOutputFile.  If the output is different, 1 is
+/// returned.  If there is a problem with the code generator (e.g., llc
+/// crashes), this will set ErrMsg.
+Expected<bool> BugDriver::diffProgram(const Module &Program,
                                       const std::string &BitcodeFile,
                                       const std::string &SharedObject,
                                       bool RemoveBitcode) const {

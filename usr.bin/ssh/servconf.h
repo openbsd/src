@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.h,v 1.130 2017/10/25 00:19:47 djm Exp $ */
+/* $OpenBSD: servconf.h,v 1.140 2019/04/18 18:56:16 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -31,12 +31,6 @@
 #define PRIVSEP_OFF		0
 #define PRIVSEP_ON		1
 #define PRIVSEP_NOSANDBOX	2
-
-/* AllowTCPForwarding */
-#define FORWARD_DENY		0
-#define FORWARD_REMOTE		(1)
-#define FORWARD_LOCAL		(1<<1)
-#define FORWARD_ALLOW		(FORWARD_REMOTE|FORWARD_LOCAL)
 
 /* PermitOpen */
 #define PERMITOPEN_ANY		0
@@ -81,6 +75,7 @@ typedef struct {
 	char	*routing_domain;	/* Bind session to routing domain */
 
 	char   **host_key_files;	/* Files containing host keys. */
+	int	*host_key_file_userprovided; /* Key was specified by user. */
 	u_int	num_host_key_files;     /* Number of files for host keys. */
 	char   **host_cert_files;	/* Files containing host certs. */
 	u_int	num_host_cert_files;	/* Number of files for host certs. */
@@ -116,6 +111,7 @@ typedef struct {
 	int     hostbased_uses_name_from_packet_only; /* experimental */
 	char   *hostbased_key_types;	/* Key types allowed for hostbased */
 	char   *hostkeyalgorithms;	/* SSH2 server key types */
+	char   *ca_sign_algorithms;	/* Allowed CA signature algorithms */
 	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
 	char   *pubkey_key_types;	/* Key types allowed for public key */
 	int     kerberos_authentication;	/* If true, permit Kerberos
@@ -139,6 +135,7 @@ typedef struct {
 	int     permit_empty_passwd;	/* If false, do not permit empty
 					 * passwords. */
 	int     permit_user_env;	/* If true, read ~/.ssh/environment */
+	char   *permit_user_env_whitelist; /* pattern-list whitelist */
 	int     compression;	/* If true, compression is allowed */
 	int	allow_tcp_forwarding; /* One of FORWARD_* */
 	int	allow_streamlocal_forwarding; /* One of FORWARD_* */
@@ -160,6 +157,8 @@ typedef struct {
 
 	u_int num_accept_env;
 	char   **accept_env;
+	u_int num_setenv;
+	char   **setenv;
 
 	int	max_startups_begin;
 	int	max_startups_rate;
@@ -185,8 +184,10 @@ typedef struct {
 
 	int	permit_tun;
 
-	char   **permitted_opens;
-	u_int   num_permitted_opens; /* May also be one of PERMITOPEN_* */
+	char   **permitted_opens;	/* May also be one of PERMITOPEN_* */
+	u_int   num_permitted_opens;
+	char   **permitted_listens; /* May also be one of PERMITOPEN_* */
+	u_int   num_permitted_listens;
 
 	char   *chroot_directory;
 	char   *revoked_keys_file;
@@ -207,6 +208,7 @@ typedef struct {
 
 	int	fingerprint_hash;
 	int	expose_userauth_info;
+	u_int64_t timing_secret;
 }       ServerOptions;
 
 /* Information about the incoming connection as used by Match */
@@ -217,6 +219,8 @@ struct connection_info {
 	const char *laddress;	/* local address */
 	int lport;		/* local port */
 	const char *rdomain;	/* routing domain if available */
+	int test;		/* test mode, allow some attributes to be
+				 * unspecified */
 };
 
 
@@ -240,7 +244,9 @@ struct connection_info {
 		M_CP_STROPT(authorized_principals_command_user); \
 		M_CP_STROPT(hostbased_key_types); \
 		M_CP_STROPT(pubkey_key_types); \
+		M_CP_STROPT(ca_sign_algorithms); \
 		M_CP_STROPT(routing_domain); \
+		M_CP_STROPT(permit_user_env_whitelist); \
 		M_CP_STRARRAYOPT(authorized_keys_files, num_authkeys_files); \
 		M_CP_STRARRAYOPT(allow_users, num_allow_users); \
 		M_CP_STRARRAYOPT(deny_users, num_deny_users); \
@@ -249,16 +255,17 @@ struct connection_info {
 		M_CP_STRARRAYOPT(accept_env, num_accept_env); \
 		M_CP_STRARRAYOPT(auth_methods, num_auth_methods); \
 		M_CP_STRARRAYOPT(permitted_opens, num_permitted_opens); \
+		M_CP_STRARRAYOPT(permitted_listens, num_permitted_listens); \
 	} while (0)
 
-struct connection_info *get_connection_info(int, int);
+struct connection_info *get_connection_info(struct ssh *, int, int);
 void	 initialize_server_options(ServerOptions *);
 void	 fill_default_server_options(ServerOptions *);
 int	 process_server_config_line(ServerOptions *, char *, const char *, int,
 	     int *, struct connection_info *);
 void	 process_permitopen(struct ssh *ssh, ServerOptions *options);
-void	 load_server_config(const char *, Buffer *);
-void	 parse_server_config(ServerOptions *, const char *, Buffer *,
+void	 load_server_config(const char *, struct sshbuf *);
+void	 parse_server_config(ServerOptions *, const char *, struct sshbuf *,
 	     struct connection_info *);
 void	 parse_server_match_config(ServerOptions *, struct connection_info *);
 int	 parse_server_match_testspec(struct connection_info *, char *);
@@ -267,7 +274,7 @@ void	 copy_set_server_options(ServerOptions *, ServerOptions *, int);
 void	 dump_config(ServerOptions *);
 char	*derelativise_path(const char *);
 void	 servconf_add_hostkey(const char *, const int,
-	    ServerOptions *, const char *path);
+	    ServerOptions *, const char *path, int);
 void	 servconf_add_hostcert(const char *, const int,
 	    ServerOptions *, const char *path);
 

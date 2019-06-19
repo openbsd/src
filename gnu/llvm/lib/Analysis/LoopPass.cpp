@@ -46,8 +46,7 @@ public:
   }
 
   bool runOnLoop(Loop *L, LPPassManager &) override {
-    auto BBI = find_if(L->blocks().begin(), L->blocks().end(),
-                       [](BasicBlock *BB) { return BB; });
+    auto BBI = llvm::find_if(L->blocks(), [](BasicBlock *BB) { return BB; });
     if (BBI != L->blocks().end() &&
         isFunctionInPrintList((*BBI)->getParent()->getName())) {
       printLoop(*L, OS, Banner);
@@ -140,12 +139,31 @@ void LPPassManager::getAnalysisUsage(AnalysisUsage &Info) const {
   Info.setPreservesAll();
 }
 
+void LPPassManager::markLoopAsDeleted(Loop &L) {
+  assert((&L == CurrentLoop || CurrentLoop->contains(&L)) &&
+         "Must not delete loop outside the current loop tree!");
+  // If this loop appears elsewhere within the queue, we also need to remove it
+  // there. However, we have to be careful to not remove the back of the queue
+  // as that is assumed to match the current loop.
+  assert(LQ.back() == CurrentLoop && "Loop queue back isn't the current loop!");
+  LQ.erase(std::remove(LQ.begin(), LQ.end(), &L), LQ.end());
+
+  if (&L == CurrentLoop) {
+    CurrentLoopDeleted = true;
+    // Add this loop back onto the back of the queue to preserve our invariants.
+    LQ.push_back(&L);
+  }
+}
+
 /// run - Execute all of the passes scheduled for execution.  Keep track of
 /// whether any of the passes modifies the function, and if so, return true.
 bool LPPassManager::runOnFunction(Function &F) {
   auto &LIWP = getAnalysis<LoopInfoWrapperPass>();
   LI = &LIWP.getLoopInfo();
+  Module &M = *F.getParent();
+#if 0
   DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+#endif
   bool Changed = false;
 
   // Collect inherited analysis from Module level pass manager.
@@ -175,8 +193,10 @@ bool LPPassManager::runOnFunction(Function &F) {
   }
 
   // Walk Loops
+  unsigned InstrCount = 0;
+  bool EmitICRemark = M.shouldEmitInstrCountChangedRemark();
   while (!LQ.empty()) {
-    bool LoopWasDeleted = false;
+    CurrentLoopDeleted = false;
     CurrentLoop = LQ.back();
 
     // Run all passes on the current Loop.
@@ -192,18 +212,20 @@ bool LPPassManager::runOnFunction(Function &F) {
       {
         PassManagerPrettyStackEntry X(P, *CurrentLoop->getHeader());
         TimeRegion PassTimer(getPassTimer(P));
-
+        if (EmitICRemark)
+          InstrCount = initSizeRemarkInfo(M);
         Changed |= P->runOnLoop(CurrentLoop, *this);
+        if (EmitICRemark)
+          emitInstrCountChangedRemark(P, M, InstrCount);
       }
-      LoopWasDeleted = CurrentLoop->isInvalid();
 
       if (Changed)
         dumpPassInfo(P, MODIFICATION_MSG, ON_LOOP_MSG,
-                     LoopWasDeleted ? "<deleted>"
-                                    : CurrentLoop->getHeader()->getName());
+                     CurrentLoopDeleted ? "<deleted loop>"
+                                        : CurrentLoop->getName());
       dumpPreservedSet(P);
 
-      if (LoopWasDeleted) {
+      if (CurrentLoopDeleted) {
         // Notify passes that the loop is being deleted.
         deleteSimpleAnalysisLoop(CurrentLoop);
       } else {
@@ -220,8 +242,12 @@ bool LPPassManager::runOnFunction(Function &F) {
         // is that LPPassManager might run passes which do not require LCSSA
         // form (LoopPassPrinter for example). We should skip verification for
         // such passes.
+        // FIXME: Loop-sink currently break LCSSA. Fix it and reenable the
+        // verification!
+#if 0
         if (mustPreserveAnalysisID(LCSSAVerificationPass::ID))
-          CurrentLoop->isRecursivelyLCSSAForm(*DT, *LI);
+          assert(CurrentLoop->isRecursivelyLCSSAForm(*DT, *LI));
+#endif
 
         // Then call the regular verifyAnalysis functions.
         verifyPreservedAnalysis(P);
@@ -231,11 +257,12 @@ bool LPPassManager::runOnFunction(Function &F) {
 
       removeNotPreservedAnalysis(P);
       recordAvailableAnalysis(P);
-      removeDeadPasses(P, LoopWasDeleted ? "<deleted>"
-                                         : CurrentLoop->getHeader()->getName(),
+      removeDeadPasses(P,
+                       CurrentLoopDeleted ? "<deleted>"
+                                          : CurrentLoop->getHeader()->getName(),
                        ON_LOOP_MSG);
 
-      if (LoopWasDeleted)
+      if (CurrentLoopDeleted)
         // Do not run other passes on this loop.
         break;
     }
@@ -243,7 +270,7 @@ bool LPPassManager::runOnFunction(Function &F) {
     // If the loop was deleted, release all the loop passes. This frees up
     // some memory, and avoids trouble with the pass manager trying to call
     // verifyAnalysis on them.
-    if (LoopWasDeleted) {
+    if (CurrentLoopDeleted) {
       for (unsigned Index = 0; Index < getNumContainedPasses(); ++Index) {
         Pass *P = getContainedPass(Index);
         freePass(P, "<deleted>", ON_LOOP_MSG);
@@ -345,13 +372,13 @@ bool LoopPass::skipLoop(const Loop *L) const {
     return false;
   // Check the opt bisect limit.
   LLVMContext &Context = F->getContext();
-  if (!Context.getOptBisect().shouldRunPass(this, *L))
+  if (!Context.getOptPassGate().shouldRunPass(this, *L))
     return true;
   // Check for the OptimizeNone attribute.
   if (F->hasFnAttribute(Attribute::OptimizeNone)) {
     // FIXME: Report this to dbgs() only once per function.
-    DEBUG(dbgs() << "Skipping pass '" << getPassName()
-          << "' in function " << F->getName() << "\n");
+    LLVM_DEBUG(dbgs() << "Skipping pass '" << getPassName() << "' in function "
+                      << F->getName() << "\n");
     // FIXME: Delete loop from pass manager's queue?
     return true;
   }
@@ -361,4 +388,3 @@ bool LoopPass::skipLoop(const Loop *L) const {
 char LCSSAVerificationPass::ID = 0;
 INITIALIZE_PASS(LCSSAVerificationPass, "lcssa-verification", "LCSSA Verifier",
                 false, false)
-

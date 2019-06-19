@@ -1,8 +1,10 @@
-.\"	$OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.6 2018/03/27 17:35:50 schwarze Exp $
-.\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
+.\" $OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.7 2018/04/02 02:06:14 schwarze Exp $
+.\" full merge up to: OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
+.\" selective merge up to: OpenSSL 2947af32 Nov 19 00:10:05 2016 +0100
 .\"
-.\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
-.\" Copyright (c) 2000, 2001 The OpenSSL Project.  All rights reserved.
+.\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>
+.\" and Christian Heimes <cheimes@redhat.com>.
+.\" Copyright (c) 2000, 2001, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -48,20 +50,26 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: April 2 2018 $
 .Dt SSL_CTX_SET_DEFAULT_PASSWD_CB 3
 .Os
 .Sh NAME
 .Nm SSL_CTX_set_default_passwd_cb ,
 .Nm SSL_CTX_set_default_passwd_cb_userdata ,
+.Nm SSL_CTX_get_default_passwd_cb ,
+.Nm SSL_CTX_get_default_passwd_cb_userdata ,
 .Nm pem_password_cb
-.Nd set passwd callback for encrypted PEM file handling
+.Nd set or get passwd callback for encrypted PEM file handling
 .Sh SYNOPSIS
 .In openssl/ssl.h
 .Ft void
 .Fn SSL_CTX_set_default_passwd_cb "SSL_CTX *ctx" "pem_password_cb *cb"
 .Ft void
 .Fn SSL_CTX_set_default_passwd_cb_userdata "SSL_CTX *ctx" "void *u"
+.Ft pem_password_cb *
+.Fn SSL_CTX_get_default_passwd_cb "SSL_CTX *ctx"
+.Ft void *
+.Fn SSL_CTX_get_default_passwd_cb_userdata "SSL_CTX *ctx"
 .In openssl/pem.h
 .Ft typedef int
 .Fn pem_password_cb "char *buf" "int size" "int rwflag" "void *userdata"
@@ -114,6 +122,20 @@ comparison in order to catch typos which would make decryption impossible.
 .Pp
 Other items in PEM formatting (certificates) can also be encrypted; it is
 however atypical, as certificate information is considered public.
+.Sh RETURN VALUES
+.Fn SSL_CTX_get_default_passwd_cb
+returns a function pointer to the password callback currently set in
+.Fa ctx ,
+or
+.Dv NULL
+if none is set.
+.Pp
+.Fn SSL_CTX_get_default_passwd_cb_userdata
+returns a pointer to the userdata currently set in
+.Fa ctx ,
+or
+.Dv NULL
+if none is set.
 .Sh EXAMPLES
 The following example returns the password provided as
 .Fa userdata
@@ -141,3 +163,9 @@ first appeared in SSLeay 0.6.2 and has been available since
 .Fn SSL_CTX_set_default_passwd_cb_userdata
 first appeared in OpenSSL 0.9.4 and has been available since
 .Ox 2.6 .
+.Pp
+.Fn SSL_CTX_get_default_passwd_cb
+and
+.Fn SSL_CTX_get_default_passwd_cb_userdata
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 6.3 .

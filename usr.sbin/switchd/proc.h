@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.6 2017/01/09 14:49:22 reyk Exp $	*/
+/*	$OpenBSD: proc.h,v 1.8 2018/09/10 13:21:39 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -126,7 +126,7 @@ TAILQ_HEAD(ctl_connlist, ctl_conn);
 extern  struct ctl_connlist ctl_conns;
 
 /* proc.c */
-void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int,
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
 	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
 void	 proc_connect(struct privsep *ps);
@@ -160,7 +160,6 @@ int	 proc_flush_imsg(struct privsep *, enum privsep_procid, int);
 /* control.c */
 int	 control_init(struct privsep *, struct control_sock *);
 int	 control_listen(struct control_sock *);
-void	 control_cleanup(struct control_sock *);
 struct ctl_conn
 	*control_connbyfd(int);
 void	 control(struct privsep *, struct privsep_proc *);

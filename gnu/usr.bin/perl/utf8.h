@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef H_UTF8      /* Guard against recursive inclusion */
-#define H_UTF8 1
+#ifndef PERL_UTF8_H_      /* Guard against recursive inclusion */
+#define PERL_UTF8_H_ 1
 
 /* Use UTF-8 as the default script encoding?
  * Turning this on will break scripts having non-UTF-8 binary
@@ -50,30 +50,47 @@ Search for the string "utf8" in this document.
 
 =for apidoc is_ascii_string
 
-This is a misleadingly-named synonym for L</is_invariant_string>.
+This is a misleadingly-named synonym for L</is_utf8_invariant_string>.
 On ASCII-ish platforms, the name isn't misleading: the ASCII-range characters
 are exactly the UTF-8 invariants.  But EBCDIC machines have more invariants
-than just the ASCII characters, so C<is_invariant_string> is preferred.
+than just the ASCII characters, so C<is_utf8_invariant_string> is preferred.
+
+=for apidoc is_invariant_string
+
+This is a somewhat misleadingly-named synonym for L</is_utf8_invariant_string>.
+C<is_utf8_invariant_string> is preferred, as it indicates under what conditions
+the string is invariant.
 
 =cut
 */
-#define is_ascii_string(s, len)     is_invariant_string(s, len)
+#define is_ascii_string(s, len)     is_utf8_invariant_string(s, len)
+#define is_invariant_string(s, len) is_utf8_invariant_string(s, len)
 
+#define uvoffuni_to_utf8_flags(d,uv,flags)                                     \
+                               uvoffuni_to_utf8_flags_msgs(d, uv, flags, 0)
 #define uvchr_to_utf8(a,b)          uvchr_to_utf8_flags(a,b,0)
 #define uvchr_to_utf8_flags(d,uv,flags)                                        \
-                            uvoffuni_to_utf8_flags(d,NATIVE_TO_UNI(uv),flags)
+                                    uvchr_to_utf8_flags_msgs(d,uv,flags, 0)
+#define uvchr_to_utf8_flags_msgs(d,uv,flags,msgs)                              \
+                uvoffuni_to_utf8_flags_msgs(d,NATIVE_TO_UNI(uv),flags, msgs)
 #define utf8_to_uvchr_buf(s, e, lenp)                                          \
                      utf8n_to_uvchr(s, (U8*)(e) - (U8*)(s), lenp,              \
                                     ckWARN_d(WARN_UTF8) ? 0 : UTF8_ALLOW_ANY)
+#define utf8n_to_uvchr(s, len, lenp, flags)                                    \
+                                utf8n_to_uvchr_error(s, len, lenp, flags, 0)
+#define utf8n_to_uvchr_error(s, len, lenp, flags, errors)                      \
+                        utf8n_to_uvchr_msgs(s, len, lenp, flags, errors, 0)
 
 #define to_uni_fold(c, p, lenp) _to_uni_fold_flags(c, p, lenp, FOLD_FLAGS_FULL)
-#define to_utf8_fold(c, p, lenp) _to_utf8_fold_flags(c, p, lenp, FOLD_FLAGS_FULL)
-#define to_utf8_lower(a,b,c) _to_utf8_lower_flags(a,b,c,0)
-#define to_utf8_upper(a,b,c) _to_utf8_upper_flags(a,b,c,0)
-#define to_utf8_title(a,b,c) _to_utf8_title_flags(a,b,c,0)
 
-/* Source backward compatibility. */
-#define is_utf8_string_loc(s, len, ep)	is_utf8_string_loclen(s, len, ep, 0)
+#define to_utf8_fold(s, r, lenr)                                                \
+    _to_utf8_fold_flags (s, NULL, r, lenr, FOLD_FLAGS_FULL, __FILE__, __LINE__)
+#define to_utf8_lower(s, r, lenr)                                               \
+                  _to_utf8_lower_flags(s, NULL, r ,lenr, 0, __FILE__, __LINE__)
+#define to_utf8_upper(s, r, lenr)                                               \
+                  _to_utf8_upper_flags(s, NULL, r, lenr, 0, __FILE__, __LINE__)
+#define to_utf8_title(s, r, lenr)                                               \
+                  _to_utf8_title_flags(s, NULL, r, lenr ,0, __FILE__, __LINE__)
 
 #define foldEQ_utf8(s1, pe1, l1, u1, s2, pe2, l2, u2) \
 		    foldEQ_utf8_flags(s1, pe1, l1, u1, s2, pe2, l2, u2, 0)
@@ -169,24 +186,30 @@ END_EXTERN_C
 
 /*
 
- The following table is from Unicode 3.2.
+ The following table is from Unicode 3.2, plus the Perl extensions for above
+ U+10FFFF
 
- Code Points		1st Byte  2nd Byte  3rd Byte  4th Byte
+ Code Points		1st Byte  2nd Byte  3rd    4th     5th     6th       7th   8th-13th
 
    U+0000..U+007F	00..7F
    U+0080..U+07FF     * C2..DF    80..BF
-   U+0800..U+0FFF	E0      * A0..BF    80..BF
-   U+1000..U+CFFF       E1..EC    80..BF    80..BF
-   U+D000..U+D7FF       ED        80..9F    80..BF
-   U+D800..U+DFFF       ED        A0..BF    80..BF  (surrogates)
-   U+E000..U+FFFF       EE..EF    80..BF    80..BF
-  U+10000..U+3FFFF	F0      * 90..BF    80..BF    80..BF
-  U+40000..U+FFFFF	F1..F3    80..BF    80..BF    80..BF
- U+100000..U+10FFFF	F4        80..8F    80..BF    80..BF
-    Below are non-Unicode code points
- U+110000..U+13FFFF	F4        90..BF    80..BF    80..BF
- U+110000..U+1FFFFF	F5..F7    80..BF    80..BF    80..BF
- U+200000..:            F8..    * 88..BF    80..BF    80..BF    80..BF
+   U+0800..U+0FFF	E0      * A0..BF  80..BF
+   U+1000..U+CFFF       E1..EC    80..BF  80..BF
+   U+D000..U+D7FF       ED        80..9F  80..BF
+   U+D800..U+DFFF       ED        A0..BF  80..BF  (surrogates)
+   U+E000..U+FFFF       EE..EF    80..BF  80..BF
+  U+10000..U+3FFFF	F0      * 90..BF  80..BF  80..BF
+  U+40000..U+FFFFF	F1..F3    80..BF  80..BF  80..BF
+ U+100000..U+10FFFF	F4        80..8F  80..BF  80..BF
+    Below are above-Unicode code points
+ U+110000..U+13FFFF	F4        90..BF  80..BF  80..BF
+ U+110000..U+1FFFFF	F5..F7    80..BF  80..BF  80..BF
+ U+200000..U+FFFFFF     F8      * 88..BF  80..BF  80..BF  80..BF
+U+1000000..U+3FFFFFF    F9..FB    80..BF  80..BF  80..BF  80..BF
+U+4000000..U+3FFFFFFF    FC     * 84..BF  80..BF  80..BF  80..BF  80..BF
+U+40000000..U+7FFFFFFF   FD       80..BF  80..BF  80..BF  80..BF  80..BF
+U+80000000..U+FFFFFFFFF  FE     * 82..BF  80..BF  80..BF  80..BF  80..BF    80..BF
+U+1000000000..           FF       80..BF  80..BF  80..BF  80..BF  80..BF  * 81..BF  80..BF
 
 Note the gaps before several of the byte entries above marked by '*'.  These are
 caused by legal UTF-8 avoiding non-shortest encodings: it is technically
@@ -210,7 +233,11 @@ As you can see, the continuation bytes all begin with C<10>, and the
 leading bits of the start byte tell how many bytes there are in the
 encoded character.
 
-Perl's extended UTF-8 means we can have start bytes up to FF.
+Perl's extended UTF-8 means we can have start bytes up through FF, though any
+beginning with FF yields a code point that is too large for 32-bit ASCII
+platforms.  FF signals to use 13 bytes for the encoded character.  This breaks
+the paradigm that the number of leading bits gives how many total bytes there
+are in the character.
 
 */
 
@@ -218,9 +245,17 @@ Perl's extended UTF-8 means we can have start bytes up to FF.
  * being encoded in UTF-8 or not? */
 #define OFFUNI_IS_INVARIANT(cp)     isASCII(cp)
 
-/* Is the representation of the code point 'cp' the same regardless of
- * being encoded in UTF-8 or not?  'cp' is native if < 256; Unicode otherwise
- * */
+/*
+=for apidoc Am|bool|UVCHR_IS_INVARIANT|UV cp
+
+Evaluates to 1 if the representation of code point C<cp> is the same whether or
+not it is encoded in UTF-8; otherwise evaluates to 0.  UTF-8 invariant
+characters can be copied as-is when converting to/from UTF-8, saving time.
+C<cp> is Unicode if above 255; otherwise is platform-native.
+
+=cut
+ */
+
 #define UVCHR_IS_INVARIANT(cp)      OFFUNI_IS_INVARIANT(cp)
 
 /* This defines the bits that are to be in the continuation bytes of a multi-byte
@@ -230,13 +265,15 @@ Perl's extended UTF-8 means we can have start bytes up to FF.
 /* Misleadingly named: is the UTF8-encoded byte 'c' part of a variant sequence
  * in UTF-8?  This is the inverse of UTF8_IS_INVARIANT.  The |0 makes sure this
  * isn't mistakenly called with a ptr argument */
-#define UTF8_IS_CONTINUED(c)        (((U8)((c) | 0)) &  UTF_CONTINUATION_MARK)
+#define UTF8_IS_CONTINUED(c)  (__ASSERT_(FITS_IN_8_BITS(c))                 \
+                               ((U8)((c) | 0)) &  UTF_CONTINUATION_MARK)
 
 /* Is the byte 'c' the first byte of a multi-byte UTF8-8 encoded sequence?
  * This doesn't catch invariants (they are single-byte).  It also excludes the
  * illegal overlong sequences that begin with C0 and C1.  The |0 makes sure
  * this isn't mistakenly called with a ptr argument */
-#define UTF8_IS_START(c)            (((U8)((c) | 0)) >= 0xc2)
+#define UTF8_IS_START(c)      (__ASSERT_(FITS_IN_8_BITS(c))                 \
+                               ((U8)((c) | 0)) >= 0xc2)
 
 /* For use in UTF8_IS_CONTINUATION() below */
 #define UTF_IS_CONTINUATION_MASK    0xC0
@@ -244,20 +281,22 @@ Perl's extended UTF-8 means we can have start bytes up to FF.
 /* Is the byte 'c' part of a multi-byte UTF8-8 encoded sequence, and not the
  * first byte thereof?  The |0 makes sure this isn't mistakenly called with a
  * ptr argument */
-#define UTF8_IS_CONTINUATION(c)                                             \
-    ((((U8)((c) | 0)) & UTF_IS_CONTINUATION_MASK) == UTF_CONTINUATION_MARK)
+#define UTF8_IS_CONTINUATION(c)     (__ASSERT_(FITS_IN_8_BITS(c))           \
+     (((U8)((c) | 0)) & UTF_IS_CONTINUATION_MASK) == UTF_CONTINUATION_MARK)
 
 /* Is the UTF8-encoded byte 'c' the first byte of a two byte sequence?  Use
  * UTF8_IS_NEXT_CHAR_DOWNGRADEABLE() instead if the input isn't known to
  * be well-formed.  Masking with 0xfe allows the low bit to be 0 or 1; thus
  * this matches 0xc[23].  The |0 makes sure this isn't mistakenly called with a
  * ptr argument */
-#define UTF8_IS_DOWNGRADEABLE_START(c)	((((U8)((c) | 0)) & 0xfe) == 0xc2)
+#define UTF8_IS_DOWNGRADEABLE_START(c)	(__ASSERT_(FITS_IN_8_BITS(c))       \
+                                         (((U8)((c) | 0)) & 0xfe) == 0xc2)
 
 /* Is the UTF8-encoded byte 'c' the first byte of a sequence of bytes that
  * represent a code point > 255?  The |0 makes sure this isn't mistakenly
  * called with a ptr argument */
-#define UTF8_IS_ABOVE_LATIN1(c)     (((U8)((c) | 0)) >= 0xc4)
+#define UTF8_IS_ABOVE_LATIN1(c)     (__ASSERT_(FITS_IN_8_BITS(c))           \
+                                     ((U8)((c) | 0)) >= 0xc4)
 
 /* This is the number of low-order bits a continuation byte in a UTF-8 encoded
  * sequence contributes to the specification of the code point.  In the bit
@@ -273,7 +312,108 @@ Perl's extended UTF-8 means we can have start bytes up to FF.
  * problematic in some contexts.  This allows code that needs to check for
  * those to to quickly exclude the vast majority of code points it will
  * encounter */
-#define isUTF8_POSSIBLY_PROBLEMATIC(c) ((U8) c >= 0xED)
+#define isUTF8_POSSIBLY_PROBLEMATIC(c) (__ASSERT_(FITS_IN_8_BITS(c))        \
+                                        (U8) c >= 0xED)
+
+/* A helper macro for isUTF8_CHAR, so use that one instead of this.  This was
+ * generated by regen/regcharclass.pl, and then moved here.  Then it was
+ * hand-edited to add some LIKELY() calls, presuming that malformations are
+ * unlikely.  The lines that generated it were then commented out.  This was
+ * done because it takes on the order of 10 minutes to generate, and is never
+ * going to change, unless the generated code is improved, and figuring out
+ * the LIKELYs there would be hard.
+ *
+        UTF8_CHAR: Matches legal UTF-8 variant code points up through 0x1FFFFFF
+
+	0x80 - 0x1FFFFF
+*/
+/*** GENERATED CODE ***/
+#define is_UTF8_CHAR_utf8_no_length_checks(s)                               \
+( ( 0xC2 <= ((const U8*)s)[0] && ((const U8*)s)[0] <= 0xDF ) ?                          \
+    ( LIKELY( ( ((const U8*)s)[1] & 0xC0 ) == 0x80 ) ? 2 : 0 )                    \
+: ( 0xE0 == ((const U8*)s)[0] ) ?                                                 \
+    ( LIKELY( ( ( ((const U8*)s)[1] & 0xE0 ) == 0xA0 ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) ? 3 : 0 )\
+: ( 0xE1 <= ((const U8*)s)[0] && ((const U8*)s)[0] <= 0xEF ) ?                          \
+    ( LIKELY( ( ( ((const U8*)s)[1] & 0xC0 ) == 0x80 ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) ? 3 : 0 )\
+: ( 0xF0 == ((const U8*)s)[0] ) ?                                                 \
+    ( LIKELY( ( ( 0x90 <= ((const U8*)s)[1] && ((const U8*)s)[1] <= 0xBF ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) && ( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ) ? 4 : 0 )\
+: ( ( ( ( 0xF1 <= ((const U8*)s)[0] && ((const U8*)s)[0] <= 0xF7 ) && LIKELY( ( ((const U8*)s)[1] & 0xC0 ) == 0x80 ) ) && LIKELY( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) && LIKELY( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ) ? 4 : 0 )
+
+/* The above macro handles UTF-8 that has this start byte as the maximum */
+#define _IS_UTF8_CHAR_HIGHEST_START_BYTE 0xF7
+
+/* A helper macro for isSTRICT_UTF8_CHAR, so use that one instead of this.
+ * Like is_UTF8_CHAR_utf8_no_length_checks(), this was moved here and LIKELYs
+ * added manually.
+ *
+	STRICT_UTF8_CHAR: Matches legal Unicode UTF-8 variant code points, no
+                          surrrogates nor non-character code points
+*/
+/*** GENERATED CODE ***/
+#define is_STRICT_UTF8_CHAR_utf8_no_length_checks(s)                        \
+( ( 0xC2 <= ((const U8*)s)[0] && ((const U8*)s)[0] <= 0xDF ) ?                          \
+    ( LIKELY( ( ((const U8*)s)[1] & 0xC0 ) == 0x80 ) ? 2 : 0 )                          \
+: ( 0xE0 == ((const U8*)s)[0] ) ?                                                 \
+    ( LIKELY( ( ( ((const U8*)s)[1] & 0xE0 ) == 0xA0 ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) ? 3 : 0 )\
+: ( ( 0xE1 <= ((const U8*)s)[0] && ((const U8*)s)[0] <= 0xEC ) || 0xEE == ((const U8*)s)[0] ) ?\
+    ( ( ( ( ((const U8*)s)[1] & 0xC0 ) == 0x80 ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) ? 3 : 0 )\
+: ( 0xED == ((const U8*)s)[0] ) ?                                                 \
+    ( LIKELY( ( ( ((const U8*)s)[1] & 0xE0 ) == 0x80 ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) ? 3 : 0 )\
+: ( 0xEF == ((const U8*)s)[0] ) ?                                                 \
+    ( ( ( 0x80 <= ((const U8*)s)[1] && ((const U8*)s)[1] <= 0xB6 ) || ( 0xB8 <= ((const U8*)s)[1] && ((const U8*)s)[1] <= 0xBE ) ) ?\
+	( LIKELY( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ? 3 : 0 )                      \
+    : ( 0xB7 == ((const U8*)s)[1] ) ?                                             \
+	( LIKELY( ( ((const U8*)s)[2] & 0xF0 ) == 0x80 || ( ((const U8*)s)[2] & 0xF0 ) == 0xB0 ) ? 3 : 0 )\
+    : ( ( 0xBF == ((const U8*)s)[1] ) && ( 0x80 <= ((const U8*)s)[2] && ((const U8*)s)[2] <= 0xBD ) ) ? 3 : 0 )\
+: ( 0xF0 == ((const U8*)s)[0] ) ?                                                 \
+    ( ( ( 0x90 <= ((const U8*)s)[1] && ((const U8*)s)[1] <= 0x9E ) || ( 0xA0 <= ((const U8*)s)[1] && ((const U8*)s)[1] <= 0xAE ) || ( 0xB0 <= ((const U8*)s)[1] && ((const U8*)s)[1] <= 0xBE ) ) ?\
+	( LIKELY( ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) && ( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ) ? 4 : 0 )\
+    : ( ((const U8*)s)[1] == 0x9F || ( ( ((const U8*)s)[1] & 0xEF ) == 0xAF ) ) ?       \
+	( ( 0x80 <= ((const U8*)s)[2] && ((const U8*)s)[2] <= 0xBE ) ?                  \
+	    ( LIKELY( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ? 4 : 0 )                  \
+	: LIKELY( ( 0xBF == ((const U8*)s)[2] ) && ( 0x80 <= ((const U8*)s)[3] && ((const U8*)s)[3] <= 0xBD ) ) ? 4 : 0 )\
+    : 0 )                                                                   \
+: ( 0xF1 <= ((const U8*)s)[0] && ((const U8*)s)[0] <= 0xF3 ) ?                          \
+    ( ( ( ( ((const U8*)s)[1] & 0xC8 ) == 0x80 ) || ( ( ((const U8*)s)[1] & 0xCC ) == 0x88 ) || ( ( ((const U8*)s)[1] & 0xCE ) == 0x8C ) || ( ( ((const U8*)s)[1] & 0xCF ) == 0x8E ) ) ?\
+	( LIKELY( ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) && ( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ) ? 4 : 0 )\
+    : ( ( ((const U8*)s)[1] & 0xCF ) == 0x8F ) ?                                  \
+	( ( 0x80 <= ((const U8*)s)[2] && ((const U8*)s)[2] <= 0xBE ) ?                  \
+	    ( LIKELY( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ? 4 : 0 )                  \
+	: LIKELY( ( 0xBF == ((const U8*)s)[2] ) && ( 0x80 <= ((const U8*)s)[3] && ((const U8*)s)[3] <= 0xBD ) ) ? 4 : 0 )\
+    : 0 )                                                                   \
+: ( 0xF4 == ((const U8*)s)[0] ) ?                                                 \
+    ( ( 0x80 <= ((const U8*)s)[1] && ((const U8*)s)[1] <= 0x8E ) ?                      \
+	( LIKELY( ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) && ( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ) ? 4 : 0 )\
+    : ( 0x8F == ((const U8*)s)[1] ) ?                                             \
+	( ( 0x80 <= ((const U8*)s)[2] && ((const U8*)s)[2] <= 0xBE ) ?                  \
+	    ( LIKELY( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ? 4 : 0 )                  \
+	: LIKELY( ( 0xBF == ((const U8*)s)[2] ) && ( 0x80 <= ((const U8*)s)[3] && ((const U8*)s)[3] <= 0xBD ) ) ? 4 : 0 )\
+    : 0 )                                                                   \
+: 0 )
+
+/*  Similarly,
+        C9_STRICT_UTF8_CHAR: Matches legal Unicode UTF-8 variant code
+                                     points, no surrogates
+	0x0080 - 0xD7FF
+	0xE000 - 0x10FFFF
+*/
+/*** GENERATED CODE ***/
+#define is_C9_STRICT_UTF8_CHAR_utf8_no_length_checks(s)                     \
+( ( 0xC2 <= ((const U8*)s)[0] && ((const U8*)s)[0] <= 0xDF ) ?                          \
+    ( LIKELY( ( ((const U8*)s)[1] & 0xC0 ) == 0x80 ) ? 2 : 0 )                    \
+: ( 0xE0 == ((const U8*)s)[0] ) ?                                                 \
+    ( LIKELY( ( ( ((const U8*)s)[1] & 0xE0 ) == 0xA0 ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) ? 3 : 0 )\
+: ( ( 0xE1 <= ((const U8*)s)[0] && ((const U8*)s)[0] <= 0xEC ) || ( ((const U8*)s)[0] & 0xFE ) == 0xEE ) ?\
+    ( LIKELY( ( ( ((const U8*)s)[1] & 0xC0 ) == 0x80 ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) ? 3 : 0 )\
+: ( 0xED == ((const U8*)s)[0] ) ?                                                 \
+    ( LIKELY( ( ( ((const U8*)s)[1] & 0xE0 ) == 0x80 ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) ? 3 : 0 )\
+: ( 0xF0 == ((const U8*)s)[0] ) ?                                                 \
+    ( LIKELY( ( ( 0x90 <= ((const U8*)s)[1] && ((const U8*)s)[1] <= 0xBF ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) && ( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ) ? 4 : 0 )\
+: ( 0xF1 <= ((const U8*)s)[0] && ((const U8*)s)[0] <= 0xF3 ) ?                          \
+    ( LIKELY( ( ( ( ((const U8*)s)[1] & 0xC0 ) == 0x80 ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) && ( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ) ? 4 : 0 )\
+: LIKELY( ( ( ( 0xF4 == ((const U8*)s)[0] ) && ( ( ((const U8*)s)[1] & 0xF0 ) == 0x80 ) ) && ( ( ((const U8*)s)[2] & 0xC0 ) == 0x80 ) ) && ( ( ((const U8*)s)[3] & 0xC0 ) == 0x80 ) ) ? 4 : 0 )
+
+#define UNICODE_IS_PERL_EXTENDED(uv)    UNLIKELY((UV) (uv) > 0x7FFFFFFF)
 
 #endif /* EBCDIC vs ASCII */
 
@@ -338,11 +478,14 @@ encoded as UTF-8.  C<cp> is a native (ASCII or EBCDIC) code point if less than
  */
 #define UVCHR_SKIP(uv) ( UVCHR_IS_INVARIANT(uv) ? 1 : __BASE_UNI_SKIP(uv))
 
-/* As explained in the comments for __COMMON_UNI_SKIP, 32 start bytes with
+/* The largest code point representable by two UTF-8 bytes on this platform.
+ * As explained in the comments for __COMMON_UNI_SKIP, 32 start bytes with
  * UTF_ACCUMULATION_SHIFT bits of information each */
 #define MAX_UTF8_TWO_BYTE (32 * (1U << UTF_ACCUMULATION_SHIFT) - 1)
 
-/* constrained by EBCDIC which has 5 bits per continuation byte */
+/* The largest code point representable by two UTF-8 bytes on any platform that
+ * Perl runs on.  This value is constrained by EBCDIC which has 5 bits per
+ * continuation byte */
 #define MAX_PORTABLE_UTF8_TWO_BYTE (32 * (1U << 5) - 1)
 
 /* The maximum number of UTF-8 bytes a single Unicode character can
@@ -392,21 +535,16 @@ encoded as UTF-8.  C<cp> is a native (ASCII or EBCDIC) code point if less than
  * that this is asymmetric on EBCDIC platforms, in that the 'new' parameter is
  * the UTF-EBCDIC byte, whereas the 'old' parameter is a Unicode (not EBCDIC)
  * code point in process of being generated */
-#define UTF8_ACCUMULATE(old, new) (((old) << UTF_ACCUMULATION_SHIFT)           \
+#define UTF8_ACCUMULATE(old, new) (__ASSERT_(FITS_IN_8_BITS(new))              \
+                                   ((old) << UTF_ACCUMULATION_SHIFT)           \
                                    | ((NATIVE_UTF8_TO_I8((U8)new))             \
                                        & UTF_CONTINUATION_MASK))
 
-/* If a value is anded with this, and the result is non-zero, then using the
- * original value in UTF8_ACCUMULATE will overflow, shifting bits off the left
- * */
-#define UTF_ACCUMULATION_OVERFLOW_MASK					\
-    (((UV) UTF_CONTINUATION_MASK) << ((sizeof(UV) * CHARBITS)           \
-           - UTF_ACCUMULATION_SHIFT))
-
 /* This works in the face of malformed UTF-8. */
-#define UTF8_IS_NEXT_CHAR_DOWNGRADEABLE(s, e) (UTF8_IS_DOWNGRADEABLE_START(*s) \
-                                               && ( (e) - (s) > 1)             \
-                                               && UTF8_IS_CONTINUATION(*((s)+1)))
+#define UTF8_IS_NEXT_CHAR_DOWNGRADEABLE(s, e)                                 \
+                                       (   UTF8_IS_DOWNGRADEABLE_START(*(s))  \
+                                        && ( (e) - (s) > 1)                   \
+                                        && UTF8_IS_CONTINUATION(*((s)+1)))
 
 /* Number of bytes a code point occupies in UTF-8. */
 #define NATIVE_SKIP(uv) UVCHR_SKIP(uv)
@@ -441,8 +579,10 @@ encoded as UTF-8.  C<cp> is a native (ASCII or EBCDIC) code point if less than
  * Note that the result can be larger than 255 if the input character is not
  * downgradable */
 #define TWO_BYTE_UTF8_TO_NATIVE(HI, LO) \
-    ( __ASSERT_(PL_utf8skip[HI] == 2)                                           \
-      __ASSERT_(UTF8_IS_CONTINUATION(LO))                                       \
+    (__ASSERT_(FITS_IN_8_BITS(HI))                                              \
+     __ASSERT_(FITS_IN_8_BITS(LO))                                              \
+     __ASSERT_(PL_utf8skip[HI] == 2)                                            \
+     __ASSERT_(UTF8_IS_CONTINUATION(LO))                                        \
      UNI_TO_NATIVE(UTF8_ACCUMULATE((NATIVE_UTF8_TO_I8(HI) & UTF_START_MASK(2)), \
                                    (LO))))
 
@@ -464,13 +604,27 @@ only) byte is pointed to by C<s>.
  * through 255 */
 #define UNI_IS_INVARIANT(cp)   UVCHR_IS_INVARIANT(cp)
 
-/* Is the byte 'c' the same character when encoded in UTF-8 as when not.  This
- * works on both UTF-8 encoded strings and non-encoded, as it returns TRUE in
- * each for the exact same set of bit patterns.  It is valid on a subset of
- * what UVCHR_IS_INVARIANT is valid on, so can just use that; and the compiler
- * should optimize out anything extraneous given the implementation of the
- * latter.  The |0 makes sure this isn't mistakenly called with a ptr argument.
- * */
+/*
+=for apidoc Am|bool|UTF8_IS_INVARIANT|char c
+
+Evaluates to 1 if the byte C<c> represents the same character when encoded in
+UTF-8 as when not; otherwise evaluates to 0.  UTF-8 invariant characters can be
+copied as-is when converting to/from UTF-8, saving time.
+
+In spite of the name, this macro gives the correct result if the input string
+from which C<c> comes is not encoded in UTF-8.
+
+See C<L</UVCHR_IS_INVARIANT>> for checking if a UV is invariant.
+
+=cut
+
+The reason it works on both UTF-8 encoded strings and non-UTF-8 encoded, is
+that it returns TRUE in each for the exact same set of bit patterns.  It is
+valid on a subset of what UVCHR_IS_INVARIANT is valid on, so can just use that;
+and the compiler should optimize out anything extraneous given the
+implementation of the latter.  The |0 makes sure this isn't mistakenly called
+with a ptr argument.
+*/
 #define UTF8_IS_INVARIANT(c)	UVCHR_IS_INVARIANT((c) | 0)
 
 /* Like the above, but its name implies a non-UTF8 input, which as the comments
@@ -533,20 +687,37 @@ only) byte is pointed to by C<s>.
  * beginning of a utf8 character.  Now that foo_utf8() determines that itself,
  * no need to do it again here
  */
-#define isIDFIRST_lazy_if(p,UTF) ((IN_BYTES || !UTF)                \
-				 ? isIDFIRST(*(p))                  \
-				 : isIDFIRST_utf8((const U8*)p))
-#define isWORDCHAR_lazy_if(p,UTF)   ((IN_BYTES || (!UTF))           \
-				 ? isWORDCHAR(*(p))                 \
-				 : isWORDCHAR_utf8((const U8*)p))
-#define isALNUM_lazy_if(p,UTF)   isWORDCHAR_lazy_if(p,UTF)
+#define isIDFIRST_lazy_if(p,UTF)                                            \
+            _is_utf8_FOO(_CC_IDFIRST, (const U8 *) p, "isIDFIRST_lazy_if",  \
+                         "isIDFIRST_lazy_if_safe",                          \
+                         cBOOL(UTF && ! IN_BYTES), 0, __FILE__,__LINE__)
+
+#define isIDFIRST_lazy_if_safe(p, e, UTF)                                   \
+                   ((IN_BYTES || !UTF)                                      \
+                     ? isIDFIRST(*(p))                                      \
+                     : isIDFIRST_utf8_safe(p, e))
+
+#define isWORDCHAR_lazy_if(p,UTF)                                           \
+            _is_utf8_FOO(_CC_IDFIRST, (const U8 *) p, "isWORDCHAR_lazy_if", \
+                         "isWORDCHAR_lazy_if_safe",                         \
+                         cBOOL(UTF && ! IN_BYTES), 0, __FILE__,__LINE__)
+
+#define isWORDCHAR_lazy_if_safe(p, e, UTF)                                  \
+                   ((IN_BYTES || !UTF)                                      \
+                     ? isWORDCHAR(*(p))                                     \
+                     : isWORDCHAR_utf8_safe((U8 *) p, (U8 *) e))
+
+#define isALNUM_lazy_if(p,UTF)                                              \
+            _is_utf8_FOO(_CC_IDFIRST, (const U8 *) p, "isALNUM_lazy_if",    \
+                         "isWORDCHAR_lazy_if_safe",                         \
+                         cBOOL(UTF && ! IN_BYTES), 0, __FILE__,__LINE__)
 
 #define UTF8_MAXLEN UTF8_MAXBYTES
 
 /* A Unicode character can fold to up to 3 characters */
 #define UTF8_MAX_FOLD_CHAR_EXPAND 3
 
-#define IN_BYTES (CopHINTS_get(PL_curcop) & HINT_BYTES)
+#define IN_BYTES UNLIKELY(CopHINTS_get(PL_curcop) & HINT_BYTES)
 
 /*
 
@@ -565,97 +736,185 @@ case any call to string overloading updates the internal UTF-8 encoding flag.
  * Is so within 'feature unicode_strings' or 'locale :not_characters', and not
  * within 'use bytes'.  UTF-8 locales are not tested for here, but perhaps
  * could be */
-#define IN_UNI_8_BIT                                                             \
-	    (((CopHINTS_get(PL_curcop) & (HINT_UNI_8_BIT))                       \
-               || (CopHINTS_get(PL_curcop) & HINT_LOCALE_PARTIAL                 \
-                   /* -1 below is for :not_characters */                         \
-                   && _is_in_locale_category(FALSE, -1)))                        \
-              && ! IN_BYTES)
+#define IN_UNI_8_BIT                                                    \
+	    ((    (      (CopHINTS_get(PL_curcop) & HINT_UNI_8_BIT))    \
+                   || (   CopHINTS_get(PL_curcop) & HINT_LOCALE_PARTIAL \
+                            /* -1 below is for :not_characters */       \
+                       && _is_in_locale_category(FALSE, -1)))           \
+              && (! IN_BYTES))
 
 
 #define UTF8_ALLOW_EMPTY		0x0001	/* Allow a zero length string */
+#define UTF8_GOT_EMPTY                  UTF8_ALLOW_EMPTY
 
 /* Allow first byte to be a continuation byte */
 #define UTF8_ALLOW_CONTINUATION		0x0002
+#define UTF8_GOT_CONTINUATION		UTF8_ALLOW_CONTINUATION
 
-/* Allow second... bytes to be non-continuation bytes */
+/* Unexpected continuation byte */
 #define UTF8_ALLOW_NON_CONTINUATION	0x0004
+#define UTF8_GOT_NON_CONTINUATION	UTF8_ALLOW_NON_CONTINUATION
 
 /* expecting more bytes than were available in the string */
 #define UTF8_ALLOW_SHORT		0x0008
+#define UTF8_GOT_SHORT		        UTF8_ALLOW_SHORT
 
-/* Overlong sequence; i.e., the code point can be specified in fewer bytes. */
+/* Overlong sequence; i.e., the code point can be specified in fewer bytes.
+ * First one will convert the overlong to the REPLACEMENT CHARACTER; second
+ * will return what the overlong evaluates to */
 #define UTF8_ALLOW_LONG                 0x0010
+#define UTF8_ALLOW_LONG_AND_ITS_VALUE   (UTF8_ALLOW_LONG|0x0020)
+#define UTF8_GOT_LONG                   UTF8_ALLOW_LONG
 
-#define UTF8_DISALLOW_SURROGATE		0x0020	/* Unicode surrogates */
-#define UTF8_WARN_SURROGATE		0x0040
+#define UTF8_ALLOW_OVERFLOW             0x0080
+#define UTF8_GOT_OVERFLOW               UTF8_ALLOW_OVERFLOW
 
-#define UTF8_DISALLOW_NONCHAR           0x0080	/* Unicode non-character */
-#define UTF8_WARN_NONCHAR               0x0100	/*  code points */
+#define UTF8_DISALLOW_SURROGATE		0x0100	/* Unicode surrogates */
+#define UTF8_GOT_SURROGATE		UTF8_DISALLOW_SURROGATE
+#define UTF8_WARN_SURROGATE		0x0200
 
-#define UTF8_DISALLOW_SUPER		0x0200	/* Super-set of Unicode: code */
-#define UTF8_WARN_SUPER		        0x0400	/* points above the legal max */
+/* Unicode non-character  code points */
+#define UTF8_DISALLOW_NONCHAR           0x0400
+#define UTF8_GOT_NONCHAR                UTF8_DISALLOW_NONCHAR
+#define UTF8_WARN_NONCHAR               0x0800
 
-/* Code points which never were part of the original UTF-8 standard, which only
- * went up to 2 ** 31 - 1.  Note that these all overflow a signed 32-bit word,
- * The first byte of these code points is FE or FF on ASCII platforms.  If the
- * first byte is FF, it will overflow a 32-bit word. */
-#define UTF8_DISALLOW_ABOVE_31_BIT      0x0800
-#define UTF8_WARN_ABOVE_31_BIT          0x1000
+/* Super-set of Unicode: code points above the legal max */
+#define UTF8_DISALLOW_SUPER		0x1000
+#define UTF8_GOT_SUPER		        UTF8_DISALLOW_SUPER
+#define UTF8_WARN_SUPER		        0x2000
 
-/* For back compat, these old names are misleading for UTF_EBCDIC */
-#define UTF8_DISALLOW_FE_FF             UTF8_DISALLOW_ABOVE_31_BIT
-#define UTF8_WARN_FE_FF                 UTF8_WARN_ABOVE_31_BIT
+/* The original UTF-8 standard did not define UTF-8 with start bytes of 0xFE or
+ * 0xFF, though UTF-EBCDIC did.  This allowed both versions to represent code
+ * points up to 2 ** 31 - 1.  Perl extends UTF-8 so that 0xFE and 0xFF are
+ * usable on ASCII platforms, and 0xFF means something different than
+ * UTF-EBCDIC defines.  These changes allow code points of 64 bits (actually
+ * somewhat more) to be represented on both platforms.  But these are Perl
+ * extensions, and not likely to be interchangeable with other languages.  Note
+ * that on ASCII platforms, FE overflows a signed 32-bit word, and FF an
+ * unsigned one. */
+#define UTF8_DISALLOW_PERL_EXTENDED     0x4000
+#define UTF8_GOT_PERL_EXTENDED          UTF8_DISALLOW_PERL_EXTENDED
+#define UTF8_WARN_PERL_EXTENDED         0x8000
 
-#define UTF8_CHECK_ONLY			0x2000
+/* For back compat, these old names are misleading for overlongs and
+ * UTF_EBCDIC. */
+#define UTF8_DISALLOW_ABOVE_31_BIT      UTF8_DISALLOW_PERL_EXTENDED
+#define UTF8_GOT_ABOVE_31_BIT           UTF8_GOT_PERL_EXTENDED
+#define UTF8_WARN_ABOVE_31_BIT          UTF8_WARN_PERL_EXTENDED
+#define UTF8_DISALLOW_FE_FF             UTF8_DISALLOW_PERL_EXTENDED
+#define UTF8_WARN_FE_FF                 UTF8_WARN_PERL_EXTENDED
+
+#define UTF8_CHECK_ONLY			0x10000
+#define _UTF8_NO_CONFIDENCE_IN_CURLEN   0x20000  /* Internal core use only */
 
 /* For backwards source compatibility.  They do nothing, as the default now
  * includes what they used to mean.  The first one's meaning was to allow the
  * just the single non-character 0xFFFF */
 #define UTF8_ALLOW_FFFF 0
+#define UTF8_ALLOW_FE_FF 0
 #define UTF8_ALLOW_SURROGATE 0
 
+/* C9 refers to Unicode Corrigendum #9: allows but discourages non-chars */
+#define UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE                                    \
+                                 (UTF8_DISALLOW_SUPER|UTF8_DISALLOW_SURROGATE)
+#define UTF8_WARN_ILLEGAL_C9_INTERCHANGE (UTF8_WARN_SUPER|UTF8_WARN_SURROGATE)
+
 #define UTF8_DISALLOW_ILLEGAL_INTERCHANGE                                       \
-                       ( UTF8_DISALLOW_SUPER|UTF8_DISALLOW_NONCHAR              \
-                        |UTF8_DISALLOW_SURROGATE)
+                  (UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE|UTF8_DISALLOW_NONCHAR)
 #define UTF8_WARN_ILLEGAL_INTERCHANGE \
-                         (UTF8_WARN_SUPER|UTF8_WARN_NONCHAR|UTF8_WARN_SURROGATE)
-#define UTF8_ALLOW_ANY                                                          \
-	    (~( UTF8_DISALLOW_ILLEGAL_INTERCHANGE|UTF8_DISALLOW_ABOVE_31_BIT    \
-               |UTF8_WARN_ILLEGAL_INTERCHANGE|UTF8_WARN_ABOVE_31_BIT))
-#define UTF8_ALLOW_ANYUV                                                        \
-         (UTF8_ALLOW_EMPTY                                                      \
-	  & ~(UTF8_DISALLOW_ILLEGAL_INTERCHANGE|UTF8_WARN_ILLEGAL_INTERCHANGE))
-#define UTF8_ALLOW_DEFAULT		(ckWARN(WARN_UTF8) ? 0 : \
-					 UTF8_ALLOW_ANYUV)
+                          (UTF8_WARN_ILLEGAL_C9_INTERCHANGE|UTF8_WARN_NONCHAR)
 
-/* Several of the macros below have a second parameter that is currently
- * unused; but could be used in the future to make sure that the input is
- * well-formed. */
+/* This is typically used for code that processes UTF-8 input and doesn't want
+ * to have to deal with any malformations that might be present.  All such will
+ * be safely replaced by the REPLACEMENT CHARACTER, unless other flags
+ * overriding this are also present. */
+#define UTF8_ALLOW_ANY ( UTF8_ALLOW_CONTINUATION                                \
+                        |UTF8_ALLOW_NON_CONTINUATION                            \
+                        |UTF8_ALLOW_SHORT                                       \
+                        |UTF8_ALLOW_LONG                                        \
+                        |UTF8_ALLOW_OVERFLOW)
 
-#define UTF8_IS_SURROGATE(s, e) cBOOL(is_SURROGATE_utf8(s))
-#define UTF8_IS_REPLACEMENT(s, send) cBOOL(is_REPLACEMENT_utf8_safe(s,send))
+/* Accept any Perl-extended UTF-8 that evaluates to any UV on the platform, but
+ * not any malformed.  This is the default.  (Note that UVs above IV_MAX are
+ * deprecated. */
+#define UTF8_ALLOW_ANYUV   0
+#define UTF8_ALLOW_DEFAULT UTF8_ALLOW_ANYUV
 
-/*		  ASCII		     EBCDIC I8
+/*
+=for apidoc Am|bool|UTF8_IS_SURROGATE|const U8 *s|const U8 *e
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8 that represents one
+of the Unicode surrogate code points; otherwise it evaluates to 0.  If
+non-zero, the value gives how many bytes starting at C<s> comprise the code
+point's representation.
+
+=cut
+ */
+#define UTF8_IS_SURROGATE(s, e)      is_SURROGATE_utf8_safe(s, e)
+
+
+#define UTF8_IS_REPLACEMENT(s, send) is_REPLACEMENT_utf8_safe(s,send)
+
+/*
+=for apidoc Am|bool|UTF8_IS_SUPER|const U8 *s|const U8 *e
+
+Recall that Perl recognizes an extension to UTF-8 that can encode code
+points larger than the ones defined by Unicode, which are 0..0x10FFFF.
+
+This macro evaluates to non-zero if the first few bytes of the string starting
+at C<s> and looking no further than S<C<e - 1>> are from this UTF-8 extension;
+otherwise it evaluates to 0.  If non-zero, the value gives how many bytes
+starting at C<s> comprise the code point's representation.
+
+0 is returned if the bytes are not well-formed extended UTF-8, or if they
+represent a code point that cannot fit in a UV on the current platform.  Hence
+this macro can give different results when run on a 64-bit word machine than on
+one with a 32-bit word size.
+
+Note that it is deprecated to have code points that are larger than what can
+fit in an IV on the current machine.
+
+=cut
+
+ *		  ASCII		     EBCDIC I8
  * U+10FFFF: \xF4\x8F\xBF\xBF	\xF9\xA1\xBF\xBF\xBF	max legal Unicode
  * U+110000: \xF4\x90\x80\x80	\xF9\xA2\xA0\xA0\xA0
  * U+110001: \xF4\x90\x80\x81	\xF9\xA2\xA0\xA0\xA1
- *
- * BE AWARE that this test doesn't rule out malformed code points, in
- * particular overlongs */
-#ifdef EBCDIC /* Both versions assume well-formed UTF8 */
-#   define UTF8_IS_SUPER(s, e) (NATIVE_UTF8_TO_I8(* (U8*) (s)) >= 0xF9          \
-                         && (NATIVE_UTF8_TO_I8(* (U8*) (s)) > 0xF9              \
-                             || (NATIVE_UTF8_TO_I8(* ((U8*) (s) + 1)) >= 0xA2)))
+ */
+#ifdef EBCDIC
+#   define UTF8_IS_SUPER(s, e)                                              \
+                  ((    LIKELY((e) > (s) + 4)                               \
+                    &&      NATIVE_UTF8_TO_I8(*(s)) >= 0xF9                 \
+                    && (    NATIVE_UTF8_TO_I8(*(s)) >  0xF9                 \
+                        || (NATIVE_UTF8_TO_I8(*((s) + 1)) >= 0xA2))         \
+                    &&  LIKELY((s) + UTF8SKIP(s) <= (e)))                   \
+                    ? _is_utf8_char_helper(s, s + UTF8SKIP(s), 0) : 0)
 #else
-#   define UTF8_IS_SUPER(s, e) (*(U8*) (s) >= 0xF4                              \
-                           && (*(U8*) (s) > 0xF4 || (*((U8*) (s) + 1) >= 0x90)))
+#   define UTF8_IS_SUPER(s, e)                                              \
+                   ((    LIKELY((e) > (s) + 3)                              \
+                     &&  (*(U8*) (s)) >= 0xF4                               \
+                     && ((*(U8*) (s)) >  0xF4 || (*((U8*) (s) + 1) >= 0x90))\
+                     &&  LIKELY((s) + UTF8SKIP(s) <= (e)))                  \
+                    ? _is_utf8_char_helper(s, s + UTF8SKIP(s), 0) : 0)
 #endif
 
 /* These are now machine generated, and the 'given' clause is no longer
  * applicable */
 #define UTF8_IS_NONCHAR_GIVEN_THAT_NON_SUPER_AND_GE_PROBLEMATIC(s, e)          \
-                                                    cBOOL(is_NONCHAR_utf8(s))
+                                            cBOOL(is_NONCHAR_utf8_safe(s,e))
+
+/*
+=for apidoc Am|bool|UTF8_IS_NONCHAR|const U8 *s|const U8 *e
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8 that represents one
+of the Unicode non-character code points; otherwise it evaluates to 0.  If
+non-zero, the value gives how many bytes starting at C<s> comprise the code
+point's representation.
+
+=cut
+ */
 #define UTF8_IS_NONCHAR(s, e)                                                  \
                 UTF8_IS_NONCHAR_GIVEN_THAT_NON_SUPER_AND_GE_PROBLEMATIC(s, e)
 
@@ -668,18 +927,30 @@ case any call to string overloading updates the internal UTF-8 encoding flag.
  * let's be conservative and do as Unicode says. */
 #define PERL_UNICODE_MAX	0x10FFFF
 
-#define UNICODE_WARN_SURROGATE        0x0001	/* UTF-16 surrogates */
-#define UNICODE_WARN_NONCHAR          0x0002	/* Non-char code points */
-#define UNICODE_WARN_SUPER            0x0004	/* Above 0x10FFFF */
-#define UNICODE_WARN_ABOVE_31_BIT     0x0008	/* Above 0x7FFF_FFFF */
-#define UNICODE_DISALLOW_SURROGATE    0x0010
-#define UNICODE_DISALLOW_NONCHAR      0x0020
-#define UNICODE_DISALLOW_SUPER        0x0040
-#define UNICODE_DISALLOW_ABOVE_31_BIT 0x0080
+#define UNICODE_WARN_SURROGATE         0x0001	/* UTF-16 surrogates */
+#define UNICODE_WARN_NONCHAR           0x0002	/* Non-char code points */
+#define UNICODE_WARN_SUPER             0x0004	/* Above 0x10FFFF */
+#define UNICODE_WARN_PERL_EXTENDED     0x0008	/* Above 0x7FFF_FFFF */
+#define UNICODE_WARN_ABOVE_31_BIT      UNICODE_WARN_PERL_EXTENDED
+#define UNICODE_DISALLOW_SURROGATE     0x0010
+#define UNICODE_DISALLOW_NONCHAR       0x0020
+#define UNICODE_DISALLOW_SUPER         0x0040
+#define UNICODE_DISALLOW_PERL_EXTENDED 0x0080
+#define UNICODE_DISALLOW_ABOVE_31_BIT  UNICODE_DISALLOW_PERL_EXTENDED
+
+#define UNICODE_GOT_SURROGATE       UNICODE_DISALLOW_SURROGATE
+#define UNICODE_GOT_NONCHAR         UNICODE_DISALLOW_NONCHAR
+#define UNICODE_GOT_SUPER           UNICODE_DISALLOW_SUPER
+#define UNICODE_GOT_PERL_EXTENDED   UNICODE_DISALLOW_PERL_EXTENDED
+
+#define UNICODE_WARN_ILLEGAL_C9_INTERCHANGE                                   \
+                                  (UNICODE_WARN_SURROGATE|UNICODE_WARN_SUPER)
 #define UNICODE_WARN_ILLEGAL_INTERCHANGE                                      \
-            (UNICODE_WARN_SURROGATE|UNICODE_WARN_NONCHAR|UNICODE_WARN_SUPER)
+                   (UNICODE_WARN_ILLEGAL_C9_INTERCHANGE|UNICODE_WARN_NONCHAR)
+#define UNICODE_DISALLOW_ILLEGAL_C9_INTERCHANGE                               \
+                          (UNICODE_DISALLOW_SURROGATE|UNICODE_DISALLOW_SUPER)
 #define UNICODE_DISALLOW_ILLEGAL_INTERCHANGE                                  \
- (UNICODE_DISALLOW_SURROGATE|UNICODE_DISALLOW_NONCHAR|UNICODE_DISALLOW_SUPER)
+           (UNICODE_DISALLOW_ILLEGAL_C9_INTERCHANGE|UNICODE_DISALLOW_NONCHAR)
 
 /* For backward source compatibility, as are now the default */
 #define UNICODE_ALLOW_SURROGATE 0
@@ -710,7 +981,6 @@ case any call to string overloading updates the internal UTF-8 encoding flag.
          && UNICODE_IS_END_PLANE_NONCHAR_GIVEN_NOT_SUPER(uv)))
 
 #define UNICODE_IS_SUPER(uv)    ((UV) (uv) > PERL_UNICODE_MAX)
-#define UNICODE_IS_ABOVE_31_BIT(uv)    ((UV) (uv) > 0x7FFFFFFF)
 
 #define LATIN_SMALL_LETTER_SHARP_S      LATIN_SMALL_LETTER_SHARP_S_NATIVE
 #define LATIN_SMALL_LETTER_Y_WITH_DIAERESIS                                  \
@@ -752,81 +1022,176 @@ case any call to string overloading updates the internal UTF-8 encoding flag.
 
 #define SHARP_S_SKIP 2
 
-/* If you want to exclude surrogates, and beyond legal Unicode, see the blame
- * log for earlier versions which gave details for these */
-
-/* A helper macro for isUTF8_CHAR, so use that one, and not this one.  This is
- * retained solely for backwards compatibility and may be deprecated and
- * removed in a future Perl version.
- *
- * regen/regcharclass.pl generates is_UTF8_CHAR_utf8() macros for up to these
- * number of bytes.  So this has to be coordinated with that file */
-#ifdef EBCDIC
-#   define IS_UTF8_CHAR_FAST(n) ((n) <= 3)
-#else
-#   define IS_UTF8_CHAR_FAST(n) ((n) <= 4)
-#endif
-
-#ifndef EBCDIC
-/* A helper macro for isUTF8_CHAR, so use that one instead of this.  This was
- * generated by regen/regcharclass.pl, and then moved here.  The lines that
- * generated it were then commented out.  This was done solely because it takes
- * on the order of 10 minutes to generate, and is never going to change, unless
- * the generated code is improved.
- *
- * The EBCDIC versions have been cut to not cover all of legal Unicode,
- * otherwise they take too long to generate; besides there is a separate one
- * for each code page, so they are in regcharclass.h instead of here */
-/*
-	UTF8_CHAR: Matches legal UTF-8 encoded characters from 2 through 4 bytes
-
-	0x80 - 0x1FFFFF
-*/
-/*** GENERATED CODE ***/
-#define is_UTF8_CHAR_utf8_no_length_checks(s)                               \
-( ( 0xC2 <= ((U8*)s)[0] && ((U8*)s)[0] <= 0xDF ) ?                          \
-    ( ( ( ((U8*)s)[1] & 0xC0 ) == 0x80 ) ? 2 : 0 )                          \
-: ( 0xE0 == ((U8*)s)[0] ) ?                                                 \
-    ( ( ( ( ((U8*)s)[1] & 0xE0 ) == 0xA0 ) && ( ( ((U8*)s)[2] & 0xC0 ) == 0x80 ) ) ? 3 : 0 )\
-: ( 0xE1 <= ((U8*)s)[0] && ((U8*)s)[0] <= 0xEF ) ?                          \
-    ( ( ( ( ((U8*)s)[1] & 0xC0 ) == 0x80 ) && ( ( ((U8*)s)[2] & 0xC0 ) == 0x80 ) ) ? 3 : 0 )\
-: ( 0xF0 == ((U8*)s)[0] ) ?                                                 \
-    ( ( ( ( 0x90 <= ((U8*)s)[1] && ((U8*)s)[1] <= 0xBF ) && ( ( ((U8*)s)[2] & 0xC0 ) == 0x80 ) ) && ( ( ((U8*)s)[3] & 0xC0 ) == 0x80 ) ) ? 4 : 0 )\
-: ( ( ( ( 0xF1 <= ((U8*)s)[0] && ((U8*)s)[0] <= 0xF7 ) && ( ( ((U8*)s)[1] & 0xC0 ) == 0x80 ) ) && ( ( ((U8*)s)[2] & 0xC0 ) == 0x80 ) ) && ( ( ((U8*)s)[3] & 0xC0 ) == 0x80 ) ) ? 4 : 0 )
-#endif
-
 /*
 
 =for apidoc Am|STRLEN|isUTF8_CHAR|const U8 *s|const U8 *e
 
-Returns the number of bytes beginning at C<s> which form a legal UTF-8 (or
-UTF-EBCDIC) encoded character, looking no further than S<C<e - s>> bytes into
-C<s>.  Returns 0 if the sequence starting at C<s> through S<C<e - 1>> is not
-well-formed UTF-8.
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8, as extended by Perl,
+that represents some code point; otherwise it evaluates to 0.  If non-zero, the
+value gives how many bytes starting at C<s> comprise the code point's
+representation.  Any bytes remaining before C<e>, but beyond the ones needed to
+form the first code point in C<s>, are not examined.
 
-Note that an INVARIANT character (i.e. ASCII on non-EBCDIC
-machines) is a valid UTF-8 character.
+The code point can be any that will fit in a UV on this machine, using Perl's
+extension to official UTF-8 to represent those higher than the Unicode maximum
+of 0x10FFFF.  That means that this macro is used to efficiently decide if the
+next few bytes in C<s> is legal UTF-8 for a single character.
+
+Use C<L</isSTRICT_UTF8_CHAR>> to restrict the acceptable code points to those
+defined by Unicode to be fully interchangeable across applications;
+C<L</isC9_STRICT_UTF8_CHAR>> to use the L<Unicode Corrigendum
+#9|http://www.unicode.org/versions/corrigendum9.html> definition of allowable
+code points; and C<L</isUTF8_CHAR_flags>> for a more customized definition.
+
+Use C<L</is_utf8_string>>, C<L</is_utf8_string_loc>>, and
+C<L</is_utf8_string_loclen>> to check entire strings.
+
+Note that it is deprecated to use code points higher than what will fit in an
+IV.  This macro does not raise any warnings for such code points, treating them
+as valid.
+
+Note also that a UTF-8 INVARIANT character (i.e. ASCII on non-EBCDIC machines)
+is a valid UTF-8 character.
 
 =cut
 */
 
-#define isUTF8_CHAR(s, e)   (UNLIKELY((e) <= (s))                           \
-                             ? 0                                            \
-                             : (UTF8_IS_INVARIANT(*s))                      \
-                               ? 1                                          \
-                               : UNLIKELY(((e) - (s)) < UTF8SKIP(s))        \
-                                 ? 0                                        \
-                                 : LIKELY(IS_UTF8_CHAR_FAST(UTF8SKIP(s)))   \
-                                   ? is_UTF8_CHAR_utf8_no_length_checks(s)  \
-                                   : _is_utf8_char_slow(s, e))
+#define isUTF8_CHAR(s, e)                                                   \
+    (UNLIKELY((e) <= (s))                                                   \
+    ? 0                                                                     \
+    : (UTF8_IS_INVARIANT(*s))                                               \
+      ? 1                                                                   \
+      : UNLIKELY(((e) - (s)) < UTF8SKIP(s))                                 \
+        ? 0                                                                 \
+        : LIKELY(NATIVE_UTF8_TO_I8(*s) <= _IS_UTF8_CHAR_HIGHEST_START_BYTE) \
+          ? is_UTF8_CHAR_utf8_no_length_checks(s)                           \
+          : _is_utf8_char_helper(s, e, 0))
 
 #define is_utf8_char_buf(buf, buf_end) isUTF8_CHAR(buf, buf_end)
+#define bytes_from_utf8(s, lenp, is_utf8p)                                  \
+                            bytes_from_utf8_loc(s, lenp, is_utf8p, 0)
+
+/*
+
+=for apidoc Am|STRLEN|isSTRICT_UTF8_CHAR|const U8 *s|const U8 *e
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8 that represents some
+Unicode code point completely acceptable for open interchange between all
+applications; otherwise it evaluates to 0.  If non-zero, the value gives how
+many bytes starting at C<s> comprise the code point's representation.  Any
+bytes remaining before C<e>, but beyond the ones needed to form the first code
+point in C<s>, are not examined.
+
+The largest acceptable code point is the Unicode maximum 0x10FFFF, and must not
+be a surrogate nor a non-character code point.  Thus this excludes any code
+point from Perl's extended UTF-8.
+
+This is used to efficiently decide if the next few bytes in C<s> is
+legal Unicode-acceptable UTF-8 for a single character.
+
+Use C<L</isC9_STRICT_UTF8_CHAR>> to use the L<Unicode Corrigendum
+#9|http://www.unicode.org/versions/corrigendum9.html> definition of allowable
+code points; C<L</isUTF8_CHAR>> to check for Perl's extended UTF-8;
+and C<L</isUTF8_CHAR_flags>> for a more customized definition.
+
+Use C<L</is_strict_utf8_string>>, C<L</is_strict_utf8_string_loc>>, and
+C<L</is_strict_utf8_string_loclen>> to check entire strings.
+
+=cut
+*/
+
+#define isSTRICT_UTF8_CHAR(s, e)                                            \
+    (UNLIKELY((e) <= (s))                                                   \
+    ? 0                                                                     \
+    : (UTF8_IS_INVARIANT(*s))                                               \
+      ? 1                                                                   \
+      : UNLIKELY(((e) - (s)) < UTF8SKIP(s))                                 \
+        ? 0                                                                 \
+        : is_STRICT_UTF8_CHAR_utf8_no_length_checks(s))
+
+/*
+
+=for apidoc Am|STRLEN|isC9_STRICT_UTF8_CHAR|const U8 *s|const U8 *e
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8 that represents some
+Unicode non-surrogate code point; otherwise it evaluates to 0.  If non-zero,
+the value gives how many bytes starting at C<s> comprise the code point's
+representation.  Any bytes remaining before C<e>, but beyond the ones needed to
+form the first code point in C<s>, are not examined.
+
+The largest acceptable code point is the Unicode maximum 0x10FFFF.  This
+differs from C<L</isSTRICT_UTF8_CHAR>> only in that it accepts non-character
+code points.  This corresponds to
+L<Unicode Corrigendum #9|http://www.unicode.org/versions/corrigendum9.html>.
+which said that non-character code points are merely discouraged rather than
+completely forbidden in open interchange.  See
+L<perlunicode/Noncharacter code points>.
+
+Use C<L</isUTF8_CHAR>> to check for Perl's extended UTF-8; and
+C<L</isUTF8_CHAR_flags>> for a more customized definition.
+
+Use C<L</is_c9strict_utf8_string>>, C<L</is_c9strict_utf8_string_loc>>, and
+C<L</is_c9strict_utf8_string_loclen>> to check entire strings.
+
+=cut
+*/
+
+#define isC9_STRICT_UTF8_CHAR(s, e)                                         \
+    (UNLIKELY((e) <= (s))                                                   \
+    ? 0                                                                     \
+    : (UTF8_IS_INVARIANT(*s))                                               \
+      ? 1                                                                   \
+      : UNLIKELY(((e) - (s)) < UTF8SKIP(s))                                 \
+        ? 0                                                                 \
+        : is_C9_STRICT_UTF8_CHAR_utf8_no_length_checks(s))
+
+/*
+
+=for apidoc Am|STRLEN|isUTF8_CHAR_flags|const U8 *s|const U8 *e| const U32 flags
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8, as extended by Perl,
+that represents some code point, subject to the restrictions given by C<flags>;
+otherwise it evaluates to 0.  If non-zero, the value gives how many bytes
+starting at C<s> comprise the code point's representation.  Any bytes remaining
+before C<e>, but beyond the ones needed to form the first code point in C<s>,
+are not examined.
+
+If C<flags> is 0, this gives the same results as C<L</isUTF8_CHAR>>;
+if C<flags> is C<UTF8_DISALLOW_ILLEGAL_INTERCHANGE>, this gives the same results
+as C<L</isSTRICT_UTF8_CHAR>>;
+and if C<flags> is C<UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE>, this gives
+the same results as C<L</isC9_STRICT_UTF8_CHAR>>.
+Otherwise C<flags> may be any combination of the C<UTF8_DISALLOW_I<foo>> flags
+understood by C<L</utf8n_to_uvchr>>, with the same meanings.
+
+The three alternative macros are for the most commonly needed validations; they
+are likely to run somewhat faster than this more general one, as they can be
+inlined into your code.
+
+Use L</is_utf8_string_flags>, L</is_utf8_string_loc_flags>, and
+L</is_utf8_string_loclen_flags> to check entire strings.
+
+=cut
+*/
+
+#define isUTF8_CHAR_flags(s, e, flags)                                      \
+    (UNLIKELY((e) <= (s))                                                   \
+    ? 0                                                                     \
+    : (UTF8_IS_INVARIANT(*s))                                               \
+      ? 1                                                                   \
+      : UNLIKELY(((e) - (s)) < UTF8SKIP(s))                                 \
+        ? 0                                                                 \
+        : _is_utf8_char_helper(s, e, flags))
 
 /* Do not use; should be deprecated.  Use isUTF8_CHAR() instead; this is
  * retained solely for backwards compatibility */
 #define IS_UTF8_CHAR(p, n)      (isUTF8_CHAR(p, (p) + (n)) == n)
 
-#endif /* H_UTF8 */
+#endif /* PERL_UTF8_H_ */
 
 /*
  * ex: set ts=8 sts=4 sw=4 et:

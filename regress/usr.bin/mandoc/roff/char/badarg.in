@@ -1,0 +1,10 @@
+.\" $OpenBSD: badarg.in,v 1.1 2018/08/25 16:43:52 schwarze Exp $
+.TH CHAR-BADARG 1 "August 25, 2018"
+.SH NAME
+char-badarg \(en char requests with invalid arguments
+.SH DESCRIPTION
+.char
+.char \fR myval
+.char \[myc]x myval
+.char xy myval
+myc: <\[myc]> x

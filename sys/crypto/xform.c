@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.58 2017/05/31 00:34:33 djm Exp $	*/
+/*	$OpenBSD: xform.c,v 1.59 2018/04/09 04:34:56 visa Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -108,18 +108,10 @@ u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
 u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **);
 u_int32_t lzs_dummy(u_int8_t *, u_int32_t, u_int8_t **);
 
-#define AESCTR_NONCESIZE	4
-#define AESCTR_IVSIZE		8
-#define AESCTR_BLOCKSIZE	16
-
 struct aes_ctr_ctx {
 	AES_CTX		ac_key;
 	u_int8_t	ac_block[AESCTR_BLOCKSIZE];
 };
-
-#define AES_XTS_BLOCKSIZE	16
-#define AES_XTS_IVSIZE		8
-#define AES_XTS_ALPHA		0x87	/* GF(2^128) generator polynomial */
 
 struct aes_xts_ctx {
 	rijndael_ctx key1;

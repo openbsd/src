@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.51 2016/09/01 12:24:56 jmc Exp $
+.\"	$OpenBSD: sbus.4,v 1.53 2018/06/18 06:06:52 jmc Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: June 18 2018 $
 .Dt SBUS 4
 .Os
 .Sh NAME
@@ -44,9 +44,8 @@ These
 attachments are specific to the sparc64 port.
 .Pp
 .Nm
-is an I/O interconnect bus mostly found in
-.Tn SPARC
-workstations and small to medium server class systems.
+is an I/O interconnect bus mostly found in SPARC workstations
+and small to medium server class systems.
 It supports both on-board peripherals and extension boards.
 The
 .Nm
@@ -58,8 +57,6 @@ provides support for the following devices.
 Note that not all architectures support all devices.
 .Ss Audio interfaces
 .Bl -tag -width 13n -offset ind -compact
-.It Xr audioamd 4
-SPARC telephone quality audio device
 .It Xr audiocs 4
 SPARC CS4231 audio device
 .El
@@ -112,8 +109,7 @@ Accelerated 24-bit color frame buffer
 SMS MGX and MGXPlus accelerated 24-bit color frame buffers
 .It Xr rfx 4
 Vitec/Connectware/AP&D
-.Tn RasterFlex
-framebuffer series
+RasterFlex framebuffer series
 .It Xr tvtwo 4
 Accelerated 24-bit color frame buffer
 .It Xr vigra 4
@@ -141,7 +137,7 @@ Zilog 8530 (ZSCC) serial communications driver
 .It Xr auxio 4
 Miscellaneous I/O controls
 .It Xr clock 4
-Realtime clock
+real-time clock
 .It Xr fdc 4
 NEC765 compatible floppy disk driver
 .It Xr uperf 4

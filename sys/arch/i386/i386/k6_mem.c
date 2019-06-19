@@ -1,4 +1,4 @@
-/* $OpenBSD: k6_mem.c,v 1.12 2015/09/08 04:28:34 semarie Exp $ */
+/* $OpenBSD: k6_mem.c,v 1.13 2018/07/30 14:19:12 kettenis Exp $ */
 /*-
  * Copyright (c) 1999 Brian Fundakowski Feldman
  * All rights reserved.
@@ -130,6 +130,7 @@ k6_mrset(struct mem_range_softc *sc, struct mem_range_desc *desc, int *arg)
 	u_int64_t reg;
 	u_int32_t mtrr;
 	int error, d;
+	u_long s;
 
 	switch (*arg) {
 	case MEMRANGE_SET_UPDATE:
@@ -163,14 +164,14 @@ k6_mrset(struct mem_range_softc *sc, struct mem_range_desc *desc, int *arg)
 
 out:
 	
-	disable_intr();
+	s = intr_disable();
 	wbinvd();
 	reg = rdmsr(UWCCR);
 	reg &= ~(0xffffffff << (32 * d));
 	reg |= mtrr << (32 * d);
 	wrmsr(UWCCR, reg);
 	wbinvd();
-	enable_intr();
+	intr_restore(s);
 
 	return 0;
 }
@@ -184,17 +185,18 @@ k6_mrinit_cpu(struct mem_range_softc *sc)
 	u_int64_t reg;
 	u_int32_t mtrr;
 	int d;
+	u_long s;
 
 	for (d = 0; d < sc->mr_ndesc; d++) {
 		k6_mrmake(&sc->mr_desc[d], &mtrr);
 
-		disable_intr();
+		s = intr_disable();
 		wbinvd();
 		reg = rdmsr(UWCCR);
 		reg &= ~(0xffffffff << (32 * d));
 		reg |= mtrr << (32 * d);
 		wrmsr(UWCCR, reg);
 		wbinvd();
-		enable_intr();
+		intr_restore(s);
 	}
 }

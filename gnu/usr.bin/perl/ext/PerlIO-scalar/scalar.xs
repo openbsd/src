@@ -15,6 +15,18 @@ typedef struct {
     Off_t posn;
 } PerlIOScalar;
 
+IV
+PerlIOScalar_eof(pTHX_ PerlIO * f)
+{
+    if (PerlIOBase(f)->flags & PERLIO_F_CANREAD) {
+        PerlIOScalar *s = PerlIOSelf(f, PerlIOScalar);
+        STRLEN len;
+        (void)SvPV(s->var, len);
+        return len - (STRLEN)(s->posn) <= 0;
+    }
+    return 1;
+}
+
 static IV
 PerlIOScalar_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 		    PerlIO_funcs * tab)
@@ -31,7 +43,7 @@ PerlIOScalar_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 	     && mode && *mode != 'r') {
 		if (ckWARN(WARN_LAYER))
 		    Perl_warner(aTHX_ packWARN(WARN_LAYER), "%s", PL_no_modify);
-		SETERRNO(EINVAL, SS_IVCHAN);
+		SETERRNO(EACCES, RMS_PRV);
 		return -1;
 	    }
 	    s->var = SvREFCNT_inc(SvRV(arg));
@@ -173,11 +185,20 @@ PerlIOScalar_read(pTHX_ PerlIO *f, void *vbuf, Size_t count)
         /* I assume that Off_t is at least as large as len (which 
          * seems safe) and that the size of the buffer in our SV is
          * always less than half the size of the address space
+         *
+         * Which turns out not to be the case on 64-bit Windows, since
+         * a build with USE_LARGE_FILES=undef defines Off_t as long,
+         * which is 32-bits on 64-bit Windows.  This doesn't appear to
+         * be the case on other 64-bit platforms.
          */
-        assert(sizeof(Off_t) >= sizeof(len));
-        assert((Off_t)len >= 0);
+#if Off_t_size >= Size_t_size
+        assert(len < ((~(STRLEN)0) >> 1));
         if ((Off_t)len <= s->posn)
 	    return 0;
+#else
+        if (len <= (STRLEN)s->posn)
+            return 0;
+#endif
 	got = len - (STRLEN)(s->posn);
 	if ((STRLEN)got > (STRLEN)count)
 	    got = (STRLEN)count;
@@ -406,7 +427,7 @@ static PERLIO_FUNCS_DECL(PerlIO_scalar) = {
     PerlIOScalar_close,
     PerlIOScalar_flush,
     PerlIOScalar_fill,
-    PerlIOBase_eof,
+    PerlIOScalar_eof,
     PerlIOBase_error,
     PerlIOBase_clearerr,
     PerlIOBase_setlinebuf,

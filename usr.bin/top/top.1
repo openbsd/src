@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.68 2016/09/08 16:47:47 tedu Exp $
+.\"	$OpenBSD: top.1,v 1.71 2018/11/28 22:00:30 kn Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 8 2016 $
+.Dd $Mdocdate: November 28 2018 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Op Fl 1bCHIinqSu
 .Op Fl d Ar count
 .Op Fl g Ar string
-.Op Fl o Ar field
+.Op Fl o Oo - Oc Ns Ar field
 .Op Fl p Ar pid
 .Op Fl s Ar time
 .Op Fl U Oo - Oc Ns Ar user
@@ -137,12 +137,15 @@ mode.
 This is identical to
 .Em batch
 mode.
-.It Fl o Ar field
+.It Fl o Oo - Oc Ns Ar field
 Sort the process display area using the specified
 .Ar field
 as the primary key.
 The field name is the name of the column as seen in the output,
 but in lower case.
+The
+.Sq -
+prefix reverses the order.
 The
 .Ox
 version of
@@ -177,13 +180,11 @@ seconds.
 The value may be fractional, to permit delays of less than 1 second.
 The default delay between updates is 5 seconds.
 .It Fl U Oo - Oc Ns Ar user
-Show only those processes owned by
+Show only those processes owned by username or UID
 .Ar user .
 The prefix
 .Sq -
 hides processes owned by that user.
-This option currently only accepts usernames and does not understand
-UID numbers.
 .It Fl u
 Do not take the time to map UID numbers to usernames.
 Normally,
@@ -329,10 +330,13 @@ This acts similarly to the command
 Show
 .Ar count
 processes.
-.It o Ar field
+.It o Oo - Oc Ns Ar field
 Sort the process display area using the specified
 .Ar field
 as the primary key.
+The
+.Sq -
+prefix reverses the order.
 Values are the same as for the
 .Fl o
 flag, as detailed above.
@@ -362,7 +366,7 @@ Set the delay between screen updates to
 .Ar time
 seconds.
 .It u Oo - Oc Ns Ar user
-Show only those processes owned by
+Show only those processes owned by username or UID
 .Ar user .
 .Sq u+
 shows processes belonging to all users.
@@ -388,7 +392,7 @@ the number of existing processes,
 the number of processes in each state
 (starting, running, idle, stopped, zombie, dead, and on processor),
 and a percentage of time spent in each of the processor states
-(user, nice, system, interrupt, and idle).
+(user, nice, system, spinning, interrupt, and idle).
 It also includes information about physical and virtual memory allocation.
 The load average numbers give the number of jobs in the run queue averaged
 over 1, 5, and 15 minutes.

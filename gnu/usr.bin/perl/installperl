@@ -11,8 +11,8 @@ BEGIN {
 }
 
 use strict;
-use vars qw($Is_VMS $Is_W32 $Is_OS2 $Is_Cygwin $Is_Darwin $Is_NetWare $Is_AmigaOS
-	    %opts $packlist);
+our ($Is_VMS, $Is_W32, $Is_OS2, $Is_Cygwin, $Is_Darwin, $Is_NetWare, $Is_AmigaOS,
+	    %opts, $packlist);
 my $versiononly;
 
 BEGIN {
@@ -394,6 +394,7 @@ foreach my $file (@corefiles) {
     if (copy_if_diff($file,"$installarchlib/CORE/$file")) {
 	if ($file =~ /\.(\Q$so\E|\Q$dlext\E)$/) {
 	    strip("-S", "$installarchlib/CORE/$file") if $^O eq 'darwin';
+	    fix_dep_names("$installarchlib/CORE/$file");
 	    chmod($SO_MODE, "$installarchlib/CORE/$file");
 	} else {
 	    chmod($NON_SO_MODE, "$installarchlib/CORE/$file");
@@ -548,49 +549,6 @@ if (!$opts{nopods} && (!$versiononly || ($installprivlib =~ m/\Q$vershort/))) {
 
 }
 
-# Check to make sure there aren't other perls around in installer's
-# path.  This is probably UNIX-specific.  Check all absolute directories
-# in the path except for where public executables are supposed to live.
-# Also skip $mainperl if the user opted to have it be a link to the
-# installed perl.
-
-if (!$versiononly && !$opts{'skip-otherperls'}) {
-    my ($path, @path);
-    my $dirsep = ($Is_OS2 || $Is_W32 || $Is_NetWare) ? ';' : ':' ;
-    ($path = $ENV{"PATH"}) =~ s:\\:/:g ;
-    @path = split(/$dirsep/, $path);
-    if ($Is_VMS) {
-	my $i = 0;
-	while (exists $ENV{'DCL$PATH' . $i}) {
-	    my $dir = unixpath($ENV{'DCL$PATH' . $i});  $dir =~ s-/$--;
-	    push(@path,$dir);
-	}
-    }
-    my @otherperls;
-    my %otherperls;
-    for (@path) {
-	next unless m,^/,;
-	# Use &samepath here because some systems have other dirs linked
-	# to $mainperldir (like SunOS)
-	next unless -d;
-	next if samepath($_, $binexp);
-	next if samepath($_, cwd());
-	next if ($mainperl_is_instperl && samepath($_, $mainperldir));
-	my $otherperl = "$_/$perl$exe_ext";
-	next if $otherperls{$otherperl}++;
-	push(@otherperls, $otherperl)
-	    if (-x $otherperl && ! -d $otherperl);
-    }
-    if (@otherperls) {
-	warn "\nWarning: $perl appears in your path in the following " .
-	    "locations beyond where\nwe just installed it:\n";
-	for (@otherperls) {
-	    warn "    ", $_, "\n";
-	}
-	warn "\n";
-    }
-
-}
 
 $packlist->write() unless $opts{notify};
 if (defined($opts{uid}) || defined($opts{gid})) {
@@ -867,6 +825,29 @@ sub strip
 	    print "# file '$file' skipped\n" if $opts{verbose};
 	}
     }
+}
+
+sub fix_dep_names {
+    my $file = shift;
+
+    $^O eq "darwin" && $Config{osvers} =~ /^(1[5-9]|[2-9])/
+      && $Config{useshrplib}
+      or return;
+
+    my @opts;
+    my $so = $Config{so};
+    my $libperl = "$Config{archlibexp}/CORE/libperl.$Config{so}";
+    if ($file =~ /\blibperl.\Q$Config{so}\E$/a) {
+        push @opts, -id => $libperl;
+    }
+    else {
+        push @opts, -change => getcwd . "/libperl.$so", $libperl;
+    }
+    push @opts, $file;
+
+    $opts{verbose} and print "  install_name_tool @opts\n";
+    system "install_name_tool", @opts
+      and die "Cannot update $file dependency paths\n";
 }
 
 # ex: set ts=8 sts=4 sw=4 et:

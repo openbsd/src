@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.135 2017/08/29 02:51:27 deraadt Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.139 2018/11/30 09:24:57 claudio Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -583,7 +583,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type)
 		auth_len = (ngroups << 2) + 5 * NFSX_UNSIGNED;
 		authsiz = nfsm_rndup(auth_len);
 		/* The authorization size + the size of the static part */
-		MH_ALIGN(mb, authsiz + 10 * NFSX_UNSIGNED);
+		m_align(mb, authsiz + 10 * NFSX_UNSIGNED);
 		break;
 	}
 
@@ -713,7 +713,7 @@ nfsm_uiotombuf(struct mbuf **mp, struct uio *uiop, size_t len)
 	uiop->uio_rw = UIO_WRITE;
 
 	while (len) {
-		xfer = ulmin(len, M_TRAILINGSPACE(mb));
+		xfer = ulmin(len, m_trailingspace(mb));
 		uiomove(mb_offset(mb), xfer, uiop);
 		mb->m_len += xfer;
 		len -= xfer;
@@ -728,7 +728,7 @@ nfsm_uiotombuf(struct mbuf **mp, struct uio *uiop, size_t len)
 	}
 
 	if (pad > 0) {
-		if (pad > M_TRAILINGSPACE(mb)) {
+		if (pad > m_trailingspace(mb)) {
 			MGET(mb2, M_WAIT, MT_DATA);
 			mb2->m_len = 0;
 			mb->m_next = mb2;
@@ -1432,7 +1432,6 @@ nfsrv_fhtovp(fhandle_t *fhp, int lockflag, struct vnode **vpp,
     struct ucred *cred, struct nfssvc_sock *slp, struct mbuf *nam,
     int *rdonlyp)
 {
-	struct proc *p = curproc;	/* XXX */
 	struct mount *mp;
 	int i;
 	struct ucred *credanon;
@@ -1472,7 +1471,7 @@ nfsrv_fhtovp(fhandle_t *fhp, int lockflag, struct vnode **vpp,
 	else
 		*rdonlyp = 0;
 	if (!lockflag)
-		VOP_UNLOCK(*vpp, p);
+		VOP_UNLOCK(*vpp);
 
 	return (0);
 }
@@ -1520,10 +1519,9 @@ loop:
 		if (vp->v_mount != mp)	/* Paranoia */
 			goto loop;
 		nvp = LIST_NEXT(vp, v_mntvnodes);
-		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp != NULL; bp = nbp) {
-			nbp = LIST_NEXT(bp, b_vnbufs);
+		LIST_FOREACH_SAFE(bp, &vp->v_dirtyblkhd, b_vnbufs, nbp) {
 			if ((bp->b_flags & (B_BUSY | B_DELWRI | B_NEEDCOMMIT))
-				== (B_DELWRI | B_NEEDCOMMIT))
+			    == (B_DELWRI | B_NEEDCOMMIT))
 				bp->b_flags &= ~B_NEEDCOMMIT;
 		}
 	}
@@ -1795,7 +1793,7 @@ nfsm_build(struct mbuf **mp, u_int len)
 	mb = *mp;
 	bpos = mb_offset(mb);
 
-	if (len > M_TRAILINGSPACE(mb)) {
+	if (len > m_trailingspace(mb)) {
 		MGET(mb2, M_WAIT, MT_DATA);
 		if (len > MLEN)
 			panic("build > MLEN");

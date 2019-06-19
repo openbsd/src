@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.21 2013/11/21 15:54:45 deraadt Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.22 2018/07/09 19:38:29 deraadt Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "pathnames.h"
 #include "mt.h"
@@ -174,9 +175,12 @@ okname(char *cp0)
 int
 rmtopen(char *tape, int mode)
 {
-	char buf[256];
+	char buf[1 + PATH_MAX+1 + 10+1 +1];
+	int r;
 
-	(void)snprintf(buf, sizeof (buf), "O%s\n%d\n", tape, mode);
+	r = snprintf(buf, sizeof (buf), "O%s\n%d\n", tape, mode);
+	if (r == -1 || r >= sizeof buf)
+		errx(1, "tape name too long");
 	rmtstate = TS_OPEN;
 	return (rmtcall(tape, buf));
 }
@@ -210,11 +214,14 @@ rmtstatus(void)
 int
 rmtioctl(int cmd, int count)
 {
-	char buf[256];
+	char buf[1 + 10+1 + 10+1 +1];
+	int r;
 
 	if (count < 0)
 		return (-1);
-	(void)snprintf(buf, sizeof (buf), "I%d\n%d\n", cmd, count);
+	r = snprintf(buf, sizeof (buf), "I%d\n%d\n", cmd, count);
+	if (r == -1 || r >= sizeof buf)
+		errx(1, "string error during ioctl");
 	return (rmtcall("ioctl", buf));
 }
 

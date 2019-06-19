@@ -29,29 +29,28 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
          "Can't have args for an object-like macro!");
   MacroArgs **ResultEnt = nullptr;
   unsigned ClosestMatch = ~0U;
-  
+
   // See if we have an entry with a big enough argument list to reuse on the
   // free list.  If so, reuse it.
   for (MacroArgs **Entry = &PP.MacroArgCache; *Entry;
-       Entry = &(*Entry)->ArgCache)
+       Entry = &(*Entry)->ArgCache) {
     if ((*Entry)->NumUnexpArgTokens >= UnexpArgTokens.size() &&
         (*Entry)->NumUnexpArgTokens < ClosestMatch) {
       ResultEnt = Entry;
-      
+
       // If we have an exact match, use it.
       if ((*Entry)->NumUnexpArgTokens == UnexpArgTokens.size())
         break;
       // Otherwise, use the best fit.
       ClosestMatch = (*Entry)->NumUnexpArgTokens;
     }
-
+  }
   MacroArgs *Result;
   if (!ResultEnt) {
-    // Allocate memory for a MacroArgs object with the lexer tokens at the end.
-    Result = (MacroArgs *)malloc(sizeof(MacroArgs) +
-                                 UnexpArgTokens.size() * sizeof(Token));
-    // Construct the MacroArgs object.
-    new (Result)
+    // Allocate memory for a MacroArgs object with the lexer tokens at the end,
+    // and construct the MacroArgs object.
+    Result = new (
+        llvm::safe_malloc(totalSizeToAlloc<Token>(UnexpArgTokens.size())))
         MacroArgs(UnexpArgTokens.size(), VarargsElided, MI->getNumParams());
   } else {
     Result = *ResultEnt;
@@ -63,9 +62,14 @@ MacroArgs *MacroArgs::create(const MacroInfo *MI,
   }
 
   // Copy the actual unexpanded tokens to immediately after the result ptr.
-  if (!UnexpArgTokens.empty())
-    std::copy(UnexpArgTokens.begin(), UnexpArgTokens.end(), 
-              const_cast<Token*>(Result->getUnexpArgument(0)));
+  if (!UnexpArgTokens.empty()) {
+    static_assert(std::is_trivial<Token>::value,
+                  "assume trivial copyability if copying into the "
+                  "uninitialized array (as opposed to reusing a cached "
+                  "MacroArgs)");
+    std::copy(UnexpArgTokens.begin(), UnexpArgTokens.end(),
+              Result->getTrailingObjects<Token>());
+  }
 
   return Result;
 }
@@ -79,7 +83,7 @@ void MacroArgs::destroy(Preprocessor &PP) {
   // would deallocate the element vectors.
   for (unsigned i = 0, e = PreExpArgTokens.size(); i != e; ++i)
     PreExpArgTokens[i].clear();
-  
+
   // Add this to the preprocessor's free list.
   ArgCache = PP.MacroArgCache;
   PP.MacroArgCache = this;
@@ -89,12 +93,14 @@ void MacroArgs::destroy(Preprocessor &PP) {
 /// its freelist.
 MacroArgs *MacroArgs::deallocate() {
   MacroArgs *Next = ArgCache;
-  
+
   // Run the dtor to deallocate the vectors.
   this->~MacroArgs();
   // Release the memory for the object.
+  static_assert(std::is_trivially_destructible<Token>::value,
+                "assume trivially destructible and forego destructors");
   free(this);
-  
+
   return Next;
 }
 
@@ -113,10 +119,13 @@ unsigned MacroArgs::getArgLength(const Token *ArgPtr) {
 /// getUnexpArgument - Return the unexpanded tokens for the specified formal.
 ///
 const Token *MacroArgs::getUnexpArgument(unsigned Arg) const {
+
+  assert(Arg < getNumMacroArguments() && "Invalid arg #");
   // The unexpanded argument tokens start immediately after the MacroArgs object
   // in memory.
-  const Token *Start = (const Token *)(this+1);
+  const Token *Start = getTrailingObjects<Token>();
   const Token *Result = Start;
+
   // Scan to find Arg.
   for (; Arg; ++Result) {
     assert(Result < Start+NumUnexpArgTokens && "Invalid arg #");
@@ -127,6 +136,16 @@ const Token *MacroArgs::getUnexpArgument(unsigned Arg) const {
   return Result;
 }
 
+// This function assumes that the variadic arguments are the tokens
+// corresponding to the last parameter (ellipsis) - and since tokens are
+// separated by the 'eof' token, if that is the only token corresponding to that
+// last parameter, we know no variadic arguments were supplied.
+bool MacroArgs::invokedWithVariadicArgument(const MacroInfo *const MI) const {
+  if (!MI->isVariadic())
+    return false;
+  const int VariadicArgIndex = getNumMacroArguments() - 1;
+  return getUnexpArgument(VariadicArgIndex)->isNot(tok::eof);
+}
 
 /// ArgNeedsPreexpansion - If we can prove that the argument won't be affected
 /// by pre-expansion, return false.  Otherwise, conservatively return true.
@@ -145,15 +164,14 @@ bool MacroArgs::ArgNeedsPreexpansion(const Token *ArgTok,
 
 /// getPreExpArgument - Return the pre-expanded form of the specified
 /// argument.
-const std::vector<Token> &
-MacroArgs::getPreExpArgument(unsigned Arg, const MacroInfo *MI, 
-                             Preprocessor &PP) {
-  assert(Arg < MI->getNumParams() && "Invalid argument number!");
+const std::vector<Token> &MacroArgs::getPreExpArgument(unsigned Arg,
+                                                       Preprocessor &PP) {
+  assert(Arg < getNumMacroArguments() && "Invalid argument number!");
 
   // If we have already computed this, return it.
-  if (PreExpArgTokens.size() < MI->getNumParams())
-    PreExpArgTokens.resize(MI->getNumParams());
-  
+  if (PreExpArgTokens.size() < getNumMacroArguments())
+    PreExpArgTokens.resize(getNumMacroArguments());
+
   std::vector<Token> &Result = PreExpArgTokens[Arg];
   if (!Result.empty()) return Result;
 
@@ -255,7 +273,7 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
   // If the last character of the string is a \, and if it isn't escaped, this
   // is an invalid string literal, diagnose it as specified in C99.
   if (Result.back() == '\\') {
-    // Count the number of consequtive \ characters.  If even, then they are
+    // Count the number of consecutive \ characters.  If even, then they are
     // just escaped backslashes, otherwise it's an error.
     unsigned FirstNonSlash = Result.size()-2;
     // Guaranteed to find the starting " if nothing else.

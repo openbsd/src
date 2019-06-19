@@ -1,4 +1,4 @@
-//===- ProvenanceAnalysis.h - ObjC ARC Optimization ---*- C++ -*-----------===//
+//===- ProvenanceAnalysis.h - ObjC ARC Optimization -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,6 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
 /// \file
 ///
 /// This file declares a special form of Alias Analysis called ``Provenance
@@ -19,7 +20,7 @@
 /// WARNING: This file knows about how certain Objective-C library functions are
 /// used. Naive LLVM IR transformations which would otherwise be
 /// behavior-preserving may break these assumptions.
-///
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIB_TRANSFORMS_OBJCARC_PROVENANCEANALYSIS_H
@@ -27,18 +28,19 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/IR/ValueHandle.h"
+#include <utility>
 
 namespace llvm {
-  class Value;
-  class DataLayout;
-  class PHINode;
-  class SelectInst;
-}
 
-namespace llvm {
+class DataLayout;
+class PHINode;
+class SelectInst;
+class Value;
+
 namespace objcarc {
 
-/// \brief This is similar to BasicAliasAnalysis, and it uses many of the same
+/// This is similar to BasicAliasAnalysis, and it uses many of the same
 /// techniques, except it uses special ObjC-specific reasoning about pointer
 /// relationships.
 ///
@@ -50,19 +52,21 @@ namespace objcarc {
 class ProvenanceAnalysis {
   AliasAnalysis *AA;
 
-  typedef std::pair<const Value *, const Value *> ValuePairTy;
-  typedef DenseMap<ValuePairTy, bool> CachedResultsTy;
+  using ValuePairTy = std::pair<const Value *, const Value *>;
+  using CachedResultsTy = DenseMap<ValuePairTy, bool>;
+
   CachedResultsTy CachedResults;
+
+  DenseMap<const Value *, WeakTrackingVH> UnderlyingObjCPtrCache;
 
   bool relatedCheck(const Value *A, const Value *B, const DataLayout &DL);
   bool relatedSelect(const SelectInst *A, const Value *B);
   bool relatedPHI(const PHINode *A, const Value *B);
 
-  void operator=(const ProvenanceAnalysis &) = delete;
-  ProvenanceAnalysis(const ProvenanceAnalysis &) = delete;
-
 public:
-  ProvenanceAnalysis() {}
+  ProvenanceAnalysis() = default;
+  ProvenanceAnalysis(const ProvenanceAnalysis &) = delete;
+  ProvenanceAnalysis &operator=(const ProvenanceAnalysis &) = delete;
 
   void setAA(AliasAnalysis *aa) { AA = aa; }
 
@@ -72,10 +76,12 @@ public:
 
   void clear() {
     CachedResults.clear();
+    UnderlyingObjCPtrCache.clear();
   }
 };
 
 } // end namespace objcarc
+
 } // end namespace llvm
 
-#endif
+#endif // LLVM_LIB_TRANSFORMS_OBJCARC_PROVENANCEANALYSIS_H

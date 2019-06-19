@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.26 2016/09/19 06:46:43 ratchov Exp $
+.\"	$OpenBSD: audio.9,v 1.27 2019/03/12 08:18:34 ratchov Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 19 2016 $
+.Dd $Mdocdate: March 12 2019 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -80,6 +80,8 @@ struct audio_hw_if {
 		    void (*)(void *), void *, struct audio_params *);
 	int	(*trigger_input)(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
+	void	(*copy_output)(void *hdl, size_t bytes);
+	void	(*underrun)(void *hdl);
 };
 
 struct audio_params {
@@ -395,6 +397,26 @@ will be called with the argument
 Once started, the transfer may be stopped using
 .Fn halt_input .
 This function returns 0 on success, otherwise an error code.
+.It Fn "void (*copy_output)" "void *hdl" "size_t bytes"
+This function is called whenever the given amount of bytes was
+appended to the play ring buffer, typically during a
+.Xr write 2
+system call.
+Drivers using bounce buffers for transfers between the audio
+ring buffer and the device could implement this function
+to copy the given amount of bytes into their bounce buffers.
+There's no analogue function for recording as data is
+produced by the device and could simply be copied upon
+transfer completion.
+.It Fn "void (*underrun)" "void *hdl"
+This function is called at interrupt context whenever a
+play block was skipped by the
+.Xr audio 4
+driver.
+Drivers using bounce buffers for transfers between the audio
+ring buffer and the device must implement this method to skip
+one block from the audio ring buffer and transfer the
+corresponding amount of silence to the device.
 .El
 .Pp
 If the audio hardware is capable of input from more

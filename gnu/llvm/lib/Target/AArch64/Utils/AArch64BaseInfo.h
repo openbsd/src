@@ -285,6 +285,8 @@ struct SysAlias {
 struct SysAliasReg : SysAlias {
   bool NeedsReg;
   SysAliasReg(const char *N, uint16_t E, bool R) : SysAlias(N, E), NeedsReg(R) {};
+  SysAliasReg(const char *N, uint16_t E, bool R, FeatureBitset F) : SysAlias(N, E, F),
+    NeedsReg(R) {};
 };
 
 namespace AArch64AT{
@@ -327,12 +329,47 @@ namespace  AArch64ISB {
   #include "AArch64GenSystemOperands.inc"
 }
 
+namespace  AArch64TSB {
+  struct TSB : SysAlias {
+    using SysAlias::SysAlias;
+  };
+  #define GET_TSB_DECL
+  #include "AArch64GenSystemOperands.inc"
+}
+
 namespace AArch64PRFM {
   struct PRFM : SysAlias {
     using SysAlias::SysAlias;
   };
   #define GET_PRFM_DECL
   #include "AArch64GenSystemOperands.inc"
+}
+
+namespace AArch64SVEPRFM {
+  struct SVEPRFM : SysAlias {
+    using SysAlias::SysAlias;
+  };
+#define GET_SVEPRFM_DECL
+#include "AArch64GenSystemOperands.inc"
+}
+
+namespace AArch64SVEPredPattern {
+  struct SVEPREDPAT {
+    const char *Name;
+    uint16_t Encoding;
+  };
+#define GET_SVEPREDPAT_DECL
+#include "AArch64GenSystemOperands.inc"
+}
+
+namespace AArch64ExactFPImm {
+  struct ExactFPImm {
+    const char *Name;
+    int Enum;
+    const char *Repr;
+  };
+#define GET_EXACTFPIMM_DECL
+#include "AArch64GenSystemOperands.inc"
 }
 
 namespace AArch64PState {
@@ -517,7 +554,12 @@ namespace AArch64II {
     /// thread-local symbol. On Darwin, only one type of thread-local access
     /// exists (pre linker-relaxation), but on ELF the TLSModel used for the
     /// referee will affect interpretation.
-    MO_TLS = 0x40
+    MO_TLS = 0x40,
+
+    /// MO_DLLIMPORT - On a symbol operand, this represents that the reference
+    /// to the symbol is for an import stub.  This is used for DLL import
+    /// storage class indication on Windows.
+    MO_DLLIMPORT = 0x80,
   };
 } // end namespace AArch64II
 

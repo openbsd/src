@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_nistz256.c,v 1.3 2017/05/02 03:59:44 deraadt Exp $	*/
+/*	$OpenBSD: ecp_nistz256.c,v 1.7 2018/11/05 20:18:21 tb Exp $	*/
 /* Copyright (c) 2014, Intel Corporation.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -565,7 +565,7 @@ ecp_nistz256_windowed_mul(const EC_GROUP *group, P256_POINT *r,
 	}
 
 	ret = 1;
-err:
+ err:
 	free(table);
 	free(p_str);
 	free(scalars);
@@ -712,7 +712,7 @@ ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
 	ec_pre_comp = NULL;
 	ret = 1;
 
-err:
+ err:
 	if (ctx != NULL)
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
@@ -985,7 +985,7 @@ ecp_nistz256_points_mul(const EC_GROUP *group, EC_POINT *r,
 
 	ret = 1;
 
-err:
+ err:
 	if (ctx)
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);
@@ -1182,7 +1182,8 @@ EC_GFp_nistz256_method(void)
 		.field_sqr = ec_GFp_mont_field_sqr,
 		.field_encode = ec_GFp_mont_field_encode,
 		.field_decode = ec_GFp_mont_field_decode,
-		.field_set_to_one = ec_GFp_mont_field_set_to_one
+		.field_set_to_one = ec_GFp_mont_field_set_to_one,
+		.blind_coordinates = NULL,
 	};
 
 	return &ret;

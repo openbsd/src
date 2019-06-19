@@ -280,7 +280,8 @@ static void FDECL3(write_one_file, char *, filename,
 	       fprintf(stderr,"%d..", last_extent_written);
 	  }
 #else
-	  if((last_extent_written % 5000) < use/SECTOR_SIZE)
+	  if((last_extent_written % 5000) < use/SECTOR_SIZE
+	    && verbose > 3)
 	  {
 	       time_t now;
 	       time_t the_end;
@@ -1545,7 +1546,7 @@ static int file_gen()
 		/* exit with the error */
 		if (*hce->error)
 		    fprintf(stderr, "%s\n", hce->error);
-		err(1, hfs_error);
+		err(1, "%s", hfs_error);
 	    }
 	    else
 	    {
@@ -1575,7 +1576,7 @@ static int file_gen()
       if (gen_mac_label(&mac_boot)) {
 	if (*hce->error)
 	    fprintf(stderr, "%s\n", hce->error);
-	err(1, hfs_error);
+	err(1, "%s", hfs_error);
       }
     }
 

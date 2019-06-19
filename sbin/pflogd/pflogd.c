@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.58 2017/09/09 13:02:52 brynet Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.59 2018/08/26 18:24:46 brynet Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -75,7 +75,7 @@ int   flush_buffer(FILE *);
 int   if_exists(char *);
 void  logmsg(int, const char *, ...);
 void  purge_buffer(void);
-int   reset_dump(int);
+int   reset_dump(void);
 int   scan_dump(FILE *, off_t);
 int   set_snaplen(int);
 void  set_suspended(int);
@@ -83,8 +83,6 @@ void  sig_alrm(int);
 void  sig_close(int);
 void  sig_hup(int);
 void  usage(void);
-
-static int try_reset_dump(int);
 
 /* buffer must always be greater than snaplen */
 static int    bufpkt = 0;	/* number of packets in buffer */
@@ -238,25 +236,7 @@ set_snaplen(int snap)
 }
 
 int
-reset_dump(int nomove)
-{
-	int ret;
-
-	for (;;) {
-		ret = try_reset_dump(nomove);
-		if (ret <= 0)
-			break;
-	}
-
-	return (ret);
-}
-
-/*
- * tries to (re)open log file, nomove flag is used with -x switch
- * returns 0: success, 1: retry (log moved), -1: error
- */
-int
-try_reset_dump(int nomove)
+reset_dump(void)
 {
 	struct pcap_file_header hdr;
 	struct stat st;
@@ -323,12 +303,9 @@ try_reset_dump(int nomove)
 		}
 	} else if (scan_dump(fp, st.st_size)) {
 		fclose(fp);
-		if (nomove || priv_move_log()) {
-			logmsg(LOG_ERR,
-			    "Invalid/incompatible log file, move it away");
-			return (-1);
-		}
-		return (1);
+		logmsg(LOG_ERR,
+		    "Invalid/incompatible log file, move it away");
+		return (-1);
 	}
 
 	dpcap = fp;
@@ -641,7 +618,7 @@ main(int argc, char **argv)
 		bufpkt = 0;
 	}
 
-	if (reset_dump(Xflag) < 0) {
+	if (reset_dump() < 0) {
 		if (Xflag)
 			return (1);
 
@@ -666,10 +643,14 @@ main(int argc, char **argv)
 		if (gotsig_close)
 			break;
 		if (gotsig_hup) {
-			if (reset_dump(0)) {
+			int was_suspended = suspended;
+			if (reset_dump()) {
 				logmsg(LOG_ERR,
 				    "Logging suspended: open error");
 				set_suspended(1);
+			} else {
+				if (was_suspended)
+					logmsg(LOG_NOTICE, "Logging resumed");
 			}
 			gotsig_hup = 0;
 		}

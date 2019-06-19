@@ -313,6 +313,12 @@ main (int argc, char **argv)
   link_info.create_object_symbols_section = NULL;
   link_info.gc_sym_list = NULL;
   link_info.base_file = NULL;
+  link_info.emit_hash = TRUE;
+#ifndef __mips64__
+  link_info.emit_gnu_hash = TRUE;
+#else
+  link_info.emit_gnu_hash = FALSE;
+#endif
   /* SVR4 linkers seem to set DT_INIT and DT_FINI based on magic _init
      and _fini symbols.  We are compatible.  */
   link_info.init_function = "_init";

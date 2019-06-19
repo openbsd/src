@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.27 2015/01/16 06:40:18 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.28 2018/04/26 12:42:51 guenther Exp $	*/
 /*	$NetBSD: cmds.c,v 1.12 1997/10/05 15:12:06 mrg Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 
 #include <signal.h>
 #include <fcntl.h>

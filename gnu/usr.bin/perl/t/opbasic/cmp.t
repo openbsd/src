@@ -1,10 +1,5 @@
 #!./perl
 
-BEGIN {
-       chdir 't' if -d 't';
-       @INC = '../lib';
-}
-
 # This file has been placed in t/opbasic to indicate that it should not use
 # functions imported from t/test.pl or Test::More, as those programs/libraries
 # use operators which are what is being tested in this file.

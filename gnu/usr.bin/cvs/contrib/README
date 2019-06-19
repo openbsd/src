@@ -20,11 +20,6 @@ If you have some software that works with CVS that you wish to offer it
 is suggested that you make it available by FTP or HTTP and then announce
 it on the info-cvs mailing list.
 
-There is a web page of software related to CVS at the following URL which
-would presumably be willing to list your software.
-
-	http://www.loria.fr/~molli/cvs-index.html
-
 An attempt at a table of Contents for this directory:
 
 	README		This file.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.24 2015/12/20 19:53:24 benno Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.26 2018/09/16 12:43:40 millert Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -37,6 +37,8 @@
 #include <stdio.h>
 #include <limits.h>
 #include <fts.h>
+#include <grp.h>
+#include <pwd.h>
 #include "mtree.h"
 #include "extern.h"
 
@@ -154,6 +156,10 @@ main(int argc, char *argv[])
 				err(1, "pledge");
 		}
 	}
+
+	/* Keep passwd and group files open for faster lookups. */
+	setpassent(1);
+	setgroupent(1);
 
 	if (dir && chdir(dir))
 		error("%s: %s", dir, strerror(errno));

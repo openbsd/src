@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armv7,v 1.33 2017/06/14 13:12:49 patrick Exp $
+#	$OpenBSD: files.armv7,v 1.37 2018/06/05 20:41:19 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -25,13 +25,6 @@ file	arch/armv7/armv7/armv7_start.S
 file	arch/armv7/armv7/autoconf.c
 file	arch/armv7/armv7/platform.c
 file	arch/arm/arm/disksubr.c			disk
-
-# FDT support
-file	dev/ofw/ofw_clock.c
-file	dev/ofw/ofw_gpio.c
-file	dev/ofw/ofw_misc.c
-file	dev/ofw/ofw_pinctrl.c
-file	dev/ofw/ofw_regulator.c
 
 include "dev/sdmmc/files.sdmmc"
 
@@ -82,12 +75,3 @@ include "arch/armv7/exynos/files.exynos"
 include "arch/armv7/vexpress/files.vexpress"
 include "arch/armv7/broadcom/files.broadcom"
 include "arch/armv7/marvell/files.marvell"
-
-# Console related stuff
-attach	com at fdt with com_fdt
-file	arch/armv7/dev/com_fdt.c		com_fdt
-
-# ARM PrimeCell PL011 UART
-device	pluart
-attach	pluart at fdt
-file	arch/armv7/dev/pluart.c			pluart

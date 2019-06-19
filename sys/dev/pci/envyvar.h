@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.19 2015/08/30 08:52:26 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.20 2019/04/30 20:29:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -54,6 +54,7 @@ struct envy_card {
 	int nmidi;
 	void (*init)(struct envy_softc *);
 	void (*codec_write)(struct envy_softc *, int, int, int);
+ 	void (*set_rate)(struct envy_softc *, int);
 	unsigned char *eeprom;
 };
 

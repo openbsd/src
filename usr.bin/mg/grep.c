@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.46 2018/01/09 17:59:29 cheloha Exp $	*/
+/*	$OpenBSD: grep.c,v 1.47 2018/12/30 23:09:58 guenther Exp $	*/
 
 /* This file is in the public domain */
 
@@ -7,7 +7,6 @@
 #include <sys/wait.h>
 
 #include <ctype.h>
-#include <libgen.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>

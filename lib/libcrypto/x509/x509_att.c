@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_att.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: x509_att.c,v 1.17 2018/05/18 19:21:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,8 +84,8 @@ X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid, int lastpos)
 }
 
 int
-X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk, ASN1_OBJECT *obj,
-    int lastpos)
+X509at_get_attr_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *sk,
+    const ASN1_OBJECT *obj, int lastpos)
 {
 	int n;
 	X509_ATTRIBUTE *ex;
@@ -205,7 +205,7 @@ X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x, const char *attrname,
 }
 
 void *
-X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x, ASN1_OBJECT *obj,
+X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x, const ASN1_OBJECT *obj,
     int lastpos, int type)
 {
 	int i;
@@ -353,7 +353,7 @@ err:
 }
 
 int
-X509_ATTRIBUTE_count(X509_ATTRIBUTE *attr)
+X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr)
 {
 	if (!attr->single)
 		return sk_ASN1_TYPE_num(attr->value.set);

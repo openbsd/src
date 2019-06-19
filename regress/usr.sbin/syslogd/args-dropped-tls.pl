@@ -31,24 +31,24 @@ our %args = (
 	loggrep => {
 	    get_between2loggrep(),
 	    get_charlog() => 400,
-	    qr/ \(dropped\)/ => '~68',
+	    qr/ \(dropped\)/ => '~65',
 	    qr/SSL3_WRITE_PENDING/ => 0,
 	},
     },
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tls", addr => "localhost" },
+	rcvbuf => 2**12,
 	func => sub {
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep(get_thirdlog(), 20)
 		or die ref($self), " syslogd did not receive third log";
 	    read_log($self);
 	},
-	rcvbuf => 2**12,
 	loggrep => {
 	    get_between2loggrep(),
 	    get_secondlog() => 1,
 	    get_thirdlog() => 0,
-	    get_charlog() => '~333',
+	    get_charlog() => '~336',
 	    qr/syslogd\[\d+\]: dropped [67][0-9] messages to loghost/ => 1,
 	},
     },

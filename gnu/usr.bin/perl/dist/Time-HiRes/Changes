@@ -1,5 +1,107 @@
 Revision history for the Perl extension Time::HiRes.
 
+1.9759 [2018-03-23]
+ - This version reverts the changes on CPAN that were included in 1.9754 - 1.9758.
+   Several of these changes caused instability on some windows platforms. We can
+   revisit these fixes if necessary in Perl 5.29.0
+
+1.9753 [2018-01-11]
+ - in t/clock.t in a fast system we need to burn more CPU,
+   reported and fix suggested by Joel C. Maslak <jmaslak@antelope.net>
+   [rt.cpan.org #124025]
+ - for t/utime.t in netbsd we need /sbin in PATH to find the mount command,
+   this is needed for the fix in 1.9751 to actually help netbsd with noatime
+   mounts.
+   (thanks to Nigel Horne)
+
+1.9752 [2018-01-04]
+ - fix an error in the error message of utimensat() not available:
+   it said futimens() not available
+ - add --force alias for Makefile.PL --configure
+
+1.9751 [2018-01-02]
+ - in macOS/OSX/Darwin, use __has_builtin() check also for utimensat(),
+   can cause errors like
+   "HiRes.xs:1474:16: error: unrecognized platform name macOS"
+   [rt.cpan.org #123994]
+   (oversight from 1.9749)
+ - do not define TIME_HIRES_STAT/d_hires_stat if none was found, instead
+   of defining it to be zero, which case has no implementation in hrstatns()
+   (thanks to Nigel Horne)
+ - in t/utime.t try to divine if the filesystem of the tempfiles has been
+   mounted with the 'noatime' option, which can prohibit updating the
+   access time timestamp.  Also document this in HiRes.pm.
+   (thanks to Nigel Horne, original analysis by Slaven Rezic)
+ - synchronize the constant lists in HiRes.pm:@EXPORT_OK
+   and Makefile.PL:doConstants and regenerate fallback/const-c.inc
+   and fallback/const-xs.inc, this fixes Perl 5.6.2 issue with
+   d_futimens not allegedly being a valid macro in t/utime.t
+   (using Perl 5.26.1 for the regenerating, not 5.6.2)
+   (thanks to Nigel Horne)
+ - in t/utime.t define a nop sub done_testing for ancient Perls
+   (like Perl 5.6.2)
+ - in Perl 5.6.2 a bogus warning
+   "Use of uninitialized value in subroutine entry"
+   is issued from t/alarm.t: add a comment documenting that
+
+1.9750 [2017-12-22]
+ - update META.yml and META.json for XSLoader instead of DynaLoader
+   [rt.cpan.org #123933]
+
+1.9749 [2017-12-21]
+ - CPAN release
+ - Quieten Time-HiRes test noise: blead 0f009486
+ - Switch some core modules to XSLoader: blead b9a5a78f [rt.cpan.org #129789]
+ - disable a flapping test for CI: blead cd2a978d
+ - Avoid newGVgen in blead-upstream modules: blead 732d3893
+ - Declaration after statement in typemap: blead d269f586
+ - semicolon-friendly diagnostic control: blead 7347ee54
+ - in macOS (OS X) check properly in runtime whether futimens()
+   and utimensat() are available
+
+1.9748 [2017-12-16]
+ - bleadperl only
+ - semicolon-friendly diagnostic control: blead 7347ee54
+
+1.9747 [2017-09-13]
+ - bleadperl only
+ - Switch some core modules to XSLoader: blead b9a5a78f [rt.cpan.org #129789]
+
+1.9746 [2017-08-17]
+ - Unreliable t/usleep.t and t/utime.t tests [rt.cpan.org #122819]
+   Avoid testing for $dt = $t2 - $t1 and assuming $dt is less than
+   some value since a heavily loaded machine can delay the $t2.
+   Testing for greater than is fine.
+ - Tweak the configuring messages about subsecond stat/utime.
+
+1.9745 [2017-08-14]
+  - Properly check for futimens/utimensat actually doing something.
+    This should handle 'gnukfreebsd' (which has only stubs, so far
+    we have been skipping the test) and as a new thing 'gnu' (Hurd)
+    (also only stubs).  Thanks to Nigel Horne.
+  - Scan in t/utime.t whether the filesystem (wherever File::Temp
+    puts it tempfiles) supports subsecond timestamps.  This removes
+    the fragile Linux/ext3 specific hack.  As a side effect, the
+    setting of subsecond timestamps is tested only if reading of
+    them is supported.  Thanks to Carsten Gaebler for the test idea,
+    and Ryan Voots for testing.
+
+1.9744 [2017-07-27]
+  - add more potential clock constants, like CLOCK_MONOTONIC_FAST
+    (available in FreeBSD), and not all potentially found clock
+    constants were properly exported to be available from Perl,
+    see your system's clock_gettime() documentation for the available ones
+
+1.9743 [2017-07-20]
+  - correct declared minimum Perl version (should be 5.6, was declared
+    as 5.8 since 1.9727_03): blead af94b3ac
+  - fix the fix for 'do file' to load hints in Makefile.PL: blead 3172fdbc
+
+1.9742 [2017-04-16]
+  - prefer 3-argument open: blead 1ae6ead9
+  - fix dist/Time-HiRes/t/*.t that assumed '.' in @INC: blead 465db51d
+  - fix cases where 'do file' should be 'do ./file'.: blead 8b69401c
+
 1.9741 [2016-11-20]
   - C++11 compatibility: blead a914236c
   - El Capitan compatibility: blead 45bbc013

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.54 2018/02/10 02:54:33 mortimer Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.55 2018/04/12 17:13:44 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -276,7 +276,8 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 	return (uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, MAP_INHERIT_COPY,
-	    MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW)));
+	    MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW |
+	    (cmd->ev_flags & VMCMD_STACK ? UVM_FLAG_STACK : 0))));
 }
 
 /*
@@ -379,17 +380,19 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 #ifdef MACHINE_STACK_GROWS_UP
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr + epp->ep_ssize, NULLVP, 0, PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
+	    epp->ep_maxsaddr + epp->ep_ssize, NULLVP, 0,
+	    PROT_NONE);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    epp->ep_maxsaddr, NULLVP, 0,
-	    PROT_READ | PROT_WRITE);
+	    PROT_READ | PROT_WRITE, VMCMD_STACK);
 #else
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
+	    epp->ep_maxsaddr, NULLVP, 0,
+	    PROT_NONE);
+	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
 	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
-	    PROT_READ | PROT_WRITE);
+	    PROT_READ | PROT_WRITE, VMCMD_STACK);
 #endif
 
 	return (0);

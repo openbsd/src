@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.72 2017/07/10 21:30:37 espie Exp $
+#	$OpenBSD: Makefile,v 1.74 2019/02/13 15:10:40 nicm Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -95,8 +95,7 @@ MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 \
 
 GENERATED= init_keytry.h codes.c comp_captab.c expanded.c fallback.c \
 	keys.list lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
-CLEANFILES+= ${GENERATED} term.5 terminfo.5 curses.3 \
-	curs_addch.3 curs_attr.3 curs_getch.3 curs_inch.3 curs_mouse.3
+CLEANFILES+= ${GENERATED}
 
 BUILDFIRST = ${GENERATED}
 
@@ -166,12 +165,3 @@ afterinstall:
 	done
 
 .include <bsd.lib.mk>
-
-# must be at the end because bsd.lib.mk clears it
-.SUFFIXES: .3 .3tbl .5 .5tbl
-
-.3tbl.3:
-	cp ${.IMPSRC} ${.TARGET}
-
-.5tbl.5:
-	cp ${.IMPSRC} ${.TARGET}

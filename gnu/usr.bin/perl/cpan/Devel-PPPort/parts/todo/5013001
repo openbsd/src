@@ -1,6 +1,0 @@
-5.013001
-croak_sv                       # U
-die_sv                         # U
-mess_sv                        # U
-sv_2nv_flags                   # U
-warn_sv                        # U

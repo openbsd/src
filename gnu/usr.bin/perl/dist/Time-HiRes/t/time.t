@@ -1,6 +1,7 @@
 use strict;
 
 use Test::More tests => 2;
+BEGIN { push @INC, '.' }
 use t::Watchdog;
 
 BEGIN { require_ok "Time::HiRes"; }

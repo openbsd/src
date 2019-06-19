@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.24 2017/08/13 02:06:42 tedu Exp $	*/
+/*	$OpenBSD: dd.c,v 1.26 2019/02/16 10:54:00 bluhm Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -136,10 +136,14 @@ setup(void)
 		if ((in.db = malloc(out.dbsz + in.dbsz - 1)) == NULL)
 			err(1, "input buffer");
 		out.db = in.db;
-	} else if ((in.db =
-	    malloc((u_int)(MAXIMUM(in.dbsz, cbsz) + cbsz))) == NULL ||
-	    (out.db = malloc((u_int)(out.dbsz + cbsz))) == NULL)
-		err(1, "output buffer");
+	} else {
+		in.db = malloc(MAXIMUM(in.dbsz, cbsz) + cbsz);
+		if (in.db == NULL)
+			err(1, "input buffer");
+		out.db = malloc(out.dbsz + cbsz);
+		if (out.db == NULL)
+			err(1, "output buffer");
+	}
 	in.dbp = in.db;
 	out.dbp = out.db;
 
@@ -343,6 +347,10 @@ dd_close(void)
 	}
 	if (out.dbcnt)
 		dd_out(1);
+	if (ddflags & C_FSYNC) {
+		if (fsync(out.fd) == -1)
+			err(1, "fsync %s", out.name);
+	}
 }
 
 void

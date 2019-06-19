@@ -16,7 +16,7 @@
 
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineValueType.h"
+#include "llvm/Support/MachineValueType.h"
 
 namespace llvm {
 
@@ -41,6 +41,9 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// stack frame in bytes.
   unsigned CalleeSavedFrameSize = 0;
 
+  // SaveArgSize - Number of register arguments saved on the stack
+  unsigned SaveArgSize = 0;
+
   /// BytesToPopOnReturn - Number of bytes function pops on return (in addition
   /// to the space used by the return address).
   /// Used on windows platform for stdcall & fastcall name decoration
@@ -49,7 +52,7 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// ReturnAddrIndex - FrameIndex for return slot.
   int ReturnAddrIndex = 0;
 
-  /// \brief FrameIndex for return slot.
+  /// FrameIndex for return slot.
   int FrameAddrIndex = 0;
 
   /// TailCallReturnAddrDelta - The number of bytes by which return address
@@ -123,6 +126,9 @@ public:
 
   unsigned getCalleeSavedFrameSize() const { return CalleeSavedFrameSize; }
   void setCalleeSavedFrameSize(unsigned bytes) { CalleeSavedFrameSize = bytes; }
+
+  unsigned getSaveArgSize() const { return SaveArgSize; }
+  void setSaveArgSize(unsigned bytes) { SaveArgSize = bytes; }
 
   unsigned getBytesToPopOnReturn() const { return BytesToPopOnReturn; }
   void setBytesToPopOnReturn (unsigned bytes) { BytesToPopOnReturn = bytes;}

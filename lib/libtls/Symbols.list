@@ -59,6 +59,7 @@ tls_connect_cbs
 tls_connect_fds
 tls_connect_servername
 tls_connect_socket
+tls_default_ca_cert_file
 tls_error
 tls_free
 tls_handshake

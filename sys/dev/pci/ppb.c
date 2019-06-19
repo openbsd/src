@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.65 2015/12/01 21:02:04 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.68 2019/04/23 19:37:35 patrick Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ struct ppb_softc {
 	pcitag_t sc_tag;		/* ...and tag. */
 	pci_intr_handle_t sc_ih[4];
 	void *sc_intrhand;
+	struct extent *sc_parent_busex;
 	struct extent *sc_busex;
 	struct extent *sc_ioex;
 	struct extent *sc_memex;
@@ -76,6 +77,9 @@ struct ppb_softc {
 	struct task sc_rescan_task;
 	struct task sc_remove_task;
 	struct timeout sc_to;
+
+	u_long sc_busnum;
+	u_long sc_busrange;
 
 	bus_addr_t sc_iobase, sc_iolimit;
 	bus_addr_t sc_membase, sc_memlimit;
@@ -113,9 +117,6 @@ void	ppb_alloc_resources(struct ppb_softc *, struct pci_attach_args *);
 int	ppb_intr(void *);
 void	ppb_hotplug_insert(void *);
 void	ppb_hotplug_insert_finish(void *);
-int	ppb_hotplug_fixup(struct pci_attach_args *);
-int	ppb_hotplug_fixup_type0(pci_chipset_tag_t, pcitag_t, pcitag_t);
-int	ppb_hotplug_fixup_type1(pci_chipset_tag_t, pcitag_t, pcitag_t);
 void	ppb_hotplug_rescan(void *);
 void	ppb_hotplug_remove(void *);
 int	ppbprint(void *, const char *pnp);
@@ -390,6 +391,10 @@ ppbdetach(struct device *self, int flags)
 		free(name, M_DEVBUF, PPB_EXNAMLEN);
 	}
 
+	if (sc->sc_parent_busex)
+		extent_free(sc->sc_parent_busex, sc->sc_busnum,
+		    sc->sc_busrange, EX_NOWAIT);
+
 	return (rv);
 }
 
@@ -529,6 +534,9 @@ ppb_alloc_busrange(struct ppb_softc *sc, struct pci_attach_args *pa,
 		if (extent_alloc(pa->pa_busex, busrange, 1, 0, 0, 
 		    EX_NOWAIT, &busnum))
 			continue;
+		sc->sc_parent_busex = pa->pa_busex;
+		sc->sc_busnum = busnum;
+		sc->sc_busrange = busrange;
 		*busdata |= pa->pa_bus;
 		*busdata |= (busnum << 8);
 		*busdata |= ((busnum + busrange - 1) << 16);
@@ -620,14 +628,18 @@ ppb_alloc_resources(struct ppb_softc *sc, struct pci_attach_args *pa)
 	csr = pci_conf_read(pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
 
 	/*
-	 * Get the bridge in a consistent state.  If memory mapped I/O
-	 * is disabled, disabled the associated windows as well.  
+	 * Get the bridge in a consistent state.  If memory mapped I/O or
+	 * port I/O is disabled, disabled the associated windows as well.
 	 */
 	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
 		pci_conf_write(pc, sc->sc_tag, PPB_REG_MEM, 0x0000ffff);
 		pci_conf_write(pc, sc->sc_tag, PPB_REG_PREFMEM, 0x0000ffff);
 		pci_conf_write(pc, sc->sc_tag, PPB_REG_PREFBASE_HI32, 0);
 		pci_conf_write(pc, sc->sc_tag, PPB_REG_PREFLIM_HI32, 0);
+	}
+	if ((csr & PCI_COMMAND_IO_ENABLE) == 0) {
+		pci_conf_write(pc, sc->sc_tag, PPB_REG_IOSTATUS, 0x000000ff);
+		pci_conf_write(pc, sc->sc_tag, PPB_REG_IO_HI, 0x0000ffff);
 	}
 
 	/* Allocate I/O address space if necessary. */
@@ -761,108 +773,14 @@ ppb_hotplug_insert_finish(void *arg)
 	task_add(systq, &sc->sc_rescan_task);
 }
 
-int
-ppb_hotplug_fixup(struct pci_attach_args *pa)
-{
-	pcireg_t bhlcr;
-
-	bhlcr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
-	switch (PCI_HDRTYPE_TYPE(bhlcr)) {
-	case 0:
-		return ppb_hotplug_fixup_type0(pa->pa_pc,
-		    pa->pa_tag, *pa->pa_bridgetag);
-	case 1:
-		return ppb_hotplug_fixup_type1(pa->pa_pc,
-		    pa->pa_tag, *pa->pa_bridgetag);
-	default:
-		return (0);
-	}
-}
-
-int
-ppb_hotplug_fixup_type0(pci_chipset_tag_t pc, pcitag_t tag, pcitag_t bridgetag)
-{
-	pcireg_t intr;
-	int line;
-
-	/*
-	 * Fill in the interrupt line for platforms that need it.
-	 *
-	 * XXX We assume that the interrupt line matches the line used
-	 * by the PCI Express bridge.  This may not be true.
-	 */
-	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-	if (PCI_INTERRUPT_PIN(intr) != PCI_INTERRUPT_PIN_NONE &&
-	    PCI_INTERRUPT_LINE(intr) == 0) {
-		/* Get the interrupt line from our parent. */
-		intr = pci_conf_read(pc, bridgetag, PCI_INTERRUPT_REG);
-		line = PCI_INTERRUPT_LINE(intr);
-
-		intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-		intr &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
-		intr |= line << PCI_INTERRUPT_LINE_SHIFT;
-		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
-	}
-
-	return (0);
-}
-
-int
-ppb_hotplug_fixup_type1(pci_chipset_tag_t pc, pcitag_t tag, pcitag_t bridgetag)
-{
-	pcireg_t bhlcr, bir, csr, val;
-	int bus, dev, reg;
-
-	bir = pci_conf_read(pc, bridgetag, PPB_REG_BUSINFO);
-	if (PPB_BUSINFO_SUBORDINATE(bir) <= PPB_BUSINFO_SECONDARY(bir))
-		return (0);
-
-	bus = PPB_BUSINFO_SECONDARY(bir);
-	bir = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
-	bir &= (0xff << 24);
-	bir |= bus++;
-	bir |= (bus << 8);
-	bir |= (bus << 16);
-	pci_conf_write(pc, tag, PPB_REG_BUSINFO, bir);
-
-	for (reg = PPB_REG_IOSTATUS; reg < PPB_REG_BRIDGECONTROL; reg += 4) {
-		val = pci_conf_read(pc, bridgetag, reg);
-		pci_conf_write(pc, tag, reg, val);
-	}
-
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
-	csr |= PCI_COMMAND_MASTER_ENABLE;
-	csr |= PCI_COMMAND_INVALIDATE_ENABLE;
-	csr |= PCI_COMMAND_SERR_ENABLE;
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-
-	for (dev = 0; dev < pci_bus_maxdevs(pc, bus); dev++) {
-		tag = pci_make_tag(pc, bus, dev, 0);
-
-		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		if (PCI_HDRTYPE_TYPE(bhlcr) != 0)
-			continue;
-
-		ppb_hotplug_fixup_type0(pc, tag, bridgetag);
-	}
-
-	return (0);
-}
-
 void
 ppb_hotplug_rescan(void *xsc)
 {
 	struct ppb_softc *sc = xsc;
 	struct pci_softc *psc = (struct pci_softc *)sc->sc_psc;
 
-	if (psc) {
-		/* Assign resources. */
-		pci_enumerate_bus(psc, ppb_hotplug_fixup, NULL);
-
-		/* Attach devices. */
+	if (psc)
 		pci_enumerate_bus(psc, NULL, NULL);
-	}
 }
 
 void

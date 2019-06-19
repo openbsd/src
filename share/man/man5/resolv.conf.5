@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.53 2017/08/13 19:03:19 krw Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.56 2019/06/17 05:51:25 otto Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: August 13 2017 $
+.Dd $Mdocdate: June 17 2019 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ exists.
 .Nm resolv.conf.tail
 is normally used to specify
 .Xr resolver 3
-options that are not available via DHCP.
+options that are not available via DHCP
 e.g. lookup or family.
 .Pp
 A keyword and its values must appear on a single line, and the keyword (e.g.\&
@@ -246,9 +246,6 @@ non-EDNS0 DNS servers,
 so the option must be used only when all the servers listed in
 .Ic nameserver
 lines are able to handle the extension.
-On
-.Ox
-this option does nothing.
 .Pp
 To verify whether a server supports EDNS,
 query it using the
@@ -333,6 +330,7 @@ file.
 .Xr hostname 7 ,
 .Xr dhclient 8 ,
 .Xr nsd 8 ,
+.Xr rebound 8 ,
 .Xr unbound 8
 .Sh HISTORY
 The

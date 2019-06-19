@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.35 2017/11/28 06:03:41 guenther Exp $
+.\"	$OpenBSD: ktrace.2,v 1.37 2019/01/06 18:29:49 tedu Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 28 2017 $
+.Dd $Mdocdate: January 6 2019 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -61,11 +61,8 @@ If tracing points are being disabled (see
 .Dv KTROP_CLEAR
 below),
 .Fa tracefile
-may be
-.Dv NULL
-or
-.Fa tracefd
-may be -1.
+must be
+.Dv NULL .
 .Pp
 Trace records are always appended to the file, ignoring the file offset,
 so the caller will usually want to truncate the file before calling
@@ -108,7 +105,7 @@ Trace all I/O
 .It Dv KTRFAC_PSIG
 Trace posted signals.
 .It Dv KTRFAC_STRUCT
-Trace various structs
+Trace various structs.
 .It Dv KTRFAC_USER
 Trace user data coming from
 .Xr utrace 2

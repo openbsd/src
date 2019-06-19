@@ -37,7 +37,7 @@ cmp_ok($removed, '>', 0, "removed $removed entries from $UNC_path");
 
 {
     my ($least_deep, $next_deepest, $deepest) =
-        create_3_level_subdirs( qw| d e f | );
+        create_3_level_subdirs( qw| IsVFFJfJ03Rk jD7ToWQFmcjm hMZR6S1qNSf5 | );
     my (@created, $error);
     my $user = join('_' => 'foobar', $$);
     {

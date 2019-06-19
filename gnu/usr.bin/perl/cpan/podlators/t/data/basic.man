@@ -90,8 +90,6 @@ Testing \fIitalics\fR
 "\fIItalic\fR text" in foo
 .PP
 "Section \f(CW\*(C`with\*(C'\fR \fI\f(BIother\fI markup\fR" in foo|bar
-.PP
-Nested <http://www.perl.org/>
 .SH "OVER AND ITEMS"
 .IX Header "OVER AND ITEMS"
 Taken from Pod::Parser tests, this is a test to ensure that multiline
@@ -218,12 +216,12 @@ Of course I should still be able to do all this \fIwith\fR escape sequences
 too: \f(CW\*(C`$self\->method()\*(C'\fR and \f(CW\*(C`$self\->{FIELDNAME}\*(C'\fR and
 \&\f(CW\*(C`{FOO=>BAR}\*(C'\fR.
 .PP
-Dont forget \f(CW\*(C`$self\->method()\->{FIELDNAME} = {FOO=>BAR}\*(C'\fR.
+Don't forget \f(CW\*(C`$self\->method()\->{FIELDNAME} = {FOO=>BAR}\*(C'\fR.
 .PP
 And make sure that \f(CW0\fR works too!
 .PP
 Now, if I use << or >> as my delimiters, then I have to use whitespace.
-So things like \f(CW\*(C`<$self\-\*(C'\fR\fImethod()\fR>> and \f(CW\*(C`<$self\-\*(C'\fR{\s-1FIELDNAME\s0}>> wont end
+So things like \f(CW\*(C`<$self\-\*(C'\fR\fBmethod()\fR>> and \f(CW\*(C`<$self\-\*(C'\fR{\s-1FIELDNAME\s0}>> won't end
 up doing what you might expect since the first > will still terminate
 the first < seen.
 .PP

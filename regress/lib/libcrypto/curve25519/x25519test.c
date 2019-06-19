@@ -1,3 +1,4 @@
+/*	$OpenBSD: x25519test.c,v 1.2 2018/07/17 17:06:49 tb Exp $	*/
 /*
  * Copyright (c) 2015, Google Inc.
  *

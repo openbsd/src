@@ -1,4 +1,4 @@
-//===-- AArch6464FastISel.cpp - AArch64 FastISel implementation -----------===//
+//===- AArch6464FastISel.cpp - AArch64 FastISel implementation ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -35,7 +35,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/Argument.h"
@@ -53,6 +52,7 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/User.h"
@@ -63,7 +63,9 @@
 #include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CodeGen.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MachineValueType.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cassert>
@@ -78,10 +80,10 @@ namespace {
 class AArch64FastISel final : public FastISel {
   class Address {
   public:
-    typedef enum {
+    using BaseKind = enum {
       RegBase,
       FrameIndexBase
-    } BaseKind;
+    };
 
   private:
     BaseKind Kind = RegBase;
@@ -305,7 +307,7 @@ public:
 
 #include "AArch64GenCallingConv.inc"
 
-/// \brief Check if the sign-/zero-extend will be a noop.
+/// Check if the sign-/zero-extend will be a noop.
 static bool isIntExtFree(const Instruction *I) {
   assert((isa<ZExtInst>(I) || isa<SExtInst>(I)) &&
          "Unexpected integer extend instruction.");
@@ -324,7 +326,7 @@ static bool isIntExtFree(const Instruction *I) {
   return false;
 }
 
-/// \brief Determine the implicit scale factor that is applied by a memory
+/// Determine the implicit scale factor that is applied by a memory
 /// operation for a given value type.
 static unsigned getImplicitScaleFactor(MVT VT) {
   switch (VT.SimpleTy) {
@@ -474,26 +476,27 @@ unsigned AArch64FastISel::materializeGV(const GlobalValue *GV) {
     // ADRP + LDRX
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADRP),
             ADRPReg)
-      .addGlobalAddress(GV, 0, AArch64II::MO_GOT | AArch64II::MO_PAGE);
+        .addGlobalAddress(GV, 0, AArch64II::MO_PAGE | OpFlags);
 
     ResultReg = createResultReg(&AArch64::GPR64RegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::LDRXui),
             ResultReg)
-      .addReg(ADRPReg)
-      .addGlobalAddress(GV, 0, AArch64II::MO_GOT | AArch64II::MO_PAGEOFF |
-                        AArch64II::MO_NC);
+        .addReg(ADRPReg)
+        .addGlobalAddress(GV, 0,
+                          AArch64II::MO_PAGEOFF | AArch64II::MO_NC | OpFlags);
   } else {
     // ADRP + ADDX
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADRP),
             ADRPReg)
-      .addGlobalAddress(GV, 0, AArch64II::MO_PAGE);
+        .addGlobalAddress(GV, 0, AArch64II::MO_PAGE | OpFlags);
 
     ResultReg = createResultReg(&AArch64::GPR64spRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADDXri),
             ResultReg)
-      .addReg(ADRPReg)
-      .addGlobalAddress(GV, 0, AArch64II::MO_PAGEOFF | AArch64II::MO_NC)
-      .addImm(0);
+        .addReg(ADRPReg)
+        .addGlobalAddress(GV, 0,
+                          AArch64II::MO_PAGEOFF | AArch64II::MO_NC | OpFlags)
+        .addImm(0);
   }
   return ResultReg;
 }
@@ -532,7 +535,7 @@ unsigned AArch64FastISel::fastMaterializeFloatZero(const ConstantFP* CFP) {
   return fastEmitInst_r(Opc, TLI.getRegClassFor(VT), ZReg, /*IsKill=*/true);
 }
 
-/// \brief Check if the multiply is by a power-of-2 constant.
+/// Check if the multiply is by a power-of-2 constant.
 static bool isMulPowOf2(const Value *I) {
   if (const auto *MI = dyn_cast<MulOperator>(I)) {
     if (const auto *C = dyn_cast<ConstantInt>(MI->getOperand(0)))
@@ -944,7 +947,6 @@ bool AArch64FastISel::computeCallAddress(const Value *V, Address &Addr) {
   return false;
 }
 
-
 bool AArch64FastISel::isTypeLegal(Type *Ty, MVT &VT) {
   EVT evt = TLI.getValueType(DL, Ty, true);
 
@@ -962,7 +964,7 @@ bool AArch64FastISel::isTypeLegal(Type *Ty, MVT &VT) {
   return TLI.isTypeLegal(VT);
 }
 
-/// \brief Determine if the value type is supported by FastISel.
+/// Determine if the value type is supported by FastISel.
 ///
 /// FastISel for AArch64 can handle more value types than are legal. This adds
 /// simple value type such as i1, i8, and i16.
@@ -1522,7 +1524,7 @@ unsigned AArch64FastISel::emitAdd(MVT RetVT, const Value *LHS, const Value *RHS,
                     IsZExt);
 }
 
-/// \brief This method is a wrapper to simplify add emission.
+/// This method is a wrapper to simplify add emission.
 ///
 /// First try to emit an add with an immediate operand using emitAddSub_ri. If
 /// that fails, then try to materialize the immediate into a register and use
@@ -2252,7 +2254,7 @@ static AArch64CC::CondCode getCompareCC(CmpInst::Predicate Pred) {
   }
 }
 
-/// \brief Try to emit a combined compare-and-branch instruction.
+/// Try to emit a combined compare-and-branch instruction.
 bool AArch64FastISel::emitCompareAndBranch(const BranchInst *BI) {
   assert(isa<CmpInst>(BI->getCondition()) && "Expected cmp instruction");
   const CmpInst *CI = cast<CmpInst>(BI->getCondition());
@@ -2605,7 +2607,7 @@ bool AArch64FastISel::selectCmp(const Instruction *I) {
   return true;
 }
 
-/// \brief Optimize selects of i1 if one of the operands has a 'true' or 'false'
+/// Optimize selects of i1 if one of the operands has a 'true' or 'false'
 /// value.
 bool AArch64FastISel::optimizeSelect(const SelectInst *SI) {
   if (!SI->getType()->isIntegerTy(1))
@@ -3320,7 +3322,7 @@ bool AArch64FastISel::tryEmitSmallMemCpy(Address Dest, Address Src,
   return true;
 }
 
-/// \brief Check if it is possible to fold the condition from the XALU intrinsic
+/// Check if it is possible to fold the condition from the XALU intrinsic
 /// into the user. The condition code will only be updated on success.
 bool AArch64FastISel::foldXALUIntrinsic(AArch64CC::CondCode &CC,
                                         const Instruction *I,
@@ -3455,7 +3457,8 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
       // Small memcpy's are common enough that we want to do them without a call
       // if possible.
       uint64_t Len = cast<ConstantInt>(MTI->getLength())->getZExtValue();
-      unsigned Alignment = MTI->getAlignment();
+      unsigned Alignment = MinAlign(MTI->getDestAlignment(),
+                                    MTI->getSourceAlignment());
       if (isMemCpySmall(Len, Alignment)) {
         Address Dest, Src;
         if (!computeAddress(MTI->getRawDest(), Dest) ||
@@ -3475,7 +3478,7 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
       return false;
 
     const char *IntrMemName = isa<MemCpyInst>(II) ? "memcpy" : "memmove";
-    return lowerCallTo(II, IntrMemName, II->getNumArgOperands() - 2);
+    return lowerCallTo(II, IntrMemName, II->getNumArgOperands() - 1);
   }
   case Intrinsic::memset: {
     const MemSetInst *MSI = cast<MemSetInst>(II);
@@ -3491,7 +3494,7 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
       // address spaces.
       return false;
 
-    return lowerCallTo(II, "memset", II->getNumArgOperands() - 2);
+    return lowerCallTo(II, "memset", II->getNumArgOperands() - 1);
   }
   case Intrinsic::sin:
   case Intrinsic::cos:
@@ -3771,7 +3774,7 @@ bool AArch64FastISel::selectRet(const Instruction *I) {
   if (Ret->getNumOperands() > 0) {
     CallingConv::ID CC = F.getCallingConv();
     SmallVector<ISD::OutputArg, 4> Outs;
-    GetReturnInfo(F.getReturnType(), F.getAttributes(), Outs, TLI, DL);
+    GetReturnInfo(CC, F.getReturnType(), F.getAttributes(), Outs, TLI, DL);
 
     // Analyze operands of the call, assigning locations to each operand.
     SmallVector<CCValAssign, 16> ValLocs;
@@ -5134,11 +5137,12 @@ bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
     return selectAtomicCmpXchg(cast<AtomicCmpXchgInst>(I));
   }
 
-  // fall-back to target-independent instruction selection.
-  return selectOperator(I, I->getOpcode());
   // Silence warnings.
   (void)&CC_AArch64_DarwinPCS_VarArg;
   (void)&CC_AArch64_Win64_VarArg;
+
+  // fall-back to target-independent instruction selection.
+  return selectOperator(I, I->getOpcode());
 }
 
 namespace llvm {

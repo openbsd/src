@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.82 2017/10/26 15:00:28 mpi Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.83 2019/04/25 01:52:14 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -719,9 +719,9 @@ uath_media_change(struct ifnet *ifp)
 		return error;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
-		uath_init(ifp);
+		error = uath_init(ifp);
 
-	return 0;
+	return error;
 }
 
 /*

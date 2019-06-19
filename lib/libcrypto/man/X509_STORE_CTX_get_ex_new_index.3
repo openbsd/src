@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_STORE_CTX_get_ex_new_index.3,v 1.4 2018/03/21 07:41:44 schwarze Exp $
+.\"	$OpenBSD: X509_STORE_CTX_get_ex_new_index.3,v 1.5 2019/06/06 01:06:59 schwarze Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 21 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt X509_STORE_CTX_GET_EX_NEW_INDEX 3
 .Os
 .Sh NAME
@@ -95,7 +95,8 @@ structure associated with a verification operation in an
 .Vt X509_STORE_CTX
 structure.
 .Sh SEE ALSO
-.Xr RSA_get_ex_new_index 3
+.Xr RSA_get_ex_new_index 3 ,
+.Xr X509_STORE_CTX_new 3
 .Sh HISTORY
 .Fn X509_STORE_CTX_get_ex_new_index ,
 .Fn X509_STORE_CTX_set_ex_data ,

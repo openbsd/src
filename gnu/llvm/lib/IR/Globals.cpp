@@ -67,6 +67,7 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
   setVisibility(Src->getVisibility());
   setUnnamedAddr(Src->getUnnamedAddr());
   setDLLStorageClass(Src->getDLLStorageClass());
+  setDSOLocal(Src->isDSOLocal());
 }
 
 void GlobalValue::removeFromParent() {
@@ -278,6 +279,24 @@ Optional<ConstantRange> GlobalValue::getAbsoluteSymbolRange() const {
     return None;
 
   return getConstantRangeFromMetadata(*MD);
+}
+
+bool GlobalValue::canBeOmittedFromSymbolTable() const {
+  if (!hasLinkOnceODRLinkage())
+    return false;
+
+  // We assume that anyone who sets global unnamed_addr on a non-constant
+  // knows what they're doing.
+  if (hasGlobalUnnamedAddr())
+    return true;
+
+  // If it is a non constant variable, it needs to be uniqued across shared
+  // objects.
+  if (auto *Var = dyn_cast<GlobalVariable>(this))
+    if (!Var->isConstant())
+      return false;
+
+  return hasAtLeastLocalUnnamedAddr();
 }
 
 //===----------------------------------------------------------------------===//

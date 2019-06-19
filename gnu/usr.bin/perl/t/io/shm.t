@@ -15,12 +15,10 @@
 ################################################################################
 
 BEGIN {
-  if ($ENV{'PERL_CORE'}) {
-    chdir 't' if -d 't';
-    @INC = '../lib' if -d '../lib' && -d '../ext';
-  }
-
+  chdir 't' if -d 't' && $ENV{'PERL_CORE'};
   require "./test.pl";
+  set_up_inc('../lib') if $ENV{'PERL_CORE'} && -d '../lib' && -d '../ext';
+
   require Config; import Config;
 
   if ($ENV{'PERL_CORE'} && $Config{'extensions'} !~ m[\bIPC/SysV\b]) {

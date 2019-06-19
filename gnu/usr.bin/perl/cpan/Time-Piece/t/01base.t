@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 15;
 
 BEGIN { use_ok('Time::Piece'); }
 
@@ -37,3 +37,8 @@ isa_ok($l, 'Time::Piece', 'custom localtime via new again');
 my $l_clone = Time::Piece->new($l);
 isa_ok($l, 'Time::Piece', 'custom localtime via clone');
 cmp_ok("$l_clone", 'eq', "$l", 'Clones match');
+
+#via clone with gmtime
+my $g_clone = Time::Piece->new($g);
+isa_ok($g, 'Time::Piece', 'custom gmtime via clone');
+cmp_ok("$g_clone", 'eq', "$g", 'Clones match');

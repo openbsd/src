@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.22 2016/03/16 15:41:11 krw Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.23 2018/09/17 15:44:16 jmc Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -132,26 +132,10 @@ verify_track(int fd, int track, int tracksize)
 static void
 usage(void)
 {
-	printf("usage: %s [-nqv] [-c cyls] [-F fillbyte] [-g gap3len] ",
-		__progname);
-	printf("[-h heads]\n");
-	printf("\t[-i intleave] [-r rate] [-S secshft] [-s secs]\n");
-	printf("\t[-t steps_per_track] device_name\n");
-	printf("Options:\n");
-	printf("\t-n\tdon't verify floppy after formatting\n");
-	printf("\t-q\tsuppress any normal output, don't ask for confirmation\n");
-	printf("\t-v\tdon't format, verify only\n");
-	printf("\tdevname\tthe full name of floppy device or in short form fd0, fd1\n");
-	printf("Obscure options:\n");
-	printf("\t-c #\tspecify number of cylinders, 40 or 80\n");
-	printf("\t-F #\tspecify fill byte\n");
-	printf("\t-g #\tspecify gap length\n");
-	printf("\t-h #\tspecify number of floppy heads, 1 or 2\n");
-	printf("\t-i #\tspecify interleave factor\n");
-	printf("\t-r #\tspecify data rate, 250, 300 or 500 kbps\n");
-	printf("\t-S #\tspecify sector size, 0=128, 1=256, 2=512 bytes\n");
-	printf("\t-s #\tspecify number of sectors per track, 9, 10, 15 or 18\n");
-	printf("\t-t #\tnumber of steps per track\n");
+	printf("usage: %s [-nqv] [-c cyls] [-F fillbyte] [-g gap3len] "
+	    "[-h heads]\n"
+	    "	[-i intleave] [-r rate] [-S secshft] [-s secs]\n"
+	    "	[-t steps_per_track] device_name\n", __progname);
 	exit(2);
 }
 

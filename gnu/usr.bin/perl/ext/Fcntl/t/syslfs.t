@@ -72,6 +72,7 @@ if ($^O eq 'unicos') {
 
 sysopen(BIG, $big1, O_WRONLY|O_CREAT|O_TRUNC) or
     die "sysopen $big1 failed: $!";
+binmode BIG;
 sysseek(BIG, 1_000_000, SEEK_SET) or
     die "sysseek $big1 failed: $!";
 syswrite(BIG, "big") or
@@ -85,6 +86,7 @@ print "# s1 = @s1\n";
 
 sysopen(BIG, $big2, O_WRONLY|O_CREAT|O_TRUNC) or
     die "sysopen $big2 failed: $!";
+binmode BIG;
 sysseek(BIG, 2_000_000, SEEK_SET) or
     die "sysseek $big2 failed: $!";
 syswrite(BIG, "big") or
@@ -127,6 +129,7 @@ EOF
 
 sysopen(BIG, $big0, O_WRONLY|O_CREAT|O_TRUNC) or
     die "sysopen $big0 failed: $!";
+binmode BIG;
 my $sysseek = sysseek(BIG, 5_000_000_000, SEEK_SET);
 unless (! $r && defined $sysseek && $sysseek == 5_000_000_000) {
     $sysseek = 'undef' unless defined $sysseek;
@@ -192,7 +195,7 @@ is(-e $big0, 1);
 is(-f $big0, 1);
 
 sysopen(BIG, $big0, O_RDONLY) or die "sysopen failed: $!";
-
+binmode BIG;
 offset('sysseek(BIG, 4_500_000_000, SEEK_SET)', 4_500_000_000);
 
 offset('sysseek(BIG, 0, SEEK_CUR)', 4_500_000_000);
@@ -234,7 +237,7 @@ explain() unless Test::Builder->new()->is_passing();
 END {
     # unlink may fail if applied directly to a large file
     # be paranoid about leaving 5 gig files lying around
-    open(BIG, ">$big0"); # truncate
+    open(BIG, '>', $big0); # truncate
     close(BIG);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.22 2018/03/15 21:36:59 uaa Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.23 2018/10/02 19:49:10 stsp Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -749,7 +749,7 @@ ugl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	int			s, error = 0;
 
 	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
+		return ENXIO;
 
 	DPRINTFN(5,("%s: %s: cmd=0x%08lx\n",
 		    sc->sc_dev.dv_xname, __func__, command));

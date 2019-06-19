@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.16 2016/09/03 11:24:40 tedu Exp $	*/
+/*	$OpenBSD: login.c,v 1.19 2018/09/30 13:29:24 ajacoutot Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -45,11 +45,8 @@ main(int argc, char **argv)
 	char *username, *password = NULL;
 	char pbuf[1024];
 	char response[1024];
-	int arg_login = 0, arg_notickets = 0;
-	char invokinguser[LOGIN_NAME_MAX];
 	char *wheel = NULL, *class = NULL;
-
-	invokinguser[0] = '\0';
+	struct passwd *pwd;
 
 	setpriority(PRIO_PROCESS, 0, 0);
 
@@ -77,13 +74,6 @@ main(int argc, char **argv)
 				wheel = optarg + 6;
 			else if (strncmp(optarg, "lastchance=", 11) == 0)
 				lastchance = (strcmp(optarg + 11, "yes") == 0);
-			else if (strcmp(optarg, "login=yes") == 0)
-				arg_login = 1;
-			else if (strcmp(optarg, "notickets=yes") == 0)
-				arg_notickets = 1;
-			else if (strncmp(optarg, "invokinguser=", 13) == 0)
-				snprintf(invokinguser, sizeof(invokinguser),
-				    "%s", &optarg[13]);
 			/* Silently ignore unsupported variables */
 			break;
 		default:
@@ -101,6 +91,14 @@ main(int argc, char **argv)
 		break;
 	default:
 		syslog(LOG_ERR, "usage error2");
+		exit(1);
+	}
+
+	/* get the password hash before pledge(2) or it will return '*' */
+	pwd = getpwnam_shadow(username);
+
+	if (pledge("stdio rpath tty id", NULL) == -1) {
+		syslog(LOG_ERR, "pledge: %m");
 		exit(1);
 	}
 
@@ -148,11 +146,7 @@ main(int argc, char **argv)
 		break;
 	}
 
-	ret = AUTH_FAILED;
-#ifdef PASSWD
-	if (ret != AUTH_OK)
-		ret = pwd_login(username, password, wheel, lastchance, class);
-#endif
+	ret = pwd_login(username, password, wheel, lastchance, class, pwd);
 
 	if (password != NULL)
 		explicit_bzero(password, strlen(password));

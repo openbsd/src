@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.237 2018/01/25 15:06:29 mpi Exp $
+#	$OpenBSD: files.i386,v 1.244 2019/01/18 01:34:50 pd Exp $
 #
 # new style config file for i386 architecture
 #
@@ -26,6 +26,7 @@ file	arch/i386/i386/via.c
 file	arch/i386/i386/locore.s
 file	arch/i386/i386/amd64errata.c	!small_kernel
 file	arch/i386/i386/longrun.c	!small_kernel
+file	arch/i386/i386/ucode.c		!small_kernel
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/i686_mem.c	mtrr
 file	arch/i386/i386/k6_mem.c		mtrr
@@ -255,9 +256,6 @@ file	arch/i386/isa/joy_isapnp.c	joy_isapnp
 # Compatibility modules
 #
 
-# VM86 mode
-file	arch/i386/i386/vm86.c			vm86
-
 # VM86 in kernel
 file	arch/i386/i386/kvm86.c			kvm86
 file	arch/i386/i386/kvm86call.S		kvm86
@@ -389,16 +387,9 @@ include "dev/onewire/files.onewire"
 include "dev/sdmmc/files.sdmmc"
 
 include "dev/acpi/files.acpi"
+attach	acpi at bios
 file	arch/i386/i386/acpi_machdep.c		acpi
 file	arch/i386/i386/acpi_wakecode.S		acpi & !small_kernel
-
-#
-# VMM
-#
-device vmm {}
-attach vmm at mainbus
-file	arch/i386/i386/vmm.c			vmm needs-flag
-file	arch/i386/i386/vmm_support.S		vmm
 
 #
 # IPMI

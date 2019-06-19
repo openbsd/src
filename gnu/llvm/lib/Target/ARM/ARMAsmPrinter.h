@@ -101,7 +101,9 @@ public:
   void EmitEndOfAsmFile(Module &M) override;
   void EmitXXStructor(const DataLayout &DL, const Constant *CV) override;
   void EmitGlobalVariable(const GlobalVariable *GV) override;
-  
+
+  MCSymbol *GetCPISymbol(unsigned CPID) const override;
+
   // lowerOperand - Convert a MachineOperand into the equivalent MCOperand.
   bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp);
 
@@ -135,8 +137,7 @@ public:
     const Triple &TT = TM.getTargetTriple();
     if (!TT.isOSBinFormatMachO())
       return 0;
-    bool isThumb = TT.getArch() == Triple::thumb ||
-                   TT.getArch() == Triple::thumbeb ||
+    bool isThumb = TT.isThumb() ||
                    TT.getSubArch() == Triple::ARMSubArch_v7m ||
                    TT.getSubArch() == Triple::ARMSubArch_v6m;
     return isThumb ? ARM::DW_ISA_ARM_thumb : ARM::DW_ISA_ARM_arm;

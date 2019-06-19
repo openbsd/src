@@ -39,6 +39,15 @@ def SFINAE_Suppress            : SFINAEResponse;
 def SFINAE_Report              : SFINAEResponse;
 def SFINAE_AccessControl       : SFINAEResponse;
 
+// Textual substitutions which may be performed on the text of diagnostics
+class TextSubstitution<string Text> {
+  string Substitution = Text;
+  // TODO: These are only here to allow substitutions to be declared inline with
+  // diagnostics
+  string Component = "";
+  string CategoryName = "";
+}
+
 // Diagnostic Categories.  These can be applied to groups or individual
 // diagnostics to specify a category.
 class DiagCategory<string Name> {
@@ -133,10 +142,12 @@ include "DiagnosticASTKinds.td"
 include "DiagnosticAnalysisKinds.td"
 include "DiagnosticCommentKinds.td"
 include "DiagnosticCommonKinds.td"
+include "DiagnosticCrossTUKinds.td"
 include "DiagnosticDriverKinds.td"
 include "DiagnosticFrontendKinds.td"
 include "DiagnosticLexKinds.td"
 include "DiagnosticParseKinds.td"
+include "DiagnosticRefactoringKinds.td"
 include "DiagnosticSemaKinds.td"
 include "DiagnosticSerializationKinds.td"
 

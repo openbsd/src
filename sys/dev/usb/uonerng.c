@@ -1,4 +1,4 @@
-/*	$OpenBSD: uonerng.c,v 1.2 2016/09/02 09:14:59 mpi Exp $ */
+/*	$OpenBSD: uonerng.c,v 1.4 2018/07/09 20:06:12 jasper Exp $ */
 /*
  * Copyright (C) 2015 Devin Reade <gdr@gno.org>
  * Copyright (C) 2015 Sean Levy <attila@stalphonsos.com>
@@ -222,10 +222,10 @@ uonerng_attach(struct device *parent, struct device *self, void *aux)
 			goto fail;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
-		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
                         ep_ibulk = ed->bEndpointAddress;
                 } else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
-			   (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
+			   UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
                         ep_obulk = ed->bEndpointAddress;
                 }
         }
@@ -424,7 +424,7 @@ uonerng_task(void *arg)
 
 	int_count = len / sizeof(int);
 	for (i = 0; i < int_count; i++) {
-		add_true_randomness(sc->sc_buf[i]);
+		enqueue_randomness(sc->sc_buf[i]);
 	}
 bail:
 

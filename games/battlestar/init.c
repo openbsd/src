@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.16 2015/12/31 17:51:19 mestre Exp $	*/
+/*	$OpenBSD: init.c,v 1.17 2019/05/09 20:19:23 tedu Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $	*/
 
 /*
@@ -39,9 +39,7 @@
 
 #include "extern.h"
 
-static int checkout(const char *);
 static const char *getutmp(void);
-static int wizard(const char *);
 
 void
 initialize(const char *filename)
@@ -72,7 +70,6 @@ initialize(const char *filename)
 		restore(savefile);
 		free(savefile);
 	}
-	wiz = wizard(username);
 	signal(SIGINT, die);
 }
 
@@ -90,59 +87,4 @@ getutmp(void)
 		name = " ??? ";
 
 	return(strdup(name));
-}
-
-/* Hereditary wizards.  A configuration file might make more sense. */
-static const char *const list[] = {
-	"riggle",
-	"chris",
-	"edward",
-	"comay",
-	"yee",
-	"dmr",
-	"ken",
-	0
-};
-
-static const char *const badguys[] = {
-	"wnj",
-	"root",
-	"ted",
-	0
-};
-
-static int
-wizard(const char *username)
-{
-	int     flag;
-
-	if ((flag = checkout(username)) != 0)
-		printf("You are the Great wizard %s.\n", username);
-	return flag;
-}
-
-static int
-checkout(const char *username)
-{
-	const char  *const *ptr;
-
-	for (ptr = list; *ptr; ptr++)
-		if (strcmp(*ptr, username) == 0)
-			return 1;
-	for (ptr = badguys; *ptr; ptr++)
-		if (strcmp(*ptr, username) == 0) {
-			printf("You are the Poor anti-wizard %s.  Good Luck!\n",
-			    username);
-			if (location != NULL) {
-				CUMBER = 3;
-				WEIGHT = 9;	/* that'll get him! */
-				ourclock = 10;
-				SetBit(location[7].objects, WOODSMAN);	/* viper room */
-				SetBit(location[20].objects, WOODSMAN);	/* laser " */
-				SetBit(location[13].objects, DARK);	/* amulet " */
-				SetBit(location[8].objects, ELF);	/* closet */
-			}
-			return 0;	/* anything else, Chris? */
-		}
-	return 0;
 }

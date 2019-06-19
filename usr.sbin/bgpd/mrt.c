@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.84 2018/02/05 03:55:54 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.94 2019/03/07 07:42:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -105,7 +105,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 	if (mrt->type == MRT_ALL_IN || mrt->type == MRT_UPDATE_IN)
 		incoming = 1;
 
-	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP, subtype,
+	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP_ET, subtype,
 	    pkglen, incoming) == -1)
 		return;
 
@@ -128,7 +128,7 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 	if (peer->capa.neg.as4byte)
 		subtype = BGP4MP_STATE_CHANGE_AS4;
 
-	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP, subtype,
+	if (mrt_dump_hdr_se(&buf, peer, MSG_PROTOCOL_BGP4MP_ET, subtype,
 	    2 * sizeof(short), 0) == -1)
 		return;
 
@@ -222,6 +222,15 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop,
 			DUMP_NLONG(nhbuf, 0);
 			DUMP_NLONG(nhbuf, nexthop->v4.s_addr);
 			break;
+		case AID_VPN_IPv6:
+			DUMP_BYTE(nhbuf, sizeof(u_int64_t) +
+			    sizeof(struct in6_addr));
+			DUMP_NLONG(nhbuf, 0);	/* set RD to 0 */
+			DUMP_NLONG(nhbuf, 0);
+			if (ibuf_add(nhbuf, &nexthop->v6,
+			    sizeof(struct in6_addr)) == -1) {
+			}
+			break;
 		}
 		if (!v2)
 			DUMP_BYTE(nhbuf, 0);
@@ -310,7 +319,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 
 	pt_getaddr(p->re->prefix, &addr);
 
-	n = prefix_aspath(p)->nexthop;
+	n = prefix_nexthop(p);
 	if (n == NULL) {
 		bzero(&nexthop, sizeof(struct bgpd_addr));
 		nexthop.aid = addr.aid;
@@ -385,7 +394,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	nexthop = prefix_aspath(p)->nexthop;
+	nexthop = prefix_nexthop(p);
 	if (nexthop == NULL) {
 		bzero(&addr, sizeof(struct bgpd_addr));
 		addr.aid = p->re->prefix->aid;
@@ -501,7 +510,11 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 		struct bgpd_addr	*nh;
 		struct ibuf		*tbuf;
 
-		nexthop = prefix_aspath(p)->nexthop;
+		/* skip pending withdraw in Adj-RIB-Out */
+		if (prefix_aspath(p) == NULL)
+			continue;
+
+		nexthop = prefix_nexthop(p);
 		if (nexthop == NULL) {
 			bzero(&addr, sizeof(struct bgpd_addr));
 			addr.aid = re->prefix->aid;
@@ -663,6 +676,9 @@ mrt_dump_upcall(struct rib_entry *re, void *ptr)
 	 * be dumped p should be set to p = pt->active.
 	 */
 	LIST_FOREACH(p, &re->prefix_h, rib_l) {
+		/* skip pending withdraw in Adj-RIB-Out */
+		if (prefix_aspath(p) == NULL)
+			continue;
 		if (mrtbuf->type == MRT_TABLE_DUMP)
 			mrt_dump_entry(mrtbuf, p, mrtbuf->seqnum++,
 			    prefix_peer(p));
@@ -673,10 +689,8 @@ mrt_dump_upcall(struct rib_entry *re, void *ptr)
 }
 
 void
-mrt_done(void *ptr)
+mrt_done(struct mrt *mrtbuf)
 {
-	struct mrt		*mrtbuf = ptr;
-
 	mrtbuf->state = MRT_STATE_REMOVE;
 }
 
@@ -684,34 +698,34 @@ int
 mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
     u_int16_t subtype, u_int32_t len, int swap)
 {
-	time_t		now;
+	struct timespec	time;
 
-	if ((*bp = ibuf_dynamic(MRT_HEADER_SIZE, MRT_HEADER_SIZE +
+	if ((*bp = ibuf_dynamic(MRT_ET_HEADER_SIZE, MRT_ET_HEADER_SIZE +
 	    MRT_BGP4MP_AS4_IPv6_HEADER_SIZE + len)) == NULL) {
 		log_warn("mrt_dump_hdr_se: ibuf_dynamic error");
 		return (-1);
 	}
 
-	now = time(NULL);
+	clock_gettime(CLOCK_REALTIME, &time);
 
-	DUMP_LONG(*bp, now);
+	DUMP_LONG(*bp, time.tv_sec);
 	DUMP_SHORT(*bp, type);
 	DUMP_SHORT(*bp, subtype);
 
-	switch (peer->sa_local.ss_family) {
-	case AF_INET:
+	switch (peer->local.aid) {
+	case AID_INET:
 		if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
 		    subtype == BGP4MP_MESSAGE_AS4)
-			len += MRT_BGP4MP_AS4_IPv4_HEADER_SIZE;
+			len += MRT_BGP4MP_ET_AS4_IPv4_HEADER_SIZE;
 		else
-			len += MRT_BGP4MP_IPv4_HEADER_SIZE;
+			len += MRT_BGP4MP_ET_IPv4_HEADER_SIZE;
 		break;
-	case AF_INET6:
+	case AID_INET6:
 		if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
 		    subtype == BGP4MP_MESSAGE_AS4)
-			len += MRT_BGP4MP_AS4_IPv6_HEADER_SIZE;
+			len += MRT_BGP4MP_ET_AS4_IPv6_HEADER_SIZE;
 		else
-			len += MRT_BGP4MP_IPv6_HEADER_SIZE;
+			len += MRT_BGP4MP_ET_IPv6_HEADER_SIZE;
 		break;
 	case 0:
 		goto fail;
@@ -721,6 +735,8 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 	}
 
 	DUMP_LONG(*bp, len);
+	/* milisecond field use by the _ET format */
+	DUMP_LONG(*bp, time.tv_nsec / 1000);
 
 	if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
 	    subtype == BGP4MP_MESSAGE_AS4) {
@@ -739,36 +755,30 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 
 	DUMP_SHORT(*bp, /* ifindex */ 0);
 
-	switch (peer->sa_local.ss_family) {
-	case AF_INET:
+	switch (peer->local.aid) {
+	case AID_INET:
 		DUMP_SHORT(*bp, AFI_IPv4);
 		if (!swap)
-			DUMP_NLONG(*bp, ((struct sockaddr_in *)
-			    &peer->sa_local)->sin_addr.s_addr);
-		DUMP_NLONG(*bp,
-		    ((struct sockaddr_in *)&peer->sa_remote)->sin_addr.s_addr);
+			DUMP_NLONG(*bp, peer->local.v4.s_addr);
+		DUMP_NLONG(*bp, peer->remote.v4.s_addr);
 		if (swap)
-			DUMP_NLONG(*bp, ((struct sockaddr_in *)
-			    &peer->sa_local)->sin_addr.s_addr);
+			DUMP_NLONG(*bp, peer->local.v4.s_addr);
 		break;
-	case AF_INET6:
+	case AID_INET6:
 		DUMP_SHORT(*bp, AFI_IPv6);
 		if (!swap)
-			if (ibuf_add(*bp, &((struct sockaddr_in6 *)
-			    &peer->sa_local)->sin6_addr,
+			if (ibuf_add(*bp, &peer->local.v6,
 			    sizeof(struct in6_addr)) == -1) {
 				log_warn("mrt_dump_hdr_se: ibuf_add error");
 				goto fail;
 			}
-		if (ibuf_add(*bp,
-		    &((struct sockaddr_in6 *)&peer->sa_remote)->sin6_addr,
+		if (ibuf_add(*bp, &peer->remote.v6,
 		    sizeof(struct in6_addr)) == -1) {
 			log_warn("mrt_dump_hdr_se: ibuf_add error");
 			goto fail;
 		}
 		if (swap)
-			if (ibuf_add(*bp, &((struct sockaddr_in6 *)
-			    &peer->sa_local)->sin6_addr,
+			if (ibuf_add(*bp, &peer->local.v6,
 			    sizeof(struct in6_addr)) == -1) {
 				log_warn("mrt_dump_hdr_se: ibuf_add error");
 				goto fail;
@@ -893,12 +903,12 @@ mrt_open(struct mrt *mrt, time_t now)
 	return (1);
 }
 
-int
+time_t
 mrt_timeout(struct mrt_head *mrt)
 {
 	struct mrt	*m;
 	time_t		 now;
-	int		 timeout = MRT_MAX_TIMEOUT;
+	time_t		 timeout = -1;
 
 	now = time(NULL);
 	LIST_FOREACH(m, mrt, entry) {
@@ -909,11 +919,12 @@ mrt_timeout(struct mrt_head *mrt)
 				MRT2MC(m)->ReopenTimer =
 				    now + MRT2MC(m)->ReopenTimerInterval;
 			}
-			if (MRT2MC(m)->ReopenTimer - now < timeout)
+			if (timeout == -1 ||
+			    MRT2MC(m)->ReopenTimer - now < timeout)
 				timeout = MRT2MC(m)->ReopenTimer - now;
 		}
 	}
-	return (timeout > 0 ? timeout : 0);
+	return (timeout);
 }
 
 void
@@ -984,7 +995,7 @@ mrt_get(struct mrt_head *c, struct mrt *m)
 	return (NULL);
 }
 
-int
+void
 mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 {
 	struct mrt	*m, *xm;
@@ -1020,6 +1031,4 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 		LIST_REMOVE(m, entry);
 		free(m);
 	}
-
-	return (0);
 }

@@ -16,15 +16,6 @@ their inception, versions, etc. There's a lot of speculation here.
 
 =over 8
 
-=item C<our> can now have an experimental optional attribute C<unique>
-
-Introduced in Perl 5.8.0
-
-Deprecated in Perl 5.10.0
-
-The ticket for this feature is
-L<[perl #119313]|https://rt.perl.org/rt3/Ticket/Display.html?id=119313>.
-
 =item Smart match (C<~~>)
 
 Introduced in Perl 5.10.0
@@ -45,18 +36,6 @@ L<[perl #119455]|https://rt.perl.org/rt3/Ticket/Display.html?id=119455>.
 See L<perlapi/PL_keyword_plugin> for the mechanism.
 
 Introduced in Perl 5.11.2
-
-=item Lexical subroutines
-
-Introduced in Perl 5.18
-
-See also: L<perlsub/Lexical Subroutines>
-
-Using this feature triggers warnings in the category
-C<experimental::lexical_subs>.
-
-The ticket for this feature is
-L<[perl #120085]|https://rt.perl.org/rt3/Ticket/Display.html?id=120085>.
 
 =item Regular Expression Set Operations
 
@@ -113,18 +92,6 @@ C<experimental::re_strict>.
 
 See L<re/'strict' mode>
 
-=item String- and number-specific bitwise operators
-
-Introduced in Perl 5.22.0
-
-See also: L<perlop/Bitwise String Operators>
-
-Using this feature triggers warnings in the category
-C<experimental::bitwise>.
-
-The ticket for this feature is
-L<[perl #123707]|https://rt.perl.org/rt3/Ticket/Display.html?id=123707>.
-
 =item The <:win32> IO pseudolayer
 
 The ticket for this feature is
@@ -132,12 +99,42 @@ L<[perl #119453]|https://rt.perl.org/rt3/Ticket/Display.html?id=119453>.
 
 See also L<perlrun>
 
+=item Declaring a reference to a variable
+
+Introduced in Perl 5.26.0
+
+Using this feature triggers warnings in the category
+C<experimental::declared_refs>.
+
+The ticket for this feature is
+L<[perl #128654]|https://rt.perl.org/rt3/Ticket/Display.html?id=128654>.
+
+See also: L<perlref/Declaring a Reference to a Variable>
+
 =item There is an C<installhtml> target in the Makefile.
 
 The ticket for this feature is
 L<[perl #116487]|https://rt.perl.org/rt3/Ticket/Display.html?id=116487>.
 
 =item Unicode in Perl on EBCDIC
+
+=item Script runs
+
+Introduced in Perl 5.28.0
+
+Using this feature triggers warnings in the category
+C<experimental::script_run>.
+
+See also: L<perlre/Script Runs>
+
+=item Alpabetic assertions
+
+Introduced in Perl 5.28.0
+
+Using this feature triggers warnings in the category
+C<experimental::alpha_assertions>.
+
+See also: L<perlre/Extended Patterns>.
 
 =back
 
@@ -249,6 +246,18 @@ Introduced in Perl 5.20.0
 
 Accepted in Perl 5.24.0
 
+=item Lexical subroutines
+
+Introduced in Perl 5.18.0
+
+Accepted in Perl 5.26.0
+
+=item String- and number-specific bitwise operators
+
+Introduced in Perl 5.22.0
+
+Accepted in Perl 5.28.0
+
 =back
 
 =head2 Removed features
@@ -322,6 +331,14 @@ Superseded by L</Postfix dereference syntax>.
 Introduced in Perl 5.14.0
 
 Removed in Perl 5.24.0
+
+=item C<our> can have an experimental optional attribute C<unique>
+
+Introduced in Perl 5.8.0
+
+Deprecated in Perl 5.10.0
+
+Removed in Perl 5.28.0
 
 =back
 

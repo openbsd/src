@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedefs.c,v 1.10 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: makedefs.c,v 1.11 2018/08/24 11:14:49 mestre Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -89,9 +89,6 @@ main(int argc, char **argv)
 	int propct = 0;
 	char *sp;
 
-	if (pledge("stdio rpath", NULL) == -1)
-		err(1, "pledge");
-
 	if (argc != 2) {
 		(void)fprintf(stderr, "usage: makedefs file\n");
 		return 1;
@@ -100,6 +97,10 @@ main(int argc, char **argv)
 		perror(argv[1]);
 		return 1;
 	}
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	skipuntil("objects[] = {");
 	while(getentry()) {
 		if(!*string){

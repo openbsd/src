@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cdp.c,v 1.6 2016/03/29 04:07:50 canacar Exp $	*/
+/*	$OpenBSD: print-cdp.c,v 1.7 2019/04/05 00:57:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -46,20 +46,17 @@ void cdp_print_prefixes(const u_char * p, int l);
  * Returns non-zero IFF it succeeds in printing the header
  */
 void
-cdp_print(const u_char *p, u_int length, u_int caplen,
-	  const u_char *esrc, const u_char *edst)
+cdp_print(const u_char *p, u_int length, u_int caplen, int i)
 {
-	int i;
 	int type, len;
 
 	/* Cisco Discovery Protocol */
 
-	if (caplen < 12) {
+	if (caplen < i + 4) {
 		printf("[|cdp]");
 		return;
 	}
 
-	i=8;		/* CDP data starts at offset 8 */
 	printf("CDP v%d, ttl=%ds", p[i], p[i+1]);
 	i+=4;		/* skip version, TTL and chksum */
 

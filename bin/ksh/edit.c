@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.64 2018/03/15 16:51:29 anton Exp $	*/
+/*	$OpenBSD: edit.c,v 1.67 2018/12/30 23:09:58 guenther Exp $	*/
 
 /*
  * Command line editing - common code
@@ -12,7 +12,6 @@
 
 #include <ctype.h>
 #include <errno.h>
-#include <libgen.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -80,10 +79,10 @@ check_sigwinch(void)
 				    ws.ws_col;
 
 				if ((vp = typeset("COLUMNS", 0, 0, 0, 0)))
-					setint(vp, (long) ws.ws_col);
+					setint(vp, (int64_t) ws.ws_col);
 			}
 			if (ws.ws_row && (vp = typeset("LINES", 0, 0, 0, 0)))
-				setint(vp, (long) ws.ws_row);
+				setint(vp, (int64_t) ws.ws_row);
 		}
 	}
 }
@@ -138,10 +137,10 @@ x_flush(void)
 	shf_flush(shl_out);
 }
 
-void
+int
 x_putc(int c)
 {
-	shf_putc(c, shl_out);
+	return shf_putc(c, shl_out);
 }
 
 void

@@ -5,7 +5,8 @@ use warnings;
 
 use File::Basename;
 use Test::More 0.88;
-use t::Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
+use lib 't';
+use Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
   hashify connect_args set_socket_source sort_headers $CRLF $LF];
 
 use HTTP::Tiny;
@@ -104,6 +105,9 @@ for my $file ( dir_list("corpus", qr/^get/ ) ) {
   else {
     $check_expected->( $response->{content}, "$label content" );
   }
+
+  ok ( ! exists $response->{redirects}, "$label redirects array doesn't exist")
+    or diag explain $response->{redirects};
 }
 
 done_testing;

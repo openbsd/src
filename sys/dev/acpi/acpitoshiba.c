@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.9 2017/09/07 11:23:17 bluhm Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.11 2018/07/01 19:40:49 mlarkin Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -95,10 +95,10 @@ int	toshiba_read_events(struct acpitoshiba_softc *);
 int	toshiba_match(struct device *, void *, void *);
 void	toshiba_attach(struct device *, struct device *, void *);
 int	toshiba_hotkey(struct aml_node *, int, void *);
-int	toshiba_get_brightness(struct acpitoshiba_softc *, u_int32_t *);
-int	toshiba_set_brightness(struct acpitoshiba_softc *, u_int32_t *);
-int	toshiba_get_video_output(struct acpitoshiba_softc *, u_int32_t *);
-int	toshiba_set_video_output(struct acpitoshiba_softc *, u_int32_t *);
+int	toshiba_get_brightness(struct acpitoshiba_softc *, uint32_t *);
+int	toshiba_set_brightness(struct acpitoshiba_softc *, uint32_t *);
+int	toshiba_get_video_output(struct acpitoshiba_softc *, uint32_t *);
+int	toshiba_set_video_output(struct acpitoshiba_softc *, uint32_t *);
 int	toshiba_find_brightness(struct acpitoshiba_softc *, int *);
 int	toshiba_fn_key_brightness_up(struct acpitoshiba_softc *);
 int	toshiba_fn_key_brightness_down(struct acpitoshiba_softc *);
@@ -124,7 +124,7 @@ const char *acpitoshiba_hids[] = {
 	"TOS6200",	/* Libretto */
 	"TOS6207",	/* Dynabook */
 	"TOS6208",	/* SPA40 */
-	0
+	NULL
 };
 
 int
@@ -328,7 +328,7 @@ toshiba_attach(struct device *parent, struct device *self, void *aux)
 int
 toshiba_fn_key_brightness_up(struct acpitoshiba_softc *sc)
 {
-	u_int32_t brightness_level;
+	uint32_t brightness_level;
 	int ret;
 
 	ret = toshiba_get_brightness(sc, &brightness_level);
@@ -346,7 +346,7 @@ toshiba_fn_key_brightness_up(struct acpitoshiba_softc *sc)
 int
 toshiba_fn_key_brightness_down(struct acpitoshiba_softc *sc)
 {
-	u_int32_t brightness_level;
+	uint32_t brightness_level;
 	int ret;
 
 	ret = toshiba_get_brightness(sc, &brightness_level);
@@ -363,7 +363,7 @@ toshiba_fn_key_brightness_down(struct acpitoshiba_softc *sc)
 int
 toshiba_fn_key_video_output(struct acpitoshiba_softc *sc)
 {
-	u_int32_t video_output;
+	uint32_t video_output;
 	int ret;
 
 	ret = toshiba_get_video_output(sc, &video_output);
@@ -429,7 +429,7 @@ toshiba_hotkey(struct aml_node *node, int notify, void *arg)
 }
 
 int
-toshiba_set_brightness(struct acpitoshiba_softc *sc, u_int32_t *brightness)
+toshiba_set_brightness(struct acpitoshiba_softc *sc, uint32_t *brightness)
 {
 	struct aml_value args[HCI_WORDS];
 	int i;
@@ -459,7 +459,7 @@ toshiba_set_brightness(struct acpitoshiba_softc *sc, u_int32_t *brightness)
 }
 
 int
-toshiba_get_brightness(struct acpitoshiba_softc *sc, u_int32_t *brightness)
+toshiba_get_brightness(struct acpitoshiba_softc *sc, uint32_t *brightness)
 {
 	struct aml_value args[HCI_WORDS];
 	struct aml_value res;
@@ -494,7 +494,7 @@ toshiba_get_brightness(struct acpitoshiba_softc *sc, u_int32_t *brightness)
 }
 
 int
-toshiba_get_video_output(struct acpitoshiba_softc *sc, u_int32_t *video_output)
+toshiba_get_video_output(struct acpitoshiba_softc *sc, uint32_t *video_output)
 {
 	struct aml_value res, args[HCI_WORDS];
 	int i;
@@ -528,7 +528,7 @@ toshiba_get_video_output(struct acpitoshiba_softc *sc, u_int32_t *video_output)
 }
 
 int
-toshiba_set_video_output(struct acpitoshiba_softc *sc, u_int32_t *video_output)
+toshiba_set_video_output(struct acpitoshiba_softc *sc, uint32_t *video_output)
 {
 	struct aml_value args[HCI_WORDS];
 	int i;

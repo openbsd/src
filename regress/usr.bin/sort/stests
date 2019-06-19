@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: stests,v 1.17 2015/10/24 15:16:53 millert Exp $
+#	$OpenBSD: stests,v 1.18 2018/05/31 15:40:24 millert Exp $
 #	from: @(#)stests	8.1 (Berkeley) 6/6/93
 
 #Latest version.  My sort passes all tests because I wrote it.
@@ -464,16 +464,16 @@ linecount C xx 2
 TEST=19; echo $TEST	# -i, -d, -f
 cat <<! >xx.c
 #include <stdio.h>
-run(i,j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
-main(){	run(0, 011);		/* 012=='\n' */
+void run(int i, int j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
+int main(){	run(0, 011);		/* 012=='\n' */
 	run(013, 0377); }
 !
 cc xx.c
 a.out >in
 cat <<! >xx.c
 #include <stdio.h>
-run(i,j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
-main(){ run(0, 011);
+void run(int i, int j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
+int main(){ run(0, 011);
 	run(013, ' '-1);
 	run(0177, 0377);
 	run(' ', 0176); }
@@ -485,8 +485,8 @@ xsort A -i -k 2
 
 cat <<! >xx.c
 #include <stdio.h>
-run(i,j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
-main(){	run(0, 010);		/* 011=='\t', 012=='\n' */
+void run(int i, int j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
+int main(){	run(0, 010);		/* 011=='\t', 012=='\n' */
 	run(013, ' '-1);
 	run(' '+1, '0'-1);
 	run('9'+1, 'A'-1);
@@ -505,8 +505,8 @@ xsort B -d -k 2
 
 cat <<! >xx.c
 #include <stdio.h>
-run(i,j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
-main(){	int i;
+void run(int i, int j){ for( ; i<=j; i++) printf("%.3o %c\n",i,i); }
+int main(){	int i;
 	run(0, 011);
 	run(013, 'A'-1);
 	for(i='A'; i<='Z'; i++) 
@@ -545,7 +545,7 @@ xsort C -dfb
 TEST=21; echo $TEST	# behavior of null bytes
 cat <<'!' >xx.c
 #include <stdio.h>
-main() { printf("%cb\n%ca\n",0,0); }
+int main() { printf("%cb\n%ca\n",0,0); }
 !
 cc xx.c
 a.out >in

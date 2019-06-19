@@ -1,0 +1,39 @@
+.\" $OpenBSD: nf.in,v 1.2 2019/01/07 06:51:37 schwarze Exp $
+.Dd $Mdocdate: January 7 2019 $
+.Dt BD-NF 1
+.Os
+.Sh NAME
+.Nm Bd-nf
+.Nd interaction of no-fill blocks and requests
+.Sh DESCRIPTION
+BEGINTEST
+initial
+text
+.nf
+after .nf
+request
+.fi
+after .fi
+request
+.Bd -unfilled
+in unfilled
+block
+.fi
+after .fi request
+in unfilled block
+.Ed
+after end
+of unfilled block
+.Bd -filled
+in filled
+block
+.nf
+after .nf request
+in filled block
+.Ed
+after end
+of filled block
+.br
+ENDTEST
+.br
+end of file

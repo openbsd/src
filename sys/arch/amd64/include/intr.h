@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.29 2015/09/13 11:48:17 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.31 2018/12/21 01:51:07 jsg Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -150,7 +150,6 @@ void softintr(int);
 #define	splhigh()	splraise(IPL_HIGH)
 #define	spl0()		spllower(IPL_NONE)
 #define	splsched()	splraise(IPL_SCHED)
-#define spllock() 	splhigh()
 #define	splx(x)		spllower(x)
 
 /* SPL asserts */
@@ -207,7 +206,6 @@ void *intr_establish(int, struct pic *, int, int, int, int (*)(void *),
 void intr_disestablish(struct intrhand *);
 int intr_handler(struct intrframe *, struct intrhand *);
 void cpu_intr_init(struct cpu_info *);
-int intr_find_mpmapping(int bus, int pin, int *handle);
 void intr_printconfig(void);
 void intr_barrier(void *);
 

@@ -13,7 +13,7 @@ if (@ARGV) {
 # attempting to move the work from them to the extension directories and
 # ExtUtils::MakeMaker.
 
-require 'regen/regen_lib.pl';
+require './regen/regen_lib.pl';
 
 my $target = 'utils/Makefile';
 print "Extracting $target (with variable substitutions)\n";
@@ -35,16 +35,14 @@ print $fh <<'EOT';
 # Files to be built with variable substitution after miniperl is
 # available.  Dependencies handled manually below (for now).
 
-pl = c2ph.PL corelist.PL cpan.PL h2ph.PL h2xs.PL instmodsh.PL perlbug.PL perldoc.PL perlivp.PL pl2pm.PL prove.PL splain.PL libnetcfg.PL piconv.PL enc2xs.PL encguess.PL xsubpp.PL pod2html.PL
-plextract = c2ph corelist cpan h2ph h2xs instmodsh perlbug perldoc perlivp pl2pm prove splain libnetcfg piconv enc2xs encguess xsubpp pod2html
-plextractexe = ./c2ph ./corelist ./cpan ./h2ph ./h2xs ./instmodsh ./perlbug ./perldoc ./perlivp ./pl2pm ./prove ./splain ./libnetcfg ./piconv ./enc2xs ./encguess ./xsubpp ./pod2html
+pl = corelist.PL cpan.PL h2ph.PL h2xs.PL instmodsh.PL perlbug.PL perldoc.PL perlivp.PL pl2pm.PL prove.PL splain.PL libnetcfg.PL piconv.PL enc2xs.PL encguess.PL xsubpp.PL pod2html.PL
+plextract = corelist cpan h2ph h2xs instmodsh perlbug perldoc perlivp pl2pm prove splain libnetcfg piconv enc2xs encguess xsubpp pod2html
+plextractexe = ./corelist ./cpan ./h2ph ./h2xs ./instmodsh ./perlbug ./perldoc ./perlivp ./pl2pm ./prove ./splain ./libnetcfg ./piconv ./enc2xs ./encguess ./xsubpp ./pod2html
 
 all: $(plextract) 
 
 $(plextract):
 	$(RUN) $(PERL) -I../lib $@.PL
-
-c2ph:		c2ph.PL ../config.sh
 
 cpan:		cpan.PL ../config.sh
 
@@ -83,7 +81,7 @@ pod2html:	pod2html.PL ../config.sh ../ext/Pod-Html/bin/pod2html
 clean:
 
 realclean:
-	rm -rf $(plextract) pstruct $(plextractexe)
+	rm -rf $(plextract) $(plextractexe)
 	rm -f ../t/_h2ph_pre.ph
 
 clobber:	realclean

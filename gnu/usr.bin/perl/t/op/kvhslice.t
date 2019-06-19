@@ -117,13 +117,6 @@ plan tests => 39;
         like $@, qr{^Can't modify key/value hash slice in local at},
             'local dies';
     }
-    # no delete
-    {
-        local $@;
-        eval 'delete %h{qw(a b)}';
-        like $@, qr{^delete argument is key/value hash slice, use hash slice},
-            'delete dies';
-    }
     # no assign
     {
         local $@;
@@ -134,8 +127,12 @@ plan tests => 39;
     # lvalue subs in assignment
     {
         local $@;
-        eval 'sub bar:lvalue{ %h{qw(a b)} }; bar() = "1"';
+        eval 'sub bar:lvalue{ %h{qw(a b)} }; (bar) = "1"';
         like $@, qr{^Can't modify key/value hash slice in list assignment},
+            'not allowed as result of lvalue sub';
+        eval 'sub bbar:lvalue{ %h{qw(a b)} }; bbar() = "1"';
+        like $@,
+             qr{^Can't modify key/value hash slice in scalar assignment},
             'not allowed as result of lvalue sub';
     }
 }

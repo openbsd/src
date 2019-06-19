@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.14 2018/02/28 13:16:22 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.17 2018/08/06 18:39:13 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -33,12 +33,14 @@
  */
 
 #include "assym.h"
+
 #include <sys/syscall.h>
 #include <sys/errno.h>
+
 #include <machine/asm.h>
-#include <arm/sysreg.h>
-#include <machine/cpu.h>
 #include <machine/frame.h>
+#include <arm/armreg.h>
+#include <arm/sysreg.h>
 
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
@@ -129,23 +131,14 @@ ENTRY_NP(cpu_reset)
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
 	/*
-	 * Load the cpu_reset_needs_v4_MMU_disable flag to determine if it's
-	 * necessary.
-	 */
-
-	ldr	r1, .Lcpu_reset_needs_v4_MMU_disable
-	ldr	r1, [r1]
-	cmp	r1, #0
-	mov	r2, #0
-
-	/*
  	 * MMU & IDC off, 32 bit program & data space
 	 * Hurl ourselves into the ROM
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
-	mcr     CP15_SCTLR(r0)	
-	mcrne   CP15_TLBIALL(r2) 	/* nail I+D TLB on ARMv4 and greater */
-	mov     pc, r4
+	mov	r2, #0
+	mcr	CP15_SCTLR(r0)
+	mcr	CP15_TLBIALL(r2) 	/* nail I+D TLB */
+	mov	pc, r4
 
 	/*
 	 * _cpu_reset_address contains the address to branch to, to complete
@@ -154,15 +147,6 @@ ENTRY_NP(cpu_reset)
 	 */
 .Lcpu_reset_address:
 	.word	_C_LABEL(cpu_reset_address)
-
-	/*
-	 * cpu_reset_needs_v4_MMU_disable contains a flag that signals if the
-	 * v4 MMU disable instruction needs executing... it is an illegal instruction
-	 * on f.e. ARM6/7 that locks up the computer in an endless illegal
-	 * instruction / data-abort / reset loop.
-	 */
-.Lcpu_reset_needs_v4_MMU_disable:
-	.word	_C_LABEL(cpu_reset_needs_v4_MMU_disable)
 
 #endif	/* OFW */
 
@@ -186,6 +170,3 @@ _C_LABEL(esym):	.word	_C_LABEL(end)
 
 ENTRY_NP(abort)
 	b	_C_LABEL(abort)
-
-
-/* End of locore.S */

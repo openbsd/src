@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.31 2017/10/27 12:22:40 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.38 2019/05/12 18:12:38 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -275,6 +275,39 @@ struct ieee80211_keyrun {
 
 #define SIOCS80211SCAN		 _IOW('i', 210, struct ifreq)
 
+#define	SIOCG80211JOINALL	_IOWR('i', 218, struct ieee80211_joinreq_all)
+#define	SIOCS80211JOIN		_IOWR('i', 255, struct ifreq)
+#define	SIOCG80211JOIN		_IOWR('i', 256, struct ifreq)
+
+/* join is pointed at by ifr.ifr_data */
+struct ieee80211_join {
+	u_int8_t	i_len;	/* length of i_nwid */
+	u_int8_t	i_nwid[IEEE80211_NWID_LEN];
+	u_int32_t	i_flags;
+
+	struct ieee80211_wpaparams	 i_wpaparams;
+	struct ieee80211_wpapsk		 i_wpapsk;
+	struct ieee80211_nwkey		 i_nwkey;
+};
+
+struct ieee80211_joinreq_all {
+	char			 ja_ifname[IFNAMSIZ];
+	int			 ja_nodes; /* returned count */
+	size_t			 ja_size;  /* size of node buffer */
+	struct ieee80211_join	*ja_node;  /* allocated node buffer */
+};
+
+
+#define IEEE80211_JOIN_SHOW	0x01
+#define IEEE80211_JOIN_FOUND	0x02
+#define IEEE80211_JOIN_DEL	0x04
+#define IEEE80211_JOIN_NWKEY	0x08
+#define IEEE80211_JOIN_WPA	0x10
+#define IEEE80211_JOIN_WPAPSK	0x20
+#define IEEE80211_JOIN_8021X	0x40
+#define IEEE80211_JOIN_ANY	0x80
+#define IEEE80211_JOIN_DEL_ALL	0x100
+
 /* node and requests */
 struct ieee80211_nodereq {
 	char		nr_ifname[IFNAMSIZ];		/* e.g. "ath0" */
@@ -320,7 +353,12 @@ struct ieee80211_nodereq {
 	uint8_t			nr_rxmcs[howmany(80,NBBY)];
 	uint16_t		nr_max_rxrate;	/* in Mb/s, 0 <= rate <= 1023 */
 	uint8_t			nr_tx_mcs_set;
+
+	/* HT / VHT */
 	uint8_t			nr_txmcs;
+
+	/* VHT */
+	uint8_t			nr_vht_ss;
 };
 
 #define IEEE80211_NODEREQ_STATE(_s)	(1 << _s)
@@ -335,6 +373,7 @@ struct ieee80211_nodereq {
 #define IEEE80211_NODEREQ_AP_BSS	0x02	/* current bss access point */
 #define IEEE80211_NODEREQ_COPY		0x04	/* add node with flags */
 #define IEEE80211_NODEREQ_HT		0x08	/* HT negotiated */
+#define IEEE80211_NODEREQ_VHT		0x10	/* VHT negotiated */
 
 #define SIOCG80211NODE		_IOWR('i', 211, struct ieee80211_nodereq)
 #define SIOCS80211NODE		 _IOW('i', 212, struct ieee80211_nodereq)
@@ -355,20 +394,21 @@ struct ieee80211_nodereq_all {
 #define SIOCG80211ALLNODES	_IOWR('i', 214, struct ieee80211_nodereq_all)
 
 /* net80211 specific interface flags */
-#define IEEE80211_F_HIDENWID	0x10000000	/* CONF: hidden ssid mode */
-#define IEEE80211_F_NOBRIDGE	0x20000000	/* CONF: no internal bridging */
-#define IEEE80211_F_HOSTAPMASK	0x30000000
-#define IEEE80211_F_USERSHIFT	28
-#define IEEE80211_F_USERBITS	"\20\01HIDENWID\02NOBRIDGE"
+#define IEEE80211_F_HIDENWID	0x00000001	/* CONF: hidden ssid mode */
+#define IEEE80211_F_NOBRIDGE	0x00000002	/* CONF: no internal bridging */
+#define IEEE80211_F_HOSTAPMASK	0x00000003
+#define IEEE80211_F_STAYAUTH	0x00000004	/* CONF: ignore deauth */
+#define IEEE80211_F_USERBITS	"\20\01HIDENWID\02NOBRIDGE\03STAYAUTH"
 
 struct ieee80211_flags {
 	const char		*f_name;
 	u_int			f_flag;
 };
 
-#define IEEE80211_FLAGS	{						\
-	{ "hidenwid", IEEE80211_F_HIDENWID >> IEEE80211_F_USERSHIFT },	\
-	{ "nobridge", IEEE80211_F_NOBRIDGE >> IEEE80211_F_USERSHIFT }	\
+#define IEEE80211_FLAGS	{			\
+	{ "hidenwid", IEEE80211_F_HIDENWID },	\
+	{ "nobridge", IEEE80211_F_NOBRIDGE },	\
+	{ "stayauth", IEEE80211_F_STAYAUTH }	\
 }
 
 #define SIOCG80211FLAGS		_IOWR('i', 216, struct ifreq)

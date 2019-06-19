@@ -1,10 +1,20 @@
-#	$OpenBSD: Makefile,v 1.4 2017/08/09 07:56:10 gilles Exp $
+#	$OpenBSD: Makefile,v 1.8 2018/07/25 10:19:28 gilles Exp $
+.PATH:	${.CURDIR}/..
 
-.include <bsd.own.mk>
+PROGS=	mail.lmtp mail.maildir mail.mboxfile mail.mda
 
-SUBDIR =	mail.lmtp
-SUBDIR+=	mail.file
-SUBDIR+=	mail.maildir
-SUBDIR+=	mail.mda
+MAN=	mail.lmtp.8 mail.maildir.8 mail.mboxfile.8 mail.mda.8
 
-.include <bsd.subdir.mk>
+BINOWN=	root
+BINGRP=	wheel
+
+BINDIR=	/usr/libexec
+
+CFLAGS+=	-fstack-protector-all
+CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+=	-Wmissing-declarations
+CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
+CFLAGS+=	-Wsign-compare
+CFLAGS+=	-Werror-implicit-function-declaration
+
+.include <bsd.prog.mk>

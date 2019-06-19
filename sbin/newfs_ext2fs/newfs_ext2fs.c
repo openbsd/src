@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.25 2016/03/16 08:34:11 natano Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.26 2018/11/25 17:12:10 krw Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -510,9 +510,6 @@ getpartition(int fsi, const char *special, char *argv[], struct disklabel **dl)
 		pp = &lp->d_partitions[*cp - 'a'];
 	if (DL_GETPSIZE(pp) == 0) 
 		errx(EXIT_FAILURE, "%s: `%c' partition is unavailable", argv[0], *cp);
-	if (pp->p_fstype == FS_BOOT)
-			errx(EXIT_FAILURE, "%s: `%c' partition overlaps boot program",
-			      argv[0], *cp);
 	*dl = lp;
 	return pp;
 }

@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.5 2017/06/25 21:59:59 bluhm Exp $
+# $OpenBSD: Makefile,v 1.8 2019/02/19 16:51:49 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Net-Pcap		Perl interface for libpcap
 # p5-NetPacket		Perl interface for packet encoding/decoding
-# p5-Crypt-Random	To fill payloads with weak random data
+# p5-BSD-arc4random	Perl interface to the arc4 random number generator
 #
 # Check wether all required perl packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.
@@ -11,7 +11,7 @@
 PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
     eval { require NetPacket::Ethernet } or print $@; \
     eval { require Net::Pcap } or print $@; \
-    eval { require Crypt::Random } or print $@; \
+    eval { require BSD::arc4random } or print $@; \
 '
 .if ! empty (PERL_REQUIRE)
 regress:
@@ -23,8 +23,6 @@ regress:
 # Automatically generate regress targets from test cases in directory.
 
 ARGS !=			cd ${.CURDIR} && ls args-*.pm
-TARGETS ?=		${ARGS}
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 CLEANFILES +=		stamp-* *.h *.ph *.conf *.log ktrace.out
 
 SRC_PATH =		${.CURDIR}/../../../usr.sbin/switchd
@@ -36,10 +34,10 @@ OFP_PERLHEADERS =	${OFP_HEADERS:S/.h/.ph/}
 # Only do that if necessary to keep visible output short.
 
 .if ${.CURDIR} == ${.OBJDIR}
-PERLINC =
+PERLINC =	-I${.OBJDIR}
 PERLPATH =
 .else
-PERLINC =	-I${.CURDIR}
+PERLINC =	-I${.CURDIR} -I${.OBJDIR}
 PERLPATH =	${.CURDIR}/
 .endif
 
@@ -47,16 +45,17 @@ PERLPATH =	${.CURDIR}/
 # test parameters.  Generally they consist of switch, switchd.
 
 .for a in ${ARGS}
-run-regress-$a: $a
+REGRESS_TARGETS +=	run-$a
+run-$a: $a
 	@echo '\n======== $@ ========'
 	time SUDO=${SUDO} KTRACE=${KTRACE} SWITCHD=${SWITCHD} perl ${PERLINC} ${PERLPATH}run.pl ${PERLPATH}$a
 .endfor
 
 ${OFP_HEADERS}:
-	@-mkdir -p ${.OBJDIR}/net
-	@-for i in ${SRC_PATH}/$@ ${SYS_PATH}/$@; do \
-		test -s $$i && grep -v '^#include' $$i > ${.OBJDIR}/$@; \
-	done
+	@echo '\n======== setup-$@ ========'
+.for p in ${SRC_PATH} ${SYS_PATH}
+	! test -s $p/$@ || grep -v '^#include' $p/$@ >$@
+.endfor
 
 .SUFFIXES: .h .ph
 .h.ph:

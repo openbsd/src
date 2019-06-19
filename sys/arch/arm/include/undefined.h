@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.h,v 1.2 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: undefined.h,v 1.4 2019/03/13 09:28:21 patrick Exp $	*/
 /*	$NetBSD: undefined.h,v 1.4 2001/12/20 01:20:23 thorpej Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 
 #include <sys/queue.h>
 
-typedef int (*undef_handler_t) (unsigned int, unsigned int, trapframe_t *, int);
+typedef int (*undef_handler_t) (unsigned int, unsigned int, trapframe_t *, int, uint32_t);
 
 #define FP_COPROC	1
 #define FP_COPROC2	2
@@ -83,7 +83,5 @@ void install_coproc_handler_static (int, struct undefined_handler *);
 void undefinedinstruction(struct trapframe *);
 
 #endif
-
-/* End of undefined.h */
 
 #endif /* _ARM_UNDEFINED_H_ */

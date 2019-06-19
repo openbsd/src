@@ -1,76 +1,99 @@
-#	$OpenBSD: Makefile,v 1.12 2016/12/11 10:01:01 natano Exp $
+#	$OpenBSD: Makefile,v 1.25 2019/05/05 17:54:57 deraadt Exp $
 
-REV=	${OSrev}
-
-TOP=		${.CURDIR}/..
-
-BSD_RD=		bsd.rd
-IMAGE=		mr.fs
-CBIN?=		instbin
-CRUNCHCONF?=	${CBIN}.conf
-CRUNCHCONFS?=	${.CURDIR}/../common/crunch.conf
-LISTS=		${.CURDIR}/list
-UTILS?=		${.CURDIR}/../../miniroot
-
+FS=		miniroot${OSrev}.fs
+FSSIZE=		18432
+FSDISKTYPE=	miniroot
+CDROM=		cd${OSrev}.iso
+MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
 
-DISKTYPE=	rdroot
-MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
+LISTS=		${.CURDIR}/list
+UTILS=		${.CURDIR}/../../miniroot
 
-.ifndef DESTDIR
-all ${IMAGE}:
-	@echo setenv DESTDIR before making a ramdisk!
-	@false
-.else
+MRDISKTYPE=	rdroot
+MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
-# mix config is not needed.
-all:	${BSD_RD}
+all: ${FS} ${CDROM}
 
-${BSD_RD}: ${IMAGE} bsd rdsetroot
-	cp bsd ${BSD_RD}
-	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
+${FS}: bsd.gz
+	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
+	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
+	echo 'u\ne 0\n83\n\n63\n*\nw\nq\n' | fdisk -e `cat vnd` > /dev/null
+	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
+	newfs_ext2fs /dev/r`cat vnd`i
+	mount /dev/`cat vnd`i ${MOUNT_POINT}
+	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
+	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd
+	df -i ${MOUNT_POINT}
+	-umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
-${IMAGE}: ${CBIN}
+${CDROM}: bsd.rd
+	rm -rf ${.OBJDIR}/cd-dir
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/loongson
+	mkdir -p ${.OBJDIR}/cd-dir/etc
+	echo "set image /${OSREV}/loongson/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
+	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/loongson
+	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
+	    -A "OpenBSD ${OSREV} loongson bootonly CD" \
+	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
+	    -p "Theo de Raadt <deraadt@openbsd.org>" \
+	    -V "OpenBSD/loongson ${OSREV} boot CD" \
+	    ${.OBJDIR}/cd-dir
+
+bsd.gz: bsd.rd
+	cp bsd.rd bsd.strip
+	strip bsd.strip
+	strip -R .comment -R .SUNW_ctf bsd.strip
+	gzip -9cn bsd.strip > bsd.gz
+
+bsd.rd: mr.fs bsd
+	cp bsd bsd.rd
+	rdsetroot bsd.rd mr.fs
+
+bsd:
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
+
+mr.fs: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
-	rm $@.d/${CBIN}
-	makefs ${MAKEFSARGS_RD} $@ $@.d
+	rm $@.d/instbin
+	makefs ${MRMAKEFSARGS} $@ $@.d
 
-.endif
+instbin.mk instbin.cache instbin.c: instbin.conf
+	crunchgen -E -M -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
+	    -c instbin.c -e instbin -m instbin.mk instbin.conf
 
-bsd:
-	cd ${TOP}/../../sys/arch/loongson/compile/RAMDISK && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${TOP}/../../sys/arch/loongson/compile/RAMDISK/obj/bsd bsd
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
-rdsetroot:	${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
-	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
-	    ${TOP}/../common/elf64.c
+instbin.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -EM -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
-
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-
-${CRUNCHCONF}: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
-
-clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    lib*.a lib*.olist ${CBIN}.map \
-	    *.o *.lo *.c bsd ${BSD_RD} cd${REV}.iso rdsetroot
-	rm -rf cd-dir ${IMAGE}.d
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .ifdef RELEASEDIR
 install:
-	cp ${BSD_RD} ${RELEASEDIR}
+	cp bsd.rd ${RELEASEDIR}/bsd.rd
+	chmod a+r ${RELEASEDIR}/bsd.rd
+	cp ${FS} ${RELEASEDIR}
+	cp ${CDROM} ${RELEASEDIR}
 .endif
 
+clean cleandir:
+	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
+	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd bsd.rd cd${OSrev}.iso
+	rm -rf cd-dir mr.fs.d
+	rm -f ${CDROM}
+
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

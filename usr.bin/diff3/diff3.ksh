@@ -1,8 +1,8 @@
 #!/bin/ksh -
 #
-# $OpenBSD: diff3.ksh,v 1.4 2006/02/22 22:35:11 jmc Exp $
+# $OpenBSD: diff3.ksh,v 1.5 2019/01/25 00:19:26 millert Exp $
 #
-# Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+# Copyright (c) 2003 Todd C. Miller <millert@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above

@@ -505,6 +505,14 @@ arguments passed to them, I<n> is the index into that array of the
 layer being called. The macro C<PerlIOArg> will return a (possibly
 C<NULL>) SV * for the argument passed to the layer.
 
+Where a layer opens or takes ownership of a file descriptor, that layer is
+responsible for getting the file descriptor's close-on-exec flag into the
+correct state.  The flag should be clear for a file descriptor numbered
+less than or equal to C<PL_maxsysfd>, and set for any file descriptor
+numbered higher.  For thread safety, when a layer opens a new file
+descriptor it should if possible open it with the close-on-exec flag
+initially set.
+
 The I<mode> string is an "C<fopen()>-like" string which would match
 the regular expression C</^[I#]?[rwa]\+?[bt]?$/>.
 
@@ -525,6 +533,9 @@ If I<fd> not negative then it is the numeric file descriptor I<fd>,
 which will be open in a manner compatible with the supplied mode
 string, the call is thus equivalent to C<PerlIO_fdopen>. In this case
 I<nargs> will be zero.
+The file descriptor may have the close-on-exec flag either set or clear;
+it is the responsibility of the layer that takes ownership of it to get
+the flag into the correct state.
 
 If I<nargs> is greater than zero then it gives the number of arguments
 passed to C<open>, otherwise it will be 1 if for example

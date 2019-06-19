@@ -1,99 +1,100 @@
-.\"	$OpenBSD: X25519.3,v 1.1 2017/04/10 17:45:06 schwarze Exp $
-.\"	OpenSSL X25519.pod 69687aa8 Mar 28 23:57:28 2017 +0200
+.\" $OpenBSD: X25519.3,v 1.4 2018/08/10 17:28:48 jsing Exp $
+.\" contains some text from: BoringSSL curve25519.h, curve25519.c
+.\" content also checked up to: OpenSSL f929439f Mar 15 12:19:16 2018 +0000
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2015 Google Inc.
+.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Permission to use, copy, modify, and/or distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in
-.\"    the documentation and/or other materials provided with the
-.\"    distribution.
-.\"
-.\" 3. All advertising materials mentioning features or use of this
-.\"    software must display the following acknowledgment:
-.\"    "This product includes software developed by the OpenSSL Project
-.\"    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
-.\"
-.\" 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
-.\"    endorse or promote products derived from this software without
-.\"    prior written permission. For written permission, please contact
-.\"    openssl-core@openssl.org.
-.\"
-.\" 5. Products derived from this software may not be called "OpenSSL"
-.\"    nor may "OpenSSL" appear in their names without prior written
-.\"    permission of the OpenSSL Project.
-.\"
-.\" 6. Redistributions of any form whatsoever must retain the following
-.\"    acknowledgment:
-.\"    "This product includes software developed by the OpenSSL Project
-.\"    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
-.\"
-.\" THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
-.\" EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
-.\" ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-.\" OF THE POSSIBILITY OF SUCH DAMAGE.
-.\"
-.Dd $Mdocdate: April 10 2017 $
+.Dd $Mdocdate: August 10 2018 $
 .Dt X25519 3
 .Os
 .Sh NAME
-.Nm X25519
-.Nd EVP_PKEY X25519 support
+.Nm X25519 ,
+.Nm X25519_keypair
+.Nd Elliptic Curve Diffie-Hellman primitive based on Curve25519
+.Sh SYNOPSIS
+.In openssl/curve25519.h
+.Ft int
+.Fo X25519
+.Fa "uint8_t out_shared_key[X25519_KEY_LENGTH]"
+.Fa "const uint8_t private_key[X25519_KEY_LENGTH]"
+.Fa "const uint8_t peer_public_value[X25519_KEY_LENGTH]"
+.Fc
+.Ft void
+.Fo X25519_keypair
+.Fa "uint8_t out_public_value[X25519_KEY_LENGTH]"
+.Fa "uint8_t out_private_key[X25519_KEY_LENGTH]"
+.Fc
 .Sh DESCRIPTION
-The
-.Nm
-.Vt EVP_PKEY
-implementation supports key generation and key derivation using X25519.
-It has associated private and public key formats compatible with
-draft-ietf-curdle-pkix-03.
+Curve25519 is an elliptic curve over a prime field specified in RFC 7748.
+The prime field is defined by the prime number 2^255 - 19.
 .Pp
-No additional parameters can be set during key generation.
+.Fn X25519
+is the Diffie-Hellman primitive built from Curve25519 as described
+in RFC 7748 section 5.
+Section 6.1 describes the intended use in an Elliptic Curve Diffie-Hellman
+(ECDH) protocol.
 .Pp
-The peer public key must be set using
-.Xr EVP_PKEY_derive_set_peer 3
-when performing key derivation.
+.Fn X25519
+writes a shared key to
+.Fa out_shared_key
+that is calculated from the given
+.Fa private_key
+and the
+.Fa peer_public_value
+by scalar multiplication.
+Do not use the shared key directly, rather use a key derivation
+function and also include the two public values as inputs.
 .Pp
-A context for the
-.Nm
-algorithm can be obtained by calling:
+.Fn X25519_keypair
+sets
+.Fa out_public_value
+and
+.Fa out_private_key
+to a freshly generated public/private key pair.
+First, the
+.Fa out_private_key
+is generated with
+.Xr arc4random_buf 3 .
+Then, the opposite of the masking described in RFC 7748 section 5
+is applied to it to make sure that the generated private key is never
+correctly masked.
+The purpose is to cause incorrect implementations on the peer side
+to consistently fail.
+Correct implementations will decode the key correctly even when it is
+not correctly masked.
+Finally, the
+.Fa out_public_value
+is calculated from the
+.Fa out_private_key
+by multiplying it with the Montgomery base point
+.Vt uint8_t u[32] No = Brq 9 .
 .Pp
-.Dl EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
-.Sh EXAMPLES
-Generate an
-.Nm
-private key and write it to standard output in PEM format:
-.Bd -literal
-#include <openssl/evp.h>
-#include <openssl/pem.h>
-
-EVP_PKEY *pkey = NULL;
-EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(NID_X25519, NULL);
-EVP_PKEY_keygen_init(pctx);
-EVP_PKEY_keygen(pctx, &pkey);
-EVP_PKEY_CTX_free(pctx);
-PEM_write_PrivateKey(stdout, pkey, NULL, NULL, 0, NULL, NULL);
-.Ed
-.Pp
-The key derivation example in
-.Xr EVP_PKEY_derive 3
-can be used with
-.Nm .
+The size of a public and private key is
+.Dv X25519_KEY_LENGTH No = 32
+bytes each.
+.Sh RETURN VALUES
+.Fn X25519
+returns 1 on success or 0 on error.
+Failure can occur when the input is a point of small order.
 .Sh SEE ALSO
-.Xr EVP_PKEY_CTX_new 3 ,
-.Xr EVP_PKEY_derive 3 ,
-.Xr EVP_PKEY_keygen 3
+.Rs
+.%A D. J. Bernstein
+.%R A state-of-the-art Diffie-Hellman function:\
+    How do I use Curve25519 in my own software?
+.%U http://cr.yp.to/ecdh.html
+.Re
+.Sh STANDARDS
+RFC 7748: Elliptic Curves for Security

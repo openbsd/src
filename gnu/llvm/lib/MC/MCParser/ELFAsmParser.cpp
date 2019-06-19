@@ -85,6 +85,7 @@ public:
     addDirectiveHandler<
       &ELFAsmParser::ParseDirectiveSymbolAttribute>(".hidden");
     addDirectiveHandler<&ELFAsmParser::ParseDirectiveSubsection>(".subsection");
+    addDirectiveHandler<&ELFAsmParser::ParseDirectiveCGProfile>(".cg_profile");
   }
 
   // FIXME: Part of this logic is duplicated in the MCELFStreamer. What is
@@ -149,6 +150,7 @@ public:
   bool ParseDirectiveWeakref(StringRef, SMLoc);
   bool ParseDirectiveSymbolAttribute(StringRef, SMLoc);
   bool ParseDirectiveSubsection(StringRef, SMLoc);
+  bool ParseDirectiveCGProfile(StringRef, SMLoc);
 
 private:
   bool ParseSectionName(StringRef &SectionName);
@@ -247,12 +249,12 @@ bool ELFAsmParser::ParseSectionName(StringRef &SectionName) {
     return false;
   }
 
-  while (true) {
+  while (!getParser().hasPendingError()) {
     SMLoc PrevLoc = getLexer().getLoc();
     if (getLexer().is(AsmToken::Comma) ||
       getLexer().is(AsmToken::EndOfStatement))
       break;
-    
+
     unsigned CurSize;
     if (getLexer().is(AsmToken::String)) {
       CurSize = getTok().getIdentifier().size() + 2;
@@ -380,7 +382,6 @@ bool ELFAsmParser::ParseDirectivePopSection(StringRef, SMLoc) {
   return false;
 }
 
-// FIXME: This is a work in progress.
 bool ELFAsmParser::ParseDirectiveSection(StringRef, SMLoc loc) {
   return ParseSectionArguments(/*IsPush=*/false, loc);
 }
@@ -423,13 +424,17 @@ bool ELFAsmParser::parseGroup(StringRef &GroupName) {
   if (L.isNot(AsmToken::Comma))
     return TokError("expected group name");
   Lex();
-  if (getParser().parseIdentifier(GroupName))
-    return true;
+  if (L.is(AsmToken::Integer)) {
+    GroupName = getTok().getString();
+    Lex();
+  } else if (getParser().parseIdentifier(GroupName)) {
+    return TokError("invalid group name");
+  }
   if (L.is(AsmToken::Comma)) {
     Lex();
     StringRef Linkage;
     if (getParser().parseIdentifier(Linkage))
-      return true;
+      return TokError("invalid linkage");
     if (Linkage != "comdat")
       return TokError("Linkage must be 'comdat'");
   }
@@ -443,7 +448,7 @@ bool ELFAsmParser::parseMetadataSym(MCSymbolELF *&Associated) {
   Lex();
   StringRef Name;
   if (getParser().parseIdentifier(Name))
-    return true;
+    return TokError("invalid metadata symbol");
   Associated = dyn_cast_or_null<MCSymbolELF>(getContext().lookupSymbol(Name));
   if (!Associated || !Associated->isInSection())
     return TokError("symbol is not in a section: " + Name);
@@ -488,24 +493,23 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush, SMLoc loc) {
   unsigned Flags = 0;
   const MCExpr *Subsection = nullptr;
   bool UseLastGroup = false;
-  StringRef UniqueStr;
   MCSymbolELF *Associated = nullptr;
   int64_t UniqueID = ~0;
 
   // Set the defaults first.
   if (hasPrefix(SectionName, ".rodata.") || SectionName == ".rodata1")
     Flags |= ELF::SHF_ALLOC;
-  if (SectionName == ".fini" || SectionName == ".init" ||
-      hasPrefix(SectionName, ".text."))
+  else if (SectionName == ".fini" || SectionName == ".init" ||
+           hasPrefix(SectionName, ".text."))
     Flags |= ELF::SHF_ALLOC | ELF::SHF_EXECINSTR;
-  if (hasPrefix(SectionName, ".data.") || SectionName == ".data1" ||
-      hasPrefix(SectionName, ".bss.") ||
-      hasPrefix(SectionName, ".init_array.") ||
-      hasPrefix(SectionName, ".fini_array.") ||
-      hasPrefix(SectionName, ".preinit_array."))
+  else if (hasPrefix(SectionName, ".data.") || SectionName == ".data1" ||
+           hasPrefix(SectionName, ".bss.") ||
+           hasPrefix(SectionName, ".init_array.") ||
+           hasPrefix(SectionName, ".fini_array.") ||
+           hasPrefix(SectionName, ".preinit_array."))
     Flags |= ELF::SHF_ALLOC | ELF::SHF_WRITE;
-  if (hasPrefix(SectionName, ".tdata.") ||
-      hasPrefix(SectionName, ".tbss."))
+  else if (hasPrefix(SectionName, ".tdata.") ||
+           hasPrefix(SectionName, ".tbss."))
     Flags |= ELF::SHF_ALLOC | ELF::SHF_WRITE | ELF::SHF_TLS;
 
   if (getLexer().is(AsmToken::Comma)) {
@@ -605,6 +609,10 @@ EndStmt:
       Type = ELF::SHT_X86_64_UNWIND;
     else if (TypeName == "llvm_odrtab")
       Type = ELF::SHT_LLVM_ODRTAB;
+    else if (TypeName == "llvm_linker_options")
+      Type = ELF::SHT_LLVM_LINKER_OPTIONS;
+    else if (TypeName == "llvm_call_graph_profile")
+      Type = ELF::SHT_LLVM_CALL_GRAPH_PROFILE;
     else if (TypeName.getAsInteger(0, Type))
       return TokError("unknown section type");
   }
@@ -764,12 +772,8 @@ bool ELFAsmParser::ParseDirectiveSymver(StringRef, SMLoc) {
   if (AliasName.find('@') == StringRef::npos)
     return TokError("expected a '@' in the name");
 
-  MCSymbol *Alias = getContext().getOrCreateSymbol(AliasName);
   MCSymbol *Sym = getContext().getOrCreateSymbol(Name);
-  const MCExpr *Value = MCSymbolRefExpr::create(Sym, getContext());
-
-  getStreamer().EmitAssignment(Alias, Value);
-  getStreamer().emitELFSymverDirective(Alias, Sym);
+  getStreamer().emitELFSymverDirective(AliasName, Sym);
   return false;
 }
 
@@ -836,6 +840,47 @@ bool ELFAsmParser::ParseDirectiveSubsection(StringRef, SMLoc) {
   Lex();
 
   getStreamer().SubSection(Subsection);
+  return false;
+}
+
+/// ParseDirectiveCGProfile
+///  ::= .cg_profile identifier, identifier, <number>
+bool ELFAsmParser::ParseDirectiveCGProfile(StringRef, SMLoc) {
+  StringRef From;
+  SMLoc FromLoc = getLexer().getLoc();
+  if (getParser().parseIdentifier(From))
+    return TokError("expected identifier in directive");
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("expected a comma");
+  Lex();
+
+  StringRef To;
+  SMLoc ToLoc = getLexer().getLoc();
+  if (getParser().parseIdentifier(To))
+    return TokError("expected identifier in directive");
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("expected a comma");
+  Lex();
+
+  int64_t Count;
+  if (getParser().parseIntToken(
+          Count, "expected integer count in '.cg_profile' directive"))
+    return true;
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in directive");
+
+  MCSymbol *FromSym = getContext().getOrCreateSymbol(From);
+  MCSymbol *ToSym = getContext().getOrCreateSymbol(To);
+
+  getStreamer().emitCGProfileEntry(
+      MCSymbolRefExpr::create(FromSym, MCSymbolRefExpr::VK_None, getContext(),
+                              FromLoc),
+      MCSymbolRefExpr::create(ToSym, MCSymbolRefExpr::VK_None, getContext(),
+                              ToLoc),
+      Count);
   return false;
 }
 

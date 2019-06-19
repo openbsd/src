@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.31 2016/07/11 00:27:50 rzalamena Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.35 2018/11/18 08:55:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -31,6 +31,7 @@ struct rtentry;
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
@@ -39,9 +40,6 @@ struct rtentry;
 #include <stdio.h>
 #include <pcap.h>
 
-#ifdef INET6
-#include <netinet/ip6.h>
-#endif
 
 #include "interface.h"
 #include "addrtoname.h"
@@ -52,6 +50,7 @@ const u_char *packetp;
 const u_char *snapend;
 
 void ether_macctl(const u_char *, u_int);
+void ether_pbb_print(const u_char *, u_int, u_int);
 
 void
 ether_print(const u_char *bp, u_int length)
@@ -168,6 +167,43 @@ ether_tryprint(const u_char *p, u_int length, int first_header)
 		putchar('\n');
 }
 
+void
+ether_pbb_print(const u_char *bp, u_int length, u_int caplen)
+{
+	uint32_t itag;
+	uint8_t pri, res;
+
+	if (caplen < sizeof(itag))
+		goto trunc;
+
+	itag = EXTRACT_32BITS(bp);
+
+	bp += sizeof(itag);
+	length -= sizeof(itag);
+	caplen -= sizeof(itag);
+
+	pri = itag >> 29;
+	if (pri <= 1)
+		pri = !pri;
+
+	res = (itag >> 24) & 0x7;
+
+	printf("802.1Q ivid %u pri %u ", itag & 0xffffff, pri);
+	if (itag & (1 << 28))
+		printf("dei ");
+	if (itag & (1 << 27))
+		printf("uca ");
+	if (res)
+		printf("res %u! ", res);
+
+	ether_tryprint(bp, length, 0);
+
+	return;
+
+trunc:
+	printf("[|pbb] ");
+}
+
 /*
  * Prints the packet encapsulated in an Ethernet data segment
  * (or an equivalent encapsulation), given the Ethernet type code.
@@ -182,6 +218,7 @@ int
 ether_encap_print(u_short ethertype, const u_char *p,
     u_int length, u_int caplen)
 {
+	uint16_t vlan, pri, vid;
 recurse:
 	extracted_ethertype = ethertype;
 
@@ -191,11 +228,9 @@ recurse:
 		ip_print(p, length);
 		return (1);
 
-#ifdef INET6
 	case ETHERTYPE_IPV6:
 		ip6_print(p, length);
 		return (1);
-#endif /*INET6*/
 
 	case ETHERTYPE_ARP:
 	case ETHERTYPE_REVARP:
@@ -221,10 +256,17 @@ recurse:
 	case ETHERTYPE_QINQ:
 		if (ethertype == ETHERTYPE_QINQ)
 			printf("QinQ s");
-		printf("vid %d pri %d%s",
-		       ntohs(*(unsigned short*)p)&0xFFF,
-		       ntohs(*(unsigned short*)p)>>13,
-		       (ntohs(*(unsigned short*)p)&0x1000) ? " cfi " : " ");
+
+		/* XXX caplen check */
+
+		vlan = ntohs(*(unsigned short*)p);
+		vid = vlan & 0xfff;
+		pri = vlan >> 13;
+		if (pri <= 1)
+			pri = !pri;
+
+		printf("vid %d pri %d%s", vid, pri,
+		    vlan & 0x1000 ? " dei " : " ");
 		ethertype = ntohs(*(unsigned short*)(p+2));
 		p += 4;
 		length -= 4;
@@ -245,6 +287,13 @@ recurse:
 			if (!xflag && !qflag)
 				default_print(p-18, caplen+4);
 		}
+		return (1);
+
+#ifndef ETHERTYPE_PBB
+#define ETHERTYPE_PBB 0x88e7
+#endif
+	case ETHERTYPE_PBB:
+		ether_pbb_print(p, length, caplen);
 		return (1);
 
 #ifdef PPP

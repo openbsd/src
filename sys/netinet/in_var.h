@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.40 2017/05/29 14:36:22 mpi Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.41 2018/10/18 15:23:04 cheloha Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ struct router_info {
 	unsigned int	rti_ifidx;
 	int		rti_type;	/* type of router on this interface */
 	int		rti_age;	/* time since last v1 query */
-	struct	router_info *rti_next;
+	LIST_ENTRY(router_info)	rti_list;
 };
 
 #ifdef _KERNEL

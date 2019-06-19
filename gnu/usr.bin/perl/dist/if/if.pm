@@ -1,6 +1,6 @@
 package if;
 
-$VERSION = '0.0606';
+$VERSION = '0.0608';
 
 sub work {
   my $method = shift() ? 'import' : 'unimport';
@@ -25,67 +25,70 @@ __END__
 
 =head1 NAME
 
-if - C<use> a Perl module if a condition holds (also can C<no> a module)
+if - C<use> a Perl module if a condition holds
 
 =head1 SYNOPSIS
 
-  use if CONDITION, MODULE => ARGUMENTS;
-  no if CONDITION, MODULE => ARGUMENTS;
+    use if CONDITION, "MODULE", ARGUMENTS;
+    no  if CONDITION, "MODULE", ARGUMENTS;
 
 =head1 DESCRIPTION
 
-The C<if> module is used to conditionally load or unload another module.
-The construct
+=head2 C<use if>
 
-  use if CONDITION, MODULE => ARGUMENTS;
+The C<if> module is used to conditionally load another module.  The construct:
 
-will load MODULE only if CONDITION evaluates to true.
-The above statement has no effect unless C<CONDITION> is true.
-If the CONDITION does evaluate to true, then the above line has
-the same effect as:
+    use if CONDITION, "MODULE", ARGUMENTS;
 
-  use MODULE ARGUMENTS;
+... will load C<MODULE> only if C<CONDITION> evaluates to true; it has no
+effect if C<CONDITION> evaluates to false.  (The module name, assuming it
+contains at least one C<::>, must be quoted when C<'use strict "subs";'> is in
+effect.)  If the CONDITION does evaluate to true, then the above line has the
+same effect as:
 
-The use of C<< => >> above provides necessary quoting of C<MODULE>.
-If you don't use the fat comma (eg you don't have any ARGUMENTS),
-then you'll need to quote the MODULE.
+    use MODULE ARGUMENTS;
 
-=head2 EXAMPLES
+For example, the F<Unicode::UCD> module's F<charinfo> function will use two functions from F<Unicode::Normalize> only if a certain condition is met:
 
-The following line is taken from the testsuite for L<File::Map>:
+    use if defined &DynaLoader::boot_DynaLoader,
+        "Unicode::Normalize" => qw(getCombinClass NFD);
 
-  use if $^O ne 'MSWin32', POSIX => qw/setlocale LC_ALL/;
+Suppose you wanted C<ARGUMENTS> to be an empty list, I<i.e.>, to have the
+effect of:
 
-If run on any operating system other than Windows,
-this will import the functions C<setlocale> and C<LC_ALL> from L<POSIX>.
-On Windows it does nothing.
+    use MODULE ();
 
-The following is used to L<deprecate> core modules beyond a certain version of Perl:
+You can't do this with the C<if> pragma; however, you can achieve
+exactly this effect, at compile time, with:
 
-  use if $] > 5.016, 'deprecate';
+    BEGIN { require MODULE if CONDITION }
 
-This line is taken from L<Text::Soundex> 3.04,
-and marks it as deprecated beyond Perl 5.16.
-If you C<use Text::Soundex> in Perl 5.18, for example,
-and you have used L<warnings>,
-then you'll get a warning message
-(the deprecate module looks to see whether the
-calling module was C<use>'d from a core library directory,
-and if so, generates a warning),
-unless you've installed a more recent version of L<Text::Soundex> from CPAN.
+=head2 C<no if>
 
-You can also specify to NOT use something:
+The C<no if> construct is mainly used to deactivate categories of warnings
+when those categories would produce superfluous output under specified
+versions of F<perl>.
 
- no if $] ge 5.021_006, warnings => "locale";
+For example, the C<redundant> category of warnings was introduced in
+Perl-5.22.  This warning flags certain instances of superfluous arguments to
+C<printf> and C<sprintf>.  But if your code was running warnings-free on
+earlier versions of F<perl> and you don't care about C<redundant> warnings in
+more recent versions, you can call:
 
-This warning category was added in the specified Perl version (a development
-release).  Without the C<'if'>, trying to use it in an earlier release would
-generate an unknown warning category error.
+    use warnings;
+    no if $] >= 5.022, q|warnings|, qw(redundant);
+
+    my $test    = { fmt  => "%s", args => [ qw( x y ) ] };
+    my $result  = sprintf $test->{fmt}, @{$test->{args}};
+
+The C<no if> construct assumes that a module or pragma has correctly
+implemented an C<unimport()> method -- but most modules and pragmata have not.
+That explains why the C<no if> construct is of limited applicability.
 
 =head1 BUGS
 
-The current implementation does not allow specification of the
-required version of the module.
+The current implementation does not allow specification of the required
+version of the module.
 
 =head1 SEE ALSO
 
@@ -96,8 +99,8 @@ Unlike C<if> though, L<Module::Requires> is not a core module.
 L<Module::Load::Conditional> provides a number of functions you can use to
 query what modules are available, and then load one or more of them at runtime.
 
-L<provide> can be used to select one of several possible modules to load,
-based on what version of Perl is running.
+The L<provide> module from CPAN can be used to select one of several possible
+modules to load based on the version of Perl that is running.
 
 =head1 AUTHOR
 

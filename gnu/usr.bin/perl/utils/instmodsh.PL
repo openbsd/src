@@ -18,7 +18,7 @@ chdir dirname($0);
 my $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
 
-open OUT,">$file" or die "Can't create $file: $!";
+open OUT, '>', $file or die "Can't create $file: $!";
 
 print "Extracting $file (with variable substitutions)\n";
 
@@ -38,7 +38,7 @@ my $instmodsh
 					     qw(cpan ExtUtils-MakeMaker bin)),
 			  'instmodsh');
 
-if (open(INSTMODSH, $instmodsh)) {
+if (open(INSTMODSH, '<', $instmodsh)) {
     print OUT <INSTMODSH>;
     close INSTMODSH;
 } else {

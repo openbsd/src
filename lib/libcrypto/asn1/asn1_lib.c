@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.40 2018/02/14 16:46:04 jsing Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.44 2018/11/17 09:34:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,7 +98,7 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 {
 	int i, ret;
 	long l;
-	const unsigned char *p= *pp;
+	const unsigned char *p = *pp;
 	int tag, xclass, inf;
 	long max = omax;
 
@@ -106,7 +106,7 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 		goto err;
 	ret = (*p & V_ASN1_CONSTRUCTED);
 	xclass = (*p & V_ASN1_PRIVATE);
-	i= *p & V_ASN1_PRIMITIVE_TAG;
+	i = *p & V_ASN1_PRIMITIVE_TAG;
 	if (i == V_ASN1_PRIMITIVE_TAG) {		/* high-tag */
 		p++;
 		if (--max == 0)
@@ -156,7 +156,7 @@ err:
 static int
 asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max)
 {
-	const unsigned char *p= *pp;
+	const unsigned char *p = *pp;
 	unsigned long ret = 0;
 	unsigned int i;
 
@@ -168,7 +168,7 @@ asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max)
 		p++;
 	} else {
 		*inf = 0;
-		i= *p & 0x7f;
+		i = *p & 0x7f;
 		if (*(p++) & 0x80) {
 			if (max < (int)i)
 				return (0);
@@ -199,7 +199,7 @@ void
 ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
     int xclass)
 {
-	unsigned char *p= *pp;
+	unsigned char *p = *pp;
 	int i, ttag;
 
 	i = (constructed) ? V_ASN1_CONSTRUCTED : 0;
@@ -240,7 +240,7 @@ ASN1_put_eoc(unsigned char **pp)
 static void
 asn1_put_length(unsigned char **pp, int length)
 {
-	unsigned char *p= *pp;
+	unsigned char *p = *pp;
 
 	int i, l;
 	if (length <= 127)
@@ -283,62 +283,6 @@ ASN1_object_size(int constructed, int length, int tag)
 		}
 	}
 	return (ret);
-}
-
-static int
-_asn1_Finish(ASN1_const_CTX *c)
-{
-	if ((c->inf == (1|V_ASN1_CONSTRUCTED)) && (!c->eos)) {
-		if (!ASN1_const_check_infinite_end(&c->p, c->slen)) {
-			c->error = ERR_R_MISSING_ASN1_EOS;
-			return (0);
-		}
-	}
-	if (((c->slen != 0) && !(c->inf & 1)) ||
-	    ((c->slen < 0) && (c->inf & 1))) {
-		c->error = ERR_R_ASN1_LENGTH_MISMATCH;
-		return (0);
-	}
-	return (1);
-}
-
-int
-asn1_Finish(ASN1_CTX *c)
-{
-	return _asn1_Finish((ASN1_const_CTX *)c);
-}
-
-int
-asn1_const_Finish(ASN1_const_CTX *c)
-{
-	return _asn1_Finish(c);
-}
-
-int
-asn1_GetSequence(ASN1_const_CTX *c, long *length)
-{
-	const unsigned char *q;
-
-	q = c->p;
-	c->inf = ASN1_get_object(&(c->p), &(c->slen), &(c->tag), &(c->xclass),
-	    *length);
-	if (c->inf & 0x80) {
-		c->error = ERR_R_BAD_GET_ASN1_OBJECT_CALL;
-		return (0);
-	}
-	if (c->tag != V_ASN1_SEQUENCE) {
-		c->error = ERR_R_EXPECTING_AN_ASN1_SEQUENCE;
-		return (0);
-	}
-	(*length) -= (c->p - q);
-	if (c->max && (*length < 0)) {
-		c->error = ERR_R_ASN1_LENGTH_MISMATCH;
-		return (0);
-	}
-	if (c->inf == (1|V_ASN1_CONSTRUCTED))
-		c->slen= *length+ *(c->pp) - c->p;
-	c->eos = 0;
-	return (1);
 }
 
 int
@@ -394,7 +338,7 @@ ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 	if (data != NULL) {
 		memmove(str->data, data, len);
 	}
-	str->data[str->length]='\0';
+	str->data[str->length] = '\0';
 	return (1);
 }
 
@@ -474,7 +418,7 @@ ASN1_STRING_length_set(ASN1_STRING *x, int len)
 }
 
 int
-ASN1_STRING_type(ASN1_STRING *x)
+ASN1_STRING_type(const ASN1_STRING *x)
 {
 	return (x->type);
 }

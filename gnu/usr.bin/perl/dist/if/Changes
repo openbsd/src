@@ -1,5 +1,14 @@
 Revision history for Perl extension if.
 
+0.0608    2018-02-01
+        - Clarify documentation and test more thoroughly.
+          [perl 132732] use if - behaviour does not match documentation
+
+0.0607    2017-06-01
+        - Add documentation re modules with empty import list
+          [perl 131142] "if" pragma POD addition for modules with an
+          empty import list
+
 0.0606    2015-10-01
         - add license information to pod
 

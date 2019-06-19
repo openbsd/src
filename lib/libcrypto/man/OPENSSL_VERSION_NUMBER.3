@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_VERSION_NUMBER.3,v 1.10 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: OPENSSL_VERSION_NUMBER.3,v 1.12 2019/06/06 01:06:58 schwarze Exp $
 .\" full merge up to: OpenSSL 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
 .\" This file is a derived work.
@@ -68,13 +68,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt OPENSSL_VERSION_NUMBER 3
 .Os
 .Sh NAME
 .Nm OPENSSL_VERSION_NUMBER ,
 .Nm LIBRESSL_VERSION_NUMBER ,
 .Nm LIBRESSL_VERSION_TEXT ,
+.Nm OPENSSL_VERSION_TEXT ,
 .Nm OpenSSL_version_num ,
 .Nm OpenSSL_version ,
 .Nm SSLeay ,
@@ -85,6 +86,7 @@
 .Fd #define OPENSSL_VERSION_NUMBER 0x020000000L
 .Fd #define LIBRESSL_VERSION_NUMBER 0x02nnnn00fL
 .Fd #define LIBRESSL_VERSION_TEXT \(dqLibreSSL 2.n.n\(dq
+.Fd #define OPENSSL_VERSION_TEXT LIBRESSL_VERSION_TEXT
 .In openssl/crypto.h
 .Ft unsigned long
 .Fn OpenSSL_version_num void
@@ -152,8 +154,9 @@ returns different strings depending on
 .Fa t :
 .Bl -tag -width Ds
 .It Dv OPENSSL_VERSION
-The text variant of the version number.
-For OpenSSL, it is followed by the release date, for example
+The text variant of the version number,
+.Dv OPENSSL_VERSION_TEXT .
+For OpenSSL, it includes the release date, for example
 .Qq OpenSSL 0.9.5a 1 Apr 2000 .
 For LibreSSL,
 .Dv LIBRESSL_VERSION_TEXT
@@ -242,7 +245,8 @@ and
 .Fn SSLeay_version
 return pointers to static strings.
 .Sh SEE ALSO
-.Xr crypto 3
+.Xr crypto 3 ,
+.Xr OPENSSL_config 3
 .Sh HISTORY
 .Fn SSLeay ,
 .Fn SSLeay_version ,

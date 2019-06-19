@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.44 2017/04/22 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.47 2019/03/14 06:36:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -41,7 +41,7 @@ const struct cmd_entry cmd_capture_pane_entry = {
 
 	.args = { "ab:CeE:JpPqS:t:", 0, 0 },
 	.usage = "[-aCeJpPq] " CMD_BUFFER_USAGE " [-E end-line] "
-		 "[-S start-line]" CMD_TARGET_PANE_USAGE,
+		 "[-S start-line] " CMD_TARGET_PANE_USAGE,
 
 	.target = { 't', CMD_FIND_PANE, 0 },
 
@@ -199,8 +199,7 @@ cmd_capture_pane_exec(struct cmd *self, struct cmdq_item *item)
 	size_t			 len;
 
 	if (self->entry == &cmd_clear_history_entry) {
-		if (wp->mode == &window_copy_mode)
-			window_pane_reset_mode(wp);
+		window_pane_reset_mode_all(wp);
 		grid_clear_history(wp->base.grid);
 		return (CMD_RETURN_NORMAL);
 	}

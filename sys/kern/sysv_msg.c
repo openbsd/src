@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.33 2016/09/15 02:00:16 dlg Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.34 2018/12/05 15:42:45 mpi Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -658,7 +658,7 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 {
 	struct msg_sysctl_info *info;
 	struct que *que;
-	size_t infolen;
+	size_t infolen, infolen0;
 	int error;
 
 	switch (*name) {
@@ -675,10 +675,10 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 		 * message queues; for now, emulate this behavior
 		 * until a more thorough fix can be made.
 		 */
-		infolen = sizeof(msginfo) +
+		infolen0 = sizeof(msginfo) +
 		    msginfo.msgmni * sizeof(struct msqid_ds);
 		if (where == NULL) {
-			*sizep = infolen;
+			*sizep = infolen0;
 			return (0);
 		}
 
@@ -692,14 +692,14 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 		if (*sizep == sizeof(struct msginfo))
 			return (copyout(&msginfo, where, sizeof(msginfo)));
 
-		info = malloc(infolen, M_TEMP, M_WAIT|M_ZERO);
+		info = malloc(infolen0, M_TEMP, M_WAIT|M_ZERO);
 
 		/* if the malloc slept, this may have changed */
 		infolen = sizeof(msginfo) +
 		    msginfo.msgmni * sizeof(struct msqid_ds);
 
 		if (*sizep < infolen) {
-			free(info, M_TEMP, 0);
+			free(info, M_TEMP, infolen0);
 			return (ENOMEM);
 		}
 
@@ -716,7 +716,7 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 
 		error = copyout(info, where, infolen);
 
-		free(info, M_TEMP, 0);
+		free(info, M_TEMP, infolen0);
 
 		return (error);
 

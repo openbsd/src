@@ -49,6 +49,9 @@ def CC_AArch64_AAPCS : CallingConv<[
   // Pass SwiftSelf in a callee saved register.
   CCIfSwiftSelf<CCIfType<[i64], CCAssignToRegWithShadow<[X20], [W20]>>>,
 
+  // A SwiftError is passed in X21.
+  CCIfSwiftError<CCIfType<[i64], CCAssignToRegWithShadow<[X21], [W21]>>>,
+
   CCIfConsecutiveRegs<CCCustom<"CC_AArch64_Custom_Block">>,
 
   // Handle i1, i8, i16, i32, i64, f32, f64 and v2f64 by passing in registers,
@@ -342,3 +345,22 @@ def CSR_AArch64_NoRegs : CalleeSavedRegs<(add)>;
 def CSR_AArch64_RT_MostRegs :  CalleeSavedRegs<(add CSR_AArch64_AAPCS,
                                                 (sequence "X%u", 9, 15))>;
 
+def CSR_AArch64_StackProbe_Windows
+    : CalleeSavedRegs<(add (sequence "X%u", 0, 15),
+                           (sequence "X%u", 18, 28), FP, SP,
+                           (sequence "Q%u", 0, 31))>;
+
+// Variants of the standard calling conventions for shadow call stack.
+// These all preserve x18 in addition to any other registers.
+def CSR_AArch64_NoRegs_SCS
+    : CalleeSavedRegs<(add CSR_AArch64_NoRegs, X18)>;
+def CSR_AArch64_AllRegs_SCS
+    : CalleeSavedRegs<(add CSR_AArch64_AllRegs, X18)>;
+def CSR_AArch64_CXX_TLS_Darwin_SCS
+    : CalleeSavedRegs<(add CSR_AArch64_CXX_TLS_Darwin, X18)>;
+def CSR_AArch64_AAPCS_SwiftError_SCS
+    : CalleeSavedRegs<(add CSR_AArch64_AAPCS_SwiftError, X18)>;
+def CSR_AArch64_RT_MostRegs_SCS
+    : CalleeSavedRegs<(add CSR_AArch64_RT_MostRegs, X18)>;
+def CSR_AArch64_AAPCS_SCS
+    : CalleeSavedRegs<(add CSR_AArch64_AAPCS, X18)>;

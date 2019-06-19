@@ -13,10 +13,11 @@ BEGIN {
 }
 
 use Fcntl qw(SEEK_SET SEEK_CUR SEEK_END); # Not 0, 1, 2 everywhere.
+use Errno qw(EACCES);
 
 $| = 1;
 
-use Test::More tests => 122;
+use Test::More tests => 123;
 
 my $fh;
 my $var = "aaa\n";
@@ -185,6 +186,7 @@ EOF
 
     my $ro = \43;
     ok(!(defined open(F, '>', $ro)), $!);
+    is($!+0, EACCES, "check we get a read-onlyish error code");
     close F;
     # but we can read from it
     ok(open(F, '<', $ro), $!);

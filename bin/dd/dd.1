@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.33 2016/08/17 21:23:01 schwarze Exp $
+.\"	$OpenBSD: dd.1,v 1.35 2019/02/16 17:01:24 jmc Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd $Mdocdate: August 17 2016 $
+.Dd $Mdocdate: February 16 2019 $
 .Dt DD 1
 .Os
 .Sh NAME
@@ -203,6 +203,10 @@ is a slightly different mapping, which is compatible with the
 .At V
 .Cm ibm
 value.
+.It Cm fsync
+Call
+.Xr fsync 2
+on the output file before exiting.
 .It Cm lcase
 Transform uppercase characters into lowercase characters.
 .It Cm noerror
@@ -361,8 +365,10 @@ and
 .Cm status
 operands,
 the
+.Cm fsync
+and
 .Cm osync
-conversion,
+conversions,
 the
 .Sq K ,
 .Sq m ,

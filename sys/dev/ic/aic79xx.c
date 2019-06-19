@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.64 2018/02/06 00:18:38 tedu Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.65 2019/01/31 18:01:14 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -269,11 +269,10 @@ int ahd_createdmamem(struct ahd_softc *, size_t, struct map_node *,
 void ahd_freedmamem(struct ahd_softc *, struct map_node *);
 
 /******************************** Private Inlines *****************************/
-__inline void	ahd_assert_atn(struct ahd_softc *ahd);
 int	ahd_currently_packetized(struct ahd_softc *ahd);
 int	ahd_set_active_fifo(struct ahd_softc *ahd);
 
-__inline void
+static inline void
 ahd_assert_atn(struct ahd_softc *ahd)
 {
 	ahd_outb(ahd, SCSISIGO, ATNO);

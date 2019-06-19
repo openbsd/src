@@ -131,7 +131,7 @@ documented methods on the object.
 Note, however, that (unlike most other OO languages) Perl does not
 ensure or enforce encapsulation in any way. If you want objects to
 actually I<be> opaque you need to arrange for that yourself. This can
-be done in a variety of ways, including using L<"Inside-Out objects">
+be done in a variety of ways, including using L</"Inside-Out objects">
 or modules from CPAN.
 
 =head3 Objects Are Blessed; Variables Are Not
@@ -179,12 +179,12 @@ Each package contains a special array called C<@ISA>. The C<@ISA> array
 contains a list of that class's parent classes, if any. This array is
 examined when Perl does method resolution, which we will cover later.
 
-It is possible to manually set C<@ISA>, and you may see this in older
-Perl code. Much older code also uses the L<base> pragma. For new code,
-we recommend that you use the L<parent> pragma to declare your parents.
-This pragma will take care of setting C<@ISA>. It will also load the
-parent classes and make sure that the package doesn't inherit from
-itself.
+Calling methods from a package means it must be loaded, of course, so
+you will often want to load a module and add it to C<@ISA> at the same
+time. You can do so in a single step using the L<parent> pragma.
+(In older code you may encounter the L<base> pragma, which is nowadays
+discouraged except when you have to work with the equally discouraged
+L<fields> pragma.)
 
 However the parent classes are set, the package's C<@ISA> variable will
 contain a list of those parents. This is simply a list of scalars, each
@@ -489,8 +489,8 @@ As you can see, we've stored the path and file data in the object
 itself. Remember, under the hood, this object is still just a hash.
 Later, we'll write accessors to manipulate this data.
 
-For our File::MP3 class, we can check to make sure that the path we're
-given ends with ".mp3":
+For our C<File::MP3> class, we can check to make sure that the path
+we're given ends with ".mp3":
 
   package File::MP3;
 
@@ -581,6 +581,34 @@ X<method>
 Perl supports several other ways to call methods besides the C<<
 $object->method() >> usage we've seen so far.
 
+=head3 Method Names with a Fully Qualified Name
+
+Perl allows you to call methods using their fully qualified name (the
+package and method name):
+
+  my $mp3 = File::MP3->new( 'Regin.mp3', $data );
+  $mp3->File::save();
+
+When you call a fully qualified method name like C<File::save>, the method
+resolution search for the C<save> method starts in the C<File> class,
+skipping any C<save> method the C<File::MP3> class may have defined. It
+still searches the C<File> class's parents if necessary.
+
+While this feature is most commonly used to explicitly call methods
+inherited from an ancestor class, there is no technical restriction
+that enforces this:
+
+  my $obj = Tree->new();
+  $obj->Dog::bark();
+
+This calls the C<bark> method from class C<Dog> on an object of class
+C<Tree>, even if the two classes are completely unrelated. Use this
+with great care.
+
+The C<SUPER> pseudo-class that was described earlier is I<not> the same
+as calling a method with a fully-qualified name. See the earlier
+L</Inheritance> section for details.
+
 =head3 Method Names as Strings
 
 Perl lets you use a scalar variable containing a string as a method
@@ -624,7 +652,7 @@ this idiom in the wild combined with a call to C<can>:
       $object->$meth();
   }
 
-=head3 Deferencing Method Call
+=head3 Dereferencing Method Call
 
 Perl also lets you use a dereferenced scalar reference in a method
 call. That's a mouthful, so let's look at some code:
@@ -903,15 +931,22 @@ argument. It does not receive any additional arguments. However, the
 C<$_[0]> variable will be read-only in the destructor, so you cannot
 assign a value to it.
 
-If your C<DESTROY> method throws an error, this error will be ignored.
-It will not be sent to C<STDERR> and it will not cause the program to
-die. However, if your destructor is running inside an C<eval {}> block,
-then the error will change the value of C<$@>.
+If your C<DESTROY> method throws an exception, this will not cause
+any control transfer beyond exiting the method.  The exception will be
+reported to C<STDERR> as a warning, marked "(in cleanup)", and Perl will
+continue with whatever it was doing before.
 
-Because C<DESTROY> methods can be called at any time, you should
-localize any global variables you might update in your C<DESTROY>. In
-particular, if you use C<eval {}> you should localize C<$@>, and if you
-use C<system> or backticks you should localize C<$?>.
+Because C<DESTROY> methods can be called at any time, you should localize
+any global status variables that might be set by anything you do in
+your C<DESTROY> method.  If you are in doubt about a particular status
+variable, it doesn't hurt to localize it.  There are five global status
+variables, and the safest way is to localize all five of them:
+
+  sub DESTROY {
+      local($., $@, $!, $^E, $?);
+      my $self = shift;
+      ...;
+  }
 
 If you define an C<AUTOLOAD> in your class, then Perl will call your
 C<AUTOLOAD> to handle the C<DESTROY> method. You can prevent this by

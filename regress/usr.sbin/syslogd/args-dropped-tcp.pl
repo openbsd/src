@@ -31,7 +31,7 @@ our %args = (
 	loggrep => {
 	    get_between2loggrep(),
 	    get_charlog() => 400,
-	    qr/ \(dropped\)/ => '~68',
+	    qr/ \(dropped\)/ => '~61',
 	},
     },
     server => {
@@ -47,8 +47,8 @@ our %args = (
 	    get_between2loggrep(),
 	    get_secondlog() => 1,
 	    get_thirdlog() => 0,
-	    get_charlog() => '~333',
-	    qr/syslogd\[\d+\]: dropped [67][0-9] messages to loghost/ => 1,
+	    get_charlog() => '~340',
+	    qr/syslogd\[\d+\]: dropped [56][0-9] messages to loghost/ => 1,
 	},
     },
     file => {

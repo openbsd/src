@@ -27,7 +27,7 @@ using namespace llvm::pdb;
 DbiStreamBuilder::DbiStreamBuilder(msf::MSFBuilder &Msf)
     : Msf(Msf), Allocator(Msf.getAllocator()), Age(1), BuildNumber(0),
       PdbDllVersion(0), PdbDllRbld(0), Flags(0), MachineType(PDB_Machine::x86),
-      Header(nullptr), DbgStreams((int)DbgHeaderType::Max) {}
+      Header(nullptr) {}
 
 DbiStreamBuilder::~DbiStreamBuilder() {}
 
@@ -37,6 +37,14 @@ void DbiStreamBuilder::setAge(uint32_t A) { Age = A; }
 
 void DbiStreamBuilder::setBuildNumber(uint16_t B) { BuildNumber = B; }
 
+void DbiStreamBuilder::setBuildNumber(uint8_t Major, uint8_t Minor) {
+  BuildNumber = (uint16_t(Major) << DbiBuildNo::BuildMajorShift) &
+                DbiBuildNo::BuildMajorMask;
+  BuildNumber |= (uint16_t(Minor) << DbiBuildNo::BuildMinorShift) &
+                 DbiBuildNo::BuildMinorMask;
+  BuildNumber |= DbiBuildNo::NewVersionFormatMask;
+}
+
 void DbiStreamBuilder::setPdbDllVersion(uint16_t V) { PdbDllVersion = V; }
 
 void DbiStreamBuilder::setPdbDllRbld(uint16_t R) { PdbDllRbld = R; }
@@ -45,8 +53,17 @@ void DbiStreamBuilder::setFlags(uint16_t F) { Flags = F; }
 
 void DbiStreamBuilder::setMachineType(PDB_Machine M) { MachineType = M; }
 
+void DbiStreamBuilder::setMachineType(COFF::MachineTypes M) {
+  // These enums are mirrors of each other, so we can just cast the value.
+  MachineType = static_cast<pdb::PDB_Machine>(static_cast<unsigned>(M));
+}
+
 void DbiStreamBuilder::setSectionMap(ArrayRef<SecMapEntry> SecMap) {
   SectionMap = SecMap;
+}
+
+void DbiStreamBuilder::setGlobalsStreamIndex(uint32_t Index) {
+  GlobalsStreamIndex = Index;
 }
 
 void DbiStreamBuilder::setSymbolRecordStreamIndex(uint32_t Index) {
@@ -59,15 +76,8 @@ void DbiStreamBuilder::setPublicsStreamIndex(uint32_t Index) {
 
 Error DbiStreamBuilder::addDbgStream(pdb::DbgHeaderType Type,
                                      ArrayRef<uint8_t> Data) {
-  if (DbgStreams[(int)Type].StreamNumber != kInvalidStreamIndex)
-    return make_error<RawError>(raw_error_code::duplicate_entry,
-                                "The specified stream type already exists");
-  auto ExpectedIndex = Msf.addStream(Data.size());
-  if (!ExpectedIndex)
-    return ExpectedIndex.takeError();
-  uint32_t Index = std::move(*ExpectedIndex);
-  DbgStreams[(int)Type].Data = Data;
-  DbgStreams[(int)Type].StreamNumber = Index;
+  DbgStreams[(int)Type].emplace();
+  DbgStreams[(int)Type]->Data = Data;
   return Error::success();
 }
 
@@ -86,24 +96,9 @@ uint32_t DbiStreamBuilder::calculateSerializedLength() const {
 Expected<DbiModuleDescriptorBuilder &>
 DbiStreamBuilder::addModuleInfo(StringRef ModuleName) {
   uint32_t Index = ModiList.size();
-  auto MIB =
-      llvm::make_unique<DbiModuleDescriptorBuilder>(ModuleName, Index, Msf);
-  auto M = MIB.get();
-  auto Result = ModiMap.insert(std::make_pair(ModuleName, std::move(MIB)));
-
-  if (!Result.second)
-    return make_error<RawError>(raw_error_code::duplicate_entry,
-                                "The specified module already exists");
-  ModiList.push_back(M);
-  return *M;
-}
-
-Error DbiStreamBuilder::addModuleSourceFile(StringRef Module, StringRef File) {
-  auto ModIter = ModiMap.find(Module);
-  if (ModIter == ModiMap.end())
-    return make_error<RawError>(raw_error_code::no_entry,
-                                "The specified module was not found");
-  return addModuleSourceFile(*ModIter->second, File);
+  ModiList.push_back(
+      llvm::make_unique<DbiModuleDescriptorBuilder>(ModuleName, Index, Msf));
+  return *ModiList.back();
 }
 
 Error DbiStreamBuilder::addModuleSourceFile(DbiModuleDescriptorBuilder &Module,
@@ -269,14 +264,23 @@ Error DbiStreamBuilder::finalize() {
   H->TypeServerSize = 0;
   H->SymRecordStreamIndex = SymRecordStreamIndex;
   H->PublicSymbolStreamIndex = PublicsStreamIndex;
-  H->MFCTypeServerIndex = kInvalidStreamIndex;
-  H->GlobalSymbolStreamIndex = kInvalidStreamIndex;
+  H->MFCTypeServerIndex = 0; // Not sure what this is, but link.exe writes 0.
+  H->GlobalSymbolStreamIndex = GlobalsStreamIndex;
 
   Header = H;
   return Error::success();
 }
 
 Error DbiStreamBuilder::finalizeMsfLayout() {
+  for (auto &S : DbgStreams) {
+    if (!S.hasValue())
+      continue;
+    auto ExpectedIndex = Msf.addStream(S->Data.size());
+    if (!ExpectedIndex)
+      return ExpectedIndex.takeError();
+    S->StreamNumber = *ExpectedIndex;
+  }
+
   for (auto &MI : ModiList) {
     if (auto EC = MI->finalizeMsfLayout())
       return EC;
@@ -305,19 +309,6 @@ static uint16_t toSecMapFlags(uint32_t Flags) {
   Ret |= static_cast<uint16_t>(OMFSegDescFlags::IsSelector);
 
   return Ret;
-}
-
-void DbiStreamBuilder::addSectionContrib(DbiModuleDescriptorBuilder *ModuleDbi,
-                                         const object::coff_section *SecHdr) {
-  SectionContrib SC;
-  memset(&SC, 0, sizeof(SC));
-  SC.ISect = (uint16_t)~0U; // This represents nil.
-  SC.Off = SecHdr->PointerToRawData;
-  SC.Size = SecHdr->SizeOfRawData;
-  SC.Characteristics = SecHdr->Characteristics;
-  // Use the module index in the module dbi stream or nil (-1).
-  SC.Imod = ModuleDbi ? ModuleDbi->getModuleIndex() : (uint16_t)~0U;
-  SectionContribs.emplace_back(SC);
 }
 
 // A utility function to create a Section Map for a given list of COFF sections.
@@ -399,17 +390,23 @@ Error DbiStreamBuilder::commit(const msf::MSFLayout &Layout,
   if (auto EC = ECNamesBuilder.commit(Writer))
     return EC;
 
-  for (auto &Stream : DbgStreams)
-    if (auto EC = Writer.writeInteger(Stream.StreamNumber))
+  for (auto &Stream : DbgStreams) {
+    uint16_t StreamNumber = kInvalidStreamIndex;
+    if (Stream.hasValue())
+      StreamNumber = Stream->StreamNumber;
+    if (auto EC = Writer.writeInteger(StreamNumber))
       return EC;
+  }
 
   for (auto &Stream : DbgStreams) {
-    if (Stream.StreamNumber == kInvalidStreamIndex)
+    if (!Stream.hasValue())
       continue;
+    assert(Stream->StreamNumber != kInvalidStreamIndex);
+
     auto WritableStream = WritableMappedBlockStream::createIndexedStream(
-        Layout, MsfBuffer, Stream.StreamNumber, Allocator);
+        Layout, MsfBuffer, Stream->StreamNumber, Allocator);
     BinaryStreamWriter DbgStreamWriter(*WritableStream);
-    if (auto EC = DbgStreamWriter.writeArray(Stream.Data))
+    if (auto EC = DbgStreamWriter.writeArray(Stream->Data))
       return EC;
   }
 

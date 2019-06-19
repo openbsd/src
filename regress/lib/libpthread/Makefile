@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.49 2017/10/16 01:46:09 guenther Exp $
+# $OpenBSD: Makefile,v 1.51 2019/05/16 05:24:13 otto Exp $
 
 # disabled because it requires a buggy behavior that uthread had:
 #	dup2_race
@@ -15,17 +15,17 @@ SUBDIR+= barrier blocked_shutdown \
 	 cancel cancel2 cancel_wait close close_race closefrom cwd \
 	 dlopen \
 	 earlysig errno execve fork \
-	 group netdb pcap poll preemption preemption_float \
+	 group malloc_duel netdb pcap poll preemption preemption_float \
 	 pthread_atfork pthread_cond_timedwait pthread_create \
 	 pthread_join pthread_kill pthread_mutex \
-	 pthread_once pthread_rwlock pthread_specific \
+	 pthread_once pthread_rwlock pthread_rwlock2 pthread_specific \
 	 readdir restart \
 	 select semaphore setjmp sigdeliver siginfo \
 	 siginterrupt signal signals signodefer sigsuspend sigwait sleep \
 	 socket spinlock stack stdarg stdio switch system
 
 .if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
-SUBDIR+= malloc_duel setsockopt
+SUBDIR+= setsockopt
 .endif
 
 # Not available or disabled: fcntl, getaddrinfo, pause, pw, sigmask, stdfiles

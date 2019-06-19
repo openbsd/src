@@ -22,17 +22,18 @@ use strict;
 use ExtUtils::MakeMaker::Config;
 use File::Basename;
 
-our $VERSION = '7.10_02';
+our $VERSION = '7.34';
+$VERSION = eval $VERSION;
 
 require ExtUtils::MM_Win32;
 our @ISA = qw(ExtUtils::MM_Win32);
 
-use ExtUtils::MakeMaker qw( &neatvalue );
+use ExtUtils::MakeMaker qw(&neatvalue &_sprintf562);
 
 $ENV{EMXSHELL} = 'sh'; # to run `commands`
 
-my $BORLAND  = $Config{'cc'} =~ /^bcc/i;
-my $GCC      = $Config{'cc'} =~ /^gcc/i;
+my $BORLAND  = $Config{'cc'} =~ /\bbcc/i;
+my $GCC      = $Config{'cc'} =~ /\bgcc/i;
 
 
 =item os_flavor
@@ -122,142 +123,82 @@ sub platform_constants {
     return $make_frag;
 }
 
+=item static_lib_pure_cmd
 
-=item const_cccmd
+Defines how to run the archive utility
 
 =cut
 
-sub const_cccmd {
-    my($self,$libperl)=@_;
-    return $self->{CONST_CCCMD} if $self->{CONST_CCCMD};
-    return '' unless $self->needs_linking();
-    return $self->{CONST_CCCMD} = <<'MAKE_FRAG';
-CCCMD = $(CC) $(CCFLAGS) $(INC) $(OPTIMIZE) \
-	$(PERLTYPE) $(MPOLLUTE) -o $@ \
-	-DVERSION=\"$(VERSION)\" -DXS_VERSION=\"$(XS_VERSION)\"
-MAKE_FRAG
-
+sub static_lib_pure_cmd {
+    my ($self, $src) = @_;
+    $src =~ s/(\$\(\w+)(\))/$1:^"+"$2/g if $BORLAND;
+    sprintf qq{\t\$(AR) %s\n}, ($BORLAND ? '$@ ' . $src
+                          : ($GCC ? '-ru $@ ' . $src
+                                  : '-type library -o $@ ' . $src));
 }
 
-
-=item static_lib
+=item xs_static_lib_is_xs
 
 =cut
 
-sub static_lib {
-    my($self) = @_;
-
-    return '' unless $self->has_link_code;
-
-    my $m = <<'END';
-$(INST_STATIC): $(OBJECT) $(MYEXTLIB) $(INST_ARCHAUTODIR)$(DFSEP).exists
-	$(RM_RF) $@
-END
-
-    # If this extension has it's own library (eg SDBM_File)
-    # then copy that to $(INST_STATIC) and add $(OBJECT) into it.
-    $m .= <<'END'  if $self->{MYEXTLIB};
-	$self->{CP} $(MYEXTLIB) $@
-END
-
-    my $ar_arg;
-    if( $BORLAND ) {
-        $ar_arg = '$@ $(OBJECT:^"+")';
-    }
-    elsif( $GCC ) {
-        $ar_arg = '-ru $@ $(OBJECT)';
-    }
-    else {
-        $ar_arg = '-type library -o $@ $(OBJECT)';
-    }
-
-    $m .= sprintf <<'END', $ar_arg;
-	$(AR) %s
-	$(NOECHO) $(ECHO) "$(EXTRALIBS)" > $(INST_ARCHAUTODIR)\extralibs.ld
-	$(CHMOD) 755 $@
-END
-
-    $m .= <<'END' if $self->{PERL_SRC};
-	$(NOECHO) $(ECHO) "$(EXTRALIBS)" >> $(PERL_SRC)\ext.libs
-
-
-END
-    return $m;
+sub xs_static_lib_is_xs {
+    return 1;
 }
 
 =item dynamic_lib
 
-Defines how to produce the *.so (or equivalent) files.
+Override of utility methods for OS-specific work.
 
 =cut
 
-sub dynamic_lib {
-    my($self, %attribs) = @_;
-    return '' unless $self->needs_linking(); #might be because of a subdir
-
-    return '' unless $self->has_link_code;
-
-    my($otherldflags) = $attribs{OTHERLDFLAGS} || ($BORLAND ? 'c0d32.obj': '');
-    my($inst_dynamic_dep) = $attribs{INST_DYNAMIC_DEP} || "";
-    my($ldfrom) = '$(LDFROM)';
-
-    (my $boot = $self->{NAME}) =~ s/:/_/g;
-
-    my $m = <<'MAKE_FRAG';
-# This section creates the dynamically loadable $(INST_DYNAMIC)
-# from $(OBJECT) and possibly $(MYEXTLIB).
-OTHERLDFLAGS = '.$otherldflags.'
-INST_DYNAMIC_DEP = '.$inst_dynamic_dep.'
-
+sub xs_make_dynamic_lib {
+    my ($self, $attribs, $from, $to, $todir, $ldfrom, $exportlist) = @_;
+    my @m;
+    # Taking care of long names like FileHandle, ByteLoader, SDBM_File etc
+    if ($to =~ /^\$/) {
+        if ($self->{NLM_SHORT_NAME}) {
+            # deal with shortnames
+            my $newto = q{$(INST_AUTODIR)\\$(NLM_SHORT_NAME).$(DLEXT)};
+            push @m, "$to: $newto\n\n";
+            $to = $newto;
+        }
+    } else {
+        my ($v, $d, $f) = File::Spec->splitpath($to);
+        # relies on $f having a literal "." in it, unlike for $(OBJ_EXT)
+        if ($f =~ /[^\.]{9}\./) {
+            # 9+ chars before '.', need to shorten
+            $f = substr $f, 0, 8;
+        }
+        my $newto = File::Spec->catpath($v, $d, $f);
+        push @m, "$to: $newto\n\n";
+        $to = $newto;
+    }
+    # bits below should be in dlsyms, not here
+    #                                   1    2      3       4
+    push @m, _sprintf562 <<'MAKE_FRAG', $to, $from, $todir, $exportlist;
 # Create xdc data for an MT safe NLM in case of mpk build
-$(INST_DYNAMIC): $(OBJECT) $(MYEXTLIB) $(BOOTSTRAP) $(INST_ARCHAUTODIR)$(DFSEP).exists
-	$(NOECHO) $(ECHO) Export boot_$(BOOT_SYMBOL) > $(BASEEXT).def
-	$(NOECHO) $(ECHO) $(BASE_IMPORT) >> $(BASEEXT).def
-	$(NOECHO) $(ECHO) Import @$(PERL_INC)\perl.imp >> $(BASEEXT).def
+%1$s: %2$s $(MYEXTLIB) $(BOOTSTRAP) %3$s$(DFSEP).exists
+	$(NOECHO) $(ECHO) Export boot_$(BOOT_SYMBOL) > %4$s
+	$(NOECHO) $(ECHO) $(BASE_IMPORT) >> %4$s
+	$(NOECHO) $(ECHO) Import @$(PERL_INC)\perl.imp >> %4$s
 MAKE_FRAG
-
-
     if ( $self->{CCFLAGS} =~ m/ -DMPK_ON /) {
-        $m .= <<'MAKE_FRAG';
-	$(MPKTOOL) $(XDCFLAGS) $(BASEEXT).xdc
-	$(NOECHO) $(ECHO) xdcdata $(BASEEXT).xdc >> $(BASEEXT).def
+        (my $xdc = $exportlist) =~ s#def\z#xdc#;
+        $xdc = '$(BASEEXT).xdc';
+        push @m, sprintf <<'MAKE_FRAG', $xdc, $exportlist;
+	$(MPKTOOL) $(XDCFLAGS) %s
+	$(NOECHO) $(ECHO) xdcdata $(BASEEXT).xdc >> %s
 MAKE_FRAG
     }
-
     # Reconstruct the X.Y.Z version.
     my $version = join '.', map { sprintf "%d", $_ }
                               $] =~ /(\d)\.(\d{3})(\d{2})/;
-    $m .= sprintf '	$(LD) $(LDFLAGS) $(OBJECT:.obj=.obj) -desc "Perl %s Extension ($(BASEEXT))  XS_VERSION: $(XS_VERSION)" -nlmversion $(NLM_VERSION)', $version;
-
-    # Taking care of long names like FileHandle, ByteLoader, SDBM_File etc
-    if($self->{NLM_SHORT_NAME}) {
-        # In case of nlms with names exceeding 8 chars, build nlm in the
-        # current dir, rename and move to auto\lib.
-        $m .= q{ -o $(NLM_SHORT_NAME).$(DLEXT)}
-    } else {
-        $m .= q{ -o $(INST_AUTODIR)\\$(BASEEXT).$(DLEXT)}
-    }
-
-    # Add additional lib files if any (SDBM_File)
-    $m .= q{ $(MYEXTLIB) } if $self->{MYEXTLIB};
-
-    $m .= q{ $(PERL_INC)\Main.lib -commandfile $(BASEEXT).def}."\n";
-
-    if($self->{NLM_SHORT_NAME}) {
-        $m .= <<'MAKE_FRAG';
-	if exist $(INST_AUTODIR)\$(NLM_SHORT_NAME).$(DLEXT) del $(INST_AUTODIR)\$(NLM_SHORT_NAME).$(DLEXT)
-	move $(NLM_SHORT_NAME).$(DLEXT) $(INST_AUTODIR)
-MAKE_FRAG
-    }
-
-    $m .= <<'MAKE_FRAG';
-
+    push @m, sprintf <<'EOF', $from, $version, $to, $exportlist;
+	$(LD) $(LDFLAGS) %s -desc "Perl %s Extension ($(BASEEXT))  XS_VERSION: $(XS_VERSION)" -nlmversion $(NLM_VERSION) -o %s $(MYEXTLIB) $(PERL_INC)\Main.lib -commandfile %s
 	$(CHMOD) 755 $@
-MAKE_FRAG
-
-    return $m;
+EOF
+    join '', @m;
 }
-
 
 1;
 __END__
@@ -265,5 +206,3 @@ __END__
 =back
 
 =cut
-
-

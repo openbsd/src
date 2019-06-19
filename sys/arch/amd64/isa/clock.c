@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.26 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.29 2019/05/23 19:00:52 jasper Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -201,18 +201,17 @@ rtcintr(void *arg)
 int
 gettick(void)
 {
-	u_long ef;
+	u_long s;
 	u_char lo, hi;
 
 	/* Don't want someone screwing with the counter while we're here. */
 	mtx_enter(&timer_mutex);
-	ef = read_rflags();
-	disable_intr();
+	s = intr_disable();
 	/* Select counter 0 and latch it. */
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	lo = inb(IO_TIMER1+TIMER_CNTR0);
 	hi = inb(IO_TIMER1+TIMER_CNTR0);
-	write_rflags(ef);
+	intr_restore(s);
 	mtx_leave(&timer_mutex);
 	return ((hi << 8) | lo);
 }
@@ -290,10 +289,7 @@ rtcdrain(void *v)
 	if (to != NULL)
 		timeout_del(to);
 
-	/*
-	* Drain any un-acknowledged RTC interrupts.
-	* See comment in cpu_initclocks().
-	*/
+	/* Drain any un-acknowledged RTC interrupts. */
 	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF)
 		; /* Nothing. */
 }
@@ -304,10 +300,14 @@ i8254_initclocks(void)
 	stathz = 128;
 	profhz = 1024;
 
-	isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr,
-	    0, "clock");
-	isa_intr_establish(NULL, 8, IST_PULSE, IPL_STATCLOCK, rtcintr,
-	    0, "rtc");
+	/*
+	 * While the clock interrupt handler isn't really MPSAFE, the
+	 * i8254 can't really be used as a clock on a true MP system.
+	 */
+	isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK | IPL_MPSAFE,
+	    clockintr, 0, "clock");
+	isa_intr_establish(NULL, 8, IST_PULSE, IPL_STATCLOCK | IPL_MPSAFE,
+	    rtcintr, 0, "rtc");
 
 	rtcstart();			/* start the mc146818 clock */
 
@@ -628,10 +628,9 @@ i8254_get_timecount(struct timecounter *tc)
 {
 	u_char hi, lo;
 	u_int count;
-	u_long ef;
+	u_long s;
 
-	ef = read_rflags();
-	disable_intr();
+	s = intr_disable();
 
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	lo = inb(IO_TIMER1+TIMER_CNTR0);
@@ -645,7 +644,8 @@ i8254_get_timecount(struct timecounter *tc)
 	}
 	i8254_lastcount = count;
 	count += i8254_offset;
-	write_rflags(ef);
+
+	intr_restore(s);
 
 	return (count);
 }

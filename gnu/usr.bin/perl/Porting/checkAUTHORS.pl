@@ -190,6 +190,9 @@ sub generate_known_author_map {
         # Randy W. Sims
         "ml-perl\100thepierianspring.org",
 
+        # Jason Hord
+        "pravus\100cpan.org",
+
         # perl internal addresses
         "perl5-porters\100africa.nicoh.com",
         "perlbug\100perl.org",,
@@ -215,7 +218,7 @@ sub read_authors_files {
     return unless (@authors);
     my (%count, %raw);
     foreach my $filename (@authors) {
-        open FH, "<$filename" or die "Can't open $filename: $!";
+        open FH, '<', $filename or die "Can't open $filename: $!";
         binmode FH, ':encoding(UTF-8)';
         while (<FH>) {
             next if /^\#/;
@@ -226,7 +229,7 @@ sub read_authors_files {
                 $name =~ s/\s*\z//;
                 $raw{$email} = $name;
                 $count{$email}++;
-            } elsif (/^([-A-Za-z0-9 .\'À-ÖØöø-ÿ]+)[\t\n]/) {
+            } elsif (/^([- .'\w]+)[\t\n]/) {
 
                 # Name only
                 $untraced{$1}++;
@@ -593,11 +596,13 @@ damian\100conway.org                    damian\100cs.monash.edu.au
 dan\100sidhe.org                        sugalsd\100lbcc.cc.or.us
 +                                       sugalskd\100osshe.edu
 daniel\100bitpusher.com                 daniel\100biz.bitpusher.com
+dave\100mag-sol.com                     dave\100dave.org.uk
 david.dyck\100fluke.com                 dcd\100tc.fluke.com
 david\100justatheory.com                david\100wheeler.net
 +                                       david\100kineticode.com
 +                                       david\100wheeler.com
 +                                       david\100wheeler.net
+whatever\100davidnicol.com              davidnicol\100gmail.com
 dennis\100booking.com                   dennis\100camel.ams6.corp.booking.com
 +					dennis.kaarsemaker\100booking.com
 +                                       dennis\100kaarsemaker.net
@@ -625,6 +630,7 @@ fugazi\100zyx.net                       larrysh\100cpan.org
 gbacon\100itsc.uah.edu                  gbacon\100adtrn-srv4.adtran.com
 gerberb\100zenez.com                    root\100devsys0.zenez.com
 gfuji\100cpan.org                       g.psy.va\100gmail.com
+genesullivan50\100yahoo.com             gsullivan\100cpan.org
 gerard\100ggoossen.net                  gerard\100tty.nl
 gibreel\100pobox.com                    stephen.zander\100interlock.mckesson.com
 +                                       srz\100loopback
@@ -660,6 +666,7 @@ jasons\100cs.unm.edu                    jasons\100sandy-home.arc.unm.edu
 jbuehler\100hekimian.com                jhpb\100hekimian.com
 jcromie\100100divsol.com                jcromie\100cpan.org
 +                                       jim.cromie\100gmail.com
+jd\100cpanel.net                        lightsey\100debian.org
 jdhedden\100cpan.org                    jerry\100hedden.us
 +                                       jdhedden\1001979.usna.com
 +                                       jdhedden\100gmail.com
@@ -689,6 +696,7 @@ jpeacock\100messagesystems.com          john.peacock\100havurah-software.org
 +                                       jpeacock\100jpeacock-hp.doesntexist.org
 +                                       jpeacock\100cpan.org
 +                                       jpeacock\100rowman.com
+james.schneider\100db.com               jschneid\100netilla.com
 jpl.jpl\100gmail.com                    jpl\100research.att.com
 jql\100accessone.com                    jql\100jql.accessone.com
 jsm28\100hermes.cam.ac.uk               jsm28\100cam.ac.uk
@@ -731,6 +739,7 @@ marcel\100codewerk.com                  gr\100univie.ac.at
 +                                       hanekomu\100gmail.com
 marcgreen\100cpan.org                   marcgreen\100wpi.edu
 markleightonfisher\100gmail.com         fisherm\100tce.com
++                                       mark-fisher\100mindspring.com
 mark.p.lutz\100boeing.com               tecmpl1\100triton.ca.boeing.com
 marnix\100gmail.com                     pttesac!marnix!vanam
 marty+p5p\100kasei.com                  marty\100martian.org
@@ -831,6 +840,7 @@ module@renee-baecker.de                 renee.baecker\100smart-websolutions.de
 +                                       otrs\100ubuntu.(none)
 +                                       perl\100renee-baecker.de
 +                                       reb\100perl-services.de
++                                       info\100perl-services.de
 richard.foley\100rfi.net                richard.foley\100t-online.de
 +                                       richard.foley\100ubs.com
 +                                       richard.foley\100ubsw.com
@@ -874,6 +884,7 @@ schwern\100pobox.com                    schwern\100gmail.com
 +                                       schwern\100athens.arena-i.com
 +                                       schwern\100blackrider.aocn.com
 +                                       schwern\100ool-18b93024.dyn.optonline.net
+scop\100cs132170.pp.htv.fi              ville.skytta\100iki.fi
 scotth\100sgi.com                       author scotth\100sgi.com 842220273 +0000
 +                                       schotth\100sgi.com
 schwab\100suse.de                       schwab\100issan.informatik.uni-dortmund.de

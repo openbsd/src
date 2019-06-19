@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.19 2015/10/04 11:58:09 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.20 2019/05/08 23:56:48 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.2 1995/04/11 02:44:49 cgd Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ void	delete(char *);
 void	dologout(int);
 void	fatal(char *);
 int	ftpd_pclose(FILE *, pid_t);
-FILE   *ftpd_popen(char *, char *, pid_t *);
+FILE   *ftpd_ls(char *, char *, pid_t *);
 int     get_line(char *, int, FILE *);
 void	ftpdlogwtmp(char *, char *, char *);
 void	lreply(int, const char *, ...);
@@ -89,7 +89,8 @@ void	renamecmd(char *, char *);
 char   *renamefrom(char *);
 void	reply(int, const char *, ...);
 void	reply_r(int, const char *, ...);
-void	retrieve(char *, char *);
+enum ret_cmd { RET_FILE, RET_LIST };
+void	retrieve(enum ret_cmd, char *);
 void	send_file_list(char *);
 void	setproctitle(const char *, ...);
 void	statcmd(void);

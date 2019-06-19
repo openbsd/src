@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.11 2017/01/24 13:32:55 jsing Exp $ */
+/*	$Id: acctproc.c,v 1.20 2019/06/17 15:20:10 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -24,12 +24,13 @@
 #include <unistd.h>
 
 #include <openssl/pem.h>
+#include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
 
 #include "extern.h"
-#include "rsa.h"
+#include "key.h"
 
 /*
  * Converts a BIGNUM to the form used in JWK.
@@ -76,8 +77,8 @@ op_thumb_rsa(EVP_PKEY *pkey)
 	char	*exp = NULL, *mod = NULL, *json = NULL;
 	RSA	*r;
 
-	if ((r = EVP_PKEY_get1_RSA(pkey)) == NULL)
-		warnx("EVP_PKEY_get1_RSA");
+	if ((r = EVP_PKEY_get0_RSA(pkey)) == NULL)
+		warnx("EVP_PKEY_get0_RSA");
 	else if ((mod = bn2string(r->n)) == NULL)
 		warnx("bn2string");
 	else if ((exp = bn2string(r->e)) == NULL)
@@ -87,6 +88,41 @@ op_thumb_rsa(EVP_PKEY *pkey)
 
 	free(exp);
 	free(mod);
+	return json;
+}
+
+/*
+ * Extract the relevant EC components from the key and create the JSON
+ * thumbprint from them.
+ */
+static char *
+op_thumb_ec(EVP_PKEY *pkey)
+{
+	BIGNUM	*X = NULL, *Y = NULL;
+	EC_KEY	*ec = NULL;
+	char	*x = NULL, *y = NULL;
+	char	*json = NULL;
+
+	if ((ec = EVP_PKEY_get0_EC_KEY(pkey)) == NULL)
+		warnx("EVP_PKEY_get0_EC_KEY");
+	else if ((X = BN_new()) == NULL)
+		warnx("BN_new");
+	else if ((Y = BN_new()) == NULL)
+		warnx("BN_new");
+	else if (!EC_POINT_get_affine_coordinates_GFp(EC_KEY_get0_group(ec),
+	    EC_KEY_get0_public_key(ec), X, Y, NULL))
+		warnx("EC_POINT_get_affine_coordinates_GFp");
+	else if ((x = bn2string(X)) == NULL)
+		warnx("bn2string");
+	else if ((y = bn2string(Y)) == NULL)
+		warnx("bn2string");
+	else if ((json = json_fmt_thumb_ec(x, y)) == NULL)
+		warnx("json_fmt_thumb_rsa");
+
+	BN_free(X);
+	BN_free(Y);
+	free(x);
+	free(y);
 	return json;
 }
 
@@ -109,6 +145,10 @@ op_thumbprint(int fd, EVP_PKEY *pkey)
 		if ((thumb = op_thumb_rsa(pkey)) != NULL)
 			break;
 		goto out;
+	case EVP_PKEY_EC:
+		if ((thumb = op_thumb_ec(pkey)) != NULL)
+			break;
+		goto out;
 	default:
 		warnx("EVP_PKEY_type: unknown key type");
 		goto out;
@@ -124,8 +164,8 @@ op_thumbprint(int fd, EVP_PKEY *pkey)
 	if ((dig = malloc(EVP_MAX_MD_SIZE)) == NULL) {
 		warn("malloc");
 		goto out;
-	} else if ((ctx = EVP_MD_CTX_create()) == NULL) {
-		warnx("EVP_MD_CTX_create");
+	} else if ((ctx = EVP_MD_CTX_new()) == NULL) {
+		warnx("EVP_MD_CTX_new");
 		goto out;
 	} else if (!EVP_DigestInit_ex(ctx, EVP_sha256(), NULL)) {
 		warnx("EVP_SignInit_ex");
@@ -144,9 +184,7 @@ op_thumbprint(int fd, EVP_PKEY *pkey)
 
 	rc = 1;
 out:
-	if (ctx != NULL)
-		EVP_MD_CTX_destroy(ctx);
-
+	EVP_MD_CTX_free(ctx);
 	free(thumb);
 	free(dig);
 	free(dig64);
@@ -154,30 +192,26 @@ out:
 }
 
 static int
-op_sign_rsa(char **head, char **prot, EVP_PKEY *pkey, const char *nonce)
+op_sign_rsa(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
 {
 	char	*exp = NULL, *mod = NULL;
 	int	rc = 0;
 	RSA	*r;
 
-	*head = NULL;
 	*prot = NULL;
 
 	/*
 	 * First, extract relevant portions of our private key.
-	 * Then construct the public header.
 	 * Finally, format the header combined with the nonce.
 	 */
 
-	if ((r = EVP_PKEY_get1_RSA(pkey)) == NULL)
-		warnx("EVP_PKEY_get1_RSA");
+	if ((r = EVP_PKEY_get0_RSA(pkey)) == NULL)
+		warnx("EVP_PKEY_get0_RSA");
 	else if ((mod = bn2string(r->n)) == NULL)
 		warnx("bn2string");
 	else if ((exp = bn2string(r->e)) == NULL)
 		warnx("bn2string");
-	else if ((*head = json_fmt_header_rsa(exp, mod)) == NULL)
-		warnx("json_fmt_header_rsa");
-	else if ((*prot = json_fmt_protected_rsa(exp, mod, nonce)) == NULL)
+	else if ((*prot = json_fmt_protected_rsa(exp, mod, nonce, url)) == NULL)
 		warnx("json_fmt_protected_rsa");
 	else
 		rc = 1;
@@ -187,20 +221,61 @@ op_sign_rsa(char **head, char **prot, EVP_PKEY *pkey, const char *nonce)
 	return rc;
 }
 
+static int
+op_sign_ec(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
+{
+	BIGNUM	*X = NULL, *Y = NULL;
+	EC_KEY	*ec = NULL;
+	char	*x = NULL, *y = NULL;
+	int	rc = 0;
+
+	*prot = NULL;
+
+	if ((ec = EVP_PKEY_get0_EC_KEY(pkey)) == NULL)
+		warnx("EVP_PKEY_get0_EC_KEY");
+	else if ((X = BN_new()) == NULL)
+		warnx("BN_new");
+	else if ((Y = BN_new()) == NULL)
+		warnx("BN_new");
+	else if (!EC_POINT_get_affine_coordinates_GFp(EC_KEY_get0_group(ec),
+	    EC_KEY_get0_public_key(ec), X, Y, NULL))
+		warnx("EC_POINT_get_affine_coordinates_GFp");
+	else if ((x = bn2string(X)) == NULL)
+		warnx("bn2string");
+	else if ((y = bn2string(Y)) == NULL)
+		warnx("bn2string");
+	else if ((*prot = json_fmt_protected_ec(x, y, nonce, url)) == NULL)
+		warnx("json_fmt_protected_ec");
+	else
+		rc = 1;
+
+	BN_free(X);
+	BN_free(Y);
+	free(x);
+	free(y);
+	return rc;
+}
+
 /*
  * Operation to sign a message with the account key.
  * This requires the sender ("fd") to provide the payload and a nonce.
  */
 static int
-op_sign(int fd, EVP_PKEY *pkey)
+op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 {
-	char		*nonce = NULL, *pay = NULL, *pay64 = NULL;
-	char		*prot = NULL, *prot64 = NULL, *head = NULL;
-	char		*sign = NULL, *dig64 = NULL, *fin = NULL;
-	unsigned char	*dig = NULL;
-	EVP_MD_CTX	*ctx = NULL;
-	int		 cc, rc = 0;
-	unsigned int	 digsz;
+	EVP_MD_CTX		*ctx = NULL;
+	const EVP_MD		*evp_md = NULL;
+	EC_KEY			*ec;
+	ECDSA_SIG		*ec_sig = NULL;
+	const BIGNUM		*ec_sig_r = NULL, *ec_sig_s = NULL;
+	int			 cc, rc = 0;
+	unsigned int		 digsz, bufsz, degree, bn_len, r_len, s_len;
+	char			*nonce = NULL, *pay = NULL, *pay64 = NULL;
+	char			*prot = NULL, *prot64 = NULL;
+	char			*sign = NULL, *dig64 = NULL, *fin = NULL;
+	char			*url = NULL, *kid = NULL, *alg = NULL;
+	unsigned char		*dig = NULL, *buf = NULL;
+	const unsigned char	*digp;
 
 	/* Read our payload and nonce from the requestor. */
 
@@ -208,6 +283,12 @@ op_sign(int fd, EVP_PKEY *pkey)
 		goto out;
 	else if ((nonce = readstr(fd, COMM_NONCE)) == NULL)
 		goto out;
+	else if ((url = readstr(fd, COMM_URL)) == NULL)
+		goto out;
+
+	if (op == ACCT_KID_SIGN)
+		if ((kid = readstr(fd, COMM_KID)) == NULL)
+			goto out;
 
 	/* Base64-encode the payload. */
 
@@ -218,12 +299,38 @@ op_sign(int fd, EVP_PKEY *pkey)
 
 	switch (EVP_PKEY_type(pkey->type)) {
 	case EVP_PKEY_RSA:
-		if (!op_sign_rsa(&head, &prot, pkey, nonce))
-			goto out;
+		alg = "RS256";
+		evp_md = EVP_sha256();
+		break;
+	case EVP_PKEY_EC:
+		alg = "ES384";
+		evp_md = EVP_sha384();
 		break;
 	default:
-		warnx("EVP_PKEY_type");
+		warnx("unknown account key type");
 		goto out;
+	}
+
+	if (op == ACCT_KID_SIGN) {
+		if ((prot = json_fmt_protected_kid(alg, kid, nonce, url)) ==
+		    NULL) {
+			warnx("json_fmt_protected_kid");
+			goto out;
+		}
+	} else {
+		switch (EVP_PKEY_type(pkey->type)) {
+		case EVP_PKEY_RSA:
+			if (!op_sign_rsa(&prot, pkey, nonce, url))
+				goto out;
+			break;
+		case EVP_PKEY_EC:
+			if (!op_sign_ec(&prot, pkey, nonce, url))
+				goto out;
+			break;
+		default:
+			warnx("EVP_PKEY_type");
+			goto out;
+		}
 	}
 
 	/* The header combined with the nonce, base64. */
@@ -252,10 +359,10 @@ op_sign(int fd, EVP_PKEY *pkey)
 	 * sign a SHA256 digest of our message.
 	 */
 
-	if ((ctx = EVP_MD_CTX_create()) == NULL) {
-		warnx("EVP_MD_CTX_create");
+	if ((ctx = EVP_MD_CTX_new()) == NULL) {
+		warnx("EVP_MD_CTX_new");
 		goto out;
-	} else if (!EVP_SignInit_ex(ctx, EVP_sha256(), NULL)) {
+	} else if (!EVP_SignInit_ex(ctx, evp_md, NULL)) {
 		warnx("EVP_SignInit_ex");
 		goto out;
 	} else if (!EVP_SignUpdate(ctx, sign, strlen(sign))) {
@@ -264,8 +371,57 @@ op_sign(int fd, EVP_PKEY *pkey)
 	} else if (!EVP_SignFinal(ctx, dig, &digsz, pkey)) {
 		warnx("EVP_SignFinal");
 		goto out;
-	} else if ((dig64 = base64buf_url((char *)dig, digsz)) == NULL) {
-		warnx("base64buf_url");
+	}
+
+	switch (EVP_PKEY_type(pkey->type)) {
+	case EVP_PKEY_RSA:
+		if ((dig64 = base64buf_url((char *)dig, digsz)) == NULL) {
+			warnx("base64buf_url");
+			goto out;
+		}
+		break;
+	case EVP_PKEY_EC:
+		if ((ec = EVP_PKEY_get0_EC_KEY(pkey)) == NULL) {
+			warnx("EVP_PKEY_get0_EC_KEY");
+			goto out;
+		}
+		degree = EC_GROUP_get_degree(EC_KEY_get0_group(ec));
+		bn_len = (degree + 7) / 8;
+
+		digp = dig; /* d2i_ECDSA_SIG advances digp */
+		if ((ec_sig = d2i_ECDSA_SIG(NULL, &digp, digsz)) == NULL) {
+			warnx("d2i_ECDSA_SIG");
+			goto out;
+		}
+
+		ECDSA_SIG_get0(ec_sig, &ec_sig_r, &ec_sig_s);
+
+		r_len = BN_num_bytes(ec_sig_r);
+		s_len = BN_num_bytes(ec_sig_s);
+
+		if((r_len > bn_len) || (s_len > bn_len)) {
+			warnx("ECDSA_SIG_get0");
+			goto out;
+		}
+
+		bufsz = 2 * bn_len;
+		if ((buf = calloc(1, bufsz)) == NULL) {
+			warnx("calloc");
+			goto out;
+		}
+
+		/* put r and s in with leading zeros if any */
+		BN_bn2bin(ec_sig_r, buf + bn_len - r_len);
+		BN_bn2bin(ec_sig_s, buf + bufsz - s_len);
+
+		if ((dig64 = base64buf_url((char *)buf, bufsz)) == NULL) {
+			warnx("base64buf_url");
+			goto out;
+		}
+
+		break;
+	default:
+		warnx("EVP_PKEY_type");
 		goto out;
 	}
 
@@ -275,7 +431,7 @@ op_sign(int fd, EVP_PKEY *pkey)
 	 * when we next enter the read loop).
 	 */
 
-	if ((fin = json_fmt_signed(head, prot64, pay64, dig64)) == NULL) {
+	if ((fin = json_fmt_signed(prot64, pay64, dig64)) == NULL) {
 		warnx("json_fmt_signed");
 		goto out;
 	} else if (writestr(fd, COMM_REQ, fin) < 0)
@@ -283,30 +439,30 @@ op_sign(int fd, EVP_PKEY *pkey)
 
 	rc = 1;
 out:
-	if (ctx != NULL)
-		EVP_MD_CTX_destroy(ctx);
-
+	EVP_MD_CTX_free(ctx);
 	free(pay);
 	free(sign);
 	free(pay64);
+	free(url);
 	free(nonce);
-	free(head);
+	free(kid);
 	free(prot);
 	free(prot64);
 	free(dig);
 	free(dig64);
 	free(fin);
+	free(buf);
 	return rc;
 }
 
 int
-acctproc(int netsock, const char *acctkey, int newacct)
+acctproc(int netsock, const char *acctkey, enum keytype keytype)
 {
 	FILE		*f = NULL;
 	EVP_PKEY	*pkey = NULL;
 	long		 lval;
 	enum acctop	 op;
-	int		 rc = 0, cc;
+	int		 rc = 0, cc, newacct = 0;
 	mode_t		 prev;
 
 	/*
@@ -316,7 +472,10 @@ acctproc(int netsock, const char *acctkey, int newacct)
 	 */
 
 	prev = umask((S_IWUSR | S_IXUSR) | S_IRWXG | S_IRWXO);
-	f = fopen(acctkey, newacct ? "wx" : "r");
+	if ((f = fopen(acctkey, "r")) == NULL && errno == ENOENT) {
+		f = fopen(acctkey, "wx");
+		newacct = 1;
+	}
 	umask(prev);
 
 	if (f == NULL) {
@@ -334,13 +493,23 @@ acctproc(int netsock, const char *acctkey, int newacct)
 	}
 
 	if (newacct) {
-		if ((pkey = rsa_key_create(f, acctkey)) == NULL)
-			goto out;
-		dodbg("%s: generated RSA account key", acctkey);
+		switch (keytype) {
+		case KT_ECDSA:
+			if ((pkey = ec_key_create(f, acctkey)) == NULL)
+				goto out;
+			dodbg("%s: generated ECDSA account key", acctkey);
+			break;
+		case KT_RSA:
+			if ((pkey = rsa_key_create(f, acctkey)) == NULL)
+				goto out;
+			dodbg("%s: generated RSA account key", acctkey);
+			break;
+		}
 	} else {
-		if ((pkey = rsa_key_load(f, acctkey)) == NULL)
+		if ((pkey = key_load(f, acctkey)) == NULL)
 			goto out;
-		doddbg("%s: loaded RSA account key", acctkey);
+		/* XXX check if account key type equals configured key type */
+		doddbg("%s: loaded account key", acctkey);
 	}
 
 	fclose(f);
@@ -363,7 +532,8 @@ acctproc(int netsock, const char *acctkey, int newacct)
 		op = ACCT__MAX;
 		if ((lval = readop(netsock, COMM_ACCT)) == 0)
 			op = ACCT_STOP;
-		else if (lval == ACCT_SIGN || lval == ACCT_THUMBPRINT)
+		else if (lval == ACCT_SIGN || lval == ACCT_KID_SIGN ||
+		    lval == ACCT_THUMBPRINT)
 			op = lval;
 
 		if (ACCT__MAX == op) {
@@ -374,7 +544,8 @@ acctproc(int netsock, const char *acctkey, int newacct)
 
 		switch (op) {
 		case ACCT_SIGN:
-			if (op_sign(netsock, pkey))
+		case ACCT_KID_SIGN:
+			if (op_sign(netsock, pkey, op))
 				break;
 			warnx("op_sign");
 			goto out;
@@ -393,8 +564,7 @@ out:
 	close(netsock);
 	if (f != NULL)
 		fclose(f);
-	if (pkey != NULL)
-		EVP_PKEY_free(pkey);
+	EVP_PKEY_free(pkey);
 	ERR_print_errors_fp(stderr);
 	ERR_free_strings();
 	return rc;

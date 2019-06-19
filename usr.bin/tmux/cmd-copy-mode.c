@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.34 2017/05/30 21:44:59 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.38 2019/05/07 11:24:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -60,7 +60,6 @@ cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 	struct client		*c = item->client;
 	struct session		*s;
 	struct window_pane	*wp = item->target.wp;
-	int			 flag;
 
 	if (args_has(args, 'M')) {
 		if ((wp = cmd_mouse_pane(&shared->mouse, &s, NULL)) == NULL)
@@ -74,18 +73,11 @@ cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (wp->mode != &window_copy_mode) {
-		flag = window_pane_set_mode(wp, &window_copy_mode, NULL, NULL);
-		if (flag != 0)
-			return (CMD_RETURN_NORMAL);
-		window_copy_init_from_pane(wp, args_has(self->args, 'e'));
+	if (!window_pane_set_mode(wp, &window_copy_mode, NULL, args)) {
+		if (args_has(args, 'M'))
+			window_copy_start_drag(c, &shared->mouse);
 	}
-	if (args_has(args, 'M')) {
-		if (wp->mode != NULL && wp->mode != &window_copy_mode)
-			return (CMD_RETURN_NORMAL);
-		window_copy_start_drag(c, &shared->mouse);
-	}
-	if (wp->mode == &window_copy_mode && args_has(self->args, 'u'))
+	if (args_has(self->args, 'u'))
 		window_copy_pageup(wp, 0);
 
 	return (CMD_RETURN_NORMAL);

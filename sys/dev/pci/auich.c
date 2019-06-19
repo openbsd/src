@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.106 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: auich.c,v 1.110 2018/10/27 01:01:34 miko Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -313,7 +313,7 @@ int auich_alloc_cdata(struct auich_softc *);
 int auich_allocmem(struct auich_softc *, size_t, size_t, struct auich_dma *);
 int auich_freemem(struct auich_softc *, struct auich_dma *);
 
-int auich_resume(struct auich_softc *);
+void auich_resume(struct auich_softc *);
 
 struct audio_hw_if auich_hw_if = {
 	auich_open,
@@ -533,18 +533,15 @@ int
 auich_activate(struct device *self, int act)
 {
 	struct auich_softc *sc = (struct auich_softc *)self;
-	int rv = 0;
 
 	switch (act) {
 	case DVACT_RESUME:
 		auich_resume(sc);
-		rv = config_activate_children(self, act);
 		break;
 	default:
-		rv = config_activate_children(self, act);
 		break;
 	}
-	return (rv);
+	return (config_activate_children(self, act));
 }
 
 int
@@ -885,7 +882,7 @@ auich_allocm(void *v, int direction, size_t size, int pool, int flags)
 
 	error = auich_allocmem(sc, size, PAGE_SIZE, p);
 	if (error) {
-		free(p, pool, 0);
+		free(p, pool, sizeof(*p));
 		return NULL;
 	}
 
@@ -916,7 +913,7 @@ auich_freem(void *v, void *ptr, int pool)
 		return;
 
 	auich_freemem(sc, p);
-	free(p, pool, 0);
+	free(p, pool, sizeof(*p));
 }
 
 size_t
@@ -1169,26 +1166,20 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 }
 
 int
-auich_trigger_input(v, start, end, blksize, intr, arg, param)
-	void *v;
-	void *start, *end;
-	int blksize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+auich_trigger_input(void *v, void *start, void *end, int blksize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct auich_softc *sc = v;
 	struct auich_dma *p;
 	size_t size;
 
-#ifdef AUICH_DEBUG
 	DPRINTF(AUICH_DEBUG_DMA,
 	    ("auich_trigger_input(%p, %p, %d, %p, %p, %p) sts=%b\n",
 		start, end, blksize, intr, arg, param,
 		bus_space_read_2(sc->iot, sc->aud_ioh,
 		    AUICH_PCMI + sc->sc_sts_reg),
 		AUICH_ISTS_BITS));
-#endif
+
 	if (sc->sc_rdma->addr == start)
 		p = sc->sc_rdma;
 	else
@@ -1339,7 +1330,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 	return error;
 }
 
-int
+void
 auich_resume(struct auich_softc *sc)
 {
 	/* SiS 7012 needs special handling */
@@ -1352,8 +1343,6 @@ auich_resume(struct auich_softc *sc)
 	}
 
 	ac97_resume(&sc->host_if, sc->codec_if);
-
-	return (0);
 }
 
 /* -------------------------------------------------------------------- */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.10 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: validate.c,v 1.11 2018/05/15 11:19:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -80,7 +80,7 @@ validate_attribute(struct attr_type *at, struct ber_element *vals)
 		    !at->syntax->is_valid(conf->schema, val, elm->be_len)) {
 			log_debug("%s: invalid syntax", ATTR_NAME(at));
 			log_debug("syntax = %s", at->syntax->desc);
-			log_debug("value: [%.*s]", elm->be_len, val);
+			log_debug("value: [%.*s]", (int)elm->be_len, val);
 			return LDAP_INVALID_SYNTAX;
 		}
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.11 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: prime.c,v 1.12 2019/01/20 01:59:06 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -116,7 +116,7 @@ prime_main(int argc, char **argv)
 	char *prime = NULL;
 	BIO *bio_out;
 	char *s;
-	int ret = 1;
+	int is_prime, ret = 1;
 
 	if (single_execution) {
 		if (pledge("stdio rpath", NULL) == -1) {
@@ -184,9 +184,13 @@ prime_main(int argc, char **argv)
 			}
 		}
 
+		is_prime = BN_is_prime_ex(bn, prime_config.checks, NULL, NULL);
+		if (is_prime < 0) {
+			BIO_printf(bio_err, "BN_is_prime_ex failed.\n");
+			goto end;
+		}
 		BIO_printf(bio_out, "%s is %sprime\n", prime,
-		    BN_is_prime_ex(bn, prime_config.checks,
-			NULL, NULL) ? "" : "not ");
+		    is_prime == 1 ? "" : "not ");
 	}
 
 	ret = 0;

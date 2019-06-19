@@ -624,7 +624,6 @@ values.
          * matching*/
         U32 lastparen;            /* highest close paren matched ($+) */
         U32 lastcloseparen;       /* last close paren matched ($^N) */
-        regexp_paren_pair *swap;  /* Swap copy of *offs */
         regexp_paren_pair *offs;  /* Array of offsets for (@-) and
                                      (@+) */
 
@@ -727,10 +726,6 @@ data structure.  The Perl engine uses the
 C<regexp_internal> structure (see L<perlreguts/Base Structures>) but a custom
 engine should use something else.
 
-=head2 C<swap>
-
-Unused.  Left in for compatibility with Perl 5.10.0.
-
 =head2 C<offs>
 
 A C<regexp_paren_pair> structure which defines offsets into the string being
@@ -745,7 +740,7 @@ C<regexp_paren_pair> struct is defined as follows:
 If C<< ->offs[num].start >> or C<< ->offs[num].end >> is C<-1> then that
 capture group did not match.
 C<< ->offs[0].start/end >> represents C<$&> (or
-C<${^MATCH}> under C<//p>) and C<< ->offs[paren].end >> matches C<$$paren> where
+C<${^MATCH}> under C</p>) and C<< ->offs[paren].end >> matches C<$$paren> where
 C<$paren >= 1>.
 
 =head2 C<precomp> C<prelen>

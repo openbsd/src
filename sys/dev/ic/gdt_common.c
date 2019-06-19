@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.63 2014/07/08 17:19:25 deraadt Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.64 2018/08/14 05:22:21 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -1371,7 +1371,7 @@ gdt_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 
 	default:
 		GDT_DPRINTF(GDT_D_IOCTL, (" invalid ioctl\n"));
-		error = EINVAL;
+		error = ENOTTY;
 	}
 
 	return (error);

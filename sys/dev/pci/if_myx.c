@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.103 2017/08/01 01:11:35 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.107 2019/04/16 11:42:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -156,6 +157,8 @@ struct myx_softc {
 
 	volatile enum myx_state	 sc_state;
 	volatile u_int8_t	 sc_linkdown;
+
+	struct rwlock		 sc_sff_lock;
 };
 
 #define MYX_RXSMALL_SIZE	MCLBYTES
@@ -200,6 +203,7 @@ int	 myx_rxrinfo(struct myx_softc *, struct if_rxrinfo *);
 void	 myx_up(struct myx_softc *);
 void	 myx_iff(struct myx_softc *);
 void	 myx_down(struct myx_softc *);
+int	 myx_get_sffpage(struct myx_softc *, struct if_sffpage *);
 
 void	 myx_start(struct ifqueue *);
 void	 myx_write_txd_tail(struct myx_softc *, struct myx_slot *, u_int8_t,
@@ -674,44 +678,6 @@ myx_cmd(struct myx_softc *sc, u_int32_t cmd, struct myx_cmd *mc, u_int32_t *r)
 	struct myx_response	*mr;
 	u_int			 i;
 	u_int32_t		 result, data;
-#ifdef MYX_DEBUG
-	static const char *cmds[MYXCMD_MAX] = {
-		"CMD_NONE",
-		"CMD_RESET",
-		"CMD_GET_VERSION",
-		"CMD_SET_INTRQDMA",
-		"CMD_SET_BIGBUFSZ",
-		"CMD_SET_SMALLBUFSZ",
-		"CMD_GET_TXRINGOFF",
-		"CMD_GET_RXSMALLRINGOFF",
-		"CMD_GET_RXBIGRINGOFF",
-		"CMD_GET_INTRACKOFF",
-		"CMD_GET_INTRDEASSERTOFF",
-		"CMD_GET_TXRINGSZ",
-		"CMD_GET_RXRINGSZ",
-		"CMD_SET_INTRQSZ",
-		"CMD_SET_IFUP",
-		"CMD_SET_IFDOWN",
-		"CMD_SET_MTU",
-		"CMD_GET_INTRCOALDELAYOFF",
-		"CMD_SET_STATSINTVL",
-		"CMD_SET_STATSDMA_OLD",
-		"CMD_SET_PROMISC",
-		"CMD_UNSET_PROMISC",
-		"CMD_SET_LLADDR",
-		"CMD_SET_FC",
-		"CMD_UNSET_FC",
-		"CMD_DMA_TEST",
-		"CMD_SET_ALLMULTI",
-		"CMD_UNSET_ALLMULTI",
-		"CMD_SET_MCASTGROUP",
-		"CMD_UNSET_MCASTGROUP",
-		"CMD_UNSET_MCAST",
-		"CMD_SET_STATSDMA",
-		"CMD_UNALIGNED_DMA_TEST",
-		"CMD_GET_UNALIGNED_STATUS"
-	};
-#endif
 
 	mc->mc_cmd = htobe32(cmd);
 	mc->mc_addr_high = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
@@ -739,16 +705,16 @@ myx_cmd(struct myx_softc *sc, u_int32_t cmd, struct myx_cmd *mc, u_int32_t *r)
 		delay(1000);
 	}
 
-	DPRINTF(MYXDBG_CMD, "%s(%s): %s completed, i %d, "
+	DPRINTF(MYXDBG_CMD, "%s(%s): cmd %u completed, i %d, "
 	    "result 0x%x, data 0x%x (%u)\n", DEVNAME(sc), __func__,
-	    cmds[cmd], i, result, data, data);
+	    cmd, i, result, data, data);
 
-	if (result != 0)
-		return (-1);
+	if (result == MYXCMD_OK) {
+		if (r != NULL)
+			*r = data;
+	}
 
-	if (r != NULL)
-		*r = data;
-	return (0);
+	return (result);
 }
 
 int
@@ -940,6 +906,15 @@ myx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = myx_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
 
+	case SIOCGIFSFFPAGE:
+		error = rw_enter(&sc->sc_sff_lock, RW_WRITE|RW_INTR);
+		if (error != 0)
+			break;
+
+		error = myx_get_sffpage(sc, (struct if_sffpage *)data);
+		rw_exit(&sc->sc_sff_lock);
+		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 	}
@@ -969,6 +944,68 @@ myx_rxrinfo(struct myx_softc *sc, struct if_rxrinfo *ifri)
 	ifr[1].ifr_info = sc->sc_rx_ring[1].mrr_rxr;
 
 	return (if_rxr_info_ioctl(ifri, nitems(ifr), ifr));
+}
+
+static int
+myx_i2c_byte(struct myx_softc *sc, uint8_t addr, uint8_t off, uint8_t *byte)
+{
+	struct myx_cmd		mc;
+	int			result;
+	uint32_t		r;
+	unsigned int		ms;
+
+	memset(&mc, 0, sizeof(mc));
+	mc.mc_data0 = htobe32(0); /* get 1 byte */
+	mc.mc_data1 = htobe32((addr << 8) | off);
+	result = myx_cmd(sc, MYXCMD_I2C_READ, &mc, NULL);
+	if (result != 0)
+		return (EIO);
+
+	for (ms = 0; ms < 50; ms++) {
+		memset(&mc, 0, sizeof(mc));
+		mc.mc_data0 = htobe32(off);
+		result = myx_cmd(sc, MYXCMD_I2C_BYTE, &mc, &r);
+		switch (result) {
+		case MYXCMD_OK:
+			*byte = r;
+			return (0);
+		case MYXCMD_ERR_BUSY:
+			break;
+		default:
+			return (EIO);
+		}
+
+		delay(1000);
+	}
+
+	return (EBUSY);
+}
+
+int
+myx_get_sffpage(struct myx_softc *sc, struct if_sffpage *sff)
+{
+	unsigned int		i;
+	int			result;
+
+	if (sff->sff_addr == IFSFF_ADDR_EEPROM) {
+		uint8_t page;
+
+		result = myx_i2c_byte(sc, IFSFF_ADDR_EEPROM, 127, &page);
+		if (result != 0)
+			return (result);
+
+		if (page != sff->sff_page)
+			return (ENXIO);
+	}
+
+	for (i = 0; i < sizeof(sff->sff_data); i++) {
+		result = myx_i2c_byte(sc, sff->sff_addr,
+		    i, &sff->sff_data[i]);
+		if (result != 0)
+			return (result);
+	}
+
+	return (0);
 }
 
 void

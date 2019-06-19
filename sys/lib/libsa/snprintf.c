@@ -1,4 +1,4 @@
-/*	$OpenBSD: snprintf.c,v 1.6 2015/03/10 21:07:43 miod Exp $	*/
+/*	$OpenBSD: snprintf.c,v 1.7 2019/05/11 16:56:47 deraadt Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 extern void kprintn(void (*)(int), u_long, int);
 extern void kdoprnt(void (*)(int), const char *, va_list);
 
-#ifndef	STRIPPED
 static void sputchar(int);
 
 static char *sbuf, *sbuf_end;
@@ -71,5 +70,3 @@ snprintf(char *buf, size_t len, const char *fmt, ...)
 
 	return sbuf - buf;
 }
-
-#endif	/* STRIPPED */

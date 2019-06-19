@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_pci.c,v 1.16 2015/11/24 17:11:39 mpi Exp $ */
+/*	$OpenBSD: if_bwi_pci.c,v 1.17 2019/05/10 16:44:36 bcook Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -45,6 +45,7 @@
 #include <net80211/ieee80211_radiotap.h>
 
 #include <dev/ic/bwivar.h>
+#include <dev/ic/bwireg.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -86,7 +87,8 @@ const struct pci_matchid bwi_pci_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4312 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4318 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4319 },
-	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43XG }
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43XG },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4331 },
 };
 
 int
@@ -109,6 +111,28 @@ bwi_pci_match(struct device *parent, void *match, void *aux)
 }
 
 void
+bwi_reset_bcm4331(struct bwi_softc *sc)
+{
+	int i;
+
+	/*
+	 * The BCM4331 is not actually supported by this driver, but buggy EFI
+	 * revisions in 2011-2012 Macs leave this chip enabled by default,
+	 * causing it to emit spurious interrupts when the shared interrupt
+	 * line is enabled.
+	 */
+	for (i = 0; CSR_READ_4(sc, BWI_RESET_STATUS) && i < 30; i++)
+		delay(10);
+
+	CSR_WRITE_4(sc, BWI_RESET_CTRL, BWI_RESET_CTRL_RESET);
+	CSR_READ_4(sc, BWI_RESET_CTRL);
+	delay(1);
+	CSR_WRITE_4(sc, BWI_RESET_CTRL, 0);
+	CSR_READ_4(sc, BWI_RESET_CTRL);
+	delay(10);
+}
+
+void
 bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct bwi_pci_softc *psc = (struct bwi_pci_softc *)self;
@@ -123,10 +147,28 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_pcitag = pa->pa_tag;
 
 	/* map control / status registers */
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BWI_PCI_BAR0); 
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BWI_PCI_BAR0);
 	if (pci_mapreg_map(pa, BWI_PCI_BAR0, memtype, 0, &sc->sc_mem_bt,
 	    &sc->sc_mem_bh, NULL, &psc->psc_mapsize, 0)) {
 		printf(": can't map mem space\n");
+		return;
+	}
+
+	/* we need to access PCI config space from the driver */
+	sc->sc_conf_write = bwi_pci_conf_write;
+	sc->sc_conf_read = bwi_pci_conf_read;
+
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	sc->sc_pci_revid = PCI_REVISION(pa->pa_class);
+	sc->sc_pci_did = PCI_PRODUCT(pa->pa_id);
+	sc->sc_pci_subvid = PCI_VENDOR(reg);
+	sc->sc_pci_subdid = PCI_PRODUCT(reg);
+
+	if (sc->sc_pci_did == PCI_PRODUCT_BROADCOM_BCM4331) {
+		printf(": disabling\n");
+		bwi_reset_bcm4331(sc);
+		bus_space_unmap(sc->sc_mem_bt, sc->sc_mem_bh, psc->psc_mapsize);
 		return;
 	}
 
@@ -148,17 +190,6 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf(": %s", intrstr);
-
-	/* we need to access PCI config space from the driver */
-	sc->sc_conf_write = bwi_pci_conf_write;
-	sc->sc_conf_read = bwi_pci_conf_read;
-
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-
-	sc->sc_pci_revid = PCI_REVISION(pa->pa_class);
-	sc->sc_pci_did = PCI_PRODUCT(pa->pa_id);
-	sc->sc_pci_subvid = PCI_VENDOR(reg);
-	sc->sc_pci_subdid = PCI_PRODUCT(reg);
 
 	bwi_attach(sc);
 }

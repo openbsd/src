@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.36 2017/12/09 06:39:04 deraadt Exp $	*/
+/*	$OpenBSD: elf.c,v 1.37 2018/12/14 19:56:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -51,9 +51,7 @@
 #define	swap_quarter	swap16
 #define	elf_fix_header	elf32_fix_header
 #define	elf_load_shdrs	elf32_load_shdrs
-#define	elf_load_phdrs	elf32_load_phdrs
 #define	elf_fix_shdrs	elf32_fix_shdrs
-#define	elf_fix_phdrs	elf32_fix_phdrs
 #define	elf_fix_sym	elf32_fix_sym
 #define	elf_size	elf32_size
 #define	elf_symloadx	elf32_symloadx
@@ -76,9 +74,7 @@
 #define	swap_quarter	swap16
 #define	elf_fix_header	elf64_fix_header
 #define	elf_load_shdrs	elf64_load_shdrs
-#define	elf_load_phdrs	elf64_load_phdrs
 #define	elf_fix_shdrs	elf64_fix_shdrs
-#define	elf_fix_phdrs	elf64_fix_phdrs
 #define	elf_fix_sym	elf64_fix_sym
 #define	elf_size	elf64_size
 #define	elf_symloadx	elf64_symloadx
@@ -115,8 +111,17 @@
 #define	STT_PARISC_MILLI	STT_LOPROC + 0
 #endif
 
-int elf_shn2type(Elf_Ehdr *, u_int, const char *);
-int elf2nlist(Elf_Sym *, Elf_Ehdr *, Elf_Shdr *, char *, struct xnlist *);
+
+static int elf_fix_header(Elf_Ehdr *);
+static int elf_fix_shdrs(Elf_Ehdr *, Elf_Shdr *);
+static int elf_fix_sym(Elf_Ehdr *, Elf_Sym *);
+static int elf_shn2type(Elf_Ehdr *, u_int _shn, const char *_sn);
+static int elf2nlist(Elf_Sym *, Elf_Ehdr *, Elf_Shdr *, char *_shstr,
+	    struct xnlist *_np);
+static int elf_symloadx(const char *_name, FILE *, off_t, Elf_Ehdr *,
+	    Elf_Shdr *, char *_shstr, long _shstrsize, struct xnlist **_pnames,
+	    struct xnlist ***_psnames, size_t *_pstabsize, int *_pnrawnames,
+	    const char *_strtab, const char *_symtab);
 
 int
 elf_fix_header(Elf_Ehdr *eh)
@@ -185,32 +190,6 @@ elf_load_shdrs(const char *name, FILE *fp, off_t foff, Elf_Ehdr *head)
 	return (shdr);
 }
 
-Elf_Phdr *
-elf_load_phdrs(const char *name, FILE *fp, off_t foff, Elf_Ehdr *head)
-{
-	Elf_Phdr *phdr;
-
-	if ((phdr = calloc(head->e_phentsize, head->e_phnum)) == NULL) {
-		warn("%s: malloc phdr", name);
-		return (NULL);
-	}
-
-	if (fseeko(fp, foff + head->e_phoff, SEEK_SET)) {
-		warn("%s: fseeko", name);
-		free(phdr);
-		return (NULL);
-	}
-
-	if (fread(phdr, head->e_phentsize, head->e_phnum, fp) != head->e_phnum) {
-		warnx("%s: premature EOF", name);
-		free(phdr);
-		return (NULL);
-	}
-
-	elf_fix_phdrs(head, phdr);
-	return (phdr);
-}
-
 int
 elf_fix_shdrs(Elf_Ehdr *eh, Elf_Shdr *shdr)
 {
@@ -231,29 +210,6 @@ elf_fix_shdrs(Elf_Ehdr *eh, Elf_Shdr *shdr)
 		shdr->sh_info = swap32(shdr->sh_info);
 		shdr->sh_addralign = swap_xword(shdr->sh_addralign);
 		shdr->sh_entsize = swap_xword(shdr->sh_entsize);
-	}
-
-	return (1);
-}
-
-int
-elf_fix_phdrs(Elf_Ehdr *eh, Elf_Phdr *phdr)
-{
-	int i;
-
-	/* nothing to do */
-	if (eh->e_ident[EI_DATA] == ELF_TARG_DATA)
-		return (0);
-
-	for (i = eh->e_phnum; i--; phdr++) {
-		phdr->p_type = swap32(phdr->p_type);
-		phdr->p_flags = swap32(phdr->p_flags);
-		phdr->p_offset = swap_off(phdr->p_offset);
-		phdr->p_vaddr = swap_addr(phdr->p_vaddr);
-		phdr->p_paddr = swap_addr(phdr->p_paddr);
-		phdr->p_filesz = swap_xword(phdr->p_filesz);
-		phdr->p_memsz = swap_xword(phdr->p_memsz);
-		phdr->p_align = swap_xword(phdr->p_align);
 	}
 
 	return (1);

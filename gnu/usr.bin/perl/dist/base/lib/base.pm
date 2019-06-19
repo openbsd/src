@@ -2,8 +2,7 @@ use 5.008;
 package base;
 
 use strict 'vars';
-use vars qw($VERSION);
-$VERSION = '2.23_01';
+our $VERSION = '2.27';
 $VERSION =~ tr/_//d;
 
 # simplest way to avoid indexing of the package: no package statement

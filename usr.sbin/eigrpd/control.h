@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.3 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: control.h,v 1.4 2018/08/05 08:10:35 mestre Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,6 @@ struct ctl_conn {
 
 int	control_init(char *);
 int	control_listen(void);
-void	control_cleanup(char *);
 int	control_imsg_relay(struct imsg *);
 
 #endif	/* _CONTROL_H_ */

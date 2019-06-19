@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.174 2017/07/11 06:08:40 natano Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.210 2018/12/22 08:54:02 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 11 2017 $
+.Dd $Mdocdate: December 22 2018 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -28,6 +28,28 @@
 is the configuration file for the mail daemon
 .Xr smtpd 8 .
 .Pp
+When mail arrives,
+each
+.Dq RCPT TO:
+command generates a mail envelope.
+If an envelope matches
+any of a pre-designated set of criteria
+(using the
+.Ic match
+directive),
+the message is accepted for delivery.
+A copy of the message, as well as its associated envelopes,
+is saved in the mail queue and later dispatched
+according to an associated set of actions
+(using the
+.Ic action
+directive).
+If an envelope does not match any options,
+it is rejected.
+The match rules are evaluated sequentially,
+with the first match winning.
+.Pp
+The format of the configuration file is fairly flexible.
 The current line can be extended over multiple lines using a backslash
 .Pq Sq \e .
 Comments can be put anywhere in the file using a hash mark
@@ -35,21 +57,22 @@ Comments can be put anywhere in the file using a hash mark
 and extend to the end of the current line.
 Care should be taken when commenting out multi-line text:
 the comment is effective until the end of the entire block.
-.Pp
-Argument names not beginning with a letter, digit, or underscore
+Argument names not beginning with a letter, digit, or underscore,
+as well as reserved words
+(such as
+.Ic listen ,
+.Ic match ,
+and
+.Cm port ) ,
 must be quoted.
 Arguments containing whitespace should be surrounded by double quotes
 .Pq \&" .
 .Pp
-Macros can be defined that will later be expanded in context.
+Macros can be defined that are later expanded in context.
 Macro names must start with a letter, digit, or underscore,
-and may contain any of those characters.
-Macro names may not be reserved words (for example
-.Ar listen ,
-.Ar accept ,
-.Ar port ) .
+and may contain any of those characters,
+but may not be reserved words.
 Macros are not expanded inside quotes.
-.Pp
 For example:
 .Bd -literal -offset indent
 lan_addr = "192.168.0.1"
@@ -57,852 +80,652 @@ listen on $lan_addr
 listen on $lan_addr tls auth
 .Ed
 .Pp
-Additional configuration files can be included with the
-.Ic include
-keyword, for example:
-.Bd -literal -offset indent
-include "/etc/mail/smtpd.conf.local"
-.Ed
-.Pp
 The syntax of
 .Nm
 is described below.
 .Bl -tag -width Ds
-.It Ic accept | reject
+.It Ic action Ar name method Op Ar options
+When the queue runner processes an envelope from the mail queue,
+it carries out the
+.Ic action
+.Ar name ,
+selected by the
+.Ic match No ... Cm action
+directive when the message was received.
+The
+.Ic action
+directive provides configuration data for delivery attempts.
+Required lookups are performed at the time of each delivery attempt.
+Consequently, changing an
+.Ic action
+directive or the files it references and restarting the
 .Xr smtpd 8
-accepts and rejects messages
-based on information gathered during the SMTP session.
+daemon causes the changes to take effect for subsequent delivery
+attempts for the respective dispatcher
+.Ar name ,
+even for messages that were already stuck in the queue
+prior to the configuration changes.
 .Pp
-For each message processed by the daemon,
-the rules are evaluated in sequential order,
-from first to last.
-The first matching rule decides what action is taken.
-If no rule matches the message,
-the default action is to reject the message.
-An exclamation mark may be specified to perform a reverse match.
-.Pp
-Following the accept/reject
-decision comes the matching of optional session related properties:
+The delivery
+.Ar method
+parameter may be one of the following:
 .Bl -tag -width Ds
-.It Xo
-.Op Ic \&!
-.Ic authenticated
-.Xc
-If specified, the rule will only be matched if the client session was
-authenticated either by requesting authentication over the network or
-because the message was submitted over the local enqueuer.
-.It Xo
-.Ic tagged
-.Op Ic \&!
-.Ar tag
-.Xc
-If specified, the rule will only be matched if the client session was tagged with
-.Ar tag .
-.El
-.Pp
-After that the client's IP address rule is specified:
-.Bl -tag -width Ds
-.It Ic from any
-Make the rule match regardless of the IP of connecting client.
-.It Xo
-.Ic from
-.Op Ic \&!
-.Ic local
-.Xc
-The rule matches only locally originating connections.
-This is the default,
-and may be omitted.
-.It Xo
-.Ic from
-.Op Ic \&!
-.Ic source
-.Pf < Ar table Ns >
-.Xc
-The rule matches if the connection is made from a client whose address
-is declared in the table
-.Ar table .
-.El
-.Pp
-In addition, finer access control may be achieved on the sender if desired:
-.Bl -tag -width Ds
-.It Xo
-.Ic sender
-.Op Ic \&!
-.Pf < Ar senders Ns >
-.Xc
-If specified, the rule will only be matched if the sender email address
-is found in the table
-.Ar senders .
-The table may contain complete email addresses or apply to an entire
-domain if prefixed with
-.Sq @ .
-.El
-.Pp
-Next comes the selection based on the domain the message is sent to:
-.Bl -tag -width Ds
-.It Ic for any Op Ic alias No < Ns Ar aliases Ns >
-Make the rule match regardless of the domain it is sent to.
-If specified, the table
-.Ar aliases
-is used for looking up alternative destinations for all addresses.
-.It Ic for any virtual No < Ns Ar vmap Ns >
-Make the rule match regardless of the domain it is sent to.
-The
-.Ar vmap
-table will be used as the virtual domain mapping.
-.It Xo
-.Ic for
-.Op Ic \&!
-.Ic domain
-.Ar domain
-.Op Ic alias No < Ns Ar aliases Ns >
-.Xc
-This rule applies to mail destined for the specified
-.Ar domain .
-This parameter supports the
-.Sq *
-wildcard,
-so that a single rule for all sub-domains can be used, for example:
-.Bd -literal -offset indent
-accept for domain "*.example.com" deliver to mbox
-.Ed
-.Pp
-If specified, the table
-.Ar aliases
-is used for looking up alternative destinations for addresses in this
-.Ar domain .
-.It Xo
-.Ic for
-.Op Ic \&!
-.Ic domain
-.Pf < Ar domains Ns >
-.Op Ic alias No < Ns Ar aliases Ns >
-.Xc
-This rule applies to mail destined to domains which are part of the table
-.Ar domains .
-.Pp
-If specified, the table
-.Ar aliases
-is used for looking up alternative destinations for addresses in these
-.Ar domains .
-.It Xo
-.Ic for
-.Op Ic \&!
-.Ic domain
-.Ar domain
-.Ic virtual No < Ns Ar users Ns >
-.Xc
-This rule applies to mail destined for the specified virtual
-.Ar domain .
-This parameter supports the
-.Sq *
-wildcard,
-so that a single rule for all sub-domains can be used, for example:
-.Bd -literal -offset indent
-accept for domain "*.example.com" \e
-       virtual <users> deliver to mbox
-.Ed
-.Pp
-The table
-.Ar users
-holds a key-value mapping of virtual to system users.
-For an example of how to configure the
-.Ar users
-table, see
-.Xr table 5 .
-.It Xo
-.Ic for
-.Op Ic \&!
-.Ic domain
-.Pf < Ar domains Ns > Ic virtual No < Ns Ar users Ns >
-.Xc
-This rule applies to mail destined for the virtual domains specified
-in the table
-.Ar domains .
-.Pp
-The table
-.Ar users
-holds a key-value mapping of virtual to system users.
-For an example of how to configure the
-.Ar users
-table, see
-.Xr table 5 .
-.It Xo
-.Ic for
-.Op Ic \&!
-.Ic local
-.Op Ic alias No < Ns Ar aliases Ns >
-.Xc
-This rule applies to mail destined to
-.Dq localhost
-and to the default server name
-(the
-.Sx FILES
-entry for
-.Pa /etc/mail/mailname
-details how the server name is determined).
-This is the default,
-and may be omitted.
-.Pp
-If specified, the table
-.Ar aliases
-is used for looking up alternative destinations for addresses in these
-.Ar domains .
-.It Xo
-.Ic for
-.Op Ic \&!
-.Ic local
-.Ic virtual No < Ns Ar vmap Ns >
-.Xc
-This rule applies to mail destined to
-.Dq localhost
-and to the default server name.
-The
-.Ar vmap
-table will be used as the virtual domain mapping.
-.El
-.Pp
-Further access control may be achieved on specific recipients if desired:
-.Bl -tag -width Ds
-.It Xo
-.Ic recipient
-.Op Ic \&!
-.Pf < Ar recipients Ns >
-.Xc
-If specified, the rule will only be matched if the recipient email address
-is found in the table
-.Ar recipients .
-The table may contain complete email addresses or apply to an entire
-domain if prefixed with
-.Sq @ .
-.El
-.Pp
-If the method of delivery is local, a user database may be
-specified to override the system database:
-.Bl -tag -width Ds
-.It Op Ic userbase No < Ns Ar table Ns >
-Look up users in the table
-.Ar table
-instead of performing system lookups using the
-.Xr getpwnam 3
-function.
-.El
-.Pp
-You can also accept mail just to have it forwarded elsewhere:
-.Bl -tag -width Ds
-.It Ic forward-only
-Mail is accepted for local recipients ONLY if it is redirected to an
-external address via an alias or a ~/.forward file.
-.Pp
-Example:
-.Bd -literal -offset indent
-accept for domain opensmtpd.org forward-only
-.Ed
-.El
-.Pp
-Finally, the method of delivery is specified:
-.Bl -tag -width Ds
-.It Xo
-.Ic deliver to lmtp
-.Op Ar host : Ns Ar port | socket
-.Op Ic rcpt-to
-.Op Ic as Ar user
-.Xc
-Mail is delivered to
-.Ar host : Ns Ar port ,
-or to the
-.Ux
-.Ar socket
-over LMTP with the privileges of the specified
-.Ar user .
+.It Cm expand\-only
+Only accept the message if a delivery method was specified
+in an aliases or
+.Pa .forward
+file.
+.It Cm forward\-only
+Only accept the message if the recipient results in a remote address
+after the processing of aliases or forward file.
+.It Cm lmtp Ar destination Op Ar rcpt-to
+Deliver the message to an LMTP server at
+.Ar destination .
+The location may be expressed as host:port or as a UNIX socket.
 .Pp
 Optionally,
-.Ic rcpt-to
-might be specified to use the recipient email address (after expansion) instead
-of the local user in the LMTP session as RCPT TO.
-.It Ic deliver to maildir Op Ar path
-Mail is added to a maildir.
-Its location,
-.Ar path ,
+.Ar rcpt-to
+might be specified to use the
+recipient email address (after expansion) instead of the
+local user in the LMTP session as RCPT TO.
+.It Cm maildir Op Ar pathname Op Cm junk
+Deliver the message to the maildir in
+.Ar pathname
+if specified, or by default to
+.Pa ~/Maildir .
+.Pp
+The
+.Ar pathname
 may contain format specifiers that are expanded before use
 .Pq see Sx FORMAT SPECIFIERS .
-If
-.Ar path
-is not provided, then
-.Pa ~/Maildir
-is assumed.
-.It Ic deliver to mbox
-Mail is delivered to the local user's system mailbox in
-.Pa /var/mail .
-.It Ic deliver to mda Ar program Op Ic as Ar user
-Mail is piped to the specified
-.Ar program ,
-which is run with the privileges of the specified
-.Ar user
-or the user the message is destined to.
-This parameter may use conversion specifiers that are expanded before use
+.Pp
+If the
+.Cm junk
+argument is provided, the message will be moved to the Junk
+folder if it contains a positive X-Spam header.
+.It Cm mbox
+Deliver the message to the user's mbox with
+.Xr mail.local 8 .
+.It Cm mda Ar command
+Delegate the delivery to a
+.Ar command
+that receives the message on its standard input.
+.Pp
+The
+.Ar command
+may contain format specifiers that are expanded before use
 .Pq see Sx FORMAT SPECIFIERS .
-.It Xo
-.Bk -words
-.Ic relay
-.Op Ic backup Op Ar mx
-.Op Ic as Ar address
-.Op Ic source No < Ns Ar source Ns >
-.Op Ic hostname Ar name
-.Op Ic hostnames No < Ns Ar names Ns >
-.Op Ic pki Ar pkiname
-.Op Ic tls Op Ic verify
-.Ek
-.Xc
-.Pp
-Mail is relayed.
-The routing decision is based on the DNS system.
-.Pp
-If the
-.Ic backup
-parameter is specified, the current server will act as a backup server
-for the target domain.
-Accepted mails are only relayed through servers with a lower preference
-value in the MX record for the domain than the one specified in
-.Ar mx .
-If
-.Ar mx
-is not specified, the default server name will be assumed.
-.Pp
-If the
-.Ic as
-parameter is specified,
-.Xr smtpd 8
-will rewrite the sender advertised
-in the SMTP session.
-.Ar address
-may be a user, a domain prefixed with
-.Sq @ ,
-or an email address, causing
-.Xr smtpd 8
-to rewrite the user-part, the domain-part, or the entire address, respectively.
-.Pp
-If the
-.Ic source
-parameter is specified,
-.Xr smtpd 8
-will explicitly bind to an address found in the table referenced by
-.Ar source
-when connecting to the relay.
-If the table contains more than one address, they are picked in turn each
-time a new connection is opened.
-.Pp
-By default, when connecting to a remote server,
-.Xr smtpd 8
-advertises its default server name.
-A
-.Ic hostname
-parameter may be specified to advertise the alternate hostname
-.Ar name .
-If the
-.Ic source
-parameter is used, the
-.Ic hostnames
-parameter may be specified to advertise a hostname based on
-the source address.
-Table
-.Ar names
-contains a mapping of IP addresses to hostnames and
-.Xr smtpd 8
-will automatically select the name that matches its source address
-when connected to the remote server.
-The
-.Ic hostname
-and
-.Ic hostnames
-parameters are mutually exclusive.
-.Pp
-When relaying, STARTTLS is always attempted if available on remote host and
-.Xr smtpd 8
-will try to present a certificate matching the outgoing hostname if one is
-registered in the pki.
-If
-.Ic pki
-is specified, the certificate registered for
-.Ar pkiname
-is used instead.
-.Pp
-If
-.Ic tls
-is specified,
-.Xr smtpd 8
-will refuse to relay unless the remote host provides STARTTLS.
-If
-.Ic tls verify
-is specified,
-.Xr smtpd 8
-will refuse to relay unless the remote host provides STARTTLS and the
-certificate it presented has been verified.
-.Pp
-Note that the
-.Ic tls
-and
-.Ic tls verify
-options should only be used in private networks
-as they will prevent proper relaying on the Internet.
-.It Xo
-.Ic relay via
-.Ar host
-.Op Ic auth No < Ns Ar auth Ns >
-.Op Ic as Ar address
-.Op Ic source No < Ns Ar source Ns >
-.Op Ic hostname Ar name
-.Op Ic hostnames No < Ns Ar names Ns >
-.Op Ic pki Ar pkiname
-.Op Ic verify
-.Xc
-.Pp
-Mail is relayed through the specified
-.Ar host
-expressed as a URL.
-For example:
-.Bd -literal -offset indent
-smtp://mx1.example.org		# use SMTP
-smtp://mx1.example.org:4321	# use SMTP \e
-				# with port 4321
-lmtp://localhost:2026		# use LMTP \e
-				# with port 2026
-.Ed
-.Pp
-The communication channel may be secured using one of the secure
-schemas.
-For example:
-.Bd -literal -offset indent
-tls://mx1.example.org		# use TLS
-smtps://mx1.example.org		# use SMTPS
-secure://mx1.example.org	# try SMTPS and \e
-				# fallback to TLS
-.Ed
-.Pp
-In addition, credentials for authenticated relaying may be provided
-when using a secure schema.
-For example:
-.Bd -literal -offset indent
-tls+auth://label@mx.example.org	    # over TLS
-smtps+auth://label@mx.example.org   # over SMTPS
-secure+auth://label@mx.example.org  # over either \e
-				    # SMTPS or TLS
-.Ed
-.Pp
-If a pki entry exists for the outgoing hostname, or one is provided
-with
-.Ar pkiname ,
-the associated certificate will be sent to the remote server.
-.Pp
-If an SMTPAUTH session with
-.Ar host
-is desired, the
-.Ic auth
-parameter is used to specify the
-.Ar auth
-table that holds the credentials.
-Credentials will be looked up using the label provided in the URL.
-.Pp
-If the
-.Ic as
-parameter is specified,
-.Xr smtpd 8
-will rewrite the sender advertised
-in the SMTP session.
-.Ar address
-may be a user, a domain prefixed with
-.Sq @ ,
-or an email address, causing
-.Xr smtpd 8
-to rewrite the user-part, the domain-part, or the entire address, respectively.
-.Pp
-If the
-.Ic source
-parameter is specified,
-.Xr smtpd 8
-will explicitly bind to an address found in the table referenced by
-.Pf < Ar source Ns >
-when connecting to the relay.
-If the table contains more than one address, they are picked in turn each
-time a new connection is opened.
-.Pp
-By default, when connecting to a remote server,
-.Xr smtpd 8
-advertises its default server name.
-A
-.Ic hostname
-parameter may be specified to advertise the alternate hostname
-.Ar name .
-If the
-.Ic source
-parameter is used, the
-.Ic hostnames
-parameter may be specified to advertise a hostname based on
-the source address.
-Table
-.Ar names
-contains a mapping of IP addresses to hostnames and
-.Xr smtpd 8
-will automatically select the name that matches its source address
-when connected to the remote server.
-The
-.Ic hostname
-and
-.Ic hostnames
-parameters are mutually exclusive.
-.Pp
-If
-.Ic verify
-is specified,
-.Xr smtpd 8
-will refuse to relay unless the remote host provides STARTTLS and the
-certificate it presented has been verified.
-The relay URL must specify TLS for this option to be valid.
+.It Cm relay
+Relay the message to another SMTP server.
 .El
 .Pp
-Additional per-rule adjustments are available:
+The local delivery methods support additional options:
 .Bl -tag -width Ds
+.It Cm alias Pf < Ar table Ns >
+Use the mapping
+.Ar table
+for
+.Xr aliases 5
+expansion.
 .It Xo
-.Ic expire
+.Cm ttl
 .Sm off
 .Ar n
 .Brq Cm s | m | h | d
 .Sm on
 .Xc
-Specify how long a message that matched this rule can stay in the queue.
-.El
-.It Xo
-.Ic bounce-warn
-.Sm off
-.Ar n
-.Brq Cm s | m | h | d
-.Oo ,
-.Sm on
-.Ar ...
-.Oc
-.Xc
-Specify the delays for which temporary failure reports must be generated
-when messages are stuck in the queue.
-For example:
-.Bd -literal -offset indent
-bounce-warn	1h, 6h, 2d
-.Ed
+Specify how long a message may remain in the queue.
+.It Cm user Ar username
+Specify the
+.Ar username
+for performing the delivery, to be looked up with
+.Xr getpwnam 3 .
 .Pp
-will generate a failure report when an envelope is in the queue for more
-than one hour, six hours and two days.
-The default is 4h.
-.It Ic ca Ar hostname Ic certificate Ar cafile
-Associate a custom CA certificate located in
-.Ar cafile
-with
-.Ar hostname .
-.It Ic ciphers Ar cipher-list
-Specify an alternate list of ciphers to use when establishing TLS sessions.
-It is highly recommended to avoid making use of this option unless there
-is a good understanding of the implications.
+This is used for virtual hosting where a single username
+is in charge of handling delivery for all virtual users.
 .Pp
-When not specified, only ciphers considered safe are chosen.
-.It Xo
-.Ic expire
-.Sm off
-.Ar n
-.Brq Cm s | m | h | d
-.Sm on
-.Xc
-Specify how long a message can stay in the queue.
-The default value is 4d.
-For example:
-.Bd -literal -offset indent
-expire 4d	# expire after 4 days
-expire 10h	# expire after 10 hours
-.Ed
-.It Xo
-.Ic limit session
-.Brq Cm max-rcpt | max-mails
-.Ar num
-.Xc
-Instruct
-.Xr smtpd 8
-to accept a maximum number of recipients or emails at once
-in the receiving queue.
-Defaults are 100 for
-.Ic max-mails
-and 1000 for
-.Ic max-rcpt .
-.It Xo
-.Ic limit mta
-.Op Ic for Ic domain Ar domain
-.Ar family
-.Xc
-Instruct
-.Xr smtpd 8
-to only use the specified address
-.Ar family
-for outgoing connections.
-Accepted values are
-.Ic inet4
-and
-.Ic inet6 .
-If a
-.Ar domain
-is specified, the restriction only applies when connecting
-to MXs for this domain.
-.It Ic limit scheduler max-inflight Ar num
-Suspend the scheduling of envelopes for deliver/relay until the number
-of inflight envelopes falls below
-.Ar num .
-Changing the default value might degrade performance.
-.It Xo
-.Bk -words
-.Ic listen on Ar interface
-.Op Ar family
-.Op Ic port Ar port
-.Op Ic tls | tls-require | tls-require verify | smtps
-.Op Ic pki Ar pkiname
-.Op Ic ca Ar caname
-.Op Ic auth | auth-optional Op < Ns Ar authtable Ns >
-.Op Ic tag Ar tag
-.Op Ic hostname Ar hostname
-.Op Ic hostnames No < Ns Ar names Ns >
-.Op Ic senders No < Ns Ar users Ns > Op Cm masquerade
-.Op Ic mask-source
-.Op Ic received-auth
-.Op Ic no-dsn
-.Ek
-.Xc
-Specify an
-.Ar interface
-and optional
-.Ar port
-to listen on for incoming connections.
-An interface group, an IP address or a domain name may
-be used in place of
-.Ar interface .
+This option is not usable with the
+.Cm mbox
+delivery method.
+.It Cm userbase Pf < Ar table Ns >
+Use the mapping
+.Ar table
+for user lookups instead of the
+.Xr getpwnam 3
+function.
+.Pp
 The
-.Ar family
-parameter can be used to listen only on specific address family.
-Accepted values are
-.Ic inet4
-and
-.Ic inet6 .
-.Pp
-Secured connections are provided either using STARTTLS
-.Pq Ic tls ,
-by default on port 25,
-or SMTPS
-.Pq Ic smtps ,
-by default on port 465.
-.Ic tls-require
-may be used to force clients to establish a secure connection
-before being allowed to start an SMTP transaction.
-.Pp
-If
-.Ic tls-require verify
-is specified, the client must provide a valid certificate to be
-able to establish an SMTP session.
-.Pp
-Host certificates may be used for these connections,
-and must be previously declared using the pki directive.
-If
-.Ic pki
-is specified,
-a certificate matching
-.Ic name
-is searched for.
-Moreover, a previously declared
-.Ic ca
-directive may be specified to use a custom CA certificate.
-.Pp
-If the
-.Ic auth
-parameter is used,
-then a client may only start an SMTP transaction after a
-successful authentication.
-Any remote sender that passed SMTPAUTH is treated as if
-it was the server's local user that was sending the mail.
-This means that filter rules using
-.Ic from local
-will be matched.
-If
-.Ic auth-optional
-is specified, then SMTPAUTH is not required to establish an
-SMTP transaction.
-This is only useful to let a listener accept incoming mail from
-untrusted senders and outgoing mail from authenticated users in
-situations where it is not possible to listen on the submission
-port.
-.Pp
-Both
-.Ic auth
-and
-.Ic auth-optional
-accept an optional table as a parameter.
-When provided, credentials are looked up in this table.
-The credentials format is described in
+.Cm userbase
+does not apply for the
+.Cm user
+option.
+.It Cm virtual Pf < Ar table Ns >
+Use the mapping
+.Ar table
+for virtual expansion.
+The aliasing table format is described in
 .Xr table 5 .
+.It Cm wrapper Ar name
+Use the wrapper specified in
+.Cm mda wrapper .
+.El
 .Pp
-If the
-.Ic tag
-parameter is used, then clients connecting to the listener will be
-tagged
-.Ar tag .
+The relay delivery methods also support additional options:
+.Bl -tag -width Ds
+.It Cm backup
+Operate as a backup mail exchanger delivering messages to any mail exchanger
+with higher priority.
+.It Cm backup mx Ar name
+Operate as a backup mail exchanger delivering messages to any mail exchanger
+with higher priority than mail exchanger identified as
+.Ar name .
+.It Cm helo Ar heloname
+Advertise
+.Ar heloname
+as the hostname to other mail exchangers during the HELO phase.
+.It Cm helo\-src Pf < Ar table Ns >
+Use the mapping
+.Ar table
+to look up a hostname matching the source address,
+to advertise during the HELO phase.
+.It Cm host Ar relay-url
+Do not perform MX lookups but relay messages to the relay host described by
+.Ar relay-url .
+The format for
+.Ar relay-url
+is
+.Sm off
+.Op Ar proto No :// Op Ar label No @
+.Ar host Op : Ar port .
+.Sm on
+The following protocols are available:
 .Pp
-If the
-.Ic hostname
-parameter is used, then it will be used in the greeting banner
-instead of the default server name.
+.Bl -tag -width "smtp+notls" -compact
+.It smtp
+Normal SMTP session with opportunistic STARTTLS
+(the default).
+.It smtp+tls
+Normal SMTP session with mandatory STARTTLS.
+.It smtp+notls
+Plain text SMTP session without TLS.
+.It lmtp
+LMTP session.
+.It smtps
+SMTP session with forced TLS on connection.
+.El
 .Pp
 The
-.Ic hostnames
-parameter overrides the server name for specific addresses.
-Table
-.Ar names
-contains a mapping of IP addresses to hostnames and
-.Xr smtpd 8
-will use the hostname that matches the address on which the connection arrives
-if it is found in the mapping.
+.Ar label
+corresponds to an entry in a credentials table,
+as documented in
+.Xr table 5 .
+It is used with the
+.Dq smtp+tls
+and
+.Dq smtps
+protocols for authentication.
+Server certificates for those protocols are verified by default.
+.It Cm tls Op no-verify
+Require TLS to be used when relaying, using mandatory STARTTLS by default.
+When used with a smarthost, the protocol must not be
+.Dq smtp+notls:// .
+If
+.Op no-verify
+is specified, do not require a valid certificate.
+.It Cm auth Pf < Ar table Ns >
+Use the mapping
+.Ar table
+for connecting to
+.Ar relay-url
+using credentials.
+This option is usable only with
+.Cm host
+option.
+The credential table format is described in
+.Xr table 5 .
+.It Cm mail\-from Ar mailaddr
+Use
+.Ar mailaddr
+as the MAIL FROM address within the SMTP transaction.
+.It Cm src Ar address | Pf < Ar address Ns >
+Use the string or list table
+.Ar address
+for the source IP address.
+If the list contains more than one address, all of them are used
+in such a way that traffic is routed as efficiently as possible.
+.El
+.It Ic bounce Cm warn\-interval Ar delay Op , Ar delay ...
+Send warning messages to the envelope sender when temporary delivery
+failures cause a message to remain on the queue for longer than
+.Ar delay .
+Each
+.Ar delay
+parameter consists of a positive decimal integer and a unit
+.Cm s , m , h ,
+or
+.Cm d .
+At most four
+.Ar delay
+parameters can be specified.
+The default is
+.Qq Ic bounce Cm warn\-interval No 4h ,
+sending a single warning after four hours.
+.It Ic ca Ar caname Cm cert Ar cafile
+Associate the Certificate Authority (CA) certificate file
+.Ar cafile
+with host
+.Ar caname ,
+and use that file as the CA certificate for that host.
+.Ar caname
+is the server's name,
+derived from the default hostname
+or set using either
+.Pa /etc/mail/mailname
+or using the
+.Ic hostname
+directive.
+.It Ic include Qq Ar pathname
+Replace this directive with the content of the additional configuration
+file at the absolute
+.Ar pathname .
+.It Ic listen on Ar interface Oo Ar family Oc Op Ar options
+Listen on the
+.Ar interface
+for incoming connections, using the same syntax as for
+.Xr ifconfig 8 .
+The
+.Ar interface
+parameter may also be an interface group, an IP address, or a domain name.
+Listening can optionally be restricted to a specific address
+.Ar family ,
+which can be either
+.Cm inet4
+or
+.Cm inet6 .
 .Pp
-If the
-.Ic senders
-parameter is used, then
-.Xr smtpd 8
-will look up a mapping of username to email addresses to see whether
-the authenticated user is allowed to submit mail
-as the sender that was provided in the SMTP session.
+The
+.Ar options
+are as follows:
+.Bl -tag -width Ds
+.It Cm auth Op Pf < Ar authtable Ns >
+Support SMTPAUTH: clients may only start SMTP transactions
+after successful authentication.
+Users are authenticated against either their own normal login credentials
+or a credentials table
+.Ar authtable ,
+the format of which is described in
+.Xr table 5 .
+.It Cm auth\-optional Op Pf < Ar authtable Ns >
+Support SMTPAUTH optionally:
+clients need not authenticate, but may do so.
+This allows a
+.Ic listen on
+directive to both accept incoming mail from untrusted senders
+and permit outgoing mail from authenticated users
+(using
+.Cm match auth ) .
+It can be used in situations where it is not possible to listen on a separate port
+(usually the submission port, 587)
+for users to authenticate.
+.It Ic ca Ar caname
+For secure connections,
+use the CA certificate associated with
+.Ar caname
+(declared in a
+.Ic ca
+directive)
+as the CA certificate when verifying client certificates.
+.It Cm hostname Ar hostname
+Use
+.Ar hostname
+in the greeting banner instead of the default server name.
+.It Cm hostnames Pf < Ar names Ns >
+Override the server name for specific addresses.
+The
+.Ar names
+table contains a mapping of IP addresses to hostnames.
+If the address on which the connection arrives appears in the mapping,
+the associated hostname is used.
+.It Cm mask\-src
+Omit the
+.Sy from
+part when prepending
+.Dq Received
+headers.
+.It Cm no\-dsn
+Disable the DSN (Delivery Status Notification) extension.
+.It Cm pki Ar pkiname
+For secure connections,
+use the certificate associated with
+.Ar pkiname
+(declared in a
+.Ic pki
+directive)
+to prove a mail server's identity.
+.It Cm port Op Ar port
+Listen on the given
+.Ar port
+instead of the default port 25.
+.It Cm received\-auth
+In
+.Dq Received
+headers, report whether the session was authenticated
+and by which local user.
+.It Cm senders Pf < Ar users Ns > Op Cm masquerade
+Look up the authenticated user in the
+.Ar users
+mapping table to find the email addresses that user is allowed
+to submit mail as.
 In addition, if the
 .Cm masquerade
 option is provided,
-the From header will be rewritten
+the From header is rewritten
 to match the sender provided in the SMTP session.
-.Pp
-If the
-.Ic mask-source
-parameter is used, then the listener will skip the
-.Ic from
-part when prepending the
-.Dq Received
-header.
-.Pp
-If the
-.Ic received-auth
-parameter is used, the
-.Dq Received
-header will display if the session was authenticated and by which local user.
-.Pp
-If the
-.Ic no-dsn
-parameter is used, DSN (Delivery Status Notification) extension will not
-be enabled.
-.It Xo
-.Ic listen on socket
-.Op Ic mask-source
-.Xc
-Modify behaviour for the listener which handles messages
-submitted through the local enqueuer,
-such as the
-.Xr mail 1
-utility.
-Clients connecting in this manner are tagged with the "local"
-.Ic tag .
-.Pp
-Parameters available are:
-.Bl -tag -width "mask-source"
-.It Ic mask-source
-Skip the
-.Ic from
-part when prepending the
-.Dq Received
-header.
+.It Cm smtps
+Support SMTPS, by default on port 465.
+Mutually exclusive with
+.Cm tls .
+.It Cm tag Ar tag
+Clients connecting to the listener are tagged with the given
+.Ar tag .
+.It Cm tls
+Support STARTTLS, by default on port 25.
+Mutually exclusive with
+.Cm smtps .
+.It Cm tls\-require Op Cm verify
+Like
+.Cm tls ,
+but force clients to establish a secure connection
+before being allowed to start an SMTP transaction.
+With the
+.Cm verify
+option, clients must also provide a valid certificate
+to establish an SMTP session.
 .El
-.It Ic max-message-size Ar n
-Specify a maximum message size of
-.Ar n
-bytes.
-The argument may contain a multiplier, as documented in
-.Xr scan_scaled 3 .
-The default maximum message size is 35MB if none is specified.
-.It Ic pki Ar hostname Ic certificate Ar certfile
-Associate the certificate located in
-.Ar certfile
-with
-.Ar hostname .
+.It Ic listen on Cm socket Op Cm mask\-src
+Listen for incoming SMTP connections on the Unix domain socket
+.Pa /var/run/smtpd.sock .
+This is done by default, even if the directive is absent.
+If the
+.Cm mask\-src
+option is specified, printing of the HELO name, hostname, and IP
+address of the originating host is suppressed in Received: header lines.
+.\" XXX The option
+.\" Cm filter Ar string
+.\" is parsed, but not implemented, see smtpf_session.c.
+.It Ic match Ar options Cm action Ar name
+If at least one mail envelope matches the
+.Ar options
+of one
+.Ic match Cm action
+directive, receive the incoming message, put a copy into each
+matching envelope, and atomically save the envelopes to the mail
+spool for later processing by the respective dispatcher
+.Ar name .
 .Pp
+The following matching options are supported and can all be negated:
+.Bl -tag -width Ds
+.It Xo
+.Op Ic \&!
+.Cm for any
+.Xc
+Specify that session may address any destination.
+.It Xo
+.Op Ic \&!
+.Cm for local
+.Xc
+Specify that session may address any local domain.
+This is the default, and may be omitted.
+.It Xo
+.Op Ic \&!
+.Cm for domain
+.Ar domain | Pf < Ar domain Ns >
+.Xc
+Specify that session may address the string or list table
+.Ar domain .
+.It Xo
+.Op Ic \&!
+.Cm for domain regex
+.Ar domain | Pf < Ar domain Ns >
+.Xc
+Specify that session may address the regex or regex table
+.Ar domain .
+.It Xo
+.Op Ic \&!
+.Cm from any
+.Xc
+Specify that session may originate from any source.
+.It Xo
+.Op Ic \&!
+.Cm from local
+.Xc
+Specify that session may only originate from a local IP address,
+or from the local enqueuer.
+This is the default, and may be omitted.
+.It Xo
+.Op Ic \&!
+.Cm from rdns
+.Ar hostname | Pf < Ar hostname Ns >
+.Xc
+Specify that session may only originate from an IP address that
+resolves to a reverse DNS matching string or list string
+.Ar hostname .
+.It Xo
+.Op Ic \&!
+.Cm from rdns regex
+.Ar hostname | Pf < Ar hostname Ns >
+.Xc
+Specify that session may only originate from an IP address that
+resolves to a reverse DNS matching regex or list regex
+.Ar hostname .
+.It Xo
+.Op Ic \&!
+.Cm from socket
+.Xc
+Specify that session may only originate from the local enqueuer.
+.It Xo
+.Op Ic \&!
+.Cm from src
+.Ar address | Pf < Ar address Ns >
+.Xc
+Specify that session may only originate from string or list table
+.Ar address
+which can be a specific address or a subnet expressed in CIDR-notation.
+.It Xo
+.Op Ic \&!
+.Cm from src regex
+.Ar address | Pf < Ar address Ns >
+.Xc
+Specify that session may only originate from regex or regex table
+.Ar address
+which can be a specific address or a subnet expressed in CIDR-notation.
+.El
+.Pp
+In addition, the following transaction options:
+.Bl -tag -width Ds
+.It Xo
+.Op Ic \&!
+.Cm auth
+.Xc
+Matches transactions which have been authenticated.
+.It Xo
+.Op Ic \&!
+.Cm helo
+.Ar helo-name | Pf < Ar helo-name Ns >
+.Xc
+Specify that session's HELO / EHLO should match the string or list table
+.Ar helo-name .
+.It Xo
+.Op Ic \&!
+.Cm helo regex
+.Ar helo-name | Pf < Ar helo-name Ns >
+.Xc
+Specify that session's HELO / EHLO should match the regex or regex table
+.Ar helo-name .
+.It Xo
+.Op Ic \&!
+.Cm mail\-from
+.Ar sender | Pf < Ar sender Ns >
+.Xc
+Specify that transactions's MAIL FROM should match the string or list table
+.Ar sender .
+.It Xo
+.Op Ic \&!
+.Cm mail\-from regex
+.Ar sender | Pf < Ar sender Ns >
+.Xc
+Specify that transactions's MAIL FROM should match the regex or regex table
+.Ar sender .
+.It Xo
+.Op Ic \&!
+.Cm rcpt\-to
+.Ar recipient | Pf < Ar recipient Ns >
+.Xc
+Specify that transaction's RCPT TO should match the string or list table
+.Ar recipient .
+.It Xo
+.Op Ic \&!
+.Cm rcpt\-to regex
+.Ar recipient | Pf < Ar recipient Ns >
+.Xc
+Specify that transaction's RCPT TO should match the regex or regex table
+.Ar recipient .
+.It Xo
+.Op Ic \&!
+.Cm tag Ar tag
+.Xc
+Matches transactions tagged with the given
+.Ar tag .
+.It Xo
+.Op Ic \&!
+.Cm tag regex Ar tag
+.Xc
+Matches transactions tagged with the given
+.Ar tag
+regex.
+.It Xo
+.Op Ic \&!
+.Cm tls
+.Xc
+Specify that transaction should take place in a TLS channel.
+.El
+.It Ic match Ar options Cm reject
+Reject the incoming message during the SMTP dialogue.
+The same
+.Ar options
+are supported as for the
+.Ic match Cm action
+directive.
+.It Ic mda Cm wrapper Ar name command
+Associate
+.Ar command
+with the mail delivery agent wrapper named
+.Ar name .
+When a local delivery specifies a wrapper, the
+.Ar command
+associated with the wrapper will be executed instead.
+The command may contain format specifiers
+.Pq see Sx FORMAT SPECIFIERS .
+.It Ic mta Cm max\-deferred Ar number
+When delivery to a given host is suspended due to temporary failures,
+cache at most
+.Ar number
+envelopes for that host such that they can be delivered
+as soon as another delivery succeeds to that host.
+The default is 100.
+.It Ic pki Ar pkiname Cm cert Ar certfile
+Associate certificate file
+.Ar certfile
+with host
+.Ar pkiname ,
+and use that file to prove the identity of the mail server to clients.
+.Ar pkiname
+is the server's name,
+derived from the default hostname
+or set using either
+.Pa /etc/mail/mailname
+or using the
+.Ic hostname
+directive.
 If a fallback certificate or SNI is wanted, the
 .Sq *
 wildcard may be used as
-.Ar hostname .
+.Ar pkiname .
 .Pp
 A certificate chain may be created by appending one or many certificates,
 including a Certificate Authority certificate,
 to
 .Ar certfile .
-.Pp
-Creation of certificates is documented in
+The creation of certificates is documented in
 .Xr starttls 8 .
-.It Ic pki Ar hostname Ic key Ar keyfile
+.It Ic pki Ar pkiname Cm key Ar keyfile
 Associate the key located in
 .Ar keyfile
-with
-.Ar hostname .
-.It Ic pki Ar hostname Ic dhe Ar params
-Specify the DHE parameters to use for DHE cipher suites with
-.Ar hostname .
-Valid parameter values are none, legacy and auto.
-For legacy a fixed key length of 1024 bits is used, whereas for auto the key
-length is determined automatically.
-The default is none, which disables DHE cipher suites.
-.It Ic queue compression
-Enable transparent compression of envelopes and messages.
-The only supported algorithm at the moment is gzip.
-Envelopes and messages may be inspected using the
-.Xr smtpctl 8
+with host
+.Ar pkiname .
+.It Ic pki Ar pkiname Cm dhe Ar params
+Specify the DHE parameters to use for DHE cipher suites with host
+.Ar pkiname .
+Valid parameter values are
+.Cm none ,
+.Cm legacy ,
+and
+.Cm auto .
+For
+.Cm legacy ,
+a fixed key length of 1024 bits is used, whereas for
+.Cm auto ,
+the key length is determined automatically.
+The default is
+.Cm none ,
+which disables DHE cipher suites.
+.It Ic queue Cm compression
+Store queue files in a compressed format.
+This may be useful to save disk space.
+.It Ic queue Cm encryption Op Ar key
+Encrypt queue files with
+.Xr EVP_aes_256_gcm 3 .
+If no
+.Ar key
+is specified, it is read with
+.Xr getpass 3 .
+If the string
+.Cm stdin
+or a single dash
+.Pq Ql \-
+is given instead of a
+.Ar key ,
+the key is read from the standard input.
+.It Ic queue Cm ttl Ar delay
+Set the default expiration time for temporarily undeliverable
+messages, given as a positive decimal integer followed by a unit
+.Cm s , m , h ,
 or
-.Xr gzcat 1
-utilities.
-.It Ic queue encryption Op key Ar key
-Enable transparent encryption of envelopes and messages.
-.Ar key
-must be a 16-byte random key in hexadecimal representation.
-It can be obtained using the
-.Xr openssl 1
-utility as follow:
-.Bd -literal -offset indent
-$ openssl rand \-hex 16
-.Ed
-.Pp
-If the
-.Ar key
-parameter is not specified, it is read with
-.Xr getpass 3
-at startup.
-If
-.Ar key
-is
-.Ic stdin ,
-then it is read from the standard input at startup.
-.Pp
-The only supported algorithm is AES-256 in GCM mode.
-Envelopes and messages may be inspected using the
-.Xr smtpctl 8
-utility.
-.Pp
-Queue encryption can be used with queue compression and will always
-perform compression before encryption.
-.It Ic subaddressing-delimiter Ar delimiter
-Redefine the subaddressing delimiter from the default
-.Sq +
-to
-.Ar delimiter .
-.Pp
-Any printable character valid in an email address is allowed,
-except spaces and
-.Sq @ .
-.Pp
-The first character in the user-part of an email address that matches
-.Ar delimiter
-is considered to be the subaddressing delimiter.
-.It Ic table Ar name Oo Ar type : Oc Ns Ar config
-Tables are used to provide additional configuration information for
+.Cm d .
+The default is four days
+.Pq 4d .
+.It Ic smtp Cm ciphers Ar control
+Set the
+.Ar control
+string for
+.Xr SSL_CTX_set_cipher_list 3 .
+The default is
+.Qq HIGH:!aNULL:!MD5 .
+.It Ic smtp Cm max\-message\-size Ar size
+Reject messages larger than
+.Ar size ,
+given as a positive number of bytes or as a string to be parsed with
+.Xr scan_scaled 3 .
+The default is
+.Qq 35M .
+.It Ic smtp Cm sub\-addr\-delim Ar character
+When resolving the local part of a local email address, ignore the ASCII
+.Ar character
+and all characters following it.
+The default is
+.Ql + .
+.It Ic table Ar name Oo Ar type : Oc Ns Ar pathname
+Tables provide additional configuration information for
 .Xr smtpd 8
 in the form of lists or key-value mappings.
 The format of the entries depends on what the table is used for.
@@ -910,68 +733,49 @@ Refer to
 .Xr table 5
 for the exhaustive documentation.
 .Pp
-The table is identified using table name
-.Ar name ;
-the name itself is arbitrarily chosen.
+Each table is identified by an arbitrary, unique
+.Ar name .
 .Pp
+If the
 .Ar type
-specifies the table backend,
-and should be one of the following:
-.Pp
-.Bl -tag -width "fileXXX" -compact
-.It db
-Information is stored in a file created using
-.Xr makemap 8 .
-.It file
-Information is stored in a plain text file using the
-same format as used to generate
-.Xr makemap 8
-mappings.
-This is the default.
-.El
-.Pp
-.Ar config
-specifies a configuration file for the table data.
-It must be an absolute path to a file for the
-.Dq file
-and
-.Dq db
-table types.
+is
+.Cm db ,
+information is stored in a file created with
+.Xr makemap 8 ;
+if it is
+.Cm file
+or omitted, information is stored in a plain text file
+using the format described in
+.Xr table 5 .
+The
+.Ar pathname
+to the file must be absolute.
 .It Ic table Ar name Brq Ar value Op , Ar ...
-Tables containing list of static values may be declared
-using an inlined notation.
-.Pp
-The table is identified using table name
-.Ar name ;
-the name itself is arbitrarily chosen.
-.Pp
-The table must contain at least one value and may declare many values as a
-list of comma-separated strings.
+Instead of using a separate file, declare a list table
+containing the given static
+.Ar value Ns s .
+The table must contain at least one value and may declare multiple values as a
+comma-separated (whitespace optional) list.
 .It Ic table Ar name Brq Ar key Ns = Ns Ar value Op , Ar ...
-Tables containing static key-value mappings may be declared
-using an inlined notation.
-.Pp
-The table is identified using table name
-.Ar name ;
-the name itself is arbitrarily chosen.
-.Pp
-The table must contain at least one key-value mapping and may declare
-many mappings as a list of comma-separated
-.Ar key Ns = Ns Ar value
-descriptions.
+Instead of using a separate file, declare a mapping table
+containing the given static
+.Ar key Ns - Ns Ar value
+pairs.
+The table must contain at least one key-value pair and may declare
+multiple pairs as a comma-separated (whitespace optional) list.
 .El
 .Ss FORMAT SPECIFIERS
 Some configuration directives support expansion of their parameters at runtime.
 Such directives (for example
-.Ic deliver to maildir ,
-.Ic deliver to mda )
-may use format specifiers which will be expanded before delivery or
+.Ic action Cm maildir ,
+.Ic action Cm mda )
+may use format specifiers which are expanded before delivery or
 relaying.
 The following formats are currently supported:
 .Bl -column %{user.directory} -offset indent
-.It %{sender}         Ta sender email address
-.It %{sender.user}    Ta user part of the sender email address
-.It %{sender.domain}  Ta domain part of the sender email address
+.It %{sender}         Ta sender email address, may be empty string
+.It %{sender.user}    Ta user part of the sender email address, may be empty
+.It %{sender.domain}  Ta domain part of the sender email address, may be empty
 .It %{rcpt}           Ta recipient email address
 .It %{rcpt.user}      Ta user part of the recipient email address
 .It %{rcpt.domain}    Ta domain part of the recipient email address
@@ -980,19 +784,21 @@ The following formats are currently supported:
 .It %{dest.domain}    Ta domain part after expansion
 .It %{user.username}  Ta local user
 .It %{user.directory} Ta home directory of the local user
+.It %{mbox.from}      Ta name used in mbox From separator lines
+.It %{mda}            Ta mda command, only available for mda wrappers
 .El
 .Pp
 Expansion formats also support partial expansion using the optional
 bracket notations with substring offset.
 For example, with recipient domain
 .Dq example.org :
-.Bl -column %{rcpt.domain[0:-4]} -offset indent
+.Bl -column %{rcpt.domain[0:\-4]} -offset indent
 .It %{rcpt.domain[0]}    Ta expands to Dq e
 .It %{rcpt.domain[1]}    Ta expands to Dq x
 .It %{rcpt.domain[8:]}   Ta expands to Dq org
-.It %{rcpt.domain[-3:]}  Ta expands to Dq org
+.It %{rcpt.domain[\-3:]} Ta expands to Dq org
 .It %{rcpt.domain[0:6]}  Ta expands to Dq example
-.It %{rcpt.domain[0:-4]} Ta expands to Dq example
+.It %{rcpt.domain[0:\-4]} Ta expands to Dq example
 .El
 .Pp
 In addition, modifiers may be applied to the token.
@@ -1031,6 +837,8 @@ Otherwise, the server name is derived from the local hostname returned by
 either directly if it is a fully qualified domain name,
 or by retrieving the associated canonical name through
 .Xr getaddrinfo 3 .
+.It Pa /var/run/smtpd.sock
+Unix domain socket for incoming SMTP connections.
 .It Pa /var/spool/smtpd/
 Spool directories for mail during processing.
 .El
@@ -1039,7 +847,8 @@ The default
 .Nm
 file which ships with
 .Ox
-listens on the loopback network interface (lo0),
+listens on the loopback network interface
+.Pq Pa lo0
 and allows for mail from users and daemons on the local machine,
 as well as permitting email to remote servers.
 Some more complex configurations are given below.
@@ -1051,7 +860,7 @@ A secrets file is needed to specify a username and password:
 # touch /etc/mail/secrets
 # chmod 640 /etc/mail/secrets
 # chown root:_smtpd /etc/mail/secrets
-# echo "label username:password" > /etc/mail/secrets
+# echo "bob username:password" > /etc/mail/secrets
 .Ed
 .Pp
 .Nm
@@ -1062,17 +871,20 @@ table secrets file:/etc/mail/secrets
 
 listen on lo0
 
-accept for local alias <aliases> deliver to mbox
-accept for any relay via tls+auth://label@smtp.example.com \e
+action "local" mbox alias <aliases>
+action "relay" relay host smtp+tls://bob@smtp.example.com \e
 	auth <secrets>
+
+match for local action "local"
+match for any action "relay"
 .Ed
 .Pp
 In this second example,
-the aim is to permit mail relaying for any user that can authenticate
-using their normal login credentials.
+the aim is to permit mail delivery and relaying only for users that can authenticate
+(using their normal login credentials).
 An RSA certificate must be provided to prove the server's identity.
-The mail server listens on all interfaces the default route(s) point to.
-Mail with a local destination should be sent to an external mda.
+The mail server listens on all interfaces the default routes point to.
+Mail with a local destination is sent to an external MDA.
 First, the RSA certificate is created:
 .Bd -literal -offset indent
 # openssl genrsa \-out /etc/ssl/private/mail.example.com.key 4096
@@ -1086,7 +898,7 @@ In the example above,
 a certificate valid for one year was created.
 The configuration file would look like this:
 .Bd -literal -offset indent
-pki mail.example.com certificate "/etc/ssl/mail.example.com.crt"
+pki mail.example.com cert "/etc/ssl/mail.example.com.crt"
 pki mail.example.com key "/etc/ssl/private/mail.example.com.key"
 
 table aliases file:/etc/mail/aliases
@@ -1094,14 +906,18 @@ table aliases file:/etc/mail/aliases
 listen on lo0
 listen on egress tls pki mail.example.com auth
 
-accept for local alias <aliases> deliver to mda "/path/to/mda \-f \-"
-accept from any for domain example.com \e
-	deliver to mda "/path/to/mda \-f \-"
-accept for any relay
+action mda_with_aliases mda "/path/to/mda \-f \-" alias <aliases>
+action mda_without_aliases mda "/path/to/mda \-f \-"
+action "relay" relay
+
+match for local action mda_with_aliases
+match from any for domain example.com action mda_without_aliases
+match for any action "relay"
+match auth from any for any action "relay"
 .Ed
 .Pp
 For sites that wish to sign messages using DKIM, the
-.Em dkimproxy
+.Sy dkimproxy
 package may be used as a filter.
 The following example is the same as the default configuration,
 but all outgoing mail is passed to dkimproxy_out on port 10027
@@ -1113,18 +929,22 @@ table aliases file:/etc/mail/aliases
 listen on lo0
 listen on lo0 port 10028 tag DKIM
 
-accept for local alias <aliases> deliver to mbox
-accept tagged DKIM for any relay
-accept from local for any relay via smtp://127.0.0.1:10027
+action "mbox" mbox alias <aliases>
+action "relay" relay
+action relay_dkim relay host smtp://127.0.0.1:10027
+
+match for local action "mbox"
+match tag DKIM for any action "relay"
+match for any action relay_dkim
 .Ed
 .Pp
 Sites that accept non-local messages may be able to cut down on the
 volume of spam received by rejecting forged messages that claim
 to be from the local domain.
-The table
+The following example uses a list table
 .Em other-relays
-can be used to specify the IP addresses of relays that may legitimately
-originate mail with your domain as the sender.
+to specify the IP addresses of relays that may legitimately
+originate mail with the owner's domain as the sender.
 .Bd -literal -offset indent
 table aliases file:/etc/mail/aliases
 table other-relays file:/etc/mail/other-relays
@@ -1132,11 +952,14 @@ table other-relays file:/etc/mail/other-relays
 listen on lo0
 listen on egress
 
-accept for local alias <aliases> deliver to mbox
-accept from local for any relay
-reject from ! source <other-relays> sender "@example.com" for any
-accept from any for domain example.com \e
-	alias <aliases> deliver to mbox
+action "mbox" mbox alias <aliases>
+action "relay" relay
+
+match for local action "mbox"
+match for any action "relay"
+match !from src <other-relays> mail\-from "@example.com" for any \e
+      reject
+match from any for domain example.com action "mbox"
 .Ed
 .Sh SEE ALSO
 .Xr mailer.conf 5 ,

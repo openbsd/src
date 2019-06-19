@@ -1,21 +1,17 @@
 #!perl -w
 #
 # This script is written intentionally in UTF-8
-# Requires Encode 1.83 or better
 # -- dankogai
 
 BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
-    skip_all_without_dynamic_extension('Encode');
-    skip_all("no encoding pragma in EBCDIC") if $::IS_EBCDIC;
     skip_all_without_perlio();
 }
 
 use strict;
 plan(tests => 8);
-no warnings 'deprecated';
-use encoding 'utf8';
+use utf8;
 
 my @hiragana =  map {chr} ord("ぁ")..ord("ん");
 my @katakana =  map {chr} ord("ァ")..ord("ン");

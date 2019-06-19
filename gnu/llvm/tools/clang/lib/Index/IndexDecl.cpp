@@ -43,7 +43,7 @@ public:
     return true;
   }
 
-  /// \brief Returns true if the given method has been defined explicitly by the
+  /// Returns true if the given method has been defined explicitly by the
   /// user.
   static bool hasUserDefined(const ObjCMethodDecl *D,
                              const ObjCImplDecl *Container) {
@@ -233,9 +233,8 @@ public:
     if (auto *CXXMD = dyn_cast<CXXMethodDecl>(D)) {
       if (CXXMD->isVirtual())
         Roles |= (unsigned)SymbolRole::Dynamic;
-      for (auto I = CXXMD->begin_overridden_methods(),
-           E = CXXMD->end_overridden_methods(); I != E; ++I) {
-        Relations.emplace_back((unsigned)SymbolRole::RelationOverrideOf, *I);
+      for (const CXXMethodDecl *O : CXXMD->overridden_methods()) {
+        Relations.emplace_back((unsigned)SymbolRole::RelationOverrideOf, O);
       }
     }
     gatherTemplatePseudoOverrides(D, Relations);
@@ -267,6 +266,10 @@ public:
                                  TypeNameInfo->getTypeLoc().getLocStart(),
                                  Dtor->getParent(), Dtor->getDeclContext());
       }
+    } else if (const auto *Guide = dyn_cast<CXXDeductionGuideDecl>(D)) {
+      IndexCtx.handleReference(Guide->getDeducedTemplate()->getTemplatedDecl(),
+                               Guide->getLocation(), Guide,
+                               Guide->getDeclContext());
     }
     // Template specialization arguments.
     if (const ASTTemplateArgumentListInfo *TemplateArgInfo =
@@ -350,12 +353,10 @@ public:
         gatherTemplatePseudoOverrides(D, Relations);
         IndexCtx.indexTagDecl(D, Relations);
       } else {
-        auto *Parent = dyn_cast<NamedDecl>(D->getDeclContext());
         SmallVector<SymbolRelation, 1> Relations;
         gatherTemplatePseudoOverrides(D, Relations);
-        return IndexCtx.handleReference(D, D->getLocation(), Parent,
-                                        D->getLexicalDeclContext(),
-                                        SymbolRoleSet(), Relations);
+        return IndexCtx.handleDecl(D, D->getLocation(), SymbolRoleSet(),
+                                   Relations, D->getLexicalDeclContext());
       }
     }
     return true;
@@ -607,6 +608,24 @@ public:
                                     SymbolRoleSet());
   }
 
+  bool VisitUnresolvedUsingValueDecl(const UnresolvedUsingValueDecl *D) {
+    TRY_DECL(D, IndexCtx.handleDecl(D));
+    const DeclContext *DC = D->getDeclContext()->getRedeclContext();
+    const NamedDecl *Parent = dyn_cast<NamedDecl>(DC);
+    IndexCtx.indexNestedNameSpecifierLoc(D->getQualifierLoc(), Parent,
+                                         D->getLexicalDeclContext());
+    return true;
+  }
+
+  bool VisitUnresolvedUsingTypenameDecl(const UnresolvedUsingTypenameDecl *D) {
+    TRY_DECL(D, IndexCtx.handleDecl(D));
+    const DeclContext *DC = D->getDeclContext()->getRedeclContext();
+    const NamedDecl *Parent = dyn_cast<NamedDecl>(DC);
+    IndexCtx.indexNestedNameSpecifierLoc(D->getQualifierLoc(), Parent,
+                                         D->getLexicalDeclContext());
+    return true;
+  }
+
   bool VisitClassTemplateSpecializationDecl(const
                                            ClassTemplateSpecializationDecl *D) {
     // FIXME: Notify subsequent callbacks if info comes from implicit
@@ -644,10 +663,12 @@ public:
   }
 
   bool VisitTemplateDecl(const TemplateDecl *D) {
-    // FIXME: Template parameters.
+
+    const NamedDecl *Parent = D->getTemplatedDecl();
+    if (!Parent)
+      return true;
 
     // Index the default values for the template parameters.
-    const NamedDecl *Parent = D->getTemplatedDecl();
     if (D->getTemplateParameters() &&
         shouldIndexTemplateParameterDefaultValue(Parent)) {
       const TemplateParameterList *Params = D->getTemplateParameters();
@@ -661,12 +682,12 @@ public:
         } else if (const auto *TTPD = dyn_cast<TemplateTemplateParmDecl>(TP)) {
           if (TTPD->hasDefaultArgument())
             handleTemplateArgumentLoc(TTPD->getDefaultArgument(), Parent,
-                                      /*DC=*/nullptr);
+                                      TP->getLexicalDeclContext());
         }
       }
     }
 
-    return Visit(D->getTemplatedDecl());
+    return Visit(Parent);
   }
 
   bool VisitFriendDecl(const FriendDecl *D) {
@@ -705,7 +726,7 @@ bool IndexingContext::indexDecl(const Decl *D) {
   if (D->isImplicit() && shouldIgnoreIfImplicit(D))
     return true;
 
-  if (isTemplateImplicitInstantiation(D))
+  if (isTemplateImplicitInstantiation(D) && !shouldIndexImplicitInstantiation())
     return true;
 
   IndexingDeclVisitor Visitor(*this);

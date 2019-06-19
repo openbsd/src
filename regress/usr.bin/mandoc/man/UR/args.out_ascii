@@ -6,7 +6,10 @@ NNAAMMEE
        UR-basic - argument handling of the man-ext URI macro
 
 DDEESSCCRRIIPPTTIIOONN
-       argument plus text: OpenBSD homepage <http://www.openbsd.org/>
+       argument, text, and tail: text <http://www.openbsd.org/>tail argument
+
+       argument plus text: OpenBSD homepage <http://www.openbsd.org/> next
+       line
 
        argument but no text: <http://www.netbsd.org/>
 
@@ -20,4 +23,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                        October 17, 2013                     UR-ARGS(1)
+OpenBSD                         August 14, 2018                     UR-ARGS(1)

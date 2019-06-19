@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280reg.h,v 1.7 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: ar9280reg.h,v 1.8 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -20,7 +20,11 @@
 #define AR9280_MAX_CHAINS	2
 
 #define AR9280_PD_GAIN_BOUNDARY_DEFAULT	56
-#define AR9280_PHY_CCA_MAX_GOOD_VALUE	(-112)
+
+#define AR9280_PHY_CCA_MIN_GOOD_VAL_2GHZ	(-127)
+#define AR9280_PHY_CCA_MIN_GOOD_VAL_5GHZ	(-122)
+#define AR9280_PHY_CCA_MAX_GOOD_VAL_2GHZ	(-97)
+#define AR9280_PHY_CCA_MAX_GOOD_VAL_5GHZ	(-102)
 
 #define AR9280_PHY_SYNTH_CONTROL	0x9874
 

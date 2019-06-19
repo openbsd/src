@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.233 2018/03/05 03:31:39 jsg Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.234 2018/04/28 15:44:59 jasper Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1128,7 +1128,7 @@ disk_attach_callback(void *xdat)
 
 	/* Read disklabel. */
 	if (disk_readlabel(&dl, dk->dk_devno, errbuf, sizeof(errbuf)) == NULL) {
-		add_timer_randomness(dl.d_checksum);
+		enqueue_randomness(dl.d_checksum);
 		dk->dk_flags |= DKF_LABELVALID;
 	}
 
@@ -1270,7 +1270,7 @@ disk_unbusy(struct disk *diskp, long bcount, daddr_t blkno, int read)
 
 	mtx_leave(&diskp->dk_mtx);
 
-	add_disk_randomness(bcount ^ diff_time.tv_usec ^
+	enqueue_randomness(bcount ^ diff_time.tv_usec ^
 	    (blkno >> 32) ^ (blkno & 0xffffffff));
 }
 

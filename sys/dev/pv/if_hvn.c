@@ -136,7 +136,6 @@ struct hvn_softc {
 	struct arpcom			 sc_ac;
 	struct ifmedia			 sc_media;
 	int				 sc_link_state;
-	int				 sc_promisc;
 
 	/* NVS protocol */
 	int				 sc_proto;
@@ -210,7 +209,6 @@ int	hvn_rndis_output(struct hvn_softc *, struct hvn_tx_desc *);
 void	hvn_rndis_status(struct hvn_softc *, caddr_t, uint32_t);
 int	hvn_rndis_query(struct hvn_softc *, uint32_t, void *, size_t *);
 int	hvn_rndis_set(struct hvn_softc *, uint32_t, void *, size_t);
-int	hvn_rndis_open(struct hvn_softc *);
 int	hvn_rndis_close(struct hvn_softc *);
 void	hvn_rndis_detach(struct hvn_softc *);
 
@@ -403,10 +401,30 @@ hvn_link_status(struct hvn_softc *sc)
 int
 hvn_iff(struct hvn_softc *sc)
 {
-	/* XXX */
-	sc->sc_promisc = 0;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	uint32_t filter = 0;
+	int rv;
 
-	return (0);
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	if ((ifp->if_flags & IFF_PROMISC) || sc->sc_ac.ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		filter = NDIS_PACKET_TYPE_PROMISCUOUS;
+	} else {
+		filter = NDIS_PACKET_TYPE_BROADCAST |
+		    NDIS_PACKET_TYPE_DIRECTED;
+		if (sc->sc_ac.ac_multicnt > 0) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			filter |= NDIS_PACKET_TYPE_ALL_MULTICAST;
+		}
+	}
+
+	rv = hvn_rndis_set(sc, OID_GEN_CURRENT_PACKET_FILTER,
+	    &filter, sizeof(filter));
+	if (rv)
+		DPRINTF("%s: failed to set RNDIS filter to %#x\n",
+		    sc->sc_dev.dv_xname, filter);
+	return (rv);
 }
 
 void
@@ -416,9 +434,7 @@ hvn_init(struct hvn_softc *sc)
 
 	hvn_stop(sc);
 
-	hvn_iff(sc);
-
-	if (hvn_rndis_open(sc) == 0) {
+	if (hvn_iff(sc) == 0) {
 		ifp->if_flags |= IFF_RUNNING;
 		ifq_clr_oactive(&ifp->if_snd);
 	}
@@ -1722,27 +1738,6 @@ hvn_rndis_set(struct hvn_softc *sc, uint32_t oid, void *data, size_t length)
 
 	hvn_free_cmd(sc, rc);
 
-	return (rv);
-}
-
-int
-hvn_rndis_open(struct hvn_softc *sc)
-{
-	uint32_t filter;
-	int rv;
-
-	if (sc->sc_promisc)
-		filter = NDIS_PACKET_TYPE_PROMISCUOUS;
-	else
-		filter = NDIS_PACKET_TYPE_BROADCAST |
-		    NDIS_PACKET_TYPE_ALL_MULTICAST |
-		    NDIS_PACKET_TYPE_DIRECTED;
-
-	rv = hvn_rndis_set(sc, OID_GEN_CURRENT_PACKET_FILTER,
-	    &filter, sizeof(filter));
-	if (rv)
-		DPRINTF("%s: failed to set RNDIS filter to %#x\n",
-		    sc->sc_dev.dv_xname, filter);
 	return (rv);
 }
 

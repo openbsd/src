@@ -481,6 +481,13 @@ the "first commit where the bug is solved".
 C<git help bisect> has much more information on how you can tweak your
 binary searches.
 
+Following bisection you may wish to configure, build and test perl at
+commits identified by the bisection process.  Sometimes, particularly
+with older perls, C<make> may fail during this process.  In this case
+you may be able to patch the source code at the older commit point.  To
+do so, please follow the suggestions provided in
+L<perlhack/Building perl at older commits>.
+
 =head2 Topic branches and rewriting history
 
 Individual committers should create topic branches under
@@ -845,6 +852,9 @@ on other OSes test the change before you commit it to blead.
 Fortunately, there is a way to get your change smoke-tested on various
 OSes: push it to a "smoke-me" branch and wait for certain automated
 smoke-testers to report the results from their OSes.
+A "smoke-me" branch is identified by the branch name: specifically, as
+seen on perl5.git.perl.org it must be a local branch whose first name
+component is precisely C<smoke-me>.
 
 The procedure for doing this is roughly as follows (using the example of
 of tonyc's smoke-me branch called win32stat):
@@ -918,11 +928,11 @@ general testing and development. Dromedary syncs the git tree from
 camel every few minutes, you should not push there. Both machines also
 have a full CPAN mirror in F</srv/CPAN>, please use this. To share files
 with the general public, dromedary serves your F<~/public_html/> as
-C<http://users.perl5.git.perl.org/~yourlogin/>
+C<L<http://users.perl5.git.perl.org/~yourlogin/>>
 
 These hosts have fairly strict firewalls to the outside. Outgoing, only
 rsync, ssh and git are allowed. For http and ftp, you can use
-http://webproxy:3128 as proxy. Incoming, the firewall tries to detect
+L<http://webproxy:3128> as proxy. Incoming, the firewall tries to detect
 attacks and blocks IP addresses with suspicious activity. This
 sometimes (but very rarely) has false positives and you might get
 blocked. The quickest way to get unblocked is to notify the admins.

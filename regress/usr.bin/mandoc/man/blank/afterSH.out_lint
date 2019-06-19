@@ -1,4 +1,6 @@
+mandoc: afterSH.in:10:2: WARNING: skipping paragraph macro: PP after SH
 mandoc: afterSH.in:32:2: WARNING: skipping paragraph macro: br after SH
 mandoc: afterSH.in:36:2: WARNING: skipping paragraph macro: sp after SH
+mandoc: afterSH.in:45:2: WARNING: skipping paragraph macro: PP after SH
 mandoc: afterSH.in:72:2: WARNING: skipping paragraph macro: br after SH
 mandoc: afterSH.in:77:2: WARNING: skipping paragraph macro: sp after SH

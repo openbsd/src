@@ -36,7 +36,7 @@ plan(tests => 8);
 my $bad = ['foo', \*GLOB,  'bar'];
 my $result;
 
-eval {$result = store ($bad , 'store')};
+eval {$result = store ($bad , "store$$")};
 is($result, undef);
 isnt($@, '');
 
@@ -45,21 +45,21 @@ $Storable::forgive_me=1;
 my $devnull = File::Spec->devnull;
 
 open(SAVEERR, ">&STDERR");
-open(STDERR, ">$devnull") or 
+open(STDERR, '>', $devnull) or 
   ( print SAVEERR "Unable to redirect STDERR: $!\n" and exit(1) );
 
-eval {$result = store ($bad , 'store')};
+eval {$result = store ($bad , "store$$")};
 
 open(STDERR, ">&SAVEERR");
 
 isnt($result, undef);
 is($@, '');
 
-my $ret = retrieve('store');
+my $ret = retrieve("store$$");
 isnt($ret, undef);
 is($ret->[0], 'foo');
 is($ret->[2], 'bar');
 is(ref $ret->[1], 'SCALAR');
 
 
-END { 1 while unlink 'store' }
+END { 1 while unlink "store$$" }

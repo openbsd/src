@@ -88,14 +88,6 @@ void nsec3_zone_trees_create(struct region* region, zone_type* zone)
 		zone->dshashtree = rbtree_create(region, cmp_dshash_tree);
 }
 
-void nsec3_hash_tree_clear(struct zone* zone)
-{
-	hash_tree_clear(zone->nsec3tree);
-	hash_tree_clear(zone->hashtree);
-	hash_tree_clear(zone->wchashtree);
-	hash_tree_clear(zone->dshashtree);
-}
-
 static void
 detect_nsec3_params(rr_type* nsec3_apex,
 	const unsigned char** salt, int* salt_len, int* iter)
@@ -181,7 +173,7 @@ nsec3_has_soa(rr_type* rr)
 }
 
 static rr_type*
-check_apex_soa(namedb_type* namedb, zone_type *zone)
+check_apex_soa(namedb_type* namedb, zone_type *zone, int nolog)
 {
 	uint8_t h[NSEC3_HASH_LEN];
 	domain_type* domain;
@@ -195,19 +187,23 @@ check_apex_soa(namedb_type* namedb, zone_type *zone)
 	hashed_apex = nsec3_b32_create(tmpregion, zone, h);
 	domain = domain_table_find(namedb->domains, hashed_apex);
 	if(!domain) {
-		log_msg(LOG_ERR, "%s NSEC3PARAM entry has no hash(apex).",
-			domain_to_string(zone->apex));
-		log_msg(LOG_ERR, "hash(apex)= %s",
-			dname_to_string(hashed_apex, NULL));
+		if(!nolog) {
+			log_msg(LOG_ERR, "%s NSEC3PARAM entry has no hash(apex).",
+				domain_to_string(zone->apex));
+			log_msg(LOG_ERR, "hash(apex)= %s",
+				dname_to_string(hashed_apex, NULL));
+		}
 		region_destroy(tmpregion);
 		return NULL;
 	}
 	nsec3_rrset = domain_find_rrset(domain, zone, TYPE_NSEC3);
 	if(!nsec3_rrset) {
-		log_msg(LOG_ERR, "%s NSEC3PARAM entry: hash(apex) has no NSEC3 RRset.",
-			domain_to_string(zone->apex));
-		log_msg(LOG_ERR, "hash(apex)= %s",
-			dname_to_string(hashed_apex, NULL));
+		if(!nolog) {
+			log_msg(LOG_ERR, "%s NSEC3PARAM entry: hash(apex) has no NSEC3 RRset.",
+				domain_to_string(zone->apex));
+			log_msg(LOG_ERR, "hash(apex)= %s",
+				dname_to_string(hashed_apex, NULL));
+		}
 		region_destroy(tmpregion);
 		return NULL;
 	}
@@ -217,16 +213,78 @@ check_apex_soa(namedb_type* namedb, zone_type *zone)
 			return &nsec3_rrset->rrs[j];
 		}
 	}
-	log_msg(LOG_ERR, "%s NSEC3PARAM entry: hash(apex) NSEC3 has no SOA flag.",
-		domain_to_string(zone->apex));
-	log_msg(LOG_ERR, "hash(apex)= %s",
-		dname_to_string(hashed_apex, NULL));
+	if(!nolog) {
+		log_msg(LOG_ERR, "%s NSEC3PARAM entry: hash(apex) NSEC3 has no SOA flag.",
+			domain_to_string(zone->apex));
+		log_msg(LOG_ERR, "hash(apex)= %s",
+			dname_to_string(hashed_apex, NULL));
+	}
 	region_destroy(tmpregion);
 	return NULL;
 }
 
+static void
+nsec3param_to_str(struct rr* rr, char* str, size_t buflen)
+{
+	rdata_atom_type* rd = rr->rdatas;
+	size_t len;
+	len = snprintf(str, buflen, "%u %u %u ",
+		(unsigned)rdata_atom_data(rd[0])[0],
+		(unsigned)rdata_atom_data(rd[1])[0],
+		(unsigned)read_uint16(rdata_atom_data(rd[2])));
+	if(rdata_atom_data(rd[3])[0] == 0) {
+		if(buflen > len + 2)
+			str[len++] = '-';
+	} else {
+		len += hex_ntop(rdata_atom_data(rd[3])+1,
+			rdata_atom_data(rd[3])[0], str+len, buflen-len-1);
+	}
+	if(buflen > len + 1)
+		str[len] = 0;
+}
+
 static struct rr*
-udb_zone_find_nsec3param(udb_base* udb, udb_ptr* uz, struct zone* z)
+db_find_nsec3param(struct namedb* db, struct zone* z, struct rr* avoid_rr,
+	int checkchain)
+{
+	unsigned i;
+	rrset_type* rrset = domain_find_rrset(z->apex, z, TYPE_NSEC3PARAM);
+	if(!rrset) /* no NSEC3PARAM in mem */
+		return NULL;
+	/* find first nsec3param we can support (SHA1, no flags) */
+	for(i=0; i<rrset->rr_count; i++) {
+		rdata_atom_type* rd = rrset->rrs[i].rdatas;
+		/* do not use the RR that is going to be deleted (in IXFR) */
+		if(&rrset->rrs[i] == avoid_rr) continue;
+		if(rrset->rrs[i].rdata_count < 4) continue;
+		if(rdata_atom_data(rd[0])[0] == NSEC3_SHA1_HASH &&
+			rdata_atom_data(rd[1])[0] == 0) {
+			if(checkchain) {
+				z->nsec3_param = &rrset->rrs[i];
+				if(!check_apex_soa(db, z, 1)) {
+					char str[MAX_RDLENGTH*2+16];
+					nsec3param_to_str(z->nsec3_param,
+						str, sizeof(str));
+					VERBOSITY(1, (LOG_WARNING, "zone %s NSEC3PARAM %s has broken chain, ignoring", domain_to_string(z->apex), str));
+					continue; /* don't use broken chain */
+				}
+			}
+			if(2 <= verbosity) {
+				char str[MAX_RDLENGTH*2+16];
+				nsec3param_to_str(&rrset->rrs[i], str,
+					sizeof(str));
+				VERBOSITY(2, (LOG_INFO, "rehash of zone %s with parameters %s",
+					domain_to_string(z->apex), str));
+			}
+			return &rrset->rrs[i];
+		}
+	}
+	return NULL;
+}
+
+static struct rr*
+udb_zone_find_nsec3param(struct namedb* db, udb_base* udb, udb_ptr* uz,
+	struct zone* z, int checkchain)
 {
 	udb_ptr urr;
 	unsigned i;
@@ -253,6 +311,12 @@ udb_zone_find_nsec3param(udb_base* udb, udb_ptr* uz, struct zone* z)
 		   memcmp(RR(&urr)->wire+5, rdata_atom_data(rd[3])+1,
 			rdata_atom_data(rd[3])[0]) == 0) {
 			udb_ptr_unlink(&urr, udb);
+			if(checkchain) {
+				z->nsec3_param = &rrset->rrs[i];
+				if(!check_apex_soa(db, z, 1))
+					return db_find_nsec3param(db, z,
+						NULL, checkchain);
+			}
 			return &rrset->rrs[i];
 		}
 	}
@@ -260,55 +324,18 @@ udb_zone_find_nsec3param(udb_base* udb, udb_ptr* uz, struct zone* z)
 	return NULL;
 }
 
-static struct rr*
-db_find_nsec3param(struct zone* z, struct rr* avoid_rr)
-{
-	unsigned i;
-	rrset_type* rrset = domain_find_rrset(z->apex, z, TYPE_NSEC3PARAM);
-	if(!rrset) /* no NSEC3PARAM in mem */
-		return NULL;
-	/* find first nsec3param we can support (SHA1, no flags) */
-	for(i=0; i<rrset->rr_count; i++) {
-		rdata_atom_type* rd = rrset->rrs[i].rdatas;
-		/* do not use the RR that is going to be deleted (in IXFR) */
-		if(&rrset->rrs[i] == avoid_rr) continue;
-		if(rrset->rrs[i].rdata_count < 4) continue;
-		if(rdata_atom_data(rd[0])[0] == NSEC3_SHA1_HASH &&
-			rdata_atom_data(rd[1])[0] == 0) {
-			if(2 <= verbosity) {
-				char str[MAX_RDLENGTH*2+16];
-				char* p;
-				p = str+snprintf(str, sizeof(str), "%u %u %u ",
-					(unsigned)rdata_atom_data(rd[0])[0],
-					(unsigned)rdata_atom_data(rd[1])[0],
-					(unsigned)read_uint16(rdata_atom_data(rd[2])));
-				if(rdata_atom_data(rd[3])[0] == 0)
-					*p++ = '-';
-				else {
-					p += hex_ntop(rdata_atom_data(rd[3])+1,
-						rdata_atom_data(rd[3])[0], p,
-						sizeof(str)-strlen(str)-1);
-				}
-				*p = 0;
-				VERBOSITY(2, (LOG_INFO, "rehash of zone %s with parameters %s",
-					domain_to_string(z->apex), str));
-			}
-			return &rrset->rrs[i];
-		}
-	}
-	return NULL;
-}
-
 void
 nsec3_find_zone_param(struct namedb* db, struct zone* zone, udb_ptr* z,
-	struct rr* avoid_rr)
+	struct rr* avoid_rr, int checkchain)
 {
 	/* get nsec3param RR from udb */
 	if(db->udb)
-		zone->nsec3_param = udb_zone_find_nsec3param(db->udb, z, zone);
+		zone->nsec3_param = udb_zone_find_nsec3param(db, db->udb,
+			z, zone, checkchain);
 	/* no db, get from memory, avoid using the rr that is going to be
 	 * deleted, avoid_rr */
-	else	zone->nsec3_param = db_find_nsec3param(zone, avoid_rr);
+	else	zone->nsec3_param = db_find_nsec3param(db, zone, avoid_rr,
+			checkchain);
 }
 
 /* check params ok for one RR */
@@ -385,7 +412,7 @@ nsec3_clear_precompile(struct namedb* db, zone_type* zone)
 	walk = zone->apex;
 	while(walk && domain_is_subdomain(walk, zone->apex)) {
 		if(walk->nsec3) {
-			if(nsec3_domain_part_of_zone(walk, zone)) {
+			if(nsec3_condition_hash(walk, zone)) {
 				walk->nsec3->nsec3_node.key = NULL;
 				walk->nsec3->nsec3_cover = NULL;
 				walk->nsec3->nsec3_wcard_child_cover = NULL;
@@ -397,8 +424,7 @@ nsec3_clear_precompile(struct namedb* db, zone_type* zone)
 					walk->nsec3->hash_wc = NULL;
 				}
 			}
-			if(!walk->parent ||
-				nsec3_domain_part_of_zone(walk->parent, zone)) {
+			if(nsec3_condition_dshash(walk, zone)) {
 				walk->nsec3->nsec3_ds_parent_cover = NULL;
 				walk->nsec3->nsec3_ds_parent_is_exact = 0;
 				if (walk->nsec3->ds_parent_hash) {
@@ -440,7 +466,8 @@ nsec3_condition_dshash(domain_type* d, zone_type* z)
 {
 	return d->is_existing && !domain_has_only_NSEC3(d, z) &&
 		(domain_find_rrset(d, z, TYPE_DS) ||
-		domain_find_rrset(d, z, TYPE_NS)) && d != z->apex;
+		domain_find_rrset(d, z, TYPE_NS)) && d != z->apex
+		&& nsec3_domain_part_of_zone(d->parent, z);
 }
 
 zone_type*
@@ -640,21 +667,22 @@ prehash_zone_complete(struct namedb* db, struct zone* zone)
 	/* find zone settings */
 
 	assert(db && zone);
+	udbz.data = 0;
 	if(db->udb) {
 		if(!udb_zone_search(db->udb, &udbz, dname_name(domain_dname(
 			zone->apex)), domain_dname(zone->apex)->name_size)) {
 			udb_ptr_init(&udbz, db->udb); /* zero the ptr */
 		}
 	}
-	nsec3_find_zone_param(db, zone, &udbz, NULL);
-	if(!zone->nsec3_param || !check_apex_soa(db, zone)) {
+	nsec3_find_zone_param(db, zone, &udbz, NULL, 1);
+	if(!zone->nsec3_param || !check_apex_soa(db, zone, 0)) {
 		zone->nsec3_param = NULL;
 		zone->nsec3_last = NULL;
-		if(db->udb)
+		if(udbz.data)
 			udb_ptr_unlink(&udbz, db->udb);
 		return;
 	}
-	if(db->udb)
+	if(udbz.data)
 		udb_ptr_unlink(&udbz, db->udb);
 	nsec3_precompile_newparam(db, zone);
 }
@@ -844,6 +872,13 @@ void prehash_zone(struct namedb* db, struct zone* zone)
 		prehash_clear(db->domains);
 		return;
 	}
+	if(!check_apex_soa(db, zone, 1)) {
+		/* the zone fails apex soa check, prehash complete may
+		 * detect other valid chains */
+		prehash_clear(db->domains);
+		prehash_zone_complete(db, zone);
+		return;
+	}
 	/* process prehash list */
 	for(d = db->domains->prehash_list; d; d = d->nsec3->prehash_next) {
 		process_prehash_domain(d, zone);
@@ -851,7 +886,7 @@ void prehash_zone(struct namedb* db, struct zone* zone)
 	/* clear prehash list */
 	prehash_clear(db->domains);
 
-	if(!check_apex_soa(db, zone)) {
+	if(!check_apex_soa(db, zone, 0)) {
 		zone->nsec3_param = NULL;
 		zone->nsec3_last = NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.181 2018/02/24 07:20:04 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.187 2019/06/10 21:55:16 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -73,6 +73,10 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
+#endif /* MPLS */
 
 #include <net/if_tun.h>
 
@@ -193,6 +197,9 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	struct tun_softc	*tp;
 	struct ifnet		*ifp;
 
+	if (unit > minor(~0U))
+		return (ENXIO);
+
 	tp = malloc(sizeof(*tp), M_DEVBUF, M_WAITOK|M_ZERO);
 	tp->tun_unit = unit;
 	tp->tun_flags = TUN_INITED|TUN_STAYUP;
@@ -309,9 +316,7 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 		int	error;
 
 		snprintf(xname, sizeof(xname), "%s%d", "tun", minor(dev));
-		NET_LOCK();
 		error = if_clone_create(xname, rdomain);
-		NET_UNLOCK();
 		if (error != 0)
 			return (error);
 
@@ -334,9 +339,7 @@ tapopen(dev_t dev, int flag, int mode, struct proc *p)
 		int	error;
 
 		snprintf(xname, sizeof(xname), "%s%d", "tap", minor(dev));
-		NET_LOCK();
 		error = if_clone_create(xname, rdomain);
-		NET_UNLOCK();
 		if (error != 0)
 			return (error);
 
@@ -411,11 +414,9 @@ tun_dev_close(struct tun_softc *tp, int flag, int mode, struct proc *p)
 
 	TUNDEBUG(("%s: closed\n", ifp->if_xname));
 
-	if (!(tp->tun_flags & TUN_STAYUP)) {
-		NET_LOCK();
+	if (!(tp->tun_flags & TUN_STAYUP))
 		error = if_clone_destroy(ifp->if_xname);
-		NET_UNLOCK();
-	} else {
+	else {
 		tp->tun_pgid = 0;
 		selwakeup(&tp->tun_rsel);
 	}
@@ -576,6 +577,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 void
 tun_wakeup(struct tun_softc *tp)
 {
+	KERNEL_LOCK();
 	if (tp->tun_flags & TUN_RWAIT) {
 		tp->tun_flags &= ~TUN_RWAIT;
 		wakeup((caddr_t)tp);
@@ -584,6 +586,7 @@ tun_wakeup(struct tun_softc *tp)
 		csignal(tp->tun_pgid, SIGIO,
 		    tp->tun_siguid, tp->tun_sigeuid);
 	selwakeup(&tp->tun_rsel);
+	KERNEL_UNLOCK();
 }
 
 /*
@@ -620,8 +623,9 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 		tunp = (struct tuninfo *)data;
 		if (tunp->mtu < ETHERMIN || tunp->mtu > TUNMRU)
 			return (EINVAL);
+		if (tunp->type != tp->tun_if.if_type)
+			return (EINVAL);
 		tp->tun_if.if_mtu = tunp->mtu;
-		tp->tun_if.if_type = tunp->type;
 		tp->tun_if.if_flags =
 		    (tunp->flags & TUN_IFF_FLAGS) |
 		    (tp->tun_if.if_flags & ~TUN_IFF_FLAGS);
@@ -667,8 +671,7 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 			tp->tun_flags &= ~TUN_ASYNC;
 		break;
 	case FIONREAD:
-		*(int *)data = ifq_empty(&tp->tun_if.if_snd) ?
-		    0 : tp->tun_if.if_mtu;
+		*(int *)data = ifq_hdatalen(&tp->tun_if.if_snd);
 		break;
 	case TIOCSPGRP:
 		tp->tun_pgid = *(int *)data;
@@ -931,6 +934,11 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 #ifdef INET6
 	case AF_INET6:
 		ipv6_input(ifp, top);
+		break;
+#endif
+#ifdef MPLS
+	case AF_MPLS:
+		mpls_input(ifp, top);
 		break;
 #endif
 	default:

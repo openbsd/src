@@ -50,9 +50,10 @@ def SM61 : SubtargetFeature<"sm_61", "SmVersion", "61",
                              "Target SM 6.1">;
 def SM62 : SubtargetFeature<"sm_62", "SmVersion", "62",
                              "Target SM 6.2">;
-
-def SATOM : SubtargetFeature<"satom", "HasAtomScope", "true",
-                             "Atomic operations with scope">;
+def SM70 : SubtargetFeature<"sm_70", "SmVersion", "70",
+                             "Target SM 7.0">;
+def SM72 : SubtargetFeature<"sm_72", "SmVersion", "72",
+                             "Target SM 7.2">;
 
 // PTX Versions
 def PTX32 : SubtargetFeature<"ptx32", "PTXVersion", "32",
@@ -67,6 +68,10 @@ def PTX43 : SubtargetFeature<"ptx43", "PTXVersion", "43",
                              "Use PTX version 4.3">;
 def PTX50 : SubtargetFeature<"ptx50", "PTXVersion", "50",
                              "Use PTX version 5.0">;
+def PTX60 : SubtargetFeature<"ptx60", "PTXVersion", "60",
+                             "Use PTX version 6.0">;
+def PTX61 : SubtargetFeature<"ptx61", "PTXVersion", "61",
+                             "Use PTX version 6.1">;
 
 //===----------------------------------------------------------------------===//
 // NVPTX supported processors.
@@ -84,9 +89,11 @@ def : Proc<"sm_37", [SM37, PTX41]>;
 def : Proc<"sm_50", [SM50, PTX40]>;
 def : Proc<"sm_52", [SM52, PTX41]>;
 def : Proc<"sm_53", [SM53, PTX42]>;
-def : Proc<"sm_60", [SM60, PTX50, SATOM]>;
-def : Proc<"sm_61", [SM61, PTX50, SATOM]>;
-def : Proc<"sm_62", [SM62, PTX50, SATOM]>;
+def : Proc<"sm_60", [SM60, PTX50]>;
+def : Proc<"sm_61", [SM61, PTX50]>;
+def : Proc<"sm_62", [SM62, PTX50]>;
+def : Proc<"sm_70", [SM70, PTX60]>;
+def : Proc<"sm_72", [SM72, PTX61]>;
 
 def NVPTXInstrInfo : InstrInfo {
 }

@@ -8,7 +8,10 @@ use IO::Dir;
 
 sub _slurp { do { local(@ARGV,$/)=shift(@_); <> } }
 
-delete $ENV{$_} for qw/PERL_JSON_BACKEND PERL_YAML_BACKEND/; # use defaults
+delete $ENV{PERL_YAML_BACKEND};
+delete $ENV{PERL_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_DECODER};
 
 my $data_dir = IO::Dir->new( 't/data-fixable' );
 my @files = sort grep { /^\w/ } $data_dir->read;

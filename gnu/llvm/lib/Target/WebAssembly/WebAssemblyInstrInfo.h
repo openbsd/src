@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file contains the WebAssembly implementation of the
+/// This file contains the WebAssembly implementation of the
 /// TargetInstrInfo class.
 ///
 //===----------------------------------------------------------------------===//
@@ -17,7 +17,7 @@
 #define LLVM_LIB_TARGET_WEBASSEMBLY_WEBASSEMBLYINSTRINFO_H
 
 #include "WebAssemblyRegisterInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "WebAssemblyGenInstrInfo.inc"

@@ -18,6 +18,8 @@ sub BEGIN {
 
 use Storable qw(freeze thaw);
 
+$Storable::flags = Storable::FLAGS_COMPAT;
+
 use Test::More tests => 19;
 
 package OVERLOADED;

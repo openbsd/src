@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287reg.h,v 1.4 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: ar9287reg.h,v 1.6 2019/03/29 11:04:40 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -19,7 +19,8 @@
 
 #define AR9287_MAX_CHAINS	2
 
-#define AR9287_PHY_CCA_MAX_GOOD_VALUE	(-118)
+#define AR9287_PHY_CCA_MIN_GOOD_VAL_2GHZ	(-127)
+#define AR9287_PHY_CCA_MAX_GOOD_VAL_2GHZ	(-97)
 
 /*
  * Analog registers.
@@ -59,6 +60,7 @@
  * ROM layout used by AR9287 (2GHz only).
  */
 #define AR9287_EEP_START_LOC		128
+#define AR9287_HTC_EEP_START_LOC	256
 #define AR9287_NUM_2G_CAL_PIERS		3
 #define AR9287_NUM_2G_CCK_TARGET_POWERS	3
 #define AR9287_NUM_2G_20_TARGET_POWERS	3

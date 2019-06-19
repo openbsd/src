@@ -1,9 +1,7 @@
 # Net::Cmd.pm
 #
-# Versions up to 2.29_1 Copyright (c) 1995-2006 Graham Barr <gbarr@pobox.com>.
-# All rights reserved.
-# Changes in Version 2.29_2 onwards Copyright (C) 2013-2015 Steve Hay.  All
-# rights reserved.
+# Copyright (C) 1995-2006 Graham Barr.  All rights reserved.
+# Copyright (C) 2013-2016 Steve Hay.  All rights reserved.
 # This module is free software; you can redistribute it and/or modify it under
 # the same terms as Perl itself, i.e. under the terms of either the GNU General
 # Public License or the Artistic License, as specified in the F<LICENCE> file.
@@ -28,7 +26,7 @@ BEGIN {
   }
 }
 
-our $VERSION = "3.08_01";
+our $VERSION = "3.11";
 our @ISA     = qw(Exporter);
 our @EXPORT  = qw(CMD_INFO CMD_OK CMD_MORE CMD_REJECT CMD_ERROR CMD_PENDING);
 
@@ -654,9 +652,14 @@ Net::Cmd - Network Command class (as used by FTP, SMTP etc)
 
 =head1 DESCRIPTION
 
-C<Net::Cmd> is a collection of methods that can be inherited by a sub class
-of C<IO::Handle>. These methods implement the functionality required for a
+C<Net::Cmd> is a collection of methods that can be inherited by a sub-class
+of C<IO::Socket::INET>. These methods implement the functionality required for a
 command based protocol, for example FTP and SMTP.
+
+If your sub-class does not also derive from C<IO::Socket::INET> or similar (e.g.
+C<IO::Socket::IP>, C<IO::Socket::INET6> or C<IO::Socket::SSL>) then you must
+provide the following methods by other means yourself: C<close()> and
+C<timeout()>.
 
 =head1 USER METHODS
 
@@ -850,16 +853,18 @@ of C<response> and C<status>. The sixth is C<CMD_PENDING>.
 
 =head1 AUTHOR
 
-Graham Barr E<lt>F<gbarr@pobox.com>E<gt>
+Graham Barr E<lt>F<gbarr@pobox.com>E<gt>.
 
 Steve Hay E<lt>F<shay@cpan.org>E<gt> is now maintaining libnet as of version
-1.22_02
+1.22_02.
 
 =head1 COPYRIGHT
 
-Versions up to 2.29_1 Copyright (c) 1995-2006 Graham Barr. All rights reserved.
-Changes in Version 2.29_2 onwards Copyright (C) 2013-2014 Steve Hay.  All rights
-reserved.
+Copyright (C) 1995-2006 Graham Barr.  All rights reserved.
+
+Copyright (C) 2013-2016 Steve Hay.  All rights reserved.
+
+=head1 LICENCE
 
 This module is free software; you can redistribute it and/or modify it under the
 same terms as Perl itself, i.e. under the terms of either the GNU General Public

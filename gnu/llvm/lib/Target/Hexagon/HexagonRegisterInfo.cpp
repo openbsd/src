@@ -19,6 +19,7 @@
 #include "HexagonTargetMachine.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/CodeGen/LiveIntervals.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -26,13 +27,13 @@
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/CodeGen/TargetInstrInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
@@ -41,8 +42,9 @@
 
 using namespace llvm;
 
-HexagonRegisterInfo::HexagonRegisterInfo()
-    : HexagonGenRegisterInfo(Hexagon::R31) {}
+HexagonRegisterInfo::HexagonRegisterInfo(unsigned HwMode)
+    : HexagonGenRegisterInfo(Hexagon::R31, 0/*DwarfFlavor*/, 0/*EHFlavor*/,
+                             0/*PC*/, HwMode) {}
 
 
 bool HexagonRegisterInfo::isEHReturnCalleeSaveReg(unsigned R) const {
@@ -80,11 +82,9 @@ HexagonRegisterInfo::getCallerSavedRegs(const MachineFunction *MF,
       return Int64;
     case PredRegsRegClassID:
       return Pred;
-    case VectorRegsRegClassID:
-    case VectorRegs128BRegClassID:
+    case HvxVRRegClassID:
       return VecSgl;
-    case VecDblRegsRegClassID:
-    case VecDblRegs128BRegClassID:
+    case HvxWRRegClassID:
       return VecDbl;
     default:
       break;
@@ -119,11 +119,12 @@ HexagonRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   bool HasEHReturn = MF->getInfo<HexagonMachineFunctionInfo>()->hasEHReturn();
 
   switch (MF->getSubtarget<HexagonSubtarget>().getHexagonArchVersion()) {
-  case HexagonSubtarget::V4:
-  case HexagonSubtarget::V5:
-  case HexagonSubtarget::V55:
-  case HexagonSubtarget::V60:
-  case HexagonSubtarget::V62:
+  case Hexagon::ArchEnum::V4:
+  case Hexagon::ArchEnum::V5:
+  case Hexagon::ArchEnum::V55:
+  case Hexagon::ArchEnum::V60:
+  case Hexagon::ArchEnum::V62:
+  case Hexagon::ArchEnum::V65:
     return HasEHReturn ? CalleeSavedRegsV3EHReturn : CalleeSavedRegsV3;
   }
 
@@ -144,6 +145,14 @@ BitVector HexagonRegisterInfo::getReservedRegs(const MachineFunction &MF)
   Reserved.set(Hexagon::R29);
   Reserved.set(Hexagon::R30);
   Reserved.set(Hexagon::R31);
+  Reserved.set(Hexagon::VTMP);
+
+  // Guest registers.
+  Reserved.set(Hexagon::GELR);        // G0
+  Reserved.set(Hexagon::GSR);         // G1
+  Reserved.set(Hexagon::GOSP);        // G2
+  Reserved.set(Hexagon::G3);          // G3
+
   // Control registers.
   Reserved.set(Hexagon::SA0);         // C0
   Reserved.set(Hexagon::LC0);         // C1
@@ -169,6 +178,9 @@ BitVector HexagonRegisterInfo::getReservedRegs(const MachineFunction &MF)
   // them here as well.
   Reserved.set(Hexagon::C8);
   Reserved.set(Hexagon::USR_OVF);
+
+  if (MF.getSubtarget<HexagonSubtarget>().hasReservedR19())
+    Reserved.set(Hexagon::R19);
 
   for (int x = Reserved.find_first(); x >= 0; x = Reserved.find_next(x))
     markSuperRegs(Reserved, x);
@@ -213,7 +225,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       break;
   }
 
-  if (!HII.isValidOffset(Opc, RealOffset)) {
+  if (!HII.isValidOffset(Opc, RealOffset, this)) {
     // If the offset is not valid, calculate the address in a temporary
     // register and use it with offset 0.
     auto &MRI = MF.getRegInfo();
@@ -229,6 +241,55 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   MI.getOperand(FIOp).ChangeToRegister(BP, false, false, IsKill);
   MI.getOperand(FIOp+1).ChangeToImmediate(RealOffset);
+}
+
+
+bool HexagonRegisterInfo::shouldCoalesce(MachineInstr *MI,
+      const TargetRegisterClass *SrcRC, unsigned SubReg,
+      const TargetRegisterClass *DstRC, unsigned DstSubReg,
+      const TargetRegisterClass *NewRC, LiveIntervals &LIS) const {
+  // Coalescing will extend the live interval of the destination register.
+  // If the destination register is a vector pair, avoid introducing function
+  // calls into the interval, since it could result in a spilling of a pair
+  // instead of a single vector.
+  MachineFunction &MF = *MI->getParent()->getParent();
+  const HexagonSubtarget &HST = MF.getSubtarget<HexagonSubtarget>();
+  if (!HST.useHVXOps() || NewRC->getID() != Hexagon::HvxWRRegClass.getID())
+    return true;
+  bool SmallSrc = SrcRC->getID() == Hexagon::HvxVRRegClass.getID();
+  bool SmallDst = DstRC->getID() == Hexagon::HvxVRRegClass.getID();
+  if (!SmallSrc && !SmallDst)
+    return true;
+
+  unsigned DstReg = MI->getOperand(0).getReg();
+  unsigned SrcReg = MI->getOperand(1).getReg();
+  const SlotIndexes &Indexes = *LIS.getSlotIndexes();
+  auto HasCall = [&Indexes] (const LiveInterval::Segment &S) {
+    for (SlotIndex I = S.start.getBaseIndex(), E = S.end.getBaseIndex();
+         I != E; I = I.getNextIndex()) {
+      if (const MachineInstr *MI = Indexes.getInstructionFromIndex(I))
+        if (MI->isCall())
+          return true;
+    }
+    return false;
+  };
+
+  if (SmallSrc == SmallDst) {
+    // Both must be true, because the case for both being false was
+    // checked earlier. Both registers will be coalesced into a register
+    // of a wider class (HvxWR), and we don't want its live range to
+    // span over calls.
+    return !any_of(LIS.getInterval(DstReg), HasCall) &&
+           !any_of(LIS.getInterval(SrcReg), HasCall);
+  }
+
+  // If one register is large (HvxWR) and the other is small (HvxVR), then
+  // coalescing is ok if the large is already live across a function call,
+  // or if the small one is not.
+  unsigned SmallReg = SmallSrc ? SrcReg : DstReg;
+  unsigned LargeReg = SmallSrc ? DstReg : SrcReg;
+  return  any_of(LIS.getInterval(LargeReg), HasCall) ||
+         !any_of(LIS.getInterval(SmallReg), HasCall);
 }
 
 
@@ -257,23 +318,22 @@ unsigned HexagonRegisterInfo::getStackRegister() const {
 
 
 unsigned HexagonRegisterInfo::getHexagonSubRegIndex(
-      const TargetRegisterClass *RC, unsigned GenIdx) const {
+      const TargetRegisterClass &RC, unsigned GenIdx) const {
   assert(GenIdx == Hexagon::ps_sub_lo || GenIdx == Hexagon::ps_sub_hi);
 
   static const unsigned ISub[] = { Hexagon::isub_lo, Hexagon::isub_hi };
   static const unsigned VSub[] = { Hexagon::vsub_lo, Hexagon::vsub_hi };
 
-  switch (RC->getID()) {
+  switch (RC.getID()) {
     case Hexagon::CtrRegs64RegClassID:
     case Hexagon::DoubleRegsRegClassID:
       return ISub[GenIdx];
-    case Hexagon::VecDblRegsRegClassID:
-    case Hexagon::VecDblRegs128BRegClassID:
+    case Hexagon::HvxWRRegClassID:
       return VSub[GenIdx];
   }
 
-  if (const TargetRegisterClass *SuperRC = *RC->getSuperClasses())
-    return getHexagonSubRegIndex(SuperRC, GenIdx);
+  if (const TargetRegisterClass *SuperRC = *RC.getSuperClasses())
+    return getHexagonSubRegIndex(*SuperRC, GenIdx);
 
   llvm_unreachable("Invalid register class");
 }
@@ -283,6 +343,11 @@ bool HexagonRegisterInfo::useFPForScavengingIndex(const MachineFunction &MF)
   return MF.getSubtarget<HexagonSubtarget>().getFrameLowering()->hasFP(MF);
 }
 
+const TargetRegisterClass *
+HexagonRegisterInfo::getPointerRegClass(const MachineFunction &MF,
+                                        unsigned Kind) const {
+  return &Hexagon::IntRegsRegClass;
+}
 
 unsigned HexagonRegisterInfo::getFirstCallerSavedNonParamReg() const {
   return Hexagon::R6;

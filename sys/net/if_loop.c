@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.87 2018/03/02 15:52:11 claudio Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.88 2018/09/09 10:11:41 henning Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -195,8 +195,27 @@ loop_clone_create(struct if_clone *ifc, int unit)
 int
 loop_clone_destroy(struct ifnet *ifp)
 {
-	if (ifp->if_index == rtable_loindex(ifp->if_rdomain))
-		return (EPERM);
+	struct ifnet	*p;
+
+	if (ifp->if_index == rtable_loindex(ifp->if_rdomain)) {
+		/* rdomain 0 always needs a loopback */
+		if (ifp->if_rdomain == 0)
+			return (EPERM);
+
+		/* if there is any other interface in this rdomain, deny */
+		NET_LOCK();
+		TAILQ_FOREACH(p, &ifnet, if_list) {
+			if (p->if_rdomain != ifp->if_rdomain)
+				continue;
+			if (p->if_index == ifp->if_index)
+				continue;
+			NET_UNLOCK();
+			return (EBUSY);
+		}
+		NET_UNLOCK();
+
+		rtable_l2set(ifp->if_rdomain, 0, 0);
+	}
 
 	if_ih_remove(ifp, loinput, NULL);
 	if_detach(ifp);

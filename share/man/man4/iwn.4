@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.51 2016/01/15 18:50:13 tj Exp $
+.\" $OpenBSD: iwn.4,v 1.53 2019/03/29 07:07:05 jmc Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 15 2016 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt IWN 4
 .Os
 .Sh NAME
@@ -26,10 +26,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for
-.Tn Intel
-Wireless WiFi Link 4965/5000/1000 and Centrino Wireless-N 1000/2000/6000
-Series PCIe Mini Card network adapters.
+driver provides support for Intel Wireless WiFi Link 4965/5000/1000
+and Centrino Wireless-N 1000/2000/6000 Series PCIe Mini Card network adapters.
 .Pp
 The Intel Wireless WiFi Link 4965AGN (codenamed Kedron) is a PCIe
 Mini Card network adapter that operates in the 2GHz and 5GHz spectra.
@@ -109,6 +107,11 @@ The
 driver offloads both encryption and decryption of unicast data frames to the
 hardware for the CCMP cipher.
 .Pp
+In BSS mode,
+the driver supports powersave mode,
+which can be enabled via
+.Xr ifconfig 8 .
+.Pp
 The
 .Nm
 driver can be configured at runtime with
@@ -156,8 +159,7 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid
-wpakey mywpakey
+nwid mynwid wpakey mywpakey
 dhcp
 .Ed
 .Sh DIAGNOSTICS

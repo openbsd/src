@@ -35,7 +35,7 @@ void CoverageFilenamesSectionWriter::write(raw_ostream &OS) {
 
 namespace {
 
-/// \brief Gather only the expressions that are used by the mapping
+/// Gather only the expressions that are used by the mapping
 /// regions in this function.
 class CounterExpressionsMinimizer {
   ArrayRef<CounterExpression> Expressions;
@@ -74,7 +74,7 @@ public:
 
   ArrayRef<CounterExpression> getExpressions() const { return UsedExpressions; }
 
-  /// \brief Adjust the given counter to correctly transition from the old
+  /// Adjust the given counter to correctly transition from the old
   /// expression ids to the new expression ids.
   Counter adjust(Counter C) const {
     if (C.isExpression())
@@ -85,7 +85,7 @@ public:
 
 } // end anonymous namespace
 
-/// \brief Encode the counter.
+/// Encode the counter.
 ///
 /// The encoding uses the following format:
 /// Low 2 bits - Tag:
@@ -116,6 +116,13 @@ static void writeCounter(ArrayRef<CounterExpression> Expressions, Counter C,
 }
 
 void CoverageMappingWriter::write(raw_ostream &OS) {
+  // Check that we don't have any bogus regions.
+  assert(all_of(MappingRegions,
+                [](const CounterMappingRegion &CMR) {
+                  return CMR.startLoc() <= CMR.endLoc();
+                }) &&
+         "Source region does not begin before it ends");
+
   // Sort the regions in an ascending order by the file id and the starting
   // location. Sort by region kinds to ensure stable order for tests.
   std::stable_sort(
@@ -164,6 +171,7 @@ void CoverageMappingWriter::write(raw_ostream &OS) {
     Counter Count = Minimizer.adjust(I->Count);
     switch (I->Kind) {
     case CounterMappingRegion::CodeRegion:
+    case CounterMappingRegion::GapRegion:
       writeCounter(MinExpressions, Count, OS);
       break;
     case CounterMappingRegion::ExpansionRegion: {

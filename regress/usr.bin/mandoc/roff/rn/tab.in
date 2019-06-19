@@ -1,0 +1,28 @@
+.\" $OpenBSD: tab.in,v 1.1 2019/02/06 20:54:28 schwarze Exp $
+.Dd $Mdocdate: February 6 2019 $
+.Dt RN-TAB 1
+.Os
+.Sh NAME
+.Nm rn-tab
+.Nd tab characters in macro renaming requests
+.Sh DESCRIPTION
+.de test1
+testval
+..
+trying to rename with a tab between the names:
+.rn test1	test2
+.br
+calling the macro with the old name:
+.test1
+.br
+calling the macro with the new name:
+.test2
+.Pp
+trying to rename with a tab after the names:
+.rn test1 test2	ignored
+.br
+calling the macro with the old name:
+.test1
+.br
+calling the macro with the new name:
+.test2

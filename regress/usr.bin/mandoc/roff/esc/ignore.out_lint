@@ -1,1 +1,4 @@
-mandoc: ignore.in:15:60: WARNING: invalid escape sequence: \s-
+mandoc: ignore.in:7:26: WARNING: invalid escape sequence: \[)]
+mandoc: ignore.in:8:12: WARNING: invalid escape sequence: \[,]
+mandoc: ignore.in:9:12: WARNING: invalid escape sequence: \[/]
+mandoc: ignore.in:13:60: WARNING: invalid escape sequence: \s-

@@ -55,9 +55,7 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 #define MARK mark
 #define TARG targ
 
-#if defined(DEBUGGING) && defined(PERL_USE_GCC_BRACE_GROUPS)
-
-#  define PUSHMARK(p) \
+#define PUSHMARK(p) \
     STMT_START {                                                      \
         I32 * mark_stack_entry;                                       \
         if (UNLIKELY((mark_stack_entry = ++PL_markstack_ptr)          \
@@ -65,48 +63,20 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 	    mark_stack_entry = markstack_grow();                      \
         *mark_stack_entry  = (I32)((p) - PL_stack_base);              \
         DEBUG_s(DEBUG_v(PerlIO_printf(Perl_debug_log,                 \
-                "MARK push %p %"IVdf"\n",                             \
+                "MARK push %p %" IVdf "\n",                           \
                 PL_markstack_ptr, (IV)*mark_stack_entry)));           \
     } STMT_END
 
-#  define TOPMARK \
-    ({                                                                \
-        DEBUG_s(DEBUG_v(PerlIO_printf(Perl_debug_log,                 \
-                "MARK top  %p %"IVdf"\n",                             \
-                PL_markstack_ptr, (IV)*PL_markstack_ptr)));           \
-        *PL_markstack_ptr;                                            \
-    })
+#define TOPMARK S_TOPMARK(aTHX)
+#define POPMARK S_POPMARK(aTHX)
 
-#  define POPMARK \
-    ({                                                                \
+#define INCMARK \
+    STMT_START {                                                      \
         DEBUG_s(DEBUG_v(PerlIO_printf(Perl_debug_log,                 \
-                "MARK pop  %p %"IVdf"\n",                             \
-                (PL_markstack_ptr-1), (IV)*(PL_markstack_ptr-1))));   \
-        assert((PL_markstack_ptr > PL_markstack) || !"MARK underflow");\
-        *PL_markstack_ptr--;                                          \
-    })
-
-#  define INCMARK \
-    ({                                                                \
-        DEBUG_s(DEBUG_v(PerlIO_printf(Perl_debug_log,                 \
-                "MARK inc  %p %"IVdf"\n",                             \
+                "MARK inc  %p %" IVdf "\n",                           \
                 (PL_markstack_ptr+1), (IV)*(PL_markstack_ptr+1))));   \
-        *PL_markstack_ptr++;                                          \
-    })
-
-#else
-
-#  define PUSHMARK(p)                                                   \
-    STMT_START {					              \
-        I32 * mark_stack_entry;                                       \
-        if (UNLIKELY((mark_stack_entry = ++PL_markstack_ptr) == PL_markstack_max)) \
-	    mark_stack_entry = markstack_grow();                      \
-        *mark_stack_entry  = (I32)((p) - PL_stack_base);              \
+        PL_markstack_ptr++;                                           \
     } STMT_END
-#  define TOPMARK                (*PL_markstack_ptr)
-#  define POPMARK                (*PL_markstack_ptr--)
-#  define INCMARK                (*PL_markstack_ptr++)
-#endif
 
 #define dSP		SV **sp = PL_stack_sp
 #define djSP		dSP
@@ -325,6 +295,20 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
 =cut
 */
 
+/* EXTEND_HWM_SET: note the high-water-mark to which the stack has been
+ * requested to be extended (which is likely to be less than PL_stack_max)
+ */
+#if defined DEBUGGING && !defined DEBUGGING_RE_ONLY
+#  define EXTEND_HWM_SET(p, n)                      \
+        STMT_START {                                \
+            SSize_t ix = (p) - PL_stack_base + (n); \
+            if (ix > PL_curstackinfo->si_stack_hwm) \
+                PL_curstackinfo->si_stack_hwm = ix; \
+        } STMT_END
+#else
+#  define EXTEND_HWM_SET(p, n) NOOP
+#endif
+
 /* _EXTEND_SAFE_N(n): private helper macro for EXTEND().
  * Tests whether the value of n would be truncated when implicitly cast to
  * SSize_t as an arg to stack_grow(). If so, sets it to -1 instead to
@@ -336,6 +320,8 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
         (sizeof(n) > sizeof(SSize_t) && ((SSize_t)(n) != (n)) ? -1 : (n))
 
 #ifdef STRESS_REALLOC
+# define EXTEND_SKIP(p, n) EXTEND_HWM_SET(p, n)
+
 # define EXTEND(p,n)   STMT_START {                                     \
                            sp = stack_grow(sp,p,_EXTEND_SAFE_N(n));     \
                            PERL_UNUSED_VAR(sp);                         \
@@ -365,15 +351,32 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
  * this just gives a safe false positive
  */
 
-#  define _EXTEND_NEEDS_GROW(p,n) ( (n) < 0 || PL_stack_max - p < (n))
+#  define _EXTEND_NEEDS_GROW(p,n) ((n) < 0 || PL_stack_max - (p) < (n))
+
+
+/* EXTEND_SKIP(): used for where you would normally call EXTEND(), but
+ * you know for sure that a previous op will have already extended the
+ * stack sufficiently.  For example pp_enteriter ensures that that there
+ * is always at least 1 free slot, so pp_iter can return &PL_sv_yes/no
+ * without checking each time. Calling EXTEND_SKIP() defeats the HWM
+ * debugging mechanism which would otherwise whine
+ */
+
+#  define EXTEND_SKIP(p, n) STMT_START {                                \
+                                EXTEND_HWM_SET(p, n);                   \
+                                assert(!_EXTEND_NEEDS_GROW(p,n));       \
+                          } STMT_END
+
 
 #  define EXTEND(p,n)   STMT_START {                                    \
+                         EXTEND_HWM_SET(p, n);                          \
                          if (UNLIKELY(_EXTEND_NEEDS_GROW(p,n))) {       \
                            sp = stack_grow(sp,p,_EXTEND_SAFE_N(n));     \
                            PERL_UNUSED_VAR(sp);                         \
                          } } STMT_END
 /* Same thing, but update mark register too. */
 #  define MEXTEND(p,n)  STMT_START {                                    \
+                         EXTEND_HWM_SET(p, n);                          \
                          if (UNLIKELY(_EXTEND_NEEDS_GROW(p,n))) {       \
                            const SSize_t markoff = mark - PL_stack_base;\
                            sp = stack_grow(sp,p,_EXTEND_SAFE_N(n));     \
@@ -381,6 +384,7 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
                            PERL_UNUSED_VAR(sp);                         \
                          } } STMT_END
 #endif
+
 
 /* set TARG to the IV value i. If do_taint is false,
  * assume that PL_tainted can never be true */
@@ -473,9 +477,9 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
 #define mXPUSHs(s)	XPUSHs(sv_2mortal(s))
 #define XPUSHmortal	XPUSHs(sv_newmortal())
 #define mXPUSHp(p,l)	STMT_START { EXTEND(sp,1); mPUSHp((p), (l)); } STMT_END
-#define mXPUSHn(n)	STMT_START { EXTEND(sp,1); sv_setnv(PUSHmortal, (NV)(n)); } STMT_END
-#define mXPUSHi(i)	STMT_START { EXTEND(sp,1); sv_setiv(PUSHmortal, (IV)(i)); } STMT_END
-#define mXPUSHu(u)	STMT_START { EXTEND(sp,1); sv_setuv(PUSHmortal, (UV)(u)); } STMT_END
+#define mXPUSHn(n)	STMT_START { EXTEND(sp,1); mPUSHn(n); } STMT_END
+#define mXPUSHi(i)	STMT_START { EXTEND(sp,1); mPUSHi(i); } STMT_END
+#define mXPUSHu(u)	STMT_START { EXTEND(sp,1); mPUSHu(u); } STMT_END
 
 #define SETs(s)		(*sp = s)
 #define SETTARG		STMT_START { SvSETMAGIC(TARG); SETs(TARG); } STMT_END

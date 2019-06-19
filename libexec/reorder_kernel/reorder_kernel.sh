@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: reorder_kernel.sh,v 1.4 2017/11/05 10:29:24 rpe Exp $
+# $OpenBSD: reorder_kernel.sh,v 1.6 2019/02/10 21:11:42 kn Exp $
 #
 # Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 #
@@ -21,8 +21,7 @@ set -o errexit
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin
 
 # Skip if /usr/share is on a nfs mounted filesystem.
-DISK_DEV=$(df /usr/share | sed '1d;s/ .*//')
-[[ $(mount | grep "^$DISK_DEV") == *" type nfs "* ]] && exit 1
+df -t nfs /usr/share >/dev/null 2>&1 && exit 1
 
 KERNEL=$(sysctl -n kern.osversion)
 KERNEL=${KERNEL%#*}
@@ -50,7 +49,17 @@ if [[ -f $KERNEL_DIR.tgz ]]; then
 	rm -f $KERNEL_DIR.tgz
 fi
 
-sha256 -C $SHA256 /bsd
+if ! sha256 -C $SHA256 /bsd; then
+	cat <<__EOF
+
+Failed to verify /bsd's checksum, therefore a randomly linked kernel (KARL)
+is not being built. KARL can be re-enabled for next boot by issuing as root:
+
+sha256 -h $SHA256 /bsd
+__EOF
+	# Trigger ERR trap
+	false
+fi
 
 cd $KERNEL_DIR/$KERNEL
 make newbsd

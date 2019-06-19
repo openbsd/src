@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.67 2017/04/05 11:31:45 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.69 2018/08/07 18:36:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -93,11 +93,12 @@ static void must_read(int, void *, size_t);
 static void must_write(int, void *, size_t);
 static int  may_read(int, void *, size_t);
 
+static struct passwd *pw;
+
 void
 priv_init(int lockfd, int nullfd, int argc, char *argv[])
 {
 	int i, socks[2];
-	struct passwd *pw;
 	char *execpath, childnum[11], **privargv;
 
 	/* Create sockets */
@@ -178,7 +179,30 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 	struct sigaction sa;
 	sigset_t sigmask;
 
-	if (pledge("stdio rpath wpath cpath dns getpw sendfd id proc exec",
+	/* Redo the password lookup after re-exec of the privsep parent. */
+	pw = getpwnam("_syslogd");
+	if (pw == NULL)
+		errx(1, "unknown user _syslogd");
+
+	if (unveil(conf, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_UTMP, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_DEV, "rw") == -1)
+		err(1, "unveil");
+
+	/* for pipes */
+	if (unveil(_PATH_BSHELL, "x") == -1)
+		err(1, "unveil");
+
+	/* For HUP / re-exec */
+	if (unveil("/usr/sbin/syslogd", "x") == -1)
+		err(1, "unveil");
+	if (argv[0][0] == '/')
+		if (unveil(argv[0], "x") == -1)
+			err(1, "unveil");
+
+	if (pledge("stdio unveil rpath wpath cpath dns sendfd id proc exec",
 	    NULL) == -1)
 		err(1, "pledge priv");
 
@@ -306,6 +330,9 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 			break;
 
 		case PRIV_DONE_CONFIG_PARSE:
+			if (pledge("stdio rpath wpath cpath dns sendfd id proc exec",
+			    NULL) == -1)
+				err(1, "pledge done config");
 			log_debug("[priv]: msg PRIV_DONE_CONFIG_PARSE "
 			    "received");
 			increase_state(STATE_RUNNING);
@@ -440,7 +467,6 @@ static int
 open_pipe(char *cmd)
 {
 	char *argp[] = {"sh", "-c", NULL, NULL};
-	struct passwd *pw;
 	int fd[2];
 	int bsize, flags;
 	pid_t pid;
@@ -490,13 +516,10 @@ open_pipe(char *cmd)
 	    &bsize, sizeof(bsize)) == -1)
 		bsize /= 2;
 
-	if ((pw = getpwnam("_syslogd")) == NULL)
-		errx(1, "unknown user _syslogd");
 	if (setgroups(1, &pw->pw_gid) == -1 ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
 		err(1, "failure dropping privs");
-	endpwent();
 
 	if (dup2(fd[0], STDIN_FILENO) == -1)
 		err(1, "dup2 failed");
@@ -552,6 +575,10 @@ check_log_name(char *lognam, size_t logsize)
 			err(1, "check_log_name() malloc");
 		strlcpy(lg->path, lognam, PATH_MAX);
 		TAILQ_INSERT_TAIL(&lognames, lg, next);
+		if (lognam[0] != '|') {
+			if (unveil(lognam, "w") == -1)
+				goto bad_path;
+		}
 		break;
 	case STATE_RUNNING:
 		TAILQ_FOREACH(lg, &lognames, next)

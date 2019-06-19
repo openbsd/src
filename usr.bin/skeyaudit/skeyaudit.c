@@ -1,7 +1,7 @@
-/*	$OpenBSD: skeyaudit.c,v 1.27 2016/04/02 14:37:42 krw Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.28 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
- * Copyright (c) 1997, 2000, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1997, 2000, 2003 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

@@ -1,98 +1,94 @@
 package Locale::Codes::Currency;
 # Copyright (C) 2001      Canon Research Centre Europe (CRE).
 # Copyright (C) 2002-2009 Neil Bowers
-# Copyright (c) 2010-2015 Sullivan Beck
+# Copyright (c) 2010-2018 Sullivan Beck
 # This program is free software; you can redistribute it and/or modify it
 # under the same terms as Perl itself.
 
-use strict;
-require 5.006;
-use warnings;
+# This file was automatically generated.  Any changes to this file will
+# be lost the next time 'gen_mods' is run.
+#    Generated on: Fri Feb 23 12:55:25 EST 2018
 
-require Exporter;
-use Carp;
+use strict;
+use warnings;
+require 5.006;
+use Exporter qw(import);
+
+our($VERSION,@EXPORT);
+$VERSION   = '3.56';
+
+################################################################################
+use if $] >= 5.027007, 'deprecate';
 use Locale::Codes;
 use Locale::Codes::Constants;
-use Locale::Codes::Currency_Codes;
-use Locale::Codes::Currency_Retired;
 
-#=======================================================================
-#       Public Global Variables
-#=======================================================================
-
-our($VERSION,@ISA,@EXPORT,@EXPORT_OK);
-
-$VERSION='3.37';
-@ISA       = qw(Exporter);
-@EXPORT    = qw(code2currency
+@EXPORT    = qw(
+                code2currency
                 currency2code
                 all_currency_codes
                 all_currency_names
                 currency_code2code
-                LOCALE_CURR_ALPHA
-                LOCALE_CURR_NUMERIC
                );
+push(@EXPORT,@Locale::Codes::Constants::CONSTANTS_CURRENCY);
+
+our $obj = new Locale::Codes('currency');
+$obj->show_errors(0);
+
+sub show_errors {
+   my($val) = @_;
+   $obj->show_errors($val);
+}
 
 sub code2currency {
-   return Locale::Codes::_code2name('currency',@_);
+   return $obj->code2name(@_);
 }
 
 sub currency2code {
-   return Locale::Codes::_name2code('currency',@_);
+   return $obj->name2code(@_);
 }
 
 sub currency_code2code {
-   return Locale::Codes::_code2code('currency',@_);
+   return $obj->code2code(@_);
 }
 
 sub all_currency_codes {
-   return Locale::Codes::_all_codes('currency',@_);
+   return $obj->all_codes(@_);
 }
 
 sub all_currency_names {
-   return Locale::Codes::_all_names('currency',@_);
+   return $obj->all_names(@_);
 }
 
 sub rename_currency {
-   return Locale::Codes::_rename('currency',@_);
+   return $obj->rename_code(@_);
 }
 
 sub add_currency {
-   return Locale::Codes::_add_code('currency',@_);
+   return $obj->add_code(@_);
 }
 
 sub delete_currency {
-   return Locale::Codes::_delete_code('currency',@_);
+   return $obj->delete_code(@_);
 }
 
 sub add_currency_alias {
-   return Locale::Codes::_add_alias('currency',@_);
+   return $obj->add_alias(@_);
 }
 
 sub delete_currency_alias {
-   return Locale::Codes::_delete_alias('currency',@_);
+   return $obj->delete_alias(@_);
 }
 
 sub rename_currency_code {
-   return Locale::Codes::_rename_code('currency',@_);
+   return $obj->replace_code(@_);
 }
 
 sub add_currency_code_alias {
-   return Locale::Codes::_add_code_alias('currency',@_);
+   return $obj->add_code_alias(@_);
 }
 
 sub delete_currency_code_alias {
-   return Locale::Codes::_delete_code_alias('currency',@_);
+   return $obj->delete_code_alias(@_);
 }
 
 1;
-# Local Variables:
-# mode: cperl
-# indent-tabs-mode: nil
-# cperl-indent-level: 3
-# cperl-continued-statement-offset: 2
-# cperl-continued-brace-offset: 0
-# cperl-brace-offset: 0
-# cperl-brace-imaginary-offset: 0
-# cperl-label-offset: -2
-# End:

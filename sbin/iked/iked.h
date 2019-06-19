@@ -1,6 +1,7 @@
-/*	$OpenBSD: iked.h,v 1.118 2018/03/16 12:31:09 mpi Exp $	*/
+/*	$OpenBSD: iked.h,v 1.121 2019/05/11 16:30:23 patrick Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -362,10 +363,26 @@ struct iked_kex {
 	struct ibuf			*kex_dhpeer;	/* pointer to i or r */
 };
 
+struct iked_frag_entry {
+	uint8_t	*frag_data;
+	size_t	 frag_size;
+};
+
+struct iked_frag {
+	struct iked_frag_entry	**frag_arr;	/* list of fragment buffers */
+	size_t			  frag_count;	/* number of fragments received */
+#define IKED_FRAG_TOTAL_MAX	  111		/* upper limit (64kB / 576B) */
+	size_t			  frag_total;	/* total numbe of fragments */
+	size_t			  frag_total_size;
+	uint8_t			  frag_nextpayload;
+
+};
+
 struct iked_sa {
 	struct iked_sahdr		 sa_hdr;
 	uint32_t			 sa_msgid;	/* Last request rcvd */
 	int				 sa_msgid_set;	/* msgid initialized */
+	uint32_t			 sa_msgid_current;	/* Current requested rcvd */
 	uint32_t			 sa_reqid;	/* Next request sent */
 
 	int				 sa_type;
@@ -376,6 +393,8 @@ struct iked_sa {
 	struct iked_addr		 sa_peer_loaded;/* MOBIKE */
 	struct iked_addr		 sa_local;
 	int				 sa_fd;
+
+	struct iked_frag		 sa_fragments;
 
 	int				 sa_natt;	/* for IKE messages */
 	int				 sa_udpencap;	/* for pfkey */
@@ -445,6 +464,7 @@ struct iked_sa {
 	uint16_t			 sa_cpi_in;	/* IPcomp incoming*/
 
 	int				 sa_mobike;	/* MOBIKE */
+	int				 sa_frag;	/* fragmentation */
 
 	struct iked_timer		 sa_timer;	/* SA timeouts */
 #define IKED_IKE_SA_EXCHANGE_TIMEOUT	 300		/* 5 minutes */
@@ -491,6 +511,7 @@ struct iked_message {
 	int			 msg_fd;
 	int			 msg_response;
 	int			 msg_responded;
+	int			 msg_valid;
 	int			 msg_natt;
 	int			 msg_natt_rcvd;
 	int			 msg_error;
@@ -602,6 +623,7 @@ struct iked {
 	uint8_t				 sc_decoupled;
 
 	uint8_t				 sc_mobike;	/* MOBIKE */
+	uint8_t				 sc_frag;	/* fragmentation */
 
 	struct iked_policies		 sc_policies;
 	struct iked_policy		*sc_defaultcon;
@@ -648,12 +670,12 @@ void	 parent_reload(struct iked *, int, const char *);
 pid_t	 control(struct privsep *, struct privsep_proc *);
 int	 control_init(struct privsep *, struct control_sock *);
 int	 control_listen(struct control_sock *);
-void	 control_cleanup(struct control_sock *);
 
 /* config.c */
 struct iked_policy *
 	 config_new_policy(struct iked *);
 void	 config_free_kex(struct iked_kex *);
+void	 config_free_fragments(struct iked_frag *);
 void	 config_free_sa(struct iked *, struct iked_sa *);
 struct iked_sa *
 	 config_new_sa(struct iked *, int);
@@ -702,6 +724,8 @@ int	 config_setkeys(struct iked *);
 int	 config_getkey(struct iked *, struct imsg *);
 int	 config_setmobike(struct iked *);
 int	 config_getmobike(struct iked *, struct imsg *);
+int	 config_setfragmentation(struct iked *);
+int	 config_getfragmentation(struct iked *, struct imsg *);
 
 /* policy.c */
 void	 policy_init(struct iked *);

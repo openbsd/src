@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.6 2014/08/21 14:24:08 mpi Exp $	*/
+/*	$OpenBSD: net.c,v 1.7 2018/12/31 11:44:57 claudio Exp $	*/
 /*	$NetBSD: net.c,v 1.1 2000/08/20 14:58:38 mrg Exp $	*/
 
 /*
@@ -60,11 +60,15 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libsa/netif.h>
+#include <lib/libsa/bootparam.h>
+#include <lib/libsa/bootp.h>
+#include <lib/libsa/nfs.h>
 
 #include "ofdev.h"
 
-static int net_mountroot_bootparams(void);
-static int net_mountroot_bootp(void);
+int net_mountroot_bootparams(void);
+int net_mountroot_bootp(void);
+int net_mountroot(void);
 
 char	rootpath[FNAME_SIZE];
 
@@ -101,7 +105,7 @@ bad:
 	return error;
 }
 
-int
+void
 net_close(struct of_dev *op)
 {
 	/*

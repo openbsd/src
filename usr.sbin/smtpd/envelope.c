@@ -1,4 +1,4 @@
-/*	$OpenBSD: envelope.c,v 1.37 2017/08/06 08:35:14 gilles Exp $	*/
+/*	$OpenBSD: envelope.c,v 1.42 2018/12/30 23:09:58 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -33,7 +33,6 @@
 #include <fcntl.h>
 #include <imsg.h>
 #include <inttypes.h>
-#include <libgen.h>
 #include <pwd.h>
 #include <limits.h>
 #include <stdio.h>
@@ -151,7 +150,7 @@ envelope_load_buffer(struct envelope *ep, const char *ibuf, size_t buflen)
 		goto end;
 	}
 
-	if (version != 2) {
+	if (version != SMTPD_ENVELOPE_VERSION) {
 		log_debug("debug: bad envelope version %lld", version);
 		goto end;
 	}
@@ -172,6 +171,7 @@ envelope_dump_buffer(const struct envelope *ep, char *dest, size_t len)
 	char	*p = dest;
 
 	envelope_ascii_dump(ep, &dest, &len, "version");
+	envelope_ascii_dump(ep, &dest, &len, "dispatcher");
 	envelope_ascii_dump(ep, &dest, &len, "tag");
 	envelope_ascii_dump(ep, &dest, &len, "type");
 	envelope_ascii_dump(ep, &dest, &len, "smtpname");
@@ -185,7 +185,7 @@ envelope_dump_buffer(const struct envelope *ep, char *dest, size_t len)
 	envelope_ascii_dump(ep, &dest, &len, "ctime");
 	envelope_ascii_dump(ep, &dest, &len, "last-try");
 	envelope_ascii_dump(ep, &dest, &len, "last-bounce");
-	envelope_ascii_dump(ep, &dest, &len, "expire");
+	envelope_ascii_dump(ep, &dest, &len, "ttl");
 	envelope_ascii_dump(ep, &dest, &len, "retry");
 	envelope_ascii_dump(ep, &dest, &len, "flags");
 	envelope_ascii_dump(ep, &dest, &len, "dsn-notify");
@@ -197,24 +197,14 @@ envelope_dump_buffer(const struct envelope *ep, char *dest, size_t len)
 
 	switch (ep->type) {
 	case D_MDA:
-		envelope_ascii_dump(ep, &dest, &len, "mda-buffer");
-		envelope_ascii_dump(ep, &dest, &len, "mda-method");
+		envelope_ascii_dump(ep, &dest, &len, "mda-exec");
+		envelope_ascii_dump(ep, &dest, &len, "mda-subaddress");
 		envelope_ascii_dump(ep, &dest, &len, "mda-user");
-		envelope_ascii_dump(ep, &dest, &len, "mda-usertable");
-		envelope_ascii_dump(ep, &dest, &len, "mda-delivery-user");
 		break;
 	case D_MTA:
-		envelope_ascii_dump(ep, &dest, &len, "mta-relay");
-		envelope_ascii_dump(ep, &dest, &len, "mta-relay-auth");
-		envelope_ascii_dump(ep, &dest, &len, "mta-relay-cert");
-		envelope_ascii_dump(ep, &dest, &len, "mta-relay-ca");
-		envelope_ascii_dump(ep, &dest, &len, "mta-relay-flags");
-		envelope_ascii_dump(ep, &dest, &len, "mta-relay-heloname");
-		envelope_ascii_dump(ep, &dest, &len, "mta-relay-helotable");
-		envelope_ascii_dump(ep, &dest, &len, "mta-relay-source");
 		break;
 	case D_BOUNCE:
-		envelope_ascii_dump(ep, &dest, &len, "bounce-expire");
+		envelope_ascii_dump(ep, &dest, &len, "bounce-ttl");
 		envelope_ascii_dump(ep, &dest, &len, "bounce-delay");
 		envelope_ascii_dump(ep, &dest, &len, "bounce-type");
 		break;
@@ -324,24 +314,6 @@ ascii_load_sockaddr(struct sockaddr_storage *ss, char *buf)
 }
 
 static int
-ascii_load_mda_method(enum action_type *dest, char *buf)
-{
-	if (strcasecmp(buf, "mbox") == 0)
-		*dest = A_MBOX;
-	else if (strcasecmp(buf, "maildir") == 0)
-		*dest = A_MAILDIR;
-	else if (strcasecmp(buf, "filename") == 0)
-		*dest = A_FILENAME;
-	else if (strcasecmp(buf, "mda") == 0)
-		*dest = A_MDA;
-	else if (strcasecmp(buf, "lmtp") == 0)
-		*dest = A_LMTP;
-	else
-		return 0;
-	return 1;
-}
-
-static int
 ascii_load_mailaddr(struct mailaddr *dest, char *buf)
 {
 	if (!text_to_mailaddr(dest, buf))
@@ -370,39 +342,16 @@ ascii_load_flags(enum envelope_flags *dest, char *buf)
 }
 
 static int
-ascii_load_mta_relay_url(struct relayhost *relay, char *buf)
-{
-	if (!text_to_relayhost(relay, buf))
-		return 0;
-	return 1;
-}
-
-static int
-ascii_load_mta_relay_flags(uint16_t *dest, char *buf)
-{
-	char *flag;
-
-	while ((flag = strsep(&buf, " ,|")) != NULL) {
-		if (strcasecmp(flag, "verify") == 0)
-			*dest |= F_TLS_VERIFY;
-		else if (strcasecmp(flag, "tls") == 0)
-			*dest |= F_STARTTLS;
-		else
-			return 0;
-	}
-
-	return 1;
-}
-
-static int
 ascii_load_bounce_type(enum bounce_type *dest, char *buf)
 {
-	if (strcasecmp(buf, "error") == 0)
-		*dest = B_ERROR;
-	else if (strcasecmp(buf, "warn") == 0)
-		*dest = B_WARNING;
-	else if (strcasecmp(buf, "dsn") == 0)
-		*dest = B_DSN;
+	if (strcasecmp(buf, "error") == 0 || strcasecmp(buf, "failed") == 0)
+		*dest = B_FAILED;
+	else if (strcasecmp(buf, "warn") == 0 ||
+	    strcasecmp(buf, "delayed") == 0)
+		*dest = B_DELAYED;
+	else if (strcasecmp(buf, "dsn") == 0 ||
+	    strcasecmp(buf, "delivered") == 0)
+		*dest = B_DELIVERED;
 	else
 		return 0;
 	return 1;
@@ -423,11 +372,15 @@ ascii_load_dsn_ret(enum dsn_ret *ret, char *buf)
 static int
 ascii_load_field(const char *field, struct envelope *ep, char *buf)
 {
+	if (strcasecmp("dispatcher", field) == 0)
+		return ascii_load_string(ep->dispatcher, buf,
+		    sizeof ep->dispatcher);
+
 	if (strcasecmp("bounce-delay", field) == 0)
 		return ascii_load_time(&ep->agent.bounce.delay, buf);
 
-	if (strcasecmp("bounce-expire", field) == 0)
-		return ascii_load_time(&ep->agent.bounce.expire, buf);
+	if (strcasecmp("bounce-ttl", field) == 0)
+		return ascii_load_time(&ep->agent.bounce.ttl, buf);
 
 	if (strcasecmp("bounce-type", field) == 0)
 		return ascii_load_bounce_type(&ep->agent.bounce.type, buf);
@@ -442,8 +395,8 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 		return ascii_load_string(ep->errorline, buf,
 		    sizeof ep->errorline);
 
-	if (strcasecmp("expire", field) == 0)
-		return ascii_load_time(&ep->expire, buf);
+	if (strcasecmp("ttl", field) == 0)
+		return ascii_load_time(&ep->ttl, buf);
 
 	if (strcasecmp("flags", field) == 0)
 		return ascii_load_flags(&ep->flags, buf);
@@ -461,68 +414,20 @@ ascii_load_field(const char *field, struct envelope *ep, char *buf)
 	if (strcasecmp("last-try", field) == 0)
 		return ascii_load_time(&ep->lasttry, buf);
 
-	if (strcasecmp("mda-buffer", field) == 0)
-		return ascii_load_string(ep->agent.mda.buffer, buf,
-		    sizeof ep->agent.mda.buffer);
-
-	if (strcasecmp("mda-method", field) == 0)
-		return ascii_load_mda_method(&ep->agent.mda.method, buf);
-
-	if (strcasecmp("mda-user", field) == 0)
-		return ascii_load_string(ep->agent.mda.username, buf,
-		    sizeof ep->agent.mda.username);
-
-	if (strcasecmp("mda-usertable", field) == 0)
-		return ascii_load_string(ep->agent.mda.usertable, buf,
-		    sizeof ep->agent.mda.usertable);
-
-	if (strcasecmp("mda-delivery-user", field) == 0)
-		return ascii_load_string(ep->agent.mda.delivery_user, buf,
-		    sizeof ep->agent.mda.delivery_user);
-
-	if (strcasecmp("mta-relay", field) == 0) {
-		int ret;
-		uint16_t flags = ep->agent.mta.relay.flags;
-		ret = ascii_load_mta_relay_url(&ep->agent.mta.relay, buf);
-		if (!ret)
-			return (0);
-		ep->agent.mta.relay.flags |= flags;
-		return ret;
-	}
-
-	if (strcasecmp("mta-relay-auth", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.authtable, buf,
-		    sizeof ep->agent.mta.relay.authtable);
-
-	if (strcasecmp("mta-relay-cert", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.pki_name, buf,
-		    sizeof ep->agent.mta.relay.pki_name);
-
-	if (strcasecmp("mta-relay-ca", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.ca_name, buf,
-		    sizeof ep->agent.mta.relay.ca_name);
-
-	if (strcasecmp("mta-relay-flags", field) == 0)
-		return ascii_load_mta_relay_flags(&ep->agent.mta.relay.flags,
-		    buf);
-
-	if (strcasecmp("mta-relay-heloname", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.heloname, buf,
-		    sizeof ep->agent.mta.relay.heloname);
-
-	if (strcasecmp("mta-relay-helotable", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.helotable, buf,
-		    sizeof ep->agent.mta.relay.helotable);
-
-	if (strcasecmp("mta-relay-source", field) == 0)
-		return ascii_load_string(ep->agent.mta.relay.sourcetable, buf,
-		    sizeof ep->agent.mta.relay.sourcetable);
-
 	if (strcasecmp("retry", field) == 0)
 		return ascii_load_uint16(&ep->retry, buf);
 
 	if (strcasecmp("rcpt", field) == 0)
 		return ascii_load_mailaddr(&ep->rcpt, buf);
+
+	if (strcasecmp("mda-exec", field) == 0)
+		return ascii_load_string(ep->mda_exec, buf, sizeof(ep->mda_exec));
+
+	if (strcasecmp("mda-subaddress", field) == 0)
+		return ascii_load_string(ep->mda_subaddress, buf, sizeof(ep->mda_subaddress));
+
+	if (strcasecmp("mda-user", field) == 0)
+		return ascii_load_string(ep->mda_user, buf, sizeof(ep->mda_user));
 
 	if (strcasecmp("sender", field) == 0)
 		return ascii_load_mailaddr(&ep->sender, buf);
@@ -638,33 +543,6 @@ ascii_dump_type(enum delivery_type type, char *dest, size_t len)
 }
 
 static int
-ascii_dump_mda_method(enum action_type type, char *dest, size_t len)
-{
-	char *p = NULL;
-
-	switch (type) {
-	case A_LMTP:
-		p = "lmtp";
-		break;
-	case A_MAILDIR:
-		p = "maildir";
-		break;
-	case A_MBOX:
-		p = "mbox";
-		break;
-	case A_FILENAME:
-		p = "filename";
-		break;
-	case A_MDA:
-		p = "mda";
-		break;
-	default:
-		return 0;
-	}
-	return bsnprintf(dest, len, "%s", p);
-}
-
-static int
 ascii_dump_mailaddr(const struct mailaddr *addr, char *dest, size_t len)
 {
 	return bsnprintf(dest, len, "%s@%s",
@@ -696,47 +574,19 @@ ascii_dump_flags(enum envelope_flags flags, char *buf, size_t len)
 }
 
 static int
-ascii_dump_mta_relay_url(const struct relayhost *relay, char *buf, size_t len)
-{
-	return bsnprintf(buf, len, "%s", relayhost_to_text(relay));
-}
-
-static int
-ascii_dump_mta_relay_flags(uint16_t flags, char *buf, size_t len)
-{
-	size_t cpylen = 0;
-
-	buf[0] = '\0';
-	if (flags) {
-		if (flags & F_TLS_VERIFY) {
-			if (buf[0] != '\0')
-				(void)strlcat(buf, " ", len);
-			cpylen = strlcat(buf, "verify", len);
-		}
-		if (flags & F_STARTTLS) {
-			if (buf[0] != '\0')
-				(void)strlcat(buf, " ", len);
-			cpylen = strlcat(buf, "tls", len);
-		}
-	}
-
-	return cpylen < len ? 1 : 0;
-}
-
-static int
 ascii_dump_bounce_type(enum bounce_type type, char *dest, size_t len)
 {
 	char *p = NULL;
 
 	switch (type) {
-	case B_ERROR:
-		p = "error";
+	case B_FAILED:
+		p = "failed";
 		break;
-	case B_WARNING:
-		p = "warn";
+	case B_DELAYED:
+		p = "delayed";
 		break;
-	case B_DSN:
-		p = "dsn";
+	case B_DELIVERED:
+		p = "delivered";
 		break;
 	default:
 		return 0;
@@ -763,16 +613,19 @@ static int
 ascii_dump_field(const char *field, const struct envelope *ep,
     char *buf, size_t len)
 {
+	if (strcasecmp(field, "dispatcher") == 0)
+		return ascii_dump_string(ep->dispatcher, buf, len);
+
 	if (strcasecmp(field, "bounce-delay") == 0) {
-		if (ep->agent.bounce.type != B_WARNING)
+		if (ep->agent.bounce.type != B_DELAYED)
 			return (1);
 		return ascii_dump_time(ep->agent.bounce.delay, buf, len);
 	}
 
-	if (strcasecmp(field, "bounce-expire") == 0) {
-		if (ep->agent.bounce.type != B_WARNING)
+	if (strcasecmp(field, "bounce-ttl") == 0) {
+		if (ep->agent.bounce.type != B_DELAYED)
 			return (1);
-		return ascii_dump_time(ep->agent.bounce.expire, buf, len);
+		return ascii_dump_time(ep->agent.bounce.ttl, buf, len);
 	}
 
 	if (strcasecmp(field, "bounce-type") == 0)
@@ -787,8 +640,8 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 	if (strcasecmp(field, "errorline") == 0)
 		return ascii_dump_string(ep->errorline, buf, len);
 
-	if (strcasecmp(field, "expire") == 0)
-		return ascii_dump_time(ep->expire, buf, len);
+	if (strcasecmp(field, "ttl") == 0)
+		return ascii_dump_time(ep->ttl, buf, len);
 
 	if (strcasecmp(field, "flags") == 0)
 		return ascii_dump_flags(ep->flags, buf, len);
@@ -805,61 +658,29 @@ ascii_dump_field(const char *field, const struct envelope *ep,
 	if (strcasecmp(field, "last-try") == 0)
 		return ascii_dump_time(ep->lasttry, buf, len);
 
-	if (strcasecmp(field, "mda-buffer") == 0)
-		return ascii_dump_string(ep->agent.mda.buffer, buf, len);
-
-	if (strcasecmp(field, "mda-method") == 0)
-		return ascii_dump_mda_method(ep->agent.mda.method, buf, len);
-
-	if (strcasecmp(field, "mda-user") == 0)
-		return ascii_dump_string(ep->agent.mda.username, buf, len);
-
-	if (strcasecmp(field, "mda-delivery-user") == 0)
-		return ascii_dump_string(ep->agent.mda.delivery_user, buf, len);
-
-	if (strcasecmp(field, "mda-usertable") == 0)
-		return ascii_dump_string(ep->agent.mda.usertable, buf, len);
-
-	if (strcasecmp(field, "mta-relay") == 0) {
-		if (ep->agent.mta.relay.hostname[0])
-			return ascii_dump_mta_relay_url(&ep->agent.mta.relay,
-			    buf, len);
-		return (1);
-	}
-
-	if (strcasecmp(field, "mta-relay-auth") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.authtable,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-cert") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.pki_name,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-ca") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.ca_name,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-flags") == 0)
-		return ascii_dump_mta_relay_flags(ep->agent.mta.relay.flags,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-heloname") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.heloname,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-helotable") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.helotable,
-		    buf, len);
-
-	if (strcasecmp(field, "mta-relay-source") == 0)
-		return ascii_dump_string(ep->agent.mta.relay.sourcetable,
-		    buf, len);
-
 	if (strcasecmp(field, "retry") == 0)
 		return ascii_dump_uint16(ep->retry, buf, len);
 
 	if (strcasecmp(field, "rcpt") == 0)
 		return ascii_dump_mailaddr(&ep->rcpt, buf, len);
+
+	if (strcasecmp(field, "mda-exec") == 0) {
+		if (ep->mda_exec[0])
+			return ascii_dump_string(ep->mda_exec, buf, len);
+		return 1;
+	}
+
+	if (strcasecmp(field, "mda-subaddress") == 0) {
+		if (ep->mda_subaddress[0])
+			return ascii_dump_string(ep->mda_subaddress, buf, len);
+		return 1;
+	}
+
+	if (strcasecmp(field, "mda-user") == 0) {
+		if (ep->mda_user[0])
+			return ascii_dump_string(ep->mda_user, buf, len);
+		return 1;
+	}
 
 	if (strcasecmp(field, "sender") == 0)
 		return ascii_dump_mailaddr(&ep->sender, buf, len);

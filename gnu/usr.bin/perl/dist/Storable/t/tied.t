@@ -18,6 +18,8 @@ sub BEGIN {
 }
 
 use Storable qw(freeze thaw);
+$Storable::flags = Storable::FLAGS_COMPAT;
+
 use Test::More tests => 25;
 
 ($scalar_fetch, $array_fetch, $hash_fetch) = (0, 0, 0);
@@ -203,7 +205,7 @@ is($FAULT::fault, 2);
 {
     package P;
     use Storable qw(freeze thaw);
-    use vars qw($a $b);
+    our ($a, $b);
     $b = "not ok ";
     sub TIESCALAR { bless \$a } sub FETCH { "ok " }
     tie $a, P; my $r = thaw freeze \$a; $b = $$r;

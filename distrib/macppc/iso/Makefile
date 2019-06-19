@@ -1,8 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2015/08/18 16:28:00 deraadt Exp $
-
-TOP=		${.CURDIR}/..
-
-#.include "${TOP}/Makefile.inc"
+#	$OpenBSD: Makefile,v 1.18 2019/05/01 20:53:55 deraadt Exp $
 
 CDROM=		install${OSrev}.iso
 RELXDIR?=	/home/relx-${MACHINE}
@@ -18,8 +14,8 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 all: ${CDROM}
 
 ${CDROM}: ${BASE} ${XBASE}
-	-rm -rf ${.OBJDIR}/cd-dir/
-	-@mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/
+	rm -rf ${.OBJDIR}/cd-dir/
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
@@ -33,7 +29,7 @@ ${CDROM}: ${BASE} ${XBASE}
 	cp -p ${RELDIR}/ofwboot ${.OBJDIR}/cd-dir/
 
 
-	mkhybrid -v -v -r -part -hfs \
+	mkhybrid -r -part -hfs \
 	    -hfs-bless ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE} \
 	    -map ${.CURDIR}/../../../gnu/usr.sbin/mkhybrid/src/more.mapping \
 	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
@@ -46,8 +42,7 @@ install:
 	cp ${CDROM} ${RELDIR}/
 
 clean cleandir:
-	/bin/rm -f ${CDROM}
+	rm -f ${CDROM}
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

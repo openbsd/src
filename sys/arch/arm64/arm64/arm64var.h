@@ -1,4 +1,4 @@
-/* $OpenBSD: arm64var.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: arm64var.h,v 1.2 2018/05/15 11:12:35 kettenis Exp $ */
 /*
  * Copyright (c) 2005,2008 Dale Rahn <drahn@openbsd.com>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -20,7 +20,6 @@
 #define __ARM64VAR_H__
 
 extern bus_space_t arm64_bs_tag;
-extern bus_space_t arm64_a4x_bs_tag;
 
 #endif /* __ARM64VAR_H__ */
 

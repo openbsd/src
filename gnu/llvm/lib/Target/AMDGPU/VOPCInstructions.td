@@ -30,8 +30,8 @@ class VOPC_SDWAe <bits<8> op, VOPProfile P> : VOP_SDWAe <P> {
   let Inst{31-25} = 0x3e; // encoding
 
   // VOPC disallows dst_sel and dst_unused as they have no effect on destination
-  let Inst{42-40} = SDWA.DWORD;
-  let Inst{44-43} = SDWA.UNUSED_PRESERVE;
+  let Inst{42-40} = 0;
+  let Inst{44-43} = 0;
 }
 
 class VOPC_SDWA9e <bits<8> op, VOPProfile P> : VOP_SDWA9Be <P> {
@@ -106,6 +106,7 @@ class VOPC_Real <VOPC_Pseudo ps, int EncodingFamily> :
   let TSFlags            = ps.TSFlags;
   let UseNamedOperandTable = ps.UseNamedOperandTable;
   let Uses                 = ps.Uses;
+  let Defs                 = ps.Defs;
 }
 
 class VOPC_SDWA_Pseudo <string OpName, VOPProfile P, list<dag> pattern=[]> :
@@ -607,9 +608,7 @@ defm V_CMPX_CLASS_F16 : VOPCX_CLASS_F16 <"v_cmpx_class_f16">;
 // V_ICMPIntrinsic Pattern.
 //===----------------------------------------------------------------------===//
 
-let Predicates = [isGCN] in {
-
-class ICMP_Pattern <PatLeaf cond, Instruction inst, ValueType vt> : Pat <
+class ICMP_Pattern <PatLeaf cond, Instruction inst, ValueType vt> : GCNPat <
   (AMDGPUsetcc vt:$src0, vt:$src1, cond),
   (inst $src0, $src1)
 >;
@@ -636,7 +635,7 @@ def : ICMP_Pattern <COND_SGE, V_CMP_GE_I64_e64, i64>;
 def : ICMP_Pattern <COND_SLT, V_CMP_LT_I64_e64, i64>;
 def : ICMP_Pattern <COND_SLE, V_CMP_LE_I64_e64, i64>;
 
-class FCMP_Pattern <PatLeaf cond, Instruction inst, ValueType vt> : Pat <
+class FCMP_Pattern <PatLeaf cond, Instruction inst, ValueType vt> : GCNPat <
   (i64 (AMDGPUsetcc (vt (VOP3Mods vt:$src0, i32:$src0_modifiers)),
                    (vt (VOP3Mods vt:$src1, i32:$src1_modifiers)), cond)),
   (inst $src0_modifiers, $src0, $src1_modifiers, $src1,
@@ -670,8 +669,6 @@ def : FCMP_Pattern <COND_UGT, V_CMP_NLE_F64_e64, f64>;
 def : FCMP_Pattern <COND_UGE, V_CMP_NLT_F64_e64, f64>;
 def : FCMP_Pattern <COND_ULT, V_CMP_NGE_F64_e64, f64>;
 def : FCMP_Pattern <COND_ULE, V_CMP_NGT_F64_e64, f64>;
-
-} // End Predicates = [isGCN]
 
 //===----------------------------------------------------------------------===//
 // Target

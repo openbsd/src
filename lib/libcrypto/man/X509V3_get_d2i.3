@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509V3_get_d2i.3,v 1.14 2018/03/23 23:18:17 schwarze Exp $
+.\" $OpenBSD: X509V3_get_d2i.3,v 1.16 2019/06/14 13:59:32 schwarze Exp $
 .\" full merge up to: OpenSSL ff7fbfd5 Nov 2 11:52:01 2015 +0000
 .\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt X509V3_GET_D2I 3
 .Os
 .Sh NAME
@@ -368,24 +368,35 @@ RFC 5280.
 .It Hold Instruction Code         Ta Dv NID_hold_instruction_code
 .El
 .Sh RETURN VALUES
-.Fn X509V3_get_d2i
+.Fn X509V3_get_d2i ,
+.Fn X509V3_EXT_d2i ,
+.Fn X509_get_ext_d2i ,
+.Fn X509_CRL_get_ext_d2i ,
 and
-.Fn X509V3_EXT_d2i
+.Fn X509_REVOKED_get_ext_d2i
 return a pointer to an extension specific structure or
 .Dv NULL
 if an error occurs.
 .Pp
-.Fn X509V3_EXT_i2d
-returns a pointer to an
-.Vt X509_EXTENSION
-structure or
-.Dv NULL
-if an error occurs.
-.Pp
-.Fn X509V3_add1_i2d
-returns 1 if the operation is successful, 0 if it fails due to a
+.Fn X509V3_add1_i2d ,
+.Fn X509_add1_ext_i2d ,
+.Fn X509_CRL_add1_ext_i2d ,
+and
+.Fn X509_REVOKED_add1_ext_i2d
+return 1 if the operation is successful, 0 if it fails due to a
 non-fatal error (extension not found, already exists, cannot be encoded),
 or -1 due to a fatal error such as a memory allocation failure.
+In some cases of failure, the reason can be determined with
+.Xr ERR_get_error 3 .
+.Pp
+The
+.Fn X509V3_EXT_i2d
+function returns a pointer to an
+.Vt X509_EXTENSION
+structure if successful; otherwise
+.Dv NULL
+is returned and an error code can be retrieved with
+.Xr ERR_get_error 3 .
 .Pp
 .Fn X509_get0_extensions ,
 .Fn X509_CRL_get0_extensions ,
@@ -397,8 +408,8 @@ if no extensions are present.
 .Sh SEE ALSO
 .Xr d2i_X509 3 ,
 .Xr d2i_X509_EXTENSION 3 ,
-.Xr ERR_get_error 3 ,
 .Xr X509_CRL_get0_by_serial 3 ,
+.Xr X509_CRL_new 3 ,
 .Xr X509_EXTENSION_new 3 ,
 .Xr X509_get_pubkey 3 ,
 .Xr X509_get_subject_name 3 ,

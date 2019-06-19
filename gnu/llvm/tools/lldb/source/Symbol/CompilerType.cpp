@@ -638,8 +638,8 @@ CompilerType CompilerType::GetChildCompilerTypeAtIndex(
 }
 
 // Look for a child member (doesn't include base classes, but it does include
-// their members) in the type hierarchy. Returns an index path into "clang_type"
-// on how to reach the appropriate member.
+// their members) in the type hierarchy. Returns an index path into
+// "clang_type" on how to reach the appropriate member.
 //
 //    class A
 //    {
@@ -662,16 +662,13 @@ CompilerType CompilerType::GetChildCompilerTypeAtIndex(
 // "m_b" in it:
 //
 // With omit_empty_base_classes == false we would get an integer array back
-// with:
-// { 1,  1 }
-// The first index 1 is the child index for "class A" within class C
-// The second index 1 is the child index for "m_b" within class A
+// with: { 1,  1 } The first index 1 is the child index for "class A" within
+// class C The second index 1 is the child index for "m_b" within class A
 //
-// With omit_empty_base_classes == true we would get an integer array back with:
-// { 0,  1 }
-// The first index 0 is the child index for "class A" within class C (since
-// class B doesn't have any members it doesn't count)
-// The second index 1 is the child index for "m_b" within class A
+// With omit_empty_base_classes == true we would get an integer array back
+// with: { 0,  1 } The first index 0 is the child index for "class A" within
+// class C (since class B doesn't have any members it doesn't count) The second
+// index 1 is the child index for "m_b" within class A
 
 size_t CompilerType::GetIndexOfChildMemberWithName(
     const char *name, bool omit_empty_base_classes,
@@ -690,13 +687,24 @@ size_t CompilerType::GetNumTemplateArguments() const {
   return 0;
 }
 
-CompilerType
-CompilerType::GetTemplateArgument(size_t idx,
-                                  lldb::TemplateArgumentKind &kind) const {
+TemplateArgumentKind CompilerType::GetTemplateArgumentKind(size_t idx) const {
+  if (IsValid())
+    return m_type_system->GetTemplateArgumentKind(m_type, idx);
+  return eTemplateArgumentKindNull;
+}
+
+CompilerType CompilerType::GetTypeTemplateArgument(size_t idx) const {
   if (IsValid()) {
-    return m_type_system->GetTemplateArgument(m_type, idx, kind);
+    return m_type_system->GetTypeTemplateArgument(m_type, idx);
   }
   return CompilerType();
+}
+
+llvm::Optional<CompilerType::IntegralTemplateArgument>
+CompilerType::GetIntegralTemplateArgument(size_t idx) const {
+  if (IsValid())
+    return m_type_system->GetIntegralTemplateArgument(m_type, idx);
+  return llvm::None;
 }
 
 CompilerType CompilerType::GetTypeForFormatters() const {
@@ -976,8 +984,8 @@ bool CompilerType::ReadFromMemory(lldb_private::ExecutionContext *exe_ctx,
   if (!IsValid())
     return false;
 
-  // Can't convert a file address to anything valid without more
-  // context (which Module it came from)
+  // Can't convert a file address to anything valid without more context (which
+  // Module it came from)
   if (address_type == eAddressTypeFile)
     return false;
 
@@ -997,7 +1005,7 @@ bool CompilerType::ReadFromMemory(lldb_private::ExecutionContext *exe_ctx,
       if (addr == 0)
         return false;
       // The address is an address in this process, so just copy it
-      memcpy(dst, (uint8_t *)nullptr + addr, byte_size);
+      memcpy(dst, reinterpret_cast<uint8_t *>(addr), byte_size);
       return true;
     } else {
       Process *process = nullptr;
@@ -1018,8 +1026,8 @@ bool CompilerType::WriteToMemory(lldb_private::ExecutionContext *exe_ctx,
   if (!IsValid())
     return false;
 
-  // Can't convert a file address to anything valid without more
-  // context (which Module it came from)
+  // Can't convert a file address to anything valid without more context (which
+  // Module it came from)
   if (address_type == eAddressTypeFile)
     return false;
 

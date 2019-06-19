@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.28 2018/02/21 21:09:57 mikeb Exp $	*/
+/*	$OpenBSD: via.c,v 1.32 2018/06/05 06:39:10 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -87,7 +87,7 @@ viac3_crypto_setup(void)
 
 	vc3_sc = malloc(sizeof(*vc3_sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (vc3_sc == NULL)
-		return;		/* YYY bitch? */
+		return;
 
 	bzero(algs, sizeof(algs));
 	algs[CRYPTO_AES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
@@ -102,7 +102,8 @@ viac3_crypto_setup(void)
 	vc3_sc->sc_cid = crypto_get_driverid(0);
 	if (vc3_sc->sc_cid < 0) {
 		free(vc3_sc, M_DEVBUF, sizeof(*vc3_sc));
-		return;		/* YYY bitch? */
+		vc3_sc = NULL;
+		return;
 	}
 
 	crypto_register(vc3_sc->sc_cid, algs, viac3_crypto_newsession,
@@ -305,18 +306,11 @@ static __inline void
 viac3_cbc(void *cw, void *src, void *dst, void *key, int rep,
     void *iv)
 {
-	unsigned int creg0;
-
-	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
-	lcr0(creg0 & ~(CR0_EM|CR0_TS));
-
 	/* Do the deed */
 	__asm volatile("pushfq; popfq");
 	__asm volatile("rep xcryptcbc" :
 	    : "b" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
 	    : "memory", "cc");
-
-	lcr0(creg0);
 }
 
 int
@@ -340,16 +334,12 @@ viac3_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 	u_int32_t *key;
 	int	err = 0;
 
-	if ((crd->crd_len % 16) != 0) {
-		err = EINVAL;
-		return (err);
-	}
+	if ((crd->crd_len % 16) != 0)
+		return (EINVAL);
 
 	sc->op_buf = malloc(crd->crd_len, M_DEVBUF, M_NOWAIT);
-	if (sc->op_buf == NULL) {
-		err = ENOMEM;
-		return (err);
-	}
+	if (sc->op_buf == NULL)
+		return (ENOMEM);
 
 	if (crd->crd_flags & CRD_F_ENCRYPT) {
 		sc->op_cw[0] = ses->ses_cw0 | C3_CRYPT_CWLO_ENCRYPT;
@@ -510,14 +500,8 @@ void
 viac3_rnd(void *v)
 {
 	struct timeout *tmo = v;
-	unsigned int *p, i, rv, creg0, len = VIAC3_RNG_BUFSIZ;
+	unsigned int *p, i, rv, len = VIAC3_RNG_BUFSIZ;
 	static int buffer[VIAC3_RNG_BUFSIZ + 2];	/* XXX why + 2? */
-#ifdef MULTIPROCESSOR
-	int s = splipi();
-#endif
-
-	creg0 = rcr0();		/* Permit access to SIMD/FPU path */
-	lcr0(creg0 & ~(CR0_EM|CR0_TS));
 
 	/*
 	 * Here we collect the random data from the VIA C3 RNG.  We make
@@ -528,14 +512,8 @@ viac3_rnd(void *v)
 	    : "=a" (rv) : "d" (3), "D" (buffer), "c" (len*sizeof(int))
 	    : "memory", "cc");
 
-	lcr0(creg0);
-
-#ifdef MULTIPROCESSOR
-	splx(s);
-#endif
-
 	for (i = 0, p = buffer; i < VIAC3_RNG_BUFSIZ; i++, p++)
-		add_true_randomness(*p);
+		enqueue_randomness(*p);
 
 	timeout_add_msec(tmo, 10);
 }

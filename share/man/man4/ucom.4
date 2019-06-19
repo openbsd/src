@@ -1,4 +1,4 @@
-.\" $OpenBSD: ucom.4,v 1.31 2015/09/23 08:53:16 sobrado Exp $
+.\" $OpenBSD: ucom.4,v 1.33 2019/06/07 16:06:59 jcs Exp $
 .\" $NetBSD: ucom.4,v 1.3 2000/04/14 14:55:18 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 23 2015 $
+.Dd $Mdocdate: June 7 2019 $
 .Dt UCOM 4
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Cd "ucom* at ucycom?"	# Cypress
 .Cd "ucom* at uftdi?"	# FTDI
 .Cd "ucom* at uipaq?"	# iPAQ
+.Cd "ucom* at ukspan?"	# Keyspan
 .Cd "ucom* at umcs?"	# MosChip Semiconductor multiport
 .Cd "ucom* at umct?"	# MCT
 .Cd "ucom* at umodem?"	# Standardized umodem
@@ -53,6 +54,7 @@
 .Cd "ucom* at uticom?"	# Texas Instruments TUSB3410
 .Cd "ucom* at uvisor?"	# Handspring Visor
 .Cd "ucom* at uvscom?"	# SUNTAC Slipper U VS-10U
+.Cd "ucom* at uxrcom?"	# Exar XR21V1410
 .Sh DESCRIPTION
 The
 .Nm

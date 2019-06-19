@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmaptest.c,v 1.6 2003/07/31 21:48:08 deraadt Exp $	*/
+/*	$OpenBSD: mmaptest.c,v 1.7 2019/05/09 23:13:31 guenther Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org>, 2001 Public Domain
  */
@@ -14,7 +14,7 @@
 
 /*
  * Map the same physical page in two places in memory.
- * Should cause a cache alias on sparc and other VAC architectures.
+ * Should cause a cache alias on virtual-aliased cache architectures.
  */
 
 #define MAGIC "The voices in my head are trying to ignore me."

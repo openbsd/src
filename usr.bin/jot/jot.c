@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.45 2018/01/13 15:43:39 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.48 2018/08/01 13:35:33 tb Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 	case 4:
 		if (!is_default(argv[3])) {
 			if (!sscanf(argv[3], "%lf", &step))
-				errx(1, "Bad s value:  %s", argv[3]);
+				errx(1, "Bad s value: %s", argv[3]);
 			mask |= STEP;
 			if (randomize)
 				warnx("random seeding not supported");
@@ -153,17 +153,17 @@ main(int argc, char *argv[])
 		}
 	case 1:
 		if (!is_default(argv[0])) {
-			if (!sscanf(argv[0], "%ld", &reps))
-				errx(1, "Bad reps value:  %s", argv[0]);
+			reps = strtonum(argv[0], 0, LONG_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "Bad reps value, %s: %s", errstr,
+				    argv[0]);
 			mask |= REPS;
 			if (reps == 0)
 				infinity = true;
 			if (prec == -1)
 				prec = 0;
 		}
-		break;
 	case 0:
-		usage();
 		break;
 	default:
 		errx(1, "Too many arguments.  What do you mean by %s?",

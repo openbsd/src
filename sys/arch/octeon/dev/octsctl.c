@@ -1,4 +1,4 @@
-/*	$OpenBSD: octsctl.c,v 1.1 2017/07/28 14:54:13 visa Exp $	*/
+/*	$OpenBSD: octsctl.c,v 1.2 2019/01/12 13:50:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -59,13 +59,7 @@ octsctl_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	/*
-	 * On some machines, the bridge controller node does not have
-	 * an AHCI controller node as a child.
-	 */
-
-	return OF_is_compatible(faa->fa_node, "cavium,octeon-7130-sata-uctl") &&
-	    OF_child(faa->fa_node) != 0;
+	return OF_is_compatible(faa->fa_node, "cavium,octeon-7130-sata-uctl");
 }
 
 void
@@ -79,12 +73,22 @@ octsctl_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t reg[4];
 	int child;
 
+	child = OF_child(faa->fa_node);
+
+	/*
+	 * On some machines, the bridge controller node does not have
+	 * an AHCI controller node as a child.
+	 */
+	if (child == 0) {
+		printf(": disabled\n");
+		return;
+	}
+
 	if (faa->fa_nreg != 1) {
 		printf(": expected one IO space, got %d\n", faa->fa_nreg);
 		return;
 	}
 
-	child = OF_child(faa->fa_node);
 	if (OF_getpropint(faa->fa_node, "#address-cells", 0) != 2 ||
 	    OF_getpropint(faa->fa_node, "#size-cells", 0) != 2) {
 		printf(": invalid fdt reg cells\n");

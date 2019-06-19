@@ -1,5 +1,5 @@
 /* cmds.c -- Texinfo commands.
-   $Id: cmds.c,v 1.3 2006/07/17 16:12:36 espie Exp $
+   $Id: cmds.c,v 1.4 2019/05/27 07:13:38 otto Exp $
 
    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
@@ -624,6 +624,7 @@ cm_comment (void)
           /* Use insert for HTML, and XML when indentation is enabled.
              For Docbook, use add_char.  */
           if (xml && xml_indentation_increment > 0
+              && output_paragraph_offset > 0
               && output_paragraph[output_paragraph_offset-1] != '\n')
             insert ('\n');
 

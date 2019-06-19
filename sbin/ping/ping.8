@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.59 2016/10/26 16:18:45 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.61 2018/11/10 23:44:53 dlg Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,7 +57,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: October 26 2016 $
+.Dd $Mdocdate: November 10 2018 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -79,7 +79,7 @@
 .Op Fl w Ar maxwait
 .Ar host
 .Nm ping6
-.Op Fl dEefHLmnqv
+.Op Fl DdEefHLmnqv
 .Op Fl c Ar count
 .Op Fl h Ar hoplimit
 .Op Fl I Ar sourceaddr
@@ -87,6 +87,7 @@
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
 .Op Fl s Ar packetsize
+.Op Fl T Ar toskeyword
 .Op Fl V Ar rtable
 .Op Fl w Ar maxwait
 .Ar host
@@ -115,10 +116,7 @@ If
 .Ar count
 is 0, send an unlimited number of packets.
 .It Fl D
-.Pq IPv4 only
-Set the
-.Dv Don't Fragment
-bit.
+Don't fragment IP packets.
 .It Fl d
 Set the
 .Dv SO_DEBUG
@@ -221,8 +219,7 @@ which translates into 64 ICMP data bytes
 when combined with the 8 bytes of ICMP header data.
 The maximum packet size is 65467 for IPv4 and 65527 for IPv6.
 .It Fl T Ar toskeyword
-.Pq IPv4 only
-Change the TOS value.
+Change the IPv4 TOS or IPv6 Traffic Class value.
 .Ar toskeyword
 may be one of
 .Cm critical ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.48 2015/11/14 13:09:14 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.49 2018/06/13 11:27:30 job Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -338,14 +338,32 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	ch = get_char(file);
 	while (ch == '-') {
 		switch (ch = get_char(file)) {
+		case 'n':
+			/* only allow the user to set the option once */
+			if ((e->flags & MAIL_WHEN_ERR) == MAIL_WHEN_ERR) {
+				ecode = e_option;
+				goto eof;
+			}
+			e->flags |= MAIL_WHEN_ERR;
+			break;
 		case 'q':
+			/* only allow the user to set the option once */
+			if ((e->flags & DONT_LOG) == DONT_LOG) {
+				ecode = e_option;
+				goto eof;
+			}
 			e->flags |= DONT_LOG;
-			Skip_Nonblanks(ch, file)
 			break;
 		default:
 			ecode = e_option;
 			goto eof;
 		}
+		ch = get_char(file);
+		if (ch!='\t' && ch!=' ') {
+			ecode = e_option;
+			goto eof;
+		}
+
 		Skip_Blanks(ch, file)
 		if (ch == EOF || ch == '\n') {
 			ecode = e_cmd;

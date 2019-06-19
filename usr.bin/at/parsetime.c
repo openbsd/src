@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.26 2015/11/11 17:42:51 millert Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.27 2019/02/16 15:23:33 naddy Exp $	*/
 
 /*
  * parsetime.c - parse time for at(1)
@@ -432,7 +432,8 @@ tod(struct tm *tm)
 	 * a relative offset, it's okay to bump things
 	 */
 	if ((sc_tokid == EOF || sc_tokid == PLUS || sc_tokid == NEXT) &&
-	    tm->tm_hour > hour) {
+	    (tm->tm_hour > hour ||
+	    (tm->tm_hour == hour && tm->tm_min > minute))) {
 		tm->tm_mday++;
 		tm->tm_wday++;
 	}

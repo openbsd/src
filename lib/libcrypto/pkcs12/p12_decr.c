@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_decr.c,v 1.18 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p12_decr.c,v 1.19 2018/05/13 14:22:34 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -67,8 +67,9 @@
  */
 
 unsigned char *
-PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass, int passlen,
-    unsigned char *in, int inlen, unsigned char **data, int *datalen, int en_de)
+PKCS12_pbe_crypt(const X509_ALGOR *algor, const char *pass, int passlen,
+    const unsigned char *in, int inlen, unsigned char **data, int *datalen,
+    int en_de)
 {
 	unsigned char *out;
 	int outlen, i;
@@ -119,8 +120,8 @@ err:
  */
 
 void *
-PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
-    const char *pass, int passlen, ASN1_OCTET_STRING *oct, int zbuf)
+PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
+    const char *pass, int passlen, const ASN1_OCTET_STRING *oct, int zbuf)
 {
 	unsigned char *out;
 	const unsigned char *p;

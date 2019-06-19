@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_locl.h,v 1.5 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: ecs_locl.h,v 1.6 2019/01/19 01:07:00 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -80,6 +80,14 @@ typedef struct ecdsa_data_st {
  * \return pointer to a ECDSA_DATA structure
  */
 ECDSA_DATA *ecdsa_check(EC_KEY *eckey);
+
+int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+    BIGNUM **rp);
+int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
+    unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
+    const BIGNUM *r, EC_KEY *eckey);
+ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
+    const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey);
 
 __END_HIDDEN_DECLS
 

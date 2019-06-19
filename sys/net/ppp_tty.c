@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.48 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.51 2018/11/09 14:14:31 claudio Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -255,6 +255,7 @@ pppasyncrelinq(struct ppp_softc *sc)
 {
     int s;
 
+    KERNEL_LOCK();
     s = spltty();
     m_freem(sc->sc_outm);
     sc->sc_outm = NULL;
@@ -268,6 +269,7 @@ pppasyncrelinq(struct ppp_softc *sc)
 	sc->sc_flags &= ~SC_TIMEOUT;
     }
     splx(s);
+    KERNEL_UNLOCK();
 }
 
 /*
@@ -356,7 +358,7 @@ pppwrite(struct tty *tp, struct uio *uio, int flag)
 	m->m_len = 0;
 	if (uio->uio_resid >= MCLBYTES / 2)
 	    MCLGET(m, M_DONTWAIT);
-	len = M_TRAILINGSPACE(m);
+	len = m_trailingspace(m);
 	if (len > uio->uio_resid)
 	    len = uio->uio_resid;
 	if ((error = uiomove(mtod(m, u_char *), len, uio)) != 0) {
@@ -424,7 +426,9 @@ ppptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	break;
 
     default:
+	NET_LOCK();
 	error = pppioctl(sc, cmd, data, flag, p);
+	NET_UNLOCK();
 	if (error == 0 && cmd == PPPIOCSMRU)
 	    ppppkt(sc);
     }
@@ -496,6 +500,7 @@ pppasyncstart(struct ppp_softc *sc)
     struct mbuf *m2;
     int s;
 
+    KERNEL_LOCK();
     idle = 0;
     while (CCOUNT(&tp->t_outq) < tp->t_hiwat) {
 	/*
@@ -662,6 +667,7 @@ pppasyncstart(struct ppp_softc *sc)
     }
 
     splx(s);
+    KERNEL_UNLOCK();
 }
 
 /*
@@ -674,12 +680,14 @@ pppasyncctlp(struct ppp_softc *sc)
     struct tty *tp;
     int s;
 
+    KERNEL_LOCK();
     /* Put a placeholder byte in canq for ttpoll()/ttnread(). */
     s = spltty();
     tp = (struct tty *) sc->sc_devp;
     putc(0, &tp->t_canq);
     ttwakeup(tp);
     splx(s);
+    KERNEL_UNLOCK();
 }
 
 /*

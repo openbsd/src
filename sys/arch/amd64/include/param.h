@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.25 2018/03/04 16:44:02 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.27 2019/01/24 00:16:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,11 +58,6 @@
 #ifdef _KERNEL
 
 #define	KERNTEXTOFF	(KERNBASE+0x1000000)	/* start of kernel text */
-#define	KERNTEXTOFF_HI	0xffffffff
-#define	KERNTEXTOFF_LO	0x81000000
-
-#define	KERNBASE_HI	0xffffffff
-#define	KERNBASE_LO	0x80000000
 
 #define	NBPG		PAGE_SIZE		/* bytes/page */
 #define	PGSHIFT		PAGE_SHIFT		/* LOG2(PAGE_SIZE) */
@@ -83,6 +78,8 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+
+#define __HAVE_ACPI
 
 #endif /* _KERNEL */
 

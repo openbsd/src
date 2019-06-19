@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.15 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: database.c,v 1.16 2019/05/10 13:50:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
+#include <netinet/ip6.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,7 +46,7 @@ send_db_description(struct nbr *nbr)
 	int			 ret = 0;
 	u_int8_t		 bits = 0;
 
-	if ((buf = ibuf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
+	if ((buf = ibuf_open(nbr->iface->mtu - sizeof(struct ip6_hdr))) == NULL)
 		fatal("send_db_description");
 
 	/* OSPF header */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.26 2017/08/12 16:27:50 benno Exp $ */
+/*	$OpenBSD: control.c,v 1.27 2018/09/01 19:21:10 remi Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,33 @@
 struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
 void		 control_close(int);
+
+int
+control_check(char *path)
+{
+	struct sockaddr_un	 sun;
+	int			 fd;
+
+	bzero(&sun, sizeof(sun));
+	sun.sun_family = AF_UNIX;
+	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+
+	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
+		log_warn("control_check: socket check");
+		return (-1);
+	}
+
+	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
+		log_warnx("control_check: socket in use");
+		close(fd);
+		return (-1);
+	}
+
+	close(fd);
+
+	return (0);
+}
+
 
 int
 control_init(char *path)
@@ -78,9 +105,7 @@ control_init(char *path)
 		return (-1);
 	}
 
-	control_state.fd = fd;
-
-	return (0);
+	return (fd);
 }
 
 int

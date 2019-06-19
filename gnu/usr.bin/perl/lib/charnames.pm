@@ -1,7 +1,7 @@
 package charnames;
 use strict;
 use warnings;
-our $VERSION = '1.43';
+our $VERSION = '1.45';
 use unicore::Name;    # mktables-generated algorithmically-defined names
 use _charnames ();    # The submodule for this where most of the work gets done
 
@@ -278,11 +278,9 @@ mean C<"B">, etc.
 
 Aliases must begin with a character that is alphabetic.  After that, each may
 contain any combination of word (C<\w>) characters, SPACE (U+0020),
-HYPHEN-MINUS (U+002D), LEFT PARENTHESIS (U+0028), RIGHT PARENTHESIS (U+0029),
-and NO-BREAK SPACE (U+00A0).  These last three should never have been allowed
-in names, and are retained for backwards compatibility only; NO-BREAK SPACE IS
-currently deprecated and scheduled for removal in Perl v5.26; the other two
-may also be
+HYPHEN-MINUS (U+002D), LEFT PARENTHESIS (U+0028), and RIGHT PARENTHESIS
+(U+0029).  These last two should never have been allowed
+in names, and are retained for backwards compatibility only, and may be
 deprecated and removed in future releases of Perl, so don't use them for new
 names.  (More precisely, the first character of a name you specify must be
 something that matches all of C<\p{ID_Start}>, C<\p{Alphabetic}>, and

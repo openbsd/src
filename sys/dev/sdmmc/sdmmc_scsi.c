@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.41 2018/03/20 04:18:40 jmatthew Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.42 2018/03/30 07:18:39 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -586,12 +586,16 @@ sdmmc_scsi_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 	case HIB_INIT:
 		/* find device (sdmmc_softc, sdmmc_function) */
 		disk = disk_lookup(&sd_cd, DISKUNIT(dev));
+		if (disk == NULL)
+			return (ENOTTY);
+
 		scsibus = disk->dv_parent;
 		sdmmc = scsibus->dv_parent;
 		chip = sdmmc->dv_parent;
 
 		bus_sc = (struct scsibus_softc *)scsibus;
 		scsi_sc = (struct sdmmc_scsi_softc *)scsibus;
+		sc = NULL;
 		SLIST_FOREACH(link, &bus_sc->sc_link_list, bus_list) {
 			if (link->device_softc == disk) {
 				sc = (struct sdmmc_softc *)link->adapter_softc;
@@ -599,6 +603,8 @@ sdmmc_scsi_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 				sf = scsi_sc->sc_tgt[link->target].card;
 			}
 		}
+		if (sc == NULL || sf == NULL)
+			return (ENOTTY);
 
 		/* if the chipset doesn't do hibernate, bail out now */
 		sc = (struct sdmmc_softc *)sdmmc;
@@ -641,8 +647,7 @@ sdmmc_scsi_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		 * bring the hardware state back into line with the real
 		 * softc by operating on the fake one
 		 */
-		sdmmc_select_card(&state->sdmmc_sc, state->orig_sf);
-		return (0);
+		return (sdmmc_select_card(&state->sdmmc_sc, state->orig_sf));
 	}
 
 	return (EINVAL);

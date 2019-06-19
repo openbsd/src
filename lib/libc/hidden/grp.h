@@ -1,4 +1,4 @@
-/*	$OpenBSD: grp.h,v 1.2 2015/11/24 22:03:33 millert Exp $	*/
+/*	$OpenBSD: grp.h,v 1.3 2018/09/13 12:31:15 millert Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -29,7 +29,8 @@ PROTO_DEPRECATED(getgrent);
 PROTO_DEPRECATED(getgrgid);
 PROTO_NORMAL(getgrgid_r);
 PROTO_DEPRECATED(getgrnam);
-PROTO_DEPRECATED(getgrnam_r);
+PROTO_NORMAL(getgrnam_r);
+PROTO_DEPRECATED(gid_from_group);
 PROTO_DEPRECATED(group_from_gid);
 PROTO_NORMAL(setgrent);
 PROTO_NORMAL(setgroupent);

@@ -127,10 +127,22 @@ sub validate_hash {
   my ($desc, $h) = @_;
   local $::Level = $::Level + 1;
 
-  my $scalar = %$h;
+  # test that scalar(%hash) works as expected, which as of perl 5.25 is
+  # the same as 0+keys %hash;
+  my $scalar= scalar %$h;
+  my $count= 0+keys %$h;
+
+  is($scalar, $count, "$desc scalar() should be the same as 0+keys() as of perl 5.25");
+
+  require Hash::Util;
+  sub Hash::Util::bucket_ratio (\%);
+
+  # back compat tests, via Hash::Util::bucket_ratio();
+  my $ratio = Hash::Util::bucket_ratio(%$h);
   my $expect = qr!\A(\d+)/(\d+)\z!;
-  like($scalar, $expect, "$desc in scalar context matches pattern");
-  my ($used, $total) = $scalar =~ $expect;
+  like($ratio, $expect, "$desc bucket_ratio matches pattern");
+  my ($used, $total)= (0,0);
+  ($used, $total)= ($1,$2) if $ratio =~ /$expect/;
   cmp_ok($total, '>', 0, "$desc has >0 array size ($total)");
   cmp_ok($used, '>', 0, "$desc uses >0 heads ($used)");
   cmp_ok($used, '<=', $total,
@@ -151,7 +163,8 @@ sub torture_hash {
   my ($h2, $h3, $h4);
   while (keys %$h > 2) {
     my $take = (keys %$h) / 2 - 1;
-    my @keys = (keys %$h)[0 .. $take];
+    my @keys = (sort keys %$h)[0..$take];
+
     my $scalar = %$h;
     delete @$h{@keys};
     push @groups, $scalar, \@keys;
@@ -167,8 +180,17 @@ sub torture_hash {
     # Each time this will get emptied then repopulated. If the fill isn't reset
     # when the hash is emptied, the used count will likely exceed the array
     %$h3 = %$h2;
+    is(join(",", sort keys %$h3),join(",",sort keys %$h2),"$desc (+$count copy) has same keys");
     my (undef, $total3) = validate_hash("$desc (+$count copy)", $h3);
-    is($total3, $total2, "$desc (+$count copy) has same array size");
+    # We now only split when we collide on insert AND exceed the load factor
+    # when we did so. Building a hash via %x=%y means a pseudo-random key
+    # order inserting into %x, and we may end up encountering a collision
+    # at a different point in the load order, resulting in a possible power of
+    # two difference under the current load factor expectations. If this test
+    # fails then it is probably because DO_HSPLIT was changed, and this test
+    # needs to be adjusted accordingly.
+    ok( $total2 == $total3 || $total2*2==$total3 || $total2==$total3*2,
+        "$desc (+$count copy) array size within a power of 2 of each other");
 
     # This might use fewer buckets than the original
     %$h4 = %$h;
@@ -177,7 +199,7 @@ sub torture_hash {
   }
 
   my $scalar = %$h;
-  my @keys = keys %$h;
+  my @keys = sort keys %$h;
   delete @$h{@keys};
   is(scalar %$h, 0, "scalar keys for empty $desc");
 
@@ -193,19 +215,23 @@ sub torture_hash {
   while (@groups) {
     my $keys = pop @groups;
     ++$h->{$_} foreach @$keys;
-    my (undef, $total) = validate_hash("$desc " . keys %$h, $h);
-    is($total, $total0, "bucket count is constant when rebuilding");
+    my (undef, $total) = validate_hash($desc, $h);
+    ok($total == $total0 || $total == ($total0*2), "bucket count is expected size when rebuilding");
     is(scalar %$h, pop @groups, "scalar keys is identical when rebuilding");
     ++$h1->{$_} foreach @$keys;
-    validate_hash("$desc copy " . keys %$h1, $h1);
+    validate_hash("$desc copy", $h1);
   }
   # This will fail if the fill count isn't handled correctly on hash split
   is(scalar %$h1, scalar %$h, "scalar keys is identical on copy and original");
 }
 
-torture_hash('a .. zz', 'a' .. 'zz');
-torture_hash('0 .. 9', 0 .. 9);
-torture_hash("'Perl'", 'Rules');
+if (is_miniperl) {
+    print "# skipping torture_hash tests on miniperl because no Hash::Util\n";
+} else {
+    torture_hash('a .. zz', 'a' .. 'zz');
+    torture_hash('0 .. 9', 0 .. 9);
+    torture_hash("'Perl'", 'Rules');
+}
 
 {
     my %h = qw(a x b y c z);
@@ -213,5 +239,26 @@ torture_hash("'Perl'", 'Rules');
     %h = $h{a};
     is(join(':', %h), 'x:', 'hash self-assign');
 }
+
+# magic keys and values should be evaluated before the hash on the LHS is
+# cleared
+
+package Magic {
+    my %inner;
+    sub TIEHASH { bless [] }
+    sub FETCH { $inner{$_[1]} }
+    sub STORE { $inner{$_[1]} = $_[2]; }
+    sub CLEAR { %inner = () }
+
+    my (%t1, %t2);
+    tie %t1, 'Magic';
+    tie %t2, 'Magic';
+
+    %inner = qw(a x b y);
+    %t1 = (@t2{'a','b'});
+    ::is(join( ':', %inner), "x:y", "magic keys");
+}
+
+
 
 done_testing();

@@ -1,4 +1,3 @@
-/*	$OpenBSD: radeon_acpi.c,v 1.2 2014/02/09 11:03:31 jsg Exp $	*/
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
@@ -22,11 +21,23 @@
  *
  */
 
-#include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/drm_crtc_helper.h>
+#include <linux/pci.h>
+#include <linux/acpi.h>
+#include <linux/slab.h>
+#include <linux/power_supply.h>
+#include <linux/pm_runtime.h>
+#include <acpi/video.h>
+#include <drm/drmP.h>
+#include <drm/drm_crtc_helper.h>
 #include "radeon.h"
 #include "radeon_acpi.h"
 #include "atom.h"
+
+#if defined(CONFIG_VGA_SWITCHEROO)
+bool radeon_atpx_dgpu_req_power_for_displays(void);
+#else
+static inline bool radeon_atpx_dgpu_req_power_for_displays(void) { return false; }
+#endif
 
 #define ACPI_AC_CLASS           "ac_adapter"
 
@@ -67,6 +78,22 @@ struct atcs_verify_interface {
 	u16 size;		/* structure size in bytes (includes size field) */
 	u16 version;		/* version */
 	u32 function_bits;	/* supported functions bit vector */
+} __packed;
+
+#define ATCS_VALID_FLAGS_MASK	0x3
+
+struct atcs_pref_req_input {
+	u16 size;		/* structure size in bytes (includes size field) */
+	u16 client_id;		/* client id (bit 2-0: func num, 7-3: dev num, 15-8: bus num) */
+	u16 valid_flags_mask;	/* valid flags mask */
+	u16 flags;		/* flags */
+	u8 req_type;		/* request type */
+	u8 perf_req;		/* performance request */
+} __packed;
+
+struct atcs_pref_req_output {
+	u16 size;		/* structure size in bytes (includes size field) */
+	u8 ret_val;		/* return value */
 } __packed;
 
 /* Call the ATIF method
@@ -324,7 +351,7 @@ out:
  * handles it.
  * Returns NOTIFY code
  */
-int radeon_atif_handler(struct radeon_device *rdev,
+static int radeon_atif_handler(struct radeon_device *rdev,
 		struct acpi_bus_event *event)
 {
 	struct radeon_atif *atif = &rdev->atif;
@@ -344,7 +371,7 @@ int radeon_atif_handler(struct radeon_device *rdev,
 		return NOTIFY_DONE;
 
 	/* Check pending SBIOS requests */
-	handle = DEVICE_ACPI_HANDLE(&rdev->pdev->dev);
+	handle = ACPI_HANDLE(&rdev->pdev->dev);
 	count = radeon_atif_get_sbios_requests(handle, &req);
 
 	if (count <= 0)
@@ -372,6 +399,16 @@ int radeon_atif_handler(struct radeon_device *rdev,
 						       BACKLIGHT_UPDATE_HOTKEY);
 			}
 #endif
+		}
+	}
+	if (req.pending & ATIF_DGPU_DISPLAY_EVENT) {
+		if ((rdev->flags & RADEON_IS_PX) &&
+		    radeon_atpx_dgpu_req_power_for_displays()) {
+			pm_runtime_get_sync(rdev->ddev->dev);
+			/* Just fire off a uevent and let userspace tell us what to do */
+			drm_helper_hpd_irq_event(rdev->ddev);
+			pm_runtime_mark_last_busy(rdev->ddev->dev);
+			pm_runtime_put_autosuspend(rdev->ddev->dev);
 		}
 	}
 	/* TODO: check other events */
@@ -497,6 +534,135 @@ out:
 }
 
 /**
+ * radeon_acpi_is_pcie_performance_request_supported
+ *
+ * @rdev: radeon_device pointer
+ *
+ * Check if the ATCS pcie_perf_req and pcie_dev_rdy methods
+ * are supported (all asics).
+ * returns true if supported, false if not.
+ */
+bool radeon_acpi_is_pcie_performance_request_supported(struct radeon_device *rdev)
+{
+	struct radeon_atcs *atcs = &rdev->atcs;
+
+	if (atcs->functions.pcie_perf_req && atcs->functions.pcie_dev_rdy)
+		return true;
+
+	return false;
+}
+
+/**
+ * radeon_acpi_pcie_notify_device_ready
+ *
+ * @rdev: radeon_device pointer
+ *
+ * Executes the PCIE_DEVICE_READY_NOTIFICATION method
+ * (all asics).
+ * returns 0 on success, error on failure.
+ */
+int radeon_acpi_pcie_notify_device_ready(struct radeon_device *rdev)
+{
+	acpi_handle handle;
+	union acpi_object *info;
+	struct radeon_atcs *atcs = &rdev->atcs;
+
+	/* Get the device handle */
+	handle = ACPI_HANDLE(&rdev->pdev->dev);
+	if (!handle)
+		return -EINVAL;
+
+	if (!atcs->functions.pcie_dev_rdy)
+		return -EINVAL;
+
+	info = radeon_atcs_call(handle, ATCS_FUNCTION_PCIE_DEVICE_READY_NOTIFICATION, NULL);
+	if (!info)
+		return -EIO;
+
+	kfree(info);
+
+	return 0;
+}
+
+/**
+ * radeon_acpi_pcie_performance_request
+ *
+ * @rdev: radeon_device pointer
+ * @perf_req: requested perf level (pcie gen speed)
+ * @advertise: set advertise caps flag if set
+ *
+ * Executes the PCIE_PERFORMANCE_REQUEST method to
+ * change the pcie gen speed (all asics).
+ * returns 0 on success, error on failure.
+ */
+int radeon_acpi_pcie_performance_request(struct radeon_device *rdev,
+					 u8 perf_req, bool advertise)
+{
+	acpi_handle handle;
+	union acpi_object *info;
+	struct radeon_atcs *atcs = &rdev->atcs;
+	struct atcs_pref_req_input atcs_input;
+	struct atcs_pref_req_output atcs_output;
+	struct acpi_buffer params;
+	size_t size;
+	u32 retry = 3;
+
+	/* Get the device handle */
+	handle = ACPI_HANDLE(&rdev->pdev->dev);
+	if (!handle)
+		return -EINVAL;
+
+	if (!atcs->functions.pcie_perf_req)
+		return -EINVAL;
+
+	atcs_input.size = sizeof(struct atcs_pref_req_input);
+	/* client id (bit 2-0: func num, 7-3: dev num, 15-8: bus num) */
+	atcs_input.client_id = rdev->pdev->devfn | (rdev->pdev->bus->number << 8);
+	atcs_input.valid_flags_mask = ATCS_VALID_FLAGS_MASK;
+	atcs_input.flags = ATCS_WAIT_FOR_COMPLETION;
+	if (advertise)
+		atcs_input.flags |= ATCS_ADVERTISE_CAPS;
+	atcs_input.req_type = ATCS_PCIE_LINK_SPEED;
+	atcs_input.perf_req = perf_req;
+
+	params.length = sizeof(struct atcs_pref_req_input);
+	params.pointer = &atcs_input;
+
+	while (retry--) {
+		info = radeon_atcs_call(handle, ATCS_FUNCTION_PCIE_PERFORMANCE_REQUEST, &params);
+		if (!info)
+			return -EIO;
+
+		memset(&atcs_output, 0, sizeof(atcs_output));
+
+		size = *(u16 *) info->buffer.pointer;
+		if (size < 3) {
+			DRM_INFO("ATCS buffer is too small: %zu\n", size);
+			kfree(info);
+			return -EINVAL;
+		}
+		size = min(sizeof(atcs_output), size);
+
+		memcpy(&atcs_output, info->buffer.pointer, size);
+
+		kfree(info);
+
+		switch (atcs_output.ret_val) {
+		case ATCS_REQUEST_REFUSED:
+		default:
+			return -EINVAL;
+		case ATCS_REQUEST_COMPLETE:
+			return 0;
+		case ATCS_REQUEST_IN_PROGRESS:
+			udelay(10);
+			break;
+		}
+	}
+
+	return 0;
+}
+
+/**
  * radeon_acpi_event - handle notify events
  *
  * @nb: notifier block
@@ -545,7 +711,7 @@ int radeon_acpi_init(struct radeon_device *rdev)
 	int ret;
 
 	/* Get the device handle */
-	handle = DEVICE_ACPI_HANDLE(&rdev->pdev->dev);
+	handle = ACPI_HANDLE(&rdev->pdev->dev);
 
 	/* No need to proceed if we're sure that ATIF is not supported */
 	if (!ASIC_IS_AVIVO(rdev) || !rdev->bios || !handle)
@@ -592,13 +758,6 @@ int radeon_acpi_init(struct radeon_device *rdev)
 		}
 
 		atif->encoder_for_bl = target;
-		if (!target) {
-			/* Brightness change notification is enabled, but we
-			 * didn't find a backlight controller, this should
-			 * never happen.
-			 */
-			DRM_ERROR("Cannot find a backlight controller\n");
-		}
 	}
 
 	if (atif->functions.sbios_requests && !atif->functions.system_params) {

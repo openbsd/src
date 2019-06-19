@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.32 2017/10/30 06:48:20 otto Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.34 2019/02/05 20:57:30 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -353,6 +353,8 @@ p_ere_exp(struct parse *p)
 		REQUIRE(!MORE() || !isdigit((uch)PEEK()), REG_BADRPT);
 		/* FALLTHROUGH */
 	default:
+		if (p->error != 0)
+			return;
 		ordinary(p, c);
 		break;
 	}
@@ -555,6 +557,8 @@ p_simp_re(struct parse *p,
 		REQUIRE(starordinary, REG_BADRPT);
 		/* FALLTHROUGH */
 	default:
+		if (p->error != 0)
+			return(0);	/* Definitely not $... */
 		ordinary(p, (char)c);
 		break;
 	}

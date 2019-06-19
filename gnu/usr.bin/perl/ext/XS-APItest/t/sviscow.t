@@ -1,10 +1,10 @@
 use strict;
-use warnings; no warnings 'once';
 
 use Test::More tests => 1;
 
 use XS::APItest;
 use Hash::Util 'lock_value';
+use warnings; no warnings 'once', 'Hash::Util';
 
 my %h;
 $h{g} = *foo;

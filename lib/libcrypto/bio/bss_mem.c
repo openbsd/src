@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.17 2018/05/12 18:51:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,7 +72,7 @@ static long mem_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int mem_new(BIO *h);
 static int mem_free(BIO *data);
 
-static BIO_METHOD mem_method = {
+static const BIO_METHOD mem_method = {
 	.type = BIO_TYPE_MEM,
 	.name = "memory buffer",
 	.bwrite = mem_write,
@@ -87,14 +87,14 @@ static BIO_METHOD mem_method = {
 /* bio->num is used to hold the value to return on 'empty', if it is
  * 0, should_retry is not set */
 
-BIO_METHOD *
+const BIO_METHOD *
 BIO_s_mem(void)
 {
 	return (&mem_method);
 }
 
 BIO *
-BIO_new_mem_buf(void *buf, int len)
+BIO_new_mem_buf(const void *buf, int len)
 {
 	BIO *ret;
 	BUF_MEM *b;
@@ -108,7 +108,7 @@ BIO_new_mem_buf(void *buf, int len)
 	if (!(ret = BIO_new(BIO_s_mem())))
 		return NULL;
 	b = (BUF_MEM *)ret->ptr;
-	b->data = buf;
+	b->data = (void *)buf;	/* Trust in the BIO_FLAGS_MEM_RDONLY flag. */
 	b->length = sz;
 	b->max = sz;
 	ret->flags |= BIO_FLAGS_MEM_RDONLY;

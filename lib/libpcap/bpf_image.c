@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_image.c,v 1.9 2004/01/27 06:58:02 tedu Exp $	*/
+/*	$OpenBSD: bpf_image.c,v 1.10 2018/06/03 10:29:28 sthen Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -35,7 +35,7 @@
 
 char *
 bpf_image(p, n)
-	struct bpf_insn *p;
+	const struct bpf_insn *p;
 	int n;
 {
 	int v;

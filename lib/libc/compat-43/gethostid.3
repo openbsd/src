@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: gethostid.3,v 1.14 2018/01/12 04:36:44 deraadt Exp $
+.\"	$OpenBSD: gethostid.3,v 1.16 2019/03/03 18:15:24 schwarze Exp $
 .\"
-.Dd $Mdocdate: January 12 2018 $
+.Dd $Mdocdate: March 3 2019 $
 .Dt GETHOSTID 3
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@ The
 function establishes a 32-bit identifier for the
 current processor that is intended to be unique among all
 UNIX systems in existence.
-This is normally a DARPA Internet address for the local machine.
+This is normally an Internet address for the local machine.
 This call is allowed only to the
 superuser and is normally performed at boot-time.
 .Pp
@@ -57,8 +57,8 @@ This function has been deprecated.
 The hostid should be set or retrieved by use of
 .Xr sysctl 2 .
 .Sh SEE ALSO
-.Xr gethostname 3 ,
 .Xr sysctl 2 ,
+.Xr gethostname 3 ,
 .Xr sysctl 8
 .Sh HISTORY
 The

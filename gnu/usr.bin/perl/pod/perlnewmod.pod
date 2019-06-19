@@ -78,7 +78,7 @@ Dig into a bunch of modules to see how they're written. I'd suggest
 starting with L<Text::Tabs|Text::Tabs>, since it's in the standard
 library and is nice and simple, and then looking at something a little
 more complex like L<File::Copy|File::Copy>.  For object oriented
-code, C<WWW::Mechanize> or the C<Email::*> modules provide some good
+code, L<WWW::Mechanize> or the C<Email::*> modules provide some good
 examples.
 
 These should give you an overall feel for how modules are laid out and
@@ -88,18 +88,18 @@ written.
 
 There are a lot of modules on CPAN, and it's easy to miss one that's
 similar to what you're planning on contributing. Have a good plough
-through the L<http://search.cpan.org> and make sure you're not the one
+through L<http://metacpan.org> and make sure you're not the one
 reinventing the wheel!
 
 =item Discuss the need
 
 You might love it. You might feel that everyone else needs it. But there
 might not actually be any real demand for it out there. If you're unsure
-about the demand your module will have, consider sending out feelers
-on the C<comp.lang.perl.modules> newsgroup, or as a last resort, ask the
-modules list at C<modules@perl.org>. Remember that this is a closed list
-with a very long turn-around time - be prepared to wait a good while for
-a response from them.
+about the demand your module will have, consider asking the
+C<module-authors@perl.org> mailing list (send an email to
+C<module-authors-subscribe@perl.org> to subscribe; see
+L<http://lists.perl.org/list/module-authors.html> for more information
+and a link to the archives).
 
 =item Choose a name
 
@@ -212,13 +212,18 @@ more than just checking your module will compile.
 L<Test::Simple|Test::Simple> and L<Test::More|Test::More> are good
 places to start when writing a test suite.
 
-=item Write the README
+=item Write the F<README>
 
 If you're uploading to CPAN, the automated gremlins will extract the
 README file and place that in your CPAN directory. It'll also appear in
 the main F<by-module> and F<by-category> directories if you make it onto
 the modules list. It's a good idea to put here what the module actually
-does in detail, and the user-visible changes since the last release.
+does in detail.
+
+=item Write F<Changes>
+
+Add any user-visible changes since the last release to your F<Changes>
+file.
 
 =back
 
@@ -229,17 +234,18 @@ does in detail, and the user-visible changes since the last release.
 =item Get a CPAN user ID
 
 Every developer publishing modules on CPAN needs a CPAN ID.  Visit
-C<http://pause.perl.org/>, select "Request PAUSE Account", and wait for
+C<L<http://pause.perl.org/>>, select "Request PAUSE Account", and wait for
 your request to be approved by the PAUSE administrators.
 
-=item C<perl Makefile.PL; make test; make dist>
+=item C<perl Makefile.PL; make test; make distcheck; make dist>
 
 Once again, C<module-starter> or C<h2xs> has done all the work for you.
 They produce the standard C<Makefile.PL> you see when you download and
 install modules, and this produces a Makefile with a C<dist> target.
 
 Once you've ensured that your module passes its own tests - always a
-good thing to make sure - you can C<make dist>, and the Makefile will
+good thing to make sure - you can C<make distcheck> to make sure
+everything looks OK, followed by C<make dist>, and the Makefile will
 hopefully produce you a nice tarball of your module, ready for upload.
 
 =item Upload the tarball
@@ -248,17 +254,8 @@ The email you got when you received your CPAN ID will tell you how to
 log in to PAUSE, the Perl Authors Upload SErver. From the menus there,
 you can upload your module to CPAN.
 
-=item Announce to the modules list
-
-Once uploaded, it'll sit unnoticed in your author directory. If you want
-it connected to the rest of the CPAN, you'll need to go to "Register
-Namespace" on PAUSE.  Once registered, your module will appear in the
-by-module and by-category listings on CPAN.
-
-=item Announce to clpa
-
-If you have a burning desire to tell the world about your release, post
-an announcement to the moderated C<comp.lang.perl.announce> newsgroup.
+Alternatively you can use the F<cpan-upload> script, part of the
+L<CPAN::Uploader> distribution on CPAN.
 
 =item Fix bugs!
 
@@ -279,5 +276,5 @@ Updated by Kirrily "Skud" Robert, C<skud@cpan.org>
 L<perlmod>, L<perlmodlib>, L<perlmodinstall>, L<h2xs>, L<strict>,
 L<Carp>, L<Exporter>, L<perlpod>, L<Test::Simple>, L<Test::More>
 L<ExtUtils::MakeMaker>, L<Module::Build>, L<Module::Starter>
-http://www.cpan.org/ , Ken Williams's tutorial on building your own
-module at http://mathforum.org/~ken/perl_modules.html
+L<http://www.cpan.org/>, Ken Williams' tutorial on building your own
+module at L<http://mathforum.org/~ken/perl_modules.html>

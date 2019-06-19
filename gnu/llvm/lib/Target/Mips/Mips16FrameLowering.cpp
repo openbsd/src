@@ -30,7 +30,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
 #include <cassert>
 #include <cstdint>
 #include <vector>
@@ -38,11 +38,10 @@
 using namespace llvm;
 
 Mips16FrameLowering::Mips16FrameLowering(const MipsSubtarget &STI)
-    : MipsFrameLowering(STI, STI.stackAlignment()) {}
+    : MipsFrameLowering(STI, STI.getStackAlignment()) {}
 
 void Mips16FrameLowering::emitPrologue(MachineFunction &MF,
                                        MachineBasicBlock &MBB) const {
-  assert(&MF.front() == &MBB && "Shrink-wrapping not yet supported");
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const Mips16InstrInfo &TII =
       *static_cast<const Mips16InstrInfo *>(STI.getInstrInfo());
@@ -59,7 +58,6 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF,
 
   MachineModuleInfo &MMI = MF.getMMI();
   const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
-  MachineLocation DstML, SrcML;
 
   // Adjust stack.
   TII.makeFrame(Mips::SP, StackSize, MBB, MBBI);
@@ -93,11 +91,11 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF,
 
 void Mips16FrameLowering::emitEpilogue(MachineFunction &MF,
                                  MachineBasicBlock &MBB) const {
-  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
+  MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   const Mips16InstrInfo &TII =
       *static_cast<const Mips16InstrInfo *>(STI.getInstrInfo());
-  DebugLoc dl = MBBI->getDebugLoc();
+  DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   uint64_t StackSize = MFI.getStackSize();
 
   if (!StackSize)
@@ -118,7 +116,6 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                           const std::vector<CalleeSavedInfo> &CSI,
                           const TargetRegisterInfo *TRI) const {
   MachineFunction *MF = MBB.getParent();
-  MachineBasicBlock *EntryBlock = &MF->front();
 
   //
   // Registers RA, S0,S1 are the callee saved registers and they
@@ -135,7 +132,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     bool IsRAAndRetAddrIsTaken = (Reg == Mips::RA)
       && MF->getFrameInfo().isReturnAddressTaken();
     if (!IsRAAndRetAddrIsTaken)
-      EntryBlock->addLiveIn(Reg);
+      MBB.addLiveIn(Reg);
   }
 
   return true;
@@ -143,7 +140,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
 bool Mips16FrameLowering::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
-                                       const std::vector<CalleeSavedInfo> &CSI,
+                                       std::vector<CalleeSavedInfo> &CSI,
                                        const TargetRegisterInfo *TRI) const {
   //
   // Registers RA,S0,S1 are the callee saved registers and they will be restored

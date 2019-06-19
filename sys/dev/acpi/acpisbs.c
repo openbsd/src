@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisbs.c,v 1.6 2017/03/13 02:33:34 jcs Exp $ */
+/* $OpenBSD: acpisbs.c,v 1.8 2019/05/09 18:29:25 cheloha Exp $ */
 /*
  * Smart Battery subsystem device driver
  * ACPI 5.0 spec section 10
@@ -121,8 +121,8 @@ struct acpisbs_battery_check {
 #endif
 };
 
-extern void acpiec_read(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
-extern void acpiec_write(struct acpiec_softc *, u_int8_t, int, u_int8_t *);
+extern void acpiec_read(struct acpiec_softc *, uint8_t, int, uint8_t *);
+extern void acpiec_write(struct acpiec_softc *, uint8_t, int, uint8_t *);
 
 int	acpisbs_match(struct device *, void *, void *);
 void	acpisbs_attach(struct device *, struct device *, void *);
@@ -170,7 +170,7 @@ acpisbs_attach(struct device *parent, struct device *self, void *aux)
 
 	memset(&sc->sc_battery, 0, sizeof(sc->sc_battery));
 
-	getmicrotime(&sc->sc_lastpoll);
+	getmicrouptime(&sc->sc_lastpoll);
 
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_SBS", 0, NULL, &sbs))
 		return;
@@ -359,11 +359,11 @@ int
 acpisbs_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpisbs_softc *sc = arg;
-	struct timeval tv;
+	struct timeval diff, now;
 
 	DPRINTF(("%s: %s: %d\n", sc->sc_dev.dv_xname, __func__, notify_type));
 
-	getmicrotime(&tv);
+	getmicrouptime(&now);
 
 	switch (notify_type) {
 	case 0x00:
@@ -373,10 +373,11 @@ acpisbs_notify(struct aml_node *node, int notify_type, void *arg)
 		 * EC SCI will come for every data point, so only run once in a
 		 * while
 		 */
-		if (tv.tv_sec - sc->sc_lastpoll.tv_sec > ACPISBS_POLL_FREQ) {
+		timersub(&now, &sc->sc_lastpoll, &diff);
+		if (diff.tv_sec > ACPISBS_POLL_FREQ) {
 			acpisbs_read(sc);
 			acpisbs_refresh_sensors(sc);
-			getmicrotime(&sc->sc_lastpoll);
+			getmicrouptime(&sc->sc_lastpoll);
 		}
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: testfly.S,v 1.4 2017/08/16 19:13:51 deraadt Exp $	*/
+/*	$OpenBSD: testfly.S,v 1.7 2019/05/10 15:57:39 visa Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -30,9 +30,9 @@
 
 #include <machine/asm.h>
 
-	.space 8192
+	.space 16384
 
-#if defined(__amd64__) || defined(__i386__)
+#if defined(__aarch64__) || defined(__amd64__) || defined(__i386__)
 ENTRY(testfly)
 	ret
 END(testfly)
@@ -58,11 +58,18 @@ ENTRY(testfly)
 END(testfly)
 #endif
 
+#ifdef __mips64__
+LEAF(testfly, 0)
+	jr	ra
+	nop
+END(testfly)
+#endif
+
 #if defined(__sparc64__)
 ENTRY(testfly)
 	retl
-	 nop
+	nop
 END(testfly)
 #endif
-	
-	.space 8192
+
+	.space 16384

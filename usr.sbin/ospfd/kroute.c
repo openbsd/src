@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.109 2018/02/11 02:27:33 benno Exp $ */
+/*	$OpenBSD: kroute.c,v 1.112 2018/12/28 19:25:10 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -45,6 +45,7 @@ struct {
 	pid_t			pid;
 	int			fib_sync;
 	int			fib_serial;
+	u_int8_t		fib_prio;
 	int			fd;
 	struct event		ev;
 	struct event		reload;
@@ -127,14 +128,15 @@ kif_init(void)
 }
 
 int
-kr_init(int fs, u_int rdomain, int redis_label_or_prefix)
+kr_init(int fs, u_int rdomain, int redis_label_or_prefix, u_int8_t fib_prio)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
-	int		filter_prio = RTP_OSPF;
+	int		filter_prio = fib_prio;
 
 	kr_state.fib_sync = fs;
 	kr_state.rdomain = rdomain;
+	kr_state.fib_prio = fib_prio;
 
 	if ((kr_state.fd = socket(AF_ROUTE,
 	    SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK, AF_INET)) == -1) {
@@ -262,7 +264,7 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int krcount,
 		kn->r.prefixlen = kroute[i].prefixlen;
 		kn->r.nexthop.s_addr = kroute[i].nexthop.s_addr;
 		kn->r.flags = kroute[i].flags | F_OSPFD_INSERTED;
-		kn->r.priority = RTP_OSPF;
+		kn->r.priority = kr_state.fib_prio;
 		kn->r.ext_tag = kroute[i].ext_tag;
 		rtlabel_unref(kn->r.rtlabel);	/* for RTM_CHANGE */
 		kn->r.rtlabel = kroute[i].rtlabel;
@@ -286,7 +288,8 @@ kr_change(struct kroute *kroute, int krcount)
 
 	kroute->rtlabel = rtlabel_tag2id(kroute->ext_tag);
 
-	kr = kroute_find(kroute->prefix.s_addr, kroute->prefixlen, RTP_OSPF);
+	kr = kroute_find(kroute->prefix.s_addr, kroute->prefixlen,
+	    kr_state.fib_prio);
 	if (kr != NULL && kr->next == NULL && krcount == 1)
 		/* single path OSPF route */
 		action = RTM_CHANGE;
@@ -297,7 +300,7 @@ kr_change(struct kroute *kroute, int krcount)
 int
 kr_delete_fib(struct kroute_node *kr)
 {
-	if (kr->r.priority != RTP_OSPF)
+	if (kr->r.priority != kr_state.fib_prio)
 		log_warn("kr_delete_fib: %s/%d has wrong priority %d",
 		    inet_ntoa(kr->r.prefix), kr->r.prefixlen, kr->r.priority);
 
@@ -316,7 +319,7 @@ kr_delete(struct kroute *kroute)
 	struct kroute_node	*kr, *nkr;
 
 	if ((kr = kroute_find(kroute->prefix.s_addr, kroute->prefixlen,
-	    RTP_OSPF)) == NULL)
+	    kr_state.fib_prio)) == NULL)
 		return (0);
 
 	while (kr != NULL) {
@@ -348,7 +351,7 @@ kr_fib_couple(void)
 	kr_state.fib_sync = 1;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
-		if (kr->r.priority == RTP_OSPF)
+		if (kr->r.priority == kr_state.fib_prio)
 			for (kn = kr; kn != NULL; kn = kn->next)
 				send_rtmsg(kr_state.fd, RTM_ADD, &kn->r);
 
@@ -365,7 +368,7 @@ kr_fib_decouple(void)
 		return;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
-		if (kr->r.priority == RTP_OSPF)
+		if (kr->r.priority == kr_state.fib_prio)
 			for (kn = kr; kn != NULL; kn = kn->next)
 				send_rtmsg(kr_state.fd, RTM_DELETE, &kn->r);
 
@@ -418,7 +421,7 @@ kr_fib_reload()
 			kn = kr->next;
 
 			if (kr->serial != kr_state.fib_serial) {
-				if (kr->r.priority == RTP_OSPF) {
+				if (kr->r.priority == kr_state.fib_prio) {
 					kr->serial = kr_state.fib_serial;
 					if (send_rtmsg(kr_state.fd,
 					    RTM_ADD, &kr->r) != 0)
@@ -430,6 +433,21 @@ kr_fib_reload()
 		} while ((kr = kn) != NULL);
 	}
 }
+
+void
+kr_fib_update_prio(u_int8_t fib_prio)
+{
+	struct kroute_node      *kr;
+
+	RB_FOREACH(kr, kroute_tree, &krt)
+		if ((kr->r.flags & F_OSPFD_INSERTED))
+			kr->r.priority = fib_prio;
+
+	log_info("fib priority changed from %hhu to %hhu",
+	    kr_state.fib_prio, fib_prio);
+
+	kr_state.fib_prio = fib_prio;
+ }
 
 /* ARGSUSED */
 void
@@ -618,7 +636,7 @@ kr_reload(int redis_label_or_prefix)
 	struct kroute_node	*kr, *kn;
 	u_int32_t		 dummy;
 	int			 r;
-	int			 filter_prio = RTP_OSPF;
+	int			 filter_prio = kr_state.fib_prio;
 
 	/* update the priority filter */
 	if (redis_label_or_prefix) {
@@ -1072,8 +1090,9 @@ void
 if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
     struct sockaddr_in *brd)
 {
-	struct kif_node *kif;
-	struct kif_addr *ka;
+	struct kif_node 	*kif;
+	struct kif_addr 	*ka;
+	struct ifaddrchange	 ifn;
 
 	if (ifa == NULL || ifa->sin_family != AF_INET)
 		return;
@@ -1094,15 +1113,21 @@ if_newaddr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
 		ka->dstbrd.s_addr = INADDR_NONE;
 
 	TAILQ_INSERT_TAIL(&kif->addrs, ka, entry);
+
+	ifn.addr = ka->addr;
+	ifn.mask = ka->mask;
+	ifn.dst = ka->dstbrd;
+	ifn.ifindex = ifindex;
+	main_imsg_compose_ospfe(IMSG_IFADDRADD, 0, &ifn, sizeof(ifn));
 }
 
 void
 if_deladdr(u_short ifindex, struct sockaddr_in *ifa, struct sockaddr_in *mask,
     struct sockaddr_in *brd)
 {
-	struct kif_node *kif;
-	struct kif_addr *ka, *nka;
-	struct ifaddrdel ifc;
+	struct kif_node 	*kif;
+	struct kif_addr		*ka, *nka;
+	struct ifaddrchange	 ifc;
 
 	if (ifa == NULL || ifa->sin_family != AF_INET)
 		return;
@@ -1166,7 +1191,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
-	hdr.rtm_priority = RTP_OSPF;
+	hdr.rtm_priority = kr_state.fib_prio;
 	hdr.rtm_tableid = kr_state.rdomain;	/* rtableid */
 	if (action == RTM_CHANGE)
 		hdr.rtm_fmask = RTF_REJECT|RTF_BLACKHOLE;
@@ -1407,7 +1432,7 @@ rtmsg_process(char *buf, size_t len)
 			if (rtm->rtm_flags & RTF_MPATH)
 				mpath = 1;
 			prio = rtm->rtm_priority;
-			flags = (prio == RTP_OSPF) ?
+			flags = (prio == kr_state.fib_prio) ?
 			    F_OSPFD_INSERTED : F_KERNEL;
 
 			switch (sa->sa_family) {
@@ -1442,10 +1467,8 @@ rtmsg_process(char *buf, size_t len)
 			if ((sa = rti_info[RTAX_GATEWAY]) != NULL) {
 				switch (sa->sa_family) {
 				case AF_INET:
-					if (rtm->rtm_flags & RTF_CONNECTED) {
+					if (rtm->rtm_flags & RTF_CONNECTED)
 						flags |= F_CONNECTED;
-						break;
-					}
 
 					nexthop.s_addr = ((struct
 					    sockaddr_in *)sa)->sin_addr.s_addr;
@@ -1475,7 +1498,7 @@ rtmsg_process(char *buf, size_t len)
 			    != NULL) {
 				/* get the correct route */
 				kr = okr;
-				if ((mpath || prio == RTP_OSPF) &&
+				if ((mpath || prio == kr_state.fib_prio) &&
 				    (kr = kroute_matchgw(okr, nexthop)) ==
 				    NULL) {
 					log_warnx("dispatch_rtmsg "
@@ -1524,7 +1547,7 @@ add:
 				kr->r.ifindex = ifindex;
 				kr->r.priority = prio;
 
-				if (rtm->rtm_priority == RTP_OSPF) {
+				if (rtm->rtm_priority == kr_state.fib_prio) {
 					log_warnx("alien OSPF route %s/%d",
 					    inet_ntoa(prefix), prefixlen);
 					rv = send_rtmsg(kr_state.fd,

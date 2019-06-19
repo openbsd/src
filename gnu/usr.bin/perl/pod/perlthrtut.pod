@@ -1104,7 +1104,7 @@ Here's a short bibliography courtesy of Jürgen Christoffel:
 Birrell, Andrew D. An Introduction to Programming with
 Threads. Digital Equipment Corporation, 1989, DEC-SRC Research Report
 #35 online as
-ftp://ftp.dec.com/pub/DEC/SRC/research-reports/SRC-035.pdf
+L<ftp://ftp.dec.com/pub/DEC/SRC/research-reports/SRC-035.pdf>
 (highly recommended)
 
 Robbins, Kay. A., and Steven Robbins. Practical Unix Programming: A

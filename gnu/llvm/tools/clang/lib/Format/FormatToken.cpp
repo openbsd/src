@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file implements specific functions of \c FormatTokens and their
+/// This file implements specific functions of \c FormatTokens and their
 /// roles.
 ///
 //===----------------------------------------------------------------------===//
@@ -25,10 +25,9 @@ namespace format {
 const char *getTokenTypeName(TokenType Type) {
   static const char *const TokNames[] = {
 #define TYPE(X) #X,
-LIST_TOKEN_TYPES
+      LIST_TOKEN_TYPES
 #undef TYPE
-    nullptr
-  };
+      nullptr};
 
   if (Type < NUM_TOKEN_TYPES)
     return TokNames[Type];
@@ -52,11 +51,13 @@ bool FormatToken::isSimpleTypeSpecifier() const {
   case tok::kw_half:
   case tok::kw_float:
   case tok::kw_double:
+  case tok::kw__Float16:
   case tok::kw___float128:
   case tok::kw_wchar_t:
   case tok::kw_bool:
   case tok::kw___underlying_type:
   case tok::annot_typename:
+  case tok::kw_char8_t:
   case tok::kw_char16_t:
   case tok::kw_char32_t:
   case tok::kw_typeof:

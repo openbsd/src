@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.35 2017/11/05 16:56:02 jca Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.44 2019/03/25 20:53:33 jca Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -29,6 +29,7 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if_types.h>
 
 #include <event.h>
 #include <err.h>
@@ -113,15 +114,14 @@ main(int argc, char *argv[])
 	int			 ipforwarding;
 	int			 mib[4];
 	size_t			 len;
-	char			*sockname;
+	char			*sockname = NULL;
+	int			 control_fd;
 
 	conffile = CONF_FILE;
 	ospfd_process = PROC_MAIN;
-	sockname = OSPF6D_SOCKET;
 
 	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
 	log_procinit(log_procnames[ospfd_process]);
-	log_setverbose(1);
 
 	while ((ch = getopt(argc, argv, "cdD:f:s:nv")) != -1) {
 		switch (ch) {
@@ -182,6 +182,13 @@ main(int argc, char *argv[])
 	/* parse config file */
 	if ((ospfd_conf = parse_config(conffile, opts)) == NULL )
 		exit(1);
+
+	if (sockname == NULL) {
+		if (asprintf(&sockname, "%s.%d", OSPF6D_SOCKET,
+		    ospfd_conf->rdomain) == -1)
+			err(1, "asprintf");
+	}
+
 	ospfd_conf->csock = sockname;
 
 	if (ospfd_conf->opts & OSPFD_OPT_NOACTION) {
@@ -202,6 +209,9 @@ main(int argc, char *argv[])
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(ospfd_conf->opts & OSPFD_OPT_VERBOSE);
+
+	if ((control_check(ospfd_conf->csock)) == -1)
+		fatalx("ospf6d already running");
 
 	if (!debug)
 		daemon(1, 0);
@@ -260,7 +270,17 @@ main(int argc, char *argv[])
 	    iev_rde->handler, iev_rde);
 	event_add(&iev_rde->ev, NULL);
 
-	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE)) == -1)
+	if ((control_fd = control_init(ospfd_conf->csock)) == -1)
+		fatalx("control socket setup failed");
+	main_imsg_compose_ospfe_fd(IMSG_CONTROLFD, 0, control_fd);
+
+	if (unveil(ospfd_conf->csock, "c") == -1)
+		fatal("unveil");
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil");
+
+	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE),
+	    ospfd_conf->rdomain, ospfd_conf->fib_priority) == -1)
 		fatalx("kr_init failed");
 
 	event_dispatch();
@@ -450,6 +470,14 @@ main_imsg_compose_ospfe(int type, pid_t pid, void *data, u_int16_t datalen)
 }
 
 void
+main_imsg_compose_ospfe_fd(int type, pid_t pid, int fd)
+{
+	if (iev_ospfe == NULL)
+		return;
+	imsg_compose_event(iev_ospfe, type, 0, pid, fd, NULL, 0);
+}
+
+void
 main_imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
 	if (iev_rde == NULL)
@@ -486,17 +514,28 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 {
 	struct redistribute	*r;
 	struct in6_addr		 ina, inb;
+	struct iface		*iface;
 	u_int8_t		 is_default = 0;
+	int			 depend_ok;
 
 	/* only allow ::/0 via REDIST_DEFAULT */
 	if (IN6_IS_ADDR_UNSPECIFIED(&kr->prefix) && kr->prefixlen == 0)
 		is_default = 1;
 
 	SIMPLEQ_FOREACH(r, &ospfd_conf->redist_list, entry) {
+		if (r->dependon[0] != '\0') {
+			if ((iface = if_findname(r->dependon)))
+				depend_ok = ifstate_is_up(iface);
+			else
+				depend_ok = 0;
+		} else
+			depend_ok = 1;
+
 		switch (r->type & ~REDIST_NO) {
 		case REDIST_LABEL:
 			if (kr->rtlabel == r->label) {
-				*metric = r->metric;
+				*metric = depend_ok ? r->metric :
+				    r->metric | MAX_METRIC;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
@@ -511,7 +550,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_STATIC) {
-				*metric = r->metric;
+				*metric = depend_ok ? r->metric :
+				    r->metric | MAX_METRIC;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
@@ -521,7 +561,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_CONNECTED) {
-				*metric = r->metric;
+				*metric = depend_ok ? r->metric :
+				    r->metric | MAX_METRIC;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
@@ -532,7 +573,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			if (IN6_IS_ADDR_UNSPECIFIED(&r->addr) &&
 			    r->prefixlen == 0) {
 				if (is_default) {
-					*metric = r->metric;
+					*metric = depend_ok ? r->metric :
+					    r->metric | MAX_METRIC;
 					return (r->type & REDIST_NO ? 0 : 1);
 				} else
 					return (0);
@@ -542,13 +584,15 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			inet6applymask(&inb, &r->addr, r->prefixlen);
 			if (IN6_ARE_ADDR_EQUAL(&ina, &inb) &&
 			    kr->prefixlen >= r->prefixlen) {
-				*metric = r->metric;
+				*metric = depend_ok ? r->metric :
+				    r->metric | MAX_METRIC;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
 		case REDIST_DEFAULT:
 			if (is_default) {
-				*metric = r->metric;
+				*metric = depend_ok ? r->metric :
+				    r->metric | MAX_METRIC;
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
@@ -567,6 +611,8 @@ ospf_reload(void)
 
 	if ((xconf = parse_config(conffile, ospfd_conf->opts)) == NULL)
 		return (-1);
+
+	/* XXX bail out if router-id changed */
 
 	/* send config to childs */
 	if (ospf_sendboth(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
@@ -774,4 +820,15 @@ iface_lookup(struct area *area, struct iface *iface)
 		if (i->ifindex == iface->ifindex)
 			return (i);
 	return (NULL);
+}
+
+int
+ifstate_is_up(struct iface *iface)
+{
+	if (!(iface->flags & IFF_UP))
+		return (0);
+	if (iface->if_type == IFT_CARP &&
+	    iface->linkstate == LINK_STATE_UNKNOWN)
+		return (0);
+	return LINK_STATE_IS_UP(iface->linkstate);
 }

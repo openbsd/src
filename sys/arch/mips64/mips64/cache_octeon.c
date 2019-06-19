@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_octeon.c,v 1.12 2017/10/11 14:24:12 visa Exp $	*/
+/*	$OpenBSD: cache_octeon.c,v 1.13 2018/12/04 16:24:13 visa Exp $	*/
 /*
  * Copyright (c) 2010 Takuya ASADA.
  *
@@ -93,6 +93,9 @@ Octeon_ConfigCache(struct cpu_info *ci)
 		break;
 
 	case MIPS_CN61XX:
+	case MIPS_CN63XX:
+	case MIPS_CN66XX:
+	case MIPS_CN68XX:
 		/* OCTEON II */
 
 		ci->ci_l1inst.linesize = 128;
@@ -109,6 +112,7 @@ Octeon_ConfigCache(struct cpu_info *ci)
 
 	case MIPS_CN71XX:
 	case MIPS_CN73XX:
+	case MIPS_CN78XX:
 		/* OCTEON III */
 
 		ci->ci_l1inst.linesize = 128;

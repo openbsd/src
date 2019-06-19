@@ -5,6 +5,11 @@ use Test::More;
 use CPAN::Meta;
 use CPAN::Meta::Merge;
 
+delete $ENV{PERL_YAML_BACKEND};
+delete $ENV{PERL_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_DECODER};
+
 my %base = (
 	abstract => 'This is a test',
 	author => ['A.U. Thor'],

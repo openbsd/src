@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmuxvar.h,v 1.10 2014/01/26 17:48:08 miod Exp $	*/
+/*	$OpenBSD: wsmuxvar.h,v 1.11 2019/02/18 17:39:14 anton Exp $	*/
 /*      $NetBSD: wsmuxvar.h,v 1.10 2005/04/30 03:47:12 augustss Exp $   */
 
 /*
@@ -77,6 +77,7 @@ struct wsmux_softc {
 	struct wsevsrc sc_base;
 	struct proc *sc_p;		/* open proc */
 	TAILQ_HEAD(, wsevsrc) sc_cld;	/* list of children */
+	struct rwlock sc_lock;		/* lock for sc_cld */
 	u_int32_t sc_kbd_layout;	/* current layout of keyboard */
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int sc_rawkbd;			/* A hack to remember the kbd mode */

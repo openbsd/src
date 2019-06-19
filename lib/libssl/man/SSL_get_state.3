@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_get_state.3,v 1.4 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: SSL_get_state.3,v 1.5 2019/06/12 09:36:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 12 2019 $
 .Dt SSL_GET_STATE 3
 .Os
 .Sh NAME
@@ -140,6 +140,7 @@ other bits.
 .Pp
 All these functions may be implemented as macros.
 .Sh SEE ALSO
+.Xr ssl 3 ,
 .Xr SSL_renegotiate 3 ,
 .Xr SSL_set_connect_state 3
 .Sh HISTORY

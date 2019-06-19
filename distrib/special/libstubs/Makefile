@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.19 2018/03/08 16:07:36 beck Exp $
+#	$OpenBSD: Makefile,v 1.20 2018/11/11 06:41:28 bcook Exp $
 
 .include <bsd.own.mk>
 LIB=    stubs
 SRCS=	db.c setlocale.c sha1.c sha2.c getgrent.c getpwent.c \
-	ethers.c pthread_once.c \
+	ethers.c pthread_mutex.c pthread_once.c \
 	mbrtowc_sb.c sscanf.c vfprintf.c vfscanf.c
 SRCS+=	asr.c			\
 	asr_utils.c		\

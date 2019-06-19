@@ -88,8 +88,7 @@
    Dean Roerich's Perl 5 API document. Also, have a look in the typemap 
    file (in the ext directory) for a fairly comprehensive list of types 
    that are already supported. If you are completely stuck, I suggest you
-   post a message to perl5-porters, comp.lang.perl.misc or if you are really 
-   desperate to me.
+   post a message to perl5-porters.
 
    Remember when you are making any changes that the return value from 
    dl_load_file is used as a parameter in the dl_find_symbol 
@@ -256,7 +255,7 @@ dl_install_xsub(perl_name, symref, filename="$Package")
     void *		symref 
     const char *	filename
     CODE:
-    DLDEBUG(2,PerlIO_printf(Perl_debug_log, "dl_install_xsub(name=%s, symref=%"UVxf")\n",
+    DLDEBUG(2,PerlIO_printf(Perl_debug_log, "dl_install_xsub(name=%s, symref=%" UVxf ")\n",
 		perl_name, PTR2UV(symref)));
     ST(0) = sv_2mortal(newRV((SV*)newXS_flags(perl_name,
 					      DPTR2FPTR(XSUBADDR_t, symref),

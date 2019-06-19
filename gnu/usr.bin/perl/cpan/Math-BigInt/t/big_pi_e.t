@@ -13,22 +13,22 @@ use Math::BigFloat;
 
 my $pi = Math::BigFloat::bpi();
 
-ok(!exists $pi->{_a}, 'A not set');
-ok(!exists $pi->{_p}, 'P not set');
+is($pi->{_a}, undef, 'A is not defined');
+is($pi->{_p}, undef, 'P is not defined');
 
 $pi = Math::BigFloat->bpi();
 
-ok(!exists $pi->{_a}, 'A not set');
-ok(!exists $pi->{_p}, 'P not set');
+is($pi->{_a}, undef, 'A is not defined');
+is($pi->{_p}, undef, 'P is not defined');
 
 $pi = Math::BigFloat->bpi(10);
 
-is($pi->{_a}, 10, 'A set');
-is($pi->{_p}, undef, 'P not set');
+is($pi->{_a}, 10,    'A is defined');
+is($pi->{_p}, undef, 'P is not defined');
 
 #############################################################################
 
 my $e = Math::BigFloat->new(1)->bexp();
 
-ok(!exists $e->{_a}, 'A not set');
-ok(!exists $e->{_p}, 'P not set');
+is($e->{_a}, undef, 'A is not defined');
+is($e->{_p}, undef, 'P is not defined');

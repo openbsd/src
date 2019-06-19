@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.15 2018/08/24 20:22:15 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -201,7 +201,7 @@ pub_decode_gost01(EVP_PKEY *pk, X509_PUBKEY *pub)
 	    == 0)
 		return 0;
 	(void)EVP_PKEY_assign_GOST(pk, NULL);
-	X509_ALGOR_get0(NULL, &ptype, (void **)&pval, palg);
+	X509_ALGOR_get0(NULL, &ptype, (const void **)&pval, palg);
 	if (ptype != V_ASN1_SEQUENCE) {
 		GOSTerror(GOST_R_BAD_KEY_PARAMETERS_FORMAT);
 		return 0;
@@ -394,14 +394,14 @@ priv_print_gost01(BIO *out, const EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx)
 }
 
 static int
-priv_decode_gost01(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
+priv_decode_gost01(EVP_PKEY *pk, const PKCS8_PRIV_KEY_INFO *p8inf)
 {
 	const unsigned char *pkey_buf = NULL, *p = NULL;
 	int priv_len = 0;
 	BIGNUM *pk_num = NULL;
 	int ret = 0;
-	X509_ALGOR *palg = NULL;
-	ASN1_OBJECT *palg_obj = NULL;
+	const X509_ALGOR *palg = NULL;
+	const ASN1_OBJECT *palg_obj = NULL;
 	ASN1_INTEGER *priv_key = NULL;
 	GOST_KEY *ec;
 	int ptype = V_ASN1_UNDEF;
@@ -410,7 +410,7 @@ priv_decode_gost01(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
 	if (PKCS8_pkey_get0(&palg_obj, &pkey_buf, &priv_len, &palg, p8inf) == 0)
 		return 0;
 	(void)EVP_PKEY_assign_GOST(pk, NULL);
-	X509_ALGOR_get0(NULL, &ptype, (void **)&pval, palg);
+	X509_ALGOR_get0(NULL, &ptype, (const void **)&pval, palg);
 	if (ptype != V_ASN1_SEQUENCE) {
 		GOSTerror(GOST_R_BAD_KEY_PARAMETERS_FORMAT);
 		return 0;
@@ -421,21 +421,17 @@ priv_decode_gost01(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
 	p = pkey_buf;
 	if (V_ASN1_OCTET_STRING == *p) {
 		/* New format - Little endian octet string */
-		unsigned char rev_buf[32];
-		int i;
 		ASN1_OCTET_STRING *s =
 		    d2i_ASN1_OCTET_STRING(NULL, &p, priv_len);
 
-		if (s == NULL || s->length != 32) {
+		if (s == NULL) {
 			GOSTerror(EVP_R_DECODE_ERROR);
 			ASN1_STRING_free(s);
 			return 0;
 		}
-		for (i = 0; i < 32; i++) {
-			rev_buf[31 - i] = s->data[i];
-		}
+
+		pk_num = GOST_le2bn(s->data, s->length, NULL);
 		ASN1_STRING_free(s);
-		pk_num = BN_bin2bn(rev_buf, 32, NULL);
 	} else {
 		priv_key = d2i_ASN1_INTEGER(NULL, &p, priv_len);
 		if (priv_key == NULL)

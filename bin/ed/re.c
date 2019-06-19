@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.17 2016/03/22 17:58:28 mmcc Exp $	*/
+/*	$OpenBSD: re.c,v 1.19 2018/06/19 12:36:18 martijn Exp $	*/
 /*	$NetBSD: re.c,v 1.14 1995/03/21 09:04:48 cgd Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for

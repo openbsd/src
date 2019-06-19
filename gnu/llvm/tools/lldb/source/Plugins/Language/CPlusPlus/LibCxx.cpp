@@ -123,12 +123,11 @@ bool lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEnd::Update() {
   
   static ConstString g___i_("__i_");
   
-  // this must be a ValueObject* because it is a child of the ValueObject we are
-  // producing children for
-  // it if were a ValueObjectSP, we would end up with a loop (iterator ->
-  // synthetic -> child -> parent == iterator)
-  // and that would in turn leak memory by never allowing the ValueObjects to
-  // die and free their memory
+  // this must be a ValueObject* because it is a child of the ValueObject we
+  // are producing children for it if were a ValueObjectSP, we would end up
+  // with a loop (iterator -> synthetic -> child -> parent == iterator) and
+  // that would in turn leak memory by never allowing the ValueObjects to die
+  // and free their memory
   m_pair_ptr = valobj_sp
                    ->GetValueForExpressionPath(
                        ".__i_.__ptr_->__value_", nullptr, nullptr,
@@ -153,12 +152,11 @@ bool lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEnd::Update() {
                      .get();
     if (m_pair_ptr) {
       auto __i_(valobj_sp->GetChildMemberWithName(g___i_, true));
-      lldb::TemplateArgumentKind kind;
       if (!__i_) {
         m_pair_ptr = nullptr;
         return false;
       }
-      CompilerType pair_type(__i_->GetCompilerType().GetTemplateArgument(0, kind));
+      CompilerType pair_type(__i_->GetCompilerType().GetTypeTemplateArgument(0));
       std::string name; uint64_t bit_offset_ptr; uint32_t bitfield_bit_size_ptr; bool is_bitfield_ptr;
       pair_type = pair_type.GetFieldAtIndex(0, name, &bit_offset_ptr, &bitfield_bit_size_ptr, &is_bitfield_ptr);
       if (!pair_type) {
@@ -387,7 +385,8 @@ enum LibcxxStringLayoutMode {
 };
 
 // this function abstracts away the layout and mode details of a libc++ string
-// and returns the address of the data and the size ready for callers to consume
+// and returns the address of the data and the size ready for callers to
+// consume
 static bool ExtractLibcxxStringInfo(ValueObject &valobj,
                                     ValueObjectSP &location_sp,
                                     uint64_t &size) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.83 2018/02/06 22:14:52 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.93 2019/02/27 06:00:29 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_llc.h>
+#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -89,7 +90,7 @@ ieee80211_proto_attach(struct ifnet *ifp)
 
 	ifp->if_hdrlen = sizeof(struct ieee80211_frame);
 
-	ic->ic_rtsthreshold = IEEE80211_RTS_DEFAULT;
+	ic->ic_rtsthreshold = IEEE80211_RTS_MAX;
 	ic->ic_fragthreshold = 2346;		/* XXX not used yet */
 	ic->ic_fixed_rate = -1;			/* no fixed rate */
 	ic->ic_fixed_mcs = -1;			/* no fixed mcs */
@@ -542,7 +543,8 @@ ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	int i;
 
-	ni->ni_flags &= ~IEEE80211_NODE_HT; 
+	ni->ni_flags &= ~(IEEE80211_NODE_HT | IEEE80211_NODE_HT_SGI20 |
+	    IEEE80211_NODE_HT_SGI40);
 
 	/* Check if we support HT. */
 	if ((ic->ic_modecaps & (1 << IEEE80211_MODE_11N)) == 0)
@@ -552,7 +554,7 @@ ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if ((ic->ic_flags & IEEE80211_F_HTON) == 0)
 		return;
 
-	/* 
+	/*
 	 * Check if the peer supports HT.
 	 * Require at least one of the mandatory MCS.
 	 * MCS 0-7 are mandatory but some APs have particular MCS disabled.
@@ -573,7 +575,7 @@ ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 		}
 	}
 
-	/* 
+	/*
 	 * Don't allow group cipher (includes WEP) or TKIP
 	 * for pairwise encryption (see 802.11-2012 11.1.6).
 	 */
@@ -588,7 +590,9 @@ ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 		return;
 	}
 
-	ni->ni_flags |= IEEE80211_NODE_HT; 
+	ni->ni_flags |= IEEE80211_NODE_HT;
+
+	/* Flags IEEE8021_NODE_HT_SGI20/40 are set by drivers if supported. */
 }
 
 void
@@ -734,6 +738,47 @@ ieee80211_auth_open_confirm(struct ieee80211com *ic,
 #endif
 
 void
+ieee80211_try_another_bss(struct ieee80211com *ic)
+{
+	struct ieee80211_node *curbs, *selbs;
+	struct ifnet *ifp = &ic->ic_if;
+
+	/* Don't select our current AP again. */
+	curbs = ieee80211_find_node(ic, ic->ic_bss->ni_macaddr);
+	if (curbs) {
+		curbs->ni_fails++;
+		ieee80211_node_newstate(curbs, IEEE80211_STA_CACHE);
+	}
+
+	/* Try a different AP from the same ESS if available. */
+	if (ic->ic_caps & IEEE80211_C_SCANALLBAND) {
+		/*
+		 * Make sure we will consider APs on all bands during
+		 * access point selection in ieee80211_node_choose_bss().
+		 * During multi-band scans, our previous AP may be trying
+		 * to steer us onto another band by denying authentication.
+		 */
+		ieee80211_setmode(ic, IEEE80211_MODE_AUTO);
+	}
+	selbs = ieee80211_node_choose_bss(ic, 0, NULL);
+	if (selbs == NULL)
+		return;
+
+	/* Should not happen but seriously, don't try the same AP again. */
+	if (memcmp(selbs->ni_macaddr, ic->ic_bss->ni_macaddr,
+	    IEEE80211_NWID_LEN) == 0)
+		return;
+
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: trying AP %s on channel %d instead\n",
+		    ifp->if_xname, ether_sprintf(selbs->ni_macaddr),
+		    ieee80211_chan2ieee(ic, selbs->ni_chan));
+
+	/* Triggers an AUTH->AUTH transition, avoiding another SCAN. */
+	ieee80211_node_join_bss(ic, selbs);
+}
+
+void
 ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
     struct ieee80211_node *ni, struct ieee80211_rxinfo *rxi, u_int16_t seq,
     u_int16_t status)
@@ -784,7 +829,7 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 			ni->ni_chan = ic->ic_bss->ni_chan;
 		}
 
-		/* 
+		/*
 		 * Drivers may want to set up state before confirming.
 		 * In which case this returns EBUSY and the driver will
 		 * later call ieee80211_auth_open_confirm() by itself.
@@ -816,11 +861,13 @@ ieee80211_auth_open(struct ieee80211com *ic, const struct ieee80211_frame *wh,
 		if (status != 0) {
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: open authentication failed "
-				    "(reason %d) for %s\n", ifp->if_xname,
+				    "(status %d) for %s\n", ifp->if_xname,
 				    status,
 				    ether_sprintf((u_int8_t *)wh->i_addr3));
 			if (ni != ic->ic_bss)
 				ni->ni_fails++;
+			else
+				ieee80211_try_another_bss(ic);
 			ic->ic_stats.is_rx_auth_fail++;
 			return;
 		}
@@ -837,7 +884,7 @@ ieee80211_set_beacon_miss_threshold(struct ieee80211com *ic)
 {
 	struct ifnet *ifp = &ic->ic_if;
 
-	/* 
+	/*
 	 * Scale the missed beacon counter threshold to the AP's actual
 	 * beacon interval. Give the AP at least 700 ms to time out and
 	 * round up to ensure that at least one beacon may be missed.
@@ -944,11 +991,12 @@ justcleanup:
 			ic->ic_mgt_timer = 0;
 			mq_purge(&ic->ic_mgtq);
 			mq_purge(&ic->ic_pwrsaveq);
-			ieee80211_free_allnodes(ic);
+			ieee80211_free_allnodes(ic, 1);
 			break;
 		}
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
-		ieee80211_crypto_clear_groupkeys(ic);
+		if (ic->ic_flags & IEEE80211_F_RSNON)
+			ieee80211_crypto_clear_groupkeys(ic);
 		break;
 	case IEEE80211_S_SCAN:
 		ic->ic_flags &= ~IEEE80211_F_SIBSS;
@@ -960,7 +1008,8 @@ justcleanup:
 		ni->ni_associd = 0;
 		ni->ni_rstamp = 0;
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
-		ieee80211_crypto_clear_groupkeys(ic);
+		if (ic->ic_flags & IEEE80211_F_RSNON)
+			ieee80211_crypto_clear_groupkeys(ic);
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 #ifndef IEEE80211_STA_ONLY
@@ -992,7 +1041,7 @@ justcleanup:
 			}
 			timeout_del(&ic->ic_bgscan_timeout);
 			ic->ic_bgscan_fail = 0;
-			ieee80211_free_allnodes(ic);
+			ieee80211_free_allnodes(ic, 1);
 			/* FALLTHROUGH */
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_ASSOC:
@@ -1006,11 +1055,12 @@ justcleanup:
 		break;
 	case IEEE80211_S_AUTH:
 		ni->ni_rsn_supp_state = RSNA_SUPP_INITIALIZE;
-		ieee80211_crypto_clear_groupkeys(ic);
+		if (ic->ic_flags & IEEE80211_F_RSNON)
+			ieee80211_crypto_clear_groupkeys(ic);
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: invalid transition %s -> %s",
+				printf("%s: invalid transition %s -> %s\n",
 				    ifp->if_xname, ieee80211_state_name[ostate],
 				    ieee80211_state_name[nstate]);
 			break;
@@ -1022,9 +1072,11 @@ justcleanup:
 		case IEEE80211_S_ASSOC:
 			switch (mgt) {
 			case IEEE80211_FC0_SUBTYPE_AUTH:
-				/* ??? */
-				IEEE80211_SEND_MGMT(ic, ni,
-				    IEEE80211_FC0_SUBTYPE_AUTH, 2);
+				if (ic->ic_opmode == IEEE80211_M_STA) {
+					IEEE80211_SEND_MGMT(ic, ni,
+					    IEEE80211_FC0_SUBTYPE_AUTH,
+					    IEEE80211_AUTH_OPEN_REQUEST);
+				}
 				break;
 			case IEEE80211_FC0_SUBTYPE_DEAUTH:
 				/* ignore and retry scan on timeout */
@@ -1055,7 +1107,7 @@ justcleanup:
 		case IEEE80211_S_SCAN:
 		case IEEE80211_S_ASSOC:
 			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: invalid transition %s -> %s",
+				printf("%s: invalid transition %s -> %s\n",
 				    ifp->if_xname, ieee80211_state_name[ostate],
 				    ieee80211_state_name[nstate]);
 			break;
@@ -1072,10 +1124,12 @@ justcleanup:
 	case IEEE80211_S_RUN:
 		switch (ostate) {
 		case IEEE80211_S_INIT:
+			if (ic->ic_opmode == IEEE80211_M_MONITOR)
+				break;
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_RUN:
 			if (ifp->if_flags & IFF_DEBUG)
-				printf("%s: invalid transition %s -> %s",
+				printf("%s: invalid transition %s -> %s\n",
 				    ifp->if_xname, ieee80211_state_name[ostate],
 				    ieee80211_state_name[nstate]);
 			break;
@@ -1148,6 +1202,20 @@ ieee80211_set_link_state(struct ieee80211com *ic, int nstate)
 	}
 	if (nstate != ifp->if_link_state) {
 		ifp->if_link_state = nstate;
+		if (LINK_STATE_IS_UP(nstate)) {
+			struct if_ieee80211_data ifie;
+			memset(&ifie, 0, sizeof(ifie));
+			ifie.ifie_nwid_len = ic->ic_bss->ni_esslen;
+			memcpy(ifie.ifie_nwid, ic->ic_bss->ni_essid,
+			    sizeof(ifie.ifie_nwid));
+			memcpy(ifie.ifie_addr, ic->ic_bss->ni_bssid,
+			    sizeof(ifie.ifie_addr));
+			ifie.ifie_channel = ieee80211_chan2ieee(ic,
+			    ic->ic_bss->ni_chan);
+			ifie.ifie_flags = ic->ic_flags;
+			ifie.ifie_xflags = ic->ic_xflags;
+			rtm_80211info(&ic->ic_if, &ifie);
+		}
 		if_link_state_change(ifp);
 	}
 }

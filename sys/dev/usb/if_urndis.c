@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.67 2017/07/19 16:31:56 mikeb Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.69 2019/01/22 18:06:05 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -826,7 +826,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 	ifp = GET_IFP(sc);
 	offset = 0;
 
-	while (len > 0) {
+	while (len > 1) {
 		msg = (struct rndis_packet_msg *)((char*)c->sc_buf + offset);
 		m = c->sc_mbuf;
 
@@ -839,7 +839,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 			    DEVNAME(sc),
 			    len,
 			    sizeof(*msg));
-			return;
+			break;
 		}
 
 		DPRINTF(("%s: urndis_decap len %u data(off:%u len:%u) "
@@ -859,14 +859,14 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 			    DEVNAME(sc),
 			    letoh32(msg->rm_type),
 			    REMOTE_NDIS_PACKET_MSG);
-			return;
+			break;
 		}
 		if (letoh32(msg->rm_len) < sizeof(*msg)) {
 			printf("%s: urndis_decap invalid msg len %u < %zu\n",
 			    DEVNAME(sc),
 			    letoh32(msg->rm_len),
 			    sizeof(*msg));
-			return;
+			break;
 		}
 		if (letoh32(msg->rm_len) > len) {
 			printf("%s: urndis_decap invalid msg len %u > buffer "
@@ -874,7 +874,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 			    DEVNAME(sc),
 			    letoh32(msg->rm_len),
 			    len);
-			return;
+			break;
 		}
 
 		if (letoh32(msg->rm_dataoffset) +
@@ -889,7 +889,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 			    letoh32(msg->rm_dataoffset) +
 			    letoh32(msg->rm_datalen) + RNDIS_HEADER_OFFSET,
 			    letoh32(msg->rm_len));
-			return;
+			break;
 		}
 
 		if (letoh32(msg->rm_datalen) < sizeof(struct ether_header)) {
@@ -899,7 +899,7 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 			    DEVNAME(sc),
 			    letoh32(msg->rm_datalen),
 			    sizeof(struct ether_header)));
-			return;
+			break;
 		}
 
 		memcpy(mtod(m, char*),
@@ -916,6 +916,8 @@ urndis_decap(struct urndis_softc *sc, struct urndis_chain *c, u_int32_t len)
 		offset += letoh32(msg->rm_len);
 		len -= letoh32(msg->rm_len);
 	}
+	if (ml_empty(&ml))
+		return;
 
 	s = splnet();
 	if_input(ifp, &ml);
@@ -1010,7 +1012,7 @@ urndis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	int			 s, error = 0;
 
 	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
+		return ENXIO;
 
 	s = splnet();
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_lib.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: dso_lib.c,v 1.20 2018/08/24 19:27:01 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -174,13 +174,15 @@ DSO_flags(DSO *dso)
 int
 DSO_up_ref(DSO *dso)
 {
+	int refs;
+
 	if (dso == NULL) {
 		DSOerror(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
 
-	CRYPTO_add(&dso->references, 1, CRYPTO_LOCK_DSO);
-	return (1);
+	refs = CRYPTO_add(&dso->references, 1, CRYPTO_LOCK_DSO);
+	return ((refs > 1) ? 1 : 0);
 }
 
 DSO *

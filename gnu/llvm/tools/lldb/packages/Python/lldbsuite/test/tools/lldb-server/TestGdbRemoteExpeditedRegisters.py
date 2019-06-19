@@ -11,6 +11,7 @@ class TestGdbRemoteExpeditedRegisters(
         gdbremote_testcase.GdbRemoteTestCaseBase):
 
     mydir = TestBase.compute_mydir(__file__)
+    @skipIfDarwinEmbedded # <rdar://problem/34539270> lldb-server tests not updated to work on ios etc yet
 
     def gather_expedited_registers(self):
         # Setup the stub and set the gdb remote command stream.
@@ -124,6 +125,8 @@ class TestGdbRemoteExpeditedRegisters(
         self.set_inferior_startup_launch()
         self.stop_notification_contains_pc_register()
 
+    # powerpc64 has no FP register
+    @skipIf(triple='^powerpc64')
     def stop_notification_contains_fp_register(self):
         self.stop_notification_contains_generic_register("fp")
 

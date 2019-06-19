@@ -15,7 +15,7 @@
 
 #include "PPC.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
@@ -30,7 +30,7 @@ class PPCFrameLowering: public TargetFrameLowering {
   const unsigned BasePointerSaveOffset;
 
   /**
-   * \brief Find register[s] that can be used in function prologue and epilogue
+   * Find register[s] that can be used in function prologue and epilogue
    *
    * Find register[s] that can be use as scratch register[s] in function
    * prologue and epilogue to save various registers (Link Register, Base
@@ -67,7 +67,7 @@ class PPCFrameLowering: public TargetFrameLowering {
   bool twoUniqueScratchRegsRequired(MachineBasicBlock *MBB) const;
 
   /**
-   * \brief Create branch instruction for PPC::TCRETURN* (tail call return)
+   * Create branch instruction for PPC::TCRETURN* (tail call return)
    *
    * \param[in] MBB that is terminated by PPC::TCRETURN*
    */
@@ -106,7 +106,7 @@ public:
 
   bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator MI,
-                                  const std::vector<CalleeSavedInfo> &CSI,
+                                  std::vector<CalleeSavedInfo> &CSI,
                                   const TargetRegisterInfo *TRI) const override;
 
   /// targetHandlesStackFrameRounding - Returns true if the target is

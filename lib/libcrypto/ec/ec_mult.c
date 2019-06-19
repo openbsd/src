@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.21 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.24 2018/07/15 16:27:39 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -301,7 +301,7 @@ compute_wNAF(const BIGNUM * scalar, int w, size_t * ret_len)
 	len = j;
 	ok = 1;
 
-err:
+ err:
 	if (!ok) {
 		free(r);
 		r = NULL;
@@ -678,7 +678,7 @@ ec_wNAF_mul(const EC_GROUP * group, EC_POINT * r, const BIGNUM * scalar,
 
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_free(new_ctx);
 	EC_POINT_free(tmp);
 	free(wsize);
@@ -857,7 +857,7 @@ ec_wNAF_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 	pre_comp = NULL;
 
 	ret = 1;
-err:
+ err:
 	if (ctx != NULL)
 		BN_CTX_end(ctx);
 	BN_CTX_free(new_ctx);

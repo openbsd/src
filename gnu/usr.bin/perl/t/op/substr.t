@@ -22,7 +22,7 @@ $SIG{__WARN__} = sub {
      }
 };
 
-plan(388);
+plan(400);
 
 run_tests() unless caller;
 
@@ -711,14 +711,6 @@ is($x, "\x{100}\x{200}\xFFb");
 
 }
 
-# [perl #23765]
-{
-    my $a = pack("C", 0xbf);
-    no warnings 'deprecated';
-    substr($a, -1) &= chr(0xfeff);
-    is($a, "\xbf");
-}
-
 # [perl #34976] incorrect caching of utf8 substr length
 {
     my  $a = "abcd\x{100}";
@@ -839,6 +831,14 @@ is $o::count, 1, 'assigning utf8 overload to substr lvalue calls ovld 1ce';
 # [perl #7678] core dump with substr reference and localisation
 {$b="abcde"; local $k; *k=\substr($b, 2, 1);}
 
+# [perl #128260] assertion failure with \substr %h, \substr @h
+{
+    my %h = 1..100;
+    my @a = 1..100;
+    is ${\substr %h, 0}, scalar %h, '\substr %h';
+    is ${\substr @a, 0}, scalar @a, '\substr @a';
+}
+
 } # sub run_tests - put tests above this line that can run in threads
 
 
@@ -869,3 +869,53 @@ is($destroyed, 1, 'Timely scalar destruction with lvalue substr');
 
     is($result_3363, "best", "ref-to-substr retains lvalue-ness under recursion [perl #3363]");
 }
+
+# failed with ASAN
+fresh_perl_is('$0 = "/usr/bin/perl"; substr($0, 0, 0, $0)', '', {}, "(perl #129340) substr() with source in target");
+
+
+# [perl #130624] - heap-use-after-free, observable under asan
+{
+    my $x = "\xE9zzzz";
+    my $y = "\x{100}";
+    my $z = substr $x, 0, 1, $y;
+    is $z, "\xE9",        "RT#130624: heap-use-after-free in 4-arg substr (ret)";
+    is $x, "\x{100}zzzz", "RT#130624: heap-use-after-free in 4-arg substr (targ)";
+}
+
+{
+    our @ta;
+    $#ta = -1;
+    substr($#ta, 0, 2) = 23;
+    is $#ta, 23;
+    $#ta = -1;
+    substr($#ta, 0, 2) =~ s/\A..\z/23/s;
+    is $#ta, 23;
+    $#ta = -1;
+    substr($#ta, 0, 2, 23);
+    is $#ta, 23;
+    sub ta_tindex :lvalue { $#ta }
+    $#ta = -1;
+    ta_tindex() = 23;
+    is $#ta, 23;
+    $#ta = -1;
+    substr(ta_tindex(), 0, 2) = 23;
+    is $#ta, 23;
+    $#ta = -1;
+    substr(ta_tindex(), 0, 2) =~ s/\A..\z/23/s;
+    is $#ta, 23;
+    $#ta = -1;
+    substr(ta_tindex(), 0, 2, 23);
+    is $#ta, 23;
+}
+
+{ # [perl #132527]
+    use feature 'refaliasing';
+    no warnings 'experimental::refaliasing';
+    my %h;
+    \$h{foo} = \(my $bar = "baz");
+    substr delete $h{foo}, 1, 1, o=>;
+    is $bar, boz => 'first arg to 4-arg substr is loose lvalue context';
+}
+
+1;

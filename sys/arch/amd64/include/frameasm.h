@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.12 2018/02/21 19:24:15 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.21 2019/05/12 21:27:47 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -28,32 +28,72 @@
 	movq	%rdi,TF_RDI(%rsp)	; \
 	movq	%rsi,TF_RSI(%rsp)	; \
 	movq	%rbp,TF_RBP(%rsp)	; \
+	leaq	TF_RBP(%rsp),%rbp	; \
 	movq	%rbx,TF_RBX(%rsp)	; \
 	movq	%rdx,TF_RDX(%rsp)	; \
 	movq	%rax,TF_RAX(%rsp)
 
+/*
+ * We clear registers when coming from userspace to prevent
+ * user-controlled values from being available for use in speculative
+ * execution in the kernel.  %rsp and %rbp are the kernel values when
+ * this is used, so there are only 14 to clear.  32bit operations clear
+ * the register upper-halves automatically.
+ */
+#define INTR_CLEAR_GPRS \
+	xorl	%eax,%eax		; \
+	xorl	%ebx,%ebx		; \
+	xorl	%ecx,%ecx		; \
+	xorl	%edx,%edx		; \
+	xorl	%esi,%esi		; \
+	xorl	%edi,%edi		; \
+	xorl	%r8d,%r8d		; \
+	xorl	%r9d,%r9d		; \
+	xorl	%r10d,%r10d		; \
+	xorl	%r11d,%r11d		; \
+	xorl	%r12d,%r12d		; \
+	xorl	%r13d,%r13d		; \
+	xorl	%r14d,%r14d		; \
+	xorl	%r15d,%r15d
+
+
 /* For real interrupt code paths, where we can come from userspace */
 #define INTRENTRY_LABEL(label)	X##label##_untramp
 #define	INTRENTRY(label) \
-	testq	$SEL_RPL,24(%rsp)	; \
+	testb	$SEL_RPL,24(%rsp)	; \
 	je	INTRENTRY_LABEL(label)	; \
 	swapgs				; \
 	movq	%rax,CPUVAR(SCRATCH)	; \
+	CODEPATCH_START			; \
 	movq	CPUVAR(KERN_CR3),%rax	; \
-	testq	%rax,%rax		; \
-	jz	98f			; \
 	movq	%rax,%cr3		; \
+	CODEPATCH_END(CPTAG_MELTDOWN_NOP);\
 	jmp	98f			; \
 	.text				; \
+	_ALIGN_TRAPS			; \
 	.global	INTRENTRY_LABEL(label)	; \
 INTRENTRY_LABEL(label):	/* from kernel */ \
-	subq	$152,%rsp		; \
-	movq	%rcx,TF_RCX(%rsp)	; \
+	INTR_ENTRY_KERN			; \
 	jmp	99f			; \
+	_ALIGN_TRAPS			; \
 98:	/* from userspace */		  \
+	INTR_ENTRY_USER			; \
+99:	INTR_SAVE_MOST_GPRS_NO_ADJ	; \
+	INTR_CLEAR_GPRS
+
+#define	INTR_ENTRY_KERN \
+	subq	$120,%rsp		; \
+	movq	%rcx,TF_RCX(%rsp)	; \
+	/* the hardware puts err next to %rip, we move it elsewhere and */ \
+	/* later put %rbp in this slot to make it look like a call frame */ \
+	movq	(TF_RIP - 8)(%rsp),%rcx	; \
+	movq	%rcx,TF_ERR(%rsp)
+
+#define	INTR_ENTRY_USER \
 	movq	CPUVAR(KERN_RSP),%rax	; \
 	xchgq	%rax,%rsp		; \
 	movq	%rcx,TF_RCX(%rsp)	; \
+	RET_STACK_REFILL_WITH_RCX	; \
 	/* copy trapno+err to the trap frame */ \
 	movq	0(%rax),%rcx		; \
 	movq	%rcx,TF_TRAPNO(%rsp)	; \
@@ -71,12 +111,10 @@ INTRENTRY_LABEL(label):	/* from kernel */ \
 	movq	%rcx,TF_RSP(%rsp)	; \
 	movq	IRETQ_SS(%rax),%rcx	; \
 	movq	%rcx,TF_SS(%rsp)	; \
-	movq	CPUVAR(SCRATCH),%rax	; \
-99:	INTR_SAVE_MOST_GPRS_NO_ADJ
+	movq	CPUVAR(SCRATCH),%rax
 
 /* For faking up an interrupt frame when we're already in the kernel */
 #define	INTR_REENTRY \
-	subq	$32,%rsp		; \
 	INTR_SAVE_GPRS
 
 #define INTRFASTEXIT \
@@ -91,8 +129,6 @@ INTRENTRY_LABEL(label):	/* from kernel */ \
 	movl	%cs,%r11d		; \
 	pushq	%r11			; \
 	pushq	%r13			;
-
-#define	INTR_FAKE_TRAP	0xbadabada
 
 #define CHECK_ASTPENDING(reg)	movq	CPUVAR(CURPROC),reg		; \
 				cmpq	$0, reg				; \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.106 2017/04/16 14:25:42 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.108 2019/03/04 01:06:48 dhill Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ struct bufcache {
  * Zero out the buffer's data area.
  */
 #define	clrbuf(bp) {							\
-	bzero((bp)->b_data, (u_int)(bp)->b_bcount);			\
+	bzero((bp)->b_data, (bp)->b_bcount);				\
 	(bp)->b_resid = 0;						\
 }
 
@@ -320,7 +320,7 @@ void  reassignbuf(struct buf *);
 void  bgetvp(struct vnode *, struct buf *);
 
 void  buf_replacevnode(struct buf *, struct vnode *);
-void  buf_daemon(struct proc *);
+void  buf_daemon(void *);
 void  buf_replacevnode(struct buf *, struct vnode *);
 int bread_cluster(struct vnode *, daddr_t, int, struct buf **);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.25 2017/08/30 09:23:00 otto Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.28 2019/05/11 13:13:47 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -241,7 +241,7 @@ static const char *bgpnotify_minor_fsm[] = {
 /* RFC 8203 */
 #define BGP_NOTIFY_MINOR_CEASE_SHUT			2
 #define BGP_NOTIFY_MINOR_CEASE_RESET			4
-#define BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN	128
+#define BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN	255
 static const char *bgpnotify_minor_cease[] = {
 	NULL, "Maximum Number of Prefixes Reached", "Administrative Shutdown",
 	"Peer De-configured", "Administrative Reset", "Connection Rejected",
@@ -300,6 +300,12 @@ static const char *bgpattr_nlri_safi[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 	/* 64-66: MPLS BGP RFC3107 */
 	"Tunnel", "VPLS", "MDT",
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	/* 128-129: RFC4364 + RFC6513 */
+	"L3VPN Unicast", "L3VPN Multicast",
 };
 #define bgp_attr_nlri_safi(x) \
 	num_or_str(bgpattr_nlri_safi, \
@@ -387,7 +393,6 @@ trunc:
 	return -2;
 }
 
-#ifdef INET6
 static int
 decode_prefix6(const u_char *pd, char *buf, u_int buflen)
 {
@@ -417,7 +422,6 @@ decode_prefix6(const u_char *pd, char *buf, u_int buflen)
 trunc:
 	return -2;
 }
-#endif
 
 static int
 bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
@@ -614,13 +618,7 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		}
 		p += 3;
 
-		if (af == AFNUM_INET)
-			;
-#ifdef INET6
-		else if (af == AFNUM_INET6)
-			;
-#endif
-		else
+		if (af != AFNUM_INET && af != AFNUM_INET6)
 			break;
 
 		TCHECK(p[0]);
@@ -635,13 +633,11 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 					printf(" %s", getname(p + 1 + i));
 					i += sizeof(struct in_addr);
 					break;
-#ifdef INET6
 				case AFNUM_INET6:
 					TCHECK2(p[1+i], sizeof(struct in6_addr));
 					printf(" %s", getname6(p + 1 + i));
 					i += sizeof(struct in6_addr);
 					break;
-#endif
 				default:
 					printf(" (unknown af)");
 					i = tlen;	/*exit loop*/
@@ -671,11 +667,9 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			case AFNUM_INET:
 				advance = decode_prefix4(p, buf, sizeof(buf));
 				break;
-#ifdef INET6
 			case AFNUM_INET6:
 				advance = decode_prefix6(p, buf, sizeof(buf));
 				break;
-#endif
 			default:
 				printf(" (unknown af)");
 				advance = 0;
@@ -710,11 +704,9 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			case AFNUM_INET:
 				advance = decode_prefix4(p, buf, sizeof(buf));
 				break;
-#ifdef INET6
 			case AFNUM_INET6:
 				advance = decode_prefix6(p, buf, sizeof(buf));
 				break;
-#endif
 			default:
 				printf(" (unknown af)");
 				advance = 0;
@@ -900,31 +892,9 @@ bgp_update_print(const u_char *dat, int length)
 		/*
 		 * Without keeping state from the original NLRI message,
 		 * it's not possible to tell if this a v4 or v6 route,
-		 * so only try to decode it if we're not v6 enabled.
-	         */
-#ifdef INET6
+		 * so do not try to decode it.
+		 */
 		printf(" (Withdrawn routes: %d bytes)", len);
-#else	
-		char buf[HOST_NAME_MAX+1 + 100];
-		int wpfx;
-
-		TCHECK2(p[2], len);
- 		i = 2;
-
-		printf(" (Withdrawn routes:");
-			
-		while(i < 2 + len) {
-			wpfx = decode_prefix4(&p[i], buf, sizeof(buf));
-			if (wpfx == -1) {
-				printf(" (illegal prefix length)");
-				break;
-			} else if (wpfx == -2)
-				goto trunc;
-			i += wpfx;
-			printf(" %s", buf);
-		}
-		printf(")");
-#endif
 	}
 	p += 2 + len;
 
@@ -1012,14 +982,14 @@ bgp_notification_print(const u_char *dat, int length)
 	u_int16_t af;
 	u_int8_t safi;
 	const u_char *p;
-	uint8_t shutdown_comm_length;
+	size_t shutdown_comm_length;
 	char shutstring[BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN + 1];
 
 	TCHECK2(dat[0], BGP_NOTIFICATION_SIZE);
 	memcpy(&bgpn, dat, BGP_NOTIFICATION_SIZE);
 
 	/* sanity checking */
-	if (length<BGP_NOTIFICATION_SIZE)
+	if (length < BGP_NOTIFICATION_SIZE)
 		return;
 
 	printf(": error %s,", bgp_notify_major(bgpn.bgpn_major));
@@ -1057,22 +1027,23 @@ bgp_notification_print(const u_char *dat, int length)
 		    (length >= BGP_NOTIFICATION_SIZE + 1)) {
 			p = dat + BGP_NOTIFICATION_SIZE;
 			TCHECK2(*p, 1);
-			shutdown_comm_length = *(p);
+			shutdown_comm_length = *p;
 
 			/* sanity checking */
 			if (shutdown_comm_length == 0)
 				return;
 			if (shutdown_comm_length >
 			    BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN)
-				return;
-			if (length < (shutdown_comm_length + 1 + BGP_NOTIFICATION_SIZE))
-				return;
+				goto trunc;
+			if (length < (shutdown_comm_length + 1 +
+			    BGP_NOTIFICATION_SIZE))
+				goto trunc;
 			TCHECK2(*(p+1), shutdown_comm_length);
 			
 			/* a proper shutdown communication */
-			printf(", Shutdown Communication [len %u]: \"",
+			printf(", Shutdown Communication [len %zu]: \"",
 			    shutdown_comm_length);
-			memset(shutstring, 0, BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN + 1);
+			memset(shutstring, 0, sizeof(shutstring));
 			memcpy(shutstring, p+1, shutdown_comm_length);
 			safeputs(shutstring);
 			printf("\"");

@@ -1,4 +1,4 @@
-//===--- TemplateName.cpp - C++ Template Name Representation---------------===//
+//===- TemplateName.cpp - C++ Template Name Representation ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,17 +12,26 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/TemplateName.h"
+#include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/LLVM.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/OperatorKinds.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/raw_ostream.h"
-using namespace clang;
-using namespace llvm;
+#include <cassert>
+#include <string>
 
-TemplateArgument 
+using namespace clang;
+
+TemplateArgument
 SubstTemplateTemplateParmPackStorage::getArgumentPack() const {
   return TemplateArgument(llvm::makeArrayRef(Arguments, size()));
 }
@@ -31,7 +40,7 @@ void SubstTemplateTemplateParmStorage::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, Parameter, Replacement);
 }
 
-void SubstTemplateTemplateParmStorage::Profile(llvm::FoldingSetNodeID &ID, 
+void SubstTemplateTemplateParmStorage::Profile(llvm::FoldingSetNodeID &ID,
                                            TemplateTemplateParmDecl *parameter,
                                                TemplateName replacement) {
   ID.AddPointer(parameter);
@@ -43,7 +52,7 @@ void SubstTemplateTemplateParmPackStorage::Profile(llvm::FoldingSetNodeID &ID,
   Profile(ID, Context, Parameter, getArgumentPack());
 }
 
-void SubstTemplateTemplateParmPackStorage::Profile(llvm::FoldingSetNodeID &ID, 
+void SubstTemplateTemplateParmPackStorage::Profile(llvm::FoldingSetNodeID &ID,
                                                    ASTContext &Context,
                                            TemplateTemplateParmDecl *Parameter,
                                              const TemplateArgument &ArgPack) {
@@ -131,6 +140,23 @@ DependentTemplateName *TemplateName::getAsDependentTemplateName() const {
   return Storage.dyn_cast<DependentTemplateName *>();
 }
 
+TemplateName TemplateName::getNameToSubstitute() const {
+  TemplateDecl *Decl = getAsTemplateDecl();
+
+  // Substituting a dependent template name: preserve it as written.
+  if (!Decl)
+    return *this;
+
+  // If we have a template declaration, use the most recent non-friend
+  // declaration of that template.
+  Decl = cast<TemplateDecl>(Decl->getMostRecentDecl());
+  while (Decl->getFriendObjectKind()) {
+    Decl = cast<TemplateDecl>(Decl->getPreviousDecl());
+    assert(Decl && "all declarations of template are friends");
+  }
+  return TemplateName(Decl);
+}
+
 bool TemplateName::isDependent() const {
   if (TemplateDecl *Template = getAsTemplateDecl()) {
     if (isa<TemplateTemplateParmDecl>(Template))
@@ -154,13 +180,18 @@ bool TemplateName::isInstantiationDependent() const {
     if (QTN->getQualifier()->isInstantiationDependent())
       return true;
   }
-  
+
   return isDependent();
 }
 
 bool TemplateName::containsUnexpandedParameterPack() const {
+  if (QualifiedTemplateName *QTN = getAsQualifiedTemplateName()) {
+    if (QTN->getQualifier()->containsUnexpandedParameterPack())
+      return true;
+  }
+
   if (TemplateDecl *Template = getAsTemplateDecl()) {
-    if (TemplateTemplateParmDecl *TTP 
+    if (TemplateTemplateParmDecl *TTP
                                   = dyn_cast<TemplateTemplateParmDecl>(Template))
       return TTP->isParameterPack();
 
@@ -168,7 +199,7 @@ bool TemplateName::containsUnexpandedParameterPack() const {
   }
 
   if (DependentTemplateName *DTN = getAsDependentTemplateName())
-    return DTN->getQualifier() && 
+    return DTN->getQualifier() &&
       DTN->getQualifier()->containsUnexpandedParameterPack();
 
   return getAsSubstTemplateTemplateParmPack() != nullptr;
@@ -189,7 +220,7 @@ TemplateName::print(raw_ostream &OS, const PrintingPolicy &Policy,
     if (!SuppressNNS && DTN->getQualifier())
       DTN->getQualifier()->print(OS, Policy);
     OS << "template ";
-    
+
     if (DTN->isIdentifier())
       OS << DTN->getIdentifier()->getName();
     else
@@ -209,7 +240,7 @@ TemplateName::print(raw_ostream &OS, const PrintingPolicy &Policy,
 const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
                                            TemplateName N) {
   std::string NameStr;
-  raw_string_ostream OS(NameStr);
+  llvm::raw_string_ostream OS(NameStr);
   LangOptions LO;
   LO.CPlusPlus = true;
   LO.Bool = true;

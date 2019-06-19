@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.h,v 1.2 2015/01/30 04:45:45 tedu Exp $	*/
+/*	$OpenBSD: cmds.h,v 1.4 2019/05/16 12:44:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>

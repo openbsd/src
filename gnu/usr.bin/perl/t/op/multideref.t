@@ -18,7 +18,7 @@ BEGIN {
 use warnings;
 use strict;
 
-plan 58;
+plan 63;
 
 
 # check that strict refs hint is handled
@@ -205,3 +205,31 @@ sub defer {}
         or diag("eval gave: $@");
     is($warn, "", "#123609: warn");
 }
+
+# RT #130727
+# a [ah]elem op can be both OPpLVAL_INTRO and OPpDEREF. It may not make
+# much sense, but it shouldn't fail an assert.
+
+{
+    my @x;
+    eval { @{local $x[0][0]} = 1; };
+    like $@, qr/Can't use an undefined value as an ARRAY reference/,
+                    "RT #130727 error";
+    ok !defined $x[0][0],"RT #130727 array not autovivified";
+
+    eval { @{1, local $x[0][0]} = 1; };
+    like $@, qr/Can't use an undefined value as an ARRAY reference/,
+                    "RT #130727 part 2: error";
+    ok !defined $x[0][0],"RT #130727 part 2: array not autovivified";
+
+}
+
+# RT #131627: assertion failure on OPf_PAREN on OP_GV
+{
+    my @x = (10..12);
+    our $rt131627 = 1;
+
+    no strict qw(refs vars);
+    is $x[qw(rt131627)->$*], 11, 'RT #131627: $a[qw(var)->$*]';
+}
+

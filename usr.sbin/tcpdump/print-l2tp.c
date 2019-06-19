@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-l2tp.c,v 1.9 2015/12/05 05:56:26 mmcc Exp $	*/
+/*	$OpenBSD: print-l2tp.c,v 1.10 2018/07/06 05:47:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -632,12 +632,12 @@ l2tp_print(const u_char *dat, u_int length)
 	TCHECK2(*dat, sizeof(val));
 	memcpy(&val, dat, sizeof(val));
 	if ((ntohs(val) & L2TP_VERSION_MASK) == L2TP_VERSION_L2TP) {
-		printf(" l2tp:");
+		printf("l2tp:");
 	} else if ((ntohs(val) & L2TP_VERSION_MASK) == L2TP_VERSION_L2F) {
-		printf(" l2f:");
+		printf("l2f:");
 		return;		/* nothing to do */
 	} else {
-		printf(" Unknown Version, neither L2F(1) nor L2TP(2)");
+		printf("Unknown Version, neither L2F(1) nor L2TP(2)");
 		return;		/* nothing we can do */
 	}
 

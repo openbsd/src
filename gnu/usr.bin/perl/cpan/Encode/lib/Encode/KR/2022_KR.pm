@@ -1,7 +1,7 @@
 package Encode::KR::2022_KR;
 use strict;
 use warnings;
-our $VERSION = do { my @r = ( q$Revision: 2.3 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.4 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use Encode qw(:fallbacks);
 
@@ -16,6 +16,7 @@ sub perlio_ok {
 
 sub decode {
     my ( $obj, $str, $chk ) = @_;
+    return undef unless defined $str;
     my $res     = $str;
     my $residue = iso_euc( \$res );
 
@@ -26,6 +27,7 @@ sub decode {
 
 sub encode {
     my ( $obj, $utf8, $chk ) = @_;
+    return undef unless defined $utf8;
 
     # empty the input string in the stack so perlio is ok
     $_[1] = '' if $chk;

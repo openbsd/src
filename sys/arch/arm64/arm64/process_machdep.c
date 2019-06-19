@@ -1,4 +1,4 @@
-/* $OpenBSD: process_machdep.c,v 1.3 2017/04/11 06:52:13 kettenis Exp $ */
+/* $OpenBSD: process_machdep.c,v 1.5 2018/08/03 18:36:01 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -81,26 +81,46 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 int
 process_write_regs(struct proc *p, struct reg *regs)
 {
+	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
+
+	memcpy(&tf->tf_x[0], &regs->r_reg[0], sizeof(tf->tf_x));
+	tf->tf_lr = regs->r_lr;
+	tf->tf_sp = regs->r_sp;
+	tf->tf_elr = regs->r_pc;
+	tf->tf_spsr = (0xff0f0000 & regs->r_spsr) | (tf->tf_spsr & 0x0020ffff);
+	p->p_addr->u_pcb.pcb_tcb = (void *)regs->r_tpidr;
 	return(0);
 }
 
 int
 process_write_fpregs(struct proc *p,  struct fpreg *regs)
 {
+	p->p_addr->u_pcb.pcb_flags |= PCB_FPU;
+	memcpy(&p->p_addr->u_pcb.pcb_fpstate, regs,
+	    sizeof(p->p_addr->u_pcb.pcb_fpstate));
 	return(0);
 }
 
 int
 process_sstep(struct proc *p, int sstep)
 {
-	if (sstep)
-		return (EINVAL);
+	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
+
+	if (sstep) {
+		p->p_addr->u_pcb.pcb_flags |= PCB_SINGLESTEP;
+		tf->tf_spsr |= PSR_SS;
+	} else {
+		p->p_addr->u_pcb.pcb_flags &= ~(PCB_SINGLESTEP);
+		tf->tf_spsr &= ~PSR_SS;
+	}
 	return 0;
 }
 
 int
 process_set_pc(struct proc *p, caddr_t addr)
 {
+	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
+	tf->tf_elr = (uint64_t)addr;
 	return (0);
 }
 

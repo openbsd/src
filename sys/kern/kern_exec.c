@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.193 2018/01/02 06:38:45 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.205 2019/06/01 14:11:17 mpi Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -64,6 +64,8 @@
 #include <uvm/uvm_extern.h>
 #include <machine/tcb.h>
 
+void	unveil_destroy(struct process *ps);
+
 const struct kmem_va_mode kv_exec = {
 	.kv_wait = 1,
 	.kv_map = &exec_map
@@ -115,6 +117,8 @@ check_exec(struct proc *p, struct exec_package *epp)
 	ndp = epp->ep_ndp;
 	ndp->ni_cnd.cn_nameiop = LOOKUP;
 	ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF | SAVENAME;
+	if (epp->ep_flags & EXEC_INDIR)
+		ndp->ni_cnd.cn_flags |= BYPASSUNVEIL;
 	/* first get the vnode */
 	if ((error = namei(ndp)) != 0)
 		return (error);
@@ -163,7 +167,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 		goto bad1;
 
 	/* unlock vp, we need it unlocked from here */
-	VOP_UNLOCK(vp, p);
+	VOP_UNLOCK(vp);
 
 	/* now we have the file, get the exec header */
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
@@ -183,8 +187,6 @@ check_exec(struct proc *p, struct exec_package *epp)
 		if (execsw[i].es_check == NULL)
 			continue;
 		newerror = (*execsw[i].es_check)(p, epp);
-		if (!newerror && !(epp->ep_emul->e_flags & EMUL_ENABLED))
-			newerror = EPERM;
 		/* make sure the first "interesting" error code is saved. */
 		if (!newerror || error == ENOEXEC)
 			error = newerror;
@@ -275,6 +277,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	nid.ni_pledge = PLEDGE_EXEC;
+	nid.ni_unveil = UNVEIL_EXEC;
 
 	/*
 	 * initialize the fields of the exec package.
@@ -468,6 +471,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
                 goto exec_abort;
 #endif
 
+	memset(&arginfo, 0, sizeof(arginfo));
+
 	/* remember information about the process */
 	arginfo.ps_nargvstr = argc;
 	arginfo.ps_nenvstr = envc;
@@ -532,6 +537,12 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	} else {
 		atomic_clearbits_int(&pr->ps_flags, PS_PLEDGE);
 		pr->ps_pledge = 0;
+		/* XXX XXX XXX XXX */
+		/* Clear our unveil paths out so the child
+		 * starts afresh
+		 */
+		unveil_destroy(pr);
+		pr->ps_uvdone = 0;
 	}
 
 	/*
@@ -584,7 +595,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				struct vnode *vp;
 				int indx;
 
-				if ((error = falloc(p, 0, &fp, &indx)) != 0)
+				if ((error = falloc(p, &fp, &indx)) != 0)
 					break;
 #ifdef DIAGNOSTIC
 				if (indx != i)
@@ -607,8 +618,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				fp->f_type = DTYPE_VNODE;
 				fp->f_ops = &vnops;
 				fp->f_data = (caddr_t)vp;
-				FILE_SET_MATURE(fp, p);
+				fdinsert(p->p_fd, indx, 0, fp);
 			}
+			FRELE(fp, p);
 		}
 		fdpunlock(p->p_fd);
 		if (error)

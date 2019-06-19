@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_floor.S,v 1.4 2016/09/12 19:47:01 guenther Exp $ */
+/*	$OpenBSD: s_floor.S,v 1.5 2018/07/03 22:43:34 mortimer Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -8,6 +8,7 @@
 #include "abi.h"
 
 ENTRY(floor)
+	RETGUARD_SETUP(floor, r11)
 	movsd	%xmm0, -8(%rsp)
 	fstcw	-12(%rsp)
 	movw	-12(%rsp),%dx
@@ -20,5 +21,6 @@ ENTRY(floor)
 	fldcw	-12(%rsp)
 	fstpl	-8(%rsp)
 	movsd	-8(%rsp),%xmm0
+	RETGUARD_CHECK(floor, r11)
 	ret
 END_STD(floor)

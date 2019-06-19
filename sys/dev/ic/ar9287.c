@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.25 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.28 2019/03/31 11:00:11 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -100,11 +100,11 @@ void	ar9280_spur_mitigate(struct athn_softc *, struct ieee80211_channel *,
 int
 ar9287_attach(struct athn_softc *sc)
 {
-	sc->eep_base = AR9287_EEP_START_LOC;
+	sc->eep_base = (sc->flags & ATHN_FLAG_USB) ?
+	    AR9287_HTC_EEP_START_LOC : AR9287_EEP_START_LOC;
 	sc->eep_size = sizeof(struct ar9287_eeprom);
-	sc->def_nf = AR9287_PHY_CCA_MAX_GOOD_VALUE;
 	sc->ngpiopins = (sc->flags & ATHN_FLAG_USB) ? 16 : 11;
-	sc->led_pin = 8;
+	sc->led_pin = (sc->flags & ATHN_FLAG_USB) ? 10 : 8;
 	sc->workaround = AR9285_WA_DEFAULT;
 	sc->ops.setup = ar9287_setup;
 	sc->ops.swap_rom = ar9287_swap_rom;
@@ -115,6 +115,8 @@ ar9287_attach(struct athn_softc *sc)
 	sc->ops.get_spur_chans = ar9287_get_spur_chans;
 	sc->ops.olpc_init = ar9287_olpc_init;
 	sc->ops.olpc_temp_compensation = ar9287_olpc_temp_compensation;
+	sc->cca_min_2g = AR9287_PHY_CCA_MIN_GOOD_VAL_2GHZ;
+	sc->cca_max_2g = AR9287_PHY_CCA_MAX_GOOD_VAL_2GHZ;
 	sc->ini = &ar9287_1_1_ini;
 	sc->serdes = &ar9280_2_0_serdes;
 

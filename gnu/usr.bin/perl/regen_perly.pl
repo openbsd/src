@@ -35,7 +35,8 @@ sub usage { die "usage: $0 [ -b bison_executable ] [ file.y ]\n" }
 use warnings;
 use strict;
 
-BEGIN { require 'regen/regen_lib.pl'; }
+our $Verbose;
+BEGIN { require './regen/regen_lib.pl'; }
 
 my $bison = 'bison';
 
@@ -78,7 +79,7 @@ EOF
 unless ($version =~ /\b(1\.875[a-z]?|2\.[0134567]|3\.[0])\b/) { die <<EOF; }
 
 You have the wrong version of bison in your path; currently versions
-1.875, 2.0-2.7 or 3.0 are known toi work.  Try installing
+1.875, 2.0-2.7 or 3.0 are known to work.  Try installing
     http://ftp.gnu.org/gnu/bison/bison-2.5.1.tar.gz
 or similar.  Your bison identifies itself as:
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: regexec.c,v 1.13 2014/10/11 04:23:12 doug Exp $ */
+/*	$OpenBSD: regexec.c,v 1.14 2018/07/11 12:38:46 martijn Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -141,7 +141,6 @@ regexec(const regex_t *preg, const char *string, size_t nmatch,
     regmatch_t pmatch[], int eflags)
 {
 	struct re_guts *g = preg->re_g;
-	char *s = (char *)string; /* XXX fucking gcc XXX */
 
 #ifdef REDEBUG
 #	define	GOODFLAGS(f)	(f)
@@ -157,7 +156,7 @@ regexec(const regex_t *preg, const char *string, size_t nmatch,
 	eflags = GOODFLAGS(eflags);
 
 	if (g->nstates <= CHAR_BIT*sizeof(states1) && !(eflags&REG_LARGE))
-		return(smatcher(g, s, nmatch, pmatch, eflags));
+		return(smatcher(g, string, nmatch, pmatch, eflags));
 	else
-		return(lmatcher(g, s, nmatch, pmatch, eflags));
+		return(lmatcher(g, string, nmatch, pmatch, eflags));
 }

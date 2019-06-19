@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.11 2017/08/10 18:00:59 reyk Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.19 2019/05/26 15:20:04 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -45,16 +45,13 @@
 #endif
 
 void		 virtio_init_vq(struct virtio_softc *,
-				struct virtqueue *, int);
+				struct virtqueue *);
 void		 vq_free_entry(struct virtqueue *, struct vq_entry *);
 struct vq_entry	*vq_alloc_entry(struct virtqueue *);
 
 struct cfdriver virtio_cd = {
 	NULL, "virtio", DV_DULL
 };
-
-#define virtio_set_status(sc, s) (sc)->sc_ops->set_status(sc, s)
-#define virtio_device_reset(sc)	virtio_set_status((sc), 0)
 
 static const char * const virtio_device_name[] = {
 	"Unknown (0)",		/* 0 */
@@ -71,22 +68,24 @@ static const char * const virtio_device_name[] = {
 };
 #define NDEVNAMES	(sizeof(virtio_device_name)/sizeof(char*))
 
-static const struct virtio_feature_name transport_feature_names[] = {
-	{ VIRTIO_F_NOTIFY_ON_EMPTY,	"NotifyOnEmpty"},
-	{ VIRTIO_F_RING_INDIRECT_DESC,	"RingIndirectDesc"},
-	{ VIRTIO_F_RING_EVENT_IDX,	"RingEventIdx"},
-	{ VIRTIO_F_BAD_FEATURE,		"BadFeature"},
-	{ 0,				NULL}
-};
-
 const char *
 virtio_device_string(int id)
 {
 	return id < NDEVNAMES ? virtio_device_name[id] : "Unknown";
 }
 
+#if VIRTIO_DEBUG
+static const struct virtio_feature_name transport_feature_names[] = {
+	{ VIRTIO_F_NOTIFY_ON_EMPTY,	"NotifyOnEmpty"},
+	{ VIRTIO_F_RING_INDIRECT_DESC,	"RingIndirectDesc"},
+	{ VIRTIO_F_RING_EVENT_IDX,	"RingEventIdx"},
+	{ VIRTIO_F_BAD_FEATURE,		"BadFeature"},
+	{ VIRTIO_F_VERSION_1,		"Version1"},
+	{ 0,				NULL}
+};
+
 void
-virtio_log_features(uint32_t host, uint32_t neg,
+virtio_log_features(uint64_t host, uint64_t neg,
     const struct virtio_feature_name *guest_feature_names)
 {
 	const struct virtio_feature_name *namep;
@@ -94,7 +93,7 @@ virtio_log_features(uint32_t host, uint32_t neg,
 	char c;
 	uint32_t bit;
 
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < 64; i++) {
 		if (i == 30) {
 			/*
 			 * VIRTIO_F_BAD_FEATURE is only used for
@@ -105,7 +104,7 @@ virtio_log_features(uint32_t host, uint32_t neg,
 		bit = 1 << i;
 		if ((host&bit) == 0)
 			continue;
-		namep = (i < 24) ? guest_feature_names :
+		namep = (i < 24 || i > 37) ? guest_feature_names :
 		    transport_feature_names;
 		while (namep->bit && namep->bit != bit)
 			namep++;
@@ -116,6 +115,7 @@ virtio_log_features(uint32_t host, uint32_t neg,
 			printf(" %cUnknown(%d)", c, i);
 	}
 }
+#endif
 
 /*
  * Reset the device.
@@ -126,15 +126,15 @@ virtio_log_features(uint32_t host, uint32_t neg,
  *	<dequeue finished requests>; // virtio_dequeue() still can be called
  *	<revoke pending requests in the vqs if any>;
  *	virtio_reinit_start(sc);     // dequeue prohibitted
- *	newfeatures = virtio_negotiate_features(sc, requestedfeatures);
  *	<some other initialization>;
  *	virtio_reinit_end(sc);	     // device activated; enqueue allowed
- * Once attached, feature negotiation can only be allowed after virtio_reset.
+ * Once attached, features are assumed to not change again.
  */
 void
 virtio_reset(struct virtio_softc *sc)
 {
 	virtio_device_reset(sc);
+	sc->sc_active_features = 0;
 }
 
 void
@@ -144,6 +144,7 @@ virtio_reinit_start(struct virtio_softc *sc)
 
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
+	virtio_negotiate_features(sc, NULL);
 	for (i = 0; i < sc->sc_nvqs; i++) {
 		int n;
 		struct virtqueue *vq = &sc->sc_vqs[i];
@@ -154,9 +155,8 @@ virtio_reinit_start(struct virtio_softc *sc)
 			panic("%s: virtqueue size changed, vq index %d\n",
 			    sc->sc_dev.dv_xname, vq->vq_index);
 		}
-		virtio_init_vq(sc, vq, 1);
-		virtio_setup_queue(sc, vq->vq_index,
-		    vq->vq_dmamap->dm_segs[0].ds_addr / VIRTIO_PAGE_SIZE);
+		virtio_init_vq(sc, vq);
+		virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 	}
 }
 
@@ -236,7 +236,7 @@ virtio_check_vqs(struct virtio_softc *sc)
  * Initialize vq structure.
  */
 void
-virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, int reinit)
+virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq)
 {
 	int i, j;
 	int vq_size = vq->vq_num;
@@ -301,7 +301,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	if (((vq_size - 1) & vq_size) != 0)
 		panic("vq_size not power of two: %d", vq_size);
 
-	hdrlen = (sc->sc_features & VIRTIO_F_RING_EVENT_IDX) ? 3 : 2;
+	hdrlen = virtio_has_feature(sc, VIRTIO_F_RING_EVENT_IDX) ? 3 : 2;
 
 	/* allocsize1: descriptor table + avail ring + pad */
 	allocsize1 = VIRTQUEUE_ALIGN(sizeof(struct vring_desc) * vq_size
@@ -346,9 +346,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 		goto err;
 	}
 
-	virtio_setup_queue(sc, index,
-	    vq->vq_dmamap->dm_segs[0].ds_addr / VIRTIO_PAGE_SIZE);
-
 	/* remember addresses and offsets for later use */
 	vq->vq_owner = sc;
 	vq->vq_num = vq_size;
@@ -377,7 +374,8 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 		goto err;
 	}
 
-	virtio_init_vq(sc, vq, 0);
+	virtio_init_vq(sc, vq);
+	virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 
 #if VIRTIO_DEBUG
 	printf("\nallocated %u byte for virtqueue %d for %s, size %d\n",
@@ -389,7 +387,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	return 0;
 
 err:
-	virtio_setup_queue(sc, index, 0);
 	if (vq->vq_dmamap)
 		bus_dmamap_destroy(sc->sc_dmat, vq->vq_dmamap);
 	if (vq->vq_vaddr)
@@ -419,7 +416,7 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	}
 
 	/* tell device that there's no virtqueue any longer */
-	virtio_setup_queue(sc, vq->vq_index, 0);
+	virtio_setup_queue(sc, vq, 0);
 
 	free(vq->vq_entries, M_DEVBUF, 0);
 	bus_dmamap_unload(sc->sc_dmat, vq->vq_dmamap);
@@ -680,7 +677,7 @@ virtio_enqueue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot,
 
 notify:
 	if (notifynow) {
-		if (vq->vq_owner->sc_features & VIRTIO_F_RING_EVENT_IDX) {
+		if (virtio_has_feature(vq->vq_owner, VIRTIO_F_RING_EVENT_IDX)) {
 			uint16_t o = vq->vq_avail->idx;
 			uint16_t n = vq->vq_avail_idx;
 			uint16_t t;
@@ -877,7 +874,7 @@ virtio_postpone_intr_far(struct virtqueue *vq)
 void
 virtio_stop_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 {
-	if ((sc->sc_features & VIRTIO_F_RING_EVENT_IDX)) {
+	if (virtio_has_feature(sc, VIRTIO_F_RING_EVENT_IDX)) {
 		/*
 		 * No way to disable the interrupt completely with
 		 * RingEventIdx. Instead advance used_event by half
@@ -901,7 +898,7 @@ virtio_start_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 	 * interrupts is done through setting the latest
 	 * consumed index in the used_event field
 	 */
-	if (sc->sc_features & VIRTIO_F_RING_EVENT_IDX)
+	if (virtio_has_feature(sc, VIRTIO_F_RING_EVENT_IDX))
 		VQ_USED_EVENT(vq) = vq->vq_used_idx;
 	else
 		vq->vq_avail->flags &= ~VRING_AVAIL_F_NO_INTERRUPT;

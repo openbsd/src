@@ -70,7 +70,7 @@ BEGIN {
 }
 use constant PLATFORM => $ARGS{PLATFORM};
 
-require "$ARGS{TARG_DIR}regen/embed_lib.pl";
+require "./$ARGS{TARG_DIR}regen/embed_lib.pl";
 
 # Is the following guard strictly necessary? Added during refactoring
 # to keep the same behaviour when merging other code into here.
@@ -108,7 +108,6 @@ my $config_h = 'config.h';
 open(CFG, '<', $config_h) || die "Cannot open $config_h: $!\n";
 while (<CFG>) {
     $define{$1} = 1 if /^\s*\#\s*define\s+(MYMALLOC|MULTIPLICITY
-                                           |SPRINTF_RETURNS_STRLEN
                                            |KILL_BY_SIGPRC
                                            |(?:PERL|USE|HAS)_\w+)\b/x;
 }
@@ -126,8 +125,34 @@ $define{PERL_IMPLICIT_CONTEXT} ||=
     $define{USE_ITHREADS} ||
     $define{MULTIPLICITY} ;
 
-if ($define{USE_ITHREADS} && $ARGS{PLATFORM} ne 'win32' && $^O ne 'darwin') {
+if ($define{USE_ITHREADS} && $ARGS{PLATFORM} ne 'win32' && $ARGS{PLATFORM} ne 'netware') {
     $define{USE_REENTRANT_API} = 1;
+}
+
+if (     $define{USE_ITHREADS}
+    &&   $define{HAS_SETLOCALE}
+    && ! $define{NO_LOCALE}
+    && ! $define{NO_POSIX_2008_LOCALE})
+{
+    $define{HAS_POSIX_2008_LOCALE} = 1 if $define{HAS_NEWLOCALE}
+                                       && $define{HAS_FREELOCALE}
+                                       && $define{HAS_USELOCALE};
+    my $cctype = $ARGS{CCTYPE} =~ s/MSVC//r;
+    if (    ! $define{NO_THREAD_SAFE_LOCALE}
+        && (  $define{HAS_POSIX_2008_LOCALE}
+            || ($ARGS{PLATFORM} eq 'win32' && (   $cctype !~ /\D/
+                                               && $cctype >= 80))))
+    {
+        $define{USE_THREAD_SAFE_LOCALE} = 1;
+        $define{USE_POSIX_2008_LOCALE} = 1 if $define{HAS_POSIX_2008_LOCALE};
+    }
+
+    if (   $ARGS{PLATFORM} eq 'win32'
+        && $define{USE_THREAD_SAFE_LOCALE}
+        && $cctype < 140)
+    {
+        $define{TS_W32_BROKEN_LOCALECONV} = 1;
+    }
 }
 
 # perl.h logic duplication ends
@@ -206,6 +231,7 @@ if ($ARGS{PLATFORM} ne 'os2') {
         ++$skip{Perl_my_symlink} unless $Config{d_symlink};
     } else {
 	++$skip{PL_statusvalue_vms};
+	++$skip{PL_perllib_sep};
 	if ($ARGS{PLATFORM} ne 'aix') {
 	    ++$skip{$_} foreach qw(
 				PL_DBcv
@@ -358,13 +384,17 @@ unless ($define{'USE_ITHREADS'}) {
 
 unless ($define{'USE_ITHREADS'}) {
     ++$skip{$_} foreach qw(
+                    PL_keyword_plugin_mutex
 		    PL_check_mutex
+                    PL_curlocales
 		    PL_op_mutex
 		    PL_regex_pad
 		    PL_regex_padav
 		    PL_dollarzero_mutex
 		    PL_hints_mutex
 		    PL_locale_mutex
+		    PL_lc_numeric_mutex
+		    PL_lc_numeric_mutex_depth
 		    PL_my_ctx_mutex
 		    PL_perlio_mutex
 		    PL_stashpad
@@ -395,7 +425,19 @@ unless ($define{'USE_ITHREADS'}) {
 		    Perl_stashpv_hvname_match
 		    Perl_regdupe_internal
 		    Perl_newPADOP
+                    PL_C_locale_obj
 			 );
+}
+
+unless ( $define{'HAS_NEWLOCALE'}
+    &&   $define{'HAS_FREELOCALE'}
+    &&   $define{'HAS_USELOCALE'}
+    && ! $define{'NO_POSIX_2008_LOCALE'})
+{
+    ++$skip{$_} foreach qw(
+        PL_C_locale_obj
+        PL_underlying_numeric_obj
+    );
 }
 
 unless ($define{'PERL_IMPLICIT_CONTEXT'}) {
@@ -422,6 +464,14 @@ unless ($define{'PERL_IMPLICIT_CONTEXT'}) {
 			 );
 }
 
+if ($define{USE_THREAD_SAFE_LOCALE}) {
+    ++$skip{PL_lc_numeric_mutex};
+    ++$skip{PL_lc_numeric_mutex_depth};
+    if (! $define{TS_W32_BROKEN_LOCALECONV}) {
+        ++$skip{PL_locale_mutex};
+    }
+}
+
 unless ($define{'PERL_OP_PARENT'}) {
     ++$skip{$_} foreach qw(
 		    Perl_op_parent
@@ -435,21 +485,6 @@ unless ($define{'USE_DTRACE'}) {
                     Perl_dtrace_probe_op
                     Perl_dtrace_probe_phase
                 );
-}
-
-if ($define{'NO_MATHOMS'}) {
-    # win32 builds happen in the win32/ subdirectory, but vms builds happen
-    # at the top level, so we need to look in two candidate locations for
-    # the mathoms.c file.
-    my ($file) = grep { -f } qw( mathoms.c ../mathoms.c )
-        or die "No mathoms.c file found in . or ..\n";
-    open my $mathoms, '<', $file
-        or die "Cannot open $file: $!\n";
-    while (<$mathoms>) {
-        ++$skip{$1} if /\A ( NATIVE_TO_NEED
-                           | ASCII_TO_NEED
-                           | Perl_\w+ ) \s* \( /axms;
-    }
 }
 
 unless ($define{'PERL_NEED_APPCTX'}) {
@@ -472,10 +507,6 @@ unless ($define{'PERL_DONT_CREATE_GVSV'}) {
     ++$skip{Perl_gv_SVadd};
 }
 
-if ($define{'SPRINTF_RETURNS_STRLEN'}) {
-    ++$skip{Perl_my_sprintf};
-}
-
 unless ($define{'PERL_USES_PL_PIDSTATUS'}) {
     ++$skip{PL_pidstatus};
 }
@@ -488,6 +519,10 @@ unless ($define{'MULTIPLICITY'}) {
     ++$skip{$_} foreach qw(
 		    PL_interp_size
 		    PL_interp_size_5_18_0
+                    PL_sv_yes
+                    PL_sv_undef
+                    PL_sv_no
+                    PL_sv_zero
 			 );
 }
 
@@ -525,6 +560,11 @@ if ($ARGS{PLATFORM} eq 'vms' && !$define{KILL_BY_SIGPRC}) {
     ++$skip{PL_sig_handlers_initted} unless !$define{HAS_SIGACTION};
 }
 
+if ($define{'HAS_STRNLEN'})
+{
+    ++$skip{Perl_my_strnlen};
+}
+
 unless ($define{USE_LOCALE_COLLATE}) {
     ++$skip{$_} foreach qw(
 		    PL_collation_ix
@@ -534,6 +574,9 @@ unless ($define{USE_LOCALE_COLLATE}) {
 		    PL_collxfrm_mult
 		    Perl_sv_collxfrm
 		    Perl_sv_collxfrm_flags
+                    PL_strxfrm_NUL_replacement
+                    PL_strxfrm_is_behaved
+                    PL_strxfrm_max_cp
 			 );
 }
 
@@ -543,6 +586,9 @@ unless ($define{USE_LOCALE_NUMERIC}) {
 		    PL_numeric_name
 		    PL_numeric_radix_sv
 		    PL_numeric_standard
+                    PL_numeric_underlying
+                    PL_numeric_underlying_is_standard
+                    PL_underlying_numeric_obj
 			 );
 }
 
@@ -578,6 +624,9 @@ if ($define{'PERL_GLOBAL_STRUCT'}) {
 
 ++$skip{PL_op_exec_cnt}
     unless $define{PERL_TRACE_OPS};
+
+++$skip{PL_hash_chars}
+    unless $define{PERL_USE_SINGLE_CHAR_HASH_CACHE};
 
 # functions from *.sym files
 
@@ -688,11 +737,14 @@ unless ($define{'USE_QUADMATH'}) {
 {
     my %seen;
     my ($embed) = setup_embed($ARGS{TARG_DIR});
+    my $excludedre = $define{'NO_MATHOMS'} ? qr/[xmib]/ : qr/[xmi]/;
 
     foreach (@$embed) {
 	my ($flags, $retval, $func, @args) = @$_;
 	next unless $func;
-	if ($flags =~ /[AX]/ && $flags !~ /[xmi]/ || $flags =~ /b/) {
+	if (($flags =~ /[AX]/ && $flags !~ $excludedre)
+            || (!$define{'NO_MATHOMS'} && $flags =~ /b/))
+        {
 	    # public API, so export
 
 	    # If a function is defined twice, for example before and after
@@ -701,7 +753,7 @@ unless ($define{'USE_QUADMATH'}) {
 	    # mean "don't export"
 	    next if $seen{$func}++;
 	    # Should we also skip adding the Perl_ prefix if $flags =~ /o/ ?
-	    $func = "Perl_$func" if ($flags =~ /[pbX]/ && $func !~ /^Perl_/); 
+	    $func = "Perl_$func" if ($flags =~ /[pX]/ && $func !~ /^Perl_/);
 	    ++$export{$func} unless exists $skip{$func};
 	}
     }
@@ -1231,7 +1283,7 @@ if ($ARGS{PLATFORM} =~ /^win(?:32|ce)$/) {
 
 if ($ARGS{PLATFORM} eq 'os2') {
     my (%mapped, @missing);
-    open MAP, 'miniperl.map' or die 'Cannot read miniperl.map';
+    open MAP, '<', 'miniperl.map' or die 'Cannot read miniperl.map';
     /^\s*[\da-f:]+\s+(\w+)/i and $mapped{$1}++ foreach <MAP>;
     close MAP or die 'Cannot close miniperl.map';
 

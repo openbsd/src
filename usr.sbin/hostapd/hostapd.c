@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.38 2017/04/19 05:36:13 natano Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.39 2019/05/10 01:29:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/stat.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
 #include <net/if_llc.h>

@@ -2461,7 +2461,7 @@ parser's API in a detectable way.
 
 =item refcnt: fd %d%s
 
-This new error only occurs if a internal consistency check fails when a
+This new error only occurs if an internal consistency check fails when a
 pipe is about to be closed.
 
 =item Regexp modifier "/%c" may not appear twice

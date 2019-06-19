@@ -10,9 +10,8 @@ use File::Temp;
 use File::Basename;
 use Cwd ();
 use File::Path;
-use Data::Dumper;
 
-plan tests => 61;
+plan tests => 70;
 
 require_ok('Module::Metadata');
 
@@ -205,12 +204,17 @@ $::VERSION = 0.01;
 
 my ( $i, $n ) = ( 1, scalar( @scripts ) );
 foreach my $script ( @scripts ) {
+  note '-------';
+  my $errs;
   my $file = File::Spec->catfile('bin', 'simple.plx');
   my ($dist_name, $dist_dir) = new_dist(files => { $file => $script } );
   my $pm_info = Module::Metadata->new_from_file( $file );
 
-  is( $pm_info->version, '0.01', "correct script version ($i of $n)" );
+  is( $pm_info->name, 'main', 'name for script is always main');
+  is( $pm_info->version, '0.01', "correct script version ($i of $n)" ) or $errs++;
   $i++;
+
+  diag 'parsed module: ', explain($pm_info) if !$ENV{PERL_CORE} && $errs;
 }
 
 {
@@ -322,6 +326,53 @@ our $VERSION = '1.23';
   my $pm_info = Module::Metadata->new_from_file('lib/Simple.pm');
   is( $pm_info->name, 'Simple', 'found default package' );
   is( $pm_info->version, '1.23', 'version for default package' );
+}
+
+my $tmpdir = GeneratePackage::tmpdir();
+my $undef;
+my $test_num = 0;
+use lib 't/lib';
+use GeneratePackage;
+
+{
+  # and now a real pod file
+  # (this test case is ready to be rolled into a corpus loop, later)
+  my $test_case = {
+    name => 'file only contains pod',
+    filename => 'Simple/Documentation.pod',
+    code => <<'---',
+# PODNAME: Simple::Documentation
+# ABSTRACT: My documentation
+
+=pod
+
+Hello, this is pod.
+
+=cut
+---
+    module => '', # TODO: should probably be $undef actually
+    all_versions => { },
+  };
+
+  note $test_case->{name};
+  my $code = $test_case->{code};
+  my $expected_name = $test_case->{module};
+  local $TODO = $test_case->{TODO};
+
+  my $errs;
+
+  my ($vol, $dir, $basename) = File::Spec->splitpath(File::Spec->catfile($tmpdir, "Simple${test_num}", ($test_case->{filename} || 'Simple.pm')));
+  my $pm_info = Module::Metadata->new_from_file(generate_file($dir, $basename, $code));
+
+  my $got_name = $pm_info->name;
+  is(
+    $got_name,
+    $expected_name,
+    "case '$test_case->{name}': module name matches",
+  )
+  or $errs++;
+
+  diag 'parsed module: ', explain($pm_info) if !$ENV{PERL_CORE} && $errs;
 }
 
 {

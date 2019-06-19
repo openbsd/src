@@ -2,10 +2,10 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    require "./test.pl";
+    set_up_inc('../lib');
+    require "./charset_tools.pl";
 }
-
-BEGIN { require "./test.pl"; require "./charset_tools.pl"; }
 
 plan(tests => 3);
 

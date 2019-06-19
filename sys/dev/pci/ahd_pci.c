@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.24 2014/07/12 18:48:51 tedu Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.25 2019/01/31 18:01:14 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -75,8 +75,7 @@
 
 #include <dev/pci/pcivar.h>
 
-__inline uint64_t ahd_compose_id(u_int, u_int, u_int, u_int);
-__inline uint64_t
+static inline uint64_t
 ahd_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 {
 	uint64_t id;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.40 2017/10/26 02:38:54 guenther Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.42 2019/03/15 05:42:38 kevlo Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -27,10 +27,6 @@
 /*
  * This implements a hash-based lookup scheme for UFS directories.
  */
-
-#if 0
-__FBSDID("$FreeBSD: src/sys/ufs/ufs/ufs_dirhash.c,v 1.18 2004/02/15 21:39:35 dwmalone Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1057,7 +1053,7 @@ ufsdirhash_init(void)
 	rw_init(&ufsdirhash_mtx, "dirhash_list");
 	arc4random_buf(&ufsdirhash_key, sizeof(ufsdirhash_key));
 	TAILQ_INIT(&ufsdirhash_list);
-	ufs_dirhashmaxmem = 2 * 1024 * 1024;
+	ufs_dirhashmaxmem = 5 * 1024 * 1024;
 	ufs_mindirhashsize = 5 * DIRBLKSIZ;
 }
 

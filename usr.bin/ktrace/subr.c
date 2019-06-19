@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.13 2016/07/18 09:36:50 guenther Exp $	*/
+/*	$OpenBSD: subr.c,v 1.14 2018/04/26 12:42:51 guenther Exp $	*/
 /*	$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $	*/
 
 /*-
@@ -31,13 +31,8 @@
  */
 
 #include <sys/param.h>	/* MAXCOMLEN */
-#include <sys/file.h>
-#include <sys/user.h>
-#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/ktrace.h>
-
-#include <stdio.h>
 
 #include "ktrace.h"
 #include "extern.h"

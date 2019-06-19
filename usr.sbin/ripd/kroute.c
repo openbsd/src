@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.32 2017/07/24 11:00:01 friehm Exp $ */
+/*	$OpenBSD: kroute.c,v 1.33 2018/12/31 20:34:16 remi Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -44,6 +44,7 @@ struct {
 	u_int32_t		rtseq;
 	pid_t			pid;
 	int			fib_sync;
+	u_int8_t		fib_prio;
 	int			fd;
 	struct event		ev;
 	u_int			rdomain;
@@ -108,7 +109,7 @@ kif_init(void)
 }
 
 int
-kr_init(int fs, u_int rdomain)
+kr_init(int fs, u_int rdomain, u_int8_t fib_prio)
 {
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
@@ -139,6 +140,7 @@ kr_init(int fs, u_int rdomain)
 
 	kr_state.pid = getpid();
 	kr_state.rtseq = 1;
+	kr_state.fib_prio = fib_prio;
 
 	RB_INIT(&krt);
 
@@ -177,7 +179,7 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int action)
 		kr->r.netmask.s_addr = kroute->netmask.s_addr;
 		kr->r.nexthop.s_addr = kroute->nexthop.s_addr;
 		kr->r.flags = kroute->flags |= F_RIPD_INSERTED;
-		kr->r.priority = RTP_RIP;
+		kr->r.priority = kr_state.fib_prio;
 
 		if (kroute_insert(kr) == -1) {
 			log_debug("kr_update_fib: cannot insert %s",
@@ -197,7 +199,7 @@ kr_change(struct kroute *kroute)
 	int			 action = RTM_ADD;
 
 	kr = kroute_find(kroute->prefix.s_addr, kroute->netmask.s_addr,
-	    RTP_RIP);
+	    kr_state.fib_prio);
 	if (kr != NULL)
 		action = RTM_CHANGE;
 
@@ -210,11 +212,11 @@ kr_delete(struct kroute *kroute)
 	struct kroute_node	*kr;
 
 	kr = kroute_find(kroute->prefix.s_addr, kroute->netmask.s_addr,
-	    RTP_RIP);
+	    kr_state.fib_prio);
 	if (kr == NULL)
 		return (0);
 
-	if (kr->r.priority != RTP_RIP)
+	if (kr->r.priority != kr_state.fib_prio)
 		log_warn("kr_delete_fib: %s/%d has wrong priority %d",
 		    inet_ntoa(kr->r.prefix), mask2prefixlen(kr->r.netmask.s_addr),
 		    kr->r.priority);
@@ -248,7 +250,7 @@ kr_fib_couple(void)
 	kr_state.fib_sync = 1;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
-		if (kr->r.priority == RTP_RIP)
+		if (kr->r.priority == kr_state.fib_prio)
 			send_rtmsg(kr_state.fd, RTM_ADD, &kr->r);
 
 	log_info("kernel routing table coupled");
@@ -263,7 +265,7 @@ kr_fib_decouple(void)
 		return;
 
 	RB_FOREACH(kr, kroute_tree, &krt)
-		if (kr->r.priority == RTP_RIP)
+		if (kr->r.priority == kr_state.fib_prio)
 			send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
 
 	kr_state.fib_sync = 0;
@@ -734,7 +736,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	bzero(&hdr, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
-	hdr.rtm_priority = RTP_RIP;
+	hdr.rtm_priority = kr_state.fib_prio;
 	hdr.rtm_tableid = kr_state.rdomain;
 	if (action == RTM_CHANGE)
 		hdr.rtm_fmask = RTF_REJECT|RTF_BLACKHOLE;
@@ -925,7 +927,7 @@ fetchtable(void)
 				break;
 			}
 
-		if (rtm->rtm_priority == RTP_RIP) {
+		if (rtm->rtm_priority == kr_state.fib_prio) {
 			send_rtmsg(kr_state.fd, RTM_DELETE, &kr->r);
 			free(kr);
 		} else {

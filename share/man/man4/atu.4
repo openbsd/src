@@ -1,4 +1,4 @@
-.\" $OpenBSD: atu.4,v 1.37 2013/10/19 16:53:14 schwarze Exp $
+.\" $OpenBSD: atu.4,v 1.39 2019/03/29 22:25:03 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 19 2013 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt ATU 4
 .Os
 .Sh NAME
@@ -86,6 +86,26 @@ driver can be configured at runtime with
 .Xr ifconfig 8
 or on boot with
 .Xr hostname.if 5 .
+.Sh FILES
+The adapter needs some firmware files, which are loaded on demand by the
+driver when the device is attached:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/atu-at76c503-i3863-int
+.It Pa /etc/firmware/atu-at76c503-i3863-ext
+.It Pa /etc/firmware/atu-at76c503-rfmd-acc-int
+.It Pa /etc/firmware/atu-at76c503-rfmd-acc-ext
+.It Pa /etc/firmware/atu-at76c505-rfmd-int
+.It Pa /etc/firmware/atu-at76c505-rfmd-ext
+.It Pa /etc/firmware/atu-intersil-int
+.It Pa /etc/firmware/atu-intersil-ext
+.It Pa /etc/firmware/atu-rfmd-int
+.It Pa /etc/firmware/atu-rfmd-ext
+.It Pa /etc/firmware/atu-rfmd2958-int
+.It Pa /etc/firmware/atu-rfmd2958-ext
+.It Pa /etc/firmware/atu-rfmd2958smc-int
+.It Pa /etc/firmware/atu-rfmd2958smc-ext
+.El
 .Sh HARDWARE
 The following devices are known to be supported by the
 .Nm
@@ -145,26 +165,6 @@ driver:
 .It Tn W-Buddie WN210
 .It Tn Z-Com M4Y-750
 .El
-.Sh FILES
-The adapter needs some firmware files, which are loaded on demand by the
-driver when the device is attached:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Pa /etc/firmware/atu-at76c503-i3863-int
-.It Pa /etc/firmware/atu-at76c503-i3863-ext
-.It Pa /etc/firmware/atu-at76c503-rfmd-acc-int
-.It Pa /etc/firmware/atu-at76c503-rfmd-acc-ext
-.It Pa /etc/firmware/atu-at76c505-rfmd-int
-.It Pa /etc/firmware/atu-at76c505-rfmd-ext
-.It Pa /etc/firmware/atu-intersil-int
-.It Pa /etc/firmware/atu-intersil-ext
-.It Pa /etc/firmware/atu-rfmd-int
-.It Pa /etc/firmware/atu-rfmd-ext
-.It Pa /etc/firmware/atu-rfmd2958-int
-.It Pa /etc/firmware/atu-rfmd2958-ext
-.It Pa /etc/firmware/atu-rfmd2958smc-int
-.It Pa /etc/firmware/atu-rfmd2958smc-ext
-.El
 .Sh EXAMPLES
 The following example scans for available networks:
 .Pp
@@ -178,8 +178,7 @@ using WEP key
 .Dq mywepkey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid
-nwkey mywepkey
+nwid mynwid nwkey mywepkey
 dhcp
 .Ed
 .Sh SEE ALSO

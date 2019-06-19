@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.6 2017/10/10 20:31:50 jcs Exp $ */
+/* $OpenBSD: hidmt.c,v 1.9 2018/08/25 20:31:31 jcs Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -126,7 +126,11 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 	capsize = hid_report_size(desc, dlen, hid_feature, mt->sc_rep_cap);
 	rep = malloc(capsize, M_DEVBUF, M_NOWAIT | M_ZERO);
 
-	if (mt->hidev_get_report(mt->sc_device, hid_feature, mt->sc_rep_cap,
+	if (mt->hidev_report_type_conv == NULL)
+		panic("no report type conversion function");
+
+	if (mt->hidev_get_report(mt->sc_device,
+	    mt->hidev_report_type_conv(hid_feature), mt->sc_rep_cap,
 	    rep, capsize)) {
 		printf("\n%s: failed getting capability report\n",
 		    self->dv_xname);
@@ -217,7 +221,7 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 		return 1;
 	}
 
-	if (hidmt_set_input_mode(mt, HIDMT_INPUT_MODE_MT)) {
+	if (hidmt_set_input_mode(mt, HIDMT_INPUT_MODE_MT_TOUCHPAD)) {
 		printf("\n%s: switch to multitouch mode failed\n",
 		    self->dv_xname);
 		return 1;
@@ -235,7 +239,7 @@ hidmt_configure(struct hidmt *mt)
 		return;
 
 	hw = wsmouse_get_hw(mt->sc_wsmousedev);
-	hw->type = WSMOUSE_TYPE_ELANTECH;	/* see hidmt_ioctl */
+	hw->type = WSMOUSE_TYPE_TOUCHPAD;
 	hw->hw_type = (mt->sc_clickpad
 	    ? WSMOUSEHW_CLICKPAD : WSMOUSEHW_TOUCHPAD);
 	hw->x_min = mt->sc_minx;
@@ -278,8 +282,12 @@ hidmt_detach(struct hidmt *mt, int flags)
 int
 hidmt_set_input_mode(struct hidmt *mt, uint16_t mode)
 {
-	return mt->hidev_set_report(mt->sc_device, hid_feature,
-	    mt->sc_rep_config, &mode, 2);
+	if (mt->hidev_report_type_conv == NULL)
+		panic("no report type conversion function");
+
+	return mt->hidev_set_report(mt->sc_device,
+	    mt->hidev_report_type_conv(hid_feature),
+	    mt->sc_rep_config, &mode, sizeof(mode));
 }
 
 void
@@ -468,13 +476,11 @@ hidmt_ioctl(struct hidmt *mt, u_long cmd, caddr_t data, int flag,
 	int wsmode;
 
 	switch (cmd) {
-	case WSMOUSEIO_GTYPE:
-		/*
-		 * So we can specify our own finger/w values to the
-		 * xf86-input-synaptics driver like pms(4)
-		 */
-		*(u_int *)data = WSMOUSE_TYPE_ELANTECH;
+	case WSMOUSEIO_GTYPE: {
+		struct wsmousehw *hw = wsmouse_get_hw(mt->sc_wsmousedev);
+		*(u_int *)data = hw->type;
 		break;
+	}
 
 	case WSMOUSEIO_GCALIBCOORDS:
 		wsmc->minx = mt->sc_minx;

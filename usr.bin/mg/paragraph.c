@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.45 2016/09/06 16:25:47 lum Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.46 2018/11/17 09:52:34 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -338,6 +338,8 @@ transposepara(int f, int n)
 	if (n == 0)
 		return (TRUE);
 
+	undo_boundary_enable(FFRAND, 0);
+
 	/* find a paragraph, set mark, then goto the end */
 	gotobop(FFRAND, 1);
 	curwp->w_markp = curwp->w_dotp;
@@ -364,6 +366,8 @@ transposepara(int f, int n)
 		return (FALSE);
 	}
 	(void)yank(FFRAND, 1);
+
+	undo_boundary_enable(FFRAND, 1);
 
 	return (TRUE);
 }

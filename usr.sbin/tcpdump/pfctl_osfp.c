@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.13 2017/05/28 10:06:12 akfaew Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.15 2018/11/08 17:19:01 brynet Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -81,17 +81,14 @@ void			 print_name_list(int, struct name_list *, const char *);
 void			 sort_name_list(int, struct name_list *);
 struct name_entry	*lookup_name_list(struct name_list *, const char *);
 
-/* XXX arbitrary */
-#define MAX_FP_LINE 1024
-
 /* Load fingerprints from a file */
 int
 pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 {
-	u_char buf[MAX_FP_LINE];
+	FILE *in;
 	u_char *line;
 	size_t len;
-	int i, lineno = 0;
+	int i, fd, lineno = 0;
 	int window, w_mod, ttl, df, psize, p_mod, mss, mss_mod, wscale,
 	    wscale_mod, optcnt, ts0;
 	pf_tcpopts_t packed_tcpopts;
@@ -99,15 +96,22 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 	struct pf_osfp_ioctl fp;
 
 	pfctl_flush_my_fingerprints(&classes);
+	
+	fd = priv_open_pfosfp();
+	if (fd < 0)
+		return (1);
+	
+	if ((in = fdopen(fd, "r")) == NULL) {
+		warn("%s", fp_filename);
+		return (1);
+	}
+
 	class = version = subtype = desc = tcpopts = NULL;
 
 	if ((opts & PF_OPT_NOACTION) == 0)
 		pfctl_clear_fingerprints(dev, opts);
 
-	priv_getlines(FTAB_PFOSFP);
-	while ((len = priv_getline(buf, sizeof(buf))) > 0) {
-		buf[len -1] = '\n';
-		line = buf;
+	while ((line = fgetln(in, &len)) != NULL) {
 		lineno++;
 		free(class);
 		free(version);
@@ -251,6 +255,7 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 	if (opts & PF_OPT_VERBOSE2)
 		printf("Loaded %d passive OS fingerprints\n",
 		    fingerprint_count);
+	fclose(in);
 	return (0);
 }
 

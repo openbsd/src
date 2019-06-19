@@ -1,4 +1,4 @@
-/*	$OpenBSD: nohup.c,v 1.16 2015/11/09 16:52:32 deraadt Exp $	*/
+/*	$OpenBSD: nohup.c,v 1.18 2018/09/14 18:17:46 bluhm Exp $	*/
 /*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/file.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -79,13 +78,14 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	if (isatty(STDOUT_FILENO))
+	if (isatty(STDOUT_FILENO) || errno == EBADF)
 		dofile();
 
 	if (pledge("stdio exec", NULL) == -1)
 		err(1, "pledge");
 
-	if (isatty(STDERR_FILENO) && dup2(STDOUT_FILENO, STDERR_FILENO) == -1) {
+	if ((isatty(STDERR_FILENO) || errno == EBADF) &&
+	    dup2(STDOUT_FILENO, STDERR_FILENO) == -1) {
 		/* may have just closed stderr */
 		(void)fprintf(stdin, "nohup: %s\n", strerror(errno));
 		exit(EXIT_MISC);
@@ -126,6 +126,8 @@ dupit:
 	(void)lseek(fd, (off_t)0, SEEK_END);
 	if (dup2(fd, STDOUT_FILENO) == -1)
 		err(EXIT_MISC, NULL);
+	if (fd > STDERR_FILENO)
+		(void)close(fd);
 	(void)fprintf(stderr, "sending output to %s\n", p);
 }
 

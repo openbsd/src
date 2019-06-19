@@ -48,11 +48,11 @@ Getting Traces
 --------------
 
 By default, XRay does not write out the trace files or patch the application
-before main starts. If we just run ``llc`` it should just work like a normally
-built binary. However, if we want to get a full trace of the application's
-operations (of the functions we do end up instrumenting with XRay) then we need
-to enable XRay at application start. To do this, XRay checks the
-``XRAY_OPTIONS`` environment variable.
+before main starts. If we run ``llc`` it should work like a normally built
+binary. If we want to get a full trace of the application's operations (of the
+functions we do end up instrumenting with XRay) then we need to enable XRay
+at application start. To do this, XRay checks the ``XRAY_OPTIONS`` environment
+variable.
 
 ::
 
@@ -60,7 +60,7 @@ to enable XRay at application start. To do this, XRay checks the
   $ ./bin/llc input.ll
 
   # We need to set the XRAY_OPTIONS to enable some features.
-  $ XRAY_OPTIONS="patch_premain=true" ./bin/llc input.ll
+  $ XRAY_OPTIONS="patch_premain=true xray_mode=xray-basic verbosity=1" ./bin/llc input.ll
   ==69819==XRay: Log file in 'xray-log.llc.m35qPB'
 
 At this point we now have an XRay trace we can start analysing.
@@ -73,9 +73,8 @@ instrumented, and how much time we're spending in parts of the code. To make
 sense of this data, we use the ``llvm-xray`` tool which has a few subcommands
 to help us understand our trace.
 
-One of the simplest things we can do is to get an accounting of the functions
-that have been instrumented. We can see an example accounting with ``llvm-xray
-account``:
+One of the things we can do is to get an accounting of the functions that have
+been instrumented. We can see an example accounting with ``llvm-xray account``:
 
 ::
 
@@ -100,7 +99,7 @@ this data in a spreadsheet, we can output the results as CSV using the
 
 If we want to get a textual representation of the raw trace we can use the
 ``llvm-xray convert`` tool to get YAML output. The first few lines of that
-ouput for an example trace would look like the following:
+output for an example trace would look like the following:
 
 ::
 
@@ -178,22 +177,85 @@ add the attribute to the source.
 To use this feature, you can define one file for the functions to always
 instrument, and another for functions to never instrument. The format of these
 files are exactly the same as the SanitizerLists files that control similar
-things for the sanitizer implementations. For example, we can have two
-different files like below:
+things for the sanitizer implementations. For example:
 
 ::
 
-  # always-instrument.txt
+  # xray-attr-list.txt
   # always instrument functions that match the following filters:
+  [always]
   fun:main
 
-  # never-instrument.txt
   # never instrument functions that match the following filters:
+  [never]
   fun:__cxx_*
 
-Given the above two files we can re-build by providing those two files as
-arguments to clang as ``-fxray-always-instrument=always-instrument.txt`` or
-``-fxray-never-instrument=never-instrument.txt``.
+Given the file above we can re-build by providing it to the
+``-fxray-attr-list=`` flag to clang. You can have multiple files, each defining
+different sets of attribute sets, to be combined into a single list by clang.
+
+The XRay stack tool
+-------------------
+
+Given a trace, and optionally an instrumentation map, the ``llvm-xray stack``
+command can be used to analyze a call stack graph constructed from the function
+call timeline.
+
+The way to use the command is to output the top stacks by call count and time spent.
+
+::
+
+  $ llvm-xray stack xray-log.llc.5rqxkU -instr_map ./bin/llc
+
+  Unique Stacks: 3069
+  Top 10 Stacks by leaf sum:
+
+  Sum: 9633790
+  lvl   function                                                            count              sum
+  #0    main                                                                    1         58421550
+  #1    compileModule(char**, llvm::LLVMContext&)                               1         51440360
+  #2    llvm::legacy::PassManagerImpl::run(llvm::Module&)                       1         40535375
+  #3    llvm::FPPassManager::runOnModule(llvm::Module&)                         2         39337525
+  #4    llvm::FPPassManager::runOnFunction(llvm::Function&)                     6         39331465
+  #5    llvm::PMDataManager::verifyPreservedAnalysis(llvm::Pass*)             399         16628590
+  #6    llvm::PMTopLevelManager::findAnalysisPass(void const*)               4584         15155600
+  #7    llvm::PMDataManager::findAnalysisPass(void const*, bool)            32088          9633790
+
+  ..etc..
+
+In the default mode, identical stacks on different threads are independently
+aggregated. In a multithreaded program, you may end up having identical call
+stacks fill your list of top calls.
+
+To address this, you may specify the ``-aggregate-threads`` or
+``-per-thread-stacks`` flags. ``-per-thread-stacks`` treats the thread id as an
+implicit root in each call stack tree, while ``-aggregate-threads`` combines
+identical stacks from all threads.
+
+Flame Graph Generation
+----------------------
+
+The ``llvm-xray stack`` tool may also be used to generate flamegraphs for
+visualizing your instrumented invocations. The tool does not generate the graphs
+themselves, but instead generates a format that can be used with Brendan Gregg's
+FlameGraph tool, currently available on `github
+<https://github.com/brendangregg/FlameGraph>`_.
+
+To generate output for a flamegraph, a few more options are necessary.
+
+- ``-all-stacks`` - Emits all of the stacks.
+- ``-stack-format`` - Choose the flamegraph output format 'flame'.
+- ``-aggregation-type`` - Choose the metric to graph.
+
+You may pipe the command output directly to the flamegraph tool to obtain an
+svg file.
+
+::
+
+  $llvm-xray stack xray-log.llc.5rqxkU -instr_map ./bin/llc -stack-format=flame -aggregation-type=time -all-stacks | \
+  /path/to/FlameGraph/flamegraph.pl > flamegraph.svg
+
+If you open the svg in a browser, mouse events allow exploring the call stacks.
 
 Further Exploration
 -------------------
@@ -211,11 +273,11 @@ application.
   #include <iostream>
   #include <thread>
 
-  [[clang::xray_always_intrument]] void f() {
+  [[clang::xray_always_instrument]] void f() {
     std::cerr << '.';
   }
 
-  [[clang::xray_always_intrument]] void g() {
+  [[clang::xray_always_instrument]] void g() {
     for (int i = 0; i < 1 << 10; ++i) {
       std::cerr << '-';
     }

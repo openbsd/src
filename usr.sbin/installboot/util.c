@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2015/11/04 02:12:49 jsg Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2018/11/07 04:51:56 miko Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -25,6 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <libgen.h>
 
 #include "installboot.h"
 
@@ -98,7 +99,7 @@ filecopy(const char *srcfile, const char *dstfile)
 char *
 fileprefix(const char *base, const char *path)
 {
-	char *r, *s;
+	char *r = NULL, *d, *b, *s;
 	int n;
 
 	if ((s = malloc(PATH_MAX)) == NULL) {
@@ -107,18 +108,33 @@ fileprefix(const char *base, const char *path)
 	}
 	n = snprintf(s, PATH_MAX, "%s/%s", base, path);
 	if (n < 1 || n >= PATH_MAX) {
-		free(s);
 		warn("snprintf");
-		return (NULL);
+		goto err;
 	}
-	if ((r = realpath(s, NULL)) == NULL) {
-		free(s);
+	if ((d = dirname(s)) == NULL) {
+		warn("dirname");
+		goto err;
+	}
+	if ((r = realpath(d, NULL)) == NULL) {
 		warn("realpath");
-		return (NULL);
+		goto err;
 	}
-	free(s);
+	if ((b = basename(s)) == NULL) {
+		warn("basename");
+		goto err;
+	}
+	n = snprintf(s, PATH_MAX, "%s/%s", r, b);
+	if (n < 1 || n >= PATH_MAX) {
+		warn("snprintf");
+		goto err;
+	}
+	free(r);
+	return (s);
 
-	return (r);
+err:
+	free(s);
+	free(r);
+	return (NULL);
 }
 
 /*

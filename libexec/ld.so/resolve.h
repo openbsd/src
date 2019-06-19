@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.83 2017/05/08 02:34:01 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.92 2019/05/11 21:02:35 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -30,8 +30,21 @@
 #define _RESOLVE_H_
 
 #include <sys/queue.h>
-#include <link.h>
 #include <dlfcn.h>
+#include <link.h>
+#include <tib.h>
+
+#define __relro		__attribute__((section(".data.rel.ro")))
+
+#ifndef __boot
+# if DO_CLEAN_BOOT
+#  define __boot	__attribute__((section(".boot.text")))
+#  define __boot_data	__attribute__((section(".boot.data")))
+# else
+#  define __boot
+#  define __boot_data
+# endif
+#endif
 
 /* Number of low tags that are used saved internally (0 .. DT_NUM-1) */
 #define DT_NUM	(DT_PREINIT_ARRAYSZ + 1)
@@ -44,6 +57,16 @@ struct load_list {
 	Elf_Addr	moff;
 	long		foff;
 };
+
+typedef void initarrayfunc(int, const char **, char **, dl_cb_cb *);
+typedef void initfunc(void);	/* also fini and fini_array functions */
+
+/* Alpha uses 8byte entries for DT_HASH */
+#ifdef __alpha__
+typedef uint64_t Elf_Hash_Word;
+#else
+typedef uint32_t Elf_Hash_Word;
+#endif
 
 /*
  *  Structure describing a loaded object.
@@ -79,8 +102,8 @@ struct elf_object {
 			Elf_Addr	relaent;
 			Elf_Addr	strsz;
 			Elf_Addr	syment;
-			void		(*init)(void);
-			void		(*fini)(void);
+			initfunc	*init;
+			initfunc	*fini;
 			const char	*soname;
 			const char	*rpath;
 			Elf_Addr	symbolic;
@@ -92,14 +115,14 @@ struct elf_object {
 			Elf_Addr	textrel;
 			Elf_Addr	jmprel;
 			Elf_Addr	bind_now;
-			void		(**init_array)(void);
-			void		(**fini_array)(void);
+			initarrayfunc	**init_array;
+			initfunc	**fini_array;
 			Elf_Addr	init_arraysz;
 			Elf_Addr	fini_arraysz;
 			const char	*runpath;
 			Elf_Addr	flags;
 			Elf_Addr	encoding;
-			void		(**preinit_array)(void);
+			initarrayfunc	**preinit_array;
 			Elf_Addr	preinit_arraysz;
 		} u;
 	} Dyn;
@@ -109,14 +132,16 @@ struct elf_object {
 	Elf_Addr	relcount;	/* DT_RELCOUNT */
 
 	int		status;
-#define	STAT_RELOC_DONE	0x01
-#define	STAT_GOT_DONE	0x02
-#define	STAT_INIT_DONE	0x04
-#define	STAT_FINI_DONE	0x08
-#define	STAT_FINI_READY	0x10
-#define	STAT_UNLOADED	0x20
-#define	STAT_NODELETE	0x40
-#define	STAT_VISITED	0x80
+#define	STAT_RELOC_DONE		0x001
+#define	STAT_GOT_DONE		0x002
+#define	STAT_INIT_DONE		0x004
+#define	STAT_FINI_DONE		0x008
+#define	STAT_FINI_READY		0x010
+#define	STAT_UNLOADED		0x020
+#define	STAT_NODELETE		0x040
+#define	STAT_GNU_HASH		0x080
+#define	STAT_VISIT_INITFIRST	0x100
+#define	STAT_VISIT_INIT		0x200
 
 	Elf_Phdr	*phdrp;
 	int		phdrc;
@@ -128,11 +153,33 @@ struct elf_object {
 #define	OBJTYPE_DLO	4
 	int		obj_flags;	/* c.f. <sys/exec_elf.h> DF_1_* */
 
-	Elf_Word	*buckets;
+	/* shared by ELF and GNU hash */
 	u_int32_t	nbuckets;
-	Elf_Word	*chains;
-	u_int32_t	nchains;
-	Elf_Dyn		*dynamic;
+	u_int32_t	nchains;	/* really, number of symbols */
+	union {
+		struct {
+			/* specific to ELF hash */
+			const Elf_Hash_Word	*buckets;
+			const Elf_Hash_Word	*chains;
+		} u_elf;
+		struct {
+			/* specific to GNU hash */
+			const Elf_Word		*buckets;
+			const Elf_Word		*chains;
+			const Elf_Addr		*bloom;
+			Elf_Word		mask_bm;
+			Elf_Word		shift2;
+			Elf_Word		symndx;
+		} u_gnu;
+	} hash_u;
+#define buckets_elf	hash_u.u_elf.buckets
+#define chains_elf	hash_u.u_elf.chains
+#define buckets_gnu	hash_u.u_gnu.buckets
+#define chains_gnu	hash_u.u_gnu.chains
+#define bloom_gnu	hash_u.u_gnu.bloom
+#define mask_bm_gnu	hash_u.u_gnu.mask_bm
+#define shift2_gnu	hash_u.u_gnu.shift2
+#define symndx_gnu	hash_u.u_gnu.symndx
 
 	TAILQ_HEAD(,dep_node)	child_list;	/* direct dep libs of object */
 	TAILQ_HEAD(,dep_node)	grpsym_list;	/* ordered complete dep list */
@@ -195,8 +242,6 @@ elf_object_t *_dl_finalize_object(const char *objname, Elf_Dyn *dynp,
     const long obase);
 void	_dl_remove_object(elf_object_t *object);
 void	_dl_cleanup_objects(void);
-void	*_dl_protect_segment(elf_object_t *_object, Elf_Addr _addr,
-	    const char *_start_sym, const char *_end_sym, int _prot);
 
 elf_object_t *_dl_load_shlib(const char *, elf_object_t *, int, int);
 elf_object_t *_dl_tryload_shlib(const char *libname, int type, int flags);
@@ -228,7 +273,6 @@ Elf_Addr _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 #define SYM_SEARCH_SELF		0x01
 #define SYM_SEARCH_OTHER	0x02
 #define SYM_SEARCH_NEXT		0x04
-#define SYM_SEARCH_OBJ		0x08
 /* warnnotfound */
 #define SYM_NOWARNNOTFOUND	0x00
 #define SYM_WARNNOTFOUND	0x10
@@ -262,16 +306,16 @@ typedef void lock_cb(int);
 void	_dl_thread_kern_go(lock_cb *);
 lock_cb	*_dl_thread_kern_stop(void);
 
-char	*_dl_getenv(const char *, char **);
-void	_dl_unsetenv(const char *, char **);
+char	*_dl_getenv(const char *, char **) __boot;
+void	_dl_unsetenv(const char *, char **) __boot;
 
-void	_dl_trace_setup(char **);
+void	_dl_trace_setup(char **) __boot;
 void	_dl_trace_object_setup(elf_object_t *);
 int	_dl_trace_plt(const elf_object_t *, const char *);
 
 /* tib.c */
-void	_dl_allocate_tls_offsets(void);
-void	_dl_allocate_first_tib(void);
+void	_dl_allocate_tls_offsets(void) __boot;
+void	_dl_allocate_first_tib(void) __boot;
 void	_dl_set_tls(elf_object_t *_object, Elf_Phdr *_ptls, Elf_Addr _libaddr,
 	    const char *_libname);
 extern int _dl_tib_static_done;
@@ -288,13 +332,14 @@ extern int  _dl_errno;
 
 extern char **_dl_libpath;
 
+extern int _dl_bindnow;
+extern int _dl_traceld;
+extern int _dl_debug;
+
 extern char *_dl_preload;
-extern char *_dl_bindnow;
-extern char *_dl_traceld;
 extern char *_dl_tracefmt1;
 extern char *_dl_tracefmt2;
 extern char *_dl_traceprog;
-extern char *_dl_debug;
 
 extern int _dl_trust;
 

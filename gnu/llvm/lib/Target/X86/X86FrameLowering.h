@@ -14,7 +14,8 @@
 #ifndef LLVM_LIB_TARGET_X86_X86FRAMELOWERING_H
 #define LLVM_LIB_TARGET_X86_X86FRAMELOWERING_H
 
-#include "llvm/Target/TargetFrameLowering.h"
+#include "X86ReturnProtectorLowering.h"
+#include "llvm/CodeGen/TargetFrameLowering.h"
 
 namespace llvm {
 
@@ -23,6 +24,7 @@ class MCCFIInstruction;
 class X86InstrInfo;
 class X86Subtarget;
 class X86RegisterInfo;
+class X86ReturnProtectorLowering;
 
 class X86FrameLowering : public TargetFrameLowering {
 public:
@@ -33,6 +35,9 @@ public:
   const X86Subtarget &STI;
   const X86InstrInfo &TII;
   const X86RegisterInfo *TRI;
+  const X86ReturnProtectorLowering RPL;
+
+  bool SaveArgs;
 
   unsigned SlotSize;
 
@@ -68,6 +73,8 @@ public:
   void emitPrologue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
   void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
+  const ReturnProtectorLowering *getReturnProtector() const override;
+
   void adjustForSegmentedStacks(MachineFunction &MF,
                                 MachineBasicBlock &PrologueMBB) const override;
 
@@ -89,7 +96,7 @@ public:
 
   bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator MI,
-                                  const std::vector<CalleeSavedInfo> &CSI,
+                                  std::vector<CalleeSavedInfo> &CSI,
                                   const TargetRegisterInfo *TRI) const override;
 
   bool hasFP(const MachineFunction &MF) const override;
@@ -125,7 +132,7 @@ public:
   /// Emit a series of instructions to increment / decrement the stack
   /// pointer by a constant value.
   void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
-                    int64_t NumBytes, bool InEpilogue) const;
+                    const DebugLoc &DL, int64_t NumBytes, bool InEpilogue) const;
 
   /// Check that LEA can be used on SP in an epilogue sequence for \p MF.
   bool canUseLEAForSPInEpilogue(const MachineFunction &MF) const;
@@ -157,15 +164,6 @@ public:
   void orderFrameObjects(const MachineFunction &MF,
                          SmallVectorImpl<int> &ObjectsToAllocate) const override;
 
-  /// convertArgMovsToPushes - This method tries to convert a call sequence
-  /// that uses sub and mov instructions to put the argument onto the stack
-  /// into a series of pushes.
-  /// Returns true if the transformation succeeded, false if not.
-  bool convertArgMovsToPushes(MachineFunction &MF, 
-                              MachineBasicBlock &MBB,
-                              MachineBasicBlock::iterator I, 
-                              uint64_t Amount) const;
-
   /// Wraps up getting a CFI index and building a MachineInstr for it.
   void BuildCFI(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                 const DebugLoc &DL, const MCCFIInstruction &CFIInst) const;
@@ -176,6 +174,10 @@ public:
   restoreWin32EHStackPointers(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MBBI,
                               const DebugLoc &DL, bool RestoreSP = false) const;
+
+  int getInitialCFAOffset(const MachineFunction &MF) const override;
+
+  unsigned getInitialCFARegister(const MachineFunction &MF) const override;
 
 private:
   uint64_t calculateMaxStackAlign(const MachineFunction &MF) const;
@@ -214,6 +216,11 @@ private:
   unsigned getPSPSlotOffsetFromSP(const MachineFunction &MF) const;
 
   unsigned getWinEHFuncletFrameSize(const MachineFunction &MF) const;
+
+  /// Materialize the catchret target MBB in RAX.
+  void emitCatchRetReturnValue(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator MBBI,
+                               MachineInstr *CatchRet) const;
 };
 
 } // End llvm namespace

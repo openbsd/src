@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_ioreg.h,v 1.7 2018/02/11 20:58:40 patrick Exp $	*/
+/*	$OpenBSD: sdmmc_ioreg.h,v 1.11 2018/08/09 13:50:15 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -47,7 +47,7 @@
 #define SD_ARG_CMD53_REG_MASK		0x1ffff
 #define SD_ARG_CMD53_LENGTH_SHIFT	0
 #define SD_ARG_CMD53_LENGTH_MASK	0x1ff
-#define SD_ARG_CMD53_LENGTH_MAX		64 /* XXX should be 511? */
+#define SD_ARG_CMD53_LENGTH_MAX		511
 
 /* 48-bit response decoding (32 bits w/o CRC) */
 #define MMC_R4(resp)			((resp)[0])
@@ -55,7 +55,7 @@
 
 /* SD R4 response (IO OCR) */
 #define SD_IO_OCR_MEM_READY		(1<<31)
-#define SD_IO_OCR_NUM_FUNCTIONS(ocr)	(((ocr) >> 28) & 0x3)
+#define SD_IO_OCR_NUM_FUNCTIONS(ocr)	(((ocr) >> 28) & 0x7)
 /* XXX big fat memory present "flag" because we don't know better */
 #define SD_IO_OCR_MEM_PRESENT		(0xf<<24)
 #define SD_IO_OCR_MASK			0x00fffff0
@@ -71,8 +71,17 @@
 #define SD_IO_CCCR_BUS_WIDTH		0x07
 #define  CCCR_BUS_WIDTH_1		(0<<0)
 #define  CCCR_BUS_WIDTH_4		(2<<0)
-#define  CCCR_BUS_WIDTH_8		(3<<0)
+#define  CCCR_BUS_WIDTH_MASK		(3<<0)
 #define SD_IO_CCCR_CISPTR		0x09 /* XXX 9-10, 10-11, or 9-12 */
+#define SD_IO_CCCR_SPEED		0x13
+#define  CCCR_SPEED_SHS			(1<<0)
+#define  CCCR_SPEED_EHS			CCCR_SPEED_SDR25
+#define  CCCR_SPEED_SDR12		(0<<1)
+#define  CCCR_SPEED_SDR25		(1<<1)
+#define  CCCR_SPEED_SDR50		(2<<1)
+#define  CCCR_SPEED_SDR104		(3<<1)
+#define  CCCR_SPEED_DDR50		(4<<1)
+#define  CCCR_SPEED_MASK		(0x7<<1)
 
 /* Function Basic Registers (FBR) */
 #define SD_IO_FBR_BASE(f)		((f) * 0x100)

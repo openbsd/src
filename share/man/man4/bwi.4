@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwi.4,v 1.40 2014/02/15 20:28:19 tedu Exp $
+.\" $OpenBSD: bwi.4,v 1.42 2019/03/29 17:16:35 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2014 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt BWI 4
 .Os
 .Sh NAME
@@ -119,8 +119,7 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid
-wpakey mywpakey
+nwid mynwid wpakey mywpakey
 dhcp
 .Ed
 .Sh SEE ALSO
@@ -156,3 +155,5 @@ and
 Some chips are incorrectly calibrated due to the lack of documentation,
 which can slow the amount of traffic to the point of being unusable.
 Furthermore this driver only supports firmware version 3.
+.Pp
+This driver does not support powersave mode.

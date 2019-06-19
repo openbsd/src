@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.66 2017/09/16 07:42:34 otto Exp $	*/
+/*	$OpenBSD: tar.c,v 1.67 2018/09/13 12:33:43 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -666,21 +666,6 @@ tar_wr(ARCHD *arcn)
  */
 
 /*
- * ustar_strd()
- *	initialization for ustar read
- * Return:
- *	0 if ok, -1 otherwise
- */
-
-int
-ustar_strd(void)
-{
-	if ((usrtb_start() < 0) || (grptb_start() < 0))
-		return(-1);
-	return(0);
-}
-
-/*
  * ustar_id()
  *	determine if a block given to us is a valid ustar header. We have to
  *	be on the lookout for those pesky blocks of all zero's
@@ -813,10 +798,10 @@ reset:
 	 * the posix spec wants).
 	 */
 	hd->gname[sizeof(hd->gname) - 1] = '\0';
-	if (Nflag || gid_name(hd->gname, &(arcn->sb.st_gid)) < 0)
+	if (Nflag || gid_from_group(hd->gname, &(arcn->sb.st_gid)) < 0)
 		arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
 	hd->uname[sizeof(hd->uname) - 1] = '\0';
-	if (Nflag || uid_name(hd->uname, &(arcn->sb.st_uid)) < 0)
+	if (Nflag || uid_from_user(hd->uname, &(arcn->sb.st_uid)) < 0)
 		arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
 
 	/*
@@ -921,8 +906,8 @@ int
 ustar_wr(ARCHD *arcn)
 {
 	HD_USTAR *hd;
-	char *pt, *name;
-	char hdblk[sizeof(HD_USTAR)];
+	const char *name;
+	char *pt, hdblk[sizeof(HD_USTAR)];
 
 	/*
 	 * check for those file system types ustar cannot store
@@ -1051,7 +1036,7 @@ ustar_wr(ARCHD *arcn)
 	 */
 	if (ul_oct(arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 3)) {
 		if (uid_nobody == 0) {
-			if (uid_name("nobody", &uid_nobody) == -1)
+			if (uid_from_user("nobody", &uid_nobody) == -1)
 				goto out;
 		}
 		if (uid_warn != arcn->sb.st_uid) {
@@ -1065,7 +1050,7 @@ ustar_wr(ARCHD *arcn)
 	}
 	if (ul_oct(arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3)) {
 		if (gid_nobody == 0) {
-			if (gid_name("nobody", &gid_nobody) == -1)
+			if (gid_from_group("nobody", &gid_nobody) == -1)
 				goto out;
 		}
 		if (gid_warn != arcn->sb.st_gid) {

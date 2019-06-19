@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.134 2017/10/11 17:19:50 patrick Exp $
+#	$OpenBSD: files.usb,v 1.139 2019/06/07 16:06:59 jcs Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -86,6 +86,11 @@ file	dev/usb/ukbd.c			ukbd			needs-flag
 device	ums: hid, hidms, wsmousedev
 attach	ums at uhidbus
 file	dev/usb/ums.c			ums
+
+# HID Multitouch Trackpad
+device	umt: hid, hidmt, wsmousedev
+attach	umt at uhidbus
+file	dev/usb/umt.c			umt
 
 # USB Touchscreen
 device	uts: wsmousedev
@@ -250,6 +255,11 @@ device	mos: ether, ifnet, mii, ifmedia
 attach	mos at uhub
 file	dev/usb/if_mos.c		mos
 
+# Microchip LAN75xx/LAN78xx
+device	mue: ether, ifnet, mii, ifmedia
+attach	mue at uhub
+file	dev/usb/if_mue.c		mue
+
 # Davicom DM9601
 device	udav: ether, ifnet, mii, ifmedia
 attach	udav at uhub
@@ -307,6 +317,11 @@ device	ubsa: ucombus
 attach	ubsa at uhub
 file	dev/usb/ubsa.c			ubsa
 
+# Keyspan USA19HS serial
+device	ukspan: ucombus
+attach	ukspan at uhub
+file	dev/usb/ukspan.c		ukspan
+
 # Silicon Laboratories CP210x serial
 device	uslcom: ucombus
 attach	uslcom at uhub
@@ -331,6 +346,16 @@ file	dev/usb/umcs.c			umcs
 device	uscom: ucombus
 attach	uscom at uhub
 file	dev/usb/uscom.c			uscom
+
+# Chromebook serial
+device	ucrcom: ucombus
+attach	ucrcom at uhub
+file	dev/usb/ucrcom.c		ucrcom
+
+# Exar XR21V1410
+device	uxrcom: ucombus
+attach	uxrcom at uhub
+file	dev/usb/uxrcom.c		uxrcom
 
 # iPAQ PDAs
 # Generic ipaq support

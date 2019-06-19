@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.11 2016/03/23 06:16:35 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.20 2018/06/26 07:44:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -39,16 +39,15 @@ struct slot {
 	struct slotops *ops;			/* client callbacks */
 	struct slot *next;			/* next on the play list */
 	struct dev *dev;			/* device this belongs to */
+	struct opt *opt;			/* config used */
 	void *arg;				/* user data for callbacks */
 	struct aparams par;			/* socket side params */
 	struct {
 		int weight;			/* dynamic range */
-		int maxweight;			/* max dynamic range allowed */
 		unsigned int vol;		/* volume within the vol */
 		struct abuf buf;		/* socket side buffer */
 		int bpf;			/* byte per frame */
-		int slot_cmin, slot_cmax;	/* slot source chans */
-		int dev_cmin, dev_cmax;		/* device destination chans */
+		int nch;			/* number of play chans */
 		struct cmap cmap;		/* channel mapper state */
 		struct resamp resamp;		/* resampler state */
 		struct conv dec;		/* format decoder params */
@@ -60,8 +59,7 @@ struct slot {
 		struct abuf buf;		/* socket side buffer */
 		int prime;			/* initial cycles to skip */
 		int bpf;			/* byte per frame */
-		int slot_cmin, slot_cmax;	/* slot destination chans */
-		int dev_cmin, dev_cmax;		/* device source chans */
+		int nch;			/* number of rec chans */
 		struct cmap cmap;		/* channel mapper state */
 		struct resamp resamp;		/* buffer for resampling */
 		struct conv enc;		/* buffer for encoding */
@@ -71,7 +69,6 @@ struct slot {
 	} sub;
 	int xrun;				/* underrun policy */
 	int skip;				/* cycles to skip (for xrun) */
-	int dup;				/* mono-to-stereo and alike */
 #define SLOT_BUFSZ(s) \
 	((s)->appbufsz + (s)->dev->bufsz / (s)->dev->round * (s)->round)
 	int appbufsz;				/* slot-side buffer size */
@@ -92,7 +89,18 @@ struct slot {
 	unsigned int unit;			/* instance of name */
 	unsigned int serial;			/* global unique number */
 	unsigned int vol;			/* current (midi) volume */
-	unsigned int tstate;			/* mmc state */
+};
+
+struct opt {
+	struct opt *next;
+#define OPT_NAMEMAX 11
+	char name[OPT_NAMEMAX + 1];
+	int maxweight;		/* max dynamic range for clients */
+	int pmin, pmax;		/* play channels */
+	int rmin, rmax;		/* recording channels */
+	int mmc;		/* true if MMC control enabled */
+	int dup;		/* true if join/expand enabled */
+	int mode;		/* bitmap of MODE_XXX */
 };
 
 /*
@@ -101,6 +109,7 @@ struct slot {
 struct dev {
 	struct dev *next;
 	struct slot *slot_list;			/* audio streams attached */
+	struct opt *opt_list;
 	struct midi *midi;
 
 	/*
@@ -180,7 +189,6 @@ struct dev {
 	/*
 	 * MIDI machine control (MMC)
 	 */
-#define MMC_OFF		0			/* ignore MMC messages */
 #define MMC_STOP	1			/* stopped, can't start */
 #define MMC_START	2			/* attempting to start */
 #define MMC_RUN		3			/* started */
@@ -223,7 +231,8 @@ void dev_midi_vol(struct dev *, struct slot *);
  * sio_open(3) like interface for clients
  */
 void slot_log(struct slot *);
-struct slot *slot_new(struct dev *, char *, struct slotops *, void *, int);
+struct slot *slot_new(struct dev *, struct opt *, char *,
+    struct slotops *, void *, int);
 void slot_del(struct slot *);
 void slot_setvol(struct slot *, unsigned int);
 void slot_start(struct slot *);

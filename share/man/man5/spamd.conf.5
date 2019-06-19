@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.21 2017/07/13 19:16:33 jmc Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.22 2018/07/22 17:09:43 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -24,7 +24,7 @@
 .\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2017 $
+.Dd $Mdocdate: July 22 2018 $
 .Dt SPAMD.CONF 5
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@ nixspam:\e
 	:black:\e
 	:msg="Your address %A is in the nixspam list\en\e
 	See http://www.heise.de/ix/nixspam/dnsbl_en/ for details":\e
-	:method=http:\e
+	:method=https:\e
 	:file=www.openbsd.org/spamd/nixspam.gz
 
 override:\e
@@ -123,12 +123,14 @@ capability entries.
 specifies the method by which to retrieve a file containing a list of
 addresses and may be one of
 .Ar http ,
+.Ar https ,
 .Ar ftp ,
 .Ar file ,
 or
 .Ar exec .
 The
 .Ar http ,
+.Ar https ,
 .Ar ftp ,
 and
 .Ar file

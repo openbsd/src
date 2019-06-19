@@ -1,10 +1,25 @@
 #!/usr/local/bin/python2.7
 
 import os
+import threading
 import string
 import random
 from addr import *
 from scapy.all import *
+
+class Sniff(threading.Thread):
+	 filter = None
+	 captured = None
+	 packet = None
+	 def __init__(self):
+		 # clear packets buffered by scapy bpf
+		 sniff(iface=LOCAL_IF, timeout=1)
+		 super(Sniff, self).__init__()
+	 def run(self):
+		 self.captured = sniff(iface=LOCAL_IF, filter=self.filter,
+		     timeout=3)
+		 if self.captured:
+			 self.packet = self.captured[0]
 
 e=Ether(src=LOCAL_MAC, dst=REMOTE_MAC)
 ip6=IPv6(src=FAKE_NET_ADDR6, dst=REMOTE_ADDR6)
@@ -30,19 +45,22 @@ sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/icmp6, iface=LOCAL_IF)
 print "Clear route cache at echo socket by sending from different address."
 sendp(e/IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/udp, iface=LOCAL_IF)
 
-print "Path MTU discovery will not send UDP atomic fragment."
 # srp1 cannot be used, fragment answer will not match on outgoing UDP packet
-if os.fork() == 0:
-	time.sleep(1)
-	sendp(e/ip6/udp, iface=LOCAL_IF)
-	os._exit(0)
+sniffer = Sniff()
+sniffer.filter = \
+    "ip6 and src "+ip6.dst+" and dst "+ip6.src+" and proto ipv6-frag"
+sniffer.start()
+time.sleep(1)
 
-ans=sniff(iface=LOCAL_IF, timeout=3, filter=
-    "ip6 and src "+ip6.dst+" and dst "+ip6.src+" and proto ipv6-frag")
+print "Send UDP packet with 1200 octets payload."
+sendp(e/ip6/udp, iface=LOCAL_IF)
+
+print "Path MTU discovery will not send UDP atomic fragment."
+sniffer.join(timeout=5)
 
 print "IPv6 atomic fragments must not be generated."
 frag=None
-for a in ans:
+for a in sniffer.captured:
 	fh=a.payload.payload
 	if fh.offset != 0 or fh.nh != (ip6/udp).nh:
 		continue
