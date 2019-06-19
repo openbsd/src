@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.12 2018/12/09 19:30:34 tobias Exp $ */
+/* $OpenBSD: genrsa.c,v 1.13 2019/06/19 01:51:14 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,6 +85,13 @@
 
 static int genrsa_cb(int p, int n, BN_GENCB * cb);
 
+static struct {
+	const EVP_CIPHER *enc;
+	unsigned long f4;
+	char *outfile;
+	char *passargout;
+} genrsa_config;
+
 int
 genrsa_main(int argc, char **argv)
 {
@@ -92,10 +99,7 @@ genrsa_main(int argc, char **argv)
 	int ret = 1;
 	int i, num = DEFBITS;
 	long l;
-	const EVP_CIPHER *enc = NULL;
-	unsigned long f4 = RSA_F4;
-	char *outfile = NULL;
-	char *passargout = NULL, *passout = NULL;
+	char *passout = NULL;
 	BIO *out = NULL;
 	BIGNUM *bn = BN_new();
 	RSA *rsa = NULL;
@@ -116,6 +120,10 @@ genrsa_main(int argc, char **argv)
 		BIO_printf(bio_err, "unable to create BIO for output\n");
 		goto err;
 	}
+
+	memset(&genrsa_config, 0, sizeof(genrsa_config));
+	genrsa_config.f4 = RSA_F4;
+
 	argv++;
 	argc--;
 	for (;;) {
@@ -124,41 +132,41 @@ genrsa_main(int argc, char **argv)
 		if (strcmp(*argv, "-out") == 0) {
 			if (--argc < 1)
 				goto bad;
-			outfile = *(++argv);
+			genrsa_config.outfile = *(++argv);
 		} else if (strcmp(*argv, "-3") == 0)
-			f4 = 3;
+			genrsa_config.f4 = 3;
 		else if (strcmp(*argv, "-F4") == 0 || strcmp(*argv, "-f4") == 0)
-			f4 = RSA_F4;
+			genrsa_config.f4 = RSA_F4;
 #ifndef OPENSSL_NO_DES
 		else if (strcmp(*argv, "-des") == 0)
-			enc = EVP_des_cbc();
+			genrsa_config.enc = EVP_des_cbc();
 		else if (strcmp(*argv, "-des3") == 0)
-			enc = EVP_des_ede3_cbc();
+			genrsa_config.enc = EVP_des_ede3_cbc();
 #endif
 #ifndef OPENSSL_NO_IDEA
 		else if (strcmp(*argv, "-idea") == 0)
-			enc = EVP_idea_cbc();
+			genrsa_config.enc = EVP_idea_cbc();
 #endif
 #ifndef OPENSSL_NO_AES
 		else if (strcmp(*argv, "-aes128") == 0)
-			enc = EVP_aes_128_cbc();
+			genrsa_config.enc = EVP_aes_128_cbc();
 		else if (strcmp(*argv, "-aes192") == 0)
-			enc = EVP_aes_192_cbc();
+			genrsa_config.enc = EVP_aes_192_cbc();
 		else if (strcmp(*argv, "-aes256") == 0)
-			enc = EVP_aes_256_cbc();
+			genrsa_config.enc = EVP_aes_256_cbc();
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 		else if (strcmp(*argv, "-camellia128") == 0)
-			enc = EVP_camellia_128_cbc();
+			genrsa_config.enc = EVP_camellia_128_cbc();
 		else if (strcmp(*argv, "-camellia192") == 0)
-			enc = EVP_camellia_192_cbc();
+			genrsa_config.enc = EVP_camellia_192_cbc();
 		else if (strcmp(*argv, "-camellia256") == 0)
-			enc = EVP_camellia_256_cbc();
+			genrsa_config.enc = EVP_camellia_256_cbc();
 #endif
 		else if (strcmp(*argv, "-passout") == 0) {
 			if (--argc < 1)
 				goto bad;
-			passargout = *(++argv);
+			genrsa_config.passargout = *(++argv);
 		} else
 			break;
 		argv++;
@@ -189,16 +197,16 @@ genrsa_main(int argc, char **argv)
 		goto err;
 	}
 
-	if (!app_passwd(bio_err, NULL, passargout, NULL, &passout)) {
+	if (!app_passwd(bio_err, NULL, genrsa_config.passargout, NULL, &passout)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto err;
 	}
 
-	if (outfile == NULL) {
+	if (genrsa_config.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, outfile) <= 0) {
-			perror(outfile);
+		if (BIO_write_filename(out, genrsa_config.outfile) <= 0) {
+			perror(genrsa_config.outfile);
 			goto err;
 		}
 	}
@@ -209,7 +217,7 @@ genrsa_main(int argc, char **argv)
 	if (!rsa)
 		goto err;
 
-	if (!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, &cb))
+	if (!BN_set_word(bn, genrsa_config.f4) || !RSA_generate_key_ex(rsa, num, bn, &cb))
 		goto err;
 
 	/*
@@ -228,8 +236,8 @@ genrsa_main(int argc, char **argv)
 	{
 		PW_CB_DATA cb_data;
 		cb_data.password = passout;
-		cb_data.prompt_info = outfile;
-		if (!PEM_write_bio_RSAPrivateKey(out, rsa, enc, NULL, 0,
+		cb_data.prompt_info = genrsa_config.outfile;
+		if (!PEM_write_bio_RSAPrivateKey(out, rsa, genrsa_config.enc, NULL, 0,
 			password_callback, &cb_data))
 			goto err;
 	}
