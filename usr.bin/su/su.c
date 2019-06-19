@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.73 2019/01/28 01:38:06 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.74 2019/06/19 16:26:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -229,8 +229,8 @@ main(int argc, char **argv)
 
 	if (!altshell) {
 		if (asme) {
-			/* if asme and non-std target shell, must be root */
-			if (ruid && !chshell(shell))
+			/* must be root to override non-std target shell */
+			if (ruid && !chshell(pwd->pw_shell))
 				auth_errx(as, 1, "permission denied (shell).");
 		} else if (pwd->pw_shell && *pwd->pw_shell) {
 			if ((shell = strdup(pwd->pw_shell)) == NULL)
