@@ -1,4 +1,4 @@
-/* $OpenBSD: copy.S,v 1.6 2019/06/17 12:25:49 patrick Exp $ */
+/* $OpenBSD: copy.S,v 1.7 2019/06/19 08:00:17 patrick Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -30,8 +30,6 @@
  * x2 = length
  *
  * Copies bytes from user space to kernel space
- *
- * XXX should this assert that address spaces are correct for each address?
  */
 ENTRY(copyin)
 	RETGUARD_SETUP(copy, x15)
@@ -39,7 +37,15 @@ ENTRY(copyin)
 	mov	x0, 0
 	RETGUARD_CHECK(copy, x15)
 	ret
+
 1:
+	/* Check whether source+len overflows. */
+	adds	x3, x0, x2
+	b.cs	.Laddrfault
+	/* Check that source+len is in userspace. */
+	tst	x3, #(1ULL << 63)
+	b.ne	.Laddrfault
+
 	mrs	x3, tpidr_el1			// load cpuinfo
 	ldr	x3, [x3, #(CI_CURPCB)]
 	ldr	x4, [x3, #(PCB_ONFAULT)]
@@ -59,8 +65,9 @@ ENTRY(copyin)
 	ret
 
 .Lcopyfault:
-	mov	x0, #EFAULT
 	str	x4, [x3, #(PCB_ONFAULT)]
+.Laddrfault:
+	mov	x0, #EFAULT
 	RETGUARD_CHECK(copy, x15)
 	ret
 
@@ -69,11 +76,17 @@ ENTRY(copyin)
  * x1 = kernel space address
  *
  * Atomically copies a 32-bit word from user space to kernel space
- *
- * XXX should this assert that address spaces are correct for each address?
  */
 ENTRY(copyin32)
 	RETGUARD_SETUP(copy, x15)
+
+	/* Check source alignment. */
+	tst	x0, #0x3
+	b.ne	.Laddrfault
+	/* Check that source is in userspace. */
+	tst	x0, #(1ULL << 63)
+	b.ne	.Laddrfault
+
 	mrs	x3, tpidr_el1			// load cpuinfo
 	ldr	x3, [x3, #(CI_CURPCB)]
 	ldr	x4, [x3, #(PCB_ONFAULT)]
@@ -94,8 +107,6 @@ ENTRY(copyin32)
  * x2 = length
  *
  * Copies bytes from kernel space to user space
- *
- * XXX should this assert that address spaces are correct for each address?
  */
 
 ENTRY(copyout)
@@ -104,7 +115,15 @@ ENTRY(copyout)
 	mov	x0, 0
 	RETGUARD_CHECK(copy, x15)
 	ret
+
 1:
+	/* Check whether dest+len overflows. */
+	adds	x3, x1, x2
+	b.cs	.Laddrfault
+	/* Check that dest+len is in userspace. */
+	tst	x3, #(1ULL << 63)
+	b.ne	.Laddrfault
+
 	mrs	x3, tpidr_el1			// load cpuinfo
 	ldr	x3, [x3, #(CI_CURPCB)]
 	ldr	x4, [x3, #(PCB_ONFAULT)]
