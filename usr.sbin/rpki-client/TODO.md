@@ -12,7 +12,7 @@ The following are unclear to me.
   system, I let the range through but don't let a specific ASid of 0 in
   certificates---only ROAs.
 
-- Route duplication.  When run as-is, there are duplicate routes and
+- VRP duplication.  When run as-is, there are duplicate VRPs and
   that doesn't seem right.  It happens when two ROAs have their validity
   period overlap.  I need to see if there's a more programmatic way to
   check before commiting the routes to output.

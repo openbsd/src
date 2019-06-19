@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.5 2019/06/19 04:21:43 deraadt Exp $ */
+/*	$Id: main.c,v 1.6 2019/06/19 09:41:25 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -53,7 +53,7 @@ struct	stats {
 	size_t	 certs; /* certificates */
 	size_t	 certs_fail; /* failing syntactic parse */
 	size_t	 certs_invalid; /* invalid resources */
-	size_t	 roas; /* route announcements */
+	size_t	 roas; /* route origin authorizations */
 	size_t	 roas_fail; /* failing syntactic parse */
 	size_t	 roas_invalid; /* invalid resources */
 	size_t	 repos; /* repositories */
@@ -1259,7 +1259,7 @@ main(int argc, char *argv[])
 	int		 rc = 0, c, proc, st, rsync,
 			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0,
 			 force = 0, norev = 0, quiet = 0;
-	size_t		 i, j, eid = 1, outsz = 0, routes, uniqs;
+	size_t		 i, j, eid = 1, outsz = 0, vrps, uniqs;
 	pid_t		 procpid, rsyncpid;
 	int		 fd[2];
 	struct entityq	 q;
@@ -1485,17 +1485,17 @@ main(int argc, char *argv[])
 	/* Output and statistics. */
 
 	output_bgpd((const struct roa **)out,
-	    outsz, quiet, &routes, &uniqs);
-	logx("Route origins: %zu (%zu failed parse, %zu invalid)",
+	    outsz, quiet, &vrps, &uniqs);
+	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
 	logx("Certificates: %zu (%zu failed parse, %zu invalid)",
 	    stats.certs, stats.certs_fail, stats.certs_invalid);
-	logx("Trust anchor locators: %zu", stats.tals);
+	logx("Trust Anchor Locators: %zu", stats.tals);
 	logx("Manifests: %zu (%zu failed parse, %zu stale)",
 	    stats.mfts, stats.mfts_fail, stats.mfts_stale);
 	logx("Certificate revocation lists: %zu", stats.crls);
 	logx("Repositories: %zu", stats.repos);
-	logx("Routes: %zu (%zu unique)", routes, uniqs);
+	logx("VRP Entries: %zu (%zu unique)", vrps, uniqs);
 
 	/* Memory cleanup. */
 

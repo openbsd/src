@@ -112,7 +112,7 @@ This process performs the bulk of the work.
 The master process is responsible for orchestrating this pipeline.
 It seeds the parser process with the TAL files, retrieves TAL output,
 then begins parsing certificates (X509), manifests (MFT), revocation
-lists (CRL), and routes (ROA).
+lists (CRL), and Route Origin Authorizations (ROAs).
 If any of these files sits in a repository not yet fetched, that
 repository is fetched or refreshed.
 When the repository is fetched, those pending entries are flushed into

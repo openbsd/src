@@ -1,4 +1,4 @@
-/*	$Id: output-bgpd.c,v 1.3 2019/06/19 04:21:43 deraadt Exp $ */
+/*	$Id: output-bgpd.c,v 1.4 2019/06/19 09:41:25 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,19 +35,19 @@ cmp(const void *p1, const void *p2)
 
 void
 output_bgpd(const struct roa **roas, size_t roasz,
-    int quiet, size_t *routes, size_t *unique)
+    int quiet, size_t *vrps, size_t *unique)
 {
 	char		 buf1[64], buf2[32], linebuf[128];
 	char		**lines = NULL;
 	size_t		 i, j, k;
 
-	*routes = *unique = 0;
+	*vrps = *unique = 0;
 
 	for (i = 0; i < roasz; i++)
 		for (j = 0; j < roas[i]->ipsz; j++)
-			(*routes)++;
+			(*vrps)++;
 
-	if ((lines = calloc(*routes, sizeof(char *))) == NULL)
+	if ((lines = calloc(*vrps, sizeof(char *))) == NULL)
 		err(EXIT_FAILURE, NULL);
 
 	for (i = k = 0; i < roasz; i++)
@@ -67,12 +67,12 @@ output_bgpd(const struct roa **roas, size_t roasz,
 				err(EXIT_FAILURE, NULL);
 		}
 
-	assert(k == *routes);
-	qsort(lines, *routes, sizeof(char *), cmp);
+	assert(k == *vrps);
+	qsort(lines, *vrps, sizeof(char *), cmp);
 
 	if (!quiet)
 		puts("roa-set {");
-	for (i = 0; i < *routes; i++)
+	for (i = 0; i < *vrps; i++)
 		if (i == 0 || strcmp(lines[i], lines[i - 1])) {
 			if (!quiet)
 				printf("    %s\n", lines[i]);
@@ -81,7 +81,7 @@ output_bgpd(const struct roa **roas, size_t roasz,
 	if (!quiet)
 		puts("}");
 
-	for (i = 0; i < *routes; i++)
+	for (i = 0; i < *vrps; i++)
 		free(lines[i]);
 	free(lines);
 }
