@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.4 2019/06/19 02:02:28 deraadt Exp $ */
+/*	$Id: main.c,v 1.5 2019/06/19 04:21:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -126,7 +126,7 @@ static int	 verbose;
 static void
 logx(const char *fmt, ...)
 {
-	va_list	 ap;
+	va_list		 ap;
 
 	if (verbose && fmt != NULL) {
 		va_start(ap, fmt);
@@ -144,8 +144,7 @@ rtype_resolve(const char *uri)
 {
 	enum rtype	 rp;
 
-	(void)rsync_uri_parse(NULL, NULL,
-		NULL, NULL, NULL, NULL, &rp, uri);
+	rsync_uri_parse(NULL, NULL, NULL, NULL, NULL, NULL, &rp, uri);
 	return rp;
 }
 
@@ -208,7 +207,7 @@ repo_lookup(int fd, struct repotab *rt, const char *uri)
 			continue;
 		return &rt->repos[i];
 	}
-	
+
 	rt->repos = reallocarray(rt->repos,
 		rt->reposz + 1, sizeof(struct repo));
 	if (rt->repos == NULL)
@@ -254,8 +253,8 @@ entityq_next(int fd, struct entityq *q)
 }
 
 static void
-entity_buffer_resp(char **b, size_t *bsz,
-	size_t *bmax, const struct entity *ent)
+entity_buffer_resp(char **b, size_t *bsz, size_t *bmax,
+    const struct entity *ent)
 {
 
 	io_simple_buffer(b, bsz, bmax, &ent->id, sizeof(size_t));
@@ -266,8 +265,8 @@ entity_buffer_resp(char **b, size_t *bsz,
  * Matched by entity_read_req().
  */
 static void
-entity_buffer_req(char **b, size_t *bsz,
-	size_t *bmax, const struct entity *ent)
+entity_buffer_req(char **b, size_t *bsz, size_t *bmax,
+    const struct entity *ent)
 {
 
 	io_simple_buffer(b, bsz, bmax, &ent->id, sizeof(size_t));
@@ -317,8 +316,8 @@ entityq_flush(int fd, struct entityq *q, const struct repo *repo)
  */
 static void
 entityq_add(int fd, struct entityq *q, char *file, enum rtype type,
-	const struct repo *rp, const unsigned char *dgst,
-	const unsigned char *pkey, size_t pkeysz, size_t *eid)
+    const struct repo *rp, const unsigned char *dgst,
+    const unsigned char *pkey, size_t pkeysz, size_t *eid)
 {
 	struct entity	*p;
 
@@ -356,9 +355,9 @@ entityq_add(int fd, struct entityq *q, char *file, enum rtype type,
  */
 static void
 queue_add_from_mft(int fd, struct entityq *q, const char *mft,
-	const struct mftfile *file, enum rtype type, size_t *eid)
+    const struct mftfile *file, enum rtype type, size_t *eid)
 {
-	size_t	 	 sz;
+	size_t		 sz;
 	char		*cp, *nfile;
 
 	assert(strncmp(mft, BASE_DIR, strlen(BASE_DIR)) == 0);
@@ -383,8 +382,7 @@ queue_add_from_mft(int fd, struct entityq *q, const char *mft,
 	 * that the repository has already been loaded.
 	 */
 
-	entityq_add(fd, q, nfile, type,
-		NULL, file->hash, NULL, 0, eid);
+	entityq_add(fd, q, nfile, type, NULL, file->hash, NULL, 0, eid);
 }
 
 /*
@@ -396,11 +394,11 @@ queue_add_from_mft(int fd, struct entityq *q, const char *mft,
  * check the suffix anyway).
  */
 static void
-queue_add_from_mft_set(int fd, struct entityq *q,
-	const struct mft *mft, size_t *eid)
+queue_add_from_mft_set(int fd, struct entityq *q, const struct mft *mft,
+    size_t *eid)
 {
 	size_t			 i, sz;
-	const struct mftfile 	*f;
+	const struct mftfile	*f;
 
 	for (i = 0; i < mft->filesz; i++) {
 		f = &mft->files[i];
@@ -408,8 +406,7 @@ queue_add_from_mft_set(int fd, struct entityq *q,
 		assert(sz > 4);
 		if (strcasecmp(f->file + sz - 4, ".crl"))
 			continue;
-		queue_add_from_mft(fd, q,
-			mft->file, f, RTYPE_CRL, eid);
+		queue_add_from_mft(fd, q, mft->file, f, RTYPE_CRL, eid);
 	}
 
 	for (i = 0; i < mft->filesz; i++) {
@@ -418,8 +415,7 @@ queue_add_from_mft_set(int fd, struct entityq *q,
 		assert(sz > 4);
 		if (strcasecmp(f->file + sz - 4, ".cer"))
 			continue;
-		queue_add_from_mft(fd, q,
-			mft->file, f, RTYPE_CER, eid);
+		queue_add_from_mft(fd, q, mft->file, f, RTYPE_CER, eid);
 	}
 
 	for (i = 0; i < mft->filesz; i++) {
@@ -428,8 +424,7 @@ queue_add_from_mft_set(int fd, struct entityq *q,
 		assert(sz > 4);
 		if (strcasecmp(f->file + sz - 4, ".roa"))
 			continue;
-		queue_add_from_mft(fd, q,
-			mft->file, f, RTYPE_ROA, eid);
+		queue_add_from_mft(fd, q, mft->file, f, RTYPE_ROA, eid);
 	}
 }
 
@@ -446,8 +441,7 @@ queue_add_tal(int fd, struct entityq *q, const char *file, size_t *eid)
 
 	/* Not in a repository, so directly add to queue. */
 
-	entityq_add(fd, q, nfile, RTYPE_TAL,
-		NULL, NULL, NULL, 0, eid);
+	entityq_add(fd, q, nfile, RTYPE_TAL, NULL, NULL, NULL, 0, eid);
 }
 
 /*
@@ -456,11 +450,11 @@ queue_add_tal(int fd, struct entityq *q, const char *file, size_t *eid)
  */
 static void
 queue_add_from_tal(int proc, int rsync, struct entityq *q,
-	const struct tal *tal, struct repotab *rt, size_t *eid)
+    const struct tal *tal, struct repotab *rt, size_t *eid)
 {
-	char		  *nfile;
-	const struct repo *repo;
-	const char 	  *uri;
+	char			*nfile;
+	const struct repo	*repo;
+	const char		*uri;
 
 	assert(tal->urisz);
 	uri = tal->uri[0];
@@ -475,8 +469,8 @@ queue_add_from_tal(int proc, int rsync, struct entityq *q,
 	    BASE_DIR, repo->host, repo->module, uri) < 0)
 		err(EXIT_FAILURE, "asprintf");
 
-	entityq_add(proc, q, nfile, RTYPE_CER,
-		repo, NULL, tal->pkey, tal->pkeysz, eid);
+	entityq_add(proc, q, nfile, RTYPE_CER, repo, NULL, tal->pkey,
+	    tal->pkeysz, eid);
 }
 
 /*
@@ -484,11 +478,11 @@ queue_add_from_tal(int proc, int rsync, struct entityq *q,
  */
 static void
 queue_add_from_cert(int proc, int rsync, struct entityq *q,
-	const char *uri, struct repotab *rt, size_t *eid)
+    const char *uri, struct repotab *rt, size_t *eid)
 {
-	char		  *nfile;
-	enum rtype	   type;
-	const struct repo *repo;
+	char			*nfile;
+	enum rtype		 type;
+	const struct repo	*repo;
 
 	if ((type = rtype_resolve(uri)) == RTYPE_EOF)
 		errx(EXIT_FAILURE, "%s: unknown file type", uri);
@@ -529,18 +523,18 @@ proc_child(int signal)
 static void
 proc_rsync(const char *prog, int fd, int noop)
 {
-	size_t		  id, i, idsz = 0;
-	ssize_t		  ssz;
-	char		 *host = NULL, *mod = NULL, *uri = NULL, *dst = NULL,
-			 *path, *save, *cmd;
-	const char	 *pp;
-	pid_t		  pid;
-	char		 *args[32];
-	int		  st, rc = 0;
-	struct stat	  stt;
-	struct pollfd	  pfd;
-	sigset_t	  mask, oldmask;
-	struct rsyncproc *ids = NULL;
+	size_t			 id, i, idsz = 0;
+	ssize_t			 ssz;
+	char			*host = NULL, *mod = NULL, *uri = NULL,
+				*dst = NULL, *path, *save, *cmd;
+	const char		*pp;
+	pid_t			 pid;
+	char			*args[32];
+	int			 st, rc = 0;
+	struct stat		 stt;
+	struct pollfd		 pfd;
+	sigset_t		 mask, oldmask;
+	struct rsyncproc	*ids = NULL;
 
 	pfd.fd = fd;
 	pfd.events = POLLIN;
@@ -740,14 +734,14 @@ out:
  */
 static struct roa *
 proc_parser_roa(struct entity *entp, int norev,
-	X509_STORE *store, X509_STORE_CTX *ctx,
-	const struct auth *auths, size_t authsz)
+    X509_STORE *store, X509_STORE_CTX *ctx,
+    const struct auth *auths, size_t authsz)
 {
-	struct roa	  *roa;
-	X509		  *x509;
-	int		   c;
-	X509_VERIFY_PARAM *param;
-	unsigned int	   fl, nfl;
+	struct roa		*roa;
+	X509			*x509;
+	int			 c;
+	X509_VERIFY_PARAM	*param;
+	unsigned int		fl, nfl;
 
 	assert(entp->has_dgst);
 	if ((roa = roa_parse(&x509, entp->uri, entp->dgst)) == NULL)
@@ -762,23 +756,21 @@ proc_parser_roa(struct entity *entp, int norev,
 	fl = X509_VERIFY_PARAM_get_flags(param);
 	nfl = X509_V_FLAG_IGNORE_CRITICAL;
 	if (!norev)
-		nfl |= X509_V_FLAG_CRL_CHECK |
-		       X509_V_FLAG_CRL_CHECK_ALL;
+		nfl |= X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL;
 	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
 		cryptoerrx("X509_VERIFY_PARAM_set_flags");
 
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
 		X509_STORE_CTX_cleanup(ctx);
-		warnx("%s: %s", entp->uri,
-			X509_verify_cert_error_string(c));
+		warnx("%s: %s", entp->uri, X509_verify_cert_error_string(c));
 		X509_free(x509);
 		roa_free(roa);
 		return NULL;
 	}
 	X509_STORE_CTX_cleanup(ctx);
 	X509_free(x509);
-	
+
 	/*
 	 * If the ROA isn't valid, we accept it anyway and depend upon
 	 * the code around roa_read() to check the "valid" field itself.
@@ -800,13 +792,13 @@ proc_parser_roa(struct entity *entp, int norev,
  */
 static struct mft *
 proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
-	X509_STORE_CTX *ctx, const struct auth *auths, size_t authsz)
+    X509_STORE_CTX *ctx, const struct auth *auths, size_t authsz)
 {
-	struct mft	    *mft;
-	X509		    *x509;
-	int		     c;
-	unsigned int	     fl, nfl;
-	X509_VERIFY_PARAM   *param;
+	struct mft		*mft;
+	X509			*x509;
+	int			 c;
+	unsigned int		 fl, nfl;
+	X509_VERIFY_PARAM	*param;
 
 	assert(!entp->has_dgst);
 	if ((mft = mft_parse(&x509, entp->uri, force)) == NULL)
@@ -825,8 +817,7 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
 		X509_STORE_CTX_cleanup(ctx);
-		warnx("%s: %s", entp->uri,
-			X509_verify_cert_error_string(c));
+		warnx("%s: %s", entp->uri, X509_verify_cert_error_string(c));
 		mft_free(mft);
 		X509_free(x509);
 		return NULL;
@@ -847,23 +838,22 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
  */
 static struct cert *
 proc_parser_cert(const struct entity *entp, int norev,
-	X509_STORE *store, X509_STORE_CTX *ctx,
-	struct auth **auths, size_t *authsz)
+    X509_STORE *store, X509_STORE_CTX *ctx,
+    struct auth **auths, size_t *authsz)
 {
-	struct cert	    *cert;
-	X509		    *x509;
-	int		     c;
-	X509_VERIFY_PARAM   *param;
-	unsigned int	     fl, nfl;
-	ssize_t		     id;
+	struct cert		*cert;
+	X509			*x509;
+	int			 c;
+	X509_VERIFY_PARAM	*param;
+	unsigned int		 fl, nfl;
+	ssize_t			 id;
 
 	assert(!entp->has_dgst != !entp->has_pkey);
 
 	/* Extract certificate data and X509. */
 
-	cert = entp->has_dgst ?
-		cert_parse(&x509, entp->uri, entp->dgst) :
-		ta_parse(&x509, entp->uri, entp->pkey, entp->pkeysz);
+	cert = entp->has_dgst ? cert_parse(&x509, entp->uri, entp->dgst) :
+	    ta_parse(&x509, entp->uri, entp->pkey, entp->pkeysz);
 	if (cert == NULL)
 		return NULL;
 
@@ -880,8 +870,7 @@ proc_parser_cert(const struct entity *entp, int norev,
 	fl = X509_VERIFY_PARAM_get_flags(param);
 	nfl = X509_V_FLAG_IGNORE_CRITICAL;
 	if (!norev)
-		nfl |= X509_V_FLAG_CRL_CHECK |
-		       X509_V_FLAG_CRL_CHECK_ALL;
+		nfl |= X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL;
 	if (!X509_VERIFY_PARAM_set_flags(param, fl | nfl))
 		cryptoerrx("X509_VERIFY_PARAM_set_flags");
 
@@ -895,7 +884,7 @@ proc_parser_cert(const struct entity *entp, int norev,
 		if (c != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT ||
 		    !entp->has_pkey) {
 			warnx("%s: %s", entp->uri,
-				X509_verify_cert_error_string(c));
+			    X509_verify_cert_error_string(c));
 			X509_STORE_CTX_cleanup(ctx);
 			X509_free(x509);
 			cert_free(cert);
@@ -921,8 +910,7 @@ proc_parser_cert(const struct entity *entp, int norev,
 	 */
 
 	cert->valid = 1;
-	*auths = reallocarray(*auths,
-		*authsz + 1, sizeof(struct auth));
+	*auths = reallocarray(*auths, *authsz + 1, sizeof(struct auth));
 	if (*auths == NULL)
 		err(EXIT_FAILURE, NULL);
 
@@ -948,7 +936,7 @@ proc_parser_cert(const struct entity *entp, int norev,
  */
 static void
 proc_parser_crl(struct entity *entp, int norev, X509_STORE *store,
-	X509_STORE_CTX *ctx, const struct auth *auths, size_t authsz)
+    X509_STORE_CTX *ctx, const struct auth *auths, size_t authsz)
 {
 	X509_CRL	    *x509;
 	const unsigned char *dgst;
@@ -1009,7 +997,7 @@ proc_parser(int fd, int force, int norev)
 			err(EXIT_FAILURE, "poll");
 		if ((pfd.revents & (POLLERR|POLLNVAL)))
 			errx(EXIT_FAILURE, "poll: bad descriptor");
-		
+
 		/* If the parent closes, return immediately. */
 
 		if ((pfd.revents & POLLHUP))
@@ -1112,7 +1100,7 @@ proc_parser(int fd, int force, int norev)
 			break;
 		case RTYPE_MFT:
 			mft = proc_parser_mft(entp, force,
-				store, ctx, auths, authsz);
+			    store, ctx, auths, authsz);
 			c = (mft != NULL);
 			io_simple_buffer(&b, &bsz, &bmax, &c, sizeof(int));
 			if (mft != NULL)
@@ -1121,12 +1109,12 @@ proc_parser(int fd, int force, int norev)
 			break;
 		case RTYPE_CRL:
 			proc_parser_crl(entp, norev,
-				store, ctx, auths, authsz);
+			    store, ctx, auths, authsz);
 			break;
 		case RTYPE_ROA:
 			assert(entp->has_dgst);
 			roa = proc_parser_roa(entp, norev,
-				store, ctx, auths, authsz);
+			    store, ctx, auths, authsz);
 			c = (roa != NULL);
 			io_simple_buffer(&b, &bsz, &bmax, &c, sizeof(int));
 			if (roa != NULL)
@@ -1175,8 +1163,8 @@ out:
  */
 static void
 entity_process(int proc, int rsync, struct stats *st,
-	struct entityq *q, const struct entity *ent, struct repotab *rt,
-	size_t *eid, struct roa ***out, size_t *outsz)
+    struct entityq *q, const struct entity *ent, struct repotab *rt,
+    size_t *eid, struct roa ***out, size_t *outsz)
 {
 	struct tal	*tal;
 	struct cert	*cert;
@@ -1215,10 +1203,10 @@ entity_process(int proc, int rsync, struct stats *st,
 			 */
 			if (cert->crl != NULL)
 				queue_add_from_cert(proc, rsync,
-					q, cert->crl, rt, eid);
+				    q, cert->crl, rt, eid);
 			if (cert->mft != NULL)
 				queue_add_from_cert(proc, rsync,
-					q, cert->mft, rt, eid);
+				    q, cert->mft, rt, eid);
 		} else
 			st->certs_invalid++;
 		cert_free(cert);
@@ -1249,7 +1237,7 @@ entity_process(int proc, int rsync, struct stats *st,
 		roa = roa_read(proc);
 		if (roa->valid) {
 			*out = reallocarray(*out,
-				*outsz + 1, sizeof(struct roa *));
+			    *outsz + 1, sizeof(struct roa *));
 			if (*out == NULL)
 				err(EXIT_FAILURE, "reallocarray");
 			(*out)[*outsz] = roa;
@@ -1268,19 +1256,19 @@ entity_process(int proc, int rsync, struct stats *st,
 int
 main(int argc, char *argv[])
 {
-	int		  rc = 0, c, proc, st, rsync,
-			  fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0,
-			  force = 0, norev = 0, quiet = 0;
-	size_t		  i, j, eid = 1, outsz = 0, routes, uniqs;
-	pid_t		  procpid, rsyncpid;
-	int		  fd[2];
-	struct entityq	  q;
-	struct entity	 *ent;
-	struct pollfd	  pfd[2];
-	struct repotab	  rt;
-	struct stats	  stats;
+	int		 rc = 0, c, proc, st, rsync,
+			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0,
+			 force = 0, norev = 0, quiet = 0;
+	size_t		 i, j, eid = 1, outsz = 0, routes, uniqs;
+	pid_t		 procpid, rsyncpid;
+	int		 fd[2];
+	struct entityq	 q;
+	struct entity	*ent;
+	struct pollfd	 pfd[2];
+	struct repotab	 rt;
+	struct stats	 stats;
 	struct roa	**out = NULL;
-	const char	 *rsync_prog = "openrsync";
+	const char	*rsync_prog = "openrsync";
 
 	if (pledge("stdio rpath proc exec cpath unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
@@ -1408,7 +1396,7 @@ main(int argc, char *argv[])
 
 		if ((c = poll(pfd, 2, verbose ? 10000 : INFTIM)) < 0)
 			err(EXIT_FAILURE, "poll");
-		
+
 		/* Debugging: print some statistics if we stall. */
 
 		if (c == 0) {
@@ -1448,7 +1436,7 @@ main(int argc, char *argv[])
 			assert(!rt.repos[i].loaded);
 			rt.repos[i].loaded = 1;
 			logx("%s/%s/%s: loaded", BASE_DIR,
-				rt.repos[i].host, rt.repos[i].module);
+			    rt.repos[i].host, rt.repos[i].module);
 			stats.repos++;
 			entityq_flush(proc, &q, &rt.repos[i]);
 		}
@@ -1461,7 +1449,7 @@ main(int argc, char *argv[])
 		if ((pfd[1].revents & POLLIN)) {
 			ent = entityq_next(proc, &q);
 			entity_process(proc, rsync, &stats,
-				&q, ent, &rt, &eid, &out, &outsz);
+			    &q, ent, &rt, &eid, &out, &outsz);
 			if (verbose > 1)
 				fprintf(stderr, "%s\n", ent->uri);
 			entity_free(ent);
@@ -1497,14 +1485,14 @@ main(int argc, char *argv[])
 	/* Output and statistics. */
 
 	output_bgpd((const struct roa **)out,
-		outsz, quiet, &routes, &uniqs);
+	    outsz, quiet, &routes, &uniqs);
 	logx("Route origins: %zu (%zu failed parse, %zu invalid)",
-		stats.roas, stats.roas_fail, stats.roas_invalid);
+	    stats.roas, stats.roas_fail, stats.roas_invalid);
 	logx("Certificates: %zu (%zu failed parse, %zu invalid)",
-		stats.certs, stats.certs_fail, stats.certs_invalid);
+	    stats.certs, stats.certs_fail, stats.certs_invalid);
 	logx("Trust anchor locators: %zu", stats.tals);
 	logx("Manifests: %zu (%zu failed parse, %zu stale)",
-		stats.mfts, stats.mfts_fail, stats.mfts_stale);
+	    stats.mfts, stats.mfts_fail, stats.mfts_stale);
 	logx("Certificate revocation lists: %zu", stats.crls);
 	logx("Repositories: %zu", stats.repos);
 	logx("Routes: %zu (%zu unique)", routes, uniqs);
@@ -1528,7 +1516,7 @@ main(int argc, char *argv[])
 	return rc ? EXIT_SUCCESS : EXIT_FAILURE;
 
 usage:
-	fprintf(stderr, "usage: %s [-fnqrv] "
-		"[-e rsync_prog] tal ...\n", getprogname());
+	fprintf(stderr,
+	    "usage: rpki-client [-fnqrv] [-e rsync_prog] tal ...\n");
 	return EXIT_FAILURE;
 }

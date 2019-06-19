@@ -1,4 +1,4 @@
-/*	$Id: output-bgpd.c,v 1.2 2019/06/17 15:04:59 deraadt Exp $ */
+/*	$Id: output-bgpd.c,v 1.3 2019/06/19 04:21:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,11 +35,11 @@ cmp(const void *p1, const void *p2)
 
 void
 output_bgpd(const struct roa **roas, size_t roasz,
-	int quiet, size_t *routes, size_t *unique)
+    int quiet, size_t *routes, size_t *unique)
 {
-	char	  buf1[64], buf2[32], linebuf[128];
-	char	**lines = NULL;
-	size_t	  i, j, k;
+	char		 buf1[64], buf2[32], linebuf[128];
+	char		**lines = NULL;
+	size_t		 i, j, k;
 
 	*routes = *unique = 0;
 
@@ -57,14 +57,12 @@ output_bgpd(const struct roa **roas, size_t roasz,
 			if (roas[i]->ips[j].maxlength >
 			    (roas[i]->ips[j].addr.sz * 8 -
 			     roas[i]->ips[j].addr.unused))
-				snprintf(buf2, sizeof(buf2),
-					"maxlen %zu ",
-					roas[i]->ips[j].maxlength);
+				snprintf(buf2, sizeof(buf2), "maxlen %zu ",
+				    roas[i]->ips[j].maxlength);
 			else
 				buf2[0] = '\0';
 			snprintf(linebuf, sizeof(linebuf),
-				"%s %ssource-as %" PRIu32,
-				buf1, buf2, roas[i]->asid);
+			    "%s %ssource-as %u", buf1, buf2, roas[i]->asid);
 			if ((lines[k++] = strdup(linebuf)) == NULL)
 				err(EXIT_FAILURE, NULL);
 		}

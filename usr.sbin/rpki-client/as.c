@@ -1,4 +1,4 @@
-/*	$Id: as.c,v 1.2 2019/06/17 15:04:59 deraadt Exp $ */
+/*	$Id: as.c,v 1.3 2019/06/19 04:21:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -73,18 +73,17 @@ as_id_parse(const ASN1_INTEGER *v, uint32_t *out)
  */
 int
 as_check_overlap(const struct cert_as *a, const char *fn,
-	const struct cert_as *as, size_t asz)
+    const struct cert_as *as, size_t asz)
 {
 	size_t	 i;
 
 	/* We can have only one inheritence statement. */
 
 	if (asz &&
-	    (a->type == CERT_AS_INHERIT ||
-	     as[0].type == CERT_AS_INHERIT)) {
-		warnx("%s: RFC 3779 section 3.2.3.3: cannot have "
-			"inheritence and multiple ASnum or "
-			"multiple inheritence", fn);
+	    (a->type == CERT_AS_INHERIT || as[0].type == CERT_AS_INHERIT)) {
+		warnx("%s: RFC 3779 section 3.2.3.3: "
+		    "cannot have inheritence and multiple ASnum or "
+		    "multiple inheritence", fn);
 		return 0;
 	}
 
@@ -98,16 +97,14 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 				if (a->id != as[i].id)
 					break;
 				warnx("%s: RFC 3779 section 3.2.3.4: "
-					"cannot have overlapping "
-					"ASnum", fn);
+				    "cannot have overlapping ASnum", fn);
 				return 0;
 			case CERT_AS_RANGE:
 				if (as->range.min > as[i].id ||
 				    as->range.max < as[i].id)
 					break;
 				warnx("%s: RFC 3779 section 3.2.3.4: "
-					"cannot have overlapping "
-					"ASnum", fn);
+				    "cannot have overlapping ASnum", fn);
 				return 0;
 			default:
 				abort();
@@ -120,16 +117,14 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 				    as[i].range.max < a->id)
 					break;
 				warnx("%s: RFC 3779 section 3.2.3.4: "
-					"cannot have overlapping "
-					"ASnum", fn);
+				    "cannot have overlapping ASnum", fn);
 				return 0;
 			case CERT_AS_RANGE:
 				if (a->range.max < as[i].range.min ||
 				    a->range.min > as[i].range.max)
 					break;
 				warnx("%s: RFC 3779 section 3.2.3.4: "
-					"cannot have overlapping "
-					"ASnum", fn);
+				    "cannot have overlapping ASnum", fn);
 				return 0;
 			default:
 				abort();
@@ -150,7 +145,7 @@ as_check_overlap(const struct cert_as *a, const char *fn,
  */
 int
 as_check_covered(uint32_t min, uint32_t max,
-	const struct cert_as *as, size_t asz)
+    const struct cert_as *as, size_t asz)
 {
 	size_t	 i;
 	uint32_t amin, amax;

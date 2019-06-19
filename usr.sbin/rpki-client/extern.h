@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.2 2019/06/17 15:02:39 deraadt Exp $ */
+/*	$Id: extern.h,v 1.3 2019/06/19 04:21:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -86,10 +86,10 @@ enum	cert_ip_type {
  * encodes both the AFI and a single address or range.
  */
 struct	cert_ip {
-	enum afi	   afi; /* AFI value */
-	enum cert_ip_type  type; /* type of IP entry */
-	unsigned char	   min[16]; /* full range minimum */
-	unsigned char	   max[16]; /* full range maximum */
+	enum afi		afi; /* AFI value */
+	enum cert_ip_type	type; /* type of IP entry */
+	unsigned char		min[16]; /* full range minimum */
+	unsigned char		max[16]; /* full range maximum */
 	union {
 		struct ip_addr ip; /* singular address */
 		struct ip_addr_range range; /* range */
@@ -123,9 +123,9 @@ struct	cert {
  */
 struct	tal {
 	char		**uri; /* well-formed rsync URIs */
-	size_t		  urisz; /* number of URIs */
-	unsigned char	 *pkey; /* DER-encoded public key */
-	size_t		  pkeysz; /* length of pkey */
+	size_t		 urisz; /* number of URIs */
+	unsigned char	*pkey; /* DER-encoded public key */
+	size_t		 pkeysz; /* length of pkey */
 };
 
 /*
@@ -216,15 +216,15 @@ struct cert	*cert_read(int);
 
 void		 mft_buffer(char **, size_t *, size_t *, const struct mft *);
 void		 mft_free(struct mft *);
-struct mft 	*mft_parse(X509 **, const char *, int);
-struct mft 	*mft_read(int);
+struct mft	*mft_parse(X509 **, const char *, int);
+struct mft	*mft_read(int);
 
 void		 roa_buffer(char **, size_t *, size_t *, const struct roa *);
 void		 roa_free(struct roa *);
-struct roa 	*roa_parse(X509 **, const char *, const unsigned char *);
+struct roa	*roa_parse(X509 **, const char *, const unsigned char *);
 struct roa	*roa_read(int);
 
-X509_CRL 	*crl_parse(const char *, const unsigned char *);
+X509_CRL	*crl_parse(const char *, const unsigned char *);
 
 /* Validation of our objects. */
 
@@ -245,7 +245,7 @@ int		 ip_addr_parse(const ASN1_BIT_STRING *,
 void		 ip_addr_print(const struct ip_addr *, enum afi, char *, size_t);
 void		 ip_addr_buffer(char **, size_t *, size_t *, const struct ip_addr *);
 void		 ip_addr_range_buffer(char **, size_t *, size_t *, const struct ip_addr_range *);
-void	 	 ip_addr_read(int, struct ip_addr *);
+void		 ip_addr_read(int, struct ip_addr *);
 void		 ip_addr_range_read(int, struct ip_addr_range *);
 int		 ip_addr_cmp(const struct ip_addr *, const struct ip_addr *);
 int		 ip_addr_check_overlap(const struct cert_ip *,
@@ -265,7 +265,7 @@ int		 as_check_covered(uint32_t, uint32_t,
 
 /* Rsync-specific. */
 
-int	 	 rsync_uri_parse(const char **, size_t *,
+int		 rsync_uri_parse(const char **, size_t *,
 			const char **, size_t *, const char **, size_t *,
 			enum rtype *, const char *);
 

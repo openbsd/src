@@ -1,4 +1,4 @@
-/*	$Id: crl.c,v 1.2 2019/06/17 15:04:59 deraadt Exp $ */
+/*	$Id: crl.c,v 1.3 2019/06/19 04:21:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,7 +33,7 @@
 X509_CRL *
 crl_parse(const char *fn, const unsigned char *dgst)
 {
-	int	 	 rc = 0, sz;
+	int		 rc = 0, sz;
 	X509_CRL	*x = NULL;
 	BIO		*bio = NULL, *shamd;
 	EVP_MD		*md;
@@ -62,7 +62,7 @@ crl_parse(const char *fn, const unsigned char *dgst)
 		cryptowarnx("%s: d2i_X509_CRL_bio", fn);
 		goto out;
 	}
-	
+
 	/*
 	 * If we have a digest, find it in the chain (we'll already have
 	 * made it, so assert otherwise) and verify it.

@@ -1,4 +1,4 @@
-/*	$Id: rsync.c,v 1.4 2019/06/19 02:02:28 deraadt Exp $ */
+/*	$Id: rsync.c,v 1.5 2019/06/19 04:21:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,9 +36,9 @@
  */
 int
 rsync_uri_parse(const char **hostp, size_t *hostsz,
-	const char **modulep, size_t *modulesz,
-	const char **pathp, size_t *pathsz,
-	enum rtype *rtypep, const char *uri)
+    const char **modulep, size_t *modulesz,
+    const char **pathp, size_t *pathsz,
+    enum rtype *rtypep, const char *uri)
 {
 	const char	*host, *module, *path;
 	size_t		 sz;

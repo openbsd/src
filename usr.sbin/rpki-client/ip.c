@@ -1,4 +1,4 @@
-/*	$Id: ip.c,v 1.3 2019/06/17 15:08:08 deraadt Exp $ */
+/*	$Id: ip.c,v 1.4 2019/06/19 04:21:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -37,15 +37,14 @@
  * Return zero on failure, non-zero on success.
  */
 int
-ip_addr_afi_parse(const char *fn,
-	const ASN1_OCTET_STRING *p, enum afi *afi)
+ip_addr_afi_parse(const char *fn, const ASN1_OCTET_STRING *p, enum afi *afi)
 {
 	char	 buf[2];
 	short	 v;
 
 	if (p->length == 0 || p->length > 3) {
-		warnx("%s: invalid field length, "
-			"want 1--3, have %d", fn, p->length);
+		warnx("%s: invalid field length, want 1--3, have %d",
+		    fn, p->length);
 		return 0;
 	}
 
@@ -55,8 +54,8 @@ ip_addr_afi_parse(const char *fn,
 	/* Only accept IPv4 and IPv6 AFIs. */
 
 	if (v != 1 && v != 2) {
-		warnx("%s: only AFI for IPV4 (1) and "
-			"IPV6 (2) allowed: have %hd", fn, v);
+		warnx("%s: only AFI for IPV4 (1) and IPV6 (2) allowed: have %hd",
+		    fn, v);
 		return 0;
 	}
 
@@ -81,8 +80,8 @@ ip_addr_afi_parse(const char *fn,
  */
 int
 ip_addr_check_covered(enum afi afi,
-	const unsigned char *min, const unsigned char *max,
-	const struct cert_ip *ips, size_t ipsz)
+    const unsigned char *min, const unsigned char *max,
+    const struct cert_ip *ips, size_t ipsz)
 {
 	size_t	 i, sz = AFI_IPV4 == afi ? 4 : 16;
 
@@ -92,7 +91,7 @@ ip_addr_check_covered(enum afi afi,
 		if (ips[i].type == CERT_IP_INHERIT)
 			return 0;
 		if (memcmp(ips[i].min, min, sz) <= 0 &&
-	  	    memcmp(ips[i].max, max, sz) >= 0)
+		    memcmp(ips[i].max, max, sz) >= 0)
 			return 1;
 	}
 
@@ -107,11 +106,11 @@ ip_addr_check_covered(enum afi afi,
  */
 int
 ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
-	const struct cert_ip *ips, size_t ipsz)
+    const struct cert_ip *ips, size_t ipsz)
 {
 	size_t	 i, sz = AFI_IPV4 == ip->afi ? 4 : 16;
-	int	 inherit_v4 = 0, inherit_v6 = 0,
-		 has_v4 = 0, has_v6 = 0, socktype;
+	int	 inherit_v4 = 0, inherit_v6 = 0;
+	int	 has_v4 = 0, has_v6 = 0, socktype;
 	char	 buf[64];
 
 	/*
@@ -140,9 +139,9 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 	     ip->type == CERT_IP_INHERIT) ||
 	    (has_v6 && ip->afi == AFI_IPV6 &&
 	     ip->type == CERT_IP_INHERIT)) {
-		warnx("%s: RFC 3779 section 2.2.3.5: cannot have "
-			"multiple inheritence or inheritence and "
-			"addresses of the same class", fn);
+		warnx("%s: RFC 3779 section 2.2.3.5: "
+		    "cannot have multiple inheritence or inheritence and "
+		    "addresses of the same class", fn);
 		return 0;
 	}
 
@@ -152,11 +151,11 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 		if (ips[i].afi != ip->afi)
 			continue;
 		if (memcmp(ips[i].max, ip->min, sz) <= 0 ||
-	  	    memcmp(ips[i].min, ip->max, sz) >= 0)
+		    memcmp(ips[i].min, ip->max, sz) >= 0)
 			continue;
 		socktype = (ips[i].afi == AFI_IPV4) ? AF_INET : AF_INET6,
 		warnx("%s: RFC 3779 section 2.2.3.5: "
-			"cannot have overlapping IP addresses", fn);
+		    "cannot have overlapping IP addresses", fn);
 		ip_addr_print(&ip->ip, ip->afi, buf, sizeof(buf));
 		warnx("%s: certificate IP: %s", fn, buf);
 		inet_ntop(socktype, ip->min, buf, sizeof(buf));
@@ -179,7 +178,7 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
  */
 int
 ip_addr_parse(const ASN1_BIT_STRING *p,
-	enum afi afi, const char *fn, struct ip_addr *addr)
+    enum afi afi, const char *fn, struct ip_addr *addr)
 {
 	long	 unused = 0;
 
@@ -189,12 +188,12 @@ ip_addr_parse(const ASN1_BIT_STRING *p,
 		unused = ~ASN1_STRING_FLAG_BITS_LEFT & p->flags;
 
 	if (unused < 0) {
-		warnx("%s: RFC 3779 section 2.2.3.8: unused "
-			"bit count must be non-negative", fn);
+		warnx("%s: RFC 3779 section 2.2.3.8: "
+		    "unused bit count must be non-negative", fn);
 		return 0;
 	} else if (unused > 8) {
-		warnx("%s: RFC 3779 section 2.2.3.8: unused "
-			"bit count must mask an unsigned char", fn);
+		warnx("%s: RFC 3779 section 2.2.3.8: "
+		    "unused bit count must mask an unsigned char", fn);
 		return 0;
 	}
 
@@ -206,8 +205,8 @@ ip_addr_parse(const ASN1_BIT_STRING *p,
 
 	if (p->length &&
 	    (p->data[p->length - 1] & ((1 << unused) - 1))) {
-		warnx("%s: RFC 3779 section 2.2.3.8: unused "
-			"bits must be set to zero", fn);
+		warnx("%s: RFC 3779 section 2.2.3.8: "
+		    "unused bits must be set to zero", fn);
 		return 0;
 	}
 
@@ -216,7 +215,7 @@ ip_addr_parse(const ASN1_BIT_STRING *p,
 	if ((afi == AFI_IPV4 && p->length > 4) ||
 	    (afi == AFI_IPV6 && p->length > 16)) {
 		warnx("%s: RFC 3779 section 2.2.3.8: "
-			"IP address too long", fn);
+		    "IP address too long", fn);
 		return 0;
 	}
 
@@ -318,7 +317,7 @@ ip6_addr2str(const struct ip_addr *addr, char *b, size_t bsz)
  */
 void
 ip_addr_print(const struct ip_addr *addr,
-	enum afi afi, char *buf, size_t bufsz)
+    enum afi afi, char *buf, size_t bufsz)
 {
 
 	if (afi == AFI_IPV4)
@@ -332,8 +331,7 @@ ip_addr_print(const struct ip_addr *addr,
  * Matched with ip_addr_read().
  */
 void
-ip_addr_buffer(char **b, size_t *bsz,
-	size_t *bmax, const struct ip_addr *p)
+ip_addr_buffer(char **b, size_t *bsz, size_t *bmax, const struct ip_addr *p)
 {
 
 	io_simple_buffer(b, bsz, bmax, &p->sz, sizeof(size_t));
@@ -347,8 +345,8 @@ ip_addr_buffer(char **b, size_t *bsz,
  * Matched with ip_addr_range_read().
  */
 void
-ip_addr_range_buffer(char **b, size_t *bsz,
-	size_t *bmax, const struct ip_addr_range *p)
+ip_addr_range_buffer(char **b, size_t *bsz, size_t *bmax,
+    const struct ip_addr_range *p)
 {
 
 	ip_addr_buffer(b, bsz, bmax, &p->min);

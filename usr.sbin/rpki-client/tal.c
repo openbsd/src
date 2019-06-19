@@ -1,4 +1,4 @@
-/*	$Id: tal.c,v 1.3 2019/06/17 15:08:08 deraadt Exp $ */
+/*	$Id: tal.c,v 1.4 2019/06/19 04:21:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -80,11 +80,11 @@ tal_parse_stream(const char *fn, FILE *f)
 		if (!rsync_uri_parse(NULL, NULL,
 		    NULL, NULL, NULL, NULL, &rp, line)) {
 			warnx("%s: RFC 7730 section 2.1: "
-				"failed to parse URL: %s", fn, line);
+			    "failed to parse URL: %s", fn, line);
 			goto out;
 		} else if (rp != RTYPE_CER) {
 			warnx("%s: RFC 7730 section 2.1: "
-				"not a certificate URL: %s", fn, line);
+			    "not a certificate URL: %s", fn, line);
 			goto out;
 		}
 	}
@@ -130,14 +130,13 @@ tal_parse_stream(const char *fn, FILE *f)
 
 		b64sz += ssz;
 	}
-	
+
 	if (ferror(f))
 		err(EXIT_FAILURE, "%s: getline", fn);
 
 	if (b64sz == 0) {
-		warnx("%s: RFC 7730 section 2.1: "
-			"subjectPublicKeyInfo: "
-			"zero-length public key", fn);
+		warnx("%s: RFC 7730 section 2.1: subjectPublicKeyInfo: "
+		    "zero-length public key", fn);
 		goto out;
 	}
 
@@ -149,9 +148,8 @@ tal_parse_stream(const char *fn, FILE *f)
 	pkey = d2i_PUBKEY(NULL, (const unsigned char **)&b64, b64sz);
 	b64 = NULL;
 	if (pkey == NULL) {
-		cryptowarnx("%s: RFC 7730 section 2.1: "
-			"subjectPublicKeyInfo: "
-			"failed public key parse", fn);
+		cryptowarnx("%s: RFC 7730 section 2.1: subjectPublicKeyInfo: "
+		    "failed public key parse", fn);
 		goto out;
 	}
 	rc = 1;

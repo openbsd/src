@@ -1,4 +1,4 @@
-/*	$Id: log.c,v 1.2 2019/06/17 15:04:59 deraadt Exp $ */
+/*	$Id: log.c,v 1.3 2019/06/19 04:21:43 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,7 +36,7 @@ cryptoerrx(const char *fmt, ...)
 {
 	unsigned long	 er;
 	char		 buf[BUFSIZ];
-	va_list	  	 ap;
+	va_list		 ap;
 
 	while ((er = ERR_get_error()) > 0) {
 		ERR_error_string_n(er, buf, sizeof(buf));
@@ -60,7 +60,7 @@ cryptowarnx(const char *fmt, ...)
 {
 	unsigned long	 er;
 	char		 buf[BUFSIZ];
-	va_list	  	 ap;
+	va_list		 ap;
 
 	while ((er = ERR_get_error()) > 0) {
 		ERR_error_string_n(er, buf, sizeof(buf));
