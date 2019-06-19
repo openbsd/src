@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.469 2019/05/11 07:18:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.470 2019/06/19 16:20:58 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -153,6 +153,10 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/ppp; \
 		${INSTALL} -c -o root -g wheel -m 600 pap-secrets \
 		    ${DESTDIR}/etc/ppp
+	cd rpki; \
+		${INSTALL} -c -o root -g wheel -m 600 \
+		    afrinic.tal apnic.tal lacnic.tal ripe.tal \
+		    ${DESTDIR}/etc/rpki
 	cd examples; \
 		${INSTALL} -c -o root -g wheel -m 644 ${EXAMPLES} \
 		    ${DESTDIR}/etc/examples; \
