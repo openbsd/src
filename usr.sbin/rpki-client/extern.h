@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.3 2019/06/19 04:21:43 deraadt Exp $ */
+/*	$Id: extern.h,v 1.4 2019/06/19 15:47:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -49,8 +49,8 @@ struct	cert_as {
  * In rpki-client, we only accept the IPV4 and IPV6 AFI values.
  */
 enum	afi {
-	AFI_IPV4,
-	AFI_IPV6
+	AFI_IPV4 = 1,
+	AFI_IPV6 = 2
 };
 
 /*
@@ -59,9 +59,8 @@ enum	afi {
  * It may either be IPv4 or IPv6.
  */
 struct	ip_addr {
-	size_t		 sz; /* length of valid bytes */
 	unsigned char	 addr[16]; /* binary address prefix */
-	size_t		 unused; /* unused bits in last byte or zero */
+	unsigned char	 prefixlen; /* number of valid bits in address */
 };
 
 /*
