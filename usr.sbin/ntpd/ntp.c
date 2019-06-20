@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.155 2019/06/16 07:36:25 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.156 2019/06/20 07:28:18 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -302,7 +302,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 			sensors_cnt = 0;
 			TAILQ_FOREACH(s, &conf->ntp_sensors, entry) {
 				if (conf->settime && s->offsets[0].offset)
-					priv_settime(s->offsets[0].offset);
+					priv_settime(s->offsets[0].offset, NULL);
 				sensors_cnt++;
 				if (s->next > 0 && s->next < nextaction)
 					nextaction = s->next;
@@ -312,7 +312,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		if (conf->settime &&
 		    ((trial_cnt > 0 && sent_cnt == 0) ||
 		    (peer_cnt == 0 && sensors_cnt == 0)))
-			priv_settime(0);	/* no good peers, don't wait */
+			priv_settime(0, "no valid peers configured");
 
 		TAILQ_FOREACH(cstr, &conf->constraints, entry) {
 			if (constraint_query(cstr) == -1)
@@ -521,7 +521,7 @@ ntp_dispatch_imsg_dns(void)
 				log_warnx("DNS lookup tempfail");
 				peer->state = STATE_DNS_TEMPFAIL;
 				if (++conf->tmpfail > TRIES_AUTO_DNSFAIL)
-					priv_settime(0);
+					priv_settime(0, "of dns failures");
 				break;
 			}
 
@@ -568,6 +568,14 @@ ntp_dispatch_imsg_dns(void)
 		case IMSG_CONSTRAINT_DNS:
 			constraint_msg_dns(imsg.hdr.peerid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			break;
+		case IMSG_PROBE_ROOT:
+			dlen = imsg.hdr.len - IMSG_HEADER_SIZE;
+			if (dlen != sizeof(int))
+				fatalx("IMSG_PROBE_ROOT");
+			memcpy(&n, imsg.data, sizeof(int));
+			if (n < 0)
+				priv_settime(0, "dns probe failed");
 			break;
 		default:
 			break;
@@ -754,8 +762,10 @@ offset_compare(const void *aa, const void *bb)
 }
 
 void
-priv_settime(double offset)
+priv_settime(double offset, char *msg)
 {
+	if (offset == 0)
+		log_info("cancel settime because %s", msg);
 	imsg_compose(ibuf_main, IMSG_SETTIME, 0, 0, -1,
 	    &offset, sizeof(offset));
 	conf->settime = 0;

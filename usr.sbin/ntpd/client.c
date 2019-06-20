@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.108 2019/06/16 07:36:25 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.109 2019/06/20 07:28:18 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -240,7 +240,7 @@ handle_auto(double offset)
 
 	if (offset < AUTO_THRESHOLD) {
 		/* don't bother */
-		priv_settime(0);
+		priv_settime(0, "offset is negative or close enough");
 		return;
 	}
 	/* collect some more */
@@ -254,7 +254,7 @@ handle_auto(double offset)
 		offset = (v[AUTO_REPLIES / 2 - 1] + v[AUTO_REPLIES / 2]) / 2;
 	else
 		offset = v[AUTO_REPLIES / 2];
-	priv_settime(offset);
+	priv_settime(offset, "");
 }
 
 int
@@ -459,7 +459,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 		if (automatic)
 			handle_auto(p->reply[p->shift].offset);
 		else
-			priv_settime(p->reply[p->shift].offset);
+			priv_settime(p->reply[p->shift].offset, "");
 	}
 
 	if (++p->shift >= OFFSET_ARRAY_SIZE)

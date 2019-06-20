@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.22 2019/06/12 05:04:45 otto Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.23 2019/06/20 07:28:18 otto Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -19,6 +19,9 @@
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/time.h>
+#include <netinet/in.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
 
 #include <netinet/in.h>
 
@@ -40,6 +43,8 @@ struct imsgbuf		*ibuf_dns;
 
 void	sighdlr_dns(int);
 int	dns_dispatch_imsg(struct ntpd_conf *);
+int	probe_root_ns(void);
+void	probe_root(void);
 
 void
 sighdlr_dns(int sig)
@@ -95,6 +100,8 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 
 	if (pledge("stdio dns", NULL) == -1)
 		err(1, "pledge");
+
+	probe_root();
 
 	while (quit_dns == 0) {
 		pfd[0].fd = ibuf_dns->fd;
@@ -201,4 +208,43 @@ dns_dispatch_imsg(struct ntpd_conf *nconf)
 		imsg_free(&imsg);
 	}
 	return (0);
+}
+
+int
+probe_root_ns(void)
+{
+	int ret;
+	int old_retrans, old_retry, old_options;
+	unsigned char buf[4096];
+
+	old_retrans = _res.retrans;
+	old_retry = _res.retry;
+	old_options = _res.options;
+	_res.retrans = 1;
+	_res.retry = 1;
+	_res.options |= RES_USE_CD;
+		
+	ret = res_query(".", C_IN, T_NS, buf, sizeof(buf));
+
+	_res.retrans = old_retrans;
+	_res.retry = old_retry;
+	_res.options = old_options;
+	
+	return ret;
+}
+
+void
+probe_root(void)
+{
+	int		n;
+
+	n = probe_root_ns();	
+	if (n < 0) {
+		/* give programs like unwind a second chance */
+		sleep(1);
+		n = probe_root_ns();
+	}
+	if (imsg_compose(ibuf_dns, IMSG_PROBE_ROOT, 0, 0, -1, &n,
+	    sizeof(int)) == -1)
+		fatalx("probe_root");
 }

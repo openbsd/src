@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.143 2019/06/16 07:36:25 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.144 2019/06/20 07:28:18 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -311,7 +311,8 @@ enum imsg_type {
 	IMSG_CTL_SHOW_ALL,
 	IMSG_CTL_SHOW_ALL_END,
 	IMSG_SYNCED,
-	IMSG_UNSYNCED
+	IMSG_UNSYNCED,
+	IMSG_PROBE_ROOT
 };
 
 enum ctl_actions {
@@ -327,7 +328,7 @@ enum ctl_actions {
 void	 ntp_main(struct ntpd_conf *, struct passwd *, int, char **);
 void	 peer_addr_head_clear(struct ntp_peer *);
 int	 priv_adjtime(void);
-void	 priv_settime(double);
+void	 priv_settime(double, char *);
 void	 priv_dns(int, char *, u_int32_t);
 int	 offset_compare(const void *, const void *);
 void	 update_scale(double);
