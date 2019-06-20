@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.6 2019/06/20 15:29:01 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.7 2019/06/20 16:09:15 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -79,7 +79,8 @@ x509_get_aki_ext(X509_EXTENSION *ext, const char *fn)
 		cryptowarnx("%s: RFC 6487 section 4.8.3: AKI: "
 		    "failed ASN.1 sub-sequence parse", fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 1) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 1) {
 		warnx("%s: RFC 6487 section 4.8.3: AKI: "
 		    "want 1 element, have %d", fn, sk_ASN1_TYPE_num(seq));
 		goto out;
@@ -205,14 +206,16 @@ x509_get_ski_aki(X509 *x, const char *fn, char **ski, char **aki)
 		cryptowarnx("%s: RFC 6487 section 4.8.3: AKI: "
 		    "missing AKI X509 extension", fn);
 		free(*ski);
+		*ski = NULL;
 		return 0;
-	} else if (*ski == NULL) {
+	}
+	if (*ski == NULL) {
 		cryptowarnx("%s: RFC 6487 section 4.8.2: AKI: "
 		    "missing SKI X509 extension", fn);
 		free(*aki);
+		*aki = NULL;
 		return 0;
 	}
 
-	assert(*ski != NULL && *aki != NULL);
 	return 1;
 }
