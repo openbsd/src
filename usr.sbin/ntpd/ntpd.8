@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.41 2017/09/06 19:43:46 jmc Exp $
+.\" $OpenBSD: ntpd.8,v 1.42 2019/06/20 08:26:13 otto Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 6 2017 $
+.Dd $Mdocdate: June 20 2019 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -60,11 +60,17 @@ instead of the default
 Configtest mode.
 Only check the configuration file for validity.
 .It Fl S
-Do not set the time immediately at startup.
-This is the default.
+Cancel the effect of the
+.Fl s
+flag.
 .It Fl s
 Try to set the time immediately at startup, as opposed to slowly adjusting the
 clock.
+By default
+.Nm
+attempts to set the time at boot if constraints are configured and
+satisfied and the clock should be moved forward.
+.Pp
 .Nm
 will stay in the foreground for up to 15 seconds waiting for one of the
 configured NTP servers to reply.
