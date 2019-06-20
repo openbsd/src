@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_read.3,v 1.5 2019/03/20 14:17:19 espie Exp $
+.\" $OpenBSD: tls_read.3,v 1.6 2019/06/20 15:47:44 deraadt Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 20 2019 $
+.Dd $Mdocdate: June 20 2019 $
 .Dt TLS_READ 3
 .Os
 .Sh NAME
@@ -163,7 +163,7 @@ while (len > 0) {
 	ret = tls_write(ctx, buf, len);
 	if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
 		continue;
-	if (ret < 0)
+	if (ret == -1)
 		errx(1, "tls_write: %s", tls_error(ctx));
 	buf += ret;
 	len -= ret;
@@ -192,7 +192,7 @@ while (len > 0) {
 			pfd[0].events = POLLIN;
 		else if (ret == TLS_WANT_POLLOUT)
 			pfd[0].events = POLLOUT;
-		else if (ret < 0)
+		else if (ret == -1)
 			errx(1, "tls_write: %s", tls_error(ctx));
 		else {
 			buf += ret;
