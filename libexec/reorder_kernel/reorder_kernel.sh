@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: reorder_kernel.sh,v 1.6 2019/02/10 21:11:42 kn Exp $
+# $OpenBSD: reorder_kernel.sh,v 1.7 2019/06/20 20:53:56 deraadt Exp $
 #
 # Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 #
@@ -64,6 +64,7 @@ fi
 cd $KERNEL_DIR/$KERNEL
 make newbsd
 make newinstall
+sync
 
 echo "\nKernel has been relinked and is active on next reboot.\n"
 cat $SHA256
