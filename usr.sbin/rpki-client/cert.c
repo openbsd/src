@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.5 2019/06/19 16:30:36 deraadt Exp $ */
+/*	$OpenBSD: cert.c,v 1.6 2019/06/20 13:50:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -125,7 +125,8 @@ sbgp_addr(struct parse *p,
 		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
 		    "invalid IP address", p->fn);
 		return 0;
-	} else if (!ip_cert_compose_ranges(ip)) {
+	}
+	if (!ip_cert_compose_ranges(ip)) {
 		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
 		    "IP address range reversed", p->fn);
 		return 0;
@@ -154,7 +155,8 @@ sbgp_sia_resource_mft(struct parse *p,
 		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 2) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 2) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "want 2 elements, have %d",
 		    p->fn, sk_ASN1_TYPE_num(seq));
@@ -182,7 +184,8 @@ sbgp_sia_resource_mft(struct parse *p,
 	if (strcmp(buf, "1.3.6.1.5.5.7.48.10")) {
 		rc = 1;
 		goto out;
-	} else if (p->res->mft != NULL) {
+	}
+	if (p->res->mft != NULL) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "MFT location already specified", p->fn);
 		goto out;
@@ -215,7 +218,8 @@ sbgp_sia_resource_mft(struct parse *p,
 		free(p->res->mft);
 		p->res->mft = NULL;
 		goto out;
-	} else if (rt != RTYPE_MFT) {
+	}
+	if (rt != RTYPE_MFT) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "invalid rsync URI suffix", p->fn);
 		free(p->res->mft);
@@ -255,7 +259,8 @@ sbgp_crl_bits(struct parse *p, const unsigned char *d, size_t dsz)
 		cryptowarnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 1) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 1) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "want 1 element, have %d", p->fn,
 		    sk_ASN1_TYPE_num(seq));
@@ -282,11 +287,13 @@ sbgp_crl_bits(struct parse *p, const unsigned char *d, size_t dsz)
 		cryptowarnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "failed dist points parse", p->fn);
 		goto out;
-	} else if (pnt->distpoint == NULL) {
+	}
+	if (pnt->distpoint == NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "no distribution point name", p->fn);
 		goto out;
-	} else if (pnt->distpoint->type != 0) {
+	}
+	if (pnt->distpoint->type != 0) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "expected GEN_OTHERNAME, have %d",
 		    p->fn, pnt->distpoint->type);
@@ -309,7 +316,7 @@ sbgp_crl_bits(struct parse *p, const unsigned char *d, size_t dsz)
 	}
 
 	assert(p->res->crl == NULL);
-	p->res->crl = strndup((const char *)nm->d.uniformResourceIdentifier->data,
+	p->res->crl = strndup((char *)nm->d.uniformResourceIdentifier->data,
 	    nm->d.uniformResourceIdentifier->length);
 	if (p->res->crl == NULL)
 		err(EXIT_FAILURE, NULL);
@@ -376,7 +383,8 @@ sbgp_crl(struct parse *p, X509_EXTENSION *ext)
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "multiple specifications", p->fn);
 		goto out;
-	} else if ((dsz = i2d_X509_EXTENSION(ext, &sv)) < 0) {
+	}
+	if ((dsz = i2d_X509_EXTENSION(ext, &sv)) < 0) {
 		cryptowarnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "failed extension parse", p->fn);
 		goto out;
@@ -387,7 +395,8 @@ sbgp_crl(struct parse *p, X509_EXTENSION *ext)
 		cryptowarnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 2) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 2) {
 		warnx("%s: RFC 6487 section 4.8.6: SIA: "
 		    "want 2 elements, have %d", p->fn,
 		    sk_ASN1_TYPE_num(seq));
@@ -401,8 +410,7 @@ sbgp_crl(struct parse *p, X509_EXTENSION *ext)
 		    p->fn, ASN1_tag2str(t->type), t->type);
 		goto out;
 	}
-	if (OBJ_obj2nid(t->value.object) !=
-	    NID_crl_distribution_points) {
+	if (OBJ_obj2nid(t->value.object) != NID_crl_distribution_points) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "incorrect OID, have %s (NID %d)", p->fn,
 		    ASN1_tag2str(OBJ_obj2nid(t->value.object)),
@@ -459,7 +467,8 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 2) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 2) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "want 2 elements, have %d", p->fn,
 		    sk_ASN1_TYPE_num(seq));
@@ -472,7 +481,8 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 		    "want ASN.1 object, have %s (NID %d)",
 		    p->fn, ASN1_tag2str(t->type), t->type);
 		goto out;
-	} else if (OBJ_obj2nid(t->value.object) != NID_sinfo_access) {
+	}
+	if (OBJ_obj2nid(t->value.object) != NID_sinfo_access) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "incorrect OID, have %s (NID %d)", p->fn,
 		    ASN1_tag2str(OBJ_obj2nid(t->value.object)),
@@ -516,7 +526,8 @@ sbgp_asrange(struct parse *p, const unsigned char *d, size_t dsz)
 		cryptowarnx("%s: RFC 3779 section 3.2.3.8: ASRange: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 2) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 2) {
 		warnx("%s: RFC 3779 section 3.2.3.8: ASRange: "
 		    "want 2 elements, have %d", p->fn,
 		    sk_ASN1_TYPE_num(seq));
@@ -532,7 +543,8 @@ sbgp_asrange(struct parse *p, const unsigned char *d, size_t dsz)
 		    "want ASN.1 integer, have %s (NID %d)",
 		    p->fn, ASN1_tag2str(t->type), t->type);
 		goto out;
-	} else if (!as_id_parse(t->value.integer, &as.range.min)) {
+	}
+	if (!as_id_parse(t->value.integer, &as.range.min)) {
 		warnx("%s: RFC 3770 section 3.2.3.8 (via RFC 1930): "
 		    "malformed AS identifier", p->fn);
 		return 0;
@@ -544,7 +556,8 @@ sbgp_asrange(struct parse *p, const unsigned char *d, size_t dsz)
 		    "want ASN.1 integer, have %s (NID %d)",
 		    p->fn, ASN1_tag2str(t->type), t->type);
 		goto out;
-	} else if (!as_id_parse(t->value.integer, &as.range.max)) {
+	}
+	if (!as_id_parse(t->value.integer, &as.range.max)) {
 		warnx("%s: RFC 3770 section 3.2.3.8 (via RFC 1930): "
 		    "malformed AS identifier", p->fn);
 		return 0;
@@ -558,9 +571,10 @@ sbgp_asrange(struct parse *p, const unsigned char *d, size_t dsz)
 		warnx("%s: RFC 3379 section 3.2.3.8: ASRange: "
 		    "range is out of order", p->fn);
 		goto out;
-	} else if (!append_as(p, &as))
-		goto out;
+	}
 
+	if (!append_as(p, &as))
+		goto out;
 	rc = 1;
 out:
 	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
@@ -582,7 +596,8 @@ sbgp_asid(struct parse *p, const ASN1_INTEGER *i)
 		warnx("%s: RFC 3770 section 3.2.3.10 (via RFC 1930): "
 		    "malformed AS identifier", p->fn);
 		return 0;
-	} else if (as.id == 0) {
+	}
+	if (as.id == 0) {
 		warnx("%s: RFC 3770 section 3.2.3.10 (via RFC 1930): "
 		    "AS identifier zero is reserved", p->fn);
 		return 0;
@@ -700,7 +715,8 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 		cryptowarnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 3) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 3) {
 		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
 		    "want 3 elements, have %d", p->fn,
 		    sk_ASN1_TYPE_num(seq));
@@ -799,7 +815,8 @@ sbgp_addr_range(struct parse *p, struct cert_ip *ip,
 		cryptowarnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 2) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 2) {
 		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
 		    "want 2 elements, have %d", p->fn, sk_ASN1_TYPE_num(seq));
 		goto out;
@@ -921,7 +938,8 @@ sbgp_ipaddrfam(struct parse *p, const unsigned char *d, size_t dsz)
 		cryptowarnx("%s: RFC 3779 section 2.2.3.2: IPAddressFamily: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 2) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 2) {
 		warnx("%s: RFC 3779 section 2.2.3.2: IPAddressFamily: "
 		    "want 2 elements, have %d",
 		    p->fn, sk_ASN1_TYPE_num(seq));
@@ -998,7 +1016,8 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 		cryptowarnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 3) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 3) {
 		warnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
 		    "want 3 elements, have %d",
 		    p->fn, sk_ASN1_TYPE_num(seq));
