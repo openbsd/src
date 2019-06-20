@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.4 2019/06/19 16:30:37 deraadt Exp $ */
+/*	$OpenBSD: mft.c,v 1.5 2019/06/20 15:26:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -401,7 +401,7 @@ mft_parse(X509 **x509, const char *fn, int force)
 		free(p.res->files);
 		p.res->filesz = 0;
 		p.res->files = NULL;
-	} else if (c < 0)
+	} else if (c == -1)
 		goto out;
 
 	rc = 1;

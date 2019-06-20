@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.5 2019/06/19 16:30:37 deraadt Exp $ */
+/*	$OpenBSD: tal.c,v 1.6 2019/06/20 15:26:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -52,7 +52,11 @@ tal_parse_stream(const char *fn, FILE *f)
 	while ((linelen = getline(&line, &linesize, f)) != -1) {
 		lineno++;
 		assert(linelen);
-		assert(line[linelen - 1] == '\n');
+		if (line[linelen - 1] != '\n') {
+			warnx("%s: RFC 7730 section 2.1: "
+			    "failed to parse URL", fn);
+			goto out;
+		}
 		line[--linelen] = '\0';
 		if (linelen && line[linelen - 1] == '\r')
 			line[--linelen] = '\0';
@@ -105,7 +109,11 @@ tal_parse_stream(const char *fn, FILE *f)
 	while ((linelen = getline(&line, &linesize, f)) != -1) {
 		lineno++;
 		assert(linelen);
-		assert(line[linelen - 1] == '\n');
+		if (line[linelen - 1] != '\n') {
+			warnx("%s: RFC 7730 section 2.1: "
+			    "failed to parse public key", fn);
+			goto out;
+		}
 		line[--linelen] = '\0';
 		if (linelen && line[linelen - 1] == '\r')
 			line[--linelen] = '\0';
