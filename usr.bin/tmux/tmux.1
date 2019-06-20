@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.666 2019/06/14 12:04:11 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.667 2019/06/20 07:10:56 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: June 20 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3680,7 +3680,7 @@ function key sequences; these have a number included to indicate modifiers such
 as Shift, Alt or Ctrl.
 .El
 .It Xo Ic show-options
-.Op Fl gHqsvw
+.Op Fl AgHqsvw
 .Op Fl t Ar target-session | Ar target-window
 .Op Ar option
 .Xc
@@ -3714,6 +3714,9 @@ is set, no error will be returned if
 is unset.
 .Fl H
 includes hooks (omitted by default).
+.Fl A
+includes options inherited from a parent set of options, such options are
+marked with an asterisk.
 .It Xo Ic show-window-options
 .Op Fl gv
 .Op Fl t Ar target-window
