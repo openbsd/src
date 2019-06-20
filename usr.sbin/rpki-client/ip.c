@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.6 2019/06/19 16:30:37 deraadt Exp $ */
+/*	$OpenBSD: ip.c,v 1.7 2019/06/20 13:43:10 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -193,9 +193,13 @@ ip_addr_parse(const ASN1_BIT_STRING *p,
 		warnx("%s: RFC 3779 section 2.2.3.8: "
 		    "unused bit count must be non-negative", fn);
 		return 0;
-	} else if (unused > 8) {
+	} else if (unused >= 8) {
 		warnx("%s: RFC 3779 section 2.2.3.8: "
 		    "unused bit count must mask an unsigned char", fn);
+		return 0;
+	} else if (p->length == 0 && unused != 0) {
+		warnx("%s: RFC 3779 section 2.2.3.8: "
+		    "unused bit count must be zero if length is zero", fn);
 		return 0;
 	}
 
