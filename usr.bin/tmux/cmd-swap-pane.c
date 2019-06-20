@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-swap-pane.c,v 1.33 2019/04/17 14:37:48 nicm Exp $ */
+/* $OpenBSD: cmd-swap-pane.c,v 1.34 2019/06/20 11:59:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -90,7 +90,11 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 	src_wp->layout_cell = dst_lc;
 
 	src_wp->window = dst_w;
+	options_set_parent(src_wp->options, dst_w->options);
+	src_wp->flags |= PANE_STYLECHANGED;
 	dst_wp->window = src_w;
+	options_set_parent(dst_wp->options, src_w->options);
+	dst_wp->flags |= PANE_STYLECHANGED;
 
 	sx = src_wp->sx; sy = src_wp->sy;
 	xoff = src_wp->xoff; yoff = src_wp->yoff;

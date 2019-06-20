@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.34 2019/04/17 14:37:48 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.35 2019/06/20 11:59:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -140,6 +140,8 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	TAILQ_REMOVE(&src_w->panes, src_wp, entry);
 
 	src_wp->window = dst_w;
+	options_set_parent(src_wp->options, dst_w->options);
+	src_wp->flags |= PANE_STYLECHANGED;
 	TAILQ_INSERT_AFTER(&dst_w->panes, dst_wp, src_wp, entry);
 	layout_assign_pane(lc, src_wp);
 
