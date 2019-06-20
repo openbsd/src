@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.7 2019/06/03 19:39:16 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.8 2019/06/20 14:55:22 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -20,6 +20,11 @@
 #include <sys/atomic.h>
 #include <sys/syslimits.h>
 #include <sys/systm.h>
+#include <sys/task.h>
+
+#include <uvm/uvm_extern.h>
+
+#define KUBSAN_NSLOTS	32
 
 #define NUMBER_BUFSIZ		32
 #define LOCATION_BUFSIZ		(PATH_MAX + 32)	/* filename:line:column */
@@ -27,6 +32,75 @@
 
 #define NBITS(typ)	(1 << ((typ)->t_info >> 1))
 #define SIGNED(typ)	((typ)->t_info & 1)
+
+struct kubsan_report {
+	enum {
+		KUBSAN_INVALID_VALUE,
+		KUBSAN_NEGATE_OVERFLOW,
+		KUBSAN_NONNULL_ARG,
+		KUBSAN_OUT_OF_BOUNDS,
+		KUBSAN_OVERFLOW,
+		KUBSAN_POINTER_OVERFLOW,
+		KUBSAN_SHIFT_OUT_OF_BOUNDS,
+		KUBSAN_TYPE_MISMATCH,
+		KUBSAN_UNREACHABLE,
+	} kr_type;
+
+	struct source_location *kr_src;
+
+	union {
+		struct {
+			const struct invalid_value_data *v_data;
+			unsigned long v_val;
+		} v_invalid_value;
+
+		struct {
+			const struct overflow_data *v_data;
+			unsigned int v_val;
+		} v_negate_overflow;
+
+		struct {
+			const struct nonnull_arg_data *v_data;
+		} v_nonnull_arg;
+
+		struct {
+			const struct out_of_bounds_data *v_data;
+			unsigned int v_idx;
+		} v_out_of_bounds;
+
+		struct {
+			const struct overflow_data *v_data;
+			unsigned long v_lhs;
+			unsigned long v_rhs;
+			char v_op;
+		} v_overflow;
+
+		struct {
+			const struct pointer_overflow_data *v_data;
+			unsigned long v_base;
+			unsigned long v_res;
+		} v_pointer_overflow;
+
+		struct {
+			const struct shift_out_of_bounds_data *v_data;
+			unsigned long v_lhs;
+			unsigned long v_rhs;
+		} v_shift_out_of_bounds;
+
+		struct {
+			const struct type_mismatch_data *v_data;
+			unsigned long v_ptr;
+		} v_type_mismatch;
+	} kr_u;
+};
+#define kr_invalid_value		kr_u.v_invalid_value
+#define kr_negate_overflow		kr_u.v_negate_overflow
+#define kr_nonnull_arg			kr_u.v_nonnull_arg
+#define kr_out_of_bounds		kr_u.v_out_of_bounds
+#define kr_overflow			kr_u.v_overflow
+#define kr_pointer_overflow		kr_u.v_pointer_overflow
+#define kr_shift_out_of_bounds		kr_u.v_shift_out_of_bounds
+#define kr_type_mismatch		kr_u.v_type_mismatch
 
 struct type_descriptor {
 	uint16_t t_kind;
@@ -83,33 +157,19 @@ struct unreachable_data {
 	struct source_location d_src;
 };
 
-void	kubsan_handle_load_invalid_value(struct invalid_value_data *,
-	    unsigned long);
-void	kubsan_handle_negate_overflow(struct overflow_data *, unsigned long);
-void	kubsan_handle_nonnull_arg(struct nonnull_arg_data *);
-void	kubsan_handle_out_of_bounds(struct out_of_bounds_data *, unsigned long);
-void	kubsan_handle_overflow(struct overflow_data *, unsigned long,
-	    unsigned long, char);
-void	kubsan_handle_pointer_overflow(struct pointer_overflow_data *,
-	    unsigned long, unsigned long);
-void	kubsan_handle_type_mismatch(struct type_mismatch_data *,
-	    unsigned long);
-void    kubsan_handle_shift_out_of_bounds(struct shift_out_of_bounds_data *,
-	    unsigned long, unsigned long);
-void	kubsan_handle_ureachable(struct unreachable_data *);
-
 int64_t		 kubsan_deserialize_int(struct type_descriptor *,
 		    unsigned long);
 uint64_t	 kubsan_deserialize_uint(struct type_descriptor *,
 		    unsigned long);
+void		 kubsan_defer_report(struct kubsan_report *);
 void		 kubsan_format_int(struct type_descriptor *, unsigned long,
 		    char *, size_t);
-int		 kubsan_format_location(struct source_location *, char *,
+int		 kubsan_format_location(const struct source_location *, char *,
 		    size_t);
 int		 kubsan_is_reported(struct source_location *);
 const char	*kubsan_kind(uint8_t);
-void		 kubsan_report(const char *, ...)
-		    __attribute__((__format__(__kprintf__, 1, 2)));
+void		 kubsan_report(void *);
+void		 kubsan_unreport(struct source_location *);
 
 static int	is_negative(struct type_descriptor *, unsigned long);
 static int	is_shift_exponent_too_large(struct type_descriptor *,
@@ -122,6 +182,11 @@ int kubsan_watch = 2;
 #else
 int kubsan_watch = 1;
 #endif
+
+struct kubsan_report	*kubsan_reports = NULL;
+struct task		 kubsan_task = TASK_INITIALIZER(kubsan_report, NULL);
+unsigned int		 kubsan_slot = 0;
+int			 kubsan_state = 0;
 
 /*
  * Compiling the kernel with `-fsanitize=undefined' will cause the following
@@ -138,270 +203,177 @@ void
 __ubsan_handle_add_overflow(struct overflow_data *data,
     unsigned long lhs, unsigned long rhs)
 {
-	kubsan_handle_overflow(data, lhs, rhs, '+');
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_OVERFLOW,
+		.kr_src			= &data->d_src,
+		.kr_overflow		= { data, lhs, rhs, '+' },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_builtin_unreachable(struct unreachable_data *data)
 {
-	kubsan_handle_ureachable(data);
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_UNREACHABLE,
+		.kr_src			= &data->d_src,
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_divrem_overflow(struct overflow_data *data,
     unsigned long lhs, unsigned long rhs)
 {
-	kubsan_handle_overflow(data, lhs, rhs, '/');
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_OVERFLOW,
+		.kr_src			= &data->d_src,
+		.kr_overflow		= { data, lhs, rhs, '/' },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_load_invalid_value(struct invalid_value_data *data,
     unsigned long val)
 {
-	kubsan_handle_load_invalid_value(data, val);
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_INVALID_VALUE,
+		.kr_src			= &data->d_src,
+		.kr_invalid_value	= { data, val },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_nonnull_arg(struct nonnull_arg_data *data)
 {
-	kubsan_handle_nonnull_arg(data);
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_NONNULL_ARG,
+		.kr_src			= &data->d_src,
+		.kr_nonnull_arg		= { data },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_mul_overflow(struct overflow_data *data,
     unsigned long lhs, unsigned long rhs)
 {
-	kubsan_handle_overflow(data, lhs, rhs, '*');
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_OVERFLOW,
+		.kr_src			= &data->d_src,
+		.kr_overflow		= { data, lhs, rhs, '*' },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_negate_overflow(struct overflow_data *data, unsigned long val)
 {
-	kubsan_handle_negate_overflow(data, val);
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_NEGATE_OVERFLOW,
+		.kr_src			= &data->d_src,
+		.kr_negate_overflow	= { data, val },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_out_of_bounds(struct out_of_bounds_data *data,
     unsigned long idx)
 {
-	kubsan_handle_out_of_bounds(data, idx);
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_OUT_OF_BOUNDS,
+		.kr_src			= &data->d_src,
+		.kr_out_of_bounds	= { data, idx },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_pointer_overflow(struct pointer_overflow_data *data,
     unsigned long base, unsigned long res)
 {
-	kubsan_handle_pointer_overflow(data, base, res);
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_POINTER_OVERFLOW,
+		.kr_src			= &data->d_src,
+		.kr_pointer_overflow	= { data, base, res },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_shift_out_of_bounds(struct shift_out_of_bounds_data *data,
     unsigned long lhs, unsigned long rhs)
 {
-	kubsan_handle_shift_out_of_bounds(data, lhs, rhs);
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_SHIFT_OUT_OF_BOUNDS,
+		.kr_src			= &data->d_src,
+		.kr_shift_out_of_bounds	= { data, lhs, rhs },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_sub_overflow(struct overflow_data *data,
     unsigned long lhs, unsigned long rhs)
 {
-	kubsan_handle_overflow(data, lhs, rhs, '-');
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_OVERFLOW,
+		.kr_src			= &data->d_src,
+		.kr_overflow		= { data, lhs, rhs, '-' },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
 void
 __ubsan_handle_type_mismatch_v1(struct type_mismatch_data *data,
     unsigned long ptr)
 {
-	kubsan_handle_type_mismatch(data, ptr);
+	struct kubsan_report kr = {
+		.kr_type		= KUBSAN_TYPE_MISMATCH,
+		.kr_src			= &data->d_src,
+		.kr_type_mismatch	= { data, ptr },
+	};
+
+	kubsan_defer_report(&kr);
 }
 
+/*
+ * Allocate storage for reports. Must be called as early on as possible in order
+ * to catch undefined behavior during boot.
+ */
 void
-kubsan_handle_load_invalid_value(struct invalid_value_data *data,
-    unsigned long val)
+kubsan_init(void)
 {
-	char bloc[LOCATION_BUFSIZ];
-	char bval[NUMBER_BUFSIZ];
-
-	if (kubsan_is_reported(&data->d_src))
-		return;
-
-	kubsan_format_location(&data->d_src, bloc, sizeof(bloc));
-	kubsan_format_int(data->d_type, val, bval, sizeof(bval));
-	kubsan_report("kubsan: %s: load invalid value: load of value %s is "
-	    "not a valid value for type %s\n",
-	    bloc, bval, data->d_type->t_name);
+	kubsan_reports = (void *)uvm_pageboot_alloc(
+	    sizeof(struct kubsan_report) * KUBSAN_NSLOTS);
+	kubsan_state = 1;
 }
 
+/*
+ * Start reporting. Must be called after the system task queue has been
+ * initialized.
+ */
 void
-kubsan_handle_negate_overflow(struct overflow_data *data, unsigned long val)
+kubsan_start(void)
 {
-	char bloc[LOCATION_BUFSIZ];
-	char bval[NUMBER_BUFSIZ];
+	kubsan_state = 2;
 
-	if (kubsan_is_reported(&data->d_src))
-		return;
-
-	kubsan_format_location(&data->d_src, bloc, sizeof(bloc));
-	kubsan_format_int(data->d_type, val, bval, sizeof(bval));
-	kubsan_report("kubsan: %s: negate overflow: negation of %s cannot be "
-	    "represented in type %s\n",
-	    bloc, bval, data->d_type->t_name);
-}
-
-void
-kubsan_handle_nonnull_arg(struct nonnull_arg_data *data)
-{
-	char bloc[LOCATION_BUFSIZ];
-	char *attr = NULL;
-	int n;
-
-	if (kubsan_is_reported(&data->d_src))
-		return;
-
-	/*
-	 * Using a dedicated buffer for the attribute location would cause a too
-	 * large stack frame. Try to use the tail of the existing location
-	 * buffer.
-	 */
-	n = kubsan_format_location(&data->d_src, bloc, sizeof(bloc));
-	if (n + 1 < sizeof(bloc) && data->d_attr_src.sl_filename) {
-		int nn;
-
-		nn = kubsan_format_location(&data->d_attr_src, bloc + n + 1,
-		    sizeof(bloc) - n - 1);
-		if (nn < sizeof(bloc) - n - 1)
-			attr = bloc + n + 1;
-	}
-
-	kubsan_report("kubsan: %s: null pointer passed as argument %d, which "
-	    "is declared to never be null%s%s\n",
-	    bloc, data->d_idx,
-	    attr ? " in " : "", attr ? attr : "");
-}
-
-void
-kubsan_handle_out_of_bounds(struct out_of_bounds_data *data,
-    unsigned long idx)
-{
-	char bloc[LOCATION_BUFSIZ];
-	char bidx[NUMBER_BUFSIZ];
-
-	if (kubsan_is_reported(&data->d_src))
-		return;
-
-	kubsan_format_location(&data->d_src, bloc, sizeof(bloc));
-	kubsan_format_int(data->d_itype, idx, bidx, sizeof(bidx));
-	kubsan_report("kubsan: %s: out of bounds: index %s is out of range "
-	    "for type %s\n",
-	    bloc, bidx, data->d_atype->t_name);
-}
-
-void
-kubsan_handle_overflow(struct overflow_data *data, unsigned long lhs,
-    unsigned long rhs, char op)
-{
-	char bloc[LOCATION_BUFSIZ];
-	char blhs[NUMBER_BUFSIZ];
-	char brhs[NUMBER_BUFSIZ];
-
-	if (kubsan_is_reported(&data->d_src))
-		return;
-
-	kubsan_format_location(&data->d_src, bloc, sizeof(bloc));
-	kubsan_format_int(data->d_type, lhs, blhs, sizeof(blhs));
-	kubsan_format_int(data->d_type, rhs, brhs, sizeof(brhs));
-	kubsan_report("kubsan: %s: %s integer overflow: %s %c %s cannot "
-	    "be represented in type %s\n",
-	    bloc, SIGNED(data->d_type) ? "signed" : "unsigned",
-	    blhs, op, brhs, data->d_type->t_name);
-}
-
-void
-kubsan_handle_pointer_overflow(struct pointer_overflow_data *data,
-    unsigned long base, unsigned long res)
-{
-	char bloc[LOCATION_BUFSIZ];
-
-	if (kubsan_is_reported(&data->d_src))
-		return;
-
-	kubsan_format_location(&data->d_src, bloc, sizeof(bloc));
-	kubsan_report("kubsan: %s: pointer overflow: pointer expression with"
-	    " base %#lx overflowed to %#lx\n",
-	    bloc, base, res);
-}
-
-void
-kubsan_handle_type_mismatch(struct type_mismatch_data *data,
-    unsigned long ptr)
-{
-	char bloc[LOCATION_BUFSIZ];
-	unsigned long align = 1UL << data->d_align;
-
-	if (kubsan_is_reported(&data->d_src))
-		return;
-
-	kubsan_format_location(&data->d_src, bloc, sizeof(bloc));
-	if (ptr == 0UL)
-		kubsan_report("kubsan: %s: type mismatch: %s null pointer of "
-		    "type %s\n",
-		    bloc, kubsan_kind(data->d_kind), data->d_type->t_name);
-	else if (ptr & (align - 1))
-		kubsan_report("kubsan: %s: type mismatch: %s misaligned address "
-		    "%p for type %s which requires %lu byte alignment\n",
-		    bloc, kubsan_kind(data->d_kind), (void *)ptr,
-		    data->d_type->t_name, align);
-	else
-		kubsan_report("kubsan: %s: type mismatch: %s address %p with "
-		    "insufficient space for an object of type %s\n",
-		    bloc, kubsan_kind(data->d_kind), (void *)ptr,
-		    data->d_type->t_name);
-}
-
-void
-kubsan_handle_shift_out_of_bounds(struct shift_out_of_bounds_data *data,
-    unsigned long lhs, unsigned long rhs)
-{
-	char bloc[LOCATION_BUFSIZ];
-	char blhs[NUMBER_BUFSIZ];
-	char brhs[NUMBER_BUFSIZ];
-
-	if (kubsan_is_reported(&data->d_src))
-		return;
-
-	kubsan_format_location(&data->d_src, bloc, sizeof(bloc));
-	kubsan_format_int(data->d_ltype, lhs, blhs, sizeof(blhs));
-	kubsan_format_int(data->d_rtype, rhs, brhs, sizeof(brhs));
-	if (is_negative(data->d_rtype, rhs))
-		kubsan_report("kubsan: %s: shift: shift exponent %s is "
-		    "negative\n",
-		    bloc, brhs);
-	else if (is_shift_exponent_too_large(data->d_rtype, rhs))
-		kubsan_report("kubsan: %s: shift: shift exponent %s is too "
-		    "large for %u-bit type\n",
-		    bloc, brhs, NBITS(data->d_rtype));
-	else if (is_negative(data->d_ltype, lhs))
-		kubsan_report("kubsan: %s: shift: left shift of negative "
-		    "value %s\n",
-		    bloc, blhs);
-	else
-		kubsan_report("kubsan: %s: shift: left shift of %s by %s "
-		    "places cannot be represented in type %s\n",
-		    bloc, blhs, brhs, data->d_ltype->t_name);
-}
-
-void
-kubsan_handle_ureachable(struct unreachable_data *data)
-{
-	char bloc[LOCATION_BUFSIZ];
-
-	if (kubsan_is_reported(&data->d_src))
-		return;
-
-	kubsan_format_location(&data->d_src, bloc, sizeof(bloc));
-	kubsan_report("kubsan: %s: unreachable: calling "
-	    "__builtin_unreachable()\n",
-	    bloc);
+	if (kubsan_slot > 0)
+		task_add(systq, &kubsan_task);
 }
 
 int64_t
@@ -437,6 +409,30 @@ kubsan_deserialize_uint(struct type_descriptor *typ, unsigned long val)
 }
 
 void
+kubsan_defer_report(struct kubsan_report *kr)
+{
+	unsigned int slot;
+
+	if (__predict_false(kubsan_state == 0) ||
+	    kubsan_is_reported(kr->kr_src))
+		return;
+
+	slot = atomic_inc_int_nv(&kubsan_slot) - 1;
+	if (slot >= KUBSAN_NSLOTS) {
+		/*
+		 * No slots left, flag source location as not reported and
+		 * hope a slot will be available next time.
+		 */
+		kubsan_unreport(kr->kr_src);
+		return;
+	}
+
+	memcpy(&kubsan_reports[slot], kr, sizeof(*kr));
+	if (__predict_true(kubsan_state > 1))
+		task_add(systq, &kubsan_task);
+}
+
+void
 kubsan_format_int(struct type_descriptor *typ, unsigned long val,
     char *buf, size_t bufsiz)
 {
@@ -456,7 +452,7 @@ kubsan_format_int(struct type_descriptor *typ, unsigned long val,
 }
 
 int
-kubsan_format_location(struct source_location *src, char *buf,
+kubsan_format_location(const struct source_location *src, char *buf,
     size_t bufsiz)
 {
 	const char *path;
@@ -515,18 +511,184 @@ kubsan_kind(uint8_t kind)
 }
 
 void
-kubsan_report(const char *fmt, ...)
+kubsan_report(void *arg)
 {
-	va_list ap;
+	char bloc[LOCATION_BUFSIZ];
+	char blhs[NUMBER_BUFSIZ];
+	char brhs[NUMBER_BUFSIZ];
+	struct kubsan_report *kr;
+	unsigned int nslots;
+	unsigned int i = 0;
 
-	va_start(ap, fmt);
-	vprintf(fmt, ap);
-	va_end(ap);
+again:
+	nslots = kubsan_slot;
+	if (nslots > KUBSAN_NSLOTS)
+		nslots = KUBSAN_NSLOTS;
+
+	for (; i < nslots; i++) {
+		kr = &kubsan_reports[i];
+
+		kubsan_format_location(kr->kr_src, bloc, sizeof(bloc));
+		switch (kr->kr_type) {
+		case KUBSAN_INVALID_VALUE: {
+			const struct invalid_value_data *data =
+			    kr->kr_invalid_value.v_data;
+
+			kubsan_format_int(data->d_type,
+			    kr->kr_invalid_value.v_val, blhs, sizeof(blhs));
+			printf("kubsan: %s: load invalid value: load of value " 
+			    "%s is not a valid value for type %s\n",
+			    bloc, blhs, data->d_type->t_name);
+			break;
+		}
+
+		case KUBSAN_NEGATE_OVERFLOW: {
+			const struct overflow_data *data =
+			    kr->kr_negate_overflow.v_data;
+
+			kubsan_format_int(data->d_type,
+			    kr->kr_negate_overflow.v_val, blhs, sizeof(blhs));
+			printf("kubsan: %s: negate overflow: negation of %s "
+			    "cannot be represented in type %s\n",
+			    bloc, blhs, data->d_type->t_name);
+			break;
+		}
+
+		case KUBSAN_NONNULL_ARG: {
+			const struct nonnull_arg_data *data =
+			    kr->kr_nonnull_arg.v_data;
+
+			if (data->d_attr_src.sl_filename)
+				kubsan_format_location(&data->d_attr_src,
+				    blhs, sizeof(blhs));
+			else
+				blhs[0] = '\0';
+
+			printf("kubsan: %s: null pointer passed as argument "
+			    "%d, which is declared to never be null%s%s\n",
+			    bloc, data->d_idx,
+			    blhs[0] ? "nonnull specified in " : "", blhs);
+			break;
+		}
+
+		case KUBSAN_OUT_OF_BOUNDS: {
+			const struct out_of_bounds_data *data =
+			    kr->kr_out_of_bounds.v_data;
+
+			kubsan_format_int(data->d_itype,
+			    kr->kr_out_of_bounds.v_idx, blhs, sizeof(blhs));
+			printf("kubsan: %s: out of bounds: index %s is out of " 
+			    "range for type %s\n",
+			    bloc, blhs, data->d_atype->t_name);
+			break;
+		}
+
+		case KUBSAN_OVERFLOW: {
+			const struct overflow_data *data =
+			    kr->kr_overflow.v_data;
+
+			kubsan_format_int(data->d_type,
+			    kr->kr_overflow.v_lhs, blhs, sizeof(blhs));
+			kubsan_format_int(data->d_type,
+			    kr->kr_overflow.v_rhs, brhs, sizeof(brhs));
+                        printf("kubsan: %s: %s integer overflow: %s %c %s "
+                            "cannot be represented in type %s\n",
+			    bloc, SIGNED(data->d_type) ? "signed" : "unsigned",
+			    blhs, kr->kr_overflow.v_op, brhs,
+			    data->d_type->t_name);
+			break;
+		}
+
+		case KUBSAN_POINTER_OVERFLOW:
+			printf("kubsan: %s: pointer overflow: pointer "
+			    "expression with base %#lx overflowed to %#lx\n",
+			    bloc, kr->kr_pointer_overflow.v_base,
+			    kr->kr_pointer_overflow.v_res);
+			break;
+
+		case KUBSAN_SHIFT_OUT_OF_BOUNDS: {
+			const struct shift_out_of_bounds_data *data =
+				kr->kr_shift_out_of_bounds.v_data;
+			unsigned long lhs = kr->kr_shift_out_of_bounds.v_lhs;
+			unsigned long rhs = kr->kr_shift_out_of_bounds.v_rhs;
+
+			kubsan_format_int(data->d_ltype, lhs, blhs,
+			    sizeof(blhs));
+			kubsan_format_int(data->d_rtype, rhs, brhs,
+			    sizeof(brhs));
+			if (is_negative(data->d_rtype, rhs))
+				printf("kubsan: %s: shift: shift exponent %s "
+				    "is negative\n",
+				    bloc, brhs);
+			else if (is_shift_exponent_too_large(data->d_rtype, rhs))
+				printf("kubsan: %s: shift: shift exponent %s "
+				    "is too large for %u-bit type\n",
+				    bloc, brhs, NBITS(data->d_rtype));
+			else if (is_negative(data->d_ltype, lhs))
+				printf("kubsan: %s: shift: left shift of "
+				    "negative value %s\n",
+				    bloc, blhs);
+			else
+				printf("kubsan: %s: shift: left shift of %s by "
+				    "%s places cannot be represented in type "
+				    "%s\n",
+				    bloc, blhs, brhs, data->d_ltype->t_name);
+			break;
+		}
+
+		case KUBSAN_TYPE_MISMATCH: {
+			const struct type_mismatch_data *data =
+				kr->kr_type_mismatch.v_data;
+			unsigned long ptr = kr->kr_type_mismatch.v_ptr;
+			unsigned long align = 1UL << data->d_align;
+
+			if (ptr == 0UL)
+				printf("kubsan: %s: type mismatch: %s null "
+				    "pointer of type %s\n",
+				    bloc, kubsan_kind(data->d_kind),
+				    data->d_type->t_name);
+			else if (ptr & (align - 1))
+				printf("kubsan: %s: type mismatch: %s "
+				    "misaligned address %p for type %s which "
+				    "requires %lu byte alignment\n",
+				    bloc, kubsan_kind(data->d_kind),
+				    (void *)ptr, data->d_type->t_name, align);
+			else
+				printf("kubsan: %s: type mismatch: %s address "
+				    "%p with insufficient space for an object "
+				    "of type %s\n",
+				    bloc, kubsan_kind(data->d_kind),
+				    (void *)ptr, data->d_type->t_name);
+			break;
+		}
+
+		case KUBSAN_UNREACHABLE:
+			printf("kubsan: %s: unreachable: calling "
+			    "__builtin_unreachable()\n",
+			    bloc);
+			break;
+		}
 
 #ifdef DDB
-	if (kubsan_watch == 2)
-		db_enter();
+		if (kubsan_watch == 2)
+			db_enter();
 #endif
+	}
+
+	/* New reports can arrive at any time. */
+	if (nslots != kubsan_slot && nslots < KUBSAN_NSLOTS)
+		goto again;
+
+	kubsan_slot = 0;
+	membar_producer();
+}
+
+void
+kubsan_unreport(struct source_location *src)
+{
+	uint32_t *line = &src->sl_line;
+
+	atomic_clearbits_int(line, LOCATION_REPORTED);
 }
 
 static int
