@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.470 2019/06/17 13:35:43 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.471 2019/06/20 13:18:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -256,9 +256,6 @@ rde_main(int debug, int verbose)
 		set_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se);
 		set_pollfd(&pfd[PFD_PIPE_SESSION_CTL], ibuf_se_ctl);
 
-		if (rib_dump_pending() || rde_update_queue_pending())
-			timeout = 0;
-
 		i = PFD_PIPE_COUNT;
 		for (mctx = LIST_FIRST(&rde_mrts); mctx != 0; mctx = xmctx) {
 			xmctx = LIST_NEXT(mctx, entry);
@@ -274,6 +271,10 @@ rde_main(int debug, int verbose)
 				rde_mrt_cnt--;
 			}
 		}
+
+		if (rib_dump_pending() || rde_update_queue_pending() ||
+		    nexthop_pending())
+			timeout = 0;
 
 		if (poll(pfd, i, timeout) == -1) {
 			if (errno != EINTR)
@@ -311,12 +312,13 @@ rde_main(int debug, int verbose)
 			mctx = LIST_NEXT(mctx, entry);
 		}
 
+		rib_dump_runner();
+		nexthop_runner();
 		if (ibuf_se && ibuf_se->w.queued < SESS_MSG_HIGH_MARK) {
 			rde_update_queue_runner();
 			for (aid = AID_INET6; aid < AID_MAX; aid++)
 				rde_update6_queue_runner(aid);
 		}
-		rib_dump_runner();
 	}
 
 	/* do not clean up on shutdown on production, it takes ages. */
