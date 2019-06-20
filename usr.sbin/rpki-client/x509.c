@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.5 2019/06/20 15:26:49 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.6 2019/06/20 15:29:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -206,13 +206,13 @@ x509_get_ski_aki(X509 *x, const char *fn, char **ski, char **aki)
 		    "missing AKI X509 extension", fn);
 		free(*ski);
 		return 0;
-	}
-	if (*ski == NULL) {
+	} else if (*ski == NULL) {
 		cryptowarnx("%s: RFC 6487 section 4.8.2: AKI: "
 		    "missing SKI X509 extension", fn);
 		free(*aki);
 		return 0;
 	}
 
+	assert(*ski != NULL && *aki != NULL);
 	return 1;
 }
