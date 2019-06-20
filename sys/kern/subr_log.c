@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.57 2019/06/17 00:21:28 guenther Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.58 2019/06/20 04:31:33 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/fcntl.h>
+#include <sys/timeout.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -63,6 +64,7 @@
 #include <dev/cons.h>
 
 #define LOG_RDPRI	(PZERO + 1)
+#define LOG_TICK	1		/* log tick interval in ticks */
 
 #define LOG_ASYNC	0x04
 #define LOG_RDWAIT	0x08
@@ -73,6 +75,8 @@ struct logsoftc {
 	int	sc_pgid;		/* process/group for async I/O */
 	uid_t	sc_siguid;		/* uid for process that set sc_pgid */
 	uid_t	sc_sigeuid;		/* euid for process that set sc_pgid */
+	int	sc_need_wakeup;		/* if set, wake up waiters */
+	struct timeout sc_tick;		/* wakeup poll timeout */
 } logsoftc;
 
 int	log_open;			/* also used in log() */
@@ -88,6 +92,7 @@ struct filterops logread_filtops =
 	{ 1, NULL, filt_logrdetach, filt_logread};
 
 int dosendsyslog(struct proc *, const char *, size_t, int, enum uio_seg);
+void logtick(void *);
 
 void
 initmsgbuf(caddr_t buf, size_t bufsize)
@@ -167,6 +172,8 @@ logopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (log_open)
 		return (EBUSY);
 	log_open = 1;
+	timeout_set(&logsoftc.sc_tick, logtick, NULL);
+	timeout_add(&logsoftc.sc_tick, LOG_TICK);
 	return (0);
 }
 
@@ -180,6 +187,7 @@ logclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (fp)
 		FRELE(fp, p);
 	log_open = 0;
+	timeout_del(&logsoftc.sc_tick);
 	logsoftc.sc_state = 0;
 	return (0);
 }
@@ -304,8 +312,38 @@ filt_logread(struct knote *kn, long hint)
 void
 logwakeup(void)
 {
+	/*
+	 * The actual wakeup has to be deferred because logwakeup() can be
+	 * called in very varied contexts.
+	 * Keep the print routines usable in as many situations as possible
+	 * by not using locking here.
+	 */
+
+	/*
+	 * Ensure that preceding stores become visible to other CPUs
+	 * before the flag.
+	 */
+	membar_producer();
+
+	logsoftc.sc_need_wakeup = 1;
+}
+
+void
+logtick(void *arg)
+{
 	if (!log_open)
 		return;
+
+	if (!logsoftc.sc_need_wakeup)
+		goto out;
+	logsoftc.sc_need_wakeup = 0;
+
+	/*
+	 * sc_need_wakeup has to be cleared before handling the wakeup.
+	 * This ensures that no wakeup is lost.
+	 */
+	membar_enter();
+
 	selwakeup(&logsoftc.sc_selp);
 	if (logsoftc.sc_state & LOG_ASYNC)
 		csignal(logsoftc.sc_pgid, SIGIO,
@@ -314,6 +352,8 @@ logwakeup(void)
 		wakeup(msgbufp);
 		logsoftc.sc_state &= ~LOG_RDWAIT;
 	}
+out:
+	timeout_add(&logsoftc.sc_tick, LOG_TICK);
 }
 
 int
