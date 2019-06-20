@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.912 2019/06/18 11:08:42 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.913 2019/06/20 07:41:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1819,6 +1819,9 @@ struct options_entry *options_set_number(struct options *, const char *,
 		     long long);
 struct options_entry *options_set_style(struct options *, const char *, int,
 		     const char *);
+enum options_table_scope options_scope_from_name(struct args *, int,
+		     const char *, struct cmd_find_state *, struct options **,
+		     char **);
 enum options_table_scope options_scope_from_flags(struct args *, int,
 		     struct cmd_find_state *, struct options **, char **);
 
