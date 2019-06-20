@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.193 2019/06/20 13:38:21 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.194 2019/06/20 19:32:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -922,24 +922,9 @@ prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
 	if (re == NULL)
 		re = rib_add(rib, prefix, prefixlen);
 
-	p = prefix_bypeer(re, peer);
-	if (p == NULL) {
-		p = prefix_alloc();
-		prefix_link(p, re, peer, asp, comm, nexthop, nhflags, vstate);
-		return (1);
-	} else {
-		if (prefix_aspath(p) != asp ||
-		    prefix_communities(p) != comm ||
-		    prefix_nexthop(p) != nexthop ||
-		    prefix_nhflags(p) != nhflags) {
-			/* prefix metadata changed therefor move */
-			return (prefix_move(p, peer, asp, comm, nexthop,
-			    nhflags, vstate));
-		}
-		p->lastchange = time(NULL);
-		p->validation_state = vstate;
-		return (0);
-	}
+	p = prefix_alloc();
+	prefix_link(p, re, peer, asp, comm, nexthop, nhflags, vstate);
+	return (1);
 }
 
 /*
