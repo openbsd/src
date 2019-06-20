@@ -22,9 +22,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" From FreeBSD: r108087 2002-12-19 01:40:28 -0800
-.\" $OpenBSD: sockatmark.3,v 1.1 2014/08/31 02:27:37 guenther Exp $
+.\" $OpenBSD: sockatmark.3,v 1.2 2019/06/20 14:19:25 deraadt Exp $
 .\"
-.Dd $Mdocdate: August 31 2014 $
+.Dd $Mdocdate: June 20 2019 $
 .Dt SOCKATMARK 3
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@ oob()
 	char waste[BUFSIZ];
 
 	for (;;) {
-		if ((mark = sockatmark(rem)) < 0) {
+		if ((mark = sockatmark(rem)) == -1) {
 			perror("sockatmark");
 			break;
 		}
@@ -74,7 +74,7 @@ oob()
 			break;
 		(void) read(rem, waste, sizeof (waste));
 	}
-	if (recv(rem, &mark, 1, MSG_OOB) < 0) {
+	if (recv(rem, &mark, 1, MSG_OOB) == -1) {
 		perror("recv");
 		...
 	}
