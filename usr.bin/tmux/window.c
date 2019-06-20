@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.234 2019/06/20 11:59:59 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.235 2019/06/20 13:40:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -944,7 +944,7 @@ window_pane_alternate_on(struct window_pane *wp, struct grid_cell *gc,
 
 	if (wp->saved_grid != NULL)
 		return;
-	if (!options_get_number(wp->window->options, "alternate-screen"))
+	if (!options_get_number(wp->options, "alternate-screen"))
 		return;
 	sx = screen_size_x(s);
 	sy = screen_size_y(s);
@@ -972,7 +972,7 @@ window_pane_alternate_off(struct window_pane *wp, struct grid_cell *gc,
 	struct screen	*s = &wp->base;
 	u_int		 sx, sy;
 
-	if (!options_get_number(wp->window->options, "alternate-screen"))
+	if (!options_get_number(wp->options, "alternate-screen"))
 		return;
 
 	/*

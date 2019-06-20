@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.107 2019/06/20 11:59:59 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.108 2019/06/20 13:40:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -563,13 +563,13 @@ const struct options_table_entry options_table[] = {
 
 	{ .name = "allow-rename",
 	  .type = OPTIONS_TABLE_FLAG,
-	  .scope = OPTIONS_TABLE_WINDOW,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
 	  .default_num = 0
 	},
 
 	{ .name = "alternate-screen",
 	  .type = OPTIONS_TABLE_FLAG,
-	  .scope = OPTIONS_TABLE_WINDOW,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
 	  .default_num = 1
 	},
 
