@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: elf_memory.3,v 1.1 2019/02/01 05:27:37 jsg Exp $
+.\" $Id: elf_memory.3,v 1.2 2019/06/20 16:15:22 deraadt Exp $
 .\"
 .Dd June 28, 2006
 .Dt ELF_MEMORY 3
@@ -70,8 +70,8 @@ void *p;
 struct stat sb;
 Elf *e;
 \&...
-if ((fd = open("./elf-file", O_RDONLY)) < 0 ||
-    fstat(fd, &sb) < 0 ||
+if ((fd = open("./elf-file", O_RDONLY)) == -1 ||
+    fstat(fd, &sb) == -1 ||
     (p = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t) 0)) ==
     MAP_FAILED) {
 	... handle system error ...

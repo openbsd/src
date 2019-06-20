@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: elf_begin.3,v 1.1 2019/02/01 05:27:37 jsg Exp $
+.\" $Id: elf_begin.3,v 1.2 2019/06/20 16:15:22 deraadt Exp $
 .\"
 .Dd December 11, 2011
 .Dt ELF_BEGIN 3
@@ -227,7 +227,7 @@ To create a new ELF file, use:
 int fd;
 Elf *e;
 \&...
-if ((fd = open("filename", O_RDWR|O_TRUNC|O_CREAT, 0666)) < 0) {
+if ((fd = open("filename", O_RDWR|O_TRUNC|O_CREAT, 0666)) == -1) {
 	\&... handle the error from open(2) ...
 }
 if ((e = elf_begin(fd, ELF_C_WRITE, (Elf *) 0)) == 0) {
