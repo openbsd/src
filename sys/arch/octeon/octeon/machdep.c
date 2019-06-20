@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.111 2019/05/18 15:57:22 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.112 2019/06/20 13:59:39 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -238,6 +238,14 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 	boot_info = (struct boot_info *)
 	    PHYS_TO_XKPHYS(boot_desc->boot_info_addr, CCA_CACHED);
 
+	/*
+	 * Save the pointers for future reference.
+	 * The descriptors are located outside the free memory,
+	 * and the kernel should preserve them.
+	 */
+	octeon_boot_desc = boot_desc;
+	octeon_boot_info = boot_info;
+
 #ifdef MULTIPROCESSOR
 	/*
 	 * Set curcpu address on primary processor.
@@ -372,14 +380,6 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 	Octeon_SyncCache(curcpu());
 
 	octeon_tlb_init();
-
-	/*
-	 * Save the the boot information for future reference since we can't
-	 * retrieve it anymore after we've fully bootstrapped the kernel.
-	 */
-
-	bcopy(&boot_info, &octeon_boot_info, sizeof(octeon_boot_info));
-	bcopy(&boot_desc, &octeon_boot_desc, sizeof(octeon_boot_desc));
 
 	snprintf(cpu_model, sizeof(cpu_model), "Cavium OCTEON (rev %d.%d) @ %d MHz",
 		 (bootcpu_hwinfo.c0prid >> 4) & 0x0f,
