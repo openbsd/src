@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.192 2019/06/20 13:18:19 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.193 2019/06/20 13:38:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1246,7 +1246,7 @@ prefix_bypeer(struct rib_entry *re, struct rde_peer *peer)
 	return (NULL);
 }
 
-void
+static void
 prefix_updateall(struct prefix *p, enum nexthop_state state,
     enum nexthop_state oldstate)
 {
