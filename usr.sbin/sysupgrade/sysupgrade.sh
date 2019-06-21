@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.21 2019/05/14 14:27:49 ajacoutot Exp $
+# $OpenBSD: sysupgrade.sh,v 1.22 2019/06/21 16:50:26 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -182,9 +182,8 @@ fi
 
 ${KEEP} && > keep
 
-cp bsd.rd /nbsd.upgrade
-ln -f /nbsd.upgrade /bsd.upgrade
-rm /nbsd.upgrade
+install -F -m 700 bsd.rd /bsd.upgrade
+sync
 
 if ${REBOOT}; then
 	echo Upgrading.
