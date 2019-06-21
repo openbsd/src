@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.287 2019/06/05 12:53:43 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.288 2019/06/21 17:11:42 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -931,7 +931,7 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 			NET_LOCK();
 			ifp->if_rtrequest(ifp, RTM_INVALIDATE, rt);
 			/* Reset the MTU of the gateway route. */
-			rtable_walk(tableid, rt_key(rt)->sa_family,
+			rtable_walk(tableid, rt_key(rt)->sa_family, NULL,
 			    route_cleargateway, rt);
 			NET_UNLOCK();
 			if_put(ifp);
@@ -1911,7 +1911,8 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 			if (af != 0 && af != i)
 				continue;
 
-			error = rtable_walk(tableid, i, sysctl_dumpentry, &w);
+			error = rtable_walk(tableid, i, NULL, sysctl_dumpentry,
+			    &w);
 			if (error == EAFNOSUPPORT)
 				error = 0;
 			if (error)

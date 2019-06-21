@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.166 2018/01/23 22:06:42 bluhm Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.167 2019/06/21 17:11:43 mpi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -173,28 +173,48 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
  * it shouldn't be called when acting as a router.
  * The gateway must already contain KAME's hack for link-local scope.
  */
-void
+int
 rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 {
+	struct rt_addrinfo info;
+	struct sockaddr_in6 sa_mask;
+	struct rtentry *rt = NULL;
+	int error;
+
 	NET_ASSERT_LOCKED();
 
 	/* We'll care only link-local addresses */
 	if (!IN6_IS_ADDR_LINKLOCAL(gateway))
-		return;
+		return (0);
 
 	KASSERT(gateway->s6_addr16[1] != 0);
 
-	rtable_walk(ifp->if_rdomain, AF_INET6, rt6_deleteroute, gateway);
+	do {
+		error = rtable_walk(ifp->if_rdomain, AF_INET6, &rt,
+		    rt6_deleteroute, gateway);
+		if (rt != NULL && error == EEXIST) {
+			memset(&info, 0, sizeof(info));
+			info.rti_flags =  rt->rt_flags;
+			info.rti_info[RTAX_DST] = rt_key(rt);
+			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+			info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt,
+			    &sa_mask);
+			error = rtrequest_delete(&info, RTP_ANY, ifp, NULL,
+			    ifp->if_rdomain);
+			if (error == 0)
+				error = EAGAIN;
+		}
+		rtfree(rt);
+		rt = NULL;
+	} while (error == EAGAIN);
+
+	return (error);
 }
 
 int
 rt6_deleteroute(struct rtentry *rt, void *arg, unsigned int id)
 {
-	struct ifnet *ifp;
-	struct rt_addrinfo info;
 	struct in6_addr *gate = (struct in6_addr *)arg;
-	struct sockaddr_in6 sa_mask;
-	int error = 0;
 
 	if (rt->rt_gateway == NULL || rt->rt_gateway->sa_family != AF_INET6)
 		return (0);
@@ -217,16 +237,5 @@ rt6_deleteroute(struct rtentry *rt, void *arg, unsigned int id)
 	if ((rt->rt_flags & RTF_HOST) == 0)
 		return (0);
 
-	ifp = if_get(rt->rt_ifidx);
-	if (ifp != NULL) {
-		bzero(&info, sizeof(info));
-		info.rti_flags =  rt->rt_flags;
-		info.rti_info[RTAX_DST] = rt_key(rt);
-		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
-		error = rtrequest_delete(&info, RTP_ANY, ifp, NULL, id);
-	}
-	if_put(ifp);
-
-	return (error != 0 ? error : EAGAIN);
+	return (EEXIST);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.126 2019/06/04 16:11:13 anton Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.127 2019/06/21 17:11:42 mpi Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -476,8 +476,10 @@ mrt_sysctl_mfc(void *oldp, size_t *oldlenp)
 	msa.msa_len = *oldlenp;
 	msa.msa_needed = 0;
 
-	for (rtableid = 0; rtableid <= RT_TABLEID_MAX; rtableid++)
-		rtable_walk(rtableid, AF_INET, mrt_rtwalk_mfcsysctl, &msa);
+	for (rtableid = 0; rtableid <= RT_TABLEID_MAX; rtableid++) {
+		rtable_walk(rtableid, AF_INET, NULL, mrt_rtwalk_mfcsysctl,
+		    &msa);
+	}
 
 	if (msa.msa_minfos != NULL && msa.msa_needed > 0 &&
 	    (error = copyout(msa.msa_minfos, oldp, msa.msa_needed)) != 0) {
@@ -549,7 +551,7 @@ ip_mrouter_done(struct socket *so)
 	NET_ASSERT_LOCKED();
 
 	/* Delete all remaining installed multicast routes. */
-	rtable_walk(rtableid, AF_INET, mrouter_rtwalk_delete, NULL);
+	rtable_walk(rtableid, AF_INET, NULL, mrouter_rtwalk_delete, NULL);
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rtableid)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.174 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.175 2019/06/21 17:11:42 mpi Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -4167,7 +4167,7 @@ sppp_update_gw(struct ifnet *ifp)
 
 	/* update routing table */
 	for (tid = 0; tid <= RT_TABLEID_MAX; tid++) {
-		rtable_walk(tid, AF_INET, sppp_update_gw_walker, ifp);
+		rtable_walk(tid, AF_INET, NULL, sppp_update_gw_walker, ifp);
 	}
 }
 

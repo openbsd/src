@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.74 2017/11/27 15:41:30 mpi Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.75 2019/06/21 17:11:43 mpi Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -193,7 +193,7 @@ void nd6_dad_stop(struct ifaddr *);
 void nd6_rtr_cache(struct mbuf *, int, int, int);
 
 int in6_ifdel(struct ifnet *, struct in6_addr *);
-void rt6_flush(struct in6_addr *, struct ifnet *);
+int rt6_flush(struct in6_addr *, struct ifnet *);
 
 void nd6_expire_timer_update(struct in6_ifaddr *);
 #endif /* _KERNEL */
