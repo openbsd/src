@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.1 2007/05/29 04:08:02 kettenis Exp $	*/
+/*	$OpenBSD: led.c,v 1.2 2019/06/21 08:12:35 kn Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -143,7 +143,7 @@ led_blink(void *v, int on)
 
 	sc->sc_on = on;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, EPIC_ADDR, EPIC_LED_STATE0);
-	timeout_add(&sc->sc_to, max(1, hz / 100));
+	timeout_add_msec(&sc->sc_to, 10);
 }
 
 void
