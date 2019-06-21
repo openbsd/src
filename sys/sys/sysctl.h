@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.188 2019/06/01 14:11:18 mpi Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.189 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -536,6 +536,14 @@ struct kinfo_vmentry {
  * p_tpgid, p_tsess, p_vm_rssize, p_u[us]time_{sec,usec}, p_cpuid
  */
 
+#if defined(_KERNEL)
+#define PR_LOCK(pr)	mtx_enter(&(pr)->ps_mtx)
+#define PR_UNLOCK(pr)	mtx_leave(&(pr)->ps_mtx)
+#else
+#define PR_LOCK(pr)	/* nothing */
+#define PR_UNLOCK(pr)	/* nothing */
+#endif
+
 #define PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
 
 #define FILL_KPROC(kp, copy_str, p, pr, uc, pg, paddr, \
@@ -638,9 +646,11 @@ do {									\
 			(kp)->p_wchan = PTRTOINT64((p)->p_wchan);	\
 	}								\
 									\
+	PR_LOCK(pr);							\
 	if (lim)							\
 		(kp)->p_rlim_rss_cur =					\
 		    (lim)->pl_rlimit[RLIMIT_RSS].rlim_cur;		\
+	PR_UNLOCK(pr);							\
 									\
 	if (((pr)->ps_flags & PS_ZOMBIE) == 0) {			\
 		struct timeval tv;					\

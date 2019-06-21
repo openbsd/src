@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.55 2018/04/12 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.56 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -351,7 +351,7 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ - MAXSSIZ_GUARD;
 	epp->ep_minsaddr = USRSTACK;
 #endif
-	epp->ep_ssize = round_page(p->p_rlimit[RLIMIT_STACK].rlim_cur);
+	epp->ep_ssize = round_page(lim_cur(RLIMIT_STACK));
 
 	if (stackgap_random != 0) {
 		sgap = arc4random() & (stackgap_random - 1);

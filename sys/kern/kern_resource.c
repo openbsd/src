@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.64 2019/06/10 03:15:53 visa Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.65 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -53,8 +53,15 @@
 
 #include <uvm/uvm_extern.h>
 
+/* Resource usage check interval in msec */
+#define RUCHECK_INTERVAL	1000
+
 /* SIGXCPU interval in seconds of process runtime */
 #define SIGXCPU_INTERVAL	5
+
+struct plimit	*lim_copy(struct plimit *);
+struct plimit	*lim_write_begin(void);
+void		 lim_write_commit(struct plimit *);
 
 void	tuagg_sub(struct tusage *, struct proc *);
 
@@ -63,6 +70,13 @@ void	tuagg_sub(struct tusage *, struct proc *);
  */
 rlim_t maxdmap = MAXDSIZ;
 rlim_t maxsmap = MAXSSIZ;
+
+/*
+ * Serializes resource limit updates.
+ * This lock has to be held together with ps_mtx when updating
+ * the process' ps_limit.
+ */
+struct rwlock rlimit_lock = RWLOCK_INITIALIZER("rlimitlk");
 
 /*
  * Resource controls and accounting.
@@ -229,24 +243,26 @@ int
 dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 {
 	struct rlimit *alimp;
+	struct plimit *limit;
 	rlim_t maxlim;
 	int error;
 
 	if (which >= RLIM_NLIMITS || limp->rlim_cur > limp->rlim_max)
 		return (EINVAL);
 
-	alimp = &p->p_rlimit[which];
-	if (limp->rlim_max > alimp->rlim_max)
-		if ((error = suser(p)) != 0)
-			return (error);
-	if (p->p_p->ps_limit->pl_refcnt > 1) {
-		struct plimit *l = p->p_p->ps_limit;
+	rw_enter_write(&rlimit_lock);
 
-		/* limcopy() can sleep, so copy before decrementing refcnt */
-		p->p_p->ps_limit = limcopy(l);
-		limfree(l);
-		alimp = &p->p_rlimit[which];
+	alimp = &p->p_p->ps_limit->pl_rlimit[which];
+	if (limp->rlim_max > alimp->rlim_max) {
+		if ((error = suser(p)) != 0) {
+			rw_exit_write(&rlimit_lock);
+			return (error);
+		}
 	}
+
+	/* Get exclusive write access to the limit structure. */
+	limit = lim_write_begin();
+	alimp = &limit->pl_rlimit[which];
 
 	switch (which) {
 	case RLIMIT_DATA:
@@ -316,6 +332,10 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 	}
 
 	*alimp = *limp;
+
+	lim_write_commit(limit);
+	rw_exit_write(&rlimit_lock);
+
 	return (0);
 }
 
@@ -326,16 +346,19 @@ sys_getrlimit(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) which;
 		syscallarg(struct rlimit *) rlp;
 	} */ *uap = v;
-	struct rlimit *alimp;
+	struct plimit *limit;
+	struct rlimit alimp;
 	int error;
 
 	if (SCARG(uap, which) < 0 || SCARG(uap, which) >= RLIM_NLIMITS)
 		return (EINVAL);
-	alimp = &p->p_rlimit[SCARG(uap, which)];
-	error = copyout(alimp, SCARG(uap, rlp), sizeof(struct rlimit));
+	limit = lim_read_enter();
+	alimp = limit->pl_rlimit[SCARG(uap, which)];
+	lim_read_leave(limit);
+	error = copyout(&alimp, SCARG(uap, rlp), sizeof(struct rlimit));
 #ifdef KTRACE
 	if (error == 0 && KTRPOINT(p, KTR_STRUCT))
-		ktrrlimit(p, alimp);
+		ktrrlimit(p, &alimp);
 #endif
 	return (error);
 }
@@ -507,8 +530,8 @@ ruadd(struct rusage *ru, struct rusage *ru2)
 void
 rucheck(void *arg)
 {
+	struct rlimit rlim;
 	struct process *pr = arg;
-	struct rlimit *rlim;
 	time_t runtime;
 	int s;
 
@@ -518,9 +541,12 @@ rucheck(void *arg)
 	runtime = pr->ps_tu.tu_runtime.tv_sec;
 	SCHED_UNLOCK(s);
 
-	rlim = &pr->ps_limit->pl_rlimit[RLIMIT_CPU];
-	if ((rlim_t)runtime >= rlim->rlim_cur) {
-		if ((rlim_t)runtime >= rlim->rlim_max) {
+	mtx_enter(&pr->ps_mtx);
+	rlim = pr->ps_limit->pl_rlimit[RLIMIT_CPU];
+	mtx_leave(&pr->ps_mtx);
+
+	if ((rlim_t)runtime >= rlim.rlim_cur) {
+		if ((rlim_t)runtime >= rlim.rlim_max) {
 			prsignal(pr, SIGKILL);
 		} else if (runtime >= pr->ps_nextxcpu) {
 			prsignal(pr, SIGXCPU);
@@ -562,7 +588,7 @@ lim_startup(struct plimit *limit0)
  * and copy when a limit is changed.
  */
 struct plimit *
-limcopy(struct plimit *lim)
+lim_copy(struct plimit *lim)
 {
 	struct plimit *newlim;
 
@@ -574,9 +600,129 @@ limcopy(struct plimit *lim)
 }
 
 void
-limfree(struct plimit *lim)
+lim_free(struct plimit *lim)
 {
-	if (--lim->pl_refcnt > 0)
+	if (atomic_dec_int_nv(&lim->pl_refcnt) > 0)
 		return;
 	pool_put(&plimit_pool, lim);
+}
+
+void
+lim_fork(struct process *parent, struct process *child)
+{
+	struct plimit *limit;
+
+	mtx_enter(&parent->ps_mtx);
+	limit = parent->ps_limit;
+	atomic_inc_int(&limit->pl_refcnt);
+	mtx_leave(&parent->ps_mtx);
+
+	child->ps_limit = limit;
+
+	if (limit->pl_rlimit[RLIMIT_CPU].rlim_cur != RLIM_INFINITY)
+		timeout_add_msec(&child->ps_rucheck_to, RUCHECK_INTERVAL);
+}
+
+/*
+ * Return an exclusive write reference to the process' resource limit structure.
+ * The caller has to release the structure by calling lim_write_commit().
+ *
+ * This invalidates any plimit read reference held by the calling thread.
+ */
+struct plimit *
+lim_write_begin(void)
+{
+	struct plimit *limit;
+	struct proc *p = curproc;
+
+	rw_assert_wrlock(&rlimit_lock);
+
+	if (p->p_limit != NULL)
+		lim_free(p->p_limit);
+	p->p_limit = NULL;
+
+	/*
+	 * It is safe to access ps_limit here without holding ps_mtx
+	 * because rlimit_lock excludes other writers.
+	 */
+
+	limit = p->p_p->ps_limit;
+	if (P_HASSIBLING(p) || limit->pl_refcnt > 1)
+		limit = lim_copy(limit);
+
+	return (limit);
+}
+
+/*
+ * Finish exclusive write access to the plimit structure.
+ * This makes the structure visible to other threads in the process.
+ */
+void
+lim_write_commit(struct plimit *limit)
+{
+	struct plimit *olimit;
+	struct proc *p = curproc;
+
+	rw_assert_wrlock(&rlimit_lock);
+
+	if (limit != p->p_p->ps_limit) {
+		mtx_enter(&p->p_p->ps_mtx);
+		olimit = p->p_p->ps_limit;
+		p->p_p->ps_limit = limit;
+		mtx_leave(&p->p_p->ps_mtx);
+
+		lim_free(olimit);
+	}
+}
+
+/*
+ * Begin read access to the process' resource limit structure.
+ * The access has to be finished by calling lim_read_leave().
+ *
+ * Sections denoted by lim_read_enter() and lim_read_leave() cannot nest.
+ */
+struct plimit *
+lim_read_enter(void)
+{
+	struct plimit *limit;
+	struct proc *p = curproc;
+	struct process *pr = p->p_p;
+
+	/*
+	 * This thread might not observe the latest value of ps_limit
+	 * if another thread updated the limits very recently on another CPU.
+	 * However, the anomaly should disappear quickly, especially if
+	 * there is any synchronization activity between the threads (or
+	 * the CPUs).
+	 */
+
+	limit = p->p_limit;
+	if (limit != pr->ps_limit) {
+		mtx_enter(&pr->ps_mtx);
+		limit = pr->ps_limit;
+		atomic_inc_int(&limit->pl_refcnt);
+		mtx_leave(&pr->ps_mtx);
+		if (p->p_limit != NULL)
+			lim_free(p->p_limit);
+		p->p_limit = limit;
+	}
+	KASSERT(limit != NULL);
+	return (limit);
+}
+
+/*
+ * Get the value of the resource limit in given process.
+ */
+rlim_t
+lim_cur_proc(struct proc *p, int which)
+{
+	struct process *pr = p->p_p;
+	rlim_t val;
+
+	KASSERT(which >= 0 && which < RLIM_NLIMITS);
+
+	mtx_enter(&pr->ps_mtx);
+	val = pr->ps_limit->pl_rlimit[which].rlim_cur;
+	mtx_leave(&pr->ps_mtx);
+	return (val);
 }

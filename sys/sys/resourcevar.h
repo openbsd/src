@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.23 2019/06/02 03:58:28 visa Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.24 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -56,6 +56,9 @@ do {									\
 } while (0)
 
 #ifdef _KERNEL
+
+#include <lib/libkern/libkern.h>	/* for KASSERT() */
+
 void	 addupc_intr(struct proc *, u_long);
 void	 addupc_task(struct proc *, u_long, u_int);
 void	 tuagg_unlocked(struct process *, struct proc *);
@@ -66,11 +69,39 @@ void	 calctsru(struct tusage *, struct timespec *, struct timespec *,
 void	 calcru(struct tusage *, struct timeval *, struct timeval *,
 	    struct timeval *);
 void	 lim_startup(struct plimit *);
-struct plimit *limcopy(struct plimit *);
-void	limfree(struct plimit *);
+void	 lim_free(struct plimit *);
+void	 lim_fork(struct process *, struct process *);
+struct plimit *lim_read_enter(void);
+
+/*
+ * Finish read access to resource limits.
+ */
+static inline void
+lim_read_leave(struct plimit *limit)
+{
+	/* nothing */
+}
+
+/*
+ * Get the value of the resource limit in current process.
+ */
+static inline rlim_t
+lim_cur(int which)
+{
+	struct plimit *limit;
+	rlim_t val;
+
+	KASSERT(which >= 0 && which < RLIM_NLIMITS);
+
+	limit = lim_read_enter();
+	val = limit->pl_rlimit[which].rlim_cur;
+	lim_read_leave(limit);
+	return (val);
+}
+
+rlim_t	 lim_cur_proc(struct proc *, int);
 
 void	 ruadd(struct rusage *, struct rusage *);
 void	 rucheck(void *);
-#define RUCHECK_INTERVAL	1000	/* check interval in msec */
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */

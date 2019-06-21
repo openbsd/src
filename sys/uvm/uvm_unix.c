@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.65 2019/03/01 01:46:18 cheloha Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.66 2019/06/21 09:39:49 visa Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ sys_obreak(struct proc *p, void *v, register_t *retval)
 
 	base = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
-	if (new < base || (new - base) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+	if (new < base || (new - base) > lim_cur(RLIMIT_DATA))
 		return (ENOMEM);
 
 	old = round_page(base + ptoa(vm->vm_dsize));
@@ -128,7 +128,7 @@ uvm_grow(struct proc *p, vaddr_t sp)
 #else
 	si = atop((vaddr_t)vm->vm_minsaddr - sp) - vm->vm_ssize;
 #endif
-	if (vm->vm_ssize + si <= atop(p->p_rlimit[RLIMIT_STACK].rlim_cur))
+	if (vm->vm_ssize + si <= atop(lim_cur(RLIMIT_STACK)))
 		vm->vm_ssize += si;
 }
 

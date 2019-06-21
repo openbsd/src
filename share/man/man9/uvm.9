@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.69 2018/06/19 22:35:07 krw Exp $
+.\"	$OpenBSD: uvm.9,v 1.70 2019/06/21 09:39:48 visa Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: June 19 2018 $
+.Dd $Mdocdate: June 21 2019 $
 .Dt UVM_INIT 9
 .Os
 .Sh NAME
@@ -132,7 +132,7 @@ for the machine dependent layer.
 .Ft void
 .Fn uvm_init "void"
 .Ft void
-.Fn uvm_init_limits "struct proc *p"
+.Fn uvm_init_limits "struct plimit *limit0"
 .Ft void
 .Fn uvm_setpagesize "void"
 .Ft void
@@ -155,7 +155,7 @@ function.
 .Pp
 The
 .Fn uvm_init_limits
-function initialises process limits for the named process.
+function initialises process limits in the given limit structure.
 This is for use by the system startup for process zero, before any other
 processes are created.
 .Pp

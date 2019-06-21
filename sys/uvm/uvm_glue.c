@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.74 2019/01/10 20:26:34 kettenis Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.75 2019/06/21 09:39:49 visa Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -303,20 +303,19 @@ uvm_exit(struct process *pr)
  * - called for process 0 and then inherited by all others.
  */
 void
-uvm_init_limits(struct proc *p)
+uvm_init_limits(struct plimit *limit0)
 {
-
 	/*
 	 * Set up the initial limits on process VM.  Set the maximum
 	 * resident set size to be all of (reasonably) available memory.
 	 * This causes any single, large process to start random page
 	 * replacement once it fills memory.
 	 */
-	p->p_rlimit[RLIMIT_STACK].rlim_cur = DFLSSIZ;
-	p->p_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
-	p->p_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;
-	p->p_rlimit[RLIMIT_DATA].rlim_max = MAXDSIZ;
-	p->p_rlimit[RLIMIT_RSS].rlim_cur = ptoa(uvmexp.free);
+	limit0->pl_rlimit[RLIMIT_STACK].rlim_cur = DFLSSIZ;
+	limit0->pl_rlimit[RLIMIT_STACK].rlim_max = MAXSSIZ;
+	limit0->pl_rlimit[RLIMIT_DATA].rlim_cur = DFLDSIZ;
+	limit0->pl_rlimit[RLIMIT_DATA].rlim_max = MAXDSIZ;
+	limit0->pl_rlimit[RLIMIT_RSS].rlim_cur = ptoa(uvmexp.free);
 }
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.205 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.206 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -201,7 +201,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 
 		/* check limits */
 		if ((epp->ep_tsize > MAXTSIZ) ||
-		    (epp->ep_dsize > p->p_rlimit[RLIMIT_DATA].rlim_cur))
+		    (epp->ep_dsize > lim_cur(RLIMIT_DATA)))
 			error = ENOMEM;
 
 		if (!error)

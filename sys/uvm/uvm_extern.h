@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.146 2019/05/09 20:36:44 beck Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.147 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -259,6 +259,8 @@ extern vaddr_t vm_min_kernel_address;
 
 #define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
 
+struct plimit;
+
 void			vmapbuf(struct buf *, vsize_t);
 void			vunmapbuf(struct buf *, vsize_t);
 struct uvm_object	*uao_create(vsize_t, int);
@@ -271,7 +273,7 @@ int			uvm_fault(vm_map_t, vaddr_t, vm_fault_t, vm_prot_t);
 vaddr_t			uvm_uarea_alloc(void);
 void			uvm_uarea_free(struct proc *);
 void			uvm_exit(struct process *);
-void			uvm_init_limits(struct proc *);
+void			uvm_init_limits(struct plimit *);
 boolean_t		uvm_kernacc(caddr_t, size_t, int);
 
 int			uvm_vslock(struct proc *, caddr_t, size_t,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.156 2019/05/11 20:02:00 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.157 2019/06/21 09:39:49 visa Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 	vaddr_t addr;
 	struct vattr va;
 	off_t pos;
-	vsize_t size, pageoff;
+	vsize_t limit, pageoff, size;
 	vm_prot_t prot, maxprot;
 	int flags, fd;
 	vaddr_t vm_min_address = VM_MIN_ADDRESS;
@@ -383,16 +383,16 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		}
 		if ((flags & __MAP_NOFAULT) != 0 ||
 		    ((flags & MAP_PRIVATE) != 0 && (prot & PROT_WRITE) != 0)) {
-			if (p->p_rlimit[RLIMIT_DATA].rlim_cur < size ||
-			    p->p_rlimit[RLIMIT_DATA].rlim_cur - size <
-			    ptoa(p->p_vmspace->vm_dused)) {
+			limit = lim_cur(RLIMIT_DATA);
+			if (limit < size ||
+			    limit - size < ptoa(p->p_vmspace->vm_dused)) {
 				error = ENOMEM;
 				goto out;
 			}
 		}
 		KERNEL_LOCK();
-		error = uvm_mmapfile(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
-		    flags, vp, pos, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
+		error = uvm_mmapfile(&p->p_vmspace->vm_map, &addr, size, prot,
+		    maxprot, flags, vp, pos, lim_cur(RLIMIT_MEMLOCK), p);
 		KERNEL_UNLOCK();
 	} else {		/* MAP_ANON case */
 		if (fd != -1)
@@ -404,9 +404,9 @@ is_anon:	/* label for SunOS style /dev/zero */
 		if ((flags & __MAP_NOFAULT) != 0)
 			return EINVAL;
 
-		if (p->p_rlimit[RLIMIT_DATA].rlim_cur < size ||
-		    p->p_rlimit[RLIMIT_DATA].rlim_cur - size <
-		    ptoa(p->p_vmspace->vm_dused)) {
+		limit = lim_cur(RLIMIT_DATA);
+		if (limit < size ||
+		    limit - size < ptoa(p->p_vmspace->vm_dused)) {
 			return ENOMEM;
 		}
 
@@ -419,7 +419,7 @@ is_anon:	/* label for SunOS style /dev/zero */
 
 		maxprot = PROT_MASK;
 		error = uvm_mmapanon(&p->p_vmspace->vm_map, &addr, size, prot,
-		    maxprot, flags, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
+		    maxprot, flags, lim_cur(RLIMIT_MEMLOCK), p);
 	}
 
 	if (error == 0)
@@ -729,7 +729,7 @@ sys_mlock(struct proc *p, void *v, register_t *retval)
 
 #ifdef pmap_wired_count
 	if (size + ptoa(pmap_wired_count(vm_map_pmap(&p->p_vmspace->vm_map))) >
-			p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur)
+			lim_cur(RLIMIT_MEMLOCK))
 		return (EAGAIN);
 #else
 	if ((error = suser(p)) != 0)
@@ -798,7 +798,7 @@ sys_mlockall(struct proc *p, void *v, register_t *retval)
 #endif
 
 	error = uvm_map_pageable_all(&p->p_vmspace->vm_map, flags,
-	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	    lim_cur(RLIMIT_MEMLOCK));
 	if (error != 0 && error != ENOMEM)
 		return (EAGAIN);
 	return (error);

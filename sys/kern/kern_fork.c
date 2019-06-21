@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.212 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.213 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -151,6 +151,7 @@ thread_new(struct proc *parent, vaddr_t uaddr)
 	p = pool_get(&proc_pool, PR_WAITOK);
 	p->p_stat = SIDL;			/* protect against others */
 	p->p_flag = 0;
+	p->p_limit = NULL;
 
 	/*
 	 * Make a proc table entry for the new process.
@@ -210,6 +211,8 @@ process_initialize(struct process *pr, struct proc *p)
 	LIST_INIT(&pr->ps_kqlist);
 	LIST_INIT(&pr->ps_sigiolst);
 
+	mtx_init(&pr->ps_mtx, IPL_MPFLOOR);
+
 	timeout_set(&pr->ps_realit_to, realitexpire, pr);
 	timeout_set(&pr->ps_rucheck_to, rucheck, pr);
 }
@@ -237,12 +240,10 @@ process_new(struct proc *p, struct process *parent, int flags)
 
 	process_initialize(pr, p);
 	pr->ps_pid = allocpid();
+	lim_fork(parent, pr);
 
 	/* post-copy fixups */
 	pr->ps_pptr = parent;
-	pr->ps_limit->pl_refcnt++;
-	if (pr->ps_limit->pl_rlimit[RLIMIT_CPU].rlim_cur != RLIM_INFINITY)
-		timeout_add_msec(&pr->ps_rucheck_to, RUCHECK_INTERVAL);
 
 	/* bump references to the text vnode (for sysctl) */
 	pr->ps_textvp = parent->ps_textvp;
@@ -373,7 +374,7 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	 * Don't allow a nonprivileged user to exceed their current limit.
 	 */
 	count = chgproccnt(uid, 1);
-	if (uid != 0 && count > curp->p_rlimit[RLIMIT_NPROC].rlim_cur) {
+	if (uid != 0 && count > lim_cur(RLIMIT_NPROC)) {
 		(void)chgproccnt(uid, -1);
 		nprocesses--;
 		nthreads--;

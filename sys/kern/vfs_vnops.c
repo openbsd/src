@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.97 2018/08/20 16:00:22 mpi Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.98 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ vn_fsizechk(struct vnode *vp, struct uio *uio, int ioflag, ssize_t *overrun)
 
 	*overrun = 0;
 	if (vp->v_type == VREG && p != NULL && !(ioflag & IO_NOLIMIT)) {
-		rlim_t limit = p->p_rlimit[RLIMIT_FSIZE].rlim_cur;
+		rlim_t limit = lim_cur_proc(p, RLIMIT_FSIZE);
 
 		/* if already at or over the limit, send the signal and fail */
 		if (uio->uio_offset >= limit) {

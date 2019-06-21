@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.269 2019/06/10 03:15:53 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.270 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -154,6 +154,12 @@ RBT_HEAD(unvname_rbt, unvname);
 struct futex;
 LIST_HEAD(futex_list, futex);
 struct unveil;
+
+/*
+ *  Locks used to protect struct members in this file:
+ *	m	this process' `ps_mtx'
+ *	r	rlimit_lock
+ */
 struct process {
 	/*
 	 * ps_mainproc is the original thread in the process.
@@ -181,6 +187,7 @@ struct process {
 
 	struct	futex_list ps_ftlist;	/* futexes attached to this process */
 	LIST_HEAD(, kqueue) ps_kqlist;	/* kqueues attached to this process */
+	struct  mutex	ps_mtx;		/* per-process mutex */
 
 /* The following fields are all zeroed upon creation in process_new. */
 #define	ps_startzero	ps_klist
@@ -221,7 +228,7 @@ struct process {
 
 /* The following fields are all copied upon creation in process_new. */
 #define	ps_startcopy	ps_limit
-	struct	plimit *ps_limit;	/* Process limits. */
+	struct	plimit *ps_limit;	/* [m,r] Process limits. */
 	struct	pgrp *ps_pgrp;		/* Pointer to process group. */
 	struct	emul *ps_emul;		/* Emulation information */
 
@@ -325,7 +332,7 @@ struct proc {
 	struct	vmspace *p_vmspace;	/* copy of p_p->ps_vmspace */
 	struct	p_inentry p_spinentry;
 	struct	p_inentry p_pcinentry;
-#define	p_rlimit	p_p->ps_limit->pl_rlimit
+	struct	plimit	*p_limit;	/* read reference of p_p->ps_limit */
 
 	int	p_flag;			/* P_* flags. */
 	u_char	p_spare;		/* unused */

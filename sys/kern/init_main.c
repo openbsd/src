@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.289 2019/06/20 14:55:22 anton Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.290 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -373,7 +373,7 @@ main(void *framep)
 	cpu_configure();
 
 	/* Configure virtual memory system, set vm rlimits. */
-	uvm_init_limits(p);
+	uvm_init_limits(&limit0);
 
 	/* Per CPU memory allocation */
 	percpu_init();

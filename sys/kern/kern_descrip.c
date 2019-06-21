@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.184 2019/05/13 17:31:51 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.185 2019/06/21 09:39:48 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ restart:
 		FRELE(fp, p);
 		return (0);
 	}
-	if ((u_int)new >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
+	if ((u_int)new >= lim_cur(RLIMIT_NOFILE) ||
 	    (u_int)new >= maxfiles) {
 		FRELE(fp, p);
 		return (EBADF);
@@ -414,7 +414,7 @@ restart:
 	case F_DUPFD:
 	case F_DUPFD_CLOEXEC:
 		newmin = (long)SCARG(uap, arg);
-		if ((u_int)newmin >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
+		if ((u_int)newmin >= lim_cur(RLIMIT_NOFILE) ||
 		    (u_int)newmin >= maxfiles) {
 			error = EINVAL;
 			break;
@@ -864,7 +864,7 @@ fdalloc(struct proc *p, int want, int *result)
 	 * expanding the ofile array.
 	 */
 restart:
-	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
+	lim = min((int)lim_cur(RLIMIT_NOFILE), maxfiles);
 	last = min(fdp->fd_nfiles, lim);
 	if ((i = want) < fdp->fd_freefile)
 		i = fdp->fd_freefile;
