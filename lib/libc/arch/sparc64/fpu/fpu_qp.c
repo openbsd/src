@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_qp.c,v 1.7 2019/03/15 05:42:38 kevlo Exp $	*/
+/*	$OpenBSD: fpu_qp.c,v 1.8 2019/06/21 17:00:58 jca Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jake Burkholder.
@@ -52,7 +52,7 @@ _Qp_ ## op(u_int *c, u_int *a, u_int *b) \
 } \
 DEF_STRONG(_Qp_ ## op);
 
-#define	_QP_TTOQ(qname, fname, ntype, atype, signed, ...) \
+#define	_QP_TTOQ(qname, fname, ntype, signpos, atype, ...) \
 void _Qp_ ## qname ## toq(u_int *c, ntype n); \
 PROTO_NORMAL(_Qp_ ## qname ## toq); \
 void \
@@ -62,7 +62,7 @@ _Qp_ ## qname ## toq(u_int *c, ntype n) \
 	atype *a; \
 	__asm volatile("stx %%fsr, %0" : "=m" (fe.fe_fsr) :); \
 	a = (atype *)&n; \
-	fe.fe_f1.fp_sign = signed ? a[0] >> 31 : 0; \
+	fe.fe_f1.fp_sign = (signpos >= 0) ? a[0] >> signpos : 0; \
 	fe.fe_f1.fp_sticky = 0; \
 	fe.fe_f1.fp_class = __fpu_ ## fname ## tof(&fe.fe_f1, __VA_ARGS__); \
 	c[0] = __fpu_ftoq(&fe, &fe.fe_f1, c); \
@@ -176,12 +176,12 @@ _QP_OP(div)
 _QP_OP(mul)
 _QP_OP(sub)
 
-_QP_TTOQ(d,	d,	double,	u_int,	1, a[0], a[1])
-_QP_TTOQ(i,	i,	int,	u_int,	1, a[0])
-_QP_TTOQ(s,	s,	float,	u_int,	1, a[0])
-_QP_TTOQ(x,	x,	long,	u_long,	1, a[0])
-_QP_TTOQ(ui,	ui,	u_int,	u_int,	0, a[0])
-_QP_TTOQ(ux,	ux,	u_long,	u_long,	0, a[0])
+_QP_TTOQ(d,	d,	double,	31,	u_int,	a[0], a[1])
+_QP_TTOQ(i,	i,	int,	31,	u_int,	a[0])
+_QP_TTOQ(s,	s,	float,	31,	u_int,	a[0])
+_QP_TTOQ(x,	x,	long,	63,	u_long,	a[0])
+_QP_TTOQ(ui,	ui,	u_int,	-1,	u_int,	a[0])
+_QP_TTOQ(ux,	ux,	u_long,	-1,	u_long,	a[0])
 
 _QP_QTOT4(d,	d,	double,	a)
 _QP_QTOT3(i,	i,	int)
