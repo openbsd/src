@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.38 2019/06/19 09:55:55 schwarze Exp $
+.\" $OpenBSD: doas.conf.5,v 1.39 2019/06/21 17:02:27 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: June 19 2019 $
+.Dd $Mdocdate: June 21 2019 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -49,22 +49,11 @@ The user is not required to enter a password.
 After the user successfully authenticates, do not ask for a password
 again for some time.
 .It Ic keepenv
-The user's environment is maintained.
-The default is to retain the variables
-.Ev DISPLAY
-and
-.Ev TERM
-from the invoking process, reset
-.Ev HOME ,
-.Ev LOGNAME ,
-.Ev PATH ,
-.Ev SHELL ,
-and
-.Ev USER
-as appropriate for the target user, and discard the rest of the environment.
+Environment variables other than those listed in
+.Xr doas 1
+are retained when creating the environment for the new process.
 .It Ic setenv { Oo Ar variable ... Oc Oo Ar variable=value ... Oc Ic }
-In addition to the variables mentioned above, keep the space-separated
-specified variables.
+Keep or set the space-separated specified variables.
 Variables may also be removed with a leading
 .Sq -
 or set using the latter syntax.
@@ -74,6 +63,7 @@ is a
 .Ql $
 then the value to be set is taken from the existing environment
 variable of the indicated name.
+This option is processed after the default environment has been created.
 .El
 .It Ar identity
 The username to match.
