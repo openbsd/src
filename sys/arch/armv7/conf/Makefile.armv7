@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.44 2019/04/14 14:07:06 deraadt Exp $
+#	$OpenBSD: Makefile.armv7,v 1.45 2019/06/21 15:34:07 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -160,8 +160,7 @@ hardlink-obsd:
 	[[ ! -f /bsd ]] || cmp -s bsd /bsd || ln -f /bsd /obsd
 
 newinstall:
-	umask 077 && cp bsd /nbsd && mv /nbsd /bsd && \
-	    sha256 -h /var/db/kernel.SHA256 /bsd
+	install -F -m 700 bsd /bsd && sha256 -h /var/db/kernel.SHA256 /bsd
 
 install: update-link hardlink-obsd newinstall
 
