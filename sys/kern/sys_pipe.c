@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.87 2018/11/13 13:02:20 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.88 2019/06/22 06:48:25 semarie Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -314,9 +314,11 @@ pipe_read(struct file *fp, struct uio *uio, int fflags)
 	int error;
 	size_t size, nread = 0;
 
+	KERNEL_LOCK();
+
 	error = pipelock(rpipe);
 	if (error)
-		return (error);
+		goto done;
 
 	++rpipe->pipe_busy;
 
@@ -420,6 +422,8 @@ unlocked_error:
 	if ((rpipe->pipe_buffer.size - rpipe->pipe_buffer.cnt) >= PIPE_BUF)
 		pipeselwakeup(rpipe);
 
+done:
+	KERNEL_UNLOCK();
 	return (error);
 }
 
@@ -430,6 +434,8 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	size_t orig_resid;
 	struct pipe *wpipe, *rpipe;
 
+	KERNEL_LOCK();
+
 	rpipe = fp->f_data;
 	wpipe = rpipe->pipe_peer;
 
@@ -437,7 +443,8 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	 * detect loss of pipe read side, issue SIGPIPE if lost.
 	 */
 	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
-		return (EPIPE);
+		error = EPIPE;
+		goto done;
 	}
 	++wpipe->pipe_busy;
 
@@ -471,7 +478,7 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 			wpipe->pipe_state &= ~(PIPE_WANT | PIPE_WANTR);
 			wakeup(wpipe);
 		}
-		return (error);
+		goto done;
 	}
 
 	orig_resid = uio->uio_resid;
@@ -642,6 +649,8 @@ retrywrite:
 	if (wpipe->pipe_buffer.cnt)
 		pipeselwakeup(wpipe);
 
+done:
+	KERNEL_UNLOCK();
 	return (error);
 }
 

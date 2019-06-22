@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.124 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.125 2019/06/22 06:48:25 semarie Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -366,8 +366,11 @@ dofilewritev(struct proc *p, int fd, struct uio *uio, int flags,
 		if (uio->uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE)
+		if (error == EPIPE) {
+			KERNEL_LOCK();
 			ptsignal(p, SIGPIPE, STHREAD);
+			KERNEL_UNLOCK();
+		}
 	}
 	cnt -= uio->uio_resid;
 

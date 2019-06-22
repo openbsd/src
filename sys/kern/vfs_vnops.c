@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.98 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.99 2019/06/22 06:48:25 semarie Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -343,6 +343,8 @@ vn_read(struct file *fp, struct uio *uio, int fflags)
 	off_t offset;
 	int error;
 
+	KERNEL_LOCK();
+
 	/*
 	 * Check below can race.  We can block on the vnode lock
 	 * and resume with a different `fp->f_offset' value.
@@ -353,11 +355,15 @@ vn_read(struct file *fp, struct uio *uio, int fflags)
 		offset = uio->uio_offset;
 
 	/* no wrap around of offsets except on character devices */
-	if (vp->v_type != VCHR && count > LLONG_MAX - offset)
-		return (EINVAL);
+	if (vp->v_type != VCHR && count > LLONG_MAX - offset) {
+		error = EINVAL;
+		goto done;
+	}
 
-	if (vp->v_type == VDIR)
-		return (EISDIR);
+	if (vp->v_type == VDIR) {
+		error = EISDIR;
+		goto done;
+	}
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if ((fflags & FO_POSITION) == 0)
@@ -367,6 +373,8 @@ vn_read(struct file *fp, struct uio *uio, int fflags)
 	if ((fflags & FO_POSITION) == 0)
 		fp->f_offset += count - uio->uio_resid;
 	VOP_UNLOCK(vp);
+done:
+	KERNEL_UNLOCK();
 	return (error);
 }
 
@@ -380,6 +388,8 @@ vn_write(struct file *fp, struct uio *uio, int fflags)
 	struct ucred *cred = fp->f_cred;
 	int error, ioflag = IO_UNIT;
 	size_t count;
+
+	KERNEL_LOCK();
 
 	/* note: pwrite/pwritev are unaffected by O_APPEND */
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND) &&
@@ -402,6 +412,8 @@ vn_write(struct file *fp, struct uio *uio, int fflags)
 			fp->f_offset += count - uio->uio_resid;
 	}
 	VOP_UNLOCK(vp);
+
+	KERNEL_UNLOCK();
 	return (error);
 }
 
