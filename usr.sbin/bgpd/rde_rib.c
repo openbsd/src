@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.194 2019/06/20 19:32:16 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.195 2019/06/22 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -103,13 +103,6 @@ rib_tree(struct rib *rib)
 static inline int
 rib_compare(const struct rib_entry *a, const struct rib_entry *b)
 {
-	/* need to handle NULL entries because of EoR marker */
-	if (a == NULL && b == NULL)
-		return (0);
-	else if (b == NULL)
-		return (1);
-	else if (a == NULL)
-		return (-1);
 	return (pt_prefix_cmp(a->prefix, b->prefix));
 }
 
@@ -207,10 +200,10 @@ rib_free(struct rib *rib)
 			if (asp && asp->pftableid) {
 				struct bgpd_addr addr;
 
-				pt_getaddr(p->re->prefix, &addr);
+				pt_getaddr(p->pt, &addr);
 				/* Commit is done in peer_down() */
 				rde_send_pftable(asp->pftableid, &addr,
-				    p->re->prefix->prefixlen, 1);
+				    p->pt->prefixlen, 1);
 			}
 			prefix_destroy(p);
 			if (np == NULL)
@@ -308,7 +301,7 @@ rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 		fatal("rib_add");
 
 	LIST_INIT(&re->prefix_h);
-	re->prefix = pte;
+	re->prefix = pt_ref(pte);
 	re->rib_id = rib->id;
 
 	if (RB_INSERT(rib_tree, rib_tree(rib), re) != NULL) {
@@ -317,7 +310,6 @@ rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 		return (NULL);
 	}
 
-	pt_ref(pte);
 
 	rdemem.rib_cnt++;
 
@@ -334,8 +326,7 @@ rib_remove(struct rib_entry *re)
 		/* entry is locked, don't free it. */
 		return;
 
-	pt_unref(re->prefix);
-	if (pt_empty(re->prefix))
+	if (pt_unref(re->prefix))
 		pt_remove(re->prefix);
 
 	if (RB_REMOVE(rib_tree, rib_tree(re_rib(re)), re) == NULL)
@@ -509,7 +500,6 @@ struct path_table {
 SIPHASH_KEY pathtablekey;
 
 #define	PATH_HASH(x)	&pathtable.path_hashtbl[x & pathtable.path_hashmask]
-
 
 static inline int
 path_empty(struct rde_aspath *asp)
@@ -879,6 +869,10 @@ prefix_cmp(struct prefix *a, struct prefix *b)
 {
 	if (a->eor != b->eor)
 		return a->eor - b->eor;
+	/* if EOR marker no need to check the rest also a->eor == b->eor */
+	if (a->eor)
+		return 0;
+
 	if (a->aspath != b->aspath)
 		return (a->aspath > b->aspath ? 1 : -1);
 	if (a->communities != b->communities)
@@ -887,7 +881,7 @@ prefix_cmp(struct prefix *a, struct prefix *b)
 		return (a->nexthop > b->nexthop ? 1 : -1);
 	if (a->nhflags != b->nhflags)
 		return (a->nhflags > b->nhflags ? 1 : -1);
-	return rib_compare(a->re, b->re);
+	return pt_prefix_cmp(a->pt, b->pt);
 }
 
 RB_GENERATE(prefix_tree, prefix, entry, prefix_cmp)
@@ -946,6 +940,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	np->aspath = path_ref(asp);
 	np->communities = communities_get(comm);
 	np->peer = peer;
+	np->pt = p->pt; /* skip refcnt update since ref is moved */
 	np->re = p->re;
 	np->validation_state = vstate;
 	np->nhflags = nhflags;
@@ -984,6 +979,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	p->aspath = NULL;
 	p->peer = NULL;
 	p->re = NULL;
+	p->pt = NULL;
 	prefix_free(p);
 
 	/* destroy old path if empty */
@@ -1296,6 +1292,7 @@ prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
 	p->aspath = path_ref(asp);
 	p->communities = communities_get(comm);
 	p->peer = peer;
+	p->pt = pt_ref(re->prefix);
 	p->re = re;
 	p->validation_state = vstate;
 	p->nhflags = nhflags;
@@ -1328,11 +1325,14 @@ prefix_unlink(struct prefix *p)
 	communities_put(p->communities);
 	if (p->aspath)
 		path_unref(p->aspath);
+	if (pt_unref(p->pt))
+		pt_remove(p->pt);
 	p->communities = NULL;
 	p->nexthop = NULL;
 	p->aspath = NULL;
 	p->peer = NULL;
 	p->re = NULL;
+	p->pt = NULL;
 
 	if (rib_empty(re))
 		rib_remove(re);

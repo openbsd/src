@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.472 2019/06/22 05:36:40 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.473 2019/06/22 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2234,11 +2234,11 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		/* announced network may have a NULL nexthop */
 		bzero(&rib.true_nexthop, sizeof(rib.true_nexthop));
 		bzero(&rib.exit_nexthop, sizeof(rib.exit_nexthop));
-		rib.true_nexthop.aid = p->re->prefix->aid;
-		rib.exit_nexthop.aid = p->re->prefix->aid;
+		rib.true_nexthop.aid = p->pt->aid;
+		rib.exit_nexthop.aid = p->pt->aid;
 	}
-	pt_getaddr(p->re->prefix, &rib.prefix);
-	rib.prefixlen = p->re->prefix->prefixlen;
+	pt_getaddr(p->pt, &rib.prefix);
+	rib.prefixlen = p->pt->prefixlen;
 	rib.origin = asp->origin;
 	rib.validation_state = p->validation_state;
 	rib.flags = 0;
@@ -2254,7 +2254,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		rib.flags &= ~F_PREF_ELIGIBLE;
 	if (asp->flags & F_ATTR_PARSE_ERR)
 		rib.flags |= F_PREF_INVALID;
-	staletime = prefix_peer(p)->staletime[p->re->prefix->aid];
+	staletime = prefix_peer(p)->staletime[p->pt->aid];
 	if (staletime && p->lastchange <= staletime)
 		rib.flags |= F_PREF_STALE;
 	rib.aspath_len = aspath_length(asp->aspath);
@@ -2610,10 +2610,10 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 	}
 
 	asp = prefix_aspath(p);
-	pt_getaddr(p->re->prefix, &addr);
+	pt_getaddr(p->pt, &addr);
 	bzero(&kr, sizeof(kr));
 	memcpy(&kr.prefix, &addr, sizeof(kr.prefix));
-	kr.prefixlen = p->re->prefix->prefixlen;
+	kr.prefixlen = p->pt->prefixlen;
 	if (prefix_nhflags(p) == NEXTHOP_REJECT)
 		kr.flags |= F_REJECT;
 	if (prefix_nhflags(p) == NEXTHOP_BLACKHOLE)
@@ -3891,7 +3891,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 		asp = prefix_aspath(p);
 		if (!(asp->flags & F_PREFIX_ANNOUNCED))
 			continue;
-		pt_getaddr(p->re->prefix, &addr);
+		pt_getaddr(p->pt, &addr);
 
 		bzero(&k, sizeof(k));
 		memcpy(&k.prefix, &addr, sizeof(k.prefix));
@@ -3901,7 +3901,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 		else
 			memcpy(&k.nexthop, &prefix_nexthop(p)->true_nexthop,
 			    sizeof(k.nexthop));
-		k.prefixlen = p->re->prefix->prefixlen;
+		k.prefixlen = p->pt->prefixlen;
 		k.flags = F_KERNEL;
 		if ((asp->flags & F_ANN_DYNAMIC) == 0)
 			k.flags = F_STATIC;

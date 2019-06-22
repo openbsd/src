@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.119 2019/06/17 11:02:19 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.120 2019/06/22 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -248,8 +248,8 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		struct bgpd_addr addr, *prefix = &addr;
 		u_int8_t plen;
 
-		pt_getaddr(p->re->prefix, prefix);
-		plen = p->re->prefix->prefixlen;
+		pt_getaddr(p->pt, prefix);
+		plen = p->pt->prefixlen;
 		if (trie_roa_check(&f->match.originset.ps->th, prefix, plen,
 		    aspath_origin(asp->aspath)) != ROA_VALID)
 			return (0);
@@ -262,8 +262,8 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		struct bgpd_addr addr, *prefix = &addr;
 		u_int8_t plen;
 
-		pt_getaddr(p->re->prefix, prefix);
-		plen = p->re->prefix->prefixlen;
+		pt_getaddr(p->pt, prefix);
+		plen = p->pt->prefixlen;
 		if (f->match.prefixset.ps == NULL ||
 		    !trie_match(&f->match.prefixset.ps->th, prefix, plen,
 		    (f->match.prefixset.flags & PREFIXSET_FLAG_LONGER)))
@@ -282,8 +282,8 @@ rde_prefix_match(struct filter_prefix *fp, struct prefix *p)
 	struct bgpd_addr addr, *prefix = &addr;
 	u_int8_t plen;
 
-	pt_getaddr(p->re->prefix, prefix);
-	plen = p->re->prefix->prefixlen;
+	pt_getaddr(p->pt, prefix);
+	plen = p->pt->prefixlen;
 
 	if (fp->addr.aid != prefix->aid)
 		/* don't use IPv4 rules for IPv6 and vice versa */
@@ -784,7 +784,7 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 		     f->skip[RDE_FILTER_SKIP_PEERID]);
 
 		if (rde_filter_match(f, peer, state, p)) {
-			rde_apply_set(&f->set, state, p->re->prefix->aid,
+			rde_apply_set(&f->set, state, p->pt->aid,
 			    prefix_peer(p), peer);
 			if (f->action != ACTION_NONE)
 				action = f->action;

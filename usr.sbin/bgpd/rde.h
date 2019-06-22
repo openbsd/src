@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.216 2019/06/20 13:38:21 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.217 2019/06/22 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -308,6 +308,7 @@ struct pt_entry_vpn6 {
 struct prefix {
 	LIST_ENTRY(prefix)		 rib_l, nexthop_l;
 	RB_ENTRY(prefix)		 entry;
+	struct pt_entry			*pt;
 	struct rib_entry		*re;
 	struct rde_aspath		*aspath;
 	struct rde_community		*communities;
@@ -464,20 +465,22 @@ pt_empty(struct pt_entry *pt)
 	return (pt->refcnt == 0);
 }
 
-static inline void
+static inline struct pt_entry *
 pt_ref(struct pt_entry *pt)
 {
 	++pt->refcnt;
 	if (pt->refcnt == 0)
 		fatalx("pt_ref: overflow");
+	return pt;
 }
 
-static inline void
+static inline int
 pt_unref(struct pt_entry *pt)
 {
 	if (pt->refcnt == 0)
 		fatalx("pt_unref: underflow");
 	--pt->refcnt;
+	return pt_empty(pt);
 }
 
 void	 pt_init(void);

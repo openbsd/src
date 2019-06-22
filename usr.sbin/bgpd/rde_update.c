@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.117 2019/06/19 08:15:07 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.118 2019/06/22 05:44:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -70,7 +70,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 	if (asp->flags & F_ATTR_LOOP)
 		fatalx("try to send out a looped path");
 
-	pt_getaddr(p->re->prefix, &addr);
+	pt_getaddr(p->pt, &addr);
 	if (peer->capa.mp[addr.aid] == 0)
 		return (-1);
 
@@ -142,9 +142,9 @@ withdraw:
 			return;
 
 		/* withdraw prefix */
-		pt_getaddr(old->re->prefix, &addr);
+		pt_getaddr(old->pt, &addr);
 		if (prefix_withdraw(&ribs[RIB_ADJ_OUT].rib, peer, &addr,
-		    old->re->prefix->prefixlen) == 1)
+		    old->pt->prefixlen) == 1)
 			peer->up_wcnt++;
 	} else {
 		switch (up_test_update(peer, new)) {
@@ -164,12 +164,12 @@ withdraw:
 			goto withdraw;
 		}
 
-		pt_getaddr(new->re->prefix, &addr);
+		pt_getaddr(new->pt, &addr);
 		if (path_update(&ribs[RIB_ADJ_OUT].rib, peer, &state, &addr,
-		    new->re->prefix->prefixlen, prefix_vstate(new)) != 2) {
+		    new->pt->prefixlen, prefix_vstate(new)) != 2) {
 			/* only send update if path changed */
 			prefix_update(&ribs[RIB_ADJ_OUT].rib, peer, &addr,
-			    new->re->prefix->prefixlen);
+			    new->pt->prefixlen);
 			peer->up_nlricnt++;
 		}
 
@@ -598,9 +598,9 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 	int		 r, wpos = 0, done = 0;
 
 	RB_FOREACH_SAFE(p, prefix_tree, prefix_head, np) {
-		pt_getaddr(p->re->prefix, &addr);
+		pt_getaddr(p->pt, &addr);
 		if ((r = prefix_write(buf + wpos, len - wpos,
-		    &addr, p->re->prefix->prefixlen, withdraw)) == -1)
+		    &addr, p->pt->prefixlen, withdraw)) == -1)
 			break;
 		wpos += r;
 
