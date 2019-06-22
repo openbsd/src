@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.30 2019/06/14 07:02:55 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.31 2019/06/22 08:36:55 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -1948,6 +1948,8 @@ struct mcx_softc {
 	struct mcx_dmamem	 sc_eq_mem;
 	int			 sc_hardmtu;
 
+	struct task		 sc_port_change;
+
 	int			 sc_flow_table_id;
 #define MCX_FLOW_GROUP_PROMISC	 0
 #define MCX_FLOW_GROUP_ALLMULTI	 1
@@ -2077,6 +2079,7 @@ static void	mcx_media_add_types(struct mcx_softc *);
 static void	mcx_media_status(struct ifnet *, struct ifmediareq *);
 static int	mcx_media_change(struct ifnet *);
 static int	mcx_get_sffpage(struct ifnet *, struct if_sffpage *);
+static void	mcx_port_change(void *);
 
 static void	mcx_calibrate_first(struct mcx_softc *);
 static void	mcx_calibrate(void *);
@@ -2365,6 +2368,9 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->sc_rx_refill, mcx_refill, sc);
 	timeout_set(&sc->sc_calibrate, mcx_calibrate, sc);
+
+	task_set(&sc->sc_port_change, mcx_port_change, sc);
+	mcx_port_change(sc);
 
 	sc->sc_flow_table_id = -1;
 	for (i = 0; i < MCX_NUM_FLOW_GROUPS; i++) {
@@ -5841,7 +5847,7 @@ mcx_intr(void *xsc)
 			break;
 
 		case MCX_EVENT_TYPE_PORT_CHANGE:
-			/* printf("%s: port change\n", DEVNAME(sc)); */
+			task_add(systq, &sc->sc_port_change);
 			break;
 
 		default:
@@ -6544,6 +6550,28 @@ mcx_media_change(struct ifnet *ifp)
 	}
 
 	return error;
+}
+
+static void
+mcx_port_change(void *xsc)
+{
+	struct mcx_softc *sc = xsc;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mcx_reg_paos paos;
+	int link_state = LINK_STATE_DOWN;
+
+	memset(&paos, 0, sizeof(paos));
+	paos.rp_local_port = 1;
+	if (mcx_access_hca_reg(sc, MCX_REG_PAOS, MCX_REG_OP_READ, &paos,
+	    sizeof(paos)) == 0) {
+		if (paos.rp_oper_status == MCX_REG_PAOS_OPER_STATUS_UP)
+			link_state = LINK_STATE_FULL_DUPLEX;
+	}
+
+	if (link_state != ifp->if_link_state) {
+		ifp->if_link_state = link_state;
+		if_link_state_change(ifp);
+	}
 }
 
 
