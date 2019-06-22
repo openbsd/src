@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.387 2019/06/17 21:17:04 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.388 2019/06/22 05:36:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -396,6 +396,12 @@ struct peer_config {
 	u_int8_t		 ttlsec;	/* TTL security hack */
 	u_int8_t		 flags;
 };
+
+#define	PEER_ID_NONE		0
+#define	PEER_ID_SELF		1
+#define	PEER_ID_STATIC_MIN	2	/* exclude self */
+#define	PEER_ID_STATIC_MAX	(UINT_MAX / 2)
+#define	PEER_ID_DYN_MAX		UINT_MAX
 
 #define PEERFLAG_TRANS_AS	0x01
 #define PEERFLAG_LOG_UPDATES	0x02

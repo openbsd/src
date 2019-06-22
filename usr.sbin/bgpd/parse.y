@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.391 2019/06/17 13:35:42 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.392 2019/06/22 05:36:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3952,7 +3952,7 @@ find_prefixset(char *name, struct prefixset_head *p)
 int
 get_id(struct peer *newpeer)
 {
-	static u_int32_t id = 1;
+	static u_int32_t id = PEER_ID_STATIC_MIN;
 	struct peer	*p = NULL;
 
 	/* check if the peer already existed before */
@@ -3982,7 +3982,7 @@ get_id(struct peer *newpeer)
 	}
 
 	/* else new one */
-	if (id < UINT_MAX / 2) {
+	if (id < PEER_ID_STATIC_MAX) {
 		newpeer->conf.id = id++;
 		return (0);
 	}
