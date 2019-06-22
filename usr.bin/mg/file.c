@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.101 2019/06/22 10:21:57 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.102 2019/06/22 15:03:43 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -690,8 +690,9 @@ writeout(FILE ** ffp, struct buffer *bp, char *fn)
 	lpend = bp->b_headp;
 	eobnl = 0;
 	if (llength(lback(lpend)) != 0) {
-		if (eyorn("No newline at end of file, add one") == TRUE)
-			eobnl = 1;
+		eobnl = eyorn("No newline at end of file, add one");
+		if (eobnl != TRUE && eobnl != FALSE)
+			return (eobnl); /* abort */
 	}
 	/* open writes message */
 	if ((s = ffwopen(ffp, fn, bp)) != FIOSUC)
