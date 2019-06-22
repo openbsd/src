@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.177 2019/06/22 10:16:14 kn Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.178 2019/06/22 20:15:09 kn Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -3579,7 +3579,7 @@ sppp_chap_tlu(struct sppp *sp)
 		 * Compute the re-challenge timeout.  This will yield
 		 * a number between 300 and 810 seconds.
 		 */
-		i = 300 + (arc4random() & 0x01fe);
+		i = 300 + arc4random_uniform(1 + 810 - 300);
 
 		timeout_add_sec(&sp->ch[IDX_CHAP], i);
 	}
