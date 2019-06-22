@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.175 2019/06/21 17:11:42 mpi Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.176 2019/06/22 10:14:30 kn Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -1608,7 +1608,7 @@ sppp_lcp_init(struct sppp *sp)
 	 * the exponential backoff option.  Note that these values are
 	 * relevant for all control protocols, not just LCP only.
 	 */
-	sp->lcp.timeout = 1 * hz;
+	sp->lcp.timeout = 1;
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
@@ -3566,7 +3566,6 @@ sppp_chap_tlu(struct sppp *sp)
 	STDDCL;
 	int i = 0, x;
 
-	i = 0;
 	sp->rst_counter[IDX_CHAP] = sp->lcp.max_configure;
 
 	/*
