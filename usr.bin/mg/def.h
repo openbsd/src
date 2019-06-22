@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.157 2018/12/13 14:59:16 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.158 2019/06/22 10:21:57 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -466,7 +466,7 @@ int		 ffropen(FILE **, const char *, struct buffer *);
 void		 ffstat(FILE *, struct buffer *);
 int		 ffwopen(FILE **, const char *, struct buffer *);
 int		 ffclose(FILE *, struct buffer *);
-int		 ffputbuf(FILE *, struct buffer *);
+int		 ffputbuf(FILE *, struct buffer *, int);
 int		 ffgetline(FILE *, char *, int, int *);
 int		 fbackupfile(const char *);
 char		*adjustname(const char *, int);

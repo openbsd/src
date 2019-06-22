@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.100 2016/01/02 10:39:19 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.101 2019/06/22 10:21:57 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -668,9 +668,10 @@ makebkfile(int f, int n)
 int
 writeout(FILE ** ffp, struct buffer *bp, char *fn)
 {
-	struct stat	statbuf;
-	int	 s;
-	char     dp[NFILEN];
+	struct stat	 statbuf;
+	struct line	*lpend;
+	int		 s, eobnl;
+	char		 dp[NFILEN];
 
 	if (stat(fn, &statbuf) == -1 && errno == ENOENT) {
 		errno = 0;
@@ -686,10 +687,16 @@ writeout(FILE ** ffp, struct buffer *bp, char *fn)
 			return (FIOERR);
 		}
         }
+	lpend = bp->b_headp;
+	eobnl = 0;
+	if (llength(lback(lpend)) != 0) {
+		if (eyorn("No newline at end of file, add one") == TRUE)
+			eobnl = 1;
+	}
 	/* open writes message */
 	if ((s = ffwopen(ffp, fn, bp)) != FIOSUC)
 		return (FALSE);
-	s = ffputbuf(*ffp, bp);
+	s = ffputbuf(*ffp, bp, eobnl);
 	if (s == FIOSUC) {
 		/* no write error */
 		s = ffclose(*ffp, bp);
