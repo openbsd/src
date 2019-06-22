@@ -1,4 +1,4 @@
-/*	$OpenBSD: beeper.c,v 1.12 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: beeper.c,v 1.13 2019/06/22 20:30:42 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -147,11 +147,7 @@ beeper_bell(vsc, pitch, period, volume, poll)
 	int poll;
 {
 	struct beeper_softc *sc = vsc;
-	int s, nticks;
-
-	nticks = (period * hz) / 1000;
-	if (nticks <= 0)
-		nticks = 1;
+	int s;
 
 	s = spltty();
 	if (sc->sc_bellactive) {
@@ -167,7 +163,7 @@ beeper_bell(vsc, pitch, period, volume, poll)
 		sc->sc_bellactive = 1;
 		sc->sc_belltimeout = 1;
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BEEP_REG, 1);
-		timeout_add(&sc->sc_to, nticks);
+		timeout_add_msec(&sc->sc_to, period);
 	}
 	splx(s);
 }

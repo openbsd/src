@@ -1,4 +1,4 @@
-/*	$OpenBSD: beep.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: beep.c,v 1.9 2019/06/22 20:30:42 kn Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -218,11 +218,7 @@ void
 beep_bell(void *vsc, u_int pitch, u_int period, u_int volume, int poll)
 {
 	struct beep_softc *sc = vsc;
-	int s, nticks;
-
-	nticks = (period * hz) / 1000;
-	if (nticks <= 0)
-		nticks = 1;
+	int s;
 
 	s = spltty();
 	if (sc->sc_bellactive) {
@@ -239,7 +235,7 @@ beep_bell(void *vsc, u_int pitch, u_int period, u_int volume, int poll)
 		sc->sc_belltimeout = 1;
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, BEEP_CTRL,
 	    	    BEEP_CTRL_ON);
-		timeout_add(&sc->sc_to, nticks);
+		timeout_add_msec(&sc->sc_to, period);
 	}
 	splx(s);
 }
