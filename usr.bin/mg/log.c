@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2019/06/14 14:27:42 lum Exp $	*/
+/*	$OpenBSD: log.c,v 1.7 2019/06/22 13:09:53 lum Exp $	*/
 
 /* 
  * This file is in the public domain.
@@ -54,10 +54,12 @@
 char	*mglogfiles_create(char *);
 int	 mglog_lines(PF);
 int	 mglog_undo(void);
+int	 mglog_window(void);
 
 char		*mglogdir;
 extern char	*mglogpath_lines;
 extern char	*mglogpath_undo;
+extern char	*mglogpath_window;
 int		 mgloglevel;
 
 int
@@ -67,10 +69,54 @@ mglog(PF funct)
 		ewprintf("Problem logging lines");
 	if(!mglog_undo())
 		ewprintf("Problem logging undo");
+	if(!mglog_window())
+		ewprintf("Problem logging window");
 
 	return (TRUE);
 }
 
+
+int
+mglog_window(void)
+{
+	struct mgwin	*wp;
+	struct stat	 sb;
+	FILE		*fd;
+	int		 i;
+
+	if(stat(mglogpath_window, &sb))
+		return (FALSE);
+	fd = fopen(mglogpath_window, "a");
+
+	for (wp = wheadp, i = 0; wp != NULL; wp = wp->w_wndp, ++i) {
+		if (fprintf(fd,
+		    "%d wh%p wlst%p wbfp%p wlp%p wdtp%p wmkp%p wdto%d wmko%d" \
+		    " wtpr%d wntr%d wfrm%d wrfl%c wflg%c wwrl%p wdtl%d" \
+		    " wmkl%d\n",
+		    i,
+		    wp,
+		    &wp->w_list,
+		    wp->w_bufp,
+		    wp->w_linep,
+		    wp->w_dotp,
+		    wp->w_markp,
+		    wp->w_doto,
+		    wp->w_marko,
+		    wp->w_toprow,
+		    wp->w_ntrows,
+		    wp->w_frame,
+		    wp->w_rflag,
+		    wp->w_flag,
+		    wp->w_wrapline,
+		    wp->w_dotline,
+		    wp->w_markline) == -1) {
+			fclose(fd);
+			return (FALSE);
+		}
+	}
+	fclose(fd);
+	return (TRUE);
+}
 
 int
 mglog_undo(void)
@@ -206,11 +252,12 @@ mgloginit(void)
 {
 	struct stat	 sb;
 	mode_t           dir_mode, f_mode, oumask;
-	char		*mglogfile_lines, *mglogfile_undo;
+	char		*mglogfile_lines, *mglogfile_undo, *mglogfile_window;
 
 	mglogdir = "./log/";
 	mglogfile_lines = "line.log";
 	mglogfile_undo = "undo.log";
+	mglogfile_window = "window.log";
 
 	/* 
 	 * Change mgloglevel for desired level of logging.
@@ -233,6 +280,9 @@ mgloginit(void)
 		return (FALSE);
 	mglogpath_undo = mglogfiles_create(mglogfile_undo);
 	if (mglogpath_undo == NULL)
+		return (FALSE);
+	mglogpath_window = mglogfiles_create(mglogfile_window);
+	if (mglogpath_window == NULL)
 		return (FALSE);
 
 	return (TRUE);
