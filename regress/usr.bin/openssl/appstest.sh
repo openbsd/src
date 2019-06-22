@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.18 2019/06/13 08:02:35 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.19 2019/06/22 15:51:54 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -548,7 +548,7 @@ __EOF__
 	if [ $mingw = 0 ] ; then
 		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=testCA.test_dummy.com/'
 	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=testTSA.test_dummy.com\'
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=testCA.test_dummy.com\'
 	fi
 	
 	$openssl_bin req -new -x509 -newkey rsa:2048 -out $ca_cert \
@@ -582,8 +582,12 @@ __EOF__
 	
 	tsa_cert=$tsa_dir/tsa_cert.pem
 	
-	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-in $tsa_csr -out $tsa_cert -extensions tsa_ext
+	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -keyform pem \
+		-key $ca_pass -config $ssldir/openssl.cnf -create_serial \
+		-policy policy_match -days 1 -md sha256 -extensions tsa_ext \
+		-sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:32 \
+		-multivalue-rdn -preserveDN -noemailDN \
+		-in $tsa_csr -outdir $tsa_dir -out $tsa_cert -verbose -notext
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -611,8 +615,10 @@ __EOF__
 	
 	ocsp_cert=$ocsp_dir/ocsp_cert.pem
 	
-	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-in $ocsp_csr -out $ocsp_cert -extensions ocsp_ext
+	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -keyform pem \
+		-key $ca_pass -out $ocsp_cert -extensions ocsp_ext \
+		-startdate `date -u '+%y%m%d%H%M%SZ'` -enddate 491223235959Z \
+		-subj $subj -infiles $ocsp_csr 
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -677,11 +683,18 @@ __EOF__
 	
 	start_message "ca ... revoke server cert#2"
 	crl_file=$ca_dir/crl.pem
-	$openssl_bin ca -gencrl -out $crl_file -crldays 30 \
-		-revoke $revoke_cert \
+	$openssl_bin ca -gencrl -out $crl_file -revoke $revoke_cert \
+		-config $ssldir/openssl.cnf -name CA_default \
+		-crldays 30 -crlhours 12 -crlsec 30 -updatedb \
+		-crl_reason unspecified -crl_hold 1.2.840.10040.2.2 \
+		-crl_compromise `date -u '+%Y%m%d%H%M%SZ'` \
+		-crl_CA_compromise `date -u '+%Y%m%d%H%M%SZ'` \
 		-keyfile $ca_key -passin pass:$ca_pass -cert $ca_cert
 	check_exit_status $?
 	
+	start_message "ca ... show certificate status by serial number"
+	$openssl_bin ca -config $ssldir/openssl.cnf -status 1
+
 	start_message "crl ... CA generates CRL"
 	$openssl_bin crl -in $crl_file -fingerprint
 	check_exit_status $?
