@@ -1,7 +1,9 @@
-# $OpenBSD: Makefile,v 1.4 2019/03/22 20:44:31 denis Exp $
+# $OpenBSD: Makefile,v 1.5 2019/06/22 08:26:26 claudio Exp $
 
-REGRESS_TARGETS	= 	network_statement md5 ovs
+REGRESS_TARGETS	= 	network_statement md5 ovs mrt
 BGPD ?=			/usr/sbin/bgpd
+
+CLEANFILES +=		*.mrt *.out
 
 network_statement:
 	${SUDO} ksh -x ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
@@ -11,5 +13,8 @@ md5:
 
 ovs:
 	${SUDO} ksh -x ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
+
+mrt:
+	${SUDO} ksh -x ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11
 
 .include <bsd.regress.mk>
