@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.118 2019/04/02 02:59:43 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.119 2019/06/22 19:47:12 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -897,13 +897,13 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    log_procname, fmtbuf[j]);
 				goto toobig;
 			}
-			if (opcount >= opleft || opcount == -1)
+			if (opcount == -1 || opcount >= opleft)
 				goto toobig;
 			opleft -= opcount;
 			op += opcount;
 			if (j + 1 < numelem && comma != ':') {
 				opcount = snprintf(op, opleft, " ");
-				if (opcount >= opleft || opcount == -1)
+				if (opcount == -1 || opcount >= opleft)
 					goto toobig;
 				opleft -= opcount;
 				op += opcount;
@@ -911,7 +911,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		}
 		if (i + 1 < numhunk) {
 			opcount = snprintf(op, opleft, "%c", comma);
-			if (opcount >= opleft || opcount == -1)
+			if (opcount == -1 || opcount >= opleft)
 				goto toobig;
 			opleft -= opcount;
 			op += opcount;
