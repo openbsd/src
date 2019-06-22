@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.41 2019/06/07 07:54:05 lum Exp $	*/
+/*	$OpenBSD: util.c,v 1.42 2019/06/22 15:38:15 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -177,7 +177,7 @@ twiddle(int f, int n)
  * Open up some blank space.  The basic plan is to insert a bunch of
  * newlines, and then back up over them.  Everything is done by the
  * subcommand processors.  They even handle the looping.  Normally this
- * is bound to "C-O".
+ * is bound to "C-o".
  */
 /* ARGSUSED */
 int
@@ -228,7 +228,7 @@ enewline(int f, int n)
  * sitting on a blank line. If dot is sitting on a blank line, this command
  * deletes all the blank lines above and below the current line. If it is
  * sitting on a non blank line then it deletes all of the blank lines after
- * the line. Normally this command is bound to "C-X C-O". Any argument is
+ * the line. Normally this command is bound to "C-x C-o". Any argument is
  * ignored.
  */
 /* ARGSUSED */
@@ -349,7 +349,7 @@ deltrailwhite(int f, int n)
  * simple.  Figure out the indentation of the current line.  Insert a newline
  * by calling the standard routine.  Insert the indentation by inserting the
  * right number of tabs and spaces.  Return TRUE if all ok.  Return FALSE if
- * one of the subcommands failed. Normally bound to "C-M".
+ * one of the subcommands failed. Normally bound to "C-m".
  */
 /* ARGSUSED */
 int
@@ -426,7 +426,7 @@ indent(int f, int n)
  * Delete forward.  This is real easy, because the basic delete routine does
  * all of the work.  Watches for negative arguments, and does the right thing.
  * If any argument is present, it kills rather than deletes, to prevent loss
- * of text if typed with a big argument.  Normally bound to "C-D".
+ * of text if typed with a big argument.  Normally bound to "C-d".
  */
 /* ARGSUSED */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.7 2019/06/22 13:09:53 lum Exp $	*/
+/*	$OpenBSD: log.c,v 1.8 2019/06/22 15:38:15 lum Exp $	*/
 
 /* 
  * This file is in the public domain.
@@ -14,7 +14,7 @@
  *
  * Note this file is not compiled into mg by default, you will need to
  * amend the 'Makefile' for that to happen. Because of this, the code
- * is subjet to bit-rot. However, I know myself and others have 
+ * is subject to bit-rot. However, I know myself and others have 
  * written similar functionally often enough, that recording the below 
  * in a code repository could aid the developement efforts of mg, even
  * if it requires a bit of effort to get working. The current code is
