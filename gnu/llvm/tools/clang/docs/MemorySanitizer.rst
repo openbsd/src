@@ -16,7 +16,7 @@ Typical slowdown introduced by MemorySanitizer is **3x**.
 How to build
 ============
 
-Build LLVM/Clang with `CMake <http://llvm.org/docs/CMake.html>`_.
+Build LLVM/Clang with `CMake <https://llvm.org/docs/CMake.html>`_.
 
 Usage
 =====
@@ -164,13 +164,6 @@ to:
    compilation.
 #. Set environment variable `MSAN_OPTIONS=poison_in_dtor=1` before running
    the program.
-
-Writable/Executable paging detection
-====================================
-
-You can eable writable-executable page detection in MemorySanitizer by
-setting the environment variable `MSAN_OPTIONS=detect_write_exec=1` before
-running the program.
 
 Handling external code
 ======================

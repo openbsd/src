@@ -10,6 +10,10 @@ Attributes in Clang
 .. contents::
    :local:
 
+.. |br| raw:: html
+
+  <br/>
+
 Introduction
 ============
 
@@ -22,9 +26,9 @@ Function Attributes
 #pragma omp declare simd
 ------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","", "X", ""
+   "","","","","","``omp declare simd``",""
 
 The `declare simd` construct can be applied to a function to enable the creation
 of one or more versions that can process multiple arguments using SIMD
@@ -58,9 +62,9 @@ where clause is one of the following:
 #pragma omp declare target
 --------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","", "X", ""
+   "","","","","","``omp declare target``",""
 
 The `declare target` directive specifies that variables and functions are mapped
 to a device for OpenMP offload mechanism.
@@ -77,21 +81,21 @@ The syntax of the declare target directive is as follows:
 _Noreturn
 ---------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","X", "", ""
+   "","","","","``_Noreturn``","",""
 
 A function declared as ``_Noreturn`` shall not return to its caller. The
 compiler will generate a diagnostic for a function declared as ``_Noreturn``
 that appears to be capable of returning to its caller.
 
 
-abi_tag (gnu::abi_tag)
-----------------------
+abi_tag
+-------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``abi_tag``","``gnu::abi_tag``","","","","","Yes"
 
 The ``abi_tag`` attribute can be applied to a function, variable, class or
 inline namespace declaration to modify the mangled name of the entity. It gives
@@ -103,22 +107,22 @@ a global variable of the class type. Therefore, the old code could keep using
 the old manged name and the new code will use the new mangled name with tags.
 
 
-acquire_capability (acquire_shared_capability, clang::acquire_capability, clang::acquire_shared_capability)
------------------------------------------------------------------------------------------------------------
+acquire_capability, acquire_shared_capability
+---------------------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``acquire_capability`` |br| ``acquire_shared_capability`` |br| ``exclusive_lock_function`` |br| ``shared_lock_function``","``clang::acquire_capability`` |br| ``clang::acquire_shared_capability``","","","","",""
 
 Marks a function as acquiring a capability.
 
 
-alloc_align (gnu::alloc_align)
-------------------------------
+alloc_align
+-----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``alloc_align``","``gnu::alloc_align``","","","","",""
 
 Use ``__attribute__((alloc_align(<alignment>))`` on a function
 declaration to specify that the return value of the function (which must be a
@@ -146,12 +150,12 @@ emit code to enforce that alignment.  The behavior is undefined if the returned
 poitner is not sufficiently aligned.
 
 
-alloc_size (gnu::alloc_size)
-----------------------------
+alloc_size
+----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``alloc_size``","``gnu::alloc_size``","","","","","Yes"
 
 The ``alloc_size`` attribute can be placed on functions that return pointers in
 order to hint to the compiler how many bytes of memory will be available at the
@@ -187,12 +191,12 @@ An example of how to use ``alloc_size``
   other attributes, such as ``enable_if``.
 
 
-artificial (gnu::artificial)
-----------------------------
+artificial
+----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``artificial``","``gnu::artificial``","","","","",""
 
 The ``artificial`` attribute can be applied to an inline function. If such a
 function is inlined, the attribute indicates that debuggers should associate
@@ -200,23 +204,23 @@ the resulting instructions with the call site, rather than with the
 corresponding line within the inlined callee.
 
 
-assert_capability (assert_shared_capability, clang::assert_capability, clang::assert_shared_capability)
--------------------------------------------------------------------------------------------------------
+assert_capability, assert_shared_capability
+-------------------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``assert_capability`` |br| ``assert_shared_capability``","``clang::assert_capability`` |br| ``clang::assert_shared_capability``","","","","",""
 
 Marks a function that dynamically tests whether a capability is held, and halts
 the program if it is not held.
 
 
-assume_aligned (gnu::assume_aligned)
-------------------------------------
+assume_aligned
+--------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``assume_aligned``","``gnu::assume_aligned``","","","","","Yes"
 
 Use ``__attribute__((assume_aligned(<alignment>[,<offset>]))`` on a function
 declaration to specify that the return value of the function (which must be a
@@ -237,12 +241,12 @@ condition that the code already ensures is true. It does not cause the compiler
 to enforce the provided alignment assumption.
 
 
-availability (clang::availability, clang::availability)
--------------------------------------------------------
+availability
+------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``availability``","``clang::availability``","``clang::availability``","","","","Yes"
 
 The ``availability`` attribute can be placed on declarations to describe the
 lifecycle of that declaration relative to operating system versions.  Consider
@@ -375,9 +379,9 @@ Also see the documentation for `@available
 carries_dependency
 ------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``carries_dependency``","``carries_dependency``","","","","","Yes"
 
 The ``carries_dependency`` attribute specifies dependency propagation into and
 out of functions.
@@ -392,12 +396,216 @@ Note, this attribute does not change the meaning of the program, but may result
 in generation of more efficient code.
 
 
+cf_consumed
+-----------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``cf_consumed``","``clang::cf_consumed``","``clang::cf_consumed``","","","","Yes"
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+cf_returns_not_retained
+-----------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``cf_returns_not_retained``","``clang::cf_returns_not_retained``","``clang::cf_returns_not_retained``","","","",""
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+cf_returns_retained
+-------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``cf_returns_retained``","``clang::cf_returns_retained``","``clang::cf_returns_retained``","","","",""
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
 code_seg
 --------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","X","", "", ""
+   "","","","``code_seg``","","",""
 
 The ``__declspec(code_seg)`` attribute enables the placement of code into separate
 named segments that can be paged or locked in memory individually. This attribute
@@ -407,12 +615,12 @@ code. See the documentation for `__declspec(code_seg)`_ on MSDN.
 .. _`__declspec(code_seg)`: http://msdn.microsoft.com/en-us/library/dn636922.aspx
 
 
-convergent (clang::convergent, clang::convergent)
--------------------------------------------------
+convergent
+----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``convergent``","``clang::convergent``","``clang::convergent``","","","","Yes"
 
 The ``convergent`` attribute can be placed on a function declaration. It is
 translated into the LLVM ``convergent`` attribute, which indicates that the call
@@ -436,12 +644,12 @@ Sample usage:
   // void convfunc(void) [[clang::convergent]];
 
 
-cpu_dispatch (clang::cpu_dispatch, clang::cpu_dispatch)
--------------------------------------------------------
+cpu_dispatch
+------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``cpu_dispatch``","``clang::cpu_dispatch``","``clang::cpu_dispatch``","``cpu_dispatch``","","","Yes"
 
 The ``cpu_specific`` and ``cpu_dispatch`` attributes are used to define and
 resolve multiversioned functions. This form of multiversioning provides a
@@ -498,12 +706,12 @@ name. The behavior of a program executing on a processor that doesn't satisfy
 any option of a multiversioned function is undefined.
 
 
-cpu_specific (clang::cpu_specific, clang::cpu_specific)
--------------------------------------------------------
+cpu_specific
+------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``cpu_specific``","``clang::cpu_specific``","``clang::cpu_specific``","``cpu_specific``","","","Yes"
 
 The ``cpu_specific`` and ``cpu_dispatch`` attributes are used to define and
 resolve multiversioned functions. This form of multiversioning provides a
@@ -560,12 +768,12 @@ name. The behavior of a program executing on a processor that doesn't satisfy
 any option of a multiversioned function is undefined.
 
 
-deprecated (gnu::deprecated)
-----------------------------
+deprecated
+----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","X","", "", ""
+   "``deprecated``","``gnu::deprecated`` |br| ``deprecated``","``deprecated``","``deprecated``","","",""
 
 The ``deprecated`` attribute can be applied to a function, a variable, or a
 type. This is useful when identifying functions, variables, or types that are
@@ -588,9 +796,9 @@ string argument which is the message to display when emitting the warning.
 diagnose_if
 -----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","","","","", "", ""
+   "``diagnose_if``","","","","","",""
 
 The ``diagnose_if`` attribute can be placed on function declarations to emit
 warnings or errors at compile-time if calls to the attributed function meet
@@ -598,9 +806,9 @@ certain user-defined criteria. For example:
 
 .. code-block:: c
 
-  void abs(int a)
+  int abs(int a)
     __attribute__((diagnose_if(a >= 0, "Redundant abs call", "warning")));
-  void must_abs(int a)
+  int must_abs(int a)
     __attribute__((diagnose_if(a >= 0, "Redundant abs call", "error")));
 
   int val = abs(1); // warning: Redundant abs call
@@ -648,12 +856,12 @@ same function. For example:
 Query for this feature with ``__has_attribute(diagnose_if)``.
 
 
-disable_tail_calls (clang::disable_tail_calls, clang::disable_tail_calls)
--------------------------------------------------------------------------
+disable_tail_calls
+------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``disable_tail_calls``","``clang::disable_tail_calls``","``clang::disable_tail_calls``","","","","Yes"
 
 The ``disable_tail_calls`` attribute instructs the backend to not perform tail call optimization inside the marked function.
 
@@ -691,9 +899,9 @@ Marking virtual functions as ``disable_tail_calls`` is legal.
 enable_if
 ---------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","","","","", "", "X"
+   "``enable_if``","","","","","","Yes"
 
 .. Note:: Some features of this attribute are experimental. The meaning of
   multiple enable_if attributes on a single declaration is subject to change in
@@ -825,12 +1033,77 @@ conditions for ``foo`` fail). However, in ``baz``, ``foo`` is resolved during
 template instantiation, so the value for ``T::number`` is known.
 
 
-external_source_symbol (clang::external_source_symbol, clang::external_source_symbol)
--------------------------------------------------------------------------------------
+exclude_from_explicit_instantiation
+-----------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``exclude_from_explicit_instantiation``","``clang::exclude_from_explicit_instantiation``","``clang::exclude_from_explicit_instantiation``","","","","Yes"
+
+The ``exclude_from_explicit_instantiation`` attribute opts-out a member of a
+class template from being part of explicit template instantiations of that
+class template. This means that an explicit instantiation will not instantiate
+members of the class template marked with the attribute, but also that code
+where an extern template declaration of the enclosing class template is visible
+will not take for granted that an external instantiation of the class template
+would provide those members (which would otherwise be a link error, since the
+explicit instantiation won't provide those members). For example, let's say we
+don't want the ``data()`` method to be part of libc++'s ABI. To make sure it
+is not exported from the dylib, we give it hidden visibility:
+
+  .. code-block:: c++
+
+    // in <string>
+    template <class CharT>
+    class basic_string {
+    public:
+      __attribute__((__visibility__("hidden")))
+      const value_type* data() const noexcept { ... }
+    };
+
+    template class basic_string<char>;
+
+Since an explicit template instantiation declaration for ``basic_string<char>``
+is provided, the compiler is free to assume that ``basic_string<char>::data()``
+will be provided by another translation unit, and it is free to produce an
+external call to this function. However, since ``data()`` has hidden visibility
+and the explicit template instantiation is provided in a shared library (as
+opposed to simply another translation unit), ``basic_string<char>::data()``
+won't be found and a link error will ensue. This happens because the compiler
+assumes that ``basic_string<char>::data()`` is part of the explicit template
+instantiation declaration, when it really isn't. To tell the compiler that
+``data()`` is not part of the explicit template instantiation declaration, the
+``exclude_from_explicit_instantiation`` attribute can be used:
+
+  .. code-block:: c++
+
+    // in <string>
+    template <class CharT>
+    class basic_string {
+    public:
+      __attribute__((__visibility__("hidden")))
+      __attribute__((exclude_from_explicit_instantiation))
+      const value_type* data() const noexcept { ... }
+    };
+
+    template class basic_string<char>;
+
+Now, the compiler won't assume that ``basic_string<char>::data()`` is provided
+externally despite there being an explicit template instantiation declaration:
+the compiler will implicitly instantiate ``basic_string<char>::data()`` in the
+TUs where it is used.
+
+This attribute can be used on static and non-static member functions of class
+templates, static data members of class templates and member classes of class
+templates.
+
+
+external_source_symbol
+----------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``external_source_symbol``","``clang::external_source_symbol``","``clang::external_source_symbol``","","","","Yes"
 
 The ``external_source_symbol`` attribute specifies that a declaration originates
 from an external source and describes the nature of that source.
@@ -886,24 +1159,24 @@ The clauses can be specified in any order. The clauses that are listed above are
 all optional, but the attribute has to have at least one clause.
 
 
-flatten (gnu::flatten)
-----------------------
+flatten
+-------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``flatten``","``gnu::flatten``","","","","","Yes"
 
 The ``flatten`` attribute causes calls within the attributed function to
 be inlined unless it is impossible to do so, for example if the body of the
 callee is unavailable or if the callee has the ``noinline`` attribute.
 
 
-force_align_arg_pointer (gnu::force_align_arg_pointer)
-------------------------------------------------------
+force_align_arg_pointer
+-----------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``force_align_arg_pointer``","``gnu::force_align_arg_pointer``","","","","",""
 
 Use this attribute to force stack alignment.
 
@@ -925,12 +1198,12 @@ jumps from i386 arch code).
     }
 
 
-format (gnu::format)
---------------------
+format
+------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``format``","``gnu::format``","","","","",""
 
 Clang supports the ``format`` attribute, which indicates that the function
 accepts a ``printf`` or ``scanf``-like format string and corresponding
@@ -990,28 +1263,106 @@ Clang implements two kinds of checks with this attribute.
    incorrect, the caller of ``foo`` will receive a warning.
 
 
-ifunc (gnu::ifunc)
-------------------
+gnu_inline
+----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``gnu_inline``","``gnu::gnu_inline``","","","","","Yes"
+
+The ``gnu_inline`` changes the meaning of ``extern inline`` to use GNU inline
+semantics, meaning:
+
+* If any declaration that is declared ``inline`` is not declared ``extern``,
+  then the ``inline`` keyword is just a hint. In particular, an out-of-line
+  definition is still emitted for a function with external linkage, even if all
+  call sites are inlined, unlike in C99 and C++ inline semantics.
+
+* If all declarations that are declared ``inline`` are also declared
+  ``extern``, then the function body is present only for inlining and no
+  out-of-line version is emitted.
+
+Some important consequences: ``static inline`` emits an out-of-line
+version if needed, a plain ``inline`` definition emits an out-of-line version
+always, and an ``extern inline`` definition (in a header) followed by a
+(non-``extern``) ``inline`` declaration in a source file emits an out-of-line
+version of the function in that source file but provides the function body for
+inlining to all includers of the header.
+
+Either ``__GNUC_GNU_INLINE__`` (GNU inline semantics) or
+``__GNUC_STDC_INLINE__`` (C99 semantics) will be defined (they are mutually
+exclusive). If ``__GNUC_STDC_INLINE__`` is defined, then the ``gnu_inline``
+function attribute can be used to get GNU inline semantics on a per function
+basis. If ``__GNUC_GNU_INLINE__`` is defined, then the translation unit is
+already being compiled with GNU inline semantics as the implied default. It is
+unspecified which macro is defined in a C++ compilation.
+
+GNU inline semantics are the default behavior with ``-std=gnu89``,
+``-std=c89``, ``-std=c94``, or ``-fgnu89-inline``.
+
+
+ifunc
+-----
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``ifunc``","``gnu::ifunc``","","","","","Yes"
 
 ``__attribute__((ifunc("resolver")))`` is used to mark that the address of a declaration should be resolved at runtime by calling a resolver function.
 
-The symbol name of the resolver function is given in quotes.  A function with this name (after mangling) must be defined in the current translation unit; it may be ``static``.  The resolver function should take no arguments and return a pointer.
+The symbol name of the resolver function is given in quotes.  A function with this name (after mangling) must be defined in the current translation unit; it may be ``static``.  The resolver function should return a pointer.
 
 The ``ifunc`` attribute may only be used on a function declaration.  A function declaration with an ``ifunc`` attribute is considered to be a definition of the declared entity.  The entity must not have weak linkage; for example, in C++, it cannot be applied to a declaration if a definition at that location would be considered inline.
 
-Not all targets support this attribute.  ELF targets support this attribute when using binutils v2.20.1 or higher and glibc v2.11.1 or higher.  Non-ELF targets currently do not support this attribute.
+Not all targets support this attribute. ELF target support depends on both the linker and runtime linker, and is available in at least lld 4.0 and later, binutils 2.20.1 and later, glibc v2.11.1 and later, and FreeBSD 9.1 and later. Non-ELF targets currently do not support this attribute.
 
 
-internal_linkage (clang::internal_linkage, clang::internal_linkage)
--------------------------------------------------------------------
+import_module
+-------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``import_module``","``clang::import_module``","``clang::import_module``","","","","Yes"
+
+Clang supports the ``__attribute__((import_module(<module_name>)))`` 
+attribute for the WebAssembly target. This attribute may be attached to a
+function declaration, where it modifies how the symbol is to be imported
+within the WebAssembly linking environment.
+
+WebAssembly imports use a two-level namespace scheme, consisting of a module
+name, which typically identifies a module from which to import, and a field
+name, which typically identifies a field from that module to import. By
+default, module names for C/C++ symbols are assigned automatically by the
+linker. This attribute can be used to override the default behavior, and
+reuqest a specific module name be used instead.
+
+
+import_name
+-----------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``import_name``","``clang::import_name``","``clang::import_name``","","","","Yes"
+
+Clang supports the ``__attribute__((import_name(<name>)))`` 
+attribute for the WebAssembly target. This attribute may be attached to a
+function declaration, where it modifies how the symbol is to be imported
+within the WebAssembly linking environment.
+
+WebAssembly imports use a two-level namespace scheme, consisting of a module
+name, which typically identifies a module from which to import, and a field
+name, which typically identifies a field from that module to import. By
+default, field names for C/C++ symbols are the same as their C/C++ symbol
+names. This attribute can be used to override the default behavior, and
+reuqest a specific field name be used instead.
+
+
+internal_linkage
+----------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``internal_linkage``","``clang::internal_linkage``","``clang::internal_linkage``","","","","Yes"
 
 The ``internal_linkage`` attribute changes the linkage type of the declaration to internal.
 This is similar to C-style ``static``, but can be used on classes and class methods. When applied to a class definition,
@@ -1022,9 +1373,9 @@ This can be used to contain the ABI of a C++ library by excluding unwanted class
 interrupt (ARM)
 ---------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``interrupt``","``gnu::interrupt``","","","","",""
 
 Clang supports the GNU style ``__attribute__((interrupt("TYPE")))`` attribute on
 ARM targets. This attribute may be attached to a function definition and
@@ -1066,9 +1417,9 @@ The semantics are as follows:
 interrupt (AVR)
 ---------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``interrupt``","``gnu::interrupt``","","","","","Yes"
 
 Clang supports the GNU style ``__attribute__((interrupt))`` attribute on
 AVR targets. This attribute may be attached to a function definition and instructs
@@ -1084,9 +1435,9 @@ does not insert a SEI instruction.
 interrupt (MIPS)
 ----------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``interrupt``","``gnu::interrupt``","","","","","Yes"
 
 Clang supports the GNU style ``__attribute__((interrupt("ARGUMENT")))`` attribute on
 MIPS targets. This attribute may be attached to a function definition and instructs
@@ -1127,9 +1478,9 @@ The semantics are as follows:
 interrupt (RISCV)
 -----------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``interrupt``","``gnu::interrupt``","","","","","Yes"
 
 Clang supports the GNU style ``__attribute__((interrupt))`` attribute on RISCV
 targets. This attribute may be attached to a function definition and instructs
@@ -1152,9 +1503,9 @@ Version 1.10.
 kernel
 ------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","","","","", "", "X"
+   "``kernel``","","","","","","Yes"
 
 ``__attribute__((kernel))`` is used to mark a ``kernel`` function in
 RenderScript.
@@ -1167,12 +1518,12 @@ See the RenderScript_ documentation for more information.
 .. _RenderScript: https://developer.android.com/guide/topics/renderscript/compute.html
 
 
-lifetimebound (clang::lifetimebound)
-------------------------------------
+lifetimebound
+-------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``lifetimebound``","``clang::lifetimebound``","","","","",""
 
 The ``lifetimebound`` attribute indicates that a resource owned by
 a function parameter or implicit object parameter
@@ -1186,12 +1537,12 @@ and is subject to change as the design of the corresponding functionality
 changes.
 
 
-long_call (gnu::long_call, gnu::far)
-------------------------------------
+long_call, far
+--------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``long_call`` |br| ``far``","``gnu::long_call`` |br| ``gnu::far``","","","","","Yes"
 
 Clang supports the ``__attribute__((long_call))``, ``__attribute__((far))``,
 and ``__attribute__((near))`` attributes on MIPS targets. These attributes may
@@ -1209,12 +1560,12 @@ These attributes take priority over command line switches such
 as ``-mlong-calls`` and ``-mno-long-calls``.
 
 
-micromips (gnu::micromips)
---------------------------
+micromips
+---------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``micromips``","``gnu::micromips``","","","","","Yes"
 
 Clang supports the GNU style ``__attribute__((micromips))`` and
 ``__attribute__((nomicromips))`` attributes on MIPS targets. These attributes
@@ -1225,12 +1576,12 @@ These attributes override the `-mmicromips` and `-mno-micromips` options
 on the command line.
 
 
-min_vector_width (clang::min_vector_width, clang::min_vector_width)
--------------------------------------------------------------------
+min_vector_width
+----------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``min_vector_width``","``clang::min_vector_width``","``clang::min_vector_width``","","","","Yes"
 
 Clang supports the ``__attribute__((min_vector_width(width)))`` attribute. This
 attribute may be attached to a function and informs the backend that this
@@ -1252,12 +1603,12 @@ code using the X86 intrinsics will prevent ``prefer-vector-width`` from
 affecting the code.
 
 
-no_caller_saved_registers (gnu::no_caller_saved_registers)
-----------------------------------------------------------
+no_caller_saved_registers
+-------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``no_caller_saved_registers``","``gnu::no_caller_saved_registers``","","","","",""
 
 Use this attribute to indicate that the specified function has no
 caller-saved registers. That is, all registers are callee-saved except for
@@ -1289,12 +1640,12 @@ For example:
   should save and restore any modified registers except for ECX and EDX.
 
 
-no_sanitize (clang::no_sanitize, clang::no_sanitize)
-----------------------------------------------------
+no_sanitize
+-----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``no_sanitize``","``clang::no_sanitize``","``clang::no_sanitize``","","","","Yes"
 
 Use the ``no_sanitize`` attribute on a function or a global variable
 declaration to specify that a particular instrumentation or set of
@@ -1309,12 +1660,12 @@ See :ref:`Controlling Code Generation <controlling-code-generation>` for a
 full list of supported sanitizer flags.
 
 
-no_sanitize_address (no_address_safety_analysis, gnu::no_address_safety_analysis, gnu::no_sanitize_address)
------------------------------------------------------------------------------------------------------------
+no_sanitize_address, no_address_safety_analysis
+-----------------------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``no_address_safety_analysis`` |br| ``no_sanitize_address`` |br| ``no_sanitize_thread`` |br| ``no_sanitize_memory``","``gnu::no_address_safety_analysis`` |br| ``gnu::no_sanitize_address`` |br| ``gnu::no_sanitize_thread`` |br| ``clang::no_sanitize_memory``","``clang::no_sanitize_memory``","","","","Yes"
 
 .. _langext-address_sanitizer:
 
@@ -1326,9 +1677,9 @@ variable declaration to specify that address safety instrumentation
 no_sanitize_memory
 ------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``no_address_safety_analysis`` |br| ``no_sanitize_address`` |br| ``no_sanitize_thread`` |br| ``no_sanitize_memory``","``gnu::no_address_safety_analysis`` |br| ``gnu::no_sanitize_address`` |br| ``gnu::no_sanitize_thread`` |br| ``clang::no_sanitize_memory``","``clang::no_sanitize_memory``","","","","Yes"
 
 .. _langext-memory_sanitizer:
 
@@ -1341,9 +1692,9 @@ to avoid false positives in other places.
 no_sanitize_thread
 ------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``no_address_safety_analysis`` |br| ``no_sanitize_address`` |br| ``no_sanitize_thread`` |br| ``no_sanitize_memory``","``gnu::no_address_safety_analysis`` |br| ``gnu::no_sanitize_address`` |br| ``gnu::no_sanitize_thread`` |br| ``clang::no_sanitize_memory``","``clang::no_sanitize_memory``","","","","Yes"
 
 .. _langext-thread_sanitizer:
 
@@ -1353,24 +1704,24 @@ not be inserted by ThreadSanitizer. The function is still instrumented by the
 tool to avoid false positives and provide meaningful stack traces.
 
 
-no_split_stack (gnu::no_split_stack)
-------------------------------------
+no_split_stack
+--------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``no_split_stack``","``gnu::no_split_stack``","","","","","Yes"
 
 The ``no_split_stack`` attribute disables the emission of the split stack
 preamble for a particular function. It has no effect if ``-fsplit-stack``
 is not specified.
 
 
-no_stack_protector (clang::no_stack_protector, clang::no_stack_protector)
--------------------------------------------------------------------------
+no_stack_protector
+------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``no_stack_protector``","``clang::no_stack_protector``","``clang::no_stack_protector``","","","","Yes"
 
 Clang supports the ``__attribute__((no_stack_protector))`` attribute which disables
 the stack protector on the specified function. This attribute is useful for
@@ -1392,21 +1743,21 @@ option.
 noalias
 -------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","X","", "", ""
+   "","","","``noalias``","","",""
 
 The ``noalias`` attribute indicates that the only memory accesses inside
 function are loads and stores from objects pointed to by its pointer-typed
 arguments, with arbitrary offsets.
 
 
-nocf_check (gnu::nocf_check)
-----------------------------
+nocf_check
+----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``nocf_check``","``gnu::nocf_check``","","","","","Yes"
 
 Jump Oriented Programming attacks rely on tampering with addresses used by
 indirect call / jmp, e.g. redirect control-flow to non-programmer
@@ -1421,12 +1772,12 @@ the function.
 pointer (by adding nocf_check prefix to the indirect-call instruction).
 
 
-nodiscard, warn_unused_result, clang::warn_unused_result, gnu::warn_unused_result
----------------------------------------------------------------------------------
+nodiscard, warn_unused_result
+-----------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``warn_unused_result``","``nodiscard`` |br| ``clang::warn_unused_result`` |br| ``gnu::warn_unused_result``","``nodiscard``","","","","Yes"
 
 Clang supports the ability to diagnose when the results of a function call
 expression are discarded under suspicious circumstances. A diagnostic is
@@ -1448,12 +1799,12 @@ potentially-evaluated discarded-value expression that is not explicitly cast to
   void f() { foo(); } // Does not diagnose, error_info is a reference.
 
 
-noduplicate (clang::noduplicate, clang::noduplicate)
-----------------------------------------------------
+noduplicate
+-----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``noduplicate``","``clang::noduplicate``","``clang::noduplicate``","","","","Yes"
 
 The ``noduplicate`` attribute can be placed on function declarations to control
 whether function calls to this function can be duplicated or not as a result of
@@ -1494,12 +1845,12 @@ where the call to "nodupfunc" is duplicated and sunk into the two branches
 of the condition.
 
 
-nomicromips (gnu::nomicromips)
-------------------------------
+nomicromips
+-----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``nomicromips``","``gnu::nomicromips``","","","","","Yes"
 
 Clang supports the GNU style ``__attribute__((micromips))`` and
 ``__attribute__((nomicromips))`` attributes on MIPS targets. These attributes
@@ -1513,21 +1864,21 @@ on the command line.
 noreturn
 --------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","X","","","", "", "X"
+   "","``noreturn``","","","","","Yes"
 
 A function declared as ``[[noreturn]]`` shall not return to its caller. The
 compiler will generate a diagnostic for a function declared as ``[[noreturn]]``
 that appears to be capable of returning to its caller.
 
 
-not_tail_called (clang::not_tail_called, clang::not_tail_called)
-----------------------------------------------------------------
+not_tail_called
+---------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``not_tail_called``","``clang::not_tail_called``","``clang::not_tail_called``","","","","Yes"
 
 The ``not_tail_called`` attribute prevents tail-call optimization on statically bound calls. It has no effect on indirect calls. Virtual functions, objective-c methods, and functions marked as ``always_inline`` cannot be marked as ``not_tail_called``.
 
@@ -1579,12 +1930,12 @@ Marking virtual functions as ``not_tail_called`` is an error:
     };
 
 
-nothrow (gnu::nothrow)
-----------------------
+nothrow
+-------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","X","", "", "X"
+   "``nothrow``","``gnu::nothrow``","","``nothrow``","","","Yes"
 
 Clang supports the GNU style ``__attribute__((nothrow))`` and Microsoft style
 ``__declspec(nothrow)`` attribute as an equivalent of `noexcept` on function
@@ -1594,12 +1945,352 @@ is particularly useful on functions in the C Standard Library that are
 guaranteed to not throw an exception.
 
 
-objc_boxable (clang::objc_boxable, clang::objc_boxable)
--------------------------------------------------------
+ns_consumed
+-----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``ns_consumed``","``clang::ns_consumed``","``clang::ns_consumed``","","","","Yes"
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+ns_consumes_self
+----------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``ns_consumes_self``","``clang::ns_consumes_self``","``clang::ns_consumes_self``","","","","Yes"
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+ns_returns_autoreleased
+-----------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``ns_returns_autoreleased``","``clang::ns_returns_autoreleased``","``clang::ns_returns_autoreleased``","","","",""
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+ns_returns_not_retained
+-----------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``ns_returns_not_retained``","``clang::ns_returns_not_retained``","``clang::ns_returns_not_retained``","","","",""
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+ns_returns_retained
+-------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``ns_returns_retained``","``clang::ns_returns_retained``","``clang::ns_returns_retained``","","","",""
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+objc_boxable
+------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``objc_boxable``","``clang::objc_boxable``","``clang::objc_boxable``","","","","Yes"
 
 Structs and unions marked with the ``objc_boxable`` attribute can be used
 with the Objective-C boxed expression syntax, ``@(...)``.
@@ -1624,12 +2315,12 @@ can only be placed on a declaration of a trivially-copyable struct or union:
   NSValue *boxed = @(ss);
 
 
-objc_method_family (clang::objc_method_family, clang::objc_method_family)
--------------------------------------------------------------------------
+objc_method_family
+------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``objc_method_family``","``clang::objc_method_family``","``clang::objc_method_family``","","","","Yes"
 
 Many methods in Objective-C have conventional meanings determined by their
 selectors. It is sometimes useful to be able to mark a method as having a
@@ -1654,12 +2345,12 @@ use the retaining behavior attributes (``ns_returns_retained``,
 Query for this feature with ``__has_attribute(objc_method_family)``.
 
 
-objc_requires_super (clang::objc_requires_super, clang::objc_requires_super)
-----------------------------------------------------------------------------
+objc_requires_super
+-------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``objc_requires_super``","``clang::objc_requires_super``","``clang::objc_requires_super``","","","","Yes"
 
 Some Objective-C classes allow a subclass to override a particular method in a
 parent class but expect that the overriding method also calls the overridden
@@ -1702,12 +2393,12 @@ implementation of an override in a subclass does not call super.  For example:
                       ^
 
 
-objc_runtime_name (clang::objc_runtime_name, clang::objc_runtime_name)
-----------------------------------------------------------------------
+objc_runtime_name
+-----------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``objc_runtime_name``","``clang::objc_runtime_name``","``clang::objc_runtime_name``","","","","Yes"
 
 By default, the Objective-C interface or protocol identifier is used
 in the metadata name for that object. The `objc_runtime_name`
@@ -1725,22 +2416,22 @@ can only be placed before an @protocol or @interface declaration:
   @end
 
 
-objc_runtime_visible (clang::objc_runtime_visible, clang::objc_runtime_visible)
--------------------------------------------------------------------------------
+objc_runtime_visible
+--------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``objc_runtime_visible``","``clang::objc_runtime_visible``","``clang::objc_runtime_visible``","","","","Yes"
 
 This attribute specifies that the Objective-C class to which it applies is visible to the Objective-C runtime but not to the linker. Classes annotated with this attribute cannot be subclassed and cannot have categories defined for them.
 
 
-optnone (clang::optnone, clang::optnone)
-----------------------------------------
+optnone
+-------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``optnone``","``clang::optnone``","``clang::optnone``","","","","Yes"
 
 The ``optnone`` attribute suppresses essentially all optimizations
 on a function or method, regardless of the optimization level applied to
@@ -1754,12 +2445,420 @@ This attribute is incompatible with the ``always_inline`` and ``minsize``
 attributes.
 
 
-overloadable (clang::overloadable, clang::overloadable)
--------------------------------------------------------
+os_consumed
+-----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``os_consumed``","``clang::os_consumed``","``clang::os_consumed``","","","","Yes"
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+os_consumes_this
+----------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``os_consumes_this``","``clang::os_consumes_this``","``clang::os_consumes_this``","","","",""
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+os_returns_not_retained
+-----------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``os_returns_not_retained``","``clang::os_returns_not_retained``","``clang::os_returns_not_retained``","","","","Yes"
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+os_returns_retained
+-------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``os_returns_retained``","``clang::os_returns_retained``","``clang::os_returns_retained``","","","","Yes"
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+os_returns_retained_on_non_zero
+-------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``os_returns_retained_on_non_zero``","``clang::os_returns_retained_on_non_zero``","``clang::os_returns_retained_on_non_zero``","","","","Yes"
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+os_returns_retained_on_zero
+---------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``os_returns_retained_on_zero``","``clang::os_returns_retained_on_zero``","``clang::os_returns_retained_on_zero``","","","","Yes"
+
+The behavior of a function with respect to reference counting for Foundation
+(Objective-C), CoreFoundation (C) and OSObject (C++) is determined by a naming
+convention (e.g. functions starting with "get" are assumed to return at
+``+0``).
+
+It can be overriden using a family of the following attributes.  In
+Objective-C, the annotation ``__attribute__((ns_returns_retained))`` applied to
+a function communicates that the object is returned at ``+1``, and the caller
+is responsible for freeing it.
+Similiarly, the annotation ``__attribute__((ns_returns_not_retained))``
+specifies that the object is returned at ``+0`` and the ownership remains with
+the callee.
+The annotation ``__attribute__((ns_consumes_self))`` specifies that
+the Objective-C method call consumes the reference to ``self``, e.g. by
+attaching it to a supplied parameter.
+Additionally, parameters can have an annotation
+``__attribute__((ns_consumed))``, which specifies that passing an owned object
+as that parameter effectively transfers the ownership, and the caller is no
+longer responsible for it.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+In C programs using CoreFoundation, a similar set of attributes:
+``__attribute__((cf_returns_not_retained))``,
+``__attribute__((cf_returns_retained))`` and ``__attribute__((cf_consumed))``
+have the same respective semantics when applied to CoreFoundation objects.
+These attributes affect code generation when interacting with ARC code, and
+they are used by the Clang Static Analyzer.
+
+Finally, in C++ interacting with XNU kernel (objects inheriting from OSObject),
+the same attribute family is present:
+``__attribute__((os_returns_not_retained))``,
+``__attribute__((os_returns_retained))`` and ``__attribute__((os_consumed))``,
+with the same respective semantics.
+Similar to ``__attribute__((ns_consumes_self))``,
+``__attribute__((os_consumes_this))`` specifies that the method call consumes
+the reference to "this" (e.g., when attaching it to a different object supplied
+as a parameter).
+Out parameters (parameters the function is meant to write into,
+either via pointers-to-pointers or references-to-pointers)
+may be annotated with ``__attribute__((os_returns_retained))``
+or ``__attribute__((os_returns_not_retained))`` which specifies that the object
+written into the out parameter should (or respectively should not) be released
+after use.
+Since often out parameters may or may not be written depending on the exit
+code of the function,
+annotations ``__attribute__((os_returns_retained_on_zero))``
+and ``__attribute__((os_returns_retained_on_non_zero))`` specify that
+an out parameter at ``+1`` is written if and only if the function returns a zero
+(respectively non-zero) error code.
+Observe that return-code-dependent out parameter annotations are only
+available for retained out parameters, as non-retained object do not have to be
+released by the callee.
+These attributes are only used by the Clang Static Analyzer.
+
+The family of attributes ``X_returns_X_retained`` can be added to functions,
+C++ methods, and Objective-C methods and properties.
+Attributes ``X_consumed`` can be added to parameters of methods, functions,
+and Objective-C methods.
+
+
+overloadable
+------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``overloadable``","``clang::overloadable``","``clang::overloadable``","","","","Yes"
 
 Clang provides support for C++ function overloading in C.  Function overloading
 in C is introduced using the ``overloadable`` attribute.  For example, one
@@ -1875,22 +2974,53 @@ query for it using ``__has_extension(overloadable_unmarked)``.
 Query for this attribute with ``__has_attribute(overloadable)``.
 
 
-release_capability (release_shared_capability, clang::release_capability, clang::release_shared_capability)
------------------------------------------------------------------------------------------------------------
+reinitializes
+-------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``reinitializes``","``clang::reinitializes``","","","","",""
+
+The ``reinitializes`` attribute can be applied to a non-static, non-const C++
+member function to indicate that this member function reinitializes the entire
+object to a known state, independent of the previous state of the object.
+
+This attribute can be interpreted by static analyzers that warn about uses of an
+object that has been left in an indeterminate state by a move operation. If a
+member function marked with the ``reinitializes`` attribute is called on a
+moved-from object, the analyzer can conclude that the object is no longer in an
+indeterminate state.
+
+A typical example where this attribute would be used is on functions that clear
+a container class:
+
+.. code-block:: c++
+
+  template <class T>
+  class Container {
+  public:
+    ...
+    [[clang::reinitializes]] void Clear();
+    ...
+  };
+
+
+release_capability, release_shared_capability
+---------------------------------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``release_capability`` |br| ``release_shared_capability`` |br| ``release_generic_capability`` |br| ``unlock_function``","``clang::release_capability`` |br| ``clang::release_shared_capability`` |br| ``clang::release_generic_capability`` |br| ``clang::unlock_function``","","","","",""
 
 Marks a function as releasing a capability.
 
 
-short_call (gnu::short_call, gnu::near)
----------------------------------------
+short_call, near
+----------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``short_call`` |br| ``near``","``gnu::short_call`` |br| ``gnu::near``","","","","","Yes"
 
 Clang supports the ``__attribute__((long_call))``, ``__attribute__((far))``,
 ``__attribute__((short__call))``, and ``__attribute__((near))`` attributes
@@ -1909,12 +3039,12 @@ These attributes take priority over command line switches such
 as ``-mlong-calls`` and ``-mno-long-calls``.
 
 
-signal (gnu::signal)
---------------------
+signal
+------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``signal``","``gnu::signal``","","","","","Yes"
 
 Clang supports the GNU style ``__attribute__((signal))`` attribute on
 AVR targets. This attribute may be attached to a function definition and instructs
@@ -1924,12 +3054,39 @@ directly as an interrupt service routine.
 Interrupt handler functions defined with the signal attribute do not re-enable interrupts.
 
 
-target (gnu::target)
---------------------
+speculative_load_hardening
+--------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``speculative_load_hardening``","``clang::speculative_load_hardening``","``clang::speculative_load_hardening``","","","","Yes"
+
+This attribute can be applied to a function declaration in order to indicate
+  that `Speculative Load Hardening <https://llvm.org/docs/SpeculativeLoadHardening.html>`_
+  should be enabled for the function body. This can also be applied to a method
+  in Objective C.
+
+  Speculative Load Hardening is a best-effort mitigation against
+  information leak attacks that make use of control flow
+  miss-speculation - specifically miss-speculation of whether a branch
+  is taken or not. Typically vulnerabilities enabling such attacks are
+  classified as "Spectre variant #1". Notably, this does not attempt to
+  mitigate against miss-speculation of branch target, classified as
+  "Spectre variant #2" vulnerabilities.
+
+  When inlining, the attribute is sticky. Inlining a function that
+  carries this attribute will cause the caller to gain the
+  attribute. This is intended to provide a maximally conservative model
+  where the code in a function annotated with this attribute will always
+  (even after inlining) end up hardened.
+
+
+target
+------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``target``","``gnu::target``","","","","","Yes"
 
 Clang supports the GNU style ``__attribute__((target("OPTIONS")))`` attribute.
 This attribute may be attached to a function definition and instructs
@@ -1965,12 +3122,12 @@ implementation, otherwise usages of the function are considered invalid.
 Additionally, a function may not become multiversioned after its first use.
 
 
-try_acquire_capability (try_acquire_shared_capability, clang::try_acquire_capability, clang::try_acquire_shared_capability)
----------------------------------------------------------------------------------------------------------------------------
+try_acquire_capability, try_acquire_shared_capability
+-----------------------------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``try_acquire_capability`` |br| ``try_acquire_shared_capability``","``clang::try_acquire_capability`` |br| ``clang::try_acquire_shared_capability``","","","","",""
 
 Marks a function that attempts to acquire a capability. This function may fail to
 actually acquire the capability; they accept a Boolean value determining
@@ -1978,12 +3135,12 @@ whether acquiring the capability means success (true), or failing to acquire
 the capability means success (false).
 
 
-xray_always_instrument (clang::xray_always_instrument), xray_never_instrument (clang::xray_never_instrument), xray_log_args (clang::xray_log_args)
---------------------------------------------------------------------------------------------------------------------------------------------------
+xray_always_instrument, xray_never_instrument, xray_log_args
+------------------------------------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``xray_always_instrument`` |br| ``xray_never_instrument``","``clang::xray_always_instrument`` |br| ``clang::xray_never_instrument``","``clang::xray_always_instrument`` |br| ``clang::xray_never_instrument``","","","","Yes"
 
 ``__attribute__((xray_always_instrument))`` or ``[[clang::xray_always_instrument]]`` is used to mark member functions (in C++), methods (in Objective C), and free functions (in C, C++, and Objective C) to be instrumented with XRay. This will cause the function to always have space at the beginning and exit points to allow for runtime patching.
 
@@ -1994,12 +3151,12 @@ If a function has neither of these attributes, they become subject to the XRay h
 ``__attribute__((xray_log_args(N)))`` or ``[[clang::xray_log_args(N)]]`` is used to preserve N function arguments for the logging function.  Currently, only N==1 is supported.
 
 
-xray_always_instrument (clang::xray_always_instrument), xray_never_instrument (clang::xray_never_instrument), xray_log_args (clang::xray_log_args)
---------------------------------------------------------------------------------------------------------------------------------------------------
+xray_always_instrument, xray_never_instrument, xray_log_args
+------------------------------------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``xray_log_args``","``clang::xray_log_args``","``clang::xray_log_args``","","","","Yes"
 
 ``__attribute__((xray_always_instrument))`` or ``[[clang::xray_always_instrument]]`` is used to mark member functions (in C++), methods (in Objective C), and free functions (in C, C++, and Objective C) to be instrumented with XRay. This will cause the function to always have space at the beginning and exit points to allow for runtime patching.
 
@@ -2014,12 +3171,24 @@ Variable Attributes
 ===================
 
 
-dllexport (gnu::dllexport)
---------------------------
+always_destroy
+--------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","X","", "", "X"
+   "``always_destroy``","``clang::always_destroy``","","","","","Yes"
+
+The ``always_destroy`` attribute specifies that a variable with static or thread
+storage duration should have its exit-time destructor run. This attribute is the
+default unless clang was invoked with -fno-c++-static-destructors.
+
+
+dllexport
+---------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``dllexport``","``gnu::dllexport``","","``dllexport``","","","Yes"
 
 The ``__declspec(dllexport)`` attribute declares a variable, function, or
 Objective-C interface to be exported from the module.  It is available under the
@@ -2031,12 +3200,12 @@ information.
 .. _dllexport: https://msdn.microsoft.com/en-us/library/3y1sfaz2.aspx
 
 
-dllimport (gnu::dllimport)
---------------------------
+dllimport
+---------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","X","", "", "X"
+   "``dllimport``","``gnu::dllimport``","","``dllimport``","","","Yes"
 
 The ``__declspec(dllimport)`` attribute declares a variable, function, or
 Objective-C interface to be imported from an external module.  It is available
@@ -2051,9 +3220,9 @@ for more information.
 init_seg
 --------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","", "X", ""
+   "","","","","","``init_seg``",""
 
 The attribute applied by ``pragma init_seg()`` controls the section into
 which global initialization function pointers are emitted.  It is only
@@ -2067,12 +3236,12 @@ documentation on MSDN for more information.
 .. _init_seg: http://msdn.microsoft.com/en-us/library/7977wcck(v=vs.110).aspx
 
 
-maybe_unused, unused, gnu::unused
----------------------------------
+maybe_unused, unused
+--------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", ""
+   "``unused``","``maybe_unused`` |br| ``gnu::unused``","``maybe_unused``","","","",""
 
 When passing the ``-Wunused`` flag to Clang, entities that are unused by the
 program may be diagnosed. The ``[[maybe_unused]]`` (or
@@ -2095,24 +3264,37 @@ enumerator, a non-static data member, or a label.
   }
 
 
-nodebug (gnu::nodebug)
-----------------------
+no_destroy
+----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``no_destroy``","``clang::no_destroy``","","","","","Yes"
+
+The ``no_destroy`` attribute specifies that a variable with static or thread
+storage duration shouldn't have its exit-time destructor run. Annotating every
+static and thread duration variable with this attribute is equivalent to
+invoking clang with -fno-c++-static-destructors.
+
+
+nodebug
+-------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``nodebug``","``gnu::nodebug``","","","","","Yes"
 
 The ``nodebug`` attribute allows you to suppress debugging information for a
 function or method, or for a variable that is not a parameter or a non-static
 data member.
 
 
-noescape (clang::noescape, clang::noescape)
--------------------------------------------
+noescape
+--------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``noescape``","``clang::noescape``","``clang::noescape``","","","","Yes"
 
 ``noescape`` placed on a function parameter of a pointer type is used to inform
 the compiler that the pointer cannot escape: that is, no reference to the object
@@ -2156,9 +3338,9 @@ applies to copies of the block. For example:
 nosvm
 -----
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","","","","", "", "X"
+   "``nosvm``","","","","","","Yes"
 
 OpenCL 2.0 supports the optional ``__attribute__((nosvm))`` qualifier for
 pointer variable. It informs the compiler that the pointer does not refer
@@ -2168,12 +3350,44 @@ Since it is not widely used and has been removed from OpenCL 2.1, it is ignored
 by Clang.
 
 
-pass_object_size (clang::pass_object_size, clang::pass_object_size)
--------------------------------------------------------------------
+objc_externally_retained
+------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``objc_externally_retained``","``clang::objc_externally_retained``","``clang::objc_externally_retained``","","","","Yes"
+
+The ``objc_externally_retained`` attribute can be applied to strong local
+variables, functions, methods, or blocks to opt into
+`externally-retained semantics
+<https://clang.llvm.org/docs/AutomaticReferenceCounting.html#externally-retained-variables>`_.
+
+When applied to the definition of a function, method, or block, every parameter
+of the function with implicit strong retainable object pointer type is
+considered externally-retained, and becomes ``const``. By explicitly annotating
+a parameter with ``__strong``, you can opt back into the default
+non-externally-retained behaviour for that parameter. For instance,
+``first_param`` is externally-retained below, but not ``second_param``:
+
+.. code-block:: objc
+
+  __attribute__((objc_externally_retained))
+  void f(NSArray *first_param, __strong NSArray *second_param) {
+    // ...
+  }
+
+Likewise, when applied to a strong local variable, that variable becomes
+``const`` and is considered externally-retained.
+
+When compiled without ``-fobjc-arc``, this attribute is ignored.
+
+
+pass_object_size
+----------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``pass_object_size``","``clang::pass_object_size``","``clang::pass_object_size``","","","","Yes"
 
 .. Note:: The mangling of functions with parameters that are annotated with
   ``pass_object_size`` is subject to change. You can get around this by
@@ -2268,12 +3482,12 @@ Currently, ``pass_object_size`` is a bit restricted in terms of its usage:
   applied to must be marked ``const`` at its function's definition.
 
 
-require_constant_initialization (clang::require_constant_initialization)
-------------------------------------------------------------------------
+require_constant_initialization
+-------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``require_constant_initialization``","``clang::require_constant_initialization``","","","","","Yes"
 
 This attribute specifies that the variable to which it is attached is intended
 to have a `constant initializer <http://en.cppreference.com/w/cpp/language/constant_initialization>`_
@@ -2308,23 +3522,23 @@ of silently falling back on dynamic initialization.
   // copy initialization is not a constant expression on a non-literal type.
 
 
-section (gnu::section, __declspec(allocate))
---------------------------------------------
+section, __declspec(allocate)
+-----------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","X","", "", "X"
+   "``section``","``gnu::section``","","``allocate``","","","Yes"
 
 The ``section`` attribute allows you to specify a specific section a
 global variable or function should be in after translation.
 
 
-swift_context (clang::swift_context, clang::swift_context)
-----------------------------------------------------------
+swift_context
+-------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``swift_context``","``clang::swift_context``","``clang::swift_context``","","","","Yes"
 
 The ``swift_context`` attribute marks a parameter of a ``swiftcall``
 function as having the special context-parameter ABI treatment.
@@ -2339,12 +3553,12 @@ the last parameter).
 A context parameter must have pointer or reference type.
 
 
-swift_error_result (clang::swift_error_result, clang::swift_error_result)
--------------------------------------------------------------------------
+swift_error_result
+------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``swift_error_result``","``clang::swift_error_result``","``clang::swift_error_result``","","","","Yes"
 
 The ``swift_error_result`` attribute marks a parameter of a ``swiftcall``
 function as having the special error-result ABI treatment.
@@ -2377,12 +3591,12 @@ value stored in the apparent argument) will be null upon function entry,
 but this is not enforced by the ABI.
 
 
-swift_indirect_result (clang::swift_indirect_result, clang::swift_indirect_result)
-----------------------------------------------------------------------------------
+swift_indirect_result
+---------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``swift_indirect_result``","``clang::swift_indirect_result``","``clang::swift_indirect_result``","","","","Yes"
 
 The ``swift_indirect_result`` attribute marks a parameter of a ``swiftcall``
 function as having the special indirect-result ABI treatment.
@@ -2408,12 +3622,12 @@ directly construct objects into them without relying on language
 optimizations like C++'s named return value optimization (NRVO).
 
 
-swiftcall (clang::swiftcall, clang::swiftcall)
-----------------------------------------------
+swiftcall
+---------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", ""
+   "``swiftcall``","``clang::swiftcall``","``clang::swiftcall``","","","",""
 
 The ``swiftcall`` attribute indicates that a function should be called
 using the Swift calling convention for a function or function pointer.
@@ -2478,9 +3692,9 @@ attributes.
 thread
 ------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","X","", "", ""
+   "","","","``thread``","","",""
 
 The ``__declspec(thread)`` attribute declares a variable with thread local
 storage.  It is available under the ``-fms-extensions`` flag for MSVC
@@ -2495,12 +3709,12 @@ declared with static storage duration, such as globals, class static data
 members, and static locals.
 
 
-tls_model (gnu::tls_model)
---------------------------
+tls_model
+---------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``tls_model``","``gnu::tls_model``","","","","","Yes"
 
 The ``tls_model`` attribute allows you to specify which thread-local storage
 model to use. It accepts the following strings:
@@ -2513,12 +3727,12 @@ model to use. It accepts the following strings:
 TLS models are mutually exclusive.
 
 
-trivial_abi (clang::trivial_abi)
---------------------------------
+trivial_abi
+-----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``trivial_abi``","``clang::trivial_abi``","","","","","Yes"
 
 The ``trivial_abi`` attribute can be applied to a C++ class, struct, or union.
 It instructs the compiler to pass and return the type using the C ABI for the
@@ -2558,6 +3772,21 @@ Attribute ``trivial_abi`` has no effect in the following cases:
   - arrays of any of the above
 
 
+uninitialized
+-------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``uninitialized``","``clang::uninitialized``","","","","",""
+
+The command-line parameter ``-ftrivial-auto-var-init=*`` can be used to
+initialize trivial automatic stack variables. By default, trivial automatic
+stack variables are uninitialized. This attribute is used to override the
+command-line parameter, forcing variables to remain uninitialized. It has no
+semantic meaning in that using uninitialized values is undefined behavior,
+it rather documents the programmer's intent.
+
+
 Type Attributes
 ===============
 
@@ -2565,9 +3794,9 @@ Type Attributes
 __single_inhertiance, __multiple_inheritance, __virtual_inheritance
 -------------------------------------------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","X", "", ""
+   "","","","","``__single_inheritance`` |br| ``__multiple_inheritance`` |br| ``__virtual_inheritance`` |br| ``__unspecified_inheritance``","",""
 
 This collection of keywords is enabled under ``-fms-extensions`` and controls
 the pointer-to-member representation used on ``*-*-win32`` targets.
@@ -2614,9 +3843,9 @@ an error:
 align_value
 -----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","","","","", "", "X"
+   "``align_value``","","","","","","Yes"
 
 The align_value attribute can be added to the typedef of a pointer type or the
 declaration of a variable of pointer or reference type. It specifies that the
@@ -2637,9 +3866,9 @@ behavior of the program is undefined.
 empty_bases
 -----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","X","", "", ""
+   "","","","``empty_bases``","","",""
 
 The empty_bases attribute permits the compiler to utilize the
 empty-base-optimization more frequently.
@@ -2647,12 +3876,12 @@ This attribute only applies to struct, class, and union types.
 It is only supported when using the Microsoft C++ ABI.
 
 
-enum_extensibility (clang::enum_extensibility, clang::enum_extensibility)
--------------------------------------------------------------------------
+enum_extensibility
+------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``enum_extensibility``","``clang::enum_extensibility``","``clang::enum_extensibility``","","","","Yes"
 
 Attribute ``enum_extensibility`` is used to distinguish between enum definitions
 that are extensible and those that are not. The attribute can take either
@@ -2698,12 +3927,12 @@ standard and instructs clang to be more lenient when issuing warnings.
   }
 
 
-flag_enum (clang::flag_enum, clang::flag_enum)
-----------------------------------------------
+flag_enum
+---------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``flag_enum``","``clang::flag_enum``","``clang::flag_enum``","","","","Yes"
 
 This attribute can be added to an enumerator to signal to the compiler that it
 is intended to be used as a flag type. This will cause the compiler to assume
@@ -2714,9 +3943,9 @@ manipulating bits of the enumerator when issuing warnings.
 layout_version
 --------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","X","", "", ""
+   "","","","``layout_version``","","",""
 
 The layout_version attribute requests that the compiler utilize the class
 layout rules of a particular compiler version.
@@ -2724,45 +3953,105 @@ This attribute only applies to struct, class, and union types.
 It is only supported when using the Microsoft C++ ABI.
 
 
-lto_visibility_public (clang::lto_visibility_public, clang::lto_visibility_public)
-----------------------------------------------------------------------------------
+lto_visibility_public
+---------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``lto_visibility_public``","``clang::lto_visibility_public``","``clang::lto_visibility_public``","","","","Yes"
 
 See :doc:`LTOVisibility`.
+
+
+noderef
+-------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``noderef``","``clang::noderef``","``clang::noderef``","","","",""
+
+The ``noderef`` attribute causes clang to diagnose dereferences of annotated pointer types.
+This is ideally used with pointers that point to special memory which cannot be read
+from or written to, but allowing for the pointer to be used in pointer arithmetic.
+The following are examples of valid expressions where dereferences are diagnosed:
+
+.. code-block:: c
+
+  int __attribute__((noderef)) *p;
+  int x = *p;  // warning
+
+  int __attribute__((noderef)) **p2;
+  x = **p2;  // warning
+
+  int * __attribute__((noderef)) *p3;
+  p = *p3;  // warning
+
+  struct S {
+    int a;
+  };
+  struct S __attribute__((noderef)) *s;
+  x = s->a;    // warning
+  x = (*s).a;  // warning
+
+Not all dereferences may diagnose a warning if the value directed by the pointer may not be
+accessed. The following are examples of valid expressions where may not be diagnosed:
+
+.. code-block:: c
+
+  int *q;
+  int __attribute__((noderef)) *p;
+  q = &*p;
+  q = *&p;
+
+  struct S {
+    int a;
+  };
+  struct S __attribute__((noderef)) *s;
+  p = &s->a;
+  p = &(*s).a;
+
+``noderef`` is currently only supported for pointers and arrays and not usable for
+references or Objective-C object pointers.
+
+.. code-block: c++
+
+  int x = 2;
+  int __attribute__((noderef)) &y = x;  // warning: 'noderef' can only be used on an array or pointer type
+
+.. code-block: objc
+
+  id __attribute__((noderef)) obj = [NSObject new]; // warning: 'noderef' can only be used on an array or pointer type
 
 
 novtable
 --------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","X","", "", ""
+   "","","","``novtable``","","",""
 
 This attribute can be added to a class declaration or definition to signal to
 the compiler that constructors and destructors will not reference the virtual
 function table. It is only supported when using the Microsoft C++ ABI.
 
 
-objc_subclassing_restricted (clang::objc_subclassing_restricted, clang::objc_subclassing_restricted)
-----------------------------------------------------------------------------------------------------
+objc_subclassing_restricted
+---------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", "X"
+   "``objc_subclassing_restricted``","``clang::objc_subclassing_restricted``","``clang::objc_subclassing_restricted``","","","","Yes"
 
 This attribute can be added to an Objective-C ``@interface`` declaration to
 ensure that this class cannot be subclassed.
 
 
-selectany (gnu::selectany)
---------------------------
+selectany
+---------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","X","", "", ""
+   "``selectany``","``gnu::selectany``","","``selectany``","","",""
 
 This attribute appertains to a global symbol, causing it to have a weak
 definition (
@@ -2774,12 +4063,12 @@ For more information see
 or `msvc documentation <https://docs.microsoft.com/pl-pl/cpp/cpp/selectany>`_.
 
 
-transparent_union (gnu::transparent_union)
-------------------------------------------
+transparent_union
+-----------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``transparent_union``","``gnu::transparent_union``","","","","",""
 
 This attribute can be applied to a union to change the behaviour of calls to
 functions that have an argument with a transparent union type. The compiler
@@ -2802,15 +4091,15 @@ Statement Attributes
 #pragma clang loop
 ------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","", "X", ""
+   "","","","","","``clang loop`` |br| ``unroll`` |br| ``nounroll`` |br| ``unroll_and_jam`` |br| ``nounroll_and_jam``",""
 
 The ``#pragma clang loop`` directive allows loop optimization hints to be
-specified for the subsequent loop. The directive allows vectorization,
-interleaving, and unrolling to be enabled or disabled. Vector width as well
-as interleave and unrolling count can be manually specified. See
-`language extensions
+specified for the subsequent loop. The directive allows pipelining to be
+disabled, or vectorization, interleaving, and unrolling to be enabled or disabled.
+Vector width, interleave count, unrolling count, and the initiation interval
+for pipelining can be explicitly specified. See `language extensions
 <http://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations>`_
 for details.
 
@@ -2818,9 +4107,9 @@ for details.
 #pragma unroll, #pragma nounroll
 --------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","", "X", ""
+   "","","","","","``clang loop`` |br| ``unroll`` |br| ``nounroll`` |br| ``unroll_and_jam`` |br| ``nounroll_and_jam``",""
 
 Loop unrolling optimization hints can be specified with ``#pragma unroll`` and
 ``#pragma nounroll``. The pragma is placed immediately before a for, while,
@@ -2872,44 +4161,12 @@ is equivalent to ``#pragma clang loop unroll(disable)``.  See
 for further details including limitations of the unroll hints.
 
 
-__attribute__((intel_reqd_sub_group_size))
-------------------------------------------
-.. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
-
-   "X","","","","", "", "X"
-
-The optional attribute intel_reqd_sub_group_size can be used to indicate that
-the kernel must be compiled and executed with the specified subgroup size. When
-this attribute is present, get_max_sub_group_size() is guaranteed to return the
-specified integer value. This is important for the correctness of many subgroup
-algorithms, and in some cases may be used by the compiler to generate more optimal
-code. See `cl_intel_required_subgroup_size
-<https://www.khronos.org/registry/OpenCL/extensions/intel/cl_intel_required_subgroup_size.txt>`
-for details.
-
-
-__attribute__((opencl_unroll_hint))
------------------------------------
-.. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
-
-   "X","","","","", "", ""
-
-The opencl_unroll_hint attribute qualifier can be used to specify that a loop
-(for, while and do loops) can be unrolled. This attribute qualifier can be
-used to specify full unrolling or partial unrolling by a specified amount.
-This is a compiler hint and the compiler may ignore this directive. See
-`OpenCL v2.0 <https://www.khronos.org/registry/cl/specs/opencl-2.0.pdf>`_
-s6.11.5 for details.
-
-
 __read_only, __write_only, __read_write (read_only, write_only, read_write)
 ---------------------------------------------------------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","X", "", ""
+   "","","","","``__read_only`` |br| ``read_only`` |br| ``__write_only`` |br| ``write_only`` |br| ``__read_write`` |br| ``read_write``","",""
 
 The access qualifiers must be used with image object arguments or pipe arguments
 to declare if they are being read or written by a kernel or function.
@@ -2933,12 +4190,12 @@ The read_write (or __read_write) qualifier can not be used with pipe.
 More details can be found in the OpenCL C language Spec v2.0, Section 6.6.
 
 
-fallthrough, clang::fallthrough
--------------------------------
+fallthrough
+-----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","X","X","","", "", ""
+   "","``fallthrough`` |br| ``clang::fallthrough``","``fallthrough``","","","",""
 
 The ``fallthrough`` (or ``clang::fallthrough``) attribute is used
 to annotate intentional fall-through
@@ -2987,12 +4244,44 @@ Here is an example:
   }
 
 
-suppress (gsl::suppress)
-------------------------
+intel_reqd_sub_group_size
+-------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","X","","","", "", ""
+   "``intel_reqd_sub_group_size``","","","","","","Yes"
+
+The optional attribute intel_reqd_sub_group_size can be used to indicate that
+the kernel must be compiled and executed with the specified subgroup size. When
+this attribute is present, get_max_sub_group_size() is guaranteed to return the
+specified integer value. This is important for the correctness of many subgroup
+algorithms, and in some cases may be used by the compiler to generate more optimal
+code. See `cl_intel_required_subgroup_size
+<https://www.khronos.org/registry/OpenCL/extensions/intel/cl_intel_required_subgroup_size.txt>`
+for details.
+
+
+opencl_unroll_hint
+------------------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``opencl_unroll_hint``","","","","","",""
+
+The opencl_unroll_hint attribute qualifier can be used to specify that a loop
+(for, while and do loops) can be unrolled. This attribute qualifier can be
+used to specify full unrolling or partial unrolling by a specified amount.
+This is a compiler hint and the compiler may ignore this directive. See
+`OpenCL v2.0 <https://www.khronos.org/registry/cl/specs/opencl-2.0.pdf>`_
+s6.11.5 for details.
+
+
+suppress
+--------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "","``gsl::suppress``","","","","",""
 
 The ``[[gsl::suppress]]`` attribute suppresses specific
 clang-tidy diagnostics for rules of the `C++ Core Guidelines`_ in a portable
@@ -3020,12 +4309,12 @@ AMD GPU Attributes
 ==================
 
 
-amdgpu_flat_work_group_size (clang::amdgpu_flat_work_group_size)
-----------------------------------------------------------------
+amdgpu_flat_work_group_size
+---------------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``amdgpu_flat_work_group_size``","``clang::amdgpu_flat_work_group_size``","","","","","Yes"
 
 The flat work-group size is the number of work-items in the work-group size
 specified when the kernel is dispatched. It is the product of the sizes of the
@@ -3051,12 +4340,12 @@ An error will be given if:
     attributes.
 
 
-amdgpu_num_sgpr (clang::amdgpu_num_sgpr)
-----------------------------------------
+amdgpu_num_sgpr
+---------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``amdgpu_num_sgpr``","``clang::amdgpu_num_sgpr``","","","","","Yes"
 
 Clang supports the ``__attribute__((amdgpu_num_sgpr(<num_sgpr>)))`` and
 ``__attribute__((amdgpu_num_vgpr(<num_vgpr>)))`` attributes for the AMDGPU
@@ -3082,12 +4371,12 @@ An error will be given if:
     request.
 
 
-amdgpu_num_vgpr (clang::amdgpu_num_vgpr)
-----------------------------------------
+amdgpu_num_vgpr
+---------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``amdgpu_num_vgpr``","``clang::amdgpu_num_vgpr``","","","","","Yes"
 
 Clang supports the ``__attribute__((amdgpu_num_sgpr(<num_sgpr>)))`` and
 ``__attribute__((amdgpu_num_vgpr(<num_vgpr>)))`` attributes for the AMDGPU
@@ -3113,12 +4402,12 @@ An error will be given if:
     request.
 
 
-amdgpu_waves_per_eu (clang::amdgpu_waves_per_eu)
-------------------------------------------------
+amdgpu_waves_per_eu
+-------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``amdgpu_waves_per_eu``","``clang::amdgpu_waves_per_eu``","","","","","Yes"
 
 A compute unit (CU) is responsible for executing the wavefronts of a work-group.
 It is composed of one or more execution units (EU), which are responsible for
@@ -3164,6 +4453,100 @@ An error will be given if:
     request.
 
 
+OpenCL Address Spaces
+=====================
+The address space qualifier may be used to specify the region of memory that is
+used to allocate the object. OpenCL supports the following address spaces:
+__generic(generic), __global(global), __local(local), __private(private),
+__constant(constant).
+
+  .. code-block:: c
+
+    __constant int c = ...;
+
+    __generic int* foo(global int* g) {
+      __local int* l;
+      private int p;
+      ...
+      return l;
+    }
+
+More details can be found in the OpenCL C language Spec v2.0, Section 6.5.
+
+constant
+--------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "","","","","``__constant`` |br| ``constant``","",""
+
+The constant address space attribute signals that an object is located in
+a constant (non-modifiable) memory region. It is available to all work items.
+Any type can be annotated with the constant address space attribute. Objects
+with the constant address space qualifier can be declared in any scope and must
+have an initializer.
+
+
+generic
+-------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "","","","","``__generic`` |br| ``generic``","",""
+
+The generic address space attribute is only available with OpenCL v2.0 and later.
+It can be used with pointer types. Variables in global and local scope and
+function parameters in non-kernel functions can have the generic address space
+type attribute. It is intended to be a placeholder for any other address space
+except for '__constant' in OpenCL code which can be used with multiple address
+spaces.
+
+
+global
+------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "","","","","``__global`` |br| ``global``","",""
+
+The global address space attribute specifies that an object is allocated in
+global memory, which is accessible by all work items. The content stored in this
+memory area persists between kernel executions. Pointer types to the global
+address space are allowed as function parameters or local variables. Starting
+with OpenCL v2.0, the global address space can be used with global (program
+scope) variables and static local variable as well.
+
+
+local
+-----
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "","","","","``__local`` |br| ``local``","",""
+
+The local address space specifies that an object is allocated in the local (work
+group) memory area, which is accessible to all work items in the same work
+group. The content stored in this memory region is not accessible after
+the kernel execution ends. In a kernel function scope, any variable can be in
+the local address space. In other scopes, only pointer types to the local address
+space are allowed. Local address space variables cannot have an initializer.
+
+
+private
+-------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "","","","","``__private`` |br| ``private``","",""
+
+The private address space specifies that an object is allocated in the private
+(work item) memory. Other work items cannot access the same memory area and its
+content is destroyed after work item execution ends. Local variables can be
+declared in the private address space. Function arguments are always in the
+private address space. Kernel function arguments of a pointer or an array type
+cannot point to the private address space.
+
+
 Calling Conventions
 ===================
 Clang supports several different calling conventions, depending on the target
@@ -3171,12 +4554,40 @@ platform and architecture. The calling convention used for a function determines
 how parameters are passed, how results are returned to the caller, and other
 low-level details of calling a function.
 
-fastcall (gnu::fastcall, __fastcall, _fastcall)
------------------------------------------------
+aarch64_vector_pcs
+------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","X", "", ""
+   "``aarch64_vector_pcs``","``clang::aarch64_vector_pcs``","``clang::aarch64_vector_pcs``","","","",""
+
+On AArch64 targets, this attribute changes the calling convention of a
+function to preserve additional floating-point and Advanced SIMD registers
+relative to the default calling convention used for AArch64.
+
+This means it is more efficient to call such functions from code that performs
+extensive floating-point and vector calculations, because fewer live SIMD and FP
+registers need to be saved. This property makes it well-suited for e.g.
+floating-point or vector math library functions, which are typically leaf
+functions that require a small number of registers.
+
+However, using this attribute also means that it is more expensive to call
+a function that adheres to the default calling convention from within such
+a function. Therefore, it is recommended that this attribute is only used
+for leaf functions.
+
+For more information, see the documentation for `aarch64_vector_pcs`_ on
+the Arm Developer website.
+
+.. _`aarch64_vector_pcs`: https://developer.arm.com/products/software-development-tools/hpc/arm-compiler-for-hpc/vector-function-abi
+
+
+fastcall
+--------
+.. csv-table:: Supported Syntaxes
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
+
+   "``fastcall``","``gnu::fastcall``","","","``__fastcall`` |br| ``_fastcall``","",""
 
 On 32-bit x86 targets, this attribute changes the calling convention of a
 function to use ECX and EDX as register parameters and clear parameters off of
@@ -3189,36 +4600,36 @@ not require callee-cleanup.  See the documentation for `__fastcall`_ on MSDN.
 .. _`__fastcall`: http://msdn.microsoft.com/en-us/library/6xa169sk.aspx
 
 
-ms_abi (gnu::ms_abi)
---------------------
+ms_abi
+------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``ms_abi``","``gnu::ms_abi``","","","","",""
 
 On non-Windows x86_64 targets, this attribute changes the calling convention of
 a function to match the default convention used on Windows x86_64. This
 attribute has no effect on Windows targets or non-x86_64 targets.
 
 
-pcs (gnu::pcs)
---------------
+pcs
+---
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``pcs``","``gnu::pcs``","","","","",""
 
 On ARM targets, this attribute can be used to select calling conventions
 similar to ``stdcall`` on x86. Valid parameter values are "aapcs" and
 "aapcs-vfp".
 
 
-preserve_all (clang::preserve_all, clang::preserve_all)
--------------------------------------------------------
+preserve_all
+------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", ""
+   "``preserve_all``","``clang::preserve_all``","``clang::preserve_all``","","","",""
 
 On X86-64 and AArch64 targets, this attribute changes the calling convention of
 a function. The ``preserve_all`` calling convention attempts to make the code
@@ -3243,12 +4654,12 @@ used by a future version of the Objective-C runtime and should be considered
 experimental at this time.
 
 
-preserve_most (clang::preserve_most, clang::preserve_most)
-----------------------------------------------------------
+preserve_most
+-------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", ""
+   "``preserve_most``","``clang::preserve_most``","``clang::preserve_most``","","","",""
 
 On X86-64 and AArch64 targets, this attribute changes the calling convention of
 a function. The ``preserve_most`` calling convention attempts to make the code
@@ -3285,12 +4696,12 @@ supports X86-64 and AArch64, but the intention is to support more architectures
 in the future.
 
 
-regcall (gnu::regcall, __regcall)
----------------------------------
+regcall
+-------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","X", "", ""
+   "``regcall``","``gnu::regcall``","","","``__regcall``","",""
 
 On x86 targets, this attribute changes the calling convention to
 `__regcall`_ convention. This convention aims to pass as many arguments
@@ -3300,12 +4711,12 @@ return value whenever it is possible.
 .. _`__regcall`: https://software.intel.com/en-us/node/693069
 
 
-regparm (gnu::regparm)
-----------------------
+regparm
+-------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``regparm``","``gnu::regparm``","","","","",""
 
 On 32-bit x86 targets, the regparm attribute causes the compiler to pass
 the first three integer parameters in EAX, EDX, and ECX instead of on the
@@ -3313,12 +4724,12 @@ stack. This attribute has no effect on variadic functions, and all parameters
 are passed via the stack as normal.
 
 
-stdcall (gnu::stdcall, __stdcall, _stdcall)
--------------------------------------------
+stdcall
+-------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","X", "", ""
+   "``stdcall``","``gnu::stdcall``","","","``__stdcall`` |br| ``_stdcall``","",""
 
 On 32-bit x86 targets, this attribute changes the calling convention of a
 function to clear parameters off of the stack on return. This convention does
@@ -3329,12 +4740,12 @@ COM applications.  See the documentation for `__stdcall`_ on MSDN.
 .. _`__stdcall`: http://msdn.microsoft.com/en-us/library/zxk0tw93.aspx
 
 
-thiscall (gnu::thiscall, __thiscall, _thiscall)
------------------------------------------------
+thiscall
+--------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","X", "", ""
+   "``thiscall``","``gnu::thiscall``","","","``__thiscall`` |br| ``_thiscall``","",""
 
 On 32-bit x86 targets, this attribute changes the calling convention of a
 function to use ECX for the first parameter (typically the implicit ``this``
@@ -3346,12 +4757,12 @@ MSDN.
 .. _`__thiscall`: http://msdn.microsoft.com/en-us/library/ek8tkfbw.aspx
 
 
-vectorcall (clang::vectorcall, clang::vectorcall, __vectorcall, _vectorcall)
-----------------------------------------------------------------------------
+vectorcall
+----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","X", "", ""
+   "``vectorcall``","``clang::vectorcall``","``clang::vectorcall``","","``__vectorcall`` |br| ``_vectorcall``","",""
 
 On 32-bit x86 *and* x86_64 targets, this attribute changes the calling
 convention of a function to pass vector parameters in SSE registers.
@@ -3382,12 +4793,12 @@ properties, specifically for unique objects that have a single owning reference.
 The following attributes are currently supported, although **the implementation
 for these annotations is currently in development and are subject to change.**
 
-callable_when (clang::callable_when)
-------------------------------------
+callable_when
+-------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``callable_when``","``clang::callable_when``","","","","","Yes"
 
 Use ``__attribute__((callable_when(...)))`` to indicate what states a method
 may be called in.  Valid states are unconsumed, consumed, or unknown.  Each
@@ -3396,12 +4807,12 @@ argument to this attribute must be a quoted string.  E.g.:
 ``__attribute__((callable_when("unconsumed", "unknown")))``
 
 
-consumable (clang::consumable)
-------------------------------
+consumable
+----------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``consumable``","``clang::consumable``","","","","","Yes"
 
 Each ``class`` that uses any of the typestate annotations must first be marked
 using the ``consumable`` attribute.  Failure to do so will result in a warning.
@@ -3410,12 +4821,12 @@ This attribute accepts a single parameter that must be one of the following:
 ``unknown``, ``consumed``, or ``unconsumed``.
 
 
-param_typestate (clang::param_typestate)
-----------------------------------------
+param_typestate
+---------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``param_typestate``","``clang::param_typestate``","","","","","Yes"
 
 This attribute specifies expectations about function parameters.  Calls to an
 function with annotated parameters will issue a warning if the corresponding
@@ -3423,12 +4834,12 @@ argument isn't in the expected state.  The attribute is also used to set the
 initial state of the parameter when analyzing the function's body.
 
 
-return_typestate (clang::return_typestate)
-------------------------------------------
+return_typestate
+----------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``return_typestate``","``clang::return_typestate``","","","","","Yes"
 
 The ``return_typestate`` attribute can be applied to functions or parameters.
 When applied to a function the attribute specifies the state of the returned
@@ -3441,24 +4852,24 @@ a call to the function returns.  The function's body is checked to ensure that
 the parameter is in the expected state before returning.
 
 
-set_typestate (clang::set_typestate)
-------------------------------------
+set_typestate
+-------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``set_typestate``","``clang::set_typestate``","","","","","Yes"
 
 Annotate methods that transition an object into a new state with
 ``__attribute__((set_typestate(new_state)))``.  The new state must be
 unconsumed, consumed, or unknown.
 
 
-test_typestate (clang::test_typestate)
---------------------------------------
+test_typestate
+--------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``test_typestate``","``clang::test_typestate``","","","","","Yes"
 
 Use ``__attribute__((test_typestate(tested_state)))`` to indicate that a method
 returns true if the object is in the specified state..
@@ -3500,9 +4911,9 @@ example:
 argument_with_type_tag
 ----------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", ""
+   "``argument_with_type_tag`` |br| ``pointer_with_type_tag``","``clang::argument_with_type_tag`` |br| ``clang::pointer_with_type_tag``","``clang::argument_with_type_tag`` |br| ``clang::pointer_with_type_tag``","","","",""
 
 Use ``__attribute__((argument_with_type_tag(arg_kind, arg_idx,
 type_tag_idx)))`` on a function declaration to specify that the function
@@ -3537,9 +4948,9 @@ For example:
 pointer_with_type_tag
 ---------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", ""
+   "``argument_with_type_tag`` |br| ``pointer_with_type_tag``","``clang::argument_with_type_tag`` |br| ``clang::pointer_with_type_tag``","``clang::argument_with_type_tag`` |br| ``clang::pointer_with_type_tag``","","","",""
 
 Use ``__attribute__((pointer_with_type_tag(ptr_kind, ptr_idx, type_tag_idx)))``
 on a function declaration to specify that the function accepts a type tag that
@@ -3571,12 +4982,12 @@ For example:
   // determine the expected pointee type of the function's 1st argument.
 
 
-type_tag_for_datatype (clang::type_tag_for_datatype, clang::type_tag_for_datatype)
-----------------------------------------------------------------------------------
+type_tag_for_datatype
+---------------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","X","","", "", ""
+   "``type_tag_for_datatype``","``clang::type_tag_for_datatype``","``clang::type_tag_for_datatype``","","","",""
 
 When declaring a variable, use
 ``__attribute__((type_tag_for_datatype(kind, type)))`` to create a type tag that
@@ -3684,100 +5095,6 @@ values for this optional third argument:
                                                           // is not a null pointer
 
 
-OpenCL Address Spaces
-=====================
-The address space qualifier may be used to specify the region of memory that is
-used to allocate the object. OpenCL supports the following address spaces:
-__generic(generic), __global(global), __local(local), __private(private),
-__constant(constant).
-
-  .. code-block:: c
-
-    __constant int c = ...;
-
-    __generic int* foo(global int* g) {
-      __local int* l;
-      private int p;
-      ...
-      return l;
-    }
-
-More details can be found in the OpenCL C language Spec v2.0, Section 6.5.
-
-constant (__constant)
----------------------
-.. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
-
-   "","","","","X", "", ""
-
-The constant address space attribute signals that an object is located in
-a constant (non-modifiable) memory region. It is available to all work items.
-Any type can be annotated with the constant address space attribute. Objects
-with the constant address space qualifier can be declared in any scope and must
-have an initializer.
-
-
-generic (__generic)
--------------------
-.. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
-
-   "","","","","X", "", ""
-
-The generic address space attribute is only available with OpenCL v2.0 and later.
-It can be used with pointer types. Variables in global and local scope and
-function parameters in non-kernel functions can have the generic address space
-type attribute. It is intended to be a placeholder for any other address space
-except for '__constant' in OpenCL code which can be used with multiple address
-spaces.
-
-
-global (__global)
------------------
-.. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
-
-   "","","","","X", "", ""
-
-The global address space attribute specifies that an object is allocated in
-global memory, which is accessible by all work items. The content stored in this
-memory area persists between kernel executions. Pointer types to the global
-address space are allowed as function parameters or local variables. Starting
-with OpenCL v2.0, the global address space can be used with global (program
-scope) variables and static local variable as well.
-
-
-local (__local)
----------------
-.. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
-
-   "","","","","X", "", ""
-
-The local address space specifies that an object is allocated in the local (work
-group) memory area, which is accessible to all work items in the same work
-group. The content stored in this memory region is not accessible after
-the kernel execution ends. In a kernel function scope, any variable can be in
-the local address space. In other scopes, only pointer types to the local address
-space are allowed. Local address space variables cannot have an initializer.
-
-
-private (__private)
--------------------
-.. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
-
-   "","","","","X", "", ""
-
-The private address space specifies that an object is allocated in the private
-(work item) memory. Other work items cannot access the same memory area and its
-content is destroyed after work item execution ends. Local variables can be
-declared in the private address space. Function arguments are always in the
-private address space. Kernel function arguments of a pointer or an array type
-cannot point to the private address space.
-
-
 Nullability Attributes
 ======================
 Whether a particular pointer may be "null" is an important concern when working with pointers in the C family of languages. The various nullability attributes indicate whether a particular pointer can be null or not, which makes APIs more expressive and can help static analysis tools identify bugs involving null pointers. Clang supports several kinds of nullability attributes: the ``nonnull`` and ``returns_nonnull`` attributes indicate which function or method parameters and result types can never be null, while nullability type qualifiers indicate which pointer types can be null (``_Nullable``) or cannot be null (``_Nonnull``).
@@ -3810,9 +5127,9 @@ In Objective-C, there is an alternate spelling for the nullability qualifiers th
 _Nonnull
 --------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","X", "", ""
+   "","","","","``_Nonnull``","",""
 
 The ``_Nonnull`` nullability qualifier indicates that null is not a meaningful value for a value of the ``_Nonnull`` pointer type. For example, given a declaration such as:
 
@@ -3826,9 +5143,9 @@ a caller of ``fetch`` should not provide a null value, and the compiler will pro
 _Null_unspecified
 -----------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","X", "", ""
+   "","","","","``_Null_unspecified``","",""
 
 The ``_Null_unspecified`` nullability qualifier indicates that neither the ``_Nonnull`` nor ``_Nullable`` qualifiers make sense for a particular pointer type. It is used primarily to indicate that the role of null with specific pointers in a nullability-annotated header is unclear, e.g., due to overly-complex implementations or historical factors with a long-lived API.
 
@@ -3836,9 +5153,9 @@ The ``_Null_unspecified`` nullability qualifier indicates that neither the ``_No
 _Nullable
 ---------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "","","","","X", "", ""
+   "","","","","``_Nullable``","",""
 
 The ``_Nullable`` nullability qualifier indicates that a value of the ``_Nullable`` pointer type can be null. For example, given:
 
@@ -3849,12 +5166,12 @@ The ``_Nullable`` nullability qualifier indicates that a value of the ``_Nullabl
 a caller of ``fetch_or_zero`` can provide null.
 
 
-nonnull (gnu::nonnull)
-----------------------
+nonnull
+-------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", ""
+   "``nonnull``","``gnu::nonnull``","","","","",""
 
 The ``nonnull`` attribute indicates that some function parameters must not be null, and can be used in several different ways. It's original usage (`from GCC <https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes>`_) is as a function (or Objective-C method) attribute that specifies which parameters of the function are nonnull in a comma-separated list. For example:
 
@@ -3881,12 +5198,12 @@ Clang also allows the ``nonnull`` attribute to be placed directly on a function 
 Note that the ``nonnull`` attribute indicates that passing null to a non-null parameter is undefined behavior, which the optimizer may take advantage of to, e.g., remove null checks. The ``_Nonnull`` type qualifier indicates that a pointer cannot be null in a more general manner (because it is part of the type system) and does not imply undefined behavior, making it more widely applicable.
 
 
-returns_nonnull (gnu::returns_nonnull)
---------------------------------------
+returns_nonnull
+---------------
 .. csv-table:: Supported Syntaxes
-   :header: "GNU", "C++11", "C2x", "__declspec", "Keyword", "Pragma", "Pragma clang attribute"
+   :header: "GNU", "C++11", "C2x", "``__declspec``", "Keyword", "``#pragma``", "``#pragma clang attribute``"
 
-   "X","X","","","", "", "X"
+   "``returns_nonnull``","``gnu::returns_nonnull``","","","","","Yes"
 
 The ``returns_nonnull`` attribute indicates that a particular function (or Objective-C method) always returns a non-null pointer. For example, a particular system ``malloc`` might be defined to terminate a process when memory is not available rather than returning a null pointer:
 
