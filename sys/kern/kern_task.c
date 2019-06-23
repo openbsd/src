@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.25 2019/04/28 04:20:40 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.26 2019/06/23 12:56:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -43,6 +43,7 @@ struct taskq {
 		TQ_S_DESTROYED
 	}			 tq_state;
 	unsigned int		 tq_running;
+	unsigned int		 tq_waiting;
 	unsigned int		 tq_nthreads;
 	unsigned int		 tq_flags;
 	const char		*tq_name;
@@ -58,6 +59,7 @@ static const char taskq_sys_name[] = "systq";
 
 struct taskq taskq_sys = {
 	TQ_S_CREATED,
+	0,
 	0,
 	1,
 	0,
@@ -76,6 +78,7 @@ static const char taskq_sys_mp_name[] = "systqmp";
 
 struct taskq taskq_sys_mp = {
 	TQ_S_CREATED,
+	0,
 	0,
 	1,
 	TASKQ_MPSAFE,
@@ -122,6 +125,7 @@ taskq_create(const char *name, unsigned int nthreads, int ipl,
 
 	tq->tq_state = TQ_S_CREATED;
 	tq->tq_running = 0;
+	tq->tq_waiting = 0;
 	tq->tq_nthreads = nthreads;
 	tq->tq_name = name;
 	tq->tq_flags = flags;
@@ -223,6 +227,7 @@ taskq_barrier(struct taskq *tq)
 
 	WITNESS_CHECKORDER(&tq->tq_lock_object, LOP_NEWORDER, NULL);
 
+	SET(t.t_flags, TASK_BARRIER);
 	task_add(tq, &t);
 	cond_wait(&c, "tqbar");
 }
@@ -238,6 +243,7 @@ taskq_del_barrier(struct taskq *tq, struct task *del)
 	if (task_del(tq, del))
 		return;
 
+	SET(t.t_flags, TASK_BARRIER);
 	task_add(tq, &t);
 	cond_wait(&c, "tqbar");
 }
@@ -304,13 +310,30 @@ taskq_next_work(struct taskq *tq, struct task *work)
 	struct task *next;
 
 	mtx_enter(&tq->tq_mtx);
+retry:
 	while ((next = TAILQ_FIRST(&tq->tq_worklist)) == NULL) {
 		if (tq->tq_state != TQ_S_RUNNING) {
 			mtx_leave(&tq->tq_mtx);
 			return (0);
 		}
 
+		tq->tq_waiting++;
 		msleep(tq, &tq->tq_mtx, PWAIT, "bored", 0);
+		tq->tq_waiting--;
+	}
+
+	if (ISSET(next->t_flags, TASK_BARRIER)) {
+		/*
+		 * Make sure all other threads are sleeping before we
+		 * proceed and run the barrier task.
+		 */
+		if (++tq->tq_waiting == tq->tq_nthreads) {
+			tq->tq_waiting--;
+		} else {
+			msleep(tq, &tq->tq_mtx, PWAIT, "tqblk", 0);
+			tq->tq_waiting--;
+			goto retry;
+		}
 	}
 
 	TAILQ_REMOVE(&tq->tq_worklist, next, t_entry);

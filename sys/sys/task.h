@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.h,v 1.15 2019/04/28 04:20:40 dlg Exp $ */
+/*	$OpenBSD: task.h,v 1.16 2019/06/23 12:56:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -31,6 +31,7 @@ struct task {
 };
 
 #define TASK_ONQUEUE		1
+#define TASK_BARRIER		2
 
 TAILQ_HEAD(task_list, task);
 
