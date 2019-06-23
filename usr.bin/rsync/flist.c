@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.27 2019/06/02 14:29:58 deraadt Exp $ */
+/*	$Id: flist.c,v 1.28 2019/06/23 10:28:32 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -803,12 +803,12 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
     size_t *max)
 {
 	char		*cargv[2], *cp;
-	int		 rc = 0, nxdev = 0, flag, i;
+	int		 rc = 0, flag;
 	FTS		*fts;
 	FTSENT		*ent;
 	struct flist	*f;
-	size_t		 flsz = 0, stripdir;
-	dev_t		*xdev;
+	size_t		 i, flsz = 0, nxdev = 0, stripdir;
+	dev_t		*newxdev, *xdev = NULL;
 	struct stat	 st;
 
 	cargv[0] = root;
@@ -931,11 +931,6 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 			    !S_ISDIR(ent->fts_statp->st_mode))
 				continue;
 
-			if ((xdev = malloc(sizeof(dev_t))) == NULL) {
-				ERRX1("malloc");
-				goto out;
-			}
-
 			flag = 0;
 			for (i = 0; i < nxdev; i++)
 				if (xdev[i] == ent->fts_statp->st_dev) {
@@ -945,12 +940,12 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 			if (flag)
 				continue;
 
-			if (nxdev)
-				if ((xdev = realloc(xdev, sizeof(dev_t))) ==
-				    NULL) {
-					ERRX1("realloc");
-					goto out;
-				}
+			if ((newxdev = reallocarray(xdev, nxdev + 1,
+			    sizeof(dev_t))) == NULL) {
+				ERRX1("reallocarray");
+				goto out;
+			}
+			xdev = newxdev;
 			xdev[nxdev] = ent->fts_statp->st_dev;
 			nxdev++;
 		}
@@ -1008,8 +1003,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 	rc = 1;
 out:
 	fts_close(fts);
-	if (sess->opts->one_file_system)
-		free(xdev);
+	free(xdev);
 	return rc;
 }
 
