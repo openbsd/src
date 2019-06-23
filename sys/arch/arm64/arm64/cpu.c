@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.31 2019/06/01 04:30:52 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.32 2019/06/23 17:14:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -605,8 +605,9 @@ cpu_opp_init(struct cpu_info *ci, uint32_t phandle)
 {
 	struct opp_table *ot;
 	int count, node, child;
+	uint32_t opp_hz, opp_microvolt;
 	uint32_t values[3];
-	int i, len;
+	int i, j, len;
 
 	LIST_FOREACH(ot, &opp_tables, ot_list) {
 		if (ot->ot_phandle == phandle) {
@@ -641,23 +642,27 @@ cpu_opp_init(struct cpu_info *ci, uint32_t phandle)
 	for (child = OF_child(node); child != 0; child = OF_peer(child)) {
 		if (OF_getproplen(child, "turbo-mode") == 0)
 			continue;
-		ot->ot_opp[count].opp_hz =
-		    OF_getpropint64(child, "opp-hz", 0);
+		opp_hz = OF_getpropint64(child, "opp-hz", 0);
 		len = OF_getpropintarray(child, "opp-microvolt",
 		    values, sizeof(values));
+		opp_microvolt = 0;
 		if (len == sizeof(uint32_t) || len == 3 * sizeof(uint32_t))
-			ot->ot_opp[count].opp_microvolt = values[0];
+			opp_microvolt = values[0];
+
+		/* Insert into the array, keeping things sorted. */
+		for (i = 0; i < count; i++) {
+			if (opp_hz < ot->ot_opp[i].opp_hz)
+				break;
+		}
+		for (j = count; j > i; j--)
+			ot->ot_opp[j] = ot->ot_opp[j - 1];
+		ot->ot_opp[i].opp_hz = opp_hz;
+		ot->ot_opp[i].opp_microvolt = opp_microvolt;
 		count++;
 	}
 
 	ot->ot_opp_hz_min = ot->ot_opp[0].opp_hz;
-	ot->ot_opp_hz_max = ot->ot_opp[0].opp_hz;
-	for (i = 1; i < ot->ot_nopp; i++) {
-		if (ot->ot_opp[i].opp_hz < ot->ot_opp_hz_min)
-			ot->ot_opp_hz_min = ot->ot_opp[i].opp_hz;
-		if (ot->ot_opp[i].opp_hz > ot->ot_opp_hz_max)
-			ot->ot_opp_hz_max = ot->ot_opp[i].opp_hz;
-	}
+	ot->ot_opp_hz_max = ot->ot_opp[count - 1].opp_hz;
 
 	if (OF_getproplen(node, "opp-shared") == 0)
 		ot->ot_master = ci;
