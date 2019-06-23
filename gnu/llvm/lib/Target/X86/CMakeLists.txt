@@ -7,6 +7,7 @@ tablegen(LLVM X86GenCallingConv.inc -gen-callingconv)
 tablegen(LLVM X86GenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM X86GenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM X86GenEVEX2VEXTables.inc -gen-x86-EVEX2VEX-tables)
+tablegen(LLVM X86GenExegesis.inc -gen-exegesis)
 tablegen(LLVM X86GenFastISel.inc -gen-fast-isel)
 tablegen(LLVM X86GenGlobalISel.inc -gen-global-isel)
 tablegen(LLVM X86GenInstrInfo.inc -gen-instr-info)
@@ -27,7 +28,9 @@ set(sources
   X86CallingConv.cpp
   X86CallLowering.cpp
   X86CmovConversion.cpp
+  X86CondBrFolding.cpp
   X86DomainReassignment.cpp
+  X86DiscriminateMemOps.cpp
   X86ExpandPseudo.cpp
   X86FastISel.cpp
   X86FixupBWInsts.cpp
@@ -43,6 +46,7 @@ set(sources
   X86ISelLowering.cpp
   X86IndirectBranchTracking.cpp
   X86InterleavedAccess.cpp
+  X86InsertPrefetch.cpp
   X86InstrFMA3Info.cpp
   X86InstrFoldTables.cpp
   X86InstrInfo.cpp
@@ -56,6 +60,7 @@ set(sources
   X86RegisterBankInfo.cpp
   X86RegisterInfo.cpp
   X86RetpolineThunks.cpp
+  X86ReturnProtectorLowering.cpp
   X86SelectionDAGInfo.cpp
   X86ShuffleDecodeConstantPool.cpp
   X86SpeculativeLoadHardening.cpp

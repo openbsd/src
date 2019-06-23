@@ -95,7 +95,7 @@ void MCELFStreamer::InitSections(bool NoExecStack) {
 
   if (NoExecStack) {
     MCSection *s = Ctx.getAsmInfo()->getNonexecutableStackSection(Ctx);
-    if (s) 
+    if (s)
 	SwitchSection(s);
   }
 }

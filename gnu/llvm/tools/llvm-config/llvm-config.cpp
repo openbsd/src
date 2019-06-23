@@ -534,7 +534,7 @@ int main(int argc, char **argv) {
             if (DyLibExists && !sys::fs::exists(path)) {
               Components =
                   GetAllDyLibComponents(IsInDevelopmentTree, true, DirSep);
-              llvm::sort(Components.begin(), Components.end());
+              llvm::sort(Components);
               break;
             }
           }

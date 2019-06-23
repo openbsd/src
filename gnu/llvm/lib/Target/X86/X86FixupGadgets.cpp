@@ -199,53 +199,6 @@ FixupGadgetsPass::isROPFriendly(MachineInstr &MI) const {
     case X86::ADD32rr_DB:
     case X86::ADD16rr_DB:
       goto Handle_MRMDestReg;
-    case X86::ACQUIRE_MOV8rm:
-    case X86::ACQUIRE_MOV16rm:
-    case X86::ACQUIRE_MOV32rm:
-    case X86::ACQUIRE_MOV64rm:
-      goto Handle_MRMSrcMem;
-    case X86::RELEASE_MOV8mr:
-    case X86::RELEASE_MOV16mr:
-    case X86::RELEASE_MOV32mr:
-    case X86::RELEASE_MOV64mr:
-    case X86::RELEASE_ADD8mr:
-    case X86::RELEASE_ADD32mr:
-    case X86::RELEASE_ADD64mr:
-    case X86::RELEASE_AND8mr:
-    case X86::RELEASE_AND32mr:
-    case X86::RELEASE_AND64mr:
-    case X86::RELEASE_OR8mr:
-    case X86::RELEASE_OR32mr:
-    case X86::RELEASE_OR64mr:
-    case X86::RELEASE_XOR8mr:
-    case X86::RELEASE_XOR32mr:
-    case X86::RELEASE_XOR64mr:
-      goto Handle_MRMDestMem;
-    case X86::RELEASE_MOV8mi:
-    case X86::RELEASE_MOV16mi:
-    case X86::RELEASE_MOV32mi:
-    case X86::RELEASE_ADD8mi:
-    case X86::RELEASE_MOV64mi32:
-    case X86::RELEASE_ADD32mi:
-    case X86::RELEASE_ADD64mi32:
-    case X86::RELEASE_AND8mi:
-    case X86::RELEASE_AND32mi:
-    case X86::RELEASE_AND64mi32:
-    case X86::RELEASE_OR8mi:
-    case X86::RELEASE_OR32mi:
-    case X86::RELEASE_OR64mi32:
-    case X86::RELEASE_XOR8mi:
-    case X86::RELEASE_XOR32mi:
-    case X86::RELEASE_XOR64mi32:
-    case X86::RELEASE_INC8m:
-    case X86::RELEASE_INC16m:
-    case X86::RELEASE_INC32m:
-    case X86::RELEASE_INC64m:
-    case X86::RELEASE_DEC8m:
-    case X86::RELEASE_DEC16m:
-    case X86::RELEASE_DEC32m:
-    case X86::RELEASE_DEC64m:
-      goto Handle_MRMXm;
     case X86::ADD16ri_DB:
     case X86::ADD32ri_DB:
     case X86::ADD64ri32_DB:
@@ -268,7 +221,6 @@ FixupGadgetsPass::isROPFriendly(MachineInstr &MI) const {
     break;
   }
   case X86II::MRMDestMem: {
-  Handle_MRMDestMem:
     checkSIB(MI, CurOp, info);
     unsigned opcode = MI.getOpcode();
     if (opcode == X86::MOVNTImr || opcode == X86::MOVNTI_64mr)
@@ -276,7 +228,6 @@ FixupGadgetsPass::isROPFriendly(MachineInstr &MI) const {
     break;
   }
   case X86II::MRMSrcMem: {
-  Handle_MRMSrcMem:
     CurOp += 1;
     if (HasVEX_4V)
       CurOp += 1;
@@ -304,7 +255,6 @@ FixupGadgetsPass::isROPFriendly(MachineInstr &MI) const {
   case X86II::MRM5m:
   case X86II::MRM6m:
   case X86II::MRM7m: {
-  Handle_MRMXm:
     if (HasVEX_4V)
       CurOp += 1;
     if (HasEVEX_K)

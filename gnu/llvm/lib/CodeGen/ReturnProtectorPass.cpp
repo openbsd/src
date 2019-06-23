@@ -58,4 +58,3 @@ char ReturnProtector::ID = 0;
 INITIALIZE_PASS(ReturnProtector, "return-protector", "Return Protector Pass",
                 false, false)
 FunctionPass *llvm::createReturnProtectorPass() { return new ReturnProtector(); }
-

@@ -146,6 +146,11 @@ void x86::getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
   // flags). This is a bit hacky but keeps existing usages working. We should
   // consider deprecating this and instead warn if the user requests external
   // retpoline thunks and *doesn't* request some form of retpolines.
+  if (Triple.isOSOpenBSD() && Triple.getArch() == llvm::Triple::x86_64 &&
+      Args.hasFlag(options::OPT_mretpoline, options::OPT_mno_retpoline, true)) {
+      Features.push_back("+retpoline-indirect-calls");
+      Features.push_back("+retpoline-indirect-branches");
+  } else
   if (Args.hasArgNoClaim(options::OPT_mretpoline, options::OPT_mno_retpoline,
                          options::OPT_mspeculative_load_hardening,
                          options::OPT_mno_speculative_load_hardening)) {

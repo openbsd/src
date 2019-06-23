@@ -746,6 +746,10 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
         case ConversionSpecifier::XArg:
         case ConversionSpecifier::nArg:
           return true;
+        case ConversionSpecifier::FreeBSDbArg:
+          return Target.getTriple().isOSFreeBSD() ||
+                 Target.getTriple().isPS4() ||
+                 Target.getTriple().isOSOpenBSD();
         case ConversionSpecifier::FreeBSDrArg:
         case ConversionSpecifier::FreeBSDyArg:
           return Target.getTriple().isOSFreeBSD() || Target.getTriple().isPS4();
@@ -779,6 +783,10 @@ bool FormatSpecifier::hasValidLengthModifier(const TargetInfo &Target) const {
         case ConversionSpecifier::ScanListArg:
         case ConversionSpecifier::ZArg:
           return true;
+        case ConversionSpecifier::FreeBSDbArg:
+          return Target.getTriple().isOSFreeBSD() ||
+                 Target.getTriple().isPS4() ||
+                 Target.getTriple().isOSOpenBSD();
         case ConversionSpecifier::FreeBSDrArg:
         case ConversionSpecifier::FreeBSDyArg:
           return Target.getTriple().isOSFreeBSD() || Target.getTriple().isPS4();
@@ -937,6 +945,7 @@ bool FormatSpecifier::hasStandardLengthConversionCombination() const {
         case ConversionSpecifier::uArg:
         case ConversionSpecifier::xArg:
         case ConversionSpecifier::XArg:
+        case ConversionSpecifier::FreeBSDbArg:
           return false;
         default:
           return true;
