@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.189 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.190 2019/06/23 16:57:00 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -363,6 +363,8 @@ struct kinfo_proc {
 	int32_t	p_eflag;		/* LONG: extra kinfo_proc flags */
 #define	EPROC_CTTY	0x01	/* controlling tty vnode active */
 #define	EPROC_SLEADER	0x02	/* session leader */
+#define	EPROC_UNVEIL	0x04	/* has unveil settings */
+#define	EPROC_LKUNVEIL	0x08	/* unveil is locked */
 	int32_t	p_exitsig;		/* unused, always zero. */
 	int32_t	p_flag;			/* INT: P_* flags. */
 
@@ -623,8 +625,12 @@ do {									\
 									\
 	if ((sess)->s_ttyvp)						\
 		(kp)->p_eflag |= EPROC_CTTY;				\
-	if ((sess)->s_leader == (praddr))				\
-		(kp)->p_eflag |= EPROC_SLEADER;				\
+	if ((pr)->ps_uvpaths)						\
+		(kp)->p_eflag |= EPROC_UNVEIL;				\
+	if ((pr)->ps_uvdone ||						\
+	    (((pr)->ps_flags & PS_PLEDGE) &&				\
+	     ((pr)->ps_pledge & PLEDGE_UNVEIL) == 0))			\
+		(kp)->p_eflag |= EPROC_LKUNVEIL;			\
 									\
 	if (((pr)->ps_flags & (PS_EMBRYO | PS_ZOMBIE)) == 0) {		\
 		if ((vm) != NULL) {					\

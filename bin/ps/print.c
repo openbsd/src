@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.72 2019/03/24 04:55:01 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.73 2019/06/23 16:57:02 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -280,6 +280,12 @@ printstate(const struct kinfo_proc *kp, VARENT *ve)
 		*cp++ = '+';
 	if (kp->p_psflags & PS_PLEDGE)
 		*cp++ = 'p';
+	if (kp->p_eflag & EPROC_UNVEIL) {
+		if (kp->p_eflag & EPROC_LKUNVEIL)
+			*cp++ = 'U';
+		else
+			*cp++ = 'u';
+	}
 	*cp = '\0';
 
 	if (state == 'R' && kp->p_cpuid != KI_NOCPU) {

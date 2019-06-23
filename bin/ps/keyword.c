@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.45 2017/01/24 22:40:09 deraadt Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.46 2019/06/23 16:57:02 deraadt Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -166,7 +166,7 @@ VAR var[] = {
 	{"ssiz", "SSIZ", NULL, 0, ssize, 4},
 	{"start", "STARTED", NULL, LJUST|USER, started, 8},
 	{"stat", "", "state"},
-	{"state", "STAT", NULL, LJUST|NLIST, printstate, 5},
+	{"state", "STAT", NULL, LJUST|NLIST, printstate, 6},
 	GID("svgid", "SVGID", pvar, POFF(p_svgid)),
 	UID("svuid", "SVUID", pvar, POFF(p_svuid)),
 	{"tdev", "TDEV", NULL, 0, tdev, 4},
