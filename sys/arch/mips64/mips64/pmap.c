@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.111 2018/10/22 17:31:25 krw Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.112 2019/06/23 15:26:42 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -88,10 +88,11 @@ void	pmap_invalidate_icache(pmap_t, vaddr_t, pt_entry_t);
 void	pmap_update_user_page(pmap_t, vaddr_t, pt_entry_t);
 #ifdef MULTIPROCESSOR
 void	pmap_invalidate_icache_action(void *);
-void	pmap_shootdown_range(pmap_t, vaddr_t, vaddr_t);
+void	pmap_shootdown_range(pmap_t, vaddr_t, vaddr_t, boolean_t);
 void	pmap_shootdown_range_action(void *);
 #else
-#define	pmap_shootdown_range(pmap, sva, eva)	do { /* nothing */ } while (0)
+#define	pmap_shootdown_range(pmap, sva, eva, needisync) \
+	do { /* nothing */ } while (0)
 #endif
 
 #ifdef PMAPDEBUG
@@ -266,10 +267,11 @@ struct pmap_shootdown_range_arg {
 	pmap_t		pmap;
 	vaddr_t		sva;
 	vaddr_t		eva;
+	boolean_t	needisync;
 };
 
 void
-pmap_shootdown_range(pmap_t pmap, vaddr_t sva, vaddr_t eva)
+pmap_shootdown_range(pmap_t pmap, vaddr_t sva, vaddr_t eva, boolean_t needisync)
 {
 	struct pmap_shootdown_range_arg sr_arg;
 	struct cpu_info *ci, *self = curcpu();
@@ -300,6 +302,7 @@ pmap_shootdown_range(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			sr_arg.eva = va + SHOOTDOWN_MAX * PAGE_SIZE;
 			if (sr_arg.eva > eva)
 				sr_arg.eva = eva;
+			sr_arg.needisync = needisync;
 			smp_rendezvous_cpus(cpumask,
 			    pmap_shootdown_range_action, &sr_arg);
 		}
@@ -318,6 +321,9 @@ pmap_shootdown_range_action(void *arg)
 	} else {
 		for (va = sr_arg->sva; va < sr_arg->eva; va += PAGE_SIZE)
 			pmap_invalidate_user_page(sr_arg->pmap, va);
+		if (sr_arg->needisync)
+			Mips_InvalidateICache(curcpu(), sr_arg->sva,
+			    sr_arg->eva - sr_arg->sva);
 	}
 }
 
@@ -608,7 +614,7 @@ pmap_collect(pmap_t pmap)
 			if (n == 0) {
 				pmpg = pde[j];
 				pde[j] = NULL;
-				pmap_shootdown_range(pmap, 0, 0);
+				pmap_shootdown_range(pmap, 0, 0, FALSE);
 				pool_put(&pmap_pg_pool, pmpg);
 			} else
 				m++;
@@ -616,7 +622,7 @@ pmap_collect(pmap_t pmap)
 		if (m == 0) {
 			pmpg = pmap->pm_segtab->seg_tab[i];
 			pmap->pm_segtab->seg_tab[i] = NULL;
-			pmap_shootdown_range(pmap, 0, 0);
+			pmap_shootdown_range(pmap, 0, 0, FALSE);
 			pool_put(&pmap_pg_pool, pmpg);
 		}
 	}
@@ -677,6 +683,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	pt_entry_t ***seg, **pde, *pte, entry;
 	paddr_t pa;
 	struct cpu_info *ci = curcpu();
+	boolean_t needisync = FALSE;
 
 	PMAP_ASSERT_LOCKED(pmap);
 
@@ -712,7 +719,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			pmap_invalidate_kernel_page(va);
 			stat_count(remove_stats.flushes);
 		}
-		pmap_shootdown_range(pmap_kernel(), sva, eva);
+		pmap_shootdown_range(pmap_kernel(), sva, eva, FALSE);
 		return;
 	}
 
@@ -746,17 +753,22 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 				pa = pfn_to_pad(entry);
 				if ((entry & PG_CACHEMODE) == PG_CACHED)
 					Mips_SyncDCachePage(ci, va, pa);
+				if (pg_xi != 0 && (entry & pg_xi) == 0)
+					needisync = TRUE;
 				pmap_remove_pv(pmap, va, pa);
 				*pte = PG_NV;
 				/*
 				 * Flush the TLB for the given address.
 				 */
 				pmap_invalidate_user_page(pmap, va);
+				if (needisync)
+					Mips_InvalidateICache(ci, va,
+					    PAGE_SIZE);
 				stat_count(remove_stats.flushes);
 			}
 		}
 	}
-	pmap_shootdown_range(pmap, sva, eva);
+	pmap_shootdown_range(pmap, sva, eva, needisync);
 }
 
 void
@@ -776,6 +788,7 @@ pmap_page_wrprotect(struct vm_page *pg, vm_prot_t prot)
 	struct cpu_info *ci = curcpu();
 	pt_entry_t *pte, entry, p;
 	pv_entry_t pv;
+	boolean_t needisync = FALSE;
 
 	p = PG_RO;
 	if (!(prot & PROT_EXEC))
@@ -801,7 +814,7 @@ pmap_page_wrprotect(struct vm_page *pg, vm_prot_t prot)
 			*pte = entry;
 			pmap_update_kernel_page(pv->pv_va, entry);
 			pmap_shootdown_range(pmap_kernel(), pv->pv_va,
-			    pv->pv_va + PAGE_SIZE);
+			    pv->pv_va + PAGE_SIZE, FALSE);
 		} else if (pv->pv_pmap != NULL) {
 			pte = pmap_pte_lookup(pv->pv_pmap, pv->pv_va);
 			if (pte == NULL)
@@ -813,11 +826,15 @@ pmap_page_wrprotect(struct vm_page *pg, vm_prot_t prot)
 			    (entry & PG_CACHEMODE) == PG_CACHED)
 				Mips_SyncDCachePage(ci, pv->pv_va,
 				    pfn_to_pad(entry));
+			if (pg_xi != 0 && (entry & pg_xi) == 0)
+				needisync = TRUE;
 			entry = (entry & ~(PG_M | PG_XI)) | p;
 			*pte = entry;
 			pmap_update_user_page(pv->pv_pmap, pv->pv_va, entry);
+			if (needisync)
+				Mips_InvalidateICache(ci, pv->pv_va, PAGE_SIZE);
 			pmap_shootdown_range(pv->pv_pmap, pv->pv_va,
-			    pv->pv_va + PAGE_SIZE);
+			    pv->pv_va + PAGE_SIZE, needisync);
 		}
 	}
 	mtx_leave(&pg->mdpage.pv_mtx);
@@ -912,6 +929,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	vaddr_t ndsva, nssva, va;
 	pt_entry_t ***seg, **pde, *pte, entry, p;
 	struct cpu_info *ci = curcpu();
+	boolean_t needisync = FALSE;
 
 	DPRINTF(PDB_FOLLOW|PDB_PROTECT,
 		("pmap_protect(%p, %p, %p, 0x%x)\n",
@@ -959,7 +977,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			 */
 			pmap_update_kernel_page(va, entry);
 		}
-		pmap_shootdown_range(pmap_kernel(), sva, eva);
+		pmap_shootdown_range(pmap_kernel(), sva, eva, FALSE);
 		pmap_unlock(pmap);
 		return;
 	}
@@ -997,13 +1015,18 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 						Mips_SyncDCachePage(ci, va,
 						    pfn_to_pad(entry));
 				}
+				if (pg_xi != 0 && (entry & pg_xi) == 0)
+					needisync = TRUE;
 				entry = (entry & ~(PG_M | PG_RO | PG_XI)) | p;
 				*pte = entry;
 				pmap_update_user_page(pmap, va, entry);
+				if (needisync)
+					Mips_InvalidateICache(ci, va,
+					    PAGE_SIZE);
 			}
 		}
 	}
-	pmap_shootdown_range(pmap, sva, eva);
+	pmap_shootdown_range(pmap, sva, eva, needisync);
 
 	pmap_unlock(pmap);
 }
@@ -1024,6 +1047,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	vm_page_t pg;
 	struct cpu_info *ci = curcpu();
 	u_long cpuid = ci->ci_cpuid;
+	boolean_t needisync = FALSE;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
@@ -1169,7 +1193,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		*pte = npte;
 		pmap_update_kernel_page(va, npte);
 		if ((opte & PG_V) != 0)
-			pmap_shootdown_range(pmap_kernel(), va, va + PAGE_SIZE);
+			pmap_shootdown_range(pmap_kernel(), va, va + PAGE_SIZE,
+			    FALSE);
 		if (pg != NULL)
 			mtx_leave(&pg->mdpage.pv_mtx);
 		pmap_unlock(pmap);
@@ -1224,8 +1249,13 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	opte = *pte;
 	*pte = npte;
 	pmap_update_user_page(pmap, va, npte);
-	if ((opte & PG_V) != 0)
-		pmap_shootdown_range(pmap, va, va + PAGE_SIZE);
+	if ((opte & PG_V) != 0) {
+		if (pg_xi != 0 && (opte & pg_xi) == 0) {
+			needisync = TRUE;
+			Mips_InvalidateICache(ci, va, PAGE_SIZE);
+		}
+		pmap_shootdown_range(pmap, va, va + PAGE_SIZE, needisync);
+	}
 
 	/*
 	 * If mapping an executable page, invalidate ICache
@@ -1279,7 +1309,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	*pte = npte;
 	pmap_update_kernel_page(va, npte);
 	if ((opte & PG_V) != 0)
-		pmap_shootdown_range(pmap_kernel(), va, va + PAGE_SIZE);
+		pmap_shootdown_range(pmap_kernel(), va, va + PAGE_SIZE, FALSE);
 }
 
 /*
@@ -1312,7 +1342,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			Mips_HitSyncDCachePage(ci, va, pfn_to_pad(entry));
 		*pte = PG_NV | PG_G;
 		pmap_invalidate_kernel_page(va);
-		pmap_shootdown_range(pmap_kernel(), va, va + PAGE_SIZE);
+		pmap_shootdown_range(pmap_kernel(), va, va + PAGE_SIZE, FALSE);
 		atomic_dec_long(&pmap_kernel()->pm_stats.wired_count);
 		atomic_dec_long(&pmap_kernel()->pm_stats.resident_count);
 	}
@@ -1564,7 +1594,7 @@ pmap_clear_modify(struct vm_page *pg)
 				*pte = entry;
 				pmap_update_kernel_page(pv->pv_va, entry);
 				pmap_shootdown_range(pmap_kernel(), pv->pv_va,
-				    pv->pv_va + PAGE_SIZE);
+				    pv->pv_va + PAGE_SIZE, FALSE);
 			}
 		} else if (pv->pv_pmap != NULL) {
 			pte = pmap_pte_lookup(pv->pv_pmap, pv->pv_va);
@@ -1580,7 +1610,7 @@ pmap_clear_modify(struct vm_page *pg)
 				pmap_update_user_page(pv->pv_pmap, pv->pv_va,
 				    entry);
 				pmap_shootdown_range(pv->pv_pmap, pv->pv_va,
-				    pv->pv_va + PAGE_SIZE);
+				    pv->pv_va + PAGE_SIZE, FALSE);
 			}
 		}
 	}
@@ -1739,7 +1769,7 @@ pmap_do_page_cache(vm_page_t pg, u_int mode)
 				*pte = entry;
 				pmap_update_kernel_page(pv->pv_va, entry);
 				pmap_shootdown_range(pmap_kernel(), pv->pv_va,
-				    pv->pv_va + PAGE_SIZE);
+				    pv->pv_va + PAGE_SIZE, FALSE);
 			}
 		} else if (pv->pv_pmap != NULL) {
 			pte = pmap_pte_lookup(pv->pv_pmap, pv->pv_va);
@@ -1752,7 +1782,7 @@ pmap_do_page_cache(vm_page_t pg, u_int mode)
 				pmap_update_user_page(pv->pv_pmap, pv->pv_va,
 				    entry);
 				pmap_shootdown_range(pv->pv_pmap, pv->pv_va,
-				    pv->pv_va + PAGE_SIZE);
+				    pv->pv_va + PAGE_SIZE, FALSE);
 			}
 		}
 	}
