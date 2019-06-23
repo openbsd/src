@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.19 2019/06/22 15:51:54 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.20 2019/06/23 05:05:07 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -160,23 +160,52 @@ function test_md {
 	echo $text > $dgstdat
 	hmac_key="test-hmac-key"
 	cmac_key="1234567890abcde1234567890abcde12"
+	dgstkey=$user1_dir/dgstkey.pem
+	dgstpass=test-dgst-pass
+	dgstpub=$user1_dir/dgstpub.pem
+	dgstsig=$user1_dir/dgst.sig
+
+	$openssl_bin genrsa -aes256 -passout pass:$dgstpass -out $dgstkey
+	check_exit_status $?
+	
+	$openssl_bin pkey -in $dgstkey -passin pass:$dgstpass -pubout \
+		-out $dgstpub
+	check_exit_status $?
 	
 	digests=`$openssl_bin list-message-digest-commands`
 	
 	for d in $digests ; do
 	
 		echo -n "$d ... "
-		$openssl_bin dgst -$d -out $dgstdat.$d $dgstdat
+		$openssl_bin dgst -$d -hex -out $dgstdat.$d $dgstdat
 		check_exit_status $?
 	
 		echo -n "$d HMAC ... "
-		$openssl_bin dgst -$d -hmac $hmac_key -out $dgstdat.$d.hmac \
+		$openssl_bin dgst -$d -c -hmac $hmac_key -out $dgstdat.$d.hmac \
 			$dgstdat
 		check_exit_status $?
 	
 		echo -n "$d CMAC ... "
-		$openssl_bin dgst -$d -mac cmac -macopt cipher:aes-128-cbc \
+		$openssl_bin dgst -$d -r -mac cmac -macopt cipher:aes-128-cbc \
 			-macopt hexkey:$cmac_key -out $dgstdat.$d.cmac $dgstdat
+		check_exit_status $?
+
+		echo -n "$d sign ... "
+		$openssl_bin dgst -sign $dgstkey -keyform pem \
+			-sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:8 \
+			-passin pass:$dgstpass -binary -out $dgstsig.$d $dgstdat
+		check_exit_status $?
+
+		echo -n "$d verify ... "
+		$openssl_bin dgst -verify $dgstpub \
+			-sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:8 \
+			-signature $dgstsig.$d $dgstdat
+		check_exit_status $?
+
+		echo -n "$d prverify ... "
+		$openssl_bin dgst -prverify $dgstkey -passin pass:$dgstpass \
+			-sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:8 \
+			-signature $dgstsig.$d $dgstdat
 		check_exit_status $?
 	done
 }
