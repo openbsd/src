@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.52 2019/05/01 14:13:12 florian Exp $	*/
+/*	$OpenBSD: main.c,v 1.53 2019/06/23 18:54:24 rob Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -193,6 +193,10 @@ main(int argc, char *argv[])
 	if (LO == NULL)
 		LO = _PATH_LOGIN;
 	if (unveil(LO, "x") == -1) {
+		syslog(LOG_ERR, "%s: %m", tname);
+		exit(1);
+	}
+	if (unveil(NULL, NULL) == -1) {
 		syslog(LOG_ERR, "%s: %m", tname);
 		exit(1);
 	}
