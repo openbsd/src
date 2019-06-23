@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.11 2018/10/12 18:37:22 kettenis Exp $
+#	$OpenBSD: install.md,v 1.12 2019/06/23 14:34:09 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@ md_installboot() {
 	local _disk=/dev/$1 _mdec _plat
 
 	case $(sysctl -n hw.product) in
-	*Pine64*)			_plat=pine64;;
+	Pine64*(+))			_plat=pine64;;
 	*'Raspberry Pi'*)		_plat=rpi;;
 	esac
 
@@ -74,7 +74,7 @@ md_prep_fdisk() {
 	local _disk=$1 _d
 
 	local bootparttype="C"
-	local bootsectorstart="8192"
+	local bootsectorstart="32768"
 	local bootsectorsize="32768"
 	local bootsectorend=$(($bootsectorstart + $bootsectorsize))
 	local bootfstype="msdos"

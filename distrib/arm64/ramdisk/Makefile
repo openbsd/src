@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.14 2019/05/03 20:03:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2019/06/23 14:34:09 kettenis Exp $
 
 FS=		miniroot${OSrev}.fs
-FSSIZE=		43008
+FSSIZE=		67584
 FSDISKTYPE=	miniroot
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 RAMDISK=	RAMDISK
 
-MSDOSSTART=	8192
+MSDOSSTART=	32768
 MSDOSSIZE=	8192
 FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
 
