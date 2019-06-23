@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/03/05 09:44:39 jsg Exp $
+# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:39 patrick Exp $
 
 LIB=	LLVMAMDGPUCodeGen
 NOPROFILE=
@@ -12,8 +12,10 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUAnnotateUniformValues.cpp \
 	AMDGPUArgumentUsageInfo.cpp \
 	AMDGPUAsmPrinter.cpp \
+	AMDGPUAtomicOptimizer.cpp \
 	AMDGPUCallLowering.cpp \
 	AMDGPUCodeGenPrepare.cpp \
+	AMDGPUFixFunctionBitcasts.cpp \
 	AMDGPUFrameLowering.cpp \
 	AMDGPUHSAMetadataStreamer.cpp \
 	AMDGPUInstrInfo.cpp \
@@ -47,7 +49,9 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUInline.cpp \
 	AMDGPUPerfHintAnalysis.cpp \
 	AMDILCFGStructurizer.cpp \
+	GCNDPPCombine.cpp \
 	GCNHazardRecognizer.cpp \
+	GCNILPSched.cpp \
 	GCNIterativeScheduler.cpp \
 	GCNMinRegStrategy.cpp \
 	GCNRegPressure.cpp \
@@ -66,11 +70,13 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	R600OptimizeVectorRegisters.cpp \
 	R600Packetizer.cpp \
 	R600RegisterInfo.cpp \
+	SIAddIMGInit.cpp \
 	SIAnnotateControlFlow.cpp \
 	SIDebuggerInsertNops.cpp \
 	SIFixSGPRCopies.cpp \
 	SIFixVGPRCopies.cpp \
 	SIFixWWMLiveness.cpp \
+	SIFixupVectorISel.cpp \
 	SIFoldOperands.cpp \
 	SIFormMemoryClauses.cpp \
 	SIFrameLowering.cpp \
@@ -84,12 +90,12 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	SIMachineFunctionInfo.cpp \
 	SIMachineScheduler.cpp \
 	SIMemoryLegalizer.cpp \
+	SIModeRegister.cpp \
 	SIOptimizeExecMasking.cpp \
 	SIOptimizeExecMaskingPreRA.cpp \
 	SIPeepholeSDWA.cpp \
 	SIRegisterInfo.cpp \
 	SIShrinkInstructions.cpp \
-	SIWholeQuadMode.cpp \
-	GCNILPSched.cpp
+	SIWholeQuadMode.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/AMDGPU

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.6 2019/06/23 22:07:39 patrick Exp $
 
 LIB=	LLVMAsmPrinter
 NOPROFILE=
@@ -10,7 +10,7 @@ SRCS+=	ARMException.cpp \
 	AsmPrinterDwarf.cpp \
 	AsmPrinterInlineAsm.cpp \
 	CodeViewDebug.cpp \
-	DbgValueHistoryCalculator.cpp \
+	DbgEntityHistoryCalculator.cpp \
 	DebugHandlerBase.cpp \
 	DebugLocStream.cpp \
 	DIE.cpp \
@@ -25,6 +25,7 @@ SRCS+=	ARMException.cpp \
 	EHStreamer.cpp \
 	ErlangGCPrinter.cpp \
 	OcamlGCPrinter.cpp \
+	WasmException.cpp \
 	WinCFGuard.cpp \
 	WinException.cpp
 

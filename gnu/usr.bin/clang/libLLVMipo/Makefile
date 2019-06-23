@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2019/03/05 09:44:42 jsg Exp $
+# $OpenBSD: Makefile,v 1.11 2019/06/23 22:07:41 patrick Exp $
 
 LIB=	LLVMipo
 NOPROFILE=
@@ -22,6 +22,7 @@ SRCS+=	ArgumentPromotion.cpp \
 	GlobalDCE.cpp \
 	GlobalOpt.cpp \
 	GlobalSplit.cpp \
+	HotColdSplitting.cpp \
 	IPConstantPropagation.cpp \
 	IPO.cpp \
 	InferFunctionAttrs.cpp \

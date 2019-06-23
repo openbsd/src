@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2019/02/26 23:39:51 jsg Exp $
+# $OpenBSD: Makefile,v 1.10 2019/06/23 22:07:41 patrick Exp $
 
 LIB=	LLVMSupport
 NOPIC=
@@ -7,12 +7,14 @@ NOPROFILE=
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Support
 
 .include <bsd.own.mk>
-SRCS=	AMDGPUMetadata.cpp \
+SRCS=	AArch64TargetParser.cpp \
+	AMDGPUMetadata.cpp \
 	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
 	ARMAttributeParser.cpp \
 	ARMBuildAttrs.cpp \
+	ARMTargetParser.cpp \
 	ARMWinEH.cpp \
 	Allocator.cpp \
 	BinaryStreamError.cpp \
@@ -21,6 +23,7 @@ SRCS=	AMDGPUMetadata.cpp \
 	BinaryStreamWriter.cpp \
 	BlockFrequency.cpp \
 	BranchProbability.cpp \
+	BuryPointer.cpp \
 	circular_raw_ostream.cpp \
 	COM.cpp \
 	CachePruning.cpp \
@@ -39,6 +42,7 @@ SRCS=	AMDGPUMetadata.cpp \
 	DeltaAlgorithm.cpp \
 	SupportError.cpp \
 	ErrorHandling.cpp \
+	FileCheck.cpp \
 	FileUtilities.cpp \
 	FileOutputBuffer.cpp \
 	FoldingSet.cpp \
@@ -50,6 +54,7 @@ SRCS=	AMDGPUMetadata.cpp \
 	InitLLVM.cpp \
 	IntEqClasses.cpp \
 	IntervalMap.cpp \
+	ItaniumManglingCanonicalizer.cpp \
 	JSON.cpp \
 	JamCRC.cpp \
 	KnownBits.cpp \
@@ -82,6 +87,7 @@ SRCS=	AMDGPUMetadata.cpp \
 	StringPool.cpp \
 	StringSaver.cpp \
 	StringRef.cpp \
+	SymbolRemappingReader.cpp \
 	SystemUtils.cpp \
 	TarWriter.cpp \
 	TargetParser.cpp \
@@ -118,6 +124,7 @@ SRCS=	AMDGPUMetadata.cpp \
 	UnicodeCaseFold.cpp \
 	Valgrind.cpp \
 	VersionTuple.cpp \
+	VirtualFileSystem.cpp \
 	Watchdog.cpp \
 	WithColor.cpp \
 	xxhash.cpp

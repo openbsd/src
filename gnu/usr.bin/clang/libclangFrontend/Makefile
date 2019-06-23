@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2019/06/23 22:07:42 patrick Exp $
 
 LIB=	clangFrontend
 NOPIC=
@@ -10,10 +10,8 @@ CPPFLAGS+=	${CLANG_INCLUDES}
 SRCS=	ASTConsumers.cpp \
 	ASTMerge.cpp \
 	ASTUnit.cpp \
-	CacheTokens.cpp \
 	ChainedDiagnosticConsumer.cpp \
 	ChainedIncludesSource.cpp \
-	CodeGenOptions.cpp \
 	CompilerInstance.cpp \
 	CompilerInvocation.cpp \
 	CreateInvocationFromCommandLine.cpp \
@@ -32,7 +30,6 @@ SRCS=	ASTConsumers.cpp \
 	LogDiagnosticPrinter.cpp \
 	ModuleDependencyCollector.cpp \
 	MultiplexConsumer.cpp \
-	PCHContainerOperations.cpp \
 	PrecompiledPreamble.cpp \
 	PrintPreprocessedOutput.cpp \
 	SerializedDiagnosticPrinter.cpp \

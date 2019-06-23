@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2019/06/23 22:07:41 patrick Exp $
 
 LIB=	clangAST
 NOPIC=
@@ -13,6 +13,7 @@ SRCS=	APValue.cpp \
 	ASTDiagnostic.cpp \
 	ASTDumper.cpp \
 	ASTImporter.cpp \
+	ASTImporterLookupTable.cpp \
 	ASTStructuralEquivalence.cpp \
 	ASTTypeTraits.cpp \
 	AttrImpl.cpp \
@@ -39,8 +40,9 @@ SRCS=	APValue.cpp \
 	ExprConstant.cpp \
 	ExprCXX.cpp \
 	ExprObjC.cpp \
-	ExternalASTSource.cpp \
 	ExternalASTMerger.cpp \
+	ExternalASTSource.cpp \
+	FormatString.cpp \
 	InheritViz.cpp \
 	ItaniumCXXABI.cpp \
 	ItaniumMangle.cpp \
@@ -50,12 +52,15 @@ SRCS=	APValue.cpp \
 	NestedNameSpecifier.cpp \
 	NSAPI.cpp \
 	ODRHash.cpp \
+	OSLog.cpp \
 	OpenMPClause.cpp \
 	ParentMap.cpp \
+	PrintfFormatString.cpp \
 	QualTypeNames.cpp \
 	RawCommentList.cpp \
 	RecordLayout.cpp \
 	RecordLayoutBuilder.cpp \
+	ScanfFormatString.cpp \
 	SelectorLocationsKind.cpp \
 	Stmt.cpp \
 	StmtCXX.cpp \
@@ -67,6 +72,7 @@ SRCS=	APValue.cpp \
 	StmtViz.cpp \
 	TemplateBase.cpp \
 	TemplateName.cpp \
+	TextNodeDumper.cpp \
 	Type.cpp \
 	TypeLoc.cpp \
 	TypePrinter.cpp \

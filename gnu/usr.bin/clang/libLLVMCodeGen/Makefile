@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.12 2019/06/23 22:07:39 patrick Exp $
 
 LIB=	LLVMCodeGen
 NOPROFILE=
@@ -45,6 +45,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	InlineSpiller.cpp \
 	InterferenceCache.cpp \
 	InterleavedAccessPass.cpp \
+	InterleavedLoadCombinePass.cpp \
 	IntrinsicLowering.cpp \
 	LLVMTargetMachine.cpp \
 	LatencyPriorityQueue.cpp \
@@ -89,7 +90,6 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineOperand.cpp \
 	MachineOptimizationRemarkEmitter.cpp \
 	MachineOutliner.cpp \
-	MachinePassRegistry.cpp \
 	MachinePipeliner.cpp \
 	MachinePostDominators.cpp \
 	MachineRegisterInfo.cpp \

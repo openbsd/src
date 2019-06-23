@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2019/03/05 09:44:41 jsg Exp $
+# $OpenBSD: Makefile,v 1.11 2019/06/23 22:07:41 patrick Exp $
 
 LIB=	LLVMScalarOpts
 NOPROFILE=
@@ -52,6 +52,7 @@ SRCS+=	ADCE.cpp \
 	LowerAtomic.cpp \
 	LowerExpectIntrinsic.cpp \
 	LowerGuardIntrinsic.cpp \
+	MakeGuardsExplicit.cpp \
 	MemCpyOptimizer.cpp \
 	MergeICmps.cpp \
 	MergedLoadStoreMotion.cpp \
@@ -74,7 +75,8 @@ SRCS+=	ADCE.cpp \
 	SpeculativeExecution.cpp \
 	StraightLineStrengthReduce.cpp \
 	StructurizeCFG.cpp \
-	TailRecursionElimination.cpp
+	TailRecursionElimination.cpp \
+	WarnMissedTransforms.cpp
 
 ScalarSCCP.cpp:
 	ln -s ${LLVM_SRCS}/lib/Transforms/Scalar/SCCP.cpp $@

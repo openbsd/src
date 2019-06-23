@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2019/06/23 22:07:43 patrick Exp $
 
 LIB=	lldbHostCommon
 NOPIC=
@@ -18,8 +18,6 @@ SRCS=	Editline.cpp \
 	LockFileBase.cpp \
 	MainLoop.cpp \
 	MonitoringProcessLauncher.cpp \
-	NativeBreakpoint.cpp \
-	NativeBreakpointList.cpp \
 	NativeWatchpointList.cpp \
 	NativeProcessProtocol.cpp \
 	NativeRegisterContext.cpp \
@@ -30,7 +28,6 @@ SRCS=	Editline.cpp \
 	PseudoTerminal.cpp \
 	Socket.cpp \
 	SocketAddress.cpp \
-	SoftwareBreakpoint.cpp \
 	StringConvert.cpp \
 	Symbols.cpp \
 	TaskPool.cpp \

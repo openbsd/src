@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2019/03/05 09:44:42 jsg Exp $
+# $OpenBSD: Makefile,v 1.11 2019/06/23 22:07:41 patrick Exp $
 
 LIB=	LLVMTransformUtils
 NOPROFILE=
@@ -13,6 +13,7 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	BuildLibCalls.cpp \
 	BypassSlowDivision.cpp \
 	CallPromotionUtils.cpp \
+	CanonicalizeAliases.cpp \
 	CloneFunction.cpp \
 	CloneModule.cpp \
 	CodeExtractor.cpp \
@@ -25,6 +26,7 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	FunctionComparator.cpp \
 	FunctionImportUtils.cpp \
 	GlobalStatus.cpp \
+	TransformUtilsGuardUtils.cpp \
 	ImportedFunctionsInliningStatistics.cpp \
 	InlineFunction.cpp \
 	InstructionNamer.cpp \
@@ -47,7 +49,6 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	MetaRenamer.cpp \
 	ModuleUtils.cpp \
 	NameAnonGlobals.cpp \
-	OrderedInstructions.cpp \
 	PredicateInfo.cpp \
 	PromoteMemoryToRegister.cpp \
 	StripGCRelocates.cpp \
@@ -63,6 +64,9 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	TransformUtilsUtils.cpp \
 	VNCoercion.cpp \
 	ValueMapper.cpp
+
+TransformUtilsGuardUtils.cpp:
+	ln -s ${LLVM_SRCS}/lib/Transforms/Utils/GuardUtils.cpp $@
 
 TransformUtilsUtils.cpp:
 	ln -s ${LLVM_SRCS}/lib/Transforms/Utils/Utils.cpp $@

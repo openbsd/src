@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:43 patrick Exp $
 
 LIB=	lldbPluginExpressionParser
 NOPIC=
@@ -18,13 +18,9 @@ SRCS=	ASTDumper.cpp \
 	ClangPersistentVariables.cpp \
 	ClangUserExpression.cpp \
 	ClangUtilityFunction.cpp \
-	GoLexer.cpp \
-	GoParser.cpp \
-	GoUserExpression.cpp \
 	IRForTarget.cpp \
 
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/ExpressionParser/Clang
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/ExpressionParser/Go
 
 install:
 	@# Nothing here so far ...

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.4 2019/06/23 22:07:40 patrick Exp $
 
 LIB=	LLVMDebugInfoPDB
 NOPROFILE=
@@ -21,13 +21,21 @@ SRCS+=	DbiModuleDescriptor.cpp \
 	InfoStreamBuilder.cpp \
 	ModuleDebugStream.cpp \
 	NamedStreamMap.cpp \
-	NativeBuiltinSymbol.cpp \
 	NativeCompilandSymbol.cpp \
+	NativeEnumGlobals.cpp \
 	NativeEnumModules.cpp \
-	NativeEnumSymbol.cpp \
 	NativeEnumTypes.cpp \
 	NativeExeSymbol.cpp \
 	NativeRawSymbol.cpp \
+	NativeSymbolEnumerator.cpp \
+	NativeTypeArray.cpp \
+	NativeTypeBuiltin.cpp \
+	NativeTypeEnum.cpp \
+	NativeTypeFunctionSig.cpp \
+	NativeTypePointer.cpp \
+	NativeTypeTypedef.cpp \
+	NativeTypeUDT.cpp \
+	NativeTypeVTShape.cpp \
 	NativeSession.cpp \
 	PDB.cpp \
 	PDBContext.cpp \
@@ -72,6 +80,7 @@ SRCS+=	DbiModuleDescriptor.cpp \
 	PDBSymbolUsingNamespace.cpp \
 	PublicsStream.cpp \
 	RawError.cpp \
+	SymbolCache.cpp \
 	SymbolStream.cpp \
 	TpiHashing.cpp \
 	TpiStream.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2019/06/23 22:07:45 patrick Exp $
 
 PROG=	llvm-tblgen
 NOMAN=
@@ -25,6 +25,7 @@ SRCS=	AsmMatcherEmitter.cpp \
 	DAGISelMatcher.cpp \
 	DFAPacketizerEmitter.cpp \
 	DisassemblerEmitter.cpp \
+	ExegesisEmitter.cpp \
 	FastISelEmitter.cpp \
 	FixedLenDecoderEmitter.cpp \
 	GlobalISelEmitter.cpp \

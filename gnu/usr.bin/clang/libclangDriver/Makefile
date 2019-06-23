@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2019/06/23 22:07:42 patrick Exp $
 
 LIB=	clangDriver
 NOPIC=
@@ -21,6 +21,7 @@ SRCS=	AMDGPU.cpp \
 	CrossWindows.cpp \
 	Cuda.cpp \
 	Darwin.cpp \
+	DarwinSDKInfo.cpp \
 	Distro.cpp \
 	DragonFly.cpp \
 	Driver.cpp \
@@ -31,8 +32,10 @@ SRCS=	AMDGPU.cpp \
 	HIP.cpp \
 	Haiku.cpp \
 	Hexagon.cpp \
+	Hurd.cpp \
 	Job.cpp \
 	Linux.cpp \
+	MSP430.cpp \
 	MSVC.cpp \
 	MinGW.cpp \
 	Minix.cpp \
@@ -44,7 +47,7 @@ SRCS=	AMDGPU.cpp \
 	OpenBSD.cpp \
 	PS4CPU.cpp \
 	Phases.cpp \
-	RISCV.cpp \
+	RISCVToolchain.cpp \
 	SanitizerArgs.cpp \
 	Solaris.cpp \
 	TCE.cpp \

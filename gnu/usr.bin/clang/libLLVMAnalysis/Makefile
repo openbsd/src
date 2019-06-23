@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.10 2019/06/23 22:07:39 patrick Exp $
 
 LIB=	LLVMAnalysis
 NOPROFILE=
@@ -36,10 +36,13 @@ SRCS+=	AliasAnalysis.cpp \
 	DominanceFrontier.cpp \
 	EHPersonalities.cpp \
 	GlobalsModRef.cpp \
+	GuardUtils.cpp \
+	IVDescriptors.cpp \
 	IVUsers.cpp \
 	IndirectCallPromotionAnalysis.cpp \
 	InlineCost.cpp \
 	InstCount.cpp \
+	InstructionPrecedenceTracking.cpp \
 	InstructionSimplify.cpp \
 	Interval.cpp \
 	IntervalPartition.cpp \
@@ -48,6 +51,7 @@ SRCS+=	AliasAnalysis.cpp \
 	LazyBranchProbabilityInfo.cpp \
 	LazyCallGraph.cpp \
 	LazyValueInfo.cpp \
+	LegacyDivergenceAnalysis.cpp \
 	Lint.cpp \
 	Loads.cpp \
 	LoopAccessAnalysis.cpp \
@@ -70,6 +74,7 @@ SRCS+=	AliasAnalysis.cpp \
 	ObjCARCInstKind.cpp \
 	OptimizationRemarkEmitter.cpp \
 	OrderedBasicBlock.cpp \
+	OrderedInstructions.cpp \
 	PHITransAddr.cpp \
 	PhiValues.cpp \
 	PostDominators.cpp \
@@ -82,6 +87,8 @@ SRCS+=	AliasAnalysis.cpp \
 	ScalarEvolutionAliasAnalysis.cpp \
 	ScalarEvolutionExpander.cpp \
 	ScalarEvolutionNormalization.cpp \
+	StackSafetyAnalysis.cpp \
+	SyncDependenceAnalysis.cpp \
 	SyntheticCountsUtils.cpp \
 	TargetLibraryInfo.cpp \
 	TargetTransformInfo.cpp \

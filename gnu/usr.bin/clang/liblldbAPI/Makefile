@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2019/06/23 22:07:42 patrick Exp $
 
 LIB=	lldbAPI
 NOPIC=
@@ -30,6 +30,7 @@ SRCS=	SBAddress.cpp \
 	SBFrame.cpp \
 	SBFunction.cpp \
 	SBHostOS.cpp \
+	SBInitializerOptions.cpp \
 	SBInstruction.cpp \
 	SBInstructionList.cpp \
 	SBLanguageRuntime.cpp \

@@ -1,11 +1,12 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2019/06/23 22:07:37 patrick Exp $
 
 .include <bsd.own.mk>
 
 TBLGEN=	${.OBJDIR}/../../../clang-tblgen/clang-tblgen
 CLANG_INC=${.CURDIR}/../../../../../llvm/tools/clang/include
 
-GEN= AttrDump.inc AttrImpl.inc AttrVisitor.inc Attrs.inc
+GEN= AttrImpl.inc AttrTextNodeDump.inc AttrNodeTraverse.inc
+GEN+=AttrVisitor.inc Attrs.inc
 GEN+=CommentCommandInfo.inc CommentCommandList.inc
 GEN+=CommentHTMLNamedCharacterReferences.inc CommentHTMLTags.inc
 GEN+=CommentHTMLTagsProperties.inc CommentNodes.inc DeclNodes.inc StmtNodes.inc
@@ -18,12 +19,16 @@ install:
 clean cleandir:
 	rm -f ${GEN}
 
-AttrDump.inc: ${CLANG_INC}/clang/Basic/Attr.td
-	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-dump \
-		-o ${.TARGET} ${.ALLSRC}
-
 AttrImpl.inc: ${CLANG_INC}/clang/Basic/Attr.td
 	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-impl \
+		-o ${.TARGET} ${.ALLSRC}
+
+AttrTextNodeDump.inc: ${CLANG_INC}/clang/Basic/Attr.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-text-node-dump \
+		-o ${.TARGET} ${.ALLSRC}
+
+AttrNodeTraverse.inc: ${CLANG_INC}/clang/Basic/Attr.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-attr-node-traverse \
 		-o ${.TARGET} ${.ALLSRC}
 
 AttrVisitor.inc: ${CLANG_INC}/clang/Basic/Attr.td

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:44 patrick Exp $
 
 LIB=	lldbPluginProcess
 NOPIC=
@@ -10,6 +10,8 @@ SRCS=	DynamicRegisterInfo.cpp \
 	GDBRemoteClientBase.cpp \
 	GDBRemoteCommunication.cpp \
 	GDBRemoteCommunicationClient.cpp \
+	GDBRemoteCommunicationHistory.cpp \
+	GDBRemoteCommunicationReplayServer.cpp \
 	GDBRemoteCommunicationServer.cpp \
 	GDBRemoteCommunicationServerLLGS.cpp \
 	GDBRemoteCommunicationServerPlatform.cpp \
@@ -18,6 +20,7 @@ SRCS=	DynamicRegisterInfo.cpp \
 	HistoryThread.cpp \
 	HistoryUnwind.cpp \
 	InferiorCallPOSIX.cpp \
+	LinuxProcMaps.cpp \
 	LinuxSignals.cpp \
 	MinidumpParser.cpp \
 	MinidumpTypes.cpp \
@@ -50,6 +53,8 @@ SRCS=	DynamicRegisterInfo.cpp \
 	RegisterContextMach_i386.cpp \
 	RegisterContextMach_x86_64.cpp \
 	RegisterContextMemory.cpp \
+	RegisterContextMinidump_ARM.cpp \
+	RegisterContextMinidump_ARM64.cpp \
 	RegisterContextMinidump_x86_32.cpp \
 	RegisterContextMinidump_x86_64.cpp \
 	RegisterContextNetBSD_x86_64.cpp \

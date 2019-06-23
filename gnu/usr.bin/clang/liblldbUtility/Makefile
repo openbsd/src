@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:45 patrick Exp $
 
 LIB=	lldbUtility
 NOPIC=
@@ -9,6 +9,7 @@ NOPROFILE=
 SRCS=	ArchSpec.cpp \
 	Args.cpp \
 	Baton.cpp \
+	Broadcaster.cpp \
 	CompletionRequest.cpp \
 	Connection.cpp \
 	ConstString.cpp \
@@ -17,18 +18,22 @@ SRCS=	ArchSpec.cpp \
 	DataEncoder.cpp \
 	DataExtractor.cpp \
 	Environment.cpp \
-	FastDemangle.cpp \
+	Event.cpp \
 	FileSpec.cpp \
 	IOObject.cpp \
 	JSON.cpp \
 	LLDBAssert.cpp \
+	Listener.cpp \
 	Log.cpp \
 	Logging.cpp \
 	NameMatches.cpp \
-	Range.cpp \
+	RegisterValue.cpp \
 	RegularExpression.cpp \
+	Reproducer.cpp \
+	Scalar.cpp \
 	SelectHelper.cpp \
 	SharingPtr.cpp \
+	State.cpp \
 	Status.cpp \
 	Stream.cpp \
 	StreamCallback.cpp \

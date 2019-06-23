@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2019/06/23 22:07:43 patrick Exp $
 
 LIB=	lldbBreakpoint
 NOPIC=
@@ -20,6 +20,7 @@ SRCS=	Breakpoint.cpp \
 	BreakpointResolverFileLine.cpp \
 	BreakpointResolverFileRegex.cpp \
 	BreakpointResolverName.cpp \
+	BreakpointResolverScripted.cpp \
 	BreakpointSite.cpp \
 	BreakpointSiteList.cpp \
 	Stoppoint.cpp \

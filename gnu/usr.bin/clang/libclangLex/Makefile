@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:42 patrick Exp $
 
 LIB=	clangLex
 NOPIC=
@@ -21,7 +21,6 @@ SRCS=	HeaderMap.cpp \
 	PPExpressions.cpp \
 	PPLexerChange.cpp \
 	PPMacroExpansion.cpp \
-	PTHLexer.cpp \
 	Pragma.cpp \
 	PreprocessingRecord.cpp \
 	Preprocessor.cpp \

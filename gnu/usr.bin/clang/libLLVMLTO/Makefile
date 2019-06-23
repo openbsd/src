@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.6 2019/06/23 22:07:40 patrick Exp $
 
 LIB=	LLVMLTO
 NOPROFILE=
@@ -10,6 +10,7 @@ SRCS+=	Caching.cpp \
 	LTOBackend.cpp \
 	LTOCodeGenerator.cpp \
 	LTOModule.cpp \
+	SummaryBasedOptimizations.cpp \
 	UpdateCompilerUsed.cpp \
 	ThinLTOCodeGenerator.cpp
 

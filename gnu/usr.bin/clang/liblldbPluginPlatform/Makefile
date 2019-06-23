@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2019/06/23 22:07:44 patrick Exp $
 
 LIB=	lldbPluginPlatform
 NOPIC=
@@ -20,6 +20,7 @@ SRCS=	AdbClient.cpp \
 	PlatformNetBSD.cpp \
 	PlatformOpenBSD.cpp \
 	PlatformPOSIX.cpp \
+	PlatformRemoteAppleBridge.cpp \
 	PlatformRemoteAppleTV.cpp \
 	PlatformRemoteAppleWatch.cpp \
 	PlatformRemoteDarwinDevice.cpp \
