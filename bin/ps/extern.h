@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.20 2016/09/08 15:11:29 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.21 2019/06/23 17:18:50 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -72,6 +72,7 @@ void	 runame(const struct kinfo_proc *, VARENT *);
 void	 showkey(void);
 void	 started(const struct kinfo_proc *, VARENT *);
 void	 printstate(const struct kinfo_proc *, VARENT *);
+void	 printpledge(const struct kinfo_proc *, VARENT *);
 void	 tdev(const struct kinfo_proc *, VARENT *);
 void	 tname(const struct kinfo_proc *, VARENT *);
 void	 tsize(const struct kinfo_proc *, VARENT *);

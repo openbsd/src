@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.190 2019/06/23 16:57:00 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.191 2019/06/23 17:18:50 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -416,6 +416,7 @@ struct kinfo_proc {
 
 	u_int16_t p_xstat;		/* U_SHORT: Exit status for wait; also stop signal. */
 	u_int16_t p_acflag;		/* U_SHORT: Accounting flags. */
+	u_int64_t p_pledge;		/* U_INT64_T: Pledge flags. */
 
 	char	p_comm[KI_MAXCOMLEN];
 
@@ -615,6 +616,7 @@ do {									\
 									\
 	(kp)->p_xstat = (p)->p_xstat;					\
 	(kp)->p_acflag = (pr)->ps_acflag;				\
+	(kp)->p_pledge = (pr)->ps_pledge;				\
 									\
 	/* XXX depends on e_name being an array and not a pointer */	\
 	copy_str((kp)->p_emul, (char *)(pr)->ps_emul +			\

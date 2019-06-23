@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.46 2019/06/23 16:57:02 deraadt Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.47 2019/06/23 17:18:50 deraadt Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -141,6 +141,7 @@ VAR var[] = {
 	{"pending", "", "sig"},
 	PID("pgid", "PGID", pvar, POFF(p__pgid)),
 	PID("pid", "PID", pvar, POFF(p_pid)),
+	{"pledge", "PLEDGE", NULL, LJUST|NLIST, printpledge, 64},
 	{"pmem", "", "%mem"},
 	PID("ppid", "PPID", pvar, POFF(p_ppid)),
 	{"pri", "PRI", NULL, 0, pri, 3},

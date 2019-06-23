@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.73 2019/06/23 16:57:02 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.74 2019/06/23 17:18:50 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -36,6 +36,8 @@
 #include <sys/stat.h>
 
 #include <sys/sysctl.h>
+#define PLEDGENAMES
+#include <sys/pledge.h>
 
 #include <err.h>
 #include <grp.h>
@@ -295,6 +297,28 @@ printstate(const struct kinfo_proc *kp, VARENT *ve)
 		*++cp = '\0';
 		strlcat(buf, pbuf, sizeof buf);
 		cp = buf + strlen(buf);
+	}
+
+	(void)printf("%-*s", v->width, buf);
+}
+
+void
+printpledge(const struct kinfo_proc *kp, VARENT *ve)
+{
+	int flag, i;
+	char *cp, state = '\0';
+	VAR *v;
+	char buf[1024];
+
+	v = ve->var;
+	buf[0] = '\0';
+
+	for (i = 0; pledgenames[i].bits != 0; i++) {
+		if (pledgenames[i].bits & kp->p_pledge) {
+			if (*buf != '\0')
+				strlcat(buf, ",", sizeof buf);
+			strlcat(buf, pledgenames[i].name, sizeof buf);
+		}
 	}
 
 	(void)printf("%-*s", v->width, buf);
