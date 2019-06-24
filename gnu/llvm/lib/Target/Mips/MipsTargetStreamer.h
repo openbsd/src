@@ -185,6 +185,10 @@ public:
     return *ABI;
   }
 
+  void setGPReg(unsigned GPReg) {
+    this->GPReg = GPReg;
+  }
+
 protected:
   llvm::Optional<MipsABIInfo> ABI;
   MipsABIFlagsSection ABIFlagsSection;
@@ -199,6 +203,7 @@ protected:
 
   bool FrameInfoSet;
   int FrameOffset;
+  unsigned GPReg;
   unsigned FrameReg;
   unsigned ReturnReg;
 

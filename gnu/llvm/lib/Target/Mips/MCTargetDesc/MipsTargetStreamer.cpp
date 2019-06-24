@@ -38,6 +38,7 @@ static cl::opt<bool> RoundSectionSizes(
 MipsTargetStreamer::MipsTargetStreamer(MCStreamer &S)
     : MCTargetStreamer(S), ModuleDirectiveAllowed(true) {
   GPRInfoSet = FPRInfoSet = FrameInfoSet = false;
+  GPReg = Mips::GP;
 }
 void MipsTargetStreamer::emitDirectiveSetMicroMips() {}
 void MipsTargetStreamer::emitDirectiveSetNoMicroMips() {}
@@ -258,8 +259,7 @@ void MipsTargetStreamer::emitNop(SMLoc IDLoc, const MCSubtargetInfo *STI) {
 /// Emit the $gp restore operation for .cprestore.
 void MipsTargetStreamer::emitGPRestore(int Offset, SMLoc IDLoc,
                                        const MCSubtargetInfo *STI) {
-  emitLoadWithImmOffset(Mips::LW, Mips::GP, Mips::SP, Offset, Mips::GP, IDLoc,
-                        STI);
+  emitLoadWithImmOffset(Mips::LW, GPReg, Mips::SP, Offset, GPReg, IDLoc, STI);
 }
 
 /// Emit a store instruction with an immediate offset.
@@ -1133,7 +1133,7 @@ void MipsTargetELFStreamer::emitDirectiveCpLoad(unsigned RegNo) {
 
   MCInst TmpInst;
   TmpInst.setOpcode(Mips::LUi);
-  TmpInst.addOperand(MCOperand::createReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::createReg(GPReg));
   const MCExpr *HiSym = MipsMCExpr::create(
       MipsMCExpr::MEK_HI,
       MCSymbolRefExpr::create("_gp_disp", MCSymbolRefExpr::VK_None,
@@ -1145,8 +1145,8 @@ void MipsTargetELFStreamer::emitDirectiveCpLoad(unsigned RegNo) {
   TmpInst.clear();
 
   TmpInst.setOpcode(Mips::ADDiu);
-  TmpInst.addOperand(MCOperand::createReg(Mips::GP));
-  TmpInst.addOperand(MCOperand::createReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::createReg(GPReg));
+  TmpInst.addOperand(MCOperand::createReg(GPReg));
   const MCExpr *LoSym = MipsMCExpr::create(
       MipsMCExpr::MEK_LO,
       MCSymbolRefExpr::create("_gp_disp", MCSymbolRefExpr::VK_None,
@@ -1158,8 +1158,8 @@ void MipsTargetELFStreamer::emitDirectiveCpLoad(unsigned RegNo) {
   TmpInst.clear();
 
   TmpInst.setOpcode(Mips::ADDu);
-  TmpInst.addOperand(MCOperand::createReg(Mips::GP));
-  TmpInst.addOperand(MCOperand::createReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::createReg(GPReg));
+  TmpInst.addOperand(MCOperand::createReg(GPReg));
   TmpInst.addOperand(MCOperand::createReg(RegNo));
   getStreamer().EmitInstruction(TmpInst, STI);
 
@@ -1182,7 +1182,7 @@ bool MipsTargetELFStreamer::emitDirectiveCpRestore(
     return true;
 
   // Store the $gp on the stack.
-  emitStoreWithImmOffset(Mips::SW, Mips::GP, Mips::SP, Offset, GetATReg, IDLoc,
+  emitStoreWithImmOffset(Mips::SW, GPReg, Mips::SP, Offset, GetATReg, IDLoc,
                          STI);
   return true;
 }
@@ -1203,10 +1203,10 @@ void MipsTargetELFStreamer::emitDirectiveCpsetup(unsigned RegNo,
   // Either store the old $gp in a register or on the stack
   if (IsReg) {
     // move $save, $gpreg
-    emitRRR(Mips::OR64, RegOrOffset, Mips::GP, Mips::ZERO, SMLoc(), &STI);
+    emitRRR(Mips::OR64, RegOrOffset, GPReg, Mips::ZERO, SMLoc(), &STI);
   } else {
     // sd $gpreg, offset($sp)
-    emitRRI(Mips::SD, Mips::GP, Mips::SP, RegOrOffset, SMLoc(), &STI);
+    emitRRI(Mips::SD, GPReg, Mips::SP, RegOrOffset, SMLoc(), &STI);
   }
 
   if (getABI().IsN32()) {
@@ -1219,10 +1219,10 @@ void MipsTargetELFStreamer::emitDirectiveCpsetup(unsigned RegNo,
         MCA.getContext());
 
     // lui $gp, %hi(__gnu_local_gp)
-    emitRX(Mips::LUi, Mips::GP, MCOperand::createExpr(HiExpr), SMLoc(), &STI);
+    emitRX(Mips::LUi, GPReg, MCOperand::createExpr(HiExpr), SMLoc(), &STI);
 
     // addiu  $gp, $gp, %lo(__gnu_local_gp)
-    emitRRX(Mips::ADDiu, Mips::GP, Mips::GP, MCOperand::createExpr(LoExpr),
+    emitRRX(Mips::ADDiu, GPReg, GPReg, MCOperand::createExpr(LoExpr),
             SMLoc(), &STI);
 
     return;
@@ -1236,14 +1236,14 @@ void MipsTargetELFStreamer::emitDirectiveCpsetup(unsigned RegNo,
       MCA.getContext());
 
   // lui $gp, %hi(%neg(%gp_rel(funcSym)))
-  emitRX(Mips::LUi, Mips::GP, MCOperand::createExpr(HiExpr), SMLoc(), &STI);
+  emitRX(Mips::LUi, GPReg, MCOperand::createExpr(HiExpr), SMLoc(), &STI);
 
   // addiu  $gp, $gp, %lo(%neg(%gp_rel(funcSym)))
-  emitRRX(Mips::ADDiu, Mips::GP, Mips::GP, MCOperand::createExpr(LoExpr),
+  emitRRX(Mips::ADDiu, GPReg, GPReg, MCOperand::createExpr(LoExpr),
           SMLoc(), &STI);
 
   // daddu  $gp, $gp, $funcreg
-  emitRRR(Mips::DADDu, Mips::GP, Mips::GP, RegNo, SMLoc(), &STI);
+  emitRRR(Mips::DADDu, GPReg, GPReg, RegNo, SMLoc(), &STI);
 }
 
 void MipsTargetELFStreamer::emitDirectiveCpreturn(unsigned SaveLocation,
@@ -1256,12 +1256,12 @@ void MipsTargetELFStreamer::emitDirectiveCpreturn(unsigned SaveLocation,
   // Either restore the old $gp from a register or on the stack
   if (SaveLocationIsRegister) {
     Inst.setOpcode(Mips::OR);
-    Inst.addOperand(MCOperand::createReg(Mips::GP));
+    Inst.addOperand(MCOperand::createReg(GPReg));
     Inst.addOperand(MCOperand::createReg(SaveLocation));
     Inst.addOperand(MCOperand::createReg(Mips::ZERO));
   } else {
     Inst.setOpcode(Mips::LD);
-    Inst.addOperand(MCOperand::createReg(Mips::GP));
+    Inst.addOperand(MCOperand::createReg(GPReg));
     Inst.addOperand(MCOperand::createReg(Mips::SP));
     Inst.addOperand(MCOperand::createImm(SaveLocation));
   }

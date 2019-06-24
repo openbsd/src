@@ -145,6 +145,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool IsPicEnabled;
   bool IsCpRestoreSet;
   int CpRestoreOffset;
+  unsigned GPRegister;
   unsigned CpSaveLocation;
   /// If true, then CpSaveLocation is a register, otherwise it's an offset.
   bool     CpSaveLocationIsRegister;
@@ -326,6 +327,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetFeature(uint64_t Feature);
   bool isPicAndNotNxxAbi(); // Used by .cpload, .cprestore, and .cpsetup.
   bool parseDirectiveCpLoad(SMLoc Loc);
+  bool parseDirectiveCpLocal(SMLoc Loc);
   bool parseDirectiveCpRestore(SMLoc Loc);
   bool parseDirectiveCPSetup();
   bool parseDirectiveCPReturn();
@@ -519,6 +521,7 @@ public:
 
     IsCpRestoreSet = false;
     CpRestoreOffset = -1;
+    GPRegister = ABI.GetGlobalPtr();
 
     const Triple &TheTriple = sti.getTargetTriple();
     IsLittleEndian = TheTriple.isLittleEndian();
@@ -2059,7 +2062,7 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
             MipsMCExpr::create(MipsMCExpr::MEK_GOT_DISP, JalExpr, getContext());
 
         TOut.emitRRX(ABI.ArePtrs64bit() ? Mips::LD : Mips::LW, Mips::T9,
-                     Mips::GP, MCOperand::createExpr(GotDispRelocExpr), IDLoc,
+                     GPRegister, MCOperand::createExpr(GotDispRelocExpr), IDLoc,
                      STI);
       }
     } else {
@@ -2070,7 +2073,8 @@ bool MipsAsmParser::processInstruction(MCInst &Inst, SMLoc IDLoc,
       const MCExpr *Call16RelocExpr =
           MipsMCExpr::create(MipsMCExpr::MEK_GOT_CALL, JalExpr, getContext());
 
-      TOut.emitRRX(ABI.ArePtrs64bit() ? Mips::LD : Mips::LW, Mips::T9, Mips::GP,
+      TOut.emitRRX(ABI.ArePtrs64bit() ? Mips::LD : Mips::LW, Mips::T9,
+                   GPRegister,
                    MCOperand::createExpr(Call16RelocExpr), IDLoc, STI);
     }
 
@@ -2889,7 +2893,7 @@ bool MipsAsmParser::loadAndAddSymbolAddress(const MCExpr *SymExpr,
                ELF::STB_LOCAL))) {
       const MCExpr *CallExpr =
           MipsMCExpr::create(MipsMCExpr::MEK_GOT_CALL, SymExpr, getContext());
-      TOut.emitRRX(Mips::LW, DstReg, ABI.GetGlobalPtr(),
+      TOut.emitRRX(Mips::LW, DstReg, GPRegister,
                    MCOperand::createExpr(CallExpr), IDLoc, STI);
       return false;
     }
@@ -2929,7 +2933,7 @@ bool MipsAsmParser::loadAndAddSymbolAddress(const MCExpr *SymExpr,
       TmpReg = ATReg;
     }
 
-    TOut.emitRRX(Mips::LW, TmpReg, ABI.GetGlobalPtr(),
+    TOut.emitRRX(Mips::LW, TmpReg, GPRegister,
                  MCOperand::createExpr(GotExpr), IDLoc, STI);
 
     if (LoExpr)
@@ -2965,7 +2969,7 @@ bool MipsAsmParser::loadAndAddSymbolAddress(const MCExpr *SymExpr,
                ELF::STB_LOCAL))) {
       const MCExpr *CallExpr =
           MipsMCExpr::create(MipsMCExpr::MEK_GOT_CALL, SymExpr, getContext());
-      TOut.emitRRX(Mips::LD, DstReg, ABI.GetGlobalPtr(),
+      TOut.emitRRX(Mips::LD, DstReg, GPRegister,
                    MCOperand::createExpr(CallExpr), IDLoc, STI);
       return false;
     }
@@ -3008,7 +3012,7 @@ bool MipsAsmParser::loadAndAddSymbolAddress(const MCExpr *SymExpr,
       TmpReg = ATReg;
     }
 
-    TOut.emitRRX(Mips::LD, TmpReg, ABI.GetGlobalPtr(),
+    TOut.emitRRX(Mips::LD, TmpReg, GPRegister,
                  MCOperand::createExpr(GotExpr), IDLoc, STI);
 
     if (LoExpr)
@@ -3239,10 +3243,10 @@ bool MipsAsmParser::emitPartialAddress(MipsTargetStreamer &TOut, SMLoc IDLoc,
         MipsMCExpr::create(MipsMCExpr::MEK_GOT, GotSym, getContext());
 
     if(isABI_O32() || isABI_N32()) {
-      TOut.emitRRX(Mips::LW, ATReg, Mips::GP, MCOperand::createExpr(GotExpr),
+      TOut.emitRRX(Mips::LW, ATReg, GPRegister, MCOperand::createExpr(GotExpr),
                    IDLoc, STI);
     } else { //isABI_N64()
-      TOut.emitRRX(Mips::LD, ATReg, Mips::GP, MCOperand::createExpr(GotExpr),
+      TOut.emitRRX(Mips::LD, ATReg, GPRegister, MCOperand::createExpr(GotExpr),
                    IDLoc, STI);
     }
   } else { //!IsPicEnabled
@@ -7127,6 +7131,36 @@ bool MipsAsmParser::parseDirectiveCpLoad(SMLoc Loc) {
   return false;
 }
 
+bool MipsAsmParser::parseDirectiveCpLocal(SMLoc Loc) {
+  if (!isABI_N32() && !isABI_N64()) {
+    reportParseError(".cplocal is allowed only in N32 or N64 mode");
+    return false;
+  }
+
+  SmallVector<std::unique_ptr<MCParsedAsmOperand>, 1> Reg;
+  OperandMatchResultTy ResTy = parseAnyRegister(Reg);
+  if (ResTy == MatchOperand_NoMatch || ResTy == MatchOperand_ParseFail) {
+    reportParseError("expected register containing function address");
+    return false;
+  }
+
+  MipsOperand &RegOpnd = static_cast<MipsOperand &>(*Reg[0]);
+  if (!RegOpnd.isGPRAsmReg()) {
+    reportParseError(RegOpnd.getStartLoc(), "invalid register");
+    return false;
+  }
+
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token, expected end of statement");
+    return false;
+  }
+
+  GPRegister = RegOpnd.getGPR32Reg();
+  getTargetStreamer().setGPReg(GPRegister);
+  return false;
+}
+
 bool MipsAsmParser::parseDirectiveCpRestore(SMLoc Loc) {
   MCAsmParser &Parser = getParser();
 
@@ -7971,6 +8005,10 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
 
   if (IDVal == ".cpload") {
     parseDirectiveCpLoad(DirectiveID.getLoc());
+    return false;
+  }
+  if (IDVal == ".cplocal") {
+    parseDirectiveCpLocal(DirectiveID.getLoc());
     return false;
   }
   if (IDVal == ".cprestore") {
