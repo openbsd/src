@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.52 2017/03/04 22:46:19 tj Exp $
+dnl	$OpenBSD: INSTALL,v 1.53 2019/06/24 01:21:46 rob Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -42,8 +42,11 @@ Because OpenBSD is from Canada, the export of Cryptography pieces
 the US.  Because of this, take care NOT to get the distribution from
 a mirror server in the US if you are outside of Canada and the US.)
 
+A list of software and ideas developed by the OpenBSD project is
+available on the web at https://www.OpenBSD.org/innovations.html.
+
 A comprehensive list of the improvements brought by the OSREV release
-is available on the web at https://www.OpenBSD.org/OSrev.html.
+is also available at https://www.OpenBSD.org/OSrev.html.
 dnl
 dnl MACHINE/whatis
 dnl A few descriptive words about the port to MACHINE (i.e. what kind
