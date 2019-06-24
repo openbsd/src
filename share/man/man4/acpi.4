@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.58 2019/06/17 18:28:17 patrick Exp $
+.\"	$OpenBSD: acpi.4,v 1.59 2019/06/24 21:33:27 kettenis Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2019 $
+.Dd $Mdocdate: June 24 2019 $
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -100,6 +100,8 @@ AMD cryptographic co-processor
 Intel Cherry View GPIO controller
 .It Xr dwiic 4
 Synopsys DesignWare I2C controller
+.It Xr glkgpio 4
+Intel Gemini Lake GPIO controller
 .It Xr tpm 4
 Trusted Platform Module device
 .El

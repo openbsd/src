@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.474 2019/06/17 18:28:17 patrick Exp $
+#	$OpenBSD: GENERIC,v 1.475 2019/06/24 21:33:27 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -64,6 +64,7 @@ aibs*		at acpi?
 aplgpio*	at acpi?
 bytgpio*	at acpi?
 chvgpio*	at acpi?
+glkgpio*	at acpi?
 sdhc*		at acpi?
 acpicbkbd*	at acpi?
 acpials*	at acpi?
