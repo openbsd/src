@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.20 2019/06/23 05:05:07 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.21 2019/06/24 15:17:36 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -959,12 +959,21 @@ function test_ocsp {
 	# --- OCSP operations ---
 	section_message "OCSP operations"
 	
+	# get key without pass
+	user1_key_nopass=$user1_dir/user1_key_nopass.pem
+	$openssl_bin pkey -in $user1_key -passin pass:$user1_pass \
+		-out $user1_key_nopass
+	check_exit_status $?
+
 	# request
 	start_message "ocsp ... create OCSP request"
 	
 	ocsp_req=$user1_dir/ocsp_req.der
 	$openssl_bin ocsp -issuer $ca_cert -cert $server_cert \
-		-cert $revoke_cert -CAfile $ca_cert -reqout $ocsp_req
+		-cert $revoke_cert -serial 1 -nonce -no_certs -CAfile $ca_cert \
+		-signer $user1_cert -signkey $user1_key_nopass \
+		-sign_other $user1_cert -sha256 \
+		-reqout $ocsp_req -req_text -out $ocsp_req.out
 	check_exit_status $?
 	
 	# response
@@ -973,7 +982,9 @@ function test_ocsp {
 	ocsp_res=$user1_dir/ocsp_res.der
 	$openssl_bin ocsp -index  $ca_dir/index.txt -CA $ca_cert \
 		-CAfile $ca_cert -rsigner $ocsp_cert -rkey $ocsp_key \
-		-reqin $ocsp_req -respout $ocsp_res -text > $ocsp_res.out 2>&1
+		-reqin $ocsp_req -rother $ocsp_cert -resp_no_certs -noverify \
+		-nmin 60 -validity_period 300 -status_age 300 \
+		-respout $ocsp_res -resp_text -out $ocsp_res.out
 	check_exit_status $?
 	
 	# ocsp server
@@ -981,9 +992,11 @@ function test_ocsp {
 	
 	ocsp_port=8888
 	
+	ocsp_svr_log=$user1_dir/ocsp_svr.log
 	$openssl_bin ocsp -index  $ca_dir/index.txt -CA $ca_cert \
 		-CAfile $ca_cert -rsigner $ocsp_cert -rkey $ocsp_key \
-		-port '*:'$ocsp_port -nrequest 1 &
+		-host localhost -port $ocsp_port -path / -ndays 1 -nrequest 1 \
+		-resp_key_id -text -out $ocsp_svr_log &
 	check_exit_status $?
 	ocsp_svr_pid=$!
 	echo "ocsp server pid = [ $ocsp_svr_pid ]"
@@ -994,9 +1007,19 @@ function test_ocsp {
 	
 	ocsp_qry=$user1_dir/ocsp_qry.der
 	$openssl_bin ocsp -issuer $ca_cert -cert $server_cert \
-		-cert $revoke_cert -CAfile $ca_cert \
-		-url http://localhost:$ocsp_port -resp_text \
-		-respout $ocsp_qry > $ocsp_qry.out 2>&1
+		-cert $revoke_cert -CAfile $ca_cert -no_nonce \
+		-url http://localhost:$ocsp_port -timeout 10 -text \
+		-header Host localhost \
+		-respout $ocsp_qry -out $ocsp_qry.out
+	check_exit_status $?
+
+	# verify response from server
+	start_message "ocsp ... verify OCSP response from server"
+
+	$openssl_bin ocsp -respin $ocsp_qry -CAfile $ca_cert \
+	-ignore_err -no_signature_verify -no_cert_verify -no_chain \
+	-no_cert_checks -no_explicit -trust_other -no_intern \
+	-verify_other $ocsp_cert -VAfile $ocsp_cert
 	check_exit_status $?
 }
 
