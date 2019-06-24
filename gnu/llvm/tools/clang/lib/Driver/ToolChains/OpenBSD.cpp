@@ -154,10 +154,9 @@ void openbsd::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     const char *crt0 = nullptr;
     const char *crtbegin = nullptr;
     if (!Args.hasArg(options::OPT_shared)) {
-      if (Args.hasArg(options::OPT_pg)) {
-        CmdArgs.push_back("-nopie");
+      if (Args.hasArg(options::OPT_pg))
         crt0 = "gcrt0.o";
-      } else if (Args.hasArg(options::OPT_static) &&
+      else if (Args.hasArg(options::OPT_static) &&
                !Args.hasArg(options::OPT_nopie))
         crt0 = "rcrt0.o";
       else
