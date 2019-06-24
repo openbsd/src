@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.67 2019/03/04 18:41:40 denis Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.68 2019/06/24 13:43:19 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -599,11 +599,11 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	mq_purge(&pxd->pxd_svcq);
 
-	free(pxd, M_DEVBUF, 0);
+	free(pxd, M_DEVBUF, sizeof(*pxd));
 
 	if (LIST_EMPTY(&pppx_devs)) {
 		pool_destroy(pppx_if_pl);
-		free(pppx_if_pl, M_DEVBUF, 0);
+		free(pppx_if_pl, M_DEVBUF, sizeof(*pppx_if_pl));
 		pppx_if_pl = NULL;
 	}
 
@@ -652,7 +652,7 @@ pppx_if_find(struct pppx_dev *pxd, int session_id, int protocol)
 		p = NULL;
 	rw_exit_read(&pppx_ifs_lk);
 
-	free(s, M_DEVBUF, 0);
+	free(s, M_DEVBUF, sizeof(*s));
 	return (p);
 }
 
