@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2016/11/15 10:43:41 mpi Exp $ */
+/*	$OpenBSD: main.c,v 1.6 2019/06/24 12:33:36 visa Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -58,9 +58,9 @@ main(int argc, char *argv[])
 
 	do_from_file(0, AF_INET6, filename, route_insert);
 
-	rtable_walk(0, AF_INET6, rtentry_delete, NULL);
+	rtable_walk(0, AF_INET6, NULL, rtentry_delete, NULL);
 
-	rtable_walk(0, AF_INET6, rtentry_dump, NULL);
+	rtable_walk(0, AF_INET6, NULL, rtentry_dump, NULL);
 
 #ifdef ART
 	struct art_root *ar;
