@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.24 2019/05/10 21:20:43 mlarkin Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.25 2019/06/24 02:52:58 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -240,14 +240,6 @@ cdprobe(void)
 	dip = alloc(sizeof(struct diskinfo));
 	diskinfo_init(dip);
 
-#if 0
-	if (bios_getdiskinfo(cddev, &dip->bios_info)) {
-		printf(" <!cd0>");	/* XXX */
-		free(dip, sizeof(*dip));
-		return;
-	}
-#endif
-
 	printf(" cd0");
 
 	dip->bios_info.bios_number = cddev;
@@ -414,7 +406,8 @@ check_hibernate(struct diskinfo *dip)
 	    DL_GETPSIZE(&dip->disklabel.d_partitions[1]) -
             (sizeof(union hibernate_info) / DEV_BSIZE);
 
-	error = dip->strategy(dip, F_READ, (daddr32_t)sec, sizeof hib, &hib, NULL);
+	error = dip->strategy(dip, F_READ, (daddr32_t)sec, sizeof hib, &hib,
+	    NULL);
 	if (error == 0 && hib.magic == HIBERNATE_MAGIC)
 		dip->bios_info.flags |= BDI_HIBVALID; /* Hibernate present */
 }
