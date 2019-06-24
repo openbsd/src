@@ -3605,6 +3605,10 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
       TOut.emitRRR(isGP64bit() ? Mips::DADDu : Mips::ADDu, TmpReg, TmpReg,
                    BaseReg, IDLoc, STI);
     TOut.emitRRI(Inst.getOpcode(), DstReg, TmpReg, LoOffset, IDLoc, STI);
+  } else if (inPicMode()) {
+    expandLoadAddress(TmpReg, Mips::NoRegister, OffsetOp, !ABI.ArePtrs64bit(),
+                      IDLoc, Out, STI);
+    TOut.emitRRI(Inst.getOpcode(), DstReg, TmpReg, 0, IDLoc, STI);
   } else {
     assert(OffsetOp.isExpr() && "expected expression operand kind");
     const MCExpr *ExprOffset = OffsetOp.getExpr();
