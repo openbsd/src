@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.148 2019/02/17 15:02:22 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.149 2019/06/24 06:45:06 claudio Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1128,6 +1128,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 		err = usbd_get_desc(dev, UDESC_DEVICE, 0, USB_MAX_IPACKET, dd);
 		if (!err)
 			break;
+		if (err == USBD_TIMEOUT)
+			goto fail;
 		usbd_delay_ms(dev, 100+50*i);
 	}
 
@@ -1141,6 +1143,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 				USB_DEVICE_DESCRIPTOR_SIZE, dd);
 			if (!err)
 				break;
+			if (err == USBD_TIMEOUT)
+				goto fail;
 			usbd_delay_ms(dev, 100+50*i);
 		}
 	}
@@ -1155,6 +1159,7 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	}
 
 	if (err) {
+fail:
 		usb_free_device(dev);
 		up->device = NULL;
 		return (err);
