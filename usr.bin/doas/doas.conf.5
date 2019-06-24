@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.39 2019/06/21 17:02:27 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.40 2019/06/24 14:45:52 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: June 21 2019 $
+.Dd $Mdocdate: June 24 2019 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -127,12 +127,13 @@ and
 unsetting
 .Ev ENV ;
 permits tedu to run procmap as root without a password;
-and additionally permits root to run unrestricted commands as itself.
+and additionally permits root to run unrestricted commands as itself
+while retaining the original PATH.
 .Bd -literal -offset indent
 permit persist setenv { PKG_CACHE PKG_PATH } aja cmd pkg_add
 permit setenv { -ENV PS1=$DOAS_PS1 SSH_AUTH_SOCK } :wheel
 permit nopass tedu as root cmd /usr/sbin/procmap
-permit nopass keepenv root as root
+permit nopass keepenv setenv { PATH=$PATH } root as root
 .Ed
 .Sh SEE ALSO
 .Xr doas 1
