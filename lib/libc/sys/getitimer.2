@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.32 2019/02/07 02:56:13 cheloha Exp $
+.\"	$OpenBSD: getitimer.2,v 1.33 2019/06/24 21:20:12 schwarze Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getitimer.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: February 7 2019 $
+.Dd $Mdocdate: June 24 2019 $
 .Dt GETITIMER 2
 .Os
 .Sh NAME
@@ -126,6 +126,8 @@ signal is delivered.
 Because this signal may interrupt in-progress
 system calls, programs using this timer must be prepared to
 restart interrupted system calls.
+.Sh RETURN VALUES
+.Rv -std
 .Sh ERRORS
 .Fn getitimer
 and
