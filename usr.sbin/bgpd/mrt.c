@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.95 2019/06/22 05:44:05 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.96 2019/06/24 06:39:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -34,7 +34,8 @@
 #include "mrt.h"
 #include "log.h"
 
-int mrt_attr_dump(struct ibuf *, struct rde_aspath *, struct bgpd_addr *, int);
+int mrt_attr_dump(struct ibuf *, struct rde_aspath *, struct rde_community *,
+    struct bgpd_addr *, int);
 int mrt_dump_entry_mp(struct mrt *, struct prefix *, u_int16_t,
     struct rde_peer*);
 int mrt_dump_entry(struct mrt *, struct prefix *, u_int16_t, struct rde_peer*);
@@ -143,8 +144,8 @@ fail:
 }
 
 int
-mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop,
-    int v2)
+mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct rde_community *c,
+    struct bgpd_addr *nexthop, int v2)
 {
 	struct attr	*oa;
 	u_char		*pdata;
@@ -186,6 +187,10 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop,
 	/* local preference */
 	tmp = htonl(a->lpref);
 	if (attr_writebuf(buf, ATTR_WELL_KNOWN, ATTR_LOCALPREF, &tmp, 4) == -1)
+		return (-1);
+
+	/* communities */
+	if (community_writebuf(buf, c) == -1)
 		return (-1);
 
 	/* dump all other path attributes without modification */
@@ -272,7 +277,8 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	if (mrt_attr_dump(buf, prefix_aspath(p), NULL, 0) == -1) {
+	if (mrt_attr_dump(buf, prefix_aspath(p), prefix_communities(p),
+	    NULL, 0) == -1) {
 		log_warnx("mrt_dump_entry_mp: mrt_attr_dump error");
 		goto fail;
 	}
@@ -401,7 +407,8 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		nh = &addr;
 	} else
 		nh = &nexthop->exit_nexthop;
-	if (mrt_attr_dump(buf, prefix_aspath(p), nh, 0) == -1) {
+	if (mrt_attr_dump(buf, prefix_aspath(p), prefix_communities(p),
+	    nh, 0) == -1) {
 		log_warnx("mrt_dump_entry: mrt_attr_dump error");
 		ibuf_free(buf);
 		return (-1);
@@ -529,7 +536,8 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 			log_warn("%s: ibuf_dynamic", __func__);
 			return (-1);
 		}
-		if (mrt_attr_dump(tbuf, prefix_aspath(p), nh, 1) == -1) {
+		if (mrt_attr_dump(tbuf, prefix_aspath(p), prefix_communities(p),
+		    nh, 1) == -1) {
 			log_warnx("%s: mrt_attr_dump error", __func__);
 			ibuf_free(buf);
 			return (-1);
@@ -641,7 +649,7 @@ mrt_dump_peer(struct ibuf *buf, struct rde_peer *peer)
 			goto fail;
 		}
 		break;
-	case AID_UNSPEC: /* XXX special handling for peer_self? */
+	case AID_UNSPEC: /* XXX special handling for peerself? */
 		DUMP_NLONG(buf, 0);
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.1 2019/06/17 11:02:19 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.2 2019/06/24 06:39:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -604,6 +604,121 @@ community_ext_write(struct rde_community *comm, int ebgp, void *buf,
 	}
 
 	return r;
+}
+
+/*
+ * Convert communities back to the wireformat and dump them into the ibuf buf.
+ * This function is used by the mrt dump code.
+ */
+int
+community_writebuf(struct ibuf *buf, struct rde_community *comm)
+{
+	size_t l, basic_n = 0, large_n = 0, ext_n = 0;
+	int flags;
+
+	/* first count how many communities will be written */
+	for (l = 0; l < comm->nentries; l++)
+		if ((u_int8_t)comm->communities[l].flags ==
+		    COMMUNITY_TYPE_BASIC)
+			basic_n++;
+		else if ((u_int8_t)comm->communities[l].flags ==
+		    COMMUNITY_TYPE_EXT)
+			ext_n++;
+		else if ((u_int8_t)comm->communities[l].flags ==
+		    COMMUNITY_TYPE_LARGE)
+			large_n++;
+
+
+	if (basic_n != 0) {
+		/* write attribute header */
+		flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+		if (comm->flags & PARTIAL_COMMUNITIES)
+			flags |= ATTR_PARTIAL;
+
+		if (attr_writebuf(buf, flags, ATTR_COMMUNITIES, NULL,
+		    basic_n * 4) == -1)
+			return -1;
+
+		/* write out the communities */
+		for (l = 0; l < comm->nentries; l++)
+			if ((u_int8_t)comm->communities[l].flags ==
+			    COMMUNITY_TYPE_BASIC) {
+				u_int16_t c;
+				c = htons(comm->communities[l].data1);
+				if (ibuf_add(buf, &c, sizeof(c)) == -1)
+					return (-1);
+				c = htons(comm->communities[l].data2);
+				if (ibuf_add(buf, &c, sizeof(c)) == -1)
+					return (-1);
+			}
+	}
+	if (ext_n != 0) {
+		/* write attribute header */
+		flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+		if (comm->flags & PARTIAL_COMMUNITIES)
+			flags |= ATTR_PARTIAL;
+
+		if (attr_writebuf(buf, flags, ATTR_EXT_COMMUNITIES, NULL,
+		    ext_n * 8) == -1)
+			return -1;
+
+		/* write out the communities */
+		for (l = 0; l < comm->nentries; l++) {
+			struct community *cp;
+			u_int64_t ext;
+
+			cp = comm->communities + l;
+			if ((u_int8_t)cp->flags != COMMUNITY_TYPE_EXT)
+				continue;
+
+			ext = (u_int64_t)cp->data3 << 48;
+			switch (cp->data3 >> 8) {
+			case EXT_COMMUNITY_TRANS_TWO_AS:
+			case EXT_COMMUNITY_TRANS_OPAQUE:
+			case EXT_COMMUNITY_TRANS_EVPN:
+			case EXT_COMMUNITY_NON_TRANS_OPAQUE:
+				ext |= ((u_int64_t)cp->data1 & 0xffff) << 32;
+				ext |= (u_int64_t)cp->data2;
+				break;
+			case EXT_COMMUNITY_TRANS_FOUR_AS:
+			case EXT_COMMUNITY_TRANS_IPV4:
+				ext |= (u_int64_t)cp->data1 << 16;
+				ext |= (u_int64_t)cp->data2 & 0xffff;
+				break;
+			}
+			ext = htobe64(ext);
+			if (ibuf_add(buf, &ext, sizeof(ext)) == -1)
+				return (-1);
+		}
+	}
+	if (large_n != 0) {
+		/* write attribute header */
+		flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+		if (comm->flags & PARTIAL_COMMUNITIES)
+			flags |= ATTR_PARTIAL;
+
+		if (attr_writebuf(buf, flags, ATTR_LARGE_COMMUNITIES, NULL,
+		    large_n * 12) == -1)
+			return -1;
+
+		/* write out the communities */
+		for (l = 0; l < comm->nentries; l++)
+			if ((u_int8_t)comm->communities[l].flags ==
+			    COMMUNITY_TYPE_LARGE) {
+				u_int32_t c;
+				c = htonl(comm->communities[l].data1);
+				if (ibuf_add(buf, &c, sizeof(c)) == -1)
+					return (-1);
+				c = htonl(comm->communities[l].data2);
+				if (ibuf_add(buf, &c, sizeof(c)) == -1)
+					return (-1);
+				c = htonl(comm->communities[l].data3);
+				if (ibuf_add(buf, &c, sizeof(c)) == -1)
+					return (-1);
+			}
+	}
+
+	return 0;
 }
 
 /*

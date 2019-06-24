@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.217 2019/06/22 05:44:05 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.218 2019/06/24 06:39:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -395,20 +395,21 @@ u_char		*aspath_override(struct aspath *, u_int32_t, u_int32_t,
 		    u_int16_t *);
 int		 aspath_lenmatch(struct aspath *, enum aslen_spec, u_int);
 
-int	 community_match(struct rde_community *, struct community *,
+int	community_match(struct rde_community *, struct community *,
 	    struct rde_peer *);
-int	 community_set(struct rde_community *, struct community *,
+int	community_set(struct rde_community *, struct community *,
 	    struct rde_peer *);
-void	 community_delete(struct rde_community *, struct community *,
+void	community_delete(struct rde_community *, struct community *,
 	    struct rde_peer *);
 
-int	 community_add(struct rde_community *, int, void *, size_t);
-int	 community_large_add(struct rde_community *, int, void *, size_t);
-int	 community_ext_add(struct rde_community *, int, void *, size_t);
+int	community_add(struct rde_community *, int, void *, size_t);
+int	community_large_add(struct rde_community *, int, void *, size_t);
+int	community_ext_add(struct rde_community *, int, void *, size_t);
 
-int	 community_write(struct rde_community *, void *, u_int16_t);
-int	 community_large_write(struct rde_community *, void *, u_int16_t);
-int	 community_ext_write(struct rde_community *, int, void *, u_int16_t);
+int	community_write(struct rde_community *, void *, u_int16_t);
+int	community_large_write(struct rde_community *, void *, u_int16_t);
+int	community_ext_write(struct rde_community *, int, void *, u_int16_t);
+int	community_writebuf(struct ibuf *, struct rde_community *);
 
 void			 communities_init(u_int32_t);
 void			 communities_shutdown(void);
