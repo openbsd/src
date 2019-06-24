@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.67 2018/09/13 12:33:43 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.68 2019/06/24 03:33:09 deraadt Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -798,10 +798,10 @@ reset:
 	 * the posix spec wants).
 	 */
 	hd->gname[sizeof(hd->gname) - 1] = '\0';
-	if (Nflag || gid_from_group(hd->gname, &(arcn->sb.st_gid)) < 0)
+	if (Nflag || gid_from_group(hd->gname, &(arcn->sb.st_gid)) == -1)
 		arcn->sb.st_gid = (gid_t)asc_ul(hd->gid, sizeof(hd->gid), OCT);
 	hd->uname[sizeof(hd->uname) - 1] = '\0';
-	if (Nflag || uid_from_user(hd->uname, &(arcn->sb.st_uid)) < 0)
+	if (Nflag || uid_from_user(hd->uname, &(arcn->sb.st_uid)) == -1)
 		arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
 
 	/*

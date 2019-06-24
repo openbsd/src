@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.27 2018/09/13 12:33:43 millert Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.28 2019/06/24 03:33:09 deraadt Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -155,7 +155,7 @@ usr_add(char *str)
 		 */
 		if ((str[0] == '\\') && (str[1] == '#'))
 			++str;
-		if (uid_from_user(str, &uid) < 0) {
+		if (uid_from_user(str, &uid) == -1) {
 			paxwarn(1, "Unable to find uid for user: %s", str);
 			return(-1);
 		}
@@ -250,7 +250,7 @@ grp_add(char *str)
 		 */
 		if ((str[0] == '\\') && (str[1] == '#'))
 			++str;
-		if (gid_from_group(str, &gid) < 0) {
+		if (gid_from_group(str, &gid) == -1) {
 			paxwarn(1,"Cannot determine gid for group name: %s", str);
 			return(-1);
 		}
