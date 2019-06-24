@@ -3007,6 +3007,20 @@ def LDMacro : MipsAsmPseudoInst<(outs GPR32Opnd:$rt),
 def SDMacro : MipsAsmPseudoInst<(outs GPR32Opnd:$rt),
                                 (ins mem_simm16:$addr), "sd $rt, $addr">,
                                 ISA_MIPS1_NOT_MIPS3;
+
+def SGE : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                            (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
+                            "sge\t$rd, $rs, $rt">;
+def SGEU : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                             (ins GPR32Opnd:$rs, GPR32Opnd:$rt),
+                             "sgeu\t$rd, $rs, $rt">;
+def SGEImm : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                               (ins GPR32Opnd:$rs, simm32_relaxed:$imm),
+                               "sge\t$rd, $rs, $imm">, GPR_32;
+def SGEUImm : MipsAsmPseudoInst<(outs GPR32Opnd:$rd),
+                                (ins GPR32Opnd:$rs, simm32_relaxed:$imm),
+                                "sgeu\t$rd, $rs, $imm">, GPR_32;
+
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//

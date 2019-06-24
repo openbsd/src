@@ -1136,6 +1136,12 @@ let AdditionalPredicates = [NotInMicroMips] in {
 def NORImm64 : NORIMM_DESC_BASE<GPR64Opnd, imm64>, GPR_64;
 def : MipsInstAlias<"nor\t$rs, $imm", (NORImm64 GPR64Opnd:$rs, GPR64Opnd:$rs,
                                                 imm64:$imm)>, GPR_64;
+def SGEImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
+                                 (ins GPR64Opnd:$rs, imm64:$imm),
+                                 "sge\t$rd, $rs, $imm">, GPR_64;
+def SGEUImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
+                                  (ins GPR64Opnd:$rs, imm64:$imm),
+                                  "sgeu\t$rd, $rs, $imm">, GPR_64;
 def SLTImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rs),
                                  (ins GPR64Opnd:$rt, imm64:$imm),
                                  "slt\t$rs, $rt, $imm">, GPR_64;

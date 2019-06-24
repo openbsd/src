@@ -307,6 +307,11 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool expandSeqI(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                   const MCSubtargetInfo *STI);
 
+  bool expandSGE(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
+                 const MCSubtargetInfo *STI);
+  bool expandSGEImm(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
+                    const MCSubtargetInfo *STI);
+
   bool expandMXTRAlias(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                        const MCSubtargetInfo *STI);
 
@@ -2482,6 +2487,14 @@ MipsAsmParser::tryExpandInstruction(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
   case Mips::NORImm:
   case Mips::NORImm64:
     return expandAliasImmediate(Inst, IDLoc, Out, STI) ? MER_Fail : MER_Success;
+  case Mips::SGE:
+  case Mips::SGEU:
+    return expandSGE(Inst, IDLoc, Out, STI) ? MER_Fail : MER_Success;
+  case Mips::SGEImm:
+  case Mips::SGEImm64:
+  case Mips::SGEUImm:
+  case Mips::SGEUImm64:
+    return expandSGEImm(Inst, IDLoc, Out, STI) ? MER_Fail : MER_Success;
   case Mips::SLTImm64:
     if (isInt<16>(Inst.getOperand(2).getImm())) {
       Inst.setOpcode(Mips::SLTi64);
@@ -4935,6 +4948,72 @@ bool MipsAsmParser::expandSeqI(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                Imm, IDLoc, STI);
   TOut.emitRRI(Mips::SLTiu, Inst.getOperand(0).getReg(),
                Inst.getOperand(0).getReg(), 1, IDLoc, STI);
+  return false;
+}
+
+bool MipsAsmParser::expandSGE(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
+                              const MCSubtargetInfo *STI) {
+  MipsTargetStreamer &TOut = getTargetStreamer();
+  unsigned DReg = Inst.getOperand(0).getReg();
+  unsigned SReg = Inst.getOperand(1).getReg();
+  unsigned TReg = Inst.getOperand(2).getReg();
+  unsigned OpCode;
+
+  warnIfNoMacro(IDLoc);
+
+  /* "$sr >= $tr" is equivalent to "not ($sr < $tr)". */
+  switch (Inst.getOpcode()) {
+    case Mips::SGE:
+      OpCode = Mips::SLT;
+      break;
+    case Mips::SGEU:
+      OpCode = Mips::SLTu;
+      break;
+    default:
+      llvm_unreachable("unexpected 'sge' opcode");
+  }
+  TOut.emitRRR(OpCode, DReg, SReg, TReg, IDLoc, STI);
+  TOut.emitRRI(Mips::XORi, DReg, DReg, 1, IDLoc, STI);
+
+  return false;
+}
+
+bool MipsAsmParser::expandSGEImm(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
+                                 const MCSubtargetInfo *STI) {
+  MipsTargetStreamer &TOut = getTargetStreamer();
+  unsigned DReg = Inst.getOperand(0).getReg();
+  unsigned SReg = Inst.getOperand(1).getReg();
+  int64_t ImmVal = Inst.getOperand(2).getImm();
+  unsigned OpCode, OpiCode;
+
+  warnIfNoMacro(IDLoc);
+
+  /* "$sr >= $imm" is equivalent to "not ($sr < $imm)". */
+  switch (Inst.getOpcode()) {
+    case Mips::SGEImm:
+    case Mips::SGEImm64:
+      OpCode = Mips::SLT;
+      OpiCode = Mips::SLTi;
+      break;
+    case Mips::SGEUImm:
+    case Mips::SGEUImm64:
+      OpCode = Mips::SLTu;
+      OpiCode = Mips::SLTiu;
+      break;
+    default:
+      llvm_unreachable("unexpected 'sge' opcode with immediate");
+  }
+
+  if (isInt<16>(ImmVal)) {
+    TOut.emitRRI(OpiCode, DReg, SReg, ImmVal, IDLoc, STI);
+  } else {
+    if (loadImmediate(ImmVal, DReg, Mips::NoRegister, isInt<32>(ImmVal), false,
+                      IDLoc, Out, STI))
+      return true;
+    TOut.emitRRR(OpCode, DReg, SReg, DReg, IDLoc, STI);
+  }
+  TOut.emitRRI(Mips::XORi, DReg, DReg, 1, IDLoc, STI);
+
   return false;
 }
 
