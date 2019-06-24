@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.178 2019/06/22 20:15:09 kn Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.179 2019/06/24 21:36:53 kn Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -1491,7 +1491,7 @@ sppp_increasing_timeout (const struct cp *cp, struct sppp *sp)
 	timo = sp->lcp.max_configure - sp->rst_counter[cp->protoidx];
 	if (timo < 1)
 		timo = 1;
-	timeout_add(&sp->ch[cp->protoidx], timo * sp->lcp.timeout);
+	timeout_add_sec(&sp->ch[cp->protoidx], timo * sp->lcp.timeout);
 }
 
 void
@@ -1608,7 +1608,7 @@ sppp_lcp_init(struct sppp *sp)
 	 * the exponential backoff option.  Note that these values are
 	 * relevant for all control protocols, not just LCP only.
 	 */
-	sp->lcp.timeout = 1 * hz;
+	sp->lcp.timeout = 1;	/* seconds */
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
@@ -3828,7 +3828,7 @@ sppp_pap_open(struct sppp *sp)
 	if (sp->myauth.proto == PPP_PAP) {
 		/* we are peer, send a request, and start a timer */
 		pap.scr(sp);
-		timeout_add(&sp->pap_my_to_ch, sp->lcp.timeout);
+		timeout_add_sec(&sp->pap_my_to_ch, sp->lcp.timeout);
 	}
 }
 

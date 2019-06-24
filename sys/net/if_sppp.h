@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.26 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.27 2019/06/24 21:36:53 kn Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct slcp {
 	u_long	protos;		/* bitmask of protos that are started */
 	u_char  echoid;         /* id of last keepalive echo request */
 	/* restart max values, see RFC 1661 */
-	int	timeout;
+	int	timeout;	/* seconds */
 	int	max_terminate;
 	int	max_configure;
 	int	max_failure;
