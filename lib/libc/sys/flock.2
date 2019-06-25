@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flock.2,v 1.20 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: flock.2,v 1.21 2019/06/25 19:28:31 millert Exp $
 .\"	$NetBSD: flock.2,v 1.5 1995/02/27 12:32:32 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)flock.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: June 25 2019 $
 .Dt FLOCK 2
 .Os
 .Sh NAME
@@ -133,7 +133,9 @@ The argument
 .Fa operation
 has an invalid value.
 .It Bq Er EOPNOTSUPP
-The referenced descriptor is not of the correct type.
+The argument
+.Fa fd
+refers to a file that does not support locking.
 .El
 .Sh SEE ALSO
 .Xr close 2 ,
