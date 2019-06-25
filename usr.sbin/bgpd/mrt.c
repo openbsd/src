@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.96 2019/06/24 06:39:49 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.97 2019/06/25 21:33:55 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -851,7 +851,7 @@ mrt_write(struct mrt *mrt)
 {
 	int	r;
 
-	if ((r = ibuf_write(&mrt->wbuf)) < 0 && errno != EAGAIN) {
+	if ((r = ibuf_write(&mrt->wbuf)) == -1 && errno != EAGAIN) {
 		log_warn("mrt dump aborted, mrt_write");
 		mrt_clean(mrt);
 		mrt_done(mrt);
