@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.32 2017/08/21 21:43:46 jmatthew Exp $ */
+/*	$OpenBSD: ahci.c,v 1.33 2019/06/25 14:12:44 patrick Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -921,11 +921,6 @@ ahci_default_port_start(struct ahci_port *ap, int fre_only)
 		    ap->ap_sc->sc_ccc_ports_cur);
 	}
 #endif
-
-	/* Wait for CR to come on */
-	if (!fre_only &&
-	    ahci_pwait_set(ap, AHCI_PREG_CMD, AHCI_PREG_CMD_CR, 1))
-		return (1);
 
 	return (0);
 }
