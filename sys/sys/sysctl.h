@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.191 2019/06/23 17:18:50 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.192 2019/06/25 14:08:57 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -416,7 +416,6 @@ struct kinfo_proc {
 
 	u_int16_t p_xstat;		/* U_SHORT: Exit status for wait; also stop signal. */
 	u_int16_t p_acflag;		/* U_SHORT: Accounting flags. */
-	u_int64_t p_pledge;		/* U_INT64_T: Pledge flags. */
 
 	char	p_comm[KI_MAXCOMLEN];
 
@@ -467,6 +466,8 @@ struct kinfo_proc {
 	u_int64_t p_vm_map_size;	/* VSIZE_T: virtual size */
 	int32_t   p_tid;		/* PID_T: Thread identifier. */
 	u_int32_t p_rtableid;		/* U_INT: Routing table identifier. */
+
+	u_int64_t p_pledge;		/* U_INT64_T: Pledge flags. */
 };
 
 /*
