@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.96 2019/06/17 13:46:33 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.97 2019/06/25 07:44:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,7 +32,6 @@
 #include <unistd.h>
 
 #include "parser.h"
-#include "irrfilter.h"
 
 enum token_type {
 	NOTOKEN,
@@ -61,15 +60,9 @@ enum token_type {
 	WEIGHT,
 	RD,
 	FAMILY,
-	GETOPT,
 	RTABLE,
 	FILENAME,
 	BULK
-};
-
-enum getopts {
-	GETOPT_NONE,
-	GETOPT_IRRFILTER
 };
 
 struct token {
@@ -118,8 +111,6 @@ static const struct token t_pftable[];
 static const struct token t_prepnbr[];
 static const struct token t_prepself[];
 static const struct token t_weight[];
-static const struct token t_irrfilter[];
-static const struct token t_irrfilter_opts[];
 static const struct token t_log[];
 static const struct token t_fib_table[];
 static const struct token t_show_fib_table[];
@@ -130,7 +121,6 @@ static const struct token t_main[] = {
 	{ KEYWORD,	"fib",		FIB,		t_fib},
 	{ KEYWORD,	"neighbor",	NEIGHBOR,	t_neighbor},
 	{ KEYWORD,	"network",	NONE,		t_network},
-	{ KEYWORD,	"irrfilter",	IRRFILTER,	t_irrfilter},
 	{ KEYWORD,	"log",		NONE,		t_log},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
@@ -469,18 +459,6 @@ static const struct token t_weight[] = {
 	{ ENDTOKEN,	"",			NONE,	NULL}
 };
 
-static const struct token t_irrfilter[] = {
-	{ GETOPT,	"",	GETOPT_IRRFILTER,	t_irrfilter},
-	{ ASNUM,	"",	NONE,			t_irrfilter_opts},
-	{ ENDTOKEN,	"",	NONE,			NULL}
-};
-
-static const struct token t_irrfilter_opts[] = {
-	{ NOTOKEN,	"",		NONE,			NULL},
-	{ FLAG,		"importonly",	F_IMPORTONLY,		t_irrfilter_opts},
-	{ ENDTOKEN,	"",		NONE,			NULL}
-};
-
 static const struct token t_log[] = {
 	{ KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
 	{ KEYWORD,	"brief",	LOG_BRIEF,	NULL},
@@ -509,7 +487,6 @@ int	parse_number(const char *, struct parse_result *, enum token_type);
 void	parsecommunity(struct community *c, int type, char *s);
 void	parseextcommunity(struct community *c, const char *t, char *s);
 int	parse_nexthop(const char *, struct parse_result *);
-int	bgpctl_getopt(int *, char **[], int);
 
 struct parse_result *
 parse(int argc, char *argv[])
@@ -520,10 +497,6 @@ parse(int argc, char *argv[])
 	bzero(&res, sizeof(res));
 	res.rtableid = getrtable();
 	TAILQ_INIT(&res.set);
-	if ((res.irr_outdir = getcwd(NULL, 0)) == NULL) {
-		fprintf(stderr, "getcwd failed: %s\n", strerror(errno));
-		return (NULL);
-	}
 
 	while (argc >= 0) {
 		if ((match = match_token(&argc, &argv, table)) == NULL) {
@@ -799,12 +772,6 @@ match_token(int *argc, char **argv[], const struct token table[])
 				t = &table[i];
 			}
 			break;
-		case GETOPT:
-			if (bgpctl_getopt(argc, argv, table[i].value)) {
-				match++;
-				t = &table[i];
-			}
-			break;
 		case FILENAME:
 			if (word != NULL && wordlen > 0) {
 				if ((res.mrtfd = open(word, O_RDONLY)) == -1) {
@@ -910,9 +877,6 @@ show_valid_args(const struct token table[])
 			break;
 		case FAMILY:
 			fprintf(stderr, "  [ inet | inet6 | IPv4 | IPv6 | VPNv4 ]\n");
-			break;
-		case GETOPT:
-			fprintf(stderr, "  <options>\n");
 			break;
 		case FILENAME:
 			fprintf(stderr, "  <filename>\n");
@@ -1420,39 +1384,4 @@ parse_nexthop(const char *word, struct parse_result *r)
 
 	TAILQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);
-}
-
-int
-bgpctl_getopt(int *argc, char **argv[], int type)
-{
-	int	  ch;
-
-	optind = optreset = 1;
-	while ((ch = getopt((*argc) + 1, (*argv) - 1, "46o:")) != -1) {
-		switch (ch) {
-		case '4':
-			res.flags = (res.flags | F_IPV4) & ~F_IPV6;
-			break;
-		case '6':
-			res.flags = (res.flags | F_IPV6) & ~F_IPV4;
-			break;
-		case 'o':
-			res.irr_outdir = optarg;
-			break;
-		default:
-			usage();
-			/* NOTREACHED */
-		}
-	}
-
-	if (optind > 1) {
-		(*argc) -= (optind - 1);
-		(*argv) += (optind - 1);
-
-		/* need to move one backwards as calling code moves forward */
-		(*argc)++;
-		(*argv)--;
-		return (1);
-	} else
-		return (0);
 }

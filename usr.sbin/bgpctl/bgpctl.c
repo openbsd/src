@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.240 2019/06/17 13:46:33 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.241 2019/06/25 07:44:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -39,7 +39,6 @@
 #include "session.h"
 #include "rde.h"
 #include "parser.h"
-#include "irrfilter.h"
 #include "mrtparser.h"
 
 enum neighbor_views {
@@ -161,11 +160,6 @@ main(int argc, char *argv[])
 	strlcpy(neighbor.shutcomm, res->shutcomm, sizeof(neighbor.shutcomm));
 
 	switch (res->action) {
-	case IRRFILTER:
-		if (!(res->flags & (F_IPV4|F_IPV6)))
-			res->flags |= (F_IPV4|F_IPV6);
-		irr_main(res->as.as_min, res->flags, res->irr_outdir);
-		break;
 	case SHOW_MRT:
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
@@ -217,7 +211,6 @@ main(int argc, char *argv[])
 
 	switch (res->action) {
 	case NONE:
-	case IRRFILTER:
 	case SHOW_MRT:
 		usage();
 		/* NOTREACHED */
@@ -479,7 +472,6 @@ main(int argc, char *argv[])
 			case NETWORK_FLUSH:
 			case NETWORK_BULK_ADD:
 			case NETWORK_BULK_REMOVE:
-			case IRRFILTER:
 			case LOG_VERBOSE:
 			case LOG_BRIEF:
 			case SHOW_MRT:

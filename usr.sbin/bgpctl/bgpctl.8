@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.87 2019/05/31 10:48:40 sthen Exp $
+.\" $OpenBSD: bgpctl.8,v 1.88 2019/06/25 07:44:20 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2019 $
+.Dd $Mdocdate: June 25 2019 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -76,31 +76,6 @@ a.k.a. the kernel routing table.
 .Xc
 Remove the learned routes from the specified Forwarding Information Base
 a.k.a. the kernel routing table.
-.It Xo
-.Cm irrfilter
-.Op Ar options
-.Ar as
-.Op Ar arguments
-.Xc
-Get the
-.Em aut-num
-object from the
-.Em Internet Routing Registry
-and generate bgpd filters from the policy specified therein.
-The aut-num object as well as the associated as-set and route objects
-have to be in RPSL format.
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl o Ar directory
-Use
-.Ar directory
-to write the filter files to.
-.It Fl 4
-Fetch only IPv4 prefixes from the registry.
-.It Fl 6
-Fetch only IPv6 prefixes from the registry.
-.El
 .It Cm log brief
 Disable verbose debug logging.
 .It Cm log verbose
@@ -489,5 +464,3 @@ The
 .Nm
 program first appeared in
 .Ox 3.5 .
-irrfilter mode was added in
-.Ox 4.1 .
