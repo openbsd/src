@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.473 2019/06/22 05:44:05 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.474 2019/06/25 09:04:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3321,6 +3321,7 @@ peer_init(u_int32_t hashsize)
 
 	bzero(&pc, sizeof(pc));
 	snprintf(pc.descr, sizeof(pc.descr), "LOCAL");
+	pc.id = PEER_ID_SELF;
 
 	peerself = peer_add(PEER_ID_SELF, &pc);
 	if (peerself == NULL)
