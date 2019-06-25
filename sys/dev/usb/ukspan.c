@@ -507,8 +507,8 @@ ukspan_param(void *addr, int portno, struct termios *ti)
 		cmsg->rxmode = cmsg->txmode = 0;
 
 	/* Set parity, data, and stop bits */
+	cflag = ti->c_cflag;
 	if ((cflag & CIGNORE) == 0) {
-		cflag = ti->c_cflag;
 		if (cflag & PARENB)
 			lcr = (cflag & PARODD) ? UKSPAN_PARITY_ODD :
 			    UKSPAN_PARITY_EVEN;
