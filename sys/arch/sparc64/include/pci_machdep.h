@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.34 2019/06/11 00:45:31 dlg Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.35 2019/06/25 22:30:56 dlg Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -84,10 +84,13 @@ struct sparc_pci_chipset {
 	pcireg_t (*conf_read)(pci_chipset_tag_t, pcitag_t, int);
 	void (*conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 	int (*intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
+	int (*probe_device_hook)(void *, struct pci_attach_args *);
 };
 
 void		pci_attach_hook(struct device *, struct device *,
 				     struct pcibus_attach_args *);
+int		pci_probe_device_hook(pci_chipset_tag_t,
+		    struct pci_attach_args *);
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
@@ -115,8 +118,6 @@ int		sparc64_pci_enumerate_bus(struct pci_softc *,
 		    struct pci_attach_args *);
 
 #define PCI_MACHDEP_ENUMERATE_BUS sparc64_pci_enumerate_bus
-
-#define	pci_probe_device_hook(c, a)	(0)
 
 #define	pci_min_powerstate(c, t)	(PCI_PMCSR_STATE_D3)
 #define	pci_set_powerstate_md(c, t, s, p)

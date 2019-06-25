@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.44 2015/09/19 21:07:04 semarie Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.45 2019/06/25 22:30:56 dlg Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -349,7 +349,7 @@ sbus_mb_attach(struct device *parent, struct device *self, void *aux)
 	snprintf(name, 32, "%s dvma", sc->sc_dev.dv_xname);
 
 	printf("%s: ", sc->sc_dev.dv_xname);
-	iommu_init(name, &sc->sc_is, 0, -1);
+	iommu_init(name, &iommu_hw_default, &sc->sc_is, 0, -1);
 
 	/* Initialize Starfire PC interrupt translation. */
 	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&

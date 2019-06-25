@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.75 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.76 2019/06/25 22:30:56 dlg Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -902,7 +902,7 @@ psycho_iommu_init(struct psycho_softc *sc, int tsbsize)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dev.dv_xname);
 
-	iommu_init(name, is, tsbsize, iobase);
+	iommu_init(name, &iommu_hw_default, is, tsbsize, iobase);
 }
 
 /*

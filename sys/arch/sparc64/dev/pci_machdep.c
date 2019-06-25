@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.47 2019/06/11 00:45:31 dlg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.48 2019/06/25 22:30:56 dlg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ int sparc_pci_debug = 0x0;
 #include <machine/openfirm.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/ofw/ofw_pci.h>
 
@@ -84,6 +85,46 @@ pci_attach_hook(parent, self, pba)
 	struct pcibus_attach_args *pba;
 {
 	/* Don't do anything */
+}
+
+int
+pci_32bit_dmamap_create(bus_dma_tag_t dt, bus_dma_tag_t t0, bus_size_t size,
+    int nsegments, bus_size_t maxsegsz, bus_size_t boundary, int flags,
+    bus_dmamap_t *dmamp)
+{
+	bus_dma_tag_t pdt = dt->_parent;
+
+	CLR(flags, BUS_DMA_64BIT);
+
+	return ((*pdt->_dmamap_create)(pdt, t0, size, nsegments, maxsegsz,
+	    boundary, flags, dmamp));
+}
+
+int
+pci_probe_device_hook(pci_chipset_tag_t pc, struct pci_attach_args *pa)
+{
+	bus_dma_tag_t dt, pdt;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RCC &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_RCC_PCIE_PCIX) {
+		/*
+		 * These PCI bridges only support 40bit DVA, so intercept
+		 * bus_dmamap_create so we can clear BUS_DMA_64BIT.
+		 */
+
+		dt = malloc(sizeof(*dt), M_DEVBUF, M_NOWAIT | M_ZERO);
+		if (dt == NULL)
+			panic("%s: could not alloc dma tag", __func__);
+
+		pdt = pa->pa_dmat;
+
+		dt->_parent = pdt;
+		dt->_dmamap_create = pci_32bit_dmamap_create;
+
+		pa->pa_dmat = dt;
+	}
+
+	return (0);
 }
 
 int

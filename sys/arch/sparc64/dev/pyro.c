@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.32 2019/06/11 00:45:31 dlg Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.33 2019/06/25 22:30:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -130,6 +130,30 @@ int pyro_msi_eq_intr(void *);
 
 int pyro_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
+
+void pyro_iommu_enable(struct iommu_state *);
+
+const struct iommu_hw iommu_hw_fire = {
+	.ihw_enable	= pyro_iommu_enable,
+
+	.ihw_dvma_pa	= 0x000007ffffffffffUL,
+
+	.ihw_bypass	= 0xfffc000000000000UL,
+	.ihw_bypass_nc	= 0x0000080000000000UL,
+	.ihw_bypass_ro	= 0,
+};
+
+const struct iommu_hw iommu_hw_oberon = {
+	.ihw_enable	= pyro_iommu_enable,
+
+	.ihw_dvma_pa	= 0x00007fffffffffffUL,
+
+	.ihw_bypass	= 0x7ffc000000000000UL,
+	.ihw_bypass_nc	= 0x0000800000000000UL,
+	.ihw_bypass_ro	= 0x8000000000000000UL,
+
+	.ihw_flags	= IOMMU_HW_FLUSH_CACHE,
+};
 
 #ifdef DDB
 void pyro_xir(void *, int);
@@ -266,6 +290,7 @@ pyro_init_iommu(struct pyro_softc *sc, struct pyro_pbm *pbm)
 	int tsbsize = 7;
 	u_int32_t iobase = -1;
 	char *name;
+	const struct iommu_hw *ihw = &iommu_hw_fire;
 
 	is->is_bustag = sc->sc_bust;
 
@@ -282,11 +307,23 @@ pyro_init_iommu(struct pyro_softc *sc, struct pyro_pbm *pbm)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
 
-	/* On Oberon, we need to flush the cache. */
 	if (sc->sc_oberon)
-		is->is_flags |= IOMMU_FLUSH_CACHE;
+		ihw = &iommu_hw_oberon;
 
-	iommu_init(name, is, tsbsize, iobase);
+	iommu_init(name, ihw, is, tsbsize, iobase);
+}
+
+void
+pyro_iommu_enable(struct iommu_state *is)
+{
+	unsigned long cr;
+
+	cr = IOMMUREG_READ(is, iommu_cr);
+	cr |= IOMMUCR_FIRE_BE | IOMMUCR_FIRE_SE | IOMMUCR_FIRE_CM_EN |
+	    IOMMUCR_FIRE_TE;
+
+	IOMMUREG_WRITE(is, iommu_tsb, is->is_ptsb | is->is_tsbsize);
+	IOMMUREG_WRITE(is, iommu_cr, cr);
 }
 
 void

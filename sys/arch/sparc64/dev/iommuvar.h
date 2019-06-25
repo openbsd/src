@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.17 2016/05/04 18:26:12 kettenis Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.18 2019/06/25 22:30:56 dlg Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -100,6 +100,21 @@ struct iommu_map_state {
 };
 #define IOMMU_MAP_STREAM	1
 
+struct iommu_hw {
+	void			(*ihw_enable)(struct iommu_state *);
+
+	unsigned long		ihw_dvma_pa;
+
+	unsigned long		ihw_bypass;
+	unsigned long		ihw_bypass_nc;		/* non-cached */
+	unsigned long		ihw_bypass_ro;		/* relaxed ordering */
+
+	unsigned int		ihw_flags;
+#define IOMMU_HW_FLUSH_CACHE		(1 << 0)
+};
+
+extern const struct iommu_hw iommu_hw_default;
+
 /*
  * per-IOMMU state
  */
@@ -112,8 +127,7 @@ struct iommu_state {
 	int64_t			is_cr;		/* Control register value */
 	struct mutex		is_mtx;
 	struct extent		*is_dvmamap;	/* DVMA map for this instance */
-	int			is_flags;
-#define IOMMU_FLUSH_CACHE	0x00000001
+	const struct iommu_hw	*is_hw;
 
 	struct strbuf_ctl	*is_sb[2];	/* Streaming buffers if any */
 
@@ -126,7 +140,8 @@ struct iommu_state {
 };
 
 /* interfaces for PCI/SBus code */
-void	iommu_init(char *, struct iommu_state *, int, u_int32_t);
+void	iommu_init(char *, const struct iommu_hw *, struct iommu_state *,
+    int, u_int32_t);
 void	iommu_reset(struct iommu_state *);
 paddr_t iommu_extract(struct iommu_state *, bus_addr_t);
 int64_t iommu_lookup_tte(struct iommu_state *, bus_addr_t);
