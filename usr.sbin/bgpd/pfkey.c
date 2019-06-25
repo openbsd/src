@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.57 2019/06/17 13:35:43 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.58 2019/06/25 21:32:08 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -500,14 +500,14 @@ pfkey_sa_add(struct bgpd_addr *src, struct bgpd_addr *dst, u_int8_t keylen,
     char *key, u_int32_t *spi)
 {
 	if (pfkey_send(pfkey_fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_GETSPI, 0,
-	    src, dst, 0, 0, 0, NULL, 0, 0, NULL, 0, 0) < 0)
+	    src, dst, 0, 0, 0, NULL, 0, 0, NULL, 0, 0) == -1)
 		return (-1);
-	if (pfkey_reply(pfkey_fd, spi) < 0)
+	if (pfkey_reply(pfkey_fd, spi) == -1)
 		return (-1);
 	if (pfkey_send(pfkey_fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_UPDATE, 0,
-		src, dst, *spi, 0, keylen, key, 0, 0, NULL, 0, 0) < 0)
+		src, dst, *spi, 0, keylen, key, 0, 0, NULL, 0, 0) == -1)
 		return (-1);
-	if (pfkey_reply(pfkey_fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		return (-1);
 	return (0);
 }
@@ -516,9 +516,9 @@ static int
 pfkey_sa_remove(struct bgpd_addr *src, struct bgpd_addr *dst, u_int32_t *spi)
 {
 	if (pfkey_send(pfkey_fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_DELETE, 0,
-	    src, dst, *spi, 0, 0, NULL, 0, 0, NULL, 0, 0) < 0)
+	    src, dst, *spi, 0, 0, NULL, 0, 0, NULL, 0, 0) == -1)
 		return (-1);
-	if (pfkey_reply(pfkey_fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		return (-1);
 	*spi = 0;
 	return (0);
@@ -609,9 +609,9 @@ pfkey_ipsec_establish(struct peer *p)
 		    p->conf.auth.enc_alg_out,
 		    p->conf.auth.enc_keylen_out,
 		    p->conf.auth.enc_key_out,
-		    0, 0) < 0)
+		    0, 0) == -1)
 			goto fail_key;
-		if (pfkey_reply(pfkey_fd, NULL) < 0)
+		if (pfkey_reply(pfkey_fd, NULL) == -1)
 			goto fail_key;
 		if (pfkey_send(pfkey_fd, satype, SADB_ADD, 0,
 		    &p->conf.remote_addr, &p->conf.local_addr,
@@ -622,9 +622,9 @@ pfkey_ipsec_establish(struct peer *p)
 		    p->conf.auth.enc_alg_in,
 		    p->conf.auth.enc_keylen_in,
 		    p->conf.auth.enc_key_in,
-		    0, 0) < 0)
+		    0, 0) == -1)
 			goto fail_key;
-		if (pfkey_reply(pfkey_fd, NULL) < 0)
+		if (pfkey_reply(pfkey_fd, NULL) == -1)
 			goto fail_key;
 		break;
 	default:
@@ -632,27 +632,27 @@ pfkey_ipsec_establish(struct peer *p)
 	}
 
 	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
-	    &p->conf.local_addr, &p->conf.remote_addr, 0, BGP_PORT) < 0)
+	    &p->conf.local_addr, &p->conf.remote_addr, 0, BGP_PORT) == -1)
 		goto fail_flow;
-	if (pfkey_reply(pfkey_fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		goto fail_flow;
 
 	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
-	    &p->conf.local_addr, &p->conf.remote_addr, BGP_PORT, 0) < 0)
+	    &p->conf.local_addr, &p->conf.remote_addr, BGP_PORT, 0) == -1)
 		goto fail_flow;
-	if (pfkey_reply(pfkey_fd, NULL) < 0)
-		goto fail_flow;
-
-	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
-	    &p->conf.remote_addr, &p->conf.local_addr, 0, BGP_PORT) < 0)
-		goto fail_flow;
-	if (pfkey_reply(pfkey_fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		goto fail_flow;
 
 	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
-	    &p->conf.remote_addr, &p->conf.local_addr, BGP_PORT, 0) < 0)
+	    &p->conf.remote_addr, &p->conf.local_addr, 0, BGP_PORT) == -1)
 		goto fail_flow;
-	if (pfkey_reply(pfkey_fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) == -1)
+		goto fail_flow;
+
+	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
+	    &p->conf.remote_addr, &p->conf.local_addr, BGP_PORT, 0) == -1)
+		goto fail_flow;
+	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		goto fail_flow;
 
 	/* save SPI so that they can be removed later on */
@@ -688,17 +688,17 @@ pfkey_ipsec_remove(struct peer *p)
 		if (pfkey_send(pfkey_fd, satype, SADB_DELETE, 0,
 		    &p->auth.local_addr, &p->conf.remote_addr,
 		    p->auth.spi_out, 0, 0, NULL, 0, 0, NULL,
-		    0, 0) < 0)
+		    0, 0) == -1)
 			goto fail_key;
-		if (pfkey_reply(pfkey_fd, NULL) < 0)
+		if (pfkey_reply(pfkey_fd, NULL) == -1)
 			goto fail_key;
 
 		if (pfkey_send(pfkey_fd, satype, SADB_DELETE, 0,
 		    &p->conf.remote_addr, &p->auth.local_addr,
 		    p->auth.spi_in, 0, 0, NULL, 0, 0, NULL,
-		    0, 0) < 0)
+		    0, 0) == -1)
 			goto fail_key;
-		if (pfkey_reply(pfkey_fd, NULL) < 0)
+		if (pfkey_reply(pfkey_fd, NULL) == -1)
 			goto fail_key;
 		break;
 	default:
@@ -706,27 +706,27 @@ pfkey_ipsec_remove(struct peer *p)
 	}
 
 	if (pfkey_flow(pfkey_fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
-	    &p->auth.local_addr, &p->conf.remote_addr, 0, BGP_PORT) < 0)
+	    &p->auth.local_addr, &p->conf.remote_addr, 0, BGP_PORT) == -1)
 		goto fail_flow;
-	if (pfkey_reply(pfkey_fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		goto fail_flow;
 
 	if (pfkey_flow(pfkey_fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
-	    &p->auth.local_addr, &p->conf.remote_addr, BGP_PORT, 0) < 0)
+	    &p->auth.local_addr, &p->conf.remote_addr, BGP_PORT, 0) == -1)
 		goto fail_flow;
-	if (pfkey_reply(pfkey_fd, NULL) < 0)
-		goto fail_flow;
-
-	if (pfkey_flow(pfkey_fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
-	    &p->conf.remote_addr, &p->auth.local_addr, 0, BGP_PORT) < 0)
-		goto fail_flow;
-	if (pfkey_reply(pfkey_fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		goto fail_flow;
 
 	if (pfkey_flow(pfkey_fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
-	    &p->conf.remote_addr, &p->auth.local_addr, BGP_PORT, 0) < 0)
+	    &p->conf.remote_addr, &p->auth.local_addr, 0, BGP_PORT) == -1)
 		goto fail_flow;
-	if (pfkey_reply(pfkey_fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) == -1)
+		goto fail_flow;
+
+	if (pfkey_flow(pfkey_fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
+	    &p->conf.remote_addr, &p->auth.local_addr, BGP_PORT, 0) == -1)
+		goto fail_flow;
+	if (pfkey_reply(pfkey_fd, NULL) == -1)
 		goto fail_flow;
 
 	p->auth.established = 0;
