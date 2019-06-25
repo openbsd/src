@@ -1368,6 +1368,7 @@
 ./usr/share/man/man4/gentbi.4
 ./usr/share/man/man4/gif.4
 ./usr/share/man/man4/glenv.4
+./usr/share/man/man4/glkgpio.4
 ./usr/share/man/man4/gpio.4
 ./usr/share/man/man4/gpiodcf.4
 ./usr/share/man/man4/gpioiic.4
