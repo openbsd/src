@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.27 2018/08/19 08:23:47 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.28 2019/06/25 16:46:32 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 /*
@@ -97,6 +97,13 @@ void		pci_set_powerstate_md(pci_chipset_tag_t, pcitag_t, int, int);
 
 void		pci_mcfg_init(bus_space_tag_t, bus_addr_t, int, int, int);
 pci_chipset_tag_t pci_lookup_segment(int);
+
+#define __HAVE_PCI_MSIX
+
+int	pci_msix_table_map(pci_chipset_tag_t, pcitag_t,
+	    bus_space_tag_t, bus_space_handle_t *);
+void	pci_msix_table_unmap(pci_chipset_tag_t, pcitag_t,
+	    bus_space_tag_t, bus_space_handle_t);
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED

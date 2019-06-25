@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.3 2019/06/17 11:07:39 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.4 2019/06/25 16:46:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -45,14 +45,12 @@ pci_msi_enable(pci_chipset_tag_t pc, pcitag_t tag,
 	pci_conf_write(pc, tag, off, reg | PCI_MSI_MC_MSIE);
 }
 
-void
-pci_msix_enable(pci_chipset_tag_t pc, pcitag_t tag, bus_space_tag_t memt,
-    int vec, bus_addr_t addr, uint32_t data)
+int
+pci_msix_table_map(pci_chipset_tag_t pc, pcitag_t tag,
+    bus_space_tag_t memt, bus_space_handle_t *memh)
 {
-	bus_space_handle_t memh;
 	bus_addr_t base;
 	pcireg_t reg, table, type;
-	uint32_t ctrl;
 	int bir, offset;
 	int off, tblsz;
 
@@ -67,7 +65,41 @@ pci_msix_enable(pci_chipset_tag_t pc, pcitag_t tag, bus_space_tag_t memt,
 	bir = PCI_MAPREG_START + bir * 4;
 	type = pci_mapreg_type(pc, tag, bir);
 	if (pci_mapreg_info(pc, tag, bir, type, &base, NULL, NULL) ||
-	    bus_space_map(memt, base + offset, tblsz * 16, 0, &memh))
+	    bus_space_map(memt, base + offset, tblsz * 16, 0, memh))
+		return -1;
+
+	return 0;
+}
+
+void
+pci_msix_table_unmap(pci_chipset_tag_t pc, pcitag_t tag,
+    bus_space_tag_t memt, bus_space_handle_t memh)
+{
+	pcireg_t reg;
+	int tblsz;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
+		panic("%s: no msix capability", __func__);
+
+	tblsz = PCI_MSIX_MC_TBLSZ(reg) + 1;
+	bus_space_unmap(memt, memh, tblsz * 16);
+}
+
+void
+pci_msix_enable(pci_chipset_tag_t pc, pcitag_t tag, bus_space_tag_t memt,
+    int vec, bus_addr_t addr, uint32_t data)
+{
+	bus_space_handle_t memh;
+	pcireg_t reg;
+	uint32_t ctrl;
+	int off;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, &reg) == 0)
+		panic("%s: no msix capability", __func__);
+
+	KASSERT(vec <= PCI_MSIX_MC_TBLSZ(reg));
+
+	if (pci_msix_table_map(pc, tag, memt, &memh))
 		panic("%s: cannot map registers", __func__);
 
 	bus_space_write_4(memt, memh, PCI_MSIX_MA(vec), addr);
@@ -79,7 +111,7 @@ pci_msix_enable(pci_chipset_tag_t pc, pcitag_t tag, bus_space_tag_t memt,
 	bus_space_write_4(memt, memh, PCI_MSIX_VC(vec),
 	    ctrl & ~PCI_MSIX_VC_MASK);
 
-	bus_space_unmap(memt, memh, tblsz * 16);
+	pci_msix_table_unmap(pc, tag, memt, memh);
 
 	pci_conf_write(pc, tag, off, reg | PCI_MSIX_MC_MSIXE);
 }

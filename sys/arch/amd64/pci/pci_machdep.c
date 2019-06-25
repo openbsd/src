@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.70 2019/05/30 22:03:14 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.71 2019/06/25 16:46:32 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -326,6 +326,46 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 	PCI_CONF_UNLOCK();
 }
 
+int
+pci_msix_table_map(pci_chipset_tag_t pc, pcitag_t tag,
+    bus_space_tag_t memt, bus_space_handle_t *memh)
+{
+	bus_addr_t base;
+	pcireg_t reg, table, type;
+	int bir, offset;
+	int off, tblsz;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, &reg) == 0)
+		panic("%s: no msix capability", __func__);
+
+	table = pci_conf_read(pc, tag, off + PCI_MSIX_TABLE);
+	bir = (table & PCI_MSIX_TABLE_BIR);
+	offset = (table & PCI_MSIX_TABLE_OFF);
+	tblsz = PCI_MSIX_MC_TBLSZ(reg) + 1;
+
+	bir = PCI_MAPREG_START + bir * 4;
+	type = pci_mapreg_type(pc, tag, bir);
+	if (pci_mapreg_info(pc, tag, bir, type, &base, NULL, NULL) ||
+	    _bus_space_map(memt, base + offset, tblsz * 16, 0, memh))
+		return -1;
+
+	return 0;
+}
+
+void
+pci_msix_table_unmap(pci_chipset_tag_t pc, pcitag_t tag,
+    bus_space_tag_t memt, bus_space_handle_t memh)
+{
+	pcireg_t reg;
+	int tblsz;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
+		panic("%s: no msix capability", __func__);
+
+	tblsz = PCI_MSIX_MC_TBLSZ(reg) + 1;
+	_bus_space_unmap(memt, memh, tblsz * 16, NULL);
+}
+
 void msi_hwmask(struct pic *, int);
 void msi_hwunmask(struct pic *, int);
 void msi_addroute(struct pic *, struct cpu_info *, int, int, int);
@@ -452,28 +492,21 @@ msix_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 	pci_chipset_tag_t pc = NULL; /* XXX */
 	bus_space_tag_t memt = X86_BUS_SPACE_MEM; /* XXX */
 	bus_space_handle_t memh;
-	bus_addr_t base;
 	pcitag_t tag = PCI_MSIX_TAG(pin);
 	int entry = PCI_MSIX_VEC(pin);
-	pcireg_t reg, addr, table;
+	pcireg_t reg, addr;
 	uint32_t ctrl;
-	int bir, offset;
-	int off, tblsz;
+	int off;
 
 	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, &reg) == 0)
 		panic("%s: no msix capability", __func__);
 
-	addr = 0xfee00000UL | (ci->ci_apicid << 12);
+	KASSERT(entry <= PCI_MSIX_MC_TBLSZ(reg));
 
-	table = pci_conf_read(pc, tag, off + PCI_MSIX_TABLE);
-	bir = (table & PCI_MSIX_TABLE_BIR);
-	offset = (table & PCI_MSIX_TABLE_OFF);
-	tblsz = PCI_MSIX_MC_TBLSZ(reg) + 1;
-
-	bir = PCI_MAPREG_START + bir * 4;
-	if (pci_mem_find(pc, tag, bir, &base, NULL, NULL) ||
-	    _bus_space_map(memt, base + offset, tblsz * 16, 0, &memh))
+	if (pci_msix_table_map(pc, tag, memt, &memh))
 		panic("%s: cannot map registers", __func__);
+
+	addr = 0xfee00000UL | (ci->ci_apicid << 12);
 
 	bus_space_write_4(memt, memh, PCI_MSIX_MA(entry), addr);
 	bus_space_write_4(memt, memh, PCI_MSIX_MAU32(entry), 0);
@@ -484,7 +517,7 @@ msix_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 	bus_space_write_4(memt, memh, PCI_MSIX_VC(entry),
 	    ctrl & ~PCI_MSIX_VC_MASK);
 
-	_bus_space_unmap(memt, memh, tblsz * 16, NULL);
+	pci_msix_table_unmap(pc, tag, memt, memh);
 
 	pci_conf_write(pc, tag, off, reg | PCI_MSIX_MC_MSIXE);
 }
@@ -495,32 +528,24 @@ msix_delroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 	pci_chipset_tag_t pc = NULL; /* XXX */
 	bus_space_tag_t memt = X86_BUS_SPACE_MEM; /* XXX */
 	bus_space_handle_t memh;
-	bus_addr_t base;
 	pcitag_t tag = PCI_MSIX_TAG(pin);
 	int entry = PCI_MSIX_VEC(pin);
-	pcireg_t reg, table;
+	pcireg_t reg;
 	uint32_t ctrl;
-	int bir, offset;
-	int off, tblsz;
 
-	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &off, &reg) == 0)
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
 		return;
 
-	table = pci_conf_read(pc, tag, off + PCI_MSIX_TABLE);
-	bir = (table & PCI_MSIX_TABLE_BIR);
-	offset = (table & PCI_MSIX_TABLE_OFF);
-	tblsz = PCI_MSIX_MC_TBLSZ(reg) + 1;
+	KASSERT(entry <= PCI_MSIX_MC_TBLSZ(reg));
 
-	bir = PCI_MAPREG_START + bir * 4;
-	if (pci_mem_find(pc, tag, bir, &base, NULL, NULL) ||
-	    _bus_space_map(memt, base + offset, tblsz * 16, 0, &memh))
-		panic("%s: cannot map registers", __func__);
+	if (pci_msix_table_map(pc, tag, memt, &memh))
+		return;
 
 	ctrl = bus_space_read_4(memt, memh, PCI_MSIX_VC(entry));
 	bus_space_write_4(memt, memh, PCI_MSIX_VC(entry),
 	    ctrl | PCI_MSIX_VC_MASK);
 
-	_bus_space_unmap(memt, memh, tblsz * 16, NULL);
+	pci_msix_table_unmap(pc, tag, memt, memh);
 }
 
 int
