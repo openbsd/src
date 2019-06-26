@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.237 2019/06/26 13:03:47 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.238 2019/06/26 13:05:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -412,6 +412,7 @@ window_set_name(struct window *w, const char *new_name)
 void
 window_resize(struct window *w, u_int sx, u_int sy)
 {
+	log_debug("%s: @%u resize %ux%u", __func__, w->id, sx, sy);
 	w->sx = sx;
 	w->sy = sy;
 }
@@ -923,6 +924,7 @@ window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 	wp->sx = sx;
 	wp->sy = sy;
 
+	log_debug("%s: %%%u resize %ux%u", __func__, wp->id, sx, sy);
 	screen_resize(&wp->base, sx, sy, wp->saved_grid == NULL);
 
 	wme = TAILQ_FIRST(&wp->modes);
