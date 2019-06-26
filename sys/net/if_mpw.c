@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.54 2019/04/23 10:53:45 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.55 2019/06/26 08:13:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -608,9 +608,8 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
-#if NPF > 0
-        pf_pkt_addr_changed(m);
-#endif
+	/* packet has not been processed by PF yet. */
+	KASSERT(m->m_pkthdr.pf.statekey == NULL);
 
 	if_vinput(ifp, m);
 	return;
