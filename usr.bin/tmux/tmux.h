@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.914 2019/06/20 11:59:59 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.915 2019/06/26 13:03:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -954,6 +954,11 @@ TAILQ_HEAD(winlink_stack, winlink);
 #define WINDOW_SIZE_LARGEST 0
 #define WINDOW_SIZE_SMALLEST 1
 #define WINDOW_SIZE_MANUAL 2
+
+/* Pane border status option. */
+#define PANE_STATUS_OFF 0
+#define PANE_STATUS_TOP 1
+#define PANE_STATUS_BOTTOM 2
 
 /* Layout direction. */
 enum layout_type {
