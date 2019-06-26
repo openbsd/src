@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.99 2019/04/28 22:15:57 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.100 2019/06/26 09:36:06 claudio Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -310,6 +310,7 @@ do {									\
 /* default interface priorities */
 #define IF_WIRED_DEFAULT_PRIORITY	0
 #define IF_WIRELESS_DEFAULT_PRIORITY	4
+#define IF_WWAN_DEFAULT_PRIORITY	6
 #define IF_CARP_DEFAULT_PRIORITY	15
 
 /*

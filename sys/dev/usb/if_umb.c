@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.22 2019/01/14 13:35:41 feinerer Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.23 2019/06/26 09:36:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -502,6 +502,7 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_link_state = LINK_STATE_DOWN;
 
 	ifp->if_type = IFT_MBIM;
+	ifp->if_priority = IF_WWAN_DEFAULT_PRIORITY;
 	ifp->if_addrlen = 0;
 	ifp->if_hdrlen = sizeof (struct ncm_header16) +
 	    sizeof (struct ncm_pointer16);
