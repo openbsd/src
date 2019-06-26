@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.247 2019/05/31 15:15:37 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.248 2019/06/26 12:13:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2130,8 +2130,8 @@ relay_tls_ctx_create(struct relay *rlay)
 	struct relay_cert	*cert;
 	const char		*fake_key;
 	int			 fake_keylen, keyfound = 0;
-	char			*buf = NULL, *cabuf = NULL;
-	off_t			 len = 0, calen = 0;
+	char			*buf = NULL, *cabuf = NULL, *ocspbuf = NULL;
+	off_t			 len = 0, calen = 0, ocsplen = 0;
 
 	if ((tls_cfg = tls_config_new()) == NULL) {
 		log_warnx("unable to allocate TLS config");
@@ -2203,6 +2203,16 @@ relay_tls_ctx_create(struct relay *rlay)
 			}
 			cert->cert_fd = -1;
 
+			if (cert->cert_ocsp_fd != -1 &&
+			    (ocspbuf = relay_load_fd(cert->cert_ocsp_fd,
+			    &ocsplen)) == NULL) {
+				log_warn("failed to load OCSP staplefile");
+				goto err;
+			}
+			if (ocsplen == 0)
+				purge_key(&ocspbuf, ocsplen);
+			cert->cert_ocsp_fd = -1;
+
 			if ((fake_keylen = ssl_ctx_fake_private_key(buf, len,
 			    &fake_key)) == -1) {
 				/* error already printed */
@@ -2211,7 +2221,7 @@ relay_tls_ctx_create(struct relay *rlay)
 
 			if (keyfound == 1 &&
 			    tls_config_set_keypair_ocsp_mem(tls_cfg, buf, len,
-			    fake_key, fake_keylen, NULL, 0) != 0) {
+			    fake_key, fake_keylen, ocspbuf, ocsplen) != 0) {
 				log_warnx("failed to set tls certificate: %s",
 				    tls_config_error(tls_cfg));
 				goto err;
@@ -2223,13 +2233,14 @@ relay_tls_ctx_create(struct relay *rlay)
 				goto err;
 
 			if (tls_config_add_keypair_ocsp_mem(tls_cfg, buf, len,
-			    fake_key, fake_keylen, NULL, 0) != 0) {
+			    fake_key, fake_keylen, ocspbuf, ocsplen) != 0) {
 				log_warnx("failed to add tls certificate: %s",
 				    tls_config_error(tls_cfg));
 				goto err;
 			}
 
 			purge_key(&buf, len);
+			purge_key(&ocspbuf, ocsplen);
 		}
 
 		if (rlay->rl_tls_cacert_fd != -1) {
@@ -2269,6 +2280,7 @@ relay_tls_ctx_create(struct relay *rlay)
 
 	return (0);
  err:
+	purge_key(&ocspbuf, ocsplen);
 	purge_key(&cabuf, calen);
 	purge_key(&buf, len);
 

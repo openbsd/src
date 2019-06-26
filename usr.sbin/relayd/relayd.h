@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.258 2019/05/31 15:25:57 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.259 2019/06/26 12:13:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -141,7 +141,8 @@ enum fd_type {
 	RELAY_FD_CERT	= 1,
 	RELAY_FD_CACERT	= 2,
 	RELAY_FD_CAFILE	= 3,
-	RELAY_FD_KEY	= 4
+	RELAY_FD_KEY	= 4,
+	RELAY_FD_OCSP	= 5
 };
 
 struct ctl_relayfd {
@@ -781,6 +782,7 @@ struct relay_cert {
 	objid_t			 cert_relayid;
 	int			 cert_fd;
 	int			 cert_key_fd;
+	int			 cert_ocsp_fd;
 	EVP_PKEY		*cert_pkey;
 	TAILQ_ENTRY(relay_cert)	 cert_entry;
 };

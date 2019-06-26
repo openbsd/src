@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.179 2019/05/31 15:25:57 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.180 2019/06/26 12:13:47 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -605,6 +605,8 @@ purge_relay(struct relayd *env, struct relay *rlay)
 			close(cert->cert_fd);
 		if (cert->cert_key_fd != -1)
 			close(cert->cert_key_fd);
+		if (cert->cert_ocsp_fd != -1)
+			close(cert->cert_ocsp_fd);
 		if (cert->cert_pkey != NULL)
 			EVP_PKEY_free(cert->cert_pkey);
 		TAILQ_REMOVE(env->sc_certs, cert, cert_entry);
@@ -1270,6 +1272,7 @@ cert_add(struct relayd *env, objid_t id)
 	cert->cert_id = id;
 	cert->cert_fd = -1;
 	cert->cert_key_fd = -1;
+	cert->cert_ocsp_fd = -1;
 
 	TAILQ_INSERT_TAIL(env->sc_certs, cert, cert_entry);
 
@@ -1325,7 +1328,7 @@ relay_load_certfiles(struct relayd *env, struct relay *rlay, const char *name)
 	struct protocol *proto = rlay->rl_proto;
 	struct relay_cert *cert;
 	int	 useport = htons(rlay->rl_conf.port);
-	int	 cert_fd = -1, key_fd = -1;
+	int	 cert_fd = -1, key_fd = -1, ocsp_fd = -1;
 
 	if (rlay->rl_conf.flags & F_TLSCLIENT) {
 		if (strlen(proto->tlsca) && rlay->rl_tls_ca_fd == -1) {
@@ -1389,12 +1392,25 @@ relay_load_certfiles(struct relayd *env, struct relay *rlay, const char *name)
 		goto fail;
 	log_debug("%s: using private key %s", __func__, certfile);
 
+	if (useport) {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/%s:%u.ocsp", hbuf, useport) == -1)
+			goto fail;
+	} else {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/%s.ocsp", hbuf) == -1)
+			goto fail;
+	}
+	if ((ocsp_fd = open(certfile, O_RDONLY)) != -1)
+		log_debug("%s: using OCSP staple file %s", __func__, certfile);
+
 	if ((cert = cert_add(env, 0)) == NULL)
 		goto fail;
 
 	cert->cert_relayid = rlay->rl_conf.id;
 	cert->cert_fd = cert_fd;
 	cert->cert_key_fd = key_fd;
+	cert->cert_ocsp_fd = ocsp_fd;
 
 	return (0);
 
@@ -1403,6 +1419,8 @@ relay_load_certfiles(struct relayd *env, struct relay *rlay, const char *name)
 		close(cert_fd);
 	if (key_fd != -1)
 		close(key_fd);
+	if (ocsp_fd != -1)
+		close(ocsp_fd);
 
 	return (-1);
 }
