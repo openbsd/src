@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.289 2019/06/20 19:29:38 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.290 2019/06/26 18:28:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1220,9 +1220,13 @@ server_client_handle_key(struct client *c, struct key_event *event)
 	 * blocked so they need to be processed immediately rather than queued.
 	 */
 	if ((~c->flags & CLIENT_READONLY) && c->overlay_key != NULL) {
-		if (c->overlay_key(c, event) != 0)
+		switch (c->overlay_key(c, event)) {
+		case 0:
+			return (0);
+		case 1:
 			server_client_clear_overlay(c);
-		return (0);
+			return (0);
+		}
 	}
 
 	/*

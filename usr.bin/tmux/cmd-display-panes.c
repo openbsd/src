@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.28 2019/06/18 11:08:42 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.29 2019/06/26 18:28:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -204,7 +204,7 @@ cmd_display_panes_key(struct client *c, struct key_event *event)
 	struct cmd_parse_result		*pr;
 
 	if (event->key < '0' || event->key > '9')
-		return (1);
+		return (-1);
 
 	wp = window_pane_at_index(w, event->key - '0');
 	if (wp == NULL)
