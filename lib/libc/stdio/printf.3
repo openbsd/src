@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.79 2019/01/16 12:55:49 schwarze Exp $
+.\"	$OpenBSD: printf.3,v 1.80 2019/06/26 21:13:23 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 16 2019 $
+.Dd $Mdocdate: June 26 2019 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -147,7 +147,8 @@ is zero,
 may be a null pointer and no characters will be written;
 the number of bytes that would have been written excluding the terminating
 .Ql \e0
-byte, or \-1 on error, will be returned.
+byte, or \-1 on error, will be returned (but due to an weakness in POSIX
+should be checked with < 0).
 .Pp
 .Fn sprintf
 and
@@ -876,7 +877,7 @@ for later interpolation by
 Be sure to use the proper secure idiom:
 .Bd -literal -offset indent
 int ret = snprintf(buffer, sizeof(buffer), "%s", string);
-if (ret == -1 || ret >= sizeof(buffer))
+if (ret < 0 || ret >= sizeof(buffer))
 	goto toolong;
 .Ed
 .Pp
