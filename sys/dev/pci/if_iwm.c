@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.241 2019/05/09 16:14:14 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.242 2019/06/26 21:01:20 kn Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4454,6 +4454,8 @@ iwm_led_is_enabled(struct iwm_softc *sc)
 	return (IWM_READ(sc, IWM_CSR_LED_REG) == IWM_CSR_LED_REG_TURN_ON);
 }
 
+#define IWM_LED_BLINK_TIMEOUT_MSEC    200
+
 void
 iwm_led_blink_timeout(void *arg)
 {
@@ -4464,13 +4466,14 @@ iwm_led_blink_timeout(void *arg)
 	else
 		iwm_led_enable(sc);
 
-	timeout_add_msec(&sc->sc_led_blink_to, 200);
+	timeout_add_msec(&sc->sc_led_blink_to, IWM_LED_BLINK_TIMEOUT_MSEC);
 }
 
 void
 iwm_led_blink_start(struct iwm_softc *sc)
 {
-	timeout_add(&sc->sc_led_blink_to, 0);
+	timeout_add_msec(&sc->sc_led_blink_to, IWM_LED_BLINK_TIMEOUT_MSEC);
+	iwm_led_enable(sc);
 }
 
 void
