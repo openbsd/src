@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.4 2006/06/21 19:24:38 jason Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.5 2019/06/26 14:34:03 jca Exp $	*/
 /*	$NetBSD: fpu_explode.c,v 1.5 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -94,7 +94,7 @@ fpu_itof(fp, i)
 	 * fpu_norm()'s handling of `supernormals'; see fpu_subr.c.
 	 */
 	fp->fp_exp = FP_LG;
-	fp->fp_mant[0] = (int)i < 0 ? -i : i;
+	fp->fp_mant[0] = (fp->fp_sign && (int)i < 0) ? -i : i;
 	fp->fp_mant[1] = 0;
 	fp->fp_mant[2] = 0;
 	fp->fp_mant[3] = 0;
@@ -120,7 +120,9 @@ fpu_xtof(fp, i)
 	 * fpu_norm()'s handling of `supernormals'; see fpu_subr.c.
 	 */
 	fp->fp_exp = FP_LG2;
-	*((int64_t*)fp->fp_mant) = (int64_t)i < 0 ? -i : i;
+	i = (fp->fp_sign && (int64_t)i < 0) ? -i : i;
+	fp->fp_mant[0] = (i >> 32) & 0xffffffff;
+	fp->fp_mant[1] = (i >> 0)  & 0xffffffff;
 	fp->fp_mant[2] = 0;
 	fp->fp_mant[3] = 0;
 	fpu_norm(fp);
@@ -248,7 +250,7 @@ fpu_explode(fe, fp, type, reg)
 	l = xspace[0];
 	space = &fe->fe_fpstate->fs_regs[reg];
 	s = space[0];
-	fp->fp_sign = s >> 31;
+	fp->fp_sign = (type == FTYPE_LNG) ? l >> 63 : s >> 31;
 	fp->fp_sticky = 0;
 	DPRINTF(FPE_INSN, ("fpu_explode: "));
 	switch (type) {
