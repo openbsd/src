@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.44 2019/06/26 13:03:47 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.45 2019/06/26 18:44:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -272,7 +272,7 @@ layout_fix_panes(struct window *w)
 		wp->xoff = lc->xoff;
 		wp->yoff = lc->yoff;
 
-		if (shift && status == 1)
+		if (shift && status == PANE_STATUS_TOP)
 			wp->yoff += 1;
 
 		window_pane_resize(wp, lc->sx, lc->sy - shift);
@@ -1021,7 +1021,7 @@ layout_spread_cell(struct window *w, struct layout_cell *parent)
 
 	number = 0;
 	TAILQ_FOREACH (lc, &parent->cells, entry)
-	    number++;
+		number++;
 	if (number <= 1)
 		return (0);
 	status = options_get_number(w->options, "pane-border-status");

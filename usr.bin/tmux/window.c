@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.238 2019/06/26 13:05:24 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.239 2019/06/26 18:44:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1368,7 +1368,7 @@ window_pane_find_down(struct window_pane *wp)
 		if (edge >= w->sy - 1)
 			edge = 0;
 	} else {
-		if (edge >= wp->sy)
+		if (edge >= w->sy)
 			edge = 0;
 	}
 
