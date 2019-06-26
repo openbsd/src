@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.391 2019/06/12 17:42:53 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.392 2019/06/26 08:46:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1083,6 +1083,15 @@ smtp_io(struct io *io, int evt, void *arg)
 		    (line && len >= SMTP_LINE_MAX)) {
 			s->flags |= SF_BADINPUT;
 			smtp_reply(s, "500 %s: Line too long",
+			    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_STATUS));
+			smtp_enter_state(s, STATE_QUIT);
+			io_set_write(io);
+			return;
+		}
+
+		if (strchr(line, '\r')) {
+			s->flags |= SF_BADINPUT;
+			smtp_reply(s, "500 %s: <CR> is only allowed before <LF>",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
 			io_set_write(io);
