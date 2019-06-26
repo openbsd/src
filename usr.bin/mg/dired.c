@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.85 2019/06/25 13:51:47 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.86 2019/06/26 16:48:00 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -445,6 +445,7 @@ d_expunge(int f, int n)
 int
 d_copy(int f, int n)
 {
+	struct stat      statbuf;
 	char		 frname[NFILEN], toname[NFILEN], sname[NFILEN];
 	char		*topath, *bufp;
 	int		 ret;
@@ -471,6 +472,18 @@ d_copy(int f, int n)
 		return (FALSE);
 
 	topath = adjustname(toname, TRUE);
+	if (stat(topath, &statbuf) == 0) {
+		if (S_ISDIR(statbuf.st_mode)) {
+			off = snprintf(toname, sizeof(toname), "%s/%s",
+			    topath, sname);
+			if (off < 0 || off >= sizeof(toname) - 1) {
+				dobeep();
+				ewprintf("Directory name too long");
+				return (FALSE);
+			}
+			topath = adjustname(toname, TRUE);
+		}
+	}
 	ret = (copy(frname, topath) >= 0) ? TRUE : FALSE;
 	if (ret != TRUE)
 		return (ret);
