@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.31 2019/06/10 06:52:44 lum Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.32 2019/06/26 16:54:29 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -157,7 +157,7 @@ doin(void)
 		/* nothing */;
 
 #ifdef  MGLOG
-	if (!mglog(funct))
+	if (!mglog(funct, curmap))
 		ewprintf("Problem with logging");
 #endif
 

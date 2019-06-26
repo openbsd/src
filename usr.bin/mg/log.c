@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.8 2019/06/22 15:38:15 lum Exp $	*/
+/*	$OpenBSD: log.c,v 1.9 2019/06/26 16:54:29 lum Exp $	*/
 
 /* 
  * This file is in the public domain.
@@ -48,22 +48,28 @@
 #include <unistd.h>
 
 #include "def.h"
-#include "log.h"
+#include "key.h"
+#include "kbd.h"
 #include "funmap.h"
+#include "chrdef.h"
+
+#include "log.h"
 
 char	*mglogfiles_create(char *);
 int	 mglog_lines(PF);
 int	 mglog_undo(void);
 int	 mglog_window(void);
+int	 mglog_key(KEYMAP *map);
 
 char		*mglogdir;
 extern char	*mglogpath_lines;
 extern char	*mglogpath_undo;
 extern char	*mglogpath_window;
+extern char	*mglogpath_key;
 int		 mgloglevel;
 
 int
-mglog(PF funct)
+mglog(PF funct, KEYMAP *map)
 {
 	if(!mglog_lines(funct))
 		ewprintf("Problem logging lines");
@@ -71,10 +77,55 @@ mglog(PF funct)
 		ewprintf("Problem logging undo");
 	if(!mglog_window())
 		ewprintf("Problem logging window");
+	if(!mglog_key(map))
+		ewprintf("Problem logging key");
 
 	return (TRUE);
 }
 
+
+int
+mglog_key(KEYMAP *map)
+{
+	struct stat      sb;
+	FILE            *fd;
+	PF		*pfp;
+
+	if(stat(mglogpath_key, &sb))
+		 return (FALSE);
+	fd = fopen(mglogpath_key, "a");
+
+	if (ISWORD(*key.k_chars)) {
+		if (fprintf(fd, "k_count:%d k_chars:%hd\tchr:%c\t", key.k_count,
+		    *key.k_chars, CHARMASK(*key.k_chars)) == -1) {
+			fclose(fd);
+			return (FALSE);
+		}
+	} else {
+		if (fprintf(fd, "k_count:%d k_chars:%hd\t\t", key.k_count,
+		    *key.k_chars) == -1) {
+			fclose(fd);
+			return (FALSE);
+		}
+	}
+	if (fprintf(fd, "map:%p %d %d %p %hd %hd\n",
+	    map,
+	    map->map_num,
+	    map->map_max,
+	    map->map_default,
+	    map->map_element->k_base,
+	    map->map_element->k_num
+	    ) == -1) {
+		fclose(fd);
+		return (FALSE);
+	}
+	for (pfp = map->map_element->k_funcp; *pfp != '\0'; pfp++)
+		fprintf(fd, "%s ", function_name(*pfp));
+
+	fprintf(fd, "\n\n");
+	fclose(fd);
+	return (TRUE);
+}
 
 int
 mglog_window(void)
@@ -253,11 +304,13 @@ mgloginit(void)
 	struct stat	 sb;
 	mode_t           dir_mode, f_mode, oumask;
 	char		*mglogfile_lines, *mglogfile_undo, *mglogfile_window;
+	char		*mglogfile_key;
 
 	mglogdir = "./log/";
 	mglogfile_lines = "line.log";
 	mglogfile_undo = "undo.log";
 	mglogfile_window = "window.log";
+	mglogfile_key = "key.log";
 
 	/* 
 	 * Change mgloglevel for desired level of logging.
@@ -283,6 +336,9 @@ mgloginit(void)
 		return (FALSE);
 	mglogpath_window = mglogfiles_create(mglogfile_window);
 	if (mglogpath_window == NULL)
+		return (FALSE);
+	mglogpath_key = mglogfiles_create(mglogfile_key);
+	if (mglogpath_key == NULL)
 		return (FALSE);
 
 	return (TRUE);
@@ -317,3 +373,25 @@ mglogfiles_create(char *mglogfile)
 
 	return (tmp2);
 }
+
+/*
+ * Template log function.
+ */
+/*
+int
+mglog_?(void)
+{
+	struct stat      sb;
+	FILE            *fd;
+
+	if(stat(mglogpath_?, &sb))
+	fd = fopen(mglogpath_?, "a");
+
+	if (fprintf(fd, "%?", ??) == -1) {
+		fclose(fd);
+		return (FALSE);
+	}
+	fclose(fd);
+	return (TRUE);
+}
+*/
