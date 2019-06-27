@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.36 2019/06/27 09:47:16 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.37 2019/06/27 09:48:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -530,7 +530,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 
 			if (addr_proposal) {
 				/* XXX should we inform netcfgd? */
-				LIST_REMOVE(addr_proposal, entries);
 				free_address_proposal(addr_proposal);
 			}
 
@@ -1057,7 +1056,6 @@ remove_slaacd_iface(uint32_t if_index)
 	/* XXX inform netcfgd? */
 	while(!LIST_EMPTY(&iface->addr_proposals)) {
 		addr_proposal = LIST_FIRST(&iface->addr_proposals);
-		LIST_REMOVE(addr_proposal, entries);
 		free_address_proposal(addr_proposal);
 	}
 	while(!LIST_EMPTY(&iface->dfr_proposals)) {
@@ -2000,6 +1998,7 @@ free_address_proposal(struct address_proposal *addr_proposal)
 	if (addr_proposal == NULL)
 		return;
 
+	LIST_REMOVE(addr_proposal, entries);
 	evtimer_del(&addr_proposal->timer);
 	free(addr_proposal);
 }
@@ -2183,7 +2182,6 @@ address_proposal_timeout(int fd, short events, void *arg)
 		} else {
 			log_debug("%s: giving up, no response to proposal",
 			    __func__);
-			LIST_REMOVE(addr_proposal, entries);
 			free_address_proposal(addr_proposal);
 		}
 		break;
@@ -2211,7 +2209,6 @@ address_proposal_timeout(int fd, short events, void *arg)
 		if (real_lifetime(&addr_proposal->uptime,
 		    addr_proposal->vltime) == 0) {
 			evtimer_del(&addr_proposal->timer);
-			LIST_REMOVE(addr_proposal, entries);
 			free_address_proposal(addr_proposal);
 			log_debug("%s: removing address proposal", __func__);
 			break;
