@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: atexit.3,v 1.11 2015/05/12 20:14:09 guenther Exp $
+.\"	$OpenBSD: atexit.3,v 1.12 2019/06/27 16:30:39 schwarze Exp $
 .\"
-.Dd $Mdocdate: May 12 2015 $
+.Dd $Mdocdate: June 27 2019 $
 .Dt ATEXIT 3
 .Os
 .Sh NAME
@@ -70,7 +70,12 @@ is very difficult to use correctly without creating
 races.
 Unless absolutely necessary, please avoid using it.
 .Sh RETURN VALUES
-.Rv -std atexit
+The
+.Nm
+function returns the value 0 if successful; otherwise a non-zero
+value is returned and the global variable
+.Va errno
+is set to indicate the error.
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er ENOMEM
@@ -86,5 +91,7 @@ The
 function conforms to
 .St -ansiC .
 .Pp
-The behavior when a shared object is unloaded is an extension to
-that standard.
+Setting
+.Va errno
+on error and the behavior when a shared object is unloaded
+are extensions to that standard.
