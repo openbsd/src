@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.35 2019/06/07 11:46:33 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.36 2019/06/27 09:47:16 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1062,7 +1062,6 @@ remove_slaacd_iface(uint32_t if_index)
 	}
 	while(!LIST_EMPTY(&iface->dfr_proposals)) {
 		dfr_proposal = LIST_FIRST(&iface->dfr_proposals);
-		LIST_REMOVE(dfr_proposal, entries);
 		free_dfr_proposal(dfr_proposal);
 	}
 	evtimer_del(&iface->timer);
