@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.22 2018/06/04 13:29:07 martijn Exp $	*/
+/*	$OpenBSD: io.c,v 1.23 2019/06/27 06:41:36 florian Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -58,7 +58,7 @@ read_file(char *fn, int n)
 		return ERR;
 	} else if ((size = read_stream(fp, n)) < 0)
 		return ERR;
-	 else if (((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
+	 else if ((*fn == '!') ?  pclose(fp) == -1 : fclose(fp) == EOF) {
 		perror(fn);
 		seterrmsg("cannot close input file");
 		return ERR;
@@ -160,7 +160,7 @@ write_file(char *fn, char *mode, int n, int m)
 		return ERR;
 	} else if ((size = write_stream(fp, n, m)) < 0)
 		return ERR;
-	 else if (((*fn == '!') ?  pclose(fp) : fclose(fp)) < 0) {
+	 else if ((*fn == '!') ?  pclose(fp) == -1 : fclose(fp) == EOF) {
 		perror(fn);
 		seterrmsg("cannot close output file");
 		return ERR;
