@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.153 2019/05/28 09:50:54 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.154 2019/06/27 15:17:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,7 +36,7 @@ static const struct grid_cell *screen_write_combine(struct screen_write_ctx *,
 		    const struct utf8_data *, u_int *);
 
 static const struct grid_cell screen_write_pad_cell = {
-	GRID_FLAG_PADDING, 0, 8, 8, { { 0 }, 0, 0, 0 }
+	GRID_FLAG_PADDING, 0, 8, 8, 0, { { 0 }, 0, 0, 0 }
 };
 
 struct screen_write_collect_item {
