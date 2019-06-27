@@ -1,4 +1,4 @@
-/*	$OpenBSD: base64test.c,v 1.5 2018/07/17 17:06:49 tb Exp $	*/
+/*	$OpenBSD: base64test.c,v 1.6 2019/06/27 04:29:35 deraadt Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -278,6 +278,9 @@ base64_decoding_test(int test_no, struct base64_test *bt, int test_nl)
 
 	if (test_nl)
 		inlen = asprintf(&input, "%s\r\n", bt->out);
+
+	if (inlen == -1)
+		errx(1, "asprintf");
 
 	bio_mem = BIO_new_mem_buf(input, inlen);
 	if (bio_mem == NULL)
