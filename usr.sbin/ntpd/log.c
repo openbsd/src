@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.17 2017/03/21 12:06:56 bluhm Exp $	*/
+/*	$OpenBSD: log.c,v 1.18 2019/06/27 15:18:42 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,42 +23,22 @@
 #include <syslog.h>
 #include <errno.h>
 #include <time.h>
+#include "log.h"
 
-static int	 debug;
+static int	 dest;
 static int	 verbose;
 const char	*log_procname;
 
-void	log_init(int, int);
-void	log_procinit(const char *);
-void	log_setverbose(int);
-int	log_getverbose(void);
-void	log_warn(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_warnx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_info(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_debug(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	logit(int, const char *, ...)
-	    __attribute__((__format__ (printf, 2, 3)));
-void	vlog(int, const char *, va_list)
-	    __attribute__((__format__ (printf, 2, 0)));
-__dead void fatal(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-__dead void fatalx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-
 void
-log_init(int n_debug, int facility)
+log_init(int n_dest, int n_verbose, int facility)
 {
 	extern char	*__progname;
 
-	debug = n_debug;
-	verbose = n_debug;
+	dest = n_dest;
+	verbose = n_verbose;
 	log_procinit(__progname);
 
-	if (!debug)
+	if (dest & LOG_TO_SYSLOG)
 		openlog(__progname, LOG_PID | LOG_NDELAY, facility);
 
 	tzset();
@@ -99,7 +79,7 @@ vlog(int pri, const char *fmt, va_list ap)
 	char	*nfmt;
 	int	 saved_errno = errno;
 
-	if (debug) {
+	if (dest & LOG_TO_STDERR) {
 		/* best effort in out of mem situations */
 		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
 			vfprintf(stderr, fmt, ap);
@@ -109,7 +89,8 @@ vlog(int pri, const char *fmt, va_list ap)
 			free(nfmt);
 		}
 		fflush(stderr);
-	} else
+	}
+	if (dest & LOG_TO_SYSLOG)
 		vsyslog(pri, fmt, ap);
 
 	errno = saved_errno;

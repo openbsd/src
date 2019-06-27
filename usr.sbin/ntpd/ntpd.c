@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.122 2019/06/12 05:04:45 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.123 2019/06/27 15:18:42 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 	struct constraint	*cstr;
 	struct passwd		*pw;
 	void			*newp;
-	int			argc0 = argc;
+	int			argc0 = argc, logdest;
 	char			**argv0 = argv;
 	char			*pname = NULL;
 
@@ -151,13 +151,13 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "df:nP:sSv")) != -1) {
 		switch (ch) {
 		case 'd':
-			lconf.debug = 2;
+			lconf.debug = 1;
 			break;
 		case 'f':
 			conffile = optarg;
 			break;
 		case 'n':
-			lconf.debug = 2;
+			lconf.debug = 1;
 			lconf.noaction = 1;
 			break;
 		case 'P':
@@ -179,8 +179,11 @@ main(int argc, char *argv[])
 	}
 
 	/* log to stderr until daemonized */
-	log_init(1, LOG_DAEMON);
-	log_setverbose(lconf.verbose);
+	logdest = LOG_TO_STDERR;
+	if (!lconf.debug)
+		logdest |= LOG_TO_SYSLOG;
+
+	log_init(logdest, lconf.verbose, LOG_DAEMON);
 
 	argc -= optind;
 	argv += optind;
@@ -230,9 +233,10 @@ main(int argc, char *argv[])
 	if (setpriority(PRIO_PROCESS, 0, -20) == -1)
 		warn("can't set priority");
 	reset_adjtime();
+
+	logdest = lconf.debug ? LOG_TO_STDERR : LOG_TO_SYSLOG;
 	if (!lconf.settime) {
-		log_init(lconf.debug, LOG_DAEMON);
-		log_setverbose(lconf.verbose);
+		log_init(logdest, lconf.verbose, LOG_DAEMON);
 		if (!lconf.debug)
 			if (daemon(1, 0))
 				fatal("daemon");
@@ -313,8 +317,7 @@ main(int argc, char *argv[])
 		if (nfds == 0 && lconf.settime) {
 			lconf.settime = 0;
 			timeout = INFTIM;
-			log_init(lconf.debug, LOG_DAEMON);
-			log_setverbose(lconf.verbose);
+			log_init(logdest, lconf.verbose, LOG_DAEMON);
 			log_warnx("no reply received in time, skipping initial "
 			    "time setting");
 			if (!lconf.debug)
@@ -413,8 +416,8 @@ dispatch_imsg(struct ntpd_conf *lconf, int argc, char **argv)
 				fatalx("invalid IMSG_SETTIME received");
 			if (!lconf->settime)
 				break;
-			log_init(lconf->debug, LOG_DAEMON);
-			log_setverbose(lconf->verbose);
+			log_init(lconf->debug ? LOG_TO_STDERR : LOG_TO_SYSLOG,
+			    lconf->verbose, LOG_DAEMON);
 			memcpy(&d, imsg.data, sizeof(d));
 			ntpd_settime(d);
 			/* daemonize now */

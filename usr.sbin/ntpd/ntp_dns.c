@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.23 2019/06/20 07:28:18 otto Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.24 2019/06/27 15:18:42 otto Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -67,8 +67,8 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 	if (setpriority(PRIO_PROCESS, 0, 0) == -1)
 		log_warn("could not set priority");
 
-	log_init(nconf->debug, LOG_DAEMON);
-	log_setverbose(nconf->verbose);
+	log_init(nconf->debug ? LOG_TO_STDERR : LOG_TO_SYSLOG, nconf->verbose,
+	    LOG_DAEMON);
 	if (!nconf->debug && setsid() == -1)
 		fatal("setsid");
 	log_procinit("dns");

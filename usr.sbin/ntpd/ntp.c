@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.156 2019/06/20 07:28:18 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.157 2019/06/27 15:18:42 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -95,8 +95,8 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 
 	start_child(NTPDNS_PROC_NAME, pipe_dns[1], argc, argv);
 
-	log_init(nconf->debug, LOG_DAEMON);
-	log_setverbose(nconf->verbose);
+	log_init(nconf->debug ? LOG_TO_STDERR : LOG_TO_SYSLOG, nconf->verbose,
+	    LOG_DAEMON);
 	if (!nconf->debug && setsid() == -1)
 		fatal("setsid");
 	log_procinit("ntp");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.144 2019/06/20 07:28:18 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.145 2019/06/27 15:18:42 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,6 +32,7 @@
 #include <imsg.h>
 
 #include "ntp.h"
+#include "log.h"
 
 #define MAXIMUM(a, b)	((a) > (b) ? (a) : (b))
 
@@ -423,24 +424,3 @@ void			 build_show_peer(struct ctl_show_peer *,
 void			 build_show_sensor(struct ctl_show_sensor *,
 			     struct ntp_sensor *);
 
-/* log.c */
-void	log_init(int, int);
-void	log_procinit(const char *);
-void	log_setverbose(int);
-int	log_getverbose(void);
-void	log_warn(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_warnx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_info(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_debug(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	logit(int, const char *, ...)
-	    __attribute__((__format__ (printf, 2, 3)));
-void	vlog(int, const char *, va_list)
-	    __attribute__((__format__ (printf, 2, 0)));
-__dead void fatal(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-__dead void fatalx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
