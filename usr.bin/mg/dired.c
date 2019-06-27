@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.87 2019/06/27 16:08:12 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.88 2019/06/27 16:13:01 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -489,6 +489,8 @@ d_copy(int f, int n)
 		return (ret);
 	if ((bp = refreshbuffer(curbp)) == NULL)
 		return (FALSE);
+
+	ewprintf("Copy: 1 file");
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
