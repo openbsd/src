@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.21 2019/06/24 15:17:36 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.22 2019/06/27 09:34:06 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -580,9 +580,13 @@ __EOF__
 		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=testCA.test_dummy.com\'
 	fi
 	
-	$openssl_bin req -new -x509 -newkey rsa:2048 -out $ca_cert \
-		-keyout $ca_key -days 1 -passout pass:$ca_pass -batch \
-		-subj $subj
+	$openssl_bin req -new -x509 -batch -newkey rsa:2048 \
+		-pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_pubexp:3 \
+		-sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:8 \
+		-config $ssldir/openssl.cnf -verbose \
+		-subj $subj -days 1 -set_serial 1 -multivalue-rdn \
+		-keyout $ca_key -passout pass:$ca_pass \
+		-out $ca_cert -outform pem
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -604,7 +608,7 @@ __EOF__
 	fi
 	
 	$openssl_bin req -new -keyout $tsa_key -out $tsa_csr \
-		-passout pass:$tsa_pass -subj $subj
+		-passout pass:$tsa_pass -subj $subj -asn1-kludge
 	check_exit_status $?
 	
 	start_message "ca ... sign by CA with TSA extensions"
@@ -637,7 +641,7 @@ __EOF__
 	fi
 	
 	$openssl_bin req -new -keyout $ocsp_key -nodes -out $ocsp_csr \
-		-subj $subj
+		-subj $subj -no-asn1-kludge
 	check_exit_status $?
 	
 	start_message "ca ... sign by CA with OCSP extensions"
@@ -655,8 +659,6 @@ __EOF__
 	# --- server-admin operations (generate server key and csr) ---
 	section_message "server-admin operations (generate server key and csr)"
 	
-	start_message "req ... generate server csr#1"
-	
 	server_key=$server_dir/server_key.pem
 	server_csr=$server_dir/server_csr.pem
 	server_pass=test-server-pass
@@ -667,10 +669,26 @@ __EOF__
 		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=localhost.test_dummy.com\'
 	fi
 	
-	$openssl_bin req -new -keyout $server_key -out $server_csr \
-		-passout pass:$server_pass -subj $subj
+	start_message "genrsa ... generate server key#1"
+
+	$openssl_bin genrsa -aes256 -passout pass:$server_pass -out $server_key
+	check_exit_status $?
+
+	start_message "req ... generate server csr#1"
+
+	$openssl_bin req -new -subj $subj -sha256 \
+		-key $server_key -keyform pem -passin pass:$server_pass \
+		-out $server_csr -outform pem
 	check_exit_status $?
 	
+	start_message "req ... verify server csr#1"
+
+	$openssl_bin req -verify -in $server_csr -inform pem \
+		-newhdr -noout -pubkey -subject -modulus -text \
+		-nameopt multiline -reqopt compatible \
+		-out $server_csr.verify.out
+	check_exit_status $?
+
 	start_message "req ... generate server csr#2 (interactive mode)"
 	
 	revoke_key=$server_dir/revoke_key.pem
@@ -701,7 +719,9 @@ __EOF__
 	start_message "x509 ... issue cert for server csr#2"
 	
 	revoke_cert=$server_dir/revoke_cert.pem
-	$openssl_bin x509 -req -in $revoke_csr -CA $ca_cert -CAkey $ca_key \
+	$openssl_bin x509 -req -in $revoke_csr -CA $ca_cert -CAform pem \
+		-CAkey $ca_key -CAkeyform pem \
+		-CAserial $ca_dir/serial -set_serial 10 \
 		-passin pass:$ca_pass -CAcreateserial -out $revoke_cert
 	check_exit_status $?
 	
@@ -744,14 +764,17 @@ __EOF__
 	check_exit_status $?
 	
 	start_message "verify ... server cert#1"
-	$openssl_bin verify -verbose -CAfile $ca_cert $server_cert
+	$openssl_bin verify -verbose -CAfile $ca_cert -CRLfile $crl_file \
+	       	-crl_check -issuer_checks -purpose sslserver $server_cert
 	check_exit_status $?
 	
 	start_message "x509 ... get detail info about server cert#1"
 	$openssl_bin x509 -in $server_cert -text -C -dates -startdate -enddate \
 		-fingerprint -issuer -issuer_hash -issuer_hash_old \
-		-subject -subject_hash -subject_hash_old -ocsp_uri \
-		-ocspid -modulus -pubkey -serial -email > $server_cert.x509.out
+		-subject -hash -subject_hash -subject_hash_old -ocsp_uri \
+		-ocspid -modulus -pubkey -serial -email -noout -trustout \
+		-alias -clrtrust -clrreject -next_serial -checkend 3600 \
+		-nameopt multiline -certopt compatible > $server_cert.x509.out
 	check_exit_status $?
 	
 	if [ $mingw = 0 ] ; then
@@ -763,8 +786,9 @@ __EOF__
 	# self signed
 	start_message "x509 ... generate self signed server cert"
 	server_self_cert=$server_dir/server_self_cert.pem
-	$openssl_bin x509 -in $server_cert -signkey $server_key \
-		-passin pass:$server_pass -out $server_self_cert
+	$openssl_bin x509 -in $server_cert -signkey $server_key -keyform pem \
+		-sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:8 \
+		-passin pass:$server_pass -out $server_self_cert -days 1
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -882,7 +906,8 @@ __EOF__
 	
 	$openssl_bin ts -reply -queryfile $tsa_tsq -inkey $tsa_key \
 		-passin pass:$tsa_pass -signer $tsa_cert -chain $ca_cert \
-		-out $tsa_tsr
+		-config $ssldir/openssl.cnf -section tsa_config1 -cert \
+		-policy 1.3.6.1.4.1.4146.2.3 -out $tsa_tsr
 	check_exit_status $?
 	
 	# Verify
