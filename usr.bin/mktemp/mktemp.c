@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.23 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.24 2019/06/27 18:03:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001-2003, 2013
@@ -94,7 +94,7 @@ main(int argc, char *argv[])
 		while (len != 0 && prefix[len - 1] == '/')
 			len--;
 
-		if (asprintf(&tempfile, "%.*s/%s", (int)len, prefix, template) < 0)
+		if (asprintf(&tempfile, "%.*s/%s", (int)len, prefix, template) == -1)
 			tempfile = NULL;
 	} else
 		tempfile = strdup(template);

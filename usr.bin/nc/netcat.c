@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.203 2019/02/26 17:32:47 jsing Exp $ */
+/* $OpenBSD: netcat.c,v 1.204 2019/06/27 18:03:37 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1453,12 +1453,12 @@ build_ports(char *p)
 			for (x = 0; x <= hi - lo; x++) {
 				cp = arc4random_uniform(x + 1);
 				portlist[x] = portlist[cp];
-				if (asprintf(&portlist[cp], "%d", x + lo) < 0)
+				if (asprintf(&portlist[cp], "%d", x + lo) == -1)
 					err(1, "asprintf");
 			}
 		} else { /* Load ports sequentially. */
 			for (cp = lo; cp <= hi; cp++) {
-				if (asprintf(&portlist[x], "%d", cp) < 0)
+				if (asprintf(&portlist[x], "%d", cp) == -1)
 					err(1, "asprintf");
 				x++;
 			}

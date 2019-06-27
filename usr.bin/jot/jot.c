@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.48 2018/08/01 13:35:33 tb Exp $	*/
+/*	$OpenBSD: jot.c,v 1.49 2019/06/27 18:03:36 deraadt Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -357,14 +357,14 @@ getformat(void)
 		p += 2;
 
 	if (p == NULL && !chardata) {
-		if (asprintf(&format, "%s%%.%df", format, prec) < 0)
+		if (asprintf(&format, "%s%%.%df", format, prec) == -1)
 			err(1, NULL);
 	} else if (p == NULL && chardata) {
-		if (asprintf(&format, "%s%%c", format) < 0)
+		if (asprintf(&format, "%s%%c", format) == -1)
 			err(1, NULL);
 	} else if (p[1] == '\0') {
 		/* cannot end in single '%' */
-		if (asprintf(&format, "%s%%", format) < 0)
+		if (asprintf(&format, "%s%%", format) == -1)
 			err(1, NULL);
 	} else {
 		/*
@@ -447,7 +447,7 @@ fmt_broken:
 			if (p[1] != '\0')
 				errx(1, "too many conversions");
 			/* cannot end in single '%' */
-			if (asprintf(&format, "%s%%", format) < 0)
+			if (asprintf(&format, "%s%%", format) == -1)
 				err(1, NULL);
 		}
 	}

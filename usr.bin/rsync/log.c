@@ -1,4 +1,4 @@
-/*	$Id: log.c,v 1.7 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: log.c,v 1.8 2019/06/27 18:03:37 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,7 +41,7 @@ rsync_log(const char *fname, size_t line, int level, const char *fmt, ...)
 
 	if (fmt != NULL) {
 		va_start(ap, fmt);
-		if (vasprintf(&buf, fmt, ap) < 0) {
+		if (vasprintf(&buf, fmt, ap) == -1) {
 			va_end(ap);
 			return;
 		}
@@ -69,7 +69,7 @@ rsync_errx(const char *fname, size_t line, const char *fmt, ...)
 
 	if (fmt != NULL) {
 		va_start(ap, fmt);
-		if (vasprintf(&buf, fmt, ap) < 0) {
+		if (vasprintf(&buf, fmt, ap) == -1) {
 			va_end(ap);
 			return;
 		}
@@ -95,7 +95,7 @@ rsync_err(const char *fname, size_t line, const char *fmt, ...)
 
 	if (fmt != NULL) {
 		va_start(ap, fmt);
-		if (vasprintf(&buf, fmt, ap) < 0) {
+		if (vasprintf(&buf, fmt, ap) == -1) {
 			va_end(ap);
 			return;
 		}
@@ -123,7 +123,7 @@ rsync_errx1(const char *fname, size_t line, const char *fmt, ...)
 
 	if (fmt != NULL) {
 		va_start(ap, fmt);
-		if (vasprintf(&buf, fmt, ap) < 0) {
+		if (vasprintf(&buf, fmt, ap) == -1) {
 			va_end(ap);
 			return;
 		}
@@ -147,7 +147,7 @@ rsync_warnx(const char *fname, size_t line, const char *fmt, ...)
 
 	if (fmt != NULL) {
 		va_start(ap, fmt);
-		if (vasprintf(&buf, fmt, ap) < 0) {
+		if (vasprintf(&buf, fmt, ap) == -1) {
 			va_end(ap);
 			return;
 		}
@@ -176,7 +176,7 @@ rsync_warn(int level, const char *fname, size_t line, const char *fmt, ...)
 
 	if (fmt != NULL) {
 		va_start(ap, fmt);
-		if (vasprintf(&buf, fmt, ap) < 0) {
+		if (vasprintf(&buf, fmt, ap) == -1) {
 			va_end(ap);
 			return;
 		}

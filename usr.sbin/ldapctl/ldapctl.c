@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.11 2018/05/15 11:19:21 reyk Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.12 2019/06/27 18:03:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -101,7 +101,7 @@ compact_namespace(struct namespace *ns, const char *datadir)
 {
 	char		*path;
 
-	if (asprintf(&path, "%s/%s_data.db", datadir, ns->suffix) < 0)
+	if (asprintf(&path, "%s/%s_data.db", datadir, ns->suffix) == -1)
 		return -1;
 	if (compact_db(path) != 0) {
 		log_warn("%s", path);
@@ -110,7 +110,7 @@ compact_namespace(struct namespace *ns, const char *datadir)
 	}
 	free(path);
 
-	if (asprintf(&path, "%s/%s_indx.db", datadir, ns->suffix) < 0)
+	if (asprintf(&path, "%s/%s_indx.db", datadir, ns->suffix) == -1)
 		return -1;
 	if (compact_db(path) != 0) {
 		log_warn("%s", path);
@@ -150,14 +150,14 @@ index_namespace(struct namespace *ns, const char *datadir)
 
 	log_info("indexing namespace %s", ns->suffix);
 
-	if (asprintf(&path, "%s/%s_data.db", DATADIR, ns->suffix) < 0)
+	if (asprintf(&path, "%s/%s_data.db", DATADIR, ns->suffix) == -1)
 		return -1;
 	data_db = btree_open(path, BT_NOSYNC | BT_REVERSEKEY, 0644);
 	free(path);
 	if (data_db == NULL)
 		return -1;
 
-	if (asprintf(&path, "%s/%s_indx.db", datadir, ns->suffix) < 0)
+	if (asprintf(&path, "%s/%s_indx.db", datadir, ns->suffix) == -1)
 		return -1;
 	indx_db = btree_open(path, BT_NOSYNC, 0644);
 	free(path);

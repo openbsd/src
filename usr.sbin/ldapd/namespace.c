@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.c,v 1.18 2018/05/15 11:19:21 reyk Exp $ */
+/*	$OpenBSD: namespace.c,v 1.19 2019/06/27 18:03:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -118,7 +118,7 @@ namespace_open(struct namespace *ns)
 	if (ns->sync == 0)
 		db_flags |= BT_NOSYNC;
 
-	if (asprintf(&ns->data_path, "%s/%s_data.db", datadir, ns->suffix) < 0)
+	if (asprintf(&ns->data_path, "%s/%s_data.db", datadir, ns->suffix) == -1)
 		return -1;
 	log_info("opening namespace %s", ns->suffix);
 	ns->data_db = btree_open(ns->data_path, db_flags | BT_REVERSEKEY, 0644);
@@ -127,7 +127,7 @@ namespace_open(struct namespace *ns)
 
 	btree_set_cache_size(ns->data_db, ns->cache_size);
 
-	if (asprintf(&ns->indx_path, "%s/%s_indx.db", datadir, ns->suffix) < 0)
+	if (asprintf(&ns->indx_path, "%s/%s_indx.db", datadir, ns->suffix) == -1)
 		return -1;
 	ns->indx_db = btree_open(ns->indx_path, db_flags, 0644);
 	if (ns->indx_db == NULL)

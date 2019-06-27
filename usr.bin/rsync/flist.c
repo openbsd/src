@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.28 2019/06/23 10:28:32 benno Exp $ */
+/*	$Id: flist.c,v 1.29 2019/06/27 18:03:37 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -962,7 +962,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		/* Our path defaults to "." for the root. */
 
 		if (ent->fts_path[stripdir] == '\0') {
-			if (asprintf(&f->path, "%s.", ent->fts_path) < 0) {
+			if (asprintf(&f->path, "%s.", ent->fts_path) == -1) {
 				ERR("asprintf");
 				f->path = NULL;
 				goto out;
@@ -1213,7 +1213,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 	if (wflsz && strcmp(wfl[0].wpath, ".") == 0) {
 		assert(cargvs == 1);
 		assert(S_ISDIR(wfl[0].st.mode));
-		if (asprintf(&cargv[0], "%s/", root) < 0) {
+		if (asprintf(&cargv[0], "%s/", root) == -1) {
 			ERR("asprintf");
 			cargv[0] = NULL;
 			goto out;
@@ -1226,7 +1226,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 			assert(S_ISDIR(wfl[i].st.mode));
 			assert(strcmp(wfl[i].wpath, "."));
 			c = asprintf(&cargv[j], "%s/%s", root, wfl[i].wpath);
-			if (c < 0) {
+			if (c == -1) {
 				ERR("asprintf");
 				cargv[j] = NULL;
 				goto out;
