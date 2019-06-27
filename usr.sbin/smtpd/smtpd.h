@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.624 2019/06/14 19:55:25 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.625 2019/06/27 05:14:49 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -305,6 +305,7 @@ enum imsg_type {
 	IMSG_SMTP_EVENT_DISCONNECT,
 
 	IMSG_LKA_PROCESSOR_FORK,
+	IMSG_LKA_PROCESSOR_ERRFD,
 
 	IMSG_REPORT_SMTP_LINK_CONNECT,
 	IMSG_REPORT_SMTP_LINK_DISCONNECT,
@@ -1025,6 +1026,7 @@ struct processor {
 	const char		       *user;
 	const char		       *group;
 	const char		       *chroot;
+	int				errfd;
 };
 
 enum filter_type {
@@ -1317,6 +1319,7 @@ int lka(void);
 /* lka_proc.c */
 int lka_proc_ready(void);
 void lka_proc_forked(const char *, int);
+void lka_proc_errfd(const char *, int);
 struct io *lka_proc_get_io(const char *);
 
 

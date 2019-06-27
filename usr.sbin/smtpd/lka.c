@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.234 2019/06/13 11:45:34 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.235 2019/06/27 05:14:49 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -360,9 +360,21 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_string(&m, &procname);
 		m_end(&m);
 
+		m_create(p, IMSG_LKA_PROCESSOR_ERRFD, 0, 0, -1);
+		m_add_string(p, procname);
+		m_close(p);
+
 		lka_proc_forked(procname, imsg->fd);
 		return;
 
+	case IMSG_LKA_PROCESSOR_ERRFD:
+		m_msg(&m, imsg);
+		m_get_string(&m, &procname);
+		m_end(&m);
+
+		lka_proc_errfd(procname, imsg->fd);
+		shutdown(imsg->fd, SHUT_WR);
+		return;
 
 	case IMSG_REPORT_SMTP_LINK_CONNECT:
 		m_msg(&m, imsg);

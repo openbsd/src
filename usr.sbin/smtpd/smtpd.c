@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.320 2019/06/13 11:45:35 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.321 2019/06/27 05:14:49 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -156,11 +156,12 @@ static void
 parent_imsg(struct mproc *p, struct imsg *imsg)
 {
 	struct forward_req	*fwreq;
+	struct processor	*processor;
 	struct deliver		 deliver;
 	struct child		*c;
 	struct msg		 m;
 	const void		*data;
-	const char		*username, *password, *cause;
+	const char		*username, *password, *cause, *procname;
 	uint64_t		 reqid;
 	size_t			 sz;
 	void			*i;
@@ -252,6 +253,17 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 		m_get_int(&m, &v);
 		m_end(&m);
 		profiling = v;
+		return;
+
+	case IMSG_LKA_PROCESSOR_ERRFD:
+		m_msg(&m, imsg);
+		m_get_string(&m, &procname);
+		m_end(&m);
+
+		processor = dict_xget(env->sc_processors_dict, procname);
+		m_create(p_lka, IMSG_LKA_PROCESSOR_ERRFD, 0, 0, processor->errfd);
+		m_add_string(p_lka, procname);
+		m_close(p_lka);
 		return;
 	}
 
@@ -1260,7 +1272,9 @@ static void
 fork_processor(const char *name, const char *command, const char *user, const char *group, const char *chroot_path)
 {
 	pid_t		 pid;
-	int		 sp[2];
+	struct processor	*processor;
+	char		 buf;
+	int		 sp[2], errfd[2];
 	struct passwd	*pw;
 	struct group	*gr;
 
@@ -1280,14 +1294,19 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1)
 		err(1, "socketpair");
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, errfd) == -1)
+		err(1, "socketpair");
 
 	if ((pid = fork()) < 0)
 		err(1, "fork");
 
 	/* parent passes the child fd over to lka */
 	if (pid > 0) {
+		processor = dict_xget(env->sc_processors_dict, name);
+		processor->errfd = errfd[1];
 		child_add(pid, CHILD_PROCESSOR, name);
 		close(sp[0]);
+		close(errfd[0]);
 		m_create(p_lka, IMSG_LKA_PROCESSOR_FORK, 0, 0, sp[1]);
 		m_add_string(p_lka, name);
 		m_close(p_lka);
@@ -1295,8 +1314,10 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 	}
 
 	close(sp[1]);
+	close(errfd[1]);
 	dup2(sp[0], STDIN_FILENO);
 	dup2(sp[0], STDOUT_FILENO);
+	dup2(errfd[0], STDERR_FILENO);
 
 	if (chroot_path) {
 		if (chroot(chroot_path) != 0 || chdir("/") != 0)
@@ -1319,6 +1340,16 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 	    signal(SIGHUP, SIG_DFL) == SIG_ERR)
 		err(1, "signal");
 
+	/*
+	 * Wait for lka to acknowledge that it received the fd.
+	 * This prevents a race condition between the filter sending an error
+	 * message, and exiting and lka not being able to log it because of
+	 * SIGCHLD.
+	 * (Ab)use read to determine if the fd is installed; since stderr is
+	 * never going to be read from we can shutdown(2) the write-end in lka.
+	 */
+	if (read(STDERR_FILENO, &buf, 1) != 0)
+		errx(1, "lka didn't properly close write end of error socket");
 	if (system(command) == -1)
 		err(1, NULL);
 
@@ -2003,6 +2034,7 @@ imsg_to_str(int type)
 	CASE(IMSG_SMTP_EVENT_DISCONNECT);
 
 	CASE(IMSG_LKA_PROCESSOR_FORK);
+	CASE(IMSG_LKA_PROCESSOR_ERRFD);
 
 	CASE(IMSG_REPORT_SMTP_LINK_CONNECT);
 	CASE(IMSG_REPORT_SMTP_LINK_DISCONNECT);
