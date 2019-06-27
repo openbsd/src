@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.33 2019/06/13 12:59:51 schwarze Exp $
+.\"	$OpenBSD: su.1,v 1.34 2019/06/27 18:10:06 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)su.1	6.12 (Berkeley) 7/29/91
 .\"
-.Dd $Mdocdate: June 13 2019 $
+.Dd $Mdocdate: June 27 2019 $
 .Dt SU 1
 .Os
 .Sh NAME
@@ -49,45 +49,43 @@ The
 .Nm
 utility allows a user to run a shell with the user and group ID of another user
 without having to log out and in as that other user.
+All of the real, effective, and saved user and group IDs as well as all
+supplementary group IDs are always set according to the target user.
 If the target
 .Ar login
 name is not specified,
 .Dq root
 is used.
 .Pp
-By default, the environment is unmodified with the exception of
-.Ev LOGNAME ,
-.Ev HOME ,
-.Ev SHELL ,
-and
-.Ev USER .
-.Ev HOME
-and
+By default, the shell of the target login is invoked and the
 .Ev SHELL
-are set to the target login's default values.
+and
+.Ev HOME
+environment variables are set according to the target login,
+whereas the current working directory remains unchanged.
+If the target login has a user ID of 0,
 .Ev LOGNAME
 and
 .Ev USER
-are set to the target login, unless the target login has a user ID of 0
-and the
-.Fl l
-flag was not specified,
-in which case it is unmodified.
-The invoked shell is the target login's.
-This is the traditional behavior of
-.Nm su .
-.Pp
-If not using
-.Fl m
-and the target login has a user ID of 0 then the
+are preserved and
 .Ev PATH
-variable and umask value
-(see
-.Xr umask 2 )
-are always set according to the
-.Pa /etc/login.conf
-file (see
-.Xr login.conf 5 ) .
+and the
+.Xr umask 2
+value are set according to
+.Xr login.conf 5 ;
+otherwise,
+.Ev LOGNAME
+and
+.Ev USER
+are set to the target login and
+.Ev PATH
+and the
+.Xr umask 2
+value are preserved.
+The
+.Ev TERM
+environment variable is always preserved.
+The rest of the environment remains unmodified by default.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -125,35 +123,26 @@ Additionally,
 will prompt for the password even when invoked by root.
 .It Fl l
 Simulate a full login.
-The environment is discarded except for
+The shell of the target login is invoked and the current working
+directory is changed to the home directory of the target login.
 .Ev HOME ,
 .Ev SHELL ,
-.Ev PATH ,
-.Ev TERM ,
 .Ev LOGNAME ,
 and
-.Ev USER .
-.Ev HOME
-and
-.Ev SHELL
-are modified as above.
-.Ev LOGNAME
-and
 .Ev USER
-are set to the target login.
+are set to the default values for the target login.
 .Ev PATH
-is set to the value specified by the
-.Dq path
-entry in
+and the
+.Xr umask 2
+value are set according to
 .Xr login.conf 5 .
-.Ev TERM
-is imported from your current environment.
-The invoked shell is the target login's, and
-.Nm
-will change directory to the target login's home directory.
+Except for preserving
+.Ev TERM ,
+the rest of the environment is discarded.
 .It Fl m
 Leave the environment unmodified.
-The invoked shell is your login shell, and no directory changes are made.
+The login shell of the invoking user is started,
+and the current working directory is not changed.
 As a security precaution, if the target user's shell is a non-standard
 shell (as defined by
 .Xr getusershell 3 )
@@ -212,19 +201,37 @@ prompt is set to
 .Dq Sy \&#
 to remind one of its awesome power.
 .Sh ENVIRONMENT
+The following list provides the values of environment variables
+in the new shell that is started by
+.Nm .
 .Bl -tag -width LOGNAME
 .It Ev HOME
-Default home directory of real user ID unless modified as
-specified above.
+The home directory of the target login, except that it remains unchanged with
+.Fl m .
 .It Ev LOGNAME
-The user ID is always the effective ID (the target user ID) after an
-.Nm
-unless the user ID is 0 (root).
+The target login by default, but unchanged if the target login has
+a UID of 0 or if
+.Fl m
+is given.
 .It Ev PATH
-Default search path of real user ID unless modified as specified above.
+The search path.
+It remains unchanged by default, but is set according to the target login
+if the target login has a UID of 0 or if
+.Fl l
+is given.
+.It Ev PWD
+The current working directory.
+It remains unchanged by default,
+but is set to the home directory of the target login with
+.Fl l .
+.It Ev SHELL
+The new shell that is started.
+It is the shell of the target login by default,
+but the shell of the invoking user with
+.Fl m .
 .It Ev TERM
-Provides terminal type which may be retained for the substituted
-user ID.
+The terminal type.
+It is always retained from the invoking process.
 .It Ev USER
 Same as
 .Ev LOGNAME .
