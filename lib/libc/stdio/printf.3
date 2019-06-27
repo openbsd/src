@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.81 2019/06/26 22:40:05 jmc Exp $
+.\"	$OpenBSD: printf.3,v 1.82 2019/06/27 11:52:59 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 26 2019 $
+.Dd $Mdocdate: June 27 2019 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -129,32 +129,27 @@ are converted for output.
 .Fn snprintf
 and
 .Fn vsnprintf
-will write at most
+write at most
 .Fa size Ns \-1
-of the characters printed into the output string
-(the
-.Fa size Ns 'th
-character then gets the terminating
-.Ql \e0 ) ;
-if the return value is greater than or equal to the
-.Fa size
-argument, the string was too short
-and some of the printed characters were discarded.
+characters to
+.Fa str ,
+followed by a terminating
+.Ql \e0 .
 If
 .Fa size
 is zero,
+no characters are written and
 .Fa str
-may be a null pointer and no characters will be written;
-the number of bytes that would have been written excluding the terminating
-.Ql \e0
-byte, or \-1 on error, will be returned (but due to a weakness in POSIX
-should be checked with < 0).
+may be a
+.Dv NULL
+pointer.
 .Pp
 .Fn sprintf
 and
 .Fn vsprintf
 effectively assume an infinite
-.Fa size .
+.Fa size ;
+their use is not recommended.
 .Pp
 The format string is composed of zero or more directives:
 ordinary
@@ -673,8 +668,12 @@ been output if the
 were unlimited
 .Po
 again, not including the final
-.Ql \e0 .
+.Ql \e0
 .Pc .
+A return value greater than or equal to the
+.Fa size
+argument indicates that the string was too small and some characters
+were discarded.
 .Pp
 The
 .Fn asprintf
