@@ -1,4 +1,4 @@
-.\"	$OpenBSD: delay.9,v 1.4 2007/09/14 16:16:08 mk Exp $
+.\"	$OpenBSD: delay.9,v 1.5 2019/06/27 18:11:53 cheloha Exp $
 .\"
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,22 +14,22 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2007 $
+.Dd $Mdocdate: June 27 2019 $
 .Dt DELAY 9
 .Os
 .Sh NAME
 .Nm delay
-.Nd busy wait for an interval
+.Nd busy-wait for an interval
 .Sh SYNOPSIS
 .In sys/param.h
 .Ft void
-.Fn delay "int delay"
+.Fn delay "int interval"
 .Sh DESCRIPTION
-.Fn delay
-is called in the kernel to busy wait for a period of time.
 The
-.Fa delay
-argument specifies the period of time to wait for, in microseconds.
+.Fn delay
+function busy-waits for at least
+.Fa interval
+microseconds.
 .Sh SEE ALSO
 .Xr timeout 9 ,
 .Xr tsleep 9
