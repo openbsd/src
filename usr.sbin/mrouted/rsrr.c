@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsrr.c,v 1.15 2017/01/21 11:32:04 guenther Exp $	*/
+/*	$OpenBSD: rsrr.c,v 1.16 2019/06/28 13:32:48 deraadt Exp $	*/
 /*	$NetBSD: rsrr.c,v 1.3 1995/12/10 10:07:14 mycroft Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ rsrr_init(void)
 {
     struct sockaddr_un serv_addr;
 
-    if ((rsrr_socket = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0)
+    if ((rsrr_socket = socket(AF_UNIX, SOCK_DGRAM, 0)) == -1)
 	logit(LOG_ERR, errno, "Can't create RSRR socket");
 
     unlink(RSRR_SERV_PATH);
@@ -93,7 +93,7 @@ rsrr_init(void)
     serv_addr.sun_family = AF_UNIX;
     strlcpy(serv_addr.sun_path, RSRR_SERV_PATH, sizeof serv_addr.sun_path);
 
-    if (bind(rsrr_socket, (struct sockaddr *)&serv_addr, sizeof serv_addr) < 0)
+    if (bind(rsrr_socket, (struct sockaddr *)&serv_addr, sizeof serv_addr) == -1)
 	logit(LOG_ERR, errno, "Can't bind RSRR socket");
 
     if (register_input_handler(rsrr_socket,rsrr_read) < 0)
@@ -110,7 +110,7 @@ rsrr_read(int f)
     bzero((char *) &client_addr, sizeof(client_addr));
     rsrr_recvlen = recvfrom(rsrr_socket, rsrr_recv_buf, sizeof(rsrr_recv_buf),
 			    0, (struct sockaddr *)&client_addr, &client_length);
-    if (rsrr_recvlen < 0) {
+    if (rsrr_recvlen == -1) {
 	if (errno != EINTR)
 	    logit(LOG_ERR, errno, "RSRR recvfrom");
 	return;
@@ -370,7 +370,7 @@ rsrr_send(int sendlen)
 		   (struct sockaddr *)&client_addr, client_length);
 
     /* Check for errors. */
-    if (error < 0) {
+    if (error == -1) {
 	logit(LOG_WARNING, errno, "Failed send on RSRR socket");
     } else if (error != sendlen) {
 	logit(LOG_WARNING, 0,

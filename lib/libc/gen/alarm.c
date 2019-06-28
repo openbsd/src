@@ -1,4 +1,4 @@
-/*	$OpenBSD: alarm.c,v 1.8 2016/01/28 16:40:54 schwarze Exp $ */
+/*	$OpenBSD: alarm.c,v 1.9 2019/06/28 13:32:41 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@ alarm(unsigned int secs)
 	timerclear(&itp->it_interval);
 	itp->it_value.tv_sec = secs;
 	itp->it_value.tv_usec = 0;
-	if (setitimer(ITIMER_REAL, itp, &oitv) < 0)
+	if (setitimer(ITIMER_REAL, itp, &oitv) == -1)
 		return ((unsigned int) -1);
 	if (oitv.it_value.tv_usec)
 		oitv.it_value.tv_sec++;

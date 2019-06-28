@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.26 2019/04/03 11:54:56 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.27 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -202,7 +202,7 @@ radiusd_start(struct radiusd *radiusd)
 			goto on_error;
 		}
 		if ((s = socket(l->addr.ipv4.sin_family,
-		    l->stype | SOCK_NONBLOCK, l->sproto)) < 0) {
+		    l->stype | SOCK_NONBLOCK, l->sproto)) == -1) {
 			log_warn("Listen %s port %d is failed: socket()",
 			    hbuf, (int)htons(l->addr.ipv4.sin_port));
 			goto on_error;
@@ -362,7 +362,7 @@ radiusd_listen_on_event(int fd, short evmask, void *ctx)
 	if (evmask & EV_READ) {
 		peersz = sizeof(peer);
 		if ((sz = recvfrom(listn->sock, buf, sizeof(buf), 0,
-		    (struct sockaddr *)&peer, &peersz)) < 0) {
+		    (struct sockaddr *)&peer, &peersz)) == -1) {
 			if (errno == EAGAIN)
 				return;
 			log_warn("%s: recvfrom() failed", __func__);
@@ -956,12 +956,12 @@ radiusd_module_load(struct radiusd *radiusd, const char *path, const char *name)
 	close(pairsock[1]);
 
 	module->fd = pairsock[0];
-	if ((ival = fcntl(module->fd, F_GETFL)) < 0) {
+	if ((ival = fcntl(module->fd, F_GETFL)) == -1) {
 		log_warn("Could not load module `%s': fcntl(F_GETFL)",
 		    name);
 		goto on_error;
 	}
-	if (fcntl(module->fd, F_SETFL, ival | O_NONBLOCK) < 0) {
+	if (fcntl(module->fd, F_SETFL, ival | O_NONBLOCK) == -1) {
 		log_warn("Could not load module `%s': fcntl(F_SETFL,O_NONBLOCK)",
 		    name);
 		goto on_error;

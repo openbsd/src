@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.49 2019/05/28 03:20:59 pd Exp $	*/
+/*	$OpenBSD: vm.c,v 1.50 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -571,7 +571,7 @@ send_vm(int fd, struct vm_create_params *vcp)
 		goto err;
 
 	vtp.vtp_vm_id = vcp->vcp_id;
-	if (ioctl(env->vmd_fd, VMM_IOC_TERM, &vtp) < 0) {
+	if (ioctl(env->vmd_fd, VMM_IOC_TERM, &vtp) == -1) {
 		log_warnx("%s: term IOC error: %d, %d", __func__,
 		    errno, ENOENT);
 	}
@@ -746,7 +746,7 @@ vcpu_reset(uint32_t vmid, uint32_t vcpu_id, struct vcpu_reg_state *vrs)
 
 	log_debug("%s: resetting vcpu %d for vm %d", __func__, vcpu_id, vmid);
 
-	if (ioctl(env->vmd_fd, VMM_IOC_RESETCPU, &vrp) < 0)
+	if (ioctl(env->vmd_fd, VMM_IOC_RESETCPU, &vrp) == -1)
 		return (errno);
 
 	return (0);
@@ -897,7 +897,7 @@ vmm_create_vm(struct vm_create_params *vcp)
 	if (vcp->vcp_nnics > VMM_MAX_NICS_PER_VM)
 		return (EINVAL);
 
-	if (ioctl(env->vmd_fd, VMM_IOC_CREATE, vcp) < 0)
+	if (ioctl(env->vmd_fd, VMM_IOC_CREATE, vcp) == -1)
 		return (errno);
 
 	return (0);
@@ -1157,7 +1157,7 @@ run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
 			vregsp.vrwp_regs = *vrs;
 			vregsp.vrwp_mask = VM_RWREGS_ALL;
 			if ((ret = ioctl(env->vmd_fd, VMM_IOC_WRITEREGS,
-			    &vregsp)) < 0) {
+			    &vregsp)) == -1) {
 				log_warn("%s: writeregs failed", __func__);
 				return (ret);
 			}
@@ -1355,7 +1355,7 @@ vcpu_run_loop(void *arg)
 			}
 		}
 
-		if (ioctl(env->vmd_fd, VMM_IOC_RUN, vrp) < 0) {
+		if (ioctl(env->vmd_fd, VMM_IOC_RUN, vrp) == -1) {
 			/* If run ioctl failed, exit */
 			ret = errno;
 			log_warn("%s: vm %d / vcpu %d run ioctl failed",
@@ -1399,7 +1399,7 @@ vcpu_pic_intr(uint32_t vm_id, uint32_t vcpu_id, uint8_t intr)
 	vip.vip_vcpu_id = vcpu_id; /* XXX always 0? */
 	vip.vip_intr = intr;
 
-	if (ioctl(env->vmd_fd, VMM_IOC_INTR, &vip) < 0)
+	if (ioctl(env->vmd_fd, VMM_IOC_INTR, &vip) == -1)
 		return (errno);
 
 	return (0);

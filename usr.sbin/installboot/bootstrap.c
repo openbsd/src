@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootstrap.c,v 1.12 2018/12/13 14:06:10 krw Exp $	*/
+/*	$OpenBSD: bootstrap.c,v 1.13 2019/06/28 13:32:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Joel Sing <jsing@openbsd.org>
@@ -60,9 +60,9 @@ bootstrap(int devfd, char *dev, char *bootfile)
 	if (verbose)
 		fprintf(stderr, "reading bootstrap from %s\n", bootfile);
 	fd = open(bootfile, O_RDONLY);
-	if (fd < 0)
+	if (fd == -1)
 		err(1, "open %s", bootfile);
-	if (fstat(fd, &sb) != 0)
+	if (fstat(fd, &sb) == -1)
 		err(1, "fstat %s", bootfile);
 	bootsec = howmany((ssize_t)sb.st_size, dl.d_secsize);
 	bootsize = bootsec * dl.d_secsize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.41 2015/08/25 04:18:43 guenther Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.42 2019/06/28 13:32:46 deraadt Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -643,7 +643,7 @@ genliteraldir(char *name, ino_t ino)
 	if (itp == NULL)
 		panic("Cannot find directory inode %llu named %s\n",
 		    (unsigned long long)ino, name);
-	if ((ofile = open(name, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0) {
+	if ((ofile = open(name, O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
 		warn("%s: cannot create file", name);
 		return (FAIL);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.40 2018/08/03 15:14:18 deraadt Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.41 2019/06/28 13:32:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 		socklen_t sval;
 
 		sval = sizeof(ss);
-		if (getpeername(0, (struct sockaddr *)&ss, &sval) < 0)
+		if (getpeername(0, (struct sockaddr *)&ss, &sval) == -1)
 			err(1, "getpeername");
 		sa = (struct sockaddr *)&ss;
 
@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (pipe(p) < 0)
+	if (pipe(p) == -1)
 		logerr("pipe: %s", strerror(errno));
 
 	switch (vfork()) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.322 2019/06/28 05:35:35 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.323 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1179,7 +1179,7 @@ fork_proc_backend(const char *key, const char *conf, const char *procname)
 	if (pid == 0) {
 		/* child process */
 		dup2(sp[0], STDIN_FILENO);
-		if (closefrom(STDERR_FILENO + 1) < 0)
+		if (closefrom(STDERR_FILENO + 1) == -1)
 			exit(1);
 
 		if (procname == NULL)
@@ -1297,7 +1297,7 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, errfd) == -1)
 		err(1, "socketpair");
 
-	if ((pid = fork()) < 0)
+	if ((pid = fork()) == -1)
 		err(1, "fork");
 
 	/* parent passes the child fd over to lka */
@@ -1329,9 +1329,9 @@ fork_processor(const char *name, const char *command, const char *user, const ch
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		err(1, "fork_processor: cannot drop privileges");
 
-	if (closefrom(STDERR_FILENO + 1) < 0)
+	if (closefrom(STDERR_FILENO + 1) == -1)
 		err(1, "closefrom");
-	if (setsid() < 0)
+	if (setsid() == -1)
 		err(1, "setsid");
 	if (signal(SIGPIPE, SIG_DFL) == SIG_ERR ||
 	    signal(SIGINT, SIG_DFL) == SIG_ERR ||
@@ -1421,7 +1421,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		return;
 	}
 
-	if (pipe(pipefd) < 0) {
+	if (pipe(pipefd) == -1) {
 		(void)snprintf(ebuf, sizeof ebuf, "pipe: %s", strerror(errno));
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
@@ -1450,7 +1450,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	unlink(sfn);
 
 	pid = fork();
-	if (pid < 0) {
+	if (pid == -1) {
 		(void)snprintf(ebuf, sizeof ebuf, "fork: %s", strerror(errno));
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);
@@ -1475,19 +1475,19 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 		m_close(p);
 		return;
 	}
-	if (chdir(pw_dir) < 0 && chdir("/") < 0)
+	if (chdir(pw_dir) == -1 && chdir("/") == -1)
 		err(1, "chdir");
 	if (setgroups(1, &pw_gid) ||
 	    setresgid(pw_gid, pw_gid, pw_gid) ||
 	    setresuid(pw_uid, pw_uid, pw_uid))
 		err(1, "forkmda: cannot drop privileges");
-	if (dup2(pipefd[0], STDIN_FILENO) < 0 ||
-	    dup2(allout, STDOUT_FILENO) < 0 ||
-	    dup2(allout, STDERR_FILENO) < 0)
+	if (dup2(pipefd[0], STDIN_FILENO) == -1 ||
+	    dup2(allout, STDOUT_FILENO) == -1 ||
+	    dup2(allout, STDERR_FILENO) == -1)
 		err(1, "forkmda: dup2");
-	if (closefrom(STDERR_FILENO + 1) < 0)
+	if (closefrom(STDERR_FILENO + 1) == -1)
 		err(1, "closefrom");
-	if (setsid() < 0)
+	if (setsid() == -1)
 		err(1, "setsid");
 	if (signal(SIGPIPE, SIG_DFL) == SIG_ERR ||
 	    signal(SIGINT, SIG_DFL) == SIG_ERR ||
@@ -1726,7 +1726,7 @@ parent_forward_open(char *username, char *directory, uid_t uid, gid_t gid)
 		return -1;
 	}
 
-	if (stat(directory, &sb) < 0) {
+	if (stat(directory, &sb) == -1) {
 		log_warn("warn: smtpd: parent_forward_open: %s", directory);
 		return -1;
 	}

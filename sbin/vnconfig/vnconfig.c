@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.4 2019/04/28 16:28:00 jmc Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.5 2019/06/28 13:32:46 deraadt Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -238,7 +238,7 @@ getinfo(const char *vname, int *availp)
 	}
 
 	vd = opendev((char *)vname, O_RDONLY, OPENDEV_PART, NULL);
-	if (vd < 0)
+	if (vd == -1)
 		err(1, "open: %s", vname);
 
 	vnu.vnu_unit = -1;
@@ -296,7 +296,7 @@ config(char *file, char *dev, struct disklabel *dp, char *key, size_t keylen)
 		asprintf(&dev, "vnd%d", unit);
 	}
 
-	if ((fd = opendev(dev, O_RDONLY, OPENDEV_PART, &rdev)) < 0) {
+	if ((fd = opendev(dev, O_RDONLY, OPENDEV_PART, &rdev)) == -1) {
 		err(4, "%s", rdev);
 		goto out;
 	}
@@ -324,7 +324,7 @@ config(char *file, char *dev, struct disklabel *dp, char *key, size_t keylen)
  out:
 	if (key)
 		explicit_bzero(key, keylen);
-	return (rv < 0);
+	return (rv == -1);
 }
 
 int
@@ -334,7 +334,7 @@ unconfig(char *vnd)
 	int fd, rv = -1, unit;
 	char *rdev;
 
-	if ((fd = opendev(vnd, O_RDONLY, OPENDEV_PART, &rdev)) < 0)
+	if ((fd = opendev(vnd, O_RDONLY, OPENDEV_PART, &rdev)) == -1)
 		err(4, "%s", rdev);
 
 	memset(&vndio, 0, sizeof vndio);
@@ -351,7 +351,7 @@ unconfig(char *vnd)
 
 	close(fd);
 	fflush(stdout);
-	return (rv < 0);
+	return (rv == -1);
 }
 
 __dead void

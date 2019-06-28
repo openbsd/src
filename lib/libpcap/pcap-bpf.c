@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.36 2018/04/05 03:47:27 lteo Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.37 2019/06/28 13:32:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -55,7 +55,7 @@ pcap_stats(pcap_t *p, struct pcap_stat *ps)
 {
 	struct bpf_stat s;
 
-	if (ioctl(p->fd, BIOCGSTATS, (caddr_t)&s) < 0) {
+	if (ioctl(p->fd, BIOCGSTATS, (caddr_t)&s) == -1) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "BIOCGSTATS: %s",
 		    pcap_strerror(errno));
 		return (PCAP_ERROR);
@@ -90,7 +90,7 @@ pcap_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	cc = p->cc;
 	if (p->cc == 0) {
 		cc = read(p->fd, (char *)p->buffer, p->bufsize);
-		if (cc < 0) {
+		if (cc == -1) {
 			/* Don't choke when we get ptraced */
 			switch (errno) {
 
@@ -246,7 +246,7 @@ get_dlt_list(int fd, int v, struct bpf_dltlist *bdlp, char *ebuf)
 			return (PCAP_ERROR);
 		}
 
-		if (ioctl(fd, BIOCGDLTLIST, (caddr_t)bdlp) < 0) {
+		if (ioctl(fd, BIOCGDLTLIST, (caddr_t)bdlp) == -1) {
 			(void)snprintf(ebuf, PCAP_ERRBUF_SIZE,
 			    "BIOCGDLTLIST: %s", pcap_strerror(errno));
 			free(bdlp->bfl_list);
@@ -321,7 +321,7 @@ pcap_cleanup_bpf(pcap_t *p)
 				memset(&req, 0, sizeof(req));
 				(void)strlcpy(req.ifm_name, p->opt.source,
 				    sizeof(req.ifm_name));
-				if (ioctl(sock, SIOCGIFMEDIA, &req) < 0) {
+				if (ioctl(sock, SIOCGIFMEDIA, &req) == -1) {
 					fprintf(stderr,
 					    "Can't restore interface flags "
 					    "(SIOCGIFMEDIA failed: %s).\n"
@@ -437,7 +437,7 @@ pcap_activate(pcap_t *p)
 
 	p->fd = fd;
 
-	if (ioctl(fd, BIOCVERSION, (caddr_t)&bv) < 0) {
+	if (ioctl(fd, BIOCVERSION, (caddr_t)&bv) == -1) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "BIOCVERSION: %s",
 		    pcap_strerror(errno));
 		status = PCAP_ERROR;
@@ -470,7 +470,7 @@ pcap_activate(pcap_t *p)
 		 * A buffer size was explicitly specified; use it.
 		 */
 		if (ioctl(fd, BIOCSBLEN,
-		    (caddr_t)&p->opt.buffer_size) < 0) {
+		    (caddr_t)&p->opt.buffer_size) == -1) {
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 			    "BIOCSBLEN: %s: %s", p->opt.source,
 			    pcap_strerror(errno));
@@ -483,12 +483,12 @@ pcap_activate(pcap_t *p)
 	 * Now bind to the device.
 	 */
 	(void)strlcpy(ifr.ifr_name, p->opt.source, sizeof(ifr.ifr_name));
-	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
+	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) == -1) {
 		status = check_setif_failure(p, errno);
 		goto bad;
 	}
 	/* Get the data link layer type. */
-	if (ioctl(fd, BIOCGDLT, (caddr_t)&v) < 0) {
+	if (ioctl(fd, BIOCGDLT, (caddr_t)&v) == -1) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "BIOCGDLT: %s",
 		    pcap_strerror(errno));
 		status = PCAP_ERROR;
@@ -557,7 +557,7 @@ pcap_activate(pcap_t *p)
 		struct timeval to;
 		to.tv_sec = p->md.timeout / 1000;
 		to.tv_usec = (p->md.timeout * 1000) % 1000000;
-		if (ioctl(p->fd, BIOCSRTIMEOUT, (caddr_t)&to) < 0) {
+		if (ioctl(p->fd, BIOCSRTIMEOUT, (caddr_t)&to) == -1) {
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 			    "BIOCSRTIMEOUT: %s", pcap_strerror(errno));
 			status = PCAP_ERROR;
@@ -567,7 +567,7 @@ pcap_activate(pcap_t *p)
 
 	if (p->opt.immediate) {
 		v = 1;
-		if (ioctl(p->fd, BIOCIMMEDIATE, &v) < 0) {
+		if (ioctl(p->fd, BIOCIMMEDIATE, &v) == -1) {
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 			    "BIOCIMMEDIATE: %s", pcap_strerror(errno));
 			status = PCAP_ERROR;
@@ -577,14 +577,14 @@ pcap_activate(pcap_t *p)
 
 	if (p->opt.promisc) {
 		/* set promiscuous mode, just warn if it fails */
-		if (ioctl(p->fd, BIOCPROMISC, NULL) < 0) {
+		if (ioctl(p->fd, BIOCPROMISC, NULL) == -1) {
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "BIOCPROMISC: %s",
 			    pcap_strerror(errno));
 			status = PCAP_WARNING_PROMISC_NOTSUP;
 		}
 	}
 
-	if (ioctl(fd, BIOCGBLEN, (caddr_t)&v) < 0) {
+	if (ioctl(fd, BIOCGBLEN, (caddr_t)&v) == -1) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "BIOCGBLEN: %s",
 		    pcap_strerror(errno));
 		status = PCAP_ERROR;
@@ -645,7 +645,7 @@ monitor_mode(pcap_t *p, int set)
 	/*
 	 * Find out how many media types we have.
 	 */
-	if (ioctl(sock, SIOCGIFMEDIA, &req) < 0) {
+	if (ioctl(sock, SIOCGIFMEDIA, &req) == -1) {
 		/*
 		 * Can't get the media types.
 		 */
@@ -693,7 +693,7 @@ monitor_mode(pcap_t *p, int set)
 		return (PCAP_ERROR);
 	}
 	req.ifm_ulist = media_list;
-	if (ioctl(sock, SIOCGIFMEDIA, &req) < 0) {
+	if (ioctl(sock, SIOCGIFMEDIA, &req) == -1) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "SIOCGIFMEDIA: %s",
 		    pcap_strerror(errno));
 		free(media_list);
@@ -931,7 +931,7 @@ pcap_setfilter(pcap_t *p, struct bpf_program *fp)
 		}
 		memcpy(p->fcode.bf_insns, fp->bf_insns,
 		    fp->bf_len * sizeof(*fp->bf_insns));
-	} else if (ioctl(p->fd, BIOCSETF, (caddr_t)fp) < 0) {
+	} else if (ioctl(p->fd, BIOCSETF, (caddr_t)fp) == -1) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "BIOCSETF: %s",
 		    pcap_strerror(errno));
 		return (-1);
@@ -958,7 +958,7 @@ pcap_setdirection(pcap_t *p, pcap_direction_t d)
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "Invalid direction");
 		return (-1);
 	}
-	if (ioctl(p->fd, BIOCSDIRFILT, &dirfilt) < 0) {
+	if (ioctl(p->fd, BIOCSDIRFILT, &dirfilt) == -1) {
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "BIOCSDIRFILT: %s",
 		    pcap_strerror(errno));
 		return (-1);

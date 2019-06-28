@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.19 2018/10/26 14:46:05 miko Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.20 2019/06/28 13:32:42 deraadt Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -194,7 +194,7 @@ getdevinfo(int fd)
 	}
 	for(i = 0; i < MAX_MIXER_DEVS; i++) {
 		mi.index = i;
-		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &mi) < 0)
+		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &mi) == -1)
 			break;
 		switch(mi.type) {
 		case AUDIO_MIXER_VALUE:
@@ -215,12 +215,12 @@ getdevinfo(int fd)
 	}
 	for(i = 0; i < MAX_MIXER_DEVS; i++) {
 		mi.index = i;
-		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &mi) < 0)
+		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &mi) == -1)
 			break;
 		if (strcmp(mi.label.name, AudioNsource) != 0)
 			continue;
 		cl.index = mi.mixer_class;
-		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &cl) < 0)
+		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &cl) == -1)
 			break;
 		if ((cl.type != AUDIO_MIXER_CLASS) ||
 		    (strcmp(cl.label.name, AudioCrecord) != 0))
@@ -274,7 +274,7 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 	case SOUND_MIXER_INFO:
 	case SOUND_OLD_MIXER_INFO:
 		error = ioctl(fd, AUDIO_GETDEV, &adev);
-		if (error)
+		if (error == -1)
 			return (error);
 		omi = argp;
 		if (com == SOUND_MIXER_INFO)
@@ -289,7 +289,7 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 		if (di->caps & SOUND_CAP_EXCL_INPUT) {
 			mc.type = AUDIO_MIXER_ENUM;
 			retval = ioctl(fd, AUDIO_MIXER_READ, &mc);
-			if (retval < 0)
+			if (retval == -1)
 				return retval;
 			e = opaque_to_enum(di, NULL, mc.un.ord);
 			if (e >= 0)
@@ -297,7 +297,7 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 		} else {
 			mc.type = AUDIO_MIXER_SET;
 			retval = ioctl(fd, AUDIO_MIXER_READ, &mc);
-			if (retval < 0)
+			if (retval == -1)
 				return retval;
 			e = opaque_to_enum(di, NULL, mc.un.mask);
 			if (e >= 0)
@@ -354,7 +354,7 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 		    doread:
 			mc.un.value.num_channels = di->stereomask & (1<<n) ? 2 : 1;
 			retval = ioctl(fd, AUDIO_MIXER_READ, &mc);
-			if (retval < 0)
+			if (retval == -1)
 				return retval;
 			if (mc.type != AUDIO_MIXER_VALUE)
 				return EINVAL;
@@ -387,7 +387,7 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
 				mc.un.value.level[AUDIO_MIXER_LEVEL_MONO] = (l+r)/2;
 			}
 			retval = ioctl(fd, AUDIO_MIXER_WRITE, &mc);
-			if (retval < 0)
+			if (retval == -1)
 				return retval;
 			if (MIXER_WRITE(SOUND_MIXER_FIRST) <= com &&
 			   com < MIXER_WRITE(SOUND_MIXER_NRDEVICES))

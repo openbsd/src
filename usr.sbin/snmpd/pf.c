@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.10 2015/02/06 23:21:59 millert Exp $	*/
+/*	$OpenBSD: pf.c,v 1.11 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -73,7 +73,7 @@ pf_get_stats(struct pf_status *s)
 	extern int	 devpf;
 
 	memset(s, 0, sizeof(*s));
-	if (ioctl(devpf, DIOCGETSTATUS, s)) {
+	if (ioctl(devpf, DIOCGETSTATUS, s) == -1) {
 		log_warn("DIOCGETSTATUS");
 		return (-1);
 	}
@@ -98,7 +98,7 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 	io.pfrio_buffer = addr;
 	io.pfrio_esize = sizeof(*addr);
 	io.pfrio_size = *size;
-	if (ioctl(devpf, DIOCRGETASTATS, &io)) 
+	if (ioctl(devpf, DIOCRGETASTATS, &io) == -1) 
 		return (-1);
 	*size = io.pfrio_size;
 	return (0);
@@ -120,7 +120,7 @@ pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
 	io.pfrio_buffer = tbl;
 	io.pfrio_esize = sizeof(*tbl);
 	io.pfrio_size = *size;
-	if (ioctl(devpf, DIOCRGETTSTATS, &io))
+	if (ioctl(devpf, DIOCRGETTSTATS, &io) == -1)
 		return (-1);
 	*size = io.pfrio_size;
 	return (0);
@@ -198,7 +198,7 @@ pfi_get_ifaces(const char *filter, struct pfi_kif *buf, int *size)
 	io.pfiio_buffer = buf;
 	io.pfiio_esize = sizeof(*buf);
 	io.pfiio_size = *size;
-	if (ioctl(devpf, DIOCIGETIFACES, &io))
+	if (ioctl(devpf, DIOCIGETIFACES, &io) == -1)
 		return (-1);
 	*size = io.pfiio_size;
 	return (0);

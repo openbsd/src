@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmpproto.c,v 1.12 2016/03/16 15:41:11 krw Exp $	*/
+/*	$OpenBSD: rmpproto.c,v 1.13 2019/06/28 13:32:50 deraadt Exp $	*/
 /*	$NetBSD: rmpproto.c,v 1.5.2.1 1995/11/14 08:45:44 thorpej Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ match:
 	 *	"too many open files" - RMP_E_BUSY
 	 *	anything else         - RMP_E_OPENFILE
 	 */
-	if ((rconn->bootfd = open(filename, O_RDONLY, 0600)) < 0) {
+	if ((rconn->bootfd = open(filename, O_RDONLY, 0600)) == -1) {
 		rpl->r_brpl.rmp_retcode = (errno == ENOENT)? RMP_E_NOFILE:
 			(errno == EMFILE || errno == ENFILE)? RMP_E_BUSY:
 			RMP_E_OPENFILE;
@@ -444,7 +444,7 @@ SendReadRepl(RMPCONN *rconn)
 	 *  Position read head on file according to info in request packet.
 	 */
 	GETWORD(req->r_rrq.rmp_offset, size);
-	if (lseek(oldconn->bootfd, (off_t)size, SEEK_SET) < 0) {
+	if (lseek(oldconn->bootfd, (off_t)size, SEEK_SET) == -1) {
 		syslog(LOG_ERR, "SendReadRepl: lseek: %m (%s)",
 		    EnetStr(rconn));
 		rpl->r_rrpl.rmp_retcode = RMP_E_ABORT;
@@ -457,7 +457,7 @@ SendReadRepl(RMPCONN *rconn)
 	 */
 	if ((size = read(oldconn->bootfd, &rpl->r_rrpl.rmp_data,
 	    (int) ntohs(req->r_rrq.rmp_size))) <= 0) {
-		if (size < 0) {
+		if (size == -1) {
 			syslog(LOG_ERR, "SendReadRepl: read: %m (%s)",
 			    EnetStr(rconn));
 			rpl->r_rrpl.rmp_retcode = RMP_E_ABORT;

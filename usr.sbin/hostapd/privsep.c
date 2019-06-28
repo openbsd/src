@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.26 2019/05/10 01:29:31 guenther Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.27 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -107,7 +107,7 @@ hostapd_priv_init(struct hostapd_config *cfg)
 	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
 		hostapd_fatal("failed to get socket pair\n");
 
-	if ((child_pid = fork()) < 0)
+	if ((child_pid = fork()) == -1)
 		hostapd_fatal("failed to fork child process\n");
 
 	/*
@@ -287,7 +287,7 @@ hostapd_priv(int fd, short sig, void *arg)
 		    SIOCS80211NODE : SIOCS80211DELNODE;
 
 		/* Try to add/delete a station from the APME */
-		if ((ret = ioctl(cfg->c_apme_ctl, request, &nr)) != 0)
+		if ((ret = ioctl(cfg->c_apme_ctl, request, &nr)) == -1)
 			ret = errno;
 
 		hostapd_must_write(fd, &ret, sizeof(int));

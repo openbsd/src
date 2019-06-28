@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.22 2018/04/26 15:55:14 guenther Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.23 2019/06/28 13:32:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -61,9 +61,9 @@ ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 
 	for (blk = beg; blk <= ((end<0)?blk:end); blk += (SBCOUNT*SBSIZE/512)){
 		memset(buf, 0, SBSIZE * SBCOUNT);
-		if (lseek(fd, (off_t)blk * 512, SEEK_SET) < 0)
+		if (lseek(fd, (off_t)blk * 512, SEEK_SET) == -1)
 		    err(1, "lseek");
-		if (read(fd, buf, SBSIZE * SBCOUNT) < 0)
+		if (read(fd, buf, SBSIZE * SBCOUNT) == -1)
 			err(1, "read");
 
 		for (n = 0; n < (SBSIZE * SBCOUNT); n += 512){
@@ -174,7 +174,7 @@ main(int argc, char *argv[])
 		usage();
 
 	fd = opendev(argv[0], O_RDONLY, OPENDEV_PART, NULL);
-	if (fd < 0)
+	if (fd == -1)
 		err(1, "%s", argv[0]);
 
 	if (pledge("stdio", NULL) == -1)

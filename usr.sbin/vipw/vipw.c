@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.23 2019/03/25 15:45:18 robert Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.24 2019/06/28 13:32:51 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -76,10 +76,10 @@ main(int argc, char *argv[])
 
 	pw_init();
 	tfd = pw_lock(0);
-	if (tfd < 0)
+	if (tfd == -1)
 		errx(1, "the passwd file is busy or you cannot lock.");
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd < 0)
+	if (pfd == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 	copyfile(pfd, tfd, &begin);
 	(void)close(tfd);
@@ -112,9 +112,9 @@ copyfile(int from, int to, struct stat *sb)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 	while ((nr = read(from, buf, sizeof(buf))) > 0)
 		for (off = 0; nr > 0; nr -= nw, off += nw)
-			if ((nw = write(to, buf + off, nr)) < 0)
+			if ((nw = write(to, buf + off, nr)) == -1)
 				pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
-	if (nr < 0)
+	if (nr == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	ts[0] = sb->st_atim;

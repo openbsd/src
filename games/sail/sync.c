@@ -1,4 +1,4 @@
-/*	$OpenBSD: sync.c,v 1.15 2016/09/11 14:21:18 tb Exp $	*/
+/*	$OpenBSD: sync.c,v 1.16 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ sync_exists(int game)
 	(void) snprintf(buf, sizeof buf, SF, game);
 	(void) time(&t);
 	setegid(egid);
-	if (stat(buf, &s) < 0) {
+	if (stat(buf, &s) == -1) {
 		setegid(gid);
 		return 0;
 	}
@@ -144,7 +144,7 @@ sync_open(void)
 	(void) snprintf(sync_lock, sizeof sync_lock, LF, game);
 	(void) snprintf(sync_file, sizeof sync_file, SF, game);
 	setegid(egid);
-	if (stat(sync_file, &tmp) < 0) {
+	if (stat(sync_file, &tmp) == -1) {
 		mode_t omask = umask(002);
 		sync_fp = fopen(sync_file, "w+");
 		(void) umask(omask);

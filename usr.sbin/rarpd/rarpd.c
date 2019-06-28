@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.75 2018/08/07 18:39:56 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.76 2019/06/28 13:32:50 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -251,12 +251,12 @@ rarp_open(char *device)
 
 	/* Set immediate mode so packets are processed as they arrive. */
 	immediate = 1;
-	if (ioctl(fd, BIOCIMMEDIATE, &immediate) < 0) {
+	if (ioctl(fd, BIOCIMMEDIATE, &immediate) == -1) {
 		error("BIOCIMMEDIATE: %s", strerror(errno));
 	}
 
 	(void) strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name);
-	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
+	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) == -1) {
 		if (aflag) {	/* for -a skip not ethernet interfaces */
 			close(fd);
 			return -1;
@@ -268,7 +268,7 @@ rarp_open(char *device)
 	 * Check that the data link layer is an Ethernet; this code
 	 * won't work with anything else.
 	 */
-	if (ioctl(fd, BIOCGDLT, (caddr_t) &dlt) < 0)
+	if (ioctl(fd, BIOCGDLT, (caddr_t) &dlt) == -1)
 		error("BIOCGDLT: %s", strerror(errno));
 	if (dlt != DLT_EN10MB) {
 		if (aflag) {	/* for -a skip not ethernet interfaces */
@@ -278,7 +278,7 @@ rarp_open(char *device)
 		error("%s is not an ethernet", device);
 	}
 	/* Set filter program. */
-	if (ioctl(fd, BIOCSETF, (caddr_t)&filter) < 0)
+	if (ioctl(fd, BIOCSETF, (caddr_t)&filter) == -1)
 		error("BIOCSETF: %s", strerror(errno));
 	return fd;
 }
@@ -333,7 +333,7 @@ rarp_loop(void)
 
 	if (iflist == 0)
 		error("no interfaces");
-	if (ioctl(iflist->ii_fd, BIOCGBLEN, (caddr_t)&bufsize) < 0)
+	if (ioctl(iflist->ii_fd, BIOCGBLEN, (caddr_t)&bufsize) == -1)
 		error("BIOCGBLEN: %s", strerror(errno));
 
 	arptab_init();
@@ -374,9 +374,9 @@ rarp_loop(void)
 		again:
 			cc = read(fd, (char *)buf, bufsize);
 			/* Don't choke when we get ptraced */
-			if (cc < 0 && errno == EINTR)
+			if (cc == -1 && errno == EINTR)
 				goto again;
-			if (cc < 0)
+			if (cc == -1)
 				error("read: %s", strerror(errno));
 			/* Loop through the packet(s) */
 #define bhp ((struct bpf_hdr *)bp)

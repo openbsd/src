@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.59 2018/08/26 18:24:46 brynet Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.60 2019/06/28 13:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -213,7 +213,7 @@ init_pcap(void)
 	set_pcap_filter();
 
 	/* lock */
-	if (ioctl(pcap_fileno(hpcap), BIOCLOCK) < 0) {
+	if (ioctl(pcap_fileno(hpcap), BIOCLOCK) == -1) {
 		logmsg(LOG_ERR, "BIOCLOCK: %s", strerror(errno));
 		return (-1);
 	}

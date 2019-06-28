@@ -1,4 +1,4 @@
-/*	$OpenBSD: initgroups.c,v 1.10 2015/09/12 14:56:50 guenther Exp $ */
+/*	$OpenBSD: initgroups.c,v 1.11 2019/06/28 13:32:41 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ initgroups(const char *uname, gid_t agroup)
 
 	ngroups = NGROUPS_MAX;
 	(void) getgrouplist(uname, agroup, groups, &ngroups);
-	if (setgroups(ngroups, groups) < 0)
+	if (setgroups(ngroups, groups) == -1)
 		return (-1);
 	return (0);
 }

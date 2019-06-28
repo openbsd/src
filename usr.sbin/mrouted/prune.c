@@ -1469,7 +1469,7 @@ age_table_entry(void)
 	    stnp = &gt->gt_srctbl;
 	    while ((st = *stnp) != NULL) {
 		sg_req.src.s_addr = st->st_origin;
-		if (ioctl(udp_socket, SIOCGETSGCNT, (char *)&sg_req) < 0) {
+		if (ioctl(udp_socket, SIOCGETSGCNT, (char *)&sg_req) == -1) {
 		    logit(LOG_WARNING, errno, "%s (%s %s)",
 			"age_table_entry: SIOCGETSGCNT failing for",
 			inet_fmt(st->st_origin, s1),
@@ -1901,7 +1901,7 @@ accept_mtrace(u_int32_t src, u_int32_t dst, u_int32_t group,
      * obtain # of packets out on interface
      */
     v_req.vifi = vifi;
-    if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) >= 0)
+    if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) == 0)
 	resp->tr_vifout  =  htonl(v_req.ocount);
 
     /*
@@ -1918,7 +1918,7 @@ accept_mtrace(u_int32_t src, u_int32_t dst, u_int32_t group,
     if (gt && gt->gt_mcastgrp == group) {
 	sg_req.src.s_addr = qry->tr_src;
 	sg_req.grp.s_addr = group;
-	if (ioctl(udp_socket, SIOCGETSGCNT, (char *)&sg_req) >= 0)
+	if (ioctl(udp_socket, SIOCGETSGCNT, (char *)&sg_req) == 0)
 	    resp->tr_pktcnt = htonl(sg_req.pktcnt);
 
 	if (VIFM_ISSET(vifi, gt->gt_scope))
@@ -1950,7 +1950,7 @@ accept_mtrace(u_int32_t src, u_int32_t dst, u_int32_t group,
     } else {
 	/* get # of packets in on interface */
 	v_req.vifi = rt->rt_parent;
-	if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) >= 0)
+	if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) == 0)
 	    resp->tr_vifin = htonl(v_req.icount);
 
 	MASK_TO_VAL(rt->rt_originmask, resp->tr_smask);

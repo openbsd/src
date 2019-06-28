@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.71 2017/02/06 17:15:56 tb Exp $	*/
+/*	$OpenBSD: mount.c,v 1.72 2019/06/28 13:32:44 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		if (!hasopt(optbuf, "update"))
 			optbuf = catopt(optbuf, "update");
 	} else if (skipmounted) {
-		if (statfs(name, &sf) < 0) {
+		if (statfs(name, &sf) == -1) {
 			warn("statfs %s", name);
 			return (1);
 		}
@@ -446,7 +446,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		free(optbuf);
 		free(argv);
 
-		if (waitpid(pid, &status, 0) < 0) {
+		if (waitpid(pid, &status, 0) == -1) {
 			warn("waitpid");
 			return (1);
 		}
@@ -460,7 +460,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		}
 
 		if (verbose) {
-			if (statfs(name, &sf) < 0) {
+			if (statfs(name, &sf) == -1) {
 				warn("statfs %s", name);
 				return (1);
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.35 2015/12/12 20:09:28 mmcc Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.36 2019/06/28 13:32:53 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -201,7 +201,7 @@ retry:
 			goto bad;
 		}
 		if ((mbfd = open(path, O_APPEND|O_CREAT|O_EXCL|O_WRONLY|O_EXLOCK,
-		    S_IRUSR|S_IWUSR)) < 0) {
+		    S_IRUSR|S_IWUSR)) == -1) {
 			if (errno == EEXIST) {
 				/* file appeared since lstat */
 				goto retry;
@@ -216,7 +216,7 @@ retry:
 		 * that if the ownership or permissions were changed there
 		 * was a reason for doing so.
 		 */
-		if (fchown(mbfd, pw->pw_uid, pw->pw_gid) < 0) {
+		if (fchown(mbfd, pw->pw_uid, pw->pw_gid) == -1) {
 			merr(NOTFATAL, "chown %u:%u: %s",
 			    pw->pw_uid, pw->pw_gid, name);
 			goto bad;
@@ -227,11 +227,11 @@ retry:
 			goto bad;
 		}
 		if ((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK,
-		    S_IRUSR|S_IWUSR)) < 0) {
+		    S_IRUSR|S_IWUSR)) == -1) {
 			merr(NOTFATAL, "%s: %s", path, strerror(errno));
 			goto bad;
 		}
-		if (fstat(mbfd, &fsb)) {
+		if (fstat(mbfd, &fsb) == -1) {
 			/* relating error to path may be bad style */
 			merr(NOTFATAL, "%s: %s", path, strerror(errno));
 			goto bad;
@@ -256,7 +256,7 @@ retry:
 
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		for (off = 0; off < nr;  off += nw)
-			if ((nw = write(mbfd, buf + off, nr - off)) < 0) {
+			if ((nw = write(mbfd, buf + off, nr - off)) == -1) {
 				merr(NOTFATAL, "%s: %s", path, strerror(errno));
 				(void)ftruncate(mbfd, curoff);
 				goto bad;

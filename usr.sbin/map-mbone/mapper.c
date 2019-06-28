@@ -1,4 +1,4 @@
-/*	$OpenBSD: mapper.c,v 1.24 2016/08/03 23:13:54 krw Exp $	*/
+/*	$OpenBSD: mapper.c,v 1.25 2019/06/28 13:32:48 deraadt Exp $	*/
 /*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
@@ -876,9 +876,9 @@ int main(int argc, char *argv[])
 	addr.sin_len = sizeof addr;
 	addr.sin_addr.s_addr = dvmrp_group;
 	addr.sin_port = htons(2000); /* any port over 1024 will do... */
-	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0
-	    || connect(udp, (struct sockaddr *) &addr, sizeof(addr)) < 0
-	    || getsockname(udp, (struct sockaddr *) &addr, &addrlen) < 0) {
+	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) == -1
+	    || connect(udp, (struct sockaddr *) &addr, sizeof(addr)) == -1
+	    || getsockname(udp, (struct sockaddr *) &addr, &addrlen) == -1) {
 	    perror("Determining local address");
 	    exit(1);
 	}
@@ -908,7 +908,7 @@ int main(int argc, char *argv[])
 
 	count = poll(pfd, 1, timeout * 1000);
 
-	if (count < 0) {
+	if (count == -1) {
 	    if (errno != EINTR)
 		perror("select");
 	    continue;

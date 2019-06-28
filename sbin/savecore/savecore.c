@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.61 2019/02/05 02:17:32 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.62 2019/06/28 13:32:46 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 	/* Increase our data size to the max if we can. */
 	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
 		rl.rlim_cur = rl.rlim_max;
-		if (setrlimit(RLIMIT_DATA, &rl) < 0)
+		if (setrlimit(RLIMIT_DATA, &rl) == -1)
 			syslog(LOG_WARNING, "can't set rlimit data size: %m");
 	}
 
@@ -538,7 +538,7 @@ err2:			syslog(LOG_WARNING,
 			exit(1);
 		}
 	}
-	if (nr < 0) {
+	if (nr == -1) {
 		syslog(LOG_ERR, "%s: %s",
 		    kernel ? kernel : _PATH_UNIX, strerror(errno));
 		syslog(LOG_WARNING,
@@ -639,12 +639,12 @@ check_space(void)
 	int fd;
 
 	tkernel = kernel ? kernel : _PATH_UNIX;
-	if (stat(tkernel, &st) < 0) {
+	if (stat(tkernel, &st) == -1) {
 		syslog(LOG_ERR, "%s: %m", tkernel);
 		exit(1);
 	}
 	kernelsize = st.st_blocks * S_BLKSIZE;
-	if ((fd = open(dirn, O_RDONLY, 0)) < 0 || fstatfs(fd, &fsbuf) < 0) {
+	if ((fd = open(dirn, O_RDONLY, 0)) == -1 || fstatfs(fd, &fsbuf) == -1) {
 		syslog(LOG_ERR, "%s: %m", dirn);
 		exit(1);
 	}

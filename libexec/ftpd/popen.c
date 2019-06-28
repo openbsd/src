@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.27 2019/05/08 23:56:48 tedu Exp $	*/
+/*	$OpenBSD: popen.c,v 1.28 2019/06/28 13:32:53 deraadt Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ ftpd_ls(char *arg, char *path, pid_t *pidptr)
 	pid_t pid;
 	char **pop, *argv[MAX_ARGV], *gargv[MAX_GARGV];
 
-	if (pipe(pdes) < 0)
+	if (pipe(pdes) == -1)
 		return (NULL);
 
 	/* break up string into pieces */
@@ -154,10 +154,10 @@ ftpd_pclose(FILE *iop, pid_t pid)
 	sigaddset(&sigset, SIGQUIT);
 	sigaddset(&sigset, SIGHUP);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
-	while ((rv = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
+	while ((rv = waitpid(pid, &status, 0)) == -1 && errno == EINTR)
 		continue;
 	sigprocmask(SIG_SETMASK, &osigset, NULL);
-	if (rv < 0)
+	if (rv == -1)
 		return (-1);
 	if (WIFEXITED(status))
 		return (WEXITSTATUS(status));

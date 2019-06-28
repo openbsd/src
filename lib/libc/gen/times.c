@@ -1,4 +1,4 @@
-/*	$OpenBSD: times.c,v 1.8 2018/03/02 16:35:58 cheloha Exp $ */
+/*	$OpenBSD: times.c,v 1.9 2019/06/28 13:32:41 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,11 +44,11 @@ times(struct tms *tp)
 	struct rusage ru;
 	struct timespec ts;
 
-	if (getrusage(RUSAGE_SELF, &ru) < 0)
+	if (getrusage(RUSAGE_SELF, &ru) == -1)
 		return ((clock_t)-1);
 	tp->tms_utime = CONVTCK(ru.ru_utime);
 	tp->tms_stime = CONVTCK(ru.ru_stime);
-	if (getrusage(RUSAGE_CHILDREN, &ru) < 0)
+	if (getrusage(RUSAGE_CHILDREN, &ru) == -1)
 		return ((clock_t)-1);
 	tp->tms_cutime = CONVTCK(ru.ru_utime);
 	tp->tms_cstime = CONVTCK(ru.ru_stime);

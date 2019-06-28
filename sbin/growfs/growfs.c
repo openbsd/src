@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.51 2016/05/28 20:40:23 tb Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.52 2019/06/28 13:32:43 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -1386,7 +1386,7 @@ rdfs(daddr_t bno, size_t size, void *bf, int fsi)
 	if (bno < 0) {
 		err(32, "rdfs: attempting to read negative block number");
 	}
-	if (lseek(fsi, (off_t)bno * DEV_BSIZE, SEEK_SET) < 0) {
+	if (lseek(fsi, (off_t)bno * DEV_BSIZE, SEEK_SET) == -1) {
 		err(33, "rdfs: seek error: %jd", (intmax_t)bno);
 	}
 	n = read(fsi, bf, size);
@@ -1406,7 +1406,7 @@ wtfs(daddr_t bno, size_t size, void *bf, int fso, unsigned int Nflag)
 	if (Nflag)
 		return;
 
-	if (lseek(fso, (off_t)bno * DEV_BSIZE, SEEK_SET) < 0)
+	if (lseek(fso, (off_t)bno * DEV_BSIZE, SEEK_SET) == -1)
 		err(35, "wtfs: seek error: %ld", (long)bno);
 	n = write(fso, bf, size);
 	if (n != (ssize_t)size)
@@ -1753,7 +1753,7 @@ main(int argc, char **argv)
 	 * Rather than guessing, use opendev() to get the device
 	 * name, which we open for reading.
 	 */
-	if ((fsi = opendev(*argv, O_RDONLY, 0, &device)) < 0)
+	if ((fsi = opendev(*argv, O_RDONLY, 0, &device)) == -1)
 		err(1, "%s", *argv);
 
 	/*
@@ -1763,7 +1763,7 @@ main(int argc, char **argv)
 		fso = -1;
 	} else {
 		fso = open(device, O_WRONLY);
-		if (fso < 0)
+		if (fso == -1)
 			err(1, "%s", device);
 	}
 
@@ -1771,7 +1771,7 @@ main(int argc, char **argv)
 	 * Now we have a file descriptor for our device, fstat() it to
 	 * figure out the partition number.
 	 */
-	if (fstat(fsi, &st) != 0)
+	if (fstat(fsi, &st) == -1)
 		err(1, "%s: fstat()", device);
 
 	/*
@@ -1979,7 +1979,7 @@ return_disklabel(int fd, struct disklabel *lp, unsigned int Nflag)
 			sum ^= *ptr++;
 		lp->d_checksum = sum;
 
-		if (ioctl(fd, DIOCWDINFO, (char *)lp) < 0)
+		if (ioctl(fd, DIOCWDINFO, (char *)lp) == -1)
 			errx(1, "DIOCWDINFO failed");
 	}
 	free(lp);

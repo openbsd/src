@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.24 2016/02/01 07:25:51 mestre Exp $	*/
+/*	$OpenBSD: announce.c,v 1.25 2019/06/28 13:32:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -60,7 +60,7 @@ announce(CTL_MSG *request, char *remote_machine)
 		return (FAILED);
 	if ((tf = fopen(full_tty, "w")) == NULL)
 		return (PERMISSION_DENIED);
-	if (fstat(fileno(tf), &stbuf) < 0) {
+	if (fstat(fileno(tf), &stbuf) == -1) {
 		fclose(tf);
 		return (PERMISSION_DENIED);
 	}

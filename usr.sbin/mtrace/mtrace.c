@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.39 2017/08/31 12:03:02 otto Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.40 2019/06/28 13:32:49 deraadt Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -443,7 +443,7 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 
 	    count = poll(pfd, 1, tv.tv_sec * 1000);
 
-	    if (count < 0) {
+	    if (count == -1) {
 		if (errno != EINTR) perror("poll");
 		continue;
 	    } else if (count == 0) {
@@ -1280,9 +1280,9 @@ usage: mtrace [-lMnpsv] [-g gateway] [-i if_addr] [-m max_hops] [-q nqueries]\n\
     addr.sin_addr.s_addr = qgrp;
     addr.sin_port = htons(2000);	/* Any port above 1024 will do */
 
-    if (((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0) ||
-	(connect(udp, (struct sockaddr *) &addr, sizeof(addr)) < 0) ||
-	getsockname(udp, (struct sockaddr *) &addr, &addrlen) < 0) {
+    if (((udp = socket(AF_INET, SOCK_DGRAM, 0)) == -1) ||
+	(connect(udp, (struct sockaddr *) &addr, sizeof(addr)) == -1) ||
+	getsockname(udp, (struct sockaddr *) &addr, &addrlen) == -1) {
 	perror("Determining local address");
 	exit(1);
     }

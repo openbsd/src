@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.36 2019/03/23 17:03:00 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.37 2019/06/28 13:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -598,7 +598,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	if (flags & LOGIN_SETPRIORITY) {
 		p = login_getcapnum(lc, "priority", 0, 0);
 
-		if (setpriority(PRIO_PROCESS, 0, (int)p) < 0)
+		if (setpriority(PRIO_PROCESS, 0, (int)p) == -1)
 			syslog(LOG_ERR, "%s: setpriority: %m", lc->lc_class);
 	}
 
@@ -608,14 +608,14 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	}
 
 	if (flags & LOGIN_SETGROUP) {
-		if (setresgid(pwd->pw_gid, pwd->pw_gid, pwd->pw_gid) < 0) {
+		if (setresgid(pwd->pw_gid, pwd->pw_gid, pwd->pw_gid) == -1) {
 			syslog(LOG_ERR, "setresgid(%u,%u,%u): %m",
 			    pwd->pw_gid, pwd->pw_gid, pwd->pw_gid);
 			login_close(flc);
 			return (-1);
 		}
 
-		if (initgroups(pwd->pw_name, pwd->pw_gid) < 0) {
+		if (initgroups(pwd->pw_name, pwd->pw_gid) == -1) {
 			syslog(LOG_ERR, "initgroups(%s,%u): %m",
 			    pwd->pw_name, pwd->pw_gid);
 			login_close(flc);
@@ -624,7 +624,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	}
 
 	if (flags & LOGIN_SETLOGIN)
-		if (setlogin(pwd->pw_name) < 0) {
+		if (setlogin(pwd->pw_name) == -1) {
 			syslog(LOG_ERR, "setlogin(%s) failure: %m",
 			    pwd->pw_name);
 			login_close(flc);
@@ -632,7 +632,7 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 		}
 
 	if (flags & LOGIN_SETUSER) {
-		if (setresuid(uid, uid, uid) < 0) {
+		if (setresuid(uid, uid, uid) == -1) {
 			syslog(LOG_ERR, "setresuid(%u,%u,%u): %m",
 			    uid, uid, uid);
 			login_close(flc);
@@ -968,7 +968,7 @@ secure_path(char *path)
 	 * If not a regular file, or is owned/writeable by someone
 	 * other than root, quit.
 	 */
-	if (lstat(path, &sb) < 0) {
+	if (lstat(path, &sb) == -1) {
 		syslog(LOG_ERR, "cannot stat %s: %m", path);
 		return (-1);
 	} else if (!S_ISREG(sb.st_mode)) {

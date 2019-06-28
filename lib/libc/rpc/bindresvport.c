@@ -1,4 +1,4 @@
-/*	$OpenBSD: bindresvport.c,v 1.18 2015/09/14 11:01:47 guenther Exp $	*/
+/*	$OpenBSD: bindresvport.c,v 1.19 2019/06/28 13:32:42 deraadt Exp $	*/
 
 /*
  * Copyright 1996, Jason Downs.  All rights reserved.
@@ -92,12 +92,12 @@ bindresvport_sa(int sd, struct sockaddr *sa)
 		socklen_t oldlen = sizeof(old);
 
 		error = getsockopt(sd, proto, portrange, &old, &oldlen);
-		if (error < 0)
+		if (error == -1)
 			return (error);
 
 		error = setsockopt(sd, proto, portrange, &portlow,
 		    sizeof(portlow));
-		if (error < 0)
+		if (error == -1)
 			return (error);
 	}
 
@@ -108,14 +108,14 @@ bindresvport_sa(int sd, struct sockaddr *sa)
 
 		if (error) {
 			if (setsockopt(sd, proto, portrange, &old,
-			    sizeof(old)) < 0)
+			    sizeof(old)) == -1)
 				errno = saved_errno;
 			return (error);
 		}
 
 		if (sa != (struct sockaddr *)&myaddr) {
 			/* Hmm, what did the kernel assign... */
-			if (getsockname(sd, sa, &salen) < 0)
+			if (getsockname(sd, sa, &salen) == -1)
 				errno = saved_errno;
 			return (error);
 		}

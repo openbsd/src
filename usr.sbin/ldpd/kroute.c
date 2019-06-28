@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.69 2019/01/23 08:43:45 dlg Exp $ */
+/*	$OpenBSD: kroute.c,v 1.70 2019/06/28 13:32:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -1835,7 +1835,7 @@ kmpw_install(const char *ifname, struct kpw *kpw)
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t) &imr;
-	if (ioctl(kr_state.ioctl_fd, SIOCSETMPWCFG, &ifr)) {
+	if (ioctl(kr_state.ioctl_fd, SIOCSETMPWCFG, &ifr) == -1) {
 		log_warn("ioctl SIOCSETMPWCFG");
 		return (-1);
 	}
@@ -1853,7 +1853,7 @@ kmpw_uninstall(const char *ifname)
 	memset(&imr, 0, sizeof(imr));
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t) &imr;
-	if (ioctl(kr_state.ioctl_fd, SIOCSETMPWCFG, &ifr)) {
+	if (ioctl(kr_state.ioctl_fd, SIOCSETMPWCFG, &ifr) == -1) {
 		log_warn("ioctl SIOCSETMPWCFG");
 		return (-1);
 	}

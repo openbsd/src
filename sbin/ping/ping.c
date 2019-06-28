@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.235 2019/03/19 23:27:49 tedu Exp $	*/
+/*	$OpenBSD: ping.c,v 1.236 2019/06/28 13:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -495,10 +495,10 @@ main(int argc, char *argv[])
 
 		if (!v6flag && IN_MULTICAST(ntohl(dst4.sin_addr.s_addr))) {
 			if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
-			    &from4.sin_addr, sizeof(from4.sin_addr)) < 0)
+			    &from4.sin_addr, sizeof(from4.sin_addr)) == -1)
 				err(1, "setsockopt IP_MULTICAST_IF");
 		} else {
-			if (bind(s, from, from->sa_len) < 0)
+			if (bind(s, from, from->sa_len) == -1)
 				err(1, "bind");
 		}
 	} else if (options & F_VERBOSE) {
@@ -509,7 +509,7 @@ main(int argc, char *argv[])
 		int dummy;
 		socklen_t len = dst->sa_len;
 
-		if ((dummy = socket(dst->sa_family, SOCK_DGRAM, 0)) < 0)
+		if ((dummy = socket(dst->sa_family, SOCK_DGRAM, 0)) == -1)
 			err(1, "UDP socket");
 
 		memcpy(from, dst, dst->sa_len);
@@ -536,23 +536,23 @@ main(int argc, char *argv[])
 
 			if ((moptions & MULTICAST_NOLOOP) && setsockopt(dummy,
 			    IPPROTO_IP, IP_MULTICAST_LOOP, &loop,
-			    sizeof(loop)) < 0)
+			    sizeof(loop)) == -1)
 				err(1, "setsockopt IP_MULTICAST_LOOP");
 			if ((moptions & MULTICAST_TTL) && setsockopt(dummy,
 			    IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
-			    sizeof(ttl)) < 0)
+			    sizeof(ttl)) == -1)
 				err(1, "setsockopt IP_MULTICAST_TTL");
 		}
 
 		if (rtableid > 0 &&
 		    setsockopt(dummy, SOL_SOCKET, SO_RTABLE, &rtableid,
-		    sizeof(rtableid)) < 0)
+		    sizeof(rtableid)) == -1)
 			err(1, "setsockopt(SO_RTABLE)");
 
-		if (connect(dummy, from, len) < 0)
+		if (connect(dummy, from, len) == -1)
 			err(1, "UDP connect");
 
-		if (getsockname(dummy, from, &len) < 0)
+		if (getsockname(dummy, from, &len) == -1)
 			err(1, "getsockname");
 
 		close(dummy);
@@ -593,10 +593,10 @@ main(int argc, char *argv[])
 	 * size of both the send and receive buffers...
 	 */
 	maxsizelen = sizeof maxsize;
-	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &maxsize, &maxsizelen) < 0)
+	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &maxsize, &maxsizelen) == -1)
 		err(1, "getsockopt");
 	if (maxsize < packlen &&
-	    setsockopt(s, SOL_SOCKET, SO_SNDBUF, &packlen, sizeof(maxsize)) < 0)
+	    setsockopt(s, SOL_SOCKET, SO_SNDBUF, &packlen, sizeof(maxsize)) == -1)
 		err(1, "setsockopt");
 
 	/*
@@ -606,7 +606,7 @@ main(int argc, char *argv[])
 	 * /etc/ethers.
 	 */
 	while (setsockopt(s, SOL_SOCKET, SO_RCVBUF,
-	    &bufspace, sizeof(bufspace)) < 0) {
+	    &bufspace, sizeof(bufspace)) == -1) {
 		if ((bufspace -= 1024) <= 0)
 			err(1, "Cannot set the receive buffer size");
 	}
@@ -641,7 +641,7 @@ main(int argc, char *argv[])
 
 		if ((moptions & MULTICAST_NOLOOP) &&
 		    setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-		    &loop, sizeof(loop)) < 0)
+		    &loop, sizeof(loop)) == -1)
 			err(1, "setsockopt IPV6_MULTICAST_LOOP");
 
 		optval = IPV6_DEFHLIM;
@@ -664,7 +664,7 @@ main(int argc, char *argv[])
 		}
 
 		if (setsockopt(s, IPPROTO_ICMPV6, ICMP6_FILTER,
-		    &filt, sizeof(filt)) < 0)
+		    &filt, sizeof(filt)) == -1)
 			err(1, "setsockopt(ICMP6_FILTER)");
 
 		if (hoplimit != -1) {
@@ -683,23 +683,23 @@ main(int argc, char *argv[])
 		if (options & F_TOS) {
 			optval = tos;
 			if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS,
-			    &optval, sizeof(optval)) < 0)
+			    &optval, sizeof(optval)) == -1)
 				err(1, "setsockopt(IPV6_TCLASS)");
 		}
 
 		if (df) {
 			optval = 1;
 			if (setsockopt(s, IPPROTO_IPV6, IPV6_DONTFRAG,
-			    &optval, sizeof(optval)) < 0)
+			    &optval, sizeof(optval)) == -1)
 				err(1, "setsockopt(IPV6_DONTFRAG)");
 		}
 
 		optval = 1;
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO,
-		    &optval, sizeof(optval)) < 0)
+		    &optval, sizeof(optval)) == -1)
 			err(1, "setsockopt(IPV6_RECVPKTINFO)");
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVHOPLIMIT,
-		    &optval, sizeof(optval)) < 0)
+		    &optval, sizeof(optval)) == -1)
 			err(1, "setsockopt(IPV6_RECVHOPLIMIT)");
 	} else {
 		u_char loop = 0;
@@ -719,7 +719,7 @@ main(int argc, char *argv[])
 			struct ip *ip = (struct ip *)outpackhdr;
 
 			if (setsockopt(s, IPPROTO_IP, IP_HDRINCL,
-			    &optval, sizeof(optval)) < 0)
+			    &optval, sizeof(optval)) == -1)
 				err(1, "setsockopt(IP_HDRINCL)");
 			ip->ip_v = IPVERSION;
 			ip->ip_hl = sizeof(struct ip) >> 2;
@@ -745,17 +745,17 @@ main(int argc, char *argv[])
 			rspace[IPOPT_OLEN] = sizeof(rspace)-1;
 			rspace[IPOPT_OFFSET] = IPOPT_MINOFF;
 			if (setsockopt(s, IPPROTO_IP, IP_OPTIONS,
-			    rspace, sizeof(rspace)) < 0)
+			    rspace, sizeof(rspace)) == -1)
 				err(1, "record route");
 		}
 
 		if ((moptions & MULTICAST_NOLOOP) &&
 		    setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP,
-		    &loop, sizeof(loop)) < 0)
+		    &loop, sizeof(loop)) == -1)
 			err(1, "setsockopt IP_MULTICAST_LOOP");
 		if ((moptions & MULTICAST_TTL) &&
 		    setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL,
-		    &ttl, sizeof(ttl)) < 0)
+		    &ttl, sizeof(ttl)) == -1)
 			err(1, "setsockopt IP_MULTICAST_TTL");
 	}
 
@@ -875,7 +875,7 @@ main(int argc, char *argv[])
 		m.msg_controllen = sizeof(cmsgbuf.buf);
 
 		cc = recvmsg(s, &m, 0);
-		if (cc < 0) {
+		if (cc == -1) {
 			if (errno != EINTR) {
 				warn("recvmsg");
 				sleep(1);
@@ -1116,8 +1116,8 @@ pinger(int s)
 
 	i = sendmsg(s, &smsghdr, 0);
 
-	if (i < 0 || i != cc) {
-		if (i < 0)
+	if (i == -1 || i != cc) {
+		if (i == -1)
 			warn("sendmsg");
 		printf("ping: wrote %s %d chars, ret=%d\n", hostname, cc, i);
 	}

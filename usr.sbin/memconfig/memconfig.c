@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.18 2016/08/14 18:34:48 guenther Exp $ */
+/* $OpenBSD: memconfig.c,v 1.19 2019/06/28 13:32:48 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
@@ -132,7 +132,7 @@ mrgetall(int memfd, int *nmr)
 	struct mem_range_op	mro;
 
 	mro.mo_arg[0] = 0;
-	if (ioctl(memfd, MEMRANGE_GET, &mro))
+	if (ioctl(memfd, MEMRANGE_GET, &mro) == -1)
 		err(1, "can't size range descriptor array");
 
 	*nmr = mro.mo_arg[0];
@@ -143,7 +143,7 @@ mrgetall(int memfd, int *nmr)
 
 	mro.mo_arg[0] = *nmr;
 	mro.mo_desc = mrd;
-	if (ioctl(memfd, MEMRANGE_GET, &mro))
+	if (ioctl(memfd, MEMRANGE_GET, &mro) == -1)
 		err(1, "can't fetch range descriptor array");
 
 	return(mrd);
@@ -254,7 +254,7 @@ setfunc(int memfd, int argc, char *argv[])
 
 	mro.mo_desc = &mrd;
 	mro.mo_arg[0] = 0;
-	if (ioctl(memfd, MEMRANGE_SET, &mro))
+	if (ioctl(memfd, MEMRANGE_SET, &mro) == -1)
 		err(1, "can't set range");
 }
 
@@ -307,7 +307,7 @@ clearfunc(int memfd, int argc, char *argv[])
 			    !(mrdp[i].mr_flags & MDF_FIXACTIVE)) {
 
 				mro.mo_desc = mrdp + i;
-				if (ioctl(memfd, MEMRANGE_SET, &mro))
+				if (ioctl(memfd, MEMRANGE_SET, &mro) == -1)
 					warn("couldn't clear range owned by '%s'",
 					    owner);
 			}
@@ -316,7 +316,7 @@ clearfunc(int memfd, int argc, char *argv[])
 		/* clear-by-base/len */
 		mro.mo_arg[0] = MEMRANGE_SET_REMOVE;
 		mro.mo_desc = &mrd;
-		if (ioctl(memfd, MEMRANGE_SET, &mro))
+		if (ioctl(memfd, MEMRANGE_SET, &mro) == -1)
 			err(1, "couldn't clear range");
 	} else {
 		help("clear");

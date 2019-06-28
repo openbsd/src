@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_queue.c,v 1.6 2017/07/19 12:51:30 mikeb Exp $ */
+/*	$OpenBSD: pfctl_queue.c,v 1.7 2019/06/28 13:32:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -123,7 +123,7 @@ pfctl_update_qstats(int dev)
 	memset(&pq, 0, sizeof(pq));
 	memset(&pqs, 0, sizeof(pqs));
 	memset(&qstats, 0, sizeof(qstats));
-	if (ioctl(dev, DIOCGETQUEUES, &pq)) {
+	if (ioctl(dev, DIOCGETQUEUES, &pq) == -1) {
 		warn("DIOCGETQUEUES");
 		return (-1);
 	}
@@ -140,7 +140,7 @@ pfctl_update_qstats(int dev)
 		pqs.ticket = pq.ticket;
 		pqs.buf = &qstats.data;
 		pqs.nbytes = sizeof(qstats.data);
-		if (ioctl(dev, DIOCGETQSTATS, &pqs)) {
+		if (ioctl(dev, DIOCGETQSTATS, &pqs) == -1) {
 			warn("DIOCGETQSTATS");
 			return (-1);
 		}

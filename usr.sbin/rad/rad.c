@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.20 2019/03/31 03:36:18 yasuoka Exp $	*/
+/*	$OpenBSD: rad.c,v 1.21 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -260,19 +260,19 @@ main(int argc, char *argv[])
 		fatal("could not establish imsg links");
 
 	if ((icmp6sock = socket(AF_INET6, SOCK_RAW | SOCK_CLOEXEC,
-	    IPPROTO_ICMPV6)) < 0)
+	    IPPROTO_ICMPV6)) == -1)
 		fatal("ICMPv6 socket");
 
 	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
-	    sizeof(on)) < 0)
+	    sizeof(on)) == -1)
 		fatal("IPV6_RECVPKTINFO");
 
 	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
-	    sizeof(on)) < 0)
+	    sizeof(on)) == -1)
 		fatal("IPV6_RECVHOPLIMIT");
 
 	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &off,
-	    sizeof(off)) < 0)
+	    sizeof(off)) == -1)
 		fatal("IPV6_RECVHOPLIMIT");
 
 	/* only router advertisements and solicitations */
@@ -284,13 +284,13 @@ main(int argc, char *argv[])
 		fatal("ICMP6_FILTER");
 
 	if ((frontend_routesock = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC,
-	    AF_INET6)) < 0)
+	    AF_INET6)) == -1)
 		fatal("route socket");
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
 	    ROUTE_FILTER(RTM_DELADDR);
 	if (setsockopt(frontend_routesock, AF_ROUTE, ROUTE_MSGFILTER,
-	    &rtfilter, sizeof(rtfilter)) < 0)
+	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
 
 	if ((control_fd = control_init(csock)) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.243 2019/06/16 09:30:15 mestre Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.244 2019/06/28 13:32:46 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -1228,7 +1228,7 @@ vfsinit(void)
 	mib[1] = VFS_GENERIC;
 	mib[2] = VFS_MAXTYPENUM;
 	buflen = 4;
-	if (sysctl(mib, 3, &maxtypenum, &buflen, NULL, 0) < 0)
+	if (sysctl(mib, 3, &maxtypenum, &buflen, NULL, 0) == -1)
 		return;
 	/*
          * We need to do 0..maxtypenum so add one, and then we offset them
@@ -1250,7 +1250,7 @@ vfsinit(void)
 	buflen = sizeof vfc;
 	for (loc = lastused, cnt = 1; cnt < maxtypenum; cnt++) {
 		mib[3] = cnt - 1;
-		if (sysctl(mib, 4, &vfc, &buflen, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &vfc, &buflen, NULL, 0) == -1) {
 			if (errno == EOPNOTSUPP)
 				continue;
 			warn("vfsinit");
@@ -1309,7 +1309,7 @@ sysctl_vfsgen(char *string, char **bufpp, int mib[], int flags, int *typep)
 	mib[2] = VFS_CONF;
 	mib[3] = indx;
 	size = sizeof vfc;
-	if (sysctl(mib, 4, &vfc, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 4, &vfc, &size, NULL, 0) == -1) {
 		if (errno != EOPNOTSUPP)
 			warn("vfs print");
 		return -1;
@@ -1767,7 +1767,7 @@ sysctl_nchstats(char *string, char **bufpp, int mib[], int flags, int *typep)
 	}
 	if (keepvalue == 0) {
 		size = sizeof(struct nchstats);
-		if (sysctl(mib, 2, &nch, &size, NULL, 0) < 0)
+		if (sysctl(mib, 2, &nch, &size, NULL, 0) == -1)
 			return (-1);
 		keepvalue = 1;
 	}
@@ -1863,7 +1863,7 @@ sysctl_forkstat(char *string, char **bufpp, int mib[], int flags, int *typep)
 	}
 	if (keepvalue == 0) {
 		size = sizeof(struct forkstat);
-		if (sysctl(mib, 2, &fks, &size, NULL, 0) < 0)
+		if (sysctl(mib, 2, &fks, &size, NULL, 0) == -1)
 			return (-1);
 		keepvalue = 1;
 	}
@@ -1923,7 +1923,7 @@ sysctl_malloc(char *string, char **bufpp, int mib[], int flags, int *typep)
 			stor = mib[2];
 			mib[2] = KERN_MALLOC_BUCKETS;
 			buf = bufp;
-			if (sysctl(mib, 3, buf, &size, NULL, 0) < 0)
+			if (sysctl(mib, 3, buf, &size, NULL, 0) == -1)
 				return (-1);
 			mib[2] = stor;
 			for (stor = 0, i = 0; i < size; i++)
@@ -1953,7 +1953,7 @@ sysctl_malloc(char *string, char **bufpp, int mib[], int flags, int *typep)
 		stor = mib[2];
 		mib[2] = KERN_MALLOC_KMEMNAMES;
 		buf = bufp;
-		if (sysctl(mib, 3, buf, &size, NULL, 0) < 0)
+		if (sysctl(mib, 3, buf, &size, NULL, 0) == -1)
 			return (-1);
 		mib[2] = stor;
 		if ((name = strsep(bufpp, ".")) == NULL) {
@@ -2034,23 +2034,23 @@ sysctl_chipset(char *string, char **bufpp, int mib[], int flags, int *typep)
 	case CPU_CHIPSET_PORTS:
 	case CPU_CHIPSET_HAE_MASK:
 		len = sizeof(void *);
-		if (sysctl(mib, 3, &q, &len, NULL, 0) < 0)
+		if (sysctl(mib, 3, &q, &len, NULL, 0) == -1)
 			goto done;
 		printf("%p", q);
 		break;
 	case CPU_CHIPSET_BWX:
 		len = sizeof(int);
-		if (sysctl(mib, 3, &bwx, &len, NULL, 0) < 0)
+		if (sysctl(mib, 3, &bwx, &len, NULL, 0) == -1)
 			goto done;
 		printf("%d", bwx);
 		break;
 	case CPU_CHIPSET_TYPE:
-		if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0)
+		if (sysctl(mib, 3, NULL, &len, NULL, 0) == -1)
 			goto done;
 		p = malloc(len + 1);
 		if (p == NULL)
 			goto done;
-		if (sysctl(mib, 3, p, &len, NULL, 0) < 0) {
+		if (sysctl(mib, 3, p, &len, NULL, 0) == -1) {
 			free(p);
 			goto done;
 		}

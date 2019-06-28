@@ -1,4 +1,4 @@
-/*	$OpenBSD: getloadavg.c,v 1.7 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: getloadavg.c,v 1.8 2019/06/28 13:32:41 deraadt Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ getloadavg(double loadavg[], int nelem)
 	mib[0] = CTL_VM;
 	mib[1] = VM_LOADAVG;
 	size = sizeof(loadinfo);
-	if (sysctl(mib, 2, &loadinfo, &size, NULL, 0) < 0)
+	if (sysctl(mib, 2, &loadinfo, &size, NULL, 0) == -1)
 		return (-1);
 
 	nelem = MINIMUM(nelem, sizeof(loadinfo.ldavg) / sizeof(fixpt_t));

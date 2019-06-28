@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.15 2017/05/28 20:34:33 tedu Exp $	*/
+/*	$OpenBSD: score.c,v 1.16 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ show_score(void)
 	int	inf;
 	static int	max_score;
 
-	if ((inf = open(Scorefile, O_RDONLY)) < 0) {
+	if ((inf = open(Scorefile, O_RDONLY)) == -1) {
 		perror(Scorefile);
 		return;
 	}

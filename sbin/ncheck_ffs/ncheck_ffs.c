@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.53 2016/05/28 23:46:06 tb Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.54 2019/06/28 13:32:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -571,7 +571,7 @@ main(int argc, char *argv[])
 		err(1, "cannot find real path for %s", disk);
 	disk = rdisk;
 
-	if (stat(disk, &stblock) < 0)
+	if (stat(disk, &stblock) == -1)
 		err(1, "cannot stat %s", disk);
 
         if (S_ISBLK(stblock.st_mode)) {
@@ -582,13 +582,13 @@ main(int argc, char *argv[])
                 disk = rawname(fsp->fs_spec);
         }
 
-	if ((diskfd = opendev(disk, O_RDONLY, 0, NULL)) < 0)
+	if ((diskfd = opendev(disk, O_RDONLY, 0, NULL)) == -1)
 		err(1, "cannot open %s", disk);
 
 gotdev:
-	if (ioctl(diskfd, DIOCGDINFO, (char *)&lab) < 0)
+	if (ioctl(diskfd, DIOCGDINFO, (char *)&lab) == -1)
 		err(1, "ioctl (DIOCGDINFO)");
-	if (ioctl(diskfd, DIOCGPDINFO, (char *)&lab) < 0)
+	if (ioctl(diskfd, DIOCGPDINFO, (char *)&lab) == -1)
 		err(1, "ioctl (DIOCGPDINFO)");
 
 	if (pledge("stdio", NULL) == -1)

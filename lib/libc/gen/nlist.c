@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.70 2019/05/13 17:18:10 guenther Exp $ */
+/*	$OpenBSD: nlist.c,v 1.71 2019/06/28 13:32:41 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -102,7 +102,7 @@ __fdnlist(int fd, struct nlist *list)
 
 	/* Make sure obj is OK */
 	if (pread(fd, &ehdr, sizeof(Elf_Ehdr), 0) != sizeof(Elf_Ehdr) ||
-	    !__elf_is_okay__(&ehdr) || fstat(fd, &st) < 0)
+	    !__elf_is_okay__(&ehdr) || fstat(fd, &st) == -1)
 		return (-1);
 
 	/* calculate section header table size */
@@ -293,7 +293,7 @@ nlist(const char *name, struct nlist *list)
 	int fd, n;
 
 	fd = open(name, O_RDONLY | O_CLOEXEC);
-	if (fd < 0)
+	if (fd == -1)
 		return (-1);
 	n = __fdnlist(fd, list);
 	(void)close(fd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.24 2015/12/22 19:51:04 mmcc Exp $	*/
+/*	$OpenBSD: inet.c,v 1.25 2019/06/28 13:32:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -161,7 +161,7 @@ pcap_lookupdev(errbuf)
 	static char device[sizeof(ifrp->ifr_name) + 1];
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (fd < 0) {
+	if (fd == -1) {
 		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE, "socket: %s",
 		    pcap_strerror(errno));
 		return (NULL);
@@ -170,7 +170,7 @@ pcap_lookupdev(errbuf)
 	ifc.ifc_buf = (caddr_t)ibuf;
 
 	memset((char *)ibuf, 0, sizeof(ibuf));
-	if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0 ||
+	if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) == -1 ||
 	    ifc.ifc_len < sizeof(struct ifreq)) {
 		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE, "SIOCGIFCONF: %s",
 		    pcap_strerror(errno));
@@ -202,7 +202,7 @@ pcap_lookupdev(errbuf)
 		 */
 		(void)strlcpy(ifr.ifr_name, ifrp->ifr_name,
 		    sizeof(ifr.ifr_name));
-		if (ioctl(fd, SIOCGIFFLAGS, (char *)&ifr) < 0) {
+		if (ioctl(fd, SIOCGIFFLAGS, (char *)&ifr) == -1) {
 			if (errno == ENXIO)
 				continue;
 			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
@@ -247,7 +247,7 @@ pcap_lookupnet(const char *device, bpf_u_int32 *netp, bpf_u_int32 *maskp,
 	struct ifreq ifr;
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (fd < 0) {
+	if (fd == -1) {
 		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE, "socket: %s",
 		    pcap_strerror(errno));
 		return (-1);
@@ -258,7 +258,7 @@ pcap_lookupnet(const char *device, bpf_u_int32 *netp, bpf_u_int32 *maskp,
 	ifr.ifr_addr.sa_family = AF_INET;
 #endif
 	(void)strlcpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
-	if (ioctl(fd, SIOCGIFADDR, (char *)&ifr) < 0) {
+	if (ioctl(fd, SIOCGIFADDR, (char *)&ifr) == -1) {
 		if (errno == EADDRNOTAVAIL) {
 			(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
 			    "%s: no IPv4 address assigned", device);
@@ -272,7 +272,7 @@ pcap_lookupnet(const char *device, bpf_u_int32 *netp, bpf_u_int32 *maskp,
 	}
 	sin = (struct sockaddr_in *)&ifr.ifr_addr;
 	*netp = sin->sin_addr.s_addr;
-	if (ioctl(fd, SIOCGIFNETMASK, (char *)&ifr) < 0) {
+	if (ioctl(fd, SIOCGIFNETMASK, (char *)&ifr) == -1) {
 		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
 		    "SIOCGIFNETMASK: %s: %s", device, pcap_strerror(errno));
 		(void)close(fd);

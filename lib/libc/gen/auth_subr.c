@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.52 2019/03/23 17:03:00 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.53 2019/06/28 13:32:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <millert@openbsd.org>
@@ -848,7 +848,7 @@ auth_call(auth_session_t *as, char *path, ...)
 
 	argv[argc] = NULL;
 
-	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, pfd) < 0) {
+	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, pfd) == -1) {
 		syslog(LOG_ERR, "unable to create backchannel %m");
 		warnx("internal resource failure");
 		goto fail;
@@ -864,10 +864,10 @@ auth_call(auth_session_t *as, char *path, ...)
 	case 0:
 #define	COMM_FD	3
 #define	AUTH_FD	4
-		if (dup2(pfd[1], COMM_FD) < 0)
+		if (dup2(pfd[1], COMM_FD) == -1)
 			err(1, "dup of backchannel");
 		if (as->fd != -1) {
-			if (dup2(as->fd, AUTH_FD) < 0)
+			if (dup2(as->fd, AUTH_FD) == -1)
 				err(1, "dup of auth fd");
 			closefrom(AUTH_FD + 1);
 		} else
@@ -1003,7 +1003,7 @@ _recv_fd(auth_session_t *as, int fd)
 	memset(&msg, 0, sizeof(msg));
 	msg.msg_control = &cmsgbuf.buf;
 	msg.msg_controllen = sizeof(cmsgbuf.buf);
-	if (recvmsg(fd, &msg, 0) < 0)
+	if (recvmsg(fd, &msg, 0) == -1)
 		syslog(LOG_ERR, "recvmsg: %m");
 	else if (msg.msg_flags & MSG_TRUNC)
 		syslog(LOG_ERR, "message truncated");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostctl.c,v 1.4 2018/07/03 16:42:51 sf Exp $	*/
+/*	$OpenBSD: hostctl.c,v 1.5 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 		err(1, "calloc");
 
 	if (tflag) {
-		if (ioctl(fd, PVBUSIOC_TYPE, &pvr, sizeof(pvr)) != 0)
+		if (ioctl(fd, PVBUSIOC_TYPE, &pvr, sizeof(pvr)) == -1)
 			err(1, "ioctl");
 
 		/* The returned type should be a simple single-line key */
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 			err(1, "open: %s", path_pvbus);
 	}
 
-	if ((ret = ioctl(fd, cmd, &pvr, sizeof(pvr))) != 0)
+	if ((ret = ioctl(fd, cmd, &pvr, sizeof(pvr))) == -1)
 		err(1, "ioctl");
 
 	if (!qflag && strlen(pvr.pvr_value)) {

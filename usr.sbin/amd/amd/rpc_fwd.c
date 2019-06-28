@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rpc_fwd.c	8.1 (Berkeley) 6/6/93
- *	$Id: rpc_fwd.c,v 1.10 2015/09/13 15:44:47 guenther Exp $
+ *	$Id: rpc_fwd.c,v 1.11 2019/06/28 13:32:46 deraadt Exp $
  */
 
 /*
@@ -162,7 +162,7 @@ int fwd_init()
 	 * Create ping socket
 	 */
 	fwd_sock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
-	if (fwd_sock < 0) {
+	if (fwd_sock == -1) {
 		plog(XLOG_ERROR, "Unable to create RPC forwarding socket: %m");
 		return errno;
 	}
@@ -170,7 +170,7 @@ int fwd_init()
 	/*
 	 * Some things we talk to require a priv port - so make one here
 	 */
-	if (bind_resv_port(fwd_sock, (unsigned short *) 0) < 0)
+	if (bind_resv_port(fwd_sock, (unsigned short *) 0) == -1)
 		plog(XLOG_ERROR, "can't bind privileged port");
 
 	return 0;
@@ -278,7 +278,7 @@ fwd_packet(int type_id, void *pkt, int len, struct sockaddr_in *fwdto,
 	}
 #endif /* DEBUG */
 	if (sendto(fwd_sock, (char *) pkt, len, 0,
-			(struct sockaddr *) fwdto, sizeof(*fwdto)) < 0)
+	    (struct sockaddr *) fwdto, sizeof(*fwdto)) == -1)
 		error = errno;
 
 	/*
@@ -316,7 +316,7 @@ fwd_reply()
 	 * Determine the length of the packet
 	 */
 #ifdef DYNAMIC_BUFFERS
-	if (ioctl(fwd_sock, FIONREAD, &len) < 0 || len < 0) {
+	if (ioctl(fwd_sock, FIONREAD, &len) == -1 || len < 0) {
 		plog(XLOG_ERROR, "Error reading packet size: %m");
 		return;
 	}
@@ -340,9 +340,9 @@ again:
 	src_addr_len = sizeof(src_addr);
 	rc = recvfrom(fwd_sock, (char *) pkt, len, 0,
 	    (struct sockaddr *) &src_addr, &src_addr_len);
-	if (rc < 0 || src_addr_len != sizeof(src_addr) ||
+	if (rc == -1 || src_addr_len != sizeof(src_addr) ||
 			src_addr.sin_family != AF_INET) {
-		if (rc < 0 && errno == EINTR)
+		if (rc == -1 && errno == EINTR)
 			goto again;
 		plog(XLOG_ERROR, "Error reading RPC reply: %m");
 		goto out;

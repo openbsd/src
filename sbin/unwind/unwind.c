@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.28 2019/05/14 14:51:31 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.29 2019/06/28 13:32:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -289,13 +289,13 @@ main(int argc, char *argv[])
 		fatalx("control socket setup failed");
 
 	if ((frontend_routesock = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC,
-	    AF_INET)) < 0)
+	    AF_INET)) == -1)
 		fatal("route socket");
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_PROPOSAL) |
 	    ROUTE_FILTER(RTM_GET);
 	if (setsockopt(frontend_routesock, AF_ROUTE, ROUTE_MSGFILTER,
-	    &rtfilter, sizeof(rtfilter)) < 0)
+	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
 
 	if ((ta_fd = open(TRUST_ANCHOR_FILE, O_RDWR | O_CREAT, 0644)) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.259 2019/01/18 15:44:14 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.260 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -1040,7 +1040,7 @@ klog_readcb(int fd, short event, void *arg)
 	if (n > 0) {
 		linebuf[n] = '\0';
 		printsys(linebuf);
-	} else if (n < 0 && errno != EINTR) {
+	} else if (n == -1 && errno != EINTR) {
 		log_warn("read klog");
 		event_del(ev);
 	}
@@ -1063,7 +1063,7 @@ udp_readcb(int fd, short event, void *arg)
 		cvthname((struct sockaddr *)&sa, resolve, sizeof(resolve));
 		log_debug("cvthname res: %s", resolve);
 		printline(resolve, linebuf);
-	} else if (n < 0 && errno != EINTR && errno != EWOULDBLOCK)
+	} else if (n == -1 && errno != EINTR && errno != EWOULDBLOCK)
 		log_warn("recvfrom udp");
 }
 
@@ -1080,7 +1080,7 @@ unix_readcb(int fd, short event, void *arg)
 	if (n > 0) {
 		linebuf[n] = '\0';
 		printline(LocalHostName, linebuf);
-	} else if (n < 0 && errno != EINTR && errno != EWOULDBLOCK)
+	} else if (n == -1 && errno != EINTR && errno != EWOULDBLOCK)
 		log_warn("recvfrom unix");
 }
 
@@ -1180,7 +1180,7 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 	}
 	p->p_ctx = NULL;
 	if (usetls) {
-		if (tls_accept_socket(server_ctx, &p->p_ctx, fd) < 0) {
+		if (tls_accept_socket(server_ctx, &p->p_ctx, fd) == -1) {
 			log_warnx("tls_accept_socket \"%s\": %s",
 			    peername, tls_error(server_ctx));
 			bufferevent_free(p->p_bufev);
@@ -2063,7 +2063,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		}
 		retryonce = 0;
 	again:
-		if (writev(f->f_file, iov, 6) < 0) {
+		if (writev(f->f_file, iov, 6) == -1) {
 			int e = errno;
 
 			/* allow to recover from file system full */

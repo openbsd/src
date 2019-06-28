@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.29 2015/01/16 06:39:57 deraadt Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.30 2019/06/28 13:32:43 deraadt Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -148,7 +148,7 @@ rmtgetconn(void)
 	/* Leave some space for rmt request/response protocol */
 	size += 2 * 1024;
 	while (size > TP_BSIZE &&
-	    setsockopt(rmtape, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) < 0)
+	    setsockopt(rmtape, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) == -1)
 		    size -= TP_BSIZE;
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size));
 

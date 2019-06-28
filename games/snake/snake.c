@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.33 2019/01/20 04:14:19 tedu Exp $	*/
+/*	$OpenBSD: snake.c,v 1.34 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -971,7 +971,7 @@ readscores(int create)
 		errc(1, ENAMETOOLONG, "%s/%s", home, ".snake.scores");
 
 	rawscores = open(scorepath, modint, 0666);
-	if (rawscores < 0) {
+	if (rawscores == -1) {
 		if (create == 0)
 			return 0;
 		err(1, "cannot open %s", scorepath);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.1.1.1 2018/04/27 16:14:37 eric Exp $	*/
+/*	$OpenBSD: lpd.c,v 1.2 2019/06/28 13:32:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -313,7 +313,7 @@ priv_open_listener(struct listener *l)
 	case AF_INET6:
 		opt = 1;
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt,
-			sizeof(opt)) < 0)
+		    sizeof(opt)) == -1)
 			fatal("setsockopt: %s", log_fmt_sockaddr(sa));
 
 		if (bind(sock, sa, sa->sa_len) == -1)

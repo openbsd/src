@@ -93,7 +93,7 @@ maildir_mkdirs(const char *dirname)
 	char	pathname[PATH_MAX];
 	char	*subdirs[] = { "cur", "tmp", "new" };
 
-	if (mkdirs(dirname, 0700) < 0 && errno != EEXIST)
+	if (mkdirs(dirname, 0700) == -1 && errno != EEXIST)
 		err(1, NULL);
 
 	for (i = 0; i < nitems(subdirs); ++i) {
@@ -101,7 +101,7 @@ maildir_mkdirs(const char *dirname)
 		    subdirs[i]);
 		if (ret == -1 || (size_t)ret >= sizeof pathname)
 			errc(1, ENAMETOOLONG, "%s/%s", dirname, subdirs[i]);
-		if (mkdir(pathname, 0700) < 0 && errno != EEXIST)
+		if (mkdir(pathname, 0700) == -1 && errno != EEXIST)
 			err(1, NULL);
 	}
 }
@@ -177,7 +177,7 @@ maildir_engine(const char *dirname, int junk)
 	(void)snprintf(tmp, sizeof tmp, "%s/tmp/%s", dirname, filename);
 
 	fd = open(tmp, O_CREAT | O_EXCL | O_WRONLY, 0600);
-	if (fd < 0)
+	if (fd == -1)
 		err(1, NULL);
 	if ((fp = fdopen(fd, "w")) == NULL)
 		err(1, NULL);
@@ -198,14 +198,14 @@ maildir_engine(const char *dirname, int junk)
 
 	if (fflush(fp) == EOF ||
 	    ferror(fp) ||
-	    fsync(fd) < 0 ||
+	    fsync(fd) == -1 ||
 	    fclose(fp) == EOF)
 		err(1, NULL);
 
 	(void)snprintf(new, sizeof new, "%s/new/%s",
 	    is_junk ? junkpath : dirname, filename);
 
-	if (rename(tmp, new) < 0)
+	if (rename(tmp, new) == -1)
 		err(1, NULL);
 
 	exit(0);

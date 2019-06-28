@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.10 2016/03/16 15:00:35 mestre Exp $	*/
+/*	$OpenBSD: misc.c,v 1.11 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.3 1995/04/22 10:37:03 cgd Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ logger(struct ship *s)
 	}
 	setegid(gid);
 #ifdef LOCK_EX
-	if (flock(fileno(fp), LOCK_EX) < 0)
+	if (flock(fileno(fp), LOCK_EX) == -1)
 		return;
 #endif
 	net = (float)s->file->points / s->specs->pts;

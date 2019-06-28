@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.11 2017/10/27 16:47:08 mpi Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.12 2019/06/28 13:32:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -44,7 +44,7 @@ sym_getword(void)
 		if (lseek(symfd, pos + symoffs, SEEK_SET) == -1)
 			continue;
 		buflen = read(symfd, symbuf, BUFSIZ);
-		if (buflen < 0)
+		if (buflen == -1)
 			continue;
 
 		/*
@@ -94,7 +94,7 @@ sym_getword(void)
 int
 sym_setup(void)
 {
-	if ((symfd = open(Dict_name, O_RDONLY)) < 0)
+	if ((symfd = open(Dict_name, O_RDONLY)) == -1)
 		return -1;
 
 	if (ksyms_elf_parse() == 0)

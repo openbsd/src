@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.23 2018/09/17 15:44:16 jmc Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.24 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -88,7 +88,7 @@ format_track(int fd, int cyl, int secs, int head, int rate, int gaplen,
 		f.fd_formb_secno(i) = il[i+1];
 		f.fd_formb_secsize(i) = secsize;
 	}
-	if (ioctl(fd, FD_FORM, (caddr_t)&f) < 0)
+	if (ioctl(fd, FD_FORM, (caddr_t)&f) == -1)
 		err(1, "FD_FORM");
 }
 
@@ -99,7 +99,7 @@ verify_track(int fd, int track, int tracksize)
 	static int bufsz = 0;
 	int fdopts = -1, ofdopts, rv = 0;
 
-	if (ioctl(fd, FD_GOPTS, &fdopts) < 0)
+	if (ioctl(fd, FD_GOPTS, &fdopts) == -1)
 		warn("FD_GOPTS");
 	else {
 		ofdopts = fdopts;
@@ -118,7 +118,7 @@ verify_track(int fd, int track, int tracksize)
 		fprintf (stderr, "\nfdformat: out of memory\n");
 		exit (2);
 	}
-	if (lseek (fd, (off_t) track*tracksize, SEEK_SET) < 0)
+	if (lseek (fd, (off_t) track*tracksize, SEEK_SET) == -1)
 		rv = -1;
 	/* try twice reading it, without using the normal retrier */
 	else if (read (fd, buf, tracksize) != tracksize
@@ -243,10 +243,10 @@ main(int argc, char *argv[])
 	if (optind != argc - 1)
 		usage();
 
-	if ((fd = opendev(argv[optind], O_RDWR, OPENDEV_PART, &devname)) < 0)
+	if ((fd = opendev(argv[optind], O_RDWR, OPENDEV_PART, &devname)) == -1)
 		err(1, "%s", devname);
 
-	if (ioctl(fd, FD_GTYPE, &fdt) < 0)
+	if (ioctl(fd, FD_GTYPE, &fdt) == -1)
 		errx(1, "not a floppy disk: %s", devname);
 
 	switch (rate) {

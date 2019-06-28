@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.24 2017/02/22 14:24:50 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.25 2019/06/28 13:32:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -562,7 +562,7 @@ if_join_ipv4_group(struct iface *iface, struct in_addr *addr)
 	mreq.imr_interface.s_addr = if_primary_addr(iface);
 
 	if (setsockopt(global.eigrp_socket_v4, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-	    (void *)&mreq, sizeof(mreq)) < 0) {
+	    (void *)&mreq, sizeof(mreq)) == -1) {
 		log_warn("%s: error IP_ADD_MEMBERSHIP, interface %s address %s",
 		    __func__, iface->name, inet_ntoa(*addr));
 		return (-1);
@@ -587,7 +587,7 @@ if_leave_ipv4_group(struct iface *iface, struct in_addr *addr)
 	mreq.imr_interface.s_addr = if_primary_addr(iface);
 
 	if (setsockopt(global.eigrp_socket_v4, IPPROTO_IP, IP_DROP_MEMBERSHIP,
-	    (void *)&mreq, sizeof(mreq)) < 0) {
+	    (void *)&mreq, sizeof(mreq)) == -1) {
 		log_warn("%s: error IP_DROP_MEMBERSHIP, interface %s "
 		    "address %s", iface->name, __func__, inet_ntoa(*addr));
 		return (-1);
@@ -600,7 +600,7 @@ int
 if_set_ipv4_mcast_ttl(int fd, uint8_t ttl)
 {
 	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL,
-	    (char *)&ttl, sizeof(ttl)) < 0) {
+	    (char *)&ttl, sizeof(ttl)) == -1) {
 		log_warn("%s: error setting IP_MULTICAST_TTL to %d",
 		    __func__, ttl);
 		return (-1);
@@ -617,7 +617,7 @@ if_set_ipv4_mcast(struct iface *iface)
 	addr = if_primary_addr(iface);
 
 	if (setsockopt(global.eigrp_socket_v4, IPPROTO_IP, IP_MULTICAST_IF,
-	    &addr, sizeof(addr)) < 0) {
+	    &addr, sizeof(addr)) == -1) {
 		log_warn("%s: error setting IP_MULTICAST_IF, interface %s",
 		    __func__, iface->name);
 		return (-1);
@@ -632,7 +632,7 @@ if_set_ipv4_mcast_loop(int fd)
 	uint8_t	loop = 0;
 
 	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP,
-	    (char *)&loop, sizeof(loop)) < 0) {
+	    (char *)&loop, sizeof(loop)) == -1) {
 		log_warn("%s: error setting IP_MULTICAST_LOOP", __func__);
 		return (-1);
 	}
@@ -644,7 +644,7 @@ int
 if_set_ipv4_recvif(int fd, int enable)
 {
 	if (setsockopt(fd, IPPROTO_IP, IP_RECVIF, &enable,
-	    sizeof(enable)) < 0) {
+	    sizeof(enable)) == -1) {
 		log_warn("%s: error setting IP_RECVIF", __func__);
 		return (-1);
 	}
@@ -656,7 +656,7 @@ if_set_ipv4_hdrincl(int fd)
 {
 	int	hincl = 1;
 
-	if (setsockopt(fd, IPPROTO_IP, IP_HDRINCL, &hincl, sizeof(hincl)) < 0) {
+	if (setsockopt(fd, IPPROTO_IP, IP_HDRINCL, &hincl, sizeof(hincl)) == -1) {
 		log_warn("%s: error setting IP_HDRINCL", __func__);
 		return (-1);
 	}
@@ -680,7 +680,7 @@ if_join_ipv6_group(struct iface *iface, struct in6_addr *addr)
 	mreq.ipv6mr_interface = iface->ifindex;
 
 	if (setsockopt(global.eigrp_socket_v6, IPPROTO_IPV6, IPV6_JOIN_GROUP,
-	    &mreq, sizeof(mreq)) < 0) {
+	    &mreq, sizeof(mreq)) == -1) {
 		log_warn("%s: error IPV6_JOIN_GROUP, interface %s address %s",
 		    __func__, iface->name, log_in6addr(addr));
 		return (-1);
@@ -705,7 +705,7 @@ if_leave_ipv6_group(struct iface *iface, struct in6_addr *addr)
 	mreq.ipv6mr_interface = iface->ifindex;
 
 	if (setsockopt(global.eigrp_socket_v6, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
-	    (void *)&mreq, sizeof(mreq)) < 0) {
+	    (void *)&mreq, sizeof(mreq)) == -1) {
 		log_warn("%s: error IPV6_LEAVE_GROUP, interface %s address %s",
 		    __func__, iface->name, log_in6addr(addr));
 		return (-1);
@@ -718,7 +718,7 @@ int
 if_set_ipv6_mcast(struct iface *iface)
 {
 	if (setsockopt(global.eigrp_socket_v6, IPPROTO_IPV6, IPV6_MULTICAST_IF,
-	    &iface->ifindex, sizeof(iface->ifindex)) < 0) {
+	    &iface->ifindex, sizeof(iface->ifindex)) == -1) {
 		log_warn("%s: error setting IPV6_MULTICAST_IF, interface %s",
 		    __func__, iface->name);
 		return (-1);
@@ -733,7 +733,7 @@ if_set_ipv6_mcast_loop(int fd)
 	unsigned int	loop = 0;
 
 	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-	    (unsigned int *)&loop, sizeof(loop)) < 0) {
+	    (unsigned int *)&loop, sizeof(loop)) == -1) {
 		log_warn("%s: error setting IPV6_MULTICAST_LOOP", __func__);
 		return (-1);
 	}
@@ -745,7 +745,7 @@ int
 if_set_ipv6_pktinfo(int fd, int enable)
 {
 	if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &enable,
-	    sizeof(enable)) < 0) {
+	    sizeof(enable)) == -1) {
 		log_warn("%s: error setting IPV6_RECVPKTINFO", __func__);
 		return (-1);
 	}
@@ -757,7 +757,7 @@ int
 if_set_ipv6_dscp(int fd, int dscp)
 {
 	if (setsockopt(fd, IPPROTO_IPV6, IPV6_TCLASS, &dscp,
-	    sizeof(dscp)) < 0) {
+	    sizeof(dscp)) == -1) {
 		log_warn("%s: error setting IPV6_TCLASS", __func__);
 		return (-1);
 	}

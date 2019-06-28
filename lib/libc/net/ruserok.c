@@ -131,11 +131,11 @@ again:
 		 * user or root or if writeable by anyone but the owner, quit.
 		 */
 		cp = NULL;
-		if (lstat(pbuf, &sbuf) < 0)
+		if (lstat(pbuf, &sbuf) == -1)
 			cp = ".rhosts lstat failed";
 		else if (!S_ISREG(sbuf.st_mode))
 			cp = ".rhosts not regular file";
-		else if (fstat(fileno(hostf), &sbuf) < 0)
+		else if (fstat(fileno(hostf), &sbuf) == -1)
 			cp = ".rhosts fstat failed";
 		else if (sbuf.st_uid && sbuf.st_uid != pwd->pw_uid)
 			cp = "bad .rhosts owner";

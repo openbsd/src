@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.19 2016/08/30 14:52:09 guenther Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.20 2019/06/28 13:32:43 deraadt Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -71,11 +71,11 @@ uu_lock(const char *ttyname)
 	(void)snprintf(lckname, sizeof(lckname), _PATH_UUCPLOCK LOCKFMT,
 	    ttyname);
 	tmpfd = open(lcktmpname, O_CREAT|O_TRUNC|O_WRONLY|O_CLOEXEC, 0664);
-	if (tmpfd < 0)
+	if (tmpfd == -1)
 		GORET(0, UU_LOCK_CREAT_ERR);
 
 	for (i = 0; i < MAXTRIES; i++) {
-		if (link(lcktmpname, lckname) < 0) {
+		if (link(lcktmpname, lckname) == -1) {
 			if (errno != EEXIST)
 				GORET(1, UU_LOCK_LINK_ERR);
 			/*
@@ -83,7 +83,7 @@ uu_lock(const char *ttyname)
 			 * check to see if the process holding the lock
 			 * still exists
 			 */
-			if ((fd = open(lckname, O_RDONLY | O_CLOEXEC)) < 0)
+			if ((fd = open(lckname, O_RDONLY | O_CLOEXEC)) == -1)
 				GORET(1, UU_LOCK_OPEN_ERR);
 
 			if ((pid_old = get_pid(fd, &err)) == -1)
@@ -127,7 +127,7 @@ uu_lock_txfr(const char *ttyname, pid_t pid)
 
 	snprintf(lckname, sizeof(lckname), _PATH_UUCPLOCK LOCKFMT, ttyname);
 
-	if ((fd = open(lckname, O_RDWR | O_CLOEXEC)) < 0)
+	if ((fd = open(lckname, O_RDWR | O_CLOEXEC)) == -1)
 		return UU_LOCK_OWNER_ERR;
 	if (get_pid(fd, &err) != getpid())
 		ret = UU_LOCK_OWNER_ERR;

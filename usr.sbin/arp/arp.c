@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.82 2019/01/22 09:25:29 krw Exp $ */
+/*	$OpenBSD: arp.c,v 1.83 2019/06/28 13:32:46 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -245,9 +245,9 @@ getsocket(void)
 	if (rtsock >= 0)
 		return;
 	rtsock = socket(AF_ROUTE, SOCK_RAW, 0);
-	if (rtsock < 0)
+	if (rtsock == -1)
 		err(1, "routing socket");
-	if (setsockopt(rtsock, AF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
+	if (setsockopt(rtsock, AF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) == -1)
 		err(1, "ROUTE_TABLEFILTER");
 
 	if (pledge("stdio dns", NULL) == -1)
@@ -664,7 +664,7 @@ doit:
 	l = rtm->rtm_msglen;
 	rtm->rtm_seq = ++seq;
 	rtm->rtm_type = cmd;
-	if (write(rtsock, (char *)&m_rtmsg, l) < 0)
+	if (write(rtsock, (char *)&m_rtmsg, l) == -1)
 		if (errno != ESRCH || cmd != RTM_DELETE) {
 			warn("writing to routing socket");
 			return (-1);

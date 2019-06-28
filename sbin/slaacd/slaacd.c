@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.37 2019/03/31 03:36:18 yasuoka Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.38 2019/06/28 13:32:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 	log_procinit(log_procnames[slaacd_process]);
 
 	if ((routesock = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC |
-	    SOCK_NONBLOCK, AF_INET6)) < 0)
+	    SOCK_NONBLOCK, AF_INET6)) == -1)
 		fatal("route socket");
 	shutdown(SHUT_RD, routesock);
 
@@ -239,19 +239,19 @@ main(int argc, char *argv[])
 	if (main_imsg_send_ipc_sockets(&iev_frontend->ibuf, &iev_engine->ibuf))
 		fatal("could not establish imsg links");
 
-	if ((ioctl_sock = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0)) < 0)
+	if ((ioctl_sock = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0)) == -1)
 		fatal("socket");
 
 	if ((icmp6sock = socket(AF_INET6, SOCK_RAW | SOCK_CLOEXEC,
-	    IPPROTO_ICMPV6)) < 0)
+	    IPPROTO_ICMPV6)) == -1)
 		fatal("ICMPv6 socket");
 
 	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
-	    sizeof(on)) < 0)
+	    sizeof(on)) == -1)
 		fatal("IPV6_RECVPKTINFO");
 
 	if (setsockopt(icmp6sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
-	    sizeof(on)) < 0)
+	    sizeof(on)) == -1)
 		fatal("IPV6_RECVHOPLIMIT");
 
 	/* only router advertisements */
@@ -262,14 +262,14 @@ main(int argc, char *argv[])
 		fatal("ICMP6_FILTER");
 
 	if ((frontend_routesock = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC,
-	    AF_INET6)) < 0)
+	    AF_INET6)) == -1)
 		fatal("route socket");
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
 	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_PROPOSAL) |
 	    ROUTE_FILTER(RTM_DELETE) | ROUTE_FILTER(RTM_CHGADDRATTR);
 	if (setsockopt(frontend_routesock, AF_ROUTE, ROUTE_MSGFILTER,
-	    &rtfilter, sizeof(rtfilter)) < 0)
+	    &rtfilter, sizeof(rtfilter)) == -1)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
 
 #ifndef SMALL
@@ -754,7 +754,7 @@ configure_interface(struct imsg_configure_address *address)
 
 	log_debug("%s: %s", __func__, if_name);
 
-	if (ioctl(ioctl_sock, SIOCAIFADDR_IN6, &in6_addreq) < 0)
+	if (ioctl(ioctl_sock, SIOCAIFADDR_IN6, &in6_addreq) == -1)
 		fatal("SIOCAIFADDR_IN6");
 
 	if (address->mtu) {
@@ -765,7 +765,7 @@ configure_interface(struct imsg_configure_address *address)
 		ifr.ifr_mtu = address->mtu;
 		log_debug("Setting MTU to %d", ifr.ifr_mtu);
 
-		if (ioctl(ioctl_sock, SIOCSIFMTU, &ifr) < 0)
+		if (ioctl(ioctl_sock, SIOCSIFMTU, &ifr) == -1)
 		    log_warn("failed to set MTU");
 	}
 }

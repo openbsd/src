@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.22 2015/01/16 06:40:00 deraadt Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.23 2019/06/28 13:32:46 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -536,11 +536,11 @@ initsymtable(char *filename)
 		ep->e_flags |= NEW;
 		return;
 	}
-	if ((fd = open(filename, O_RDONLY, 0)) < 0) {
+	if ((fd = open(filename, O_RDONLY, 0)) == -1) {
 		warn("open");
 		panic("cannot open symbol table file %s\n", filename);
 	}
-	if (fstat(fd, &stbuf) < 0) {
+	if (fstat(fd, &stbuf) == -1) {
 		warn("stat");
 		panic("cannot stat symbol table file %s\n", filename);
 	}
@@ -548,8 +548,8 @@ initsymtable(char *filename)
 	base = calloc(tblsize, sizeof(char));
 	if (base == NULL)
 		panic("cannot allocate space for symbol table\n");
-	if (read(fd, base, tblsize) < 0 ||
-	    read(fd, &hdr, sizeof(struct symtableheader)) < 0) {
+	if (read(fd, base, tblsize) == -1 ||
+	    read(fd, &hdr, sizeof(struct symtableheader)) == -1) {
 		warn("read");
 		panic("cannot read symbol table file %s\n", filename);
 	}

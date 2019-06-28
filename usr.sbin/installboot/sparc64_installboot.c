@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.7 2015/12/28 23:00:29 krw Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.8 2019/06/28 13:32:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -55,7 +55,7 @@ md_loadboot(void)
 	int fd;
 
 	/* Load first-stage boot block. */
-	if ((fd = open(stage1, O_RDONLY)) < 0)
+	if ((fd = open(stage1, O_RDONLY)) == -1)
 		err(1, "open");
 	if (fstat(fd, &sb) == -1)
 		err(1, "fstat");
@@ -76,7 +76,7 @@ md_loadboot(void)
 	close(fd);
 
 	/* Load second-stage boot loader. */
-        if ((fd = open(stage2, O_RDONLY)) < 0)
+        if ((fd = open(stage2, O_RDONLY)) == -1)
                 err(1, "open");
         if (fstat(fd, &sb) == -1)
                 err(1, "stat");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.49 2019/01/25 00:19:27 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.50 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <millert@openbsd.org>
@@ -264,7 +264,7 @@ run_job(const atjob *job, int dfd, const char *atfile)
 	char *nargv[2], *nenvp[1];
 
 	/* Open the file and unlink it so we don't try running it again. */
-	if ((fd = openat(dfd, atfile, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) < 0) {
+	if ((fd = openat(dfd, atfile, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) == -1) {
 		syslog(LOG_ERR, "(CRON) CAN'T OPEN (%s)", atfile);
 		return;
 	}
@@ -310,7 +310,7 @@ run_job(const atjob *job, int dfd, const char *atfile)
 	}
 
 	/* Sanity checks */
-	if (fstat(fd, &sb) < 0) {
+	if (fstat(fd, &sb) == -1) {
 		syslog(LOG_ERR, "(%s) FSTAT FAILED (%s)", pw->pw_name, atfile);
 		_exit(EXIT_FAILURE);
 	}
@@ -424,7 +424,7 @@ run_job(const atjob *job, int dfd, const char *atfile)
 		syslog(LOG_INFO, "(%s) ATJOB (%s)", pw->pw_name, atfile);
 
 		/* Connect grandchild's stdin to the at job file. */
-		if (lseek(fd, 0, SEEK_SET) < 0) {
+		if (lseek(fd, 0, SEEK_SET) == -1) {
 			syslog(LOG_ERR, "(CRON) LSEEK (%m)");
 			_exit(EXIT_FAILURE);
 		}

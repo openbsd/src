@@ -1,4 +1,4 @@
-/*	$OpenBSD: talkd.c,v 1.25 2016/02/05 10:13:51 mestre Exp $	*/
+/*	$OpenBSD: talkd.c,v 1.26 2019/06/28 13:32:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -67,11 +67,11 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	openlog("talkd", LOG_PID, LOG_DAEMON);
-	if (gethostname(hostname, sizeof(hostname)) < 0) {
+	if (gethostname(hostname, sizeof(hostname)) == -1) {
 		syslog(LOG_ERR, "gethostname: %m");
 		_exit(1);
 	}
-	if (chdir(_PATH_DEV) < 0) {
+	if (chdir(_PATH_DEV) == -1) {
 		syslog(LOG_ERR, "chdir: %s: %m", _PATH_DEV);
 		_exit(1);
 	}
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 		    sizeof(request), 0, (struct sockaddr *)&response.addr,
 		    &len);
 		if (cc != sizeof(request)) {
-			if (cc < 0 && errno != EINTR)
+			if (cc == -1 && errno != EINTR)
 				syslog(LOG_WARNING, "recvfrom: %m");
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.10 2016/04/28 16:48:18 krw Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.11 2019/06/28 13:32:48 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -73,11 +73,11 @@ sr_install_bootblk(int devfd, int vol, int disk)
 
 	/* Open this device and check its disklabel. */
 	if ((diskfd = opendev(bd.bd_vendor, (nowrite? O_RDONLY:O_RDWR),
-	    OPENDEV_PART, &dev)) < 0)
+	    OPENDEV_PART, &dev)) == -1)
 		err(1, "open: %s", dev);
 
 	/* Get and check disklabel. */
-	if (ioctl(diskfd, DIOCGDINFO, &dl) != 0)
+	if (ioctl(diskfd, DIOCGDINFO, &dl) == -1)
 		err(1, "disklabel: %s", dev);
 	if (dl.d_magic != DISKMAGIC)
 		err(1, "bad disklabel magic=0x%08x", dl.d_magic);

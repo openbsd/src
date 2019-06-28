@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.140 2019/01/30 21:33:34 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.141 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -570,7 +570,7 @@ secure_file(int fd, char *path, char *userdir, uid_t uid, int mayread)
 		homedir[0] = '\0';
 
 	/* Check the open file to avoid races. */
-	if (fstat(fd, &st) < 0 ||
+	if (fstat(fd, &st) == -1 ||
 	    !S_ISREG(st.st_mode) ||
 	    st.st_uid != uid ||
 	    (st.st_mode & (mayread ? 022 : 066)) != 0)
@@ -582,7 +582,7 @@ secure_file(int fd, char *path, char *userdir, uid_t uid, int mayread)
 			return 0;
 		(void)strlcpy(buf, cp, sizeof(buf));
 
-		if (stat(buf, &st) < 0 ||
+		if (stat(buf, &st) == -1 ||
 		    (st.st_uid != 0 && st.st_uid != uid) ||
 		    (st.st_mode & 022) != 0)
 			return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.20 2018/12/27 15:04:59 eric Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.21 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -136,7 +136,7 @@ table_db_open2(struct table *table)
 	    >= sizeof handle->pathname)
 		goto error;
 
-	if (stat(handle->pathname, &sb) < 0)
+	if (stat(handle->pathname, &sb) == -1)
 		goto error;
 
 	handle->mtime = sb.st_mtime;
@@ -173,7 +173,7 @@ table_db_lookup(struct table *table, enum table_service service, const char *key
 	size_t		i;
 	struct stat	sb;
 
-	if (stat(handle->pathname, &sb) < 0)
+	if (stat(handle->pathname, &sb) == -1)
 		return -1;
 
 	/* DB has changed, close and reopen */

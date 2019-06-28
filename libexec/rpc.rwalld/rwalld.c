@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwalld.c,v 1.16 2017/05/27 07:39:27 tedu Exp $	*/
+/*	$OpenBSD: rwalld.c,v 1.17 2019/06/28 13:32:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 	 * See if inetd started us
 	 */
 	fromlen = sizeof(from);
-	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+	if (getsockname(0, (struct sockaddr *)&from, &fromlen) == -1) {
 		from_inetd = 0;
 		sock = RPC_ANYSOCK;
 		proto = IPPROTO_UDP;

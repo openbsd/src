@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.164 2018/12/23 16:37:53 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.165 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -138,7 +138,7 @@ smtp_setup_listeners(void)
 		}
 		opt = 1;
 		if (setsockopt(l->fd, SOL_SOCKET, SO_REUSEADDR, &opt,
-			sizeof(opt)) < 0)
+		    sizeof(opt)) == -1)
 			fatal("smtpd: setsockopt");
 		if (bind(l->fd, (struct sockaddr *)&l->ss, l->ss.ss_len) == -1)
 			fatal("smtpd: bind");

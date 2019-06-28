@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.14 2017/01/17 16:30:54 jca Exp $ */
+/*	$OpenBSD: interface.c,v 1.15 2019/06/28 13:32:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -257,7 +257,7 @@ int
 if_set_mcast_ttl(int fd, u_int8_t ttl)
 {
 	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL,
-	    (char *)&ttl, sizeof(ttl)) < 0) {
+	    (char *)&ttl, sizeof(ttl)) == -1) {
 		log_warn("if_set_mcast_ttl: error setting "
 		    "IP_MULTICAST_TTL to %d", ttl);
 		return (-1);
@@ -272,7 +272,7 @@ if_set_opt(int fd)
 	int	 yes = 1;
 
 	if (setsockopt(fd, IPPROTO_IP, IP_RECVIF, &yes,
-	    sizeof(int)) < 0) {
+	    sizeof(int)) == -1) {
 		log_warn("if_set_opt: error setting IP_RECVIF");
 		return (-1);
 	}
@@ -284,7 +284,7 @@ int
 if_set_tos(int fd, int tos)
 {
 	if (setsockopt(fd, IPPROTO_IP, IP_TOS,
-	    (int *)&tos, sizeof(tos)) < 0) {
+	    (int *)&tos, sizeof(tos)) == -1) {
 		log_warn("if_set_tos: error setting IP_TOS to 0x%x", tos);
 		return (-1);
 	}
@@ -299,7 +299,7 @@ if_set_mcast(struct iface *iface)
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_MULTICAST_IF,
-		    &iface->addr.s_addr, sizeof(iface->addr.s_addr)) < 0) {
+		    &iface->addr.s_addr, sizeof(iface->addr.s_addr)) == -1) {
 			log_debug("if_set_mcast: error setting "
 				"IP_MULTICAST_IF, interface %s", iface->name);
 			return (-1);
@@ -318,7 +318,7 @@ if_set_mcast_loop(int fd)
 	u_int8_t	 loop = 0;
 
 	if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP,
-	    (char *)&loop, sizeof(loop)) < 0) {
+	    (char *)&loop, sizeof(loop)) == -1) {
 		log_warn("if_set_mcast_loop: error setting IP_MULTICAST_LOOP");
 		return (-1);
 	}
@@ -349,7 +349,7 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 		mreq.imr_interface.s_addr = iface->addr.s_addr;
 
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-		    (void *)&mreq, sizeof(mreq)) < 0)
+		    (void *)&mreq, sizeof(mreq)) == -1)
 			return (-1);
 		break;
 	default:
@@ -371,7 +371,7 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 		mreq.imr_interface.s_addr = iface->addr.s_addr;
 
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_DROP_MEMBERSHIP,
-		    (void *)&mreq, sizeof(mreq)) < 0)
+		    (void *)&mreq, sizeof(mreq)) == -1)
 			return (-1);
 		break;
 	default:
@@ -406,7 +406,7 @@ if_new(struct kif *kif)
 	/* set up ifreq */
 	strlcpy(ifr->ifr_name, kif->ifname, sizeof(ifr->ifr_name));
 	if ((s = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	    0)) < 0)
+	    0)) == -1)
 		err(1, "if_new: socket");
 
 	/* get type */
@@ -429,20 +429,20 @@ if_new(struct kif *kif)
 	iface->baudrate = kif->baudrate;
 
 	/* get address */
-	if (ioctl(s, SIOCGIFADDR, ifr) < 0)
+	if (ioctl(s, SIOCGIFADDR, ifr) == -1)
 		err(1, "if_new: cannot get address");
 	sain = (struct sockaddr_in *)&ifr->ifr_addr;
 	iface->addr = sain->sin_addr;
 
 	/* get mask */
-	if (ioctl(s, SIOCGIFNETMASK, ifr) < 0)
+	if (ioctl(s, SIOCGIFNETMASK, ifr) == -1)
 		err(1, "if_new: cannot get mask");
 	sain = (struct sockaddr_in *)&ifr->ifr_addr;
 	iface->mask = sain->sin_addr;
 
 	/* get p2p dst address */
 	if (kif->flags & IFF_POINTOPOINT) {
-		if (ioctl(s, SIOCGIFDSTADDR, ifr) < 0)
+		if (ioctl(s, SIOCGIFDSTADDR, ifr) == -1)
 			err(1, "if_new: cannot get dst addr");
 		sain = (struct sockaddr_in *)&ifr->ifr_addr;
 		iface->dst = sain->sin_addr;

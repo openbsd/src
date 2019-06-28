@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.118 2019/02/19 11:37:26 pirofti Exp $	*/
+/*	$OpenBSD: server.c,v 1.119 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -821,7 +821,7 @@ server_tls_readcb(int fd, short event, void *arg)
 	ret = tls_read(clt->clt_tls_ctx, rbuf, howmuch);
 	if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT) {
 		goto retry;
-	} else if (ret < 0) {
+	} else if (ret == -1) {
 		what |= EVBUFFER_ERROR;
 		goto err;
 	}
@@ -881,7 +881,7 @@ server_tls_writecb(int fd, short event, void *arg)
 		    EVBUFFER_LENGTH(bufev->output));
 		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT) {
 			goto retry;
-		} else if (ret < 0) {
+		} else if (ret == -1) {
 			what |= EVBUFFER_ERROR;
 			goto err;
 		}

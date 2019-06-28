@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_udf.c,v 1.7 2015/01/16 06:39:59 deraadt Exp $	*/
+/*	$OpenBSD: mount_udf.c,v 1.8 2019/06/28 13:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
@@ -56,7 +56,7 @@ lastblock(char *dev)
 	struct cd_toc_entry te;
 
 	fd = open(dev, O_RDONLY, 0);
-	if (fd < 0)
+	if (fd == -1)
 		err(1, "open");
 
 	t.address_format = CD_LBA_FORMAT;
@@ -99,7 +99,7 @@ main(int argc, char **argv)
 	if (realpath(argv[1], node) == NULL)
 		err(1, "realpath %s", argv[1]);
 
-	if (mount(MOUNT_UDF, node, flags, &args) < 0)
+	if (mount(MOUNT_UDF, node, flags, &args) == -1)
 		err(1, "mount");
 
 	exit(0);

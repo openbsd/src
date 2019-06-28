@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pager.c,v 1.24 2016/03/15 19:56:20 mestre Exp $	*/
+/*	$OpenBSD: hack.pager.c,v 1.25 2019/06/28 13:32:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -369,7 +369,7 @@ page_file(char *fnam, boolean silent)
 
 	int fd = open(fnam, O_RDONLY);
 
-	if(fd < 0) {
+	if(fd == -1) {
 		if(!silent) pline("Cannot open %s.", fnam);
 		return(0);
 	}

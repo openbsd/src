@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_nlist.c,v 1.6 2017/10/27 16:47:08 mpi Exp $	*/
+/*	$OpenBSD: i386_nlist.c,v 1.7 2019/06/28 13:32:48 deraadt Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -109,7 +109,7 @@ __elf_fdnlist(int fd, struct nlist *list)
 
 	/* Make sure obj is OK */
 	if (pread(fd, &ehdr, sizeof(Elf_Ehdr), (off_t)0) != sizeof(Elf_Ehdr) ||
-	    !__elf_is_okay__(&ehdr) || fstat(fd, &st) < 0)
+	    !__elf_is_okay__(&ehdr) || fstat(fd, &st) == -1)
 		return (-1);
 
 	/* calculate section header table size */
@@ -301,7 +301,7 @@ nlist_elf32(const char *name, struct nlist *list)
 	int fd, n;
 
 	fd = open(name, O_RDONLY, 0);
-	if (fd < 0)
+	if (fd == -1)
 		return (-1);
 	n = __elf_fdnlist(fd, list);
 	close(fd);

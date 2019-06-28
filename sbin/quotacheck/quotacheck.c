@@ -1,4 +1,4 @@
-/*	$OpenBSD: quotacheck.c,v 1.40 2018/09/26 03:03:39 deraadt Exp $	*/
+/*	$OpenBSD: quotacheck.c,v 1.41 2019/06/28 13:32:45 deraadt Exp $	*/
 /*	$NetBSD: quotacheck.c,v 1.12 1996/03/30 22:34:25 mark Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 		warn("fork");
 		return 1;
 	case 0:		/* child */
-		if ((fi = opendev(fsname, O_RDONLY, 0, NULL)) < 0)
+		if ((fi = opendev(fsname, O_RDONLY, 0, NULL)) == -1)
 			err(1, "%s", fsname);
 		sync();
 		for (i = 0; sblock_try[i] != -1; i++) {
@@ -377,7 +377,7 @@ chkquota(const char *vfstype, const char *fsname, const char *mntpt,
 			*pidp = pid;
 			return 0;
 		}
-		if (waitpid(pid, &status, 0) < 0) {
+		if (waitpid(pid, &status, 0) == -1) {
 			warn("waitpid");
 			return 1;
 		}
@@ -428,7 +428,7 @@ update(const char *fsname, const char *quotafile, int type)
 		(void) fclose(qfo);
 		return (1);
 	}
-	if (quotactl(fsname, QCMD(Q_SYNC, type), 0, (caddr_t)0) < 0 &&
+	if (quotactl(fsname, QCMD(Q_SYNC, type), 0, (caddr_t)0) == -1 &&
 	    errno == EOPNOTSUPP && !warned &&
 	    (flags&(CHECK_DEBUG|CHECK_VERBOSE))) {
 		warned++;

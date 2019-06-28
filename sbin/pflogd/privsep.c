@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.32 2018/08/26 18:26:51 brynet Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.33 2019/06/28 13:32:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -99,7 +99,7 @@ priv_init(int Pflag, int argc, char *argv[])
 		err(1, "socketpair() failed");
 
 	child_pid = fork();
-	if (child_pid < 0)
+	if (child_pid == -1)
 		err(1, "fork() failed");
 
 	if (!child_pid) {
@@ -200,7 +200,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath sendfd proc bpf", NULL) == -1)
 			    0600);
 			olderrno = errno;
 			send_fd(socks[0], bpfd);
-			if (bpfd < 0)
+			if (bpfd == -1)
 				logmsg(LOG_NOTICE,
 				    "[priv]: failed to open %s: %s",
 				    filename, strerror(olderrno));

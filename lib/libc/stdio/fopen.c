@@ -1,4 +1,4 @@
-/*	$OpenBSD: fopen.c,v 1.9 2016/09/21 04:38:56 guenther Exp $ */
+/*	$OpenBSD: fopen.c,v 1.10 2019/06/28 13:32:42 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@ fopen(const char *file, const char *mode)
 		return (NULL);
 	if ((fp = __sfp()) == NULL)
 		return (NULL);
-	if ((f = open(file, oflags, DEFFILEMODE)) < 0) {
+	if ((f = open(file, oflags, DEFFILEMODE)) == -1) {
 		fp->_flags = 0;			/* release */
 		return (NULL);
 	}

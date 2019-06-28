@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.32 2018/01/06 15:37:36 cheloha Exp $ */
+/*	$OpenBSD: clnt_tcp.c,v 1.33 2019/06/28 13:32:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -148,9 +148,9 @@ clnttcp_create(struct sockaddr_in *raddr, u_long prog, u_long vers, int *sockp,
 	if (*sockp < 0) {
 		*sockp = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		(void)bindresvport(*sockp, NULL);
-		if ((*sockp < 0)
+		if ((*sockp == -1)
 		    || (connect(*sockp, (struct sockaddr *)raddr,
-		    sizeof(*raddr)) < 0)) {
+		    sizeof(*raddr)) == -1)) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
 			if (*sockp != -1)

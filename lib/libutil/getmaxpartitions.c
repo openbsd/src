@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmaxpartitions.c,v 1.9 2016/08/27 03:54:20 guenther Exp $	*/
+/*	$OpenBSD: getmaxpartitions.c,v 1.10 2019/06/28 13:32:43 deraadt Exp $	*/
 /*	$NetBSD: getmaxpartitions.c,v 1.1 1996/05/16 07:03:31 thorpej Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ getmaxpartitions(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_MAXPARTITIONS;
 	varlen = sizeof(maxpart);
-	if (sysctl(mib, 2, &maxpart, &varlen, NULL, (size_t)0) < 0)
+	if (sysctl(mib, 2, &maxpart, &varlen, NULL, (size_t)0) == -1)
 		return (-1);
 
 	return (maxpart);

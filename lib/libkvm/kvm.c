@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.65 2018/05/03 16:42:07 zhuk Exp $ */
+/*	$OpenBSD: kvm.c,v 1.66 2019/06/28 13:32:42 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -219,11 +219,11 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 	if (mf == 0)
 		mf = _PATH_MEM;
 
-	if ((kd->pmfd = open(mf, flag)) < 0) {
+	if ((kd->pmfd = open(mf, flag)) == -1) {
 		_kvm_syserr(kd, kd->program, "%s", mf);
 		goto failed;
 	}
-	if (fstat(kd->pmfd, &st) < 0) {
+	if (fstat(kd->pmfd, &st) == -1) {
 		_kvm_syserr(kd, kd->program, "%s", mf);
 		goto failed;
 	}
@@ -239,12 +239,12 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 				 "%s: not physical memory device", mf);
 			goto failed;
 		}
-		if ((kd->vmfd = open(_PATH_KMEM, flag)) < 0) {
+		if ((kd->vmfd = open(_PATH_KMEM, flag)) == -1) {
 			_kvm_syserr(kd, kd->program, "%s", _PATH_KMEM);
 			goto failed;
 		}
 		kd->alive = 1;
-		if (sf != NULL && (kd->swfd = open(sf, flag)) < 0) {
+		if (sf != NULL && (kd->swfd = open(sf, flag)) == -1) {
 			_kvm_syserr(kd, kd->program, "%s", sf);
 			goto failed;
 		}

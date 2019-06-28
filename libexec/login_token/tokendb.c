@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokendb.c,v 1.10 2015/10/05 17:31:17 millert Exp $	*/
+/*	$OpenBSD: tokendb.c,v 1.11 2019/06/28 13:32:53 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -176,7 +176,7 @@ tokendb_open(void)
 		return (-1);
 	}
 
-	if (stat(tt->db, &statb) < 0) {
+	if (stat(tt->db, &statb) == -1) {
 		if (errno != ENOENT)
 			return (-1);
 		must_set_perms++;

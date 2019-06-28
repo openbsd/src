@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.tty.c,v 1.15 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.tty.c,v 1.16 2019/06/28 13:32:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -114,7 +114,7 @@ static void setctty(void);
 void
 gettty(void)
 {
-	if(tcgetattr(0, &inittyb) < 0)
+	if(tcgetattr(0, &inittyb) == -1)
 		perror("Hack (gettty)");
 	curttyb = inittyb;
 	erase_char = inittyb.c_cc[VERASE];
@@ -137,7 +137,7 @@ settty(char *s)
 	end_screen();
 	if(s) printf("%s", s);
 	(void) fflush(stdout);
-	if(tcsetattr(0, TCSADRAIN, &inittyb) < 0)
+	if(tcsetattr(0, TCSADRAIN, &inittyb) == -1)
 		perror("Hack (settty)");
 	flags.echo = (inittyb.c_lflag & ECHO) ? ON : OFF;
 	flags.cbreak = (inittyb.c_lflag & ICANON) ? OFF : ON;
@@ -147,7 +147,7 @@ settty(char *s)
 static void
 setctty(void)
 {
-	if(tcsetattr(0, TCSADRAIN, &curttyb) < 0)
+	if(tcsetattr(0, TCSADRAIN, &curttyb) == -1)
 		perror("Hack (setctty)");
 }
 

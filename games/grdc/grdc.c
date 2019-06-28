@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.30 2019/01/06 18:27:14 tedu Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.31 2019/06/28 13:32:52 deraadt Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -293,7 +293,7 @@ getwinsize(int *wid, int *ht)
 {
 	struct winsize size;
 
-	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) < 0) {
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &size) == -1) {
 		*wid = 80;     /* Default */
 		*ht = 24;
 	} else {

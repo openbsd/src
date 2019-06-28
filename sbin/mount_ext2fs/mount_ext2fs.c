@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ext2fs.c,v 1.18 2015/12/08 15:56:42 tedu Exp $	*/
+/*	$OpenBSD: mount_ext2fs.c,v 1.19 2019/06/28 13:32:44 deraadt Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 	else
 		args.export_info.ex_flags = 0;
 
-	if (mount(MOUNT_EXT2FS, fs_name, mntflags, &args) < 0) {
+	if (mount(MOUNT_EXT2FS, fs_name, mntflags, &args) == -1) {
 		switch (errno) {
 		case EMFILE:
 			errcause = "mount table full";

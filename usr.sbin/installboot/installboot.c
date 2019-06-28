@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.11 2015/11/29 00:14:07 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.12 2019/06/28 13:32:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -98,7 +98,7 @@ main(int argc, char **argv)
 	}
 
 	if ((devfd = opendev(dev, (nowrite ? O_RDONLY : O_RDWR), OPENDEV_PART,
-	    &realdev)) < 0)
+	    &realdev)) == -1)
 		err(1, "open: %s", realdev);
 
         if (verbose) {

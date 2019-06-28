@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_expire.c,v 1.12 2015/11/26 23:32:52 millert Exp $	*/
+/*	$OpenBSD: check_expire.c,v 1.13 2019/06/28 13:32:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -166,7 +166,7 @@ pwd_update(const struct passwd *pwd, const struct passwd *opwd)
 
 	pw_init();
 	tfd = pw_lock(0);
-	if (tfd < 0) {
+	if (tfd == -1) {
 		if (errno == EEXIST)
 			return("the passwd file is busy.");
 		else
@@ -174,13 +174,13 @@ pwd_update(const struct passwd *pwd, const struct passwd *opwd)
 	}
 
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY|O_CLOEXEC, 0);
-	if (pfd < 0) {
+	if (pfd == -1) {
 		pw_abort();
 		return(strerror(errno));
 	}
 
 	pw_copy(pfd, tfd, pwd, opwd);
-	if (pw_mkdb(pwd->pw_name, 0) < 0) {
+	if (pw_mkdb(pwd->pw_name, 0) == -1) {
 		pw_abort();
 		return("unable to update password database");
 	}

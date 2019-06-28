@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedefs.c,v 1.11 2018/08/24 11:14:49 mestre Exp $	*/
+/*	$OpenBSD: makedefs.c,v 1.12 2019/06/28 13:32:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -93,7 +93,7 @@ main(int argc, char **argv)
 		(void)fprintf(stderr, "usage: makedefs file\n");
 		return 1;
 	}
-	if ((fd = open(argv[1], O_RDONLY)) < 0) {
+	if ((fd = open(argv[1], O_RDONLY)) == -1) {
 		perror(argv[1]);
 		return 1;
 	}
@@ -138,7 +138,7 @@ readline(void)
 {
 	int n = read(fd, lp0, (line+LINSZ)-lp0);
 
-	if(n < 0){
+	if(n == -1){
 		printf("Input error.\n");
 		exit(1);
 	}

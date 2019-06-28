@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdopen.c,v 1.9 2016/03/20 00:01:21 krw Exp $ */
+/*	$OpenBSD: fdopen.c,v 1.10 2019/06/28 13:32:42 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@ fdopen(int fd, const char *mode)
 		return (NULL);
 
 	/* Make sure the mode the user wants is a subset of the actual mode. */
-	if ((fdflags = fcntl(fd, F_GETFL)) < 0)
+	if ((fdflags = fcntl(fd, F_GETFL)) == -1)
 		return (NULL);
 	tmp = fdflags & O_ACCMODE;
 	if (tmp != O_RDWR && (tmp != (oflags & O_ACCMODE))) {

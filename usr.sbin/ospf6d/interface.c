@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.24 2018/07/12 13:45:03 remi Exp $ */
+/*	$OpenBSD: interface.c,v 1.25 2019/06/28 13:32:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -735,7 +735,7 @@ if_join_group(struct iface *iface, struct in6_addr *addr)
 		mreq.ipv6mr_interface = iface->ifindex;
 
 		if (setsockopt(iface->fd, IPPROTO_IPV6, IPV6_JOIN_GROUP,
-		    &mreq, sizeof(mreq)) < 0) {
+		    &mreq, sizeof(mreq)) == -1) {
 			log_warn("if_join_group: error IPV6_JOIN_GROUP, "
 			    "interface %s address %s", iface->name,
 			    log_in6addr(addr));
@@ -769,7 +769,7 @@ if_leave_group(struct iface *iface, struct in6_addr *addr)
 		mreq.ipv6mr_interface = iface->ifindex;
 
 		if (setsockopt(iface->fd, IPPROTO_IPV6, IPV6_LEAVE_GROUP,
-		    (void *)&mreq, sizeof(mreq)) < 0) {
+		    (void *)&mreq, sizeof(mreq)) == -1) {
 			log_warn("if_leave_group: error IPV6_LEAVE_GROUP, "
 			    "interface %s address %s", iface->name,
 			    log_in6addr(addr));
@@ -795,7 +795,7 @@ if_set_mcast(struct iface *iface)
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
 		if (setsockopt(iface->fd, IPPROTO_IPV6, IPV6_MULTICAST_IF,
-		    &iface->ifindex, sizeof(iface->ifindex)) < 0) {
+		    &iface->ifindex, sizeof(iface->ifindex)) == -1) {
 			log_debug("if_set_mcast: error setting "
 			    "IP_MULTICAST_IF, interface %s", iface->name);
 			return (-1);
@@ -820,7 +820,7 @@ if_set_mcast_loop(int fd)
 	u_int	loop = 0;
 
 	if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-	    (u_int *)&loop, sizeof(loop)) < 0) {
+	    (u_int *)&loop, sizeof(loop)) == -1) {
 		log_warn("if_set_mcast_loop: error setting "
 		    "IPV6_MULTICAST_LOOP");
 		return (-1);
@@ -833,7 +833,7 @@ int
 if_set_ipv6_pktinfo(int fd, int enable)
 {
 	if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &enable,
-	    sizeof(enable)) < 0) {
+	    sizeof(enable)) == -1) {
 		log_warn("if_set_ipv6_pktinfo: error setting IPV6_PKTINFO");
 		return (-1);
 	}
@@ -848,7 +848,7 @@ if_set_ipv6_checksum(int fd)
 
 	log_debug("if_set_ipv6_checksum setting cksum offset to %d", offset);
 	if (setsockopt(fd, IPPROTO_IPV6, IPV6_CHECKSUM, &offset,
-	     sizeof(offset)) < 0) {
+	     sizeof(offset)) == -1) {
 		log_warn("if_set_ipv6_checksum: error setting IPV6_CHECKSUM");
 		return (-1);
 	}

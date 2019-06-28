@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.60 2019/05/12 12:49:52 schwarze Exp $ */
+/*	$OpenBSD: localtime.c,v 1.61 2019/06/28 13:32:42 deraadt Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -342,7 +342,7 @@ tzload(const char *name, struct state *sp, int doextend)
 		goto oops;
 
 	nread = read(fid, up->buf, sizeof up->buf);
-	if (close(fid) < 0 || nread <= 0)
+	if (close(fid) == -1 || nread <= 0)
 		goto oops;
 	for (stored = 4; stored <= 8; stored *= 2) {
 		int		ttisstdcnt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.20 2019/03/21 10:55:41 otto Exp $	*/
+/*	$OpenBSD: conf.y,v 1.21 2019/06/28 13:32:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -370,7 +370,7 @@ conf_parse_file(char *cfgfile)
 	}
 
 	fd = open(cfgfile, O_RDONLY, 0);
-	if (fd < 0)
+	if (fd == -1)
 		goto bad;
 
 	conflen = st.st_size;

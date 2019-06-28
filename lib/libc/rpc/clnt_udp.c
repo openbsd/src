@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.35 2018/01/06 15:37:36 cheloha Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.36 2019/06/28 13:32:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -158,7 +158,7 @@ clntudp_bufcreate(struct sockaddr_in *raddr, u_long program, u_long version,
 	if (*sockp < 0) {
 		*sockp = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK,
 		    IPPROTO_UDP);
-		if (*sockp < 0) {
+		if (*sockp == -1) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			rpc_createerr.cf_error.re_errno = errno;
 			goto fooy;
@@ -299,8 +299,8 @@ send_again:
 			inlen = recvfrom(cu->cu_sock, cu->cu_inbuf, 
 			    (int) cu->cu_recvsz, 0,
 			    (struct sockaddr *)&from, &fromlen);
-		} while (inlen < 0 && errno == EINTR);
-		if (inlen < 0) {
+		} while (inlen == -1 && errno == EINTR);
+		if (inlen == -1) {
 			if (errno == EWOULDBLOCK)
 				continue;
 			cu->cu_error.re_errno = errno;

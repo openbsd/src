@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.39 2017/12/14 18:56:22 jca Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.40 2019/06/28 13:32:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -134,18 +134,18 @@ svctcp_create(int sock, u_int sendsize, u_int recvsize)
 	socklen_t len = sizeof(struct sockaddr_in);
 
 	if (sock == RPC_ANYSOCK) {
-		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
 			return (NULL);
 		madesock = TRUE;
 	}
 	memset(&addr, 0, sizeof (addr));
 	addr.sin_len = sizeof(struct sockaddr_in);
 	addr.sin_family = AF_INET;
-	if (bindresvport(sock, &addr)) {
+	if (bindresvport(sock, &addr) == -1) {
 		addr.sin_port = 0;
 		(void)bind(sock, (struct sockaddr *)&addr, len);
 	}
-	if ((getsockname(sock, (struct sockaddr *)&addr, &len) != 0)  ||
+	if ((getsockname(sock, (struct sockaddr *)&addr, &len) == -1)  ||
 	    (listen(sock, 2) != 0)) {
 		if (madesock)
 			(void)close(sock);
@@ -241,7 +241,7 @@ rendezvous_request(SVCXPRT *xprt, struct rpc_msg *ignored)
     again:
 	len = sizeof(struct sockaddr_in);
 	if ((sock = accept(xprt->xp_sock, (struct sockaddr *)&addr,
-	    &len)) < 0) {
+	    &len)) == -1) {
 		if (errno == EINTR || errno == EWOULDBLOCK ||
 		    errno == ECONNABORTED)
 			goto again;
@@ -254,8 +254,9 @@ rendezvous_request(SVCXPRT *xprt, struct rpc_msg *ignored)
 		socklen_t optsize = sizeof(opts);
 		int i;
 
-		if (!getsockopt(sock, IPPROTO_IP, IP_OPTIONS, (char *)&opts,
-		    &optsize) && optsize != 0) {
+		if (getsockopt(sock, IPPROTO_IP, IP_OPTIONS,
+		    (char *)&opts, &optsize) == 0 &&
+		    optsize != 0) {
 			for (i = 0; (char *)&opts.ipopt_list[i] - (char *)&opts <
 			    optsize; ) {	
 				u_char c = (u_char)opts.ipopt_list[i];
@@ -377,7 +378,7 @@ writetcp(SVCXPRT *xprt, caddr_t buf, int len)
 	int i, cnt;
 
 	for (cnt = len; cnt > 0; cnt -= i, buf += i) {
-		if ((i = write(xprt->xp_sock, buf, cnt)) < 0) {
+		if ((i = write(xprt->xp_sock, buf, cnt)) == -1) {
 			((struct tcp_conn *)(xprt->xp_p1))->strm_stat =
 			    XPRT_DIED;
 			return (-1);

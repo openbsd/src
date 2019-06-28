@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.26 2018/11/25 17:12:10 krw Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.27 2019/06/28 13:32:45 deraadt Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ main(int argc, char *argv[])
 			err(EXIT_FAILURE, "can't fstat opened %s", special);
 	} else {	/* !Fflag */
 		fd = opendev(special, fl, 0, &special);
-		if (fd < 0 || fstat(fd, &sb) == -1)
+		if (fd == -1 || fstat(fd, &sb) == -1)
 			err(EXIT_FAILURE, "%s: open", special);
 
 		if (!Nflag) {
@@ -464,7 +464,7 @@ getdisklabel(const char *s, int fd)
 {
 	static struct disklabel lab;
 
-	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
+	if (ioctl(fd, DIOCGDINFO, (char *)&lab) == -1) {
 		if (disktype != NULL) {
 			struct disklabel *lp;
 
@@ -491,7 +491,7 @@ getpartition(int fsi, const char *special, char *argv[], struct disklabel **dl)
 	struct disklabel *lp;
 	struct partition *pp;
 
-	if (fstat(fsi, &st) < 0)
+	if (fstat(fsi, &st) == -1)
 		err(EXIT_FAILURE, "%s", special);
 	if (S_ISBLK(st.st_mode))
 		errx(EXIT_FAILURE, "%s: block device", special);

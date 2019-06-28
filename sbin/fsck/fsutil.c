@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.23 2018/09/24 21:26:00 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.24 2019/06/28 13:32:43 deraadt Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ struct stat stslash;
 void
 checkroot(void)
 {
-	if (stat("/", &stslash) < 0) {
+	if (stat("/", &stslash) == -1) {
 		xperror("/");
 		printf("Can't stat root\n");
 	}
@@ -164,7 +164,7 @@ unrawname(char *name)
 
 	if ((dp = strrchr(name, '/')) == NULL)
 		return (name);
-	if (stat(name, &stb) < 0)
+	if (stat(name, &stb) == -1)
 		return (name);
 	if (!S_ISCHR(stb.st_mode))
 		return (name);
@@ -201,14 +201,14 @@ blockcheck(char *origname)
 	hot = 0;
 	newname = origname;
 retry:
-	if (stat(newname, &stblock) < 0)
+	if (stat(newname, &stblock) == -1)
 		return (origname);
 
 	if (S_ISBLK(stblock.st_mode)) {
 		if (stslash.st_dev == stblock.st_rdev)
 			hot++;
 		raw = rawname(newname);
-		if (stat(raw, &stchar) < 0) {
+		if (stat(raw, &stchar) == -1) {
 			xperror(raw);
 			printf("Can't stat %s\n", raw);
 			return (origname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: makebuf.c,v 1.9 2015/01/13 07:18:21 guenther Exp $ */
+/*	$OpenBSD: makebuf.c,v 1.10 2019/06/28 13:32:42 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -81,7 +81,7 @@ __swhatbuf(FILE *fp, size_t *bufsize, int *couldbetty)
 {
 	struct stat st;
 
-	if (fp->_file < 0 || fstat(fp->_file, &st) < 0) {
+	if (fp->_file < 0 || fstat(fp->_file, &st) == -1) {
 		*couldbetty = 0;
 		*bufsize = BUFSIZ;
 		return (__SNPT);

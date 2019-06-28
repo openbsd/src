@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.23 2015/12/22 21:03:58 mmcc Exp $	*/
+/*	$OpenBSD: itime.c,v 1.24 2019/06/28 13:32:43 deraadt Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -172,7 +172,7 @@ putdumptime(void)
 	dthead = NULL;
 	ddates_in = 0;
 	readdumptimes(df);
-	if (fseek(df, 0L, SEEK_SET) < 0)
+	if (fseek(df, 0L, SEEK_SET) == -1)
 		quit("fseek: %s\n", strerror(errno));
 	spcl.c_ddate = 0;
 	ITITERATE(i, dtwalk) {

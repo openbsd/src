@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.112 2019/05/08 19:57:45 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.113 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -2338,7 +2338,7 @@ is_if_in_group(const char *ifname, const char *groupname)
 	int			 s;
 	int			 ret = 0;
 
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		err(1, "socket");
 
 	memset(&ifgr, 0, sizeof(ifgr));

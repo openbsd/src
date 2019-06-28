@@ -142,7 +142,7 @@ usage:	fprintf(stderr,
 	    (void)close(t);
 	}
 #else
-	if (setsid() < 0)
+	if (setsid() == -1)
 	    perror("setsid");
 #endif
     }
@@ -250,7 +250,7 @@ usage:	fprintf(stderr,
      */
     dummy = 0;
     for(;;) {
-	if ((n = poll(pfd, nhandlers + 1, -1)) < 0) {
+	if ((n = poll(pfd, nhandlers + 1, -1)) == -1) {
             if (errno != EINTR) /* SIGALRM is expected */
                 logit(LOG_WARNING, errno, "poll failed");
             continue;
@@ -259,13 +259,13 @@ usage:	fprintf(stderr,
 	if (pfd[0].revents & POLLIN) {
 	    recvlen = recvfrom(igmp_socket, recv_buf, RECV_BUF_SIZE,
 			       0, NULL, &dummy);
-	    if (recvlen < 0) {
+	    if (recvlen == -1) {
 		if (errno != EINTR) logit(LOG_ERR, errno, "recvfrom");
 		continue;
 	    }
 	    (void)sigemptyset(&mask);
 	    (void)sigaddset(&mask, SIGALRM);
-	    if (sigprocmask(SIG_BLOCK, &mask, &omask) < 0)
+	    if (sigprocmask(SIG_BLOCK, &mask, &omask) == -1)
 		    logit(LOG_ERR, errno, "sigprocmask");
 	    accept_igmp(recvlen);
 	    (void)sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -488,7 +488,7 @@ restart(int i)
      */
     (void)sigemptyset(&mask);
     (void)sigaddset(&mask, SIGALRM);
-    if (sigprocmask(SIG_BLOCK, &mask, &omask) < 0)
+    if (sigprocmask(SIG_BLOCK, &mask, &omask) == -1)
 	logit(LOG_ERR, errno, "sigprocmask");
     free_all_prunes();
     free_all_routes();

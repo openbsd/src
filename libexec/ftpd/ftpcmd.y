@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.67 2019/05/08 23:56:48 tedu Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.68 2019/06/28 13:32:53 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -530,7 +530,7 @@ cmd
 					reply(550,
 					    "No permission to change mode of %s.",
 					    $8);
-				else if (chmod($8, $6) < 0)
+				else if (chmod($8, $6) == -1)
 					perror_reply(550, $8);
 				else
 					reply(200,
@@ -605,7 +605,7 @@ cmd
 		{
 			if ($2 && $4 != NULL) {
 				struct stat stbuf;
-				if (stat($4, &stbuf) < 0)
+				if (stat($4, &stbuf) == -1)
 					reply(550, "%s: %s",
 					    $4, strerror(errno));
 				else if (!S_ISREG(stbuf.st_mode)) {
@@ -1514,7 +1514,7 @@ sizecmd(filename)
 	case TYPE_L:
 	case TYPE_I: {
 		struct stat stbuf;
-		if (stat(filename, &stbuf) < 0 || !S_ISREG(stbuf.st_mode))
+		if (stat(filename, &stbuf) == -1 || !S_ISREG(stbuf.st_mode))
 			reply(550, "%s: not a plain file.", filename);
 		else
 			reply(213, "%lld", (long long)stbuf.st_size);
@@ -1529,7 +1529,7 @@ sizecmd(filename)
 			perror_reply(550, filename);
 			return;
 		}
-		if (fstat(fileno(fin), &stbuf) < 0 || !S_ISREG(stbuf.st_mode)) {
+		if (fstat(fileno(fin), &stbuf) == -1 || !S_ISREG(stbuf.st_mode)) {
 			reply(550, "%s: not a plain file.", filename);
 			(void) fclose(fin);
 			return;

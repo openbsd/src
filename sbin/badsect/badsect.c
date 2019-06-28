@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.27 2015/11/12 22:33:07 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.28 2019/06/28 13:32:43 deraadt Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 		fprintf(stderr, "usage: badsect bbdir sector ...\n");
 		exit(1);
 	}
-	if (chdir(argv[1]) < 0 || stat(".", &stbuf) < 0)
+	if (chdir(argv[1]) == -1 || stat(".", &stbuf) == -1)
 		err(2, "%s", argv[1]);
 
 	strlcpy(name, _PATH_DEV, sizeof name);
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 
 	while ((dp = readdir(dirp)) != NULL) {
 		strlcpy(&name[len], dp->d_name, sizeof name - len);
-		if (stat(name, &devstat) < 0)
+		if (stat(name, &devstat) == -1)
 			err(4, "%s", name);
 
 		if (stbuf.st_dev == devstat.st_rdev &&
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 		err(5, "Cannot find dev 0%o corresponding to %s",
 			stbuf.st_rdev, argv[1]);
 
-	if ((fsi = open(name, O_RDONLY)) < 0)
+	if ((fsi = open(name, O_RDONLY)) == -1)
 		err(6, "%s", name);
 
 	fs = &sblock;

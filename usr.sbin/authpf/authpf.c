@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.127 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.128 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -641,7 +641,7 @@ remove_stale_rulesets(void)
 
 	memset(&prs, 0, sizeof(prs));
 	strlcpy(prs.path, anchorname, sizeof(prs.path));
-	if (ioctl(dev, DIOCGETRULESETS, &prs)) {
+	if (ioctl(dev, DIOCGETRULESETS, &prs) == -1) {
 		if (errno == EINVAL)
 			return (0);
 		else
@@ -654,7 +654,7 @@ remove_stale_rulesets(void)
 		pid_t	 pid;
 
 		prs.nr = nr - 1;
-		if (ioctl(dev, DIOCGETRULESET, &prs))
+		if (ioctl(dev, DIOCGETRULESET, &prs) == -1)
 			return (1);
 		errno = 0;
 		if ((t = strchr(prs.name, '(')) == NULL)
@@ -694,8 +694,8 @@ recursive_ruleset_purge(char *an, char *rs)
 	snprintf(t_e[0].anchor, sizeof(t_e[0].anchor), "%s/%s", an, rs);
 	t_e[1].type = PF_TRANS_TABLE;
 
-	if ((ioctl(dev, DIOCXBEGIN, t) ||
-	    ioctl(dev, DIOCXCOMMIT, t)) &&
+	if ((ioctl(dev, DIOCXBEGIN, t) == -1||
+	    ioctl(dev, DIOCXCOMMIT, t) == -1) &&
 	    errno != EINVAL)
 		goto cleanup;
 
@@ -703,7 +703,7 @@ recursive_ruleset_purge(char *an, char *rs)
 	if ((prs = calloc(1, sizeof(struct pfioc_ruleset))) == NULL)
 		goto no_mem;
 	snprintf(prs->path, sizeof(prs->path), "%s/%s", an, rs);
-	if (ioctl(dev, DIOCGETRULESETS, prs)) {
+	if (ioctl(dev, DIOCGETRULESETS, prs) == -1) {
 		if (errno != EINVAL)
 			goto cleanup;
 		errno = 0;
@@ -712,7 +712,7 @@ recursive_ruleset_purge(char *an, char *rs)
 
 		while (nr) {
 			prs->nr = 0;
-			if (ioctl(dev, DIOCGETRULESET, prs))
+			if (ioctl(dev, DIOCGETRULESET, prs) == -1)
 				goto cleanup;
 
 			if (recursive_ruleset_purge(prs->path, prs->name))
@@ -870,7 +870,7 @@ change_table(int add, const char *ipsrc)
 		return (-1);
 	}
 
-	if (ioctl(dev, add ? DIOCRADDADDRS : DIOCRDELADDRS, &io) &&
+	if (ioctl(dev, add ? DIOCRADDADDRS : DIOCRDELADDRS, &io) == -1 &&
 	    errno != ESRCH) {
 		syslog(LOG_ERR, "cannot %s %s from table %s: %s",
 		    add ? "add" : "remove", ipsrc, tablename,
@@ -910,7 +910,7 @@ authpf_kill_states(void)
 	    sizeof(psk.psk_src.addr.v.a.addr));
 	memset(&psk.psk_src.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_src.addr.v.a.mask));
-	if (ioctl(dev, DIOCKILLSTATES, &psk))
+	if (ioctl(dev, DIOCKILLSTATES, &psk) == -1)
 		syslog(LOG_ERR, "DIOCKILLSTATES failed (%m)");
 
 	/* Kill all states to ipsrc */
@@ -919,7 +919,7 @@ authpf_kill_states(void)
 	    sizeof(psk.psk_dst.addr.v.a.addr));
 	memset(&psk.psk_dst.addr.v.a.mask, 0xff,
 	    sizeof(psk.psk_dst.addr.v.a.mask));
-	if (ioctl(dev, DIOCKILLSTATES, &psk))
+	if (ioctl(dev, DIOCKILLSTATES, &psk) == -1)
 		syslog(LOG_ERR, "DIOCKILLSTATES failed (%m)");
 }
 

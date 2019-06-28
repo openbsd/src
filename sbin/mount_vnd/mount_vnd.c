@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_vnd.c,v 1.21 2019/04/25 22:39:46 deraadt Exp $	*/
+/*	$OpenBSD: mount_vnd.c,v 1.22 2019/06/28 13:32:45 deraadt Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -190,7 +190,7 @@ config(char *dev, char *file, struct disklabel *dp, char *key, size_t keylen)
 	char *rdev;
 	int fd, rv = -1;
 
-	if ((fd = opendev(dev, O_RDONLY, OPENDEV_PART, &rdev)) < 0) {
+	if ((fd = opendev(dev, O_RDONLY, OPENDEV_PART, &rdev)) == -1) {
 		err(4, "%s", rdev);
 		goto out;
 	}

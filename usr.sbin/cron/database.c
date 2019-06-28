@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.37 2018/02/05 03:52:37 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.38 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -58,14 +58,14 @@ load_database(cron_db **db)
 	 * so that if anything changes as of this moment (i.e., before we've
 	 * cached any of the database), we'll see the changes next time.
 	 */
-	if (stat(_PATH_CRON_SPOOL, &statbuf) < 0) {
+	if (stat(_PATH_CRON_SPOOL, &statbuf) == -1) {
 		syslog(LOG_ERR, "(CRON) STAT FAILED (%s)", _PATH_CRON_SPOOL);
 		return;
 	}
 
 	/* track system crontab file
 	 */
-	if (stat(_PATH_SYS_CRONTAB, &syscron_stat) < 0)
+	if (stat(_PATH_SYS_CRONTAB, &syscron_stat) == -1)
 		timespecclear(&syscron_stat.st_mtim);
 
 	/* hash mtime of system crontab file and crontab dir
@@ -184,7 +184,7 @@ process_crontab(int dfd, const char *uname, const char *fname,
 	}
 
 	fd = openat(dfd, fname, O_RDONLY|O_NONBLOCK|O_NOFOLLOW|O_CLOEXEC);
-	if (fd < 0) {
+	if (fd == -1) {
 		/* crontab not accessible?
 		 */
 		syslog(LOG_ERR, "(%s) CAN'T OPEN (%s)", uname, fname);
@@ -196,7 +196,7 @@ process_crontab(int dfd, const char *uname, const char *fname,
 		goto next_crontab;
 	}
 
-	if (fstat(fileno(crontab_fp), statbuf) < 0) {
+	if (fstat(fileno(crontab_fp), statbuf) == -1) {
 		syslog(LOG_ERR, "(%s) FSTAT FAILED (%s)", uname, fname);
 		goto next_crontab;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.33 2019/05/24 14:31:30 gilles Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.34 2019/06/28 13:32:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -48,7 +48,7 @@ mproc_fork(struct mproc *p, const char *path, char *argv[])
 {
 	int sp[2];
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) < 0)
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1)
 		return (-1);
 
 	io_set_nonblocking(sp[0]);
@@ -60,7 +60,7 @@ mproc_fork(struct mproc *p, const char *path, char *argv[])
 	if (p->pid == 0) {
 		/* child process */
 		dup2(sp[0], STDIN_FILENO);
-		if (closefrom(STDERR_FILENO + 1) < 0)
+		if (closefrom(STDERR_FILENO + 1) == -1)
 			exit(1);
 
 		execv(path, argv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rquotad.c,v 1.22 2015/01/16 06:39:50 deraadt Exp $	*/
+/*	$OpenBSD: rquotad.c,v 1.23 2019/06/28 13:32:53 deraadt Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr). Public domain.
@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 	socklen_t fromlen;
 
 	fromlen = sizeof(from);
-	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+	if (getsockname(0, (struct sockaddr *)&from, &fromlen) == -1) {
 		from_inetd = 0;
 		sock = RPC_ANYSOCK;
 		proto = IPPROTO_UDP;
@@ -231,7 +231,7 @@ getfsquota(long id, char *path, struct dqblk *dqblk)
 	struct fs_stat *fs;
 	int	qcmd, fd, ret = 0;
 
-	if (stat(path, &st_path) < 0)
+	if (stat(path, &st_path) == -1)
 		return (0);
 
 	qcmd = QCMD(Q_GETQUOTA, USRQUOTA);
@@ -245,7 +245,7 @@ getfsquota(long id, char *path, struct dqblk *dqblk)
 		if (quotactl(fs->fs_file, qcmd, id, (char *)dqblk) == 0)
 			return (1);
 
-		if ((fd = open(fs->qfpathname, O_RDONLY)) < 0) {
+		if ((fd = open(fs->qfpathname, O_RDONLY)) == -1) {
 			syslog(LOG_ERR, "open error: %s: %m", fs->qfpathname);
 			return (0);
 		}

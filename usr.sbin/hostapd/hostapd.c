@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.39 2019/05/10 01:29:31 guenther Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.40 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -281,7 +281,7 @@ hostapd_udp_init(struct hostapd_config *cfg)
 			    "%s: %s\n", IAPP_MCASTADDR, strerror(errno));
 
 		if (setsockopt(iapp->i_udp, IPPROTO_IP, IP_MULTICAST_TTL,
-		    &iapp->i_ttl, sizeof(iapp->i_ttl)) < 0)
+		    &iapp->i_ttl, sizeof(iapp->i_ttl)) == -1)
 			hostapd_fatal("failed to set multicast ttl to "
 			    "%u: %s\n", iapp->i_ttl, strerror(errno));
 

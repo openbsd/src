@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.92 2019/01/22 09:25:29 krw Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.93 2019/06/28 13:32:49 deraadt Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -289,9 +289,9 @@ getsocket(void)
 	if (rtsock >= 0)
 		return;
 	rtsock = socket(AF_ROUTE, SOCK_RAW, 0);
-	if (rtsock < 0)
+	if (rtsock == -1)
 		err(1, "routing socket");
-	if (setsockopt(rtsock, AF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
+	if (setsockopt(rtsock, AF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) == -1)
 		err(1, "ROUTE_TABLEFILTER");
 
 	if (pledge("stdio dns", NULL) == -1)
@@ -700,13 +700,13 @@ getnbrinfo(struct in6_addr *addr, int ifindex, int warning)
 	static struct in6_nbrinfo nbi;
 	int s;
 
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
 		err(1, "socket");
 
 	bzero(&nbi, sizeof(nbi));
 	if_indextoname(ifindex, nbi.ifname);
 	nbi.addr = *addr;
-	if (ioctl(s, SIOCGNBRINFO_IN6, (caddr_t)&nbi) < 0) {
+	if (ioctl(s, SIOCGNBRINFO_IN6, (caddr_t)&nbi) == -1) {
 		if (warning)
 			warn("ioctl(SIOCGNBRINFO_IN6)");
 		close(s);
@@ -814,7 +814,7 @@ doit:
 	l = rtm->rtm_msglen;
 	rtm->rtm_seq = ++seq;
 	rtm->rtm_type = cmd;
-	if ((rlen = write(rtsock, (char *)&m_rtmsg, l)) < 0) {
+	if ((rlen = write(rtsock, (char *)&m_rtmsg, l)) == -1) {
 		if (errno != ESRCH || cmd != RTM_DELETE) {
 			err(1, "writing to routing socket");
 			/* NOTREACHED */
@@ -824,7 +824,7 @@ doit:
 		l = read(rtsock, (char *)&m_rtmsg, sizeof(m_rtmsg));
 	} while (l > 0 && (rtm->rtm_version != RTM_VERSION ||
 	    rtm->rtm_seq != seq || rtm->rtm_pid != pid));
-	if (l < 0)
+	if (l == -1)
 		(void) fprintf(stderr, "ndp: read from routing socket: %s\n",
 		    strerror(errno));
 	return (0);
@@ -878,13 +878,13 @@ ifinfo(char *ifname)
 	struct in6_ndireq nd;
 	int s;
 
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
 		err(1, "socket");
 		/* NOTREACHED */
 	}
 	bzero(&nd, sizeof(nd));
 	strlcpy(nd.ifname, ifname, sizeof(nd.ifname));
-	if (ioctl(s, SIOCGIFINFO_IN6, (caddr_t)&nd) < 0)
+	if (ioctl(s, SIOCGIFINFO_IN6, (caddr_t)&nd) == -1)
 		err(1, "ioctl(SIOCGIFINFO_IN6)");
 
 	if (!nd.ndi.initialized)

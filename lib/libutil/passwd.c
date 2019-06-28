@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.55 2018/08/10 17:03:26 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.56 2019/06/28 13:32:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -101,7 +101,7 @@ pw_lock(int retries)
 	/* Acquire the lock file.  */
 	old_mode = umask(0);
 	fd = open(pw_lck, O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC, 0600);
-	for (i = 0; i < retries && fd < 0 && errno == EEXIST; i++) {
+	for (i = 0; i < retries && fd == -1 && errno == EEXIST; i++) {
 		sleep(1);
 		fd = open(pw_lck, O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC, 0600);
 	}

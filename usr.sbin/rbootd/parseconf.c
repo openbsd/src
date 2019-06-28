@@ -1,4 +1,4 @@
-/*	$OpenBSD: parseconf.c,v 1.13 2016/05/29 02:19:02 guenther Exp $	*/
+/*	$OpenBSD: parseconf.c,v 1.14 2019/06/28 13:32:50 deraadt Exp $	*/
 /*	$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ GetBootFiles(void)
 	 */
 	i = 0;
 	for (dp = readdir(dfd); dp != NULL; dp = readdir(dfd)) {
-		if (stat(dp->d_name, &statb) < 0 ||
+		if (stat(dp->d_name, &statb) == -1 ||
 		    (statb.st_mode & S_IFMT) != S_IFREG)
 			continue;
 		if (i == C_MAXFILE)

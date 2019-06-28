@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.23 2016/03/17 19:40:43 krw Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.24 2019/06/28 13:32:46 deraadt Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -300,7 +300,7 @@ void
 change_priority(char *path)
 {
 
-	if (swapctl(SWAP_CTL, path, pri) < 0)
+	if (swapctl(SWAP_CTL, path, pri) == -1)
 		warn("%s", path);
 }
 
@@ -311,7 +311,7 @@ void
 add_swap(char *path)
 {
 
-	if (swapctl(SWAP_ON, path, pri) < 0)
+	if (swapctl(SWAP_ON, path, pri) == -1)
 		if (errno != EBUSY)
 			err(1, "%s", path);
 }
@@ -323,7 +323,7 @@ void
 del_swap(char *path)
 {
 
-	if (swapctl(SWAP_OFF, path, pri) < 0)
+	if (swapctl(SWAP_OFF, path, pri) == -1)
 		err(1, "%s", path);
 }
 
@@ -402,7 +402,7 @@ do_fstab(void)
 				    (char *)NULL);
 				err(1, "execl");
 			}
-			while (waitpid(pid, &status, 0) < 0)
+			while (waitpid(pid, &status, 0) == -1)
 				if (errno != EINTR)
 					err(1, "waitpid");
 			if (status != 0) {
@@ -422,7 +422,7 @@ do_fstab(void)
 				if (strncmp("/dev/", spec, 5) != 0)
 					continue;
 			}
-			if (stat(spec, &st) < 0) {
+			if (stat(spec, &st) == -1) {
 				warn("%s", spec);
 				continue;
 			}
@@ -437,7 +437,7 @@ do_fstab(void)
 				continue;
 		}
 
-		if (swapctl(SWAP_ON, spec, (int)priority) < 0) {
+		if (swapctl(SWAP_ON, spec, (int)priority) == -1) {
 			if (errno != EBUSY)
 				warn("%s", spec);
 		} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.14 2016/08/30 14:44:45 guenther Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.15 2019/06/28 13:32:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -74,7 +74,7 @@ readlabelfs(char *device, int verbose)
 	}
 
 	/* Assuming device is of the form /dev/??p, build a raw partition. */
-	if (stat(device, &sbuf) < 0) {
+	if (stat(device, &sbuf) == -1) {
 		if (verbose)
 			warn("%s", device);
 		return (NULL);
@@ -106,12 +106,12 @@ readlabelfs(char *device, int verbose)
 
 	/* If rpath doesn't exist, change that partition back. */
 	fd = open(rpath, O_RDONLY|O_CLOEXEC);
-	if (fd < 0) {
+	if (fd == -1) {
 		if (errno == ENOENT) {
 			rpath[strlen(rpath) - 1] = part;
 
 			fd = open(rpath, O_RDONLY|O_CLOEXEC);
-			if (fd < 0) {
+			if (fd == -1) {
 				if (verbose)
 					warn("%s", rpath);
 				return (NULL);
@@ -125,7 +125,7 @@ readlabelfs(char *device, int verbose)
 
 disklabel:
 
-	if (ioctl(fd, DIOCGDINFO, &dk) < 0) {
+	if (ioctl(fd, DIOCGDINFO, &dk) == -1) {
 		if (verbose)
 			warn("%s: couldn't read disklabel", rpath);
 		close(fd);

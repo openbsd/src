@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkuboot.c,v 1.8 2017/10/29 08:45:53 mpi Exp $	*/
+/*	$OpenBSD: mkuboot.c,v 1.9 2019/06/28 13:32:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -224,13 +224,13 @@ main(int argc, char *argv[])
 	strlcpy((char *)ih.ih_name, imgname, sizeof ih.ih_name);
 
 	ifd = open(iname, O_RDONLY);
-	if (ifd < 0)
+	if (ifd == -1)
 		err(1, "%s", iname);
 	if (fstat(ifd, &sb) == -1)
 		err(1, "%s", iname);
 
 	ofd = open(oname, O_RDWR | O_TRUNC | O_CREAT, 0644);
-	if (ofd < 0)
+	if (ofd == -1)
 		err(1, "%s", oname);
 
 	if (pledge("stdio", NULL) == -1)

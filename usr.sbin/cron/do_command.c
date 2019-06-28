@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.59 2018/06/13 13:30:03 tb Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.60 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -206,7 +206,7 @@ child_process(entry *e, user *u)
 			    e->pwd->pw_name);
 			_exit(EXIT_FAILURE);
 		}
-		if (setusercontext(lc, e->pwd, e->pwd->pw_uid, LOGIN_SETALL) < 0) {
+		if (setusercontext(lc, e->pwd, e->pwd->pw_uid, LOGIN_SETALL) == -1) {
 			warn("setusercontext failed for %s", e->pwd->pw_name);
 			syslog(LOG_ERR, "(%s) SETUSERCONTEXT FAILED (%m)",
 			    e->pwd->pw_name);
@@ -425,7 +425,7 @@ child_process(entry *e, user *u)
 	 */
 	int waiter;
 	if (jobpid > 0) {
-		while (waitpid(jobpid, &waiter, 0) < 0 && errno == EINTR)
+		while (waitpid(jobpid, &waiter, 0) == -1 && errno == EINTR)
 			;
 
 		/* If everything went well, and -n was set, _and_ we have mail,
@@ -462,7 +462,7 @@ child_process(entry *e, user *u)
 	}
 
 	if (stdinjob > 0)
-		while (waitpid(stdinjob, &waiter, 0) < 0 && errno == EINTR)
+		while (waitpid(stdinjob, &waiter, 0) == -1 && errno == EINTR)
 			;
 }
 

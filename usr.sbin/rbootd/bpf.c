@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.26 2017/04/19 05:36:13 natano Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.27 2019/06/28 13:32:50 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ BpfOpen(void)
 	 *  type and make sure it's type Ethernet.
 	 */
 	(void) strncpy(ifr.ifr_name, IntfName, sizeof(ifr.ifr_name));
-	if (ioctl(BpfFd, BIOCSETIF, (caddr_t)&ifr) < 0) {
+	if (ioctl(BpfFd, BIOCSETIF, (caddr_t)&ifr) == -1) {
 		syslog(LOG_ERR, "bpf: ioctl(BIOCSETIF,%s): %m", IntfName);
 		DoExit();
 	}
@@ -102,7 +102,7 @@ BpfOpen(void)
 	/*
 	 *  Make sure we are dealing with an Ethernet device.
 	 */
-	if (ioctl(BpfFd, BIOCGDLT, (caddr_t)&n) < 0) {
+	if (ioctl(BpfFd, BIOCGDLT, (caddr_t)&n) == -1) {
 		syslog(LOG_ERR, "bpf: ioctl(BIOCGDLT): %m");
 		DoExit();
 	}
@@ -116,7 +116,7 @@ BpfOpen(void)
 	 *  On read(), return packets immediately (do not buffer them).
 	 */
 	n = 1;
-	if (ioctl(BpfFd, BIOCIMMEDIATE, (caddr_t)&n) < 0) {
+	if (ioctl(BpfFd, BIOCIMMEDIATE, (caddr_t)&n) == -1) {
 		syslog(LOG_ERR, "bpf: ioctl(BIOCIMMEDIATE): %m");
 		DoExit();
 	}
@@ -132,11 +132,11 @@ BpfOpen(void)
 #endif
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
 	bcopy(&RmpMcastAddr[0], (char *)&ifr.ifr_addr.sa_data[0], RMP_ADDRLEN);
-	if (ioctl(BpfFd, SIOCADDMULTI, (caddr_t)&ifr) < 0) {
+	if (ioctl(BpfFd, SIOCADDMULTI, (caddr_t)&ifr) == -1) {
 		syslog(LOG_WARNING,
 		    "bpf: can't add mcast addr (%m), setting promiscuous mode");
 
-		if (ioctl(BpfFd, BIOCPROMISC, (caddr_t)0) < 0) {
+		if (ioctl(BpfFd, BIOCPROMISC, (caddr_t)0) == -1) {
 			syslog(LOG_ERR, "bpf: can't set promiscuous mode: %m");
 			DoExit();
 		}
@@ -145,7 +145,7 @@ BpfOpen(void)
 	/*
 	 *  Ask BPF how much buffer space it requires and allocate one.
 	 */
-	if (ioctl(BpfFd, BIOCGBLEN, (caddr_t)&BpfLen) < 0) {
+	if (ioctl(BpfFd, BIOCGBLEN, (caddr_t)&BpfLen) == -1) {
 		syslog(LOG_ERR, "bpf: ioctl(BIOCGBLEN): %m");
 		DoExit();
 	}
@@ -213,17 +213,17 @@ BpfOpen(void)
 			sizeof(bpf_wf_insn)/sizeof(bpf_wf_insn[0]), bpf_wf_insn
 		};
 
-		if (ioctl(BpfFd, BIOCSETF, (caddr_t)&bpf_pgm) < 0) {
+		if (ioctl(BpfFd, BIOCSETF, (caddr_t)&bpf_pgm) == -1) {
 			syslog(LOG_ERR, "bpf: ioctl(BIOCSETF): %m");
 			DoExit();
 		}
 
-		if (ioctl(BpfFd, BIOCSETWF, (caddr_t)&bpf_w_pgm) < 0) {
+		if (ioctl(BpfFd, BIOCSETWF, (caddr_t)&bpf_w_pgm) == -1) {
 			syslog(LOG_ERR, "bpf: ioctl(BIOCSETWF): %m");
 			DoExit();
 		}
 
-		if (ioctl(BpfFd, BIOCLOCK) < 0) {
+		if (ioctl(BpfFd, BIOCLOCK) == -1) {
 			syslog(LOG_ERR, "bpf: ioctl(BIOCLOCK): %m");
 			DoExit();
 		}
@@ -324,7 +324,7 @@ BpfRead(RMPCONN *rconn, int doread)
 	 *  We let the caller decide whether or not we can issue a read().
 	 */
 	if (doread) {
-		if ((cc = read(BpfFd, (char *)BpfPkt, (int)BpfLen)) < 0) {
+		if ((cc = read(BpfFd, (char *)BpfPkt, (int)BpfLen)) == -1) {
 			syslog(LOG_ERR, "bpf: read: %m");
 			return(0);
 		} else {
@@ -379,7 +379,7 @@ BpfRead(RMPCONN *rconn, int doread)
 int
 BpfWrite(RMPCONN *rconn)
 {
-	if (write(BpfFd, (char *)&rconn->rmp, rconn->rmplen) < 0) {
+	if (write(BpfFd, (char *)&rconn->rmp, rconn->rmplen) == -1) {
 		syslog(LOG_ERR, "write: %s: %m", EnetStr(rconn));
 		return(0);
 	}

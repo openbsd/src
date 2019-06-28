@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_udp.c,v 1.25 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: svc_udp.c,v 1.26 2019/06/28 13:32:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -104,7 +104,7 @@ svcudp_bufcreate(int sock, u_int sendsz, u_int recvsz)
 	socklen_t len = sizeof(struct sockaddr_in);
 
 	if (sock == RPC_ANYSOCK) {
-		if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+		if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 			return (NULL);
 		madesock = TRUE;
 	}

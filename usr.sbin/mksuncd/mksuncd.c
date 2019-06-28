@@ -1,4 +1,4 @@
-/*	$OpenBSD: mksuncd.c,v 1.3 2015/10/12 07:45:48 deraadt Exp $	*/
+/*	$OpenBSD: mksuncd.c,v 1.4 2019/06/28 13:32:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -282,7 +282,7 @@ adjust_label(int f, struct sun_disklabel *slp, int part, off_t start, off_t size
 		return (-1);
 
 	i = write(f, slp, sizeof(*slp));
-	if (i < 0)
+	if (i == -1)
 		err(1, "write modified label");
 	if (i != sizeof(*slp))
 		errx(1, "short write modified label");
@@ -297,13 +297,13 @@ append_osfile(int outf, int inf)
 
 	while (1) {
 		len = read(inf, buf, sizeof(buf));
-		if (len < 0)
+		if (len == -1)
 			err(1, "read osfile");
 		if (len == 0)
 			return (0);
 
 		r = write(outf, buf, len);
-		if (r < 0)
+		if (r == -1)
 			err(1, "write basefile");
 		if (r != len)
 			errx(1, "short write basefile");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.12 2018/11/25 15:31:12 deraadt Exp $ */
+/*	$OpenBSD: pftable.c,v 1.13 2019/06/28 13:32:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -97,7 +97,7 @@ pftable_clear(const char *name)
 	strlcpy(tio.pfrio_table.pfrt_name, name,
 	    sizeof(tio.pfrio_table.pfrt_name));
 
-	if (ioctl(devpf, DIOCRCLRADDRS, &tio) != 0) {
+	if (ioctl(devpf, DIOCRCLRADDRS, &tio) == -1) {
 		log_warn("pftable_clear ioctl");
 		return (-1);
 	}
@@ -121,7 +121,7 @@ pftable_exists(const char *name)
 	tio.pfrio_esize = sizeof(dummy);
 	tio.pfrio_size = 1;
 
-	if (ioctl(devpf, DIOCRGETASTATS, &tio) != 0)
+	if (ioctl(devpf, DIOCRGETASTATS, &tio) == -1)
 		return (-1);
 
 	return (0);

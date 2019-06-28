@@ -1,4 +1,4 @@
-/*	$OpenBSD: worker.c,v 1.5 2017/08/03 17:36:06 florian Exp $	*/
+/*	$OpenBSD: worker.c,v 1.6 2019/06/28 13:32:51 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -324,7 +324,7 @@ build_probe6(struct tr_conf *conf, int seq, u_int8_t hops, int iflag,
 
 	i = hops;
 	if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
-	    (char *)&i, sizeof(i)) < 0)
+	    (char *)&i, sizeof(i)) == -1)
 		warn("setsockopt IPV6_UNICAST_HOPS");
 
 	if (iflag)
@@ -373,8 +373,8 @@ send_probe(struct tr_conf *conf, int seq, u_int8_t ttl, int iflag,
 		dump_packet();
 
 	i = sendto(sndsock, outpacket, datalen, 0, to, to->sa_len);
-	if (i < 0 || i != datalen)  {
-		if (i < 0)
+	if (i == -1 || i != datalen)  {
+		if (i == -1)
 			warn("sendto");
 		printf("%s: wrote %s %d chars, ret=%d\n", __progname, hostname,
 		    datalen, i);

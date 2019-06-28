@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.71 2019/01/22 09:25:29 krw Exp $	 */
+/* $OpenBSD: util.c,v 1.72 2019/06/28 13:32:44 deraadt Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -252,7 +252,7 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 			rtm->rtm_addrs |= RTA_NETMASK|RTA_IFP|RTA_IFA;
 			rtm->rtm_msglen = sizeof(*rtm) + sizeof(*sa2);
 
-			if ((b = write(fd, buf, rtm->rtm_msglen)) < 0) {
+			if ((b = write(fd, buf, rtm->rtm_msglen)) == -1) {
 				close(fd);
 				return -1;
 			}

@@ -142,7 +142,7 @@ stmt	: error
 				inet_fmt($2, s1));
 
 			strlcpy(ffr.ifr_name, ifname, sizeof(ffr.ifr_name));
-			if (ioctl(udp_socket, SIOCGIFFLAGS, (char *)&ffr)<0)
+			if (ioctl(udp_socket, SIOCGIFFLAGS, (char *)&ffr) == -1)
 			    fatal("ioctl SIOCGIFFLAGS on %s",ffr.ifr_name);
 			if (ffr.ifr_flags & IFF_LOOPBACK)
 			    fatal("Tunnel local address %s is a loopback interface",

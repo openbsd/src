@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.80 2019/05/11 16:30:23 patrick Exp $	*/
+/*	$OpenBSD: parse.y,v 1.81 2019/06/28 13:32:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1735,9 +1735,9 @@ parsekeyfile(char *filename, struct iked_auth *auth)
 	int		 fd, ret;
 	unsigned char	*hex;
 
-	if ((fd = open(filename, O_RDONLY)) < 0)
+	if ((fd = open(filename, O_RDONLY)) == -1)
 		err(1, "open %s", filename);
-	if (fstat(fd, &sb) < 0)
+	if (fstat(fd, &sb) == -1)
 		err(1, "parsekeyfile: stat %s", filename);
 	if ((sb.st_size > KEYSIZE_LIMIT) || (sb.st_size == 0))
 		errx(1, "%s: key too %s", filename, sb.st_size ? "large" :
@@ -2187,7 +2187,7 @@ ifa_load(void)
 	struct sockaddr_in	*sa_in;
 	struct sockaddr_in6	*sa_in6;
 
-	if (getifaddrs(&ifap) < 0)
+	if (getifaddrs(&ifap) == -1)
 		err(1, "ifa_load: getifaddrs");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {

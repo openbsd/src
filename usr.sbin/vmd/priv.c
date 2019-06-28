@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.14 2018/11/21 12:31:47 reyk Exp $	*/
+/*	$OpenBSD: priv.c,v 1.15 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -124,13 +124,13 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		/* Set the interface description */
 		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
 		ifr.ifr_data = (caddr_t)vfr.vfr_value;
-		if (ioctl(env->vmd_fd, SIOCSIFDESCR, &ifr) < 0)
+		if (ioctl(env->vmd_fd, SIOCSIFDESCR, &ifr) == -1)
 			log_warn("SIOCSIFDESCR");
 		break;
 	case IMSG_VMDOP_PRIV_IFRDOMAIN:
 		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
 		ifr.ifr_rdomainid = vfr.vfr_id;
-		if (ioctl(env->vmd_fd, SIOCSIFRDOMAIN, &ifr) < 0)
+		if (ioctl(env->vmd_fd, SIOCSIFRDOMAIN, &ifr) == -1)
 			log_warn("SIOCSIFRDOMAIN");
 		break;
 	case IMSG_VMDOP_PRIV_IFADD:
@@ -143,14 +143,14 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    sizeof(ifbr.ifbr_name));
 		strlcpy(ifbr.ifbr_ifsname, vfr.vfr_value,
 		    sizeof(ifbr.ifbr_ifsname));
-		if (ioctl(env->vmd_fd, SIOCBRDGADD, &ifbr) < 0 &&
+		if (ioctl(env->vmd_fd, SIOCBRDGADD, &ifbr) == -1 &&
 		    errno != EEXIST)
 			log_warn("SIOCBRDGADD");
 		break;
 	case IMSG_VMDOP_PRIV_IFEXISTS:
 		/* Determine if bridge/switch exists */
 		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
-		if (ioctl(env->vmd_fd, SIOCGIFFLAGS, &ifr) < 0)
+		if (ioctl(env->vmd_fd, SIOCGIFFLAGS, &ifr) == -1)
 			fatalx("%s: bridge \"%s\" does not exist",
 			    __func__, vfr.vfr_name);
 		break;
@@ -158,7 +158,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_PRIV_IFDOWN:
 		/* Set the interface status */
 		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
-		if (ioctl(env->vmd_fd, SIOCGIFFLAGS, &ifr) < 0) {
+		if (ioctl(env->vmd_fd, SIOCGIFFLAGS, &ifr) == -1) {
 			log_warn("SIOCGIFFLAGS");
 			break;
 		}
@@ -166,7 +166,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			ifr.ifr_flags |= IFF_UP;
 		else
 			ifr.ifr_flags &= ~IFF_UP;
-		if (ioctl(env->vmd_fd, SIOCSIFFLAGS, &ifr) < 0)
+		if (ioctl(env->vmd_fd, SIOCSIFFLAGS, &ifr) == -1)
 			log_warn("SIOCSIFFLAGS");
 		break;
 	case IMSG_VMDOP_PRIV_IFGROUP:
@@ -179,7 +179,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    sizeof(ifgr.ifgr_group)) >= sizeof(ifgr.ifgr_group))
 			fatalx("%s: group name too long", __func__);
 
-		if (ioctl(env->vmd_fd, SIOCAIFGROUP, &ifgr) < 0 &&
+		if (ioctl(env->vmd_fd, SIOCAIFGROUP, &ifgr) == -1 &&
 		    errno != EEXIST)
 			log_warn("SIOCAIFGROUP");
 		break;
@@ -202,7 +202,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&ifra.ifra_mask, &vfr.vfr_mask,
 		    ifra.ifra_mask.sa_len);
 
-		if (ioctl(env->vmd_fd, SIOCAIFADDR, &ifra) < 0)
+		if (ioctl(env->vmd_fd, SIOCAIFADDR, &ifra) == -1)
 			log_warn("SIOCAIFADDR");
 		break;
 	case IMSG_VMDOP_PRIV_IFADDR6:
@@ -217,7 +217,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		strlcpy(ifar.ifar_name, vfr.vfr_name,
 		    sizeof(ifar.ifar_name));
 		ifar.ifar_af = AF_INET6;
-		if (ioctl(env->vmd_fd, SIOCIFAFATTACH, (caddr_t)&ifar) < 0)
+		if (ioctl(env->vmd_fd, SIOCIFAFATTACH, (caddr_t)&ifar) == -1)
 			log_warn("SIOCIFAFATTACH");
 
 		/* Set the interface address */
@@ -237,11 +237,11 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		in6_ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 		in6_ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 
-		if (ioctl(env->vmd_fd6, SIOCDIFADDR_IN6, &in6_ifra) < 0 &&
+		if (ioctl(env->vmd_fd6, SIOCDIFADDR_IN6, &in6_ifra) == -1 &&
 		    errno != EADDRNOTAVAIL)
 			log_warn("SIOCDIFADDR_IN6");
 
-		if (ioctl(env->vmd_fd6, SIOCAIFADDR_IN6, &in6_ifra) < 0)
+		if (ioctl(env->vmd_fd6, SIOCAIFADDR_IN6, &in6_ifra) == -1)
 			log_warn("SIOCAIFADDR_IN6");
 		break;
 	case IMSG_VMDOP_CONFIG:

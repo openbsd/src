@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.55 2018/10/09 12:33:40 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.56 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -265,7 +265,7 @@ main(int argc, char **argv)
 	if (makeold) {
 		(void)snprintf(buf, sizeof(buf), "%s.orig", pname);
 		if ((tfd = open(buf,
-		    O_WRONLY|O_CREAT|O_EXCL, PERM_INSECURE)) < 0)
+		    O_WRONLY|O_CREAT|O_EXCL, PERM_INSECURE)) == -1)
 			fatal("%s", buf);
 		if ((oldfp = fdopen(tfd, "w")) == NULL)
 			fatal("%s", buf);
@@ -386,16 +386,16 @@ cp(char *from, char *to, mode_t mode)
 	static char buf[MAXBSIZE];
 	int from_fd, rcount, to_fd, wcount;
 
-	if ((from_fd = open(from, O_RDONLY, 0)) < 0)
+	if ((from_fd = open(from, O_RDONLY, 0)) == -1)
 		fatal("%s", from);
-	if ((to_fd = open(to, O_WRONLY|O_CREAT|O_EXCL, mode)) < 0)
+	if ((to_fd = open(to, O_WRONLY|O_CREAT|O_EXCL, mode)) == -1)
 		fatal("%s", to);
 	while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
 		wcount = write(to_fd, buf, rcount);
 		if (rcount != wcount || wcount == -1)
 			fatal("%s to %s", from, to);
 	}
-	if (rcount < 0)
+	if (rcount == -1)
 		fatal("%s to %s", from, to);
 	close(to_fd);
 	close(from_fd);

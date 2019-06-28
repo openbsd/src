@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.28 2019/01/22 09:25:29 krw Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.29 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -161,7 +161,7 @@ void
 sys_init()
 {
     /* Get an internet socket for doing socket ioctl's on. */
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 	syslog(LOG_ERR, "Couldn't create IP socket: %m");
 	die(1);
     }
@@ -179,7 +179,7 @@ sys_cleanup()
 
     if (if_is_up) {
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(sockfd, SIOCGIFFLAGS, &ifr) >= 0
+	if (ioctl(sockfd, SIOCGIFFLAGS, &ifr) == 0
 	    && ((ifr.ifr_flags & IFF_UP) != 0)) {
 	    ifr.ifr_flags &= ~IFF_UP;
 	    ioctl(sockfd, SIOCSIFFLAGS, &ifr);
@@ -225,11 +225,11 @@ ppp_available()
     struct ifreq ifr;
     extern char *no_ppp_msg;
 
-    if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 	return 1;		/* can't tell */
 
     strlcpy(ifr.ifr_name, "ppp0", sizeof(ifr.ifr_name));
-    ok = ioctl(s, SIOCGIFFLAGS, (caddr_t) &ifr) >= 0;
+    ok = ioctl(s, SIOCGIFFLAGS, (caddr_t) &ifr) == 0;
     close(s);
 
     no_ppp_msg = "\
@@ -252,7 +252,7 @@ establish_ppp(fd)
 	/*
 	 * Demand mode - prime the old ppp device to relinquish the unit.
 	 */
-	if (ioctl(ppp_fd, PPPIOCXFERUNIT, 0) < 0) {
+	if (ioctl(ppp_fd, PPPIOCXFERUNIT, 0) == -1) {
 	    syslog(LOG_ERR, "ioctl(transfer ppp unit): %m");
 	    die(1);
 	}
@@ -261,11 +261,11 @@ establish_ppp(fd)
     /*
      * Save the old line discipline of fd, and set it to PPP.
      */
-    if (ioctl(fd, TIOCGETD, &initdisc) < 0) {
+    if (ioctl(fd, TIOCGETD, &initdisc) == -1) {
 	syslog(LOG_ERR, "ioctl(TIOCGETD): %m");
 	die(1);
     }
-    if (ioctl(fd, TIOCSETD, &pppdisc) < 0) {
+    if (ioctl(fd, TIOCSETD, &pppdisc) == -1) {
 	syslog(LOG_ERR, "ioctl(TIOCSETD): %m");
 	die(1);
     }
@@ -274,7 +274,7 @@ establish_ppp(fd)
 	/*
 	 * Find out which interface we were given.
 	 */
-	if (ioctl(fd, PPPIOCGUNIT, &ifunit) < 0) {	
+	if (ioctl(fd, PPPIOCGUNIT, &ifunit) == -1) {	
 	    syslog(LOG_ERR, "ioctl(PPPIOCGUNIT): %m");
 	    die(1);
 	}
@@ -282,7 +282,7 @@ establish_ppp(fd)
 	/*
 	 * Check that we got the same unit again.
 	 */
-	if (ioctl(fd, PPPIOCGUNIT, &x) < 0) {	
+	if (ioctl(fd, PPPIOCGUNIT, &x) == -1) {	
 	    syslog(LOG_ERR, "ioctl(PPPIOCGUNIT): %m");
 	    die(1);
 	}
@@ -301,11 +301,11 @@ establish_ppp(fd)
      * Enable debug in the driver if requested.
      */
     if (kdebugflag) {
-	if (ioctl(fd, PPPIOCGFLAGS, (caddr_t) &x) < 0) {
+	if (ioctl(fd, PPPIOCGFLAGS, (caddr_t) &x) == -1) {
 	    syslog(LOG_WARNING, "ioctl (PPPIOCGFLAGS): %m");
 	} else {
 	    x |= (kdebugflag & 0xFF) * SC_DEBUG;
-	    if (ioctl(fd, PPPIOCSFLAGS, (caddr_t) &x) < 0)
+	    if (ioctl(fd, PPPIOCSFLAGS, (caddr_t) &x) == -1)
 		syslog(LOG_WARNING, "ioctl(PPPIOCSFLAGS): %m");
 	}
     }
@@ -330,12 +330,12 @@ restore_loop()
     /*
      * Transfer the ppp interface back to the loopback.
      */
-    if (ioctl(ppp_fd, PPPIOCXFERUNIT, 0) < 0) {
+    if (ioctl(ppp_fd, PPPIOCXFERUNIT, 0) == -1) {
 	syslog(LOG_ERR, "ioctl(transfer ppp unit): %m");
 	die(1);
     }
     x = PPPDISC;
-    if (ioctl(loop_slave, TIOCSETD, &x) < 0) {
+    if (ioctl(loop_slave, TIOCSETD, &x) == -1) {
 	syslog(LOG_ERR, "ioctl(TIOCSETD): %m");
 	die(1);
     }
@@ -343,7 +343,7 @@ restore_loop()
     /*
      * Check that we got the same unit again.
      */
-    if (ioctl(loop_slave, PPPIOCGUNIT, &x) < 0) {	
+    if (ioctl(loop_slave, PPPIOCGUNIT, &x) == -1) {	
 	syslog(LOG_ERR, "ioctl(PPPIOCGUNIT): %m");
 	die(1);
     }
@@ -364,12 +364,12 @@ disestablish_ppp(fd)
     int fd;
 {
     /* Reset non-blocking mode on fd. */
-    if (initfdflags != -1 && fcntl(fd, F_SETFL, initfdflags) < 0)
+    if (initfdflags != -1 && fcntl(fd, F_SETFL, initfdflags) == -1)
 	syslog(LOG_WARNING, "Couldn't restore device fd flags: %m");
     initfdflags = -1;
 
     /* Restore old line discipline. */
-    if (initdisc >= 0 && ioctl(fd, TIOCSETD, &initdisc) < 0)
+    if (initdisc >= 0 && ioctl(fd, TIOCSETD, &initdisc) == -1)
 	syslog(LOG_ERR, "ioctl(TIOCSETD): %m");
     initdisc = -1;
 
@@ -422,7 +422,7 @@ set_up_tty(fd, local)
 {
     struct termios tios;
 
-    if (tcgetattr(fd, &tios) < 0) {
+    if (tcgetattr(fd, &tios) == -1) {
 	syslog(LOG_ERR, "tcgetattr: %m");
 	die(1);
     }
@@ -470,7 +470,7 @@ set_up_tty(fd, local)
     }
     baud_rate = inspeed;
 
-    if (tcsetattr(fd, TCSAFLUSH, &tios) < 0) {
+    if (tcsetattr(fd, TCSAFLUSH, &tios) == -1) {
 	syslog(LOG_ERR, "tcsetattr: %m");
 	die(1);
     }
@@ -495,7 +495,7 @@ restore_tty(fd)
 	     */
 	    inittermios.c_lflag &= ~(ECHO | ECHONL);
 	}
-	if (tcsetattr(fd, TCSAFLUSH, &inittermios) < 0)
+	if (tcsetattr(fd, TCSAFLUSH, &inittermios) == -1)
 	    if (errno != ENXIO)
 		syslog(LOG_WARNING, "tcsetattr: %m");
 	ioctl(fd, TIOCSWINSZ, &wsinfo);
@@ -529,7 +529,7 @@ open_ppp_loopback()
     struct termios tios;
     int pppdisc = PPPDISC;
 
-    if (openpty(&loop_master, &loop_slave, loop_name, NULL, NULL) < 0) {
+    if (openpty(&loop_master, &loop_slave, loop_name, NULL, NULL) == -1) {
 	syslog(LOG_ERR, "No free pty for loopback");
 	die(1);
     }
@@ -541,7 +541,7 @@ open_ppp_loopback()
 	tios.c_iflag = IGNPAR;
 	tios.c_oflag = 0;
 	tios.c_lflag = 0;
-	if (tcsetattr(loop_slave, TCSAFLUSH, &tios) < 0)
+	if (tcsetattr(loop_slave, TCSAFLUSH, &tios) == -1)
 	    syslog(LOG_WARNING, "couldn't set attributes on loopback: %m");
     }
 
@@ -550,7 +550,7 @@ open_ppp_loopback()
 	    syslog(LOG_WARNING, "couldn't set loopback to nonblock: %m");
 
     ppp_fd = loop_slave;
-    if (ioctl(ppp_fd, TIOCSETD, &pppdisc) < 0) {
+    if (ioctl(ppp_fd, TIOCSETD, &pppdisc) == -1) {
 	syslog(LOG_ERR, "ioctl(TIOCSETD): %m");
 	die(1);
     }
@@ -558,7 +558,7 @@ open_ppp_loopback()
     /*
      * Find out which interface we were given.
      */
-    if (ioctl(ppp_fd, PPPIOCGUNIT, &ifunit) < 0) {	
+    if (ioctl(ppp_fd, PPPIOCGUNIT, &ifunit) == -1) {	
 	syslog(LOG_ERR, "ioctl(PPPIOCGUNIT): %m");
 	die(1);
     }
@@ -567,11 +567,11 @@ open_ppp_loopback()
      * Enable debug in the driver if requested.
      */
     if (kdebugflag) {
-	if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &flags) < 0) {
+	if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &flags) == -1) {
 	    syslog(LOG_WARNING, "ioctl (PPPIOCGFLAGS): %m");
 	} else {
 	    flags |= (kdebugflag & 0xFF) * SC_DEBUG;
-	    if (ioctl(ppp_fd, PPPIOCSFLAGS, (caddr_t) &flags) < 0)
+	    if (ioctl(ppp_fd, PPPIOCSFLAGS, (caddr_t) &flags) == -1)
 		syslog(LOG_WARNING, "ioctl(PPPIOCSFLAGS): %m");
 	}
     }
@@ -591,7 +591,7 @@ output(unit, p, len)
     if (debug)
 	log_packet(p, len, "sent ", LOG_DEBUG);
 
-    if (write(ttyfd, p, len) < 0) {
+    if (write(ttyfd, p, len) == -1) {
 	if (errno != EIO)
 	    syslog(LOG_ERR, "write: %m");
     }
@@ -618,7 +618,7 @@ wait_input(timo)
     FD_SET(ttyfd, fdsp);
 
     n = select(ttyfd+1, fdsp, NULL, fdsp, timo);
-    if (n < 0 && errno != EINTR) {
+    if (n == -1 && errno != EINTR) {
 	syslog(LOG_ERR, "select: %m");
 	free(fdsp);
 	die(1);
@@ -647,7 +647,7 @@ wait_loop_output(timo)
     FD_SET(loop_master, fdsp);
 
     n = select(loop_master + 1, fdsp, NULL, fdsp, timo);
-    if (n < 0 && errno != EINTR) {
+    if (n == -1 && errno != EINTR) {
 	syslog(LOG_ERR, "select: %m");
 	free(fdsp);
 	die(1);
@@ -667,7 +667,7 @@ wait_time(timo)
     int n;
 
     n = select(0, NULL, NULL, NULL, timo);
-    if (n < 0 && errno != EINTR) {
+    if (n == -1 && errno != EINTR) {
 	syslog(LOG_ERR, "select: %m");
 	die(1);
     }
@@ -683,7 +683,7 @@ read_packet(buf)
 {
     int len;
 
-    if ((len = read(ttyfd, buf, PPP_MTU + PPP_HDRLEN)) < 0) {
+    if ((len = read(ttyfd, buf, PPP_MTU + PPP_HDRLEN)) == -1) {
 	if (errno == EWOULDBLOCK || errno == EINTR)
 	    return -1;
 	syslog(LOG_ERR, "read: %m");
@@ -736,23 +736,23 @@ ppp_send_config(unit, mtu, asyncmap, pcomp, accomp)
 
     strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
     ifr.ifr_mtu = mtu;
-    if (ioctl(sockfd, SIOCSIFMTU, (caddr_t) &ifr) < 0) {
+    if (ioctl(sockfd, SIOCSIFMTU, (caddr_t) &ifr) == -1) {
 	syslog(LOG_ERR, "ioctl(SIOCSIFMTU): %m");
 	quit();
     }
 
-    if (ioctl(ppp_fd, PPPIOCSASYNCMAP, (caddr_t) &asyncmap) < 0) {
+    if (ioctl(ppp_fd, PPPIOCSASYNCMAP, (caddr_t) &asyncmap) == -1) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSASYNCMAP): %m");
 	quit();
     }
 
-    if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &x) < 0) {
+    if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &x) == -1) {
 	syslog(LOG_ERR, "ioctl (PPPIOCGFLAGS): %m");
 	quit();
     }
     x = pcomp? x | SC_COMP_PROT: x &~ SC_COMP_PROT;
     x = accomp? x | SC_COMP_AC: x &~ SC_COMP_AC;
-    if (ioctl(ppp_fd, PPPIOCSFLAGS, (caddr_t) &x) < 0) {
+    if (ioctl(ppp_fd, PPPIOCSFLAGS, (caddr_t) &x) == -1) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 	quit();
     }
@@ -767,7 +767,7 @@ ppp_set_xaccm(unit, accm)
     int unit;
     ext_accm accm;
 {
-    if (ioctl(ppp_fd, PPPIOCSXASYNCMAP, accm) < 0 && errno != ENOTTY)
+    if (ioctl(ppp_fd, PPPIOCSXASYNCMAP, accm) == -1 && errno != ENOTTY)
 	syslog(LOG_WARNING, "ioctl(set extended ACCM): %m");
 }
 
@@ -784,20 +784,20 @@ ppp_recv_config(unit, mru, asyncmap, pcomp, accomp)
 {
     int x;
 
-    if (ioctl(ppp_fd, PPPIOCSMRU, (caddr_t) &mru) < 0) {
+    if (ioctl(ppp_fd, PPPIOCSMRU, (caddr_t) &mru) == -1) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSMRU): %m");
 	quit();
     }
-    if (ioctl(ppp_fd, PPPIOCSRASYNCMAP, (caddr_t) &asyncmap) < 0) {
+    if (ioctl(ppp_fd, PPPIOCSRASYNCMAP, (caddr_t) &asyncmap) == -1) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSRASYNCMAP): %m");
 	quit();
     }
-    if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &x) < 0) {
+    if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &x) == -1) {
 	syslog(LOG_ERR, "ioctl (PPPIOCGFLAGS): %m");
 	quit();
     }
     x = !accomp? x | SC_REJ_COMP_AC: x &~ SC_REJ_COMP_AC;
-    if (ioctl(ppp_fd, PPPIOCSFLAGS, (caddr_t) &x) < 0) {
+    if (ioctl(ppp_fd, PPPIOCSFLAGS, (caddr_t) &x) == -1) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 	quit();
     }
@@ -833,13 +833,13 @@ ccp_flags_set(unit, isopen, isup)
 {
     int x;
 
-    if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &x) < 0) {
+    if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &x) == -1) {
 	syslog(LOG_ERR, "ioctl (PPPIOCGFLAGS): %m");
 	return;
     }
     x = isopen? x | SC_CCP_OPEN: x &~ SC_CCP_OPEN;
     x = isup? x | SC_CCP_UP: x &~ SC_CCP_UP;
-    if (ioctl(ppp_fd, PPPIOCSFLAGS, (caddr_t) &x) < 0)
+    if (ioctl(ppp_fd, PPPIOCSFLAGS, (caddr_t) &x) == -1)
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 }
 
@@ -854,7 +854,7 @@ ccp_fatal_error(unit)
 {
     int x;
 
-    if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &x) < 0) {
+    if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &x) == -1) {
 	syslog(LOG_ERR, "ioctl(PPPIOCGFLAGS): %m");
 	return 0;
     }
@@ -884,13 +884,13 @@ set_filters(pass, active)
     int ret = 1;
 
     if (pass->bf_len > 0) {
-	if (ioctl(ppp_fd, PPPIOCSPASS, pass) < 0) {
+	if (ioctl(ppp_fd, PPPIOCSPASS, pass) == -1) {
 	    syslog(LOG_ERR, "Couldn't set pass-filter in kernel: %m");
 	    ret = 0;
 	}
     }
     if (active->bf_len > 0) {
-	if (ioctl(ppp_fd, PPPIOCSACTIVE, active) < 0) {
+	if (ioctl(ppp_fd, PPPIOCSACTIVE, active) == -1) {
 	    syslog(LOG_ERR, "Couldn't set active-filter in kernel: %m");
 	    ret = 0;
 	}
@@ -908,17 +908,17 @@ sifvjcomp(u, vjcomp, cidcomp, maxcid)
 {
     u_int x;
 
-    if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &x) < 0) {
+    if (ioctl(ppp_fd, PPPIOCGFLAGS, (caddr_t) &x) == -1) {
 	syslog(LOG_ERR, "ioctl (PPPIOCGFLAGS): %m");
 	return 0;
     }
     x = vjcomp ? x | SC_COMP_TCP: x &~ SC_COMP_TCP;
     x = cidcomp? x & ~SC_NO_TCP_CCID: x | SC_NO_TCP_CCID;
-    if (ioctl(ppp_fd, PPPIOCSFLAGS, (caddr_t) &x) < 0) {
+    if (ioctl(ppp_fd, PPPIOCSFLAGS, (caddr_t) &x) == -1) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 	return 0;
     }
-    if (vjcomp && ioctl(ppp_fd, PPPIOCSMAXCID, (caddr_t) &maxcid) < 0) {
+    if (vjcomp && ioctl(ppp_fd, PPPIOCSMAXCID, (caddr_t) &maxcid) == -1) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 	return 0;
     }
@@ -935,12 +935,12 @@ sifup(u)
     struct ifreq ifr;
 
     strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-    if (ioctl(sockfd, SIOCGIFFLAGS, (caddr_t) &ifr) < 0) {
+    if (ioctl(sockfd, SIOCGIFFLAGS, (caddr_t) &ifr) == -1) {
 	syslog(LOG_ERR, "ioctl (SIOCGIFFLAGS): %m");
 	return 0;
     }
     ifr.ifr_flags |= IFF_UP;
-    if (ioctl(sockfd, SIOCSIFFLAGS, (caddr_t) &ifr) < 0) {
+    if (ioctl(sockfd, SIOCSIFFLAGS, (caddr_t) &ifr) == -1) {
 	syslog(LOG_ERR, "ioctl(SIOCSIFFLAGS): %m");
 	return 0;
     }
@@ -961,7 +961,7 @@ sifnpmode(u, proto, mode)
 
     npi.protocol = proto;
     npi.mode = mode;
-    if (ioctl(ppp_fd, PPPIOCSNPMODE, &npi) < 0) {
+    if (ioctl(ppp_fd, PPPIOCSNPMODE, &npi) == -1) {
 	syslog(LOG_ERR, "ioctl(set NP %d mode to %d): %m", proto, mode);
 	return 0;
     }
@@ -986,12 +986,12 @@ sifdown(u)
     /* ignore errors, because ppp_fd might have been closed by now. */
 
     strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-    if (ioctl(sockfd, SIOCGIFFLAGS, (caddr_t) &ifr) < 0) {
+    if (ioctl(sockfd, SIOCGIFFLAGS, (caddr_t) &ifr) == -1) {
 	syslog(LOG_ERR, "ioctl (SIOCGIFFLAGS): %m");
 	rv = 0;
     } else {
 	ifr.ifr_flags &= ~IFF_UP;
-	if (ioctl(sockfd, SIOCSIFFLAGS, (caddr_t) &ifr) < 0) {
+	if (ioctl(sockfd, SIOCSIFFLAGS, (caddr_t) &ifr) == -1) {
 	    syslog(LOG_ERR, "ioctl(SIOCSIFFLAGS): %m");
 	    rv = 0;
 	} else
@@ -1033,11 +1033,11 @@ sifaddr(u, o, h, m)
 	BZERO(&ifra.ifra_mask, sizeof(ifra.ifra_mask));
     BZERO(&ifr, sizeof(ifr));
     strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-    if (ioctl(sockfd, SIOCDIFADDR, (caddr_t) &ifr) < 0) {
+    if (ioctl(sockfd, SIOCDIFADDR, (caddr_t) &ifr) == -1) {
 	if (errno != EADDRNOTAVAIL)
 	    syslog(LOG_WARNING, "Couldn't remove interface address: %m");
     }
-    if (ioctl(sockfd, SIOCAIFADDR, (caddr_t) &ifra) < 0) {
+    if (ioctl(sockfd, SIOCAIFADDR, (caddr_t) &ifra) == -1) {
 	if (errno != EEXIST) {
 	    syslog(LOG_ERR, "Couldn't set interface address: %m");
 	    return 0;
@@ -1071,7 +1071,7 @@ cifaddr(u, o, h)
     SET_SA_FAMILY(ifra.ifra_broadaddr, AF_INET);
     ((struct sockaddr_in *) &ifra.ifra_broadaddr)->sin_addr.s_addr = h;
     BZERO(&ifra.ifra_mask, sizeof(ifra.ifra_mask));
-    if (ioctl(sockfd, SIOCDIFADDR, (caddr_t) &ifra) < 0) {
+    if (ioctl(sockfd, SIOCDIFADDR, (caddr_t) &ifra) == -1) {
 	if (errno != EADDRNOTAVAIL)
 	    syslog(LOG_WARNING, "Couldn't delete interface address: %m");
 	return 0;
@@ -1117,7 +1117,7 @@ dodefaultroute(g, cmd)
 	struct sockaddr_in	mask;
     } rtmsg;
 
-    if ((routes = socket(AF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
+    if ((routes = socket(AF_ROUTE, SOCK_RAW, AF_INET)) == -1) {
 	syslog(LOG_ERR, "Couldn't %s default route: socket: %m",
 	       cmd=='s'? "add": "delete");
 	return 0;
@@ -1138,7 +1138,7 @@ dodefaultroute(g, cmd)
     rtmsg.mask.sin_family = AF_INET;
 
     rtmsg.hdr.rtm_msglen = sizeof(rtmsg);
-    if (write(routes, &rtmsg, sizeof(rtmsg)) < 0) {
+    if (write(routes, &rtmsg, sizeof(rtmsg)) == -1) {
 	syslog(LOG_ERR, "Couldn't %s default route: %m",
 	       cmd=='s'? "add": "delete");
 	close(routes);
@@ -1181,7 +1181,7 @@ sifproxyarp(unit, hisaddr)
 	return 0;
     }
 
-    if ((routes = socket(AF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
+    if ((routes = socket(AF_ROUTE, SOCK_RAW, AF_INET)) == -1) {
 	syslog(LOG_ERR, "Couldn't add proxy arp entry: socket: %m");
 	return 0;
     }
@@ -1199,7 +1199,7 @@ sifproxyarp(unit, hisaddr)
 
     arpmsg.hdr.rtm_msglen = (char *) &arpmsg.hwa - (char *) &arpmsg
 	+ arpmsg.hwa.sdl_len;
-    if (write(routes, &arpmsg, arpmsg.hdr.rtm_msglen) < 0) {
+    if (write(routes, &arpmsg, arpmsg.hdr.rtm_msglen) == -1) {
 	syslog(LOG_ERR, "Couldn't add proxy arp entry: %m");
 	close(routes);
 	return 0;
@@ -1228,12 +1228,12 @@ cifproxyarp(unit, hisaddr)
     arpmsg.hdr.rtm_type = RTM_DELETE;
     arpmsg.hdr.rtm_seq = ++rtm_seq;
 
-    if ((routes = socket(AF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
+    if ((routes = socket(AF_ROUTE, SOCK_RAW, AF_INET)) == -1) {
 	syslog(LOG_ERR, "Couldn't delete proxy arp entry: socket: %m");
 	return 0;
     }
 
-    if (write(routes, &arpmsg, arpmsg.hdr.rtm_msglen) < 0) {
+    if (write(routes, &arpmsg, arpmsg.hdr.rtm_msglen) == -1) {
 	syslog(LOG_ERR, "Couldn't delete proxy arp entry: %m");
 	close(routes);
 	return 0;
@@ -1277,7 +1277,7 @@ sifproxyarp(unit, hisaddr)
     SET_SA_FAMILY(arpreq.arp_pa, AF_INET);
     ((struct sockaddr_in *) &arpreq.arp_pa)->sin_addr.s_addr = hisaddr;
     arpreq.arp_flags = ATF_PERM | ATF_PUBL;
-    if (ioctl(sockfd, SIOCSARP, (caddr_t)&arpreq) < 0) {
+    if (ioctl(sockfd, SIOCSARP, (caddr_t)&arpreq) == -1) {
 	syslog(LOG_ERR, "Couldn't add proxy arp entry: %m");
 	return 0;
     }
@@ -1299,7 +1299,7 @@ cifproxyarp(unit, hisaddr)
     BZERO(&arpreq, sizeof(arpreq));
     SET_SA_FAMILY(arpreq.arp_pa, AF_INET);
     ((struct sockaddr_in *) &arpreq.arp_pa)->sin_addr.s_addr = hisaddr;
-    if (ioctl(sockfd, SIOCDARP, (caddr_t)&arpreq) < 0) {
+    if (ioctl(sockfd, SIOCDARP, (caddr_t)&arpreq) == -1) {
 	syslog(LOG_WARNING, "Couldn't delete proxy arp entry: %m");
 	return 0;
     }
@@ -1458,7 +1458,7 @@ lock(dev)
     if (asprintf(&lock_file, "%s%s", LOCK_PREFIX, dev) == -1)
 	novm("lock file name");
 
-    while ((fd = open(lock_file, O_EXCL | O_CREAT | O_RDWR, 0644)) < 0) {
+    while ((fd = open(lock_file, O_EXCL | O_CREAT | O_RDWR, 0644)) == -1) {
 	if (errno == EEXIST
 	    && (fd = open(lock_file, O_RDONLY, 0)) >= 0) {
 	    /* Read the lock file to find out who has the device locked */

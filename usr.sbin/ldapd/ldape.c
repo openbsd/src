@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.30 2018/08/12 22:04:09 rob Exp $ */
+/*	$OpenBSD: ldape.c,v 1.31 2019/06/28 13:32:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -381,7 +381,7 @@ ldape(int debug, int verbose, char *csockpath)
 	TAILQ_FOREACH(l, &conf->listeners, entry) {
 		l->fd = socket(l->ss.ss_family, SOCK_STREAM | SOCK_NONBLOCK,
 		    0);
-		if (l->fd < 0)
+		if (l->fd == -1)
 			fatal("ldape: socket");
 
 		setsockopt(l->fd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));

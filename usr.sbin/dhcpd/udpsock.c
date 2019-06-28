@@ -1,4 +1,4 @@
-/*	$OpenBSD: udpsock.c,v 1.10 2017/02/13 22:33:39 krw Exp $	*/
+/*	$OpenBSD: udpsock.c,v 1.11 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -58,7 +58,7 @@ udpsock_startup(struct in_addr bindaddr)
 		fatal("could not create udpsock");
 
 	memset(&sin4, 0, sizeof(sin4));
-	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0)
+	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 		fatal("creating a socket failed for udp");
 
 	onoff = 1;
@@ -115,7 +115,7 @@ udpsock_handler(struct protocol *protocol)
 	m.msg_controllen = sizeof(cbuf);
 
 	memset(&iface, 0, sizeof(iface));
-	if ((len = recvmsg(udpsock->sock, &m, 0)) < 0) {
+	if ((len = recvmsg(udpsock->sock, &m, 0)) == -1) {
 		log_warn("receiving a DHCP message failed");
 		return;
 	}
@@ -137,12 +137,12 @@ udpsock_handler(struct protocol *protocol)
 	}
 	if_indextoname(sdl->sdl_index, ifname);
 
-	if ((sockio = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+	if ((sockio = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 		log_warn("socket creation failed");
 		return;
 	}
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(sockio, SIOCGIFADDR, &ifr, sizeof(ifr)) != 0) {
+	if (ioctl(sockio, SIOCGIFADDR, &ifr, sizeof(ifr)) == -1) {
 		log_warn("Failed to get address for %s", ifname);
 		close(sockio);
 		return;

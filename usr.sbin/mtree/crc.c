@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc.c,v 1.3 2009/10/27 23:59:53 deraadt Exp $	*/
+/*	$OpenBSD: crc.c,v 1.4 2019/06/28 13:32:49 deraadt Exp $	*/
 /*	$NetBSD: crc.c,v 1.7 1996/02/27 21:29:53 jtc Exp $	*/
 
 /*-
@@ -118,7 +118,7 @@ crc(int fd, u_int32_t *cval, u_int32_t *clen)
 			COMPUTE(crc, *p);
 			COMPUTE(crc_total, *p);
 		}
-	if (nr < 0)
+	if (nr == -1)
 		return (1);
 
 	*clen = len;

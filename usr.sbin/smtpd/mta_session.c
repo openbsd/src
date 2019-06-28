@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.118 2019/06/24 15:14:01 gilles Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.119 2019/06/28 13:32:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -975,7 +975,7 @@ mta_response(struct mta_session *s, char *line)
 			 */
 			sa_len = sizeof(ss);
 			sa = (struct sockaddr *)&ss;
-			if (getsockname(io_fileno(s->io), sa, &sa_len) < 0)
+			if (getsockname(io_fileno(s->io), sa, &sa_len) == -1)
 				mta_delivery_log(e, NULL, buf, delivery, line);
 			else
 				mta_delivery_log(e, sa_to_text(sa),
@@ -1373,7 +1373,7 @@ mta_flush_task(struct mta_session *s, int delivery, const char *error, size_t co
 		 */
 		sa = (struct sockaddr *)&ss;
 		sa_len = sizeof(ss);
-		if (getsockname(io_fileno(s->io), sa, &sa_len) < 0)
+		if (getsockname(io_fileno(s->io), sa, &sa_len) == -1)
 			mta_delivery_log(e, NULL, relay, delivery, error);
 		else
 			mta_delivery_log(e, sa_to_text(sa),

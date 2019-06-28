@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.93 2019/05/02 14:04:10 gerhard Exp $	*/
+/*	$OpenBSD: mib.c,v 1.94 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -1916,7 +1916,7 @@ mib_pflimits(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	if (pl.index == PF_LIMIT_MAX)
 		return (-1);
 
-	if (ioctl(devpf, DIOCGETLIMIT, &pl)) {
+	if (ioctl(devpf, DIOCGETLIMIT, &pl) == -1) {
 		log_warn("DIOCGETLIMIT");
 		return (-1);
 	}
@@ -1972,7 +1972,7 @@ mib_pftimeouts(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	if (pt.timeout == PFTM_MAX)
 		return (-1);
 
-	if (ioctl(devpf, DIOCGETTIMEOUT, &pt)) {
+	if (ioctl(devpf, DIOCGETTIMEOUT, &pt) == -1) {
 		log_warn("DIOCGETTIMEOUT");
 		return (-1);
 	}
@@ -2383,7 +2383,7 @@ mib_pflabelnum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	extern int		 devpf;
 
 	memset(&pr, 0, sizeof(pr));
-	if (ioctl(devpf, DIOCGETRULES, &pr)) {
+	if (ioctl(devpf, DIOCGETRULES, &pr) == -1) {
 		log_warn("DIOCGETRULES");
 		return (-1);
 	}
@@ -2392,7 +2392,7 @@ mib_pflabelnum(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	lnr = 0;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if (ioctl(devpf, DIOCGETRULE, &pr)) {
+		if (ioctl(devpf, DIOCGETRULE, &pr) == -1) {
 			log_warn("DIOCGETRULE");
 			return (-1);
 		}
@@ -2420,7 +2420,7 @@ mib_pflabels(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	idx = o->bo_id[OIDIDX_pfLabelEntry];
 
 	memset(&pr, 0, sizeof(pr));
-	if (ioctl(devpf, DIOCGETRULES, &pr)) {
+	if (ioctl(devpf, DIOCGETRULES, &pr) == -1) {
 		log_warn("DIOCGETRULES");
 		return (-1);
 	}
@@ -2429,7 +2429,7 @@ mib_pflabels(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	lnr = 0;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
-		if (ioctl(devpf, DIOCGETRULE, &pr)) {
+		if (ioctl(devpf, DIOCGETRULE, &pr) == -1) {
 			log_warn("DIOCGETRULE");
 			return (-1);
 		}

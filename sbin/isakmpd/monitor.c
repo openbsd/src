@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.76 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: monitor.c,v 1.77 2019/06/28 13:32:44 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -611,7 +611,7 @@ m_priv_bind(void)
 		v = -1;
 	} else {
 		v = bind(sock, name, namelen);
-		if (v < 0) {
+		if (v == -1) {
 			log_error("m_priv_bind: bind(%d,%p,%d) returned %d",
 			    sock, name, namelen, v);
 			err = errno;

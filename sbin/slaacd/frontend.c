@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.26 2019/03/15 16:45:33 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.27 2019/06/28 13:32:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -142,7 +142,7 @@ frontend(int debug, int verbose)
 	setproctitle("%s", log_procnames[slaacd_process]);
 	log_procinit(log_procnames[slaacd_process]);
 
-	if ((ioctlsock = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0)) < 0)
+	if ((ioctlsock = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0)) == -1)
 		fatal("socket");
 
 	if (setgroups(1, &pw->pw_gid) ||
@@ -466,7 +466,7 @@ get_flags(char *if_name)
 	struct ifreq		 ifr;
 
 	(void) strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
-	if (ioctl(ioctlsock, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
+	if (ioctl(ioctlsock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1)
 		fatal("SIOCGIFFLAGS");
 	return ifr.ifr_flags;
 }
@@ -477,7 +477,7 @@ get_xflags(char *if_name)
 	struct ifreq		 ifr;
 
 	(void) strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
-	if (ioctl(ioctlsock, SIOCGIFXFLAGS, (caddr_t)&ifr) < 0)
+	if (ioctl(ioctlsock, SIOCGIFXFLAGS, (caddr_t)&ifr) == -1)
 		fatal("SIOCGIFXFLAGS");
 	return ifr.ifr_flags;
 }
@@ -560,7 +560,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 		(void) strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
 
-		if (ioctl(ioctlsock, SIOCGIFAFLAG_IN6, (caddr_t)&ifr6) < 0) {
+		if (ioctl(ioctlsock, SIOCGIFAFLAG_IN6, (caddr_t)&ifr6) == -1) {
 			log_warn("SIOCGIFAFLAG_IN6");
 			continue;
 		}
@@ -576,7 +576,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 		(void) strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
 
-		if (ioctl(ioctlsock, SIOCGIFNETMASK_IN6, (caddr_t)&ifr6) < 0) {
+		if (ioctl(ioctlsock, SIOCGIFNETMASK_IN6, (caddr_t)&ifr6) == -1) {
 			log_warn("SIOCGIFNETMASK_IN6");
 			continue;
 		}
@@ -589,8 +589,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
 		lifetime = &ifr6.ifr_ifru.ifru_lifetime;
 
-		if (ioctl(ioctlsock, SIOCGIFALIFETIME_IN6, (caddr_t)&ifr6) <
-		    0) {
+		if (ioctl(ioctlsock, SIOCGIFALIFETIME_IN6, (caddr_t)&ifr6) == -1) {
 			log_warn("SIOCGIFALIFETIME_IN6");
 			continue;
 		}
@@ -799,7 +798,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
 
 			if (ioctl(ioctlsock, SIOCGIFAFLAG_IN6, (caddr_t)&ifr6)
-			    < 0) {
+			    == -1) {
 				log_warn("SIOCGIFAFLAG_IN6");
 				break;
 			}
@@ -990,7 +989,7 @@ icmp6_receive(int fd, short events, void *arg)
 	int			 if_index = 0, *hlimp = NULL;
 	char			 ntopbuf[INET6_ADDRSTRLEN], ifnamebuf[IFNAMSIZ];
 
-	if ((len = recvmsg(fd, &icmp6ev.rcvmhdr, 0)) < 0) {
+	if ((len = recvmsg(fd, &icmp6ev.rcvmhdr, 0)) == -1) {
 		log_warn("recvmsg");
 		return;
 	}

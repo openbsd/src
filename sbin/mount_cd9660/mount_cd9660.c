@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_cd9660.c,v 1.21 2015/01/16 06:39:59 deraadt Exp $	*/
+/*	$OpenBSD: mount_cd9660.c,v 1.22 2019/06/28 13:32:44 deraadt Exp $	*/
 /*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 	args.flags = opts;
 	args.sess = sess;
 
-	if (mount(MOUNT_CD9660, dir, mntflags, &args) < 0) {
+	if (mount(MOUNT_CD9660, dir, mntflags, &args) == -1) {
 		if (errno == EOPNOTSUPP)
 			errx(1, "%s: Filesystem not supported by kernel", dir);
 		else

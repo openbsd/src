@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.226 2019/05/08 23:56:48 tedu Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.227 2019/06/28 13:32:53 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -398,7 +398,7 @@ main(int argc, char *argv[])
 		/*
 		 * Detach from parent.
 		 */
-		if (daemon(1, 1) < 0) {
+		if (daemon(1, 1) == -1) {
 			syslog(LOG_ERR, "failed to become a daemon");
 			exit(1);
 		}
@@ -435,29 +435,29 @@ main(int argc, char *argv[])
 		for (res = res0; res; res = res->ai_next) {
 			fds[n] = socket(res->ai_family, res->ai_socktype,
 			    res->ai_protocol);
-			if (fds[n] < 0)
+			if (fds[n] == -1)
 				continue;
 
 			if (setsockopt(fds[n], SOL_SOCKET, SO_KEEPALIVE,
-			    &on, sizeof(on)) < 0) {
+			    &on, sizeof(on)) == -1) {
 				close(fds[n]);
 				fds[n] = -1;
 				continue;
 			}
 
 			if (setsockopt(fds[n], SOL_SOCKET, SO_REUSEADDR,
-			    &on, sizeof(on)) < 0) {
+			    &on, sizeof(on)) == -1) {
 				close(fds[n]);
 				fds[n] = -1;
 				continue;
 			}
 
-			if (bind(fds[n], res->ai_addr, res->ai_addrlen) < 0) {
+			if (bind(fds[n], res->ai_addr, res->ai_addrlen) == -1) {
 				close(fds[n]);
 				fds[n] = -1;
 				continue;
 			}
-			if (listen(fds[n], 32) < 0) {
+			if (listen(fds[n], 32) == -1) {
 				close(fds[n]);
 				fds[n] = -1;
 				continue;
@@ -479,7 +479,7 @@ main(int argc, char *argv[])
 		 * children to handle them.
 		 */
 		while (1) {
-			if (poll(pfds, n, INFTIM) < 0) {
+			if (poll(pfds, n, INFTIM) == -1) {
 				if (errno == EINTR)
 					continue;
 				syslog(LOG_ERR, "poll: %m");
@@ -508,7 +508,7 @@ main(int argc, char *argv[])
 	} else {
 		addrlen = sizeof(his_addr);
 		if (getpeername(0, (struct sockaddr *)&his_addr,
-		    &addrlen) < 0) {
+		    &addrlen) == -1) {
 			/* syslog(LOG_ERR, "getpeername (%s): %m", argv[0]); */
 			exit(1);
 		}
@@ -520,7 +520,7 @@ main(int argc, char *argv[])
 	set_slave_signals();
 
 	addrlen = sizeof(ctrl_addr);
-	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) < 0) {
+	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) == -1) {
 		syslog(LOG_ERR, "getsockname: %m");
 		exit(1);
 	}
@@ -535,19 +535,19 @@ main(int argc, char *argv[])
 	switch (his_addr.su_family) {
 	case AF_INET:
 		if (setsockopt(0, IPPROTO_IP, IP_TOS, &tos,
-		    sizeof(int)) < 0)
+		    sizeof(int)) == -1)
 			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 		break;
 	case AF_INET6:
 		if (setsockopt(0, IPPROTO_IPV6, IPV6_TCLASS, &tos,
-		    sizeof(int)) < 0)
+		    sizeof(int)) == -1)
 			syslog(LOG_WARNING, "setsockopt (IPV6_TCLASS): %m");
 		break;
 	}
 	data_source.su_port = htons(ntohs(ctrl_addr.su_port) - 1);
 
 	/* Try to handle urgent data inline */
-	if (setsockopt(0, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on)) < 0)
+	if (setsockopt(0, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on)) == -1)
 		syslog(LOG_ERR, "setsockopt: %m");
 
 	dolog((struct sockaddr *)&his_addr);
@@ -971,7 +971,7 @@ pass(char *passwd)
 
 	/* open stats file before chroot */
 	if (guest && (stats == 1) && (statfd < 0))
-		if ((statfd = open(_PATH_FTPDSTATFILE, O_WRONLY|O_APPEND)) < 0)
+		if ((statfd = open(_PATH_FTPDSTATFILE, O_WRONLY|O_APPEND)) == -1)
 			stats = 0;
 
 	logged_in = 1;
@@ -1006,7 +1006,7 @@ pass(char *passwd)
 			/* Compute root directory. */
 			snprintf(rootdir, sizeof(rootdir), "%s/%s",
 			    pw->pw_dir, dhostname);
-			if (stat(rootdir, &ts) < 0) {
+			if (stat(rootdir, &ts) == -1) {
 				snprintf(rootdir, sizeof(rootdir), "%s/%s",
 				    pw->pw_dir, hostname);
 			}
@@ -1019,7 +1019,7 @@ pass(char *passwd)
 		 * the old current directory will be accessible as "."
 		 * outside the new root!
 		 */
-		if (chroot(rootdir) < 0 || chdir("/") < 0) {
+		if (chroot(rootdir) == -1 || chdir("/") == -1) {
 			reply(550, "Can't set guest privileges.");
 			goto bad;
 		}
@@ -1029,7 +1029,7 @@ pass(char *passwd)
 			goto bad;
 		}
 	} else if (dochroot) {
-		if (chroot(rootdir) < 0 || chdir("/") < 0) {
+		if (chroot(rootdir) == -1 || chdir("/") == -1) {
 			reply(550, "Can't change root.");
 			goto bad;
 		}
@@ -1038,19 +1038,19 @@ pass(char *passwd)
 			reply(550, "Can't setup environment.");
 			goto bad;
 		}
-	} else if (chdir(pw->pw_dir) < 0) {
-		if (chdir("/") < 0) {
+	} else if (chdir(pw->pw_dir) == -1) {
+		if (chdir("/") == -1) {
 			reply(530, "User %s: can't change directory to %s.",
 			    pw->pw_name, pw->pw_dir);
 			goto bad;
 		} else
 			lreply(230, "No directory! Logging in with home=/");
 	}
-	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) < 0) {
+	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1) {
 		reply(550, "Can't set gid.");
 		goto bad;
 	}
-	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) < 0) {
+	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1) {
 		reply(550, "Can't set uid.");
 		goto bad;
 	}
@@ -1139,7 +1139,7 @@ retrieve(enum ret_cmd cmd, char *name)
 	}
 	byte_count = -1;
 	if (cmd == RET_FILE &&
-	    (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode))) {
+	    (fstat(fileno(fin), &st) == -1 || !S_ISREG(st.st_mode))) {
 		reply(550, "%s: not a plain file.", name);
 		goto done;
 	}
@@ -1161,7 +1161,7 @@ retrieve(enum ret_cmd cmd, char *name)
 				if (c == '\n')
 					i++;
 			}
-		} else if (lseek(fileno(fin), restart_point, SEEK_SET) < 0) {
+		} else if (lseek(fileno(fin), restart_point, SEEK_SET) == -1) {
 			perror_reply(550, name);
 			goto done;
 		}
@@ -1242,11 +1242,11 @@ store(char *name, char *mode, int unique)
 			 * because we are changing from reading to
 			 * writing.
 			 */
-			if (fseek(fout, 0, SEEK_CUR) < 0) {
+			if (fseek(fout, 0, SEEK_CUR) == -1) {
 				perror_reply(550, name);
 				goto done;
 			}
-		} else if (lseek(fileno(fout), restart_point, SEEK_SET) < 0) {
+		} else if (lseek(fileno(fout), restart_point, SEEK_SET) == -1) {
 			perror_reply(550, name);
 			goto done;
 		}
@@ -1282,7 +1282,7 @@ getdatasock(char *mode)
 		goto bad;
 	opt = 1;
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
-	    &opt, sizeof(opt)) < 0)
+	    &opt, sizeof(opt)) == -1)
 		goto bad;
 	/* anchor socket to avoid multi-homing problems */
 	data_source = ctrl_addr;
@@ -1301,12 +1301,12 @@ getdatasock(char *mode)
 	switch (ctrl_addr.su_family) {
 	case AF_INET:
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, &opt,
-		    sizeof(opt)) < 0)
+		    sizeof(opt)) == -1)
 			syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 		break;
 	case AF_INET6:
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_TCLASS, &opt,
-		    sizeof(opt)) < 0)
+		    sizeof(opt)) == -1)
 			syslog(LOG_WARNING, "setsockopt (IPV6_TCLASS): %m");
 		break;
 	}
@@ -1317,10 +1317,10 @@ getdatasock(char *mode)
 	 * in heavy-load situations.
 	 */
 	opt = 1;
-	if (setsockopt(s, IPPROTO_TCP, TCP_NOPUSH, &opt, sizeof(opt)) < 0)
+	if (setsockopt(s, IPPROTO_TCP, TCP_NOPUSH, &opt, sizeof(opt)) == -1)
 		syslog(LOG_WARNING, "setsockopt (TCP_NOPUSH): %m");
 	opt = 65536;
-	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) < 0)
+	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) == -1)
 		syslog(LOG_WARNING, "setsockopt (SO_SNDBUF): %m");
 
 	return (fdopen(s, mode));
@@ -1360,7 +1360,7 @@ dataconn(char *name, off_t size, char *mode)
 		(void) alarm ((unsigned) timeout);
 		s = accept(pdata, (struct sockaddr *)&from, &fromlen);
 		(void) alarm (0);
-		if (s < 0) {
+		if (s == -1) {
 			reply(425, "Can't open data connection.");
 			(void) close(pdata);
 			pdata = -1;
@@ -1590,7 +1590,7 @@ oldway:
 		transflag = 0;
 		(void)free(buf);
 		if (cnt != 0) {
-			if (cnt < 0)
+			if (cnt == -1)
 				goto file_err;
 			goto data_err;
 		}
@@ -1658,7 +1658,7 @@ receive_data(FILE *instr, FILE *outstr)
 			}
 		} while (cnt > 0);
 		(void) sigaction(SIGALRM, &sa_saved, NULL);
-		if (cnt < 0)
+		if (cnt == -1)
 			goto data_err;
 		transflag = 0;
 		return (0);
@@ -1995,18 +1995,18 @@ delete(char *name)
 	struct stat st;
 
 	LOGCMD("delete", name);
-	if (stat(name, &st) < 0) {
+	if (stat(name, &st) == -1) {
 		perror_reply(550, name);
 		return;
 	}
 	if ((st.st_mode&S_IFMT) == S_IFDIR) {
-		if (rmdir(name) < 0) {
+		if (rmdir(name) == -1) {
 			perror_reply(550, name);
 			return;
 		}
 		goto done;
 	}
-	if (unlink(name) < 0) {
+	if (unlink(name) == -1) {
 		perror_reply(550, name);
 		return;
 	}
@@ -2019,7 +2019,7 @@ cwd(char *path)
 {
 	FILE *message;
 
-	if (chdir(path) < 0)
+	if (chdir(path) == -1)
 		perror_reply(550, path);
 	else {
 		if ((message = fopen(_PATH_CWDMESG, "r")) != NULL) {
@@ -2065,7 +2065,7 @@ makedir(char *name)
 {
 
 	LOGCMD("mkdir", name);
-	if (mkdir(name, 0777) < 0)
+	if (mkdir(name, 0777) == -1)
 		perror_reply(550, name);
 	else
 		replydirname(name, "directory created.");
@@ -2076,7 +2076,7 @@ removedir(char *name)
 {
 
 	LOGCMD("rmdir", name);
-	if (rmdir(name) < 0)
+	if (rmdir(name) == -1)
 		perror_reply(550, name);
 	else
 		ack("RMD");
@@ -2098,7 +2098,7 @@ renamefrom(char *name)
 {
 	struct stat st;
 
-	if (stat(name, &st) < 0) {
+	if (stat(name, &st) == -1) {
 		perror_reply(550, name);
 		return (NULL);
 	}
@@ -2111,7 +2111,7 @@ renamecmd(char *from, char *to)
 {
 
 	LOGCMD2("rename", from, to);
-	if (rename(from, to) < 0)
+	if (rename(from, to) == -1)
 		perror_reply(550, "rename");
 	else
 		ack("RNTO");
@@ -2233,30 +2233,30 @@ passive(void)
 	 * resources.
 	 */
 	pdata = socket(AF_INET, SOCK_STREAM, 0);
-	if (pdata < 0) {
+	if (pdata == -1) {
 		perror_reply(425, "Can't open passive connection");
 		return;
 	}
 
 	if (setsockopt(pdata, SOL_SOCKET, SO_KEEPALIVE,
-	    &on, sizeof(on)) < 0)
+	    &on, sizeof(on)) == -1)
 		goto pasv_error;
 
 	on = IP_PORTRANGE_HIGH;
 	if (setsockopt(pdata, IPPROTO_IP, IP_PORTRANGE,
-	    &on, sizeof(on)) < 0)
+	    &on, sizeof(on)) == -1)
 		goto pasv_error;
 
 	pasv_addr = ctrl_addr;
 	pasv_addr.su_sin.sin_port = 0;
 	if (bind(pdata, (struct sockaddr *)&pasv_addr,
-	    pasv_addr.su_len) < 0)
+	    pasv_addr.su_len) == -1)
 		goto pasv_error;
 
 	len = sizeof(pasv_addr);
-	if (getsockname(pdata, (struct sockaddr *)&pasv_addr, &len) < 0)
+	if (getsockname(pdata, (struct sockaddr *)&pasv_addr, &len) == -1)
 		goto pasv_error;
-	if (listen(pdata, 1) < 0)
+	if (listen(pdata, 1) == -1)
 		goto pasv_error;
 	a = (u_char *)&pasv_addr.su_sin.sin_addr;
 	p = (u_char *)&pasv_addr.su_sin.sin_port;
@@ -2336,38 +2336,38 @@ long_passive(char *cmd, int pf)
 	 * resources.
 	 */
 	pdata = socket(ctrl_addr.su_family, SOCK_STREAM, 0);
-	if (pdata < 0) {
+	if (pdata == -1) {
 		perror_reply(425, "Can't open passive connection");
 		return;
 	}
 
 	if (setsockopt(pdata, SOL_SOCKET, SO_KEEPALIVE,
-	    &on, sizeof(on)) < 0)
+	    &on, sizeof(on)) == -1)
 		goto pasv_error;
 
 	switch (ctrl_addr.su_family) {
 	case AF_INET:
 		on = IP_PORTRANGE_HIGH;
 		if (setsockopt(pdata, IPPROTO_IP, IP_PORTRANGE,
-		    &on, sizeof(on)) < 0)
+		    &on, sizeof(on)) == -1)
 			goto pasv_error;
 		break;
 	case AF_INET6:
 		on = IPV6_PORTRANGE_HIGH;
 		if (setsockopt(pdata, IPPROTO_IPV6, IPV6_PORTRANGE,
-		    &on, sizeof(on)) < 0)
+		    &on, sizeof(on)) == -1)
 			goto pasv_error;
 		break;
 	}
 
 	pasv_addr = ctrl_addr;
 	pasv_addr.su_port = 0;
-	if (bind(pdata, (struct sockaddr *)&pasv_addr, pasv_addr.su_len) < 0)
+	if (bind(pdata, (struct sockaddr *)&pasv_addr, pasv_addr.su_len) == -1)
 		goto pasv_error;
 	len = pasv_addr.su_len;
-	if (getsockname(pdata, (struct sockaddr *)&pasv_addr, &len) < 0)
+	if (getsockname(pdata, (struct sockaddr *)&pasv_addr, &len) == -1)
 		goto pasv_error;
-	if (listen(pdata, 1) < 0)
+	if (listen(pdata, 1) == -1)
 		goto pasv_error;
 	p = (u_char *)&pasv_addr.su_port;
 
@@ -2545,7 +2545,7 @@ guniquefd(char *local, char **nam)
 	cp = strrchr(local, '/');
 	if (cp)
 		*cp = '\0';
-	if (stat(cp ? local : ".", &st) < 0) {
+	if (stat(cp ? local : ".", &st) == -1) {
 		perror_reply(553, cp ? local : ".");
 		return (-1);
 	}
@@ -2619,7 +2619,7 @@ send_file_list(char *whichf)
 	}
 
 	while ((dirname = *dirlist++)) {
-		if (stat(dirname, &st) < 0) {
+		if (stat(dirname, &st) == -1) {
 			/*
 			 * If user typed "ls -l", etc, and the client
 			 * used NLST, do what the user meant.

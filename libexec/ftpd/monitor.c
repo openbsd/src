@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.25 2017/04/17 21:48:26 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.26 2019/06/28 13:32:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -310,7 +310,7 @@ handle_cmds(void)
 				send_data(fd_slave, &slavequit,
 				    sizeof(slavequit));
 
-				while (waitpid(preauth_slave_pid, NULL, 0) < 0 &&
+				while (waitpid(preauth_slave_pid, NULL, 0) == -1 &&
 				    errno == EINTR)
 					;
 				break;

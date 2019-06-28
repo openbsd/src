@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.25 2017/05/28 07:17:53 akfaew Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.26 2019/06/28 13:32:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -259,7 +259,7 @@ pfctl_file_fingerprints(int dev, int opts, const char *fp_filename)
 void
 pfctl_clear_fingerprints(int dev, int opts)
 {
-	if (ioctl(dev, DIOCOSFPFLUSH))
+	if (ioctl(dev, DIOCOSFPFLUSH) == -1)
 		err(1, "DIOCOSFPFLUSH");
 }
 
@@ -290,7 +290,7 @@ pfctl_load_fingerprints(int dev, int opts)
 	for (i = 0; i >= 0; i++) {
 		memset(&io, 0, sizeof(io));
 		io.fp_getnum = i;
-		if (ioctl(dev, DIOCOSFPGET, &io)) {
+		if (ioctl(dev, DIOCOSFPGET, &io) == -1) {
 			if (errno == EBUSY)
 				break;
 			warn("DIOCOSFPGET");
@@ -625,7 +625,7 @@ add_fingerprint(int dev, int opts, struct pf_osfp_ioctl *fp)
 	/* Linked to the sys/net/pf_osfp.c.  Call pf_osfp_add() */
 	if ((errno = pf_osfp_add(fp)))
 #else
-	if ((opts & PF_OPT_NOACTION) == 0 && ioctl(dev, DIOCOSFPADD, fp))
+	if ((opts & PF_OPT_NOACTION) == 0 && ioctl(dev, DIOCOSFPADD, fp) == -1)
 #endif /* FAKE_PF_KERNEL */
 	{
 		if (errno == EEXIST) {

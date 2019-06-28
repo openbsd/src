@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.84 2018/12/04 18:00:57 tedu Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.85 2019/06/28 13:32:46 deraadt Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -316,7 +316,7 @@ handle_client(int sock_fd, int ctl_fd)
 		break;
 	}
 
-	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) < 0)
+	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) == -1)
 		logmsg(LOG_INFO, "cannot read hw.cpuspeed");
 
 	reply.cpuspeed = cpuspeed;
@@ -464,7 +464,7 @@ main(int argc, char *argv[])
 		doperf = PERF_MANUAL;
 
 	if (debug == 0) {
-		if (daemon(0, 0) < 0)
+		if (daemon(0, 0) == -1)
 			error("failed to daemonize", NULL);
 		openlog(__progname, LOG_CONS, LOG_DAEMON);
 		setlogmask(LOG_UPTO(LOG_NOTICE));
@@ -501,10 +501,10 @@ main(int argc, char *argv[])
 		    EV_CLEAR, 0, 0, NULL);
 		nchanges = 2;
 	}
-	if (kevent(kq, ev, nchanges, NULL, 0, &sts) < 0)
+	if (kevent(kq, ev, nchanges, NULL, 0, &sts) == -1)
 		error("kevent", NULL);
 
-	if (sysctl(ncpu_mib, 2, &ncpu, &ncpu_sz, NULL, 0) < 0)
+	if (sysctl(ncpu_mib, 2, &ncpu, &ncpu_sz, NULL, 0) == -1)
 		error("cannot read hw.ncpu", NULL);
 
 	for (;;) {
@@ -513,7 +513,7 @@ main(int argc, char *argv[])
 		sts = ts;
 
 		apmtimeout += 1;
-		if ((rv = kevent(kq, NULL, 0, ev, 1, &sts)) < 0)
+		if ((rv = kevent(kq, NULL, 0, ev, 1, &sts)) == -1)
 			break;
 
 		if (apmtimeout >= ts.tv_sec) {
@@ -645,7 +645,8 @@ setperfpolicy(char *policy)
 		setlo = 1;
 	}
 
-	if (sysctl(hw_perfpol_mib, 2, oldpolicy, &oldsz, policy, strlen(policy) + 1) < 0)
+	if (sysctl(hw_perfpol_mib, 2, oldpolicy, &oldsz,
+	    policy, strlen(policy) + 1) == -1)
 		logmsg(LOG_INFO, "cannot set hw.perfpolicy");
 
 	if (setlo == 1) {
@@ -653,7 +654,7 @@ setperfpolicy(char *policy)
 		int perf;
 		int new_perf = 0;
 		size_t perf_sz = sizeof(perf);
-		if (sysctl(hw_perf_mib, 2, &perf, &perf_sz, &new_perf, perf_sz) < 0)
+		if (sysctl(hw_perf_mib, 2, &perf, &perf_sz, &new_perf, perf_sz) == -1)
 			logmsg(LOG_INFO, "cannot set hw.setperf");
 	}
 }

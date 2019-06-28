@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.50 2017/03/03 23:41:27 renato Exp $ */
+/*	$OpenBSD: interface.c,v 1.51 2019/06/28 13:32:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -460,7 +460,7 @@ if_join_ipv4_group(struct iface *iface, struct in_addr *addr)
 	mreq.imr_interface.s_addr = if_get_ipv4_addr(iface);
 
 	if (setsockopt(global.ipv4.ldp_disc_socket, IPPROTO_IP,
-	    IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0) {
+	    IP_ADD_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) == -1) {
 		log_warn("%s: error IP_ADD_MEMBERSHIP, interface %s address %s",
 		     __func__, iface->name, inet_ntoa(*addr));
 		return (-1);
@@ -480,7 +480,7 @@ if_leave_ipv4_group(struct iface *iface, struct in_addr *addr)
 	mreq.imr_interface.s_addr = if_get_ipv4_addr(iface);
 
 	if (setsockopt(global.ipv4.ldp_disc_socket, IPPROTO_IP,
-	    IP_DROP_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0) {
+	    IP_DROP_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) == -1) {
 		log_warn("%s: error IP_DROP_MEMBERSHIP, interface %s "
 		    "address %s", __func__, iface->name, inet_ntoa(*addr));
 		return (-1);
@@ -501,7 +501,7 @@ if_join_ipv6_group(struct iface *iface, struct in6_addr *addr)
 	mreq.ipv6mr_interface = iface->ifindex;
 
 	if (setsockopt(global.ipv6.ldp_disc_socket, IPPROTO_IPV6,
-	    IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) < 0) {
+	    IPV6_JOIN_GROUP, &mreq, sizeof(mreq)) == -1) {
 		log_warn("%s: error IPV6_JOIN_GROUP, interface %s address %s",
 		    __func__, iface->name, log_in6addr(addr));
 		return (-1);
@@ -522,7 +522,7 @@ if_leave_ipv6_group(struct iface *iface, struct in6_addr *addr)
 	mreq.ipv6mr_interface = iface->ifindex;
 
 	if (setsockopt(global.ipv6.ldp_disc_socket, IPPROTO_IPV6,
-	    IPV6_LEAVE_GROUP, (void *)&mreq, sizeof(mreq)) < 0) {
+	    IPV6_LEAVE_GROUP, (void *)&mreq, sizeof(mreq)) == -1) {
 		log_warn("%s: error IPV6_LEAVE_GROUP, interface %s address %s",
 		    __func__, iface->name, log_in6addr(addr));
 		return (-1);

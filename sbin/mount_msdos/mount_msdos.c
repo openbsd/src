@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.33 2016/05/21 19:14:02 jmc Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.34 2019/06/28 13:32:45 deraadt Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ main(int argc, char **argv)
 			args.mask = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
 
-	if (mount(MOUNT_MSDOS, dir, mntflags, &args) < 0) {
+	if (mount(MOUNT_MSDOS, dir, mntflags, &args) == -1) {
 		switch (errno) {
 		case EOPNOTSUPP:
 			errcause = "filesystem not supported by kernel";

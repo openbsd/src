@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.7 2019/05/24 18:01:52 gilles Exp $	 */
+/* $OpenBSD: crypto.c,v 1.8 2019/06/28 13:32:50 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@openbsd.org>
@@ -74,7 +74,7 @@ crypto_encrypt_file(FILE * in, FILE * out)
 	struct stat	sb;
 
 	/* XXX - Do NOT encrypt files bigger than 64GB */
-	if (fstat(fileno(in), &sb) < 0)
+	if (fstat(fileno(in), &sb) == -1)
 		return 0;
 	if (sb.st_size >= 0x1000000000LL)
 		return 0;
@@ -140,7 +140,7 @@ crypto_decrypt_file(FILE * in, FILE * out)
 	struct stat	sb;
 
 	/* input file too small to be an encrypted file */
-	if (fstat(fileno(in), &sb) < 0)
+	if (fstat(fileno(in), &sb) == -1)
 		return 0;
 	if (sb.st_size <= (off_t) (sizeof version + sizeof tag + sizeof iv))
 		return 0;

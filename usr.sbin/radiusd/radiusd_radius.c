@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.16 2019/04/01 11:05:41 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.17 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -342,7 +342,7 @@ radius_server_start(struct radius_server *server)
 	char		 buf1[NI_MAXHOST + NI_MAXSERV + 32];
 
 	if ((server->sock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0))
-	    < 0) {
+	    == -1) {
 		module_radius_log(server->module, LOG_WARNING,
 		    "%s: socket() failed", __func__);
 		goto on_error;

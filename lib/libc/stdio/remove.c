@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.8 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: remove.c,v 1.9 2019/06/28 13:32:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@ remove(const char *file)
 {
 	struct stat st;
 
-	if (lstat(file, &st) < 0)
+	if (lstat(file, &st) == -1)
 		return (-1);
 	if (S_ISDIR(st.st_mode))
 		return (rmdir(file));

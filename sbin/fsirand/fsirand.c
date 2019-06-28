@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.40 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.41 2019/06/28 13:32:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <millert@openbsd.org>
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 	/* Increase our data size to the max */
 	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
 		rl.rlim_cur = rl.rlim_max;
-		if (setrlimit(RLIMIT_DATA, &rl) < 0)
+		if (setrlimit(RLIMIT_DATA, &rl) == -1)
 			warn("Can't set resource limit to max data size");
 	} else
 		warn("Can't get resource limit for data size");
@@ -107,14 +107,14 @@ fsirand(char *device)
 	struct disklabel label;
 
 	if ((devfd = opendev(device, printonly ? O_RDONLY : O_RDWR,
-	    0, &devpath)) < 0) {
+	    0, &devpath)) == -1) {
 		warn("Can't open %s", devpath);
 		return (1);
 	}
 
 	/* Get block size (usually 512) from disklabel if possible */
 	if (!ignorelabel) {
-		if (ioctl(devfd, DIOCGDINFO, &label) < 0)
+		if (ioctl(devfd, DIOCGDINFO, &label) == -1)
 			warn("Can't read disklabel, using sector size of %d",
 			    bsize);
 		else
@@ -180,7 +180,7 @@ fsirand(char *device)
 	tmpsblock = (struct fs *)&sbuftmp;
 	for (cg = 0; cg < sblock->fs_ncg; cg++) {
 		dblk = fsbtodb(sblock, cgsblock(sblock, cg));
-		if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+		if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) == -1) {
 			warn("Can't seek to %lld", (long long)dblk * bsize);
 			return (1);
 		} else if ((n = read(devfd, tmpsblock, SBSIZE)) != SBSIZE) {
@@ -247,7 +247,7 @@ fsirand(char *device)
 		if ((sblock->fs_inodefmt >= FS_44INODEFMT) && !printonly) {
 			dblk = fsbtodb(sblock, cgsblock(sblock, cg));
 			if (lseek(devfd, (off_t)dblk * bsize,
-			    SEEK_SET) < 0) {
+			    SEEK_SET) == -1) {
 				warn("Can't seek to %lld",
 				    (long long)dblk * bsize);
 				return (1);
@@ -262,7 +262,7 @@ fsirand(char *device)
 
 		/* Read in inodes, then print or randomize generation nums */
 		dblk = fsbtodb(sblock, ino_to_fsba(sblock, inumber));
-		if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+		if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) == -1) {
 			warn("Can't seek to %lld", (long long)dblk * bsize);
 			return (1);
 		} else if ((n = read(devfd, inodebuf, ibufsize)) != ibufsize) {
@@ -291,7 +291,7 @@ fsirand(char *device)
 
 		/* Write out modified inodes */
 		if (!printonly) {
-			if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) < 0) {
+			if (lseek(devfd, (off_t)dblk * bsize, SEEK_SET) == -1) {
 				warn("Can't seek to %lld",
 				    (long long)dblk * bsize);
 				return (1);

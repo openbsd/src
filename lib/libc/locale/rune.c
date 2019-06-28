@@ -1,4 +1,4 @@
-/*	$OpenBSD: rune.c,v 1.7 2016/09/05 09:47:03 schwarze Exp $ */
+/*	$OpenBSD: rune.c,v 1.8 2019/06/28 13:32:41 deraadt Exp $ */
 /*	$NetBSD: rune.c,v 1.26 2004/05/09 11:26:33 kleink Exp $	*/
 
 /*-
@@ -227,7 +227,7 @@ _Read_RuneMagi(FILE *fp)
 	int x;
 	uint32_t runetype_nranges, maplower_nranges, mapupper_nranges, var_len;
 
-	if (fstat(fileno(fp), &sb) < 0)
+	if (fstat(fileno(fp), &sb) == -1)
 		return NULL;
 
 	if (sb.st_size < sizeof(_FileRuneLocale))

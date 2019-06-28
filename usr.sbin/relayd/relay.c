@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.248 2019/06/26 12:13:47 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.249 2019/06/28 13:32:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2504,7 +2504,7 @@ relay_tls_readcb(int fd, short event, void *arg)
 	ret = tls_read(cre->tls, rbuf, howmuch);
 	if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT) {
 		goto retry;
-	} else if (ret < 0) {
+	} else if (ret == -1) {
 		what |= EVBUFFER_ERROR;
 		goto err;
 	}
@@ -2563,7 +2563,7 @@ relay_tls_writecb(int fd, short event, void *arg)
 		    EVBUFFER_LENGTH(bufev->output));
 		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT) {
 			goto retry;
-		} else if (ret < 0) {
+		} else if (ret == -1) {
 			what |= EVBUFFER_ERROR;
 			goto err;
 		}

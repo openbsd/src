@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.32 2015/08/20 22:02:21 deraadt Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.33 2019/06/28 13:32:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -419,7 +419,7 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 		memset(&flags_ifr6, 0, sizeof(flags_ifr6));
 		strlcpy(flags_ifr6.ifr_name, ifname, sizeof flags_ifr6.ifr_name);
 		flags_ifr6.ifr_addr = *(struct sockaddr_in6 *)if_addr;
-		if (ioctl(s, SIOCGIFAFLAG_IN6, (caddr_t)&flags_ifr6) < 0) {
+		if (ioctl(s, SIOCGIFAFLAG_IN6, (caddr_t)&flags_ifr6) == -1) {
 			log_error("virtual_bind_if: "
 			    "ioctl (%d, SIOCGIFAFLAG_IN6, ...) failed", s);
 			close(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: optree.c,v 1.9 2017/10/20 10:32:03 kettenis Exp $	*/
+/*	$OpenBSD: optree.c,v 1.10 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Federico G. Schwindt <fgsch@openbsd.org>
@@ -120,7 +120,7 @@ op_nodes(int fd, int node, int depth)
 	opio.op_name = op_name;
 
 	if (!node) {
-		if (ioctl(fd, OPIOCGETNEXT, &opio) < 0)
+		if (ioctl(fd, OPIOCGETNEXT, &opio) == -1)
 			err(1, "OPIOCGETNEXT");
 		node = opio.op_nodeid;
 	} else
@@ -133,7 +133,7 @@ op_nodes(int fd, int node, int depth)
 		opio.op_namelen = sizeof(op_name);
 
 		/* Get the next property. */
-		if (ioctl(fd, OPIOCNEXTPROP, &opio) < 0)
+		if (ioctl(fd, OPIOCNEXTPROP, &opio) == -1)
 			err(1, "OPIOCNEXTPROP");
 
 		op_buf[opio.op_buflen] = '\0';
@@ -148,7 +148,7 @@ op_nodes(int fd, int node, int depth)
 		opio.op_buflen = sizeof(op_buf);
 
 		/* And its value. */
-		if (ioctl(fd, OPIOCGET, &opio) < 0) {
+		if (ioctl(fd, OPIOCGET, &opio) == -1) {
 			if (errno != ENOMEM)
 				err(1, "OPIOCGET");
 
@@ -159,14 +159,14 @@ op_nodes(int fd, int node, int depth)
 	}
 
 	/* Get next child. */
-	if (ioctl(fd, OPIOCGETCHILD, &opio) < 0)
+	if (ioctl(fd, OPIOCGETCHILD, &opio) == -1)
 		err(1, "OPIOCGETCHILD");
 	if (opio.op_nodeid)
 		op_nodes(fd, opio.op_nodeid, depth + 1);
 
 	/* Get next node/sibling. */
 	opio.op_nodeid = node;
-	if (ioctl(fd, OPIOCGETNEXT, &opio) < 0)
+	if (ioctl(fd, OPIOCGETNEXT, &opio) == -1)
 		err(1, "OPIOCGETNEXT");
 	if (opio.op_nodeid)
 		op_nodes(fd, opio.op_nodeid, depth);
@@ -177,7 +177,7 @@ op_tree(void)
 {
 	int fd;
 
-	if ((fd = open(path_openprom, O_RDONLY, 0640)) < 0)
+	if ((fd = open(path_openprom, O_RDONLY, 0640)) == -1)
 		err(1, "open: %s", path_openprom);
 	op_nodes(fd, 0, 0);
 	(void)close(fd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.58 2017/03/17 15:14:40 deraadt Exp $	*/
+/*	$OpenBSD: fts.c,v 1.59 2019/06/28 13:32:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -160,7 +160,7 @@ fts_open(char * const *argv, int options,
 	 * descriptor we run anyway, just more slowly.
 	 */
 	if (!ISSET(FTS_NOCHDIR) &&
-	    (sp->fts_rfd = open(".", O_RDONLY | O_CLOEXEC)) < 0)
+	    (sp->fts_rfd = open(".", O_RDONLY | O_CLOEXEC)) == -1)
 		SET(FTS_NOCHDIR);
 
 	if (nitems == 0)
@@ -287,7 +287,7 @@ fts_read(FTS *sp)
 		p->fts_info = fts_stat(sp, p, 1, -1);
 		if (p->fts_info == FTS_D && !ISSET(FTS_NOCHDIR)) {
 			if ((p->fts_symfd =
-			    open(".", O_RDONLY | O_CLOEXEC)) < 0) {
+			    open(".", O_RDONLY | O_CLOEXEC)) == -1) {
 				p->fts_errno = errno;
 				p->fts_info = FTS_ERR;
 			} else
@@ -377,7 +377,7 @@ next:	tmp = p;
 			p->fts_info = fts_stat(sp, p, 1, -1);
 			if (p->fts_info == FTS_D && !ISSET(FTS_NOCHDIR)) {
 				if ((p->fts_symfd =
-				    open(".", O_RDONLY | O_CLOEXEC)) < 0) {
+				    open(".", O_RDONLY | O_CLOEXEC)) == -1) {
 					p->fts_errno = errno;
 					p->fts_info = FTS_ERR;
 				} else
@@ -517,7 +517,7 @@ fts_children(FTS *sp, int instr)
 	    ISSET(FTS_NOCHDIR))
 		return (sp->fts_child = fts_build(sp, instr));
 
-	if ((fd = open(".", O_RDONLY | O_CLOEXEC)) < 0)
+	if ((fd = open(".", O_RDONLY | O_CLOEXEC)) == -1)
 		return (NULL);
 	sp->fts_child = fts_build(sp, instr);
 	if (fchdir(fd)) {
@@ -1028,9 +1028,9 @@ fts_safe_changedir(FTS *sp, FTSENT *p, int fd, char *path)
 	newfd = fd;
 	if (ISSET(FTS_NOCHDIR))
 		return (0);
-	if (fd < 0 && (newfd = open(path, O_RDONLY|O_DIRECTORY|O_CLOEXEC)) < 0)
+	if (fd == -1 && (newfd = open(path, O_RDONLY|O_DIRECTORY|O_CLOEXEC)) == -1)
 		return (-1);
-	if (fstat(newfd, &sb)) {
+	if (fstat(newfd, &sb) == -1) {
 		ret = -1;
 		goto bail;
 	}
@@ -1042,7 +1042,7 @@ fts_safe_changedir(FTS *sp, FTSENT *p, int fd, char *path)
 	ret = fchdir(newfd);
 bail:
 	oerrno = errno;
-	if (fd < 0)
+	if (fd == -1)
 		(void)close(newfd);
 	errno = oerrno;
 	return (ret);

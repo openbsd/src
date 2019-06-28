@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.125 2019/06/28 05:35:35 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.126 2019/06/28 13:32:51 deraadt Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -249,7 +249,7 @@ removehomedir(const char *user, uid_t uid, const char *dir)
 	}
 
 	/* directory exists (and is a directory!) */
-	if (stat(dir, &st) < 0) {
+	if (stat(dir, &st) == -1) {
 		warnx("Home directory `%s' doesn't exist", dir);
 		return 0;
 	}
@@ -269,7 +269,7 @@ removehomedir(const char *user, uid_t uid, const char *dir)
 	/* we add the "|| true" to keep asystem() quiet if there is a non-zero exit status. */
 	(void) asystem("%s -rf %s > /dev/null 2>&1 || true", RM, dir);
 	(void) seteuid(0);
-	if (rmdir(dir) < 0) {
+	if (rmdir(dir) == -1) {
 		warnx("Unable to remove all files in `%s'", dir);
 		return 0;
 	}
@@ -357,7 +357,7 @@ creategid(char *group, gid_t gid, const char *name)
 		    _PATH_GROUP);
 		return 0;
 	}
-	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
+	if (flock(fileno(from), LOCK_EX | LOCK_NB) == -1) {
 		warn("can't lock `%s'", _PATH_GROUP);
 	}
 	(void) fstat(fileno(from), &st);
@@ -398,7 +398,7 @@ creategid(char *group, gid_t gid, const char *name)
 		unlink(f);
 		return 0;
 	}
-	if (rename(f, _PATH_GROUP) < 0) {
+	if (rename(f, _PATH_GROUP) == -1) {
 		warn("can't create gid: can't rename `%s' to `%s'", f,
 		    _PATH_GROUP);
 		unlink(f);
@@ -429,7 +429,7 @@ modify_gid(char *group, char *newent)
 		    _PATH_GROUP);
 		return 0;
 	}
-	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
+	if (flock(fileno(from), LOCK_EX | LOCK_NB) == -1) {
 		warn("can't lock `%s'", _PATH_GROUP);
 	}
 	(void) fstat(fileno(from), &st);
@@ -497,7 +497,7 @@ modify_gid(char *group, char *newent)
 		unlink(f);
 		return 0;
 	}
-	if (rename(f, _PATH_GROUP) < 0) {
+	if (rename(f, _PATH_GROUP) == -1) {
 		warn("can't modify gid: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		unlink(f);
 		return 0;
@@ -554,7 +554,7 @@ append_group(char *user, int ngroups, const char **groups)
 		    _PATH_GROUP);
 		return 0;
 	}
-	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
+	if (flock(fileno(from), LOCK_EX | LOCK_NB) == -1) {
 		warn("can't lock `%s'", _PATH_GROUP);
 	}
 	(void) fstat(fileno(from), &st);
@@ -624,7 +624,7 @@ append_group(char *user, int ngroups, const char **groups)
 		unlink(f);
 		return 0;
 	}
-	if (rename(f, _PATH_GROUP) < 0) {
+	if (rename(f, _PATH_GROUP) == -1) {
 		warn("can't append group: can't rename `%s' to `%s'", f, _PATH_GROUP);
 		unlink(f);
 		return 0;
@@ -801,7 +801,7 @@ read_defaults(user_t *up)
 	up->u_inactive = DEF_INACTIVE;
 	up->u_expire = DEF_EXPIRE;
 	if ((fp = fopen(CONFFILE, "r")) == NULL) {
-		if (stat(CONFFILE, &st) < 0 && !setdefaults(up)) {
+		if (stat(CONFFILE, &st) == -1 && !setdefaults(up)) {
 			warn("can't create `%s' defaults file", CONFFILE);
 		}
 		fp = fopen(CONFFILE, "r");
@@ -1001,14 +1001,14 @@ adduser(char *login_name, user_t *up)
 	if (!valid_class(up->u_class)) {
 		errx(EXIT_FAILURE, "No such login class `%s'", up->u_class);
 	}
-	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
+	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) == -1) {
 		err(EXIT_FAILURE, "can't open `%s'", _PATH_MASTERPASSWD);
 	}
-	if (flock(masterfd, LOCK_EX | LOCK_NB) < 0) {
+	if (flock(masterfd, LOCK_EX | LOCK_NB) == -1) {
 		err(EXIT_FAILURE, "can't lock `%s'", _PATH_MASTERPASSWD);
 	}
 	pw_init();
-	if ((ptmpfd = pw_lock(WAITSECS)) < 0) {
+	if ((ptmpfd = pw_lock(WAITSECS)) == -1) {
 		int saved_errno = errno;
 		close(masterfd);
 		errc(EXIT_FAILURE, saved_errno, "can't obtain pw_lock");
@@ -1132,7 +1132,7 @@ adduser(char *login_name, user_t *up)
 		warnx("Warning: expire time `%s' invalid, account expiry off",
 				up->u_expire);
 	}
-	if (lstat(home, &st) < 0 && !(up->u_flags & F_MKDIR) &&
+	if (lstat(home, &st) == -1 && !(up->u_flags & F_MKDIR) &&
 	    strcmp(home, _PATH_NONEXISTENT) != 0) {
 		warnx("Warning: home directory `%s' doesn't exist, and -m was"
 		    " not specified", home);
@@ -1232,7 +1232,7 @@ adduser(char *login_name, user_t *up)
 	}
 	fclose(fp);
 	close(ptmpfd);
-	if (pw_mkdb(yp ? NULL : login_name, 0) < 0) {
+	if (pw_mkdb(yp ? NULL : login_name, 0) == -1) {
 		pw_abort();
 		err(EXIT_FAILURE, "pw_mkdb failed");
 	}
@@ -1261,7 +1261,7 @@ rm_user_from_groups(char *login_name)
 		    login_name, _PATH_GROUP);
 		return 0;
 	}
-	if (flock(fileno(from), LOCK_EX | LOCK_NB) < 0) {
+	if (flock(fileno(from), LOCK_EX | LOCK_NB) == -1) {
 		warn("can't lock `%s'", _PATH_GROUP);
 	}
 	(void) fstat(fileno(from), &st);
@@ -1331,7 +1331,7 @@ rm_user_from_groups(char *login_name)
 		unlink(f);
 		return 0;
 	}
-	if (rename(f, _PATH_GROUP) < 0) {
+	if (rename(f, _PATH_GROUP) == -1) {
 		warn("can't remove gid for `%s': can't rename `%s' to `%s'",
 		    login_name, f, _PATH_GROUP);
 		unlink(f);
@@ -1435,14 +1435,14 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	/* get the last char of the shell in case we need it for '-U' or '-Z' */
 	shell_last_char = pwp->pw_shell+strlen(pwp->pw_shell) - 1;
 
-	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) < 0) {
+	if ((masterfd = open(_PATH_MASTERPASSWD, O_RDONLY)) == -1) {
 		err(EXIT_FAILURE, "can't open `%s'", _PATH_MASTERPASSWD);
 	}
-	if (flock(masterfd, LOCK_EX | LOCK_NB) < 0) {
+	if (flock(masterfd, LOCK_EX | LOCK_NB) == -1) {
 		err(EXIT_FAILURE, "can't lock `%s'", _PATH_MASTERPASSWD);
 	}
 	pw_init();
-	if ((ptmpfd = pw_lock(WAITSECS)) < 0) {
+	if ((ptmpfd = pw_lock(WAITSECS)) == -1) {
 		int saved_errno = errno;
 		close(masterfd);
 		errc(EXIT_FAILURE, saved_errno, "can't obtain pw_lock");

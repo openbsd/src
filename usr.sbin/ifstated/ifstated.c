@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.63 2019/01/22 09:25:29 krw Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.64 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(opts & IFSD_OPT_VERBOSE);
 
-	if ((rt_fd = socket(AF_ROUTE, SOCK_RAW, 0)) < 0)
+	if ((rt_fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		fatal("no routing socket");
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_IFANNOUNCE);
@@ -328,7 +328,7 @@ external_exec(struct ifsd_external *external, int async)
 	argp[2] = external->command;
 	log_debug("running %s", external->command);
 	pid = fork();
-	if (pid < 0) {
+	if (pid == -1) {
 		log_warn("fork error");
 	} else if (pid == 0) {
 		execv(_PATH_BSHELL, argp);

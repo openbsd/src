@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.16 2017/10/29 08:45:53 mpi Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.17 2019/06/28 13:32:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -97,7 +97,7 @@ loadkernel(char *file)
 {
 	int fd;
 
-	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) < 0)
+	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) == -1)
 		err(1, "%s", file);
 
 	if (read(fd, (char *)&elf_ex, sizeof(elf_ex)) != sizeof(elf_ex))
@@ -140,7 +140,7 @@ savekernel(char *outfile)
 {
 	int fd;
 
-	if ((fd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0700)) < 0)
+	if ((fd = open(outfile, O_WRONLY | O_CREAT | O_TRUNC, 0700)) == -1)
 		err(1, "%s", outfile);
 
 	if (write(fd, elf_total, (size_t)elf_size) != elf_size)

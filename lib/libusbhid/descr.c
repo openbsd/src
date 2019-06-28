@@ -1,4 +1,4 @@
-/*	$OpenBSD: descr.c,v 1.6 2012/07/16 19:57:17 jasper Exp $	*/
+/*	$OpenBSD: descr.c,v 1.7 2019/06/28 13:32:42 deraadt Exp $	*/
 /*	$NetBSD: descr.c,v 1.2 2002/02/20 20:31:07 christos Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ hid_get_report_desc(int fd)
 	struct usb_ctl_report_desc rep;
 
 	rep.ucrd_size = 0;
-	if (ioctl(fd, USB_GET_REPORT_DESC, &rep) < 0)
+	if (ioctl(fd, USB_GET_REPORT_DESC, &rep) == -1)
 		return (NULL);
 
 	return hid_use_report_desc(rep.ucrd_data, (unsigned int)rep.ucrd_size);

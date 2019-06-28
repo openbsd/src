@@ -1,4 +1,4 @@
-/*	$OpenBSD: fseek.c,v 1.12 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: fseek.c,v 1.13 2019/06/28 13:32:42 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -127,7 +127,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 		goto dumb;
 	if ((fp->_flags & __SOPT) == 0) {
 		if (seekfn != __sseek ||
-		    fp->_file < 0 || fstat(fp->_file, &st) ||
+		    fp->_file < 0 || fstat(fp->_file, &st) == -1 ||
 		    (st.st_mode & S_IFMT) != S_IFREG) {
 			fp->_flags |= __SNPT;
 			goto dumb;
@@ -143,7 +143,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	if (whence == SEEK_SET)
 		target = offset;
 	else {
-		if (fstat(fp->_file, &st))
+		if (fstat(fp->_file, &st) == -1)
 			goto dumb;
 		target = st.st_size + offset;
 	}

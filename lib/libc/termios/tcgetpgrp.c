@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcgetpgrp.c,v 1.7 2014/12/16 03:32:21 millert Exp $ */
+/*	$OpenBSD: tcgetpgrp.c,v 1.8 2019/06/28 13:32:42 deraadt Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@ tcgetpgrp(int fd)
 {
 	int s;
 
-	if (ioctl(fd, TIOCGPGRP, &s) < 0)
+	if (ioctl(fd, TIOCGPGRP, &s) == -1)
 		return (-1);
 
 	return (s);

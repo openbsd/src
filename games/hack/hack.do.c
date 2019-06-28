@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.do.c,v 1.10 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.do.c,v 1.11 2019/06/28 13:32:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -195,7 +195,7 @@ goto_level(int newlevel, boolean at_stairs)
 
 	glo(dlevel);
 	fd = open(lock, O_CREAT | O_TRUNC | O_WRONLY, FMASK);
-	if(fd < 0) {
+	if(fd == -1) {
 		/*
 		 * This is not quite impossible: e.g., we may have
 		 * exceeded our quota. If that is the case then we
@@ -232,7 +232,7 @@ goto_level(int newlevel, boolean at_stairs)
 	else {
 		extern int hackpid;
 
-		if((fd = open(lock, O_RDONLY)) < 0) {
+		if((fd = open(lock, O_RDONLY)) == -1) {
 			pline("Cannot open %s .", lock);
 			pline("Probably someone removed it.");
 			done("tricked");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.save.c,v 1.13 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.save.c,v 1.14 2019/06/28 13:32:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -101,7 +101,7 @@ dosave0(int hu)
 
 	(void) signal(SIGHUP, SIG_IGN);
 	(void) signal(SIGINT, SIG_IGN);
-	if((fd = open(SAVEF, O_CREAT | O_TRUNC | O_WRONLY, FMASK)) < 0) {
+	if((fd = open(SAVEF, O_CREAT | O_TRUNC | O_WRONLY, FMASK)) == -1) {
 		if(!hu) pline("Cannot open save file. (Continue or Quit)");
 		(void) unlink(SAVEF);		/* ab@unido */
 		return(0);
@@ -131,7 +131,7 @@ dosave0(int hu)
 
 		if(tmp == dlevel || !level_exists[tmp]) continue;
 		glo(tmp);
-		if((ofd = open(lock, O_RDONLY)) < 0) {
+		if((ofd = open(lock, O_RDONLY)) == -1) {
 		    if(!hu) pline("Error while saving: cannot read %s.", lock);
 		    (void) close(fd);
 		    (void) unlink(SAVEF);
@@ -193,7 +193,7 @@ dorecover(int fd)
 			break;
 		getlev(fd, 0, tmp);
 		glo(tmp);
-		if((nfd = open(lock, O_CREAT | O_TRUNC | O_WRONLY, FMASK)) < 0)
+		if((nfd = open(lock, O_CREAT | O_TRUNC | O_WRONLY, FMASK)) == -1)
 			panic("Cannot open temp file %s!\n", lock);
 		savelev(nfd,tmp);
 		(void) close(nfd);

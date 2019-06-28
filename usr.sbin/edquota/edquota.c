@@ -266,9 +266,9 @@ getprivs(u_int id, int quotatype)
 				    "group %s not known, skipping %s\n",
 				    quotagroup, fs->fs_file);
 			}
-			if ((fd = open(qfpathname, O_RDONLY)) < 0) {
+			if ((fd = open(qfpathname, O_RDONLY)) == -1) {
 				fd = open(qfpathname, O_RDWR|O_CREAT, 0640);
-				if (fd < 0 && errno != ENOENT) {
+				if (fd == -1 && errno != ENOENT) {
 					perror(qfpathname);
 					free(qup);
 					continue;
@@ -327,7 +327,7 @@ putprivs(long id, int quotatype, struct quotause *quplist)
 	for (qup = quplist; qup; qup = qup->next) {
 		if (quotactl(qup->fsname, qcmd, id, (char *)&qup->dqblk) == 0)
 			continue;
-		if ((fd = open(qup->qfname, O_WRONLY)) < 0) {
+		if ((fd = open(qup->qfname, O_WRONLY)) == -1) {
 			perror(qup->qfname);
 		} else {
 			lseek(fd, (off_t)(id * sizeof (struct dqblk)), SEEK_SET);

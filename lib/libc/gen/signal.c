@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.10 2015/10/25 04:13:59 guenther Exp $ */
+/*	$OpenBSD: signal.c,v 1.11 2019/06/28 13:32:41 deraadt Exp $ */
 /*
  * Copyright (c) 1985, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@ signal(int s, sig_t a)
 	sa.sa_flags = 0;
 	if (!sigismember(&__sigintr, s))
 		sa.sa_flags |= SA_RESTART;
-	if (WRAP(sigaction)(s, &sa, &osa) < 0)
+	if (WRAP(sigaction)(s, &sa, &osa) == -1)
 		return (SIG_ERR);
 	return (osa.sa_handler);
 }

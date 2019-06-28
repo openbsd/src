@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcgetsid.c,v 1.3 2013/12/17 22:12:07 millert Exp $ */
+/*	$OpenBSD: tcgetsid.c,v 1.4 2019/06/28 13:32:42 deraadt Exp $ */
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@ tcgetsid(int fd)
 {
 	int s;
 
-	if (ioctl(fd, TIOCGSID, &s) < 0)
+	if (ioctl(fd, TIOCGSID, &s) == -1)
 		return (-1);
 
 	return (s);

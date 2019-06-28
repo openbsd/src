@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.21 2019/03/27 17:24:17 fcambus Exp $	*/
+/*	$OpenBSD: display.c,v 1.22 2019/06/28 13:32:46 deraadt Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -144,7 +144,7 @@ display_get_values(int fd)
 		    (cmd == WSDISPLAYIO_GBURNER && !bon) ||
 		    (cmd == WSDISPLAYIO_GINFO && !fbon)) {
 			errno = ENOTTY;
-			if (!cmd || ioctl(fd, cmd, ptr) < 0) {
+			if (!cmd || ioctl(fd, cmd, ptr) == -1) {
 				if (errno == ENOTTY) {
 					pf->flags |= FLG_DEAD;
 					continue;
@@ -265,7 +265,7 @@ display_put_values(int fd)
 		}
 
 		errno = ENOTTY;
-		if (!cmd || ioctl(fd, cmd, ptr) < 0) {
+		if (!cmd || ioctl(fd, cmd, ptr) == -1) {
 			if (errno == ENOTTY) {
 				pf->flags |= FLG_DEAD;
 				continue;

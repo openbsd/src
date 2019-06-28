@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcconn.c,v 1.12 2016/10/12 19:07:42 reyk Exp $	*/
+/*	$OpenBSD: ofcconn.c,v 1.13 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -243,7 +243,7 @@ ofsw_on_io(int fd, short evmask, void *ctx)
 
 	if ((evmask & EV_READ) && ofsw_ofc_write_ready(os)) {
 		if ((msgsz = read(os->os_fd, msg, sizeof(msg))) <= 0) {
-			if (msgsz < 0)
+			if (msgsz == -1)
 				log_warn("%s: %s read", __func__, os->os_name);
 			else
 				log_warnx("%s: %s closed", __func__,
@@ -310,7 +310,7 @@ ofsw_write(struct ofsw *os, struct ofcconn *oc0)
 	}
 	if (hdr->oh_type != OFP_T_HELLO) {
 		if ((sz = write(os->os_fd, msg, msglen)) != msglen) {
-			if (sz < 0)
+			if (sz == -1)
 				log_warn("%s: %s write failed", __func__,
 				    os->os_name);
 			else

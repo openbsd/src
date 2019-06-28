@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.234 2019/04/02 01:47:49 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.235 2019/06/28 13:32:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -203,7 +203,7 @@ main(int argc, char *argv[])
 	dkname = argv[0];
 	f = opendev(dkname, (op == READ ? O_RDONLY : O_RDWR), OPENDEV_PART,
 	    &specname);
-	if (f < 0)
+	if (f == -1)
 		err(4, "%s", specname);
 
 	if (op != WRITE || aflag || dflag) {

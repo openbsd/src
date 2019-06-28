@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.9 2016/08/27 02:06:40 guenther Exp $	*/
+/*	$OpenBSD: list.c,v 1.10 2019/06/28 13:32:52 deraadt Exp $	*/
 /*
  * Copyright 2001, David Leonard. All rights reserved.
  * Redistribution and use in source and binary forms with or without
@@ -261,7 +261,7 @@ probe_drivers(u_int16_t req, char *preferred)
                 if ((ninbuf = realloc(inbuf, inlen)) == NULL)
 			err(1, "malloc");
                 ifc.ifc_buf = inbuf = ninbuf;
-                if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) 
+                if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) == -1) 
                         err(1, "SIOCGIFCONF");
                 if (ifc.ifc_len + sizeof(*ifr) < inlen)
                         break;
@@ -279,20 +279,20 @@ probe_drivers(u_int16_t req, char *preferred)
 		if (ifr->ifr_addr.sa_family != AF_INET)
 			continue;
 
-                if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
+                if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) == -1) {
                         warn("%s: SIOCGIFFLAGS", ifr->ifr_name);
 			continue;
 		}
                 if ((ifr->ifr_flags & IFF_UP) == 0)
 			continue;
 		if ((ifr->ifr_flags & IFF_BROADCAST) != 0) {
-			if (ioctl(fd, SIOCGIFBRDADDR, (caddr_t)ifr) < 0)  {
+			if (ioctl(fd, SIOCGIFBRDADDR, (caddr_t)ifr) == -1) {
 				warn("%s: SIOCGIFBRDADDR", ifr->ifr_name);
 				continue;
 			}
 			target = (struct sockaddr_in *)&ifr->ifr_dstaddr;
 		} else if ((ifr->ifr_flags & IFF_POINTOPOINT) != 0) {
-			if (ioctl(fd, SIOCGIFDSTADDR, (caddr_t)ifr) < 0)  {
+			if (ioctl(fd, SIOCGIFDSTADDR, (caddr_t)ifr) == -1) {
 				warn("%s: SIOCGIFDSTADDR", ifr->ifr_name);
 				continue;
 			}

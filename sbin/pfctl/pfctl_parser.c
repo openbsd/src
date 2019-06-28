@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.340 2019/03/30 02:45:14 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.341 2019/06/28 13:32:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1350,7 +1350,7 @@ ifa_load(void)
 	struct ifaddrs		*ifap, *ifa;
 	struct node_host	*n = NULL, *h = NULL;
 
-	if (getifaddrs(&ifap) < 0)
+	if (getifaddrs(&ifap) == -1)
 		err(1, "getifaddrs");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {

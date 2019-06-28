@@ -1,4 +1,4 @@
-/*	$OpenBSD: swaplist.c,v 1.12 2015/12/10 17:27:00 mmcc Exp $	*/
+/*	$OpenBSD: swaplist.c,v 1.13 2019/06/28 13:32:46 deraadt Exp $	*/
 /*	$NetBSD: swaplist.c,v 1.8 1998/10/08 10:00:31 mrg Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ list_swap(int pri, int kflag, int pflag, int dolong)
 	if (sep == NULL)
 		err(1, "calloc");
 	rnswap = swapctl(SWAP_STATS, (void *)sep, nswap);
-	if (rnswap < 0)
+	if (rnswap == -1)
 		err(1, "SWAP_STATS");
 	if (nswap != rnswap)
 		warnx("SWAP_STATS different to SWAP_NSWAP (%d != %d)",

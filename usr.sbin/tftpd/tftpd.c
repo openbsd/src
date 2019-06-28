@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.41 2018/01/26 16:40:14 naddy Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.42 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -744,7 +744,7 @@ tftpd_recv(int fd, short events, void *arg)
 		    &on, sizeof(on));
 
 		if (bind(client->sock, (struct sockaddr *)&s_in,
-		    s_in.ss_len) < 0) {
+		    s_in.ss_len) == -1) {
 			lwarn("bind to %s", getip(&s_in));
 			goto err;
 		}
@@ -1004,7 +1004,7 @@ retryread:
 	 * set.
 	 */
 	wmode = O_TRUNC;
-	if (stat(filename, &stbuf) < 0) {
+	if (stat(filename, &stbuf) == -1) {
 		if (!cancreate) {
 			/*
 			 * In -i mode, retry failed read requests from
@@ -1043,12 +1043,12 @@ retryread:
 		}
 	}
 	fd = open(filename, mode == RRQ ? O_RDONLY : (O_WRONLY|wmode), 0666);
-	if (fd < 0)
+	if (fd == -1)
 		return (errno + 100);
 	/*
 	 * If the file was created, set default permissions.
 	 */
-	if ((wmode & O_CREAT) && fchmod(fd, 0666) < 0) {
+	if ((wmode & O_CREAT) && fchmod(fd, 0666) == -1) {
 		int serrno = errno;
 
 		close(fd);

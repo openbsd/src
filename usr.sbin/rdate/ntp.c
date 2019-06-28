@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.34 2018/08/18 15:25:20 mestre Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.35 2019/06/28 13:32:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -146,7 +146,7 @@ ntp_client(const char *hostname, int family, struct timeval *new,
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		if (s < 0)
+		if (s == -1)
 			continue;
 
 		ret = sync_ntp(s, res->ai_addr, &offset, &error);
@@ -188,7 +188,7 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 	*offset = 0.0;
 	*error = NTP_INSANITY;
 
-	if (connect(fd, peer, SA_LEN(peer)) < 0) {
+	if (connect(fd, peer, SA_LEN(peer)) == -1) {
 		warn("Failed to connect to server");
 		return (-1);
 	}
@@ -318,7 +318,7 @@ read_packet(int fd, struct ntp_data *data, double *off, double *error)
 
 retry:
 	r = poll(pfd, 1, 1000 * MAX_DELAY / MAX_QUERIES);
-	if (r < 0) {
+	if (r == -1) {
 		if (errno == EINTR)
 			goto retry;
 		warn("select");
@@ -331,7 +331,7 @@ retry:
 		return (1);
 
 	length = read(fd, receive, NTP_PACKET_MAX);
-	if (length < 0) {
+	if (length == -1) {
 		warn("Unable to receive NTP packet from server");
 		return (-1);
 	}

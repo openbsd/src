@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.33 2018/09/16 02:41:16 millert Exp $	*/
+/*	$OpenBSD: create.c,v 1.34 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -192,7 +192,7 @@ statf(int indent, FTSENT *p)
 		    (long long)p->fts_statp->st_mtimespec.tv_sec,
 		    p->fts_statp->st_mtimespec.tv_nsec);
 	if (keys & F_CKSUM && S_ISREG(p->fts_statp->st_mode)) {
-		if ((fd = open(p->fts_accpath, MTREE_O_FLAGS, 0)) < 0 ||
+		if ((fd = open(p->fts_accpath, MTREE_O_FLAGS, 0)) == -1 ||
 		    crc(fd, &val, &len))
 			error("%s: %s", p->fts_accpath, strerror(errno));
 		(void)close(fd);

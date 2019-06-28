@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.99 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: policy.c,v 1.100 2019/06/28 13:32:44 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -2182,7 +2182,7 @@ keynote_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 		return 0;
 	}
 
-	if (fstat(fd, &sb) < 0) {
+	if (fstat(fd, &sb) == -1) {
 		LOG_DBG((LOG_POLICY, 30, "keynote_cert_obtain: "
 		    "failed to stat \"%s\"", file));
 		free(file);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.18 2017/04/16 18:04:02 tb Exp $	*/
+/*	$OpenBSD: screen.c,v 1.19 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -279,12 +279,12 @@ scr_set(void)
 		    MINROWS, MINCOLS);
 		stop(smallscr);
 	}
-	if (tcgetattr(0, &oldtt) < 0)
+	if (tcgetattr(0, &oldtt) == -1)
 		stop("tcgetattr() fails");
 	newtt = oldtt;
 	newtt.c_lflag &= ~(ICANON|ECHO);
 	newtt.c_oflag &= ~OXTABS;
-	if (tcsetattr(0, TCSADRAIN, &newtt) < 0)
+	if (tcsetattr(0, TCSADRAIN, &newtt) == -1)
 		stop("tcsetattr() fails");
 	(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
 

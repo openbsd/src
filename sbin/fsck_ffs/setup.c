@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.65 2018/09/24 21:26:02 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.66 2019/06/28 13:32:43 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ setup(char *dev, int isfsdb)
 	havesb = 0;
 	fswritefd = fsreadfd = -1;
 	doskipclean = skipclean;
-	if ((fsreadfd = opendev(dev, O_RDONLY, 0, &realdev)) < 0) {
+	if ((fsreadfd = opendev(dev, O_RDONLY, 0, &realdev)) == -1) {
 		printf("Can't open %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
@@ -111,7 +111,7 @@ setup(char *dev, int isfsdb)
 		}
 	}
 
-	if (fstat(fsreadfd, &statb) < 0) {
+	if (fstat(fsreadfd, &statb) == -1) {
 		printf("Can't stat %s: %s\n", realdev, strerror(errno));
 		close(fsreadfd);
 		return (0);
@@ -128,7 +128,7 @@ setup(char *dev, int isfsdb)
 		if (strncmp(dev, realdev, PATH_MAX) != 0)
 			printf(" (%s)", dev);
 	}
-	if (nflag || (fswritefd = opendev(dev, O_WRONLY, 0, NULL)) < 0) {
+	if (nflag || (fswritefd = opendev(dev, O_WRONLY, 0, NULL)) == -1) {
 		fswritefd = -1;
 		if (preen)
 			pfatal("NO WRITE ACCESS");
@@ -662,7 +662,7 @@ getdisklabel(char *s, int fd)
 {
 	static struct disklabel lab;
 
-	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
+	if (ioctl(fd, DIOCGDINFO, (char *)&lab) == -1) {
 		if (s == NULL)
 			return (NULL);
 		pwarn("ioctl (GCINFO): %s\n", strerror(errno));

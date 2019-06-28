@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.30 2018/10/26 17:11:33 mestre Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.31 2019/06/28 13:32:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -85,7 +85,7 @@ main(int argc, char *argv[])
 	/* Increase our data size to the max if we can. */
 	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
 		rl.rlim_cur = rl.rlim_max;
-		if (setrlimit(RLIMIT_DATA, &rl) < 0)
+		if (setrlimit(RLIMIT_DATA, &rl) == -1)
 			warn("can't set rlimit data size");
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.14 2016/09/11 14:21:18 tb Exp $	*/
+/*	$OpenBSD: execute.c,v 1.15 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
 
 /*
@@ -292,7 +292,7 @@ rest_f(char *file)
 	long tl;
 
 	printf("\"%s\" ", file);
-	if (stat(file, &sbuf) < 0) {		/* get file stats	*/
+	if (stat(file, &sbuf) == -1) {		/* get file stats	*/
 		warn("%s", file);
 		return(FALSE);
 	}

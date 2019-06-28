@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.69 2018/08/07 18:36:49 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.70 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -110,7 +110,7 @@ priv_init(int lockfd, int nullfd, int argc, char *argv[])
 		errx(1, "unknown user _syslogd");
 
 	child_pid = fork();
-	if (child_pid < 0)
+	if (child_pid == -1)
 		err(1, "fork() failed");
 
 	if (!child_pid) {
@@ -239,7 +239,7 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 	if (sigprocmask(SIG_SETMASK, &sigmask, NULL) == -1)
 		err(1, "sigprocmask priv");
 
-	if (stat(conf, &cf_info) < 0)
+	if (stat(conf, &cf_info) == -1)
 		err(1, "stat config file failed");
 
 	TAILQ_INIT(&lognames);
@@ -261,7 +261,7 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 			check_tty_name(path, sizeof(path));
 			fd = open(path, O_WRONLY|O_NONBLOCK, 0);
 			send_fd(sock, fd);
-			if (fd < 0)
+			if (fd == -1)
 				warnx("priv_open_tty failed");
 			else
 				close(fd);
@@ -287,7 +287,7 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 				errx(1, "invalid cmd");
 
 			send_fd(sock, fd);
-			if (fd < 0)
+			if (fd == -1)
 				warnx("priv_open_log failed");
 			else
 				close(fd);
@@ -297,7 +297,7 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 			log_debug("[priv]: msg PRIV_OPEN_UTMP received");
 			fd = open(_PATH_UTMP, O_RDONLY|O_NONBLOCK, 0);
 			send_fd(sock, fd);
-			if (fd < 0)
+			if (fd == -1)
 				warnx("priv_open_utmp failed");
 			else
 				close(fd);
@@ -308,7 +308,7 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 			stat(conf, &cf_info);
 			fd = open(conf, O_RDONLY|O_NONBLOCK, 0);
 			send_fd(sock, fd);
-			if (fd < 0)
+			if (fd == -1)
 				warnx("priv_open_config failed");
 			else
 				close(fd);
@@ -316,7 +316,7 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 
 		case PRIV_CONFIG_MODIFIED:
 			log_debug("[priv]: msg PRIV_CONFIG_MODIFIED received");
-			if (stat(conf, &cf_stat) < 0 ||
+			if (stat(conf, &cf_stat) == -1 ||
 			    timespeccmp(&cf_info.st_mtimespec,
 			    &cf_stat.st_mtimespec, <) ||
 			    cf_info.st_size != cf_stat.st_size) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.42 2018/11/27 12:06:39 martijn Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.43 2019/06/28 13:32:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -77,7 +77,7 @@ client_aldap_open(struct ypldap_addr_list *addr)
 			sizeof(sbuf), NI_NUMERICHOST | NI_NUMERICSERV))
 				errx(1, "could not get numeric hostname");
 
-		if ((fd = socket(sa->sa_family, SOCK_STREAM, 0)) < 0)
+		if ((fd = socket(sa->sa_family, SOCK_STREAM, 0)) == -1)
 			return NULL;
 
 		if (connect(fd, sa, SA_LEN(sa)) == 0)

@@ -71,7 +71,7 @@ init_vifs(void)
      * the kernel and the contents of the configuration file.
      * (Open a UDP socket for ioctl use in the config procedures.)
      */
-    if ((udp_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+    if ((udp_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 	logit(LOG_ERR, errno, "UDP socket");
     logit(LOG_INFO,0,"Getting vifs from kernel interfaces");
     config_vifs_from_kernel();
@@ -169,7 +169,7 @@ check_vif_state(void)
 	if (v->uv_flags & VIFF_DISABLED) continue;
 
 	strncpy(ifr.ifr_name, v->uv_name, IFNAMSIZ);
-	if (ioctl(udp_socket, SIOCGIFFLAGS, (char *)&ifr) < 0)
+	if (ioctl(udp_socket, SIOCGIFFLAGS, (char *)&ifr) == -1)
 	    logit(LOG_ERR, errno,
 		"ioctl SIOCGIFFLAGS for %s", ifr.ifr_name);
 
@@ -702,9 +702,9 @@ accept_neighbor_request(u_int32_t src, u_int32_t dst)
 	addr.sin_len = sizeof addr;
 	addr.sin_addr.s_addr = dst;
 	addr.sin_port = htons(2000); /* any port over 1024 will do... */
-	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0
-	    || connect(udp, (struct sockaddr *) &addr, sizeof(addr)) < 0
-	    || getsockname(udp, (struct sockaddr *) &addr, &addrlen) < 0) {
+	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) == -1
+	    || connect(udp, (struct sockaddr *) &addr, sizeof(addr)) == -1
+	    || getsockname(udp, (struct sockaddr *) &addr, &addrlen) == -1) {
 	    logit(LOG_WARNING, errno, "Determining local address");
 	    close(udp);
 	    return;
@@ -787,9 +787,9 @@ accept_neighbor_request2(u_int32_t src, u_int32_t dst)
 	addr.sin_len = sizeof addr;
 	addr.sin_addr.s_addr = dst;
 	addr.sin_port = htons(2000); /* any port over 1024 will do... */
-	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0
-	    || connect(udp, (struct sockaddr *) &addr, sizeof(addr)) < 0
-	    || getsockname(udp, (struct sockaddr *) &addr, &addrlen) < 0) {
+	if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) == -1
+	    || connect(udp, (struct sockaddr *) &addr, sizeof(addr)) == -1
+	    || getsockname(udp, (struct sockaddr *) &addr, &addrlen) == -1) {
 	    logit(LOG_WARNING, errno, "Determining local address");
 	    close(udp);
 	    return;
@@ -1332,7 +1332,7 @@ dump_vifs(FILE *fp)
 	    }
 	}
 	v_req.vifi = vifi;
-	if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) < 0) {
+	if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) == -1) {
 	    logit(LOG_WARNING, 0,
 		"SIOCGETVIFCNT fails");
 	}

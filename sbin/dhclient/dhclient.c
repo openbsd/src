@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.635 2019/05/22 12:56:31 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.636 2019/06/28 13:32:43 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1856,7 +1856,7 @@ write_option_db(char *name, struct client_lease *offered,
 	else if (fprintf(optionDB, "%s", leasestr) == -1)
 		log_warn("optionDB 'effective' fprintf()");
 
-	if (fflush(optionDB) == -1)
+	if (fflush(optionDB) == EOF)
 		log_warn("optionDB fflush()");
 	else if (fsync(fileno(optionDB)) == -1)
 		log_warn("optionDB fsync()");

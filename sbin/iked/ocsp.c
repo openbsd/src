@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.8 2015/12/07 12:46:37 reyk Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.9 2019/06/28 13:32:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -88,7 +88,7 @@ ocsp_connect(struct iked *env)
 		goto done;
 	}
 
-	if ((fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) < 0) {
+	if ((fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1) {
 		log_debug("%s: socket failed", __func__);
 		goto done;
 	}
@@ -159,7 +159,7 @@ ocsp_connect_cb(int fd, short event, void *arg)
 	socklen_t		 len;
 
 	len = sizeof(error);
-	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
 		log_warn("%s: getsockopt SOL_SOCKET SO_ERROR", __func__);
 	} else if (error) {
 		log_debug("%s: error while connecting: %s", __func__,

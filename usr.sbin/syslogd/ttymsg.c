@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.17 2017/10/05 16:15:24 bluhm Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.18 2019/06/28 13:32:51 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ ttymsg(struct iovec *iov, int iovcnt, char *utline)
 	 * open will fail on slip lines or exclusive-use lines
 	 * if not running as root; not an error.
 	 */
-	if ((fd = priv_open_tty(device)) < 0) {
+	if ((fd = priv_open_tty(device)) == -1) {
 		if (errno != EBUSY && errno != EACCES)
 			log_warn("priv_open_tty device \"%s\"", device);
 		return;
@@ -208,7 +208,7 @@ ttycb(int fd, short event, void *arg)
 		goto done;
 
 	wret = write(fd, td->td_line, td->td_length);
-	if (wret < 0 && errno != EINTR && errno != EWOULDBLOCK)
+	if (wret == -1 && errno != EINTR && errno != EWOULDBLOCK)
 		goto done;
 	if (wret > 0) {
 		td->td_length -= wret;

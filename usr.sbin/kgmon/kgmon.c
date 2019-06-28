@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgmon.c,v 1.25 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: kgmon.c,v 1.26 2019/06/28 13:32:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -188,7 +188,7 @@ openfiles(char *sys, char *kmemf, struct kvmvars *kvp, int cpuid)
 		mib[2] = GPROF_STATE;
 		mib[3] = cpuid;
 		size = sizeof state;
-		if (sysctl(mib, 4, &state, &size, NULL, 0) < 0)
+		if (sysctl(mib, 4, &state, &size, NULL, 0) == -1)
 			errx(20, "profiling not defined in kernel.");
 		if (!(bflag || hflag || rflag ||
 		    (pflag && state == GMON_PROF_ON)))
@@ -210,7 +210,7 @@ openfiles(char *sys, char *kmemf, struct kvmvars *kvp, int cpuid)
 			errx(2, "kvm_openfiles: %s", errbuf);
 		kern_readonly(GMON_PROF_ON);
 	}
-	if (kvm_nlist(kvp->kd, nl) < 0)
+	if (kvm_nlist(kvp->kd, nl) == -1)
 		errx(3, "%s: no namelist", sys ? sys : _PATH_UNIX);
 	if (!nl[N_GMONPARAM].n_value)
 		errx(20, "profiling not defined in kernel.");
@@ -255,7 +255,7 @@ getprof(struct kvmvars *kvp, int cpuid)
 		mib[2] = GPROF_GMONPARAM;
 		mib[3] = cpuid;
 		size = sizeof kvp->gpm;
-		if (sysctl(mib, 4, &kvp->gpm, &size, NULL, 0) < 0)
+		if (sysctl(mib, 4, &kvp->gpm, &size, NULL, 0) == -1)
 			size = 0;
 	}
 	if (size != sizeof kvp->gpm)
@@ -280,7 +280,7 @@ setprof(struct kvmvars *kvp, int cpuid, int state)
 		mib[1] = KERN_PROF;
 		mib[2] = GPROF_STATE;
 		mib[3] = cpuid;
-		if (sysctl(mib, 4, &oldstate, &sz, NULL, 0) < 0)
+		if (sysctl(mib, 4, &oldstate, &sz, NULL, 0) == -1)
 			goto bad;
 		if (oldstate == state)
 			return;
@@ -345,7 +345,7 @@ dumpstate(struct kvmvars *kvp, int cpuid)
 		mib[2] = GPROF_COUNT;
 		mib[3] = cpuid;
 		i = kvp->gpm.kcountsize;
-		if (sysctl(mib, 4, tickbuf, &i, NULL, 0) < 0)
+		if (sysctl(mib, 4, tickbuf, &i, NULL, 0) == -1)
 			i = 0;
 	}
 	if (i != kvp->gpm.kcountsize)
@@ -368,7 +368,7 @@ dumpstate(struct kvmvars *kvp, int cpuid)
 		mib[2] = GPROF_FROMS;
 		mib[3] = cpuid;
 		i = kvp->gpm.fromssize;
-		if (sysctl(mib, 4, froms, &i, NULL, 0) < 0)
+		if (sysctl(mib, 4, froms, &i, NULL, 0) == -1)
 			i = 0;
 	}
 	if (i != kvp->gpm.fromssize)
@@ -384,7 +384,7 @@ dumpstate(struct kvmvars *kvp, int cpuid)
 		mib[2] = GPROF_TOS;
 		mib[3] = cpuid;
 		i = kvp->gpm.tossize;
-		if (sysctl(mib, 4, tos, &i, NULL, 0) < 0)
+		if (sysctl(mib, 4, tos, &i, NULL, 0) == -1)
 			i = 0;
 	}
 	if (i != kvp->gpm.tossize)
@@ -435,7 +435,7 @@ getprofhz(struct kvmvars *kvp)
 	mib[1] = KERN_CLOCKRATE;
 	clockrate.profhz = 1;
 	size = sizeof clockrate;
-	if (sysctl(mib, 2, &clockrate, &size, NULL, 0) < 0)
+	if (sysctl(mib, 2, &clockrate, &size, NULL, 0) == -1)
 		warn("get clockrate");
 	return (clockrate.profhz);
 }
@@ -476,13 +476,13 @@ reset(struct kvmvars *kvp, int cpuid)
 	mib[1] = KERN_PROF;
 	mib[2] = GPROF_COUNT;
 	mib[3] = cpuid;
-	if (sysctl(mib, 4, NULL, NULL, zbuf, kvp->gpm.kcountsize) < 0)
+	if (sysctl(mib, 4, NULL, NULL, zbuf, kvp->gpm.kcountsize) == -1)
 		err(13, "tickbuf zero");
 	mib[2] = GPROF_FROMS;
-	if (sysctl(mib, 4, NULL, NULL, zbuf, kvp->gpm.fromssize) < 0)
+	if (sysctl(mib, 4, NULL, NULL, zbuf, kvp->gpm.fromssize) == -1)
 		err(14, "froms zero");
 	mib[2] = GPROF_TOS;
-	if (sysctl(mib, 4, NULL, NULL, zbuf, kvp->gpm.tossize) < 0)
+	if (sysctl(mib, 4, NULL, NULL, zbuf, kvp->gpm.tossize) == -1)
 		err(15, "tos zero");
 	free(zbuf);
 }
@@ -495,7 +495,7 @@ getncpu(void)
 	int ncpu;
 
 	size = sizeof(ncpu);
-	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) == -1) {
 		warnx("cannot read hw.ncpu");
 		return (1);
 	}

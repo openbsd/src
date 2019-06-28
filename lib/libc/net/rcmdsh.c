@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcmdsh.c,v 1.19 2016/05/28 15:46:00 millert Exp $	*/ 
+/*	$OpenBSD: rcmdsh.c,v 1.20 2019/06/28 13:32:42 deraadt Exp $	*/ 
 
 /*
  * Copyright (c) 2001, MagniComp
@@ -89,13 +89,13 @@ rcmdsh(char **ahost, int rport, const char *locuser, const char *remuser,
 	}
 
 	/* Get a socketpair we'll use for stdin and stdout. */
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) < 0) {
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) == -1) {
 		perror("rcmdsh: socketpair");
 		return(-1);
 	}
 
 	cpid = fork();
-	if (cpid < 0) {
+	if (cpid == -1) {
 		perror("rcmdsh: fork failed");
 		return(-1);
 	} else if (cpid == 0) {
@@ -103,13 +103,13 @@ rcmdsh(char **ahost, int rport, const char *locuser, const char *remuser,
 		 * Child.  We use sp[1] to be stdin/stdout, and close sp[0].
 		 */
 		(void) close(sp[0]);
-		if (dup2(sp[1], 0) < 0 || dup2(0, 1) < 0) {
+		if (dup2(sp[1], 0) == -1 || dup2(0, 1) == -1) {
 			perror("rcmdsh: dup2 failed");
 			_exit(255);
 		}
 		/* Fork again to lose parent. */
 		cpid = fork();
-		if (cpid < 0) {
+		if (cpid == -1) {
 			perror("rcmdsh: fork to lose parent failed");
 			_exit(255);
 		}

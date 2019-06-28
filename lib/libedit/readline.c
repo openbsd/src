@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.27 2016/05/31 16:12:00 schwarze Exp $	*/
+/*	$OpenBSD: readline.c,v 1.28 2019/06/28 13:32:42 deraadt Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -1265,7 +1265,7 @@ history_truncate_file (const char *filename, int nlines)
 		if (nlines <= 0 || count == 0)
 			break;
 		count--;
-		if (fseeko(tp, (off_t)sizeof(buf) * count, SEEK_SET) < 0) {
+		if (fseeko(tp, (off_t)sizeof(buf) * count, SEEK_SET) == -1) {
 			ret = errno;
 			break;
 		}
@@ -2092,16 +2092,16 @@ _rl_event_read_char(EditLine *el, wchar_t *wc)
 		(*rl_event_hook)();
 
 #if defined(FIONREAD)
-		if (ioctl(el->el_infd, FIONREAD, &n) < 0)
+		if (ioctl(el->el_infd, FIONREAD, &n) == -1)
 			return -1;
 		if (n)
 			num_read = read(el->el_infd, &ch, 1);
 		else
 			num_read = 0;
 #elif defined(F_SETFL) && defined(O_NDELAY)
-		if ((n = fcntl(el->el_infd, F_GETFL)) < 0)
+		if ((n = fcntl(el->el_infd, F_GETFL)) == -1)
 			return -1;
-		if (fcntl(el->el_infd, F_SETFL, n|O_NDELAY) < 0)
+		if (fcntl(el->el_infd, F_SETFL, n|O_NDELAY) == -1)
 			return -1;
 		num_read = read(el->el_infd, &ch, 1);
 		if (fcntl(el->el_infd, F_SETFL, n))

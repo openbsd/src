@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.32 2016/10/03 13:03:49 jca Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.33 2019/06/28 13:32:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -136,7 +136,7 @@ kbd_get_encs(int fd, struct wskbd_encoding_data *encs)
 		    encs->nencodings, sizeof(kbd_t));
 		if (encs->encodings == NULL)
 			err(1, NULL);
-		if (ioctl(fd, WSKBDIO_GETENCODINGS, encs) < 0)
+		if (ioctl(fd, WSKBDIO_GETENCODINGS, encs) == -1)
 			err(1, "WSKBDIO_GETENCODINGS");
 		if (encs->nencodings == nencodings) {
 			nencodings *= 2;
@@ -160,10 +160,10 @@ kbd_list(void)
 	for (i = 0; i < NUM_KBD; i++) {
 		(void) snprintf(device, sizeof device, "/dev/wskbd%d", i);
 		fd = open(device, O_WRONLY);
-		if (fd < 0)
+		if (fd == -1)
 			fd = open(device, O_RDONLY);
 		if (fd >= 0) {
-			if (ioctl(fd, WSKBDIO_GTYPE, &kbtype) < 0)
+			if (ioctl(fd, WSKBDIO_GTYPE, &kbtype) == -1)
 				err(1, "WSKBDIO_GTYPE");
 			switch (kbtype) {
 			case WSKBD_TYPE_PC_XT:
@@ -258,10 +258,10 @@ kbd_set(char *name, int verbose)
 	for (i = 0; i < NUM_KBD; i++) {
 		(void) snprintf(device, sizeof device, "/dev/wskbd%d", i);
 		fd = open(device, O_WRONLY);
-		if (fd < 0)
+		if (fd == -1)
 			fd = open(device, O_RDONLY);
 		if (fd >= 0) {
-			if (ioctl(fd, WSKBDIO_SETENCODING, &map) < 0) {
+			if (ioctl(fd, WSKBDIO_SETENCODING, &map) == -1) {
 				if (errno == EINVAL) {
 					fprintf(stderr,
 					    "%s: unsupported encoding %s on %s\n",

@@ -72,7 +72,7 @@ mboxfile_engine(const char *sender, const char *filename)
 	time(&now);
 
 	fd = open(filename, O_CREAT | O_APPEND | O_WRONLY | O_EXLOCK, 0600);
-	if (fd < 0)
+	if (fd == -1)
 		err(1, NULL);
 
 	if ((fp = fdopen(fd, "w")) == NULL)
@@ -93,7 +93,7 @@ mboxfile_engine(const char *sender, const char *filename)
 
 	if (fflush(fp) == EOF ||
 	    ferror(fp) ||
-	    fsync(fd) < 0 ||
+	    fsync(fd) == -1 ||
 	    fclose(fp) == EOF)
 		err(1, NULL);
 }

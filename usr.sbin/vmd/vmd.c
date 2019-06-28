@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.113 2019/05/20 17:04:24 jasper Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.114 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1736,7 +1736,7 @@ vm_opentty(struct vmd_vm *vm)
 	 * We use user ioctl(2) mode to pass break commands.
 	 */
 	on = 1;
-	if (ioctl(ptm.cfd, TIOCUCNTL, &on))
+	if (ioctl(ptm.cfd, TIOCUCNTL, &on) == -1)
 		fatal("could not enable user ioctl mode");
 
 	vm->vm_tty = ptm.cfd;

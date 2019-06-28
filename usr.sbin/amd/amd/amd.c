@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.22 2015/09/11 19:03:30 millert Exp $
+ *	$Id: amd.c,v 1.23 2019/06/28 13:32:46 deraadt Exp $
  */
 
 /*
@@ -167,11 +167,11 @@ daemon_mode(void)
 #ifdef TIOCNOTTY
 	{
 		int t = open("/dev/tty", O_RDWR);
-		if (t < 0) {
+		if (t == -1) {
 			if (errno != ENXIO)	/* not an error if already no controlling tty */
 				plog(XLOG_WARNING, "Could not open controlling tty: %m");
 		} else {
-			if (ioctl(t, TIOCNOTTY, 0) < 0 && errno != ENOTTY)
+			if (ioctl(t, TIOCNOTTY, 0) == -1 && errno != ENOTTY)
 				plog(XLOG_WARNING, "Could not disassociate tty (TIOCNOTTY): %m");
 			(void) close(t);
 		}
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 	/*
 	 * Get local machine name
 	 */
-	if (gethostname(hostname, sizeof(hostname)) < 0) {
+	if (gethostname(hostname, sizeof(hostname)) == -1) {
 		plog(XLOG_FATAL, "gethostname: %m");
 		going_down(1);
 	}

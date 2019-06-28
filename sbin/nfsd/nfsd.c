@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.38 2018/01/05 08:13:31 mpi Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.39 2019/06/28 13:32:45 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 
 		setproctitle("server");
 		nsd.nsd_nfsd = NULL;
-		if (nfssvc(NFSSVC_NFSD, &nsd) < 0) {
+		if (nfssvc(NFSSVC_NFSD, &nsd) == -1) {
 			syslog(LOG_ERR, "nfssvc: %s", strerror(errno));
 			return (1);
 		}
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 
 	/* If we are serving udp, set up the socket. */
 	if (udpflag) {
-		if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 			syslog(LOG_ERR, "can't create udp socket");
 			return (1);
 		}
@@ -216,7 +216,7 @@ main(int argc, char *argv[])
 		inetaddr.sin_port = htons(NFS_PORT);
 		inetaddr.sin_len = sizeof(inetaddr);
 		if (bind(sock, (struct sockaddr *)&inetaddr,
-		    sizeof(inetaddr)) < 0) {
+		    sizeof(inetaddr)) == -1) {
 			syslog(LOG_ERR, "can't bind udp addr");
 			return (1);
 		}
@@ -228,7 +228,7 @@ main(int argc, char *argv[])
 		nfsdargs.sock = sock;
 		nfsdargs.name = NULL;
 		nfsdargs.namelen = 0;
-		if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) < 0) {
+		if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) == -1) {
 			syslog(LOG_ERR, "can't Add UDP socket");
 			return (1);
 		}
@@ -239,12 +239,12 @@ main(int argc, char *argv[])
 	on = 1;
 	connect_type_cnt = 0;
 	if (tcpflag) {
-		if ((tcpsock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		if ((tcpsock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 			syslog(LOG_ERR, "can't create tcp socket");
 			return (1);
 		}
 		if (setsockopt(tcpsock,
-		    SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0)
+		    SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1)
 			syslog(LOG_ERR, "setsockopt SO_REUSEADDR: %s", strerror(errno));
 		memset(&inetaddr, 0, sizeof inetaddr);
 		inetaddr.sin_family = AF_INET;
@@ -252,11 +252,11 @@ main(int argc, char *argv[])
 		inetaddr.sin_port = htons(NFS_PORT);
 		inetaddr.sin_len = sizeof(inetaddr);
 		if (bind(tcpsock, (struct sockaddr *)&inetaddr,
-		    sizeof (inetaddr)) < 0) {
+		    sizeof (inetaddr)) == -1) {
 			syslog(LOG_ERR, "can't bind tcp addr");
 			return (1);
 		}
-		if (listen(tcpsock, 5) < 0) {
+		if (listen(tcpsock, 5) == -1) {
 			syslog(LOG_ERR, "listen failed");
 			return (1);
 		}
@@ -298,7 +298,7 @@ main(int argc, char *argv[])
 		if (tcpflag) {
 			len = sizeof(inetpeer);
 			if ((msgsock = accept(tcpsock,
-			    (struct sockaddr *)&inetpeer, &len)) < 0) {
+			    (struct sockaddr *)&inetpeer, &len)) == -1) {
 				if (errno == EWOULDBLOCK || errno == EINTR ||
 				    errno == ECONNABORTED)
 					continue;
@@ -307,13 +307,13 @@ main(int argc, char *argv[])
 			}
 			memset(inetpeer.sin_zero, 0, sizeof(inetpeer.sin_zero));
 			if (setsockopt(msgsock, SOL_SOCKET,
-			    SO_KEEPALIVE, &on, sizeof(on)) < 0)
+			    SO_KEEPALIVE, &on, sizeof(on)) == -1)
 				syslog(LOG_ERR,
 				    "setsockopt SO_KEEPALIVE: %s", strerror(errno));
 			nfsdargs.sock = msgsock;
 			nfsdargs.name = (caddr_t)&inetpeer;
 			nfsdargs.namelen = sizeof(inetpeer);
-			if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) < 0) {
+			if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) == -1) {
 				syslog(LOG_ERR, "can't Add TCP socket");
 				return (1);
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: varpush.c,v 1.11 2016/01/08 18:09:59 mestre Exp $	*/
+/*	$OpenBSD: varpush.c,v 1.12 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: varpush.c,v 1.4 1995/03/24 05:02:35 cgd Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ varpush(int file, ssize_t (*func)(int, const struct iovec *, int))
 	}
 
 	if (func == readv) {
-		if ((read(file, (void *) &temp, sizeof temp)) < 0) {
+		if ((read(file, (void *) &temp, sizeof temp)) == -1) {
 			error(strerror(errno));
 			return FALSE;
 		}
@@ -94,7 +94,7 @@ over:
 #endif
 	} else {
 		temp = Topcard - Deck;
-		if ((write(file, (void *) &temp, sizeof temp)) < 0) {
+		if ((write(file, (void *) &temp, sizeof temp)) == -1) {
 			error(strerror(errno));
 			return FALSE;
 		}

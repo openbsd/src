@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.92 2016/01/11 14:23:50 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.93 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -199,11 +199,11 @@ parse_args(int argc, char *argv[])
 			 * the race.
 			 */
 
-			if (setegid(user_gid) < 0)
+			if (setegid(user_gid) == -1)
 				err(EXIT_FAILURE, "setegid(user_gid)");
 			if (!(NewCrontab = fopen(Filename, "r")))
 				err(EXIT_FAILURE, "%s", Filename);
-			if (setegid(crontab_gid) < 0)
+			if (setegid(crontab_gid) == -1)
 				err(EXIT_FAILURE, "setegid(crontab_gid)");
 		}
 	}
@@ -279,7 +279,7 @@ edit_cmd(void)
 			err(EXIT_FAILURE, _PATH_DEVNULL);
 	}
 
-	if (fstat(fileno(f), &statbuf) < 0) {
+	if (fstat(fileno(f), &statbuf) == -1) {
 		warn("fstat");
 		goto fatal;
 	}
@@ -310,7 +310,7 @@ edit_cmd(void)
 
 	copy_crontab(f, NewCrontab);
 	fclose(f);
-	if (fflush(NewCrontab) < 0)
+	if (fflush(NewCrontab) == EOF)
 		err(EXIT_FAILURE, "%s", Filename);
 	if (futimens(t, ts) == -1)
 		warn("unable to set times on %s", Filename);
@@ -335,7 +335,7 @@ edit_cmd(void)
 		goto fatal;
 	}
 
-	if (fstat(t, &statbuf) < 0) {
+	if (fstat(t, &statbuf) == -1) {
 		warn("fstat");
 		goto fatal;
 	}

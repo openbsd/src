@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntopts.c,v 1.12 2015/01/16 06:39:59 deraadt Exp $	*/
+/*	$OpenBSD: getmntopts.c,v 1.13 2019/06/28 13:32:44 deraadt Exp $	*/
 /*	$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ getmntopt(char **optionp, union mntval *valuep, const struct mntopt *m0,
 		if (m->m_oflags & MFLAG_INTVAL) {
 			errno = 0;
 			l = strtol(value, &endp, 10);
-			if (endp == value || l < 0 || l > INT_MAX ||
+			if (endp == value || l == -1 || l > INT_MAX ||
 			    (l == LONG_MAX && errno == ERANGE))
 				errx(1, "%s: illegal value '%s'",
 				    opt, value);

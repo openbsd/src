@@ -1,4 +1,4 @@
-/*	$OpenBSD: posix_spawn.c,v 1.9 2016/03/13 18:34:20 guenther Exp $	*/
+/*	$OpenBSD: posix_spawn.c,v 1.10 2019/06/28 13:32:41 deraadt Exp $	*/
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
  * All rights reserved.
@@ -141,7 +141,7 @@ process_file_actions_entry(posix_spawn_file_actions_entry_t *fae)
 	case FAE_OPEN:
 		/* Perform an open(), make it use the right fd */
 		fd = open(fae->fae_path, fae->fae_oflag, fae->fae_mode);
-		if (fd < 0)
+		if (fd == -1)
 			return (errno);
 		if (fd != fae->fae_fildes) {
 			if (dup2(fd, fae->fae_fildes) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd_lock.c,v 1.9 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: lockd_lock.c,v 1.10 2019/06/28 13:32:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -508,7 +508,7 @@ do_lock(struct file_lock *fl, int block)
 	struct stat st;
 
 	fl->fd = fhopen((fhandle_t *)fl->filehandle.fhdata, O_RDWR);
-	if (fl->fd < 0) {
+	if (fl->fd == -1) {
 		switch (errno) {
 		case ESTALE:
 			error = nlm4_stale_fh;
@@ -526,7 +526,7 @@ do_lock(struct file_lock *fl, int block)
 		LIST_REMOVE(fl, lcklst);
 		return error;
 	}
-	if (fstat(fl->fd, &st) < 0) {
+	if (fstat(fl->fd, &st) == -1) {
 		syslog(LOG_NOTICE, "fstat failed (from %s) (%m)",
 		    fl->client_name);
 	}
@@ -738,7 +738,7 @@ siglock(void)
 	sigemptyset(&block);
 	sigaddset(&block, SIGCHLD);
 
-	if (sigprocmask(SIG_BLOCK, &block, NULL) < 0) {
+	if (sigprocmask(SIG_BLOCK, &block, NULL) == -1) {
 		syslog(LOG_WARNING, "siglock failed (%m)");
 	}
 }
@@ -751,7 +751,7 @@ sigunlock(void)
 	sigemptyset(&block);
 	sigaddset(&block, SIGCHLD);
 
-	if (sigprocmask(SIG_UNBLOCK, &block, NULL) < 0) {
+	if (sigprocmask(SIG_UNBLOCK, &block, NULL) == -1) {
 		syslog(LOG_WARNING, "sigunlock failed (%m)");
 	}
 }

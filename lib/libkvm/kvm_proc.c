@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.59 2018/05/03 15:47:41 zhuk Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.60 2019/06/28 13:32:42 deraadt Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -491,7 +491,7 @@ again:
 	mib[3] = isenv ? KERN_PROC_ENV : KERN_PROC_ARGV;
 
 	len = orglen;
-	ret = (sysctl(mib, 4, *pargbuf, &len, NULL, 0) < 0);
+	ret = (sysctl(mib, 4, *pargbuf, &len, NULL, 0) == -1);
 	if (ret && errno == ENOMEM) {
 		buf = _kvm_reallocarray(kd, *pargbuf, orglen, 2);
 		if (buf == NULL)

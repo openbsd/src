@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.19 2016/03/07 12:07:56 mestre Exp $	*/
+/*	$OpenBSD: setup.c,v 1.20 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
@@ -116,11 +116,11 @@ main(int argc, char *argv[])
 		continue;
 		}
 
-	    if (unlink(path) < 0)
+	    if (unlink(path) == -1)
 		Error("Cannot unlink %s.\n", path);
 	    }
 
-	if ((fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660)) < 0)
+	if ((fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660)) == -1)
 	    Error("Cannot create %s.\n", path);
 
 	close(fd);			/* close newly created file */

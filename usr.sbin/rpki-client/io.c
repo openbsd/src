@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.3 2019/06/19 16:30:37 deraadt Exp $ */
+/*	$OpenBSD: io.c,v 1.4 2019/06/28 13:32:50 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -62,7 +62,7 @@ io_simple_write(int fd, const void *res, size_t sz)
 
 	if (sz == 0)
 		return;
-	if ((ssz = write(fd, res, sz)) < 0)
+	if ((ssz = write(fd, res, sz)) == -1)
 		err(EXIT_FAILURE, "write");
 	else if ((size_t)ssz != sz)
 		errx(EXIT_FAILURE, "write: short write");
@@ -145,7 +145,7 @@ io_simple_read(int fd, void *res, size_t sz)
 again:
 	if (sz == 0)
 		return;
-	if ((ssz = read(fd, res, sz)) < 0)
+	if ((ssz = read(fd, res, sz)) == -1)
 		err(EXIT_FAILURE, "read");
 	else if (ssz == 0)
 		errx(EXIT_FAILURE, "read: unexpected end of file");

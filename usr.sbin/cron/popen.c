@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.30 2015/11/15 23:24:24 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.31 2019/06/28 13:32:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -75,7 +75,7 @@ cron_popen(char *program, char *type, struct passwd *pw, pid_t *pidptr)
 	if ((*type != 'r' && *type != 'w') || type[1] != '\0')
 		return (NULL);
 
-	if (pipe(pdes) < 0)
+	if (pipe(pdes) == -1)
 		return (NULL);
 
 	/* break up string into pieces */
@@ -92,7 +92,7 @@ cron_popen(char *program, char *type, struct passwd *pw, pid_t *pidptr)
 		/* NOTREACHED */
 	case 0:				/* child */
 		if (pw) {
-			if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) < 0) {
+			if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) == -1) {
 				syslog(LOG_ERR,
 				    "(%s) SETUSERCONTEXT FAILED (%m)",
 				    pw->pw_name);
@@ -145,10 +145,10 @@ cron_pclose(FILE *iop, pid_t pid)
 	sigaddset(&sigset, SIGQUIT);
 	sigaddset(&sigset, SIGHUP);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
-	while ((rv = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
+	while ((rv = waitpid(pid, &status, 0)) == -1 && errno == EINTR)
 		continue;
 	sigprocmask(SIG_SETMASK, &osigset, NULL);
-	if (rv < 0)
+	if (rv == -1)
 		return (rv);
 	if (WIFEXITED(status))
 		return (WEXITSTATUS(status));

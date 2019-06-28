@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.16 2014/05/14 18:28:22 shadchin Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.17 2019/06/28 13:32:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -189,7 +189,7 @@ SetMouseSpeed(int old, unsigned int cflag)
 	struct termios tty;
 	char	*c;
 
-	if (tcgetattr(mouse.mfd, &tty) < 0) {
+	if (tcgetattr(mouse.mfd, &tty) == -1) {
 		debug("Warning: %s unable to get status of mouse fd (%s)\n",
 		    mouse.portname, strerror(errno));
 		return;
@@ -220,7 +220,7 @@ SetMouseSpeed(int old, unsigned int cflag)
 		cfsetospeed(&tty, B1200);
 	}
 
-	if (tcsetattr(mouse.mfd, TCSADRAIN, &tty) < 0)
+	if (tcsetattr(mouse.mfd, TCSADRAIN, &tty) == -1)
 		logerr(1, "unable to get mouse status. Exiting...\n");
 
 	c = "*n";
@@ -233,7 +233,7 @@ SetMouseSpeed(int old, unsigned int cflag)
 	}
 	usleep(100000);
 
-	if (tcsetattr(mouse.mfd, TCSADRAIN, &tty) < 0)
+	if (tcsetattr(mouse.mfd, TCSADRAIN, &tty) == -1)
 		logerr(1, "unable to get mouse status. Exiting...\n");
 }
 

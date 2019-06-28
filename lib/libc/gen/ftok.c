@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftok.c,v 1.8 2014/11/15 22:38:47 guenther Exp $ */
+/*	$OpenBSD: ftok.c,v 1.9 2019/06/28 13:32:41 deraadt Exp $ */
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
  * All rights reserved.
@@ -34,7 +34,7 @@ ftok(const char *path, int id)
 {
 	struct stat st;
 
-	if (stat(path, &st) < 0)
+	if (stat(path, &st) == -1)
 		return (key_t)-1;
 
 	return (key_t)

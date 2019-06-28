@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.68 2018/08/24 18:36:56 cheloha Exp $	*/
+/*	$OpenBSD: init.c,v 1.69 2019/06/28 13:32:44 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -226,14 +226,14 @@ main(int argc, char *argv[])
 	/*
 	 * Create an initial session.
 	 */
-	if (setsid() < 0)
+	if (setsid() == -1)
 		warning("initial setsid() failed: %m");
 
 	/*
 	 * Establish an initial user so that programs running
 	 * single user do not freak out and die (like passwd).
 	 */
-	if (setlogin("root") < 0)
+	if (setlogin("root") == -1)
 		warning("setlogin() failed: %m");
 
 	/*
@@ -967,7 +967,7 @@ start_window_system(session_t *sp)
 	sigemptyset(&mask);
 	sigprocmask(SIG_SETMASK, &mask, NULL);
 
-	if (setsid() < 0)
+	if (setsid() == -1)
 		emergency("setsid failed (window) %m");
 
 	setprocresources(RESOURCE_WINDOW);

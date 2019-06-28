@@ -1,4 +1,4 @@
-/*	$OpenBSD: kmroute.c,v 1.2 2010/05/26 13:56:07 nicm Exp $ */
+/*	$OpenBSD: kmroute.c,v 1.3 2019/06/28 13:32:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -153,7 +153,7 @@ mrt_init(int fd)
 	int	flag = 1;
 
 	if (setsockopt(fd, IPPROTO_IP, MRT_INIT, &flag,
-	    sizeof(flag)) < 0) {
+	    sizeof(flag)) == -1) {
 		log_warn("mrt_init: error setting MRT_INIT");
 		return (-1);
 	}
@@ -167,7 +167,7 @@ mrt_done(int fd)
 	int	flag = 0;
 
 	if (setsockopt(fd, IPPROTO_IP, MRT_DONE, &flag,
-	    sizeof(flag)) < 0) {
+	    sizeof(flag)) == -1) {
 		log_warn("mrt_done: error setting MRT_DONE");
 		return (-1);
 	}
@@ -188,7 +188,7 @@ mrt_add_vif(int fd, struct iface *iface)
 	vc.vifc_rmt_addr.s_addr = 0;
 
 	if (setsockopt(fd, IPPROTO_IP, MRT_ADD_VIF, &vc,
-	    sizeof(vc)) < 0) {
+	    sizeof(vc)) == -1) {
 		log_warn("mrt_add_vif: error adding VIF");
 		return (-1);
 	}
@@ -204,7 +204,7 @@ mrt_del_vif(int fd, struct iface *iface)
 	vifi = iface->ifindex;
 
 	if (setsockopt(fd, IPPROTO_IP, MRT_DEL_VIF, &vifi,
-	    sizeof(vifi)) < 0)
+	    sizeof(vifi)) == -1)
 		log_warn("mrt_del_vif: error deleting VIF");
 }
 
@@ -226,7 +226,7 @@ mrt_add_mfc(int fd, struct mfc *mfc)
 	}
 
 	if (setsockopt(fd, IPPROTO_IP, MRT_ADD_MFC, &mc, sizeof(mc))
-	    < 0) {
+	    == -1) {
 		log_warnx("mrt_add_mfc: error adding group %s to interface %d",
 		    inet_ntoa(mfc->group), mfc->ifindex);
 		return (-1);
@@ -246,7 +246,7 @@ mrt_del_mfc(int fd, struct mfc *mfc)
 	mc.mfcc_mcastgrp = mfc->group;
 
 	if (setsockopt(fd, IPPROTO_IP, MRT_DEL_MFC, &mc, sizeof(mc))
-	    < 0) {
+	    == -1) {
 		log_warnx("mrt_del_mfc: error deleting group %s ",
 		    inet_ntoa(mfc->group));
 		return (-1);

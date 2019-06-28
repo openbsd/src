@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.160 2019/03/19 23:27:50 tedu Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.161 2019/06/28 13:32:51 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -347,14 +347,14 @@ main(int argc, char *argv[])
 
 	conf->waittime = 5 * 1000;
 
-	if ((rcvsock6 = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0)
+	if ((rcvsock6 = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) == -1)
 		v6sock_errno = errno;
-	else if ((sndsock6 = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+	else if ((sndsock6 = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
 		v6sock_errno = errno;
 
-	if ((rcvsock4 = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+	if ((rcvsock4 = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1)
 		v4sock_errno = errno;
-	else if ((sndsock4 = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
+	else if ((sndsock4 = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1)
 		v4sock_errno = errno;
 
 	/* revoke privs */
@@ -400,12 +400,12 @@ main(int argc, char *argv[])
 		mib[3] = IPV6CTL_DEFHLIM;
 		/* specify to tell receiving interface */
 		if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
-		    sizeof(on)) < 0)
+		    sizeof(on)) == -1)
 			err(1, "setsockopt(IPV6_RECVPKTINFO)");
 
 		/* specify to tell hoplimit field of received IP6 hdr */
 		if (setsockopt(rcvsock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
-		    sizeof(on)) < 0)
+		    sizeof(on)) == -1)
 			err(1, "setsockopt(IPV6_RECVHOPLIMIT)");
 	}
 
@@ -687,7 +687,7 @@ main(int argc, char *argv[])
 		ip->ip_tos = conf->tos;
 
 		if (setsockopt(sndsock, IPPROTO_IP, IP_HDRINCL,
-		     &on, sizeof(on)) < 0)
+		     &on, sizeof(on)) == -1)
 			err(6, "IP_HDRINCL");
 
 		if (conf->source) {
@@ -703,7 +703,7 @@ main(int argc, char *argv[])
 				errx(1, "source is on 127/8, destination is"
 				    " not");
 			if (ouid && bind(sndsock, (struct sockaddr *)&from4,
-			    sizeof(from4)) < 0)
+			    sizeof(from4)) == -1)
 				err(1, "bind");
 		}
 		packetlen = datalen;
@@ -787,35 +787,34 @@ main(int argc, char *argv[])
 
 			nxt = to6;
 			nxt.sin6_port = htons(DUMMY_PORT);
-			if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+			if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) == -1)
 				err(1, "socket");
 			if (conf->rtableid > 0 &&
 			    setsockopt(dummy, SOL_SOCKET, SO_RTABLE,
-			    &conf->rtableid, sizeof(conf->rtableid)) < 0)
+			    &conf->rtableid, sizeof(conf->rtableid)) == -1)
 				err(1, "setsockopt(SO_RTABLE)");
 			if (connect(dummy, (struct sockaddr *)&nxt,
-			    nxt.sin6_len) < 0)
+			    nxt.sin6_len) == -1)
 				err(1, "connect");
 			len = sizeof(from6);
 			if (getsockname(dummy, (struct sockaddr *)&from6,
-			    &len) < 0)
+			    &len) == -1)
 				err(1, "getsockname");
 			close(dummy);
 		}
 
 		from6.sin6_port = htons(0);
-		if (bind(sndsock, (struct sockaddr *)&from6, from6.sin6_len) <
-		    0)
+		if (bind(sndsock, (struct sockaddr *)&from6, from6.sin6_len) == -1)
 			err(1, "bind sndsock");
 
 		if (conf->tflag) {
 			if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_TCLASS,
-			    &conf->tos, sizeof(conf->tos)) < 0)
+			    &conf->tos, sizeof(conf->tos)) == -1)
 				err(6, "IPV6_TCLASS");
 		}
 
 		len = sizeof(from6);
-		if (getsockname(sndsock, (struct sockaddr *)&from6, &len) < 0)
+		if (getsockname(sndsock, (struct sockaddr *)&from6, &len) == -1)
 			err(1, "getsockname");
 		srcport = ntohs(from6.sin6_port);
 		break;
@@ -832,7 +831,7 @@ main(int argc, char *argv[])
 	}
 
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF,
-	    &datalen, sizeof(datalen)) < 0)
+	    &datalen, sizeof(datalen)) == -1)
 		err(6, "SO_SNDBUF");
 
 	if (conf->nflag && !conf->Aflag) {

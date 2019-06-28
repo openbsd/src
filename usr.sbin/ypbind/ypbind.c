@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.72 2018/04/26 15:55:14 guenther Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.73 2019/06/28 13:32:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -470,7 +470,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if ((rpcsock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0)) < 0) {
+	if ((rpcsock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0)) == -1) {
 		perror("socket");
 		return -1;
 	}
@@ -480,7 +480,7 @@ main(int argc, char *argv[])
 	sin.sin_port = 0;
 	bindresvport(rpcsock, &sin);
 
-	if ((pingsock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0)) < 0) {
+	if ((pingsock = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0)) == -1) {
 		perror("socket");
 		return -1;
 	}
@@ -653,7 +653,7 @@ ping(struct _dom_binding *ypdb)
 	ypdb->dom_alive = 2;
 	if (sendto(pingsock, buf, outlen, 0,
 	    (struct sockaddr *)&ypdb->dom_server_addr,
-	    (socklen_t)sizeof ypdb->dom_server_addr) < 0)
+	    (socklen_t)sizeof ypdb->dom_server_addr) == -1)
 		perror("sendto");
 	return 0;
 
@@ -732,7 +732,7 @@ pings(struct _dom_binding *ypdb)
 		bindsin.sin_port = htons(PMAPPORT);
 		bindsin.sin_addr = ypdb->dom_server_addr.sin_addr;
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
-		    (socklen_t)sizeof bindsin) < 0)
+		    (socklen_t)sizeof bindsin) == -1)
 			perror("sendto");
 	}
 	if (ypdb->dom_servlistfp)
@@ -779,7 +779,7 @@ broadcast(struct _dom_binding *ypdb, char *buf, int outlen)
 
 		bindsin.sin_addr = in;
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
-		    (socklen_t)bindsin.sin_len) < 0)
+		    (socklen_t)bindsin.sin_len) == -1)
 			perror("sendto");
 	}
 	freeifaddrs(ifap);
@@ -836,7 +836,7 @@ direct(struct _dom_binding *ypdb, char *buf, int outlen)
 			    hp->h_length);
 			if (sendto(rpcsock, buf, outlen, 0,
 			    (struct sockaddr *)&bindsin,
-			    (socklen_t)sizeof bindsin) < 0) {
+			    (socklen_t)sizeof bindsin) == -1) {
 				perror("sendto");
 				continue;
 			}
@@ -867,7 +867,7 @@ try_again:
 	fromlen = sizeof (struct sockaddr);
 	inlen = recvfrom(rpcsock, buf, sizeof buf, 0,
 	    (struct sockaddr *)&raddr, &fromlen);
-	if (inlen < 0) {
+	if (inlen == -1) {
 		if (errno == EINTR)
 			goto try_again;
 		return RPC_CANTRECV;
@@ -919,7 +919,7 @@ try_again:
 	fromlen = sizeof (struct sockaddr);
 	inlen = recvfrom(pingsock, buf, sizeof buf, 0,
 	    (struct sockaddr *)&raddr, &fromlen);
-	if (inlen < 0) {
+	if (inlen == -1) {
 		if (errno == EINTR)
 			goto try_again;
 		return RPC_CANTRECV;

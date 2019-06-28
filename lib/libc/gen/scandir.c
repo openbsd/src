@@ -1,4 +1,4 @@
-/*	$OpenBSD: scandir.c,v 1.20 2015/08/20 21:49:29 deraadt Exp $ */
+/*	$OpenBSD: scandir.c,v 1.21 2019/06/28 13:32:41 deraadt Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ scandir(const char *dirname, struct dirent ***namelist,
 
 	if ((dirp = opendir(dirname)) == NULL)
 		return (-1);
-	if (fstat(dirp->dd_fd, &stb) < 0)
+	if (fstat(dirp->dd_fd, &stb) == -1)
 		goto fail;
 
 	/*
@@ -97,7 +97,7 @@ scandir(const char *dirname, struct dirent ***namelist,
 		if (nitems >= arraysz) {
 			struct dirent **nnames;
 			
-			if (fstat(dirp->dd_fd, &stb) < 0)
+			if (fstat(dirp->dd_fd, &stb) == -1)
 				goto fail;
 
 			arraysz *= 2;

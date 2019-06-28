@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.26 2016/05/26 15:51:37 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.27 2019/06/28 13:32:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -164,7 +164,7 @@ auth_cat(char *file)
 	int fd, nchars;
 	char tbuf[8192];
 
-	if ((fd = open(file, O_RDONLY, 0)) < 0)
+	if ((fd = open(file, O_RDONLY, 0)) == -1)
 		return (0);
 	while ((nchars = read(fd, tbuf, sizeof(tbuf))) > 0)
 		(void)write(fileno(stdout), tbuf, nchars);
@@ -282,7 +282,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 	    pwd->pw_dir[0]) {
 		struct stat sb;
 
-		if (stat(pwd->pw_dir, &sb) < 0 || !S_ISDIR(sb.st_mode) ||
+		if (stat(pwd->pw_dir, &sb) == -1 || !S_ISDIR(sb.st_mode) ||
 		    (pwd->pw_uid && sb.st_uid == pwd->pw_uid &&
 		    (sb.st_mode & S_IXUSR) == 0)) {
 			auth_setstate(as, (auth_getstate(as) & ~AUTH_ALLOW));

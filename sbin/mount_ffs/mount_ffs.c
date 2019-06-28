@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ffs.c,v 1.24 2016/09/10 16:53:30 natano Exp $	*/
+/*	$OpenBSD: mount_ffs.c,v 1.25 2019/06/28 13:32:44 deraadt Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	if (mntflags & MNT_NOPERM)
 		mntflags |= MNT_NODEV | MNT_NOEXEC;
 
-	if (mount(MOUNT_FFS, fs_name, mntflags, &args) < 0) {
+	if (mount(MOUNT_FFS, fs_name, mntflags, &args) == -1) {
 		switch (errno) {
 		case EMFILE:
 			errcause = "mount table full";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.53 2019/03/18 00:09:22 dlg Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.54 2019/06/28 13:32:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -172,7 +172,7 @@ priv_init(int argc, char **argv)
 	sigprocmask(SIG_BLOCK, &allsigs, &oset);
 
 	child_pid = fork();
-	if (child_pid < 0)
+	if (child_pid == -1)
 		err(1, "fork() failed");
 
 	if (child_pid) {
@@ -404,7 +404,7 @@ impl_open_dump(int fd, const char *RFileName)
 	} else {
 		file = open(RFileName, O_RDONLY, 0);
 		err = errno;
-		if (file < 0)
+		if (file == -1)
 			logmsg(LOG_DEBUG, "[priv]: failed to open %s: %s",
 			    RFileName, strerror(errno));
 	}
@@ -423,7 +423,7 @@ impl_open_pfosfp(int fd)
 
 	file = open(PF_OSFP_FILE, O_RDONLY, 0);
 	err = errno;
-	if (file < 0)
+	if (file == -1)
 		logmsg(LOG_DEBUG, "[priv]: failed to open %s: %s",
 		    PF_OSFP_FILE, strerror(errno));
 	send_fd(fd, file);
@@ -443,7 +443,7 @@ impl_open_output(int fd, const char *WFileName)
 	err = errno;
 	send_fd(fd, file);
 	must_write(fd, &err, sizeof(int));
-	if (file < 0)
+	if (file == -1)
 		logmsg(LOG_DEBUG, "[priv]: failed to open %s: %s",
 		    WFileName, strerror(err));
 	else

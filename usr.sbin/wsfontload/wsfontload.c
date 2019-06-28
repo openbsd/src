@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.20 2017/08/23 09:15:33 fcambus Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.21 2019/06/28 13:32:51 deraadt Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 		usage();
 
 	wsfd = open(wsdev, O_RDWR, 0);
-	if (wsfd < 0)
+	if (wsfd == -1)
 		err(2, "open %s", wsdev);
 
 	if (list) {
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
 	if (argc > 0) {
 		infile = argv[0];
 		ffd = open(infile, O_RDONLY, 0);
-		if (ffd < 0)
+		if (ffd == -1)
 			err(4, "open %s", infile);
 		if (!*f.name)
 			strlcpy(f.name, infile, WSFONT_NAME_SIZE);
@@ -229,7 +229,7 @@ main(int argc, char *argv[])
 	if (!buf)
 		errx(1, "malloc");
 	res = read(ffd, buf, len);
-	if (res < 0)
+	if (res == -1)
 		err(4, "read %s", infile);
 	if (res != len)
 		errx(4, "short read on %s", infile);
@@ -237,7 +237,7 @@ main(int argc, char *argv[])
 	f.data = buf;
 
 	res = ioctl(wsfd, WSDISPLAYIO_LDFONT, &f);
-	if (res < 0)
+	if (res == -1)
 		err(3, "WSDISPLAYIO_LDFONT");
 
 	return (0);

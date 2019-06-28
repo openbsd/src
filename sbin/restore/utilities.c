@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.19 2015/11/07 21:52:55 guenther Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.20 2019/06/28 13:32:46 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ gentempname(struct entry *ep)
 void
 renameit(char *from, char *to)
 {
-	if (!Nflag && rename(from, to) < 0) {
+	if (!Nflag && rename(from, to) == -1) {
 		warn("cannot rename %s to %s", from, to);
 		return;
 	}
@@ -137,7 +137,7 @@ newnode(struct entry *np)
 	if (np->e_type != NODE)
 		badentry(np, "newnode: not a node");
 	cp = myname(np);
-	if (!Nflag && mkdir(cp, 0777) < 0) {
+	if (!Nflag && mkdir(cp, 0777) == -1) {
 		np->e_flags |= EXISTED;
 		warn("%s", cp);
 		return;
@@ -160,7 +160,7 @@ removenode(struct entry *ep)
 	ep->e_flags |= REMOVED;
 	ep->e_flags &= ~TMPNAME;
 	cp = myname(ep);
-	if (!Nflag && rmdir(cp) < 0) {
+	if (!Nflag && rmdir(cp) == -1) {
 		warn("%s", cp);
 		return;
 	}
@@ -180,7 +180,7 @@ removeleaf(struct entry *ep)
 	ep->e_flags |= REMOVED;
 	ep->e_flags &= ~TMPNAME;
 	cp = myname(ep);
-	if (!Nflag && unlink(cp) < 0) {
+	if (!Nflag && unlink(cp) == -1) {
 		warn("%s", cp);
 		return;
 	}
@@ -195,14 +195,14 @@ linkit(char *existing, char *new, int type)
 {
 
 	if (type == SYMLINK) {
-		if (!Nflag && symlink(existing, new) < 0) {
+		if (!Nflag && symlink(existing, new) == -1) {
 			warn("cannot create symbolic link %s->%s",
 			    new, existing);
 			return (FAIL);
 		}
 	} else if (type == HARDLINK) {
 		if (!Nflag && linkat(AT_FDCWD, existing, AT_FDCWD, new, 0)
-		    < 0) {
+		    == -1) {
 			warn("cannot create hard link %s->%s",
 			    new, existing);
 			return (FAIL);

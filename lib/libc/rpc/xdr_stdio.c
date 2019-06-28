@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_stdio.c,v 1.14 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: xdr_stdio.c,v 1.15 2019/06/28 13:32:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -144,7 +144,7 @@ static bool_t
 xdrstdio_setpos(XDR *xdrs, u_int pos)
 { 
 
-	return ((fseek((FILE *)xdrs->x_private, (long)pos, SEEK_SET) < 0) ?
+	return ((fseek((FILE *)xdrs->x_private, (long)pos, SEEK_SET) == -1) ?
 		FALSE : TRUE);
 }
 

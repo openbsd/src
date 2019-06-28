@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.49 2018/08/04 03:23:08 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.50 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -138,12 +138,12 @@ main(int argc, char *argv[])
 	laddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	laddr.sin_port = htons(PMAPPORT);
 
-	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 		syslog(LOG_ERR, "cannot create udp socket: %m");
 		exit(1);
 	}
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
-	if (bind(sock, (struct sockaddr *)&addr, len) != 0) {
+	if (bind(sock, (struct sockaddr *)&addr, len) == -1) {
 		syslog(LOG_ERR, "cannot bind udp: %m");
 		exit(1);
 	}
@@ -153,12 +153,12 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if ((lsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	if ((lsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 		syslog(LOG_ERR, "cannot create udp socket: %m");
 		exit(1);
 	}
 	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
-	if (bind(lsock, (struct sockaddr *)&laddr, len) != 0) {
+	if (bind(lsock, (struct sockaddr *)&laddr, len) == -1) {
 		syslog(LOG_ERR, "cannot bind local udp: %m");
 		exit(1);
 	}
@@ -181,12 +181,12 @@ main(int argc, char *argv[])
 	pml->pml_map.pm_port = PMAPPORT;
 	pmaplist = pml;
 
-	if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+	if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
 		syslog(LOG_ERR, "cannot create tcp socket: %m");
 		exit(1);
 	}
 	setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
-	if (bind(sock, (struct sockaddr *)&addr, len) != 0) {
+	if (bind(sock, (struct sockaddr *)&addr, len) == -1) {
 		syslog(LOG_ERR, "cannot bind tcp: %m");
 		exit(1);
 	}
@@ -196,12 +196,12 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if ((lsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+	if ((lsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
 		syslog(LOG_ERR, "cannot create tcp socket: %m");
 		exit(1);
 	}
 	setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &on, sizeof on);
-	if (bind(lsock, (struct sockaddr *)&laddr, len) != 0) {
+	if (bind(lsock, (struct sockaddr *)&laddr, len) == -1) {
 		syslog(LOG_ERR, "cannot bind tcp: %m");
 		exit(1);
 	}

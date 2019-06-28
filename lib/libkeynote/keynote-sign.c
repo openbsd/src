@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sign.c,v 1.18 2015/11/19 07:00:58 guenther Exp $ */
+/* $OpenBSD: keynote-sign.c,v 1.19 2019/06/28 13:32:42 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -104,13 +104,13 @@ keynote_sign(int argc, char *argv[])
 
     /* Read assertion */
     fd = open(argv[2 + flg], O_RDONLY, 0);
-    if (fd < 0)
+    if (fd == -1)
     {
 	perror(argv[2 + flg]);
 	exit(1);
     }
 
-    if (fstat(fd, &sb) < 0)
+    if (fstat(fd, &sb) == -1)
     {
 	perror("fstat()");
 	exit(1);
@@ -130,7 +130,7 @@ keynote_sign(int argc, char *argv[])
 	exit(1);
     }
 
-    if (read(fd, buf, buflen - 1) < 0)
+    if (read(fd, buf, buflen - 1) == -1)
     {
 	perror("read()");
 	exit(1);
@@ -140,13 +140,13 @@ keynote_sign(int argc, char *argv[])
 
     /* Read private key file */
     fd = open(argv[3 + flg], O_RDONLY, 0);
-    if (fd < 0)
+    if (fd == -1)
     {
 	perror(argv[3 + flg]);
 	exit(1);
     }
 
-    if (fstat(fd, &sb) < 0)
+    if (fstat(fd, &sb) == -1)
     {
 	perror("fstat()");
 	exit(1);
@@ -165,7 +165,7 @@ keynote_sign(int argc, char *argv[])
 	exit(1);
     }
 
-    if (read(fd, buf2, sb.st_size) < 0)
+    if (read(fd, buf2, sb.st_size) == -1)
     {
 	perror("read()");
 	exit(1);

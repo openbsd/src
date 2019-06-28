@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.16 2015/12/30 21:38:28 millert Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.17 2019/06/28 13:32:45 deraadt Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 		if (!set_mask)
 			args.mode = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
-	if (mount(MOUNT_NTFS, dir, mntflags, &args) < 0)
+	if (mount(MOUNT_NTFS, dir, mntflags, &args) == -1)
 		err(1, "%s on %s", dev, dir);
 
 	exit(0);

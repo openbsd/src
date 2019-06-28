@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.c,v 1.39 2018/09/24 21:26:00 deraadt Exp $	*/
+/*	$OpenBSD: fsck.c,v 1.40 2019/06/28 13:32:43 deraadt Exp $	*/
 /*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 			rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
 		else
 			rl.rlim_cur = rl.rlim_max;
-		if (setrlimit(RLIMIT_DATA, &rl) < 0)
+		if (setrlimit(RLIMIT_DATA, &rl) == -1)
 			warn("Can't set resource limit to max data size");
 	} else
 		warn("Can't get resource limit for data size");
@@ -339,7 +339,7 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 			return 0;
 		}
 
-		if (waitpid(pid, &status, 0) < 0) {
+		if (waitpid(pid, &status, 0) == -1) {
 			warn("waitpid");
 			return (1);
 		}

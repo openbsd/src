@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.50 2018/04/27 06:46:04 guenther Exp $	*/
+/*	$OpenBSD: tape.c,v 1.51 2019/06/28 13:32:46 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ setup(void)
 		mt = 0;
 	else
 		mt = open(magtape, O_RDONLY);
-	if (mt < 0)
+	if (mt == -1)
 		err(1, "%s", magtape);
 	volno = 1;
 	setdumpnum();
@@ -234,7 +234,7 @@ setup(void)
 		printdumpinfo();
 	dumptime = (time_t)spcl.c_ddate;
 	dumpdate = (time_t)spcl.c_date;
-	if (stat(".", &stbuf) < 0)
+	if (stat(".", &stbuf) == -1)
 		err(1, "cannot stat .");
 	if (stbuf.st_blksize > 0 && stbuf.st_blksize < TP_BSIZE )
 		fssize = TP_BSIZE;
@@ -478,7 +478,7 @@ setdumpnum(void)
 		rmtioctl(MTFSF, dumpnum - 1);
 	else
 #endif
-		if (ioctl(mt, MTIOCTOP, (char *)&tcom) < 0)
+		if (ioctl(mt, MTIOCTOP, (char *)&tcom) == -1)
 			warn("ioctl MTFSF");
 }
 
@@ -576,7 +576,7 @@ extractfile(char *name)
 			skipfile();
 			return (GOOD);
 		}
-		if (mknod(name, mode, (int)curfile.rdev) < 0) {
+		if (mknod(name, mode, (int)curfile.rdev) == -1) {
 			warn("%s: cannot create special file", name);
 			skipfile();
 			return (FAIL);
@@ -596,7 +596,7 @@ extractfile(char *name)
 			skipfile();
 			return (GOOD);
 		}
-		if (mkfifo(name, mode) < 0) {
+		if (mkfifo(name, mode) == -1) {
 			warn("%s: cannot create fifo", name);
 			skipfile();
 			return (FAIL);
@@ -617,7 +617,7 @@ extractfile(char *name)
 			return (GOOD);
 		}
 		if ((ofile = open(name, O_WRONLY | O_CREAT | O_TRUNC,
-		    0666)) < 0) {
+		    0666)) == -1) {
 			warn("%s: cannot create file", name);
 			skipfile();
 			return (FAIL);

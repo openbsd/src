@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.24 2019/03/18 00:09:22 dlg Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.25 2019/06/28 13:32:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -79,7 +79,7 @@ setfilter(int bpfd, int sock, char *filter)
 		goto err;
 
 	/* if bpf descriptor is open, set the filter XXX check oflag? */
-	if (bpfd >= 0 && ioctl(bpfd, BIOCSETF, &fcode)) {
+	if (bpfd >= 0 && ioctl(bpfd, BIOCSETF, &fcode) == -1) {
 		snprintf(hpcap.errbuf, PCAP_ERRBUF_SIZE,
 		    "ioctl: BIOCSETF: %s", strerror(errno));
 		pcap_freecode(&fcode);
@@ -189,23 +189,23 @@ pcap_live(const char *device, int snaplen, int promisc, u_int dlt,
 	ioctl(fd, BIOCSBLEN, &v);
 
 	strlcpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
-	if (ioctl(fd, BIOCSETIF, &ifr) < 0)
+	if (ioctl(fd, BIOCSETIF, &ifr) == -1)
 		goto error;
 
-	if (dlt != (u_int) -1 && ioctl(fd, BIOCSDLT, &dlt))
+	if (dlt != (u_int) -1 && ioctl(fd, BIOCSDLT, &dlt) == -1)
 		goto error;
 
 	if (promisc)
 		/* this is allowed to fail */
 		ioctl(fd, BIOCPROMISC, NULL);
-	if (ioctl(fd, BIOCSDIRFILT, &dirfilt) < 0)
+	if (ioctl(fd, BIOCSDIRFILT, &dirfilt) == -1)
 		goto error;
 
-	if (ioctl(fd, BIOCSFILDROP, &fildrop) < 0)
+	if (ioctl(fd, BIOCSFILDROP, &fildrop) == -1)
 		goto error;
 
 	/* lock the descriptor */
-	if (ioctl(fd, BIOCLOCK, NULL) < 0)
+	if (ioctl(fd, BIOCLOCK, NULL) == -1)
 		goto error;
 	return (fd);
 
@@ -263,7 +263,7 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms,
 	}
 
 	/* fd is locked, can only use 'safe' ioctls */
-	if (ioctl(fd, BIOCVERSION, &bv) < 0) {
+	if (ioctl(fd, BIOCVERSION, &bv) == -1) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCVERSION: %s",
 		    pcap_strerror(errno));
 		goto bad;
@@ -280,7 +280,7 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms,
 	p->snapshot = slen;
 
 	/* Get the data link layer type. */
-	if (ioctl(fd, BIOCGDLT, &v) < 0) {
+	if (ioctl(fd, BIOCGDLT, &v) == -1) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCGDLT: %s",
 		    pcap_strerror(errno));
 		goto bad;
@@ -296,14 +296,14 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms,
 		struct timeval to;
 		to.tv_sec = to_ms / 1000;
 		to.tv_usec = (to_ms * 1000) % 1000000;
-		if (ioctl(p->fd, BIOCSRTIMEOUT, &to) < 0) {
+		if (ioctl(p->fd, BIOCSRTIMEOUT, &to) == -1) {
 			snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCSRTIMEOUT: %s",
 			    pcap_strerror(errno));
 			goto bad;
 		}
 	}
 
-	if (ioctl(fd, BIOCGBLEN, &v) < 0) {
+	if (ioctl(fd, BIOCGBLEN, &v) == -1) {
 		snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCGBLEN: %s",
 		    pcap_strerror(errno));
 		goto bad;

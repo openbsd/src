@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.17 2016/11/26 11:18:43 mpi Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.18 2019/06/28 13:32:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -210,7 +210,7 @@ main(int argc, char *argv[])
 		goto bail_out;
 	}
 
-	if ((fd = open(dev, O_RDWR)) < 0) {
+	if ((fd = open(dev, O_RDWR)) == -1) {
 		syslog(LOG_ERR, "can't open %s", dev);
 		goto bail_out;
 	}
@@ -221,7 +221,7 @@ main(int argc, char *argv[])
 	 * the line discipline (e.g. nmea has a default baudrate of
 	 * 4800 instead of 9600).
 	 */
-	if (tcgetattr(fd, &tty) < 0) {
+	if (tcgetattr(fd, &tty) == -1) {
 		if (ppid != 1)
 			warnx("tcgetattr");
 		goto bail_out;
@@ -258,9 +258,9 @@ main(int argc, char *argv[])
 		cfsetspeed(&tty, speed);
 
 	/* setup common to all line disciplines */
-	if (ioctl(fd, TIOCSDTR, 0) < 0)
+	if (ioctl(fd, TIOCSDTR, 0) == -1)
 		warn("TIOCSDTR");
-	if (ioctl(fd, TIOCSETD, &ldisc) < 0) {
+	if (ioctl(fd, TIOCSETD, &ldisc) == -1) {
 		syslog(LOG_ERR, "can't attach %s line discipline on %s", disc,
 		    dev);
 		goto bail_out;
@@ -271,7 +271,7 @@ main(int argc, char *argv[])
 	case NMEADISC:
 	case MSTSDISC:
 	case ENDRUNDISC:
-		if (ioctl(fd, TIOCSTSTAMP, &tstamps) < 0) {
+		if (ioctl(fd, TIOCSTSTAMP, &tstamps) == -1) {
 			warnx("TIOCSTSTAMP");
 			goto bail_out;
 		}
@@ -285,7 +285,7 @@ main(int argc, char *argv[])
 	}
 
 	/* finally set the line attributes */
-	if (tcsetattr(fd, TCSADRAIN, &tty) < 0) {
+	if (tcsetattr(fd, TCSADRAIN, &tty) == -1) {
 		if (ppid != 1)
 			warnx("tcsetattr");
 		goto bail_out;

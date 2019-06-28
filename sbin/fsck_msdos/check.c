@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.19 2018/09/24 21:26:02 deraadt Exp $	*/
+/*	$OpenBSD: check.c,v 1.20 2019/06/28 13:32:43 deraadt Exp $	*/
 /*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
 
 /*
@@ -60,11 +60,11 @@ checkfilesys(const char *fname)
 	rdonly = alwaysno;
 
 	dosfs = opendev(fname, rdonly ? O_RDONLY : O_RDWR, 0, &realdev);
-	if (dosfs < 0 && !rdonly) {
+	if (dosfs == -1 && !rdonly) {
 		dosfs = opendev(fname, O_RDONLY, 0, &realdev);
 		rdonly = 1;
 	}
-	if (dosfs < 0) {
+	if (dosfs == -1) {
 		xperror("Can't open");
 		return (8);
 	}
@@ -78,7 +78,7 @@ checkfilesys(const char *fname)
 		printf("\n");
 	}
 
-	if (ioctl(dosfs, DIOCGDINFO, (char *)&lab) < 0)
+	if (ioctl(dosfs, DIOCGDINFO, (char *)&lab) == -1)
 		pfatal("can't read disk label for %s\n", fname);
 
 	if (pledge("stdio", NULL) == -1)

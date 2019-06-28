@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.54 2019/06/02 02:37:12 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.55 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -903,14 +903,14 @@ dump_rom(int bus, int dev, int func)
 	rom.pr_sel.pc_bus = bus;
 	rom.pr_sel.pc_dev = dev;
 	rom.pr_sel.pc_func = func;
-	if (ioctl(pcifd, PCIOCGETROMLEN, &rom))
+	if (ioctl(pcifd, PCIOCGETROMLEN, &rom) == -1)
 		return (errno);
 
 	rom.pr_rom = malloc(rom.pr_romlen);
 	if (rom.pr_rom == NULL)
 		return (ENOMEM);
 
-	if (ioctl(pcifd, PCIOCGETROM, &rom))
+	if (ioctl(pcifd, PCIOCGETROM, &rom) == -1)
 		return (errno);
 
 	if (write(romfd, rom.pr_rom, rom.pr_romlen) == -1)

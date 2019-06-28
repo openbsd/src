@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_softraid.c,v 1.3 2015/10/03 16:56:52 krw Exp $	*/
+/*	$OpenBSD: sparc64_softraid.c,v 1.4 2019/06/28 13:32:48 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -64,7 +64,7 @@ sr_install_bootblk(int devfd, int vol, int disk)
 
 	/* Open device. */
 	if ((diskfd = opendev(bd.bd_vendor, (nowrite ? O_RDONLY : O_RDWR),
-	    OPENDEV_PART, &realdev)) < 0)
+	    OPENDEV_PART, &realdev)) == -1)
 		err(1, "open: %s", realdev);
 
 	if (verbose)

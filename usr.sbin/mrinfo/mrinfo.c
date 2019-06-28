@@ -375,9 +375,9 @@ main(int argc, char *argv[])
 		addr.sin_addr.s_addr = target_addr;
 		addr.sin_port = htons(2000);	/* any port over 1024 will
 						 * do... */
-		if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ||
-		    connect(udp, (struct sockaddr *) & addr, sizeof(addr)) < 0 ||
-		    getsockname(udp, (struct sockaddr *) & addr, &addrlen) < 0) {
+		if ((udp = socket(AF_INET, SOCK_DGRAM, 0)) == -1 ||
+		    connect(udp, (struct sockaddr *) & addr, sizeof(addr)) == -1 ||
+		    getsockname(udp, (struct sockaddr *) & addr, &addrlen) == -1) {
 			perror("Determining local address");
 			exit(1);
 		}
@@ -422,7 +422,7 @@ main(int argc, char *argv[])
 
 			count = poll(pfd, 1, tv.tv_sec * 1000);
 
-			if (count < 0) {
+			if (count == -1) {
 				if (errno != EINTR)
 					perror("select");
 				continue;

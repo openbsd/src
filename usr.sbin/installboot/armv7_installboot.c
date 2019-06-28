@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_installboot.c,v 1.3 2017/05/07 10:40:17 kettenis Exp $	*/
+/*	$OpenBSD: armv7_installboot.c,v 1.4 2019/06/28 13:32:48 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -73,7 +73,7 @@ md_installboot(int devfd, char *dev)
 	int part;
 
 	/* Get and check disklabel. */
-	if (ioctl(devfd, DIOCGDINFO, &dl) != 0)
+	if (ioctl(devfd, DIOCGDINFO, &dl) == -1)
 		err(1, "disklabel: %s", dev);
 	if (dl.d_magic != DISKMAGIC)
 		errx(1, "bad disklabel magic=0x%08x", dl.d_magic);

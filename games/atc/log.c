@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.24 2017/01/20 00:50:16 krw Exp $	*/
+/*	$OpenBSD: log.c,v 1.25 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@ open_score_file(void)
 
 	old_mode = umask(0);
 	score_fd = open(scorefile, O_CREAT|O_RDWR, 0644);
-	if (score_fd < 0)
+	if (score_fd == -1)
 		err(1, "open");
 	/*
 	 * This is done to take advantage of stdio, while still
@@ -144,7 +144,7 @@ log_score(int list_em)
 
 	if (score_fp == NULL)
 		return (-1);
-	if (flock(fileno(score_fp), LOCK_EX) < 0)
+	if (flock(fileno(score_fp), LOCK_EX) == -1)
 		err(1, "flock");
 	snprintf(scanstr, 50, "%%%zus %%%zus %%d %%d %%d", sizeof(score[0].name)-1,
 	    sizeof(score[0].game)-1);

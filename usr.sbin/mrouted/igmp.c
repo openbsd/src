@@ -43,7 +43,7 @@ init_igmp(void)
     recv_buf = malloc(RECV_BUF_SIZE);
     send_buf = malloc(RECV_BUF_SIZE);
 
-    if ((igmp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IGMP)) < 0)
+    if ((igmp_socket = socket(AF_INET, SOCK_RAW, IPPROTO_IGMP)) == -1)
 	logit(LOG_ERR, errno, "IGMP socket");
 
     k_hdr_include(TRUE);	/* include IP header when sending */
@@ -331,7 +331,7 @@ send_igmp(u_int32_t src, u_int32_t dst, int type, int code,
     sdst.sin_len = sizeof(sdst);
     sdst.sin_addr.s_addr = dst;
     if (sendto(igmp_socket, send_buf, ntohs(ip->ip_len), 0,
-			(struct sockaddr *)&sdst, sizeof(sdst)) < 0) {
+			(struct sockaddr *)&sdst, sizeof(sdst)) == -1) {
 	if (errno == ENETDOWN)
 	    check_vif_state();
 	else

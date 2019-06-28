@@ -1,4 +1,4 @@
-/*	$OpenBSD: ophandlers.c,v 1.14 2015/08/20 22:39:29 deraadt Exp $	*/
+/*	$OpenBSD: ophandlers.c,v 1.15 2019/06/28 13:32:47 deraadt Exp $	*/
 /*	$NetBSD: ophandlers.c,v 1.2 1996/02/28 01:13:30 thorpej Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ op_handler(char *keyword, char *arg)
 	char opio_buf[BUFSIZE];
 	int fd, optnode;
 
-	if ((fd = open(path_openprom, arg ? O_RDWR : O_RDONLY, 0640)) < 0)
+	if ((fd = open(path_openprom, arg ? O_RDWR : O_RDONLY, 0640)) == -1)
 		BARF(path_openprom, strerror(errno));
 
 	/* Check to see if it's a special-case keyword. */
@@ -87,7 +87,7 @@ op_handler(char *keyword, char *arg)
 		if (strcmp(ex->ex_keyword, keyword) == 0)
 			break;
 
-	if (ioctl(fd, OPIOCGETOPTNODE, (char *)&optnode) < 0)
+	if (ioctl(fd, OPIOCGETOPTNODE, (char *)&optnode) == -1)
 		BARF("OPIOCGETOPTNODE", strerror(errno));
 
 	bzero(&opio_buf[0], sizeof(opio_buf));
@@ -102,7 +102,7 @@ op_handler(char *keyword, char *arg)
 
 			opio.op_buf = &opio_buf[0];
 			opio.op_buflen = sizeof(opio_buf);
-			if (ioctl(fd, OPIOCGET, (char *)&opio) < 0)
+			if (ioctl(fd, OPIOCGET, (char *)&opio) == -1)
 				BARF("OPIOCGET", strerror(errno));
 
 			if (opio.op_buflen <= 0) {
@@ -123,7 +123,7 @@ op_handler(char *keyword, char *arg)
 			opio.op_buflen = strlen(arg);
 		}
 
-		if (ioctl(fd, OPIOCSET, (char *)&opio) < 0)
+		if (ioctl(fd, OPIOCSET, (char *)&opio) == -1)
 			BARF("invalid keyword", keyword);
 
 		if (verbose) {
@@ -136,7 +136,7 @@ op_handler(char *keyword, char *arg)
 	} else {
 		opio.op_buf = &opio_buf[0];
 		opio.op_buflen = sizeof(opio_buf);
-		if (ioctl(fd, OPIOCGET, (char *)&opio) < 0)
+		if (ioctl(fd, OPIOCGET, (char *)&opio) == -1)
 			BARF("OPIOCGET", strerror(errno));
 
 		if (opio.op_buflen <= 0) {
@@ -178,10 +178,10 @@ op_dump(void)
 	char buf1[BUFSIZE], buf2[BUFSIZE], buf3[BUFSIZE], buf4[BUFSIZE];
 	int fd, optnode;
 
-	if ((fd = open(path_openprom, O_RDONLY, 0640)) < 0)
+	if ((fd = open(path_openprom, O_RDONLY, 0640)) == -1)
 		err(1, "open: %s", path_openprom);
 
-	if (ioctl(fd, OPIOCGETOPTNODE, (char *)&optnode) < 0)
+	if (ioctl(fd, OPIOCGETOPTNODE, (char *)&optnode) == -1)
 		err(1, "OPIOCGETOPTNODE");
 
 	bzero(&opio1, sizeof(opio1));
@@ -213,7 +213,7 @@ op_dump(void)
 		opio1.op_namelen = strlen(opio1.op_name);
 		opio1.op_buflen = sizeof(buf2);
 
-		if (ioctl(fd, OPIOCNEXTPROP, (char *)&opio1) < 0)
+		if (ioctl(fd, OPIOCNEXTPROP, (char *)&opio1) == -1)
 			err(1, "ioctl: OPIOCNEXTPROP");
 
 		/*
@@ -233,7 +233,7 @@ op_dump(void)
 		bzero(opio2.op_buf, sizeof(buf4));
 		opio2.op_buflen = sizeof(buf4);
 
-		if (ioctl(fd, OPIOCGET, (char *)&opio2) < 0)
+		if (ioctl(fd, OPIOCGET, (char *)&opio2) == -1)
 			err(1, "ioctl: OPIOCGET");
 
 		for (ex = opextab; ex->ex_keyword != NULL; ++ex)

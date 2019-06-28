@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.13 2016/09/11 14:21:18 tb Exp $	*/
+/*	$OpenBSD: save.c,v 1.14 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: save.c,v 1.4 1995/03/24 05:02:13 cgd Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ over:
 	    && getyn(OVERWRITEFILEPROMPT) == FALSE))
 		return FALSE;
 
-	if ((outf = open(buf, O_CREAT | O_TRUNC | O_WRONLY, 0644)) < 0) {
+	if ((outf = open(buf, O_CREAT | O_TRUNC | O_WRONLY, 0644)) == -1) {
 		error(strerror(errno));
 		return FALSE;
 	}
@@ -144,9 +144,9 @@ rest_f(const char *file)
 	char	buf[80];
 	STAT	sbuf;
 
-	if ((inf = open(file, O_RDONLY)) < 0)
+	if ((inf = open(file, O_RDONLY)) == -1)
 		err(1, "%s", file);
-	if (fstat(inf, &sbuf) < 0)		/* get file stats	*/
+	if (fstat(inf, &sbuf) == -1)		/* get file stats	*/
 		err(1, "%s", file);
 	varpush(inf, readv);
 	close(inf);

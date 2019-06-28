@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.60 2018/04/26 17:40:48 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.61 2019/06/28 13:32:43 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -382,11 +382,11 @@ main(int argc, char *argv[])
 	spcl.c_level = level - '0';
 	spcl.c_type = TS_TAPE;
 
-	if ((diskfd = open(disk, O_RDONLY)) < 0) {
+	if ((diskfd = open(disk, O_RDONLY)) == -1) {
 		msg("Cannot open %s\n", disk);
 		exit(X_STARTUP);
 	}
-	if (ioctl(diskfd, DIOCGDINFO, (char *)&lab) < 0)
+	if (ioctl(diskfd, DIOCGDINFO, (char *)&lab) == -1)
 		err(1, "ioctl (DIOCGDINFO)");
 	
 	if (memcmp(lab.d_uid, &zero_uid, sizeof(lab.d_uid)) != 0) {
@@ -416,7 +416,7 @@ main(int argc, char *argv[])
 	else
 		msgtail("to %s\n", tape);
 
-	if (ioctl(diskfd, DIOCGPDINFO, (char *)&lab) < 0)
+	if (ioctl(diskfd, DIOCGPDINFO, (char *)&lab) == -1)
 		err(1, "ioctl (DIOCGPDINFO)");
 	sync();
 	sblock = (struct fs *)sblock_buf;
@@ -658,7 +658,7 @@ getduid(char *path)
 	char *duid;
 	
 	if ((fd = opendev(path, O_RDONLY | O_NOFOLLOW, 0, NULL)) >= 0) {
-		if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
+		if (ioctl(fd, DIOCGDINFO, (char *)&lab) == -1) {
 			close(fd);
 			warn("ioctl(DIOCGDINFO)");
 			return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.160 2018/10/15 11:29:27 florian Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.161 2019/06/28 13:32:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -356,7 +356,7 @@ main(int argc, char *argv[])
 
 	openlog("inetd", LOG_PID | LOG_NOWAIT, LOG_DAEMON);
 
-	if (getrlimit(RLIMIT_NOFILE, &rlim_nofile) < 0) {
+	if (getrlimit(RLIMIT_NOFILE, &rlim_nofile) == -1) {
 		syslog(LOG_ERR, "getrlimit: %m");
 	} else {
 		rlim_nofile_cur = rlim_nofile.rlim_cur;
@@ -399,7 +399,7 @@ gettcp(int fd, short events, void *xsep)
 	ctrl = accept(sep->se_fd, NULL, NULL);
 	if (debug)
 		fprintf(stderr, "accept, ctrl %d\n", ctrl);
-	if (ctrl < 0) {
+	if (ctrl == -1) {
 		if (errno != EWOULDBLOCK && errno != EINTR &&
 		    errno != ECONNABORTED)
 			syslog(LOG_WARNING, "accept (for %s): %m",
@@ -412,7 +412,7 @@ gettcp(int fd, short events, void *xsep)
 		socklen_t plen = sizeof(peer);
 		char sbuf[NI_MAXSERV];
 
-		if (getpeername(ctrl, (struct sockaddr *)&peer, &plen) < 0) {
+		if (getpeername(ctrl, (struct sockaddr *)&peer, &plen) == -1) {
 			syslog(LOG_WARNING, "could not getpeername");
 			close(ctrl);
 			return;
@@ -484,7 +484,7 @@ dg_broadcast(struct in_addr *in)
 	struct ifaddrs *ifa, *ifap;
 	struct sockaddr_in *sin;
 
-	if (getifaddrs(&ifap) < 0)
+	if (getifaddrs(&ifap) == -1)
 		return (0);
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr->sa_family != AF_INET ||
@@ -814,7 +814,7 @@ setup(struct servtab *sep)
 	int r;
 	mode_t mask = 0;
 
-	if ((sep->se_fd = socket(sep->se_family, sep->se_socktype, 0)) < 0) {
+	if ((sep->se_fd = socket(sep->se_family, sep->se_socktype, 0)) == -1) {
 		syslog(LOG_ERR, "%s/%s: socket: %m",
 		    sep->se_service, sep->se_proto);
 		return;
@@ -862,7 +862,7 @@ setsockopt(fd, SOL_SOCKET, opt, &on, sizeof (on))
 		if (sep->se_family == AF_UNIX)
 			umask(mask);
 	}
-	if (r < 0) {
+	if (r == -1) {
 		syslog(LOG_ERR, "%s/%s: bind: %m",
 		    sep->se_service, sep->se_proto);
 		(void) close(sep->se_fd);
@@ -906,7 +906,7 @@ register_rpc(struct servtab *sep)
 		return;
 	}
 	n = sizeof sin;
-	if (getsockname(sep->se_fd, (struct sockaddr *)&sin, &n) < 0) {
+	if (getsockname(sep->se_fd, (struct sockaddr *)&sin, &n) == -1) {
 		syslog(LOG_ERR, "%s/%s: getsockname: %m",
 		    sep->se_service, sep->se_proto);
 		return;
@@ -1115,7 +1115,7 @@ more:
 
 		/* check if the family is supported */
 		s = socket(sep->se_family, SOCK_DGRAM, 0);
-		if (s < 0) {
+		if (s == -1) {
 			syslog(LOG_WARNING, "%s/%s: %s: the address family is "
 			    "not supported by the kernel", sep->se_service,
 			    sep->se_proto, sep->se_hostaddr);
@@ -1412,7 +1412,7 @@ bump_nofile(void)
 
 	struct rlimit rl;
 
-	if (getrlimit(RLIMIT_NOFILE, &rl) < 0) {
+	if (getrlimit(RLIMIT_NOFILE, &rl) == -1) {
 		syslog(LOG_ERR, "getrlimit: %m");
 		return -1;
 	}
@@ -1425,7 +1425,7 @@ bump_nofile(void)
 		return -1;
 	}
 
-	if (setrlimit(RLIMIT_NOFILE, &rl) < 0) {
+	if (setrlimit(RLIMIT_NOFILE, &rl) == -1) {
 		syslog(LOG_ERR, "setrlimit: %m");
 		return -1;
 	}
@@ -1462,7 +1462,7 @@ echo_dg(int s, struct servtab *sep)
 
 	size = sizeof(ss);
 	if ((i = recvfrom(s, buffer, sizeof(buffer), 0,
-	    (struct sockaddr *)&ss, &size)) < 0)
+	    (struct sockaddr *)&ss, &size)) == -1)
 		return;
 	if (dg_badinput((struct sockaddr *)&ss))
 		return;
@@ -1553,7 +1553,7 @@ chargen_dg(int s, struct servtab *sep)
 
 	size = sizeof(ss);
 	if (recvfrom(s, text, sizeof(text), 0, (struct sockaddr *)&ss,
-	    &size) < 0)
+	    &size) == -1)
 		return;
 	if (dg_badinput((struct sockaddr *)&ss))
 		return;
@@ -1583,7 +1583,7 @@ machtime(void)
 {
 	struct timeval tv;
 
-	if (gettimeofday(&tv, NULL) < 0)
+	if (gettimeofday(&tv, NULL) == -1)
 		return (0L);
 
 	return (htonl((u_int32_t)tv.tv_sec + 2208988800UL));
@@ -1607,7 +1607,7 @@ machtime_dg(int s, struct servtab *sep)
 
 	size = sizeof(ss);
 	if (recvfrom(s, &result, sizeof(result), 0,
-	    (struct sockaddr *)&ss, &size) < 0)
+	    (struct sockaddr *)&ss, &size) == -1)
 		return;
 	if (dg_badinput((struct sockaddr *)&ss))
 		return;
@@ -1642,7 +1642,7 @@ daytime_dg(int s, struct servtab *sep)
 
 	size = sizeof(ss);
 	if (recvfrom(s, buffer, sizeof(buffer), 0, (struct sockaddr *)&ss,
-	    &size) < 0)
+	    &size) == -1)
 		return;
 	if (dg_badinput((struct sockaddr *)&ss))
 		return;
@@ -1739,7 +1739,7 @@ spawn(int ctrl, short events, void *xsep)
 		}
 		pid = fork();
 	}
-	if (pid < 0) {
+	if (pid == -1) {
 		syslog(LOG_ERR, "fork: %m");
 		if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
 			close(ctrl);
@@ -1791,7 +1791,7 @@ spawn(int ctrl, short events, void *xsep)
 					tmpint |= LOGIN_SETGROUP;
 				}
 				if (setusercontext(NULL, pwd, pwd->pw_uid,
-				    tmpint) < 0) {
+				    tmpint) == -1) {
 					syslog(LOG_ERR,
 					    "%s/%s: setusercontext: %m",
 					    sep->se_service, sep->se_proto);

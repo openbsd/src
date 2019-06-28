@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntinfo.c,v 1.10 2015/09/14 16:09:13 tedu Exp $ */
+/*	$OpenBSD: getmntinfo.c,v 1.11 2019/06/28 13:32:41 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,18 +42,18 @@ getmntinfo(struct statfs **mntbufp, int flags)
 	static int mntsize;
 	static size_t bufsize;
 
-	if (mntsize <= 0 && (mntsize = getfsstat(0, 0, MNT_NOWAIT)) < 0)
+	if (mntsize <= 0 && (mntsize = getfsstat(0, 0, MNT_NOWAIT)) == -1)
 		return (0);
-	if (bufsize > 0 && (mntsize = getfsstat(mntbuf, bufsize, flags)) < 0)
+	if (bufsize > 0 && (mntsize = getfsstat(mntbuf, bufsize, flags)) == -1)
 		return (0);
 	while (bufsize <= mntsize * sizeof(struct statfs)) {
 		free(mntbuf);
 		bufsize = (mntsize + 1) * sizeof(struct statfs);
-		if ((mntbuf = malloc(bufsize)) == 0) {
+		if ((mntbuf = malloc(bufsize)) == NULL) {
 			bufsize = 0;
 			return (0);
 		}
-		if ((mntsize = getfsstat(mntbuf, bufsize, flags)) < 0)
+		if ((mntsize = getfsstat(mntbuf, bufsize, flags)) == -1)
 			return (0);
 	}
 	*mntbufp = mntbuf;

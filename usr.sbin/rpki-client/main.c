@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2019/06/19 16:39:02 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.11 2019/06/28 13:32:50 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -628,7 +628,7 @@ proc_rsync(const char *prog, int fd, int noop)
 		 * That will mean that we can safely exit.
 		 */
 
-		if ((ssz = read(fd, &id, sizeof(size_t))) < 0)
+		if ((ssz = read(fd, &id, sizeof(size_t))) == -1)
 			err(EXIT_FAILURE, "read");
 		if (ssz == 0)
 			break;
@@ -1034,7 +1034,7 @@ proc_parser(int fd, int force, int norev)
 
 		if (bsz) {
 			assert(bpos < bmax);
-			if ((ssz = write(fd, b + bpos, bsz)) < 0)
+			if ((ssz = write(fd, b + bpos, bsz)) == -1)
 				err(EXIT_FAILURE, "write");
 			bpos += ssz;
 			bsz -= ssz;

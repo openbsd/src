@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.31 2017/08/26 06:32:06 otto Exp $	*/
+/*	$OpenBSD: setup.c,v 1.32 2019/06/28 13:32:43 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ setup(char *dev)
 	havesb = 0;
 	fswritefd = -1;
 	doskipclean = skipclean;
-	if (stat(dev, &statb) < 0) {
+	if (stat(dev, &statb) == -1) {
 		printf("Can't stat %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
@@ -85,13 +85,13 @@ setup(char *dev)
 		if (reply("CONTINUE") == 0)
 			return (0);
 	}
-	if ((fsreadfd = open(dev, O_RDONLY)) < 0) {
+	if ((fsreadfd = open(dev, O_RDONLY)) == -1) {
 		printf("Can't open %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
 	if (preen == 0)
 		printf("** %s", dev);
-	if (nflag || (fswritefd = open(dev, O_WRONLY)) < 0) {
+	if (nflag || (fswritefd = open(dev, O_WRONLY)) == -1) {
 		fswritefd = -1;
 		if (preen)
 			pfatal("NO WRITE ACCESS");
@@ -487,7 +487,7 @@ getdisklabel(char *s, int fd)
 {
 	static struct disklabel lab;
 
-	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
+	if (ioctl(fd, DIOCGDINFO, (char *)&lab) == -1) {
 		if (s == NULL)
 			return (NULL);
 		pwarn("ioctl (GCINFO): %s\n", strerror(errno));

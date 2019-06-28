@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppctl.c,v 1.8 2017/08/11 16:25:59 goda Exp $	*/
+/*	$OpenBSD: npppctl.c,v 1.9 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Internet Initiative Japan Inc.
@@ -102,12 +102,12 @@ main(int argc, char *argv[])
 	if ((result = parse(argc, argv)) == NULL)
 		exit(EXIT_FAILURE);
 
-	if ((ctlsock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
+	if ((ctlsock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(EXIT_FAILURE, "socket");
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, npppd_ctlpath, sizeof(sun.sun_path));
-	if (connect(ctlsock, (struct sockaddr *)&sun, sizeof(sun)) < 0)
+	if (connect(ctlsock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(EXIT_FAILURE, "connect");
 
 	imsg_init(&ctl_ibuf, ctlsock);

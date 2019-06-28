@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.31 2016/05/29 02:19:02 guenther Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.32 2019/06/28 13:32:50 deraadt Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ main(int argc, char *argv[])
 	 *  All boot files are relative to the boot directory, we might
 	 *  as well chdir() there to make life easier.
 	 */
-	if (chdir(BootDir) < 0) {
+	if (chdir(BootDir) == -1) {
 		syslog(LOG_ERR, "chdir: %m (%s)", BootDir);
 		DoExit();
 	}
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 
 		nsel = poll(pfd, 1, RmpConns ? RMP_TIMEOUT * 100 : -1);
 
-		if (nsel < 0) {
+		if (nsel == -1) {
 			if (errno == EINTR)
 				continue;
 			syslog(LOG_ERR, "poll: %m");

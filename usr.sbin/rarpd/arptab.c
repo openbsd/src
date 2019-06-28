@@ -1,4 +1,4 @@
-/*	$OpenBSD: arptab.c,v 1.30 2019/01/22 09:25:29 krw Exp $ */
+/*	$OpenBSD: arptab.c,v 1.31 2019/06/28 13:32:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -73,7 +73,7 @@ void
 arptab_init(void)
 {
 	s = socket(AF_ROUTE, SOCK_RAW, 0);
-	if (s < 0)
+	if (s == -1)
 		err(1, "arp: socket");
 }
 
@@ -217,7 +217,7 @@ doit:
 	l = rtm->rtm_msglen;
 	rtm->rtm_seq = ++seq;
 	rtm->rtm_type = cmd;
-	if (write(s, (char *)&m_rtmsg, l) < 0) {
+	if (write(s, (char *)&m_rtmsg, l) == -1) {
 		if (errno != ESRCH && errno != EEXIST) {
 			syslog(LOG_ERR, "writing to routing socket: %m");
 			return (-1);
@@ -227,7 +227,7 @@ doit:
 		l = recv(s, (char *)&m_rtmsg, sizeof(m_rtmsg), MSG_DONTWAIT);
 	} while (l > 0 && (rtm->rtm_version != RTM_VERSION ||
 	    rtm->rtm_seq != seq || rtm->rtm_pid != pid));
-	if (l < 0) {
+	if (l == -1) {
 		if (errno == EAGAIN || errno == EINTR)
 			goto retry;
 		syslog(LOG_ERR, "arptab_set: read from routing socket: %m");

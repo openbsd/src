@@ -1,4 +1,4 @@
-/*	$OpenBSD: evutil.c,v 1.10 2016/03/20 00:01:22 krw Exp $	*/
+/*	$OpenBSD: evutil.c,v 1.11 2019/06/28 13:32:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Niels Provos <provos@citi.umich.edu>
@@ -54,7 +54,7 @@ evutil_make_socket_nonblocking(int fd)
 {
 	int flags;
 
-	if ((flags = fcntl(fd, F_GETFL)) < 0) {
+	if ((flags = fcntl(fd, F_GETFL)) == -1) {
 		event_warn("fcntl(%d, F_GETFL)", fd);
 		return -1;
 	}

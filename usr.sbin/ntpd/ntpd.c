@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.123 2019/06/27 15:18:42 otto Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.124 2019/06/28 13:32:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -111,7 +111,7 @@ auto_preconditions(const struct ntpd_conf *cnf)
 	int constraints, securelevel;
 	size_t sz = sizeof(int);
 
-	if (sysctl(mib, 2, &securelevel, &sz, NULL, 0) < 0)
+	if (sysctl(mib, 2, &securelevel, &sz, NULL, 0) == -1)
 		err(1, "sysctl");
 	constraints = !TAILQ_EMPTY(&cnf->constraints);
 	return !cnf->settime && constraints && securelevel == 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.12 2019/04/03 11:54:56 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.13 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -102,9 +102,9 @@ module_start(struct module_base *base)
 #ifdef USE_LIBEVENT
 	int	 ival;
 
-	if ((ival = fcntl(base->ibuf.fd, F_GETFL)) < 0)
+	if ((ival = fcntl(base->ibuf.fd, F_GETFL)) == -1)
 		err(1, "Failed to F_GETFL");
-	if (fcntl(base->ibuf.fd, F_SETFL, ival | O_NONBLOCK) < 0)
+	if (fcntl(base->ibuf.fd, F_SETFL, ival | O_NONBLOCK) == -1)
 		err(1, "Failed to setup NONBLOCK");
 	event_set(&base->ev, base->ibuf.fd, EV_READ, module_on_event, base);
 	event_add(&base->ev, NULL);

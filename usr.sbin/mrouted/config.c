@@ -27,7 +27,7 @@ config_vifs_from_kernel(void)
     u_int32_t addr, mask, subnet;
     short flags;
 
-    if (getifaddrs(&ifap) < 0)
+    if (getifaddrs(&ifap) == -1)
 	logit(LOG_ERR, errno, "getifaddrs");
 
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {

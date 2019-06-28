@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.26 2017/04/27 21:28:00 millert Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.27 2019/06/28 13:32:53 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -80,7 +80,7 @@ getidle(char *tty, int len)
 
 	snprintf(devname, sizeof devname, "%s/%.*s", _PATH_DEV,
 	    len, tty);
-	if (stat(devname, &st) < 0) {
+	if (stat(devname, &st) == -1) {
 #ifdef DEBUG
 		printf("%s: %m\n", devname);
 #endif

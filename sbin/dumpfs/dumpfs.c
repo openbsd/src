@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.33 2015/11/23 19:19:29 deraadt Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.34 2019/06/28 13:32:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -128,7 +128,7 @@ open_disk(const char *name)
 	ssize_t n;
 
 	/* XXX - should retry w/raw device on failure */
-	if ((fd = opendev(name, O_RDONLY, 0, NULL)) < 0) {
+	if ((fd = opendev(name, O_RDONLY, 0, NULL)) == -1) {
 		warn("%s", name);
 		return(-1);
 	}

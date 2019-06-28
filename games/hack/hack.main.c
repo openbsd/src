@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.main.c,v 1.23 2019/04/05 09:02:27 bentley Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.24 2019/06/28 13:32:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -533,7 +533,7 @@ chdirx(char *dir, boolean wr)
 		dir = HACKDIR;
 #endif
 
-	if(dir && chdir(dir) < 0) {
+	if(dir && chdir(dir) == -1) {
 		perror(dir);
 		error("Cannot chdir to %s.", dir);
 	}
@@ -548,12 +548,12 @@ chdirx(char *dir, boolean wr)
 
 	    if(dir == NULL)
 		dir = ".";
-	    if((fd = open(RECORD, O_RDWR | O_CREAT, FMASK)) < 0) {
+	    if((fd = open(RECORD, O_RDWR | O_CREAT, FMASK)) == -1) {
 		printf("Warning: cannot write %s/%s", dir, RECORD);
 		getret();
 	    } else
 		(void) close(fd);
-	    if((fd = open(HLOCK, O_RDONLY | O_CREAT, FMASK)) < 0) {
+	    if((fd = open(HLOCK, O_RDONLY | O_CREAT, FMASK)) == -1) {
 		printf("Warning: cannot read %s/%s", dir, HLOCK);
 		getret();
 	    } else

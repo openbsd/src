@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.46 2019/06/16 07:36:25 otto Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.47 2019/06/28 13:32:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -955,7 +955,7 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 		ret = tls_write(httpsdate->tls_ctx, buf, len);
 		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
 			continue;
-		if (ret < 0) {
+		if (ret == -1) {
 			log_warnx("tls write failed: %s (%s): %s",
 			    httpsdate->tls_addr, httpsdate->tls_hostname,
 			    tls_error(httpsdate->tls_ctx));
@@ -1091,7 +1091,7 @@ tls_readline(struct tls *tls, size_t *lenp, size_t *maxlength,
 		ret = tls_read(tls, &c, 1);
 		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
 			goto again;
-		if (ret < 0) {
+		if (ret == -1) {
 			/* SSL read error, ignore */
 			free(buf);
 			return (NULL);

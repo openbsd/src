@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_1.c,v 1.12 2016/01/08 20:26:33 mestre Exp $	*/
+/*	$OpenBSD: pl_1.c,v 1.13 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: pl_1.c,v 1.3 1995/04/22 10:37:07 cgd Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ child(int n __attribute__((unused)))
 	(void) signal(SIGCHLD, SIG_DFL);
 	do {
 		pid = waitpid((pid_t)-1, &status, WNOHANG);
-		if (pid < 0 || (pid > 0 && !WIFSTOPPED(status)))
+		if (pid == -1 || (pid > 0 && !WIFSTOPPED(status)))
 			hasdriver = 0;
 	} while (pid > 0);
 	(void) signal(SIGCHLD, child);

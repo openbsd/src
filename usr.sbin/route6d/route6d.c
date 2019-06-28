@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.98 2019/01/22 09:25:29 krw Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.99 2019/06/28 13:32:50 deraadt Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -300,7 +300,7 @@ main(int argc, char *argv[])
 	}
 
 	if (dflag == 0) {
-		if (daemon(0, 0) < 0) {
+		if (daemon(0, 0) == -1) {
 			fatal("daemon");
 			/*NOTREACHED*/
 		}
@@ -530,39 +530,39 @@ init(void)
 	}
 
 	ripsock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (ripsock < 0) {
+	if (ripsock == -1) {
 		fatal("rip socket");
 		/*NOTREACHED*/
 	}
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_V6ONLY,
-	    &int1, sizeof(int1)) < 0) {
+	    &int1, sizeof(int1)) == -1) {
 		fatal("rip IPV6_V6ONLY");
 		/*NOTREACHED*/
 	}
-	if (bind(ripsock, res->ai_addr, res->ai_addrlen) < 0) {
+	if (bind(ripsock, res->ai_addr, res->ai_addrlen) == -1) {
 		fatal("rip bind");
 		/*NOTREACHED*/
 	}
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
-	    &int255, sizeof(int255)) < 0) {
+	    &int255, sizeof(int255)) == -1) {
 		fatal("rip IPV6_MULTICAST_HOPS");
 		/*NOTREACHED*/
 	}
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-	    &int0, sizeof(int0)) < 0) {
+	    &int0, sizeof(int0)) == -1) {
 		fatal("rip IPV6_MULTICAST_LOOP");
 		/*NOTREACHED*/
 	}
 
 	i = 1;
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &i,
-	    sizeof(i)) < 0) {
+	    sizeof(i)) == -1) {
 		fatal("rip IPV6_RECVPKTINFO");
 		/*NOTREACHED*/
 	}
 
 	if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT,
-	    &int1, sizeof(int1)) < 0) {
+	    &int1, sizeof(int1)) == -1) {
 		fatal("rip IPV6_RECVHOPLIMIT");
 		/*NOTREACHED*/
 	}
@@ -587,7 +587,7 @@ init(void)
 	pfd[0].events = POLLIN;
 
 	if (nflag == 0) {
-		if ((rtsock = socket(AF_ROUTE, SOCK_RAW, 0)) < 0) {
+		if ((rtsock = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
 			fatal("route socket");
 			/*NOTREACHED*/
 		}
@@ -927,7 +927,7 @@ sendpacket(struct sockaddr_in6 *sin6, int len)
 		pi->ipi6_ifindex = idx;
 	}
 
-	if (sendmsg(ripsock, &m, 0) < 0) {
+	if (sendmsg(ripsock, &m, 0) == -1) {
 		log_debug("sendmsg: %s", strerror(errno));
 		return errno;
 	}
@@ -977,7 +977,7 @@ riprecv(void)
 	m.msg_iovlen = 1;
 	m.msg_control = (caddr_t)&cmsgbuf.buf;
 	m.msg_controllen = sizeof(cmsgbuf.buf);
-	if ((len = recvmsg(ripsock, &m, 0)) < 0) {
+	if ((len = recvmsg(ripsock, &m, 0)) == -1) {
 		fatal("recvmsg");
 		/*NOTREACHED*/
 	}
@@ -1359,7 +1359,7 @@ ifconfig(void)
 	struct ipv6_mreq mreq;
 	int s;
 
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
 		fatal("socket");
 		/*NOTREACHED*/
 	}
@@ -1410,7 +1410,7 @@ ifconfig(void)
 			mreq.ipv6mr_multiaddr = ifcp->ifc_ripsin.sin6_addr;
 			mreq.ipv6mr_interface = ifcp->ifc_index;
 			if (setsockopt(ripsock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
-			    &mreq, sizeof(mreq)) < 0) {
+			    &mreq, sizeof(mreq)) == -1) {
 				fatalx("IPV6_JOIN_GROUP");
 				/*NOTREACHED*/
 			}
@@ -1436,7 +1436,7 @@ ifconfig1(const char *name, const struct sockaddr *sa, struct ifc *ifcp, int s)
 		return;
 	ifr.ifr_addr = *sin6;
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFNETMASK_IN6, (char *)&ifr) < 0) {
+	if (ioctl(s, SIOCGIFNETMASK_IN6, (char *)&ifr) == -1) {
 		fatal("ioctl: SIOCGIFNETMASK_IN6");
 		/*NOTREACHED*/
 	}
@@ -1461,7 +1461,7 @@ ifconfig1(const char *name, const struct sockaddr *sa, struct ifc *ifcp, int s)
 	ifa->ifa_plen = plen;
 	if (ifcp->ifc_flags & IFF_POINTOPOINT) {
 		ifr.ifr_addr = *sin6;
-		if (ioctl(s, SIOCGIFDSTADDR_IN6, (char *)&ifr) < 0) {
+		if (ioctl(s, SIOCGIFDSTADDR_IN6, (char *)&ifr) == -1) {
 			fatal("ioctl: SIOCGIFDSTADDR_IN6");
 			/*NOTREACHED*/
 		}
@@ -1483,7 +1483,7 @@ ifconfig1(const char *name, const struct sockaddr *sa, struct ifc *ifcp, int s)
 		ifcp->ifc_mtu = getifmtu(ifcp->ifc_index);
 		if (ifcp->ifc_mtu > RIP6_MAXMTU)
 			ifcp->ifc_mtu = RIP6_MAXMTU;
-		if (ioctl(s, SIOCGIFMETRIC, (char *)&ifr) < 0) {
+		if (ioctl(s, SIOCGIFMETRIC, (char *)&ifr) == -1) {
 			fatal("ioctl: SIOCGIFMETRIC");
 			/*NOTREACHED*/
 		}
@@ -1514,7 +1514,7 @@ rtrecv(void)
 	int i, addrs;
 	struct riprt *rrt;
 
-	if ((len = read(rtsock, buf, sizeof(buf))) < 0) {
+	if ((len = read(rtsock, buf, sizeof(buf))) == -1) {
 		perror("read from rtsock");
 		exit(1);
 	}
@@ -2368,7 +2368,7 @@ krtread(int again)
 		free(buf);
 		buf = NULL;
 		errmsg = NULL;
-		if (sysctl(mib, 6, NULL, &msize, NULL, 0) < 0) {
+		if (sysctl(mib, 6, NULL, &msize, NULL, 0) == -1) {
 			errmsg = "sysctl estimate";
 			continue;
 		}
@@ -2376,7 +2376,7 @@ krtread(int again)
 			errmsg = "malloc";
 			continue;
 		}
-		if (sysctl(mib, 6, buf, &msize, NULL, 0) < 0) {
+		if (sysctl(mib, 6, buf, &msize, NULL, 0) == -1) {
 			errmsg = "sysctl NET_RT_DUMP";
 			continue;
 		}
@@ -2687,14 +2687,14 @@ getroute(struct netinfo6 *np, struct in6_addr *gw)
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_addr = np->rip6_dest;
-	if (write(rtsock, buf, len) < 0) {
+	if (write(rtsock, buf, len) == -1) {
 		if (errno == ESRCH)	/* No such route found */
 			return NULL;
 		perror("write to rtsock");
 		exit(1);
 	}
 	do {
-		if ((len = read(rtsock, buf, sizeof(buf))) < 0) {
+		if ((len = read(rtsock, buf, sizeof(buf))) == -1) {
 			perror("read from rtsock");
 			exit(1);
 		}

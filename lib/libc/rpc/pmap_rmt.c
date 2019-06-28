@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_rmt.c,v 1.34 2015/12/28 22:08:18 mmcc Exp $ */
+/*	$OpenBSD: pmap_rmt.c,v 1.35 2019/06/28 13:32:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -238,12 +238,12 @@ clnt_broadcast(u_long prog,	/* program number */
 	 * initialization: create a socket, a broadcast address, and
 	 * preserialize the arguments into a send buffer.
 	 */
-	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
 		stat = RPC_CANTSEND;
 		goto done_broad;
 	}
 #ifdef SO_BROADCAST
-	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) < 0) {
+	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof (on)) == -1) {
 		stat = RPC_CANTSEND;
 		goto done_broad;
 	}
@@ -338,7 +338,7 @@ clnt_broadcast(u_long prog,	/* program number */
 		fromlen = sizeof(struct sockaddr);
 		inlen = recvfrom(sock, inbuf, UDPMSGSIZE, 0,
 		    (struct sockaddr *)&raddr, &fromlen);
-		if (inlen < 0) {
+		if (inlen == -1) {
 			if (errno == EINTR)
 				goto try_again;
 			stat = RPC_CANTRECV;

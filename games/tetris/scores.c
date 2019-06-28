@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.24 2019/05/20 02:11:22 lteo Exp $	*/
+/*	$OpenBSD: scores.c,v 1.25 2019/06/28 13:32:52 deraadt Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ getscores(FILE **fpp)
 	}
 
 	sd = open(scorepath, mint, 0666);
-	if (sd < 0) {
+	if (sd == -1) {
 		if (fpp == NULL) {
 			nscores = 0;
 			return;

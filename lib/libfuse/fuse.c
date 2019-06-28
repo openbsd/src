@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse.c,v 1.50 2018/11/16 02:16:17 tedu Exp $ */
+/* $OpenBSD: fuse.c,v 1.51 2019/06/28 13:32:42 deraadt Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -121,7 +121,7 @@ ifuse_try_unmount(struct fuse *f)
 	/* unmount in another thread so fuse_loop() doesn't deadlock */
 	child = fork();
 
-	if (child < 0) {
+	if (child == -1) {
 		DPERROR(__func__);
 		return;
 	}
@@ -218,7 +218,7 @@ fuse_loop(struct fuse *fuse)
 				ioexch.fbxch_data = fbuf.fb_dat;
 
 				if (ioctl(fuse->fc->fd, FIOCGETFBDAT,
-				    &ioexch)) {
+				    &ioexch) == -1) {
 					free(fbuf.fb_dat);
 					return (-1);
 				}
@@ -249,7 +249,7 @@ fuse_loop(struct fuse *fuse)
 				ioexch.fbxch_len = fbuf.fb_len;
 				ioexch.fbxch_data = fbuf.fb_dat;
 
-				if (ioctl(fuse->fc->fd, FIOCSETFBDAT, &ioexch)) {
+				if (ioctl(fuse->fc->fd, FIOCSETFBDAT, &ioexch) == -1) {
 					free(fbuf.fb_dat);
 					return (-1);
 				}

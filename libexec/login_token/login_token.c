@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_token.c,v 1.15 2015/12/22 08:54:16 mmcc Exp $	*/
+/*	$OpenBSD: login_token.c,v 1.16 2019/06/28 13:32:53 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Berkeley Software Design, Inc. All rights reserved.
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 
 	cds.rlim_cur = 0;
 	cds.rlim_max = 0;
-	if (setrlimit(RLIMIT_CORE, &cds) < 0)
+	if (setrlimit(RLIMIT_CORE, &cds) == -1)
 		syslog(LOG_ERR, "couldn't set core dump size to 0: %m");
 
 	if (pledge("stdio rpath wpath cpath fattr flock getpw tty", NULL) == -1) {
