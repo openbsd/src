@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.97 2019/06/25 07:44:20 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.98 2019/06/28 12:12:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -202,7 +202,7 @@ static const struct token t_show_mrt[] = {
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_mrt},
 	{ FLAG,		"ssv",		F_CTL_SSV,	t_show_mrt},
 	{ KEYWORD,	"neighbor",	NONE,		t_show_mrt_neigh},
-	{ FLAG,		"neighbors",	F_CTL_NEIGHBORS,t_show_mrt},
+	{ FLAG,		"peers",	F_CTL_NEIGHBORS,t_show_mrt},
 	{ KEYWORD,	"file",		NONE,		t_show_mrt_file},
 	{ FAMILY,	"",		NONE,		t_show_mrt},
 	{ PREFIX,	"",		NONE,		t_show_prefix},
