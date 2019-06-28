@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.289 2019/06/09 13:53:38 beck Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.290 2019/06/28 13:25:09 visa Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1624,6 +1624,7 @@ vnoperm(struct vnode *vp)
 }
 
 struct rwlock vfs_stall_lock = RWLOCK_INITIALIZER("vfs_stall");
+unsigned int vfs_stalling = 0;
 
 int
 vfs_stall(struct proc *p, int stall)
@@ -1631,8 +1632,10 @@ vfs_stall(struct proc *p, int stall)
 	struct mount *mp;
 	int allerror = 0, error;
 
-	if (stall)
+	if (stall) {
+		atomic_inc_int(&vfs_stalling);
 		rw_enter_write(&vfs_stall_lock);
+	}
 
 	/*
 	 * The loop variable mp is protected by vfs_busy() so that it cannot
@@ -1664,8 +1667,10 @@ vfs_stall(struct proc *p, int stall)
 		}
 	}
 
-	if (!stall)
+	if (!stall) {
 		rw_exit_write(&vfs_stall_lock);
+		atomic_dec_int(&vfs_stalling);
+	}
 
 	return (allerror);
 }
@@ -1673,8 +1678,10 @@ vfs_stall(struct proc *p, int stall)
 void
 vfs_stall_barrier(void)
 {
-	rw_enter_read(&vfs_stall_lock);
-	rw_exit_read(&vfs_stall_lock);
+	if (__predict_false(vfs_stalling)) {
+		rw_enter_read(&vfs_stall_lock);
+		rw_exit_read(&vfs_stall_lock);
+	}
 }
 
 /*
