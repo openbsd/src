@@ -1,4 +1,4 @@
-/*	$OpenBSD: pidfile.c,v 1.12 2015/11/27 01:57:59 mmcc Exp $	*/
+/*	$OpenBSD: pidfile.c,v 1.13 2019/06/28 05:33:35 deraadt Exp $	*/
 /*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@ pidfile(const char *basename)
 	(void) fclose(f);
 
 	pidfile_pid = pid;
-	if (atexit(pidfile_cleanup) < 0) {
+	if (atexit(pidfile_cleanup) == -1) {
 		save_errno = errno;
 		(void) unlink(pidfile_path);
 		free(pidfile_path);
