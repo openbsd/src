@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2019/04/19 08:59:40 visa Exp $
+#	$OpenBSD: Makefile,v 1.31 2019/06/28 13:43:48 kettenis Exp $
 
 OBJS=		crt0.o gcrt0.o
 OBJS+=		crtbegin.o crtend.o
@@ -13,14 +13,6 @@ CFLAGS+=	-I${.CURDIR}/../../libexec/ld.so/${MACHINE_CPU}
 # XXX "use -fno-omit-frame-pointer; the reason is almost crazy; pr#287"
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 CFLAGS+=	-fno-omit-frame-pointer
-.endif
-
-# Override powerpc default of -fPIE
-# XXX if this is safe, why not override CFLAGS for alpha and sparc64 too?
-# Does it work because the csu bits come first and get the first few GOT
-# entries?
-.if ${MACHINE_ARCH} == "powerpc"
-CFLAGS+=	-fpie
 .endif
 
 .ifdef NOPIC
