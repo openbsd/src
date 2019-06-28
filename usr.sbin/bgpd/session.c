@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.386 2019/06/22 05:36:40 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.387 2019/06/28 09:14:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -422,7 +422,7 @@ session_main(int debug, int verbose)
 			if (p->wbuf.queued > 0 || p->state == STATE_CONNECT)
 				events |= POLLOUT;
 			/* is there still work to do? */
-			if (p->rpending)
+			if (p->rpending && p->rbuf && p->rbuf->wpos)
 				timeout = 0;
 
 			/* poll events */
@@ -888,6 +888,7 @@ change_state(struct peer *peer, enum session_state state,
 		msgbuf_clear(&peer->wbuf);
 		free(peer->rbuf);
 		peer->rbuf = NULL;
+		peer->rpending = 0;
 		bzero(&peer->capa.peer, sizeof(peer->capa.peer));
 		if (!peer->template)
 			imsg_compose(ibuf_main, IMSG_PFKEY_RELOAD,
@@ -2959,6 +2960,7 @@ getpeerbyip(struct bgpd_config *c, struct sockaddr *ip)
 		newpeer->state = newpeer->prev_state = STATE_NONE;
 		newpeer->reconf_action = RECONF_KEEP;
 		newpeer->rbuf = NULL;
+		newpeer->rpending = 0;
 		init_peer(newpeer);
 		bgp_fsm(newpeer, EVNT_START);
 		if (RB_INSERT(peer_head, &c->peers, newpeer) != NULL)
