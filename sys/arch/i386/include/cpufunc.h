@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.31 2018/08/23 14:47:52 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.32 2019/06/28 21:54:05 bluhm Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ intr_restore(u_long ef)
 static __inline void
 wbinvd(void)
 {
-        __asm volatile("wbinvd");
+	__asm volatile("wbinvd" : : : "memory");
 }
 
 static __inline void
