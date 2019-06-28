@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.11 2019/06/17 13:46:33 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.12 2019/06/28 05:22:13 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -33,11 +33,11 @@ void	*mrt_read_msg(int, struct mrt_hdr *);
 size_t	 mrt_read_buf(int, void *, size_t);
 
 struct mrt_peer	*mrt_parse_v2_peer(struct mrt_hdr *, void *);
-struct mrt_rib	*mrt_parse_v2_rib(struct mrt_hdr *, void *);
+struct mrt_rib	*mrt_parse_v2_rib(struct mrt_hdr *, void *, int);
 int	mrt_parse_dump(struct mrt_hdr *, void *, struct mrt_peer **,
 	    struct mrt_rib **);
 int	mrt_parse_dump_mp(struct mrt_hdr *, void *, struct mrt_peer **,
-	    struct mrt_rib **);
+	    struct mrt_rib **, int);
 int	mrt_extract_attr(struct mrt_rib_entry *, u_char *, int, u_int8_t,
 	    int);
 
@@ -48,9 +48,11 @@ void	mrt_free_bgp_msg(struct mrt_bgp_msg *);
 
 u_char *mrt_aspath_inflate(void *, u_int16_t, u_int16_t *);
 int	mrt_extract_addr(void *, u_int, struct bgpd_addr *, u_int8_t);
+int	mrt_extract_prefix(void *, u_int, u_int8_t, struct bgpd_addr *,
+	    u_int8_t *, int);
 
-struct mrt_bgp_state	*mrt_parse_state(struct mrt_hdr *, void *);
-struct mrt_bgp_msg	*mrt_parse_msg(struct mrt_hdr *, void *);
+struct mrt_bgp_state	*mrt_parse_state(struct mrt_hdr *, void *, int);
+struct mrt_bgp_msg	*mrt_parse_msg(struct mrt_hdr *, void *, int);
 
 void *
 mrt_read_msg(int fd, struct mrt_hdr *hdr)
@@ -163,7 +165,7 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 			case MRT_DUMP_V2_RIB_GENERIC:
 				if (p->dump == NULL)
 					break;
-				r = mrt_parse_v2_rib(&h, msg);
+				r = mrt_parse_v2_rib(&h, msg, verbose);
 				if (r) {
 					if (p->dump)
 						p->dump(r, pctx, p->arg);
@@ -182,7 +184,7 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 			switch (ntohs(h.subtype)) {
 			case BGP4MP_STATE_CHANGE:
 			case BGP4MP_STATE_CHANGE_AS4:
-				if ((s = mrt_parse_state(&h, msg))) {
+				if ((s = mrt_parse_state(&h, msg, verbose))) {
 					if (p->state)
 						p->state(s, p->arg);
 					free(s);
@@ -192,7 +194,7 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 			case BGP4MP_MESSAGE_AS4:
 			case BGP4MP_MESSAGE_LOCAL:
 			case BGP4MP_MESSAGE_AS4_LOCAL:
-				if ((m = mrt_parse_msg(&h, msg))) {
+				if ((m = mrt_parse_msg(&h, msg, verbose))) {
 					if (p->message)
 						p->message(m, p->arg);
 					free(m->msg);
@@ -202,8 +204,8 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 			case BGP4MP_ENTRY:
 				if (p->dump == NULL)
 					break;
-				if (mrt_parse_dump_mp(&h, msg, &pctx, &r) ==
-				    0) {
+				if (mrt_parse_dump_mp(&h, msg, &pctx, &r,
+				    verbose) == 0) {
 					if (p->dump)
 						p->dump(r, pctx, p->arg);
 					mrt_free_rib(r);
@@ -225,6 +227,30 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 	}
 	if (pctx)
 		mrt_free_peers(pctx);
+}
+
+static int
+mrt_afi2aid(int afi, int safi, int verbose)
+{
+	switch (afi) {
+	case MRT_DUMP_AFI_IP:
+		if (safi == -1 || safi == 1 || safi == 2)
+			return AID_INET;
+		else if (safi == 128)
+			return AID_VPN_IPv4;
+		break;
+	case MRT_DUMP_AFI_IPv6:
+		if (safi == -1 || safi == 1 || safi == 2)
+			return AID_INET6;
+		else if (safi == 128)
+			return AID_VPN_IPv6;
+		break;
+	default:
+		break;
+	}
+	if (verbose)
+		printf("unhandled AFI/SAFI %d/%d\n", afi, safi);
+	return AID_UNSPEC;
 }
 
 struct mrt_peer *
@@ -330,15 +356,16 @@ fail:
 }
 
 struct mrt_rib *
-mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg)
+mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 {
 	struct mrt_rib_entry *entries = NULL;
 	struct mrt_rib	*r;
 	u_int8_t	*b = msg;
 	u_int		len = ntohl(hdr->length);
 	u_int32_t	snum;
-	u_int16_t	cnt, i;
-	u_int8_t	plen;
+	u_int16_t	cnt, i, afi;
+	u_int8_t	safi, aid;
+	int		ret;
 
 	if (len < sizeof(snum) + 1)
 		return NULL;
@@ -356,33 +383,44 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg)
 	switch (ntohs(hdr->subtype)) {
 	case MRT_DUMP_V2_RIB_IPV4_UNICAST:
 	case MRT_DUMP_V2_RIB_IPV4_MULTICAST:
-		plen = *b++;
-		len -= 1;
-		if (len < MRT_PREFIX_LEN(plen))
+		/* prefix */
+		ret = mrt_extract_prefix(b, len, AID_INET, &r->prefix,
+		    &r->prefixlen, verbose);
+		if (ret == 1)
 			goto fail;
-		r->prefix.aid = AID_INET;
-		memcpy(&r->prefix.v4, b, MRT_PREFIX_LEN(plen));
-		b += MRT_PREFIX_LEN(plen);
-		len -= MRT_PREFIX_LEN(plen);
-		r->prefixlen = plen;
 		break;
 	case MRT_DUMP_V2_RIB_IPV6_UNICAST:
 	case MRT_DUMP_V2_RIB_IPV6_MULTICAST:
-		plen = *b++;
-		len -= 1;
-		if (len < MRT_PREFIX_LEN(plen))
+		/* prefix */
+		ret = mrt_extract_prefix(b, len, AID_INET6, &r->prefix,
+		    &r->prefixlen, verbose);
+		if (ret == 1)
 			goto fail;
-		r->prefix.aid = AID_INET6;
-		memcpy(&r->prefix.v6, b, MRT_PREFIX_LEN(plen));
-		b += MRT_PREFIX_LEN(plen);
-		len -= MRT_PREFIX_LEN(plen);
-		r->prefixlen = plen;
 		break;
 	case MRT_DUMP_V2_RIB_GENERIC:
-		/* XXX unhandled */
-		errx(1, "MRT_DUMP_V2_RIB_GENERIC subtype not yet implemented");
-		goto fail;
+		/* fetch AFI/SAFI pair */
+		memcpy(&afi, b, sizeof(afi));
+		b += sizeof(afi);
+		len -= sizeof(afi);
+		afi = ntohs(afi);
+
+		safi = *b++;
+		len -= 1;
+
+		if ((aid = mrt_afi2aid(afi, safi, verbose)) == AID_UNSPEC)
+			goto fail;
+		
+		/* prefix */
+		ret = mrt_extract_prefix(b, len, aid, &r->prefix,
+		    &r->prefixlen, verbose);
+		if (ret == 1)
+			goto fail;
+		break;
 	}
+
+	/* adjust length */
+	b += ret;
+	len -= ret;
 
 	/* entries count */
 	if (len < sizeof(cnt))
@@ -545,7 +583,7 @@ fail:
 
 int
 mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
-    struct mrt_rib **rp)
+    struct mrt_rib **rp, int verbose)
 {
 	struct mrt_peer		*p;
 	struct mrt_rib		*r;
@@ -554,6 +592,7 @@ mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 	u_int			 len = ntohl(hdr->length);
 	u_int16_t		 asnum, alen, afi;
 	u_int8_t		 safi, nhlen, aid;
+	int			 ret;
 
 	/* just ignore the microsec field for _ET header for now */
 	if (ntohs(hdr->type) == MSG_PROTOCOL_BGP4MP_ET) {
@@ -649,28 +688,8 @@ mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 	safi = *b++;
 	len -= 1;
 
-	switch (afi) {
-	case MRT_DUMP_AFI_IP:
-		if (safi == 1 || safi == 2) {
-			aid = AID_INET;
-			break;
-		} else if (safi == 128) {
-			aid = AID_VPN_IPv4;
-			break;
-		}
+	if ((aid = mrt_afi2aid(afi, safi, verbose)) == AID_UNSPEC)
 		goto fail;
-	case MRT_DUMP_AFI_IPv6:
-		if (safi == 1 || safi == 2) {
-			aid = AID_INET6;
-			break;
-		} else if (safi == 128) {
-			aid = AID_VPN_IPv6;
-			break;
-		}
-		goto fail;
-	default:
-		goto fail;
-	}
 
 	/* nhlen */
 	nhlen = *b++;
@@ -684,40 +703,13 @@ mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 	b += nhlen;
 	len -= nhlen;
 
-	if (len < 1)
-		goto fail;
-	r->prefixlen = *b++;
-	len -= 1;
-
 	/* prefix */
-	switch (aid) {
-	case AID_INET:
-		if (len < MRT_PREFIX_LEN(r->prefixlen))
-			goto fail;
-		r->prefix.aid = aid;
-		memcpy(&r->prefix.v4, b, MRT_PREFIX_LEN(r->prefixlen));
-		b += MRT_PREFIX_LEN(r->prefixlen);
-		len -= MRT_PREFIX_LEN(r->prefixlen);
-		break;
-	case AID_INET6:
-		if (len < MRT_PREFIX_LEN(r->prefixlen))
-			goto fail;
-		r->prefix.aid = aid;
-		memcpy(&r->prefix.v6, b, MRT_PREFIX_LEN(r->prefixlen));
-		b += MRT_PREFIX_LEN(r->prefixlen);
-		len -= MRT_PREFIX_LEN(r->prefixlen);
-		break;
-	case AID_VPN_IPv4:
-		if (len < MRT_PREFIX_LEN(r->prefixlen))
-			goto fail;
-		errx(1, "AID_VPN_IPv4 handling not yet implemented");
+	ret = mrt_extract_prefix(b, len, aid, &r->prefix, &r->prefixlen,
+	    verbose);
+	if (ret == 1)
 		goto fail;
-	case AID_VPN_IPv6:
-		if (len < MRT_PREFIX_LEN(r->prefixlen))
-			goto fail;
-		errx(1, "AID_VPN_IPv6 handling not yet implemented");
-		goto fail;
-	}
+	b += ret;
+	len -= ret;
 
 	memcpy(&alen, b, sizeof(alen));
 	b += sizeof(alen);
@@ -842,7 +834,13 @@ mrt_extract_attr(struct mrt_rib_entry *re, u_char *a, int alen, u_int8_t aid,
 				re->nexthop.vpn4.addr.s_addr = tmp;
 				break;
 			case AID_VPN_IPv6:
-				errx(1, "AID_VPN_IPv6 not yet implemented");
+				if (attr_len < sizeof(u_int64_t) +
+				    sizeof(struct in6_addr))
+					return (-1);
+				re->nexthop.aid = aid;
+				memcpy(&re->nexthop.vpn6.addr,
+				    a + 1 + sizeof(u_int64_t),
+				    sizeof(struct in6_addr));
 				break;
 			}
 			break;
@@ -995,8 +993,37 @@ mrt_extract_addr(void *msg, u_int len, struct bgpd_addr *addr, u_int8_t aid)
 	}
 }
 
+int
+mrt_extract_prefix(void *msg, u_int len, u_int8_t aid,
+    struct bgpd_addr *prefix, u_int8_t *prefixlen, int verbose)
+{
+	int r;
+
+	switch (aid) {
+	case AID_INET:
+		r = nlri_get_prefix(msg, len, prefix, prefixlen);
+		break;
+	case AID_INET6:
+		r = nlri_get_prefix6(msg, len, prefix, prefixlen);
+		break;
+	case AID_VPN_IPv4:
+		r = nlri_get_vpn4(msg, len, prefix, prefixlen, 0);
+		break;
+	case AID_VPN_IPv6:
+		r = nlri_get_vpn6(msg, len, prefix, prefixlen, 0);
+		break;
+	default:
+		if (verbose)
+			printf("unknown prefix AID %d\n", aid);
+		return -1;
+	}
+	if (r == -1 && verbose)
+		printf("failed to parse prefix of AID %d\n", aid);
+	return r;
+}
+
 struct mrt_bgp_state *
-mrt_parse_state(struct mrt_hdr *hdr, void *msg)
+mrt_parse_state(struct mrt_hdr *hdr, void *msg, int verbose)
 {
 	struct timespec		 t;
 	struct mrt_bgp_state	*s;
@@ -1068,16 +1095,8 @@ mrt_parse_state(struct mrt_hdr *hdr, void *msg)
 	}
 
 	/* src & dst addr */
-	switch (afi) {
-	case MRT_DUMP_AFI_IP:
-		aid = AID_INET;
-		break;
-	case MRT_DUMP_AFI_IPv6:
-		aid = AID_INET6;
-		break;
-	default:
-		 errx(1, "mrt_parse_state: bad afi");
-	}
+	if ((aid = mrt_afi2aid(afi, -1, verbose)) == AID_UNSPEC)
+		return (NULL);
 
 	if ((s = calloc(1, sizeof(struct mrt_bgp_state))) == NULL)
 		err(1, "calloc");
@@ -1112,7 +1131,7 @@ fail:
 }
 
 struct mrt_bgp_msg *
-mrt_parse_msg(struct mrt_hdr *hdr, void *msg)
+mrt_parse_msg(struct mrt_hdr *hdr, void *msg, int verbose)
 {
 	struct timespec		 t;
 	struct mrt_bgp_msg	*m;
@@ -1184,16 +1203,8 @@ mrt_parse_msg(struct mrt_hdr *hdr, void *msg)
 	}
 
 	/* src & dst addr */
-	switch (afi) {
-	case MRT_DUMP_AFI_IP:
-		aid = AID_INET;
-		break;
-	case MRT_DUMP_AFI_IPv6:
-		aid = AID_INET6;
-		break;
-	default:
-		 errx(1, "mrt_parse_msg: bad afi");
-	}
+	if ((aid = mrt_afi2aid(afi, -1, verbose)) == AID_UNSPEC)
+		return (NULL);
 
 	if ((m = calloc(1, sizeof(struct mrt_bgp_msg))) == NULL)
 		err(1, "calloc");
