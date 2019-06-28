@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.46 2019/04/01 07:04:38 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.47 2019/06/28 13:33:55 deraadt Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.34 1997/02/02 21:12:36 thorpej Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ mkmakefile(void)
 	while (fgets(line, sizeof(line), ifp) != NULL) {
 		lineno++;
 		if (line[0] != '%') {
-			if (fputs(line, ofp) < 0)
+			if (fputs(line, ofp) == EOF)
 				goto wrerror;
 			continue;
 		}
@@ -126,7 +126,7 @@ mkmakefile(void)
 		warn("error reading %s (at line %d)", ifname, lineno);
 		goto bad;
 	}
-	if (fclose(ofp)) {
+	if (fclose(ofp) == EOF) {
 		ofp = NULL;
 		goto wrerror;
 	}
@@ -244,7 +244,7 @@ emitdefs(FILE *fp)
 	struct nvlist *nv;
 	char *sp;
 
-	if (fputs("IDENT=", fp) < 0)
+	if (fputs("IDENT=", fp) == EOF)
 		return (1);
 	sp = "";
 	for (nv = options; nv != NULL; nv = nv->nv_next) {
@@ -257,7 +257,7 @@ emitdefs(FILE *fp)
 			return 1;
 		sp = " ";
 	}
-	if (putc('\n', fp) < 0)
+	if (putc('\n', fp) == EOF)
 		return (1);
 	if (fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers) < 0)
 		return (1);
@@ -278,12 +278,12 @@ emitreconfig(FILE *fp)
 {
 	if (fputs("\n"
 	    ".PHONY: config\n"
-	    "config:\n", fp) < 0)
+	    "config:\n", fp) == EOF)
 		return (1);
 	if (fprintf(fp, "\tcd %s && config ", startdir) < 0)
 		return (1);
 	if (pflag) {
-		if (fputs("-p ", fp) < 0)
+		if (fputs("-p ", fp) == EOF)
 			return (1);
 	}
 	if (sflag) {
@@ -308,7 +308,7 @@ emitobjs(FILE *fp)
 	int lpos, len, sp;
 	const char *fpath;
 
-	if (fputs("OBJS=", fp) < 0)
+	if (fputs("OBJS=", fp) == EOF)
 		return (1);
 	sp = '\t';
 	lpos = 7;
@@ -319,7 +319,7 @@ emitobjs(FILE *fp)
 			return (1);
 		len = strlen(fi->fi_base) + 3;
 		if (lpos + len > 72) {
-			if (fputs(" \\\n", fp) < 0)
+			if (fputs(" \\\n", fp) == EOF)
 				return (1);
 			sp = '\t';
 			lpos = 7;
@@ -334,7 +334,7 @@ emitobjs(FILE *fp)
 			continue;
 		len = strlen(oi->oi_path) + 3;
 		if (lpos + len > 72) {
-			if (fputs(" \\\n", fp) < 0)
+			if (fputs(" \\\n", fp) == EOF)
 				return (1);
 			sp = '\t';
 			lpos = 7;
@@ -344,7 +344,7 @@ emitobjs(FILE *fp)
 		lpos += len + 1;
 		sp = ' ';
 	}
-	if (putc('\n', fp) < 0)
+	if (putc('\n', fp) == EOF)
 		return (1);
 	return (0);
 }
@@ -386,7 +386,7 @@ emitfiles(FILE *fp, int suffix)
 		if (*fpath != '/')
 			len += 3;	/* "$S/" */
 		if (lpos + len > 72) {
-			if (fputs(" \\\n", fp) < 0)
+			if (fputs(" \\\n", fp) == EOF)
 				return (1);
 			sp = '\t';
 			lpos = 7;
@@ -397,7 +397,7 @@ emitfiles(FILE *fp, int suffix)
 		lpos += len + 1;
 		sp = ' ';
 	}
-	if (putc('\n', fp) < 0)
+	if (putc('\n', fp) == EOF)
 		return (1);
 	return (0);
 }
@@ -474,13 +474,13 @@ emitload(FILE *fp)
 	const char *nm, *swname;
 	int first;
 
-	if (fputs("all:", fp) < 0)
+	if (fputs("all:", fp) == EOF)
 		return (1);
 	for (cf = allcf; cf != NULL; cf = cf->cf_next) {
 		if (fprintf(fp, " %s", cf->cf_name) < 0)
 			return (1);
 	}
-	if (fputs("\n\n", fp) < 0)
+	if (fputs("\n\n", fp) == EOF)
 		return (1);
 	for (first = 1, cf = allcf; cf != NULL; cf = cf->cf_next) {
 		nm = cf->cf_name;
@@ -489,7 +489,7 @@ emitload(FILE *fp)
 		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o", nm, swname) < 0)
 			return (1);
 		if (first) {
-			if (fputs(" vers.o", fp) < 0)
+			if (fputs(" vers.o", fp) == EOF)
 				return (1);
 			first = 0;
 		}
@@ -507,7 +507,7 @@ emitload(FILE *fp)
 			if (fprintf(fp, "$S/conf/swapgeneric.c\n") < 0)
 				return (1);
 		}
-		if (fputs("\t${NORMAL_C}\n\n", fp) < 0)
+		if (fputs("\t${NORMAL_C}\n\n", fp) == EOF)
 			return (1);
 
 		if (fprintf(fp, "new%s:\n", nm) < 0)

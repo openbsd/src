@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.37 2017/09/27 15:14:51 deraadt Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.38 2019/06/28 13:33:55 deraadt Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ static int emitroots(FILE *);
  * NEWLINE can only be used in the emitXXX functions.
  * In most cases it can be subsumed into an fprintf.
  */
-#define	NEWLINE		if (putc('\n', fp) < 0) return (1)
+#define	NEWLINE		if (putc('\n', fp) == EOF) return (1)
 
 int
 mkioconf(void)
@@ -133,7 +133,7 @@ emithdr(FILE *ofp)
 	} else {
 		if (fputs("\
 #include <sys/param.h>\n\
-#include <sys/device.h>\n", ofp) < 0)
+#include <sys/device.h>\n", ofp) == EOF)
 			return (1);
 	}
 	return (0);
@@ -337,14 +337,14 @@ struct cfdata cfdata[] = {\n\
 			if (fprintf(fp, "%s%s", v == 0 ? "" : "|",
 			    i->i_parents[v]->i_name) < 0)
 				return (1);
-		if (v == 0 && fputs("root", fp) < 0)
+		if (v == 0 && fputs("root", fp) == EOF)
 			return (1);
 		a = i->i_atattr;
 		for (nv = a->a_locs, v = 0; nv != NULL; nv = nv->nv_next, v++)
 			if (fprintf(fp, " %s %s",
 			    nv->nv_name, i->i_locs[v]) < 0)
 				return (1);
-		if (fputs(" */\n", fp) < 0)
+		if (fputs(" */\n", fp) == EOF)
 			return (-1);
 
 		/* then the actual defining line */
@@ -383,7 +383,7 @@ struct cfdata cfdata[] = {\n\
 		return (1);
 	if (fprintf(fp, "    {0},\n    {0},\n    {0},\n    {0},\n") < 0)
 		return (1);
-	return (fputs("    {(struct cfattach *)-1}\n};\n", fp) < 0);
+	return (fputs("    {(struct cfattach *)-1}\n};\n", fp) == EOF);
 }
 
 /*
@@ -395,7 +395,7 @@ emitroots(FILE *fp)
 	struct devi **p, *i;
 	int cnt = 0;
 
-	if (fputs("\nshort cfroots[] = {\n", fp) < 0)
+	if (fputs("\nshort cfroots[] = {\n", fp) == EOF)
 		return (1);
 	for (p = packed; (i = *p) != NULL; p++) {
 		if (i->i_at != NULL)
@@ -408,7 +408,7 @@ emitroots(FILE *fp)
 			return (1);
 		cnt++;
 	}
-	if (fputs("\t-1\n};\n", fp) < 0)
+	if (fputs("\t-1\n};\n", fp) == EOF)
 		return (1);
 
 	return(fprintf(fp, "\nint cfroots_size = %d;\n", cnt+1) < 0);
@@ -424,13 +424,13 @@ emitpseudo(FILE *fp)
 	struct devbase *d;
 	int cnt = 0, umax;
 
-	if (fputs("\n/* pseudo-devices */\n", fp) < 0)
+	if (fputs("\n/* pseudo-devices */\n", fp) == EOF)
 		return (1);
 	for (i = allpseudo; i != NULL; i = i->i_next)
 		if (fprintf(fp, "extern void %sattach(int);\n",
 		    i->i_base->d_name) < 0)
 			return (1);
-	if (fputs("\nchar *pdevnames[] = {\n", fp) < 0)
+	if (fputs("\nchar *pdevnames[] = {\n", fp) == EOF)
 		return (1);
 	for (i = allpseudo; i != NULL; i = i->i_next) {
 		d = i->i_base;
@@ -438,11 +438,11 @@ emitpseudo(FILE *fp)
 			return (1);
 		cnt++;
 	}
-	if (fputs("};\n", fp) < 0)
+	if (fputs("};\n", fp) == EOF)
 		return (1);
 	if (fprintf(fp, "\nint pdevnames_size = %d;\n", cnt) < 0)
 		return (1);
-	if (fputs("\nstruct pdevinit pdevinit[] = {\n", fp) < 0)
+	if (fputs("\nstruct pdevinit pdevinit[] = {\n", fp) == EOF)
 		return (1);
 	for (i = allpseudo; i != NULL; i = i->i_next) {
 		d = i->i_base;
@@ -453,5 +453,5 @@ emitpseudo(FILE *fp)
 		    d->d_name, umax) < 0)
 			return (1);
 	}
-	return (fputs("\t{ NULL, 0 }\n};\n", fp) < 0);
+	return (fputs("\t{ NULL, 0 }\n};\n", fp) == EOF);
 }
