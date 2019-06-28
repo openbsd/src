@@ -336,7 +336,7 @@ file_tryopen(const char *file)
 	/* XXX check for non-regular files */
 
 	fd = open(file, O_RDONLY);
-	if (fd < 0) {
+	if (fd == -1) {
 		if (errno != ENOENT && errno != ENOTDIR) {
 			complain(NULL, "%s: %s", file, strerror(errno));
 		}
