@@ -1,4 +1,4 @@
-/* $OpenBSD: b_print.c,v 1.25 2014/06/12 15:49:28 deraadt Exp $ */
+/* $OpenBSD: b_print.c,v 1.26 2019/06/28 05:47:57 deraadt Exp $ */
 
 /* Theo de Raadt places this file in the public domain. */
 
@@ -49,13 +49,10 @@ BIO_vprintf(BIO *bio, const char *format, va_list args)
 	char *buf = NULL;
 
 	ret = vasprintf(&buf, format, args);
-	if (buf == NULL) {
-		ret = -1;
-		goto fail;
-	}
+	if (ret == -1)
+		return (ret);
 	BIO_write(bio, buf, ret);
 	free(buf);
-fail:
 	return (ret);
 }
 
