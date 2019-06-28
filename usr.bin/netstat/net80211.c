@@ -1,4 +1,4 @@
-/*	$OpenBSD: net80211.c,v 1.18 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: net80211.c,v 1.19 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -47,13 +47,13 @@ net80211_ifstats(char *ifname)
 
 #define	p(f, m)	printf(m, (unsigned long)stats.f, plural(stats.f))
 
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		err(1, "socket(AF_INET)");
 
 	ifr.ifr_data = (caddr_t)&stats;
 	strlcpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
 
-	if (ioctl(s, SIOCG80211STATS, &ifr) < 0)
+	if (ioctl(s, SIOCG80211STATS, &ifr) == -1)
 		err(1, "ioctl(SIOCG80211STATS)");
 
 	printf("ieee80211 on %s:\n", ifr.ifr_name);

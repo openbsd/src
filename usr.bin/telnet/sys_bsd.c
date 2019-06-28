@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_bsd.c,v 1.34 2017/07/19 12:25:52 deraadt Exp $	*/
+/*	$OpenBSD: sys_bsd.c,v 1.35 2019/06/28 13:35:04 deraadt Exp $	*/
 /*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ TerminalNewMode(int f)
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 	tmp_tc = old_tc;
     }
-    if (isatty(tin) && tcsetattr(tin, TCSADRAIN, &tmp_tc) < 0)
+    if (isatty(tin) && tcsetattr(tin, TCSADRAIN, &tmp_tc) == -1)
 	tcsetattr(tin, TCSANOW, &tmp_tc);
 
     ioctl(tin, FIONBIO, &onoff);
@@ -381,7 +381,7 @@ TerminalWindowSize(long *rows, long *cols)
 {
     struct winsize ws;
 
-    if (ioctl(fileno(stdin), TIOCGWINSZ, &ws) >= 0) {
+    if (ioctl(fileno(stdin), TIOCGWINSZ, &ws) == 0) {
 	*rows = ws.ws_row;
 	*cols = ws.ws_col;
 	return 1;
@@ -526,7 +526,7 @@ process_rings(int netin, int netout, int netex, int ttyin, int ttyout,
 	pfd[TELNET_FD_NET].fd = -1;
     }
 
-    if ((c = poll(pfd, TELNET_FD_NUM, dopoll ? 0 : INFTIM)) < 0) {
+    if ((c = poll(pfd, TELNET_FD_NUM, dopoll ? 0 : INFTIM)) == -1) {
 	return 0;
     }
 
@@ -546,7 +546,7 @@ process_rings(int netin, int netout, int netex, int ttyin, int ttyout,
 
 	canread = ring_empty_consecutive(&netiring);
 	c = recv(net, netiring.supply, canread, 0);
-	if (c < 0 && errno == EWOULDBLOCK) {
+	if (c == -1 && errno == EWOULDBLOCK) {
 	    c = 0;
 	} else if (c <= 0) {
 	    return -1;
@@ -564,9 +564,9 @@ process_rings(int netin, int netout, int netex, int ttyin, int ttyout,
      */
     if (pfd[TELNET_FD_TIN].revents & (POLLIN|POLLHUP)) {
 	c = read(tin, ttyiring.supply, ring_empty_consecutive(&ttyiring));
-	if (c < 0 && errno == EIO)
+	if (c == -1 && errno == EIO)
 	    c = 0;
-	if (c < 0 && errno == EWOULDBLOCK) {
+	if (c == -1 && errno == EWOULDBLOCK) {
 	    c = 0;
 	} else {
 	    /* EOF detection for line mode!!!! */

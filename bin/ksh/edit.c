@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.68 2019/06/27 18:03:36 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.69 2019/06/28 13:34:59 deraadt Exp $	*/
 
 /*
  * Command line editing - common code
@@ -65,7 +65,7 @@ check_sigwinch(void)
 		struct winsize ws;
 
 		got_sigwinch = 0;
-		if (procpid == kshpid && ioctl(tty_fd, TIOCGWINSZ, &ws) >= 0) {
+		if (procpid == kshpid && ioctl(tty_fd, TIOCGWINSZ, &ws) == 0) {
 			struct tbl *vp;
 
 			/* Do NOT export COLUMNS/LINES.  Many applications
@@ -390,7 +390,7 @@ x_file_glob(int flags, const char *str, int slen, char ***wordsp)
 		 * which evaluated to an empty string (e.g.,
 		 * "$FOO" when there is no FOO, etc).
 		 */
-		 if ((lstat(words[0], &statb) < 0) ||
+		 if ((lstat(words[0], &statb) == -1) ||
 		    words[0][0] == '\0') {
 			x_free_words(nwords, words);
 			words = NULL;

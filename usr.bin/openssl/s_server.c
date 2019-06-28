@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.30 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.31 2019/06/28 13:35:02 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1512,7 +1512,7 @@ sv_body(char *hostname, int s, unsigned char *context)
 								n = write(fileno(stdout), buf + len, i - len);
 							} while (n == -1 && errno == EINTR);
 
-							if (n < 0) {
+							if (n == -1) {
 								BIO_printf(bio_s_out, "ERROR\n");
 								goto err;
 							}

@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.24 2019/06/02 17:36:48 florian Exp $ */
+/*	$Id: sender.c,v 1.25 2019/06/28 13:35:03 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -570,7 +570,7 @@ rsync_sender(struct sess *sess, int fdin,
 			assert(wbufsz - wbufpos);
 			ssz = write(fdout,
 				wbuf + wbufpos, wbufsz - wbufpos);
-			if (ssz < 0) {
+			if (ssz == -1) {
 				ERR("write");
 				goto out;
 			}

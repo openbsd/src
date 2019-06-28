@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.7 2015/01/16 00:03:37 deraadt Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.8 2019/06/28 13:35:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -150,7 +150,7 @@ read_nfs(void)
 	mib[1] = 2; /* NETDEV */
 	mib[2] = NFS_NFSSTATS;
 
-	if (sysctl(mib, 3, p, &len, NULL, 0) < 0)
+	if (sysctl(mib, 3, p, &len, NULL, 0) == -1)
 		return(-1);
 	else
 		return(0);

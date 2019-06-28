@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.36 2017/07/09 14:04:50 espie Exp $	*/
+/*	$OpenBSD: client.c,v 1.37 2019/06/28 13:35:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -391,7 +391,7 @@ sendfile(char *rname, opt_t opts, struct stat *stb, char *user,
 			return(sendhardlink(opts, lp, rname, destdir));
 	}
 
-	if ((f = open(target, O_RDONLY)) < 0) {
+	if ((f = open(target, O_RDONLY)) == -1) {
 		error("%s: open for read failed: %s", target, SYSERR);
 		return(-1);
 	}
@@ -529,7 +529,7 @@ rmchk(opt_t opts)
 			debugmsg(DM_MISC, "check %s\n", target);
 			if (except(target))
 				(void) sendcmd(CC_NO, NULL);
-			else if (lstat(target, &stb) < 0) {
+			else if (lstat(target, &stb) == -1) {
 				if (sendcmd(CC_YES, NULL) == 0)
 					didupdate = 1;
 			} else
@@ -1027,7 +1027,7 @@ dostat(char *file, struct stat *statbuf, opt_t opts)
 	else
 		s = lstat(file, statbuf);
 
-	if (s < 0)
+	if (s == -1)
 		error("%s: %s failed: %s", file,
 		      IS_ON(opts, DO_FOLLOW) ? "stat" : "lstat", SYSERR);
 	return(s);

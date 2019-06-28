@@ -1,4 +1,4 @@
-/*	$OpenBSD: ln.c,v 1.24 2016/05/10 20:20:43 tim Exp $	*/
+/*	$OpenBSD: ln.c,v 1.25 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: ln.c,v 1.10 1995/03/21 09:06:10 cgd Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ linkit(char *target, char *source, int isdir)
 	 * If the file exists, and -f was specified, unlink it.
 	 * Attempt the link.
 	 */
-	if ((fflag && unlink(source) < 0 && errno != ENOENT) ||
+	if ((fflag && unlink(source) == -1 && errno != ENOENT) ||
 	    (sflag ? symlink(target, source) :
 	    linkat(AT_FDCWD, target, AT_FDCWD, source,
 	    Pflag ? 0 : AT_SYMLINK_FOLLOW))) {

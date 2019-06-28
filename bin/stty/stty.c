@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.20 2016/07/23 08:57:18 bluhm Exp $	*/
+/*	$OpenBSD: stty.c,v 1.21 2019/06/28 13:35:00 deraadt Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 			fmt = BSD;
 			break;
 		case 'f':
-			if ((i.fd = open(optarg, O_RDONLY | O_NONBLOCK)) < 0)
+			if ((i.fd = open(optarg, O_RDONLY | O_NONBLOCK)) == -1)
 				err(1, "%s", optarg);
 			break;
 		case 'g':
@@ -82,12 +82,12 @@ main(int argc, char *argv[])
 args:	argc -= optind;
 	argv += optind;
 
-	if (ioctl(i.fd, TIOCGETD, &i.ldisc) < 0	)
+	if (ioctl(i.fd, TIOCGETD, &i.ldisc) == -1)
 		err(1, "TIOCGETD");
 
-	if (tcgetattr(i.fd, &i.t) < 0)
+	if (tcgetattr(i.fd, &i.t) == -1)
 		errx(1, "not a terminal");
-	if (ioctl(i.fd, TIOCGWINSZ, &i.win) < 0)
+	if (ioctl(i.fd, TIOCGWINSZ, &i.win) == -1)
 		warn("TIOCGWINSZ");
 
 	switch(fmt) {
@@ -149,9 +149,9 @@ args:	argc -= optind;
 		usage();
 	}
 
-	if (i.set && tcsetattr(i.fd, 0, &i.t) < 0)
+	if (i.set && tcsetattr(i.fd, 0, &i.t) == -1)
 		err(1, "tcsetattr");
-	if (i.wset && ioctl(i.fd, TIOCSWINSZ, &i.win) < 0)
+	if (i.wset && ioctl(i.fd, TIOCSWINSZ, &i.win) == -1)
 		warn("TIOCSWINSZ");
 	return (0);
 }

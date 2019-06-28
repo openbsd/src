@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.27 2012/12/05 23:20:26 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.28 2019/06/28 13:35:03 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 
 /*
@@ -718,7 +718,7 @@ write_pm_most(infile, netflag)
 	definition *def;
 	version_list *vp;
 
-	fprintf(fout, "\tif (!ioctl(0, I_LOOK, mname) &&\n");
+	fprintf(fout, "\tif (!ioctl(0, I_LOOK, mname) == -1 &&\n");
 	fprintf(fout, "\t\t(!strcmp(mname, \"sockmod\") ||");
 	fprintf(fout, " !strcmp(mname, \"timod\"))) {\n");
 	fprintf(fout, "\t\tchar *netid;\n");
@@ -746,7 +746,7 @@ write_pm_most(infile, netflag)
 	 * sockmod, and RPC works only with timod, hence all this jugglery
 	 */
 	fprintf(fout, "\t\tif (strcmp(mname, \"sockmod\") == 0) {\n");
-	fprintf(fout, "\t\t\tif (ioctl(0, I_POP, 0) || ioctl(0, I_PUSH, \"timod\")) {\n");
+	fprintf(fout, "\t\t\tif (ioctl(0, I_POP, 0) == -1 || ioctl(0, I_PUSH, \"timod\") == -1) {\n");
 	snprintf(_errbuf, sizeof _errbuf, "could not get the right module");
 	print_err_message("\t\t\t\t");
 	fprintf(fout, "\t\t\t\texit(1);\n");
@@ -810,7 +810,7 @@ write_rpc_svc_fg(infile, sp)
 		fprintf(fout, "%spid_t pid;\n\n", sp);
 	}
 	fprintf(fout, "%spid = fork();\n", sp);
-	fprintf(fout, "%sif (pid < 0) {\n", sp);
+	fprintf(fout, "%sif (pid == -1) {\n", sp);
 	fprintf(fout, "%s\tperror(\"cannot fork\");\n", sp);
 	fprintf(fout, "%s\texit(1);\n", sp);
 	fprintf(fout, "%s}\n", sp);
@@ -837,7 +837,7 @@ write_rpc_svc_fg(infile, sp)
 		fprintf(fout, "%ssetsid();\n", sp);
 	else {
 		fprintf(fout, "%si = open(\"/dev/tty\", 2);\n", sp);
-		fprintf(fout, "%sif (i >= 0) {\n", sp);
+		fprintf(fout, "%sif (i != -1) {\n", sp);
 		fprintf(fout, "%s\t(void) ioctl(i, TIOCNOTTY, (char *)NULL);\n", sp);
 		fprintf(fout, "%s\t(void) close(i);\n", sp);
 		fprintf(fout, "%s}\n", sp);

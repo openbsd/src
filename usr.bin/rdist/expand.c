@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.17 2018/09/21 19:00:45 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.18 2019/06/28 13:35:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -354,7 +354,7 @@ matchdir(char *pattern)			/* quote in pattern */
 			return;
 		goto patherr2;
 	}
-	if (fstat(dirfd(dirp), &stb) < 0)
+	if (fstat(dirfd(dirp), &stb) == -1)
 		goto patherr1;
 	if (!S_ISDIR(stb.st_mode)) {
 		errno = ENOTDIR;

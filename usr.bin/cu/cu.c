@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.27 2019/03/22 07:03:23 nicm Exp $ */
+/* $OpenBSD: cu.c,v 1.28 2019/06/28 13:35:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -176,7 +176,7 @@ main(int argc, char **argv)
 	if (is_direct)
 		flags |= O_NONBLOCK;
 	line_fd = open(line_path, flags);
-	if (line_fd < 0)
+	if (line_fd == -1)
 		err(1, "open(\"%s\")", line_path);
 	if (restricted && pledge("stdio tty", NULL) == -1)
 		err(1, "pledge");

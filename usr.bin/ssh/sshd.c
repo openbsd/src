@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.536 2019/06/21 04:21:05 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.537 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -321,7 +321,7 @@ main_sigchld_handler(int sig)
 	int status;
 
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0 ||
-	    (pid < 0 && errno == EINTR))
+	    (pid == -1 && errno == EINTR))
 		;
 	errno = save_errno;
 }
@@ -432,7 +432,7 @@ privsep_preauth_child(void)
 		debug3("privsep user:group %u:%u", (u_int)pw->pw_uid,
 		    (u_int)pw->pw_gid);
 		gidset[0] = pw->pw_gid;
-		if (setgroups(1, gidset) < 0)
+		if (setgroups(1, gidset) == -1)
 			fatal("setgroups: %.100s", strerror(errno));
 		permanently_set_uid(pw);
 	}
@@ -472,7 +472,7 @@ privsep_preauth(struct ssh *ssh)
 		monitor_child_preauth(ssh, pmonitor);
 
 		/* Wait for the child's exit status */
-		while (waitpid(pid, &status, 0) < 0) {
+		while (waitpid(pid, &status, 0) == -1) {
 			if (errno == EINTR)
 				continue;
 			pmonitor->m_pid = -1;
@@ -916,7 +916,7 @@ listen_on_addrs(struct listenaddr *la)
 		/* Create socket for listening. */
 		listen_sock = socket(ai->ai_family, ai->ai_socktype,
 		    ai->ai_protocol);
-		if (listen_sock < 0) {
+		if (listen_sock == -1) {
 			/* kernel may not support ipv6 */
 			verbose("socket: %.100s", strerror(errno));
 			continue;
@@ -941,7 +941,7 @@ listen_on_addrs(struct listenaddr *la)
 		debug("Bind to port %s on %s.", strport, ntop);
 
 		/* Bind the socket to the desired port. */
-		if (bind(listen_sock, ai->ai_addr, ai->ai_addrlen) < 0) {
+		if (bind(listen_sock, ai->ai_addr, ai->ai_addrlen) == -1) {
 			error("Bind to port %s on %s failed: %.200s.",
 			    strport, ntop, strerror(errno));
 			close(listen_sock);
@@ -951,7 +951,7 @@ listen_on_addrs(struct listenaddr *la)
 		num_listen_socks++;
 
 		/* Start listening on the port. */
-		if (listen(listen_sock, SSH_LISTEN_BACKLOG) < 0)
+		if (listen(listen_sock, SSH_LISTEN_BACKLOG) == -1)
 			fatal("listen on [%s]:%s: %.100s",
 			    ntop, strport, strerror(errno));
 		logit("Server listening on %s port %s%s%s.",
@@ -1035,7 +1035,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 
 		/* Wait in select until there is a connection. */
 		ret = select(maxfd+1, fdset, NULL, NULL, NULL);
-		if (ret < 0 && errno != EINTR)
+		if (ret == -1 && errno != EINTR)
 			error("select: %.100s", strerror(errno));
 		if (received_sigterm) {
 			logit("Received signal %d; terminating.",
@@ -1045,7 +1045,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 				unlink(options.pid_file);
 			exit(received_sigterm == SIGTERM ? 0 : 255);
 		}
-		if (ret < 0)
+		if (ret == -1)
 			continue;
 
 		for (i = 0; i < options.max_startups; i++) {
@@ -1085,7 +1085,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 			fromlen = sizeof(from);
 			*newsock = accept(listen_socks[i],
 			    (struct sockaddr *)&from, &fromlen);
-			if (*newsock < 0) {
+			if (*newsock == -1) {
 				if (errno != EINTR && errno != EWOULDBLOCK &&
 				    errno != ECONNABORTED)
 					error("accept: %.100s",
@@ -1202,7 +1202,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 			}
 
 			/* Parent.  Stay in the loop. */
-			if (pid < 0)
+			if (pid == -1)
 				error("fork: %.100s", strerror(errno));
 			else
 				debug("Forked child %ld.", (long)pid);
@@ -1241,7 +1241,7 @@ check_ip_options(struct ssh *ssh)
 
 	memset(&from, 0, sizeof(from));
 	if (getpeername(sock_in, (struct sockaddr *)&from,
-	    &fromlen) < 0)
+	    &fromlen) == -1)
 		return;
 	if (from.ss_family != AF_INET)
 		return;
@@ -1757,7 +1757,7 @@ main(int ac, char **av)
 	already_daemon = daemonized();
 	if (!(debug_flag || inetd_flag || no_daemon_flag || already_daemon)) {
 
-		if (daemon(0, 0) < 0)
+		if (daemon(0, 0) == -1)
 			fatal("daemon() failed: %.200s", strerror(errno));
 
 		disconnect_controlling_tty();
@@ -1813,7 +1813,7 @@ main(int ac, char **av)
 	 * setlogin() affects the entire process group.  We don't
 	 * want the child to be able to affect the parent.
 	 */
-	if (!debug_flag && !inetd_flag && setsid() < 0)
+	if (!debug_flag && !inetd_flag && setsid() == -1)
 		error("setsid: %.100s", strerror(errno));
 
 	if (rexec_flag) {
@@ -1889,7 +1889,7 @@ main(int ac, char **av)
 
 	/* Set SO_KEEPALIVE if requested. */
 	if (options.tcp_keep_alive && ssh_packet_connection_is_on_socket(ssh) &&
-	    setsockopt(sock_in, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0)
+	    setsockopt(sock_in, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) == -1)
 		error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
 
 	if ((remote_port = ssh_remote_port(ssh)) < 0) {

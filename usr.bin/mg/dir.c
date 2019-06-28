@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.30 2017/05/30 07:05:22 florian Exp $	*/
+/*	$OpenBSD: dir.c,v 1.31 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -153,7 +153,7 @@ do_makedir(char *path)
 		}
 
 		if (mkdir(path, finished ? f_mode : dir_mode) == 0) {
-			if (f_mode > 0777 && chmod(path, f_mode) < 0) {
+			if (f_mode > 0777 && chmod(path, f_mode) == -1) {
 				umask(oumask);
 				return (ABORT);
 			}

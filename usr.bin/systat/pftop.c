@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.43 2019/02/18 13:11:44 bluhm Exp $	 */
+/* $OpenBSD: pftop.c,v 1.44 2019/06/28 13:35:04 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -668,7 +668,7 @@ read_states(void)
 		ps.ps_len = sbytes;
 		ps.ps_states = state_buf;
 
-		if (ioctl(pf_dev, DIOCGETSTATES, &ps) < 0) {
+		if (ioctl(pf_dev, DIOCGETSTATES, &ps) == -1) {
 			error("DIOCGETSTATES");
 		}
 		num_states_all = ps.ps_len / sizeof(struct pfsync_state);
@@ -955,7 +955,7 @@ read_anchor_rules(char *anchor)
 	memset(&pr, 0, sizeof(pr));
 	strlcpy(pr.anchor, anchor, sizeof(pr.anchor));
 
-	if (ioctl(pf_dev, DIOCGETRULES, &pr)) {
+	if (ioctl(pf_dev, DIOCGETRULES, &pr) == -1) {
 		error("anchor %s: %s", anchor, strerror(errno));
 		return (-1);
 	}
@@ -966,7 +966,7 @@ read_anchor_rules(char *anchor)
 
 	for (nr = 0; nr < num; ++nr) {
 		pr.nr = nr;
-		if (ioctl(pf_dev, DIOCGETRULE, &pr)) {
+		if (ioctl(pf_dev, DIOCGETRULE, &pr) == -1) {
 			error("DIOCGETRULE: %s", strerror(errno));
 			return (-1);
 		}
@@ -1055,7 +1055,7 @@ read_rulesets(const char *path)
 
 	a->ref += len;
 
-	if (ioctl(pf_dev, DIOCGETRULESETS, &ruleset)) {
+	if (ioctl(pf_dev, DIOCGETRULESETS, &ruleset) == -1) {
 		error("DIOCGETRULESETS: %s", strerror(errno));
 		return (-1);
 	}
@@ -1074,7 +1074,7 @@ read_rulesets(const char *path)
 
 	for (nr = 0; nr < ns; ++nr) {
 		ruleset.nr = nr;
-		if (ioctl(pf_dev, DIOCGETRULESET, &ruleset)) {
+		if (ioctl(pf_dev, DIOCGETRULESET, &ruleset) == -1) {
 			error("DIOCGETRULESET: %s", strerror(errno));
 			return (-1);
 		}
@@ -1515,7 +1515,7 @@ pfctl_update_qstats(void)
 	if (pf_dev < 0)
 		return (-1);
 
-	if (ioctl(pf_dev, DIOCGETQUEUES, &pq)) {
+	if (ioctl(pf_dev, DIOCGETQUEUES, &pq) == -1) {
 		error("DIOCGETQUEUES: %s", strerror(errno));
 		return (-1);
 	}
@@ -1534,7 +1534,7 @@ pfctl_update_qstats(void)
 		pqs.ticket = pq.ticket;
 		pqs.buf = &qstats.data;
 		pqs.nbytes = sizeof(qstats.data);
-		if (ioctl(pf_dev, DIOCGETQSTATS, &pqs)) {
+		if (ioctl(pf_dev, DIOCGETQSTATS, &pqs) == -1) {
 			error("DIOCGETQSTATS: %s", strerror(errno));
 			return (-1);
 		}
@@ -1727,7 +1727,7 @@ initpftop(void)
 	pf_dev = open("/dev/pf", O_RDONLY);
 	if (pf_dev == -1) {
 		alloc_buf(0);
-	} else if (ioctl(pf_dev, DIOCGETSTATUS, &status)) {
+	} else if (ioctl(pf_dev, DIOCGETSTATUS, &status) == -1) {
 		warn("DIOCGETSTATUS");
 		alloc_buf(0);
 	} else

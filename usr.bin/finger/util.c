@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.34 2018/06/17 15:00:29 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.35 2019/06/28 13:35:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -60,7 +60,7 @@ find_idle_and_ttywrite(WHERE *w)
 	struct stat sb;
 
 	(void)snprintf(tbuf, sizeof(tbuf), "%s%s", _PATH_DEV, w->tty);
-	if (stat(tbuf, &sb) < 0) {
+	if (stat(tbuf, &sb) == -1) {
 		/* Don't bitch about it, just handle it... */
 		w->idletime = 0;
 		w->writable = 0;

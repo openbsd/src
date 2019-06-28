@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.40 2017/05/30 05:57:46 tedu Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.41 2019/06/28 13:35:05 deraadt Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ dkreadstats(void)
 		mib[0] = CTL_HW;
 		mib[1] = HW_DISKCOUNT;
 		size = sizeof(dk_ndrive);
-		if (sysctl(mib, 2, &dk_ndrive, &size, NULL, 0) < 0 ) {
+		if (sysctl(mib, 2, &dk_ndrive, &size, NULL, 0) == -1 ) {
 			warn("could not read hw.diskcount");
 			dk_ndrive = 0;
 		}
@@ -189,12 +189,12 @@ dkreadstats(void)
 			mib[0] = CTL_HW;
 			mib[1] = HW_DISKNAMES;
 			size = 0;
-			if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0)
+			if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1)
 				err(1, "can't get hw.disknames");
 			disknames = malloc(size);
 			if (disknames == NULL)
 				err(1, NULL);
-			if (sysctl(mib, 2, disknames, &size, NULL, 0) < 0)
+			if (sysctl(mib, 2, disknames, &size, NULL, 0) == -1)
 				err(1, "can't get hw.disknames");
 			bufpp = disknames;
 			for (i = 0; i < dk_ndrive &&
@@ -357,7 +357,7 @@ dkreadstats(void)
 		q = malloc(size);
 		if (q == NULL)
 			err(1, NULL);
-		if (sysctl(mib, 2, q, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 2, q, &size, NULL, 0) == -1) {
 #ifdef	DEBUG
 			warn("could not read hw.diskstats");
 #endif	/* DEBUG */
@@ -377,7 +377,7 @@ dkreadstats(void)
 		size = sizeof(cur.cp_time);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CPTIME;
-		if (sysctl(mib, 2, cur.cp_time, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 2, cur.cp_time, &size, NULL, 0) == -1) {
 			warn("could not read kern.cp_time");
 			memset(cur.cp_time, 0, sizeof(cur.cp_time));
 		}
@@ -385,7 +385,7 @@ dkreadstats(void)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_TTY;
 		mib[2] = KERN_TTY_TKNIN;
-		if (sysctl(mib, 3, &cur.tk_nin, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 3, &cur.tk_nin, &size, NULL, 0) == -1) {
 			warn("could not read kern.tty.tk_nin");
 			cur.tk_nin = 0;
 		}
@@ -393,7 +393,7 @@ dkreadstats(void)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_TTY;
 		mib[2] = KERN_TTY_TKNOUT;
-		if (sysctl(mib, 3, &cur.tk_nout, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 3, &cur.tk_nout, &size, NULL, 0) == -1) {
 			warn("could not read kern.tty.tk_nout");
 			cur.tk_nout = 0;
 		}
@@ -472,7 +472,7 @@ dkinit(int sel)
 		mib[0] = CTL_HW;
 		mib[1] = HW_DISKCOUNT;
 		size = sizeof(cur.dk_ndrive);
-		if (sysctl(mib, 2, &cur.dk_ndrive, &size, NULL, 0) < 0 ) {
+		if (sysctl(mib, 2, &cur.dk_ndrive, &size, NULL, 0) == -1 ) {
 			warn("could not read hw.diskcount");
 			cur.dk_ndrive = 0;
 		}
@@ -481,7 +481,7 @@ dkinit(int sel)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CLOCKRATE;
 		size = sizeof(clkinfo);
-		if (sysctl(mib, 2, &clkinfo, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &clkinfo, &size, NULL, 0) == -1) {
 			warn("could not read kern.clockrate");
 			hz = 0;
 		} else
@@ -521,12 +521,12 @@ dkinit(int sel)
 		mib[0] = CTL_HW;
 		mib[1] = HW_DISKNAMES;
 		size = 0;
-		if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0)
+		if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1)
 			err(1, "can't get hw.disknames");
 		disknames = malloc(size);
 		if (disknames == NULL)
 			err(1, NULL);
-		if (sysctl(mib, 2, disknames, &size, NULL, 0) < 0)
+		if (sysctl(mib, 2, disknames, &size, NULL, 0) == -1)
 			err(1, "can't get hw.disknames");
 		bufpp = disknames;
 		for (i = 0; i < dk_ndrive && (name = strsep(&bufpp, ",")) != NULL; i++) {

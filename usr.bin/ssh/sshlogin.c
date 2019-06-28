@@ -1,4 +1,4 @@
-/* $OpenBSD: sshlogin.c,v 1.33 2018/07/09 21:26:02 markus Exp $ */
+/* $OpenBSD: sshlogin.c,v 1.34 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -81,7 +81,7 @@ get_last_login_time(uid_t uid, const char *logname,
 	buf[0] = '\0';
 
 	fd = open(lastlog, O_RDONLY);
-	if (fd < 0)
+	if (fd == -1)
 		return 0;
 
 	pos = (off_t)uid * sizeof(ll);

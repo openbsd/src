@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpcinfo.c,v 1.14 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.15 2019/06/28 13:35:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -213,7 +213,7 @@ udpping(u_short portnum, int argc, char **argv)
 	get_inet_address(&addr, argv[0]);
 	/* Open the socket here so it will survive calls to clnt_destroy */
 	sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (sock < 0) {
+	if (sock == -1) {
 		perror("rpcinfo: socket");
 		exit(1);
 	}

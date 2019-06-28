@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.51 2018/08/03 15:01:28 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.52 2019/06/28 13:35:01 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -254,7 +254,7 @@ wtmp(void)
 	off_t	bl;
 	struct ttytab	*T;
 
-	if ((wfd = open(file, O_RDONLY, 0)) < 0 || fstat(wfd, &stb) == -1)
+	if ((wfd = open(file, O_RDONLY, 0)) == -1 || fstat(wfd, &stb) == -1)
 		err(1, "%s", file);
 	bl = (stb.st_size + sizeof(buf) - 1) / sizeof(buf);
 
@@ -558,7 +558,7 @@ dateconv(char *arg)
 	char *p;
 
 	/* Start with the current time. */
-	if (time(&timet) < 0)
+	if (time(&timet) == -1)
 		err(1, "time");
 	if ((t = localtime(&timet)) == NULL)
 		err(1, "localtime");

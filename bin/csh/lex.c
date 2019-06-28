@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.30 2018/10/24 06:01:03 martijn Exp $	*/
+/*	$OpenBSD: lex.c,v 1.31 2019/06/28 13:34:58 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -1553,7 +1553,7 @@ settell(void)
     cantell = 0;
     if (arginp || onelflg || intty)
 	return;
-    if (lseek(SHIN, (off_t) 0, SEEK_CUR) < 0 || errno == ESPIPE)
+    if (lseek(SHIN, (off_t) 0, SEEK_CUR) == -1 || errno == ESPIPE)
 	return;
     fbuf = xcalloc(2, sizeof(*fbuf));
     fblocks = 1;

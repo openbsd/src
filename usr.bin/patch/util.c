@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.42 2018/12/30 23:09:58 guenther Exp $	*/
+/*	$OpenBSD: util.c,v 1.43 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -59,7 +59,7 @@ move_file(const char *from, const char *to)
 			say("Moving %s to stdout.\n", from);
 #endif
 		fromfd = open(from, O_RDONLY);
-		if (fromfd < 0)
+		if (fromfd == -1)
 			pfatal("internal error, can't reopen %s", from);
 		while ((i = read(fromfd, buf, sizeof buf)) > 0)
 			if (write(STDOUT_FILENO, buf, i) != i)
@@ -76,7 +76,7 @@ move_file(const char *from, const char *to)
 	if (debug & 4)
 		say("Moving %s to %s.\n", from, to);
 #endif
-	if (rename(from, to) < 0) {
+	if (rename(from, to) == -1) {
 		if (errno != EXDEV || copy_file(from, to) < 0) {
 			say("Can't create %s, output is in %s: %s\n",
 			    to, from, strerror(errno));
@@ -138,7 +138,7 @@ backup_file(const char *orig)
 	if (debug & 4)
 		say("Moving %s to %s.\n", orig, bakname);
 #endif
-	if (rename(orig, bakname) < 0) {
+	if (rename(orig, bakname) == -1) {
 		if (errno != EXDEV || copy_file(orig, bakname) < 0)
 			return -1;
 	}
@@ -155,10 +155,10 @@ copy_file(const char *from, const char *to)
 	ssize_t	i;
 
 	tofd = open(to, O_CREAT|O_TRUNC|O_WRONLY, 0666);
-	if (tofd < 0)
+	if (tofd == -1)
 		return -1;
 	fromfd = open(from, O_RDONLY, 0);
-	if (fromfd < 0)
+	if (fromfd == -1)
 		pfatal("internal error, can't reopen %s", from);
 	while ((i = read(fromfd, buf, sizeof buf)) > 0)
 		if (write(tofd, buf, i) != i)
@@ -271,7 +271,7 @@ ask(const char *fmt, ...)
 		    buf[nr - 1] == '\n')
 			buf[nr - 1] = '\0';
 	}
-	if (ttyfd < 0 || nr <= 0) {
+	if (ttyfd == -1 || nr <= 0) {
 		/* no tty or error reading, pretend user entered 'return' */
 		putchar('\n');
 		buf[0] = '\0';

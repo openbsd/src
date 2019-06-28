@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect.c,v 1.316 2019/06/21 04:21:04 djm Exp $ */
+/* $OpenBSD: sshconnect.c,v 1.317 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -119,7 +119,7 @@ ssh_proxy_fdpass_connect(struct ssh *ssh, const char *host, u_short port,
 	if ((shell = getenv("SHELL")) == NULL)
 		shell = _PATH_BSHELL;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sp) < 0)
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, sp) == -1)
 		fatal("Could not create socketpair to communicate with "
 		    "proxy dialer: %.100s", strerror(errno));
 
@@ -134,11 +134,11 @@ ssh_proxy_fdpass_connect(struct ssh *ssh, const char *host, u_short port,
 		close(sp[1]);
 		/* Redirect stdin and stdout. */
 		if (sp[0] != 0) {
-			if (dup2(sp[0], 0) < 0)
+			if (dup2(sp[0], 0) == -1)
 				perror("dup2 stdin");
 		}
 		if (sp[0] != 1) {
-			if (dup2(sp[0], 1) < 0)
+			if (dup2(sp[0], 1) == -1)
 				perror("dup2 stdout");
 		}
 		if (sp[0] >= 2)
@@ -166,7 +166,7 @@ ssh_proxy_fdpass_connect(struct ssh *ssh, const char *host, u_short port,
 		exit(1);
 	}
 	/* Parent. */
-	if (pid < 0)
+	if (pid == -1)
 		fatal("fork failed: %.100s", strerror(errno));
 	close(sp[0]);
 	free(command_string);
@@ -202,7 +202,7 @@ ssh_proxy_connect(struct ssh *ssh, const char *host, u_short port,
 		shell = _PATH_BSHELL;
 
 	/* Create pipes for communicating with the proxy. */
-	if (pipe(pin) < 0 || pipe(pout) < 0)
+	if (pipe(pin) == -1 || pipe(pout) == -1)
 		fatal("Could not create pipes to communicate with the proxy: %.100s",
 		    strerror(errno));
 
@@ -217,12 +217,12 @@ ssh_proxy_connect(struct ssh *ssh, const char *host, u_short port,
 		/* Redirect stdin and stdout. */
 		close(pin[1]);
 		if (pin[0] != 0) {
-			if (dup2(pin[0], 0) < 0)
+			if (dup2(pin[0], 0) == -1)
 				perror("dup2 stdin");
 			close(pin[0]);
 		}
 		close(pout[0]);
-		if (dup2(pout[1], 1) < 0)
+		if (dup2(pout[1], 1) == -1)
 			perror("dup2 stdout");
 		/* Cannot be 1 because pin allocated two descriptors. */
 		close(pout[1]);
@@ -248,7 +248,7 @@ ssh_proxy_connect(struct ssh *ssh, const char *host, u_short port,
 		exit(1);
 	}
 	/* Parent. */
-	if (pid < 0)
+	if (pid == -1)
 		fatal("fork failed: %.100s", strerror(errno));
 	else
 		proxy_command_pid = pid; /* save pid to clean up later */
@@ -353,7 +353,7 @@ ssh_create_socket(struct addrinfo *ai)
 	char ntop[NI_MAXHOST];
 
 	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-	if (sock < 0) {
+	if (sock == -1) {
 		error("socket: %s", strerror(errno));
 		return -1;
 	}
@@ -508,7 +508,7 @@ ssh_connect_direct(struct ssh *ssh, const char *host, struct addrinfo *aitop,
 	/* Set SO_KEEPALIVE if requested. */
 	if (want_keepalive &&
 	    setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&on,
-	    sizeof(on)) < 0)
+	    sizeof(on)) == -1)
 		error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
 
 	/* Set the connection. */
@@ -529,8 +529,8 @@ ssh_connect(struct ssh *ssh, const char *host, struct addrinfo *addrs,
 		return ssh_connect_direct(ssh, host, addrs, hostaddr, port,
 		    family, connection_attempts, timeout_ms, want_keepalive);
 	} else if (strcmp(options.proxy_command, "-") == 0) {
-		if ((in = dup(STDIN_FILENO)) < 0 ||
-		    (out = dup(STDOUT_FILENO)) < 0) {
+		if ((in = dup(STDIN_FILENO)) == -1 ||
+		    (out = dup(STDOUT_FILENO)) == -1) {
 			if (in >= 0)
 				close(in);
 			error("%s: dup() in/out failed", __func__);

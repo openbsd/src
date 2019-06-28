@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.37 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: fio.c,v 1.38 2019/06/28 13:35:01 deraadt Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ setinput(struct message *mp)
 
 	fflush(otf);
 	if (fseek(itf, (long)positionof(mp->m_block, mp->m_offset), SEEK_SET)
-	    < 0)
+	    == -1)
 		err(1, "fseek");
 	return(itf);
 }
@@ -313,7 +313,7 @@ rm(char *name)
 {
 	struct stat sb;
 
-	if (stat(name, &sb) < 0)
+	if (stat(name, &sb) == -1)
 		return(-1);
 	if (!S_ISREG(sb.st_mode)) {
 		errno = EISDIR;
@@ -391,7 +391,7 @@ fsize(FILE *iob)
 {
 	struct stat sbuf;
 
-	if (fstat(fileno(iob), &sbuf) < 0)
+	if (fstat(fileno(iob), &sbuf) == -1)
 		return(0);
 	return(sbuf.st_size);
 }

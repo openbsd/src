@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesg.c,v 1.15 2018/08/11 11:04:26 mestre Exp $	*/
+/*	$OpenBSD: mesg.c,v 1.16 2019/06/28 13:35:02 deraadt Exp $	*/
 /*	$NetBSD: mesg.c,v 1.4 1994/12/23 07:16:32 jtc Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath fattr", NULL) == -1)
 		err(2, "pledge");
 
-	if (stat(tty, &sb) < 0)
+	if (stat(tty, &sb) == -1)
 		err(2, "%s", tty);
 
 	sb.st_mode &= ACCESSPERMS;
@@ -85,11 +85,11 @@ main(int argc, char *argv[])
 
 	switch (*argv[0]) {
 	case 'y':
-		if (chmod(tty, sb.st_mode | S_IWGRP) < 0)
+		if (chmod(tty, sb.st_mode | S_IWGRP) == -1)
 			err(2, "%s", tty);
 		exit(0);
 	case 'n':
-		if (chmod(tty, sb.st_mode & ~S_IWGRP) < 0)
+		if (chmod(tty, sb.st_mode & ~S_IWGRP) == -1)
 			err(2, "%s", tty);
 		exit(1);
 	}

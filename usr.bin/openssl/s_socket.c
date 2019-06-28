@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.10 2018/08/19 20:07:06 tb Exp $ */
+/* $OpenBSD: s_socket.c,v 1.11 2019/06/28 13:35:02 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -107,7 +107,7 @@ init_client(int *sock, char *host, char *port, int type, int af)
 			i = 0;
 			i = setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,
 			    (char *) &i, sizeof(i));
-			if (i < 0) {
+			if (i == -1) {
 				perror("keepalive");
 				goto out;
 			}
@@ -251,10 +251,10 @@ do_accept(int acc_sock, int *sock, char **host)
 	ling.l_onoff=1;
 	ling.l_linger=0;
 	i=setsockopt(ret,SOL_SOCKET,SO_LINGER,(char *)&ling,sizeof(ling));
-	if (i < 0) { perror("linger"); return(0); }
+	if (i == -1) { perror("linger"); return(0); }
 	i=0;
 	i=setsockopt(ret,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
-	if (i < 0) { perror("keepalive"); return(0); }
+	if (i == -1) { perror("keepalive"); return(0); }
 */
 
 	if (host == NULL)

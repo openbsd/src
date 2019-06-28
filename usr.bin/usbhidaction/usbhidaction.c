@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.22 2016/03/17 19:40:43 krw Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.23 2019/06/28 13:35:05 deraadt Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -135,10 +135,10 @@ main(int argc, char **argv)
 		errx(1, "config file must have an absolute path, %s", conf);
 
 	fd = open(dev, O_RDWR | O_CLOEXEC);
-	if (fd < 0)
+	if (fd == -1)
 		err(1, "%s", dev);
 
-	if (ioctl(fd, USB_GET_REPORT_ID, &reportid) < 0)
+	if (ioctl(fd, USB_GET_REPORT_ID, &reportid) == -1)
 		reportid = -1;
 	repd = hid_get_report_desc(fd);
 	if (repd == NULL)
@@ -159,7 +159,7 @@ main(int argc, char **argv)
 	(void)signal(SIGCHLD, SIG_IGN);
 
 	if (demon) {
-		if (daemon(0, 0) < 0)
+		if (daemon(0, 0) == -1)
 			err(1, "daemon()");
 		isdemon = 1;
 	}
@@ -172,7 +172,7 @@ main(int argc, char **argv)
 				printf(" %02x", buf[i]);
 			printf("\n");
 		}
-		if (n < 0) {
+		if (n == -1) {
 			if (verbose)
 				err(1, "read");
 			else

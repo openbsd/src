@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.27 2015/10/16 17:56:07 mmcc Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.28 2019/06/28 13:35:01 deraadt Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ schdir(void *v)
 		if ((cp = expand(*arglist)) == NULL)
 			return(1);
 	}
-	if (chdir(cp) < 0) {
+	if (chdir(cp) == -1) {
 		warn("%s", cp);
 		return(1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.25 2017/05/31 16:18:20 joris Exp $	*/
+/*	$OpenBSD: repository.c,v 1.26 2019/06/28 13:35:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -82,7 +82,7 @@ cvs_repository_lock(const char *repo, int wantlock)
 	if (wantlock == 0)
 		return;
 
-	if ((i = open(fpath, O_WRONLY|O_CREAT|O_TRUNC, 0755)) < 0) {
+	if ((i = open(fpath, O_WRONLY|O_CREAT|O_TRUNC, 0755)) == -1) {
 		if (errno == EEXIST)
 			fatal("cvs_repository_lock: somebody beat us");
 		else

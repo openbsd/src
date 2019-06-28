@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.20 2017/01/24 22:40:09 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.21 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -105,14 +105,14 @@ donlist(void)
 		siz = sizeof (fscale);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_FSCALE;
-		if (sysctl(mib, 2, &fscale, &siz, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &fscale, &siz, NULL, 0) == -1) {
 			warnx("fscale: failed to get kern.fscale");
 			eval = rval = 1;
 		}
 		siz = sizeof (physmem);
 		mib[0] = CTL_HW;
 		mib[1] = HW_PHYSMEM64;
-		if (sysctl(mib, 2, &physmem, &siz, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &physmem, &siz, NULL, 0) == -1) {
 			warnx("physmem: failed to get hw.physmem");
 			eval = rval = 1;
 		}
@@ -121,14 +121,14 @@ donlist(void)
 		siz = sizeof (ccpu);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CCPU;
-		if (sysctl(mib, 2, &ccpu, &siz, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &ccpu, &siz, NULL, 0) == -1) {
 			warnx("ccpu: failed to get kern.ccpu");
 			eval = rval = 1;
 		}
 		siz = sizeof (maxslp);
 		mib[0] = CTL_VM;
 		mib[1] = VM_MAXSLP;
-		if (sysctl(mib, 2, &maxslp, &siz, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &maxslp, &siz, NULL, 0) == -1) {
 			warnx("maxslp: failed to get vm.maxslp");
 			eval = rval = 1;
 		}

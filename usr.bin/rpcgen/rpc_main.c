@@ -1,4 +1,4 @@
-/* $OpenBSD: rpc_main.c,v 1.34 2018/04/26 12:42:51 guenther Exp $	 */
+/* $OpenBSD: rpc_main.c,v 1.35 2019/06/28 13:35:03 deraadt Exp $	 */
 /* $NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	 */
 
 /*
@@ -282,14 +282,14 @@ find_cpp(void)
 	struct stat     buf;
 
 	/* SVR4 or explicit cpp does not exist */
-	if (stat(CPP, &buf) < 0) {
+	if (stat(CPP, &buf) == -1) {
 		if (cppDefined) {
 			fprintf(stderr, "cannot find C preprocessor: %s \n", CPP);
 			crash();
 		} else {
 			/* try the other one */
 			CPP = SUNOS_CPP;
-			if (stat(CPP, &buf) < 0) {	/* can't find any cpp */
+			if (stat(CPP, &buf) == -1) {	/* can't find any cpp */
 				fprintf(stderr,
 				    "cannot find any C preprocessor: %s\n", CPP);
 				crash();
@@ -830,13 +830,13 @@ checkfiles(infile, outfile)
 	struct stat     buf;
 
 	if (infile)		/* infile ! = NULL */
-		if (stat(infile, &buf) < 0) {
+		if (stat(infile, &buf) == -1) {
 			perror(infile);
 			crash();
 		}
 #if 0
 	if (outfile) {
-		if (stat(outfile, &buf) < 0)
+		if (stat(outfile, &buf) == -1)
 			return;	/* file does not exist */
 		else {
 			fprintf(stderr,

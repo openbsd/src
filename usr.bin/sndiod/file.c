@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.23 2016/10/27 04:37:47 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.24 2019/06/28 13:35:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -394,7 +394,7 @@ file_poll(void)
 		timo = -1;
 	log_flush();
 	res = poll(pfds, nfds, timo);
-	if (res < 0) {
+	if (res == -1) {
 		if (errno != EINTR) {
 			log_puts("poll failed");
 			panic();
@@ -440,7 +440,7 @@ filelist_init(void)
 {
 	sigset_t set;
 
-	if (clock_gettime(CLOCK_UPTIME, &file_ts) < 0) {
+	if (clock_gettime(CLOCK_UPTIME, &file_ts) == -1) {
 		log_puts("filelist_init: CLOCK_UPTIME unsupported\n");
 		panic();
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsdiff.c,v 1.84 2015/11/02 16:45:21 nicm Exp $	*/
+/*	$OpenBSD: rcsdiff.c,v 1.85 2019/06/28 13:35:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -331,7 +331,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename, int dflags)
 	buf_free(b1);
 	b1 = NULL;
 
-	if (utimes(path1, (const struct timeval *)&tv) < 0)
+	if (utimes(path1, (const struct timeval *)&tv) == -1)
 		warn("utimes");
 
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
@@ -340,7 +340,7 @@ rcsdiff_file(RCSFILE *file, RCSNUM *rev, const char *filename, int dflags)
 	buf_free(b2);
 	b2 = NULL;
 
-	if (utimes(path2, (const struct timeval *)&tv2) < 0)
+	if (utimes(path2, (const struct timeval *)&tv2) == -1)
 		warn("utimes");
 
 	ret = diffreg(path1, path2, NULL, dflags);
@@ -408,7 +408,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, int dflags)
 	buf_free(b1);
 	b1 = NULL;
 
-	if (utimes(path1, (const struct timeval *)&tv) < 0)
+	if (utimes(path1, (const struct timeval *)&tv) == -1)
 		warn("utimes");
 
 	(void)xasprintf(&path2, "%s/diff2.XXXXXXXXXX", rcs_tmpdir);
@@ -417,7 +417,7 @@ rcsdiff_rev(RCSFILE *file, RCSNUM *rev1, RCSNUM *rev2, int dflags)
 	buf_free(b2);
 	b2 = NULL;
 
-	if (utimes(path2, (const struct timeval *)&tv2) < 0)
+	if (utimes(path2, (const struct timeval *)&tv2) == -1)
 		warn("utimes");
 
 	ret = diffreg(path1, path2, NULL, dflags);

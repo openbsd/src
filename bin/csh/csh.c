@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.45 2018/10/24 06:01:03 martijn Exp $	*/
+/*	$OpenBSD: csh.c,v 1.46 2019/06/28 13:34:58 deraadt Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -343,7 +343,7 @@ main(int argc, char *argv[])
      */
     if (nofile == 0 && argc > 0) {
 	nofile = open(tempv[0], O_RDONLY);
-	if (nofile < 0) {
+	if (nofile == -1) {
 	    child = 1;		/* So this doesn't return */
 	    stderror(ERR_SYSTEM, tempv[0], strerror(errno));
 	}
@@ -662,7 +662,7 @@ srcunit(int unit, bool onlyown, bool hflg)
     if (onlyown) {
 	struct stat stb;
 
-	if (fstat(unit, &stb) < 0) {
+	if (fstat(unit, &stb) == -1) {
 	    (void) close(unit);
 	    return;
 	}
@@ -1127,7 +1127,7 @@ mailchk(void)
     if (chktim + intvl > t)
 	return;
     for (; *vp; vp++) {
-	if (stat(short2str(*vp), &stb) < 0)
+	if (stat(short2str(*vp), &stb) == -1)
 	    continue;
 	new = stb.st_mtime > time0.tv_sec;
 	if (stb.st_size == 0 || stb.st_atime > stb.st_mtime ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.40 2019/01/22 21:20:13 krw Exp $	*/
+/*	$OpenBSD: mt.c,v 1.41 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ _rmtstatus(int fd)
 	if (host)
 		return rmtstatus();
 #endif
-	if (ioctl(fd, MTIOCGET, &mt_status) < 0)
+	if (ioctl(fd, MTIOCGET, &mt_status) == -1)
 		err(2, "ioctl MTIOCGET");
 	return &mt_status;
 }
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 
 	flags = comp->c_ronly ? O_RDONLY : O_WRONLY | O_CREAT;
 	/* NOTE: OPENDEV_PART required since cd(4) devices go through here. */
-	if ((mtfd = _rmtopendev(tape, flags, OPENDEV_PART, &realtape)) < 0) {
+	if ((mtfd = _rmtopendev(tape, flags, OPENDEV_PART, &realtape)) == -1) {
 		if (errno != 0)
 			warn("%s", host ? tape : realtape);
 		exit(2);
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 		}
 		else
 			mt_com.mt_count = 1;
-		if (_rmtmtioctop(mtfd, &mt_com) < 0) {
+		if (_rmtmtioctop(mtfd, &mt_com) == -1) {
 			if (eject)
 				err(2, "%s", tape);
 			else

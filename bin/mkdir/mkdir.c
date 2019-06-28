@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.30 2016/10/19 18:20:25 schwarze Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.31 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: mkdir.c,v 1.14 1995/06/25 21:59:21 mycroft Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 			if (rv == 0 && mode > 0777)
 				rv = chmod(*argv, mode);
 		}
-		if (rv < 0) {
+		if (rv == -1) {
 			warn("%s", *argv);
 			exitval = 1;
 		}
@@ -140,12 +140,12 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		*slash = '\0';
 
 		if (mkdir(path, done ? mode : dir_mode) == 0) {
-			if (mode > 0777 && chmod(path, mode) < 0)
+			if (mode > 0777 && chmod(path, mode) == -1)
 				return (-1);
 		} else {
 			int mkdir_errno = errno;
 
-			if (stat(path, &sb)) {
+			if (stat(path, &sb) == -1) {
 				/* Not there; use mkdir()s errno */
 				errno = mkdir_errno;
 				return (-1);

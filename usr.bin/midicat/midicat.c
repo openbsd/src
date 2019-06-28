@@ -98,7 +98,7 @@ main(int argc, char **argv)
 			ifd = STDIN_FILENO;
 		else {
 			ifd = open(ifile, O_RDONLY, 0);
-			if (ifd < 0) {
+			if (ifd == -1) {
 				perror(ifile);
 				return 1;
 			}
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 			ofd = STDOUT_FILENO;
 		else {
 			ofd = open(ofile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-			if (ofd < 0) {
+			if (ofd == -1) {
 				perror(ofile);
 				return 1;
 			}
@@ -141,7 +141,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (pledge("stdio", NULL) < 0)
+	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	/* transfer until end-of-file or error */
@@ -150,7 +150,7 @@ main(int argc, char **argv)
 			len = read(ifd, buf, sizeof(buf));
 			if (len == 0)
 				break;
-			if (len < 0) {
+			if (len == -1) {
 				perror("stdin");
 				break;
 			}

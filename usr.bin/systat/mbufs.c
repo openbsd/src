@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.41 2016/04/04 16:26:00 sthen Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.42 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -137,7 +137,7 @@ initmembufs(void)
 	mib[2] = KERN_POOL_NPOOLS;
 	size = sizeof(npools);
 
-	if (sysctl(mib, 3, &npools, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 3, &npools, &size, NULL, 0) == -1) {
 		err(1, "sysctl(KERN_POOL_NPOOLS)");
 		/* NOTREACHED */
 	}
@@ -148,7 +148,7 @@ initmembufs(void)
 		mib[2] = KERN_POOL_NAME;
 		mib[3] = i;
 		size = sizeof(pname);
-		if (sysctl(mib, 4, &pname, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &pname, &size, NULL, 0) == -1) {
 			continue;
 		}
 
@@ -168,7 +168,7 @@ initmembufs(void)
 		mib[2] = KERN_POOL_POOL;
 		size = sizeof(pool);
 
-		if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &pool, &size, NULL, 0) == -1) {
 			err(1, "sysctl(KERN_POOL_POOL, %d)", i);
 			/* NOTREACHED */
 		}
@@ -216,7 +216,7 @@ read_mb(void)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_NETLIVELOCKS;
 	size = sizeof(mcllivelocks_cur);
-	if (sysctl(mib, 2, &mcllivelocks_cur, &size, NULL, 0) < 0 &&
+	if (sysctl(mib, 2, &mcllivelocks_cur, &size, NULL, 0) == -1 &&
 	    errno != EOPNOTSUPP) {
 		error("sysctl(KERN_NETLIVELOCKS)");
 		goto exit;
@@ -308,7 +308,7 @@ read_mb(void)
 	mib[3] = mbpool_index;
 	size = sizeof(mbpool);
 
-	if (sysctl(mib, 4, &mbpool, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 4, &mbpool, &size, NULL, 0) == -1) {
 		error("sysctl(KERN_POOL_POOL, %d)", mib[3]);
 		goto exit;
 	}
@@ -319,7 +319,7 @@ read_mb(void)
 		mib[3] = mclpools_index[i];
 		size = sizeof(pool);
 
-		if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &pool, &size, NULL, 0) == -1) {
 			error("sysctl(KERN_POOL_POOL, %d)", mib[3]);
 			continue;
 		}

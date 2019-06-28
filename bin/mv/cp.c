@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.7 2015/12/27 01:25:57 chl Exp $	*/
+/*	$OpenBSD: cp.c,v 1.8 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ copy(char *argv[], enum op type, int fts_options)
 			 */
 			if (fts_dne(curr)) {
 				if (mkdir(to.p_path,
-				    curr->fts_statp->st_mode | S_IRWXU) < 0)
+				    curr->fts_statp->st_mode | S_IRWXU) == -1)
 					err(1, "%s", to.p_path);
 			} else if (!S_ISDIR(to_stat.st_mode))
 				errc(1, ENOTDIR, "%s", to.p_path);
@@ -386,7 +386,7 @@ copy(char *argv[], enum op type, int fts_options)
 }
 
 
-/*	$OpenBSD: cp.c,v 1.7 2015/12/27 01:25:57 chl Exp $	*/
+/*	$OpenBSD: cp.c,v 1.8 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -520,7 +520,7 @@ copy_file(FTSENT *entp, int dne)
 				rval = 1;
 			}
 			/* Some systems don't unmap on close(2). */
-			if (munmap(p, fs->st_size) < 0) {
+			if (munmap(p, fs->st_size) == -1) {
 				warn("%s", entp->fts_path);
 				rval = 1;
 			}
@@ -545,7 +545,7 @@ copy_file(FTSENT *entp, int dne)
 		}
 		if (skipholes && rcount >= 0)
 			rcount = ftruncate(to_fd, lseek(to_fd, 0, SEEK_CUR));
-		if (rcount < 0) {
+		if (rcount == -1) {
 			warn("%s", entp->fts_path);
 			rval = 1;
 		}

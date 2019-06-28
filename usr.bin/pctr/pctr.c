@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.23 2017/09/10 11:30:43 tom Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.24 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov, Aleksey Lomovtsev
@@ -338,9 +338,9 @@ pctr_read(struct pctrst *st)
 	int fd, se;
 
 	fd = open(_PATH_PCTR, O_RDONLY);
-	if (fd < 0)
+	if (fd == -1)
 		return (-1);
-	if (ioctl(fd, PCIOCRD, st) < 0) {
+	if (ioctl(fd, PCIOCRD, st) == -1) {
 		se = errno;
 		close(fd);
 		errno = se;
@@ -355,9 +355,9 @@ pctr_write(int ctr, u_int32_t val)
 	int fd, se;
 
 	fd = open(_PATH_PCTR, O_WRONLY);
-	if (fd < 0)
+	if (fd == -1)
 		return (-1);
-	if (ioctl(fd, PCIOCS0 + ctr, &val) < 0) {
+	if (ioctl(fd, PCIOCS0 + ctr, &val) == -1) {
 		se = errno;
 		close(fd);
 		errno = se;

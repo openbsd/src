@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.41 2017/09/16 07:42:34 otto Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.42 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -308,12 +308,12 @@ ftree_arg(void)
 				return(-1);
 			if (ftcur->chflg) {
 				/* First fchdir() back... */
-				if (fchdir(cwdfd) < 0) {
+				if (fchdir(cwdfd) == -1) {
 					syswarn(1, errno,
 					  "Can't fchdir to starting directory");
 					return(-1);
 				}
-				if (chdir(ftcur->fname) < 0) {
+				if (chdir(ftcur->fname) == -1) {
 					syswarn(1, errno, "Can't chdir to %s",
 					    ftcur->fname);
 					return(-1);
@@ -480,7 +480,7 @@ next_file(ARCHD *arcn)
 			 * have to read the symlink path from the file
 			 */
 			if ((cnt = readlink(ftent->fts_path, arcn->ln_name,
-			    PAXPATHLEN)) < 0) {
+			    PAXPATHLEN)) == -1) {
 				syswarn(1, errno, "Unable to read symlink %s",
 				    ftent->fts_path);
 				continue;

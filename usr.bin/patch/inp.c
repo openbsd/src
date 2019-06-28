@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.48 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: inp.c,v 1.49 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -179,7 +179,7 @@ plan_a(const char *filename)
 		say("block too large to mmap\n");
 		return false;
 	}
-	if ((ifd = open(filename, O_RDONLY)) < 0)
+	if ((ifd = open(filename, O_RDONLY)) == -1)
 		pfatal("can't open file %s", filename);
 
 	if (i_size) {
@@ -285,7 +285,7 @@ plan_b(const char *filename)
 	if ((ifp = fopen(filename, "r")) == NULL)
 		pfatal("can't open file %s", filename);
 	(void) unlink(TMPINNAME);
-	if ((tifd = open(TMPINNAME, O_EXCL | O_CREAT | O_WRONLY, 0666)) < 0)
+	if ((tifd = open(TMPINNAME, O_EXCL | O_CREAT | O_WRONLY, 0666)) == -1)
 		pfatal("can't open file %s", TMPINNAME);
 	while ((p = fgetln(ifp, &len)) != NULL) {
 		if (p[len - 1] == '\n')
@@ -363,7 +363,7 @@ plan_b(const char *filename)
 	}
 	fclose(ifp);
 	close(tifd);
-	if ((tifd = open(TMPINNAME, O_RDONLY)) < 0)
+	if ((tifd = open(TMPINNAME, O_RDONLY)) == -1)
 		pfatal("can't reopen file %s", TMPINNAME);
 }
 
@@ -394,7 +394,7 @@ ifetch(LINENUM line, int whichbuf)
 			tiline[whichbuf] = baseline;
 
 			if (lseek(tifd, (off_t) (baseline / lines_per_buf *
-			    tibuflen), SEEK_SET) < 0)
+			    tibuflen), SEEK_SET) == -1)
 				pfatal("cannot seek in the temporary input file");
 
 			if (read(tifd, tibuf[whichbuf], tibuflen)

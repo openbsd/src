@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.36 2018/09/17 14:14:39 mestre Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.37 2019/06/28 13:35:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
@@ -223,15 +223,15 @@ main(int argc, char **argv)
 		err(1, "unveil");
 
 	fd = open(path, O_RDWR);
-	if (fd < 0)
+	if (fd == -1)
 		err(1, "%s", path);
-	if (ioctl(fd, AUDIO_GETSTATUS, &rstatus) < 0)
+	if (ioctl(fd, AUDIO_GETSTATUS, &rstatus) == -1)
 		err(1, "AUDIO_GETSTATUS");
-	if (ioctl(fd, AUDIO_GETDEV, &rname) < 0)
+	if (ioctl(fd, AUDIO_GETDEV, &rname) == -1)
 		err(1, "AUDIO_GETDEV");
-	if (ioctl(fd, AUDIO_GETPAR, &rpar) < 0)
+	if (ioctl(fd, AUDIO_GETPAR, &rpar) == -1)
 		err(1, "AUDIO_GETPAR");
-	if (ioctl(fd, AUDIO_GETPOS, &rpos) < 0)
+	if (ioctl(fd, AUDIO_GETPOS, &rpos) == -1)
 		err(1, "AUDIO_GETPOS");
 	if (argc == 0) {
 		for (f = fields; f->name != NULL; f++) {
@@ -269,9 +269,9 @@ main(int argc, char **argv)
 		close(fd);
 		return 0;
 	}
-	if (ioctl(fd, AUDIO_SETPAR, &wpar) < 0)
+	if (ioctl(fd, AUDIO_SETPAR, &wpar) == -1)
 		err(1, "AUDIO_SETPAR");
-	if (ioctl(fd, AUDIO_GETPAR, &wpar) < 0)
+	if (ioctl(fd, AUDIO_GETPAR, &wpar) == -1)
 		err(1, "AUDIO_GETPAR");
 	for (f = fields; f->name != NULL; f++) {
 		if (!f->set || quiet)

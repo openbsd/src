@@ -1,4 +1,4 @@
-/*	$OpenBSD: biff.c,v 1.16 2018/08/11 10:59:34 mestre Exp $	*/
+/*	$OpenBSD: biff.c,v 1.17 2019/06/28 13:35:00 deraadt Exp $	*/
 /*	$NetBSD: biff.c,v 1.3 1995/03/26 02:34:22 glass Exp $	*/
 
 /*
@@ -78,11 +78,11 @@ main(int argc, char *argv[])
 
 	switch(argv[0][0]) {
 	case 'n':
-		if (chmod(name, sb.st_mode & ~S_IXUSR) < 0)
+		if (chmod(name, sb.st_mode & ~S_IXUSR) == -1)
 			err(2, "%s", name);
 		break;
 	case 'y':
-		if (chmod(name, sb.st_mode | S_IXUSR) < 0)
+		if (chmod(name, sb.st_mode | S_IXUSR) == -1)
 			err(2, "%s", name);
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.34 2018/09/18 03:10:53 millert Exp $	*/
+/*	$OpenBSD: write.c,v 1.35 2019/06/28 13:35:05 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ utmp_chk(char *user, char *tty)
 	struct utmp u;
 	int ufd;
 
-	if ((ufd = open(_PATH_UTMP, O_RDONLY)) < 0)
+	if ((ufd = open(_PATH_UTMP, O_RDONLY)) == -1)
 		return(1);	/* no utmp, cannot talk to users */
 
 	while (read(ufd, (char *) &u, sizeof(u)) == sizeof(u))
@@ -157,7 +157,7 @@ search_utmp(char *user, char *tty, int ttyl, char *mytty, uid_t myuid)
 	int ufd, nloggedttys, nttys, msgsok, user_is_me;
 	char atty[UT_LINESIZE + 1];
 
-	if ((ufd = open(_PATH_UTMP, O_RDONLY)) < 0)
+	if ((ufd = open(_PATH_UTMP, O_RDONLY)) == -1)
 		err(1, "%s", _PATH_UTMP);
 
 	nloggedttys = nttys = 0;
@@ -208,7 +208,7 @@ term_chk(char *tty, int *msgsokP, time_t *atimeP, int showerror)
 	char path[PATH_MAX];
 
 	(void)snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
-	if (stat(path, &s) < 0) {
+	if (stat(path, &s) == -1) {
 		if (showerror)
 			warn("%s", path);
 		return(1);
@@ -261,7 +261,7 @@ do_write(char *tty, char *mytty, uid_t myuid)
 	(void)signal(SIGHUP, done);
 
 	/* print greeting */
-	if (gethostname(host, sizeof(host)) < 0)
+	if (gethostname(host, sizeof(host)) == -1)
 		(void)strlcpy(host, "???", sizeof host);
 	now = time(NULL);
 	nows = ctime(&now);

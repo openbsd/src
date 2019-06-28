@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.89 2019/05/15 09:07:46 schwarze Exp $	*/
+/*	$OpenBSD: sort.c,v 1.90 2019/06/28 13:35:03 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -350,7 +350,7 @@ set_signal_handler(void)
 	sa.sa_handler = sig_handler;
 
 	for (i = 0; signals[i] != 0; i++) {
-		if (sigaction(signals[i], &sa, NULL) < 0) {
+		if (sigaction(signals[i], &sa, NULL) == -1) {
 			warn("sigaction(%s)", strsignal(signals[i]));
 			continue;
 		}
@@ -1140,7 +1140,7 @@ main(int argc, char *argv[])
 	}
 
 	if (real_outfile) {
-		if (rename(outfile, real_outfile) < 0)
+		if (rename(outfile, real_outfile) == -1)
 			err(2, "%s", real_outfile);
 		sort_free(outfile);
 	}

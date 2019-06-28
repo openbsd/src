@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.26 2019/02/16 10:54:00 bluhm Exp $	*/
+/*	$OpenBSD: dd.c,v 1.27 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ setup(void)
 		in.fd = STDIN_FILENO;
 	} else {
 		in.fd = open(in.name, O_RDONLY, 0);
-		if (in.fd < 0)
+		if (in.fd == -1)
 			err(1, "%s", in.name);
 	}
 
@@ -118,11 +118,11 @@ setup(void)
 		 * Without read we may have a problem if output also does
 		 * not support seeks.
 		 */
-		if (out.fd < 0) {
+		if (out.fd == -1) {
 			out.fd = open(out.name, O_WRONLY | OFLAGS, DEFFILEMODE);
 			out.flags |= NOREAD;
 		}
-		if (out.fd < 0)
+		if (out.fd == -1)
 			err(1, "%s", out.name);
 	}
 
@@ -257,7 +257,7 @@ dd_in(void)
 		}
 
 		/* Read error. */
-		if (n < 0) {
+		if (n == -1) {
 			/*
 			 * If noerror not specified, die.  POSIX requires that
 			 * the warning message be followed by an I/O display.
@@ -381,9 +381,9 @@ dd_out(int force)
 	for (n = force ? out.dbcnt : out.dbsz;; n = out.dbsz) {
 		for (cnt = n;; cnt -= nw) {
 			nw = write(out.fd, outp, cnt);
-			if (nw <= 0) {
-				if (nw == 0)
-					errx(1, "%s: end of device", out.name);
+			if (nw == 0)
+				errx(1, "%s: end of device", out.name);
+			if (nw == -1) {
 				if (errno != EINTR)
 					err(1, "%s", out.name);
 				nw = 0;

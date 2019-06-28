@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.38 2018/09/08 01:28:39 miko Exp $       */
+/*    $OpenBSD: func.c,v 1.39 2019/06/28 13:34:58 deraadt Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -1101,7 +1101,7 @@ dolimit(Char **v, struct command *t)
 	return;
     }
     limit = getval(lp, v + 1);
-    if (setlim(lp, hard, limit) < 0)
+    if (setlim(lp, hard, limit) == -1)
 	stderror(ERR_SILENT);
 }
 
@@ -1221,7 +1221,7 @@ dounlimit(Char **v, struct command *t)
     }
     if (*v == 0) {
 	for (lp = limits; lp->limconst >= 0; lp++)
-	    if (setlim(lp, hard, RLIM_INFINITY) < 0)
+	    if (setlim(lp, hard, RLIM_INFINITY) == -1)
 		lerr++;
 	if (lerr)
 	    stderror(ERR_SILENT);
@@ -1229,7 +1229,7 @@ dounlimit(Char **v, struct command *t)
     }
     while (*v) {
 	lp = findlim(*v++);
-	if (setlim(lp, hard, RLIM_INFINITY) < 0)
+	if (setlim(lp, hard, RLIM_INFINITY) == -1)
 	    stderror(ERR_SILENT);
     }
 }
@@ -1248,7 +1248,7 @@ setlim(struct limits *lp, Char hard, rlim_t limit)
     else
 	rlim.rlim_cur = limit;
 
-    if (setrlimit(lp->limconst, &rlim) < 0) {
+    if (setrlimit(lp->limconst, &rlim) == -1) {
 	(void) fprintf(csherr, "%s: %s: Can't %s%s limit\n", bname, lp->limname,
 		       limit == RLIM_INFINITY ? "remove" : "set",
 		       hard ? " hard" : "");

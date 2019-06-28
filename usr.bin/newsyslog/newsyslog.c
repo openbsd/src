@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.111 2019/06/28 05:35:34 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.112 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -922,7 +922,7 @@ compress_log(struct conf_entry *ent)
 		return;
 	}
 	pid = fork();
-	if (pid < 0) {
+	if (pid == -1) {
 		err(1, "fork");
 	} else if (pid == 0) {
 		(void)execl(COMPRESS, base, "-f", tmp, (char *)NULL);
@@ -956,10 +956,10 @@ age_old_log(struct conf_entry *ent)
 		(void)snprintf(file, sizeof(file), "%s.0", ent->log);
 	if (ent->flags & CE_COMPACT) {
 		if (stat_suffix(file, sizeof(file), COMPRESS_POSTFIX, &sb,
-		    stat) < 0 && stat(file, &sb) < 0)
+		    stat) < 0 && stat(file, &sb) == -1)
 			return (-1);
 	} else {
-		if (stat(file, &sb) < 0 && stat_suffix(file, sizeof(file),
+		if (stat(file, &sb) == -1 && stat_suffix(file, sizeof(file),
 		    COMPRESS_POSTFIX, &sb, stat) < 0)
 			return (-1);
 	}
@@ -1006,7 +1006,7 @@ domonitor(struct conf_entry *ent)
 	FILE *fp;
 	int rd;
 
-	if (stat(ent->log, &sb) < 0)
+	if (stat(ent->log, &sb) == -1)
 		return (0);
 
 	if (noaction) {
@@ -1027,7 +1027,7 @@ domonitor(struct conf_entry *ent)
 	    STATS_DIR, flog);
 
 	/* ..if it doesn't exist, simply record the current size. */
-	if ((sb.st_size == 0) || stat(fname, &tsb) < 0)
+	if ((sb.st_size == 0) || stat(fname, &tsb) == -1)
 		goto update;
 
 	fp = fopen(fname, "r");

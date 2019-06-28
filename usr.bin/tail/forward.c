@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.32 2019/01/04 15:04:28 martijn Exp $	*/
+/*	$OpenBSD: forward.c,v 1.33 2019/06/28 13:35:04 deraadt Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -88,7 +88,7 @@ forward(struct tailfile *tf, int nfiles, enum STYLE style, off_t origoff)
 	if (nfiles < 1)
 		return;
 
-	if (fflag && (kq = kqueue()) < 0)
+	if (fflag && (kq = kqueue()) == -1)
 		warn("kqueue");
 
 	for (i = 0; i < nfiles; i++) {
@@ -184,7 +184,7 @@ forward(struct tailfile *tf, int nfiles, enum STYLE style, off_t origoff)
 	ltf = &(tf[i-1]);
 
 	(void)fflush(stdout);
-	if (!fflag || kq < 0)
+	if (!fflag || kq == -1)
 		return;
 
 	while (1) {
@@ -317,7 +317,7 @@ tfqueue(struct tailfile *tf)
 		    NOTE_DELETE | NOTE_RENAME | NOTE_TRUNCATE,
 		    0, tf);
 	}
-	if (kevent(kq, ke, i, NULL, 0, NULL) < 0) {
+	if (kevent(kq, ke, i, NULL, 0, NULL) == -1) {
 		ierr(tf->fname);
 		return -1;
 	}

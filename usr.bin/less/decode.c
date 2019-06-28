@@ -624,7 +624,7 @@ lesskey(char *filename, int sysvar)
 	filename = shell_unquote(filename);
 	f = open(filename, O_RDONLY);
 	free(filename);
-	if (f < 0)
+	if (f == -1)
 		return (1);
 
 	/*

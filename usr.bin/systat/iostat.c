@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.48 2019/05/08 23:54:13 tedu Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.49 2019/06/28 13:35:04 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ read_io(void)
 	mib[2] = VFS_BCACHESTAT;
 	size = sizeof(bccur);
 
-	if (sysctl(mib, 3, &bccur, &size, NULL, 0) < 0)
+	if (sysctl(mib, 3, &bccur, &size, NULL, 0) == -1)
 		error("cannot get vfs.bcachestat");
 
 	if (bclast.numbufs == 0)

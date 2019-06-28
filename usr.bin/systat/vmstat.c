@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.90 2019/01/20 03:53:03 tedu Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.91 2019/06/28 13:35:04 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -176,14 +176,14 @@ initvmstat(void)
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU;
 	size = sizeof(ncpu);
-	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) < 0)
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) == -1)
 		return (-1);
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_INTRCNT;
 	mib[2] = KERN_INTRCNT_NUM;
 	size = sizeof(nintr);
-	if (sysctl(mib, 3, &nintr, &size, NULL, 0) < 0)
+	if (sysctl(mib, 3, &nintr, &size, NULL, 0) == -1)
 		return (-1);
 
 	intrloc = calloc(nintr, sizeof(long));
@@ -199,7 +199,7 @@ initvmstat(void)
 		mib[2] = KERN_INTRCNT_NAME;
 		mib[3] = i;
 		size = sizeof(name);
-		if (sysctl(mib, 4, name, &size, NULL, 0) < 0)
+		if (sysctl(mib, 4, name, &size, NULL, 0) == -1)
 			return (-1);
 
 		intrname[i] = strdup(name);
@@ -616,7 +616,7 @@ getinfo(struct Info *si)
 		mib[2] = KERN_INTRCNT_CNT;
 		mib[3] = i;
 		size = sizeof(si->intrcnt[i]);
-		if (sysctl(mib, 4, &si->intrcnt[i], &size, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &si->intrcnt[i], &size, NULL, 0) == -1) {
 			si->intrcnt[i] = 0;
 		}
 	}
@@ -625,7 +625,7 @@ getinfo(struct Info *si)
 	for (i = 0; i < ncpu; i++) {
 		cpustats_mib[2] = i;
 		size = sizeof(cs);
-		if (sysctl(cpustats_mib, 3, &cs, &size, NULL, 0) < 0) {
+		if (sysctl(cpustats_mib, 3, &cs, &size, NULL, 0) == -1) {
 			error("Can't get KERN_CPUSTATS: %s\n", strerror(errno));
 			memset(&si->cpustats, 0, sizeof(si->cpustats));
 		}
@@ -636,19 +636,19 @@ getinfo(struct Info *si)
 	}
 
 	size = sizeof(si->nchstats);
-	if (sysctl(nchstats_mib, 2, &si->nchstats, &size, NULL, 0) < 0) {
+	if (sysctl(nchstats_mib, 2, &si->nchstats, &size, NULL, 0) == -1) {
 		error("Can't get KERN_NCHSTATS: %s\n", strerror(errno));
 		memset(&si->nchstats, 0, sizeof(si->nchstats));
 	}
 
 	size = sizeof(si->uvmexp);
-	if (sysctl(uvmexp_mib, 2, &si->uvmexp, &size, NULL, 0) < 0) {
+	if (sysctl(uvmexp_mib, 2, &si->uvmexp, &size, NULL, 0) == -1) {
 		error("Can't get VM_UVMEXP: %s\n", strerror(errno));
 		memset(&si->uvmexp, 0, sizeof(si->uvmexp));
 	}
 
 	size = sizeof(si->Total);
-	if (sysctl(vmtotal_mib, 2, &si->Total, &size, NULL, 0) < 0) {
+	if (sysctl(vmtotal_mib, 2, &si->Total, &size, NULL, 0) == -1) {
 		error("Can't get VM_METER: %s\n", strerror(errno));
 		memset(&si->Total, 0, sizeof(si->Total));
 	}

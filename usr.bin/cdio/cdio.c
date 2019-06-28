@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.76 2019/04/01 03:57:07 naddy Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.77 2019/06/28 13:35:00 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -378,7 +378,7 @@ run(int cmd, char *arg)
 			return (0);
 
 		rc = ioctl(fd, CDIOCRESET);
-		if (rc < 0)
+		if (rc == -1)
 			return rc;
 		close(fd);
 		fd = -1;
@@ -424,7 +424,7 @@ run(int cmd, char *arg)
 
 		(void) ioctl(fd, CDIOCALLOW);
 		rc = ioctl(fd, CDIOCEJECT);
-		if (rc < 0)
+		if (rc == -1)
 			return (rc);
 #if defined(__OpenBSD__)
 		close(fd);
@@ -442,7 +442,7 @@ run(int cmd, char *arg)
 
 		(void) ioctl(fd, CDIOCALLOW);
 		rc = ioctl(fd, CDIOCCLOSE);
-		if (rc < 0)
+		if (rc == -1)
 			return (rc);
 		close(fd);
 		fd = -1;
@@ -694,7 +694,7 @@ play(char *arg)
 
 	rc = ioctl(fd, CDIOREADTOCHEADER, &h);
 
-	if (rc < 0)
+	if (rc == -1)
 		return (rc);
 
 	if (h.starting_track > h.ending_track) {
@@ -1037,7 +1037,7 @@ play_prev(char *arg)
 		trk--;
 
 		rc = ioctl(fd, CDIOREADTOCHEADER, &h);
-		if (rc < 0) {
+		if (rc == -1) {
 			warn("getting toc header");
 			return (rc);
 		}
@@ -1060,7 +1060,7 @@ play_same(char *arg)
 
 	if (status (&trk, &min, &sec, &frm) >= 0) {
 		rc = ioctl(fd, CDIOREADTOCHEADER, &h);
-		if (rc < 0) {
+		if (rc == -1) {
 			warn("getting toc header");
 			return (rc);
 		}
@@ -1081,7 +1081,7 @@ play_next(char *arg)
 	if (status(&trk, &min, &sec, &frm) >= 0) {
 		trk++;
 		rc = ioctl(fd, CDIOREADTOCHEADER, &h);
-		if (rc < 0) {
+		if (rc == -1) {
 			warn("getting toc header");
 			return (rc);
 		}
@@ -1474,7 +1474,7 @@ status(int *trk, int *min, int *sec, int *frame)
 	s.address_format = msf ? CD_MSF_FORMAT : CD_LBA_FORMAT;
 	s.data_format = CD_CURRENT_POSITION;
 
-	if (ioctl(fd, CDIOCREADSUBCHANNEL, (char *) &s) < 0)
+	if (ioctl(fd, CDIOCREADSUBCHANNEL, (char *) &s) == -1)
 		return -1;
 
 	*trk = s.data->what.position.track_number;
@@ -1598,7 +1598,7 @@ open_cd(char *dev, int needwrite)
 			fd = opendev(dev, O_RDWR, OPENDEV_PART, &realdev);
 		else
 			fd = opendev(dev, O_RDONLY, OPENDEV_PART, &realdev);
-		if (fd < 0) {
+		if (fd == -1) {
 			if (errno == ENXIO) {
 				/*  ENXIO has an overloaded meaning here.
 				 *  The original "Device not configured" should
@@ -1614,7 +1614,7 @@ open_cd(char *dev, int needwrite)
 		}
 		sleep(1);
 	}
-	if (fd < 0) {
+	if (fd == -1) {
 		warn("Can't open %s", realdev);
 		return (0);
 	}

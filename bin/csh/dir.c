@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.23 2018/10/24 06:01:03 martijn Exp $	*/
+/*	$OpenBSD: dir.c,v 1.24 2019/06/28 13:34:58 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -328,7 +328,7 @@ dochngd(Char **v, struct command *t)
     if (*v == NULL) {
 	if ((cp = value(STRhome)) == NULL || *cp == 0)
 	    stderror(ERR_NAME | ERR_NOHOMEDIR);
-	if (chdir(short2str(cp)) < 0)
+	if (chdir(short2str(cp)) == -1)
 	    stderror(ERR_NAME | ERR_CANTCHANGE);
 	cp = Strsave(cp);
     }
@@ -341,7 +341,7 @@ dochngd(Char **v, struct command *t)
 	char   *tmp;
 
 	printd = 1;
-	if (chdir(tmp = short2str(dp->di_name)) < 0)
+	if (chdir(tmp = short2str(dp->di_name)) == -1)
 	    stderror(ERR_SYSTEM, tmp, strerror(errno));
 	dcwd->di_prev->di_next = dcwd->di_next;
 	dcwd->di_next->di_prev = dcwd->di_prev;
@@ -478,7 +478,7 @@ dopushd(Char **v, struct command *t)
 	    dp = dhead.di_prev;
 	if (dp == dcwd)
 	    stderror(ERR_NAME | ERR_NODIR);
-	if (chdir(tmp = short2str(dp->di_name)) < 0)
+	if (chdir(tmp = short2str(dp->di_name)) == -1)
 	    stderror(ERR_SYSTEM, tmp, strerror(errno));
 	dp->di_prev->di_next = dp->di_next;
 	dp->di_next->di_prev = dp->di_prev;
@@ -495,7 +495,7 @@ dopushd(Char **v, struct command *t)
     else if ((dp = dfind(*v)) != NULL) {
 	char   *tmp;
 
-	if (chdir(tmp = short2str(dp->di_name)) < 0)
+	if (chdir(tmp = short2str(dp->di_name)) == -1)
 	    stderror(ERR_SYSTEM, tmp, strerror(errno));
     }
     else {
@@ -569,7 +569,7 @@ dopopd(Char **v, struct command *t)
 
 	if ((p = dp->di_prev) == &dhead)
 	    p = dhead.di_prev;
-	if (chdir(tmp = short2str(p->di_name)) < 0)
+	if (chdir(tmp = short2str(p->di_name)) == -1)
 	    stderror(ERR_SYSTEM, tmp, strerror(errno));
     }
     dp->di_prev->di_next = dp->di_next;

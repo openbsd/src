@@ -191,7 +191,7 @@ dirfile(const char *dirname, const char *filename)
 	 */
 	qpathname = shell_unquote(pathname);
 	f = open(qpathname, O_RDONLY);
-	if (f < 0) {
+	if (f == -1) {
 		free(pathname);
 		pathname = NULL;
 	} else {
@@ -713,7 +713,7 @@ bad_file(char *filename)
 		struct stat statbuf;
 
 		r = stat(filename, &statbuf);
-		if (r < 0) {
+		if (r == -1) {
 			m = errno_message(filename);
 		} else if (force_open) {
 			m = NULL;

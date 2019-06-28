@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.25 2014/03/16 18:38:30 guenther Exp $	*/
+/*	$OpenBSD: chio.c,v 1.26 2019/06/28 13:34:58 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ do_move(char *cname, int argc, char *argv[])
 	}
 
 	/* Send command to changer. */
-	if (ioctl(changer_fd, CHIOMOVE, &cmd))
+	if (ioctl(changer_fd, CHIOMOVE, &cmd) == -1)
 		err(1, "%s: CHIOMOVE", changer_name);
 
 	return (0);
@@ -312,7 +312,7 @@ do_exchange(char *cname, int argc, char *argv[])
 	}
 
 	/* Send command to changer. */
-	if (ioctl(changer_fd, CHIOEXCHANGE, &cmd))
+	if (ioctl(changer_fd, CHIOEXCHANGE, &cmd) == -1)
 		err(1, "%s: CHIOEXCHANGE", changer_name);
 
 	return (0);
@@ -373,7 +373,7 @@ do_position(char *cname, int argc, char *argv[])
 	}
 
 	/* Send command to changer. */
-	if (ioctl(changer_fd, CHIOPOSITION, &cmd))
+	if (ioctl(changer_fd, CHIOPOSITION, &cmd) == -1)
 		err(1, "%s: CHIOPOSITION", changer_name);
 
 	return (0);
@@ -400,7 +400,7 @@ do_params(char *cname, int argc, char *argv[])
 
 	/* Get params from changer and display them. */
 	bzero(&data, sizeof(data));
-	if (ioctl(changer_fd, CHIOGPARAMS, &data))
+	if (ioctl(changer_fd, CHIOGPARAMS, &data) == -1)
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
 	printf("%s: %d slot%s, %d drive%s, %d picker%s",
@@ -435,7 +435,7 @@ do_getpicker(char *cname, int argc, char *argv[])
 	}
 
 	/* Get current picker from changer and display it. */
-	if (ioctl(changer_fd, CHIOGPICKER, &picker))
+	if (ioctl(changer_fd, CHIOGPICKER, &picker) == -1)
 		err(1, "%s: CHIOGPICKER", changer_name);
 
 	printf("%s: current picker: %d\n", changer_name, picker);
@@ -465,7 +465,7 @@ do_setpicker(char *cname, int argc, char *argv[])
 	picker = parse_element_unit(*argv);
 
 	/* Set the changer picker. */
-	if (ioctl(changer_fd, CHIOSPICKER, &picker))
+	if (ioctl(changer_fd, CHIOSPICKER, &picker) == -1)
 		err(1, "%s: CHIOSPICKER", changer_name);
 
 	return (0);
@@ -525,7 +525,7 @@ do_status(char *cname, int argc, char *argv[])
 	 * counts.
 	 */
 	bzero(&data, sizeof(data));
-	if (ioctl(changer_fd, CHIOGPARAMS, &data))
+	if (ioctl(changer_fd, CHIOGPARAMS, &data) == -1)
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
 	if (argc)
@@ -578,7 +578,7 @@ do_status(char *cname, int argc, char *argv[])
 		if (avoltag || pvoltag)
 			cmd.cesr_flags |= CESR_VOLTAGS;
 
-		if (ioctl(changer_fd, CHIOGSTATUS, &cmd)) {
+		if (ioctl(changer_fd, CHIOGSTATUS, &cmd) == -1) {
 			free(cmd.cesr_data);
 			err(1, "%s: CHIOGSTATUS", changer_name);
 		}
@@ -634,7 +634,7 @@ check_source_drive(int unit)
 	 * counts.
 	 */
 	bzero(&data, sizeof(data));
-	if (ioctl(changer_fd, CHIOGPARAMS, &data))
+	if (ioctl(changer_fd, CHIOGPARAMS, &data) == -1)
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
 	count = data.cp_ndrives;
@@ -648,7 +648,7 @@ check_source_drive(int unit)
 	if ((cmd.cesr_data) == NULL)
 		errx(1, "can't allocate status storage");
 
-	if (ioctl(changer_fd, CHIOGSTATUS, &cmd)) {
+	if (ioctl(changer_fd, CHIOGSTATUS, &cmd) == -1) {
 		free(cmd.cesr_data);
 		err(1, "%s: CHIOGSTATUS", changer_name);
 	}
@@ -687,7 +687,7 @@ find_voltag(char *voltag, int *type, int *unit)
 	 * counts.
 	 */
 	bzero(&data, sizeof(data));
-	if (ioctl(changer_fd, CHIOGPARAMS, &data))
+	if (ioctl(changer_fd, CHIOGPARAMS, &data) == -1)
 		err(1, "%s: CHIOGPARAMS", changer_name);
 
 	found = 0;
@@ -724,7 +724,7 @@ find_voltag(char *voltag, int *type, int *unit)
 			errx(1, "can't allocate status storage");
 		cmd.cesr_flags |= CESR_VOLTAGS;
 
-		if (ioctl(changer_fd, CHIOGSTATUS, &cmd)) {
+		if (ioctl(changer_fd, CHIOGSTATUS, &cmd) == -1) {
 			free(cmd.cesr_data);
 			err(1, "%s: CHIOGSTATUS", changer_name);
 		}

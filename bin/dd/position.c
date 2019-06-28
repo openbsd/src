@@ -1,4 +1,4 @@
-/*	$OpenBSD: position.c,v 1.10 2009/10/27 23:59:21 deraadt Exp $	*/
+/*	$OpenBSD: position.c,v 1.11 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: position.c,v 1.4 1995/03/21 09:04:12 cgd Exp $	*/
 
 /*-
@@ -134,7 +134,7 @@ pos_out(void)
 		t_op.mt_op = MTFSR;
 		t_op.mt_count = out.offset;
 
-		if (ioctl(out.fd, MTIOCTOP, &t_op) < 0)
+		if (ioctl(out.fd, MTIOCTOP, &t_op) == -1)
 			err(1, "%s", out.name);
 		return;
 	}
@@ -144,7 +144,7 @@ pos_out(void)
 		if ((n = read(out.fd, out.db, out.dbsz)) > 0)
 			continue;
 
-		if (n < 0)
+		if (n == -1)
 			err(1, "%s", out.name);
 
 		/*

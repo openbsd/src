@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.26 2019/06/19 18:18:22 millert Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.27 2019/06/28 13:34:59 deraadt Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -371,7 +371,7 @@ test_eaccess(const char *path, int amode)
 	if (res == 0 && ksheuid == 0 && (amode & X_OK)) {
 		struct stat statb;
 
-		if (stat(path, &statb) < 0)
+		if (stat(path, &statb) == -1)
 			res = -1;
 		else if (S_ISDIR(statb.st_mode))
 			res = 0;

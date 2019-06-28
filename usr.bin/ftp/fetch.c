@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.169 2019/05/16 12:44:17 florian Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.170 2019/06/28 13:35:01 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -558,7 +558,7 @@ noslash:
 				cause = "bind";
 				continue;
 			}
-			if (bind(fd, ares->ai_addr, ares->ai_addrlen) < 0) {
+			if (bind(fd, ares->ai_addr, ares->ai_addrlen) == -1) {
 				save_errno = errno;
 				close(fd);
 				errno = save_errno;
@@ -939,7 +939,7 @@ noslash:
 #endif /* !SMALL */
 			out = open(savefile, O_CREAT | O_WRONLY | O_TRUNC,
 				0666);
-		if (out < 0) {
+		if (out == -1) {
 			warn("Can't open %s", savefile);
 			goto cleanup_url_get;
 		}
@@ -1530,7 +1530,7 @@ ftp_read(FILE *fp, struct tls *tls, char *buf, size_t len)
 		do {
 			tret = tls_read(tls, buf, len);
 		} while (tret == TLS_WANT_POLLIN || tret == TLS_WANT_POLLOUT);
-		if (tret < 0)
+		if (tret == -1)
 			errx(1, "SSL read error: %s", tls_error(tls));
 		ret = (size_t)tret;
 	}
@@ -1582,7 +1582,7 @@ SSL_vprintf(struct tls *tls, const char *fmt, va_list ap)
 		ret = tls_write(tls, buf, len);
 		if (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT)
 			continue;
-		if (ret < 0)
+		if (ret == -1)
 			errx(1, "SSL write error: %s", tls_error(tls));
 		buf += ret;
 		len -= ret;
@@ -1611,7 +1611,7 @@ SSL_readline(struct tls *tls, size_t *lenp)
 		do {
 			ret = tls_read(tls, &c, 1);
 		} while (ret == TLS_WANT_POLLIN || ret == TLS_WANT_POLLOUT);
-		if (ret < 0)
+		if (ret == -1)
 			errx(1, "SSL read error: %s", tls_error(tls));
 
 		buf[i] = c;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.17 2016/03/23 14:52:42 mmcc Exp $	*/
+/*	$OpenBSD: key.c,v 1.18 2019/06/28 13:35:00 deraadt Exp $	*/
 /*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
@@ -323,20 +323,20 @@ f_tty(struct info *ip)
 	int tmp;
 
 	tmp = TTYDISC;
-	if (ioctl(ip->fd, TIOCSETD, &tmp) < 0)
+	if (ioctl(ip->fd, TIOCSETD, &tmp) == -1)
 		err(1, "TIOCSETD");
 }
 
 void
 f_ostart(struct info *ip)
 {
-	if (ioctl(ip->fd, TIOCSTART) < 0)
+	if (ioctl(ip->fd, TIOCSTART) == -1)
 		err(1, "TIOCSTART");
 }
 
 void
 f_ostop(struct info *ip)
 {
-	if (ioctl(ip->fd, TIOCSTOP) < 0)
+	if (ioctl(ip->fd, TIOCSTOP) == -1)
 		err(1, "TIOCSTOP");
 }

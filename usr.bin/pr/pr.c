@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.41 2017/12/23 20:53:07 cheloha Exp $	*/
+/*	$OpenBSD: pr.c,v 1.42 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -1507,7 +1507,7 @@ nxtfile(int argc, char *argv[], char **fname, char *buf, int dt)
 		curtime = time(NULL);
 		timeptr = localtime(&curtime);
 	    } else {
-		if (fstat(fileno(inf), &statbuf) < 0) {
+		if (fstat(fileno(inf), &statbuf) == -1) {
 		    ++errcnt;
 		    (void)fclose(inf);
 		    ferrout("pr: Cannot stat %s, %s\n",

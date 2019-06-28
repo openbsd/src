@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.66 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.67 2019/06/28 13:35:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <millert@openbsd.org>
@@ -253,12 +253,12 @@ main(int argc, char **argv)
 	} else {
 		if (S_ISDIR(stb1.st_mode)) {
 			argv[0] = splice(argv[0], argv[1]);
-			if (stat(argv[0], &stb1) < 0)
+			if (stat(argv[0], &stb1) == -1)
 				err(2, "%s", argv[0]);
 		}
 		if (S_ISDIR(stb2.st_mode)) {
 			argv[1] = splice(argv[1], argv[0]);
-			if (stat(argv[1], &stb2) < 0)
+			if (stat(argv[1], &stb2) == -1)
 				err(2, "%s", argv[1]);
 		}
 		print_status(diffreg(argv[0], argv[1], dflags), argv[0], argv[1],

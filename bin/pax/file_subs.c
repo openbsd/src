@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.53 2017/01/21 08:17:06 krw Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.54 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -147,7 +147,7 @@ file_close(ARCHD *arcn, int fd)
 	if (patime || pmtime)
 		fset_ftime(arcn->name, fd, &arcn->sb.st_mtim,
 		    &arcn->sb.st_atim, 0);
-	if (close(fd) < 0)
+	if (close(fd) == -1)
 		syswarn(0, errno, "Unable to close file descriptor on %s",
 		    arcn->name);
 }
@@ -170,7 +170,7 @@ lnk_creat(ARCHD *arcn)
 	 * we may be running as root, so we have to be sure that link target
 	 * is not a directory, so we lstat and check
 	 */
-	if (lstat(arcn->ln_name, &sb) < 0) {
+	if (lstat(arcn->ln_name, &sb) == -1) {
 		syswarn(1,errno,"Unable to link to %s from %s", arcn->ln_name,
 		    arcn->name);
 		return(-1);
@@ -239,7 +239,7 @@ chk_same(ARCHD *arcn)
 	 * if file does not exist, return. if file exists and -k, skip it
 	 * quietly
 	 */
-	if (lstat(arcn->name, &sb) < 0)
+	if (lstat(arcn->name, &sb) == -1)
 		return(1);
 	if (kflag)
 		return(0);
@@ -293,12 +293,12 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		 * try to get rid of the file, based on the type
 		 */
 		if (S_ISDIR(sb.st_mode)) {
-			if (rmdir(from) < 0) {
+			if (rmdir(from) == -1) {
 				syswarn(1, errno, "Unable to remove %s", from);
 				return(-1);
 			}
 			delete_dir(sb.st_dev, sb.st_ino);
-		} else if (unlink(from) < 0) {
+		} else if (unlink(from) == -1) {
 			if (!ign) {
 				syswarn(1, errno, "Unable to remove %s", from);
 				return(-1);
@@ -493,9 +493,9 @@ badlink:
 		 * before pax exits.  To do that safely, we want the dev+ino
 		 * of the directory we created.
 		 */
-		if (lstat(nm, &sb) < 0) {
+		if (lstat(nm, &sb) == -1) {
 			syswarn(0, errno,"Could not access %s (stat)", nm);
-		} else if (access(nm, R_OK | W_OK | X_OK) < 0) {
+		} else if (access(nm, R_OK | W_OK | X_OK) == -1) {
 			/*
 			 * We have to add rights to the dir, so we make
 			 * sure to restore the mode. The mode must be
@@ -545,7 +545,7 @@ unlnk_exist(char *name, int type)
 	/*
 	 * the file does not exist, or -k we are done
 	 */
-	if (lstat(name, &sb) < 0)
+	if (lstat(name, &sb) == -1)
 		return(0);
 	if (kflag)
 		return(-1);
@@ -555,7 +555,7 @@ unlnk_exist(char *name, int type)
 		 * try to remove a directory, if it fails and we were going to
 		 * create a directory anyway, tell the caller (return a 1)
 		 */
-		if (rmdir(name) < 0) {
+		if (rmdir(name) == -1) {
 			if (type == PAX_DIR)
 				return(1);
 			syswarn(1,errno,"Unable to remove directory %s", name);
@@ -568,7 +568,7 @@ unlnk_exist(char *name, int type)
 	/*
 	 * try to get rid of all non-directory type nodes
 	 */
-	if (unlink(name) < 0) {
+	if (unlink(name) == -1) {
 		syswarn(1, errno, "Could not unlink %s", name);
 		return(-1);
 	}
@@ -642,7 +642,7 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 		 * the path fails at this point, see if we can create the
 		 * needed directory and continue on
 		 */
-		if (mkdir(name, S_IRWXU | S_IRWXG | S_IRWXO) < 0) {
+		if (mkdir(name, S_IRWXU | S_IRWXG | S_IRWXO) == -1) {
 			*spt = '/';
 			retval = -1;
 			break;
@@ -663,7 +663,7 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 		 * the modes and restore them back to the creation default at
 		 * the end of pax
 		 */
-		if ((access(name, R_OK | W_OK | X_OK) < 0) &&
+		if ((access(name, R_OK | W_OK | X_OK) == -1) &&
 		    (lstat(name, &sb) == 0)) {
 			set_pmode(name, ((sb.st_mode & FILEBITS) | S_IRWXU));
 			add_dir(name, &sb, 1);
@@ -736,7 +736,7 @@ fset_ftime(const char *fnm, int fd, const struct timespec *mtimp,
 	/*
 	 * set the times
 	 */
-	if (futimens(fd, tv) < 0)
+	if (futimens(fd, tv) == -1)
 		syswarn(1, errno, "Access/modification time set failed on: %s",
 		    fnm);
 }
@@ -751,7 +751,7 @@ fset_ftime(const char *fnm, int fd, const struct timespec *mtimp,
 int
 set_ids(char *fnm, uid_t uid, gid_t gid)
 {
-	if (fchownat(AT_FDCWD, fnm, uid, gid, AT_SYMLINK_NOFOLLOW) < 0) {
+	if (fchownat(AT_FDCWD, fnm, uid, gid, AT_SYMLINK_NOFOLLOW) == -1) {
 		/*
 		 * ignore EPERM unless in verbose mode or being run by root.
 		 * if running as pax, POSIX requires a warning.
@@ -768,7 +768,7 @@ set_ids(char *fnm, uid_t uid, gid_t gid)
 int
 fset_ids(char *fnm, int fd, uid_t uid, gid_t gid)
 {
-	if (fchown(fd, uid, gid) < 0) {
+	if (fchown(fd, uid, gid) == -1) {
 		/*
 		 * ignore EPERM unless in verbose mode or being run by root.
 		 * if running as pax, POSIX requires a warning.
@@ -791,7 +791,7 @@ void
 set_pmode(char *fnm, mode_t mode)
 {
 	mode &= ABITS;
-	if (fchmodat(AT_FDCWD, fnm, mode, AT_SYMLINK_NOFOLLOW) < 0)
+	if (fchmodat(AT_FDCWD, fnm, mode, AT_SYMLINK_NOFOLLOW) == -1)
 		syswarn(1, errno, "Could not set permissions on %s", fnm);
 }
 
@@ -799,7 +799,7 @@ void
 fset_pmode(char *fnm, int fd, mode_t mode)
 {
 	mode &= ABITS;
-	if (fchmod(fd, mode) < 0)
+	if (fchmod(fd, mode) == -1)
 		syswarn(1, errno, "Could not set permissions on %s", fnm);
 }
 
@@ -1032,7 +1032,7 @@ file_flush(int fd, char *fname, int isempt)
 		return;
 	}
 
-	if (write(fd, blnk, 1) < 0)
+	if (write(fd, blnk, 1) == -1)
 		syswarn(1, errno, "Failed write to file %s", fname);
 }
 
@@ -1111,7 +1111,7 @@ set_crc(ARCHD *arcn, int fd)
 	 */
 	if (cpcnt != arcn->sb.st_size)
 		paxwarn(1, "File changed size %s", arcn->org_name);
-	else if (fstat(fd, &sb) < 0)
+	else if (fstat(fd, &sb) == -1)
 		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
 	else if (timespeccmp(&arcn->sb.st_mtim, &sb.st_mtim, !=))
 		paxwarn(1, "File %s was modified during read", arcn->org_name);

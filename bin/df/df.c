@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.59 2016/08/14 21:07:40 krw Exp $	*/
+/*	$OpenBSD: df.c,v 1.60 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 			err(1, NULL);
 		mntsize = 0;
 		for (; *argv; argv++) {
-			if (stat(*argv, &stbuf) < 0) {
+			if (stat(*argv, &stbuf) == -1) {
 				if ((mntpt = getmntpt(*argv)) == 0) {
 					warn("%s", *argv);
 					continue;
@@ -421,7 +421,7 @@ raw_df(char *file, struct statfs *sfsp)
 {
 	int rfd, ret = -1;
 
-	if ((rfd = open(file, O_RDONLY)) < 0) {
+	if ((rfd = open(file, O_RDONLY)) == -1) {
 		warn("%s", file);
 		return (-1);
 	}

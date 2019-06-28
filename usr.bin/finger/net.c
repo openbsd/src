@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.13 2015/01/16 06:40:07 deraadt Exp $	*/
+/*	$OpenBSD: net.c,v 1.14 2019/06/28 13:35:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -72,10 +72,10 @@ netfinger(name)
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {
 		if ((s = socket(res->ai_family, res->ai_socktype,
-				res->ai_protocol)) < 0) {
+				res->ai_protocol)) == -1) {
 			continue;
 		}
-		if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+		if (connect(s, res->ai_addr, res->ai_addrlen) == -1) {
 			(void)close(s);
 			s = -1;
 			continue;
@@ -84,7 +84,7 @@ netfinger(name)
 		break;
 	}
 
-	if (s < 0) {
+	if (s == -1) {
 		perror("finger");
 		freeaddrinfo(res0);
 		return;

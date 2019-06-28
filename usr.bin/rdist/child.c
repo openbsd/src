@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.26 2016/03/30 20:12:18 millert Exp $	*/
+/*	$OpenBSD: child.c,v 1.27 2019/06/28 13:35:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -404,7 +404,7 @@ waitup(void)
 		/* 
 		 * Make sure child still exists 
 		 */
-		if (pc->c_name && kill(pc->c_pid, 0) < 0 && 
+		if (pc->c_name && kill(pc->c_pid, 0) == -1 && 
 		    errno == ESRCH) {
 			debugmsg(DM_MISC, 
 				 "waitup() proc %d (%s) died unexpectedly!",
@@ -433,7 +433,7 @@ setnonblocking(int fd)
 {
 	int	flags;
 
-	if ((flags = fcntl(fd, F_GETFL)) < 0)
+	if ((flags = fcntl(fd, F_GETFL)) == -1)
 		return (-1);
 	if (flags & O_NONBLOCK)
 		return (0);
@@ -450,7 +450,7 @@ spawn(struct cmd *cmd, struct cmd *cmdlist)
 	int fildes[2];
 	char *childname = cmd->c_name;
 
-	if (pipe(fildes) < 0) {
+	if (pipe(fildes) == -1) {
 		error("Cannot create pipe for %s: %s", childname, SYSERR);
 		return(-1);
 	}
@@ -504,12 +504,12 @@ spawn(struct cmd *cmd, struct cmd *cmdlist)
 		(void) close(fildes[PIPE_READ]);
 
 		/* Make stdout and stderr go to PIPE_WRITE (our parent) */
-		if (dup2(fildes[PIPE_WRITE], (int)fileno(stdout)) < 0) {
+		if (dup2(fildes[PIPE_WRITE], (int)fileno(stdout)) == -1) {
 			error("Cannot duplicate stdout file descriptor: %s", 
 			      SYSERR);
 			return(-1);
 		}
-		if (dup2(fildes[PIPE_WRITE], (int)fileno(stderr)) < 0) {
+		if (dup2(fildes[PIPE_WRITE], (int)fileno(stderr)) == -1) {
 			error("Cannot duplicate stderr file descriptor: %s", 
 			      SYSERR);
 			return(-1);

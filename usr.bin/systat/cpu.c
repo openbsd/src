@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.9 2018/11/17 23:10:08 cheloha Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.10 2019/06/28 13:35:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -154,7 +154,7 @@ cpu_info(void)
 	for (i = 0; i < cpu_count; i++) {
 		cpustats_mib[2] = i;
 		tmpstate = cpu_states + (CPUSTATES * i);
-		if (sysctl(cpustats_mib, 3, &cpu_tm[i], &size, NULL, 0) < 0)
+		if (sysctl(cpustats_mib, 3, &cpu_tm[i], &size, NULL, 0) == -1)
 			error("sysctl KERN_CPUSTATS");
 		percentages(CPUSTATES, tmpstate, cpu_tm[i].cs_time,
 		    cpu_old[i].cs_time, cpu_diff[i].cs_time);

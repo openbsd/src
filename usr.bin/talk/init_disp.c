@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.22 2016/02/01 07:29:25 mestre Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.23 2019/06/28 13:35:04 deraadt Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ resize_display(void)
 {
 	struct winsize ws;
 
-	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) < 0 ||
+	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1 ||
 	    (ws.ws_row == LINES && ws.ws_col == COLS))
 		return;
 

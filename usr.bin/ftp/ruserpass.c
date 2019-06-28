@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.32 2019/05/16 12:44:18 florian Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.33 2019/06/28 13:35:01 deraadt Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ ruserpass(const char *host, char **aname, char **apass, char **aacct)
 			warn("%s", buf);
 		return (0);
 	}
-	if (gethostname(myname, sizeof(myname)) < 0)
+	if (gethostname(myname, sizeof(myname)) == -1)
 		myname[0] = '\0';
 	if ((mydomain = strchr(myname, '.')) == NULL)
 		mydomain = "";

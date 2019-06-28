@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.37 2018/11/14 06:24:21 tb Exp $ */
+/* $OpenBSD: s_client.c,v 1.38 2019/06/28 13:35:02 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -759,7 +759,7 @@ re_start:
 	if (SSL_version(con) == DTLS1_VERSION) {
 
 		sbio = BIO_new_dgram(s, BIO_NOCLOSE);
-		if (getsockname(s, &peer, (void *) &peerlen) < 0) {
+		if (getsockname(s, &peer, (void *) &peerlen) == -1) {
 			BIO_printf(bio_err, "getsockname:errno=%d\n",
 			    errno);
 			shutdown(s, SHUT_RD);
@@ -1013,7 +1013,7 @@ re_start:
 				tty_on,read_tty,write_tty,read_ssl,write_ssl);*/
 
 			i = poll(pfd, 3, ptimeout);
-			if (i < 0) {
+			if (i == -1) {
 				BIO_printf(bio_err, "bad select %d\n",
 				    errno);
 				goto shut;

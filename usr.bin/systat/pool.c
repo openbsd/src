@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.18 2018/06/20 13:09:08 krw Exp $	*/
+/*	$OpenBSD: pool.c,v 1.19 2019/06/28 13:35:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -340,7 +340,7 @@ read_pool(void)
 
 		mib[3] = np;
 		size = sizeof(pools[i].pool);
-		if (sysctl(mib, nitems(mib), &p->pool, &size, NULL, 0) < 0) {
+		if (sysctl(mib, nitems(mib), &p->pool, &size, NULL, 0) == -1) {
 			p->name[0] = '\0';
 			num_disp--;
 			continue;

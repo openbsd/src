@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.28 2018/04/09 17:53:36 tobias Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.29 2019/06/28 13:34:59 deraadt Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -162,7 +162,7 @@ set_ulimit(const struct limits *l, const char *v, int how)
 		limit.rlim_cur = val;
 	if (how & HARD)
 		limit.rlim_max = val;
-	if (setrlimit(l->resource, &limit) < 0) {
+	if (setrlimit(l->resource, &limit) == -1) {
 		if (errno == EPERM)
 			bi_errorf("-%c exceeds allowable limit", l->option);
 		else

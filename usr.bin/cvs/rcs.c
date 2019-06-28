@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.318 2017/08/28 18:52:25 millert Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.319 2019/06/28 13:35:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2169,7 +2169,7 @@ rcs_rev_write_stmp(RCSFILE *rfp,  RCSNUM *rev, char *template, int mode)
 	worklist_add(template, &temp_files);
 	rcs_rev_write_fd(rfp, rev, fd, mode);
 
-	if (lseek(fd, 0, SEEK_SET) < 0)
+	if (lseek(fd, 0, SEEK_SET) == -1)
 		fatal("rcs_rev_write_stmp: lseek: %s", strerror(errno));
 
 	return (fd);

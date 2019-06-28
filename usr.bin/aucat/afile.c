@@ -219,7 +219,7 @@ be32_set(be32_t *p, unsigned int v)
 static int
 afile_readhdr(struct afile *f, void *addr, size_t size)
 {
-	if (lseek(f->fd, 0, SEEK_SET) < 0) {
+	if (lseek(f->fd, 0, SEEK_SET) == -1) {
 		log_puts(f->path);
 		log_puts(": failed to seek to beginning of file\n");
 		return 0;
@@ -235,7 +235,7 @@ afile_readhdr(struct afile *f, void *addr, size_t size)
 static int
 afile_writehdr(struct afile *f, void *addr, size_t size)
 {
-	if (lseek(f->fd, 0, SEEK_SET) < 0) {
+	if (lseek(f->fd, 0, SEEK_SET) == -1) {
 		log_puts(f->path);
 		log_puts(": failed to seek back to header\n");
 		return 0;
@@ -404,7 +404,7 @@ afile_wav_readhdr(struct afile *f)
 		 * next chunk
 		 */
 		pos += sizeof(struct wav_chunk) + csize;
-		if (lseek(f->fd, sizeof(riff) + pos, SEEK_SET) < 0) {
+		if (lseek(f->fd, sizeof(riff) + pos, SEEK_SET) == -1) {
 			log_puts(f->path);
 			log_puts(": filed to seek to chunk\n");
 			return 0;
@@ -593,7 +593,7 @@ afile_aiff_readhdr(struct afile *f)
 		csize = (csize + 1) & ~1;
 		pos += sizeof(struct aiff_chunk) + csize;
 
-		if (lseek(f->fd, sizeof(form) + pos, SEEK_SET) < 0) {
+		if (lseek(f->fd, sizeof(form) + pos, SEEK_SET) == -1) {
 			log_puts(f->path);
 			log_puts(": filed to seek to chunk\n");
 			return 0;
@@ -708,7 +708,7 @@ afile_au_readhdr(struct afile *f)
 	f->par.msb = 0;
 	f->rate = be32_get(&hdr.rate);
 	f->nch = be32_get(&hdr.nch);
-	if (lseek(f->fd, f->startpos, SEEK_SET) < 0) {
+	if (lseek(f->fd, f->startpos, SEEK_SET) == -1) {
 		log_puts(f->path);
 		log_puts(": ");
 		log_puts("failed to seek to data chunk\n");
@@ -778,7 +778,7 @@ afile_read(struct afile *f, void *data, size_t count)
 			count = maxread;
 	}
 	n = read(f->fd, data, count);
-	if (n < 0) {
+	if (n == -1) {
 		log_puts(f->path);
 		log_puts(": couldn't read\n");
 		return 0;
@@ -808,7 +808,7 @@ afile_write(struct afile *f, void *data, size_t count)
 			count = maxwrite;
 	}
 	n = write(f->fd, data, count);
-	if (n < 0) {
+	if (n == -1) {
 		log_puts(f->path);
 		log_puts(": couldn't write\n");
 		return 0;
@@ -833,7 +833,7 @@ afile_seek(struct afile *f, off_t pos)
 	 * seek only if needed to avoid errors with pipes & sockets
 	 */
 	if (pos != f->curpos) {
-		if (lseek(f->fd, pos, SEEK_SET) < 0) {
+		if (lseek(f->fd, pos, SEEK_SET) == -1) {
 			log_puts(f->path);
 			log_puts(": couldn't seek\n");
 			return 0;
@@ -896,7 +896,7 @@ afile_open(struct afile *f, char *path, int hdr, int flags,
 		} else {
 			f->path = path;
 			f->fd = open(f->path, O_RDONLY, 0);
-			if (f->fd < 0) {
+			if (f->fd == -1) {
 				log_puts(f->path);
 				log_puts(": failed to open for reading\n");
 				return 0;
@@ -925,7 +925,7 @@ afile_open(struct afile *f, char *path, int hdr, int flags,
 			f->path = path;
 			f->fd = open(f->path,
 			    O_WRONLY | O_TRUNC | O_CREAT, 0666);
-			if (f->fd < 0) {
+			if (f->fd == -1) {
 				log_puts(f->path);
 				log_puts(": failed to create file\n");
 				return 0;

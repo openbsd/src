@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.159 2018/12/30 23:09:58 guenther Exp $	*/
+/*	$OpenBSD: commit.c,v 1.160 2019/06/28 13:35:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -537,7 +537,7 @@ cvs_commit_local(struct cvs_file *cf)
 		}
 
 		cf->repo_fd = open(cf->file_rpath, openflags);
-		if (cf->repo_fd < 0)
+		if (cf->repo_fd == -1)
 			fatal("cvs_commit_local: %s", strerror(errno));
 
 		cf->file_rcs = rcs_open(cf->file_rpath, cf->repo_fd,

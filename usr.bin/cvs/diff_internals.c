@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.39 2016/10/15 22:20:17 millert Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.40 2019/06/28 13:35:00 deraadt Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -329,7 +329,7 @@ diffreg(const char *file1, const char *file2, int _fd1, int _fd2,
 	if (fd2 == -1)
 		fatal("diffreg: dup: %s", strerror(errno));
 
-	if (lseek(fd1, 0, SEEK_SET) < 0)
+	if (lseek(fd1, 0, SEEK_SET) == -1)
 		fatal("diffreg: lseek: %s", strerror(errno));
 
 	f1 = fdopen(fd1, "r");
@@ -338,7 +338,7 @@ diffreg(const char *file1, const char *file2, int _fd1, int _fd2,
 		goto closem;
 	}
 
-	if (lseek(fd2, 0, SEEK_SET) < 0)
+	if (lseek(fd2, 0, SEEK_SET) == -1)
 		fatal("diffreg: lseek: %s", strerror(errno));
 
 	f2 = fdopen(fd2, "r");
@@ -347,12 +347,12 @@ diffreg(const char *file1, const char *file2, int _fd1, int _fd2,
 		goto closem;
 	}
 
-	if (fstat(fd1, &stb1) < 0) {
+	if (fstat(fd1, &stb1) == -1) {
 		cvs_log(LP_ERR, "%s", file1);
 		goto closem;
 	}
 
-	if (fstat(fd2, &stb2) < 0) {
+	if (fstat(fd2, &stb2) == -1) {
 		cvs_log(LP_ERR, "%s", file2);
 		goto closem;
 	}
@@ -867,7 +867,7 @@ preadline(int fd, size_t rlen, off_t off)
 	ssize_t nr;
 
 	line = xmalloc(rlen + 1);
-	if ((nr = pread(fd, line, rlen, off)) < 0)
+	if ((nr = pread(fd, line, rlen, off)) == -1)
 		fatal("preadline: %s", strerror(errno));
 	line[nr] = '\0';
 	return (line);

@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.145 2018/06/19 22:35:07 krw Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.146 2019/06/28 13:35:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -214,9 +214,10 @@ main(int argc, char *argv[])
 		dkinit(0);	/* Initialize disk stats, no disks selected. */
 		argv = choosedrives(argv);	/* Select disks. */
 		winsize.ws_row = 0;
-		(void) ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize);
-		if (winsize.ws_row > 0)
-			winlines = winsize.ws_row;
+		if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &winsize) == 0) {
+			if (winsize.ws_row > 0)
+				winlines = winsize.ws_row;
+		}
 
 	}
 
@@ -330,7 +331,7 @@ dovmstat(u_int interval, int reps)
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CLOCKRATE;
 	size = sizeof(clkinfo);
-	if (sysctl(mib, 2, &clkinfo, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 2, &clkinfo, &size, NULL, 0) == -1) {
 		warn("could not read kern.clockrate");
 		return;
 	}
@@ -345,7 +346,7 @@ dovmstat(u_int interval, int reps)
 			size = sizeof(struct uvmexp);
 			mib[0] = CTL_VM;
 			mib[1] = VM_UVMEXP;
-			if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+			if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) == -1) {
 				warn("could not get vm.uvmexp");
 				memset(&uvmexp, 0, sizeof(struct uvmexp));
 			}
@@ -355,7 +356,7 @@ dovmstat(u_int interval, int reps)
 		size = sizeof(total);
 		mib[0] = CTL_VM;
 		mib[1] = VM_METER;
-		if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &total, &size, NULL, 0) == -1) {
 			warn("could not read vm.vmmeter");
 			memset(&total, 0, sizeof(total));
 		}
@@ -446,7 +447,7 @@ dotimes(void)
 		size = sizeof(struct uvmexp);
 		mib[0] = CTL_VM;
 		mib[1] = VM_UVMEXP;
-		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) == -1) {
 			warn("could not read vm.uvmexp");
 			memset(&uvmexp, 0, sizeof(struct uvmexp));
 		}
@@ -490,7 +491,7 @@ dosum(void)
 		size = sizeof(struct uvmexp);
 		mib[0] = CTL_VM;
 		mib[1] = VM_UVMEXP;
-		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) == -1) {
 			warn("could not read vm.uvmexp");
 			memset(&uvmexp, 0, sizeof(struct uvmexp));
 		}
@@ -547,7 +548,7 @@ dosum(void)
 		size = sizeof(nchstats);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_NCHSTATS;
-		if (sysctl(mib, 2, &nchstats, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &nchstats, &size, NULL, 0) == -1) {
 			warn("could not read kern.nchstats");
 			memset(&nchstats, 0, sizeof(nchstats));
 		}
@@ -573,7 +574,7 @@ dosum(void)
 		size = sizeof(nselcoll);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_NSELCOLL;
-		if (sysctl(mib, 2, &nselcoll, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &nselcoll, &size, NULL, 0) == -1) {
 			warn("could not read kern.nselcoll");
 			nselcoll = 0;
 		}
@@ -594,7 +595,7 @@ doforkst(void)
 		size = sizeof(struct forkstat);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_FORKSTAT;
-		if (sysctl(mib, 2, &fks, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 2, &fks, &size, NULL, 0) == -1) {
 			warn("could not read kern.forkstat");
 			memset(&fks, 0, sizeof(struct forkstat));
 		}
@@ -676,7 +677,7 @@ dointr(void)
 	mib[1] = KERN_INTRCNT;
 	mib[2] = KERN_INTRCNT_NUM;
 	siz = sizeof(nintr);
-	if (sysctl(mib, 3, &nintr, &siz, NULL, 0) < 0) {
+	if (sysctl(mib, 3, &nintr, &siz, NULL, 0) == -1) {
 		warnx("could not read kern.intrcnt.nintrcnt");
 		return;
 	}
@@ -694,7 +695,7 @@ dointr(void)
 		mib[2] = KERN_INTRCNT_NAME;
 		mib[3] = i;
 		siz = sizeof(name);
-		if (sysctl(mib, 4, name, &siz, NULL, 0) < 0) {
+		if (sysctl(mib, 4, name, &siz, NULL, 0) == -1) {
 			warnx("could not read kern.intrcnt.name.%d", i);
 			return;
 		}
@@ -704,7 +705,7 @@ dointr(void)
 		mib[2] = KERN_INTRCNT_VECTOR;
 		mib[3] = i;
 		siz = sizeof(vector);
-		if (sysctl(mib, 4, &vector, &siz, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &vector, &siz, NULL, 0) == -1) {
 			strlcpy(intrname, name, sizeof(intrname));
 		} else {
 			snprintf(intrname, sizeof(intrname), "irq%d/%s",
@@ -716,7 +717,7 @@ dointr(void)
 		mib[2] = KERN_INTRCNT_CNT;
 		mib[3] = i;
 		siz = sizeof(cnt);
-		if (sysctl(mib, 4, &cnt, &siz, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &cnt, &siz, NULL, 0) == -1) {
 			warnx("could not read kern.intrcnt.cnt.%d", i);
 			return;
 		}
@@ -753,7 +754,7 @@ domem(void)
 		mib[1] = KERN_MALLOCSTATS;
 		mib[2] = KERN_MALLOC_BUCKETS;
 		siz = sizeof(buf);
-		if (sysctl(mib, 3, buf, &siz, NULL, 0) < 0) {
+		if (sysctl(mib, 3, buf, &siz, NULL, 0) == -1) {
 			warnx("could not read kern.malloc.buckets");
 			return;
 		}
@@ -772,7 +773,7 @@ domem(void)
 			}
 
 			if (sysctl(mib, 4, &buckets[MINBUCKET + i], &siz,
-			    NULL, 0) < 0) {
+			    NULL, 0) == -1) {
 				warn("could not read kern.malloc.bucket.%d", mib[3]);
 				return;
 			}
@@ -825,7 +826,7 @@ domem(void)
 			 * Skip errors -- these are presumed to be unallocated
 			 * entries.
 			 */
-			if (sysctl(mib, 4, &kmemstats[i], &siz, NULL, 0) < 0)
+			if (sysctl(mib, 4, &kmemstats[i], &siz, NULL, 0) == -1)
 				continue;
 		}
 	} else {
@@ -983,7 +984,7 @@ dopool_sysctl(void)
 	mib[1] = KERN_POOL;
 	mib[2] = KERN_POOL_NPOOLS;
 	size = sizeof(npools);
-	if (sysctl(mib, 3, &npools, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 3, &npools, &size, NULL, 0) == -1) {
 		warn("can't figure out number of pools in kernel");
 		return;
 	}
@@ -996,7 +997,7 @@ dopool_sysctl(void)
 		mib[2] = KERN_POOL_POOL;
 		mib[3] = i;
 		size = sizeof(pool);
-		if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &pool, &size, NULL, 0) == -1) {
 			if (errno == ENOENT)
 				continue;
 			warn("error getting pool");
@@ -1005,7 +1006,7 @@ dopool_sysctl(void)
 		npools--;
 		mib[2] = KERN_POOL_NAME;
 		size = sizeof(name);
-		if (sysctl(mib, 4, &name, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &name, &size, NULL, 0) == -1) {
 			warn("error getting pool name");
 			return;
 		}

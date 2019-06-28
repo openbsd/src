@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.67 2019/06/28 05:35:35 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.68 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -511,7 +511,7 @@ get_some_switches(void)
 			check_only = true;
 			break;
 		case 'd':
-			if (chdir(optarg) < 0)
+			if (chdir(optarg) == -1)
 				pfatal("can't cd to %s", optarg);
 			break;
 		case 'D':

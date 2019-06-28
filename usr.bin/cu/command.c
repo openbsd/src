@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.17 2019/03/22 07:03:23 nicm Exp $ */
+/* $OpenBSD: command.c,v 1.18 2019/06/28 13:35:00 deraadt Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -60,7 +60,7 @@ pipe_command(void)
 		cu_err(1, "fork");
 	case 0:
 		fd = open(_PATH_DEVNULL, O_RDWR);
-		if (fd < 0 || dup2(fd, STDIN_FILENO) == -1)
+		if (fd == -1 || dup2(fd, STDIN_FILENO) == -1)
 			_exit(1);
 		close(fd);
 

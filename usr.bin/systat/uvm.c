@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.c,v 1.4 2018/06/21 13:47:22 krw Exp $	*/
+/*	$OpenBSD: uvm.c,v 1.5 2019/06/28 13:35:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -205,7 +205,7 @@ read_uvm(void)
 	memcpy(&last_uvmexp, &uvmexp, sizeof(uvmexp));
 
 	size = sizeof(uvmexp);
-	if (sysctl(uvmexp_mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+	if (sysctl(uvmexp_mib, 2, &uvmexp, &size, NULL, 0) == -1) {
 		error("Can't get VM_UVMEXP: %s\n", strerror(errno));
 		memset(&uvmexp, 0, sizeof(uvmexp));
 	}

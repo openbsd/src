@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.17 2019/05/08 21:30:11 benno Exp $ */
+/*	$Id: io.c,v 1.18 2019/06/28 13:35:03 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,7 +40,7 @@ io_read_check(int fd)
 	pfd.fd = fd;
 	pfd.events = POLLIN;
 
-	if (poll(&pfd, 1, 0) < 0) {
+	if (poll(&pfd, 1, 0) == -1) {
 		ERR("poll");
 		return -1;
 	}
@@ -89,7 +89,7 @@ io_write_nonblocking(int fd, const void *buf, size_t bsz,
 
 	/* Now the non-blocking write. */
 
-	if ((wsz = write(fd, buf, bsz)) < 0) {
+	if ((wsz = write(fd, buf, bsz)) == -1) {
 		ERR("write");
 		return 0;
 	}
@@ -217,7 +217,7 @@ io_read_nonblocking(int fd, void *buf, size_t bsz, size_t *sz)
 
 	/* Now the non-blocking read, checking for EOF. */
 
-	if ((rsz = read(fd, buf, bsz)) < 0) {
+	if ((rsz = read(fd, buf, bsz)) == -1) {
 		ERR("read");
 		return 0;
 	} else if (rsz == 0) {

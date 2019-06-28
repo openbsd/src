@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.27 2015/08/20 22:32:42 deraadt Exp $	*/
+/*	$OpenBSD: swap.c,v 1.28 2019/06/28 13:35:04 deraadt Exp $	*/
 /*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@ read_sw(void)
 		return 0;
 
 	rnswap = swapctl(SWAP_STATS, (void *)swap_devices, nswap);
-	if (rnswap < 0 || nswap != rnswap)
+	if (rnswap == -1 || nswap != rnswap)
 		return 0;
 
 	num_disp = nswap;

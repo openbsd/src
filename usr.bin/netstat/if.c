@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.75 2019/03/04 21:32:26 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.76 2019/06/28 13:35:02 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -481,7 +481,7 @@ isegress(char *name)
 	int rv = 0;
 
 	if (s == -1) {
-		if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 			return 0;
 	}
 

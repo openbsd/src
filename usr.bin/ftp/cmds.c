@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.82 2019/05/16 12:44:17 florian Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.83 2019/06/28 13:35:01 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -803,7 +803,7 @@ lcd(int argc, char *argv[])
 		code = -1;
 		return;
 	}
-	if (chdir(argv[1]) < 0) {
+	if (chdir(argv[1]) == -1) {
 		warn("local: %s", argv[1]);
 		code = -1;
 	} else {

@@ -1,4 +1,4 @@
-/* $OpenBSD: uidswap.c,v 1.41 2018/07/18 11:34:04 dtucker Exp $ */
+/* $OpenBSD: uidswap.c,v 1.42 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -63,23 +63,23 @@ temporarily_use_uid(struct passwd *pw)
 	privileged = 1;
 	temporarily_use_uid_effective = 1;
 	saved_egroupslen = getgroups(NGROUPS_MAX, saved_egroups);
-	if (saved_egroupslen < 0)
+	if (saved_egroupslen == -1)
 		fatal("getgroups: %.100s", strerror(errno));
 
 	/* set and save the user's groups */
 	if (user_groupslen == -1 || user_groups_uid != pw->pw_uid) {
-		if (initgroups(pw->pw_name, pw->pw_gid) < 0)
+		if (initgroups(pw->pw_name, pw->pw_gid) == -1)
 			fatal("initgroups: %s: %.100s", pw->pw_name,
 			    strerror(errno));
 		user_groupslen = getgroups(NGROUPS_MAX, user_groups);
-		if (user_groupslen < 0)
+		if (user_groupslen == -1)
 			fatal("getgroups: %.100s", strerror(errno));
 		user_groups_uid = pw->pw_uid;
 	}
 	/* Set the effective uid to the given (unprivileged) uid. */
-	if (setgroups(user_groupslen, user_groups) < 0)
+	if (setgroups(user_groupslen, user_groups) == -1)
 		fatal("setgroups: %.100s", strerror(errno));
-	if (setegid(pw->pw_gid) < 0)
+	if (setegid(pw->pw_gid) == -1)
 		fatal("setegid %u: %.100s", (u_int)pw->pw_gid,
 		    strerror(errno));
 	if (seteuid(pw->pw_uid) == -1)
@@ -102,11 +102,11 @@ restore_uid(void)
 		fatal("restore_uid: temporarily_use_uid not effective");
 	debug("restore_uid: %u/%u", (u_int)saved_euid, (u_int)saved_egid);
 	/* Set the effective uid back to the saved privileged uid. */
-	if (seteuid(saved_euid) < 0)
+	if (seteuid(saved_euid) == -1)
 		fatal("seteuid %u: %.100s", (u_int)saved_euid, strerror(errno));
-	if (setgroups(saved_egroupslen, saved_egroups) < 0)
+	if (setgroups(saved_egroupslen, saved_egroups) == -1)
 		fatal("setgroups: %.100s", strerror(errno));
-	if (setegid(saved_egid) < 0)
+	if (setegid(saved_egid) == -1)
 		fatal("setegid %u: %.100s", (u_int)saved_egid, strerror(errno));
 	temporarily_use_uid_effective = 0;
 }
@@ -122,8 +122,8 @@ permanently_set_uid(struct passwd *pw)
 		fatal("permanently_set_uid: temporarily_use_uid effective");
 	debug("permanently_set_uid: %u/%u", (u_int)pw->pw_uid,
 	    (u_int)pw->pw_gid);
-	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) != 0)
+	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
 		fatal("setresgid %u: %s", (u_int)pw->pw_gid, strerror(errno));
-	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) != 0)
+	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
 		fatal("setresuid %u: %s", (u_int)pw->pw_uid, strerror(errno));
 }

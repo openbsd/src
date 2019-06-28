@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.21 2017/06/28 14:58:23 anton Exp $	*/
+/*	$OpenBSD: tty.c,v 1.22 2019/06/28 13:35:02 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ grabh(struct header *hp, int gflags)
 	memset(&tty, 0, sizeof(tty));
 	tty.fdin = fileno(stdin);
 	tty.fdout = fileno(stdout);
-	if (tcgetattr(tty.fdin, &oldtio) < 0) {
+	if (tcgetattr(tty.fdin, &oldtio) == -1) {
 		warn("tcgetattr");
 		return(-1);
 	}
@@ -107,7 +107,7 @@ grabh(struct header *hp, int gflags)
 	newtio.c_lflag &= ~(ECHO | ICANON);
 	newtio.c_cc[VMIN] = 1;
 	newtio.c_cc[VTIME] = 0;
-	if (tcsetattr(tty.fdin, TCSADRAIN, &newtio) < 0) {
+	if (tcsetattr(tty.fdin, TCSADRAIN, &newtio) == -1) {
 		warn("tcsetattr");
 		return(-1);
 	}
@@ -116,7 +116,7 @@ grabh(struct header *hp, int gflags)
 	extproc = ((oldtio.c_lflag & EXTPROC) ? 1 : 0);
 	if (extproc) {
 		flag = 0;
-		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
+		if (ioctl(fileno(stdin), TIOCEXT, &flag) == -1)
 			warn("TIOCEXT: off");
 	}
 #endif
@@ -152,11 +152,11 @@ out:
 #ifdef TIOCEXT
 	if (extproc) {
 		flag = 1;
-		if (ioctl(fileno(stdin), TIOCEXT, &flag) < 0)
+		if (ioctl(fileno(stdin), TIOCEXT, &flag) == -1)
 			warn("TIOCEXT: on");
 	}
 #endif
-	if (tcsetattr(tty.fdin, TCSADRAIN, &oldtio) < 0)
+	if (tcsetattr(tty.fdin, TCSADRAIN, &oldtio) == -1)
 		warn("tcsetattr");
 	return(error);
 }

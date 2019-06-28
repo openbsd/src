@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.39 2018/09/21 19:00:45 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.40 2019/06/28 13:35:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -674,7 +674,7 @@ runcommand(char *cmd)
 	char sbuf[BUFSIZ], buf[BUFSIZ];
 	int fd[2], status;
 
-	if (pipe(fd) < 0) {
+	if (pipe(fd) == -1) {
 		error("pipe of %s failed: %s", cmd, SYSERR);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.30 2016/12/20 21:29:08 kettenis Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.31 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -626,7 +626,7 @@ wr_rdfile(ARCHD *arcn, int ifd, off_t *left)
 		syswarn(1, errno, "Read fault on %s", arcn->org_name);
 	else if (size != 0)
 		paxwarn(1, "File changed size during read %s", arcn->org_name);
-	else if (fstat(ifd, &sb) < 0)
+	else if (fstat(ifd, &sb) == -1)
 		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
 	else if (timespeccmp(&arcn->sb.st_mtim, &sb.st_mtim, !=))
 		paxwarn(1, "File %s was modified during copy to archive",
@@ -800,7 +800,7 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	else if (cpcnt != arcn->sb.st_size)
 		paxwarn(1, "File %s changed size during copy to %s",
 			arcn->org_name, arcn->name);
-	else if (fstat(fd1, &sb) < 0)
+	else if (fstat(fd1, &sb) == -1)
 		syswarn(1, errno, "Failed stat of %s", arcn->org_name);
 	else if (timespeccmp(&arcn->sb.st_mtim, &sb.st_mtim, !=))
 		paxwarn(1, "File %s was modified during copy to %s",

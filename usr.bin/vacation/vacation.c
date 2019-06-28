@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.37 2015/08/20 22:32:42 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.38 2019/06/28 13:35:05 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -458,12 +458,12 @@ sendmessage(char *myname)
 		syslog(LOG_NOTICE, "no ~%s/%s file.", myname, VMSG);
 		exit(1);
 	}
-	if (pipe(pvect) < 0) {
+	if (pipe(pvect) == -1) {
 		syslog(LOG_ERR, "pipe: %m");
 		exit(1);
 	}
 	i = vfork();
-	if (i < 0) {
+	if (i == -1) {
 		syslog(LOG_ERR, "fork: %m");
 		exit(1);
 	}

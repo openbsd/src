@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.37 2015/03/23 12:31:19 bcallah Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.38 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -62,7 +62,7 @@ ttopen(void)
 int
 ttraw(void)
 {
-	if (tcgetattr(0, &oldtty) < 0) {
+	if (tcgetattr(0, &oldtty) == -1) {
 		dobeep();
 		ewprintf("ttopen can't get terminal attributes");
 		return (FALSE);
@@ -76,7 +76,7 @@ ttraw(void)
 	newtty.c_oflag &= ~OPOST;
 	newtty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
 
-	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &newtty) < 0) {
+	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &newtty) == -1) {
 		dobeep();
 		ewprintf("ttopen can't tcsetattr");
 		return (FALSE);
@@ -110,7 +110,7 @@ int
 ttcooked(void)
 {
 	ttflush();
-	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &oldtty) < 0) {
+	if (tcsetattr(0, TCSASOFT | TCSADRAIN, &oldtty) == -1) {
 		dobeep();
 		ewprintf("ttclose can't tcsetattr");
 		return (FALSE);
@@ -188,7 +188,7 @@ charswaiting(void)
 {
 	int	x;
 
-	return ((ioctl(0, FIONREAD, &x) < 0) ? 0 : x);
+	return ((ioctl(0, FIONREAD, &x) == -1) ? 0 : x);
 }
 
 /*

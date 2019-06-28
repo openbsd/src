@@ -1,4 +1,4 @@
-/*	$OpenBSD: lndir.c,v 1.22 2015/10/10 14:23:12 deraadt Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.23 2019/06/28 13:35:01 deraadt Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 
 /*
@@ -118,15 +118,15 @@ main(int argc, char *argv[])
 		tn = ".";
 
 	/* to directory */
-	if (stat(tn, &ts) < 0)
+	if (stat(tn, &ts) == -1)
 		err(1, "%s", tn);
 	if (!(S_ISDIR(ts.st_mode)))
 		errc(2, ENOTDIR, "%s", tn);
-	if (chdir(tn) < 0)
+	if (chdir(tn) == -1)
 		err(1, "%s", tn);
 
 	/* from directory */
-	if (stat(fn, &fs) < 0)
+	if (stat(fn, &fs) == -1)
 		err(1, "%s", fn);
 	if (!(S_ISDIR(fs.st_mode)))
 		errc(2, ENOTDIR, "%s", fn);
@@ -221,7 +221,7 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 		strlcpy(p, dp->d_name, buf + sizeof(buf) - p);
 
 		if (n_dirs > 0) {
-			if (stat(buf, &sb) < 0) {
+			if (stat(buf, &sb) == -1) {
 				warn("%s", buf);
 				continue;
 			}
@@ -247,10 +247,10 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 				curdir = silent ? buf : NULL;
 				if (!silent)
 					printf("%s:\n", buf);
-				if (stat(dp->d_name, &sc) < 0 &&
+				if (stat(dp->d_name, &sc) == -1 &&
 				    errno == ENOENT) {
-					if (mkdir(dp->d_name, 0777) < 0 ||
-					    stat(dp->d_name, &sc) < 0) {
+					if (mkdir(dp->d_name, 0777) == -1 ||
+					    stat(dp->d_name, &sc) == -1) {
 						warn("%s", dp->d_name);
 						curdir = rcurdir = ocurdir;
 						continue;
@@ -265,13 +265,13 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 					curdir = rcurdir = ocurdir;
 					continue;
 				}
-				if (chdir(dp->d_name) < 0) {
+				if (chdir(dp->d_name) == -1) {
 					warn("%s", dp->d_name);
 					curdir = rcurdir = ocurdir;
 					continue;
 				}
 				dodir(buf, &sb, &sc, (buf[0] != '/'));
-				if (chdir("..") < 0)
+				if (chdir("..") == -1)
 					err(1, "..");
 				curdir = rcurdir = ocurdir;
 				continue;
@@ -306,7 +306,7 @@ dodir(char *fn, struct stat *fs, struct stat *ts, int rel)
 				fprintf(stderr,"%s: %s\n", dp->d_name, symbuf);
 		} else {
 			if (symlink(basesymlen >= 0 ? basesym : buf,
-			    dp->d_name) < 0)
+			    dp->d_name) == -1)
 				warn("%s", dp->d_name);
 		}
 next:

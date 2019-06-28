@@ -1,4 +1,4 @@
-/* $OpenBSD: packet.c,v 1.285 2019/06/07 14:18:48 dtucker Exp $ */
+/* $OpenBSD: packet.c,v 1.286 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -422,12 +422,12 @@ ssh_packet_connection_is_on_socket(struct ssh *ssh)
 	fromlen = sizeof(from);
 	memset(&from, 0, sizeof(from));
 	if (getpeername(state->connection_in, (struct sockaddr *)&from,
-	    &fromlen) < 0)
+	    &fromlen) == -1)
 		return 0;
 	tolen = sizeof(to);
 	memset(&to, 0, sizeof(to));
 	if (getpeername(state->connection_out, (struct sockaddr *)&to,
-	    &tolen) < 0)
+	    &tolen) == -1)
 		return 0;
 	if (fromlen != tolen || memcmp(&from, &to, fromlen) != 0)
 		return 0;
@@ -453,7 +453,7 @@ ssh_packet_connection_af(struct ssh *ssh)
 
 	memset(&to, 0, sizeof(to));
 	if (getsockname(ssh->state->connection_out, (struct sockaddr *)&to,
-	    &tolen) < 0)
+	    &tolen) == -1)
 		return 0;
 	return to.ss_family;
 }
@@ -1335,7 +1335,7 @@ ssh_packet_read_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			r = SSH_ERR_CONN_CLOSED;
 			goto out;
 		}
-		if (len < 0) {
+		if (len == -1) {
 			r = SSH_ERR_SYSTEM_ERROR;
 			goto out;
 		}
@@ -2008,14 +2008,14 @@ ssh_packet_set_tos(struct ssh *ssh, int tos)
 	case AF_INET:
 		debug3("%s: set IP_TOS 0x%02x", __func__, tos);
 		if (setsockopt(ssh->state->connection_in,
-		    IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0)
+		    IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) == -1)
 			error("setsockopt IP_TOS %d: %.100s:",
 			    tos, strerror(errno));
 		break;
 	case AF_INET6:
 		debug3("%s: set IPV6_TCLASS 0x%02x", __func__, tos);
 		if (setsockopt(ssh->state->connection_in,
-		    IPPROTO_IPV6, IPV6_TCLASS, &tos, sizeof(tos)) < 0)
+		    IPPROTO_IPV6, IPV6_TCLASS, &tos, sizeof(tos)) == -1)
 			error("setsockopt IPV6_TCLASS %d: %.100s:",
 			    tos, strerror(errno));
 		break;

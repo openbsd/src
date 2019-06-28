@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.22 2018/01/06 16:28:58 millert Exp $	*/
+/*	$OpenBSD: path.c,v 1.23 2019/06/28 13:34:59 deraadt Exp $	*/
 
 #include <sys/stat.h>
 
@@ -248,7 +248,7 @@ do_phys_path(XString *xsp, char *xp, const char *path)
 		*xp = '\0';
 
 		llen = readlink(Xstring(*xsp, xp), lbuf, sizeof(lbuf) - 1);
-		if (llen < 0) {
+		if (llen == -1) {
 			/* EINVAL means it wasn't a symlink... */
 			if (errno != EINVAL)
 				return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.c,v 1.5 2019/05/10 04:39:08 ratchov Exp $	*/
+/*	$OpenBSD: fdpass.c,v 1.6 2019/06/28 13:35:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -105,7 +105,7 @@ fdpass_send(struct fdpass *f, int cmd, int num, int mode, int fd)
 		*(int *)CMSG_DATA(cmsg) = fd;
 	}
 	n = sendmsg(f->fd, &msg, 0);
-	if (n < 0) {
+	if (n == -1) {
 		if (log_level >= 1) {
 			fdpass_log(f);
 			log_puts(": sendmsg failed\n");
@@ -161,7 +161,7 @@ fdpass_recv(struct fdpass *f, int *cmd, int *num, int *mode, int *fd)
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 	n = recvmsg(f->fd, &msg, MSG_WAITALL);
-	if (n < 0 && errno == EMSGSIZE) {
+	if (n == -1 && errno == EMSGSIZE) {
 		if (log_level >= 1) {
 			fdpass_log(f);
 			log_puts(": out of fds\n");
@@ -172,7 +172,7 @@ fdpass_recv(struct fdpass *f, int *cmd, int *num, int *mode, int *fd)
 		 */
 		n = recvmsg(f->fd, &msg, MSG_WAITALL);
 	}
-	if (n < 0) {
+	if (n == -1) {
 		if (log_level >= 1) {
 			fdpass_log(f);
 			log_puts(": recvmsg failed\n");

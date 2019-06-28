@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.35 2019/01/06 18:30:36 tedu Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.36 2019/06/28 13:35:01 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 		} else
 			ops |= pid ? KTROP_CLEAR : KTROP_CLEARFILE;
 
-		if (ktrace(tracefile, ops, trpoints, pid) < 0) {
+		if (ktrace(tracefile, ops, trpoints, pid) == -1) {
 			if (errno == ESRCH)
 				err(1, "%d", pid);
 			err(1, "%s", tracefile);
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 
 	omask = umask(S_IRWXG|S_IRWXO);
 	if (append) {
-		if ((fd = open(tracefile, O_CREAT | O_WRONLY, DEFFILEMODE)) < 0)
+		if ((fd = open(tracefile, O_CREAT | O_WRONLY, DEFFILEMODE)) == -1)
 			err(1, "%s", tracefile);
 		if (fstat(fd, &sb) != 0 || sb.st_uid != getuid())
 			errx(1, "Refuse to append to %s: not owned by you.",
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 		if (unlink(tracefile) == -1 && errno != ENOENT)
 			err(1, "unlink %s", tracefile);
 		if ((fd = open(tracefile, O_CREAT | O_EXCL | O_WRONLY,
-		    DEFFILEMODE)) < 0)
+		    DEFFILEMODE)) == -1)
 			err(1, "%s", tracefile);
 	}
 	(void)umask(omask);
@@ -196,12 +196,12 @@ main(int argc, char *argv[])
 			    setenv("LD_TRACE_PLTSPEC", tracespec, 1) < 0)
 				err(1, "setenv(LD_TRACE_PLTSPEC)");
 		}
-		if (ktrace(tracefile, ops, trpoints, getpid()) < 0)
+		if (ktrace(tracefile, ops, trpoints, getpid()) == -1)
 			err(1, "%s", tracefile);
 		execvp(argv[0], &argv[0]);
 		err(1, "exec of '%s' failed", argv[0]);
 	}
-	else if (ktrace(tracefile, ops, trpoints, pid) < 0) {
+	else if (ktrace(tracefile, ops, trpoints, pid) == -1) {
 		if (errno == ESRCH)
 			err(1, "%d", pid);
 		err(1, "%s", tracefile);

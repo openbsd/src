@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.69 2019/01/17 05:56:29 tedu Exp $	 */
+/* $OpenBSD: main.c,v 1.70 2019/06/28 13:35:04 deraadt Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -428,7 +428,7 @@ main(int argc, char *argv[])
 	int ch;
 
 	ut = open(_PATH_UTMP, O_RDONLY);
-	if (ut < 0) {
+	if (ut == -1) {
 		warn("No utmp");
 	}
 

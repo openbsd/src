@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.161 2017/08/28 19:33:20 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.162 2019/06/28 13:35:00 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -888,7 +888,7 @@ cvs_exec(char *prog, char *in, int needwait)
 	int fds[2], st;
 	char *argp[4] = { "sh", "-c", prog, NULL };
 
-	if (in != NULL && pipe(fds) < 0) {
+	if (in != NULL && pipe(fds) == -1) {
 		cvs_log(LP_ERR, "cvs_exec: pipe failed");
 		return (-1);
 	}

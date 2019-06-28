@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.47 2019/01/28 18:58:42 jca Exp $	*/
+/*	$OpenBSD: utils.c,v 1.48 2019/06/28 13:34:58 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -129,7 +129,7 @@ copy_file(FTSENT *entp, int exists)
 				rval = 1;
 			}
 			/* Some systems don't unmap on close(2). */
-			if (munmap(p, fs->st_size) < 0) {
+			if (munmap(p, fs->st_size) == -1) {
 				warn("%s", entp->fts_path);
 				rval = 1;
 			}
@@ -152,9 +152,9 @@ copy_file(FTSENT *entp, int exists)
 				break;
 			}
 		}
-		if (skipholes && rcount >= 0)
+		if (skipholes && rcount != -1)
 			rcount = ftruncate(to_fd, lseek(to_fd, 0, SEEK_CUR));
-		if (rcount < 0) {
+		if (rcount == -1) {
 			warn("%s", entp->fts_path);
 			rval = 1;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.90 2019/06/28 05:35:34 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.91 2019/06/28 13:35:01 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -1089,7 +1089,7 @@ connect_wait(int s)
 
 	if (poll(pfd, 1, -1) == -1)
 		return -1;
-	if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
+	if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) == -1)
 		return -1;
 	if (error != 0) {
 		errno = error;

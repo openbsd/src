@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.55 2018/11/08 15:41:41 mestre Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.56 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -147,13 +147,13 @@ local_passwd(char *uname, int authenticated)
 	if (i >= 4)
 		fputc('\n', stderr);
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY | O_CLOEXEC, 0);
-	if (pfd < 0)
+	if (pfd == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	/* Update master.passwd file and rebuild spwd.db. */
 	pw_copy(pfd, tfd, pw, opw);
 	free(opw);
-	if (pw_mkdb(uname, pwflags) < 0)
+	if (pw_mkdb(uname, pwflags) == -1)
 		pw_error(NULL, 0, 1);
 
 	return(0);

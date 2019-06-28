@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.48 2019/01/29 22:28:30 tedu Exp $	*/
+/*	$OpenBSD: io.c,v 1.49 2019/06/28 13:35:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -331,7 +331,7 @@ opencal(void)
 		}
 	}
 
-	if (pipe(pdes) < 0) {
+	if (pipe(pdes) == -1) {
 		close(fdin);
 		return (NULL);
 	}
@@ -393,7 +393,7 @@ closecal(FILE *fp)
 	(void)rewind(fp);
 	if (fstat(fileno(fp), &sbuf) || !sbuf.st_size)
 		goto done;
-	if (pipe(pdes) < 0)
+	if (pipe(pdes) == -1)
 		goto done;
 	switch ((pid = vfork())) {
 	case -1:			/* error */

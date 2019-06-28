@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.41 2019/06/13 20:38:54 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.42 2019/06/28 13:35:02 deraadt Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ mbpr(void)
 	mib[1] = KERN_MAXCLUSTERS;
 	size = sizeof(maxclusters);
 
-	if (sysctl(mib, 2, &maxclusters, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 2, &maxclusters, &size, NULL, 0) == -1) {
 		printf("Can't retrieve value of maxclusters from the "
 		    "kernel: %s\n",  strerror(errno));
 		return;
@@ -114,7 +114,7 @@ mbpr(void)
 	mib[1] = KERN_MBSTAT;
 	size = sizeof(mbstat);
 
-	if (sysctl(mib, 2, &mbstat, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 2, &mbstat, &size, NULL, 0) == -1) {
 		printf("Can't retrieve mbuf statistics from the kernel: %s\n",
 		    strerror(errno));
 		return;
@@ -125,7 +125,7 @@ mbpr(void)
 	mib[2] = KERN_POOL_NPOOLS;
 	size = sizeof(npools);
 
-	if (sysctl(mib, 3, &npools, &size, NULL, 0) < 0) {
+	if (sysctl(mib, 3, &npools, &size, NULL, 0) == -1) {
 		printf("Can't figure out number of pools in kernel: %s\n",
 		    strerror(errno));
 		return;
@@ -139,7 +139,7 @@ mbpr(void)
 		mib[2] = KERN_POOL_POOL;
 		mib[3] = i;
 		size = sizeof(pool);
-		if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &pool, &size, NULL, 0) == -1) {
 			if (errno == ENOENT)
 				continue;
 			printf("error getting pool: %s\n",
@@ -149,7 +149,7 @@ mbpr(void)
 		npools--;
 		mib[2] = KERN_POOL_NAME;
 		size = sizeof(name);
-		if (sysctl(mib, 4, &name, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 4, &name, &size, NULL, 0) == -1) {
 			printf("error getting pool name: %s\n",
 			    strerror(errno));
 			return;

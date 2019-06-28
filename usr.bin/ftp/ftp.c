@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.104 2019/05/16 12:44:17 florian Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.105 2019/06/28 13:35:01 deraadt Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ hookup(char *host, char *port)
 				fprintf(ttyout, "Trying %s...\n", hbuf);
 		}
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-		if (s < 0) {
+		if (s == -1) {
 			cause = "socket";
 			continue;
 		}
@@ -202,7 +202,7 @@ hookup(char *host, char *port)
 				cause = "bind";
 				continue;
 			}
-			if (bind(s, ares->ai_addr, ares->ai_addrlen) < 0) {
+			if (bind(s, ares->ai_addr, ares->ai_addrlen) == -1) {
 				cause = "bind";
 				error = errno;
 				close(s);
@@ -236,7 +236,7 @@ hookup(char *host, char *port)
 		/* finally we got one */
 		break;
 	}
-	if (s < 0) {
+	if (s == -1) {
 		warn("%s", cause);
 		code = -1;
 		freeaddrinfo(res0);
@@ -252,14 +252,14 @@ hookup(char *host, char *port)
 		ares = NULL;
 	}
 #endif /* !SMALL */
-	if (getsockname(s, &myctladdr.sa, &namelen) < 0) {
+	if (getsockname(s, &myctladdr.sa, &namelen) == -1) {
 		warn("getsockname");
 		code = -1;
 		goto bad;
 	}
 	if (hisctladdr.sa.sa_family == AF_INET) {
 		tos = IPTOS_LOWDELAY;
-		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos, sizeof(int)) < 0)
+		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos, sizeof(int)) == -1)
 			warn("setsockopt TOS (ignored)");
 	}
 	cin = fdopen(s, "r");
@@ -288,7 +288,7 @@ hookup(char *host, char *port)
 
 	ret = setsockopt(s, SOL_SOCKET, SO_OOBINLINE, (char *)&on, sizeof(on));
 #ifndef SMALL
-	if (ret < 0 && debug)
+	if (ret == -1 && debug)
 		warn("setsockopt");
 #endif /* !SMALL */
 	}
@@ -659,7 +659,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			return;
 		}
 		closefunc = fclose;
-		if (fstat(fileno(fin), &st) < 0 ||
+		if (fstat(fileno(fin), &st) == -1 ||
 		    (st.st_mode & S_IFMT) != S_IFREG) {
 			fprintf(ttyout, "%s: not a plain file.\n", local);
 			(void)signal(SIGINT, oldintr);
@@ -929,7 +929,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 	oldintr = signal(SIGINT, abortrecv);
 	oldinti = signal(SIGINFO, psummary);
 	if (ignorespecial || (strcmp(local, "-") && *local != '|')) {
-		if (access(local, W_OK) < 0) {
+		if (access(local, W_OK) == -1) {
 			char *dir;
 
 			if (errno != ENOENT && errno != EACCES) {
@@ -945,7 +945,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 			d = access(dir == local ? "/" : dir ? local : ".", W_OK);
 			if (dir != NULL)
 				*dir = '/';
-			if (d < 0) {
+			if (d == -1) {
 				warn("local: %s", local);
 				(void)signal(SIGINT, oldintr);
 				(void)signal(SIGINFO, oldinti);
@@ -953,7 +953,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 				return;
 			}
 			if (!runique && errno == EACCES &&
-			    chmod(local, (S_IRUSR|S_IWUSR)) < 0) {
+			    chmod(local, (S_IRUSR|S_IWUSR)) == -1) {
 				warn("local: %s", local);
 				(void)signal(SIGINT, oldintr);
 				(void)signal(SIGINFO, oldinti);
@@ -1032,7 +1032,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 		}
 		closefunc = fclose;
 	}
-	if (fstat(fileno(fout), &st) < 0 || st.st_blksize == 0)
+	if (fstat(fileno(fout), &st) == -1 || st.st_blksize == 0)
 		st.st_blksize = BUFSIZ;
 	if (st.st_blksize > bufsize) {
 		(void)free(buf);
@@ -1056,7 +1056,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 
 	case TYPE_I:
 		if (restart_point &&
-		    lseek(fileno(fout), restart_point, SEEK_SET) < 0) {
+		    lseek(fileno(fout), restart_point, SEEK_SET) == -1) {
 			warn("local: %s", local);
 			progress = oprogress;
 			preserve = opreserve;
@@ -1116,7 +1116,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 		if (restart_point) {
 			int i, n, ch;
 
-			if (fseek(fout, 0L, SEEK_SET) < 0)
+			if (fseek(fout, 0L, SEEK_SET) == -1)
 				goto done;
 			n = restart_point;
 			for (i = 0; i++ < n;) {
@@ -1128,7 +1128,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 				if (ch == '\n')
 					i++;
 			}
-			if (fseek(fout, 0L, SEEK_CUR) < 0) {
+			if (fseek(fout, 0L, SEEK_CUR) == -1) {
 done:
 				if (errno)
 					warn("local: %s", local);
@@ -1300,13 +1300,13 @@ reinit:
 	if (passivemode) {
 		data_addr = myctladdr;
 		data = socket(data_addr.sa.sa_family, SOCK_STREAM, 0);
-		if (data < 0) {
+		if (data == -1) {
 			warn("socket");
 			return (1);
 		}
 #ifndef SMALL
 		if (srcaddr) {
-			if (bind(data, ares->ai_addr, ares->ai_addrlen) < 0) {
+			if (bind(data, ares->ai_addr, ares->ai_addrlen) == -1) {
 				warn("bind");
 				close(data);
 				return (1);
@@ -1314,7 +1314,7 @@ reinit:
 		}
 		if ((options & SO_DEBUG) &&
 		    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
-			       sizeof(on)) < 0)
+			       sizeof(on)) == -1)
 			warn("setsockopt (ignored)");
 #endif /* !SMALL */
 		switch (data_addr.sa.sa_family) {
@@ -1527,7 +1527,7 @@ reinit:
 		if (data_addr.sa.sa_family == AF_INET) {
 			on = IPTOS_THROUGHPUT;
 			if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
-				       sizeof(int)) < 0)
+				       sizeof(int)) == -1)
 				warn("setsockopt TOS (ignored)");
 		}
 		return (0);
@@ -1540,7 +1540,7 @@ noport:
 	if (data != -1)
 		(void)close(data);
 	data = socket(data_addr.sa.sa_family, SOCK_STREAM, 0);
-	if (data < 0) {
+	if (data == -1) {
 		warn("socket");
 		if (tmpno)
 			sendport = 1;
@@ -1548,7 +1548,7 @@ noport:
 	}
 	if (!sendport)
 		if (setsockopt(data, SOL_SOCKET, SO_REUSEADDR, (char *)&on,
-				sizeof(on)) < 0) {
+				sizeof(on)) == -1) {
 			warn("setsockopt (reuse address)");
 			goto bad;
 		}
@@ -1556,32 +1556,32 @@ noport:
 	case AF_INET:
 		on = IP_PORTRANGE_HIGH;
 		if (setsockopt(data, IPPROTO_IP, IP_PORTRANGE,
-		    (char *)&on, sizeof(on)) < 0)
+		    (char *)&on, sizeof(on)) == -1)
 			warn("setsockopt IP_PORTRANGE (ignored)");
 		break;
 	case AF_INET6:
 		on = IPV6_PORTRANGE_HIGH;
 		if (setsockopt(data, IPPROTO_IPV6, IPV6_PORTRANGE,
-		    (char *)&on, sizeof(on)) < 0)
+		    (char *)&on, sizeof(on)) == -1)
 			warn("setsockopt IPV6_PORTRANGE (ignored)");
 		break;
 	}
-	if (bind(data, &data_addr.sa, data_addr.sa.sa_len) < 0) {
+	if (bind(data, &data_addr.sa, data_addr.sa.sa_len) == -1) {
 		warn("bind");
 		goto bad;
 	}
 #ifndef SMALL
 	if (options & SO_DEBUG &&
 	    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
-			sizeof(on)) < 0)
+			sizeof(on)) == -1)
 		warn("setsockopt (ignored)");
 #endif /* !SMALL */
 	namelen = sizeof(data_addr);
-	if (getsockname(data, &data_addr.sa, &namelen) < 0) {
+	if (getsockname(data, &data_addr.sa, &namelen) == -1) {
 		warn("getsockname");
 		goto bad;
 	}
-	if (listen(data, 1) < 0)
+	if (listen(data, 1) == -1)
 		warn("listen");
 
 #define	UC(b)	(((int)b)&0xff)
@@ -1666,7 +1666,7 @@ noport:
 	if (data_addr.sa.sa_family == AF_INET) {
 		on = IPTOS_THROUGHPUT;
 		if (setsockopt(data, IPPROTO_IP, IP_TOS, (char *)&on,
-			       sizeof(int)) < 0)
+			       sizeof(int)) == -1)
 			warn("setsockopt TOS (ignored)");
 	}
 	return (0);
@@ -1688,7 +1688,7 @@ dataconn(const char *lmode)
 		return (fdopen(data, lmode));
 
 	s = accept(data, &from.sa, &fromlen);
-	if (s < 0) {
+	if (s == -1) {
 		warn("accept");
 		(void)close(data), data = -1;
 		return (NULL);
@@ -1698,7 +1698,7 @@ dataconn(const char *lmode)
 	if (from.sa.sa_family == AF_INET) {
 		int tos = IPTOS_THROUGHPUT;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
-				sizeof(int)) < 0) {
+				sizeof(int)) == -1) {
 			warn("setsockopt TOS (ignored)");
 		}
 	}
@@ -1930,7 +1930,7 @@ abort:
 		pfd[0].fd = fileno(cin);
 		pfd[0].events = POLLIN;
 		if ((nfnd = poll(pfd, 1, 10 * 1000)) <= 0) {
-			if (nfnd < 0)
+			if (nfnd == -1)
 				warn("abort");
 			if (ptabflg)
 				code = -1;
@@ -1958,7 +1958,7 @@ reset(int argc, char *argv[])
 	pfd[0].fd = fileno(cin);
 	pfd[0].events = POLLIN;
 	while (nfnd > 0) {
-		if ((nfnd = poll(pfd, 1, 0)) < 0) {
+		if ((nfnd = poll(pfd, 1, 0)) == -1) {
 			warn("reset");
 			code = -1;
 			lostpeer();
@@ -1982,7 +1982,7 @@ gunique(const char *local)
 	d = access(cp == local ? "/" : cp ? local : ".", W_OK);
 	if (cp)
 		*cp = '/';
-	if (d < 0) {
+	if (d == -1) {
 		warn("local: %s", local);
 		return ((char *) 0);
 	}
@@ -2000,7 +2000,7 @@ gunique(const char *local)
 			ext = '0';
 		else
 			ext++;
-		if ((d = access(new, F_OK)) < 0)
+		if ((d = access(new, F_OK)) == -1)
 			break;
 		if (ext != '0')
 			cp--;
@@ -2069,7 +2069,7 @@ abort_remote(FILE *din)
 		nfds++;
 	}
 	if ((nfnd = poll(pfd, nfds, 10 * 1000)) <= 0) {
-		if (nfnd < 0)
+		if (nfnd == -1)
 			warn("abort");
 		if (ptabflg)
 			code = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.38 2015/10/16 17:56:07 mmcc Exp $	*/
+/*	$OpenBSD: popen.c,v 1.39 2019/06/28 13:35:02 deraadt Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ Popen(char *cmd, char *mode)
 	sigset_t nset;
 	FILE *fp;
 
-	if (pipe(p) < 0)
+	if (pipe(p) == -1)
 		return(NULL);
 	(void)fcntl(p[READ], F_SETFD, FD_CLOEXEC);
 	(void)fcntl(p[WRITE], F_SETFD, FD_CLOEXEC);
@@ -210,7 +210,7 @@ start_commandv(char *cmd, sigset_t *nset, int infd, int outfd, va_list args)
 {
 	pid_t pid;
 
-	if ((pid = fork()) < 0) {
+	if ((pid = fork()) == -1) {
 		warn("fork");
 		return(-1);
 	}

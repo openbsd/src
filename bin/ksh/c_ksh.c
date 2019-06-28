@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.61 2018/05/18 13:25:20 benno Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.62 2019/06/28 13:34:59 deraadt Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -114,9 +114,9 @@ c_cd(char **wp)
 			simplify_path(Xstring(xs, xp));
 			rval = chdir(try = Xstring(xs, xp));
 		}
-	} while (rval < 0 && cdpath != NULL);
+	} while (rval == -1 && cdpath != NULL);
 
-	if (rval < 0) {
+	if (rval == -1) {
 		if (cdnode)
 			bi_errorf("%s: bad directory", dir);
 		else
@@ -186,7 +186,7 @@ c_pwd(char **wp)
 	}
 	p = current_wd[0] ? (physical ? get_phys_path(current_wd) : current_wd) :
 	    NULL;
-	if (p && access(p, R_OK) < 0)
+	if (p && access(p, R_OK) == -1)
 		p = NULL;
 	if (!p) {
 		freep = p = ksh_get_wd(NULL, 0);
@@ -374,7 +374,7 @@ c_print(char **wp)
 		}
 		for (s = Xstring(xs, xp); len > 0; ) {
 			n = write(fd, s, len);
-			if (n < 0) {
+			if (n == -1) {
 				if (flags & PO_COPROC)
 					restore_pipe(opipe);
 				if (errno == EINTR) {
@@ -1245,7 +1245,7 @@ c_kill(char **wp)
 			/* use killpg if < -1 since -1 does special things for
 			 * some non-killpg-endowed kills
 			 */
-			if ((n < -1 ? killpg(-n, sig) : kill(n, sig)) < 0) {
+			if ((n < -1 ? killpg(-n, sig) : kill(n, sig)) == -1) {
 				bi_errorf("%s: %s", p, strerror(errno));
 				rv = 1;
 			}

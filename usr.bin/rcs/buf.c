@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.27 2016/10/16 13:35:51 okan Exp $	*/
+/*	$OpenBSD: buf.c,v 1.28 2019/06/28 13:35:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -290,7 +290,7 @@ buf_write(BUF *b, const char *path, mode_t mode)
 		errx(1, "buf_write: buf_write_fd: `%s'", path);
 	}
 
-	if (fchmod(fd, mode) < 0)
+	if (fchmod(fd, mode) == -1)
 		warn("permissions not set on file %s", path);
 
 	(void)close(fd);

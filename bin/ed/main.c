@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.65 2018/06/15 08:45:03 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.66 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -1384,7 +1384,7 @@ handle_winch(int signo)
 	int save_errno = errno;
 	struct winsize ws;		/* window size structure */
 
-	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) >= 0) {
+	if (ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == 0) {
 		if (ws.ws_row > 2)
 			rows = ws.ws_row - 2;
 		if (ws.ws_col > 8)

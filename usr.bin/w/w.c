@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.65 2017/12/18 05:51:53 cheloha Exp $	*/
+/*	$OpenBSD: w.c,v 1.66 2019/06/28 13:35:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -286,7 +286,7 @@ main(int argc, char *argv[])
 	}
 
 	if (!nflag) {
-		if (gethostname(domain, sizeof(domain)) < 0 ||
+		if (gethostname(domain, sizeof(domain)) == -1 ||
 		    (p = strchr(domain, '.')) == 0)
 			domain[0] = '\0';
 		else {

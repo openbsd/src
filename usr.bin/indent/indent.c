@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.30 2015/11/11 01:12:09 deraadt Exp $	*/
+/*	$OpenBSD: indent.c,v 1.31 2019/06/28 13:35:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -1185,12 +1185,12 @@ bakcopy(void)
 
     /* copy in_name to backup file */
     bakchn = open(bakfile, O_CREAT | O_TRUNC | O_WRONLY, 0600);
-    if (bakchn < 0)
+    if (bakchn == -1)
 	err(1, "%s", bakfile);
     while ((n = read(fileno(input), buff, sizeof buff)) > 0)
 	if (write(bakchn, buff, n) != n)
 	    err(1, "%s", bakfile);
-    if (n < 0)
+    if (n == -1)
 	err(1, "%s", in_name);
     close(bakchn);
     fclose(input);

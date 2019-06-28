@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.46 2019/06/28 05:35:35 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.47 2019/06/28 13:35:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -131,7 +131,7 @@ setownership(char *file, int fd, uid_t uid, gid_t gid, int islink)
 		status = fchownat(AT_FDCWD, file, uid, gid,
 		    AT_SYMLINK_NOFOLLOW);
 
-	if (status < 0) {
+	if (status == -1) {
 		if (uid == (uid_t)-1)
 			message(MT_NOTICE, "%s: chgrp %d failed: %s",
 				target, gid, SYSERR);
@@ -161,10 +161,10 @@ setfilemode(char *file, int fd, int mode, int islink)
 	if (fd != -1 && !islink)
 		status = fchmod(fd, mode);
 
-	if (status < 0 && !islink)
+	if (status == -1 && !islink)
 		status = chmod(file, mode);
 
-	if (status < 0) {
+	if (status == -1) {
 		message(MT_NOTICE, "%s: chmod failed: %s", target, SYSERR);
 		return(-1);
 	}
@@ -296,7 +296,7 @@ removefile(struct stat *statb, int silent)
 	case S_IFBLK:
 	case S_IFSOCK:
 	case S_IFIFO:
-		if (unlink(target) < 0) {
+		if (unlink(target) == -1) {
 			if (errno == ETXTBSY) {
 				if (!silent)
 					message(MT_REMOTE|MT_NOTICE, 
@@ -344,7 +344,7 @@ removefile(struct stat *statb, int silent)
 		while ((*ptarget++ = *cp++) != '\0')
 			continue;
 		ptarget--;
-		if (lstat(target, &stb) < 0) {
+		if (lstat(target, &stb) == -1) {
 			if (!silent)
 				message(MT_REMOTE|MT_WARNING,
 					"%s: lstat failed: %s", 
@@ -361,7 +361,7 @@ removefile(struct stat *statb, int silent)
 	if (failures)
 		return(-1);
 
-	if (rmdir(target) < 0) {
+	if (rmdir(target) == -1) {
 		error("%s: rmdir failed: %s", target, SYSERR);
 		return(-1);
 	}
@@ -425,7 +425,7 @@ doclean(char *cp)
 		while ((*ptarget++ = *cp++) != '\0')
 			continue;
 		ptarget--;
-		if (lstat(target, &stb) < 0) {
+		if (lstat(target, &stb) == -1) {
 			message(MT_REMOTE|MT_WARNING, "%s: lstat failed: %s", 
 				target, SYSERR);
 			continue;
@@ -603,7 +603,7 @@ query(char *xname)
 	 * If stbvalid is false, "stb" is not valid because the stat()
 	 * by is_*_mounted() either failed or does not match "target".
 	 */
-	if (!stbvalid && lstat(target, &stb) < 0) {
+	if (!stbvalid && lstat(target, &stb) == -1) {
 		if (errno == ENOENT)
 			(void) sendcmd(QC_NO, NULL);
 		else
@@ -649,7 +649,7 @@ chkparent(char *name, opt_t opts)
 
 	*cp = CNULL;
 
-	if (lstat(name, &stb) < 0) {
+	if (lstat(name, &stb) == -1) {
 		if (errno == ENOENT && chkparent(name, opts) >= 0) {
 			if (mkdir(name, 0777 & ~oumask) == 0) {
 				message(MT_NOTICE, "%s: mkdir", name);
@@ -886,7 +886,7 @@ recvfile(char *new, opt_t opts, int mode, char *owner, char *group,
 	/*
 	 * Install new (temporary) file as the actual target
 	 */
-	if (rename(new, target) < 0) {
+	if (rename(new, target) == -1) {
 		static const char fmt[] = "%s -> %s: rename failed: %s";
 		struct stat stb;
 		/*
@@ -898,10 +898,10 @@ recvfile(char *new, opt_t opts, int mode, char *owner, char *group,
 			/* Save the target */
 			if ((savefile = savetarget(target, opts)) != NULL) {
 				/* Retry installing new file as target */
-				if (rename(new, target) < 0) {
+				if (rename(new, target) == -1) {
 					error(fmt, new, target, SYSERR);
 					/* Try to put back save file */
-					if (rename(savefile, target) < 0)
+					if (rename(savefile, target) == -1)
 						error(fmt,
 						      savefile, target, SYSERR);
 					(void) unlink(new);
@@ -968,7 +968,7 @@ recvdir(opt_t opts, int mode, char *owner, char *group)
 				message(MT_NOTICE, "%s: need to remove",
 					target);
 			else {
-				if (unlink(target) < 0) {
+				if (unlink(target) == -1) {
 					error("%s: remove failed: %s",
 					      target, SYSERR);
 					return;
@@ -1149,7 +1149,7 @@ recvlink(char *new, opt_t opts, int mode, off_t size)
 	 * Make new symlink using a temporary name
 	 */
 	if (chkparent(new, opts) < 0 || mktemp(new) == NULL ||
-	    symlink(dbuf, new) < 0) {
+	    symlink(dbuf, new) == -1) {
 		error("%s -> %s: symlink failed: %s", new, dbuf, SYSERR);
 		return;
 	}
@@ -1175,7 +1175,7 @@ recvlink(char *new, opt_t opts, int mode, off_t size)
 	/*
 	 * Install link as the target
 	 */
-	if (rename(new, target) < 0) {
+	if (rename(new, target) == -1) {
 		error("%s -> %s: symlink rename failed: %s",
 		      new, target, SYSERR);
 		(void) unlink(new);
@@ -1259,11 +1259,11 @@ hardlink(char *cmd)
 		error("%s: no parent: %s ", target, SYSERR);
 		return;
 	}
-	if (exists && (unlink(target) < 0)) {
+	if (exists && (unlink(target) == -1)) {
 		error("%s: unlink failed: %s", target, SYSERR);
 		return;
 	}
-	if (linkat(AT_FDCWD, expbuf, AT_FDCWD, target, 0) < 0) {
+	if (linkat(AT_FDCWD, expbuf, AT_FDCWD, target, 0) == -1) {
 		error("%s: cannot link to %s: %s", target, oldname, SYSERR);
 		return;
 	}

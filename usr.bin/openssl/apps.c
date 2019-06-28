@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.51 2019/02/09 15:49:21 inoguchi Exp $ */
+/* $OpenBSD: apps.c,v 1.52 2019/06/28 13:35:02 deraadt Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1377,7 +1377,7 @@ rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 		goto err;
 	}
 
-	if (rename(serialfile, opath) < 0 &&
+	if (rename(serialfile, opath) == -1 &&
 	    errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
 		    serialfile, opath);
@@ -1386,11 +1386,11 @@ rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	}
 
 
-	if (rename(npath, serialfile) < 0) {
+	if (rename(npath, serialfile) == -1) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
 		    npath, serialfile);
 		perror("reason");
-		if (rename(opath, serialfile) < 0) {
+		if (rename(opath, serialfile) == -1) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
 			    opath, serialfile);
 			perror("reason");
@@ -1599,18 +1599,18 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 		goto err;
 	}
 
-	if (rename(dbfile, odbpath) < 0 && errno != ENOENT && errno != ENOTDIR) {
+	if (rename(dbfile, odbpath) == -1 && errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
 		    dbfile, odbpath);
 		perror("reason");
 		goto err;
 	}
 
-	if (rename(dbpath, dbfile) < 0) {
+	if (rename(dbpath, dbfile) == -1) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
 		    dbpath, dbfile);
 		perror("reason");
-		if (rename(odbpath, dbfile) < 0) {
+		if (rename(odbpath, dbfile) == -1) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
 			    odbpath, dbfile);
 			perror("reason");
@@ -1618,16 +1618,16 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 		goto err;
 	}
 
-	if (rename(attrpath, oattrpath) < 0 && errno != ENOENT && errno != ENOTDIR) {
+	if (rename(attrpath, oattrpath) == -1 && errno != ENOENT && errno != ENOTDIR) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
 		    attrpath, oattrpath);
 		perror("reason");
-		if (rename(dbfile, dbpath) < 0) {
+		if (rename(dbfile, dbpath) == -1) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
 			    dbfile, dbpath);
 			perror("reason");
 		}
-		if (rename(odbpath, dbfile) < 0) {
+		if (rename(odbpath, dbfile) == -1) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
 			    odbpath, dbfile);
 			perror("reason");
@@ -1635,21 +1635,21 @@ rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix)
 		goto err;
 	}
 
-	if (rename(nattrpath, attrpath) < 0) {
+	if (rename(nattrpath, attrpath) == -1) {
 		BIO_printf(bio_err, "unable to rename %s to %s\n",
 		    nattrpath, attrpath);
 		perror("reason");
-		if (rename(oattrpath, attrpath) < 0) {
+		if (rename(oattrpath, attrpath) == -1) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
 			    oattrpath, attrpath);
 			perror("reason");
 		}
-		if (rename(dbfile, dbpath) < 0) {
+		if (rename(dbfile, dbpath) == -1) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
 			    dbfile, dbpath);
 			perror("reason");
 		}
-		if (rename(odbpath, dbfile) < 0) {
+		if (rename(odbpath, dbfile) == -1) {
 			BIO_printf(bio_err, "unable to rename %s to %s\n",
 			    odbpath, dbfile);
 			perror("reason");

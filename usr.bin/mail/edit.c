@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.20 2017/03/28 09:14:43 natano Exp $	*/
+/*	$OpenBSD: edit.c,v 1.21 2019/06/28 13:35:01 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ run_editor(FILE *fp, off_t size, int type, int readonly)
 		while ((t = getc(fp)) != EOF)
 			(void)putc(t, nf);
 	(void)fflush(nf);
-	if (fstat(fileno(nf), &statb) < 0)
+	if (fstat(fileno(nf), &statb) == -1)
 		modtime = 0;
 	else
 		modtime = statb.st_mtime;
@@ -211,7 +211,7 @@ run_editor(FILE *fp, off_t size, int type, int readonly)
 		(void)rm(tempname);
 		goto out;
 	}
-	if (stat(tempname, &statb) < 0) {
+	if (stat(tempname, &statb) == -1) {
 		warn("%s", tempname);
 		goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.c,v 1.33 2018/03/15 16:51:29 anton Exp $	*/
+/*	$OpenBSD: shf.c,v 1.34 2019/06/28 13:34:59 deraadt Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -49,7 +49,7 @@ shf_open(const char *name, int oflags, int mode, int sflags)
 	/* Rest filled in by reopen. */
 
 	fd = open(name, oflags, mode);
-	if (fd < 0) {
+	if (fd == -1) {
 		afree(shf, shf->areap);
 		return NULL;
 	}
@@ -58,7 +58,7 @@ shf_open(const char *name, int oflags, int mode, int sflags)
 
 		nfd = fcntl(fd, F_DUPFD, FDBASE);
 		close(fd);
-		if (nfd < 0) {
+		if (nfd == -1) {
 			afree(shf, shf->areap);
 			return NULL;
 		}
@@ -81,7 +81,7 @@ shf_fdopen(int fd, int sflags, struct shf *shf)
 	if (sflags & SHF_GETFL) {
 		int flags = fcntl(fd, F_GETFL);
 
-		if (flags < 0)
+		if (flags == -1)
 			/* will get an error on first read/write */
 			sflags |= SHF_RDWR;
 		else {
@@ -138,7 +138,7 @@ shf_reopen(int fd, int sflags, struct shf *shf)
 	if (sflags & SHF_GETFL) {
 		int flags = fcntl(fd, F_GETFL);
 
-		if (flags < 0)
+		if (flags == -1)
 			/* will get an error on first read/write */
 			sflags |= SHF_RDWR;
 		else {
@@ -223,7 +223,7 @@ shf_close(struct shf *shf)
 
 	if (shf->fd >= 0) {
 		ret = shf_flush(shf);
-		if (close(shf->fd) < 0)
+		if (close(shf->fd) == -1)
 			ret = EOF;
 	}
 	if (shf->flags & SHF_ALLOCS)
@@ -242,7 +242,7 @@ shf_fdclose(struct shf *shf)
 
 	if (shf->fd >= 0) {
 		ret = shf_flush(shf);
-		if (close(shf->fd) < 0)
+		if (close(shf->fd) == -1)
 			ret = EOF;
 		shf->rnleft = 0;
 		shf->rp = shf->buf;
@@ -350,7 +350,7 @@ shf_emptybuf(struct shf *shf, int flags)
 
 			while (ntowrite > 0) {
 				n = write(shf->fd, buf, ntowrite);
-				if (n < 0) {
+				if (n == -1) {
 					if (errno == EINTR &&
 					    !(shf->flags & SHF_INTERRUPT))
 						continue;
@@ -574,7 +574,7 @@ shf_putchar(int c, struct shf *shf)
 			return EOF;
 		}
 		while ((n = write(shf->fd, &cc, 1)) != 1)
-			if (n < 0) {
+			if (n == -1) {
 				if (errno == EINTR &&
 				    !(shf->flags & SHF_INTERRUPT))
 					continue;
@@ -641,7 +641,7 @@ shf_write(const char *buf, int nbytes, struct shf *shf)
 			nbytes -= ncopy;
 			while (ncopy > 0) {
 				n = write(shf->fd, buf, ncopy);
-				if (n < 0) {
+				if (n == -1) {
 					if (errno == EINTR &&
 					    !(shf->flags & SHF_INTERRUPT))
 						continue;

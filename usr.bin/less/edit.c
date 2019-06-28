@@ -290,7 +290,7 @@ err1:
 		}
 		reedit_ifile(was_curr_ifile);
 		return (1);
-	} else if ((f = open(qopen_filename, O_RDONLY)) < 0) {
+	} else if ((f = open(qopen_filename, O_RDONLY)) == -1) {
 		/*
 		 * Got an error trying to open it.
 		 */

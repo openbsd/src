@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.96 2018/11/28 22:00:30 kn Exp $	 */
+/* $OpenBSD: machine.c,v 1.97 2019/06/28 13:35:05 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -154,7 +154,7 @@ getfscale(void)
 	size_t size = sizeof(fscale);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
-	    &fscale, &size, NULL, 0) < 0)
+	    &fscale, &size, NULL, 0) == -1)
 		return (-1);
 	return fscale;
 }
@@ -272,7 +272,7 @@ get_system_info(struct system_info *si)
 	for (i = 0; i < ncpu; i++) {
 		cpustats_mib[2] = i;
 		tmpstate = cpu_states + (CPUSTATES * i);
-		if (sysctl(cpustats_mib, 3, &cp_time[i], &size, NULL, 0) < 0)
+		if (sysctl(cpustats_mib, 3, &cp_time[i], &size, NULL, 0) == -1)
 			warn("sysctl kern.cpustats failed");
 		/* convert cpustats counts to percentages */
 		(void) percentages(CPUSTATES, tmpstate, cp_time[i].cs_time,
@@ -282,7 +282,7 @@ get_system_info(struct system_info *si)
 	}
 
 	size = sizeof(sysload);
-	if (sysctl(sysload_mib, 2, &sysload, &size, NULL, 0) < 0)
+	if (sysctl(sysload_mib, 2, &sysload, &size, NULL, 0) == -1)
 		warn("sysctl failed");
 	infoloadp = si->load_avg;
 	for (i = 0; i < 3; i++)
@@ -291,12 +291,12 @@ get_system_info(struct system_info *si)
 
 	/* get total -- systemwide main memory usage structure */
 	size = sizeof(uvmexp);
-	if (sysctl(uvmexp_mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+	if (sysctl(uvmexp_mib, 2, &uvmexp, &size, NULL, 0) == -1) {
 		warn("sysctl failed");
 		bzero(&uvmexp, sizeof(uvmexp));
 	}
 	size = sizeof(bcstats);
-	if (sysctl(bcstats_mib, 3, &bcstats, &size, NULL, 0) < 0) {
+	if (sysctl(bcstats_mib, 3, &bcstats, &size, NULL, 0) == -1) {
 		warn("sysctl failed");
 		bzero(&bcstats, sizeof(bcstats));
 	}
@@ -337,7 +337,7 @@ getprocs(int op, int arg, int *cnt)
 	mib[3] = arg;
 
 	size = sizeof(maxslp);
-	if (sysctl(maxslp_mib, 2, &maxslp, &size, NULL, 0) < 0) {
+	if (sysctl(maxslp_mib, 2, &maxslp, &size, NULL, 0) == -1) {
 		warn("sysctl vm.maxslp failed");
 		return (0);
 	}

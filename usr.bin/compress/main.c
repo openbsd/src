@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.95 2019/05/27 15:11:01 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.96 2019/06/28 13:35:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -499,7 +499,7 @@ docompress(const char *in, char *out, const struct compressor *method,
 		ifd = dup(STDIN_FILENO);
 	else
 		ifd = open(in, O_RDONLY);
-	if (ifd < 0) {
+	if (ifd == -1) {
 		if (verbose >= 0)
 			warn("%s", in);
 		return (FAILURE);
@@ -517,7 +517,7 @@ docompress(const char *in, char *out, const struct compressor *method,
 		}
 		ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR);
 	}
-	if (ofd < 0) {
+	if (ofd == -1) {
 		if (verbose >= 0)
 			warn("%s", out);
 		(void) close(ifd);
@@ -636,7 +636,7 @@ dodecompress(const char *in, char *out, struct stat *sb)
 		ifd = dup(STDIN_FILENO);
 	else
 		ifd = open(in, O_RDONLY);
-	if (ifd < 0) {
+	if (ifd == -1) {
 		if (verbose >= 0)
 			warn("%s", in);
 		return -1;
@@ -691,7 +691,7 @@ dodecompress(const char *in, char *out, struct stat *sb)
 			}
 			ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR);
 		}
-		if (ofd < 0) {
+		if (ofd == -1) {
 			if (verbose >= 0)
 				warn("%s", in);
 			method->close(cookie, NULL, NULL, NULL);

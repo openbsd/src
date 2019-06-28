@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.22 2016/03/19 15:42:38 krw Exp $	*/
+/*	$OpenBSD: sem.c,v 1.23 2019/06/28 13:34:58 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -254,7 +254,7 @@ execute(struct command *t, int wanttty, int *pipein, int *pipeout)
 		Vt = 0;
 		pid = vfork();
 
-		if (pid < 0) {
+		if (pid == -1) {
 		    sigprocmask(SIG_SETMASK, &osigset, NULL);
 		    stderror(ERR_NOPROC);
 		}
@@ -529,7 +529,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 	    cp = splicepipe(t, t->t_dlef);
 	    strlcpy(tmp, short2str(cp), sizeof tmp);
 	    free(cp);
-	    if ((fd = open(tmp, O_RDONLY)) < 0)
+	    if ((fd = open(tmp, O_RDONLY)) == -1)
 		stderror(ERR_SYSTEM, tmp, strerror(errno));
 	    (void) dmove(fd, 0);
 	}
@@ -568,7 +568,7 @@ doio(struct command *t, int *pipein, int *pipeout)
 		    stderror(ERR_SYSTEM, tmp, strerror(errno));
 		chkclob(tmp);
 	    }
-	    if ((fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
+	    if ((fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1)
 		stderror(ERR_SYSTEM, tmp, strerror(errno));
 	}
 	(void) dmove(fd, 1);
@@ -598,7 +598,7 @@ void
 mypipe(int *pv)
 {
 
-    if (pipe(pv) < 0)
+    if (pipe(pv) == -1)
 	goto oops;
     pv[0] = dmove(pv[0], -1);
     pv[1] = dmove(pv[1], -1);
@@ -613,7 +613,7 @@ chkclob(char *cp)
 {
     struct stat stb;
 
-    if (stat(cp, &stb) < 0)
+    if (stat(cp, &stb) == -1)
 	return;
     if (S_ISCHR(stb.st_mode))
 	return;

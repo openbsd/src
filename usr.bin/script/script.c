@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.34 2018/01/21 20:18:20 jasper Exp $	*/
+/*	$OpenBSD: script.c,v 1.35 2019/06/28 13:35:03 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -156,13 +156,13 @@ main(int argc, char *argv[])
 	(void)sigaction(SIGWINCH, &sa, NULL);
 
 	child = fork();
-	if (child < 0) {
+	if (child == -1) {
 		warn("fork");
 		fail();
 	}
 	if (child == 0) {
 		subchild = child = fork();
-		if (child < 0) {
+		if (child == -1) {
 			warn("fork");
 			fail();
 		}

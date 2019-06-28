@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.22 2018/07/09 19:38:29 deraadt Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.23 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -104,7 +104,6 @@ void
 rmtgetconn(void)
 {
 	char *cp;
-	static struct servent *sp = NULL;
 	static struct passwd *pwd = NULL;
 #ifdef notdef
 	static int on = 1;
@@ -113,14 +112,6 @@ rmtgetconn(void)
 	int size;
 	int maxseg;
 
-	if (sp == NULL) {
-		sp = getservbyname("shell", "tcp");
-		if (sp == NULL)
-			errx(1, "shell/tcp: unknown service");
-		pwd = getpwuid(getuid());
-		if (pwd == NULL)
-			errx(1, "who are you?");
-	}
 	if ((cp = strchr(rmtpeer, '@')) != NULL) {
 		tuser = rmtpeer;
 		*cp = '\0';
@@ -130,7 +121,7 @@ rmtgetconn(void)
 	} else
 		tuser = pwd->pw_name;
 
-	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
+	rmtape = rcmdsh(&rmtpeer, -1, pwd->pw_name, tuser,
 	    _PATH_RMT, NULL);
 	if (rmtape == -1)
 		exit(1);		/* rcmd already printed error message */
@@ -142,18 +133,20 @@ rmtgetconn(void)
 	size += 2 * 1024;
 
 	while (size > TP_BSIZE &&
-	    setsockopt(rmtape, SOL_SOCKET, SO_SNDBUF, &size, sizeof (size)) < 0)
+	    setsockopt(rmtape, SOL_SOCKET, SO_SNDBUF, &size, sizeof (size)) == -1)
 		    size -= TP_BSIZE;
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size));
 
 	maxseg = 1024;
 	(void)setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG, &maxseg,
-		sizeof (maxseg));
+	    sizeof (maxseg));
 
 #ifdef notdef
-	if (setsockopt(rmtape, IPPROTO_TCP, TCP_NODELAY, &on, sizeof (on)) < 0)
+	if (setsockopt(rmtape, IPPROTO_TCP, TCP_NODELAY, &on, sizeof (on)) == -1)
 		perror("TCP_NODELAY setsockopt");
 #endif
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 }
 
 static int

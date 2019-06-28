@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.81 2017/06/15 19:37:10 tb Exp $	*/
+/*	$OpenBSD: at.c,v 1.82 2019/06/28 13:35:00 deraadt Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -353,7 +353,7 @@ writefile(const char *cwd, time_t runtimer, char queue)
 	/*
 	 * Set the x bit so that we're ready to start executing
 	 */
-	if (fchmod(fileno(fp), S_IRUSR | S_IWUSR | S_IXUSR) < 0)
+	if (fchmod(fileno(fp), S_IRUSR | S_IWUSR | S_IXUSR) == -1)
 		fatal("fchmod");
 
 	(void)fclose(fp);

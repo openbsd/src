@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.33 2015/11/11 02:52:46 deraadt Exp $	*/
+/*	$OpenBSD: tic.c,v 1.34 2019/06/28 13:35:04 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -46,7 +46,7 @@
 #include <dump_entry.h>
 #include <transform.h>
 
-MODULE_ID("$Id: tic.c,v 1.33 2015/11/11 02:52:46 deraadt Exp $")
+MODULE_ID("$Id: tic.c,v 1.34 2019/06/28 13:35:04 deraadt Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -369,7 +369,7 @@ open_input(const char *filename)
 	fprintf(stderr, "%s: Can't open %s\n", _nc_progname, filename);
 	ExitProgram(EXIT_FAILURE);
     }
-    if (fstat(fileno(fp), &sb) < 0
+    if (fstat(fileno(fp), &sb) == -1
 	|| (sb.st_mode & S_IFMT) != S_IFREG) {
 	fprintf(stderr, "%s: %s is not a file\n", _nc_progname, filename);
 	ExitProgram(EXIT_FAILURE);

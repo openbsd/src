@@ -1214,7 +1214,7 @@ playrec(char *dev, int mode, int bufsz, char *port)
 			nm = mio_pollfd(dev_mh, pfds + ns, POLLIN);
 		else
 			nm = 0;
-		if (poll(pfds, ns + nm, -1) < 0) {
+		if (poll(pfds, ns + nm, -1) == -1) {
 			if (errno == EINTR)
 				continue;
 			log_puts("poll failed\n");

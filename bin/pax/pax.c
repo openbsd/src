@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.52 2018/09/13 12:33:43 millert Exp $	*/
+/*	$OpenBSD: pax.c,v 1.53 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -228,7 +228,7 @@ main(int argc, char **argv)
 	 * Keep a reference to cwd, so we can always come back home.
 	 */
 	cwdfd = open(".", O_RDONLY | O_CLOEXEC);
-	if (cwdfd < 0) {
+	if (cwdfd == -1) {
 		syswarn(1, errno, "Can't open current working directory.");
 		return(exit_val);
 	}
@@ -348,7 +348,7 @@ setup_sig(int sig, const struct sigaction *n_hand)
 {
 	struct sigaction o_hand;
 
-	if (sigaction(sig, NULL, &o_hand) < 0)
+	if (sigaction(sig, NULL, &o_hand) == -1)
 		return (-1);
 
 	if (o_hand.sa_handler == SIG_IGN)
@@ -433,8 +433,8 @@ gen_init(void)
 		goto out;
 
 	n_hand.sa_handler = SIG_IGN;
-	if ((sigaction(SIGPIPE, &n_hand, NULL) < 0) ||
-	    (sigaction(SIGXFSZ, &n_hand, NULL) < 0))
+	if ((sigaction(SIGPIPE, &n_hand, NULL) == -1) ||
+	    (sigaction(SIGXFSZ, &n_hand, NULL) == -1))
 		goto out;
 	return(0);
 

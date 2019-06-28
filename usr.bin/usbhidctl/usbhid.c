@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.c,v 1.14 2016/01/09 02:01:34 jcs Exp $	*/
+/*	$OpenBSD: usbhid.c,v 1.15 2019/06/28 13:35:05 deraadt Exp $	*/
 /*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
 
 /*
@@ -425,7 +425,7 @@ getreport(struct Sreport *report, int hidfd, report_desc_t rd, int repindex)
 			return;
 
 		report->buffer->ucr_report = reptoparam[repindex].uhid_report;
-		if (ioctl(hidfd, USB_GET_REPORT, report->buffer) < 0)
+		if (ioctl(hidfd, USB_GET_REPORT, report->buffer) == -1)
 			err(1, "USB_GET_REPORT (probably not supported by "
 			    "device)");
 	}
@@ -437,7 +437,7 @@ setreport(struct Sreport *report, int hidfd, int repindex)
 	if (report->status == srs_dirty) {
 		report->buffer->ucr_report = reptoparam[repindex].uhid_report;
 
-		if (ioctl(hidfd, USB_SET_REPORT, report->buffer) < 0)
+		if (ioctl(hidfd, USB_SET_REPORT, report->buffer) == -1)
 			err(1, "USB_SET_REPORT(%s)",
 			    reptoparam[repindex].name);
 
@@ -596,7 +596,7 @@ devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 		ssize_t readlen;
 
 		readlen = read(hidfd, dbuf, dlen);
-		if (readlen < 0)
+		if (readlen == -1)
 			err(1, "Device read error");
 		if (dlen != (size_t)readlen)
 			errx(1, "Unexpected response length: %lu != %lu",
@@ -937,10 +937,10 @@ main(int argc, char **argv)
 	}
 
 	hidfd = open(dev, wflag ? O_RDWR : O_RDONLY);
-	if (hidfd < 0)
+	if (hidfd == -1)
 		err(1, "%s", dev);
 
-	if (ioctl(hidfd, USB_GET_REPORT_ID, &reportid) < 0)
+	if (ioctl(hidfd, USB_GET_REPORT_ID, &reportid) == -1)
 		reportid = -1;
 	if (verbose > 1)
 		printf("report ID=%d\n", reportid);

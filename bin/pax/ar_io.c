@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.62 2017/03/11 12:55:47 tb Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.63 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ ar_open(const char *name)
 		if (name == NULL) {
 			arfd = STDIN_FILENO;
 			arcname = STDN;
-		} else if ((arfd = open(name, EXT_MODE, DMOD)) < 0)
+		} else if ((arfd = open(name, EXT_MODE, DMOD)) == -1)
 			syswarn(1, errno, "Failed open to read on %s", name);
 		if (arfd != -1 && gzip_program != NULL)
 			ar_start_gzip(arfd, gzip_program, 0);
@@ -120,7 +120,7 @@ ar_open(const char *name)
 		if (name == NULL) {
 			arfd = STDOUT_FILENO;
 			arcname = STDO;
-		} else if ((arfd = open(name, AR_MODE, DMOD)) < 0)
+		} else if ((arfd = open(name, AR_MODE, DMOD)) == -1)
 			syswarn(1, errno, "Failed open to write on %s", name);
 		else
 			can_unlnk = 1;
@@ -131,7 +131,7 @@ ar_open(const char *name)
 		if (name == NULL) {
 			arfd = STDOUT_FILENO;
 			arcname = STDO;
-		} else if ((arfd = open(name, APP_MODE, DMOD)) < 0)
+		} else if ((arfd = open(name, APP_MODE, DMOD)) == -1)
 			syswarn(1, errno, "Failed open to read/write on %s",
 				name);
 		break;
@@ -147,14 +147,14 @@ ar_open(const char *name)
 		return(-1);
 
 	if (chdname != NULL)
-		if (chdir(chdname) != 0) {
+		if (chdir(chdname) == -1) {
 			syswarn(1, errno, "Failed chdir to %s", chdname);
 			return(-1);
 		}
 	/*
 	 * set up is based on device type
 	 */
-	if (fstat(arfd, &arsb) < 0) {
+	if (fstat(arfd, &arsb) == -1) {
 		syswarn(1, errno, "Failed stat on %s", arcname);
 		(void)close(arfd);
 		arfd = -1;
@@ -462,7 +462,7 @@ ar_set_wr(void)
 	 * (it was not written by pax).
 	 */
 	if (((cpos = lseek(arfd, 0, SEEK_CUR)) < 0) ||
-	    (ftruncate(arfd, cpos) < 0)) {
+	    (ftruncate(arfd, cpos) == -1)) {
 		syswarn(1, errno, "Unable to truncate archive file");
 		return(-1);
 	}
@@ -588,7 +588,7 @@ ar_read(char *buf, int cnt)
 int
 ar_write(char *buf, int bsz)
 {
-	int res;
+	ssize_t res;
 	off_t cpos;
 
 	/*
@@ -607,7 +607,7 @@ ar_write(char *buf, int bsz)
 	 * write broke, see what we can do with it. We try to send any partial
 	 * writes that may violate pax spec to the next archive volume.
 	 */
-	if (res < 0)
+	if (res == -1)
 		lstrval = res;
 	else
 		lstrval = 0;
@@ -620,10 +620,10 @@ ar_write(char *buf, int bsz)
 			 * in size by forcing the runt record to next archive
 			 * volume
 			 */
-			if ((cpos = lseek(arfd, 0, SEEK_CUR)) < 0)
+			if ((cpos = lseek(arfd, 0, SEEK_CUR)) == -1)
 				break;
 			cpos -= res;
-			if (ftruncate(arfd, cpos) < 0)
+			if (ftruncate(arfd, cpos) == -1)
 				break;
 			res = lstrval = 0;
 			break;
@@ -743,7 +743,7 @@ ar_rdsync(void)
 		}
 		mb.mt_op = MTFSR;
 		mb.mt_count = 1;
-		if (ioctl(arfd, MTIOCTOP, &mb) < 0)
+		if (ioctl(arfd, MTIOCTOP, &mb) == -1)
 			break;
 		lstrval = 1;
 		break;
@@ -756,10 +756,10 @@ ar_rdsync(void)
 		io_ok = 0;
 		if (((fsbz = arsb.st_blksize) <= 0) || (artyp != ISREG))
 			fsbz = BLKMULT;
-		if ((cpos = lseek(arfd, 0, SEEK_CUR)) < 0)
+		if ((cpos = lseek(arfd, 0, SEEK_CUR)) == -1)
 			break;
 		mpos = fsbz - (cpos % fsbz);
-		if (lseek(arfd, mpos, SEEK_CUR) < 0)
+		if (lseek(arfd, mpos, SEEK_CUR) == -1)
 			break;
 		lstrval = 1;
 		break;
@@ -885,7 +885,7 @@ ar_rev(off_t sksz)
 		 * may not even have the ability to lseek() in any direction).
 		 * First we figure out where we are in the archive.
 		 */
-		if ((cpos = lseek(arfd, 0, SEEK_CUR)) < 0) {
+		if ((cpos = lseek(arfd, 0, SEEK_CUR)) == -1) {
 			syswarn(1, errno,
 			   "Unable to obtain current archive byte offset");
 			lstrval = -1;
@@ -910,7 +910,7 @@ ar_rev(off_t sksz)
 			}
 			cpos = 0;
 		}
-		if (lseek(arfd, cpos, SEEK_SET) < 0) {
+		if (lseek(arfd, cpos, SEEK_SET) == -1) {
 			syswarn(1, errno, "Unable to seek archive backwards");
 			lstrval = -1;
 			return(-1);
@@ -957,7 +957,7 @@ ar_rev(off_t sksz)
 		 */
 		mb.mt_op = MTBSR;
 		mb.mt_count = sksz/phyblk;
-		if (ioctl(arfd, MTIOCTOP, &mb) < 0) {
+		if (ioctl(arfd, MTIOCTOP, &mb) == -1) {
 			syswarn(1,errno, "Unable to backspace tape %d blocks.",
 			    mb.mt_count);
 			lstrval = -1;
@@ -1000,7 +1000,7 @@ get_phys(void)
 		 */
 		while ((res = read(arfd, scbuf, sizeof(scbuf))) > 0)
 			padsz += res;
-		if (res < 0) {
+		if (res == -1) {
 			syswarn(1, errno, "Unable to locate tape filemark.");
 			return(-1);
 		}
@@ -1012,7 +1012,7 @@ get_phys(void)
 	 */
 	mb.mt_op = MTBSF;
 	mb.mt_count = 1;
-	if (ioctl(arfd, MTIOCTOP, &mb) < 0) {
+	if (ioctl(arfd, MTIOCTOP, &mb) == -1) {
 		syswarn(1, errno, "Unable to backspace over tape filemark.");
 		return(-1);
 	}
@@ -1023,7 +1023,7 @@ get_phys(void)
 	 */
 	mb.mt_op = MTBSR;
 	mb.mt_count = 1;
-	if (ioctl(arfd, MTIOCTOP, &mb) < 0) {
+	if (ioctl(arfd, MTIOCTOP, &mb) == -1) {
 		syswarn(1, errno, "Unable to backspace over last tape block.");
 		return(-1);
 	}
@@ -1038,13 +1038,13 @@ get_phys(void)
 	 */
 	while ((res = read(arfd, scbuf, sizeof(scbuf))) > 0)
 		continue;
-	if (res < 0) {
+	if (res == -1) {
 		syswarn(1, errno, "Unable to locate tape filemark.");
 		return(-1);
 	}
 	mb.mt_op = MTBSF;
 	mb.mt_count = 1;
-	if (ioctl(arfd, MTIOCTOP, &mb) < 0) {
+	if (ioctl(arfd, MTIOCTOP, &mb) == -1) {
 		syswarn(1, errno, "Unable to backspace over tape filemark.");
 		return(-1);
 	}
@@ -1075,7 +1075,7 @@ get_phys(void)
 	 */
 	mb.mt_op = MTBSR;
 	mb.mt_count = padsz/phyblk;
-	if (ioctl(arfd, MTIOCTOP, &mb) < 0) {
+	if (ioctl(arfd, MTIOCTOP, &mb) == -1) {
 		syswarn(1,errno,"Unable to backspace tape over %d pad blocks",
 		    mb.mt_count);
 		return(-1);
@@ -1105,10 +1105,10 @@ ar_next(void)
 	 * things like writing EOF etc will be done) (Watch out ar_close() can
 	 * also be called via a signal handler, so we must prevent a race.
 	 */
-	if (sigprocmask(SIG_BLOCK, &s_mask, &o_mask) < 0)
+	if (sigprocmask(SIG_BLOCK, &s_mask, &o_mask) == -1)
 		syswarn(0, errno, "Unable to set signal mask");
 	ar_close(0);
-	if (sigprocmask(SIG_SETMASK, &o_mask, NULL) < 0)
+	if (sigprocmask(SIG_SETMASK, &o_mask, NULL) == -1)
 		syswarn(0, errno, "Unable to restore signal mask");
 
 	if (done || !wr_trail || force_one_volume || op_mode == OP_TAR)
@@ -1245,10 +1245,10 @@ ar_start_gzip(int fd, const char *path, int wr)
 	int fds[2];
 	const char *gzip_flags;
 
-	if (pipe(fds) < 0)
+	if (pipe(fds) == -1)
 		err(1, "could not pipe");
 	zpid = fork();
-	if (zpid < 0)
+	if (zpid == -1)
 		err(1, "could not fork");
 
 	/* parent */
@@ -1281,7 +1281,7 @@ ar_start_gzip(int fd, const char *path, int wr)
 		/* System compressors are more likely to use pledge(2) */
 		putenv("PATH=/usr/bin:/usr/local/bin");
 
-		if (execlp(path, path, gzip_flags, (char *)NULL) < 0)
+		if (execlp(path, path, gzip_flags, (char *)NULL) == -1)
 			err(1, "could not exec %s", path);
 		/* NOTREACHED */
 	}

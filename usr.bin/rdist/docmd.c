@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.33 2017/07/09 14:04:50 espie Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.34 2019/06/28 13:35:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -115,11 +115,11 @@ notify(char *rhost, struct namelist *to, time_t lmod)
 
 	debugmsg(DM_MISC, "notify() temp file = '%s'", file);
 
-	if ((fd = open(file, O_RDONLY)) < 0) {
+	if ((fd = open(file, O_RDONLY)) == -1) {
 		error("%s: open for reading failed: %s", file, SYSERR);
 		return;
 	}
-	if (fstat(fd, &stb) < 0) {
+	if (fstat(fd, &stb) == -1) {
 		error("%s: fstat failed: %s", file, SYSERR);
 		(void) close(fd);
 		return;
@@ -671,7 +671,7 @@ cmptime(char *name, struct subcmd *sbcmds, char **env)
 		while (*ptarget)
 			ptarget++;
 	}
-	if (access(name, R_OK) < 0 || stat(name, &stb) < 0) {
+	if (access(name, R_OK) == -1 || stat(name, &stb) == -1) {
 		error("%s: cannot access file: %s", name, SYSERR);
 		return;
 	}
@@ -730,7 +730,7 @@ dodcolon(struct cmd *cmd, char **filev)
 		      cmd->c_label);
 		return;
 	}
-	if (stat(stamp, &stb) < 0) {
+	if (stat(stamp, &stb) == -1) {
 		error("%s: stat failed: %s", stamp, SYSERR);
 		return;
 	}

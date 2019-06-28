@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmdir.c,v 1.13 2016/10/19 18:20:26 schwarze Exp $	*/
+/*	$OpenBSD: rmdir.c,v 1.14 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: rmdir.c,v 1.13 1995/03/21 09:08:31 cgd Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 			continue;
 		*++p = '\0';
 
-		if (rmdir(*argv) < 0) {
+		if (rmdir(*argv) == -1) {
 			warn("%s", *argv);
 			errors = 1;
 		} else if (pflag)
@@ -96,7 +96,7 @@ rm_path(char *path)
 			continue;
 		*++p = '\0';
 
-		if (rmdir(path) < 0) {
+		if (rmdir(path) == -1) {
 			warn("%s", path);
 			return (1);
 		}

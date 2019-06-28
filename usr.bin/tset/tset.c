@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.40 2019/03/12 11:01:25 nicm Exp $	*/
+/*	$OpenBSD: tset.c,v 1.41 2019/06/28 13:35:05 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -142,7 +142,7 @@ static void
 exit_error(void)
 {
     if (can_restore)
-	SET_TTY(STDERR_FILENO, &original);
+	tcsetattr(STDERR_FILENO, TCSADRAIN, &original);
     (void) fprintf(stderr, "\n");
     fflush(stderr);
     ExitProgram(EXIT_FAILURE);
@@ -820,7 +820,7 @@ reset_mode(void)
 	);
 #endif
 
-    SET_TTY(STDERR_FILENO, &mode);
+    tcsetattr(STDERR_FILENO, TCSADRAIN, &mode);
 }
 
 /*
@@ -950,7 +950,7 @@ set_init(void)
 #ifdef TAB3
     if (oldmode.c_oflag & (TAB3 | ONLCR | OCRNL | ONLRET)) {
 	oldmode.c_oflag &= (TAB3 | ONLCR | OCRNL | ONLRET);
-	SET_TTY(STDERR_FILENO, &oldmode);
+	tcsetattr(STDERR_FILENO, TCSADRAIN, &oldmode);
     }
 #endif
     settle = set_tabs();
@@ -1209,7 +1209,7 @@ main(int argc, char **argv)
     if (!opt_c && !opt_w)
 	opt_c = opt_w = TRUE;
 
-    if (GET_TTY(STDERR_FILENO, &mode) < 0)
+    if (tcgetattr(STDERR_FILENO, &mode) < 0)
 	failed("standard error");
     can_restore = TRUE;
     original = oldmode = mode;
@@ -1234,13 +1234,14 @@ main(int argc, char **argv)
 	if (opt_w) {
 	    struct winsize win;
 	    /* Set window size if not set already */
-	    (void) ioctl(STDERR_FILENO, TIOCGWINSZ, &win);
-	    if (win.ws_row == 0 &&
-		win.ws_col == 0 &&
-		tlines > 0 && tcolumns > 0) {
-		win.ws_row = tlines;
-		win.ws_col = tcolumns;
-		(void) ioctl(STDERR_FILENO, TIOCSWINSZ, &win);
+	    if (ioctl(STDERR_FILENO, TIOCGWINSZ, &win) == 0) {
+	        if (win.ws_row == 0 &&
+		    win.ws_col == 0 &&
+		    tlines > 0 && tcolumns > 0) {
+		    win.ws_row = tlines;
+		    win.ws_col = tcolumns;
+		    (void) ioctl(STDERR_FILENO, TIOCSWINSZ, &win);
+		}
 	    }
 	}
 #endif
@@ -1253,7 +1254,7 @@ main(int argc, char **argv)
 
 	    /* Set the modes if they've changed. */
 	    if (memcmp(&mode, &oldmode, sizeof(mode))) {
-		SET_TTY(STDERR_FILENO, &mode);
+		tcsetattr(STDERR_FILENO, TCSADRAIN, &mode);
 	    }
 	}
     }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.3 2015/01/16 00:03:37 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.4 2019/06/28 13:35:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -247,7 +247,7 @@ read_buckets(void)
 	siz = sizeof(buf);
 	num_buckets = 0;
 
-	if (sysctl(mib, 3, buf, &siz, NULL, 0) < 0) {
+	if (sysctl(mib, 3, buf, &siz, NULL, 0) == -1) {
 		error("sysctl(kern.malloc.buckets): %s", strerror(errno));
 		return (-1);
 	}
@@ -266,7 +266,7 @@ read_buckets(void)
 		}
 		mib[3] = bucket_sizes[num_buckets];
 		if (sysctl(mib, 4, &buckets[num_buckets], &siz,
-			   NULL, 0) < 0) {
+			   NULL, 0) == -1) {
 			error("sysctl(kern.malloc.bucket.%d): %s",
 			    mib[3], strerror(errno));
 			return (-1);
@@ -300,7 +300,7 @@ read_types(void)
 		 * Skip errors -- these are presumed to be unallocated
 		 * entries.
 		 */
-		if (sysctl(mib, 4, &ti->stats, &siz, NULL, 0) < 0)
+		if (sysctl(mib, 4, &ti->stats, &siz, NULL, 0) == -1)
 			continue;
 
 		if (ti->stats.ks_calls == 0)

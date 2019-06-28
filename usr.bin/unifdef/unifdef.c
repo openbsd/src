@@ -410,7 +410,7 @@ processinout(const char *ifn, const char *ofn)
 		process();
 		return;
 	}
-	if (stat(ofn, &st) < 0) {
+	if (stat(ofn, &st) == -1) {
 		output = fopen(ofn, "wb");
 		if (output == NULL)
 			err(2, "can't create %s", ofn);
@@ -427,11 +427,11 @@ processinout(const char *ifn, const char *ofn)
 
 	if (backext != NULL && *backext != '\0') {
 		char *backname = astrcat(ofn, backext);
-		if (rename(ofn, backname) < 0)
+		if (rename(ofn, backname) == -1)
 			err(2, "can't rename \"%s\" to \"%s\"", ofn, backname);
 		free(backname);
 	}
-	if (rename(tempname, ofn) < 0)
+	if (rename(tempname, ofn) == -1)
 		err(2, "can't rename \"%s\" to \"%s\"", tempname, ofn);
 	free(tempname);
 	tempname = NULL;

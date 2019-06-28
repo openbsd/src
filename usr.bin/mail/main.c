@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2015/11/24 00:08:27 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2019/06/28 13:35:02 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -261,9 +261,9 @@ setscreensize(void)
 	struct winsize ws;
 	speed_t ospeed;
 
-	if (ioctl(1, TIOCGWINSZ, (char *) &ws) < 0)
+	if (ioctl(1, TIOCGWINSZ, (char *) &ws) == -1)
 		ws.ws_col = ws.ws_row = 0;
-	if (tcgetattr(1, &tbuf) < 0)
+	if (tcgetattr(1, &tbuf) == -1)
 		ospeed = 9600;
 	else
 		ospeed = cfgetospeed(&tbuf);

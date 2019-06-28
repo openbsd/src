@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.19 2013/12/21 06:54:53 guenther Exp $ */
+/* $OpenBSD: radioctl.c,v 1.20 2019/06/28 13:35:03 deraadt Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -183,10 +183,10 @@ main(int argc, char **argv)
 		}
 
 	rd = open(radiodev, mode);
-	if (rd < 0)
+	if (rd == -1)
 		err(1, "%s open error", radiodev);
 
-	if (ioctl(rd, RIOCGINFO, &ri) < 0)
+	if (ioctl(rd, RIOCGINFO, &ri) == -1)
 		err(1, "RIOCGINFO");
 
 	if (!argc && show_vars)
@@ -208,7 +208,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (close(rd) < 0)
+	if (close(rd) == -1)
 		warn("%s close error", radiodev);
 
 	return 0;
@@ -260,7 +260,7 @@ do_ioctls(int fd, struct opt_t *o, int silent)
 
 	if (o->option == OPTION_SEARCH) {
 
-		if (ioctl(fd, RIOCSSRCH, &o->value) < 0) {
+		if (ioctl(fd, RIOCSSRCH, &o->value) == -1) {
 			warn("RIOCSSRCH");
 			return;
 		}
@@ -268,14 +268,14 @@ do_ioctls(int fd, struct opt_t *o, int silent)
 	} else {
 
 		change_value(*o);
-		if (ioctl(fd, RIOCSINFO, &ri) < 0) {
+		if (ioctl(fd, RIOCSINFO, &ri) == -1) {
 			warn("RIOCSINFO");
 			return;
 		}
 
 	}
 
-	if (ioctl(fd, RIOCGINFO, &ri) < 0) {
+	if (ioctl(fd, RIOCGINFO, &ri) == -1) {
 		warn("RIOCGINFO");
 		return;
 	}

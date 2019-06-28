@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.25 2018/09/30 12:44:22 schwarze Exp $	*/
+/*	$OpenBSD: wc.c,v 1.26 2019/06/28 13:35:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -132,7 +132,7 @@ cnt(char *file)
 	linect = wordct = charct = 0;
 	stream = NULL;
 	if (file) {
-		if ((fd = open(file, O_RDONLY, 0)) < 0) {
+		if ((fd = open(file, O_RDONLY, 0)) == -1) {
 			warn("%s", file);
 			rval = 1;
 			return;

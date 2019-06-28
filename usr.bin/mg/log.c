@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2019/06/26 16:54:29 lum Exp $	*/
+/*	$OpenBSD: log.c,v 1.10 2019/06/28 13:35:02 deraadt Exp $	*/
 
 /* 
  * This file is in the public domain.
@@ -325,7 +325,7 @@ mgloginit(void)
 	if(stat(mglogdir, &sb)) {
 		if (mkdir(mglogdir, dir_mode) != 0)
 			return (FALSE);
-		if (chmod(mglogdir, f_mode) < 0)
+		if (chmod(mglogdir, f_mode) == -1)
 			return (FALSE);
 	}
 	mglogpath_lines = mglogfiles_create(mglogfile_lines);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.86 2018/09/30 14:35:32 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.87 2019/06/28 13:35:04 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -1841,7 +1841,7 @@ tn(int argc, char *argv[])
 	    printf("Trying %s...\r\n", hbuf);
 	}
 	net = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (net < 0)
+	if (net == -1)
 	    continue;
 
 	if (aliasp) {
@@ -1858,7 +1858,7 @@ tn(int argc, char *argv[])
 		net = -1;
 		continue;
 	    }
-	    if (bind(net, ares->ai_addr, ares->ai_addrlen) < 0) {
+	    if (bind(net, ares->ai_addr, ares->ai_addrlen) == -1) {
 		perror(aliasp);
 		(void) close(net);   /* dump descriptor */
 		net = -1;
@@ -1870,18 +1870,18 @@ tn(int argc, char *argv[])
 
 	switch (res->ai_family) {
 	case AF_INET:
-		if (setsockopt(net, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0
+		if (setsockopt(net, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) == -1
 		    && errno != ENOPROTOOPT)
 			perror("telnet: setsockopt (IP_TOS) (ignored)");
 		break;
 	case AF_INET6:
 		if (setsockopt(net, IPPROTO_IPV6, IPV6_TCLASS, &tos,
-		    sizeof(tos)) < 0 && errno != ENOPROTOOPT)
+		    sizeof(tos)) == -1 && errno != ENOPROTOOPT)
 			perror("telnet: setsockopt (IPV6_TCLASS) (ignored)");
 		break;
 	}
 
-	if (connect(net, res->ai_addr, res->ai_addrlen) < 0) {
+	if (connect(net, res->ai_addr, res->ai_addrlen) == -1) {
 	    char hbuf[NI_MAXHOST];
 
 	    if (getnameinfo(res->ai_addr, res->ai_addrlen, hbuf, sizeof(hbuf),

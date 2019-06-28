@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.73 2018/03/15 16:51:29 anton Exp $	*/
+/*	$OpenBSD: exec.c,v 1.74 2019/06/28 13:34:59 deraadt Exp $	*/
 
 /*
  * execute command tree
@@ -956,10 +956,10 @@ search_access(const char *path, int mode,
 	int ret, err = 0;
 	struct stat statb;
 
-	if (stat(path, &statb) < 0)
+	if (stat(path, &statb) == -1)
 		return -1;
 	ret = access(path, mode);
-	if (ret < 0)
+	if (ret == -1)
 		err = errno; /* File exists, but we can't access it */
 	else if (mode == X_OK && (!S_ISREG(statb.st_mode) ||
 	    !(statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH)))) {
@@ -1078,7 +1078,7 @@ iosetup(struct ioword *iop, struct tbl *tp)
 		 * things like /dev/null without error.
 		 */
 		if (Flag(FNOCLOBBER) && !(iop->flag & IOCLOB) &&
-		    (stat(cp, &statb) < 0 || S_ISREG(statb.st_mode)))
+		    (stat(cp, &statb) == -1 || S_ISREG(statb.st_mode)))
 			flags |= O_EXCL;
 		break;
 
@@ -1197,7 +1197,7 @@ herein(const char *content, int sub)
 	 * doesn't get removed too soon).
 	 */
 	h = maketemp(ATEMP, TT_HEREDOC_EXP, &genv->temps);
-	if (!(shf = h->shf) || (fd = open(h->name, O_RDONLY, 0)) < 0) {
+	if (!(shf = h->shf) || (fd = open(h->name, O_RDONLY, 0)) == -1) {
 		warningf(true, "can't %s temporary file %s: %s",
 		    !shf ? "create" : "open",
 		    h->name, strerror(errno));

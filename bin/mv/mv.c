@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.45 2017/06/27 21:43:46 tedu Exp $	*/
+/*	$OpenBSD: mv.c,v 1.46 2019/06/28 13:34:59 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -276,11 +276,11 @@ fastcopy(char *from, char *to, struct stat *sbp)
 		}
 	}
 
-	if ((from_fd = open(from, O_RDONLY, 0)) < 0) {
+	if ((from_fd = open(from, O_RDONLY, 0)) == -1) {
 		warn("%s", from);
 		return (1);
 	}
-	if ((to_fd = open(to, O_CREAT | O_TRUNC | O_WRONLY, 0600)) < 0) {
+	if ((to_fd = open(to, O_CREAT | O_TRUNC | O_WRONLY, 0600)) == -1) {
 		warn("%s", to);
 		(void)close(from_fd);
 		return (1);
@@ -297,7 +297,7 @@ fastcopy(char *from, char *to, struct stat *sbp)
 			warn("%s", to);
 			goto err;
 		}
-	if (nread < 0) {
+	if (nread == -1) {
 		warn("%s", from);
 err:		if (unlink(to))
 			warn("%s: remove", to);

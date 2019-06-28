@@ -1299,7 +1299,7 @@ save_cmdhist(void)
 
 	/* Make history file readable only by owner. */
 	r = fstat(fileno(f), &statbuf);
-	if (r < 0 || !S_ISREG(statbuf.st_mode))
+	if (r == -1 || !S_ISREG(statbuf.st_mode))
 		/* Don't chmod if not a regular file. */
 		do_chmod = 0;
 	if (do_chmod)

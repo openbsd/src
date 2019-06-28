@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.75 2019/06/20 00:41:18 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.76 2019/06/28 13:35:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -270,7 +270,7 @@ main(int argc, char **argv)
 			seteuid(pwd->pw_uid);
 
 			homeless = chdir(pwd->pw_dir);
-			if (homeless) {
+			if (homeless == -1) {
 				if (login_getcapbool(lc, "requirehome", 0)) {
 					auth_err(as, 1, "%s", pwd->pw_dir);
 				} else {
@@ -278,7 +278,7 @@ main(int argc, char **argv)
 						err(1, "unveil");
 					printf("No home directory %s!\n", pwd->pw_dir);
 					printf("Logging in with home = \"/\".\n");
-					if (chdir("/") < 0)
+					if (chdir("/") == -1)
 						auth_err(as, 1, "/");
 				}
 			}
