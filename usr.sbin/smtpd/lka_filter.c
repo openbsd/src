@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.36 2019/05/02 11:39:45 martijn Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.37 2019/06/28 06:05:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -726,22 +726,23 @@ static void
 filter_protocol_query(struct filter *filter, uint64_t token, uint64_t reqid, const char *phase, const char *param)
 {
 	int	n;
-	time_t	tm;
 	struct filter_session	*fs;
+	struct timeval	tv;
 
+	gettimeofday(&tv, NULL);
+	
 	fs = tree_xget(&sessions, reqid);
-	time(&tm);
 	if (strcmp(phase, "connect") == 0)
 		n = io_printf(lka_proc_get_io(filter->proc),
-		    "filter|%d|%zd|smtp-in|%s|%016"PRIx64"|%016"PRIx64"|%s|%s\n",
+		    "filter|%d|%lld.%06ld|smtp-in|%s|%016"PRIx64"|%016"PRIx64"|%s|%s\n",
 		    PROTOCOL_VERSION,
-		    tm,
+		    tv.tv_sec, tv.tv_usec,
 		    phase, reqid, token, fs->rdns, param);
 	else
 		n = io_printf(lka_proc_get_io(filter->proc),
-		    "filter|%d|%zd|smtp-in|%s|%016"PRIx64"|%016"PRIx64"|%s\n",
+		    "filter|%d|%lld.%06ld|smtp-in|%s|%016"PRIx64"|%016"PRIx64"|%s\n",
 		    PROTOCOL_VERSION,
-		    tm,
+		    tv.tv_sec, tv.tv_usec,
 		    phase, reqid, token, param);
 	if (n == -1)
 		fatalx("failed to write to processor");
@@ -751,14 +752,16 @@ static void
 filter_data_query(struct filter *filter, uint64_t token, uint64_t reqid, const char *line)
 {
 	int	n;
-	time_t	tm;
+	struct timeval	tv;
 
-	time(&tm);
+	gettimeofday(&tv, NULL);
+
 	n = io_printf(lka_proc_get_io(filter->proc),
-	    "filter|%d|%zd|smtp-in|data-line|"
+	    "filter|%d|%lld.%06ld|smtp-in|data-line|"
 	    "%016"PRIx64"|%016"PRIx64"|%s\n",
 	    PROTOCOL_VERSION,
-	    tm, reqid, token, line);
+	    tv.tv_sec, tv.tv_usec,
+	    reqid, token, line);
 	if (n == -1)
 		fatalx("failed to write to processor");
 }
