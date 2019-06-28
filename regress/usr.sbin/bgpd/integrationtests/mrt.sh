@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: mrt.sh,v 1.1 2019/06/22 08:26:26 claudio Exp $
+#	$OpenBSD: mrt.sh,v 1.2 2019/06/28 05:47:28 claudio Exp $
 
 set -e
 
@@ -8,12 +8,9 @@ BGPDCONFIGDIR=$2
 RDOMAIN1=$3
 
 error_notify() {
-	echo cleanup
 	pkill -T ${RDOMAIN1} bgpd || true
 	sleep 1
-	echo cleanup rdomain
 	route -qn -T ${RDOMAIN1} flush || true
-	echo cleanup interfaces
 	ifconfig mpe${RDOMAIN1} destroy || true
 	ifconfig lo${RDOMAIN1} destroy || true
 	if [ $1 -ne 0 ]; then
