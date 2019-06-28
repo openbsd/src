@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.82 2019/06/27 11:52:59 schwarze Exp $
+.\"	$OpenBSD: printf.3,v 1.83 2019/06/28 14:36:18 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: June 27 2019 $
+.Dd $Mdocdate: June 28 2019 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -689,15 +689,19 @@ it should be passed to
 .Xr free 3
 to release the allocated storage
 when it is no longer needed.
-If sufficient space cannot be allocated, these functions
-will return \-1.
+If sufficient space cannot be allocated or some other error occurs,
+these functions return \-1.
 The value of
 .Fa ret
-in this situation is implementation-dependent
-(on
+in this situation is implementation-dependent.
+On
 .Ox ,
 .Fa ret
-will be set to the null pointer, but this behavior should not be relied upon).
+is set to the
+.Dv NULL
+pointer, but other implementations may leave
+.Fa ret
+unchanged.
 .Sh EXAMPLES
 To print a date and time in the form `Sunday, July 3, 10:02',
 where
