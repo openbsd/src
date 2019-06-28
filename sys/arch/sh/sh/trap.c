@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.37 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.38 2019/06/28 05:51:43 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -173,6 +173,9 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 		KDASSERT(p->p_md.md_regs == tf); /* check exception depth */
 		expevt |= EXP_USER;
 		refreshcreds(p);
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			return;
 	}
 
 	switch (expevt) {
