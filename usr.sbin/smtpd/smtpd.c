@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.321 2019/06/27 05:14:49 martijn Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.322 2019/06/28 05:35:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1435,7 +1435,7 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	/* prepare file which captures stdout and stderr */
 	(void)strlcpy(sfn, "/tmp/smtpd.out.XXXXXXXXXXX", sizeof(sfn));
 	allout = mkstemp(sfn);
-	if (allout < 0) {
+	if (allout == -1) {
 		(void)snprintf(ebuf, sizeof ebuf, "mkstemp: %s", strerror(errno));
 		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
 		m_add_id(p_pony, id);

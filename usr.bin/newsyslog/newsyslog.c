@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.110 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.111 2019/06/28 05:35:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -850,7 +850,7 @@ dotrim(struct conf_entry *ent)
 	if (noaction)  {
 		printf("\tmktemp %s\n", file2);
 	} else {
-		if ((fd = mkstemp(file2)) < 0)
+		if ((fd = mkstemp(file2)) == -1)
 			err(1, "can't start '%s' log", file2);
 		if (fchmod(fd, ent->permissions))
 			err(1, "can't chmod '%s' log file", file2);

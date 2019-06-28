@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.28 2016/03/30 20:51:59 millert Exp $	*/
+/*	$OpenBSD: message.c,v 1.29 2019/06/28 05:35:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -482,7 +482,7 @@ msgsendnotify(struct msgfacility *msgfac, int mtype, int flags, char *msgbuf)
 		(void) snprintf(tempfile, len, "%s/%s", cp, _RDIST_TMP);
 
 		msgfac->mf_filename = tempfile;
-		if ((fd = mkstemp(msgfac->mf_filename)) < 0 ||
+		if ((fd = mkstemp(msgfac->mf_filename)) == -1 ||
 		    (msgfac->mf_fptr = fdopen(fd, "w")) == NULL)
 		    fatalerr("Cannot open notify file for writing: %s: %s.",
 			msgfac->mf_filename, SYSERR);

@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.124 2018/12/31 14:25:00 millert Exp $ */
+/* $OpenBSD: user.c,v 1.125 2019/06/28 05:35:35 deraadt Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -362,7 +362,7 @@ creategid(char *group, gid_t gid, const char *name)
 	}
 	(void) fstat(fileno(from), &st);
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
-	if ((fd = mkstemp(f)) < 0) {
+	if ((fd = mkstemp(f)) == -1) {
 		warn("can't create gid: mkstemp failed");
 		fclose(from);
 		return 0;
@@ -434,7 +434,7 @@ modify_gid(char *group, char *newent)
 	}
 	(void) fstat(fileno(from), &st);
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
-	if ((fd = mkstemp(f)) < 0) {
+	if ((fd = mkstemp(f)) == -1) {
 		warn("can't modify gid: mkstemp failed");
 		fclose(from);
 		return 0;
@@ -559,7 +559,7 @@ append_group(char *user, int ngroups, const char **groups)
 	}
 	(void) fstat(fileno(from), &st);
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
-	if ((fd = mkstemp(f)) < 0) {
+	if ((fd = mkstemp(f)) == -1) {
 		warn("can't append group: mkstemp failed");
 		fclose(from);
 		return 0;
@@ -741,7 +741,7 @@ setdefaults(user_t *up)
 	int	i;
 
 	(void) snprintf(template, sizeof(template), "%s.XXXXXXXX", CONFFILE);
-	if ((fd = mkstemp(template)) < 0) {
+	if ((fd = mkstemp(template)) == -1) {
 		warnx("can't mkstemp `%s' for writing", CONFFILE);
 		return 0;
 	}
@@ -1266,7 +1266,7 @@ rm_user_from_groups(char *login_name)
 	}
 	(void) fstat(fileno(from), &st);
 	(void) snprintf(f, sizeof(f), "%s.XXXXXXXX", _PATH_GROUP);
-	if ((fd = mkstemp(f)) < 0) {
+	if ((fd = mkstemp(f)) == -1) {
 		warn("can't remove gid for `%s': mkstemp failed", login_name);
 		fclose(from);
 		return 0;

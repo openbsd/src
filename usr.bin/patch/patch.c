@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.66 2018/06/22 15:37:15 zhuk Exp $	*/
+/*	$OpenBSD: patch.c,v 1.67 2019/06/28 05:35:35 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -166,25 +166,25 @@ main(int argc, char *argv[])
 	i++;
 	if (asprintf(&TMPOUTNAME, "%.*s/patchoXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
-	if ((fd = mkstemp(TMPOUTNAME)) < 0)
+	if ((fd = mkstemp(TMPOUTNAME)) == -1)
 		pfatal("can't create %s", TMPOUTNAME);
 	close(fd);
 
 	if (asprintf(&TMPINNAME, "%.*s/patchiXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
-	if ((fd = mkstemp(TMPINNAME)) < 0)
+	if ((fd = mkstemp(TMPINNAME)) == -1)
 		pfatal("can't create %s", TMPINNAME);
 	close(fd);
 
 	if (asprintf(&TMPREJNAME, "%.*s/patchrXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
-	if ((fd = mkstemp(TMPREJNAME)) < 0)
+	if ((fd = mkstemp(TMPREJNAME)) == -1)
 		pfatal("can't create %s", TMPREJNAME);
 	close(fd);
 
 	if (asprintf(&TMPPATNAME, "%.*s/patchpXXXXXXXXXX", i, tmpdir) == -1)
 		fatal("cannot allocate memory");
-	if ((fd = mkstemp(TMPPATNAME)) < 0)
+	if ((fd = mkstemp(TMPPATNAME)) == -1)
 		pfatal("can't create %s", TMPPATNAME);
 	close(fd);
 

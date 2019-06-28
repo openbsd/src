@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.25 2016/05/06 13:12:52 schwarze Exp $	*/
+/*	$OpenBSD: vi.c,v 1.26 2019/06/28 05:35:34 deraadt Exp $	*/
 /*	$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $	*/
 
 /*-
@@ -1017,7 +1017,7 @@ vi_histedit(EditLine *el, wint_t c __attribute__((__unused__)))
 	}
 
 	fd = mkstemp(tempfile);
-	if (fd < 0)
+	if (fd == -1)
 		return CC_ERROR;
 	len = (size_t)(el->el_line.lastchar - el->el_line.buffer);
 #define TMP_BUFSIZ (EL_BUFSIZ * MB_LEN_MAX)

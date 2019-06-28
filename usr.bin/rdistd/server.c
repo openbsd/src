@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.45 2018/09/21 19:13:49 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.46 2019/06/28 05:35:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -740,7 +740,7 @@ recvfile(char *new, opt_t opts, int mode, char *owner, char *group,
 	/*
 	 * Create temporary file
 	 */
-	if (chkparent(new, opts) < 0 || (f = mkstemp(new)) < 0) {
+	if (chkparent(new, opts) < 0 || (f = mkstemp(new)) == -1) {
 		error("%s: create failed: %s", new, SYSERR);
 		return;
 	}

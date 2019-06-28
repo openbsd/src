@@ -1585,7 +1585,7 @@ static FILE *
 mktempmode(char *tmp, int mode)
 {
 	int fd = mkstemp(tmp);
-	if (fd < 0)
+	if (fd == -1)
 		return (NULL);
 	fchmod(fd, mode & (S_IRWXU|S_IRWXG|S_IRWXO));
 	return (fdopen(fd, "wb"));

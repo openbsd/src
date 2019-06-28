@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.74 2019/03/28 11:11:18 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.75 2019/06/28 05:35:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -282,7 +282,7 @@ bad_gen:
 	memcpy(tmp, path, path_len);
 	memcpy(tmp + path_len, TEMPL_SUFFIX, sizeof(TEMPL_SUFFIX));
 	fd = mkstemp(tmp);
-	if (fd < 0) {
+	if (fd == -1) {
 		DPERROR(tmp);
 		goto done;
 	}

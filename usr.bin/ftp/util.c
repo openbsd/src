@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.89 2019/05/16 12:44:18 florian Exp $	*/
+/*	$OpenBSD: util.c,v 1.90 2019/06/28 05:35:34 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -404,7 +404,7 @@ remglob2(char *argv[], int doswitch, char **errbuf, FILE **ftemp, char *type)
 		if (temp[len-1] != '/')
 			temp[len++] = '/';
 		(void)strlcpy(&temp[len], TMPFILE, sizeof temp - len);
-		if ((fd = mkstemp(temp)) < 0) {
+		if ((fd = mkstemp(temp)) == -1) {
 			warn("unable to create temporary file: %s", temp);
 			return (NULL);
 		}
