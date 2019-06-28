@@ -303,7 +303,7 @@ easprintf(const char *fmt, ...)
 	rv = vasprintf(&p, fmt, ap);
 	va_end(ap);
 
-	if (p == NULL || rv < 0) {
+	if (rv == -1) {
 		error("Cannot allocate memory", NULL);
 		quit(QUIT_ERROR);
 	}
