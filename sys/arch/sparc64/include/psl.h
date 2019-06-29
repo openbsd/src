@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.34 2018/08/20 15:02:07 visa Exp $	*/
+/*	$OpenBSD: psl.h,v 1.35 2019/06/29 15:41:21 deraadt Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -226,8 +226,6 @@
 #define BLOCK_ALIGN	0x3f
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-
-extern u_int64_t ver;	/* Copy of v9 version register.  We need to read this only once, in locore.s. */
 
 #ifdef DIAGNOSTIC
 /*
