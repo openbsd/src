@@ -1,4 +1,4 @@
-/*	$OpenBSD: mio.c,v 1.22 2018/10/31 10:06:54 miko Exp $	*/
+/*	$OpenBSD: mio.c,v 1.23 2019/06/29 06:05:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -94,7 +94,7 @@ mio_psleep(struct mio_hdl *hdl, int event)
 	}
 	for (;;) {
 		nfds = mio_pollfd(hdl, pfd, event);
-		while (poll(pfd, nfds, -1) < 0) {
+		while (poll(pfd, nfds, -1) == -1) {
 			if (errno == EINTR)
 				continue;
 			DPERROR("mio_psleep: poll");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.23 2018/10/31 10:06:54 miko Exp $	*/
+/*	$OpenBSD: sio.c,v 1.24 2019/06/29 06:05:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -220,7 +220,7 @@ sio_psleep(struct sio_hdl *hdl, int event)
 	}
 	for (;;) {
 		nfds = sio_pollfd(hdl, pfd, event);
-		while (poll(pfd, nfds, -1) < 0) {
+		while (poll(pfd, nfds, -1) == -1) {
 			if (errno == EINTR)
 				continue;
 			DPERROR("sio_psleep: poll");

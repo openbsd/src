@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.75 2019/06/28 05:35:34 deraadt Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.76 2019/06/29 06:05:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -53,7 +53,7 @@ _aucat_rmsg(struct aucat *hdl, int *eof)
 	while (hdl->rtodo > 0) {
 		data = (unsigned char *)&hdl->rmsg;
 		data += sizeof(struct amsg) - hdl->rtodo;
-		while ((n = read(hdl->fd, data, hdl->rtodo)) < 0) {
+		while ((n = read(hdl->fd, data, hdl->rtodo)) == -1) {
 			if (errno == EINTR)
 				continue;
 			if (errno != EAGAIN) {
@@ -99,7 +99,7 @@ _aucat_wmsg(struct aucat *hdl, int *eof)
 	while (hdl->wtodo > 0) {
 		data = (unsigned char *)&hdl->wmsg;
 		data += sizeof(struct amsg) - hdl->wtodo;
-		while ((n = write(hdl->fd, data, hdl->wtodo)) < 0) {
+		while ((n = write(hdl->fd, data, hdl->wtodo)) == -1) {
 			if (errno == EINTR)
 				continue;
 			if (errno != EAGAIN) {
@@ -131,7 +131,7 @@ _aucat_rdata(struct aucat *hdl, void *buf, size_t len, int *eof)
 	}
 	if (len > hdl->rtodo)
 		len = hdl->rtodo;
-	while ((n = read(hdl->fd, buf, len)) < 0) {
+	while ((n = read(hdl->fd, buf, len)) == -1) {
 		if (errno == EINTR)
 			continue;
 		if (errno != EAGAIN) {
@@ -184,7 +184,7 @@ _aucat_wdata(struct aucat *hdl, const void *buf, size_t len,
 		DPRINTF("_aucat_wdata: len == 0\n");
 		abort();
 	}
-	while ((n = write(hdl->fd, buf, len)) < 0) {
+	while ((n = write(hdl->fd, buf, len)) == -1) {
 		if (errno == EINTR)
 			continue;
 		if (errno != EAGAIN) {
@@ -230,12 +230,12 @@ aucat_mkcookie(unsigned char *cookie)
 	memcpy(path + home_len, COOKIE_SUFFIX, sizeof(COOKIE_SUFFIX));
 	path_len = home_len + sizeof(COOKIE_SUFFIX) - 1;
 	fd = open(path, O_RDONLY);
-	if (fd < 0) {
+	if (fd == -1) {
 		if (errno != ENOENT)
 			DPERROR(path);
 		goto bad_gen;
 	}
-	if (fstat(fd, &sb) < 0) {
+	if (fstat(fd, &sb) == -1) {
 		DPERROR(path);
 		goto bad_close;
 	}
@@ -244,7 +244,7 @@ aucat_mkcookie(unsigned char *cookie)
 		goto bad_close;
 	}
 	len = read(fd, cookie, AMSG_COOKIELEN);
-	if (len < 0) {
+	if (len == -1) {
 		DPERROR(path);
 		goto bad_close;
 	}
@@ -275,7 +275,7 @@ bad_gen:
 	/* create ~/.sndio directory */
 	memcpy(tmp, home, home_len);
 	memcpy(tmp + home_len, COOKIE_DIR, sizeof(COOKIE_DIR));
-	if (mkdir(tmp, 0755) < 0 && errno != EEXIST)
+	if (mkdir(tmp, 0755) == -1 && errno != EEXIST)
 		goto done;
 
 	/* create cookie file in it */
@@ -286,14 +286,14 @@ bad_gen:
 		DPERROR(tmp);
 		goto done;
 	}
-	if (write(fd, cookie, AMSG_COOKIELEN) < 0) {
+	if (write(fd, cookie, AMSG_COOKIELEN) == -1) {
 		DPERROR(tmp);
 		unlink(tmp);
 		close(fd);
 		goto done;
 	}
 	close(fd);
-	if (rename(tmp, path) < 0) {
+	if (rename(tmp, path) == -1) {
 		DPERROR(tmp);
 		unlink(tmp);
 	}
@@ -323,12 +323,12 @@ aucat_connect_tcp(struct aucat *hdl, char *host, unsigned int unit)
 	for (ai = ailist; ai != NULL; ai = ai->ai_next) {
 		s = socket(ai->ai_family, ai->ai_socktype | SOCK_CLOEXEC,
 		    ai->ai_protocol);
-		if (s < 0) {
+		if (s == -1) {
 			DPERROR("socket");
 			continue;
 		}
 	restart:
-		if (connect(s, ai->ai_addr, ai->ai_addrlen) < 0) {
+		if (connect(s, ai->ai_addr, ai->ai_addrlen) == -1) {
 			if (errno == EINTR)
 				goto restart;
 			DPERROR("connect");
@@ -339,10 +339,10 @@ aucat_connect_tcp(struct aucat *hdl, char *host, unsigned int unit)
 		break;
 	}
 	freeaddrinfo(ailist);
-	if (s < 0)
+	if (s == -1)
 		return 0;
 	opt = 1;
-	if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(int)) < 0) {
+	if (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(int)) == -1) {
 		DPERROR("setsockopt");
 		close(s);
 		return 0;
@@ -364,16 +364,16 @@ aucat_connect_un(struct aucat *hdl, unsigned int unit)
 	    SOCKPATH_DIR "-%u/" SOCKPATH_FILE "%u", uid, unit);
 	ca.sun_family = AF_UNIX;
 	s = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0);
-	if (s < 0)
+	if (s == -1)
 		return 0;
-	while (connect(s, (struct sockaddr *)&ca, len) < 0) {
+	while (connect(s, (struct sockaddr *)&ca, len) == -1) {
 		if (errno == EINTR)
 			continue;
 		DPERROR(ca.sun_path);
 		/* try shared server */
 		snprintf(ca.sun_path, sizeof(ca.sun_path),
 		    SOCKPATH_DIR "/" SOCKPATH_FILE "%u", unit);
-		while (connect(s, (struct sockaddr *)&ca, len) < 0) {
+		while (connect(s, (struct sockaddr *)&ca, len) == -1) {
 			if (errno == EINTR)
 				continue;
 			DPERROR(ca.sun_path);
@@ -504,7 +504,7 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode)
 	}
 	return 1;
  bad_connect:
-	while (close(hdl->fd) < 0 && errno == EINTR)
+	while (close(hdl->fd) == -1 && errno == EINTR)
 		; /* retry */
 	return 0;
 }
@@ -527,7 +527,7 @@ _aucat_close(struct aucat *hdl, int eof)
 		 */
 		while (1) {
 			n = read(hdl->fd, dummy, sizeof(dummy));
-			if (n < 0) {
+			if (n == -1) {
 				if (errno == EINTR)
 					continue;
 				break;
@@ -537,14 +537,14 @@ _aucat_close(struct aucat *hdl, int eof)
 		}
 	}
  bad_close:
-	while (close(hdl->fd) < 0 && errno == EINTR)
+	while (close(hdl->fd) == -1 && errno == EINTR)
 		; /* nothing */
 }
 
 int
 _aucat_setfl(struct aucat *hdl, int nbio, int *eof)
 {
-	if (fcntl(hdl->fd, F_SETFL, nbio ? O_NONBLOCK : 0) < 0) {
+	if (fcntl(hdl->fd, F_SETFL, nbio ? O_NONBLOCK : 0) == -1) {
 		DPERROR("_aucat_setfl: fcntl");
 		*eof = 1;
 		return 0;
