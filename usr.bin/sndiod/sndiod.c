@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.34 2018/08/08 22:31:43 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.35 2019/06/29 21:23:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -234,11 +234,11 @@ setsig(void)
 	sigfillset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = sigint;
-	if (sigaction(SIGINT, &sa, NULL) < 0)
+	if (sigaction(SIGINT, &sa, NULL) == -1)
 		err(1, "sigaction(int) failed");
-	if (sigaction(SIGTERM, &sa, NULL) < 0)
+	if (sigaction(SIGTERM, &sa, NULL) == -1)
 		err(1, "sigaction(term) failed");
-	if (sigaction(SIGHUP, &sa, NULL) < 0)
+	if (sigaction(SIGHUP, &sa, NULL) == -1)
 		err(1, "sigaction(hup) failed");
 }
 
@@ -250,11 +250,11 @@ unsetsig(void)
 	sigfillset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = SIG_DFL;
-	if (sigaction(SIGHUP, &sa, NULL) < 0)
+	if (sigaction(SIGHUP, &sa, NULL) == -1)
 		err(1, "unsetsig(hup): sigaction failed");
-	if (sigaction(SIGTERM, &sa, NULL) < 0)
+	if (sigaction(SIGTERM, &sa, NULL) == -1)
 		err(1, "unsetsig(term): sigaction failed");
-	if (sigaction(SIGINT, &sa, NULL) < 0)
+	if (sigaction(SIGINT, &sa, NULL) == -1)
 		err(1, "unsetsig(int): sigaction failed");
 }
 
@@ -274,12 +274,12 @@ getbasepath(char *base)
 		snprintf(base, SOCKPATH_MAX, SOCKPATH_DIR "-%u", uid);
 	}
 	omask = umask(mask);
-	if (mkdir(base, 0777) < 0) {
+	if (mkdir(base, 0777) == -1) {
 		if (errno != EEXIST)
 			err(1, "mkdir(\"%s\")", base);
 	}
 	umask(omask);
-	if (stat(base, &sb) < 0)
+	if (stat(base, &sb) == -1)
 		err(1, "stat(\"%s\")", base);
 	if (!S_ISDIR(sb.st_mode))
 		errx(1, "%s is not a directory", base);
@@ -351,7 +351,7 @@ dounveil(char *name, char *prefix, char *path_prefix)
 	if (strncmp(name, prefix, prefix_len) != 0)
 		errx(1, "%s: unsupported device or port format", name);
 	snprintf(path, sizeof(path), "%s%s", path_prefix, name + prefix_len);
-	if (unveil(path, "rw") < 0)
+	if (unveil(path, "rw") == -1)
 		err(1, "unveil");
 }
 
@@ -369,7 +369,7 @@ start_helper(int background)
 			errx(1, "unknown user %s", SNDIO_PRIV_USER);
 	} else
 		pw = NULL;
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, s) < 0) {
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, s) == -1) {
 		perror("socketpair");
 		return 0;
 	}
@@ -386,7 +386,7 @@ start_helper(int background)
 		if (background) {
 			log_flush();
 			log_level = 0;
-			if (daemon(0, 0) < 0)
+			if (daemon(0, 0) == -1)
 				err(1, "daemon");
 		}
 		if (pw != NULL) {
@@ -399,7 +399,7 @@ start_helper(int background)
 			dounveil(d->path, "rsnd/", "/dev/audio");
 		for (p = port_list; p != NULL; p = p->next)
 			dounveil(p->path, "rmidi/", "/dev/rmidi");
-		if (pledge("stdio sendfd rpath wpath", NULL) < 0)
+		if (pledge("stdio sendfd rpath wpath", NULL) == -1)
 			err(1, "pledge");
 		while (file_poll())
 			; /* nothing */
@@ -594,17 +594,17 @@ main(int argc, char **argv)
 	if (background) {
 		log_flush();
 		log_level = 0;
-		if (daemon(0, 0) < 0)
+		if (daemon(0, 0) == -1)
 			err(1, "daemon");
 	}
 	if (pw != NULL) {
-		if (setpriority(PRIO_PROCESS, 0, SNDIO_PRIO) < 0)
+		if (setpriority(PRIO_PROCESS, 0, SNDIO_PRIO) == -1)
 			err(1, "setpriority");
-		if (chroot(pw->pw_dir) != 0 || chdir("/") != 0)
+		if (chroot(pw->pw_dir) == -1 || chdir("/") == -1)
 			err(1, "cannot chroot to %s", pw->pw_dir);
-		if (setgroups(1, &pw->pw_gid) ||
-		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		if (setgroups(1, &pw->pw_gid) == -1 ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1 )
 			err(1, "cannot drop privileges");
 	}
 	if (tcpaddr_list) {

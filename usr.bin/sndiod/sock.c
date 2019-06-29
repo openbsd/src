@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.29 2018/06/26 07:39:59 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.30 2019/06/29 21:23:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -320,7 +320,7 @@ sock_fdwrite(struct sock *f, void *data, int count)
 	int n;
 
 	n = write(f->fd, data, count);
-	if (n < 0) {
+	if (n == -1) {
 #ifdef DEBUG
 		if (errno == EFAULT) {
 			log_puts("sock_fdwrite: fault\n");
@@ -361,7 +361,7 @@ sock_fdread(struct sock *f, void *data, int count)
 	int n;
 
 	n = read(f->fd, data, count);
-	if (n < 0) {
+	if (n == -1) {
 #ifdef DEBUG
 		if (errno == EFAULT) {
 			log_puts("sock_fdread: fault\n");
