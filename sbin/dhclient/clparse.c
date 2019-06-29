@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.185 2019/04/02 02:59:43 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.186 2019/06/29 16:39:57 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -183,13 +183,13 @@ read_conf(char *name, char *ignore_list, struct ether_addr *hwaddr)
  *	| leases lease
  */
 void
-read_lease_db(char *name, struct client_lease_tq *tq)
+read_lease_db(char *name, struct client_lease_tq *lease_db)
 {
 	struct client_lease	*lease, *lp, *nlp;
 	FILE			*cfile;
 	int			 i;
 
-	TAILQ_INIT(tq);
+	TAILQ_INIT(lease_db);
 
 	if ((cfile = fopen(path_lease_db, "r")) == NULL)
 		return;
@@ -206,7 +206,7 @@ read_lease_db(char *name, struct client_lease_tq *tq)
 		 * ssid AND the same Client Identifier AND the same
 		 * IP address.
 		 */
-		TAILQ_FOREACH_SAFE(lp, tq, next, nlp) {
+		TAILQ_FOREACH_SAFE(lp, lease_db, next, nlp) {
 			if (lp->ssid_len != lease->ssid_len)
 				continue;
 			if (memcmp(lp->ssid, lease->ssid, lp->ssid_len) != 0)
@@ -219,11 +219,11 @@ read_lease_db(char *name, struct client_lease_tq *tq)
 			if (lp->address.s_addr != lease->address.s_addr)
 				continue;
 
-			TAILQ_REMOVE(tq, lp, next);
+			TAILQ_REMOVE(lease_db, lp, next);
 			free_client_lease(lp);
 		}
 
-		TAILQ_INSERT_TAIL(tq, lease, next);
+		TAILQ_INSERT_TAIL(lease_db, lease, next);
 	}
 
 	fclose(cfile);

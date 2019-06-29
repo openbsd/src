@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.636 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.637 2019/06/29 16:39:57 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,7 @@ void make_release(struct interface_info *, struct client_lease *);
 void release_lease(struct interface_info *);
 void propose_release(struct interface_info *);
 
-void write_lease_db(struct interface_info *);
+void write_lease_db(char *, struct client_lease_tq *);
 void write_option_db(char *, struct client_lease *, struct client_lease *);
 char *lease_as_string(char *, char *, struct client_lease *);
 struct proposal *lease_as_proposal(struct client_lease *);
@@ -606,7 +606,7 @@ main(int argc, char *argv[])
 	read_lease_db(ifi->name, &ifi->lease_db);
 	if ((leaseFile = fopen(path_lease_db, "w")) == NULL)
 		fatal("fopen(%s)", path_lease_db);
-	write_lease_db(ifi);
+	write_lease_db(ifi->name, &ifi->lease_db);
 	close(fd);
 
 	if (path_option_db != NULL) {
@@ -1005,7 +1005,7 @@ newlease:
 	 * the bind process is complete and all related information is in
 	 * place when dhclient(8) goes daemon.
 	 */
-	write_lease_db(ifi);
+	write_lease_db(ifi->name, &ifi->lease_db);
 	write_option_db(ifi->name, ifi->active, lease);
 	write_resolv_conf();
 
@@ -1792,7 +1792,7 @@ free_client_lease(struct client_lease *lease)
 }
 
 void
-write_lease_db(struct interface_info *ifi)
+write_lease_db(char *name, struct client_lease_tq *lease_db)
 {
 	struct client_lease	*lp;
 	char			*leasestr;
@@ -1812,10 +1812,10 @@ write_lease_db(struct interface_info *ifi)
 	 * the chonological order required.
 	 */
 	time(&cur_time);
-	TAILQ_FOREACH_REVERSE(lp, &ifi->lease_db, client_lease_tq, next) {
+	TAILQ_FOREACH_REVERSE(lp, lease_db, client_lease_tq, next) {
 		if (lease_expiry(lp) < cur_time)
 			continue;
-		leasestr = lease_as_string(ifi->name, "lease", lp);
+		leasestr = lease_as_string(name, "lease", lp);
 		if (leasestr != NULL)
 			fprintf(leaseFile, "%s", leasestr);
 		else
@@ -2669,7 +2669,7 @@ release_lease(struct interface_info *ifi)
 	imsg_flush(unpriv_ibuf);
 
 	TAILQ_REMOVE(&ifi->lease_db, ifi->active, next);
-	write_lease_db(ifi);
+	write_lease_db(ifi->name, &ifi->lease_db);
 
 	if (optionDB != NULL) {
 		ftruncate(fileno(optionDB), 0);
