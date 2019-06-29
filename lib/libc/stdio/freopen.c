@@ -1,4 +1,4 @@
-/*	$OpenBSD: freopen.c,v 1.16 2016/09/21 04:38:56 guenther Exp $ */
+/*	$OpenBSD: freopen.c,v 1.17 2019/06/29 16:12:21 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -88,7 +88,7 @@ freopen(const char *file, const char *mode, FILE *fp)
 
 	/* Get a new descriptor to refer to the new file. */
 	f = open(file, oflags, DEFFILEMODE);
-	if (f < 0 && isopen) {
+	if (f == -1 && isopen) {
 		/* If out of fd's close the old one and try again. */
 		if (errno == ENFILE || errno == EMFILE) {
 			(void) (*fp->_close)(fp->_cookie);
@@ -121,7 +121,7 @@ freopen(const char *file, const char *mode, FILE *fp)
 		FREELB(fp);
 	fp->_lb._size = 0;
 
-	if (f < 0) {			/* did not get it after all */
+	if (f == -1) {			/* did not get it after all */
 		fp->_flags = 0;		/* set it free */
 		FUNLOCKFILE(fp);
 		errno = sverrno;	/* restore in case _close clobbered */

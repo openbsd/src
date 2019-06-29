@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.31 2019/05/12 12:49:52 schwarze Exp $ */
+/*	$OpenBSD: strftime.c,v 1.32 2019/06/29 16:12:21 deraadt Exp $ */
 /*
 ** Copyright (c) 1989, 1993
 **	The Regents of the University of California.  All rights reserved.
@@ -614,7 +614,7 @@ _loc(void)
 	if (len < 0 || len >= sizeof filename)
 		goto no_locale;
 	fd = open(filename, O_RDONLY);
-	if (fd < 0) {
+	if (fd == -1) {
 		/*
 		** Old Sun systems have a different naming and data convention.
 		*/
@@ -624,10 +624,10 @@ _loc(void)
 		if (len < 0 || len >= sizeof filename)
 			goto no_locale;
 		fd = open(filename, O_RDONLY);
-		if (fd < 0)
+		if (fd  == -1)
 			goto no_locale;
 	}
-	if (fstat(fd, &st) != 0)
+	if (fstat(fd, &st) == -1)
 		goto bad_locale;
 	if (st.st_size <= 0)
 		goto bad_locale;
