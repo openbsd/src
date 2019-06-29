@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.78 2019/06/17 19:51:23 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.79 2019/06/29 22:35:37 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -448,10 +448,13 @@ main(int argc, char **argv)
 
 	envp = prepenv(rule, mypw, targpw);
 
+	/* setusercontext set path for the next process, so reset it for us */
 	if (rule->cmd) {
-		/* do this again after setusercontext reset it */
 		if (setenv("PATH", safepath, 1) == -1)
 			err(1, "failed to set PATH '%s'", safepath);
+	} else {
+		if (setenv("PATH", formerpath, 1) == -1)
+			err(1, "failed to set PATH '%s'", formerpath);
 	}
 	execvpe(cmd, argv, envp);
 fail:
