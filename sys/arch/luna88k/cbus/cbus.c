@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.6 2016/06/13 23:51:58 dlg Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.7 2019/06/29 04:33:11 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -41,12 +41,15 @@
 
 static struct cbus_attach_args cbus_devs[] = {
 #if NNECSB > 0
-	{ "necsb",	-1 },	/* PC-9801-86 sound board */
+	/* PC-9801-86 sound board */
+	{ "necsb", -1, -1, -1, -1, -1 },
 #endif
 #if NPCIC > 0
-	{ "pcic",	-1 },	/* PC-9801-102 & PC-9821X[AE]-01 PCMCIA board */
+	/* PC-9801-102 & PC-9821X[AE]-01 PCMCIA board */
+	{ "pcic",  -1, -1, -1, -1, -1 },
 #endif
-	{ "pcex",	-1 }	/* C-bus "generic" driver */
+	/* C-bus "generic" driver */
+	{ "pcex",  -1, -1, -1, -1, -1 }
 };
 
 /*
@@ -128,8 +131,12 @@ cbus_print(void *aux, const char *pnp)
 
 	if (pnp)
 		printf("%s at %s", caa->ca_name, pnp);	/* not configured */
-	if (caa->ca_intlevel != -1)
-		printf(" int %d", caa->ca_intlevel);
+	if (caa->ca_iobase != -1)
+		printf(" port 0x%x", caa->ca_iobase);
+	if (caa->ca_maddr != -1)
+		printf(" addr 0x%x", caa->ca_maddr);
+	if (caa->ca_int != -1)
+		printf(" int %d", caa->ca_int);
 
 	return UNCONF;
 }

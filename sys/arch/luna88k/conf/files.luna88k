@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.29 2017/07/23 09:17:17 aoyama Exp $
+#	$OpenBSD: files.luna88k,v 1.30 2019/06/29 04:33:11 aoyama Exp $
 #
 maxpartitions 16
 
@@ -63,7 +63,8 @@ attach spc at mainbus
 file arch/luna88k/dev/spc.c				spc
 file arch/luna88k/dev/mb89352.c				spc
 
-device cbus {}
+device	cbus {[port = -1], [size = 0],
+	[iomem = -1], [iosiz = 0], [int = -1]}
 attach	cbus at mainbus
 file	arch/luna88k/cbus/cbus.c
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbusvar.h,v 1.4 2015/02/18 22:42:04 aoyama Exp $	*/
+/*	$OpenBSD: cbusvar.h,v 1.5 2019/06/29 04:33:11 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2014 Kenji Aoyama.
@@ -44,6 +44,16 @@ int	cbus_isrunlink(int (*)(void *), int);
 u_int8_t	cbus_intr_registered(void);
 
 struct cbus_attach_args {
-	char	*ca_name;
-	int	ca_intlevel;
+	char		*ca_name;
+	u_int32_t	ca_iobase;
+	u_int32_t	ca_iosize;
+	u_int32_t	ca_maddr;
+	u_int32_t	ca_msize;
+	u_int32_t	ca_int;
 };
+
+#define	cf_iobase	cf_loc[0]
+#define	cf_iosize	cf_loc[1]
+#define	cf_maddr	cf_loc[2]
+#define	cf_msize	cf_loc[3]
+#define	cf_int		cf_loc[4]
