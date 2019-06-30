@@ -28,9 +28,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: realpath.3,v 1.22 2019/06/29 21:21:27 guenther Exp $
+.\"	$OpenBSD: realpath.3,v 1.23 2019/06/30 17:31:39 jmc Exp $
 .\"
-.Dd $Mdocdate: June 29 2019 $
+.Dd $Mdocdate: June 30 2019 $
 .Dt REALPATH 3
 .Os
 .Sh NAME
@@ -150,14 +150,15 @@ function call first appeared in
 .Pp
 In
 .Ox 6.6 ,
-it was reimplemented on top of a
+it was reimplemented on top of the
 .Fn __realpath
-system call whose calling convention differs from the standard
+system call.
+Its calling convention differed from the standard
 function by requiring
 .Ar resolved
 to not be
 .Dv NULL
 and by returning an integer,
-zero on success and \-1 with corresponding errno on failure.
+zero on success, and -1 with corresponding errno on failure.
 This is visible in the output of
 .Xr kdump 1 .
