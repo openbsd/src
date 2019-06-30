@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.638 2019/06/30 16:46:40 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.639 2019/06/30 19:19:08 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -248,7 +248,7 @@ interface_state(struct interface_info *ifi)
 
 	oldlinkup = LINK_STATE_IS_UP(ifi->link_state);
 
-	if (getifaddrs(&ifap) != 0)
+	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
 
 	ifa = get_link_ifa(ifi->name, ifap);
@@ -289,7 +289,7 @@ get_hw_address(struct interface_info *ifi)
 	struct ifaddrs		*ifap, *ifa;
 	struct sockaddr_dl	*sdl;
 
-	if (getifaddrs(&ifap) != 0)
+	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
 
 	ifa = get_link_ifa(ifi->name, ifap);
@@ -2478,7 +2478,7 @@ take_charge(struct interface_info *ifi, int routefd)
 			fatal("poll(routefd)");
 		}
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
-			fatal("routefd: ERR|HUP|NVAL");
+			fatalx("routefd: ERR|HUP|NVAL");
 		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
 			continue;
 		routefd_handler(ifi, routefd);
@@ -2735,7 +2735,7 @@ propose_release(struct interface_info *ifi)
 			fatal("poll(routefd)");
 		}
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
-			fatal("routefd: ERR|HUP|NVAL");
+			fatalx("routefd: ERR|HUP|NVAL");
 		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
 			continue;
 		routefd_handler(ifi, routefd);
