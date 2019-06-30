@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.18 2017/06/08 11:47:25 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.19 2019/06/30 07:37:47 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -125,10 +125,11 @@ LEAF(ip27_cpu_spinup_trampoline, 0)
 	LA	gp, _gp
 
 	/* Wait the turn of this CPU. */
-1:	ll	v0, ip27_spinup_turn
+	LA	v1, ip27_spinup_turn
+1:	ll	v0, 0(v1)
 	bne	v0, a0, 1b
 	 not	v0, zero
-	sc	v0, ip27_spinup_turn
+	sc	v0, 0(v1)
 	beqz	v0, 1b
 	 nop
 
