@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.157 2018/07/07 11:32:01 espie Exp $
+# $OpenBSD: Delete.pm,v 1.158 2019/06/30 14:57:25 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -303,8 +303,8 @@ package OpenBSD::PackingElement::DirBase;
 sub prepare_for_deletion
 {
 	my ($self, $state, $pkgname) = @_;
-	my $fname = $state->{destdir}.$self->fullname;
-	$state->vstat->remove_directory($fname, $self);
+	$state->vstat->remove_directory(
+	    $self->retrieve_fullname($state, $pkgname), $self);
 }
 
 sub delete
@@ -401,9 +401,9 @@ sub prepare_for_deletion
 {
 	my ($self, $state, $pkgname) = @_;
 
-	my $fname = $state->{destdir}.$self->fullname;
+	my $fname = $self->retrieve_fullname($state, $pkgname);
 	my $s;
-	my $size = $self->{tied} ? 0 : $self->{size};
+	my $size = $self->{tied} ? 0 : $self->retrieve_size;
 	if ($state->{delete_first}) {
 		$s = $state->vstat->remove_first($fname, $size);
 	} else {
@@ -506,22 +506,6 @@ sub copy_old_stuff
 
 package OpenBSD::PackingElement::SpecialFile;
 use OpenBSD::PackageInfo;
-
-sub prepare_for_deletion
-{
-	my ($self, $state, $pkgname) = @_;
-
-	my $fname = $self->fullname;
-	my $size = $self->{size};
-	if (!defined $size) {
-		$size = (stat $fname)[7];
-	}
-	my $s = $state->vstat->remove($fname, $self->{size});
-	return unless defined $s;
-	if ($s->ro) {
-		$s->report_ro($state, $fname);
-	}
-}
 
 sub copy_old_stuff
 {

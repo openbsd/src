@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.84 2019/04/07 12:30:39 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.85 2019/06/30 14:57:25 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -22,6 +22,41 @@ use warnings;
 # common framework, let's place most everything in there
 package main;
 our $not;
+
+package OpenBSD::PackingElement::FileObject;
+sub retrieve_fullname
+{
+	my ($self, $state, $pkgname) = @_;
+	return $state->{destdir}.$self->fullname;
+}
+
+package OpenBSD::PackingElement::FileBase;
+sub retrieve_size
+{
+	my $self = shift;
+	return $self->{size};
+}
+
+package OpenBSD::PackingElement::SpecialFile;
+use OpenBSD::PackageInfo;
+sub retrieve_fullname
+{
+	my ($self, $state, $pkgname);
+	return installed_info($pkgname).$self->name;
+}
+
+package OpenBSD::PackingElement::FCONTENTS;
+sub retrieve_size
+{
+	my $self = shift;
+	my $size = 0;
+	my $cname = $self->fullname;
+	if (defined $cname) {
+		$size = (stat $cname)[7];
+	}
+	return $size;
+}
+
 
 package OpenBSD::AddDelete;
 use OpenBSD::Error;
