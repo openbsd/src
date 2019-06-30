@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.239 2019/06/26 18:44:22 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.240 2019/06/30 19:21:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -338,7 +338,7 @@ window_create(u_int sx, u_int sy)
 	return (w);
 }
 
-void
+static void
 window_destroy(struct window *w)
 {
 	log_debug("window @%u destroyed (%d references)", w->id, w->references);
