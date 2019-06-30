@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.83 2019/04/07 10:44:25 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.84 2019/06/30 14:56:21 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -128,10 +128,29 @@ sub has_error
 	&OpenBSD::Handle::has_error;
 }
 
+sub smart_join
+{
+	my $self = shift;
+	if (@_ <= 1) {
+		return join('+', @_);
+	}
+	my ($k, @stems);
+	for my $l (@_) {
+		my ($stem, @rest) = OpenBSD::PackageName::splitname($l);
+		my $k2 = join('-', @rest);
+		$k //= $k2;
+		if ($k2 ne $k) {
+			return join('+', sort @_);
+		}
+		push(@stems, $stem);
+	}
+	return join('+', sort @stems).'-'.$k;
+}
+
 sub print
 {
 	my $self = shift;
-	return join('+', sort $self->older_names);
+	return $self->smart_join($self->older_names);
 }
 
 sub todo_names
@@ -142,7 +161,7 @@ sub todo_names
 sub short_print
 {
 	my $self = shift;
-	my $result = join('+', sort $self->todo_names);
+	my $result = $self->smart_join($self->todo_names);
 	if (length $result > 30) {
 		return substr($result, 0, 27)."...";
 	} else {
@@ -382,25 +401,31 @@ sub print
 	my $self = shift;
 	my $result = "";
 	if ($self->kept > 0) {
-		$result = "[".join('+', sort $self->kept_names)."]";
+		$result = "[".$self->smart_join($self->kept_names)."]";
+	}
+	my ($old, $new);
+	if ($self->older > 0) {
+		$old = $self->SUPER::print;
+	}
+	if ($self->newer > 0) {
+		$new = $self->smart_join($self->newer_names);
 	}
 	# XXX common case
-	if ($self->newer == 1 && $self->older == 1) {
-		my ($a, $b) = ($self->older_names, $self->newer_names);
-		my $stema = OpenBSD::PackageName::splitstem($a);
-		my ($stemb, @rest) = OpenBSD::PackageName::splitname($b);
+	if (defined $old && defined $new) {
+		my $stema = OpenBSD::PackageName::splitstem($old);
+		my ($stemb, @rest) = OpenBSD::PackageName::splitname($new);
 		if ($stema eq $stemb) {
-			return $result .$a."->".join('-', @rest);
+			return $result .$old."->".join('-', @rest);
 		}
 	}
 
-	if ($self->older > 0) {
-		$result .= $self->SUPER::print."->";
+	if (defined $old) {
+		$result .= $old."->";
 	}
-	if ($self->newer > 0) {
-		$result .= join('+', sort $self->newer_names);
+	if (defined $new) {
+		$result .= $new;
 	} elsif ($self->hints > 0) {
-		$result .= join('+', sort $self->hint_names);
+		$result .= $self->smart_join($self->hint_names);
 	}
 	return $result;
 }
