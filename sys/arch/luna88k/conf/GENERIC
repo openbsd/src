@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 2016/12/17 05:22:34 aoyama Exp $
+#	$OpenBSD: GENERIC,v 1.23 2019/06/30 00:23:22 aoyama Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -61,7 +61,7 @@ pcex0		at cbus0
 #audio*		at necsb?
 
 # NEC PC-9801-102 & PC-9821X[AE]-E01 PC Card slot adapter
-#pcic*		at cbus?
+#pcic0		at cbus? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 #pcmcia*	at pcic?
 
 # SCSI devices

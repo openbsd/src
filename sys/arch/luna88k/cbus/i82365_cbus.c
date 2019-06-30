@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_cbus.c,v 1.5 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: i82365_cbus.c,v 1.6 2019/06/30 00:23:22 aoyama Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -75,10 +75,6 @@
 #define PCIC_CIRRUS_MISC_CTL_1			0x16
 #define  PCIC_CIRRUS_MISC_CTL_1_PULSE_MGMT_INTR	0x04
 #define  PCIC_CIRRUS_MISC_CTL_1_PULSE_SYS_IRQ	0x08
-
-/* XXX: should be passed by cbus_attach_args */
-#define PCIC_CBUS_IOBASE	0x3e0
-#define PCIC_CBUS_MEMBASE	0xd0000
 
 #define PCEXMEM_BASE		PC_BASE
 #define PCEXIO_BASE		PC_BASE + 0x1000000		
@@ -173,17 +169,37 @@ pcic_cbus_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-#if 0	/* should be use cbus_attach_args in the future */
+	struct cfdata *cf = match;
 	struct cbus_attach_args *caa = aux;
-#endif
 	bus_space_tag_t iot = &pcic_cbus_io_bst;
-	bus_space_handle_t ioh;
+	bus_space_tag_t memt = &pcic_cbus_mem_bst;
+	bus_space_handle_t ioh, memh;
+	bus_size_t msize;
 	int val, found;
 
-	SET_TAG_LITTLE_ENDIAN(iot);
+        if (strcmp(caa->ca_name, cf->cf_driver->cd_name) != 0)
+                return (0);
 
-	if (bus_space_map(iot, PCIC_CBUS_IOBASE, PCIC_IOSIZE, 0, &ioh))
+	SET_TAG_LITTLE_ENDIAN(iot);
+	SET_TAG_LITTLE_ENDIAN(memt);
+
+	caa->ca_iobase = cf->cf_iobase;
+	caa->ca_maddr  = cf->cf_maddr;
+	caa->ca_msize  = cf->cf_msize;
+	caa->ca_int    = cf->cf_int;
+
+	/* Disallow wildcarded i/o address. */
+	if (caa->ca_iobase == -1)
 		return (0);
+
+	if (bus_space_map(iot, caa->ca_iobase, PCIC_IOSIZE, 0, &ioh))
+		return (0);
+
+	if (caa->ca_msize == -1)
+		msize = PCIC_MEMSIZE;
+	if (bus_space_map(memt, caa->ca_maddr, msize, 0, &memh))
+		return (0);
+
 	found = 0;
 
 	/*
@@ -212,10 +228,12 @@ pcic_cbus_probe(parent, match, aux)
 		found++;
 
 	bus_space_unmap(iot, ioh, PCIC_IOSIZE);
+	bus_space_unmap(memt, memh, msize);
 
 	if (!found)
 		return (0);
-
+	caa->ca_iosize = PCIC_IOSIZE;
+	caa->ca_msize = msize;
 	return (1);
 }
 
@@ -224,33 +242,32 @@ pcic_cbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-#if 0	/* should be use cbus_attach_args in the future */
-	struct cbus_attach_args *caa = aux;
-#endif
 	struct pcic_softc *sc = (void *)self;
 	struct pcic_handle *h;
+	struct cbus_attach_args *caa = aux;
 	bus_space_tag_t iot = &pcic_cbus_io_bst;
 	bus_space_tag_t memt = &pcic_cbus_mem_bst;
-	bus_space_handle_t ioh, memh;
+	bus_space_handle_t ioh;
+	bus_space_handle_t memh;
 	int intlevel, irq, i, reg;
 
 	SET_TAG_LITTLE_ENDIAN(iot);
 	SET_TAG_LITTLE_ENDIAN(memt);
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, PCIC_CBUS_IOBASE, PCIC_IOSIZE, 0, &ioh)) {
+	if (bus_space_map(iot, caa->ca_iobase, caa->ca_iosize, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
 	/* Map mem space. */
-	if (bus_space_map(memt, PCIC_CBUS_MEMBASE, PCIC_MEMSIZE, 0, &memh)) {
+	if (bus_space_map(memt, caa->ca_maddr, caa->ca_msize, 0, &memh)) {
 		printf(": can't map mem space\n");
 		return;
 	}
 
-	sc->membase = PCIC_CBUS_MEMBASE;
-	sc->subregionmask = (1 << (PCIC_MEMSIZE / PCIC_MEM_PAGESIZE)) - 1;
+	sc->membase = caa->ca_maddr;
+	sc->subregionmask = (1 << (caa->ca_msize / PCIC_MEM_PAGESIZE)) - 1;
 
 	sc->intr_est = NULL;	/* not used on luna88k */
 	sc->pct = (pcmcia_chipset_tag_t)&pcic_cbus_functions;
@@ -280,7 +297,7 @@ pcic_cbus_attach(parent, self, aux)
 	 */
 	intlevel = pcic_cbus_intlevel_find();
 	if (intlevel == -1) {
-		printf("pcic_cbus_attach: no free INT found\n");
+		printf("pcic_cbus_attach: no free int found\n");
 		return;
 	}
 
@@ -290,7 +307,7 @@ pcic_cbus_attach(parent, self, aux)
 	sc->irq = irq;
 
 	if (irq) {
-		printf("%s: INT%d (irq %d), ", sc->dev.dv_xname,
+		printf("%s: int %d (irq %d), ", sc->dev.dv_xname,
 		    intlevel, irq);
 
 		/* Set up the pcic to interrupt on card detect. */
@@ -308,7 +325,7 @@ pcic_cbus_attach(parent, self, aux)
 			}
 		}
 	} else
-		printf("%s: no irq, ", sc->dev.dv_xname);
+		printf("%s: no int, ", sc->dev.dv_xname);
 
 	printf("polling enabled\n");
 	if (sc->poll_established == 0) {
@@ -353,14 +370,14 @@ pcic_cbus_chip_intr_establish(pcmcia_chipset_handle_t pch,
 	intlevel = pcic_cbus_intlevel_find();
 
 	if (intlevel == -1) {
-		printf("pcic_cbus_chip_intr_establish: no INT found\n");
+		printf("pcic_cbus_chip_intr_establish: no int found\n");
 		return (NULL);
 	}
 
 	irq = pcic_cbus_int2irq[intlevel];
 	h->ih_irq = irq;
 
-	DPRINTF(("%s: pcic_cbus_chip_intr_establish INT%d (irq %d)\n",
+	DPRINTF(("%s: pcic_cbus_chip_intr_establish int %d (irq %d)\n",
 	    sc->dev.dv_xname, intlevel, h->ih_irq));
 
 	cbus_isrlink(fcl, arg, intlevel, ipl, h->pcmcia->dv_xname);
@@ -383,12 +400,12 @@ pcic_cbus_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 
 	intlevel = pcic_cbus_irq2int[h->ih_irq];
 
-	DPRINTF(("%s: pcic_cbus_chip_intr_disestablish INT%d (irq %d)\n",
+	DPRINTF(("%s: pcic_cbus_chip_intr_disestablish int %d (irq %d)\n",
 	    sc->dev.dv_xname, intlevel, h->ih_irq));
 
 	if (intlevel == -1) {
 		printf("pcic_cbus_chip_intr_disestablish: "
-		    "strange INT (irq = %d)\n", h->ih_irq);
+		    "strange int (irq = %d)\n", h->ih_irq);
 		return;
 	}
 
@@ -416,7 +433,7 @@ pcic_cbus_chip_intr_string(pcmcia_chipset_handle_t pch, void *ih)
 		snprintf(irqstr, sizeof(irqstr),
 		    "couldn't establish interrupt");
 	else
-		snprintf(irqstr, sizeof(irqstr), "INT%d (irq %d)",
+		snprintf(irqstr, sizeof(irqstr), "int %d (irq %d)",
 		    pcic_cbus_irq2int[h->ih_irq], h->ih_irq);
 	return(irqstr);
 }
