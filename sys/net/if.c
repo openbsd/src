@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.585 2019/06/15 17:05:21 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.586 2019/06/30 23:02:28 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -963,7 +963,7 @@ if_vinput(struct ifnet *ifp, struct mbuf *m)
 #if NBPFILTER > 0
 	if_bpf = ifp->if_bpf;
 	if (if_bpf) {
-		if (bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_OUT)) {
+		if (bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_IN)) {
 			m_freem(m);
 			return;
 		}
