@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.35 2014/03/29 18:09:30 guenther Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.36 2019/06/30 07:41:50 visa Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -228,8 +228,7 @@ bios_getchar()
 #endif
 
 void
-bios_putchar(c)
-char c;
+bios_putchar(char c)
 {
 	char buf[4];
 	long  cnt;
@@ -251,8 +250,7 @@ char c;
 }
 
 void
-bios_putstring(s)
-char *s;
+bios_putstring(char *s)
 {
 	while (*s) {
 		bios_putchar(*s++);
@@ -566,11 +564,7 @@ bios_ident()
  * display configuration.
  */
 void
-bios_display_info(xpos, ypos, xsize, ysize)
-    int	*xpos;
-    int	*ypos;
-    int *xsize;
-    int *ysize;
+bios_display_info(int *xpos, int *ypos, int *xsize, int *ysize)
 {
 #ifdef __arc__
 	*xpos = displayinfo.CursorXPosition;
