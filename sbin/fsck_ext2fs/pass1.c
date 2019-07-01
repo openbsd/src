@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.17 2017/08/26 06:32:06 otto Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.18 2019/07/01 07:13:44 kevlo Exp $	*/
 /*	$NetBSD: pass1.c,v 1.9 2000/01/31 11:40:12 bouyer Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ pass1(void)
 
 		if (sblock.e2fs.e2fs_rev == E2FS_REV0 ||
 		    (sblock.e2fs.e2fs_features_rocompat &
-			EXT2F_ROCOMPAT_SPARSESUPER) == 0 ||
+			EXT2F_ROCOMPAT_SPARSE_SUPER) == 0 ||
 		    cg_has_sb(c)) {
 			/* Mark copuy of SB and descriptors */
 			setbmap(dbase);

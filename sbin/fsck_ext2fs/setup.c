@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.32 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.33 2019/07/01 07:13:44 kevlo Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -344,9 +344,9 @@ readsb(int listerr)
 	asblk.b_un.b_fs->e2fs_rgid = sblk.b_un.b_fs->e2fs_rgid;
 	asblk.b_un.b_fs->e2fs_block_group_nr =
 	    sblk.b_un.b_fs->e2fs_block_group_nr;
-	asblk.b_un.b_fs->e2fs_features_rocompat &= ~EXT2F_ROCOMPAT_LARGEFILE;
+	asblk.b_un.b_fs->e2fs_features_rocompat &= ~EXT2F_ROCOMPAT_LARGE_FILE;
 	asblk.b_un.b_fs->e2fs_features_rocompat |=
-	    sblk.b_un.b_fs->e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE;
+	    sblk.b_un.b_fs->e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGE_FILE;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP) ||
 	    (sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP))) {
@@ -504,7 +504,7 @@ cgoverhead(int c)
 		1 /* inode bitmap */ +
 		sblock.e2fs_itpg;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
-	    sblock.e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_SPARSESUPER) {
+	    sblock.e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_SPARSE_SUPER) {
 		if (cg_has_sb(c) == 0)
 			return overh;
 	}

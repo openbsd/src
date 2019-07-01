@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.28 2018/09/16 02:43:11 millert Exp $	*/
+/*	$OpenBSD: inode.c,v 1.29 2019/07/01 07:13:44 kevlo Exp $	*/
 /*	$NetBSD: inode.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -72,12 +72,12 @@ setlarge(void)
 		pfatal("LARGE FILES UNSUPPORTED ON REVISION 0 FILESYSTEMS");
 		return 0;
 	}
-	if (!(sblock.e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE)) {
+	if (!(sblock.e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGE_FILE)) {
 		if (preen)
 			pwarn("SETTING LARGE FILE INDICATOR\n");
 		else if (!reply("SET LARGE FILE INDICATOR"))
 			return 0;
-		sblock.e2fs.e2fs_features_rocompat |= EXT2F_ROCOMPAT_LARGEFILE;
+		sblock.e2fs.e2fs_features_rocompat |= EXT2F_ROCOMPAT_LARGE_FILE;
 		sbdirty();
 	}
 	return 1;
