@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.104 2019/05/04 14:52:45 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.105 2019/07/01 16:52:02 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -55,7 +55,7 @@
 #include <sys/timeout.h>
 
 int	kqueue_scan(struct kqueue *kq, int maxevents,
-		    struct kevent *ulistp, const struct timespec *timeout,
+		    struct kevent *ulistp, struct timespec *timeout,
 		    struct proc *p, int *retval);
 
 int	kqueue_read(struct file *, struct uio *, int);
@@ -484,6 +484,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	struct kqueue *kq;
 	struct file *fp;
 	struct timespec ts;
+	struct timespec *tsp = NULL;
 	int i, n, nerrors, error;
 	struct kevent kev[KQ_NEVENTS];
 
@@ -503,7 +504,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
 #endif
-		SCARG(uap, timeout) = &ts;
+		tsp = &ts;
 	}
 
 	kq = fp->f_data;
@@ -550,7 +551,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	KQREF(kq);
 	FRELE(fp, p);
 	error = kqueue_scan(kq, SCARG(uap, nevents), SCARG(uap, eventlist),
-	    SCARG(uap, timeout), p, &n);
+	    tsp, p, &n);
 	KQRELE(kq);
 	*retval = n;
 	return (error);
@@ -696,10 +697,10 @@ done:
 
 int
 kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
-	const struct timespec *tsp, struct proc *p, int *retval)
+    struct timespec *tsp, struct proc *p, int *retval)
 {
 	struct kevent *kevp;
-	struct timespec ats, rts, tts;
+	struct timespec elapsed, start, stop;
 	struct knote *kn, marker;
 	int s, count, timeout, nkev = 0, error = 0;
 	struct kevent kev[KQ_NEVENTS];
@@ -708,41 +709,12 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 	if (count == 0)
 		goto done;
 
-	if (tsp != NULL) {
-		ats = *tsp;
-		if (!timespecisset(&ats)) {
-			/* No timeout, just poll */
-			timeout = -1;
-			goto start;
-		}
-		if (timespecfix(&ats)) {
-			error = EINVAL;
-			goto done;
-		}
-
-		timeout = ats.tv_sec > 24 * 60 * 60 ?
-		    24 * 60 * 60 * hz : tstohz(&ats);
-
-		getnanouptime(&rts);
-		timespecadd(&ats, &rts, &ats);
-	} else {
-		timespecclear(&ats);
-		timeout = 0;
+	if (tsp != NULL && (tsp->tv_sec < 0 || !timespecisvalid(tsp))) {
+		error = EINVAL;
+		goto done;
 	}
-	goto start;
 
 retry:
-	if (timespecisset(&ats)) {
-		getnanouptime(&rts);
-		if (timespeccmp(&rts, &ats, >=))
-			goto done;
-		tts = ats;
-		timespecsub(&tts, &rts, &tts);
-		timeout = tts.tv_sec > 24 * 60 * 60 ?
-		    24 * 60 * 60 * hz : tstohz(&tts);
-	}
-
-start:
 	if (kq->kq_state & KQ_DYING) {
 		error = EBADF;
 		goto done;
@@ -751,20 +723,29 @@ start:
 	kevp = &kev[0];
 	s = splhigh();
 	if (kq->kq_count == 0) {
-		if (timeout < 0) {
-			error = EWOULDBLOCK;
-		} else {
-			kq->kq_state |= KQ_SLEEP;
-			error = tsleep(kq, PSOCK | PCATCH, "kqread", timeout);
+		if (tsp != NULL && !timespecisset(tsp)) {
+			splx(s);
+			error = 0;
+			goto done;
+		}
+		kq->kq_state |= KQ_SLEEP;
+		timeout = (tsp == NULL) ? 0 : tstohz(tsp);
+		if (tsp != NULL)
+			getnanouptime(&start);
+		error = tsleep(kq, PSOCK | PCATCH, "kqread", timeout);
+		if (tsp != NULL) {
+			getnanouptime(&stop);
+			timespecsub(&stop, &start, &elapsed);
+			timespecsub(tsp, &elapsed, tsp);
+			if (tsp->tv_sec < 0)
+				timespecclear(tsp);
 		}
 		splx(s);
-		if (error == 0)
+		if (error == 0 || error == EWOULDBLOCK)
 			goto retry;
 		/* don't restart after signals... */
 		if (error == ERESTART)
 			error = EINTR;
-		else if (error == EWOULDBLOCK)
-			error = 0;
 		goto done;
 	}
 

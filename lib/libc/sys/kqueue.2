@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.38 2019/05/03 04:06:08 schwarze Exp $
+.\"	$OpenBSD: kqueue.2,v 1.39 2019/07/01 16:52:02 cheloha Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: May 3 2019 $
+.Dd $Mdocdate: July 1 2019 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -569,8 +569,3 @@ system and this manual page were written by
 It is currently not possible to watch FIFOs or AIO that reside
 on anything but a UFS file system.
 Watching a vnode is possible on UFS, NFS and MS-DOS file systems.
-.Pp
-The
-.Fa timeout
-value is limited to 24 hours; longer timeouts will be silently
-reinterpreted as 24 hours.
