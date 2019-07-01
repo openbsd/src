@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.639 2019/06/30 19:19:08 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.640 2019/07/01 15:06:38 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2428,11 +2428,16 @@ take_charge(struct interface_info *ifi, int routefd)
 {
 	struct pollfd		 fds[1];
 	struct rt_msghdr	 rtm;
-	time_t			 start_time, cur_time;
+	time_t			 cur_time, sent_time, start_time;
 	int			 nfds, retries;
+
+#define	MAXSECONDS		9
+#define	SENTSECONDS		3
+#define	POLLMILLISECONDS	3
 
 	if (time(&start_time) == -1)
 		fatal("time");
+	sent_time = start_time;
 
 	/*
 	 * Send RTM_PROPOSAL with RTF_PROTO3 set.
@@ -2457,31 +2462,31 @@ take_charge(struct interface_info *ifi, int routefd)
 
 	retries = 0;
 	while ((ifi->flags & IFI_IN_CHARGE) == 0) {
-		time(&cur_time);
-		if ((cur_time - start_time) > 3) {
-			if (++retries <= 3) {
-				if (time(&start_time) == -1)
-					fatal("time");
-				rtm.rtm_seq = ifi->xid = arc4random();
-				if (write(routefd, &rtm, sizeof(rtm)) == -1)
-					fatal("write(routefd)");
-			} else {
-				fatalx("failed to take charge");
-			}
+		if (time(&cur_time) == -1)
+			fatal("time");
+		if (cur_time - start_time >= MAXSECONDS)
+			fatalx("failed to take charge");
+
+		if ((cur_time - sent_time) >= SENTSECONDS) {
+			sent_time = cur_time;
+			rtm.rtm_seq = ifi->xid = arc4random();
+			if (write(routefd, &rtm, sizeof(rtm)) == -1)
+				fatal("write(routefd)");
 		}
+
 		fds[0].fd = routefd;
 		fds[0].events = POLLIN;
-		nfds = poll(fds, 1, 3);
+		nfds = poll(fds, 1, POLLMILLISECONDS);
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
 			fatal("poll(routefd)");
 		}
+
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
 			fatalx("routefd: ERR|HUP|NVAL");
-		if (nfds == 0 || (fds[0].revents & POLLIN) == 0)
-			continue;
-		routefd_handler(ifi, routefd);
+		if (nfds == 1 && (fds[0].revents & POLLIN) == POLLIN)
+			routefd_handler(ifi, routefd);
 	}
 }
 
