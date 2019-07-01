@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.91 2019/07/01 08:56:36 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.92 2019/07/01 19:36:17 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -1083,12 +1083,14 @@ d_gotofile(int f, int n)
 {
 	struct line	*lp, *nlp;
 	struct buffer   *curbp;
+	size_t		 lenfpath;
 	char		 fpath[NFILEN], fname[NFILEN];
-	char		*p, *fnp = NULL;
+	char		*p, *fpth, *fnp = NULL;
 	int		 tmp;
 
 	if (getbufcwd(fpath, sizeof(fpath)) != TRUE)
 		fpath[0] = '\0';
+	lenfpath = strlen(fpath);
 	fnp = eread("Goto file: ", fpath, NFILEN,
 	    EFNEW | EFCR | EFFILE | EFDEF);
 	if (fnp == NULL)
@@ -1096,7 +1098,12 @@ d_gotofile(int f, int n)
 	else if (fnp[0] == '\0')
 		return (FALSE);
 
-	(void)xbasename(fname, fpath, NFILEN);
+	fpth = adjustname(fpath, TRUE);		/* Removes last '/' if	*/
+	if (strlen(fpth) == lenfpath - 1) {	/* directory, hence -1.	*/
+		ewprintf("No file to find");	/* Current directory given so  */
+		return (TRUE);			/* return at present location. */
+	}
+	(void)xbasename(fname, fpth, NFILEN);
 	curbp = curwp->w_bufp;
 	tmp = 0;
 	for (lp = bfirstlp(curbp); lp != curbp->b_headp; lp = nlp) {
