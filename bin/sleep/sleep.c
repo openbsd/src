@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.27 2019/01/10 16:41:10 cheloha Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.28 2019/07/01 00:01:34 cheloha Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -49,9 +49,8 @@ int
 main(int argc, char *argv[])
 {
 	int ch;
-	time_t secs = 0, t;
+	time_t t;
 	char *cp;
-	long nsecs = 0;
 	struct timespec rqtp;
 	int i;
 
@@ -71,40 +70,32 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	cp = *argv;
-	while ((*cp != '\0') && (*cp != '.')) {
+	timespecclear(&rqtp);
+
+	/* Handle whole seconds. */
+	for (cp = *argv; *cp != '\0' && *cp != '.'; cp++) {
 		if (!isdigit((unsigned char)*cp))
 			errx(1, "seconds is invalid: %s", *argv);
-		t = (secs * 10) + (*cp++ - '0');
-		if (t / 10 != secs)	/* oflow */
+		t = (rqtp.tv_sec * 10) + (*cp - '0');
+		if (t / 10 != rqtp.tv_sec)	/* overflow */
 			errx(1, "seconds is too large: %s", *argv);
-		secs = t;
+		rqtp.tv_sec = t;
 	}
 
-	/* Handle fractions of a second */
+	/*
+	 * Handle fractions of a second.  The multiplier divides to zero
+	 * after nine digits so anything more precise than a nanosecond is
+	 * validated but not used.
+	 */
 	if (*cp == '.') {
-		cp++;
-		for (i = 100000000; i > 0; i /= 10) {
-			if (*cp == '\0')
-				break;
+		i = 100000000;
+		for (cp++; *cp != '\0'; cp++) {
 			if (!isdigit((unsigned char)*cp))
 				errx(1, "seconds is invalid: %s", *argv);
-			nsecs += (*cp++ - '0') * i;
-		}
-
-		/*
-		 * We parse all the way down to nanoseconds
-		 * in the above for loop. Be pedantic about
-		 * checking the rest of the argument.
-		 */
-		while (*cp != '\0') {
-			if (!isdigit((unsigned char)*cp++))
-				errx(1, "seconds is invalid: %s", *argv);
+			rqtp.tv_nsec += (*cp - '0') * i;
+			i /= 10;
 		}
 	}
-
-	rqtp.tv_sec = secs;
-	rqtp.tv_nsec = nsecs;
 
 	if (timespecisset(&rqtp)) {
 		if (nanosleep(&rqtp, NULL) == -1)
