@@ -858,11 +858,11 @@ int intel_engine_init_breadcrumbs(struct intel_engine_cs *engine)
 	struct intel_breadcrumbs *b = &engine->breadcrumbs;
 	struct task_struct *tsk;
 
-	mtx_init(&b->rb_lock, IPL_NONE);
-	mtx_init(&b->irq_lock, IPL_NONE);
+	spin_lock_init(&b->rb_lock);
+	spin_lock_init(&b->irq_lock);
 
-	timeout_set(&b->fake_irq, intel_breadcrumbs_fake_irq, engine);
-	timeout_set(&b->hangcheck, intel_breadcrumbs_hangcheck, engine);
+	timer_setup(&b->fake_irq, intel_breadcrumbs_fake_irq, 0);
+	timer_setup(&b->hangcheck, intel_breadcrumbs_hangcheck, 0);
 
 	INIT_LIST_HEAD(&b->signals);
 
