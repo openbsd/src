@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.237 2019/04/21 23:45:50 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.238 2019/07/01 22:43:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -781,7 +781,7 @@ roff_reset(struct roff *r)
 void
 roff_free(struct roff *r)
 {
-	int	 	 i;
+	int		 i;
 
 	roff_free1(r);
 	for (i = 0; i < r->mstacksz; i++)
@@ -1588,7 +1588,7 @@ char *
 roff_getarg(struct roff *r, char **cpp, int ln, int *pos)
 {
 	struct buf	 buf;
-	char	 	*cp, *start;
+	char		*cp, *start;
 	int		 newesc, pairs, quoted, white;
 
 	/* Quoting can only start with a new word. */

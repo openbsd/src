@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbm.c,v 1.4 2018/11/04 05:32:42 bluhm Exp $ */
+/*	$OpenBSD: dbm.c,v 1.5 2019/07/01 22:43:03 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -223,7 +223,7 @@ static struct dbm_res
 page_bytitle(enum iter arg_iter, const struct dbm_match *arg_match)
 {
 	static const struct dbm_match	*match;
-	static const char		*cp;	
+	static const char		*cp;
 	static int32_t			 ip;
 	struct dbm_res			 res = {-1, 0};
 
@@ -305,7 +305,7 @@ page_byarch(const struct dbm_match *arg_match)
 	static const struct dbm_match	*match;
 	struct dbm_res			 res = {-1, 0};
 	static int32_t			 ip;
-	const char			*cp;	
+	const char			*cp;
 
 	/* Initialize for a new iteration. */
 

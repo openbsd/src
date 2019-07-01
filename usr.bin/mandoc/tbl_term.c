@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.59 2019/06/11 15:40:41 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.60 2019/07/01 22:43:03 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -162,7 +162,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	const struct tbl_cell	*cp, *cpn, *cpp, *cps;
 	const struct tbl_dat	*dp;
 	static size_t		 offset;
-	size_t		 	 save_offset;
+	size_t			 save_offset;
 	size_t			 coloff, tsz;
 	int			 hspans, ic, more;
 	int			 dvert, fc, horiz, lhori, rhori, uvert;
