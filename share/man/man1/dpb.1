@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.15 2019/05/31 23:12:08 jmc Exp $
+.\"	$OpenBSD: dpb.1,v 1.16 2019/07/01 09:05:45 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2019 $
+.Dd $Mdocdate: July 1 2019 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -213,6 +213,11 @@ Defaults to 10 seconds (but ssh will retry 3 times).
 Let
 .Nm
 create a unix socket of the given name for external control.
+Defaults to
+.Sq %L/dpb-$$ .
+If no socket is wanted, explicitly set
+.Ar CONTROL
+to empty.
 .It Ar DISPLAY_TIMEOUT
 Display timeout (in seconds) while waiting for jobs to finish, so that the
 display is updated even if jobs didn't finish.
@@ -1072,12 +1077,14 @@ may vanish before human intervention addresses the problem.
 This is supposed to be a temporary hack, as kde4 is large and
 having official packages helps a great deal in debugging it.
 .Sh EXTERNAL CONTROL
-If
-.Fl D Ar CONTROL Ns = Ns Ar path
-if used,
+By default
+.Po
+see
+.Ar CONTROL
+.Pc ,
 .Nm
-will create a Unix socket at the given
-.Pa path ,
+will create a Unix socket at
+.Pa %L/dpb-$$ ,
 only accessible by
 .Ar LOG_USER ,
 that can accept a few commands, e.g.,
@@ -1107,6 +1114,10 @@ Wipe out an existing lock: clean up the corresponding
 .Ar fullpkgpath
 on the appropriate host, then remove all lock and affinity info pertaining
 to the port.
+.It Cm wipehost Ar hostname ...
+Remove all information relevant to a given host from
+.Nm ,
+including running jobs, locks, and affinity information.
 .El
 .Sh SHUTTING DOWN GRACEFULLY
 .Nm
@@ -1295,6 +1306,8 @@ lock files.
 Log of the
 .Xr ftp 1
 process(es) that attempted to fetch the distfile.
+.It Pa dpb-$$
+Default name for the external control socket.
 .It Pa dump.log
 A long log file generated at the end of build that yields any information
 pertinent to ports still in the
