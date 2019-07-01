@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.197 2019/07/01 07:33:46 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.198 2019/07/01 14:47:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1455,24 +1455,23 @@ nexthop_update(struct kroute_nexthop *msg)
 	}
 
 	nh->oldstate = nh->state;
+	if (msg->valid)
+		nh->state = NEXTHOP_REACH;
+	else
+		nh->state = NEXTHOP_UNREACH;
+
 	if (nh->oldstate == NEXTHOP_LOOKUP)
 		/* drop reference which was hold during the lookup */
 		if (nexthop_unref(nh))
 			return;		/* nh lost last ref, no work left */
 
-	if (nh->next_prefix) {
+	if (nh->next_prefix)
 		/*
 		 * If nexthop_runner() is not finished with this nexthop
 		 * then ensure that all prefixes are updated by setting
 		 * the oldstate to NEXTHOP_FLAPPED.
 		 */
 		nh->oldstate = NEXTHOP_FLAPPED;
-	}
-
-	if (msg->valid)
-		nh->state = NEXTHOP_REACH;
-	else
-		nh->state = NEXTHOP_UNREACH;
 
 	if (msg->connected) {
 		nh->flags |= NEXTHOP_CONNECTED;
