@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1081 2019/03/20 20:07:28 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1082 2019/07/01 12:13:51 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -222,7 +222,7 @@ int			 pf_test_state_icmp(struct pf_pdesc *,
 u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t, int,
 			    u_int16_t);
 static __inline int	 pf_set_rt_ifp(struct pf_state *, struct pf_addr *,
-			    sa_family_t);
+			    sa_family_t, struct pf_src_node **);
 struct pf_divert	*pf_get_divert(struct mbuf *);
 int			 pf_walk_header(struct pf_pdesc *, struct ip *,
 			    u_short *);
@@ -3410,17 +3410,16 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, int rtableid, u_int16_t offer)
 }
 
 static __inline int
-pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr, sa_family_t af)
+pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr, sa_family_t af,
+    struct pf_src_node **sns)
 {
 	struct pf_rule *r = s->rule.ptr;
-	struct pf_src_node *sns[PF_SN_MAX];
 	int	rv;
 
 	s->rt_kif = NULL;
 	if (!r->rt)
 		return (0);
 
-	memset(sns, 0, sizeof(sns));
 	switch (af) {
 	case AF_INET:
 		rv = pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, sns,
@@ -4089,6 +4088,11 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		goto csfailed;
 	}
 
+	if (pf_set_rt_ifp(s, pd->src, (*skw)->af, sns) != 0) {
+		REASON_SET(&reason, PFRES_NOROUTE);
+		goto csfailed;
+	}
+
 	for (i = 0; i < PF_SN_MAX; i++)
 		if (sns[i] != NULL) {
 			struct pf_sn_item	*sni;
@@ -4102,11 +4106,6 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 			SLIST_INSERT_HEAD(&s->src_nodes, sni, next);
 			sni->sn->states++;
 		}
-
-	if (pf_set_rt_ifp(s, pd->src, (*skw)->af) != 0) {
-		REASON_SET(&reason, PFRES_NOROUTE);
-		goto csfailed;
-	}
 
 	if (pf_state_insert(BOUND_IFACE(r, pd->kif), skw, sks, s)) {
 		pf_detach_state(s);
