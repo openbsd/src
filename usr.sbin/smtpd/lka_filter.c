@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.37 2019/06/28 06:05:07 gilles Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.38 2019/07/01 07:40:43 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -41,7 +41,7 @@ struct filter;
 struct filter_session;
 static void	filter_protocol_internal(struct filter_session *, uint64_t *, uint64_t, enum filter_phase, const char *);
 static void	filter_protocol(uint64_t, enum filter_phase, const char *);
-static void	filter_protocol_next(uint64_t, uint64_t, enum filter_phase, const char *);
+static void	filter_protocol_next(uint64_t, uint64_t, enum filter_phase);
 static void	filter_protocol_query(struct filter *, uint64_t, uint64_t, const char *, const char *);
 
 static void	filter_data_internal(struct filter_session *, uint64_t, uint64_t, const char *);
@@ -67,6 +67,8 @@ int		lka_filter_process_response(const char *, const char *);
 struct filter_session {
 	uint64_t	id;
 	struct io	*io;
+
+	char *lastparam;
 
 	char *filter_name;
 	struct sockaddr_storage ss_src;
@@ -337,6 +339,9 @@ lka_filter_end(uint64_t reqid)
 
 	fs = tree_xpop(&sessions, reqid);
 	free(fs->rdns);
+	free(fs->helo);
+	free(fs->mail_from);
+	free(fs->lastparam);
 	free(fs);
 	log_trace(TRACE_FILTERS, "%016"PRIx64" filters session-end", reqid);
 }
@@ -504,7 +509,7 @@ lka_filter_process_response(const char *name, const char *line)
 		return 1;
 	}
 
-	filter_protocol_next(token, reqid, 0, parameter);
+	filter_protocol_next(token, reqid, 0);
 	return 1;
 }
 
@@ -658,14 +663,11 @@ filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
 	switch (phase) {
 	case FILTER_HELO:
 	case FILTER_EHLO:
-		if (fs->helo)
-			free(fs->helo);
+		free(fs->helo);
 		fs->helo = xstrdup(param);
 		break;
 	case FILTER_MAIL_FROM:
-		if (fs->mail_from)
-			free(fs->mail_from);
-
+		free(fs->mail_from);
 		fs->mail_from = xstrdup(param + 1);
 		*strchr(fs->mail_from, '>') = '\0';
 		param = fs->mail_from;
@@ -683,13 +685,17 @@ filter_protocol(uint64_t reqid, enum filter_phase phase, const char *param)
 	default:
 		break;
 	}
+
+	free(fs->lastparam);
+	fs->lastparam = xstrdup(param);
+
 	filter_protocol_internal(fs, &token, reqid, phase, param);
 	if (nparam)
 		free(nparam);
 }
 
 static void
-filter_protocol_next(uint64_t token, uint64_t reqid, enum filter_phase phase, const char *param)
+filter_protocol_next(uint64_t token, uint64_t reqid, enum filter_phase phase)
 {
 	struct filter_session  *fs;
 
@@ -697,7 +703,7 @@ filter_protocol_next(uint64_t token, uint64_t reqid, enum filter_phase phase, co
 	if ((fs = tree_get(&sessions, reqid)) == NULL)
 		return;
 
-	filter_protocol_internal(fs, &token, reqid, phase, param);
+	filter_protocol_internal(fs, &token, reqid, phase, fs->lastparam);
 }
 
 static void
