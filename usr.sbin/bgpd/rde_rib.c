@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.195 2019/06/22 05:44:05 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.196 2019/07/01 07:07:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -62,11 +62,11 @@ struct rib_context {
 };
 LIST_HEAD(, rib_context) rib_dumps = LIST_HEAD_INITIALIZER(rib_dumps);
 
-static int	 prefix_add(struct bgpd_addr *, int, struct rib *,
+static int	prefix_add(struct bgpd_addr *, int, struct rib *,
 		    struct rde_peer *, struct rde_aspath *,
 		    struct rde_community *, struct nexthop *,
 		    u_int8_t, u_int8_t);
-static int	 prefix_move(struct prefix *, struct rde_peer *,
+static int	prefix_move(struct prefix *, struct rde_peer *,
 		    struct rde_aspath *, struct rde_community *,
 		    struct nexthop *, u_int8_t, u_int8_t);
 
@@ -326,8 +326,7 @@ rib_remove(struct rib_entry *re)
 		/* entry is locked, don't free it. */
 		return;
 
-	if (pt_unref(re->prefix))
-		pt_remove(re->prefix);
+	pt_unref(re->prefix);
 
 	if (RB_REMOVE(rib_tree, rib_tree(re_rib(re)), re) == NULL)
 		log_warnx("rib_remove: remove failed.");
@@ -501,12 +500,6 @@ SIPHASH_KEY pathtablekey;
 
 #define	PATH_HASH(x)	&pathtable.path_hashtbl[x & pathtable.path_hashmask]
 
-static inline int
-path_empty(struct rde_aspath *asp)
-{
-	return (asp == NULL || asp->refcnt <= 0);
-}
-
 static inline struct rde_aspath *
 path_ref(struct rde_aspath *asp)
 {
@@ -521,10 +514,14 @@ path_ref(struct rde_aspath *asp)
 static inline void
 path_unref(struct rde_aspath *asp)
 {
+	if (asp == NULL)
+		return;
 	if ((asp->flags & F_ATTR_LINKED) == 0)
 		fatalx("%s: unlinked object", __func__);
 	asp->refcnt--;
 	rdemem.path_refs--;
+	if (asp->refcnt <= 0)
+		path_unlink(asp);
 }
 
 void
@@ -765,8 +762,8 @@ path_unlink(struct rde_aspath *asp)
 		return;
 
 	/* make sure no reference is hold for this rde_aspath */
-	if (!path_empty(asp))
-		fatalx("%s: still has prefixes", __func__);
+	if (asp->refcnt != 0)
+		fatalx("%s: still holds references", __func__);
 
 	LIST_REMOVE(asp, path_l);
 	asp->flags &= ~F_ATTR_LINKED;
@@ -938,7 +935,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	np = prefix_alloc();
 	/* add reference to new AS path and communities */
 	np->aspath = path_ref(asp);
-	np->communities = communities_get(comm);
+	np->communities = communities_ref(comm);
 	np->peer = peer;
 	np->pt = p->pt; /* skip refcnt update since ref is moved */
 	np->re = p->re;
@@ -970,10 +967,9 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 
 	/* destroy all references to other objects and free the old prefix */
 	nexthop_unlink(p);
-	nexthop_put(p->nexthop);
-	communities_put(p->communities);
-	if (oasp)
-		path_unref(oasp);
+	nexthop_unref(p->nexthop);
+	communities_unref(p->communities);
+	path_unref(oasp);
 	p->communities = NULL;
 	p->nexthop = NULL;
 	p->aspath = NULL;
@@ -981,10 +977,6 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	p->re = NULL;
 	p->pt = NULL;
 	prefix_free(p);
-
-	/* destroy old path if empty */
-	if (path_empty(oasp))
-		path_unlink(oasp);
 
 	return (0);
 }
@@ -1061,28 +1053,22 @@ prefix_withdraw(struct rib *rib, struct rde_peer *peer,
     struct bgpd_addr *prefix, int prefixlen)
 {
 	struct prefix		*p;
-	struct rde_aspath	*asp;
 
 	p = prefix_get(rib, peer, prefix, prefixlen);
 	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return (0);
 
 	/* unlink from aspath ...*/
-	asp = p->aspath;
-	if (asp != NULL) {
-		path_unref(asp);
-		p->aspath = NULL;
-		if (path_empty(asp))
-			path_unlink(asp);
-	}
+	path_unref(p->aspath);
+	p->aspath = NULL;
 
 	/* ... communities ... */
-	communities_put(p->communities);
+	communities_unref(p->communities);
 	p->communities = NULL;
 
 	/* ... and nexthop but keep the re link */
 	nexthop_unlink(p);
-	nexthop_put(p->nexthop);
+	nexthop_unref(p->nexthop);
 	p->nexthop = NULL;
 	p->nhflags = 0;
 	/* re link still exists */
@@ -1271,14 +1257,8 @@ prefix_updateall(struct prefix *p, enum nexthop_state state,
 void
 prefix_destroy(struct prefix *p)
 {
-	struct rde_aspath	*asp;
-
-	asp = prefix_aspath(p);
 	prefix_unlink(p);
 	prefix_free(p);
-
-	if (path_empty(asp))
-		path_unlink(asp);
 }
 
 /*
@@ -1290,7 +1270,7 @@ prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
     struct nexthop *nexthop, u_int8_t nhflags, u_int8_t vstate)
 {
 	p->aspath = path_ref(asp);
-	p->communities = communities_get(comm);
+	p->communities = communities_ref(comm);
 	p->peer = peer;
 	p->pt = pt_ref(re->prefix);
 	p->re = re;
@@ -1321,12 +1301,10 @@ prefix_unlink(struct prefix *p)
 
 	/* destroy all references to other objects */
 	nexthop_unlink(p);
-	nexthop_put(p->nexthop);
-	communities_put(p->communities);
-	if (p->aspath)
-		path_unref(p->aspath);
-	if (pt_unref(p->pt))
-		pt_remove(p->pt);
+	nexthop_unref(p->nexthop);
+	communities_unref(p->communities);
+	path_unref(p->aspath);
+	pt_unref(p->pt);
 	p->communities = NULL;
 	p->nexthop = NULL;
 	p->aspath = NULL;
@@ -1418,7 +1396,7 @@ nexthop_shutdown(void)
 		    nh != NULL; nh = nnh) {
 			nnh = LIST_NEXT(nh, nexthop_l);
 			nh->state = NEXTHOP_UNREACH;
-			(void)nexthop_put(nh);
+			nexthop_unref(nh);
 		}
 		if (!LIST_EMPTY(&nexthoptable.nexthop_hashtbl[i])) {
 			nh = LIST_FIRST(&nexthoptable.nexthop_hashtbl[i]);
@@ -1481,7 +1459,7 @@ nexthop_update(struct kroute_nexthop *msg)
 	nh->oldstate = nh->state;
 	if (nh->oldstate == NEXTHOP_LOOKUP)
 		/* drop reference which was hold during the lookup */
-		if (nexthop_put(nh))
+		if (nexthop_unref(nh))
 			return;		/* nh lost last ref, no work left */
 
 	if (nh->next_prefix) {
@@ -1546,7 +1524,7 @@ nexthop_modify(struct nexthop *setnh, enum action_types type, u_int8_t aid,
 		 */
 		if (aid != setnh->exit_nexthop.aid)
 			break;
-		nexthop_put(*nexthop);
+		nexthop_unref(*nexthop);
 		*nexthop = nexthop_ref(setnh);
 		*flags = 0;
 		break;
@@ -1617,11 +1595,10 @@ nexthop_ref(struct nexthop *nexthop)
 }
 
 int
-nexthop_put(struct nexthop *nh)
+nexthop_unref(struct nexthop *nh)
 {
 	if (nh == NULL)
 		return (0);
-
 	if (--nh->refcnt > 0)
 		return (0);
 

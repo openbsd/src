@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.38 2019/02/15 09:55:21 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.39 2019/07/01 07:07:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -188,7 +188,7 @@ pt_add(struct bgpd_addr *prefix, int prefixlen)
 void
 pt_remove(struct pt_entry *pte)
 {
-	if (!pt_empty(pte))
+	if (pte->refcnt != 0)
 		fatalx("pt_remove: entry still holds references");
 
 	if (RB_REMOVE(pt_tree, &pttable, pte) == NULL)

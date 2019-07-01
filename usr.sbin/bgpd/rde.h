@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.218 2019/06/24 06:39:49 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.219 2019/07/01 07:07:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -423,7 +423,7 @@ void	 communities_copy(struct rde_community *, struct rde_community *);
 void	 communities_clean(struct rde_community *);
 
 static inline struct rde_community *
-communities_get(struct rde_community *comm)
+communities_ref(struct rde_community *comm)
 {
 	if (comm->refcnt == 0)
 		fatalx("%s: not-referenced community", __func__);
@@ -433,12 +433,12 @@ communities_get(struct rde_community *comm)
 }
 
 static inline void
-communities_put(struct rde_community *comm)
+communities_unref(struct rde_community *comm)
 {
 	if (comm == NULL)
 		return;
 	rdemem.comm_refs--;
-	if (--comm->refcnt == 1)
+	if (--comm->refcnt == 1)	/* last ref is hold internally */
 		communities_unlink(comm);
 }
 
@@ -460,11 +460,15 @@ int		 rde_filter_equal(struct filter_head *, struct filter_head *,
 void		 rde_filter_calc_skip_steps(struct filter_head *);
 
 /* rde_prefix.c */
-static inline int
-pt_empty(struct pt_entry *pt)
-{
-	return (pt->refcnt == 0);
-}
+void	 pt_init(void);
+void	 pt_shutdown(void);
+void	 pt_getaddr(struct pt_entry *, struct bgpd_addr *);
+struct pt_entry	*pt_fill(struct bgpd_addr *, int);
+struct pt_entry	*pt_get(struct bgpd_addr *, int);
+struct pt_entry *pt_add(struct bgpd_addr *, int);
+void	 pt_remove(struct pt_entry *);
+struct pt_entry	*pt_lookup(struct bgpd_addr *);
+int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
 
 static inline struct pt_entry *
 pt_ref(struct pt_entry *pt)
@@ -475,24 +479,14 @@ pt_ref(struct pt_entry *pt)
 	return pt;
 }
 
-static inline int
+static inline void
 pt_unref(struct pt_entry *pt)
 {
 	if (pt->refcnt == 0)
 		fatalx("pt_unref: underflow");
-	--pt->refcnt;
-	return pt_empty(pt);
+	if (--pt->refcnt == 0)
+		pt_remove(pt);
 }
-
-void	 pt_init(void);
-void	 pt_shutdown(void);
-void	 pt_getaddr(struct pt_entry *, struct bgpd_addr *);
-struct pt_entry	*pt_fill(struct bgpd_addr *, int);
-struct pt_entry	*pt_get(struct bgpd_addr *, int);
-struct pt_entry *pt_add(struct bgpd_addr *, int);
-void	 pt_remove(struct pt_entry *);
-struct pt_entry	*pt_lookup(struct bgpd_addr *);
-int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
 
 /* rde_rib.c */
 extern u_int16_t	 rib_size;
@@ -608,7 +602,7 @@ void		 nexthop_unlink(struct prefix *);
 void		 nexthop_update(struct kroute_nexthop *);
 struct nexthop	*nexthop_get(struct bgpd_addr *);
 struct nexthop	*nexthop_ref(struct nexthop *);
-int		 nexthop_put(struct nexthop *);
+int		 nexthop_unref(struct nexthop *);
 int		 nexthop_compare(struct nexthop *, struct nexthop *);
 
 /* rde_update.c */

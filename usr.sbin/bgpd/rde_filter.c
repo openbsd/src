@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.120 2019/06/22 05:44:05 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.121 2019/07/01 07:07:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -444,7 +444,7 @@ rde_filterstate_clean(struct filterstate *state)
 {
 	path_clean(&state->aspath);
 	communities_clean(&state->communities);
-	nexthop_put(state->nexthop);
+	nexthop_unref(state->nexthop);
 	state->nexthop = NULL;
 }
 
@@ -481,7 +481,7 @@ filterset_free(struct filter_set_head *sh)
 			pftable_unref(s->action.id);
 		else if (s->type == ACTION_SET_NEXTHOP &&
 		    bgpd_process == PROC_RDE)
-			nexthop_put(s->action.nh);
+			nexthop_unref(s->action.nh);
 		free(s);
 	}
 }

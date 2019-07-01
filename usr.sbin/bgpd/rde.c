@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.474 2019/06/25 09:04:42 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.475 2019/07/01 07:07:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1353,7 +1353,7 @@ rde_update_dispatch(struct imsg *imsg)
 		}
 
 		/* unlock the previously locked nexthop, it is no longer used */
-		(void)nexthop_put(state.nexthop);
+		nexthop_unref(state.nexthop);
 		state.nexthop = NULL;
 		if ((pos = rde_get_mp_nexthop(mpp, mplen, aid, &state)) == -1) {
 			log_peer_warnx(&peer->conf, "bad nlri nexthop");
@@ -1653,7 +1653,7 @@ bad_flags:
 			    op, len);
 			return (-1);
 		}
-		nexthop_put(state->nexthop);	/* just to be sure */
+		nexthop_unref(state->nexthop);	/* just to be sure */
 		state->nexthop = nexthop_get(&nexthop);
 		break;
 	case ATTR_MED:
@@ -2015,7 +2015,7 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 		return (-1);
 	}
 
-	nexthop_put(state->nexthop);	/* just to be sure */
+	nexthop_unref(state->nexthop);	/* just to be sure */
 	state->nexthop = nexthop_get(&nexthop);
 
 	/* ignore reserved (old SNPA) field as per RFC4760 */
