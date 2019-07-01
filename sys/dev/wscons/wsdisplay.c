@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.132 2019/05/04 11:34:48 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.133 2019/07/01 19:38:40 kn Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -162,9 +162,9 @@ struct wsdisplay_softc {
 
 #ifdef HAVE_BURNER_SUPPORT
 	struct timeout sc_burner;
-	int	sc_burnoutintvl;	/* delay before blanking */
-	int	sc_burninintvl;		/* delay before unblanking */
-	int	sc_burnout;		/* current sc_burner delay */
+	int	sc_burnoutintvl;	/* delay before blanking (ms) */
+	int	sc_burninintvl;		/* delay before unblanking (ms) */
+	int	sc_burnout;		/* current sc_burner delay (ms) */
 	int	sc_burnman;		/* nonzero if screen blanked */
 	int	sc_burnflags;
 #endif
@@ -766,8 +766,8 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 		wsdisplay_addscreen_print(sc, start, i-start);
 
 #ifdef HAVE_BURNER_SUPPORT
-	sc->sc_burnoutintvl = (hz * WSDISPLAY_DEFBURNOUT) / 1000;
-	sc->sc_burninintvl = (hz * WSDISPLAY_DEFBURNIN) / 1000;
+	sc->sc_burnoutintvl = WSDISPLAY_DEFBURNOUT_MSEC;
+	sc->sc_burninintvl = WSDISPLAY_DEFBURNIN_MSEC;
 	sc->sc_burnflags = WSDISPLAY_BURN_OUTPUT | WSDISPLAY_BURN_KBD |
 	    WSDISPLAY_BURN_MOUSE;
 	timeout_set(&sc->sc_burner, wsdisplay_burner, sc);
@@ -1196,8 +1196,8 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 	case WSDISPLAYIO_GBURNER:
 #define d ((struct wsdisplay_burner *)data)
-		d->on  = sc->sc_burninintvl  * 1000 / hz;
-		d->off = sc->sc_burnoutintvl * 1000 / hz;
+		d->on  = sc->sc_burninintvl;
+		d->off = sc->sc_burnoutintvl;
 		d->flags = sc->sc_burnflags;
 		return (0);
 
@@ -1223,7 +1223,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			active = scr;
 
 		if (d->on) {
-			sc->sc_burninintvl = hz * d->on / 1000;
+			sc->sc_burninintvl = d->on;
 			if (sc->sc_burnman) {
 				sc->sc_burnout = sc->sc_burninintvl;
 				/* reinit timeout if changed */
@@ -1232,7 +1232,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			}
 		}
 		if (d->off) {
-			sc->sc_burnoutintvl = hz * d->off / 1000;
+			sc->sc_burnoutintvl = d->off;
 			if (!sc->sc_burnman) {
 				sc->sc_burnout = sc->sc_burnoutintvl;
 				/* reinit timeout if changed */
@@ -2332,7 +2332,7 @@ wsdisplay_burn(void *v, u_int flags)
 	    WSDISPLAY_BURN_KBD | WSDISPLAY_BURN_MOUSE)) &&
 	    sc->sc_accessops->burn_screen) {
 		if (sc->sc_burnout)
-			timeout_add(&sc->sc_burner, sc->sc_burnout);
+			timeout_add_msec(&sc->sc_burner, sc->sc_burnout);
 		if (sc->sc_burnman)
 			sc->sc_burnout = 0;
 	}
@@ -2350,7 +2350,7 @@ wsdisplay_burner(void *v)
 		s = spltty();
 		if (sc->sc_burnman) {
 			sc->sc_burnout = sc->sc_burnoutintvl;
-			timeout_add(&sc->sc_burner, sc->sc_burnout);
+			timeout_add_msec(&sc->sc_burner, sc->sc_burnout);
 		} else
 			sc->sc_burnout = sc->sc_burninintvl;
 		sc->sc_burnman = !sc->sc_burnman;
