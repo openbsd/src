@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.16 2019/07/01 09:05:45 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.17 2019/07/01 12:05:22 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -145,7 +145,7 @@ GMtime, formatted as yyyy-mm-dd@hh:mm:ss.
 .It Cm %f
 fetch distfiles location (DISTDIR).
 .It Cm %h
-hostname running
+short hostname running
 .Nm .
 .It Cm %L
 logdir location.
@@ -154,6 +154,10 @@ portsdir location.
 .It Cm %t
 timestamp (number of seconds since January 1 1970) at start of
 .Nm .
+.It Cm %$
+Pid of the main
+.Nm
+process .
 .El
 .Pp
 Options are as follows:
@@ -214,7 +218,7 @@ Let
 .Nm
 create a unix socket of the given name for external control.
 Defaults to
-.Sq %L/dpb-$$ .
+.Sq %L/control-%h-%$ .
 If no socket is wanted, explicitly set
 .Ar CONTROL
 to empty.
@@ -1084,7 +1088,7 @@ see
 .Pc ,
 .Nm
 will create a Unix socket at
-.Pa %L/dpb-$$ ,
+.Pa %L/control-%h-%$ ,
 only accessible by
 .Ar LOG_USER ,
 that can accept a few commands, e.g.,
@@ -1306,7 +1310,7 @@ lock files.
 Log of the
 .Xr ftp 1
 process(es) that attempted to fetch the distfile.
-.It Pa dpb-$$
+.It Pa control-%h-%$
 Default name for the external control socket.
 .It Pa dump.log
 A long log file generated at the end of build that yields any information
