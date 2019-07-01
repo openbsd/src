@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.640 2019/07/01 15:06:38 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.641 2019/07/01 16:53:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2429,7 +2429,7 @@ take_charge(struct interface_info *ifi, int routefd)
 	struct pollfd		 fds[1];
 	struct rt_msghdr	 rtm;
 	time_t			 cur_time, sent_time, start_time;
-	int			 nfds, retries;
+	int			 nfds;
 
 #define	MAXSECONDS		9
 #define	SENTSECONDS		3
@@ -2460,7 +2460,6 @@ take_charge(struct interface_info *ifi, int routefd)
 	if (write(routefd, &rtm, sizeof(rtm)) == -1)
 		fatal("write(routefd)");
 
-	retries = 0;
 	while ((ifi->flags & IFI_IN_CHARGE) == 0) {
 		if (time(&cur_time) == -1)
 			fatal("time");
