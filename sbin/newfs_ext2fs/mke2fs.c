@@ -1,4 +1,4 @@
-/* $OpenBSD: mke2fs.c,v 1.17 2017/08/28 18:07:56 otto Exp $ */
+/* $OpenBSD: mke2fs.c,v 1.18 2019/07/01 07:17:26 kevlo Exp $ */
 /*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
 
 /*-
@@ -392,7 +392,7 @@ mke2fs(const char *fsys, int f)
 		sblock.e2fs.e2fs_features_compat   = EXT2F_COMPAT_RESIZE;
 		sblock.e2fs.e2fs_features_incompat = EXT2F_INCOMPAT_FTYPE;
 		sblock.e2fs.e2fs_features_rocompat =
-		    EXT2F_ROCOMPAT_SPARSESUPER | EXT2F_ROCOMPAT_LARGEFILE;
+		    EXT2F_ROCOMPAT_SPARSE_SUPER | EXT2F_ROCOMPAT_LARGE_FILE;
 	}
 
 	sblock.e2fs.e2fs_ruid = geteuid();
@@ -478,7 +478,7 @@ mke2fs(const char *fsys, int f)
 		boffset = cgbase(&sblock, cylno);
 		if (sblock.e2fs.e2fs_rev == E2FS_REV0 ||
 		    (sblock.e2fs.e2fs_features_rocompat &
-		     EXT2F_ROCOMPAT_SPARSESUPER) == 0 ||
+		     EXT2F_ROCOMPAT_SPARSE_SUPER) == 0 ||
 		    cg_has_sb(cylno)) {
 			boffset += NBLOCK_SUPERBLOCK + sblock.e2fs_ngdb;
 			if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
@@ -593,7 +593,7 @@ mke2fs(const char *fsys, int f)
 		/* skip if this cylinder doesn't have a backup */
 		if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 		    (sblock.e2fs.e2fs_features_rocompat &
-		     EXT2F_ROCOMPAT_SPARSESUPER) != 0 &&
+		     EXT2F_ROCOMPAT_SPARSE_SUPER) != 0 &&
 		    cg_has_sb(cylno) == 0)
 			continue;
 
@@ -675,7 +675,7 @@ initcg(uint cylno)
 	 */
 	if (sblock.e2fs.e2fs_rev == E2FS_REV0 ||
 	    (sblock.e2fs.e2fs_features_rocompat &
-	     EXT2F_ROCOMPAT_SPARSESUPER) == 0 ||
+	     EXT2F_ROCOMPAT_SPARSE_SUPER) == 0 ||
 	    cg_has_sb(cylno)) {
 		sblock.e2fs.e2fs_block_group_nr = cylno;
 		sboff = 0;
@@ -836,7 +836,7 @@ cgoverhead(uint c)
 
 	if (sblock.e2fs.e2fs_rev == E2FS_REV0 ||
 	    (sblock.e2fs.e2fs_features_rocompat &
-	     EXT2F_ROCOMPAT_SPARSESUPER) == 0 ||
+	     EXT2F_ROCOMPAT_SPARSE_SUPER) == 0 ||
 	    cg_has_sb(c) != 0) {
 		overh += NBLOCK_SUPERBLOCK + sblock.e2fs_ngdb;
 
@@ -1104,7 +1104,7 @@ init_resizeino(const struct timeval *tv)
 	    (uint64_t)sblock.e2fs_bsize * NINDIR(&sblock) * NINDIR(&sblock);
 	if (isize > UINT32_MAX &&
 	    (sblock.e2fs.e2fs_features_rocompat &
-	     EXT2F_ROCOMPAT_LARGEFILE) == 0) {
+	     EXT2F_ROCOMPAT_LARGE_FILE) == 0) {
 		/* XXX should enable it here and update all backups? */
 		errx(EXIT_FAILURE, "%s: large_file rocompat feature is "
 		    "required to enable resize feature for this filesystem\n",
@@ -1181,7 +1181,7 @@ init_resizeino(const struct timeval *tv)
 		for (n = 0, cylno = 1; cylno < sblock.e2fs_ncg; cylno++) {
 			/* skip block groups without backup */
 			if ((sblock.e2fs.e2fs_features_rocompat &
-			     EXT2F_ROCOMPAT_SPARSESUPER) != 0 &&
+			     EXT2F_ROCOMPAT_SPARSE_SUPER) != 0 &&
 			    cg_has_sb(cylno) == 0)
 				continue;
 
