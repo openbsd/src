@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.90 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: dired.c,v 1.91 2019/07/01 08:56:36 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -51,6 +51,7 @@ static int	 d_backline(int, int);
 static int	 d_killbuffer_cmd(int, int);
 static int	 d_refreshbuffer(int, int);
 static int	 d_filevisitalt(int, int);
+static int	 d_gotofile(int, int);
 static void	 reaper(int);
 static struct buffer	*refreshbuffer(struct buffer *);
 static int	 createlist(struct buffer *);
@@ -127,7 +128,10 @@ static PF direda[] = {
 	d_del,			/* d */
 	d_findfile,		/* e */
 	d_findfile,		/* f */
-	d_refreshbuffer		/* g */
+	d_refreshbuffer,	/* g */
+	rescan,			/* h */
+	rescan,			/* i */
+	d_gotofile		/* j */
 };
 
 static PF diredn[] = {
@@ -186,7 +190,7 @@ static struct KEYMAPE (7) diredmap = {
 			CCHR('Z'), '+', diredcz, (KEYMAP *) & metamap
 		},
 		{
-			'a', 'g', direda, NULL
+			'a', 'j', direda, NULL
 		},
 		{
 			'n', 'x', diredn, NULL
@@ -208,6 +212,7 @@ dired_init(void)
 	funmap_add(d_findfile, "dired-find-file");
 	funmap_add(d_ffotherwindow, "dired-find-file-other-window");
 	funmap_add(d_del, "dired-flag-file-deletion");
+	funmap_add(d_gotofile, "dired-goto-file");
 	funmap_add(d_forwline, "dired-next-line");
 	funmap_add(d_otherwindow, "dired-other-window");
 	funmap_add(d_backline, "dired-previous-line");
@@ -1071,6 +1076,51 @@ createlist(struct buffer *bp)
 		nlp = lforw(lp);
 	}
 	return (ret);
+}
+
+int
+d_gotofile(int f, int n)
+{
+	struct line	*lp, *nlp;
+	struct buffer   *curbp;
+	char		 fpath[NFILEN], fname[NFILEN];
+	char		*p, *fnp = NULL;
+	int		 tmp;
+
+	if (getbufcwd(fpath, sizeof(fpath)) != TRUE)
+		fpath[0] = '\0';
+	fnp = eread("Goto file: ", fpath, NFILEN,
+	    EFNEW | EFCR | EFFILE | EFDEF);
+	if (fnp == NULL)
+		return (ABORT);
+	else if (fnp[0] == '\0')
+		return (FALSE);
+
+	(void)xbasename(fname, fpath, NFILEN);
+	curbp = curwp->w_bufp;
+	tmp = 0;
+	for (lp = bfirstlp(curbp); lp != curbp->b_headp; lp = nlp) {
+		tmp++;
+		if ((p = findfname(lp, p)) == NULL) {
+			nlp = lforw(lp);
+			continue;
+		}
+		if (strcmp(fname, p) == 0) {
+			curwp->w_dotp = lp;
+			curwp->w_dotline = tmp;
+			(void)d_warpdot(curwp->w_dotp, &curwp->w_doto);
+			tmp--;
+			break;
+		}
+		nlp = lforw(lp);
+	}
+	if (tmp == curbp->b_lines - 1) {
+		ewprintf("File not found %s", fname);
+		return (FALSE);
+	} else {
+		ewprintf("");
+		return (TRUE);
+	}
 }
 
 /*

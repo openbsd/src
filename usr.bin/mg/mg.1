@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.115 2019/06/17 11:39:26 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.116 2019/07/01 08:56:36 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: June 17 2019 $
+.Dd $Mdocdate: July 1 2019 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -983,6 +983,8 @@ dired-do-copy
 dired-flag-file-deletion
 .It g
 dired-revert
+.It j
+dired-goto-file
 .It o
 dired-find-file-other-window
 .It p
@@ -1025,6 +1027,8 @@ is executed.
 .It dired-find-file-other-window
 Open the file on the current line of the dired buffer in a
 different window.
+.It dired-goto-file
+Move the cursor to a file name in the dired buffer.
 .It dired-next-line
 Move the cursor to the next line.
 .It dired-other-window
