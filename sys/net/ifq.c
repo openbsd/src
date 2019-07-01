@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.31 2019/04/16 04:04:19 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.32 2019/07/01 00:44:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -498,8 +498,8 @@ ifiq_destroy(struct ifiqueue *ifiq)
 	ml_purge(&ifiq->ifiq_ml);
 }
 
-unsigned int ifiq_maxlen_drop = 2048 * 5;
-unsigned int ifiq_maxlen_return = 2048 * 3;
+unsigned int ifiq_pressure_drop = 8;
+unsigned int ifiq_pressure_return = 6;
 
 int
 ifiq_input(struct ifiqueue *ifiq, struct mbuf_list *ml)
@@ -508,7 +508,7 @@ ifiq_input(struct ifiqueue *ifiq, struct mbuf_list *ml)
 	struct mbuf *m;
 	uint64_t packets;
 	uint64_t bytes = 0;
-	unsigned int len;
+	unsigned int pressure;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
 #endif
@@ -552,8 +552,8 @@ ifiq_input(struct ifiqueue *ifiq, struct mbuf_list *ml)
 	ifiq->ifiq_packets += packets;
 	ifiq->ifiq_bytes += bytes;
 
-	len = ml_len(&ifiq->ifiq_ml);
-	if (len > ifiq_maxlen_drop)
+	pressure = ++ifiq->ifiq_pressure;
+	if (pressure > ifiq_pressure_drop)
 		ifiq->ifiq_qdrops += ml_len(ml);
 	else
 		ml_enlist(&ifiq->ifiq_ml, ml);
@@ -564,7 +564,7 @@ ifiq_input(struct ifiqueue *ifiq, struct mbuf_list *ml)
 	else
 		ml_purge(ml);
 
-	return (len > ifiq_maxlen_return);
+	return (pressure > ifiq_pressure_return);
 }
 
 void
@@ -599,6 +599,7 @@ ifiq_process(void *arg)
 		return;
 
 	mtx_enter(&ifiq->ifiq_mtx);
+	ifiq->ifiq_pressure = 0;
 	ml = ifiq->ifiq_ml;
 	ml_init(&ifiq->ifiq_ml);
 	mtx_leave(&ifiq->ifiq_mtx);
