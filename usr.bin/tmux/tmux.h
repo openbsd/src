@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.917 2019/06/30 19:21:53 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.918 2019/07/01 06:56:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -682,6 +682,7 @@ TAILQ_HEAD(style_ranges, style_range);
 struct style {
 	struct grid_cell	gc;
 
+	int			fill;
 	enum style_align	align;
 	enum style_list		list;
 

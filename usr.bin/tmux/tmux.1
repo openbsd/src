@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.673 2019/06/27 17:29:16 jmc Exp $
+.\" $OpenBSD: tmux.1,v 1.674 2019/07/01 06:56:00 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 27 2019 $
+.Dd $Mdocdate: July 1 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4337,6 +4337,9 @@ to unset.
 .Ic align=right
 .Xc
 Align text to the left, centre or right of the available space if appropriate.
+.It Xo Ic fill=colour
+.Xc
+Fill the available space with a background colour if appropriate.
 .It Xo Ic list=on ,
 .Ic list=focus ,
 .Ic list=left-marker ,
