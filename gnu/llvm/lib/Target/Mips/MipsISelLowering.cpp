@@ -3685,6 +3685,7 @@ MipsTargetLowering::getConstraintType(StringRef Constraint) const {
   //       backwards compatibility.
   // 'c' : A register suitable for use in an indirect
   //       jump. This will always be $25 for -mabicalls.
+  // 'h' : The hi register. 1 word storage.
   // 'l' : The lo register. 1 word storage.
   // 'x' : The hilo register pair. Double word storage.
   if (Constraint.size() == 1) {
@@ -3694,6 +3695,7 @@ MipsTargetLowering::getConstraintType(StringRef Constraint) const {
       case 'y':
       case 'f':
       case 'c':
+      case 'h':
       case 'l':
       case 'x':
         return C_RegisterClass;
@@ -3739,6 +3741,7 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
       weight = CW_Register;
     break;
   case 'c': // $25 for indirect jumps
+  case 'h': // hi register
   case 'l': // lo register
   case 'x': // hilo register pair
     if (type->isIntegerTy())
@@ -3913,6 +3916,11 @@ MipsTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
         return std::make_pair((unsigned)Mips::T9_64, &Mips::GPR64RegClass);
       // This will generate an error message
       return std::make_pair(0U, nullptr);
+    case 'h': // use the `hi` register to store values
+              // that are no bigger than a word
+      if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8)
+        return std::make_pair((unsigned)Mips::HI0, &Mips::HI32RegClass);
+      return std::make_pair((unsigned)Mips::HI0_64, &Mips::HI64RegClass);
     case 'l': // use the `lo` register to store values
               // that are no bigger than a word
       if (VT == MVT::i32 || VT == MVT::i16 || VT == MVT::i8)
