@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.196 2019/07/01 07:07:08 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.197 2019/07/01 07:33:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -927,7 +927,6 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
     struct nexthop *nexthop, u_int8_t nhflags, u_int8_t vstate)
 {
 	struct prefix		*np;
-	struct rde_aspath	*oasp;
 
 	if (peer != prefix_peer(p))
 		fatalx("prefix_move: cross peer move");
@@ -963,13 +962,12 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 
 	/* remove old prefix node */
 	/* as before peer count needs no update because of move */
-	oasp = p->aspath;
 
 	/* destroy all references to other objects and free the old prefix */
 	nexthop_unlink(p);
 	nexthop_unref(p->nexthop);
 	communities_unref(p->communities);
-	path_unref(oasp);
+	path_unref(p->aspath);
 	p->communities = NULL;
 	p->nexthop = NULL;
 	p->aspath = NULL;
