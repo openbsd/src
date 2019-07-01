@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.110 2018/09/26 14:51:44 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.111 2019/07/01 05:11:32 kevlo Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -400,7 +400,7 @@ e2fs_sbfill(struct vnode *devvp, struct m_ext2fs *fs)
 		bp = NULL;
 	}
 
-	if ((fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE) == 0 ||
+	if (!(fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGE_FILE) ||
 	    (fs->e2fs.e2fs_rev == E2FS_REV0))
 		fs->e2fs_maxfilesize = INT_MAX;
 	else
@@ -674,7 +674,7 @@ ext2fs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	overhead = fs->e2fs.e2fs_first_dblock +
 	    fs->e2fs_ncg * overhead_per_group;
 	if (fs->e2fs.e2fs_rev > E2FS_REV0 &&
-	    fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_SPARSESUPER) {
+	    fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_SPARSE_SUPER) {
 		for (i = 0, ngroups = 0; i < fs->e2fs_ncg; i++) {
 			if (cg_has_sb(i))
 				ngroups++;
@@ -1072,7 +1072,8 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 static int
 e2fs_sbcheck(struct ext2fs *fs, int ronly)
 {
-	u_int32_t tmp;
+	u_int32_t mask, tmp;
+	int i;
 
 	tmp = letoh16(fs->e2fs_magic);
 	if (tmp != E2FS_MAGIC) {
@@ -1108,8 +1109,13 @@ e2fs_sbcheck(struct ext2fs *fs, int ronly)
 	}
 
 	tmp = letoh32(fs->e2fs_features_incompat);
-	if (tmp & ~(EXT2F_INCOMPAT_SUPP | EXT4F_RO_INCOMPAT_SUPP)) {
-		printf("ext2fs: unsupported incompat features 0x%x\n", tmp);
+	mask = tmp & ~(EXT2F_INCOMPAT_SUPP | EXT4F_RO_INCOMPAT_SUPP);
+	if (mask) {
+		printf("ext2fs: unsupported incompat features: ");
+		for (i = 0; i < nitems(incompat); i++)
+			if (mask & incompat[i].mask)
+				printf("%s ", incompat[i].name);
+		printf("\n");
 		return (EINVAL);      /* XXX needs translation */
 	}
 
@@ -1124,9 +1130,13 @@ e2fs_sbcheck(struct ext2fs *fs, int ronly)
 			return (EROFS);	/* XXX needs translation */
 	}
 
-	tmp = letoh32(fs->e2fs_features_rocompat);
-	if (!ronly && (tmp & ~EXT2F_ROCOMPAT_SUPP)) {
-		printf("ext2fs: unsupported R/O compat features 0x%x\n", tmp);
+	tmp = letoh32(fs->e2fs_features_rocompat) & ~EXT2F_ROCOMPAT_SUPP;
+	if (!ronly && tmp) {
+		printf("ext2fs: unsupported R/O compat features: ");
+		for (i = 0; i < nitems(ro_compat); i++)
+			if (tmp & ro_compat[i].mask)
+				printf("%s ", ro_compat[i].name);
+		printf("\n");
 		return (EROFS);      /* XXX needs translation */
 	}
 

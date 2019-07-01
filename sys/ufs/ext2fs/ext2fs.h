@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.23 2016/04/27 11:27:24 krw Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.24 2019/07/01 05:11:32 kevlo Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -195,15 +195,25 @@ e2fs_overflow(struct m_ext2fs *fs, off_t lower, off_t value)
 
 /* compatible/imcompatible features */
 #define EXT2F_COMPAT_PREALLOC		0x0001
-#define EXT2F_COMPAT_HASJOURNAL		0x0004
+#define EXT2F_COMPAT_IMAGIC_INODES	0x0002
+#define EXT2F_COMPAT_HAS_JOURNAL	0x0004
+#define EXT2F_COMPAT_EXT_ATTR		0x0008
 #define EXT2F_COMPAT_RESIZE		0x0010
-#define EXT2F_COMPAT_DIRHASHINDEX	0x0020
+#define EXT2F_COMPAT_DIR_INDEX		0x0020
+#define EXT2F_COMPAT_SPARSE_SUPER2	0x0200
 
-
-#define EXT2F_ROCOMPAT_SPARSESUPER	0x0001
-#define EXT2F_ROCOMPAT_LARGEFILE	0x0002
+#define EXT2F_ROCOMPAT_SPARSE_SUPER	0x0001
+#define EXT2F_ROCOMPAT_LARGE_FILE	0x0002
 #define EXT2F_ROCOMPAT_BTREE_DIR	0x0004
 #define EXT2F_ROCOMPAT_HUGE_FILE	0x0008
+#define EXT2F_ROCOMPAT_GDT_CSUM		0x0010
+#define EXT2F_ROCOMPAT_DIR_NLINK	0x0020
+#define EXT2F_ROCOMPAT_EXTRA_ISIZE	0x0040
+#define EXT2F_ROCOMPAT_QUOTA		0x0100
+#define EXT2F_ROCOMPAT_BIGALLOC		0x0200
+#define EXT2F_ROCOMPAT_METADATA_CKSUM	0x0400
+#define EXT2F_ROCOMPAT_READONLY		0x1000
+#define EXT2F_ROCOMPAT_PROJECT		0x2000
 
 #define EXT2F_INCOMPAT_COMP		0x0001
 #define EXT2F_INCOMPAT_FTYPE		0x0002
@@ -211,12 +221,58 @@ e2fs_overflow(struct m_ext2fs *fs, off_t lower, off_t value)
 #define EXT2F_INCOMPAT_JOURNAL_DEV	0x0008
 #define EXT2F_INCOMPAT_META_BG		0x0010
 #define EXT2F_INCOMPAT_EXTENTS		0x0040
+#define EXT2F_INCOMPAT_64BIT		0x0080
+#define EXT2F_INCOMPAT_MMP		0x0100
 #define EXT2F_INCOMPAT_FLEX_BG		0x0200
+#define EXT2F_INCOMPAT_EA_INODE		0x0400
+#define EXT2F_INCOMPAT_DIRDATA		0x1000
+#define EXT2F_INCOMPAT_CSUM_SEED	0x2000
+#define EXT2F_INCOMPAT_LARGEDIR		0x4000
+#define EXT2F_INCOMPAT_INLINE_DATA	0x8000
+#define EXT2F_INCOMPAT_ENCRYPT		0x10000
+
+struct ext2_feature {
+	uint32_t mask;
+	const char *name;
+};
+
+static const struct ext2_feature ro_compat[] = {
+	{ EXT2F_ROCOMPAT_SPARSE_SUPER,		"sparse_super" },
+	{ EXT2F_ROCOMPAT_LARGE_FILE,		"large_file" },
+	{ EXT2F_ROCOMPAT_BTREE_DIR,		"btree_dir" },
+	{ EXT2F_ROCOMPAT_HUGE_FILE,		"huge_file" },
+	{ EXT2F_ROCOMPAT_GDT_CSUM,		"uninit_bg" },
+	{ EXT2F_ROCOMPAT_DIR_NLINK,		"dir_nlink" },
+	{ EXT2F_ROCOMPAT_EXTRA_ISIZE,		"extra_isize" },
+	{ EXT2F_ROCOMPAT_QUOTA,			"quota" },
+	{ EXT2F_ROCOMPAT_BIGALLOC,		"bigalloc" },
+	{ EXT2F_ROCOMPAT_METADATA_CKSUM,	"metadata_csum" },
+	{ EXT2F_ROCOMPAT_READONLY,		"read-only" },
+	{ EXT2F_ROCOMPAT_PROJECT,		"project" }
+};
+
+static const struct ext2_feature incompat[] = {
+	{ EXT2F_INCOMPAT_COMP,		"compression" },
+	{ EXT2F_INCOMPAT_FTYPE,		"filetype" },
+	{ EXT2F_INCOMPAT_RECOVER,	"needs_recovery" },
+	{ EXT2F_INCOMPAT_JOURNAL_DEV,	"journal_dev" },
+	{ EXT2F_INCOMPAT_META_BG,	"meta_bg" },
+	{ EXT2F_INCOMPAT_EXTENTS,	"extents" },
+	{ EXT2F_INCOMPAT_64BIT,		"64bit" },
+	{ EXT2F_INCOMPAT_MMP,		"mmp" },
+	{ EXT2F_INCOMPAT_FLEX_BG,	"flex_bg" },
+	{ EXT2F_INCOMPAT_EA_INODE,	"ea_inode" },
+	{ EXT2F_INCOMPAT_DIRDATA,	"dirdata" },
+	{ EXT2F_INCOMPAT_CSUM_SEED,	"metadata_csum_seed" },
+	{ EXT2F_INCOMPAT_LARGEDIR,	"large_dir" },
+	{ EXT2F_INCOMPAT_INLINE_DATA,	"inline_data" },
+	{ EXT2F_INCOMPAT_ENCRYPT,	"encrypt" }
+};
 
 /* features supported in this implementation */
 #define EXT2F_COMPAT_SUPP		0x0000
-#define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSESUPER | \
-					 EXT2F_ROCOMPAT_LARGEFILE)
+#define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSE_SUPER | \
+					 EXT2F_ROCOMPAT_LARGE_FILE)
 #define EXT2F_INCOMPAT_SUPP		(EXT2F_INCOMPAT_FTYPE)
 #define EXT4F_RO_INCOMPAT_SUPP		(EXT2F_INCOMPAT_EXTENTS | \
 					 EXT2F_INCOMPAT_FLEX_BG | \
@@ -258,7 +314,7 @@ struct ext2_gd {
 };
 
 /*
- * If the EXT2F_ROCOMPAT_SPARSESUPER flag is set, the cylinder group has a
+ * If the EXT2F_ROCOMPAT_SPARSE_SUPER flag is set, the cylinder group has a
  * copy of the super and cylinder group descriptors blocks only if it's
  * a power of 3, 5 or 7
  */
