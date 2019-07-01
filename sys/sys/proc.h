@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.270 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.271 2019/07/01 21:13:03 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -210,7 +210,7 @@ struct process {
 	struct	tusage ps_tu;		/* accumulated times. */
 	struct	rusage ps_cru;		/* sum of stats for reaped children */
 	struct	itimerval ps_timer[3];	/* timers, indexed by ITIMER_* */
-	struct	timeout ps_rucheck_to;	/* resource limit check timer */
+	struct	timeout ps_rucheck_to;	/* [] resource limit check timer */
 	time_t	ps_nextxcpu;		/* when to send next SIGXCPU, */
 					/* in seconds of process runtime */
 
@@ -315,13 +315,15 @@ struct p_inentry {
 
 /*
  *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
  *	s	scheduler lock
+ *	l	read only reference, see lim_read_enter()
  */
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;	/* [s] current run/sleep queue */
 	LIST_ENTRY(proc) p_list;	/* List of all threads. */
 
-	struct	process *p_p;		/* The process of this thread. */
+	struct	process *p_p;		/* [I] The process of this thread. */
 	TAILQ_ENTRY(proc) p_thr_link;	/* Threads in a process linkage. */
 
 	TAILQ_ENTRY(proc) p_fut_link;	/* Threads in a futex linkage. */
@@ -329,10 +331,10 @@ struct proc {
 
 	/* substructures: */
 	struct	filedesc *p_fd;		/* copy of p_p->ps_fd */
-	struct	vmspace *p_vmspace;	/* copy of p_p->ps_vmspace */
+	struct	vmspace *p_vmspace;	/* [I] copy of p_p->ps_vmspace */
 	struct	p_inentry p_spinentry;
 	struct	p_inentry p_pcinentry;
-	struct	plimit	*p_limit;	/* read reference of p_p->ps_limit */
+	struct	plimit	*p_limit;	/* [l] read ref. of p_p->ps_limit */
 
 	int	p_flag;			/* P_* flags. */
 	u_char	p_spare;		/* unused */

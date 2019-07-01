@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.147 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.148 2019/07/01 21:13:03 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -192,6 +192,9 @@ struct pmap;
  * Shareable process virtual address space.
  * May eventually be merged with vm_map.
  * Several fields are temporary (text, data stuff).
+ *
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
  */
 struct vmspace {
 	struct	vm_map vm_map;	/* VM address map */
@@ -207,8 +210,8 @@ struct vmspace {
 	segsz_t vm_ssize;	/* stack size (pages) */
 	caddr_t	vm_taddr;	/* user virtual address of text XXX */
 	caddr_t	vm_daddr;	/* user virtual address of data XXX */
-	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
-	caddr_t vm_minsaddr;	/* user VA at top of stack */
+	caddr_t vm_maxsaddr;	/* [I] user VA at max stack growth */
+	caddr_t vm_minsaddr;	/* [I] user VA at top of stack */
 };
 
 /*
