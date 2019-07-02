@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.63 2018/12/10 16:48:15 kn Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.64 2019/07/02 09:04:53 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -329,6 +329,10 @@ pf_map_addr_sticky(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		pf_print_host(naddr, 0, af);
 		addlog("\n");
 	}
+
+	if (sns[type]->kif != NULL)
+		rpool->kif = sns[type]->kif;
+
 	return (0);
 }
 
@@ -618,7 +622,8 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			pf_remove_src_node(sns[type]);
 			sns[type] = NULL;
 		}
-		if (pf_insert_src_node(&sns[type], r, type, af, saddr, naddr))
+		if (pf_insert_src_node(&sns[type], r, type, af, saddr, naddr,
+		    rpool->kif))
 			return (1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.490 2019/02/18 13:11:44 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.491 2019/07/02 09:04:53 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1712,7 +1712,7 @@ extern int			 pf_state_insert(struct pfi_kif *,
 int				 pf_insert_src_node(struct pf_src_node **,
 				    struct pf_rule *, enum pf_sn_types,
 				    sa_family_t, struct pf_addr *,
-				    struct pf_addr *);
+				    struct pf_addr *, struct pfi_kif *);
 void				 pf_remove_src_node(struct pf_src_node *);
 struct pf_src_node		*pf_get_src_node(struct pf_state *,
 				    enum pf_sn_types);

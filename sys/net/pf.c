@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1082 2019/07/01 12:13:51 yasuoka Exp $ */
+/*	$OpenBSD: pf.c,v 1.1083 2019/07/02 09:04:53 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -542,7 +542,7 @@ pf_src_connlimit(struct pf_state **state)
 int
 pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
     enum pf_sn_types type, sa_family_t af, struct pf_addr *src,
-    struct pf_addr *raddr)
+    struct pf_addr *raddr, struct pfi_kif *kif)
 {
 	struct pf_src_node	k;
 
@@ -586,6 +586,7 @@ pf_insert_src_node(struct pf_src_node **sn, struct pf_rule *rule,
 		}
 		(*sn)->creation = time_uptime;
 		(*sn)->rule.ptr->src_nodes++;
+		(*sn)->kif = kif;
 		pf_status.scounters[SCNT_SRC_NODE_INSERT]++;
 		pf_status.src_nodes++;
 	} else {
@@ -3881,7 +3882,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 
 		if (r->rule_flag & PFRULE_SRCTRACK &&
 		    pf_insert_src_node(&ctx.sns[PF_SN_NONE], r, PF_SN_NONE,
-		    pd->af, pd->src, NULL) != 0) {
+		    pd->af, pd->src, NULL, NULL) != 0) {
 			REASON_SET(&ctx.reason, PFRES_SRCLIMIT);
 			goto cleanup;
 		}
