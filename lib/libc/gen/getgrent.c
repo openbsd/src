@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.47 2018/09/13 12:31:15 millert Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.48 2019/07/02 15:54:05 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -197,6 +197,10 @@ DEF_WEAK(getgrgid_r);
 static int
 start_gr(void)
 {
+#ifdef YP
+	int saved_errno = errno;
+#endif
+
 	if (_gr_fp) {
 		rewind(_gr_fp);
 #ifdef YP
@@ -214,7 +218,9 @@ start_gr(void)
 	/*
 	 * Hint to the kernel that a passwd database operation is happening.
 	 */
+	saved_errno = errno;
 	(void)access("/var/run/ypbind.lock", R_OK);
+	errno = saved_errno;
 #endif
 
 	return((_gr_fp = fopen(_PATH_GROUP, "re")) ? 1 : 0);
