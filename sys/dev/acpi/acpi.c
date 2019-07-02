@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.370 2019/06/10 14:38:06 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.371 2019/07/02 21:17:24 jcs Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2073,6 +2073,7 @@ acpi_interrupt(void *arg)
 	struct acpi_softc *sc = (struct acpi_softc *)arg;
 	uint32_t processed = 0, idx, jdx;
 	uint16_t sts, en;
+	int gpe;
 
 	dnprintf(40, "ACPI Interrupt\n");
 	for (idx = 0; idx < sc->sc_lastgpe; idx += 8) {
@@ -2084,26 +2085,38 @@ acpi_interrupt(void *arg)
 			/* Mask the GPE until it is serviced */
 			acpi_write_pmreg(sc, ACPIREG_GPE_EN, idx>>3, en & ~sts);
 			for (jdx = 0; jdx < 8; jdx++) {
-				if (en & sts & (1L << jdx)) {
-					/* Signal this GPE */
-					sc->gpe_table[idx+jdx].active = 1;
-					dnprintf(10, "queue gpe: %x\n",
-					    idx+jdx);
-					acpi_addtask(sc, acpi_gpe_task, NULL,
-					    idx+jdx);
+				if (!(en & sts & (1L << jdx)))
+					continue;
 
-					/*
-					 * Edge interrupts need their STS bits
-					 * cleared now.  Level interrupts will
-					 * have their STS bits cleared just
-					 * before they are re-enabled.
-					 */
-					if (sc->gpe_table[idx+jdx].edge)
-						acpi_write_pmreg(sc,
-						    ACPIREG_GPE_STS, idx>>3,
-						    1L << jdx);
-					processed = 1;
+				/* Signal this GPE */
+				gpe = idx + jdx;
+				if (sc->gpe_table[gpe].flags & GPE_DIRECT) {
+					dnprintf(10, "directly handle gpe: %x\n",
+					    gpe);
+					sc->gpe_table[gpe].handler(sc, gpe,
+					    sc->gpe_table[gpe].arg);
+					if (sc->gpe_table[gpe].flags &
+					    GPE_LEVEL)
+						acpi_gpe(sc, gpe,
+						    sc->gpe_table[gpe].arg);
+				} else {
+					sc->gpe_table[gpe].active = 1;
+					dnprintf(10, "queue gpe: %x\n", gpe);
+					acpi_addtask(sc, acpi_gpe_task, NULL,
+					    gpe);
 				}
+
+				/*
+				 * Edge interrupts need their STS bits cleared
+				 * now.  Level interrupts will have their STS
+				 * bits cleared just before they are
+				 * re-enabled.
+				 */
+				if (sc->gpe_table[gpe].flags & GPE_EDGE)
+					acpi_write_pmreg(sc,
+					    ACPIREG_GPE_STS, idx>>3, 1L << jdx);
+
+				processed = 1;
 			}
 		}
 	}
@@ -2253,21 +2266,25 @@ acpi_enable_wakegpes(struct acpi_softc *sc, int state)
 
 int
 acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
-    (struct acpi_softc *, int, void *), void *arg, int edge)
+    (struct acpi_softc *, int, void *), void *arg, int flags)
 {
 	struct gpe_block *ptbl;
 
 	ptbl = acpi_find_gpe(sc, gpe);
 	if (ptbl == NULL || handler == NULL)
 		return -EINVAL;
-	if (ptbl->handler != NULL)
+	if ((flags & GPE_LEVEL) && (flags & GPE_EDGE))
+		return -EINVAL;
+	if (!(flags & (GPE_LEVEL | GPE_EDGE)))
+		return -EINVAL;
+	if (ptbl->handler != NULL && !(flags & GPE_DIRECT))
 		printf("%s: GPE 0x%.2x already enabled\n", DEVNAME(sc), gpe);
 
 	dnprintf(50, "Adding GPE handler 0x%.2x (%s)\n", gpe,
-	    edge ? "edge" : "level");
+	    (flags & GPE_EDGE ? "edge" : "level"));
 	ptbl->handler = handler;
 	ptbl->arg = arg;
-	ptbl->edge = edge;
+	ptbl->flags = flags;
 
 	return (0);
 }
@@ -2282,7 +2299,7 @@ acpi_gpe(struct acpi_softc *sc, int gpe, void *arg)
 	aml_evalnode(sc, node, 0, NULL, NULL);
 
 	mask = (1L << (gpe & 7));
-	if (!sc->gpe_table[gpe].edge)
+	if (sc->gpe_table[gpe].flags & GPE_LEVEL)
 		acpi_write_pmreg(sc, ACPIREG_GPE_STS, gpe>>3, mask);
 	en = acpi_read_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3);
 	acpi_write_pmreg(sc, ACPIREG_GPE_EN,  gpe>>3, en | mask);
@@ -2370,13 +2387,14 @@ acpi_init_gpes(struct acpi_softc *sc)
 		snprintf(name, sizeof(name), "\\_GPE._L%.2X", idx);
 		gpe = aml_searchname(&aml_root, name);
 		if (gpe != NULL)
-			acpi_set_gpehandler(sc, idx, acpi_gpe, gpe, 0);
+			acpi_set_gpehandler(sc, idx, acpi_gpe, gpe, GPE_LEVEL);
 		if (gpe == NULL) {
 			/* Search Edge-sensitive GPES */
 			snprintf(name, sizeof(name), "\\_GPE._E%.2X", idx);
 			gpe = aml_searchname(&aml_root, name);
 			if (gpe != NULL)
-				acpi_set_gpehandler(sc, idx, acpi_gpe, gpe, 1);
+				acpi_set_gpehandler(sc, idx, acpi_gpe, gpe,
+				    GPE_EDGE);
 		}
 	}
 	aml_find_node(&aml_root, "_PRW", acpi_foundprw, sc);

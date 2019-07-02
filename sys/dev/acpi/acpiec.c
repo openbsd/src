@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.59 2018/07/01 19:40:49 mlarkin Exp $ */
+/* $OpenBSD: acpiec.c,v 1.60 2019/07/02 21:17:24 jcs Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -322,7 +322,7 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 
 #ifndef SMALL_KERNEL
 	acpi_set_gpehandler(sc->sc_acpi, sc->sc_gpe, acpiec_gpehandler,
-	    sc, 1);
+	    sc, GPE_EDGE);
 #endif
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_GLK", 0, NULL, &res))

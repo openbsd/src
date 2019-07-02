@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.101 2019/06/10 14:38:06 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.102 2019/07/02 21:17:24 jcs Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -172,7 +172,7 @@ struct gpe_block {
 	int  (*handler)(struct acpi_softc *, int, void *);
 	void *arg;
 	int   active;
-	int   edge;
+	int   flags;
 };
 
 struct acpi_devlist {
@@ -278,9 +278,10 @@ extern struct acpi_softc *acpi_softc;
 #define	SCFLAG_OWRITE	0x0000002
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
 
-#define GPE_NONE  0x00
-#define GPE_LEVEL 0x01
-#define GPE_EDGE  0x02
+#define GPE_NONE	0x00
+#define GPE_LEVEL	0x01
+#define GPE_EDGE	0x02
+#define GPE_DIRECT	0x04
 
 struct acpi_table {
 	int	offset;
