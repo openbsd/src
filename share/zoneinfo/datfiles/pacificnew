@@ -1,4 +1,4 @@
-# $OpenBSD: pacificnew,v 1.12 2018/10/22 21:44:28 millert Exp $
+# $OpenBSD: pacificnew,v 1.13 2019/07/02 15:31:43 millert Exp $
 # tzdb data for proposed US election time (this file is obsolete)
 
 # This file is in the public domain, so clarified as of
@@ -22,7 +22,7 @@
 ## Rule	Twilite	XXXX	max	uspres	Nov	Sun>=7	2:00	0	S
 ## Rule	Twilite	XXXX	max	nonpres	Oct	lastSun	2:00	0	S
 
-# Zone	NAME			GMTOFF	RULES/SAVE	FORMAT	[UNTIL]
+# Zone	NAME			STDOFF	RULES/SAVE	FORMAT	[UNTIL]
 ## Zone	America/Los_Angeles-PET	-8:00	US		P%sT	XXXX
 ##				-8:00	Twilite		P%sT
 
