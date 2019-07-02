@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.160 2019/06/26 16:42:30 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.161 2019/07/02 16:25:39 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -642,7 +642,6 @@ void		 ttykeymapinit(void);
 void		 ttykeymaptidy(void);
 
 /* match.c X */
-int		 ask_showmatch(int, int);
 int		 showmatch(int, int);
 
 /* version.c X */

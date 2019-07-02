@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.116 2019/07/01 08:56:36 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.117 2019/07/02 16:25:39 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: July 1 2019 $
+.Dd $Mdocdate: July 2 2019 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -417,6 +417,7 @@ matching delimiter.
 For delimiters other than
 parenthesis, brackets, and braces, the character itself
 is used as its own match.
+Can be used in the startup file with the global-set-key command.
 .It bsmap-mode
 Toggle bsmap mode, where DEL and C-h are swapped.
 .It c-mode

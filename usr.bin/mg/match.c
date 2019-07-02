@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.20 2019/06/26 16:42:30 lum Exp $	*/
+/*	$OpenBSD: match.c,v 1.21 2019/07/02 16:25:39 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -35,30 +35,11 @@ static struct balance {
 	{ '\0', '\0' }
 };
 
-
 /*
- * Self-insert character, then show matching character.
- * Bound to "blink-and-insert".
- */
-int
-ask_showmatch(int f, int n)
-{
-	char	*c, cbuf[2];
-
-	if ((c = eread("Insert a character: ", cbuf, sizeof(cbuf),
-	    EFNEW)) == NULL || (c[0] == '\0'))
-		return (ABORT);
-	
-	key.k_chars[0] = *c;
-	key.k_chars[1] = '\0';
-	key.k_count = 1;
-
-	return (showmatch(FFRAND, 1));
-}
-
-
-/*
- * Hack to show matching paren. Bound to balance stucture chars ),],}.
+ * Hack to show matching paren.  Self-insert character, then show matching
+ * character, if any.  Bound to "blink-and-insert".  Used in the mg startup
+ * file to amend the default cursor behaviour of a key press, e.g:
+ *   global-set-key "%" blink-and-insert
  */
 int
 showmatch(int f, int n)
