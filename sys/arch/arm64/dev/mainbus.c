@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.13 2019/05/23 13:41:53 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.14 2019/07/02 20:12:11 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -25,6 +25,7 @@
 #include <machine/fdt.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/ofw_thermal.h>
 
 #include <arm64/arm64/arm64var.h>
 #include <arm64/dev/mainbus.h>
@@ -147,6 +148,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach secondary CPUs. */
 	mainbus_attach_cpus(self, mainbus_match_secondary);
+
+	thermal_init();
 }
 
 int
