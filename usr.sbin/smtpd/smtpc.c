@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.5 2019/05/15 05:02:43 eric Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.6 2019/07/02 09:36:20 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -263,19 +263,12 @@ parse_server(char *server)
 void
 parse_message(FILE *ifp)
 {
-	char sfn[] = "/tmp/smtp.XXXXXXXXXX";
 	char *line = NULL;
 	size_t linesz = 0;
 	ssize_t len;
-	int fd;
 
-	if ((fd = mkstemp(sfn)) == -1)
-		fatal("mkstemp");
-	unlink(sfn);
-
-	mail.fp = fdopen(fd, "w+");
-	if ((mail.fp) == NULL)
-		fatal("fdopen");
+	if ((mail.fp = tmpfile()) == NULL)
+		fatal("tmpfile");
 
 	for (;;) {
 		if ((len = getline(&line, &linesz, ifp)) == -1) {
