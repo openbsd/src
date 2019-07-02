@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.119 2019/06/03 01:27:30 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.120 2019/07/02 14:54:36 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -636,20 +636,6 @@ realitexpire(void *arg)
 			return;
 		}
 	}
-}
-
-/*
- * Check that a timespec value is legit
- */
-int
-timespecfix(struct timespec *ts)
-{
-	if (ts->tv_sec < 0 ||
-	    ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
-		return (EINVAL);
-	if (ts->tv_sec > 100000000)
-		ts->tv_sec = 100000000;
-	return (0);
 }
 
 /*
