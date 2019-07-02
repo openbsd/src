@@ -58,7 +58,7 @@ void intel_guc_ct_init_early(struct intel_guc_ct *ct)
 	/* we're using static channel owners */
 	ct->host_channel.owner = CTB_OWNER_HOST;
 
-	mtx_init(&ct->lock, IPL_NONE);
+	mtx_init(&ct->lock, IPL_TTY);
 	INIT_LIST_HEAD(&ct->pending_requests);
 	INIT_LIST_HEAD(&ct->incoming_requests);
 	INIT_WORK(&ct->worker, ct_incoming_request_worker_func);

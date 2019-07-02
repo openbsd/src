@@ -3653,7 +3653,7 @@ void i915_perf_init(struct drm_i915_private *dev_priv)
 
 		INIT_LIST_HEAD(&dev_priv->perf.streams);
 		rw_init(&dev_priv->perf.lock, "perflk");
-		mtx_init(&dev_priv->perf.oa.oa_buffer.ptr_lock, IPL_NONE);
+		mtx_init(&dev_priv->perf.oa.oa_buffer.ptr_lock, IPL_TTY);
 
 		oa_sample_rate_hard_limit = 1000 *
 			(INTEL_INFO(dev_priv)->cs_timestamp_frequency_khz / 2);

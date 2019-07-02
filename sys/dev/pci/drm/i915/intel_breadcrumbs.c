@@ -900,8 +900,8 @@ int intel_engine_init_breadcrumbs(struct intel_engine_cs *engine)
 {
 	struct intel_breadcrumbs *b = &engine->breadcrumbs;
 
-	mtx_init(&b->rb_lock, IPL_NONE);
-	mtx_init(&b->irq_lock, IPL_NONE);
+	mtx_init(&b->rb_lock, IPL_TTY);
+	mtx_init(&b->irq_lock, IPL_TTY);
 
 	timeout_set(&b->fake_irq, intel_breadcrumbs_fake_irq, engine);
 	timeout_set(&b->hangcheck, intel_breadcrumbs_hangcheck, engine);

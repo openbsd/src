@@ -8,6 +8,6 @@
 #include <linux/rwlock_types.h>
 
 typedef struct mutex spinlock_t;
-#define DEFINE_SPINLOCK(x)	struct mutex x
+#define DEFINE_SPINLOCK(x)	struct mutex x = MUTEX_INITIALIZER(IPL_TTY)
 
 #endif

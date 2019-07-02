@@ -119,7 +119,7 @@ lpe_audio_platdev_create(struct drm_i915_private *dev_priv)
 	pdata->port[0].pipe = -1;
 	pdata->port[1].pipe = -1;
 	pdata->port[2].pipe = -1;
-	mtx_init(&pdata->lpe_audio_slock);
+	mtx_init(&pdata->lpe_audio_slock, IPL_TTY);
 
 	platdev = platform_device_register_full(&pinfo);
 	kfree(rsc);
