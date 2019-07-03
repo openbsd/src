@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.229 2019/05/03 18:38:44 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.230 2019/07/03 16:33:06 espie Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -474,7 +474,8 @@ main(int argc, char *argv[])
 	if (argc < 1) {
 		if (use_pager) {
 			tag_files = tag_init();
-			tag_files->tagname = conf.output.tag;
+			if (tag_files != NULL)
+				tag_files->tagname = conf.output.tag;
 		}
 		thisarg = "<stdin>";
 		mandoc_msg_setinfilename(thisarg);
@@ -512,7 +513,8 @@ main(int argc, char *argv[])
 			if (use_pager) {
 				use_pager = 0;
 				tag_files = tag_init();
-				tag_files->tagname = conf.output.tag;
+				if (tag_files != NULL)
+					tag_files->tagname = conf.output.tag;
 			}
 
 			mandoc_msg_setinfilename(thisarg);
