@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.244 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.245 2019/07/03 10:32:33 dlg Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -195,6 +195,7 @@ void usage(void);
 int findname(char *, char *, char **, struct list *);
 int sysctl_inet(char *, char **, int *, int, int *);
 int sysctl_inet6(char *, char **, int *, int, int *);
+int sysctl_link(char *, char **, int *, int, int *);
 int sysctl_bpf(char *, char **, int *, int, int *);
 int sysctl_mpls(char *, char **, int *, int, int *);
 int sysctl_pipex(char *, char **, int *, int, int *);
@@ -662,6 +663,12 @@ parse(char *string, int flags)
 				    string);
 				return;
 			}
+			break;
+		}
+		if (mib[1] == PF_LINK) {
+			len = sysctl_link(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
 			break;
 		}
 		if (mib[1] == PF_BPF) {
@@ -2246,6 +2253,46 @@ sysctl_inet6(char *string, char **bufpp, int mib[], int flags, int *typep)
 		*typep = lp->list[tindx].ctl_type;
 		return(5);
 	}
+	return (4);
+}
+
+/* handle net.link requests */
+struct ctlname netlinkname[] = CTL_NET_LINK_NAMES;
+struct ctlname ifrxqname[] = CTL_NET_LINK_IFRXQ_NAMES;
+struct list netlinklist = { netlinkname, NET_LINK_MAXID };
+struct list netlinkvars[] = {
+	[NET_LINK_IFRXQ] = { ifrxqname, NET_LINK_IFRXQ_MAXID },
+};
+
+int
+sysctl_link(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	struct list *lp;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &netlinklist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &netlinklist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	if (indx < NET_LINK_MAXID && netlinkvars[indx].list != NULL)
+		lp = &netlinkvars[indx];
+	else if (!flags)
+		return (-1);
+	else {
+		warnx("%s: no variables defined for this protocol", string);
+		return (-1);
+	}
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return (-1);
+	}
+	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
+		return (-1);
+	mib[3] = indx;
+	*typep = lp->list[indx].ctl_type;
 	return (4);
 }
 
