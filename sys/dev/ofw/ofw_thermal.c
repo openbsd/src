@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_thermal.c,v 1.2 2019/07/03 21:20:14 kettenis Exp $	*/
+/*	$OpenBSD: ofw_thermal.c,v 1.3 2019/07/03 22:12:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -325,6 +325,11 @@ thermal_zone_init(int node)
 
 	len = OF_getproplen(node, "thermal-sensors");
 	if (len <= 0)
+		return;
+
+	if (OF_getnodebyname(node, "trips") == 0)
+		return;
+	if (OF_getnodebyname(node, "cooling-maps") == 0)
 		return;
 
 	tz = malloc(sizeof(struct thermal_zone), M_DEVBUF, M_ZERO | M_WAITOK);
