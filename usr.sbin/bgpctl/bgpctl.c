@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.241 2019/06/25 07:44:20 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.242 2019/07/03 06:15:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1446,7 +1446,7 @@ show_attr(void *b, u_int16_t len, int flag0)
 		data += 4;
 		len -= 4;
 	} else {
-		alen = (u_char)data[2];
+		alen = data[2];
 		data += 3;
 		len -= 3;
 	}
