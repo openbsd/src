@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.17 2015/10/27 15:23:28 millert Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.18 2019/07/03 03:24:03 deraadt Exp $	*/
 /*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
@@ -82,8 +82,8 @@ startdaemon(char *printer)
 	}
 	PRIV_END;
 	siginterrupt(SIGINT, 0);
-	if ((n = snprintf(buf, sizeof(buf), "\1%s\n", printer)) >= sizeof(buf) ||
-	    n == -1) {
+	if ((n = snprintf(buf, sizeof(buf), "\1%s\n", printer)) < 0 ||
+	    n >= sizeof(buf)) {
 		close(s);
 		return (0);
 	}

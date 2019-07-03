@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.20 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.21 2019/07/03 03:24:04 deraadt Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -197,13 +197,15 @@ put_pid(int fd, pid_t pid)
 	int len;
 
 	len = snprintf(buf, sizeof buf, "%10ld\n", (long)pid);
+	if (len < 0 || len >= sizeof buf)
+		return 0;
 
-	if (len < sizeof buf && len != -1 && write(fd, buf, (size_t)len) == len) {
-		/* We don't mind too much if ftruncate() fails - see get_pid */
-		ftruncate(fd, (off_t)len);
-		return 1;
-	}
-	return 0;
+	if (write(fd, buf, len) != len)
+		return 0;
+
+	/* We don't mind too much if ftruncate() fails - see get_pid */
+	ftruncate(fd, (off_t)len);
+	return 1;
 }
 
 static pid_t

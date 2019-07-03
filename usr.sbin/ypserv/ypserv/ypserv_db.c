@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.30 2015/12/08 07:16:33 mmcc Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.31 2019/07/03 03:24:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -422,7 +422,7 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 	}
 
 	len = snprintf(val, sizeof(val), "%s %s", keystr, host->h_name);
-	if (len == (size_t)-1 || len >= sizeof(val))
+	if (len < 0 || len >= sizeof(val))
 		return(YP_YPERR);
 	v = val + len;
 	while ((ptr = *(host->h_aliases)) != NULL) {

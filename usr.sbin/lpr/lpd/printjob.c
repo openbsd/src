@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.60 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.61 2019/07/03 03:24:03 deraadt Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -187,8 +187,8 @@ printjob(void)
 	 * write process id for others to know
 	 */
 	pid = getpid();
-	if ((pidoff = i = snprintf(line, sizeof(line), "%d\n", pid)) >=
-	    sizeof(line) || pidoff == -1) {
+	if ((pidoff = i = snprintf(line, sizeof(line), "%d\n", pid)) < 0 ||
+	    i >= sizeof(line)) {
 		syslog(LOG_ERR, "impossibly large pid: %u", pid);
 		exit(1);
 	}
@@ -230,8 +230,8 @@ again:
 		fino = (ino_t)-1;
 
 		(void)lseek(lfd, pidoff, SEEK_SET);
-		if ((i = snprintf(line, sizeof(line), "%s\n", q->q_name)) >=
-		    sizeof(line) || i == -1)
+		if ((i = snprintf(line, sizeof(line), "%s\n", q->q_name)) < 0 ||
+		    i >= sizeof(line))
 			i = sizeof(line) - 1;	/* can't happen */
 		if (write(lfd, line, i) != i)
 			syslog(LOG_ERR, "%s: %s: %m", printer, LO);
@@ -913,7 +913,7 @@ sendfile(int type, char *file)
 	if (f == -1)
 		return(ERROR);
 	if ((amt = snprintf(buf, sizeof(buf), "%c%lld %s\n", type,
-	    (long long)stb.st_size, file)) >= sizeof(buf) || amt == -1)
+	    (long long)stb.st_size, file)) < 0 || amt >= sizeof(buf))
 		return (ACCESS);		/* XXX hack */
 	for (i = 0;  ; i++) {
 		if (write(pfd, buf, amt) != amt ||
@@ -1483,8 +1483,8 @@ openrem(void)
 		resp = -1;
 		pfd = getport(RM, 0);
 		if (pfd >= 0) {
-			if ((n = snprintf(line, sizeof(line), "\2%s\n", RP)) >=
-			    sizeof(line) || n == -1)
+			if ((n = snprintf(line, sizeof(line), "\2%s\n", RP)) < 0 ||
+			    n >= sizeof(line))
 				n = sizeof(line) - 1;
 			if (write(pfd, line, n) == n &&
 			    (resp = response()) == '\0')
@@ -1600,7 +1600,7 @@ pstatus(const char *msg, ...)
 	ftruncate(fd, 0);
 	len = vsnprintf(buf, sizeof(buf), msg, ap);
 	va_end(ap);
-	if (len == -1) {
+	if (len < 0) {
 		(void)close(fd);
 		return;
 	}

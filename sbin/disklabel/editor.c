@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.360 2019/04/29 18:54:12 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.361 2019/07/03 03:24:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -1141,7 +1141,7 @@ getnumber(char *prompt, char *helpstring, u_int32_t oval, u_int32_t maxval)
 	const char *errstr;
 
 	rslt = snprintf(buf, sizeof(buf), "%u", oval);
-	if (rslt == -1 || (unsigned int)rslt >= sizeof(buf))
+	if (rslt < 0 || (unsigned int)rslt >= sizeof(buf))
 		return (CMD_BADVALUE);
 
 	p = getstring(prompt, helpstring, buf);
@@ -1176,7 +1176,7 @@ getuint64(struct disklabel *lp, char *prompt, char *helpstring,
 	int rslt;
 
 	rslt = snprintf(buf, sizeof(buf), "%llu", oval);
-	if (rslt == -1 || (unsigned int)rslt >= sizeof(buf))
+	if (rslt < 0 || (unsigned int)rslt >= sizeof(buf))
 		goto invalid;
 
 	p = getstring(prompt, helpstring, buf);

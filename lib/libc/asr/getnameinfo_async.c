@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo_async.c,v 1.13 2017/02/23 17:04:02 eric Exp $	*/
+/*	$OpenBSD: getnameinfo_async.c,v 1.14 2019/07/03 03:24:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -235,7 +235,7 @@ _servname(struct asr_query *as)
 	}
 
 	r = snprintf(buf, buflen, "%u", ntohs(port));
-	if (r == -1 || r >= (int)buflen)
+	if (r < 0 || r >= buflen)
 		return (-1);
 
 	return (0);

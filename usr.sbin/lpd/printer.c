@@ -1,4 +1,4 @@
-/*	$OpenBSD: printer.c,v 1.1.1.1 2018/04/27 16:14:37 eric Exp $	*/
+/*	$OpenBSD: printer.c,v 1.2 2019/07/03 03:24:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -848,7 +848,7 @@ sendcmd(const char *fmt, ...)
 	len = vsnprintf(line, sizeof(line), fmt, ap);
 	va_end(ap);
 
-	if (len == -1) {
+	if (len < 0) {
 		log_warn("%s: vsnprintf", __func__);
 		return -1;
 	}

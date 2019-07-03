@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.29 2018/03/29 16:39:04 schwarze Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.30 2019/07/03 03:24:04 deraadt Exp $	*/
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -162,7 +162,7 @@ setlocale(int category, const char *locname)
 		ic = snprintf(global_locname, sizeof(global_locname),
 		    "%s/%s/%s/%s/%s/%s", newgl[1], newgl[2], newgl[3],
 		    newgl[4], newgl[5], newgl[6]);
-		if (ic == -1 || ic >= sizeof(global_locname))
+		if (ic < 0 || ic >= sizeof(global_locname))
 			global_locname[0] = '\0';
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdu.c,v 1.11 2015/12/05 06:38:18 mmcc Exp $ */
+/*	$OpenBSD: pdu.c,v 1.12 2019/07/03 03:24:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -75,7 +75,7 @@ text_to_pdu(struct kvp *k, struct pdu *p)
 	nk = 0;
 	while(k[nk].key) {
 		n = snprintf(s, rem, "%s=%s", k[nk].key, k[nk].value);
-		if (n == -1 || (size_t)n >= rem)
+		if (n < 0 || (size_t)n >= rem)
 			fatalx("text_to_pdu");
 		rem -= n + 1;
 		s += n + 1;

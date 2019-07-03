@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.58 2018/11/28 22:00:30 kn Exp $	 */
+/* $OpenBSD: display.c,v 1.59 2019/07/03 03:24:02 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -728,7 +728,7 @@ static void
 summary_format(char *buf, size_t left, int *numbers, char **names)
 {
 	char *p, *thisname;
-	size_t len;
+	int len;
 	int num;
 
 	/* format each number followed by its string */
@@ -750,7 +750,7 @@ summary_format(char *buf, size_t left, int *numbers, char **names)
 				COPYLEFT(p, thisname + 1);
 			} else if (num > 0) {
 				len = snprintf(p, left, "%d%s", num, thisname);
-				if (len == (size_t)-1 || len >= left)
+				if (len < 0 || len >= left)
 					return;
 				p += len;
 				left -= len;

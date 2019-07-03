@@ -99,7 +99,7 @@ maildir_mkdirs(const char *dirname)
 	for (i = 0; i < nitems(subdirs); ++i) {
 		ret = snprintf(pathname, sizeof pathname, "%s/%s", dirname,
 		    subdirs[i]);
-		if (ret == -1 || (size_t)ret >= sizeof pathname)
+		if (ret < 0 || (size_t)ret >= sizeof pathname)
 			errc(1, ENAMETOOLONG, "%s/%s", dirname, subdirs[i]);
 		if (mkdir(pathname, 0700) == -1 && errno != EEXIST)
 			err(1, NULL);
@@ -137,7 +137,7 @@ maildir_engine(const char *dirname, int junk)
 		if ((home = getenv("HOME")) == NULL)
 			err(1, NULL);
 		ret = snprintf(rootpath, sizeof rootpath, "%s/Maildir", home);
-		if (ret == -1 || (size_t)ret >= sizeof rootpath)
+		if (ret < 0 || (size_t)ret >= sizeof rootpath)
 			errc(1, ENAMETOOLONG, "%s/Maildir", home);
 		dirname = rootpath;
 	}
@@ -146,7 +146,7 @@ maildir_engine(const char *dirname, int junk)
 	if (junk) {
 		/* create Junk subdirectory */
 		ret = snprintf(junkpath, sizeof junkpath, "%s/.Junk", dirname);
-		if (ret == -1 || (size_t)ret >= sizeof junkpath)
+		if (ret < 0 || (size_t)ret >= sizeof junkpath)
 			errc(1, ENAMETOOLONG, "%s/.Junk", dirname);
 		maildir_mkdirs(junkpath);
 	}
@@ -156,7 +156,7 @@ maildir_engine(const char *dirname, int junk)
 		    subdir[0]) {
 			ret = snprintf(extpath, sizeof extpath, "%s/.%s",
 			    dirname, subdir);
-			if (ret == -1 || (size_t)ret >= sizeof extpath)
+			if (ret < 0 || (size_t)ret >= sizeof extpath)
 				errc(1, ENAMETOOLONG, "%s/.%s",
 				    dirname, subdir);
 			if (stat(extpath, &sb) != -1) {

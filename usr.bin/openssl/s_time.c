@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.32 2018/09/17 15:37:35 cheloha Exp $ */
+/* $OpenBSD: s_time.c,v 1.33 2019/07/03 03:24:02 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -377,7 +377,7 @@ run_test(SSL *scon)
 	if (s_time_config.www_path != NULL) {
 		retval = snprintf(buf, sizeof buf,
 		    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
-		if (retval == -1 || retval >= sizeof buf) {
+		if (retval < 0 || retval >= sizeof buf) {
 			fprintf(stderr, "URL too long\n");
 			return 0;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.50 2019/06/28 13:32:47 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.51 2019/07/03 03:24:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <millert@openbsd.org>
@@ -189,7 +189,7 @@ atrun(at_db *db, double batch_maxload, time_t now)
 
 		len = snprintf(atfile, sizeof(atfile), "%lld.%c",
 		    (long long)job->run_time, job->queue);
-		if (len >= sizeof(atfile)) {
+		if (len < 0 || len >= sizeof(atfile)) {
 			TAILQ_REMOVE(&db->jobs, job, entries);
 			free(job);
 			continue;
@@ -234,7 +234,9 @@ atrun(at_db *db, double batch_maxload, time_t now)
 	    ) {
 		len = snprintf(atfile, sizeof(atfile), "%lld.%c",
 		    (long long)batch->run_time, batch->queue);
-		if (len < sizeof(atfile))
+		if (len < 0 || len >= sizeof(atfile))
+			;
+		else
 			run_job(batch, dfd, atfile);
 		TAILQ_REMOVE(&db->jobs, batch, entries);
 		free(job);

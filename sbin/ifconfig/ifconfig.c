@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.403 2019/06/28 13:32:44 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.404 2019/07/03 03:24:01 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -5984,7 +5984,7 @@ in_getaddr(const char *s, int which)
 	    (bits = inet_net_pton(AF_INET, s, &tsin.sin_addr,
 	    sizeof(tsin.sin_addr))) != -1) {
 		l = snprintf(p, sizeof(p), "%d", bits);
-		if (l >= sizeof(p) || l == -1)
+		if (l < 0 || l >= sizeof(p))
 			errx(1, "%d: bad prefixlen", bits);
 		in_getprefix(p, MASK);
 		memcpy(&sin->sin_addr, &tsin.sin_addr, sizeof(sin->sin_addr));

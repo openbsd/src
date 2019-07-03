@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.50 2019/06/17 13:35:43 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.51 2019/07/03 03:24:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -104,7 +104,7 @@ log_as(u_int32_t as)
 {
 	static char	buf[11];	/* "4294967294\0" */
 
-	if (snprintf(buf, sizeof(buf), "%u", as) == -1)
+	if (snprintf(buf, sizeof(buf), "%u", as) < 0)
 		return ("?");
 
 	return (buf);
@@ -206,7 +206,7 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 {
 #define UPDATE()				\
 	do {					\
-		if (r == -1)			\
+		if (r < 0)			\
 			return (-1);		\
 		total_size += r;		\
 		if ((unsigned int)r < size) {	\

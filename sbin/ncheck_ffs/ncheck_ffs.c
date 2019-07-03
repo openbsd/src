@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.54 2019/06/28 13:32:45 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.55 2019/07/03 03:24:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -643,14 +643,14 @@ format_entry(const char *path, struct direct *dp)
 			case 'I':
 				len = snprintf(dst, size - (dst - buf), "%llu",
 				    (unsigned long long)dp->d_ino);
-				if (len == -1 || len >= size - (dst - buf))
+				if (len < 0 || len >= size - (dst - buf))
 					goto expand_buf;
 				dst += len;
 				break;
 			case 'P':
 				len = snprintf(dst, size - (dst - buf), "%s/%s",
 				    path, dp->d_name);
-				if (len == -1 || len >= size - (dst - buf))
+				if (len < 0 || len >= size - (dst - buf))
 					goto expand_buf;
 				dst += len;
 				break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.52 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.53 2019/07/03 03:24:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -226,7 +226,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 		    cylno < (sblock.fs_ncg - 1) ? "," : "");
 		if (j >= sizeof(tmpbuf))
 			j = sizeof(tmpbuf) - 1;
-		if (j == -1 || i + j >= colwidth) {
+		if (j < 0 || i + j >= colwidth) {
 			printf("\n");
 			i = 0;
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.100 2019/06/28 13:32:44 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.101 2019/07/03 03:24:02 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -94,7 +94,7 @@ my_inet_ntop4(const in_addr_t *src, char *dst, size_t size, int normalize)
 	len = snprintf(tmp, sizeof tmp, fmt, ((u_int8_t *)&src2)[0],
 	    ((u_int8_t *)&src2)[1], ((u_int8_t *)&src2)[2],
 	    ((u_int8_t *)&src2)[3]);
-	if (len == -1 || len > (int)size) {
+	if (len < 0 || len > (int)size) {
 		errno = ENOSPC;
 		return 0;
 	}
@@ -113,7 +113,7 @@ my_inet_ntop6(const unsigned char *src, char *dst, size_t size)
 	len = snprintf(tmp, sizeof tmp, fmt, src[0], src[1], src[2], src[3],
 	    src[4], src[5], src[6], src[7], src[8], src[9], src[10], src[11],
 	    src[12], src[13], src[14], src[15]);
-	if (len == -1 || len > (int)size) {
+	if (len < 0 || len > (int)size) {
 		errno = ENOSPC;
 		return 0;
 	}

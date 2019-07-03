@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_perror.c,v 1.24 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: clnt_perror.c,v 1.25 2019/07/03 03:24:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -57,7 +57,7 @@ clnt_sperror(CLIENT *rpch, char *s)
 	CLNT_GETERR(rpch, &e);
 
 	ret = snprintf(str, len, "%s: %s", s, clnt_sperrno(e.re_status));
-	if (ret == -1)
+	if (ret < 0)
 		ret = 0;
 	else if (ret >= len)
 		goto truncated;
@@ -83,7 +83,7 @@ clnt_sperror(CLIENT *rpch, char *s)
 	case RPC_CANTSEND:
 	case RPC_CANTRECV:
 		ret = snprintf(str, len, "; errno = %s", strerror(e.re_errno));
-		if (ret == -1 || ret >= len)
+		if (ret < 0 || ret >= len)
 			goto truncated;
 		break;
 
@@ -91,13 +91,13 @@ clnt_sperror(CLIENT *rpch, char *s)
 		ret = snprintf(str, len,
 		    "; low version = %u, high version = %u",
 		    e.re_vers.low, e.re_vers.high);
-		if (ret == -1 || ret >= len)
+		if (ret < 0 || ret >= len)
 			goto truncated;
 		break;
 
 	case RPC_AUTHERROR:
 		ret = snprintf(str, len, "; why = ");
-		if (ret == -1)
+		if (ret < 0)
 			ret = 0;
 		else if (ret >= len)
 			goto truncated;
@@ -106,13 +106,13 @@ clnt_sperror(CLIENT *rpch, char *s)
 		err = auth_errmsg(e.re_why);
 		if (err != NULL) {
 			ret = snprintf(str, len, "%s", err);
-			if (ret == -1 || ret >= len)
+			if (ret < 0 || ret >= len)
 				goto truncated;
 		} else {
 			ret = snprintf(str, len,
 			    "(unknown authentication error - %d)",
 			    (int) e.re_why);
-			if (ret == -1 || ret >= len)
+			if (ret < 0 || ret >= len)
 				goto truncated;
 		}
 		break;
@@ -121,14 +121,14 @@ clnt_sperror(CLIENT *rpch, char *s)
 		ret = snprintf(str, len,
 		    "; low version = %u, high version = %u",
 		    e.re_vers.low, e.re_vers.high);
-		if (ret == -1 || ret >= len)
+		if (ret < 0 || ret >= len)
 			goto truncated;
 		break;
 
 	default:	/* unknown */
 		ret = snprintf(str, len, "; s1 = %u, s2 = %u",
 		    e.re_lb.s1, e.re_lb.s2);
-		if (ret == -1 || ret >= len)
+		if (ret < 0 || ret >= len)
 			goto truncated;
 		break;
 	}

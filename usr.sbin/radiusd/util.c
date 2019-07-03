@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2015/08/27 01:02:35 yasuoka Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2019/07/03 03:24:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -101,7 +101,7 @@ addrport_tostring(struct sockaddr *sa, socklen_t salen, char *buf, size_t lbuf)
 		return "error";
 	}
 
-	if (ret == -1 || ret >= (int)lbuf)
+	if (ret < 0 || ret >= (int)lbuf)
 		return "(error)";
 	return (buf);
 }

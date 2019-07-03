@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_debug.c,v 1.25 2018/04/28 15:16:49 schwarze Exp $	*/
+/*	$OpenBSD: asr_debug.c,v 1.26 2019/07/03 03:24:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -73,7 +73,7 @@ print_rr(const struct asr_dns_rr *rr, char *buf, size_t max)
 	    rr->rr_ttl,
 	    __p_class(rr->rr_class),
 	    __p_type(rr->rr_type));
-	if (r == -1) {
+	if (r < 0 || r >= max) {
 		buf[0] = '\0';
 		return (buf);
 	}

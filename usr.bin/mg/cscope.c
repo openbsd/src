@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.17 2017/10/12 14:12:00 florian Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.18 2019/07/03 03:24:02 deraadt Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -634,7 +634,7 @@ csexists(const char *cmd)
 			dir[--dlen] = '\0';     /* strip trailing '/' */
 
 		len = snprintf(fname, sizeof(fname), "%s/%s", dir, cmd);
-		if (len == -1 || len >= sizeof(fname)) {
+		if (len < 0 || len >= sizeof(fname)) {
 			dobeep();
 			ewprintf("path too long");
 			goto cleanup;

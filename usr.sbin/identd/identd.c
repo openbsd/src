@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.39 2018/01/05 08:13:31 mpi Exp $ */
+/*	$OpenBSD: identd.c,v 1.40 2019/07/03 03:24:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -469,7 +469,7 @@ parent_noident(struct ident_resolver *r, struct passwd *pw)
 	int rv;
 
 	rv = snprintf(path, sizeof(path), "%s/%s", pw->pw_dir, DOTNOIDENT);
-	if (rv == -1 || rv >= sizeof(path)) {
+	if (rv < 0 || rv >= sizeof(path)) {
 		r->error = E_UNKNOWN;
 		return;
 	}

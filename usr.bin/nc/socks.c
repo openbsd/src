@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.27 2019/01/10 12:44:54 mestre Exp $	*/
+/*	$OpenBSD: socks.c,v 1.28 2019/07/03 03:24:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -334,7 +334,7 @@ socks_connect(const char *host, const char *port,
 			    "CONNECT %s:%d HTTP/1.0\r\n",
 			    host, ntohs(serverport));
 		}
-		if (r == -1 || (size_t)r >= sizeof(buf))
+		if (r < 0 || (size_t)r >= sizeof(buf))
 			errx(1, "hostname too long");
 		r = strlen(buf);
 
@@ -357,7 +357,7 @@ socks_connect(const char *host, const char *port,
 				errx(1, "Proxy username/password too long");
 			r = snprintf(buf, sizeof(buf), "Proxy-Authorization: "
 			    "Basic %s\r\n", resp);
-			if (r == -1 || (size_t)r >= sizeof(buf))
+			if (r < 0 || (size_t)r >= sizeof(buf))
 				errx(1, "Proxy auth response too long");
 			r = strlen(buf);
 			if ((cnt = atomicio(vwrite, proxyfd, buf, r)) != r)

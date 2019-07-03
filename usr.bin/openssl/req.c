@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.15 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: req.c,v 1.16 2019/07/03 03:24:02 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1030,7 +1030,7 @@ prompt_info(X509_REQ * req,
 			if ((nid = OBJ_txt2nid(type)) == NID_undef)
 				goto start;
 			ret = snprintf(buf, sizeof buf, "%s_default", v->name);
-			if (ret == -1 || ret >= sizeof(buf)) {
+			if (ret < 0 || ret >= sizeof(buf)) {
 				BIO_printf(bio_err, "Name '%s' too long for default\n",
 				    v->name);
 				return 0;
@@ -1040,7 +1040,7 @@ prompt_info(X509_REQ * req,
 				def = "";
 			}
 			ret = snprintf(buf, sizeof buf, "%s_value", v->name);
-			if (ret == -1 || ret >= sizeof(buf)) {
+			if (ret < 0 || ret >= sizeof(buf)) {
 				BIO_printf(bio_err, "Name '%s' too long for value\n",
 				    v->name);
 				return 0;
@@ -1050,7 +1050,7 @@ prompt_info(X509_REQ * req,
 				value = NULL;
 			}
 			ret = snprintf(buf, sizeof buf, "%s_min", v->name);
-			if (ret == -1 || ret >= sizeof(buf)) {
+			if (ret < 0 || ret >= sizeof(buf)) {
 				BIO_printf(bio_err, "Name '%s' too long for min\n",
 				    v->name);
 				return 0;
@@ -1060,7 +1060,7 @@ prompt_info(X509_REQ * req,
 				n_min = -1;
 			}
 			ret = snprintf(buf, sizeof buf, "%s_max", v->name);
-			if (ret == -1 || ret >= sizeof(buf)) {
+			if (ret < 0 || ret >= sizeof(buf)) {
 				BIO_printf(bio_err, "Name '%s' too long for max\n",
 				    v->name);
 				return 0;
@@ -1098,7 +1098,7 @@ start2:			for (;;) {
 				if ((nid = OBJ_txt2nid(type)) == NID_undef)
 					goto start2;
 				ret = snprintf(buf, sizeof buf, "%s_default", type);
-				if (ret == -1 || ret >= sizeof(buf)) {
+				if (ret < 0 || ret >= sizeof(buf)) {
 					BIO_printf(bio_err, "Name '%s' too long for default\n",
 					    v->name);
 					return 0;
@@ -1109,7 +1109,7 @@ start2:			for (;;) {
 					def = "";
 				}
 				ret = snprintf(buf, sizeof buf, "%s_value", type);
-				if (ret == -1 || ret >= sizeof(buf)) {
+				if (ret < 0 || ret >= sizeof(buf)) {
 					BIO_printf(bio_err, "Name '%s' too long for value\n",
 					    v->name);
 					return 0;
@@ -1120,7 +1120,7 @@ start2:			for (;;) {
 					value = NULL;
 				}
 				ret = snprintf(buf, sizeof buf, "%s_min", type);
-				if (ret == -1 || ret >= sizeof(buf)) {
+				if (ret < 0 || ret >= sizeof(buf)) {
 					BIO_printf(bio_err, "Name '%s' too long for min\n",
 					    v->name);
 					return 0;
@@ -1130,7 +1130,7 @@ start2:			for (;;) {
 					n_min = -1;
 				}
 				ret = snprintf(buf, sizeof buf, "%s_max", type);
-				if (ret == -1 || ret >= sizeof(buf)) {
+				if (ret < 0 || ret >= sizeof(buf)) {
 					BIO_printf(bio_err, "Name '%s' too long for max\n",
 					    v->name);
 					return 0;

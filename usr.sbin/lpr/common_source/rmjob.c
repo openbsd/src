@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmjob.c,v 1.23 2016/01/12 23:35:13 tb Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.24 2019/07/03 03:24:03 deraadt Exp $	*/
 /*	$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ rmremote(void)
 
 	/* the trailing space will be replaced with a newline later */
 	n = snprintf(buf, sizeof(buf), "\5%s %s ", RP, all ? "-all" : person);
-	if (n == -1 || n >= sizeof(buf))
+	if (n < 0 || n >= sizeof(buf))
 		goto bad;
 	cp = buf + n;
 	for (i = 0; i < users; i++) {
@@ -352,7 +352,7 @@ rmremote(void)
 	*cp = '\0';
 	for (i = 0; i < requests; i++) {
 		n = snprintf(cp, sizeof(buf) - (cp - buf), "%d ", requ[i]);
-		if (n == -1 || n >= sizeof(buf) - (cp - buf))
+		if (n < 0 || n >= sizeof(buf) - (cp - buf))
 			goto bad;
 		cp += n;
 	}

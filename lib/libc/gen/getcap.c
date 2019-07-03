@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.34 2016/09/21 04:38:56 guenther Exp $	*/
+/*	$OpenBSD: getcap.c,v 1.35 2019/07/03 03:24:04 deraadt Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -251,7 +251,7 @@ getent(char **cap, u_int *len, char **db_array, FILE *fp,
 			char *dbrecord;
 
 			clen = snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
-			if (clen != -1 && clen < sizeof(pbuf) && usedb &&
+			if (clen >= 0 && clen < sizeof(pbuf) && usedb &&
 			    (capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))) {
 				opened++;
 				retval = cdbget(capdbp, &dbrecord, name);

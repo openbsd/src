@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.23 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.24 2019/07/03 03:24:01 deraadt Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -172,7 +172,7 @@ rmtopen(char *tape, int mode)
 	int r;
 
 	r = snprintf(buf, sizeof (buf), "O%s\n%d\n", tape, mode);
-	if (r == -1 || r >= sizeof buf)
+	if (r < 0 || r >= sizeof buf)
 		errx(1, "tape name too long");
 	rmtstate = TS_OPEN;
 	return (rmtcall(tape, buf));
@@ -213,7 +213,7 @@ rmtioctl(int cmd, int count)
 	if (count < 0)
 		return (-1);
 	r = snprintf(buf, sizeof (buf), "I%d\n%d\n", cmd, count);
-	if (r == -1 || r >= sizeof buf)
+	if (r < 0 || r >= sizeof buf)
 		errx(1, "string error during ioctl");
 	return (rmtcall("ioctl", buf));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.119 2019/06/22 19:47:12 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.120 2019/07/03 03:24:01 deraadt Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -362,7 +362,7 @@ code_to_name(int code)
 		return dhcp_options[code].name;
 
 	ret = snprintf(unknown, sizeof(unknown), "option-%d", code);
-	if (ret == -1 || ret >= (int)sizeof(unknown))
+	if (ret < 0 || ret >= (int)sizeof(unknown))
 		return "";
 
 	return unknown;
@@ -378,7 +378,7 @@ name_to_code(char *name)
 		if (dhcp_options[code].name == NULL) {
 			ret = snprintf(unknown, sizeof(unknown), "option-%d",
 			    code);
-			if (ret == -1 || ret >= (int)sizeof(unknown))
+			if (ret < 0 || ret >= (int)sizeof(unknown))
 				return DHO_END;
 			if (strcasecmp(unknown, name) == 0)
 				return code;
@@ -635,7 +635,7 @@ pretty_print_classless_routes(unsigned char *src, size_t srclen,
 		}
 
 		rslt = snprintf(bitsbuf, sizeof(bitsbuf), "/%d ", bits);
-		if (rslt == -1 || (unsigned int)rslt >= sizeof(bitsbuf))
+		if (rslt < 0 || (unsigned int)rslt >= sizeof(bitsbuf))
 			goto bad;
 
 		if (strlen(buf) > 0)
@@ -897,13 +897,13 @@ pretty_print_option(unsigned int code, struct option_data *option,
 				    log_procname, fmtbuf[j]);
 				goto toobig;
 			}
-			if (opcount == -1 || opcount >= opleft)
+			if (opcount < 0 || opcount >= opleft)
 				goto toobig;
 			opleft -= opcount;
 			op += opcount;
 			if (j + 1 < numelem && comma != ':') {
 				opcount = snprintf(op, opleft, " ");
-				if (opcount == -1 || opcount >= opleft)
+				if (opcount < 0 || opcount >= opleft)
 					goto toobig;
 				opleft -= opcount;
 				op += opcount;
@@ -911,7 +911,7 @@ pretty_print_option(unsigned int code, struct option_data *option,
 		}
 		if (i + 1 < numhunk) {
 			opcount = snprintf(op, opleft, "%c", comma);
-			if (opcount == -1 || opcount >= opleft)
+			if (opcount < 0 || opcount >= opleft)
 				goto toobig;
 			opleft -= opcount;
 			op += opcount;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2018/11/07 04:51:56 miko Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2019/07/03 03:24:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -107,7 +107,7 @@ fileprefix(const char *base, const char *path)
 		return (NULL);
 	}
 	n = snprintf(s, PATH_MAX, "%s/%s", base, path);
-	if (n < 1 || n >= PATH_MAX) {
+	if (n < 0 || n >= PATH_MAX) {
 		warn("snprintf");
 		goto err;
 	}
@@ -124,7 +124,7 @@ fileprefix(const char *base, const char *path)
 		goto err;
 	}
 	n = snprintf(s, PATH_MAX, "%s/%s", r, b);
-	if (n < 1 || n >= PATH_MAX) {
+	if (n < 0 || n >= PATH_MAX) {
 		warn("snprintf");
 		goto err;
 	}

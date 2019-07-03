@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.42 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.43 2019/07/03 03:24:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -991,7 +991,7 @@ validate_access(struct tftp_client *client, const char *requested)
 		 */
 		ret = snprintf(rewritten, sizeof(rewritten), "%s/%s",
 		    getip(&client->ss), requested);
-		if (ret == -1 || ret >= sizeof(rewritten))
+		if (ret < 0 || ret >= sizeof(rewritten))
 			return (ENAMETOOLONG + 100);
 		filename = rewritten;
 	} else {
@@ -1502,7 +1502,7 @@ oack(struct tftp_client *client)
 
 		n = snprintf(bp, size, "%s%c%lld", opt_names[i], '\0',
 		    options[i].o_reply);
-		if (n == -1 || n >= size) {
+		if (n < 0 || n >= size) {
 			lwarnx("oack: no buffer space");
 			goto error;
 		}

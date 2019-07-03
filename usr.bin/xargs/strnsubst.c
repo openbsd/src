@@ -1,4 +1,4 @@
-/*	$OpenBSD: strnsubst.c,v 1.6 2017/01/03 21:47:37 tedu Exp $	*/
+/*	$OpenBSD: strnsubst.c,v 1.7 2019/07/03 03:24:02 deraadt Exp $	*/
 /*	$FreeBSD: strnsubst.c,v 1.6 2002/06/22 12:58:42 jmallett Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ strnsubst(char **str, const char *match, const char *replstr, size_t maxsize)
 			break;
 		n = snprintf(s2 + s2len, maxsize - s2len, "%.*s%s",
 		    (int)(this - s1), s1, replstr);
-		if (n == -1 || n + s2len + strlen(this + matchlen) >= maxsize)
+		if (n < 0 || n + s2len + strlen(this + matchlen) >= maxsize)
 			break;			/* out of room */
 		s2len += n;
 		s1 = this + matchlen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2019/05/13 23:13:24 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2019/07/03 03:24:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -354,7 +354,7 @@ forwarderoptsl		: STRING {
 				ret = snprintf(uw_forwarder->name,
 				    sizeof(uw_forwarder->name), "%s@%d", $1,
 				    (int)$3);
-				if (ret == -1 || (size_t)ret >=
+				if (ret < 0 || (size_t)ret >=
 				    sizeof(uw_forwarder->name)) {
 					free(uw_forwarder);
 					yyerror("forwarder %s too long", $1);
@@ -381,7 +381,7 @@ forwarderoptsl		: STRING {
 
 				ret = snprintf(uw_forwarder->name,
 				    sizeof(uw_forwarder->name), "%s@853", $1);
-				if (ret == -1 || (size_t)ret >=
+				if (ret < 0 || (size_t)ret >=
 				    sizeof(uw_forwarder->name)) {
 					free(uw_forwarder);
 					yyerror("forwarder %s too long", $1);
@@ -416,7 +416,7 @@ forwarderoptsl		: STRING {
 				ret = snprintf(uw_forwarder->name,
 				    sizeof(uw_forwarder->name), "%s@%d", $1,
 				    (int)$3);
-				if (ret == -1 || (size_t)ret >=
+				if (ret < 0 || (size_t)ret >=
 				    sizeof(uw_forwarder->name)) {
 					free(uw_forwarder);
 					yyerror("forwarder %s too long", $1);
@@ -445,7 +445,7 @@ forwarderoptsl		: STRING {
 				ret = snprintf(uw_forwarder->name,
 				    sizeof(uw_forwarder->name), "%s@853#%s", $1,
 				    $4);
-				if (ret == -1 || (size_t)ret >=
+				if (ret < 0 || (size_t)ret >=
 				    sizeof(uw_forwarder->name)) {
 					free(uw_forwarder);
 					yyerror("forwarder %s too long", $1);
@@ -480,7 +480,7 @@ forwarderoptsl		: STRING {
 				ret = snprintf(uw_forwarder->name,
 				    sizeof(uw_forwarder->name), "%s@%d#%s", $1,
 				    (int)$3, $6);
-				if (ret == -1 || (size_t)ret >=
+				if (ret < 0 || (size_t)ret >=
 				    sizeof(uw_forwarder->name)) {
 					free(uw_forwarder);
 					yyerror("forwarder %s too long", $1);

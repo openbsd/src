@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.26 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: ca.c,v 1.27 2019/07/03 03:24:02 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1109,7 +1109,7 @@ ca_main(int argc, char **argv)
 				k = snprintf(pempath, sizeof(pempath),
 				    "%s/%s.pem", outdir, serialstr);
 				free(serialstr);
-				if (k == -1 || k >= sizeof(pempath)) {
+				if (k < 0 || k >= sizeof(pempath)) {
 					BIO_printf(bio_err,
 					    "certificate file name too long\n");
 					goto err;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.47 2019/02/27 06:33:56 sthen Exp $	*/
+/*	$OpenBSD: ca.c,v 1.48 2019/07/03 03:24:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -589,7 +589,7 @@ ca_reload(struct iked *env)
 			continue;
 
 		if (snprintf(file, sizeof(file), "%s%s",
-		    IKED_CA_DIR, entry->d_name) == -1)
+		    IKED_CA_DIR, entry->d_name) < 0)
 			continue;
 
 		if (!X509_load_cert_file(store->ca_calookup, file,
@@ -615,7 +615,7 @@ ca_reload(struct iked *env)
 			continue;
 
 		if (snprintf(file, sizeof(file), "%s%s",
-		    IKED_CRL_DIR, entry->d_name) == -1)
+		    IKED_CRL_DIR, entry->d_name) < 0)
 			continue;
 
 		if (!X509_load_crl_file(store->ca_calookup, file,
@@ -688,7 +688,7 @@ ca_reload(struct iked *env)
 			continue;
 
 		if (snprintf(file, sizeof(file), "%s%s",
-		    IKED_CERT_DIR, entry->d_name) == -1)
+		    IKED_CERT_DIR, entry->d_name) < 0)
 			continue;
 
 		if (!X509_load_cert_file(store->ca_certlookup, file,

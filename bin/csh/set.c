@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.22 2018/10/24 06:01:03 martijn Exp $	*/
+/*	$OpenBSD: set.c,v 1.23 2019/07/03 03:24:01 deraadt Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -329,7 +329,7 @@ putn(int n)
     int i;
 
     i = snprintf(number, sizeof(number), "%d", n);
-    if (i == -1 || i >= sizeof(number))
+    if (i < 0 || i >= sizeof(number))
 	return (STRNULL);
     return (SAVE(number));
 }

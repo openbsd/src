@@ -1,4 +1,4 @@
-/*	$OpenBSD: asctime.c,v 1.23 2015/10/24 18:13:18 guenther Exp $ */
+/*	$OpenBSD: asctime.c,v 1.24 2019/07/03 03:24:04 deraadt Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -99,7 +99,7 @@ asctime3(const struct tm *timeptr, char *buf, int bufsize)
 	    timeptr->tm_mday, timeptr->tm_hour,
 	    timeptr->tm_min, timeptr->tm_sec,
 	    year);
-	if (len != -1 && len < bufsize) {
+	if (len >= 0 && len < bufsize) {
 		return buf;
 	} else {
 		errno = EOVERFLOW;

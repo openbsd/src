@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.394 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.395 2019/07/03 03:24:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2046,7 +2046,7 @@ smtp_reply(struct smtp_session *s, char *fmt, ...)
 	va_start(ap, fmt);
 	n = vsnprintf(buf, sizeof buf, fmt, ap);
 	va_end(ap);
-	if (n == -1 || n >= LINE_MAX)
+	if (n < 0 || n >= LINE_MAX)
 		fatalx("smtp_reply: line too long");
 	if (n < 4)
 		fatalx("smtp_reply: response too short");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.97 2016/09/01 09:27:06 otto Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.98 2019/07/03 03:24:02 deraadt Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -567,7 +567,7 @@ mkfs(struct partition *pp, char *fsys, int fi, int fo, mode_t mfsmode,
 		    (long long)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
 		if (j >= sizeof tmpbuf)
 			j = sizeof tmpbuf - 1;
-		if (j == -1 || i+j >= width) {
+		if (j < 0 || i+j >= width) {
 			printf("\n");
 			i = 0;
 		}

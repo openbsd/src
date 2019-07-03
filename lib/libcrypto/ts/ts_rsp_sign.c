@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.22 2018/05/13 15:04:05 tb Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.23 2019/07/03 03:24:04 deraadt Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -1001,7 +1001,7 @@ TS_RESP_set_genTime_with_precision(ASN1_GENERALIZEDTIME *asn1_time,
 	    "%04d%02d%02d%02d%02d%02d%sZ",
 	    tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
 	    tm->tm_hour, tm->tm_min, tm->tm_sec, usecstr);
-	if (rv == -1 || rv >= sizeof(genTime_str))
+	if (rv < 0 || rv >= sizeof(genTime_str))
 		goto err;
 
 	/* Now call OpenSSL to check and set our genTime value */
