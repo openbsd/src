@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_thermal.c,v 1.1 2019/07/02 20:12:11 kettenis Exp $	*/
+/*	$OpenBSD: ofw_thermal.c,v 1.2 2019/07/03 21:20:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -434,7 +434,7 @@ thermal_init(void)
 {
 	int node = OF_finddevice("/thermal-zones");
 
-	if (node == 0)
+	if (node == -1)
 		return;
 
 	tztq = taskq_create("tztq", 1, IPL_NONE, 0);
