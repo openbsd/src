@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.12 2019/06/28 05:22:13 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.13 2019/07/03 06:22:01 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -416,6 +416,8 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 		if (ret == 1)
 			goto fail;
 		break;
+	default:
+		errx(1, "unknonw subtype %hd", ntohs(hdr->subtype));
 	}
 
 	/* adjust length */
