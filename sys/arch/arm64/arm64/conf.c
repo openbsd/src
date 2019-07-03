@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2019/01/23 09:57:36 phessler Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 2019/07/03 21:04:26 patrick Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -250,7 +250,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 90: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),     /* 91: pppx */
 	cdev_fuse_init(NFUSE,fuse),	/* 92: fuse */
-	cdev_notdef(),			/* 93 */
+	cdev_tun_init(NTUN,tap),	/* 93: Ethernet network tunnel */
 	cdev_notdef(),			/* 94 */
 	cdev_notdef(),			/* 95 */
 	cdev_notdef(),			/* 96 */
