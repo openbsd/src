@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.32 2019/07/01 00:44:29 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.33 2019/07/03 10:19:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -605,6 +606,43 @@ ifiq_process(void *arg)
 	mtx_leave(&ifiq->ifiq_mtx);
 
 	if_input_process(ifiq->ifiq_if, &ml);
+}
+
+int
+net_ifiq_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, 
+    void *newp, size_t newlen)
+{
+	int val;
+	int error;
+
+	if (namelen != 1)
+		return (EISDIR);
+
+	switch (name[0]) {
+	case NET_LINK_IFRXQ_PRESSURE_RETURN:
+		val = ifiq_pressure_return;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
+		if (error != 0)
+			return (error);
+		if (val < 1 || val > ifiq_pressure_drop)
+			return (EINVAL);
+		ifiq_pressure_return = val;
+		break;
+	case NET_LINK_IFRXQ_PRESSURE_DROP:
+		val = ifiq_pressure_drop;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
+		if (error != 0)
+			return (error);
+		if (ifiq_pressure_return > val)
+			return (EINVAL);
+		ifiq_pressure_drop = val;
+		break;
+	default:
+		error = EOPNOTSUPP;
+		break;
+	}
+
+	return (error);
 }
 
 /*

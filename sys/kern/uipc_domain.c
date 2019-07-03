@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.56 2018/06/23 14:38:59 denis Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.57 2019/07/03 10:19:45 dlg Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -159,6 +159,37 @@ pffindproto(int family, int protocol, int type)
 	return (maybe);
 }
 
+static int
+net_link_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	int node;
+	int error;
+
+	/*
+	 * All sysctl names at this level are nonterminal.
+	 */
+	if (namelen < 2)
+		return (EISDIR);		/* overloaded */
+	node = name[0];
+
+	namelen--;
+	name++;
+
+	switch (node) {
+	case NET_LINK_IFRXQ:
+		error = net_ifiq_sysctl(name, namelen, oldp, oldlenp,
+		    newp, newlen);
+		break;
+
+	default:
+		error = ENOPROTOOPT;
+		break;
+	}
+
+	return (error);
+}
+
 int
 net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
@@ -178,6 +209,9 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	if (family == PF_UNSPEC)
 		return (0);
+	if (family == PF_LINK)
+		return (net_link_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 #if NBPFILTER > 0
 	if (family == PF_BPF)
 		return (bpf_sysctl(name + 1, namelen - 1, oldp, oldlenp,

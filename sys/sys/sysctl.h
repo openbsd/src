@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.192 2019/06/25 14:08:57 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.193 2019/07/03 10:19:45 dlg Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -1031,6 +1031,7 @@ int sysctl_wdog(int *, u_int, void *, size_t *, void *, size_t);
 extern int (*cpu_cpuspeed)(int *);
 extern void (*cpu_setperf)(int);
 
+int net_ifiq_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int bpf_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pflow_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pipex_sysctl(int *, u_int, void *, size_t *, void *, size_t);
