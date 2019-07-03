@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.32 2019/06/26 16:54:29 lum Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.33 2019/07/03 18:11:07 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -387,6 +387,29 @@ selfinsert(int f, int n)
 			return (TRUE);
 	}
 	return (linsert(n, c));
+}
+
+/*
+ * selfinsert() can't be called directly from a startup file or by
+ * 'eval-current-buffer' since it is by design, meant to be called interactively
+ * as characters are typed in a buffer. ask_selfinsert() allows selfinsert() to
+ * be used by excline(). Having ask_selfinsert() helps with regression testing.
+ * No manual page entry since use case is a bit obscure. See 'insert' command.
+ */
+int
+ask_selfinsert(int f, int n)
+{
+	char	*c, cbuf[2];
+
+	if ((c = eread("Insert a character: ", cbuf, sizeof(cbuf),
+	    EFNEW)) == NULL || (c[0] == '\0'))
+		return (ABORT);
+
+	key.k_chars[0] = *c;
+	key.k_chars[1] = '\0';
+	key.k_count = 1;
+
+	return (selfinsert(FFRAND, 1));
 }
 
 /*

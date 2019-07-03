@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.161 2019/07/02 16:25:39 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.162 2019/07/03 18:11:07 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -490,6 +490,7 @@ int		 rescan(int, int);
 int		 universal_argument(int, int);
 int		 digit_argument(int, int);
 int		 negative_argument(int, int);
+int		 ask_selfinsert(int, int);
 int		 selfinsert(int, int);
 int		 quote(int, int);
 
