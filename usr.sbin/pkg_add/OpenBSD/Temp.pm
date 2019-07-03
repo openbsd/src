@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.30 2019/07/03 12:51:02 espie Exp $
+# $OpenBSD: Temp.pm,v 1.31 2019/07/03 13:48:08 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -28,6 +28,8 @@ our $tempbase = $ENV{'PKG_TMPDIR'} || OpenBSD::Paths->vartmp;
 
 my $dirs = {};
 my $files = {};
+
+my ($lastname, $lasterror, $lasttype);
 
 my $cleanup = sub {
 	while (my ($name, $pid) = each %$files) {
@@ -108,7 +110,12 @@ sub permanent_file
 	if (defined $dir) {
 		$template = "$dir/$template";
 	}
-	return OpenBSD::MkTemp::mkstemp($template);
+	if (my @l = OpenBSD::MkTemp::mkstemp($template)) {
+		return @l;
+	}
+	($lastname, $lasttype, $lasterror) = ($template, 'file', $!);
+	return undef;
+	
 }
 
 sub permanent_dir
@@ -118,12 +125,19 @@ sub permanent_dir
 	if (defined $dir) {
 		$template = "$dir/$template";
 	}
-	return OpenBSD::MkTemp::mkdtemp($template);
+	if (my @l = OpenBSD::MkTemp::mkdtemp($template)) {
+		return @l;
+	}
+	($lastname, $lasttype, $lasterror) = ($template, 'dir', $!);
+	return undef;
 }
 
-sub tempbase
+sub last_error
 {
-	return $tempbase;
-}
+	my ($class, $template) = @_;
 
+	my ($user) = getpwuid($>);
+	$template //= "User #1 couldn't create temp #2 as #3: #4";
+	return ($template, $user, $lasttype, $lastname, $lasterror);
+}
 1;
