@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.107 2019/04/16 11:42:56 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.108 2019/07/03 10:34:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1743,6 +1743,7 @@ myx_rxeof(struct myx_softc *sc)
 	int ring;
 	u_int rxfree[2] = { 0 , 0 };
 	u_int len;
+	int livelocked;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_intrq_dma.mxm_map, 0,
 	    sc->sc_intrq_dma.mxm_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -1778,19 +1779,21 @@ myx_rxeof(struct myx_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_intrq_dma.mxm_map, 0,
 	    sc->sc_intrq_dma.mxm_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
+	livelocked = ifiq_input(&ifp->if_rcv, &ml);
 	for (ring = MYX_RXSMALL; ring <= MYX_RXBIG; ring++) {
 		if (rxfree[ring] == 0)
 			continue;
 
 		mrr = &sc->sc_rx_ring[ring];
 
+		if (livelocked)
+			if_rxr_livelocked(&mrr->mrr_rxr);
+
 		if_rxr_put(&mrr->mrr_rxr, rxfree[ring]);
 		myx_rx_fill(sc, mrr);
 		if (mrr->mrr_prod == mrr->mrr_cons)
 			timeout_add(&mrr->mrr_refill, 0);
 	}
-
-	if_input(ifp, &ml);
 }
 
 static int
