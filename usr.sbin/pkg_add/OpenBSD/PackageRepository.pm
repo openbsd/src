@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.160 2018/04/22 09:16:15 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.161 2019/07/03 12:51:02 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1023,7 +1023,9 @@ sub setup_session
 	my ($fh, undef) = OpenBSD::Temp::fh_file("session",
 		sub { unlink(shift); });
 	if (!defined $fh) {
-		$self->{state}->fatal("Can't write session into tmp directory");
+		$self->{state}->fatal(
+		    "User #1 can't write session into #2 directory", $user, 
+		    OpenBSD::Temp->tempbase);
 	}
 	$self->{fh} = $fh; # XXX store the full fh and not the fileno
 }
