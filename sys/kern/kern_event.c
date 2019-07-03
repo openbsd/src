@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.105 2019/07/01 16:52:02 cheloha Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.106 2019/07/03 14:32:02 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -962,6 +962,8 @@ knote_fdclose(struct proc *p, int fd)
 {
 	struct kqueue *kq;
 	struct klist *list;
+
+	KERNEL_ASSERT_LOCKED();
 
 	LIST_FOREACH(kq, &p->p_p->ps_kqlist, kq_next) {
 		if (fd >= kq->kq_knlistsize)
