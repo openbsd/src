@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.96 2018/04/08 18:57:39 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.97 2019/07/03 10:08:10 dlg Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ struct sockpeercred {
 	{ "hylink", CTLTYPE_NODE }, \
 	{ "appletalk", CTLTYPE_NODE }, \
 	{ "route", CTLTYPE_NODE }, \
-	{ "link_layer", CTLTYPE_NODE }, \
+	{ "link", CTLTYPE_NODE }, \
 	{ "xtp", CTLTYPE_NODE }, \
 	{ "coip", CTLTYPE_NODE }, \
 	{ "cnt", CTLTYPE_NODE }, \
@@ -376,6 +376,29 @@ struct sockpeercred {
 	{ "stats", CTLTYPE_STRUCT }, \
 	{ "table", CTLTYPE_STRUCT }, \
 	{ "ifnames", CTLTYPE_STRUCT }, \
+}
+
+/*
+ * PF_LINK - link layer or device tunables
+ */
+#define NET_LINK_IFRXQ		1	/* net.link.ifrxq */
+#define NET_LINK_MAXID		2
+
+#define CTL_NET_LINK_NAMES { \
+	{ 0, 0 }, \
+	{ "ifrxq", CTLTYPE_NODE }, \
+}
+
+#define NET_LINK_IFRXQ_PRESSURE_RETURN \
+				1	/* net.link.ifrxq.pressure_return */
+#define NET_LINK_IFRXQ_PRESSURE_DROP \
+				2	/* net.link.ifrxq.pressure_drop */
+#define NET_LINK_IFRXQ_MAXID	3
+
+#define CTL_NET_LINK_IFRXQ_NAMES { \
+	{ 0, 0 }, \
+	{ "pressure_return", CTLTYPE_INT }, \
+	{ "pressure_drop", CTLTYPE_INT }, \
 }
 
 /*
