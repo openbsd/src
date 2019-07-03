@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.18 2019/06/27 15:18:42 otto Exp $	*/
+/*	$OpenBSD: log.c,v 1.19 2019/07/03 05:04:19 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -78,7 +78,9 @@ vlog(int pri, const char *fmt, va_list ap)
 {
 	char	*nfmt;
 	int	 saved_errno = errno;
+	va_list	 ap2;
 
+	va_copy(ap2, ap);
 	if (dest & LOG_TO_STDERR) {
 		/* best effort in out of mem situations */
 		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
@@ -91,7 +93,8 @@ vlog(int pri, const char *fmt, va_list ap)
 		fflush(stderr);
 	}
 	if (dest & LOG_TO_SYSLOG)
-		vsyslog(pri, fmt, ap);
+		vsyslog(pri, fmt, ap2);
+	va_end(ap2);
 
 	errno = saved_errno;
 }
