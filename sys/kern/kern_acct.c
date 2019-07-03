@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.38 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.39 2019/07/03 22:39:33 cheloha Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ struct	vnode *savacctp;
  */
 int	acctsuspend = 2;	/* stop accounting when < 2% free space left */
 int	acctresume = 4;		/* resume when free space risen to > 4% */
-int	acctchkfreq = 15;	/* frequency (in seconds) to check space */
+int	acctrate = 15;		/* delay (in seconds) between space checks */
 
 struct proc *acct_proc;
 
@@ -313,7 +313,7 @@ acct_thread(void *arg)
 		} else {
 			break;
 		}
-		tsleep(&acct_proc, PPAUSE, "acct", acctchkfreq *hz);
+		tsleep_nsec(&acct_proc, PPAUSE, "acct", SEC_TO_NSEC(acctrate));
 	}
 	acct_proc = NULL;
 	kthread_exit(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.43 2019/07/02 14:54:36 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.44 2019/07/03 22:39:33 cheloha Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -340,10 +340,36 @@ NSEC_TO_TIMEVAL(uint64_t ns, struct timeval *tv)
 }
 
 static __inline void
-NSEC_TO_TIMESPEC(uint64_t ns, struct timespec *tv)
+NSEC_TO_TIMESPEC(uint64_t ns, struct timespec *ts)
 {
-	tv->tv_sec = ns / 1000000000L;
-	tv->tv_nsec = ns % 1000000000L;
+	ts->tv_sec = ns / 1000000000L;
+	ts->tv_nsec = ns % 1000000000L;
+}
+
+#include <sys/stdint.h>
+
+static __inline uint64_t
+SEC_TO_NSEC(uint64_t seconds)
+{
+	if (seconds > UINT64_MAX / 1000000000ULL)
+		return UINT64_MAX;
+	return seconds * 1000000000ULL;
+}
+
+static __inline uint64_t
+MSEC_TO_NSEC(uint64_t milliseconds)
+{
+	if (milliseconds > UINT64_MAX / 1000000ULL)
+		return UINT64_MAX;
+	return milliseconds * 1000000ULL;
+}
+
+static __inline uint64_t
+USEC_TO_NSEC(uint64_t microseconds)
+{
+	if (microseconds > UINT64_MAX / 1000ULL)
+		return UINT64_MAX;
+	return microseconds * 1000ULL;
 }
 
 #else /* !_KERNEL */

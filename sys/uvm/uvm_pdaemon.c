@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.82 2019/05/10 02:33:57 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.83 2019/07/03 22:39:33 cheloha Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -110,7 +110,7 @@ void		uvmpd_drop(struct pglist *);
 void
 uvm_wait(const char *wmsg)
 {
-	int	timo = 0;
+	uint64_t timo = INFSLP;
 
 #ifdef DIAGNOSTIC
 	if (curproc == &proc0)
@@ -140,7 +140,7 @@ uvm_wait(const char *wmsg)
 		 */
 
 		printf("pagedaemon: deadlock detected!\n");
-		timo = hz >> 3;		/* set timeout */
+		timo = MSEC_TO_NSEC(125);	/* set timeout */
 #if defined(DEBUG)
 		/* DEBUG: panic so we can debug it */
 		panic("pagedaemon deadlock");
@@ -149,7 +149,7 @@ uvm_wait(const char *wmsg)
 
 	uvm_lock_fpageq();
 	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
-	msleep(&uvmexp.free, &uvm.fpageqlock, PVM | PNORELOCK, wmsg, timo);
+	msleep_nsec(&uvmexp.free, &uvm.fpageqlock, PVM | PNORELOCK, wmsg, timo);
 }
 
 /*

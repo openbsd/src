@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_smr.c,v 1.4 2019/05/17 03:53:08 visa Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.5 2019/07/03 22:39:33 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -100,8 +100,8 @@ smr_thread(void *arg)
 				    "bored", 0);
 		} else {
 			if (smr_expedite == 0)
-				msleep(&smr_ndeferred, &smr_lock, PVM,
-				    "pause", SMR_PAUSE * hz / 1000);
+				msleep_nsec(&smr_ndeferred, &smr_lock, PVM,
+				    "pause", MSEC_TO_NSEC(SMR_PAUSE));
 		}
 
 		SIMPLEQ_CONCAT(&deferred, &smr_deferred);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.141 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: systm.h,v 1.142 2019/07/03 22:39:33 cheloha Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -259,14 +259,21 @@ void	cond_init(struct cond *);
 void	cond_wait(struct cond *, const char *);
 void	cond_signal(struct cond *);
 
+#define	INFSLP	UINT64_MAX
+
 struct mutex;
 struct rwlock;
 void    wakeup_n(const volatile void *, int);
 void    wakeup(const volatile void *);
 #define wakeup_one(c) wakeup_n((c), 1)
 int	tsleep(const volatile void *, int, const char *, int);
+int	tsleep_nsec(const volatile void *, int, const char *, uint64_t);
 int	msleep(const volatile void *, struct mutex *, int,  const char*, int);
+int	msleep_nsec(const volatile void *, struct mutex *, int,  const char*,
+	    uint64_t);
 int	rwsleep(const volatile void *, struct rwlock *, int, const char *, int);
+int	rwsleep_nsec(const volatile void *, struct rwlock *, int, const char *,
+	    uint64_t);
 void	yield(void);
 
 void	wdog_register(int (*)(void *, int), void *);

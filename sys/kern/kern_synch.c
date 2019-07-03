@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.149 2019/06/18 15:53:11 visa Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.150 2019/07/03 22:39:33 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -54,6 +54,10 @@
 #include <ddb/db_output.h>
 
 #include <machine/spinlock.h>
+
+#ifdef DIAGNOSTIC
+#include <sys/syslog.h>
+#endif
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -149,6 +153,28 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 }
 
 int
+tsleep_nsec(const volatile void *ident, int priority, const char *wmesg,
+    uint64_t nsecs)
+{
+	uint64_t to_ticks;
+
+	if (nsecs == INFSLP)
+		return tsleep(ident, priority, wmesg, 0);
+#ifdef DIAGNOSTIC
+	if (nsecs == 0) {
+		log(LOG_WARNING, "%s: %s: trying to sleep for zero nanoseconds",
+		    __func__, wmesg);
+	}
+#endif
+	to_ticks = nsecs / (tick * 1000);
+	if (to_ticks > INT_MAX)
+		to_ticks = INT_MAX;
+	if (to_ticks == 0)
+		to_ticks = 1;
+	return tsleep(ident, priority, wmesg, (int)to_ticks);
+}
+
+int
 sleep_finish_all(struct sleep_state *sls, int do_sleep)
 {
 	int error, error1;
@@ -228,6 +254,28 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	return error;
 }
 
+int
+msleep_nsec(const volatile void *ident, struct mutex *mtx, int priority,
+    const char *wmesg, uint64_t nsecs)
+{
+	uint64_t to_ticks;
+
+	if (nsecs == INFSLP)
+		return msleep(ident, mtx, priority, wmesg, 0);
+#ifdef DIAGNOSTIC
+	if (nsecs == 0) {
+		log(LOG_WARNING, "%s: %s: trying to sleep for zero nanoseconds",
+		    __func__, wmesg);
+	}
+#endif
+	to_ticks = nsecs / (tick * 1000);
+	if (to_ticks > INT_MAX)
+		to_ticks = INT_MAX;
+	if (to_ticks == 0)
+		to_ticks = 1;
+	return msleep(ident, mtx, priority, wmesg, (int)to_ticks);
+}
+
 /*
  * Same as tsleep, but if we have a rwlock provided, then once we've
  * entered the sleep queue we drop the it. After sleeping we re-lock.
@@ -255,6 +303,28 @@ rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
 		rw_enter(rwl, status);
 
 	return error;
+}
+
+int
+rwsleep_nsec(const volatile void *ident, struct rwlock *rwl, int priority,
+    const char *wmesg, uint64_t nsecs)
+{
+	uint64_t to_ticks;
+
+	if (nsecs == INFSLP)
+		return rwsleep(ident, rwl, priority, wmesg, 0);
+#ifdef DIAGNOSTIC
+	if (nsecs == 0) {
+		log(LOG_WARNING, "%s: %s: trying to sleep for zero nanoseconds",
+		    __func__, wmesg);
+	}
+#endif
+	to_ticks = nsecs / (tick * 1000);
+	if (to_ticks > INT_MAX)
+		to_ticks = INT_MAX;
+	if (to_ticks == 0)
+		to_ticks = 1;
+	return 	rwsleep(ident, rwl, priority, wmesg, (int)to_ticks);
 }
 
 void
