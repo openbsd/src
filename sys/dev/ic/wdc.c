@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.134 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.135 2019/07/03 00:08:18 ians Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -158,8 +158,7 @@ wdc_log(struct channel_softc *chp, enum wdcevent_type type,
 	unsigned int tail = wdc_tail;
 
 #ifdef DIAGNOSTIC
-	if (head < 0 || head > wdc_log_cap ||
-	    tail < 0 || tail > wdc_log_cap) {
+	if (head > wdc_log_cap || tail > wdc_log_cap) {
 		printf ("wdc_log: head %x wdc_tail %x\n", head,
 		    tail);
 		return;
@@ -246,8 +245,7 @@ wdc_get_log(unsigned int * size, unsigned int *left)
 	}
 
 #ifdef DIAGNOSTIC
-	if (head < 0 || head > wdc_log_cap ||
-	    tail < 0 || tail > wdc_log_cap) {
+	if (head > wdc_log_cap || tail > wdc_log_cap) {
 		printf ("wdc_log: head %x tail %x\n", head,
 		    tail);
 		*size = 0;
