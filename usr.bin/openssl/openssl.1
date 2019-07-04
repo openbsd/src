@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.103 2019/07/04 13:00:42 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.104 2019/07/04 13:55:20 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -878,17 +878,21 @@ but without cipher suite codes.
 .Nm "openssl crl"
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar dir
+.Op Fl crlnumber
 .Op Fl fingerprint
 .Op Fl hash
+.Op Fl hash_old
 .Op Fl in Ar file
 .Op Fl inform Cm der | pem
 .Op Fl issuer
 .Op Fl lastupdate
+.Op Fl nameopt Ar option
 .Op Fl nextupdate
 .Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Cm der | pem
 .Op Fl text
+.Op Fl verify
 .nr nS 0
 .Pp
 The
@@ -907,11 +911,15 @@ This directory must be a standard certificate directory,
 i.e. a hash of each subject name (using
 .Cm x509 Fl hash )
 should be linked to each certificate.
+.It Fl crlnumber
+Print the CRL number.
 .It Fl fingerprint
 Print the CRL fingerprint.
 .It Fl hash
 Output a hash of the issuer name.
 This can be used to look up CRLs in a directory by issuer name.
+.It Fl hash_old
+Output an old-style (MD5) hash of the issuer name.
 .It Fl in Ar file
 The input file to read from, or standard input if not specified.
 .It Fl inform Cm der | pem
@@ -922,6 +930,8 @@ Output the issuer name.
 Output the
 .Cm lastUpdate
 field.
+.It Fl nameopt Ar option
+Specify certificate name options.
 .It Fl nextupdate
 Output the
 .Cm nextUpdate
@@ -934,6 +944,8 @@ The output file to write to, or standard output if not specified.
 The output format.
 .It Fl text
 Print the CRL in plain text.
+.It Fl verify
+Verify the signature on the CRL.
 .El
 .Sh CRL2PKCS7
 .nr nS 1
