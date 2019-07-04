@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.38 2019/05/04 13:42:12 jsg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.39 2019/07/04 06:31:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1140,6 +1140,8 @@ struct ixl_softc {
 	unsigned int		 sc_dead;
 
 	struct rwlock		 sc_sff_lock;
+
+	uint8_t			 sc_enaddr[ETHER_ADDR_LEN];
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
@@ -1652,6 +1654,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
 	ixl_add_macvlan(sc, etherbroadcastaddr, 0,
 	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
+	memcpy(sc->sc_enaddr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
 
 	ixl_intr_enable(sc);
 
@@ -2005,6 +2008,13 @@ ixl_iff(struct ixl_softc *sc)
 	if (iaq->iaq_retval != htole16(IXL_AQ_RC_OK))
 		return (EIO);
 
+	if (memcmp(sc->sc_enaddr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN) != 0) {
+		ixl_remove_macvlan(sc, sc->sc_enaddr, 0,
+		    IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN);
+		ixl_add_macvlan(sc, sc->sc_ac.ac_enaddr, 0,
+		    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
+		memcpy(sc->sc_enaddr, sc->sc_ac.ac_enaddr, ETHER_ADDR_LEN);
+	}
 	return (0);
 }
 
