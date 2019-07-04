@@ -48,6 +48,7 @@ static int psp_early_init(void *handle)
 		psp_v3_1_set_psp_funcs(psp);
 		break;
 	case CHIP_RAVEN:
+	case CHIP_PICASSO:
 		psp_v10_0_set_psp_funcs(psp);
 		break;
 	default:
