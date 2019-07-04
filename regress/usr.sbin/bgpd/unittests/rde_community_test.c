@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community_test.c,v 1.1 2019/06/17 13:13:03 claudio Exp $ */
+/*	$OpenBSD: rde_community_test.c,v 1.2 2019/07/04 10:20:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -229,4 +229,11 @@ attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
 		memcpy(b, data, data_len);
 
 	return (tot_len);
+}
+
+int
+attr_writebuf(struct ibuf *buf, u_int8_t flags, u_int8_t type, void *data,
+    u_int16_t data_len)
+{
+	return (-1);
 }
