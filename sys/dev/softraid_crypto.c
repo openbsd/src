@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.137 2017/06/12 16:39:51 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.138 2019/07/04 18:09:17 bluhm Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -107,6 +107,7 @@ sr_crypto_discipline_init(struct sr_discipline *sd)
 	int i;
 
 	/* Fill out discipline members. */
+	sd->sd_wu_size = sizeof(struct sr_crypto_wu);
 	sd->sd_type = SR_MD_CRYPTO;
 	strlcpy(sd->sd_name, "CRYPTO", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE;
@@ -934,7 +935,7 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	for (i = 0; i < SR_CRYPTO_MAXKEYS; i++)
 		sd->mds.mdd_crypto.scr_sid[i] = (u_int64_t)-1;
 
-	if (sr_wu_alloc(sd, sizeof(struct sr_crypto_wu))) {
+	if (sr_wu_alloc(sd)) {
 		sr_error(sd->sd_sc, "unable to allocate work units");
 		return (ENOMEM);
 	}
