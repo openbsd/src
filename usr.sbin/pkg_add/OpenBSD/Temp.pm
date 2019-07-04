@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.31 2019/07/03 13:48:08 espie Exp $
+# $OpenBSD: Temp.pm,v 1.32 2019/07/04 14:50:01 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -125,8 +125,8 @@ sub permanent_dir
 	if (defined $dir) {
 		$template = "$dir/$template";
 	}
-	if (my @l = OpenBSD::MkTemp::mkdtemp($template)) {
-		return @l;
+	if (my $d = OpenBSD::MkTemp::mkdtemp($template)) {
+		return $d;
 	}
 	($lastname, $lasttype, $lasterror) = ($template, 'dir', $!);
 	return undef;
