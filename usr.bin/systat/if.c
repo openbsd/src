@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.24 2019/03/04 21:27:35 dlg Exp $ */
+/*	$OpenBSD: if.c,v 1.25 2019/07/04 01:39:44 dlg Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -434,7 +434,7 @@ if_set_errs(unsigned int v)
 {
 	if_err_view = &if_err_views[v];
 	FLD_IF_IERRS->title = if_err_view->iname;
-	FLD_IF_IERRS->title = if_err_view->oname;
+	FLD_IF_OERRS->title = if_err_view->oname;
 	gotsig_alarm = 1;
 }
 
