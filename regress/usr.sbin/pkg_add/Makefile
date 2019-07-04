@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.64 2019/06/19 12:52:06 espie Exp $
+# $OpenBSD: Makefile,v 1.65 2019/07/04 09:48:24 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -10,7 +10,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
 	qttest gstest exotest inter1 manual1 oldlib1 \
 	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug \
-	tying-1 tying-2 tag-delete
+	tying-1 tying-2 tag-delete setsprint
 
 # lots of tests that really require a vstat overhaul
 REGRESS_EXPECTED_FAILURES = collision-check1 collision-check2 \
@@ -40,6 +40,9 @@ pkgnames:
 
 pkgcfl:
 	perl ${.CURDIR}/check-cfl
+
+setsprint:
+	perl ${.CURDIR}/check-beautify
 
 pkgpaths:
 	perl ${.CURDIR}/check-path
