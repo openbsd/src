@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.102 2019/06/07 05:53:46 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.103 2019/07/04 13:00:42 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: June 7 2019 $
+.Dd $Mdocdate: July 4 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -308,29 +308,31 @@ into a nested structure.
 .Op Fl crldays Ar days
 .Op Fl crlexts Ar section
 .Op Fl crlhours Ar hours
+.Op Fl crlsec Ar seconds
 .Op Fl days Ar arg
 .Op Fl enddate Ar date
 .Op Fl extensions Ar section
-.Op Fl extfile Ar section
+.Op Fl extfile Ar file
 .Op Fl gencrl
 .Op Fl in Ar file
 .Op Fl infiles
 .Op Fl key Ar password
-.Op Fl keyfile Ar arg
+.Op Fl keyfile Ar file
 .Op Fl keyform Cm pem | der
-.Op Fl md Ar arg
+.Op Fl md Ar alg
 .Op Fl msie_hack
 .Op Fl multivalue\-rdn
 .Op Fl name Ar section
 .Op Fl noemailDN
 .Op Fl notext
 .Op Fl out Ar file
-.Op Fl outdir Ar dir
+.Op Fl outdir Ar directory
 .Op Fl passin Ar arg
 .Op Fl policy Ar arg
 .Op Fl preserveDN
 .Op Fl revoke Ar file
 .Op Fl selfsign
+.Op Fl sigopt Ar nm:v
 .Op Fl spkac Ar file
 .Op Fl ss_cert Ar file
 .Op Fl startdate Ar date
@@ -521,6 +523,9 @@ the certificate database (see the configuration option
 .Cm database )
 and uses the same serial number counter as all other certificates
 signed with the self-signed certificate.
+.It Fl sigopt Ar nm:v
+Pass options to the signature algorithm during sign or certify operations.
+The names and values of these options are algorithm-specific.
 .It Fl spkac Ar file
 A file containing a single Netscape signed public key and challenge,
 and additional field values to be signed by the CA.
@@ -593,7 +598,7 @@ is case insensitive.
 Setting any revocation reason will make the CRL v2.
 In practice, removeFromCRL is not particularly useful because it is only used
 in delta CRLs which are not currently implemented.
-.It Fl crldays Ar num
+.It Fl crldays Ar days
 The number of days before the next CRL is due.
 This is the days from now to place in the CRL
 .Cm nextUpdate
@@ -611,8 +616,10 @@ It should be noted that some software can't handle V2 CRLs.
 See the
 .Xr x509v3.cnf 5
 manual page for details of the extension section format.
-.It Fl crlhours Ar num
+.It Fl crlhours Ar hours
 The number of hours before the next CRL is due.
+.It Fl crlsec Ar seconds
+The number of seconds before the next CRL is due.
 .It Fl gencrl
 Generate a CRL based on information in the index file.
 .It Fl revoke Ar file
