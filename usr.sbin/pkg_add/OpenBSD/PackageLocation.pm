@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.51 2017/03/07 14:15:09 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.52 2019/07/04 14:53:27 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -157,7 +157,8 @@ sub grab_info
 	}
 
 	if (! -f $dir.CONTENTS) {
-		open my $fh, '>', $dir.CONTENTS or die "Permission denied";
+		open my $fh, '>', $dir.CONTENTS or 
+		    die "write to ",$dir.CONTENTS, ": ", $!;
 		print $fh $self->contents;
 		close $fh;
 	}
