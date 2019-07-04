@@ -308,7 +308,7 @@ intel_engine_setup(struct drm_i915_private *dev_priv,
 	/* Nothing to do here, execute in order of dependencies */
 	engine->schedule = NULL;
 
-	seqlock_init(&engine->stats.lock);
+	seqlock_init(&engine->stats.lock, IPL_TTY);
 
 	ATOMIC_INIT_NOTIFIER_HEAD(&engine->context_status_notifier);
 

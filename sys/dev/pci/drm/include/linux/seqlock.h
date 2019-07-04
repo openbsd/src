@@ -84,10 +84,10 @@ typedef struct {
 } seqlock_t;
 
 static inline void
-seqlock_init(seqlock_t *sl)
+seqlock_init(seqlock_t *sl, int wantipl)
 { 
 	sl->seq = 0;
-	mtx_init(&sl->lock, IPL_NONE);
+	mtx_init(&sl->lock, wantipl);
 }
 
 static inline void

@@ -446,7 +446,7 @@ int drm_vblank_init(struct drm_device *dev, unsigned int num_crtcs)
 		init_waitqueue_head(&vblank->queue);
 		setup_timer(&vblank->disable_timer, vblank_disable_fn,
 		    (unsigned long)vblank);
-		seqlock_init(&vblank->seqlock);
+		seqlock_init(&vblank->seqlock, IPL_NONE);
 	}
 
 	DRM_INFO("Supports vblank timestamp caching Rev 2 (21.10.2013).\n");
