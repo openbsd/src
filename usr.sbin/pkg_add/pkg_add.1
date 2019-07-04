@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.158 2019/04/19 19:50:53 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.159 2019/07/04 15:25:16 tb Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: April 19 2019 $
+.Dd $Mdocdate: July 4 2019 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -569,7 +569,7 @@ extracts the package's
 .Dq packing information
 (the packing-list, description, and installation/deinstallation scripts)
 into a special staging directory in
-.Pa /var/tmp
+.Pa /tmp
 (or
 .Ev PKG_TMPDIR
 if set)
@@ -799,7 +799,7 @@ Special sequences
 will be expanded.
 .It Ev PKG_TMPDIR
 Temporary area where package information files will be extracted, instead of
-.Pa /var/tmp .
+.Pa /tmp .
 .It Ev TRUSTED_PKG_PATH
 Same semantics as
 .Ev PKG_PATH ,
