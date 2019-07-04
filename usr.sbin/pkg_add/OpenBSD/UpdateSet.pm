@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.84 2019/06/30 14:56:21 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.85 2019/07/04 09:47:09 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -412,10 +412,12 @@ sub print
 	}
 	# XXX common case
 	if (defined $old && defined $new) {
-		my $stema = OpenBSD::PackageName::splitstem($old);
-		my ($stemb, @rest) = OpenBSD::PackageName::splitname($new);
-		if ($stema eq $stemb) {
-			return $result .$old."->".join('-', @rest);
+		my ($stema, @resta) = OpenBSD::PackageName::splitname($old);
+		my $resta = join('-', @resta);
+		my ($stemb, @restb) = OpenBSD::PackageName::splitname($new);
+		my $restb = join('-', @restb);
+		if ($stema eq $stemb && $resta !~ /\+/ && $restb !~ /\+/) {
+			return $result .$old."->".$restb;
 		}
 	}
 
@@ -496,22 +498,6 @@ sub cleanup_old_shared
 		    $state->fatal("Can't continue");
 		delete $state->{recorder}{dirs}{$d};
 	}
-}
-
-sub create_new
-{
-	my ($class, $pkgname) = @_;
-	my $set = $class->new;
-	$set->add_newer(OpenBSD::Handle->create_new($pkgname));
-	return $set;
-}
-
-sub from_location
-{
-	my ($class, $location) = @_;
-	my $set = $class->new;
-	$set->add_newer(OpenBSD::Handle->from_location($location));
-	return $set;
 }
 
 my @extra = qw(solver conflict_cache);
