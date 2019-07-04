@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sosplice.9,v 1.9 2018/08/15 12:10:49 kn Exp $
+.\"	$OpenBSD: sosplice.9,v 1.10 2019/07/04 17:42:17 bluhm Exp $
 .\"
 .\" Copyright (c) 2011-2013 Alexander Bluhm <bluhm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 15 2018 $
+.Dd $Mdocdate: July 4 2019 $
 .Dt SOSPLICE 9
 .Os
 .Sh NAME
@@ -206,10 +206,13 @@ will call
 to trigger the transfer when new data or buffer space is available.
 While socket splicing is active, any
 .Xr read 2
-from the source socket will block and the wakeup will not be delivered
-to the file descriptor.
-A read event or a socket error is signaled to userland after
-dissolving.
+from the source socket will block.
+Neither read nor write wakeups will be delivered to the file
+descriptors.
+After dissolving, a read event or a socket error is signaled to
+userland on the source socket.
+If space is available, a write event will be signaled on the drain
+socket.
 .Sh RETURN VALUES
 .Fn sosplice
 returns 0 on success and otherwise the error number.

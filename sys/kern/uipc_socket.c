@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.231 2018/12/17 16:46:59 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.232 2019/07/04 17:42:17 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -195,6 +195,8 @@ solisten(struct socket *so, int backlog)
 	return (0);
 }
 
+#define SOSP_FREEING_READ	1
+#define SOSP_FREEING_WRITE	2
 void
 sofree(struct socket *so, int s)
 {
@@ -218,11 +220,20 @@ sofree(struct socket *so, int s)
 	sigio_free(&so->so_sigio);
 #ifdef SOCKET_SPLICE
 	if (so->so_sp) {
-		if (issplicedback(so))
-			sounsplice(so->so_sp->ssp_soback, so,
-			    so->so_sp->ssp_soback != so);
-		if (isspliced(so))
-			sounsplice(so, so->so_sp->ssp_socket, 0);
+		if (issplicedback(so)) {
+			int freeing = SOSP_FREEING_WRITE;
+
+			if (so->so_sp->ssp_soback == so)
+				freeing |= SOSP_FREEING_READ;
+			sounsplice(so->so_sp->ssp_soback, so, freeing);
+		}
+		if (isspliced(so)) {
+			int freeing = SOSP_FREEING_READ;
+
+			if (so == so->so_sp->ssp_socket)
+				freeing |= SOSP_FREEING_WRITE;
+			sounsplice(so, so->so_sp->ssp_socket, freeing);
+		}
 	}
 #endif /* SOCKET_SPLICE */
 	sbrelease(so, &so->so_snd);
@@ -1148,7 +1159,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 			return (error);
 		}
 		if (so->so_sp->ssp_socket)
-			sounsplice(so, so->so_sp->ssp_socket, 1);
+			sounsplice(so, so->so_sp->ssp_socket, 0);
 		sbunlock(so, &so->so_rcv);
 		return (0);
 	}
@@ -1227,7 +1238,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 }
 
 void
-sounsplice(struct socket *so, struct socket *sosp, int wakeup)
+sounsplice(struct socket *so, struct socket *sosp, int freeing)
 {
 	soassertlocked(so);
 
@@ -1236,8 +1247,11 @@ sounsplice(struct socket *so, struct socket *sosp, int wakeup)
 	sosp->so_snd.sb_flags &= ~SB_SPLICE;
 	so->so_rcv.sb_flags &= ~SB_SPLICE;
 	so->so_sp->ssp_socket = sosp->so_sp->ssp_soback = NULL;
-	if (wakeup && soreadable(so))
+	/* Do not wakeup a socket that is about to be freed. */
+	if ((freeing & SOSP_FREEING_READ) == 0 && soreadable(so))
 		sorwakeup(so);
+	if ((freeing & SOSP_FREEING_WRITE) == 0 && sowriteable(sosp))
+		sowwakeup(sosp);
 }
 
 void
@@ -1249,7 +1263,7 @@ soidle(void *arg)
 	s = solock(so);
 	if (so->so_rcv.sb_flags & SB_SPLICE) {
 		so->so_error = ETIMEDOUT;
-		sounsplice(so, so->so_sp->ssp_socket, 1);
+		sounsplice(so, so->so_sp->ssp_socket, 0);
 	}
 	sounlock(so, s);
 }
@@ -1574,7 +1588,7 @@ somove(struct socket *so, int wait)
 		so->so_error = error;
 	if (((so->so_state & SS_CANTRCVMORE) && so->so_rcv.sb_cc == 0) ||
 	    (sosp->so_state & SS_CANTSENDMORE) || maxreached || error) {
-		sounsplice(so, sosp, 1);
+		sounsplice(so, sosp, 0);
 		return (0);
 	}
 	if (timerisset(&so->so_idletv))
@@ -1620,6 +1634,8 @@ sowwakeup(struct socket *so)
 #ifdef SOCKET_SPLICE
 	if (so->so_snd.sb_flags & SB_SPLICE)
 		task_add(sosplice_taskq, &so->so_sp->ssp_soback->so_splicetask);
+	if (issplicedback(so))
+		return;
 #endif
 	sowakeup(so, &so->so_snd);
 }
