@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.35 2017/03/01 17:52:00 rpe Exp $
+# $OpenBSD: Paths.pm,v 1.36 2019/07/04 15:08:27 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -62,7 +62,7 @@ sub sha256() { '/bin/sha256' }
 sub shells() { '/etc/shells' }
 sub pkgdb() { '/var/db/pkg' }
 sub localbase() { '/usr/local' }
-sub vartmp() { '/var/tmp' }
+sub vartmp() { '/tmp' }
 sub portsdir() { '/usr/ports' }
 
 sub library_dirs() { ("/usr", "/usr/X11R6") }
