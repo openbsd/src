@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.20 2019/06/17 12:42:52 florian Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.21 2019/07/04 05:06:06 solene Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2019 $
+.Dd $Mdocdate: July 4 2019 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ Macros are not expanded inside quotes.
 .Pp
 For example:
 .Bd -literal -offset indent
-api_url="https://acme-v01.api.letsencrypt.org/directory"
+api_url="https://acme-v02.api.letsencrypt.org/directory"
 authority letsencrypt {
 	api url $api_url
 	account key "/etc/acme/letsencrypt-privkey.pem"
