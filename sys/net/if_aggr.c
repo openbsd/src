@@ -1003,6 +1003,8 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	struct aggr_port *p;
 	struct aggr_multiaddr *ma;
 	uint32_t hardmtu;
+	int past = ticks - (hz * LACP_TIMEOUT_FACTOR);
+	int i;
 	int error;
 
 	NET_ASSERT_LOCKED();
@@ -1039,6 +1041,9 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 		error = ENOMEM;
 		goto put;
 	}
+
+	for (i = 0; i < nitems(p->p_txm_log); i++)
+		p->p_txm_log[i] = past;
 
 	p->p_ifp0 = ifp0;
 	p->p_aggr = sc;
