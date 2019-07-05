@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.17 2016/06/21 10:40:37 espie Exp $
+# $OpenBSD: Subst.pm,v 1.18 2019/07/05 06:02:29 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -87,14 +87,14 @@ sub copy_fh2
 sub copy_fh
 {
 	my ($self, $srcname, $dest) = @_;
-	open my $src, '<', $srcname or die "can't open $srcname";
+	open my $src, '<', $srcname or die "can't open $srcname: $!";
 	$self->copy_fh2($src, $dest);
 }
 
 sub copy
 {
 	my ($self, $srcname, $destname) = @_;
-	open my $dest, '>', $destname or die "can't open $destname";
+	open my $dest, '>', $destname or die "can't open $destname: $!";
 	$self->copy_fh($srcname, $dest);
 	return $dest;
 }
