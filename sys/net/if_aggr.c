@@ -2279,8 +2279,9 @@ static int
 aggr_iff(struct aggr_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	NET_ASSERT_LOCKED();
 	unsigned int promisc = ISSET(ifp->if_flags, IFF_PROMISC);
+
+	NET_ASSERT_LOCKED();
 
 	if (promisc != sc->sc_promisc) {
 		struct aggr_port *p;
