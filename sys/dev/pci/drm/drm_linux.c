@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.38 2019/06/09 12:58:30 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.39 2019/07/05 12:10:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1399,15 +1399,15 @@ drm_linux_init(void)
 {
 	if (system_wq == NULL) {
 		system_wq = (struct workqueue_struct *)
-		    taskq_create("drmwq", 1, IPL_HIGH, 0);
+		    taskq_create("drmwq", 4, IPL_HIGH, 0);
 	}
 	if (system_unbound_wq == NULL) {
 		system_unbound_wq = (struct workqueue_struct *)
-		    taskq_create("drmubwq", 1, IPL_HIGH, 0);
+		    taskq_create("drmubwq", 4, IPL_HIGH, 0);
 	}
 	if (system_long_wq == NULL) {
 		system_long_wq = (struct workqueue_struct *)
-		    taskq_create("drmlwq", 1, IPL_HIGH, 0);
+		    taskq_create("drmlwq", 4, IPL_HIGH, 0);
 	}
 
 	if (taskletq == NULL)
