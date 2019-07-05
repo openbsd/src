@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.32 2017/10/05 16:15:24 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.33 2019/07/05 13:23:27 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -43,11 +43,6 @@ void ttymsg(struct iovec *, int, char *);
 /* File descriptor send/recv */
 void send_fd(int, int);
 int  receive_fd(int);
-
-/* The list of domain sockets */
-extern int nunix;
-extern char **path_unix;
-extern char *path_ctlsock;
 
 #define ERRBUFSIZE	256
 void vlogmsg(int pri, const char *, const char *, va_list);

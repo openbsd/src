@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.261 2019/07/02 13:17:27 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.262 2019/07/05 13:23:27 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -215,8 +215,6 @@ char	*TypeNames[] = {
 SIMPLEQ_HEAD(filed_list, filed) Files;
 struct	filed consfile;
 
-int	nunix;			/* Number of Unix domain sockets requested */
-char	**path_unix;		/* Paths to Unix domain sockets */
 int	Debug;			/* debug flag */
 int	Foreground;		/* run in foreground, instead of daemonizing */
 char	LocalHostName[HOST_NAME_MAX+1];	/* our hostname */
@@ -233,7 +231,6 @@ int	NoDNS = 0;		/* when true, refrain from doing DNS lookups */
 int	ZuluTime = 0;		/* display date and time in UTC ISO format */
 int	IncludeHostname = 0;	/* include RFC 3164 hostnames when forwarding */
 int	Family = PF_UNSPEC;	/* protocol family, may disable IPv4 or IPv6 */
-char	*path_ctlsock = NULL;	/* Path to control socket */
 
 struct	tls *server_ctx;
 struct	tls_config *client_config, *server_config;
@@ -372,7 +369,8 @@ main(int argc, char *argv[])
 	int		 ch, i;
 	int		 lockpipe[2] = { -1, -1}, pair[2], nullfd, fd;
 	int		 fd_ctlsock, fd_klog, fd_sendsys, *fd_bind, *fd_listen;
-	int		*fd_tls, *fd_unix, nbind, nlisten, ntls;
+	int		*fd_tls, *fd_unix, nunix, nbind, nlisten, ntls;
+	char		**path_unix, *path_ctlsock;
 	char		**bind_host, **bind_port, **listen_host, **listen_port;
 	char		*tls_hostport, **tls_host, **tls_port;
 
@@ -386,6 +384,7 @@ main(int argc, char *argv[])
 		err(1, "malloc %s", _PATH_LOG);
 	path_unix[0] = _PATH_LOG;
 	nunix = 1;
+	path_ctlsock = NULL;
 
 	bind_host = listen_host = tls_host = NULL;
 	bind_port = listen_port = tls_port = NULL;

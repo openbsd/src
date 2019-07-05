@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.70 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.71 2019/07/05 13:23:27 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -189,6 +189,8 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 	if (unveil(_PATH_UTMP, "r") == -1)
 		err(1, "unveil");
 	if (unveil(_PATH_DEV, "rw") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_LOGPID, "c") == -1)
 		err(1, "unveil");
 
 	/* for pipes */
@@ -431,12 +433,6 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 	}
 
 	close(sock);
-
-	/* Unlink any domain sockets that have been opened */
-	for (i = 0; i < nunix; i++)
-		(void)unlink(path_unix[i]);
-	if (path_ctlsock != NULL)
-		(void)unlink(path_ctlsock);
 
 	if (restart) {
 		int status;
