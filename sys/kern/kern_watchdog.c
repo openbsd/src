@@ -1,4 +1,4 @@
-/*      $OpenBSD: kern_watchdog.c,v 1.13 2017/01/09 17:58:44 mpi Exp $        */
+/*      $OpenBSD: kern_watchdog.c,v 1.14 2019/07/05 22:10:50 kn Exp $        */
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -54,7 +54,7 @@ wdog_tickle(void *arg)
 	if (wdog_ctl_cb == NULL)
 		return;
 	(void) (*wdog_ctl_cb)(wdog_ctl_cb_arg, wdog_period);
-	timeout_add(&wdog_timeout, wdog_period * hz / 2);
+	timeout_add_msec(&wdog_timeout, wdog_period * 1000 / 2);
 }
 
 void
@@ -100,7 +100,7 @@ sysctl_wdog(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	if (wdog_auto && wdog_period > 0) {
 		(void) (*wdog_ctl_cb)(wdog_ctl_cb_arg, wdog_period);
-		timeout_add(&wdog_timeout, wdog_period * hz / 2);
+		timeout_add_msec(&wdog_timeout, wdog_period * 1000 / 2);
 	} else
 		timeout_del(&wdog_timeout);
 
