@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.696 2019/05/08 21:31:30 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.697 2019/07/05 06:56:22 patrick Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -83,7 +83,9 @@ int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
+int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 igetc(void);
@@ -1041,7 +1043,7 @@ scrub_opt	: NODF	{
 				YYERROR;
 			}
 			if ($2 < 0 || $2 > 255) {
-				yyerror("illegal min-ttl value %d", $2);
+				yyerror("illegal min-ttl value %lld", $2);
 				YYERROR;
 			}
 			scrub_opts.marker |= FOM_MINTTL;
@@ -1053,7 +1055,7 @@ scrub_opt	: NODF	{
 				YYERROR;
 			}
 			if ($2 < 0 || $2 > 65535) {
-				yyerror("illegal max-mss value %d", $2);
+				yyerror("illegal max-mss value %lld", $2);
 				YYERROR;
 			}
 			scrub_opts.marker |= FOM_MAXMSS;
@@ -2218,7 +2220,7 @@ filter_set	: prio {
 				YYERROR;
 			}
 			if ($2 < 0 || $2 > 0xffff) {
-				yyerror("illegal delay value %d (0-%u)", $2,
+				yyerror("illegal delay value %lld (0-%u)", $2,
 				    0xffff);
 				YYERROR;
 			}
@@ -2289,7 +2291,7 @@ blockspec	: /* empty */		{
 		}
 		| RETURNRST '(' TTL NUMBER ')'	{
 			if ($4 < 0 || $4 > 255) {
-				yyerror("illegal ttl value %d", $4);
+				yyerror("illegal ttl value %lld", $4);
 				YYERROR;
 			}
 			$$.b2 = PFRULE_RETURNRST;
@@ -2339,7 +2341,7 @@ reticmpspec	: STRING			{
 			u_int8_t		icmptype;
 
 			if ($1 < 0 || $1 > 255) {
-				yyerror("invalid icmp code %lu", $1);
+				yyerror("invalid icmp code %lld", $1);
 				YYERROR;
 			}
 			icmptype = returnicmpdefault >> 8;
@@ -2358,7 +2360,7 @@ reticmp6spec	: STRING			{
 			u_int8_t		icmptype;
 
 			if ($1 < 0 || $1 > 255) {
-				yyerror("invalid icmp code %lu", $1);
+				yyerror("invalid icmp code %lld", $1);
 				YYERROR;
 			}
 			icmptype = returnicmp6default >> 8;
@@ -2788,7 +2790,7 @@ host		: STRING			{
 			if (strlcpy($$->addr.v.rtlabelname, $2,
 			    sizeof($$->addr.v.rtlabelname)) >=
 			    sizeof($$->addr.v.rtlabelname)) {
-				yyerror("route label too long, max %u chars",
+				yyerror("route label too long, max %zu chars",
 				    sizeof($$->addr.v.rtlabelname) - 1);
 				free($2);
 				free($$);
@@ -3014,7 +3016,7 @@ uid		: STRING			{
 		}
 		| NUMBER			{
 			if ($1 < 0 || $1 >= UID_MAX) {
-				yyerror("illegal uid value %lu", $1);
+				yyerror("illegal uid value %lld", $1);
 				YYERROR;
 			}
 			$$ = $1;
@@ -3092,7 +3094,7 @@ gid		: STRING			{
 		}
 		| NUMBER			{
 			if ($1 < 0 || $1 >= GID_MAX) {
-				yyerror("illegal gid value %lu", $1);
+				yyerror("illegal gid value %lld", $1);
 				YYERROR;
 			}
 			$$ = $1;
@@ -3170,7 +3172,7 @@ icmp_item	: icmptype		{
 		}
 		| icmptype CODE NUMBER	{
 			if ($3 < 0 || $3 > 255) {
-				yyerror("illegal icmp-code %lu", $3);
+				yyerror("illegal icmp-code %lld", $3);
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_icmp));
@@ -3215,7 +3217,7 @@ icmp6_item	: icmp6type		{
 		}
 		| icmp6type CODE NUMBER	{
 			if ($3 < 0 || $3 > 255) {
-				yyerror("illegal icmp-code %lu", $3);
+				yyerror("illegal icmp-code %lld", $3);
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_icmp));
@@ -3242,7 +3244,7 @@ icmptype	: STRING			{
 		}
 		| NUMBER			{
 			if ($1 < 0 || $1 > 255) {
-				yyerror("illegal icmp-type %lu", $1);
+				yyerror("illegal icmp-type %lld", $1);
 				YYERROR;
 			}
 			$$ = $1 + 1;
@@ -3263,7 +3265,7 @@ icmp6type	: STRING			{
 		}
 		| NUMBER			{
 			if ($1 < 0 || $1 > 255) {
-				yyerror("illegal icmp6-type %lu", $1);
+				yyerror("illegal icmp6-type %lld", $1);
 				YYERROR;
 			}
 			$$ = $1 + 1;
@@ -3871,7 +3873,7 @@ limit_spec	: STRING NUMBER
 				YYERROR;
 			}
 			if (pfctl_set_limit(pf, $1, $2) != 0) {
-				yyerror("unable to set limit %s %u", $1, $2);
+				yyerror("unable to set limit %s %lld", $1, $2);
 				free($1);
 				YYERROR;
 			}
@@ -3941,7 +3943,7 @@ disallow_urpf_failed(struct node_host *h, const char *fmt)
 {
 	for (; h != NULL; h = h->next)
 		if (h->addr.type == PF_ADDR_URPFFAILED) {
-			yyerror(fmt);
+			yyerror("%s", fmt);
 			return (1);
 		}
 	return (0);
@@ -5731,7 +5733,7 @@ rule_label(struct pf_rule *r, char *s)
 	if (s) {
 		if (strlcpy(r->label, s, sizeof(r->label)) >=
 		    sizeof(r->label)) {
-			yyerror("rule label too long (max %d chars)",
+			yyerror("rule label too long (max %zu chars)",
 			    sizeof(r->label)-1);
 			return (-1);
 		}
@@ -5995,7 +5997,7 @@ filteropts_to_rule(struct pf_rule *r, struct filter_opts *opts)
 		if (strlcpy(r->qname, opts->queues.qname,
 		    sizeof(r->qname)) >= sizeof(r->qname)) {
 			yyerror("rule qname too long (max "
-			    "%d chars)", sizeof(r->qname)-1);
+			    "%zu chars)", sizeof(r->qname)-1);
 			return (1);
 		}
 		free(opts->queues.qname);
@@ -6004,7 +6006,7 @@ filteropts_to_rule(struct pf_rule *r, struct filter_opts *opts)
 		if (strlcpy(r->pqname, opts->queues.pqname,
 		    sizeof(r->pqname)) >= sizeof(r->pqname)) {
 			yyerror("rule pqname too long (max "
-			    "%d chars)", sizeof(r->pqname)-1);
+			    "%zu chars)", sizeof(r->pqname)-1);
 			return (1);
 		}
 		free(opts->queues.pqname);
