@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpath.c,v 1.26 2019/06/17 03:13:17 deraadt Exp $ */
+/*	$OpenBSD: realpath.c,v 1.27 2019/07/05 05:04:26 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
@@ -36,39 +36,8 @@ realpath(const char *path, char *resolved)
 {
 	char rbuf[PATH_MAX];
 
-	if (__realpath(path, rbuf) == -1) {
-		/*
-		 * XXX XXX XXX
-		 *
-		 * The old userland implementation strips trailing slashes.
-		 * According to Dr. POSIX, realpathing "/bsd" should be fine,
-		 * realpathing "/bsd/" should return ENOTDIR.
-		 *
-		 * Similar, but *different* to the above, The old userland
-		 * implementation allows for realpathing "/nonexistent" but
-		 * not "/nonexistent/", Both those should return ENOENT
-		 * according to POSIX.
-		 *
-		 * This hack should go away once we decide to match POSIX.
-		 * which we should as soon as is convenient.
-		 */
-		if (errno == ENOTDIR) {
-			char pbuf[PATH_MAX];
-			ssize_t i;
-
-			if (strlcpy(pbuf, path, sizeof(pbuf)) >= sizeof(pbuf)) {
-				errno = ENAMETOOLONG;
-				return NULL;
-			}
-			/* Try again without the trailing slashes. */
-			for (i = strlen(pbuf); i > 1 && pbuf[i - 1] == '/'; i--)
-				pbuf[i - 1] = '\0';
-			if (__realpath(pbuf, rbuf) == -1)
-				return NULL;
-		} else
-			return NULL;
-	}
-
+	if (__realpath(path, rbuf) == -1)
+		return NULL;
 	if (resolved == NULL)
 		return (strdup(rbuf));
 	strlcpy(resolved, rbuf, PATH_MAX);
