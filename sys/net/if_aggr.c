@@ -903,6 +903,8 @@ aggr_get_trunk(struct aggr_softc *sc, struct trunk_reqall *ra)
 		memcpy(rp.rp_ifname, ifp->if_xname, sizeof(rp.rp_ifname));
 		memcpy(rp.rp_portname, ifp0->if_xname, sizeof(rp.rp_portname));
 
+		if (p->p_muxed)
+			SET(rp.rp_flags, TRUNK_PORT_ACTIVE);
 		if (p->p_collecting)
 			SET(rp.rp_flags, TRUNK_PORT_COLLECTING);
 		if (p->p_distributing)
