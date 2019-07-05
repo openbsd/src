@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.100 2019/01/20 23:24:19 djm Exp $
+#	$OpenBSD: Makefile,v 1.101 2019/07/05 04:19:39 dtucker Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -102,6 +102,7 @@ CLEANFILES+=	*.core actual agent-key.* authorized_keys_${USERNAME} \
 		rsa_ssh2_crnl.prv scp-ssh-wrapper.exe \
 		scp-ssh-wrapper.scp setuid-allowed sftp-server.log \
 		sftp-server.sh sftp.log ssh-log-wrapper.sh ssh.log \
+		ssh-rsa_oldfmt \
 		ssh_config ssh_config.* ssh_proxy ssh_proxy_bak \
 		ssh_proxy_envpass sshd.log sshd_config sshd_config.orig \
 		sshd_proxy sshd_proxy.* sshd_proxy_bak sshd_proxy_orig \
