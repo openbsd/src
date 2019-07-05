@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcwd.3,v 1.20 2019/06/30 17:31:39 jmc Exp $
+.\"	$OpenBSD: getcwd.3,v 1.21 2019/07/05 12:55:36 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 30 2019 $
+.Dd $Mdocdate: July 5 2019 $
 .Dt GETCWD 3
 .Os
 .Sh NAME
@@ -147,7 +147,7 @@ In
 was reimplemented on top of the
 .Fn __getcwd
 system call.
-Its calling convention differed from the standard
+Its calling convention differs from the standard
 function by requiring
 .Ar buf
 to not be
