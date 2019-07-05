@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.239 2019/06/28 13:32:50 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.240 2019/07/05 06:49:27 patrick Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -75,7 +75,9 @@ int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
+int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 igetc(void);
@@ -350,7 +352,7 @@ port		: PORT HTTP {
 		}
 		| PORT NUMBER {
 			if ($2 <= 0 || $2 > (int)USHRT_MAX) {
-				yyerror("invalid port: %d", $2);
+				yyerror("invalid port: %lld", $2);
 				YYERROR;
 			}
 			$$.val[0] = htons($2);
@@ -389,7 +391,7 @@ sendbuf		: NOTHING		{
 
 main		: INTERVAL NUMBER	{
 			if ((conf->sc_conf.interval.tv_sec = $2) < 0) {
-				yyerror("invalid interval: %d", $2);
+				yyerror("invalid interval: %lld", $2);
 				YYERROR;
 			}
 		}
@@ -403,7 +405,7 @@ main		: INTERVAL NUMBER	{
 		| PREFORK NUMBER	{
 			if ($2 <= 0 || $2 > PROC_MAX_INSTANCES) {
 				yyerror("invalid number of preforked "
-				    "relays: %d", $2);
+				    "relays: %lld", $2);
 				YYERROR;
 			}
 			conf->sc_conf.prefork_relay = $2;
@@ -895,7 +897,7 @@ tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 			}
 			table->conf.check = CHECK_HTTP_CODE;
 			if ((table->conf.retcode = $5) <= 0) {
-				yyerror("invalid HTTP code: %d", $5);
+				yyerror("invalid HTTP code: %lld", $5);
 				free($2);
 				free($3);
 				YYERROR;
@@ -1094,7 +1096,7 @@ httpflags_l	: httpflags comma httpflags_l
 
 httpflags	: HEADERLEN NUMBER	{
 			if ($2 < 0 || $2 > RELAY_MAXHEADERLENGTH) {
-				yyerror("invalid headerlen: %d", $2);
+				yyerror("invalid headerlen: %lld", $2);
 				YYERROR;
 			}
 			proto->httpheaderlen = $2;
@@ -1115,7 +1117,7 @@ tcpflags	: SACK			{ proto->tcpflags |= TCPFLAG_SACK; }
 		| NO SPLICE		{ proto->tcpflags |= TCPFLAG_NSPLICE; }
 		| BACKLOG NUMBER	{
 			if ($2 < 0 || $2 > RELAY_MAX_BACKLOG) {
-				yyerror("invalid backlog: %d", $2);
+				yyerror("invalid backlog: %lld", $2);
 				YYERROR;
 			}
 			proto->tcpbacklog = $2;
@@ -1123,13 +1125,13 @@ tcpflags	: SACK			{ proto->tcpflags |= TCPFLAG_SACK; }
 		| SOCKET BUFFER NUMBER	{
 			proto->tcpflags |= TCPFLAG_BUFSIZ;
 			if ((proto->tcpbufsiz = $3) < 0) {
-				yyerror("invalid socket buffer size: %d", $3);
+				yyerror("invalid socket buffer size: %lld", $3);
 				YYERROR;
 			}
 		}
 		| IP STRING NUMBER	{
 			if ($3 < 0) {
-				yyerror("invalid ttl: %d", $3);
+				yyerror("invalid ttl: %lld", $3);
 				free($2);
 				YYERROR;
 			}
@@ -2072,7 +2074,7 @@ routeoptsl	: ROUTE addrprefix {
 				YYERROR;
 			}
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
-				yyerror("invalid rtable id %d", $2);
+				yyerror("invalid rtable id %lld", $2);
 				YYERROR;
 			}
 			router->rt_conf.rtable = $2;
@@ -2150,7 +2152,7 @@ hostflags	: RETRY NUMBER		{
 				YYERROR;
 			}
 			if ($2 < 0) {
-				yyerror("invalid retry value: %d\n", $2);
+				yyerror("invalid retry value: %lld\n", $2);
 				YYERROR;
 			}
 			hst->conf.retry = $2;
@@ -2161,7 +2163,7 @@ hostflags	: RETRY NUMBER		{
 				YYERROR;
 			}
 			if ($2 < 0) {
-				yyerror("invalid parent value: %d\n", $2);
+				yyerror("invalid parent value: %lld\n", $2);
 				YYERROR;
 			}
 			hst->conf.parentid = $2;
@@ -2172,7 +2174,7 @@ hostflags	: RETRY NUMBER		{
 				YYERROR;
 			}
 			if ($2 < 0 || $2 > RTP_MAX) {
-				yyerror("invalid priority value: %d\n", $2);
+				yyerror("invalid priority value: %lld\n", $2);
 				YYERROR;
 			}
 			hst->conf.priority = $2;
@@ -2183,7 +2185,7 @@ hostflags	: RETRY NUMBER		{
 				YYERROR;
 			}
 			if ($3 < 0) {
-				yyerror("invalid ttl value: %d\n", $3);
+				yyerror("invalid ttl value: %lld\n", $3);
 				YYERROR;
 			}
 			hst->conf.ttl = $3;
@@ -2220,7 +2222,7 @@ addrprefix	: address '/' NUMBER 		{
 			    ($3 > 32 || $3 < 0)) ||
 			    ($$.ss.ss_family == AF_INET6 &&
 			    ($3 > 128 || $3 < 0))) {
-				yyerror("invalid prefixlen %d", $3);
+				yyerror("invalid prefixlen %lld", $3);
 				YYERROR;
 			}
 			$$.prefixlen = $3;
@@ -2237,7 +2239,7 @@ addrprefix	: address '/' NUMBER 		{
 retry		: /* empty */		{ $$ = 0; }
 		| RETRY NUMBER		{
 			if (($$ = $2) < 0) {
-				yyerror("invalid retry value: %d\n", $2);
+				yyerror("invalid retry value: %lld\n", $2);
 				YYERROR;
 			}
 		}
@@ -2246,7 +2248,7 @@ retry		: /* empty */		{ $$ = 0; }
 timeout		: NUMBER
 		{
 			if ($1 < 0) {
-				yyerror("invalid timeout: %d\n", $1);
+				yyerror("invalid timeout: %lld\n", $1);
 				YYERROR;
 			}
 			$$.tv_sec = $1 / 1000;
