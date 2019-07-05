@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: md5.pm,v 1.17 2017/03/07 16:11:08 espie Exp $
+# $OpenBSD: md5.pm,v 1.18 2019/07/05 06:21:14 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -49,7 +49,7 @@ sub digest_file
 	};
 	if ($@) {
 		$@ =~ s/\sat.*//;
-		die "can't compute ".$self->keyword." on $fname: $@";
+		die "can't compute ", $self->keyword, " on $fname: $@";
 	}
 	return $d->digest;
 }
