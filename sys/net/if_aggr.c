@@ -299,6 +299,7 @@ struct aggr_port {
 	struct ifnet		*p_ifp0;
 
 	uint8_t			 p_lladdr[ETHER_ADDR_LEN];
+	uint32_t		 p_mtu;
 
 	int (*p_ioctl)(struct ifnet *, u_long, caddr_t);
 	int (*p_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -422,9 +423,11 @@ static int	aggr_set_options(struct aggr_softc *,
 		    const struct trunk_opts *);
 static int	aggr_get_options(struct aggr_softc *, struct trunk_opts *);
 static int	aggr_set_lladdr(struct aggr_softc *, const struct ifreq *);
+static int	aggr_set_mtu(struct aggr_softc *, uint32_t);
 static void	aggr_p_dtor(struct aggr_softc *, struct aggr_port *,
 		    const char *);
 static int	aggr_p_setlladdr(struct aggr_port *, const uint8_t *);
+static int	aggr_p_set_mtu(struct aggr_port *, uint32_t);
 static int	aggr_add_port(struct aggr_softc *,
 		    const struct trunk_reqport *);
 static int	aggr_get_port(struct aggr_softc *, struct trunk_reqport *);
@@ -815,6 +818,10 @@ aggr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = aggr_del_port(sc, (struct trunk_reqport *)data);
 		break;
 
+	case SIOCSIFMTU:
+		error = aggr_set_mtu(sc, ifr->ifr_mtu);
+		break;
+
 	case SIOCADDMULTI:
 		error = aggr_multi_add(sc, ifr); 
 		break;
@@ -1033,6 +1040,7 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 
 	p->p_ifp0 = ifp0;
 	p->p_aggr = sc;
+	p->p_mtu = ifp0->if_mtu;
 
 	CTASSERT(sizeof(p->p_lladdr) == sizeof(ac0->ac_enaddr));
 	memcpy(p->p_lladdr, ac0->ac_enaddr, sizeof(p->p_lladdr));
@@ -1047,10 +1055,14 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	if (error != 0)
 		goto ungroup;
 
+	error = aggr_p_set_mtu(p, ifp->if_mtu);
+	if (error != 0)
+		goto resetlladdr;
+
 	if (sc->sc_promisc) {
 		error = ifpromisc(ifp0, 1);
 		if (error != 0)
-			goto resetlladdr;
+			goto unmtu;
 	}
 
 	TAILQ_FOREACH(ma, &sc->sc_multiaddrs, m_entry) {
@@ -1103,6 +1115,11 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 
 	return (0);
 
+unmtu:
+	if (aggr_p_set_mtu(p, p->p_mtu) != 0) {
+		log(LOG_WARNING, "%s add %s: unable to reset mtu %u",
+		    ifp->if_xname, ifp0->if_xname, p->p_mtu);
+	}
 resetlladdr:
 	if (aggr_p_setlladdr(p, p->p_lladdr) != 0) {
 		log(LOG_WARNING, "%s add %s: unable to reset lladdr",
@@ -1204,10 +1221,27 @@ aggr_p_setlladdr(struct aggr_port *p, const uint8_t *addr)
 }
 
 static int
+aggr_p_set_mtu(struct aggr_port *p, uint32_t mtu)
+{
+	struct ifnet *ifp0 = p->p_ifp0;
+	struct ifreq ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
+
+	CTASSERT(sizeof(ifr.ifr_name) == sizeof(ifp0->if_xname));
+	memcpy(ifr.ifr_name, ifp0->if_xname, sizeof(ifr.ifr_name));
+
+	ifr.ifr_mtu = mtu;
+
+	return ((*p->p_ioctl)(ifp0, SIOCSIFMTU, (caddr_t)&ifr));
+}
+
+static int
 aggr_p_ioctl(struct ifnet *ifp0, u_long cmd, caddr_t data)
 {
 	struct arpcom *ac0 = (struct arpcom *)ifp0;
 	struct aggr_port *p = ac0->ac_trunkport;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int error = 0;
 
 	switch (cmd) {
@@ -1226,6 +1260,10 @@ aggr_p_ioctl(struct ifnet *ifp0, u_long cmd, caddr_t data)
 	}
 
 	case SIOCSIFMTU:
+		if (ifr->ifr_mtu == ifp0->if_mtu)
+			break; /* nop */
+
+		/* FALLTHROUGH */
 	case SIOCSIFLLADDR:
 		error = EBUSY;
 		break;
@@ -1294,6 +1332,11 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	if (sc->sc_promisc && ifpromisc(ifp0, 0) != 0) {
 		log(LOG_WARNING, "%s %s %s: unable to disable promisc",
 		    ifp->if_xname, op, ifp0->if_xname);
+	}
+
+	if (aggr_p_set_mtu(p, p->p_mtu) != 0) {
+		log(LOG_WARNING, "%s %s %s: unable to restore mtu %u",
+		    ifp->if_xname, op, ifp0->if_xname, p->p_mtu);
 	}
 
 	if (aggr_p_setlladdr(p, p->p_lladdr) != 0) {
@@ -2303,6 +2346,28 @@ aggr_set_lladdr(struct aggr_softc *sc, const struct ifreq *ifr)
 		}
 	}
 	rw_exit_read(&sc->sc_lock);
+
+	return (0);
+}
+
+static int
+aggr_set_mtu(struct aggr_softc *sc, uint32_t mtu)
+{
+	struct ifnet *ifp = &sc->sc_if;
+	struct aggr_port *p;
+
+	if (mtu < ETHERMIN || mtu > ifp->if_hardmtu)
+		return (EINVAL);
+
+	ifp->if_mtu = mtu;
+
+	TAILQ_FOREACH(p, &sc->sc_ports, p_entry) {
+		if (aggr_p_set_mtu(p, mtu) != 0) {
+			struct ifnet *ifp0 = p->p_ifp0;
+			log(LOG_WARNING, "%s %s: unable to set mtu %u",
+			    ifp->if_xname, ifp0->if_xname, mtu);
+		}
+	}
 
 	return (0);
 }
