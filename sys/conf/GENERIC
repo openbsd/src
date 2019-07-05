@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.261 2019/04/22 02:04:12 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.262 2019/07/05 01:37:53 dlg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -101,6 +101,7 @@ pseudo-device	pppoe		# PPP over Ethernet (RFC 2516)
 pseudo-device	pppx		# PPP multiplexer
 pseudo-device	sppp	1	# Sync PPP/HDLC
 pseudo-device	trunk		# Trunking support
+#pseudo-device	aggr		# 802.1AX Link Aggregation
 pseudo-device	tun		# network tunneling over tty (tun & tap)
 pseudo-device	vether		# Virtual ethernet
 pseudo-device	vxlan		# Virtual extensible LAN
