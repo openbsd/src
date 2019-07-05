@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.56 2019/05/29 21:32:43 reyk Exp $	*/
+/*	$OpenBSD: main.c,v 1.57 2019/07/05 22:22:40 jmc Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -82,7 +82,7 @@ struct ctl_command ctl_commands[] = {
 	{ "send",	CMD_SEND,	ctl_send,	"id",	1},
 	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "start",	CMD_START,	ctl_start,
-	    " [-cL] [-B device] [-b path] [-d disk] [-i count]\n"
+	    "[-cL] [-B device] [-b path] [-d disk] [-i count]\n"
 	    "\t\t[-m size] [-n switch] [-r path] [-t name] id | name" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"[-fw] [id | -a]" },
