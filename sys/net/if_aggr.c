@@ -1418,7 +1418,7 @@ aggr_map(struct aggr_softc *sc)
 		for (i = 0; i < nitems(map->m_ifp0s); i++) {
 			map->m_ifp0s[i] = p->p_ifp0;
 
-			p = TAILQ_NEXT(p, p_entry);
+			p = TAILQ_NEXT(p, p_entry_distributing);
 			if (p == NULL)
 				p = TAILQ_FIRST(&sc->sc_distributing);
 		}
