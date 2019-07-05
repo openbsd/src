@@ -515,7 +515,7 @@ aggr_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_map = NULL; /* no links yet */
 
 	sc->sc_lacp_mode = AGGR_LACP_MODE_ACTIVE;
-	sc->sc_lacp_timeout = 0; /* passive */
+	sc->sc_lacp_timeout = AGGR_LACP_TIMEOUT_SLOW;
 	sc->sc_lacp_prio = 0x8000; /* medium */
 	sc->sc_lacp_port_prio = 0x8000; /* medium */
 
