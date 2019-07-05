@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lock.1,v 1.17 2013/08/14 08:39:26 jmc Exp $
+.\"	$OpenBSD: lock.1,v 1.18 2019/07/05 14:11:26 cheloha Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)lock.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: July 5 2019 $
 .Dt LOCK 1
 .Os
 .Sh NAME
@@ -69,6 +69,9 @@ to get the standard prompt for that
 .It Fl n
 Don't use a timeout value.
 Terminal will be locked forever.
+This option is incompatible with the
+.Fl t
+option.
 .It Fl p
 A password is not requested, instead the user's current login password
 is used.
@@ -85,6 +88,9 @@ password.
 The time limit (default 15 minutes) is changed to
 .Ar timeout
 minutes.
+This option is incompatible with the
+.Fl n
+option.
 .El
 .Sh SEE ALSO
 .Xr skey 1 ,

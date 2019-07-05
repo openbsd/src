@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.41 2017/09/06 21:02:31 tb Exp $	*/
+/*	$OpenBSD: lock.c,v 1.42 2019/07/05 14:11:26 cheloha Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -63,7 +63,9 @@
 
 void bye(int);
 void hi(int);
+void usage(void);
 
+int	custom_timeout;
 int	no_timeout;			/* lock terminal forever */
 
 int
@@ -84,7 +86,7 @@ main(int argc, char *argv[])
 	sectimeout = TIMEOUT;
 	style = NULL;
 	usemine = 0;
-	no_timeout = 0;
+	custom_timeout = no_timeout = 0;
 	memset(&timeout, 0, sizeof(timeout));
 
 	if (pledge("stdio rpath wpath getpw tty proc exec", NULL) == -1)
@@ -116,21 +118,23 @@ main(int argc, char *argv[])
 			usemine = 1;
 			break;
 		case 't':
+			if (no_timeout)
+				usage();
 			sectimeout = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "timeout %s: %s", errstr, optarg);
+			custom_timeout = 1;
 			break;
 		case 'p':
 			usemine = 1;
 			break;
 		case 'n':
+			if (custom_timeout)
+				usage();
 			no_timeout = 1;
 			break;
 		default:
-			fprintf(stderr,
-			    "usage: %s [-np] [-a style] [-t timeout]\n",
-			    getprogname());
-			exit(1);
+			usage();
 		}
 	}
 	timeout.tv_sec = sectimeout * 60;
@@ -251,4 +255,12 @@ bye(int signo)
 	if (!no_timeout)
 		warnx("timeout");
 	_exit(1);
+}
+
+void
+usage(void)
+{
+	fprintf(stderr, "usage: %s [-np] [-a style] [-t timeout]\n",
+	    getprogname());
+	exit(1);
 }
