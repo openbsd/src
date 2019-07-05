@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.105 2019/07/05 11:50:46 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.106 2019/07/05 14:33:10 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1401,6 +1401,8 @@ Note: the
 alternative,
 as specified in RFC 3279,
 is currently not implemented.
+.It Fl param_out
+Print the elliptic curve parameters.
 .It Fl passin Ar arg
 The key password source.
 .It Fl passout Ar arg
@@ -1510,7 +1512,7 @@ Print the EC parameters in plain text.
 .nr nS 1
 .Nm "openssl enc"
 .Fl ciphername
-.Op Fl AadePp
+.Op Fl AadePpv
 .Op Fl base64
 .Op Fl bufsize Ar number
 .Op Fl debug
@@ -1667,6 +1669,8 @@ When the salt is being used
 the first eight bytes of the encrypted data are reserved for the salt:
 it is randomly generated when encrypting a file and read from the
 encrypted file when it is decrypted.
+.It Fl v
+Print extra details about the processing.
 .El
 .Sh ERRSTR
 .Nm openssl errstr
@@ -2326,6 +2330,7 @@ to each password hash.
 .Op Fl noout
 .Op Fl out Ar file
 .Op Fl outform Cm der | pem
+.Op Fl print
 .Op Fl print_certs
 .Op Fl text
 .nr nS 0
@@ -2352,6 +2357,8 @@ The output to write to,
 or standard output if not specified.
 .It Fl outform Cm der | pem
 The output format.
+.It Fl print
+Print the ASN.1 representation of PKCS#7 structure.
 .It Fl print_certs
 Print any certificates or CRLs contained in the file,
 preceded by their subject and issuer names in a one-line format.
