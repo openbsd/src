@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.62 2019/05/22 15:25:25 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.63 2019/07/05 12:35:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -131,7 +131,7 @@ int	 bwfm_newstate(struct ieee80211com *, enum ieee80211_state, int);
 
 void	 bwfm_set_key_cb(struct bwfm_softc *, void *);
 void	 bwfm_delete_key_cb(struct bwfm_softc *, void *);
-void	 bwfm_rx_event_cb(struct bwfm_softc *, void *);
+void	 bwfm_rx_event_cb(struct bwfm_softc *, struct mbuf *);
 
 struct mbuf *bwfm_newbuf(void);
 void	 bwfm_rx(struct bwfm_softc *, struct mbuf *);
@@ -181,6 +181,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	sc->sc_cmdq.cur = sc->sc_cmdq.next = sc->sc_cmdq.queued = 0;
 	sc->sc_taskq = taskq_create(DEVNAME(sc), 1, IPL_SOFTNET, 0);
 	task_set(&sc->sc_task, bwfm_task, sc);
+	ml_init(&sc->sc_evml);
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
@@ -2234,19 +2235,20 @@ bwfm_rx_leave_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len,
 void
 bwfm_rx_event(struct bwfm_softc *sc, struct mbuf *m)
 {
-	struct bwfm_cmd_mbuf cmd;
+	int s;
 
-	cmd.m = m;
-	bwfm_do_async(sc, bwfm_rx_event_cb, &cmd, sizeof(cmd));
+	s = splsoftnet();
+	ml_enqueue(&sc->sc_evml, m);
+	splx(s);
+
+	task_add(sc->sc_taskq, &sc->sc_task);
 }
 
 void
-bwfm_rx_event_cb(struct bwfm_softc *sc, void *arg)
+bwfm_rx_event_cb(struct bwfm_softc *sc, struct mbuf *m)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	struct bwfm_cmd_mbuf *cmd = arg;
-	struct mbuf *m = cmd->m;
 	struct bwfm_event *e = mtod(m, void *);
 	size_t len = m->m_len;
 
@@ -2429,6 +2431,7 @@ bwfm_task(void *arg)
 	struct bwfm_softc *sc = arg;
 	struct bwfm_host_cmd_ring *ring = &sc->sc_cmdq;
 	struct bwfm_host_cmd *cmd;
+	struct mbuf *m;
 	int s;
 
 	s = splsoftnet();
@@ -2439,6 +2442,14 @@ bwfm_task(void *arg)
 		s = splsoftnet();
 		ring->queued--;
 		ring->next = (ring->next + 1) % BWFM_HOST_CMD_RING_COUNT;
+	}
+	splx(s);
+
+	s = splsoftnet();
+	while ((m = ml_dequeue(&sc->sc_evml)) != NULL) {
+		splx(s);
+		bwfm_rx_event_cb(sc, m);
+		s = splsoftnet();
 	}
 	splx(s);
 }

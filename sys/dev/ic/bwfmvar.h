@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.15 2018/07/17 19:44:38 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.16 2019/07/05 12:35:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -121,10 +121,6 @@ struct bwfm_cmd_key {
 	struct ieee80211_key	 *k;
 };
 
-struct bwfm_cmd_mbuf {
-	struct mbuf		 *m;
-};
-
 struct bwfm_cmd_flowring_create {
 	struct mbuf		*m;
 	int			 flowid;
@@ -167,6 +163,7 @@ struct bwfm_softc {
 	struct bwfm_host_cmd_ring sc_cmdq;
 	struct taskq		*sc_taskq;
 	struct task		 sc_task;
+	struct mbuf_list	 sc_evml;
 
 	int			 sc_bcdc_reqid;
 	TAILQ_HEAD(, bwfm_proto_bcdc_ctl) sc_bcdc_rxctlq;
