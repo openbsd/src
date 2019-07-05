@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.65 2019/06/22 15:38:15 lum Exp $	*/
+/*	$OpenBSD: extend.c,v 1.66 2019/07/05 14:50:59 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -657,7 +657,7 @@ load(const char *fname)
 {
 	int	 s = TRUE, line, ret;
 	int	 nbytes = 0;
-	char	 excbuf[128];
+	char	 excbuf[128], fncpy[NFILEN];
 	FILE    *ffp;
 
 	if ((fname = adjustname(fname, TRUE)) == NULL)
@@ -671,6 +671,8 @@ load(const char *fname)
 		return (FALSE);
 	}
 
+	/* keep a note of fname incase of errors in loaded file. */
+	(void)strlcpy(fncpy, fname, sizeof(fncpy));
 	line = 0;
 	while ((s = ffgetline(ffp, excbuf, sizeof(excbuf) - 1, &nbytes))
 	    == FIOSUC) {
@@ -679,7 +681,7 @@ load(const char *fname)
 		if (excline(excbuf) != TRUE) {
 			s = FIOERR;
 			dobeep();
-			ewprintf("Error loading file %s at line %d", fname, line);
+			ewprintf("Error loading file %s at line %d", fncpy, line);
 			break;
 		}
 	}
