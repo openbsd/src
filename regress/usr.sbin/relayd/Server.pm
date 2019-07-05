@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.12 2017/01/31 18:02:54 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.13 2019/07/05 13:15:52 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -59,7 +59,7 @@ sub new {
 		    or die ref($self), " set SO_RCVBUF failed: $!";
 	}
 	my $packstr = $Config{longsize} == 8 ? 'ql!' :
-	    $Config{byteorder} == 1234 ? 'lxxxxl!' : 'xxxxll!';
+	    $Config{byteorder} == 1234 ? 'lxxxxl!xxxx' : 'xxxxll!';
 	if ($self->{sndtimeo}) {
 		setsockopt($ls, SOL_SOCKET, SO_SNDTIMEO,
 		    pack($packstr, $self->{sndtimeo}, 0))
