@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.76 2019/05/13 15:19:16 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.77 2019/07/05 13:42:06 robert Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1126,13 +1126,30 @@ char *
 relay_expand_http(struct ctl_relay_event *cre, char *val, char *buf,
     size_t len)
 {
-	struct rsession	*con = cre->con;
-	struct relay	*rlay = con->se_relay;
-	char		 ibuf[128];
+	struct rsession		*con = cre->con;
+	struct relay		*rlay = con->se_relay;
+	struct http_descriptor	*desc = cre->desc;
+	struct kv		*host, key;
+	char			 ibuf[128];
 
 	if (strlcpy(buf, val, len) >= len)
 		return (NULL);
 
+	if (strstr(val, "$HOST") != NULL) {
+		key.kv_key = "Host";
+		host = kv_find(&desc->http_headers, &key);
+		if (host) {
+			if (host->kv_value == NULL)
+				return (NULL);
+			snprintf(ibuf, sizeof(ibuf), "%s", host->kv_value);
+		} else {
+			if (print_host(&rlay->rl_conf.ss,
+			    ibuf, sizeof(ibuf)) == NULL)
+				return (NULL);
+		}
+		if (expand_string(buf, len, "$HOST", ibuf))
+			return (NULL);
+	}
 	if (strstr(val, "$REMOTE_") != NULL) {
 		if (strstr(val, "$REMOTE_ADDR") != NULL) {
 			if (print_host(&cre->ss, ibuf, sizeof(ibuf)) == NULL)

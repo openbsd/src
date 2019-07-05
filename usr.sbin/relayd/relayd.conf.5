@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.191 2019/06/26 12:13:47 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.192 2019/07/05 13:42:06 robert Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2019 $
+.Dd $Mdocdate: July 5 2019 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -1318,6 +1318,8 @@ The value string may contain predefined macros that will be expanded
 at runtime:
 .Pp
 .Bl -tag -width $SERVER_ADDR -offset indent -compact
+.It Ic $HOST
+The Host header's value of the relay.
 .It Ic $REMOTE_ADDR
 The IP address of the connected client.
 .It Ic $REMOTE_PORT
