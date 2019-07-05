@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smr_call.9,v 1.1 2019/02/26 14:28:20 visa Exp $
+.\"	$OpenBSD: smr_call.9,v 1.2 2019/07/05 04:41:23 dlg Exp $
 .\"
 .\" Copyright (c) 2019 Visa Hankala
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2019 $
+.Dd $Mdocdate: July 5 2019 $
 .Dt SMR_CALL 9
 .Os
 .Sh NAME
@@ -53,7 +53,10 @@ The mechanism guarantees that SMR-protected objects are not destroyed
 while readers are using them.
 However, it does not control how these objects are modified.
 .Pp
-Readers access SMR-protected objects inside SMR read-side critical section.
+Readers access SMR-protected objects inside an SMR read-side critical section
+using
+.Xr SMR_PTR_GET 9 .
+.\" or with a higher level API built on top of it.
 The section is entered with
 .Fn smr_read_enter ,
 and exited with
@@ -118,7 +121,9 @@ and
 can be called during autoconf, or from process context.
 .Sh SEE ALSO
 .Xr mutex 9 ,
-.Xr rwlock 9
+.Xr rwlock 9 ,
+.Xr SMR_LIST_INIT 9 ,
+.Xr SMR_PTR_GET 9
 .Sh HISTORY
 The SMR API first appeared in
 .Ox 6.5 .
