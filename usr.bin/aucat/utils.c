@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.5 2017/01/03 07:25:16 ratchov Exp $	*/
+/*	$OpenBSD: utils.c,v 1.6 2019/07/05 07:34:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -16,7 +16,7 @@
  */
 /*
  * log_xxx() routines are used to quickly store traces into a trace buffer.
- * This allows trances to be collected during time sensitive operations without
+ * This allows traces to be collected during time sensitive operations without
  * disturbing them. The buffer can be flushed on standard error later, when
  * slow syscalls are no longer disruptive, e.g. at the end of the poll() loop.
  */
@@ -50,7 +50,7 @@ unsigned int log_sync = 1;	/* if true, flush after each '\n' */
 void
 log_flush(void)
 {
-	if (log_used ==  0)
+	if (log_used == 0)
 		return;
 	write(STDERR_FILENO, log_buf, log_used);
 	log_used = 0;
@@ -140,7 +140,9 @@ panic(void)
 }
 
 /*
- * allocate a (small) amount of memory, and abort if it fails
+ * allocate 'size' bytes of memory (with size > 0). This functions never
+ * fails (and never returns NULL), if there isn't enough memory then
+ * abort the program.
  */
 void *
 xmalloc(size_t size)
