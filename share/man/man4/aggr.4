@@ -1,4 +1,4 @@
-.\" $OpenBSD: aggr.4,v 1.1 2019/07/05 01:39:55 dlg Exp $
+.\" $OpenBSD: aggr.4,v 1.2 2019/07/05 05:22:57 jmc Exp $
 .\"
 .\" Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
 .\"
@@ -24,28 +24,28 @@
 .Cd "pseudo-device aggr"
 .Sh DESCRIPTION
 The
-.Nm aggr
+.Nm
 driver implements IEEE 802.1AX (formerly 802.3ad) Link Aggregation
 for combining one or more Ethernet interfaces into a single logical
 interface.
-The Link Aggregation Control Protocol (LACP) is used negotiate the
+The Link Aggregation Control Protocol (LACP) is used to negotiate the
 aggregation of member interfaces with a partner device.
 .Pp
-.Nm aggr
+.Nm
 interfaces must be configured to use one or more Ethernet interfaces
-as ports, and will communicate with a partner device over those
+as ports, and communicate with a partner device over those
 ports using LACP.
-Member interfaces that negotiate with a partner device will be
+Member interfaces that negotiate with a partner device are
 aggregated into a single logical link.
 Packets transmitted through an
-.Nm aggr
-interface will select an aggregated interface for transmission.
-Packets received by an aggregated device will appear to be received
+.Nm
+interface select an aggregated interface for transmission.
+Packets received by an aggregated device appear to be received
 by the
-.Nm aggr
+.Nm
 interface it is a member of.
 .Pp
-.Nm aggr
+.Nm
 interfaces can be created at runtime using the
 .Ic ifconfig aggr Ns Ar N Ic create
 command or by setting up a
@@ -56,7 +56,7 @@ The interface itself can be configured with
 .Xr ifconfig 8 ;
 see its manual page for more information.
 .Pp
-.Nm aggr
+.Nm
 interfaces may be configured with
 .Xr ifconfig 8
 and
@@ -68,24 +68,18 @@ Set the LACP mode to either
 .Cm active
 or
 .Cm passive .
-The
-.Nm aggr
-driver defaults to active mode.
+The default is active mode.
 .It Cm lacptimeout Cm fast Ns | Ns Cm slow
 Set the LACP timeout speed to either
 .Cm fast
 or
 .Cm slow .
-The
-.Nm aggr
-driver defaults to slow timeouts.
+The default is slow timeouts.
 .It Cm lladdr Ar etheraddr Ns | Ns Cm random
 Change the link layer address (MAC address) of the interface.
 This should be specified as six colon-separated hex values, or can
 be chosen randomly.
-By default the
-.Nm aggr
-driver generates a random MAC address when an interface is created.
+By default a random MAC address is generated when an interface is created.
 .It Cm trunkport Ar child-iface
 Add
 .Ar child-iface
@@ -102,7 +96,7 @@ using the
 driver.
 .Sh EXAMPLES
 Create an
-.Nm aggr
+.Nm
 virtual interface on top of two physical interfaces:
 .Bd -literal -offset indent
 # ifconfig aggr0 create
