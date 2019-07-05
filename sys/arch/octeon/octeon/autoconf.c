@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.14 2018/12/18 13:44:11 visa Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.15 2019/07/05 15:23:35 visa Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -54,7 +54,7 @@ struct devmap {
 	enum devclass	 class;
 };
 
-struct devmap *
+enum devclass
 findtype(void)
 {
 	static struct devmap devmap[] = {
@@ -62,30 +62,24 @@ findtype(void)
 		{ "sd", DV_DISK },
 		{ "octcf", DV_DISK },
 		{ "amdcf", DV_DISK },
-		{ "cnmac", DV_IFNET },
-		{ NULL, DV_DULL }
+		{ NULL, DV_IFNET }
 	};
 	struct devmap *dp = &devmap[0];
 
 	if (strlen(bootdev) < 2)
-		return dp;
+		return DV_DISK;
 
 	while (dp->dev) {
 		if (strncmp(bootdev, dp->dev, strlen(dp->dev)) == 0)
 			break;
 		dp++;
 	}
-
-	if (dp->dev == NULL)
-		printf("%s is not a valid rootdev\n", bootdev);
-
-	return dp;
+	return dp->class;
 }
 
 void
 parse_uboot_root(void)
 {
-	struct devmap *dp;
 	char *p;
 	size_t len;
 
@@ -111,8 +105,7 @@ parse_uboot_root(void)
 
 	strlcpy(bootdev, p, sizeof(bootdev));
 
-	dp = findtype();
-	bootdev_class = dp->class;
+	bootdev_class = findtype();
 }
 
 static unsigned int
