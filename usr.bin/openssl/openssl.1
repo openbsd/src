@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.104 2019/07/04 13:55:20 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.105 2019/07/05 11:50:46 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 4 2019 $
+.Dd $Mdocdate: July 5 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -993,7 +993,7 @@ The output format.
 .Sh DGST
 .nr nS 1
 .Nm "openssl dgst"
-.Op Fl cd
+.Op Fl cdr
 .Op Fl binary
 .Op Fl Ar digest
 .Op Fl hex
@@ -1081,6 +1081,8 @@ The output is either
 .Qq Verification OK
 or
 .Qq Verification Failure .
+.It Fl r
+Print the digest in coreutils format.
 .It Fl sign Ar file
 Digitally sign the digest using the private key in
 .Ar file .
