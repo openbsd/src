@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.25 2019/06/11 00:45:31 dlg Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.26 2019/07/05 19:06:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -472,10 +472,10 @@ vpci_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 		if (offset < child || offset >= child + size)
 			continue;
 
-		paddr = pbm->vp_range[i].phys_lo + offset;
+		paddr = pbm->vp_range[i].phys_lo;
 		paddr |= ((bus_addr_t)pbm->vp_range[i].phys_hi) << 32;
 		return ((*t->parent->sparc_bus_map)
-		    (t, t0, paddr, size, flags, hp));
+		    (t, t0, paddr + offset - child, size, flags, hp));
 	}
 
 	return (EINVAL);
