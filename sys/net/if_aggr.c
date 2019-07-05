@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.8 2019/07/05 05:00:40 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.9 2019/07/05 07:18:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -784,6 +784,19 @@ aggr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = aggr_set_lladdr(sc, ifr);
 		break;
 
+	case SIOCSTRUNK:
+		error = suser(curproc);
+		if (error != 0)
+			break;
+ 
+		if (((struct trunk_reqall *)data)->ra_proto !=
+		    TRUNK_PROTO_LACP) {
+			error = EPROTONOSUPPORT;
+			break;
+		}
+
+		/* nop */
+		break;
 	case SIOCGTRUNK:
 		error = aggr_get_trunk(sc, (struct trunk_reqall *)data);
 		break;
