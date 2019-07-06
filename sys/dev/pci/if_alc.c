@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.51 2019/06/17 08:17:21 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.52 2019/07/06 13:55:20 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -235,6 +235,12 @@ alc_mii_readreg_816x(struct device *dev, int phy, int reg)
 			break;
 	}
 
+	if (i == 0) {
+		printf("%s: phy read timeout: phy %d, reg %d\n",
+		    sc->sc_dev.dv_xname, phy, reg);
+		return (0);
+	}
+
 	return ((v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT);
 }
 
@@ -383,6 +389,12 @@ alc_miiext_readreg(struct alc_softc *sc, int devaddr, int reg)
 			break;
 	}
 
+	if (i == 0) {
+		printf("%s: phy ext read timeout: phy %d, reg %d\n",
+		    sc->sc_dev.dv_xname, devaddr, reg);
+		return (0);
+	}
+
 	return ((v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT);
 }
 
@@ -407,6 +419,10 @@ alc_miiext_writereg(struct alc_softc *sc, int devaddr, int reg, int val)
 		if ((v & MDIO_OP_BUSY) == 0)
 			break;
 	}
+
+	if (i == 0)
+		printf("%s: phy ext write timeout: phy %d, reg %d\n",
+		    sc->sc_dev.dv_xname, devaddr, reg);
 }
 
 void
@@ -654,6 +670,9 @@ alc_get_macaddr_816x(struct alc_softc *sc)
 		}
 		if (i != 0)
 			reloaded++;
+		else if (alcdebug)
+			printf("%s: reloading station address via TWSI timed"
+			    "out!\n", sc->sc_dev.dv_xname);
 	}
 
 	/* Try to reload station address from EEPROM or FLASH. */
@@ -677,7 +696,9 @@ alc_get_macaddr_816x(struct alc_softc *sc)
 					if ((reg & EEPROM_LD_START) == 0)
 						break;
 				}
-			}
+			} else if (alcdebug)
+				printf("%s: reloading EEPROM/FLASH timed out!\n",
+				    sc->sc_dev.dv_xname);
 		}
 	}
 
