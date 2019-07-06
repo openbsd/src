@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.11 2019/07/01 06:56:00 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.12 2019/07/06 20:37:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -565,7 +565,7 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 				cp++;
 			}
 
-			/* Draw the cell to th current screen. */
+			/* Draw the cell to the current screen. */
 			screen_write_cell(&ctx[current], &sy.gc);
 			width[current] += ud->width;
 			continue;

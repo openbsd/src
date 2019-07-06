@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.96 2019/06/27 15:17:41 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.97 2019/07/06 20:37:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,12 +37,12 @@
 
 /* Default grid cell data. */
 const struct grid_cell grid_default_cell = {
-	0, 0, 8, 8, 0, { { ' ' }, 0, 1, 1 }
+	{ { ' ' }, 0, 1, 1 }, 0, 0, 8, 8, 0
 };
 
 /* Cleared grid cell data. */
 const struct grid_cell grid_cleared_cell = {
-	GRID_FLAG_CLEARED, 0, 8, 8, 0, { { ' ' }, 0, 1, 1 }
+	{ { ' ' }, 0, 1, 1 }, 0, GRID_FLAG_CLEARED, 8, 8, 0
 };
 static const struct grid_cell_entry grid_cleared_entry = {
 	GRID_FLAG_CLEARED, { .data = { 0, 8, 8, ' ' } }
@@ -475,6 +475,7 @@ grid_get_cell1(struct grid_line *gl, u_int px, struct grid_cell *gc)
 	gc->bg = gce->data.bg;
 	if (gce->flags & GRID_FLAG_BG256)
 		gc->bg |= COLOUR_FLAG_256;
+	gc->us = 0;
 	utf8_set(&gc->data, gce->data.data);
 }
 

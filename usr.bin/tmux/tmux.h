@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.918 2019/07/01 06:56:00 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.919 2019/07/06 20:37:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -596,13 +596,13 @@ enum utf8_state {
 
 /* Grid cell data. */
 struct grid_cell {
-	u_char			flags;
+	struct utf8_data	data; /* 21 bytes */
 	u_short			attr;
+	u_char			flags;
 	int			fg;
 	int			bg;
 	int			us;
-	struct utf8_data	data;
-};
+} __packed;
 struct grid_cell_entry {
 	u_char			flags;
 	union {
