@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdstore.c,v 1.8 2018/09/15 13:20:16 kettenis Exp $	*/
+/*	$OpenBSD: mdstore.c,v 1.9 2019/07/06 21:12:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -55,6 +55,7 @@ struct mdstore_msg {
 	uint64_t	svc_handle;
 	uint64_t	reqnum;
 	uint16_t	command;
+	uint8_t		reserved[6];
 } __packed;
 
 struct mdstore_begin_end_req {
@@ -104,7 +105,7 @@ struct mdstore_sel_del_req {
 	uint64_t	svc_handle;
 	uint64_t	reqnum;
 	uint16_t	command;
-	uint16_t	reserved;
+	uint8_t		reserved[2];
 	uint32_t	namelen;
 	char		name[1];
 } __packed;
