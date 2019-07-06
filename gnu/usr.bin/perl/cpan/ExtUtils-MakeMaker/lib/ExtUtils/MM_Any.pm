@@ -1088,8 +1088,9 @@ manifypods : pure_all config $dependencies
 END
 
     my @man_cmds;
-    foreach my $section (qw(1 3)) {
-        my $pods = $self->{"MAN${section}PODS"};
+    foreach my $num (qw(1 3)) {
+        my $pods = $self->{"MAN${num}PODS"};
+        my $section = $self->{"MAN${num}SECTION"};
         my $p2m = sprintf <<'CMD', $section, $] > 5.008 ? " -u" : "";
 	$(NOECHO) $(POD2MAN) --section=%s --perm_rw=$(PERM_RW)%s
 CMD
@@ -2176,6 +2177,22 @@ sub init_INSTALL_from_PREFIX {
 
         warn "  $Installvar == $self->{$Installvar}\n"
           if $Verbose >= 2;
+    }
+
+    # logic similar to picking man${num}ext in perl's Configure script
+    foreach my $num (1,3) {
+        my $mandir
+            = $self->{ 'INSTALL' . uc $self->{INSTALLDIRS} . "MAN${num}DIR" };
+        my $section = $num;
+
+        foreach ($num, "${num}p", "${num}pm", qw< l n o C L >, "L$num") {
+            if ( $mandir =~ /$_$/ ) {
+                $section = $_;
+                last;
+            }
+        }
+
+        $self->{"MAN${num}SECTION"} = $section;
     }
 
     # Generate these if they weren't figured out.
