@@ -1,4 +1,4 @@
-/* $OpenBSD: env.c,v 1.9 2019/06/17 19:51:23 tedu Exp $ */
+/* $OpenBSD: env.c,v 1.10 2019/07/07 19:21:28 tedu Exp $ */
 /*
  * Copyright (c) 2016 Ted Unangst <tedu@openbsd.org>
  *
@@ -207,7 +207,10 @@ fillenv(struct env *env, const char **envlist)
 					val = getenv(val + 1);
 			}
 		} else {
-			val = getenv(name);
+			if (strcmp(name, "PATH") == 0)
+				val = formerpath;
+			else
+				val = getenv(name);
 		}
 		/* at last, we have something to insert */
 		if (val) {
