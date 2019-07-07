@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.32 2019/07/04 14:50:01 espie Exp $
+# $OpenBSD: Temp.pm,v 1.33 2019/07/07 12:42:54 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -114,8 +114,7 @@ sub permanent_file
 		return @l;
 	}
 	($lastname, $lasttype, $lasterror) = ($template, 'file', $!);
-	return undef;
-	
+	return ();
 }
 
 sub permanent_dir
