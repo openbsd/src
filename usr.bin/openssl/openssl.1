@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.106 2019/07/05 14:33:10 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.107 2019/07/07 02:04:40 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 5 2019 $
+.Dd $Mdocdate: July 7 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -321,7 +321,7 @@ into a nested structure.
 .Op Fl keyform Cm pem | der
 .Op Fl md Ar alg
 .Op Fl msie_hack
-.Op Fl multivalue\-rdn
+.Op Fl multivalue-rdn
 .Op Fl name Ar section
 .Op Fl noemailDN
 .Op Fl notext
@@ -428,14 +428,14 @@ its use is strongly discouraged.
 The newer control
 .Qq Xenroll
 does not need this option.
-.It Fl multivalue\-rdn
+.It Fl multivalue-rdn
 This option causes the
 .Fl subj
 argument to be interpreted with full support for multivalued RDNs,
 for example
 .Qq "/DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe" .
 If
-.Fl multivalue\-rdn
+.Fl multivalue-rdn
 is not used, the UID value is set to
 .Qq "123456+CN=John Doe" .
 .It Fl name Ar section
@@ -2449,7 +2449,10 @@ It is recommended that des3 is used.
 .Sh PKCS12
 .nr nS 1
 .Nm "openssl pkcs12"
-.Op Fl aes128 | aes192 | aes256 | des | des3
+.Oo
+.Fl aes128 | aes192 | aes256 | camellia128 |
+.Fl camellia192 | camellia256 | des | des3 | idea
+.Oc
 .Op Fl cacerts
 .Op Fl CAfile Ar file
 .Op Fl caname Ar name
@@ -2467,6 +2470,7 @@ It is recommended that des3 is used.
 .Op Fl keyex
 .Op Fl keypbe Ar alg
 .Op Fl keysig
+.Op Fl LMK
 .Op Fl macalg Ar alg
 .Op Fl maciter
 .Op Fl name Ar name
@@ -2481,6 +2485,7 @@ It is recommended that des3 is used.
 .Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
+.Op Fl password Ar arg
 .Op Fl twopass
 .nr nS 0
 .Pp
@@ -2496,9 +2501,14 @@ option.
 .Pp
 The options for parsing a PKCS12 file are as follows:
 .Bl -tag -width "XXXX"
-.It Fl aes128 | aes192 | aes256 | des | des3
-Encrypt private keys
-using AES, DES, or triple DES, respectively.
+.It Xo
+.Fl aes128 | aes192 | aes256 |
+.Fl camellia128 | camellia192 | camellia256 |
+.Fl des | des3 |
+.Fl idea
+.Xc
+Encrypt private keys using AES, CAMELLIA, DES, triple DES
+or the IDEA ciphers, respectively.
 The default is triple DES.
 .It Fl cacerts
 Only output CA certificates
@@ -2603,6 +2613,8 @@ option marks the key for signing only.
 Signing only keys can be used for S/MIME signing, authenticode
 (ActiveX control signing)
 and SSL client authentication.
+.It Fl LMK
+Add local machine keyset attribute to private key.
 .It Fl macalg Ar alg
 Specify the MAC digest algorithm.
 The default is SHA1.
@@ -2638,6 +2650,16 @@ or standard output if not specified.
 The key password source.
 .It Fl passout Ar arg
 The output file password source.
+.It Fl password Ar arg
+With
+.Fl export ,
+.Fl password
+is equivalent to
+.Fl passout .
+Otherwise, 
+.Fl password
+is equivalent to
+.Fl passin .
 .El
 .Sh PKEY
 .nr nS 1
@@ -2959,6 +2981,7 @@ or standard output if not specified.
 .Op Fl keyout Ar file
 .Op Fl md4 | md5 | sha1
 .Op Fl modulus
+.Op Fl multivalue-rdn
 .Op Fl nameopt Ar option
 .Op Fl new
 .Op Fl newhdr
@@ -2970,10 +2993,12 @@ or standard output if not specified.
 .Op Fl outform Cm der | pem
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
+.Op Fl pkeyopt Ar opt:value
 .Op Fl pubkey
 .Op Fl reqexts Ar section
 .Op Fl reqopt Ar option
 .Op Fl set_serial Ar n
+.Op Fl sigopt Ar nm:v
 .Op Fl subj Ar arg
 .Op Fl subject
 .Op Fl text
@@ -3042,6 +3067,16 @@ Some public key algorithms may override this choice.
 For instance, DSA signatures always use SHA1.
 .It Fl modulus
 Print the value of the modulus of the public key contained in the request.
+.It Fl multivalue-rdn
+This option causes the
+.Fl subj
+argument to be interpreted with full support for multivalued RDNs,
+for example
+.Qq "/DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe" .
+If
+.Fl multivalue-rdn
+is not used, the UID value is set to
+.Qq "123456+CN=John Doe" .
 .It Fl nameopt Ar option , Fl reqopt Ar option
 Determine how the subject or issuer names are displayed.
 .Ar option
@@ -3112,6 +3147,11 @@ The output format.
 The key password source.
 .It Fl passout Ar arg
 The output file password source.
+.It Fl pkeyopt Ar opt:value
+Set the public key algorithm option
+.Ar opt
+to
+.Ar value .
 .It Fl pubkey
 Output the public key.
 .It Fl reqopt Ar option
@@ -3130,6 +3170,9 @@ Serial number to use when outputting a self-signed certificate.
 This may be specified as a decimal value or a hex value if preceded by
 .Sq 0x .
 It is possible to use negative serial numbers but this is not recommended.
+.It Fl sigopt Ar nm:v
+Pass options to the signature algorithm during sign operation.
+The names and values of these options are algorithm-specific.
 .It Fl subj Ar arg
 Replaces the subject field of an input request
 with the specified data and output the modified request.
@@ -4920,6 +4963,7 @@ The default is no.
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl check_ss_sig
+.Op Fl CRLfile Ar file
 .Op Fl crl_check
 .Op Fl crl_check_all
 .Op Fl explicit_policy
@@ -4931,6 +4975,7 @@ The default is no.
 .Op Fl issuer_checks
 .Op Fl policy_check
 .Op Fl purpose Ar purpose
+.Op Fl trusted Ar file
 .Op Fl untrusted Ar file
 .Op Fl verbose
 .Op Fl x509_strict
@@ -4943,10 +4988,6 @@ command verifies certificate chains.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl check_ss_sig
-Verify the signature on the self-signed root CA.
-This is disabled by default
-because it doesn't add any security.
 .It Fl CAfile Ar file
 A
 .Ar file
@@ -4969,6 +5010,14 @@ is the hashed certificate subject name
 option of the
 .Nm x509
 utility).
+.It Fl check_ss_sig
+Verify the signature on the self-signed root CA.
+This is disabled by default
+because it doesn't add any security.
+.It Fl CRLfile Ar file
+The
+.Ar file
+should contain one or more CRLs in PEM format.
 .It Fl crl_check
 Check end entity certificate validity by attempting to look up a valid CRL.
 If a valid CRL cannot be found an error occurs.
@@ -5007,6 +5056,13 @@ Currently accepted uses are
 .Cm any ,
 and
 .Cm ocsphelper .
+.It Fl trusted Ar file
+A
+.Ar file
+of trusted certificates.
+The
+.Ar file
+should contain multiple certificates.
 .It Fl untrusted Ar file
 A
 .Ar file
@@ -5292,6 +5348,7 @@ version.
 .Op Fl md5 | sha1
 .Op Fl modulus
 .Op Fl nameopt Ar option
+.Op Fl next_serial
 .Op Fl noout
 .Op Fl ocsp_uri
 .Op Fl ocspid
@@ -5305,6 +5362,7 @@ version.
 .Op Fl set_serial Ar n
 .Op Fl setalias Ar arg
 .Op Fl signkey Ar file
+.Op Fl sigopt Ar nm:v
 .Op Fl startdate
 .Op Fl subject
 .Op Fl subject_hash
@@ -5572,6 +5630,8 @@ are represented using the format \eUXXXX for 16 bits and \eWXXXXXXXX
 for 32 bits,
 and any UTF8Strings are converted to their character form first.
 .El
+.It Fl next_serial
+Print the next serial number.
 .It Fl noout
 Do not output the encoded version of the request.
 .It Fl ocsp_uri
@@ -5582,6 +5642,9 @@ Print OCSP hash values for the subject name and public key.
 Print the public key.
 .It Fl serial
 Print the certificate serial number.
+.It Fl sigopt Ar nm:v
+Pass options to the signature algorithm during sign or certify operations.
+The names and values of these options are algorithm-specific.
 .It Fl startdate
 Print the start date of the certificate; that is, the
 .Cm notBefore
