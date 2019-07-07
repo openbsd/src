@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mue.c,v 1.6 2019/07/06 13:37:09 kevlo Exp $	*/
+/*	$OpenBSD: if_mue.c,v 1.7 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -855,10 +855,6 @@ mue_detach(struct device *self, int flags)
 		if_detach(ifp);
 	}
 
-	if (--sc->mue_refcnt >= 0) {
-		/* Wait for processes to go away. */
-		usb_detach_wait(&sc->mue_dev);
-	}
 	splx(s);
 
 	return (0);

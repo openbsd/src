@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.39 2018/07/03 00:47:49 kevlo Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -784,10 +784,6 @@ mos_detach(struct device *self, int flags)
 		    sc->mos_dev.dv_xname);
 #endif
 
-	if (--sc->mos_refcnt >= 0) {
-		/* Wait for processes to go away. */
-		usb_detach_wait(&sc->mos_dev);
-	}
 	splx(s);
 
 	return (0);

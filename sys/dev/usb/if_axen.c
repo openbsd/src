@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.26 2018/12/05 15:54:58 mpi Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.27 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -778,10 +778,6 @@ axen_detach(struct device *self, int flags)
 		    sc->axen_dev.dv_xname);
 #endif
 
-	if (--sc->axen_refcnt >= 0) {
-		/* Wait for processes to go away. */
-		usb_detach_wait(&sc->axen_dev);
-	}
 	splx(s);
 
 	return 0;
