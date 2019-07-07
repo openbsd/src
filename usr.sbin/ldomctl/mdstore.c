@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdstore.c,v 1.10 2019/07/06 21:20:19 kettenis Exp $	*/
+/*	$OpenBSD: mdstore.c,v 1.11 2019/07/07 14:45:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -31,6 +31,7 @@
 
 void	mdstore_start(struct ldc_conn *, uint64_t);
 void	mdstore_start_v2(struct ldc_conn *, uint64_t);
+void	mdstore_start_v3(struct ldc_conn *, uint64_t);
 void	mdstore_rx_data(struct ldc_conn *, uint64_t, void *, size_t);
 
 struct ds_service mdstore_service = {
@@ -39,6 +40,10 @@ struct ds_service mdstore_service = {
 
 struct ds_service mdstore_service_v2 = {
 	"mdstore", 2, 0, mdstore_start_v2, mdstore_rx_data
+};
+
+struct ds_service mdstore_service_v3 = {
+	"mdstore", 3, 0, mdstore_start_v3, mdstore_rx_data
 };
 
 #define MDSET_BEGIN_REQUEST	0x0001
@@ -81,6 +86,28 @@ struct mdstore_begin_req_v2 {
 	uint32_t	namelen;
 	char		name[1];
 } __packed;
+
+struct mdstore_begin_req_v3 {
+	uint32_t	msg_type;
+	uint32_t	payload_len;
+	uint64_t	svc_handle;
+	uint64_t	reqnum;
+	uint16_t	command;
+	uint16_t	nmds;
+	uint32_t	config_size;
+  	uint64_t	timestamp;
+	uint8_t		degraded;
+	uint8_t		active_config;
+	uint8_t		reserved[2];
+	uint32_t	namelen;
+	char		name[1];
+} __packed;
+
+#define CONFIG_NORMAL		0x00
+#define CONFIG_DEGRADED		0x01
+
+#define CONFIG_EXISTING		0x00
+#define CONFIG_ACTIVE		0x01
 
 struct mdstore_transfer_req {
 	uint32_t	msg_type;
@@ -146,6 +173,7 @@ mdstore_register(struct ds_conn *dc)
 {
 	ds_conn_register_service(dc, &mdstore_service);
 	ds_conn_register_service(dc, &mdstore_service_v2);
+	ds_conn_register_service(dc, &mdstore_service_v3);
 }
 
 void
@@ -166,6 +194,13 @@ void
 mdstore_start_v2(struct ldc_conn *lc, uint64_t svc_handle)
 {
 	mdstore_major = 2;
+	mdstore_start(lc, svc_handle);
+}
+
+void
+mdstore_start_v3(struct ldc_conn *lc, uint64_t svc_handle)
+{
+	mdstore_major = 3;
 	mdstore_start(lc, svc_handle);
 }
 
@@ -200,8 +235,10 @@ mdstore_rx_data(struct ldc_conn *lc, uint64_t svc_handle, void *data,
 			set->boot_set = (idx == mr->boot_set);
 			TAILQ_INSERT_TAIL(&mdstore_sets, set, link);
 			len += strlen(&mr->sets[len]) + 1;
-			if (mdstore_major == 2)
+			if (mdstore_major >= 2)
 				len += sizeof(uint64_t); /* skip timestamp */
+			if (mdstore_major >= 3)
+				len += sizeof(uint8_t);	/* skip has_degraded */
 		}
 		break;
 	}
@@ -260,13 +297,43 @@ mdstore_begin_v2(struct ds_conn *dc, uint64_t svc_handle, const char *name,
 }
 
 void
+mdstore_begin_v3(struct ds_conn *dc, uint64_t svc_handle, const char *name,
+    int nmds, uint32_t config_size)
+{
+	struct mdstore_begin_req_v3 *mr;
+	size_t len = sizeof(*mr) + strlen(name);
+
+	mr = xzalloc(len);
+	mr->msg_type = DS_DATA;
+	mr->payload_len = len - 8;
+	mr->svc_handle = svc_handle;
+	mr->reqnum = mdstore_reqnum++;
+	mr->command = mdstore_command = MDSET_BEGIN_REQUEST;
+	mr->config_size = config_size;
+	mr->timestamp = time(NULL);
+	mr->degraded = CONFIG_NORMAL;
+	mr->active_config = CONFIG_EXISTING;
+	mr->nmds = nmds;
+	mr->namelen = strlen(name);
+	memcpy(mr->name, name, strlen(name));
+
+	ds_send_msg(&dc->lc, mr, len);
+	free(mr);
+
+	while (mdstore_command == MDSET_BEGIN_REQUEST)
+		ds_conn_handle(dc);
+}
+
+void
 mdstore_begin(struct ds_conn *dc, uint64_t svc_handle, const char *name,
     int nmds, uint32_t config_size)
 {
-	if (mdstore_major == 2)
-	  mdstore_begin_v2(dc, svc_handle, name, nmds, config_size);
+	if (mdstore_major == 3)
+		mdstore_begin_v3(dc, svc_handle, name, nmds, config_size);
+	else if (mdstore_major == 2)
+		mdstore_begin_v2(dc, svc_handle, name, nmds, config_size);
 	else
-	  mdstore_begin_v1(dc, svc_handle, name, nmds);
+		mdstore_begin_v1(dc, svc_handle, name, nmds);
 }
 
 void
