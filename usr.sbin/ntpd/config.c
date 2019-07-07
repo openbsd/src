@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.31 2019/06/12 05:04:45 otto Exp $ */
+/*	$OpenBSD: config.c,v 1.32 2019/07/07 07:14:57 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@ host_dns1(const char *s, struct ntp_addr **hn, int notauth)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
-	/* ntpd MUST NOT use AI_ADDRCONFIG here */
+	hints.ai_flags = AI_ADDRCONFIG;
 	error = getaddrinfo(s, NULL, &hints, &res0);
 	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
 			return (0);

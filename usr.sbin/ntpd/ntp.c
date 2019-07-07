@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.157 2019/06/27 15:18:42 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.158 2019/07/07 07:14:57 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -54,6 +54,8 @@ int	ntp_dispatch_imsg(void);
 int	ntp_dispatch_imsg_dns(void);
 void	peer_add(struct ntp_peer *);
 void	peer_remove(struct ntp_peer *);
+int	inpool(struct sockaddr_storage *,
+	    struct sockaddr_storage[MAX_SERVERS_DNS], size_t);
 
 void
 ntp_sighdlr(int sig)
@@ -263,7 +265,10 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 					log_info("peer %s now invalid",
 					    log_sockaddr(
 					    (struct sockaddr *)&p->addr->ss));
-				client_nextaddr(p);
+				if (client_nextaddr(p) == 1) {
+					peer_addr_head_clear(p);
+					client_nextaddr(p);
+				}
 				set_next(p, timeout);
 			}
 			if (p->senderrors > MAX_SEND_ERRORS) {
@@ -272,7 +277,10 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 				    (struct sockaddr *)&p->addr->ss),
 				    INTERVAL_QUERY_PATHETIC);
 				p->senderrors = 0;
-				client_nextaddr(p);
+				if (client_nextaddr(p) == 1) {
+					peer_addr_head_clear(p);
+					client_nextaddr(p);
+				}
 				set_next(p, INTERVAL_QUERY_PATHETIC);
 			}
 			if (p->next > 0 && p->next < nextaction)
@@ -468,13 +476,37 @@ ntp_dispatch_imsg(void)
 }
 
 int
+inpool(struct sockaddr_storage *a,
+    struct sockaddr_storage old[MAX_SERVERS_DNS], size_t n)
+{
+	size_t i;
+
+	for (i = 0; i < n; i++) {
+		if (a->ss_family != old[i].ss_family)
+			continue;
+		if (a->ss_family == AF_INET) {
+			if (((struct sockaddr_in *)a)->sin_addr.s_addr ==
+			    ((struct sockaddr_in *)&old[i])->sin_addr.s_addr)
+				return 1;
+		} else if (memcmp(&((struct sockaddr_in6 *)a)->sin6_addr,
+		    &((struct sockaddr_in6 *)&old[i])->sin6_addr,
+		    sizeof(struct sockaddr_in6)) == 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int
 ntp_dispatch_imsg_dns(void)
 {
 	struct imsg		 imsg;
+	struct sockaddr_storage	 existing[MAX_SERVERS_DNS];
 	struct ntp_peer		*peer, *npeer, *tmp;
 	u_int16_t		 dlen;
 	u_char			*p;
 	struct ntp_addr		*h;
+	size_t			 addrcount, peercount;
 	int			 n;
 
 	if (((n = imsg_read(ibuf_dns)) == -1 && errno != EAGAIN) || n == 0)
@@ -501,18 +533,20 @@ ntp_dispatch_imsg_dns(void)
 				break;
 			}
 
-			/*
-			 * For the redo dns case we want to have only one clone
-			 * of the pool peer, since it wil be cloned again
-			 */
 			if (peer->addr_head.pool) {
+				n = 0;
+				peercount = 0;
+
 				TAILQ_FOREACH_SAFE(npeer, &conf->ntp_peers,
 				    entry, tmp) {
+					if (strcmp(npeer->addr_head.name,
+					    peer->addr_head.name) != 0)
+						continue;
+					peercount++;
 					if (npeer->id == peer->id)
 						continue;
-					if (strcmp(npeer->addr_head.name,
-					    peer->addr_head.name) == 0)
-						peer_remove(npeer);
+					if (npeer->addr != NULL)
+						existing[n++] = npeer->addr->ss;
 				}
 			}
 
@@ -520,12 +554,15 @@ ntp_dispatch_imsg_dns(void)
 			if (dlen == 0) {	/* no data -> temp error */
 				log_warnx("DNS lookup tempfail");
 				peer->state = STATE_DNS_TEMPFAIL;
-				if (++conf->tmpfail > TRIES_AUTO_DNSFAIL)
+				if (conf->tmpfail++ == TRIES_AUTO_DNSFAIL)
 					priv_settime(0, "of dns failures");
 				break;
 			}
 
 			p = (u_char *)imsg.data;
+			addrcount = dlen / (sizeof(struct sockaddr_storage) +
+			    sizeof(int));
+
 			while (dlen >= sizeof(struct sockaddr_storage) +
 			    sizeof(int)) {
 				if ((h = calloc(1, sizeof(struct ntp_addr))) ==
@@ -538,6 +575,18 @@ ntp_dispatch_imsg_dns(void)
 				p += sizeof(int);
 				dlen -= sizeof(int);
 				if (peer->addr_head.pool) {
+					if (peercount > addrcount) {
+						free(h);
+						continue;
+					}
+					if (inpool(&h->ss, existing,
+					    n)) {
+						free(h);
+						continue;
+					}
+					log_debug("Adding address %s to %s",
+					    log_sockaddr((struct sockaddr *)
+					    &h->ss), peer->addr_head.name);
 					npeer = new_peer();
 					npeer->weight = peer->weight;
 					npeer->query_addr4 = peer->query_addr4;
@@ -551,6 +600,7 @@ ntp_dispatch_imsg_dns(void)
 					client_peer_init(npeer);
 					npeer->state = STATE_DNS_DONE;
 					peer_add(npeer);
+					peercount++;
 				} else {
 					h->next = peer->addr;
 					peer->addr = h;

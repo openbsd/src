@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.109 2019/06/20 07:28:18 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.110 2019/07/07 07:14:57 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -114,11 +114,13 @@ client_nextaddr(struct ntp_peer *p)
 		return (-1);
 	}
 
-	if (p->addr == NULL || (p->addr = p->addr->next) == NULL)
-		p->addr = p->addr_head.a;
-
 	p->shift = 0;
 	p->trustlevel = TRUSTLEVEL_PATHETIC;
+
+	if (p->addr == NULL)
+		p->addr = p->addr_head.a;
+	else if ((p->addr = p->addr->next) == NULL)
+		return (1);
 
 	return (0);
 }
@@ -168,9 +170,14 @@ client_query(struct ntp_peer *p)
 		if (connect(p->query->fd, sa, SA_LEN(sa)) == -1) {
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
 			    errno == EHOSTUNREACH || errno == EADDRNOTAVAIL) {
+				/* cycle through addresses, but do increase
+				   senderrors */
 				client_nextaddr(p);
+				if (p->addr == NULL)
+					p->addr = p->addr_head.a;
 				set_next(p, MAXIMUM(SETTIME_TIMEOUT,
 				    scale_interval(INTERVAL_QUERY_AGGRESSIVE)));
+				p->senderrors++;
 				return (-1);
 			} else
 				fatal("client_query connect");
