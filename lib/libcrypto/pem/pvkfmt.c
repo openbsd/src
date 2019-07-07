@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.20 2018/08/05 11:19:25 bcook Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.21 2019/07/07 10:52:56 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -837,7 +837,7 @@ i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel, pem_password_cb *cb,
     void *u)
 {
 	int outlen = 24, pklen;
-	unsigned char *p, *salt = NULL;
+	unsigned char *p = NULL, *start = NULL, *salt = NULL;
 	EVP_CIPHER_CTX cctx;
 
 	EVP_CIPHER_CTX_init(&cctx);
@@ -847,7 +847,7 @@ i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel, pem_password_cb *cb,
 	if (pklen < 0)
 		return -1;
 	outlen += pklen;
-	p = malloc(outlen);
+	start = p = malloc(outlen);
 	if (!p) {
 		PEMerror(ERR_R_MALLOC_FAILURE);
 		return -1;
@@ -869,7 +869,7 @@ i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel, pem_password_cb *cb,
 	}
 	do_i2b(&p, pk, 0);
 	if (enclevel == 0) {
-		*out = p;
+		*out = start;
 		return outlen;
 	} else {
 		char psbuf[PEM_BUFSIZE];
@@ -892,18 +892,18 @@ i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel, pem_password_cb *cb,
 		if (!EVP_EncryptInit_ex(&cctx, EVP_rc4(), NULL, keybuf, NULL))
 			goto error;
 		explicit_bzero(keybuf, 20);
-		if (!EVP_DecryptUpdate(&cctx, p, &enctmplen, p, pklen - 8))
+		if (!EVP_EncryptUpdate(&cctx, p, &enctmplen, p, pklen - 8))
 			goto error;
-		if (!EVP_DecryptFinal_ex(&cctx, p + enctmplen, &enctmplen))
+		if (!EVP_EncryptFinal_ex(&cctx, p + enctmplen, &enctmplen))
 			goto error;
 	}
 	EVP_CIPHER_CTX_cleanup(&cctx);
-	*out = p;
+	*out = start;
 	return outlen;
 
 error:
 	EVP_CIPHER_CTX_cleanup(&cctx);
-	free(p);
+	free(start);
 	return -1;
 }
 
@@ -918,11 +918,11 @@ i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel, pem_password_cb *cb, void *u)
 		return -1;
 	wrlen = BIO_write(out, tmp, outlen);
 	free(tmp);
-	if (wrlen == outlen) {
+	if (wrlen != outlen) {
 		PEMerror(PEM_R_BIO_WRITE_FAILURE);
-		return outlen;
+		return -1;
 	}
-	return -1;
+	return outlen;
 }
 
 #endif
