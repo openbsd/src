@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.117 2019/06/05 00:36:20 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.118 2019/07/07 11:17:36 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -164,9 +164,9 @@ struct mpii_softc {
 	int			sc_flags;
 #define MPII_F_RAID		(1<<1)
 #define MPII_F_SAS3		(1<<2)
-#define MPII_F_CONFIG_PENDING	(1<<3)
 
 	struct scsibus_softc	*sc_scsibus;
+	unsigned int		sc_pending;
 
 	struct mpii_device	**sc_devs;
 
@@ -601,7 +601,7 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 		goto free_devs;
 
 	/* force autoconf to wait for the first sas discovery to complete */
-	SET(sc->sc_flags, MPII_F_CONFIG_PENDING);
+	sc->sc_pending = 1;
 	config_pending_incr();
 
 	/* config_found() returns the scsibus attached to us */
@@ -1918,16 +1918,19 @@ mpii_event_discovery(struct mpii_softc *sc, struct mpii_msg_event_reply *enp)
 	struct mpii_evt_sas_discovery *esd =
 	    (struct mpii_evt_sas_discovery *)(enp + 1);
 
-	if (esd->reason_code == MPII_EVENT_SAS_DISC_REASON_CODE_COMPLETED) {
-		if (esd->discovery_status != 0) {
-			printf("%s: sas discovery completed with status %#x\n",
-			    DEVNAME(sc), esd->discovery_status);
-		}
+	if (sc->sc_pending == 0)
+		return;
 
-		if (ISSET(sc->sc_flags, MPII_F_CONFIG_PENDING)) {
-			CLR(sc->sc_flags, MPII_F_CONFIG_PENDING);
+	switch (esd->reason_code) {
+	case MPII_EVENT_SAS_DISC_REASON_CODE_STARTED:
+		++sc->sc_pending;
+		break;
+	case MPII_EVENT_SAS_DISC_REASON_CODE_COMPLETED:
+		if (--sc->sc_pending == 1) {
+			sc->sc_pending = 0;
 			config_pending_decr();
 		}
+		break;
 	}
 }
 
