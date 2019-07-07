@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.148 2019/05/05 10:34:01 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.149 2019/07/07 11:11:22 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -217,8 +217,6 @@ rollback_patch()
 
 trap_handler()
 {
-	local _rc=0
-
 	set +e # we're trapped
 	rm -rf "${_TMP}"
 
@@ -234,7 +232,9 @@ trap_handler()
 		if /usr/libexec/reorder_kernel; then
 			echo " done; reboot to load the new kernel"
 		else
-			_rc=$?; echo " failed!"; exit ${_rc}
+			echo " failed!\n!!! \"/usr/libexec/reorder_kernel\" \
+must be run manually to install the new kernel"
+			exit 1
 		fi
 	fi
 
