@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.4 2019/07/07 14:41:55 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.8 2006/01/02 23:16:20 uwe Exp $	*/
 
 /*-
@@ -64,9 +64,11 @@ cpu_match(struct device *parent, void *vcf, void *aux)
 void
 cpu_attach(struct device *parent, struct device *self, void *aux)
 {
+	extern char cpu_model[120];
+
 #define	MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
-	printf(": HITACHI SH%d %d.%02d MHz PCLOCK %d.%02d MHz\n",
-	    CPU_IS_SH3 ? 3 : 4, MHZ(sh_clock_get_cpuclock()),
+	printf(": HITACHI %s %d.%02d MHz PCLOCK %d.%02d MHz\n",
+	    cpu_model, MHZ(sh_clock_get_cpuclock()),
 	    MHZ(sh_clock_get_pclock()));
 #undef MHZ
 	sh_cache_information();
