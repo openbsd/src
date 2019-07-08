@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termios.4,v 1.37 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: termios.4,v 1.38 2019/07/08 18:48:30 anton Exp $
 .\"	$NetBSD: termios.4,v 1.5 1994/11/30 16:22:36 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)termios.4	8.4 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: July 8 2019 $
 .Dt TERMIOS 4
 .Os
 .Sh NAME
@@ -750,7 +750,7 @@ described later in the document under
 Special
 character functions associated with changeable special control characters
 can be disabled individually by setting their value to
-.Dv {_POSIX_VDISABLE} ;
+.Dv _POSIX_VDISABLE ;
 see
 .Sx "Special Control Characters" .
 .Pp
@@ -1527,14 +1527,14 @@ If the
 value of one of the changeable special control characters (see
 .Sx "Special Characters" )
 is
-.Dv {_POSIX_VDISABLE} ,
+.Dv _POSIX_VDISABLE ,
 that function is disabled; that is, no input
 data is recognized as the disabled special character.
 If
 .Dv ICANON
 is
 not set, the value of
-.Dv {_POSIX_VDISABLE}
+.Dv _POSIX_VDISABLE
 has no special meaning for the
 .Dv VMIN
 and

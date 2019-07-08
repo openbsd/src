@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setgroups.2,v 1.13 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: setgroups.2,v 1.14 2019/07/08 18:48:30 anton Exp $
 .\"	$NetBSD: setgroups.2,v 1.7 1995/02/27 12:36:49 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)setgroups.2	8.2 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: July 8 2019 $
 .Dt SETGROUPS 2
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ The parameter
 .Fa ngroups
 indicates the number of entries in the array and must be no
 more than
-.Dv {NGROUPS_MAX} .
+.Dv NGROUPS_MAX .
 .Pp
 Only the superuser may set new groups.
 .Sh RETURN VALUES
@@ -64,7 +64,7 @@ call will fail if:
 The value of
 .Fa ngroups
 is greater than
-.Dv {NGROUPS_MAX} .
+.Dv NGROUPS_MAX .
 .It Bq Er EPERM
 The caller is not the superuser.
 .It Bq Er EFAULT

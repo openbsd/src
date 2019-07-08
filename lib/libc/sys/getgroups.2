@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgroups.2,v 1.14 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: getgroups.2,v 1.15 2019/07/08 18:48:30 anton Exp $
 .\"	$NetBSD: getgroups.2,v 1.8 1995/02/27 12:32:57 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getgroups.2	8.2 (Berkeley) 4/16/94
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: July 8 2019 $
 .Dt GETGROUPS 2
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ indicates the number of entries that may be placed in
 returns the actual number of groups returned in
 .Fa gidset .
 No more than
-.Dv {NGROUPS_MAX}
+.Dv NGROUPS_MAX
 will ever
 be returned.
 If
