@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termios.4,v 1.38 2019/07/08 18:48:30 anton Exp $
+.\"	$OpenBSD: termios.4,v 1.39 2019/07/08 19:23:17 schwarze Exp $
 .\"	$NetBSD: termios.4,v 1.5 1994/11/30 16:22:36 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -232,7 +232,7 @@ Each terminal device file has associated with it an input queue, into
 which incoming data is stored by the system before being read by a
 process.
 The system imposes a limit,
-.Pf \&{ Dv MAX_INPUT Ns \&} ,
+.Dv MAX_INPUT ,
 on the number of
 bytes that may be stored in the input queue.
 The behavior of the system when this limit is exceeded depends on the
@@ -241,9 +241,7 @@ setting of the
 flag in the termios
 .Fa c_iflag .
 If this flag is set, the terminal
-is sent an
-.Tn ASCII
-.Dv BEL
+is sent an ASCII BEL
 character each time a character is received
 while the input queue is full.
 Otherwise, the input queue is flushed upon receiving the character.
@@ -321,12 +319,12 @@ at most one line is returned.
 It is not, however, necessary to read a whole line at once; any number
 of bytes, even one, may be requested in a read without losing information.
 .Pp
-.Pf \&{ Dv MAX_CANON Ns \&}
+.Dv MAX_CANON
 is a limit on the
 number of bytes in a line.
 The behavior of the system when this limit is
 exceeded is the same as when the input queue limit
-.Pf \&{ Dv MAX_INPUT Ns \&} ,
+.Dv MAX_INPUT ,
 is exceeded.
 .Pp
 Erase and kill processing occur when either of two special characters,
@@ -388,7 +386,7 @@ transmissions.
 If
 .Dv VMIN
 is greater than
-.Pf \&{ Dv MAX_INPUT Ns \&} ,
+.Dv MAX_INPUT ,
 the response to the
 request is undefined.
 The four possible values for
@@ -448,8 +446,7 @@ bytes are received (i.e., the pending read blocks until
 .Dv VMIN
 bytes
 are received), or a signal is received.
-A program that uses this case to read record-based terminal
-.Dv I/O
+A program that uses this case to read record-based terminal I/O
 may block indefinitely in the read
 operation.
 .Ss "Case C: VMIN = 0, VTIME > 0"
@@ -647,9 +644,7 @@ Special character on input and is recognized if the
 .Dv ICANON
 flag is set; it is the
 .Ql \&\er ,
-as denoted in the
-.Tn \&C
-Standard {2}.
+as denoted in the C Standard {2}.
 When
 .Dv ICANON
 and
@@ -797,9 +792,7 @@ Then, if
 is set in the control modes, and the communications port supports a
 disconnect function, the terminal device performs a disconnect.
 .Ss Parameters That Can Be Set
-Routines that need to control certain terminal
-.Tn I/O
-characteristics
+Routines that need to control certain terminal I/O characteristics
 do so by using the termios structure as defined in the header
 .In termios.h .
 This structure contains minimally four scalar elements of bit flags
@@ -1024,9 +1017,7 @@ characters are transmitted are implementation defined.
 If
 .Dv IMAXBEL
 is set and the input queue is full, subsequent input shall cause an
-.Tn ASCII
-.Dv BEL
-character to be transmitted to
+ASCII BEL character to be transmitted to
 the output queue.
 .Pp
 If
@@ -1081,10 +1072,7 @@ spaces (assuming 8 column tab stops).
 .Pp
 If
 .Dv ONOEOT
-is set,
-.Tn ASCII
-.Dv EOT Ns 's
-are discarded on output.
+is set, ASCII EOT characters are discarded on output.
 .Pp
 If
 .Dv OCRNL
