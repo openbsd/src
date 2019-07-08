@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.107 2019/07/07 02:04:40 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.108 2019/07/08 14:15:12 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 7 2019 $
+.Dd $Mdocdate: July 8 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1184,15 +1184,16 @@ parameters are generated instead.
 .Fl des | des3
 .Oc
 .Op Fl in Ar file
-.Op Fl inform Cm der | pem
+.Op Fl inform Cm der | pem | pvk
 .Op Fl modulus
 .Op Fl noout
 .Op Fl out Ar file
-.Op Fl outform Cm der | pem
+.Op Fl outform Cm der | pem | pvk
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
 .Op Fl pubin
 .Op Fl pubout
+.Op Fl pvk-none | pvk-strong | pvk-weak
 .Op Fl text
 .nr nS 0
 .Pp
@@ -1230,7 +1231,7 @@ These options can only be used with PEM format output files.
 The input file to read from,
 or standard input if not specified.
 If the key is encrypted, a pass phrase will be prompted for.
-.It Fl inform Cm der | pem
+.It Fl inform Cm der | pem | pvk
 The input format.
 .It Fl modulus
 Print the value of the public key component of the key.
@@ -1241,7 +1242,7 @@ The output file to write to,
 or standard output if not specified.
 If any encryption options are set then a pass phrase will be
 prompted for.
-.It Fl outform Cm der | pem
+.It Fl outform Cm der | pem | pvk
 The output format.
 .It Fl passin Ar arg
 The key password source.
@@ -1252,6 +1253,12 @@ Read in a public key, not a private key.
 .It Fl pubout
 Output a public key, not a private key.
 Automatically set if the input is a public key.
+.It Xo
+.Fl pvk-none | pvk-strong | pvk-weak
+.Xc
+Enable or disable PVK encoding.
+The default is
+.Fl pvk-strong .
 .It Fl text
 Print the public/private key in plain text.
 .El
@@ -1933,7 +1940,9 @@ a Netscape certificate sequence is created from a file of certificates.
 .Op Fl CApath Ar directory
 .Op Fl cert Ar file
 .Op Fl dgst Ar alg
+.Op Fl header Ar name value
 .Op Fl host Ar hostname : Ns Ar port
+.Op Fl ignore_err
 .Op Fl index Ar indexfile
 .Op Fl issuer Ar file
 .Op Fl ndays Ar days
@@ -1942,6 +1951,7 @@ a Netscape certificate sequence is created from a file of certificates.
 .Op Fl no_cert_verify
 .Op Fl no_certs
 .Op Fl no_chain
+.Op Fl no_explicit
 .Op Fl no_intern
 .Op Fl no_nonce
 .Op Fl no_signature_verify
@@ -1962,12 +1972,13 @@ a Netscape certificate sequence is created from a file of certificates.
 .Op Fl rkey Ar file
 .Op Fl rother Ar file
 .Op Fl rsigner Ar file
-.Op Fl serial Ar number
+.Op Fl serial Ar num
 .Op Fl sign_other Ar file
 .Op Fl signer Ar file
 .Op Fl signkey Ar file
 .Op Fl status_age Ar age
 .Op Fl text
+.Op Fl timeout Ar seconds
 .Op Fl trust_other
 .Op Fl url Ar responder_url
 .Op Fl VAfile Ar file
@@ -2016,6 +2027,10 @@ on
 specifies the HTTP path name to use, or
 .Pa /
 by default.
+.It Fl header Ar name value
+Add the header name with the specified value to the OCSP request that is sent
+to the responder.
+This may be repeated.
 .It Fl issuer Ar file
 The current issuer certificate, in PEM format.
 Can be used multiple times and must come before any
@@ -2035,6 +2050,8 @@ Don't include any certificates in the signed request.
 .It Fl no_chain
 Do not use certificates in the response as additional untrusted CA
 certificates.
+.It Fl no_explicit
+Don't check the explicit trust for OCSP signing in the root CA certificate.
 .It Fl no_intern
 Ignore certificates contained in the OCSP response
 when searching for the signer's certificate.
@@ -2109,6 +2126,8 @@ If the
 option is not present, then the private key is read from the same file
 as the certificate.
 If neither option is specified, the OCSP request is not signed.
+.It Fl timeout Ar seconds
+Connection timeout to the OCSP responder in seconds.
 .It Fl trust_other
 The certificates specified by the
 .Fl verify_other
@@ -2160,6 +2179,8 @@ The options for the OCSP server are as follows:
 .It Fl CA Ar file
 CA certificate corresponding to the revocation information in
 .Ar indexfile .
+.It Fl ignore_err
+Ignore the invalid response.
 .It Fl index Ar indexfile
 .Ar indexfile
 is a text index file in ca format
@@ -2656,7 +2677,7 @@ With
 .Fl password
 is equivalent to
 .Fl passout .
-Otherwise, 
+Otherwise,
 .Fl password
 is equivalent to
 .Fl passin .
@@ -3411,15 +3432,18 @@ Any additional fields will be treated as though they were a
 .Op Fl aes128 | aes192 | aes256 | des | des3
 .Op Fl check
 .Op Fl in Ar file
-.Op Fl inform Cm der | net | pem
+.Op Fl inform Cm der | net | pem | pvk
 .Op Fl modulus
 .Op Fl noout
 .Op Fl out Ar file
-.Op Fl outform Cm der | net | pem
+.Op Fl outform Cm der | net | pem | pvk
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
 .Op Fl pubin
 .Op Fl pubout
+.Op Fl pvk-none | pvk-strong | pvk-weak
+.Op Fl RSAPublicKey_in
+.Op Fl RSAPublicKey_out
 .Op Fl sgckey
 .Op Fl text
 .nr nS 0
@@ -3455,7 +3479,7 @@ Check the consistency of an RSA private key.
 The input file to read from,
 or standard input if not specified.
 If the key is encrypted, a pass phrase will be prompted for.
-.It Fl inform Cm der | net | pem
+.It Fl inform Cm der | net | pem | pvk
 The input format.
 .It Fl noout
 Do not output the encoded version of the key.
@@ -3464,7 +3488,7 @@ Print the value of the modulus of the key.
 .It Fl out Ar file
 The output file to write to,
 or standard output if not specified.
-.It Fl outform Cm der | net | pem
+.It Fl outform Cm der | net | pem | pvk
 The output format.
 .It Fl passin Ar arg
 The key password source.
@@ -3477,6 +3501,20 @@ not a private key.
 Output a public key,
 not a private key.
 Automatically set if the input is a public key.
+.It Xo
+.Fl pvk-none | pvk-strong | pvk-weak
+.Xc
+Enable or disable PVK encoding.
+The default is
+.Fl pvk-strong .
+.It Fl RSAPublicKey_in , RSAPublicKey_out
+Same as
+.Fl pubin
+and
+.Fl pubout
+except
+.Cm RSAPublicKey
+format is used instead.
 .It Fl sgckey
 Use the modified NET algorithm used with some versions of Microsoft IIS
 and SGC keys.
@@ -4243,6 +4281,7 @@ debugging purposes.
 .Op Fl noindef
 .Op Fl nointern
 .Op Fl nosigs
+.Op Fl nosmimecap
 .Op Fl noverify
 .Op Fl out Ar file
 .Op Fl outform Cm der | pem | smime
@@ -4440,6 +4479,9 @@ Only use certificates specified in the
 The supplied certificates can still be used as untrusted CAs.
 .It Fl nosigs
 Do not try to verify the signatures on the message.
+.It Fl nosmimecap
+Exclude the list of supported algorithms from signed attributes,
+other options such as signing time and content type are still included.
 .It Fl noverify
 Do not verify the signer's certificate of a signed message.
 .It Fl out Ar file
@@ -6035,6 +6077,8 @@ Insecure legacy format.
 .It Cm pem
 Privacy Enhanced Mail (PEM)
 is base64-encoded.
+.It Cm pvk
+Private Key format.
 .It Cm smime
 An SMIME format message.
 .It Cm txt
