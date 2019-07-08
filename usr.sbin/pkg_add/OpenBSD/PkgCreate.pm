@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.155 2019/05/28 23:24:44 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.156 2019/07/08 10:59:30 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -635,7 +635,8 @@ sub format_source_page
 	my $fullname = $self->cwd."/".$dest;
 	my $d = dirname($fullname);
 	$state->{mandir} //= OpenBSD::Temp::permanent_dir(
-	    $ENV{TMPDIR} // '/tmp', "manpage");
+	    $ENV{TMPDIR} // '/tmp', "manpage") or
+	    	$state->fatal(OpenBSD::Temp->last_error);
 	my $tempname = $state->{mandir}.$fullname;
 	require File::Path;
 	File::Path::make_path($state->{mandir}.$d);
