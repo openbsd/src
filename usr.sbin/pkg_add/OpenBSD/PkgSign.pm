@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.16 2017/03/01 10:35:24 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.17 2019/07/08 10:55:39 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -83,7 +83,8 @@ sub sign_existing_package
 			return;
 	    	}
 	}
-	my (undef, $tmp) = OpenBSD::Temp::permanent_file($output, "pkg");
+	my (undef, $tmp) = OpenBSD::Temp::permanent_file($output, "pkg") or
+	    die $state->fatal(OpenBSD::Temp->last_error);
 	$state->{signer}->sign($pkg, $state, $tmp);
 
 	chmod((0666 & ~umask), $tmp);
