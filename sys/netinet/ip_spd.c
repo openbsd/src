@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.99 2018/10/22 15:32:19 cheloha Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.100 2019/07/08 17:49:57 mpi Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -93,7 +93,8 @@ spd_table_add(unsigned int rtableid)
 
 		if (spd_tables != NULL) {
 			memcpy(p, spd_tables, sizeof(*rnh) * (spd_table_max+1));
-			free(spd_tables, M_RTABLE, 0);
+			free(spd_tables, M_RTABLE,
+			    sizeof(*rnh) * (spd_table_max+1));
 		}
 		spd_tables = p;
 		spd_table_max = rdomain;

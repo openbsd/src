@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.58 2017/06/20 09:03:39 mpi Exp $	*/
+/*	$OpenBSD: radix.c,v 1.59 2019/07/08 17:49:57 mpi Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ rn_addmask(void *n_arg, int search, int skip)
 		tm = NULL;
 	if (tm || search)
 		return (tm);
-	tm = malloc(max_keylen + 2 * sizeof (*tm), M_RTABLE, M_NOWAIT | M_ZERO);
+	tm = malloc(max_keylen + 2 * sizeof(*tm), M_RTABLE, M_NOWAIT | M_ZERO);
 	if (tm == NULL)
 		return (0);
 	saved_tm = tm;
@@ -457,7 +457,7 @@ rn_addmask(void *n_arg, int search, int skip)
 	tm = rn_insert(cp, mask_rnhead, &maskduplicated, tm);
 	if (maskduplicated) {
 		log(LOG_ERR, "%s: mask impossibly already in tree\n", __func__);
-		free(saved_tm, M_RTABLE, 0);
+		free(saved_tm, M_RTABLE, max_keylen + 2 * sizeof(*saved_tm));
 		return (tm);
 	}
 	/*

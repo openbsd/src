@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.130 2018/12/10 16:48:15 kn Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.131 2019/07/08 17:49:57 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2051,9 +2051,9 @@ pfr_destroy_ktable(struct pfr_ktable *kt, int flushaddr)
 		pfr_destroy_kentries(&addrq);
 	}
 	if (kt->pfrkt_ip4 != NULL)
-		free((caddr_t)kt->pfrkt_ip4, M_RTABLE, 0);
+		free(kt->pfrkt_ip4, M_RTABLE, sizeof(*kt->pfrkt_ip4));
 	if (kt->pfrkt_ip6 != NULL)
-		free((caddr_t)kt->pfrkt_ip6, M_RTABLE, 0);
+		free(kt->pfrkt_ip6, M_RTABLE, sizeof(*kt->pfrkt_ip6));
 	if (kt->pfrkt_shadow != NULL)
 		pfr_destroy_ktable(kt->pfrkt_shadow, flushaddr);
 	if (kt->pfrkt_rs != NULL) {
