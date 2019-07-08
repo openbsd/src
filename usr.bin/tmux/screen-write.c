@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.155 2019/07/06 20:37:29 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.156 2019/07/08 11:38:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1169,11 +1169,7 @@ screen_write_clearscreen(struct screen_write_ctx *ctx, u_int bg)
 void
 screen_write_clearhistory(struct screen_write_ctx *ctx)
 {
-	struct screen	*s = ctx->s;
-	struct grid	*gd = s->grid;
-
-	grid_move_lines(gd, 0, gd->hsize, gd->sy, 8);
-	gd->hscrolled = gd->hsize = 0;
+	grid_clear_history(ctx->s->grid);
 }
 
 /* Clear a collected line. */
