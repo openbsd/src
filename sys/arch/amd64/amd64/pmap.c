@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.132 2019/04/24 04:12:36 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.133 2019/07/08 19:57:42 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2401,7 +2401,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 {
 	uint64_t l4idx, l3idx, l2idx, l1idx;
 	pd_entry_t *pd, npte;
-	struct vm_page *ptp, *pptp, *pg;
+	struct vm_page *ptp, *pptp;
 	paddr_t npa;
 	struct uvm_object *obj;
 
@@ -2545,8 +2545,6 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 		npte |= EPT_W;
 	if (prot & PROT_EXEC)
 		npte |= EPT_X;
-
-	pg = PHYS_TO_VM_PAGE(hpa);
 
 	if (pd[l1idx] == 0) {
 		ptp->wire_count++;
