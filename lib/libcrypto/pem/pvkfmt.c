@@ -1,4 +1,4 @@
-/* $OpenBSD: pvkfmt.c,v 1.21 2019/07/07 10:52:56 inoguchi Exp $ */
+/* $OpenBSD: pvkfmt.c,v 1.22 2019/07/08 11:56:18 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -300,7 +300,7 @@ do_b2i_bio(BIO *in, int ispub)
 	else
 		ret = b2i_rsa(&p, length, bitlen, ispub);
 
-err:
+ err:
 	free(buf);
 	return ret;
 }
@@ -320,27 +320,27 @@ b2i_dss(const unsigned char **in, unsigned int length, unsigned int bitlen,
 	dsa = DSA_new();
 	ret = EVP_PKEY_new();
 	if (!dsa || !ret)
-		goto memerr;
+		goto err;
 	if (!read_lebn(&p, nbyte, &dsa->p))
-		goto memerr;
+		goto err;
 	if (!read_lebn(&p, 20, &dsa->q))
-		goto memerr;
+		goto err;
 	if (!read_lebn(&p, nbyte, &dsa->g))
-		goto memerr;
+		goto err;
 	if (ispub) {
 		if (!read_lebn(&p, nbyte, &dsa->pub_key))
-			goto memerr;
+			goto err;
 	} else {
 		if (!read_lebn(&p, 20, &dsa->priv_key))
-			goto memerr;
+			goto err;
 		/* Calculate public key */
 		if (!(dsa->pub_key = BN_new()))
-			goto memerr;
+			goto err;
 		if (!(ctx = BN_CTX_new()))
-			goto memerr;
+			goto err;
 		if (!BN_mod_exp_ct(dsa->pub_key, dsa->g,
 		    dsa->priv_key, dsa->p, ctx))
-			goto memerr;
+			goto err;
 		BN_CTX_free(ctx);
 	}
 
@@ -349,7 +349,7 @@ b2i_dss(const unsigned char **in, unsigned int length, unsigned int bitlen,
 	*in = p;
 	return ret;
 
-memerr:
+ err:
 	PEMerror(ERR_R_MALLOC_FAILURE);
 	DSA_free(dsa);
 	EVP_PKEY_free(ret);
@@ -371,27 +371,27 @@ b2i_rsa(const unsigned char **in, unsigned int length, unsigned int bitlen,
 	rsa = RSA_new();
 	ret = EVP_PKEY_new();
 	if (!rsa || !ret)
-		goto memerr;
+		goto err;
 	rsa->e = BN_new();
 	if (!rsa->e)
-		goto memerr;
+		goto err;
 	if (!BN_set_word(rsa->e, read_ledword(&p)))
-		goto memerr;
+		goto err;
 	if (!read_lebn(&p, nbyte, &rsa->n))
-		goto memerr;
+		goto err;
 	if (!ispub) {
 		if (!read_lebn(&p, hnbyte, &rsa->p))
-			goto memerr;
+			goto err;
 		if (!read_lebn(&p, hnbyte, &rsa->q))
-			goto memerr;
+			goto err;
 		if (!read_lebn(&p, hnbyte, &rsa->dmp1))
-			goto memerr;
+			goto err;
 		if (!read_lebn(&p, hnbyte, &rsa->dmq1))
-			goto memerr;
+			goto err;
 		if (!read_lebn(&p, hnbyte, &rsa->iqmp))
-			goto memerr;
+			goto err;
 		if (!read_lebn(&p, nbyte, &rsa->d))
-			goto memerr;
+			goto err;
 	}
 
 	EVP_PKEY_set1_RSA(ret, rsa);
@@ -399,7 +399,7 @@ b2i_rsa(const unsigned char **in, unsigned int length, unsigned int bitlen,
 	*in = p;
 	return ret;
 
-memerr:
+ err:
 	PEMerror(ERR_R_MALLOC_FAILURE);
 	RSA_free(rsa);
 	EVP_PKEY_free(ret);
@@ -548,20 +548,20 @@ check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
 	bitlen = BN_num_bits(dsa->p);
 	if ((bitlen & 7) || (BN_num_bits(dsa->q) != 160) ||
 	    (BN_num_bits(dsa->g) > bitlen))
-		goto badkey;
+		goto err;
 	if (ispub) {
 		if (BN_num_bits(dsa->pub_key) > bitlen)
-			goto badkey;
+			goto err;
 		*pmagic = MS_DSS1MAGIC;
 	} else {
 		if (BN_num_bits(dsa->priv_key) > 160)
-			goto badkey;
+			goto err;
 		*pmagic = MS_DSS2MAGIC;
 	}
 
 	return bitlen;
 
-badkey:
+ err:
 	PEMerror(PEM_R_UNSUPPORTED_KEY_COMPONENTS);
 	return 0;
 }
@@ -572,7 +572,7 @@ check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 	int nbyte, hnbyte, bitlen;
 
 	if (BN_num_bits(rsa->e) > 32)
-		goto badkey;
+		goto err;
 	bitlen = BN_num_bits(rsa->n);
 	nbyte = BN_num_bytes(rsa->n);
 	hnbyte = (BN_num_bits(rsa->n) + 15) >> 4;
@@ -585,17 +585,17 @@ check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
 		 * hnbyte.
 		 */
 		if (BN_num_bytes(rsa->d) > nbyte)
-			goto badkey;
+			goto err;
 		if ((BN_num_bytes(rsa->iqmp) > hnbyte) ||
 		    (BN_num_bytes(rsa->p) > hnbyte) ||
 		    (BN_num_bytes(rsa->q) > hnbyte) ||
 		    (BN_num_bytes(rsa->dmp1) > hnbyte) ||
 		    (BN_num_bytes(rsa->dmq1) > hnbyte))
-			goto badkey;
+			goto err;
 	}
 	return bitlen;
 
-badkey:
+ err:
 	PEMerror(PEM_R_UNSUPPORTED_KEY_COMPONENTS);
 	return 0;
 }
@@ -723,9 +723,12 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 	const unsigned char *p = *in;
 	unsigned int magic;
 	unsigned char *enctmp = NULL, *q;
-	EVP_CIPHER_CTX cctx;
+	EVP_CIPHER_CTX *cctx = NULL;
 
-	EVP_CIPHER_CTX_init(&cctx);
+	if ((cctx = EVP_CIPHER_CTX_new()) == NULL) {
+		PEMerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 	if (saltlen) {
 		char psbuf[PEM_BUFSIZE];
 		unsigned char keybuf[20];
@@ -758,23 +761,23 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 		}
 		inlen = keylen - 8;
 		q = enctmp + 8;
-		if (!EVP_DecryptInit_ex(&cctx, EVP_rc4(), NULL, keybuf, NULL))
+		if (!EVP_DecryptInit_ex(cctx, EVP_rc4(), NULL, keybuf, NULL))
 			goto err;
-		if (!EVP_DecryptUpdate(&cctx, q, &enctmplen, p, inlen))
+		if (!EVP_DecryptUpdate(cctx, q, &enctmplen, p, inlen))
 			goto err;
-		if (!EVP_DecryptFinal_ex(&cctx, q + enctmplen, &enctmplen))
+		if (!EVP_DecryptFinal_ex(cctx, q + enctmplen, &enctmplen))
 			goto err;
 		magic = read_ledword((const unsigned char **)&q);
 		if (magic != MS_RSA2MAGIC && magic != MS_DSS2MAGIC) {
 			q = enctmp + 8;
 			memset(keybuf + 5, 0, 11);
-			if (!EVP_DecryptInit_ex(&cctx, EVP_rc4(), NULL, keybuf,
+			if (!EVP_DecryptInit_ex(cctx, EVP_rc4(), NULL, keybuf,
 			    NULL))
 				goto err;
 			explicit_bzero(keybuf, 20);
-			if (!EVP_DecryptUpdate(&cctx, q, &enctmplen, p, inlen))
+			if (!EVP_DecryptUpdate(cctx, q, &enctmplen, p, inlen))
 				goto err;
-			if (!EVP_DecryptFinal_ex(&cctx, q + enctmplen,
+			if (!EVP_DecryptFinal_ex(cctx, q + enctmplen,
 			    &enctmplen))
 				goto err;
 			magic = read_ledword((const unsigned char **)&q);
@@ -789,8 +792,8 @@ do_PVK_body(const unsigned char **in, unsigned int saltlen,
 
 	ret = b2i_PrivateKey(&p, keylen);
 
-err:
-	EVP_CIPHER_CTX_cleanup(&cctx);
+ err:
+	EVP_CIPHER_CTX_free(cctx);
 	if (enctmp && saltlen)
 		free(enctmp);
 	return ret;
@@ -827,7 +830,7 @@ b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
 	}
 	ret = do_PVK_body(&p, saltlen, keylen, cb, u);
 
-err:
+ err:
 	freezero(buf, buflen);
 	return ret;
 }
@@ -838,19 +841,22 @@ i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel, pem_password_cb *cb,
 {
 	int outlen = 24, pklen;
 	unsigned char *p = NULL, *start = NULL, *salt = NULL;
-	EVP_CIPHER_CTX cctx;
+	EVP_CIPHER_CTX *cctx = NULL;
 
-	EVP_CIPHER_CTX_init(&cctx);
-	if (enclevel)
+	if ((cctx = EVP_CIPHER_CTX_new()) == NULL) {
+		PEMerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if (enclevel != 0)
 		outlen += PVK_SALTLEN;
 	pklen = do_i2b(NULL, pk, 0);
 	if (pklen < 0)
-		return -1;
+		goto err;
 	outlen += pklen;
 	start = p = malloc(outlen);
 	if (!p) {
 		PEMerror(ERR_R_MALLOC_FAILURE);
-		return -1;
+		goto err;
 	}
 
 	write_ledword(&p, MS_PVKMAGIC);
@@ -862,16 +868,13 @@ i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel, pem_password_cb *cb,
 	write_ledword(&p, enclevel ? 1 : 0);
 	write_ledword(&p, enclevel ? PVK_SALTLEN : 0);
 	write_ledword(&p, pklen);
-	if (enclevel) {
+	if (enclevel != 0) {
 		arc4random_buf(p, PVK_SALTLEN);
 		salt = p;
 		p += PVK_SALTLEN;
 	}
 	do_i2b(&p, pk, 0);
-	if (enclevel == 0) {
-		*out = start;
-		return outlen;
-	} else {
+	if (enclevel != 0) {
 		char psbuf[PEM_BUFSIZE];
 		unsigned char keybuf[20];
 		int enctmplen, inlen;
@@ -881,28 +884,28 @@ i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel, pem_password_cb *cb,
 			inlen = PEM_def_callback(psbuf, PEM_BUFSIZE, 1, u);
 		if (inlen <= 0) {
 			PEMerror(PEM_R_BAD_PASSWORD_READ);
-			goto error;
+			goto err;
 		}
 		if (!derive_pvk_key(keybuf, salt, PVK_SALTLEN,
 		    (unsigned char *)psbuf, inlen))
-			goto error;
+			goto err;
 		if (enclevel == 1)
 			memset(keybuf + 5, 0, 11);
 		p = salt + PVK_SALTLEN + 8;
-		if (!EVP_EncryptInit_ex(&cctx, EVP_rc4(), NULL, keybuf, NULL))
-			goto error;
+		if (!EVP_EncryptInit_ex(cctx, EVP_rc4(), NULL, keybuf, NULL))
+			goto err;
 		explicit_bzero(keybuf, 20);
-		if (!EVP_EncryptUpdate(&cctx, p, &enctmplen, p, pklen - 8))
-			goto error;
-		if (!EVP_EncryptFinal_ex(&cctx, p + enctmplen, &enctmplen))
-			goto error;
+		if (!EVP_EncryptUpdate(cctx, p, &enctmplen, p, pklen - 8))
+			goto err;
+		if (!EVP_EncryptFinal_ex(cctx, p + enctmplen, &enctmplen))
+			goto err;
 	}
-	EVP_CIPHER_CTX_cleanup(&cctx);
+	EVP_CIPHER_CTX_free(cctx);
 	*out = start;
 	return outlen;
 
-error:
-	EVP_CIPHER_CTX_cleanup(&cctx);
+ err:
+	EVP_CIPHER_CTX_free(cctx);
 	free(start);
 	return -1;
 }
