@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.162 2019/07/07 12:42:54 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.163 2019/07/08 11:50:01 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -956,8 +956,7 @@ sub list
 		$self->make_room;
 		my $error = OpenBSD::Temp->file;
 		if (!defined $error) {
-			$self->{state}->fatal("#1 not writable",
-			    $OpenBSD::Temp::tempbase);
+			$self->{state}->fatal(OpenBSD::Temp->last_error);
 		}
 		$self->{list} = $self->obtain_list($error);
 		$self->parse_problems($error);
@@ -1023,9 +1022,7 @@ sub setup_session
 	my ($fh, undef) = OpenBSD::Temp::fh_file("session",
 		sub { unlink(shift); });
 	if (!defined $fh) {
-		$self->{state}->fatal(
-		    "User #1 can't write session into #2 directory", $user, 
-		    OpenBSD::Temp->tempbase);
+		$self->{state}->fatal(OpenBSD::Temp->last_error);
 	}
 	$self->{fh} = $fh; # XXX store the full fh and not the fileno
 }
