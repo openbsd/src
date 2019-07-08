@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.53 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.54 2019/07/08 18:53:18 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@ struct __mp_lock sched_lock;
 #endif
 
 void	 schedcpu(void *);
-void	 updatepri(struct proc *);
+uint32_t decay_aftersleep(uint32_t, uint32_t);
 
 void
 scheduler_start(void)
@@ -252,8 +252,9 @@ schedcpu(void *arg)
 #endif
 		p->p_cpticks = 0;
 		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu);
-		p->p_estcpu = newcpu;
-		resetpriority(p);
+		setpriority(p, newcpu, p->p_p->ps_nice);
+		resched_proc(p, p->p_usrpri);
+
 		if (p->p_priority >= PUSER) {
 			if (p->p_stat == SRUN &&
 			    (p->p_priority / SCHED_PPQ) !=
@@ -276,23 +277,23 @@ schedcpu(void *arg)
  * For all load averages >= 1 and max p_estcpu of 255, sleeping for at
  * least six times the loadfactor will decay p_estcpu to zero.
  */
-void
-updatepri(struct proc *p)
+uint32_t
+decay_aftersleep(uint32_t estcpu, uint32_t slptime)
 {
-	unsigned int newcpu = p->p_estcpu;
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
+	uint32_t newcpu;
 
-	SCHED_ASSERT_LOCKED();
-
-	if (p->p_slptime > 5 * loadfac)
-		p->p_estcpu = 0;
+	if (slptime > 5 * loadfac)
+		newcpu = 0;
 	else {
-		p->p_slptime--;	/* the first time was done in schedcpu */
-		while (newcpu && --p->p_slptime)
-			newcpu = (int) decay_cpu(loadfac, newcpu);
-		p->p_estcpu = newcpu;
+		newcpu = estcpu;
+		slptime--;	/* the first time was done in schedcpu */
+		while (newcpu && --slptime)
+			newcpu = decay_cpu(loadfac, newcpu);
+
 	}
-	resetpriority(p);
+
+	return (newcpu);
 }
 
 /*
@@ -441,7 +442,7 @@ mi_switch(void)
 #endif
 }
 
-static __inline void
+void
 resched_proc(struct proc *p, u_char pri)
 {
 	struct cpu_info *ci;
@@ -496,29 +497,29 @@ setrunnable(struct proc *p)
 	p->p_stat = SRUN;
 	p->p_cpu = sched_choosecpu(p);
 	setrunqueue(p);
-	if (p->p_slptime > 1)
-		updatepri(p);
+	if (p->p_slptime > 1) {
+		uint32_t newcpu;
+
+		newcpu = decay_aftersleep(p->p_estcpu, p->p_slptime);
+		setpriority(p, newcpu, p->p_p->ps_nice);
+	}
 	p->p_slptime = 0;
-	resched_proc(p, p->p_priority);
+	resched_proc(p, MIN(p->p_priority, p->p_usrpri));
 }
 
 /*
- * Compute the priority of a process when running in user mode.
- * Arrange to reschedule if the resulting priority is better
- * than that of the current process.
+ * Compute the priority of a process.
  */
 void
-resetpriority(struct proc *p)
+setpriority(struct proc *p, uint32_t newcpu, uint8_t nice)
 {
-	unsigned int newpriority;
+	unsigned int newprio;
+
+	newprio = min((PUSER + newcpu + NICE_WEIGHT * (nice - NZERO)), MAXPRI);
 
 	SCHED_ASSERT_LOCKED();
-
-	newpriority = PUSER + p->p_estcpu +
-	    NICE_WEIGHT * (p->p_p->ps_nice - NZERO);
-	newpriority = min(newpriority, MAXPRI);
-	p->p_usrpri = newpriority;
-	resched_proc(p, p->p_usrpri);
+	p->p_estcpu = newcpu;
+	p->p_usrpri = newprio;
 }
 
 /*
@@ -540,14 +541,15 @@ schedclock(struct proc *p)
 {
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
+	uint32_t newcpu;
 	int s;
 
 	if (p == spc->spc_idleproc || spc->spc_spinning)
 		return;
 
 	SCHED_LOCK(s);
-	p->p_estcpu = ESTCPULIM(p->p_estcpu + 1);
-	resetpriority(p);
+	newcpu = ESTCPULIM(p->p_estcpu + 1);
+	setpriority(p, newcpu, p->p_p->ps_nice);
 	if (p->p_priority >= PUSER)
 		p->p_priority = p->p_usrpri;
 	SCHED_UNLOCK(s);

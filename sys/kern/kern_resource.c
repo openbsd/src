@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.66 2019/06/24 12:49:03 visa Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.67 2019/07/08 18:53:18 mpi Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -212,8 +212,10 @@ donice(struct proc *curp, struct process *chgpr, int n)
 		return (EACCES);
 	chgpr->ps_nice = n;
 	SCHED_LOCK(s);
-	TAILQ_FOREACH(p, &chgpr->ps_threads, p_thr_link)
-		(void)resetpriority(p);
+	TAILQ_FOREACH(p, &chgpr->ps_threads, p_thr_link) {
+		setpriority(p, p->p_estcpu, n);
+		resched_proc(p, p->p_usrpri);
+	}
 	SCHED_UNLOCK(s);
 	return (0);
 }

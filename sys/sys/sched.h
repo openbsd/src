@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.52 2019/05/16 13:52:47 visa Exp $	*/
+/*	$OpenBSD: sched.h,v 1.53 2019/07/08 18:53:18 mpi Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -164,6 +164,7 @@ void cpu_idle_cycle(void);
 void cpu_idle_leave(void);
 void sched_peg_curproc(struct cpu_info *ci);
 void sched_barrier(struct cpu_info *ci);
+void resched_proc(struct proc *, u_char);
 
 int sysctl_hwsetperf(void *, size_t *, void *, size_t);
 int sysctl_hwperfpolicy(void *, size_t *, void *, size_t);

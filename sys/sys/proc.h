@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.271 2019/07/01 21:13:03 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.272 2019/07/08 18:53:18 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -561,7 +561,7 @@ void	leavepgrp(struct process *);
 void	killjobc(struct process *);
 void	preempt(void);
 void	procinit(void);
-void	resetpriority(struct proc *);
+void	setpriority(struct proc *, uint32_t, uint8_t);
 void	setrunnable(struct proc *);
 void	endtsleep(void *);
 void	unsleep(struct proc *);
