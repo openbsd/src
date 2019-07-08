@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.247 2019/06/24 02:49:19 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.248 2019/07/08 19:57:11 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -310,7 +310,7 @@ vmm_enabled(void)
 {
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-	int found_vmx = 0, found_svm = 0, vmm_disabled = 0;
+	int found_vmx = 0, found_svm = 0;
 
 	/* Check if we have at least one CPU with either VMX or SVM */
 	CPU_INFO_FOREACH(cii, ci) {
@@ -318,8 +318,6 @@ vmm_enabled(void)
 			found_vmx = 1;
 		if (ci->ci_vmm_flags & CI_VMM_SVM)
 			found_svm = 1;
-		if (ci->ci_vmm_flags & CI_VMM_DIS)
-			vmm_disabled = 1;
 	}
 
 	/* Don't support both SVM and VMX at the same time */
