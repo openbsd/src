@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.19 2019/05/12 19:53:22 mpi Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.20 2019/07/09 15:15:49 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -531,8 +531,10 @@ bridge_rtfind(struct bridge_softc *sc, struct ifbaconf *baconf)
 		LIST_FOREACH(n, &sc->sc_rts[k], brt_next) {
 			struct ifnet *ifp;
 
-			if (i >= total)
+			if (i >= total) {
+				mtx_leave(&sc->sc_mtx);
 				goto done;
+			}
 			bareq = &bareqs[i];
 
 			ifp = if_get(n->brt_ifidx);
