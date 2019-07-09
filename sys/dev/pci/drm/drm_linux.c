@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.39 2019/07/05 12:10:10 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.40 2019/07/09 09:55:09 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -907,10 +907,17 @@ dma_fence_context_alloc(unsigned int num)
 	return __sync_add_and_fetch(&drm_fence_count, num) - num;
 }
 
+struct default_wait_cb {
+	struct dma_fence_cb base;
+	struct proc *proc;
+};
+
 static void
 dma_fence_default_wait_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
 {
-	wakeup(fence);
+	struct default_wait_cb *wait =
+	    container_of(cb, struct default_wait_cb, base);
+	wakeup(wait->proc);
 }
 
 long
@@ -918,7 +925,7 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, signed long timeout)
 {
 	long ret = timeout ? timeout : 1;
 	int err;
-	struct dma_fence_cb cb;
+	struct default_wait_cb cb;
 	bool was_set;
 
 	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
@@ -944,11 +951,12 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, signed long timeout)
 		goto out;
 	}
 
-	cb.func = dma_fence_default_wait_cb;
-	list_add(&cb.node, &fence->cb_list);
+	cb.base.func = dma_fence_default_wait_cb;
+	cb.proc = curproc;
+	list_add(&cb.base.node, &fence->cb_list);
 
 	while (!test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
-		err = msleep(fence, fence->lock, intr ? PCATCH : 0, "dmafence",
+		err = msleep(curproc, fence->lock, intr ? PCATCH : 0, "dmafence",
 		    timeout);
 		if (err == EINTR || err == ERESTART) {
 			ret = -ERESTARTSYS;
@@ -959,11 +967,84 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, signed long timeout)
 		}
 	}
 
-	if (!list_empty(&cb.node))
-		list_del(&cb.node);
+	if (!list_empty(&cb.base.node))
+		list_del(&cb.base.node);
 out:
 	mtx_leave(fence->lock);
 	
+	return ret;
+}
+
+static bool
+dma_fence_test_signaled_any(struct dma_fence **fences, uint32_t count,
+    uint32_t *idx)
+{
+	int i;
+
+	for (i = 0; i < count; ++i) {
+		struct dma_fence *fence = fences[i];
+		if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
+			if (idx)
+				*idx = i;
+			return true;
+		}
+	}
+	return false;
+}
+
+long
+dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t count,
+    bool intr, long timeout, uint32_t *idx)
+{
+	struct default_wait_cb *cb;
+	int i, err;
+	int ret = timeout;
+
+	if (timeout == 0) {
+		for (i = 0; i < count; i++) {
+			if (dma_fence_is_signaled(fences[i])) {
+				if (idx)
+					*idx = i;
+				return 1;
+			}
+		}
+		return 0;
+	}
+
+	cb = mallocarray(count, sizeof(*cb), M_DRM, M_WAITOK|M_CANFAIL|M_ZERO);
+	if (cb == NULL)
+		return -ENOMEM;
+	
+	for (i = 0; i < count; i++) {
+		struct dma_fence *fence = fences[i];
+		cb[i].proc = curproc;
+		if (dma_fence_add_callback(fence, &cb[i].base,
+		    dma_fence_default_wait_cb)) {
+			if (idx)
+				*idx = i;
+			goto cb_cleanup;
+		}
+	}
+
+	while (ret > 0) {
+		if (dma_fence_test_signaled_any(fences, count, idx))
+			break;
+
+		err = tsleep(curproc, intr ? PCATCH : 0,
+		    "dfwat", timeout);
+		if (err == EINTR || err == ERESTART) {
+			ret = -ERESTARTSYS;
+			break;
+		} else if (err == EWOULDBLOCK) {
+			ret = 0;
+			break;
+		}
+	}
+
+cb_cleanup:
+	while (i-- > 0)
+		dma_fence_remove_callback(fences[i], &cb[i].base);
+	free(cb, M_DRM, count * sizeof(*cb));
 	return ret;
 }
 
