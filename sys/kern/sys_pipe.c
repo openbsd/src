@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.89 2019/07/09 11:35:06 semarie Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.90 2019/07/09 15:02:15 semarie Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -198,7 +198,6 @@ free3:
 free2:
 	fdpunlock(fdp);
 free1:
-	/* fine without KERNEL_LOCK because just created */
 	pipeclose(wpipe);
 	pipeclose(rpipe);
 	return (error);
@@ -215,18 +214,12 @@ pipespace(struct pipe *cpipe, u_int size)
 {
 	caddr_t buffer;
 
-	/* pipe should be uninitialized or locked */
-	KASSERT((cpipe->pipe_buffer.buffer == NULL) ||
-	    (cpipe->pipe_state & PIPE_LOCK));
-
-	/* buffer should be empty */
-	KASSERT(cpipe->pipe_buffer.cnt == 0);
-
 	KERNEL_LOCK();
 	buffer = km_alloc(size, &kv_any, &kp_pageable, &kd_waitok);
 	KERNEL_UNLOCK();
-	if (buffer == NULL)
+	if (buffer == NULL) {
 		return (ENOMEM);
+	}
 
 	/* free old resources if we are resizing */
 	pipe_free_kmem(cpipe);
@@ -234,6 +227,7 @@ pipespace(struct pipe *cpipe, u_int size)
 	cpipe->pipe_buffer.size = size;
 	cpipe->pipe_buffer.in = 0;
 	cpipe->pipe_buffer.out = 0;
+	cpipe->pipe_buffer.cnt = 0;
 
 	atomic_add_int(&amountpipekva, cpipe->pipe_buffer.size);
 
@@ -250,8 +244,6 @@ pipe_create(struct pipe *cpipe)
 
 	/* so pipe_free_kmem() doesn't follow junk pointer */
 	cpipe->pipe_buffer.buffer = NULL;
-	cpipe->pipe_buffer.cnt = 0;
-
 	/*
 	 * protect so pipeclose() doesn't follow a junk pointer
 	 * if pipespace() fails.
@@ -311,7 +303,6 @@ pipeselwakeup(struct pipe *cpipe)
 		selwakeup(&cpipe->pipe_sel);
 	} else
 		KNOTE(&cpipe->pipe_sel.si_note, 0);
-
 	if (cpipe->pipe_state & PIPE_ASYNC)
 		pgsigio(&cpipe->pipe_sigio, SIGIO, 0);
 }
