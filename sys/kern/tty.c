@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.146 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: tty.c,v 1.147 2019/07/09 18:59:15 kn Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1497,43 +1497,36 @@ loop:	lflag = tp->t_lflag;
 
 	s = spltty();
 	if (!ISSET(lflag, ICANON)) {
-		int m = cc[VMIN];
-		long t;
-
-		/*
-		 * Note - since cc[VTIME] is a u_char, this won't overflow
-		 * until we have 32-bit longs and a hz > 8388608.
-		 * Hopefully this code and 32-bit longs are obsolete by then.
-		 */
-		t = cc[VTIME] * hz / 10;
+		int min = cc[VMIN];
+		int time = cc[VTIME] * 100;	/* tenths of a second (ms) */
 
 		qp = &tp->t_rawq;
 		/*
 		 * Check each of the four combinations.
-		 * (m > 0 && t == 0) is the normal read case.
+		 * (min > 0 && time == 0) is the normal read case.
 		 * It should be fairly efficient, so we check that and its
-		 * companion case (m == 0 && t == 0) first.
+		 * companion case (min == 0 && time == 0) first.
 		 */
-		if (t == 0) {
-			if (qp->c_cc < m)
+		if (time == 0) {
+			if (qp->c_cc < min)
 				goto sleep;
 			goto read;
 		}
-		if (m > 0) {
+		if (min > 0) {
 			if (qp->c_cc <= 0)
 				goto sleep;
-			if (qp->c_cc >= m)
+			if (qp->c_cc >= min)
 				goto read;
 			if (stime == NULL) {
 alloc_timer:
 				stime = malloc(sizeof(*stime), M_TEMP, M_WAITOK);
 				timeout_set(stime, ttvtimeout, tp);
-				timeout_add(stime, t);
+				timeout_add_msec(stime, time);
 			} else if (qp->c_cc > last_cc) {
 				/* got a character, restart timer */
-				timeout_add(stime, t);
+				timeout_add_msec(stime, time);
 			}
-		} else {	/* m == 0 */
+		} else {	/* min == 0 */
 			if (qp->c_cc > 0)
 				goto read;
 			if (stime == NULL) {
