@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.17 2019/01/05 09:43:39 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.18 2019/07/09 15:43:24 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -184,8 +184,13 @@ lka_report_smtp_link_connect(const char *direction, struct timeval *tv, uint64_t
 	else if (ss_dest->ss_family == AF_INET6)
 		dest_port = ntohs(((const struct sockaddr_in6 *)ss_dest)->sin6_port);
 
-	(void)strlcpy(src, ss_to_text(ss_src), sizeof src);
-	(void)strlcpy(dest, ss_to_text(ss_dest), sizeof dest);
+	if (strcmp(ss_to_text(ss_src), "local") == 0) {
+		(void)snprintf(src, sizeof src, "unix:%s", SMTPD_SOCKET);
+		(void)snprintf(dest, sizeof dest, "unix:%s", SMTPD_SOCKET);
+	} else {
+		(void)snprintf(src, sizeof src, "%s:%d", ss_to_text(ss_src), src_port);
+		(void)snprintf(dest, sizeof dest, "%s:%d", ss_to_text(ss_dest), dest_port);
+	}
 
 	switch (fcrdns) {
 	case 1:
@@ -200,8 +205,8 @@ lka_report_smtp_link_connect(const char *direction, struct timeval *tv, uint64_t
 	}
 	
 	report_smtp_broadcast(reqid, direction, tv, "link-connect",
-	    "%016"PRIx64"|%s|%s|%s:%d|%s:%d\n",
-	    reqid, rdns, fcrdns_str, src, src_port, dest, dest_port);
+	    "%016"PRIx64"|%s|%s|%s|%s\n",
+	    reqid, rdns, fcrdns_str, src, dest);
 }
 
 void
