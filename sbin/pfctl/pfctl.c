@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.374 2019/06/28 13:32:45 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.375 2019/07/09 16:42:48 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2439,7 +2439,7 @@ main(int argc, char *argv[])
 	if ((opts & PF_OPT_NODNS) && (opts & PF_OPT_USEDNS))
 		errx(1, "-N and -r are mutually exclusive");
 
-	if (tblcmdopt == NULL ^ tableopt == NULL)
+	if ((tblcmdopt == NULL) ^ (tableopt == NULL))
 		usage();
 
 	if (tblcmdopt != NULL) {
