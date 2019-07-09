@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.139 2019/06/01 22:42:21 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.140 2019/07/09 23:48:07 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -157,7 +157,8 @@ trap(struct trapframe *frame)
 		type |= T_USER;
 		p->p_md.md_regs = frame;
 		refreshcreds(p);
-		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 			return;
 	}

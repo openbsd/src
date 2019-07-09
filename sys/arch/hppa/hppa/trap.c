@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.144 2019/06/01 22:42:20 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.145 2019/07/09 23:48:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -215,7 +215,8 @@ trap(int type, struct trapframe *frame)
 
 	if (type & T_USER) {
 		refreshcreds(p);
-		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 			return;
 	}

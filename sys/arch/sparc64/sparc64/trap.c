@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.100 2019/06/01 22:42:21 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.101 2019/07/09 23:48:08 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -426,7 +426,8 @@ trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate)
 	pcb = &p->p_addr->u_pcb;
 	p->p_md.md_tf = tf;	/* for ptrace/signals */
 	refreshcreds(p);
-	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+	    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 		return;
 
