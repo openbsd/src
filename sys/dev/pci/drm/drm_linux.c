@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.40 2019/07/09 09:55:09 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.41 2019/07/09 09:57:57 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -917,7 +917,7 @@ dma_fence_default_wait_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
 {
 	struct default_wait_cb *wait =
 	    container_of(cb, struct default_wait_cb, base);
-	wakeup(wait->proc);
+	wake_up_process(wait->proc);
 }
 
 long
