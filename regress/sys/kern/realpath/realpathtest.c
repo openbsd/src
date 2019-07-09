@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpathtest.c,v 1.7 2019/05/29 13:53:59 beck Exp $ */
+/*	$OpenBSD: realpathtest.c,v 1.8 2019/07/09 17:00:12 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -63,29 +63,29 @@ rpcompare(const char *pathname, char *resolv2,
 	struct rp_compare rc = rpcompare(A, B, C);			\
 	if (rc.r2 == NULL)  {						\
 		errno = rc.e2;						\
-		err(1, "%s:%d - realpath of '%s' failed", __FILE__, 	\
+		err(1, "%s:%d - realpath of '%s' failed", __FILE__,	\
 		    __LINE__, (A));					\
-	} 								\
+	}								\
 	if (rc.r3 == NULL)  {						\
 		errno = rc.e3;						\
 		err(1, "%s:%d - realpath3 of '%s' failed", __FILE__,	\
 		    __LINE__, (A));					\
 	}								\
 	if (strcmp(rc.r2, rc.r3) != 0)					\
-		errx(1, "%s:%d - realpath of '%s' result '%s',"		\
+		errx(1, "%s:%d - realpath of '%s' result '%s', "	\
 		    "expected '%s", __FILE__, __LINE__, (A), rc.r2,	\
 		    rc.r3);						\
 } while(0);
 
 #define RP_SHOULD_FAIL(A, B, C) do {					\
-	struct rp_compare rc = rpcompare(A, B, C); 			\
-	if (rc.r2 != NULL) 						\
-		errx(1, "%s:%d - realpath of '%s' should have failed,"	\
-		    "returned '%s'", __FILE__, __LINE__, (A), rc.r2); 	\
-	if (rc.r3 != NULL) 						\
-		errx(1, "%s:%d - realpath3 of '%s' should have failed,"	\
-		    "returned '%s'", __FILE__, __LINE__, (A), rc.r3); 	\
-	if (rc.e2 != rc.e3) 						\
+	struct rp_compare rc = rpcompare(A, B, C);			\
+	if (rc.r2 != NULL)						\
+		errx(1, "%s:%d - realpath of '%s' should have failed, "	\
+		    "returned '%s'", __FILE__, __LINE__, (A), rc.r2);	\
+	if (rc.r3 != NULL)						\
+		errx(1, "%s:%d - realpath3 of '%s' should have failed, "\
+		    "returned '%s'", __FILE__, __LINE__, (A), rc.r3);	\
+	if (rc.e2 != rc.e3)						\
 		errx(1, "%s:%d - realpath of '%s' errno %d does not "	\
 		    "match realpath3 errno %d", __FILE__, __LINE__, (A),\
 		    rc.e2, rc.e3 );					\
