@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: my,v 1.3 2019/07/09 10:48:30 espie Exp $
+# $OpenBSD: my,v 1.4 2019/07/09 10:59:47 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -39,7 +39,7 @@ if ($ENV{'DEBUG'}) {
 } else {
 	unshift(@args, $prog);
 }
-print STDERR join(' ', @ARGV), "\n" unless $ENV{'SILENT'} || $ENV{'VERBOSE'};
+print STDERR join(' ', $prog, @ARGV), "\n" unless $ENV{'SILENT'} || $ENV{'VERBOSE'};
 print join(' ', @args), "\n" if $ENV{'VERBOSE'};
 
 my $choices = {
