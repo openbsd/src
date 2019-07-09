@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.108 2019/07/08 14:15:12 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.109 2019/07/09 11:19:05 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 8 2019 $
+.Dd $Mdocdate: July 9 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1859,7 +1859,10 @@ Print the private/public key in plain text.
 .nr nS 1
 .Nm "openssl genrsa"
 .Op Fl 3 | f4
-.Op Fl aes128 | aes192 | aes256 | des | des3
+.Oo
+.Fl aes128 | aes192 | aes256 | camellia128 |
+.Fl camellia192 | camellia256 | des | des3 | idea
+.Oc
 .Op Fl out Ar file
 .Op Fl passout Ar arg
 .Op Ar numbits
@@ -1884,9 +1887,14 @@ The options are as follows:
 .It Fl 3 | f4
 The public exponent to use, either 3 or 65537.
 The default is 65537.
-.It Fl aes128 | aes192 | aes256 | des | des3
-Encrypt the private key with the AES, DES,
-or the triple DES ciphers, respectively, before outputting it.
+.It Xo
+.Fl aes128 | aes192 | aes256 |
+.Fl camellia128 | camellia192 | camellia256 |
+.Fl des | des3 |
+.Fl idea
+.Xc
+Encrypt the private key with the AES, CAMELLIA, DES, triple DES
+or the IDEA ciphers, respectively, before outputting it.
 If none of these options are specified, no encryption is used.
 If encryption is used, a pass phrase is prompted for,
 if it is not supplied via the
