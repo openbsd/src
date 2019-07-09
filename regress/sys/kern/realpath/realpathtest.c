@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpathtest.c,v 1.8 2019/07/09 17:00:12 bluhm Exp $ */
+/*	$OpenBSD: realpathtest.c,v 1.9 2019/07/09 17:30:39 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 	}
 	i-= 3;
 	strlcpy(big+i, "bsd/", 5);
-	RP_SHOULD_SUCCEED(big, r2, r3);	/* XXX This is wrong by posix */
+	RP_SHOULD_FAIL(big, r2, r3);
 
 	for (i = 0; i < (PATH_MAX - 5); i += 3) {
 		big[i] = '.';

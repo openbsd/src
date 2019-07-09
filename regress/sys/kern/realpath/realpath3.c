@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpath3.c,v 1.1 2019/04/19 19:50:48 beck Exp $ */
+/*	$OpenBSD: realpath3.c,v 1.2 2019/07/09 17:30:39 bluhm Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -27,6 +27,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/stat.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +38,8 @@
 /*
  * The OpenBSD 6.4 libc version of realpath(3), preserved to validate
  * an implementation of realpath(2).
+ * As our kernel realpath(2) is heading towards to POSIX compliance,
+ * some details in this version have changed.
  */
 
 /*
@@ -218,6 +222,18 @@ realpath3(const char *path, char *resolved)
 				}
 			}
 			left_len = strlcpy(left, symlink, sizeof(left));
+		}
+	}
+
+	/*
+	 * POSIX demands ENOTDIR for non directories ending in a "/".
+	 */
+	if (strchr(path, '/') != NULL && path[strlen(path) - 1] == '/') {
+		struct stat sb;
+
+		if (stat(resolved, &sb) != -1 && !S_ISDIR(sb.st_mode)) {
+			errno = ENOTDIR;
+			goto err;
 		}
 	}
 
