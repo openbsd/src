@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.23 2019/05/31 11:34:09 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.24 2019/07/09 13:19:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -80,6 +80,7 @@ control_callback(struct client *c, int closed, __unused void *data)
 		if (line == NULL)
 			break;
 		if (*line == '\0') { /* empty line exit */
+			free(line);
 			c->flags |= CLIENT_EXIT;
 			break;
 		}
