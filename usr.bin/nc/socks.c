@@ -373,7 +373,8 @@ socks_connect(const char *host, const char *port,
 		/* Read status reply */
 		proxy_read_line(proxyfd, buf, sizeof(buf));
 		if (proxyuser != NULL &&
-		    strncmp(buf, "HTTP/1.0 407 ", 12) == 0) {
+		    (strncmp(buf, "HTTP/1.0 407 ", 12) == 0 ||
+		     strncmp(buf, "HTTP/1.1 407 ", 12) == 0)) {
 			if (authretry > 1) {
 				fprintf(stderr, "Proxy authentication "
 				    "failed\n");
