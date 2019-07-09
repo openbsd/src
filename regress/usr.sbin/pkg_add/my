@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: my,v 1.4 2019/07/09 10:59:47 espie Exp $
+# $OpenBSD: my,v 1.5 2019/07/09 11:27:09 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -34,6 +34,7 @@ if ($prog ne 'pkg_info') {
 if ($prog eq 'pkg_add') {
 	unshift(@args, '-D', 'unsigned');
 }
+unshift(@args, '-D', 'NOINSTALLPATH');
 if ($ENV{'DEBUG'}) {
 	unshift(@args, 'perl', '-d', "/usr/sbin/$prog", '-D', 'debug');
 } else {
