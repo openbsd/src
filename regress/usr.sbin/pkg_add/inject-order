@@ -1,0 +1,26 @@
+#! /usr/bin/perl
+
+# $OpenBSD: inject-order,v 1.1 2019/07/09 10:48:30 espie Exp $
+
+use warnings;
+use strict;
+
+# This script injects a specific order in the dependencies key to reproduce
+# the cups bug
+use OpenBSD::Dependencies;
+
+package OpenBSD::Dependencies::SolverBase;
+
+{
+no warnings qw(redefine);
+sub dependencies
+{
+	my $self = shift;
+	my @l = keys %{$self->{all_dependencies}};
+	my $v = 'ghostscript-9.07p7';
+	@l = ((grep {$_ ne $v} @l) , (grep {$_ eq $v} @l));
+	return @l;
+}
+}
+
+1;

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: mycreate,v 1.6 2012/08/17 23:49:59 espie Exp $
+# $OpenBSD: mycreate,v 1.7 2019/07/09 10:48:30 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -44,4 +44,14 @@ push(@l,
 
 my @args = ('pkg_create', @l, @ARGV, $target);
 print join(' ', @args), "\n" if $ENV{'VERBOSE'};
-exec {$args[0]}  @args;
+if ($ENV{INJECT}) {
+	require OpenBSD::PkgCreate;
+	eval "require \"$ENV{INJECT}\"";
+	if ($@) {
+		die $@;
+	}
+	@ARGV = @args;
+	exit(OpenBSD::PkgCreate->parse_and_run(shift @ARGV));
+} else {
+	exec {$args[0]}  @args;
+}

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.65 2019/07/04 09:48:24 espie Exp $
+# $OpenBSD: Makefile,v 1.66 2019/07/09 10:48:30 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -640,8 +640,8 @@ rep3/$n.tgz: ${.CURDIR}/newcups/$n/+CONTENTS
 cups-bug: ${CUPS_FILES}
 	rm -rf ${D36}
 	mkdir -p ${D36}/vardbpkg ${D36}/usr/local
-	PKG_DBDIR=${D36}/vardbpkg PKG_PATH=${.OBJDIR}/rep2 perl ${.CURDIR}/injectadd -Dstub -Dunsigned -Dnonroot -B ${D36} cups
-	PKG_DBDIR=${D36}/vardbpkg PKG_PATH=${.OBJDIR}/rep3 perl ${.CURDIR}/injectadd -Dstub -Dunsigned -Dnonroot -B ${D36} -u
+	ROOT=${D36} PKG_PATH=${.OBJDIR}/rep2 INJECT=${.CURDIR}/inject-order ${ADD_PKG} -Dstub cups
+	ROOT=${D36} PKG_PATH=${.OBJDIR}/rep3 INJECT=${.CURDIR}/inject-order ${ADD_PKG} -Dstub -u
 
 usertest-1:
 	@if ${CREATE_PKG} -u ${.CURDIR}/baduser1 \
