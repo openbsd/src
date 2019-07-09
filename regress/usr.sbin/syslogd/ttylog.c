@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttylog.c,v 1.6 2017/09/11 18:21:08 bluhm Exp $	*/
+/*	$OpenBSD: ttylog.c,v 1.7 2019/07/09 15:09:38 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015 Alexander Bluhm <bluhm@openbsd.org>
@@ -40,8 +40,8 @@ void terminate(int);
 void iostdin(int);
 
 FILE *lg;
-char *console, *username, *tty;
-int sfd;
+char ptyname[16], *console, *username, *logfile, *tty;
+int mfd, sfd;
 
 __dead void
 usage()
@@ -54,11 +54,10 @@ usage()
 int
 main(int argc, char *argv[])
 {
-	char buf[8192], ptyname[16], *logfile;
+	char buf[8192];
 	struct sigaction act;
 	sigset_t set;
 	ssize_t n;
-	int mfd;
 
 	if (argc != 3)
 		usage();
@@ -218,6 +217,20 @@ iostdin(int sig)
 	ssize_t n;
 
 	fprintf(lg, "signal iostdin %d\n", sig);
+
+	/* try to read as many log messages as possible before terminating */
+	if (fcntl(mfd, F_SETFL, O_NONBLOCK) == -1)
+		err(1, "fcntl O_NONBLOCK");
+	while ((n = read(mfd, buf, sizeof(buf))) > 0) {
+		fprintf(lg, ">>> ");
+		if (fwrite(buf, 1, n, lg) != (size_t)n)
+			err(1, "fwrite %s", logfile);
+		if (buf[n-1] != '\n')
+			fprintf(lg, "\n");
+	}
+	if (n < 0 && errno != EAGAIN)
+		err(1, "read %s", ptyname);
+
 	if ((n = read(0, buf, sizeof(buf))) < 0)
 		err(1, "read stdin");
 	restore();
