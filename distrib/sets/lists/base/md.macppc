@@ -320,6 +320,7 @@
 ./usr/libdata/perl5/powerpc-openbsd/OpenBSD
 ./usr/libdata/perl5/powerpc-openbsd/OpenBSD/MkTemp.pm
 ./usr/libdata/perl5/powerpc-openbsd/OpenBSD/Pledge.pm
+./usr/libdata/perl5/powerpc-openbsd/OpenBSD/Unveil.pm
 ./usr/libdata/perl5/powerpc-openbsd/POSIX.pm
 ./usr/libdata/perl5/powerpc-openbsd/POSIX.pod
 ./usr/libdata/perl5/powerpc-openbsd/PerlIO
@@ -440,6 +441,8 @@
 ./usr/libdata/perl5/powerpc-openbsd/auto/OpenBSD/MkTemp/MkTemp.so
 ./usr/libdata/perl5/powerpc-openbsd/auto/OpenBSD/Pledge
 ./usr/libdata/perl5/powerpc-openbsd/auto/OpenBSD/Pledge/Pledge.so
+./usr/libdata/perl5/powerpc-openbsd/auto/OpenBSD/Unveil
+./usr/libdata/perl5/powerpc-openbsd/auto/OpenBSD/Unveil/Unveil.so
 ./usr/libdata/perl5/powerpc-openbsd/auto/POSIX
 ./usr/libdata/perl5/powerpc-openbsd/auto/POSIX/POSIX.so
 ./usr/libdata/perl5/powerpc-openbsd/auto/PerlIO

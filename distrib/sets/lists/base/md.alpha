@@ -310,6 +310,7 @@
 ./usr/libdata/perl5/alpha-openbsd/OpenBSD
 ./usr/libdata/perl5/alpha-openbsd/OpenBSD/MkTemp.pm
 ./usr/libdata/perl5/alpha-openbsd/OpenBSD/Pledge.pm
+./usr/libdata/perl5/alpha-openbsd/OpenBSD/Unveil.pm
 ./usr/libdata/perl5/alpha-openbsd/POSIX.pm
 ./usr/libdata/perl5/alpha-openbsd/POSIX.pod
 ./usr/libdata/perl5/alpha-openbsd/PerlIO
@@ -430,6 +431,8 @@
 ./usr/libdata/perl5/alpha-openbsd/auto/OpenBSD/MkTemp/MkTemp.so
 ./usr/libdata/perl5/alpha-openbsd/auto/OpenBSD/Pledge
 ./usr/libdata/perl5/alpha-openbsd/auto/OpenBSD/Pledge/Pledge.so
+./usr/libdata/perl5/alpha-openbsd/auto/OpenBSD/Unveil
+./usr/libdata/perl5/alpha-openbsd/auto/OpenBSD/Unveil/Unveil.so
 ./usr/libdata/perl5/alpha-openbsd/auto/POSIX
 ./usr/libdata/perl5/alpha-openbsd/auto/POSIX/POSIX.so
 ./usr/libdata/perl5/alpha-openbsd/auto/PerlIO
