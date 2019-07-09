@@ -319,14 +319,9 @@ int amdgpu_sa_bo_new(struct amdgpu_sa_manager *sa_manager,
 
 		if (count) {
 			spin_unlock(&sa_manager->wq.lock);
-#ifdef notyet
 			t = dma_fence_wait_any_timeout(fences, count, false,
 						       MAX_SCHEDULE_TIMEOUT,
 						       NULL);
-#else
-			STUB();
-			t = -EINVAL;
-#endif
 			for (i = 0; i < count; ++i)
 				dma_fence_put(fences[i]);
 
