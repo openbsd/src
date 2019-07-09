@@ -1537,9 +1537,6 @@ static int amdgpu_cs_wait_any_fence(struct amdgpu_device *adev,
 				    union drm_amdgpu_wait_fences *wait,
 				    struct drm_amdgpu_fence *fences)
 {
-	STUB();
-	return -ENOSYS;
-#if 0
 	unsigned long timeout = amdgpu_gem_timeout(wait->in.timeout_ns);
 	uint32_t fence_count = wait->in.fence_count;
 	uint32_t first = ~0;
@@ -1590,7 +1587,6 @@ err_free_fence_array:
 	kfree(array);
 
 	return r;
-#endif
 }
 
 /**
