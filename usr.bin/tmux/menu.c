@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.10 2019/06/18 11:08:42 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.11 2019/07/09 12:44:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -206,8 +206,18 @@ menu_key_cb(struct client *c, struct key_event *event)
 			c->flags |= CLIENT_REDRAWOVERLAY;
 		return (0);
 	}
+	for (i = 0; i < (u_int)count; i++) {
+		name = menu->items[i].name;
+		if (name == NULL || *name == '-')
+			continue;
+		if (event->key == menu->items[i].key) {
+			md->choice = i;
+			goto chosen;
+		}
+	}
 	switch (event->key) {
 	case KEYC_UP:
+	case 'k':
 		if (old == -1)
 			old = 0;
 		do {
@@ -220,6 +230,7 @@ menu_key_cb(struct client *c, struct key_event *event)
 		c->flags |= CLIENT_REDRAWOVERLAY;
 		return (0);
 	case KEYC_DOWN:
+	case 'j':
 		if (old == -1)
 			old = 0;
 		do {
@@ -238,15 +249,6 @@ menu_key_cb(struct client *c, struct key_event *event)
 	case '\007': /* C-g */
 	case 'q':
 		return (1);
-	}
-	for (i = 0; i < (u_int)count; i++) {
-		name = menu->items[i].name;
-		if (name == NULL || *name == '-')
-			continue;
-		if (event->key == menu->items[i].key) {
-			md->choice = i;
-			goto chosen;
-		}
 	}
 	return (0);
 
