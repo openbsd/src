@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.63 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.64 2019/07/09 14:03:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -170,6 +170,13 @@ input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 	if (KEYC_IS_MOUSE(key)) {
 		if (m != NULL && m->wp != -1 && (u_int)m->wp == wp->id)
 			input_key_mouse(wp, m);
+		return;
+	}
+
+	/* Literal keys go as themselves (can't be more than eight bits). */
+	if (key & KEYC_LITERAL) {
+		ud.data[0] = (u_char)key;
+		bufferevent_write(wp->event, &ud.data[0], 1);
 		return;
 	}
 

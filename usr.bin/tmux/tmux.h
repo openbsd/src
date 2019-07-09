@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.919 2019/07/06 20:37:29 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.920 2019/07/09 14:03:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -111,9 +111,10 @@ struct winlink;
 #define KEYC_CTRL 0x400000000000ULL
 #define KEYC_SHIFT 0x800000000000ULL
 #define KEYC_XTERM 0x1000000000000ULL
+#define KEYC_LITERAL 0x2000000000000ULL
 
 /* Mask to obtain key w/o modifiers. */
-#define KEYC_MASK_MOD (KEYC_ESCAPE|KEYC_CTRL|KEYC_SHIFT|KEYC_XTERM)
+#define KEYC_MASK_MOD (KEYC_ESCAPE|KEYC_CTRL|KEYC_SHIFT|KEYC_XTERM|KEYC_LITERAL)
 #define KEYC_MASK_KEY (~KEYC_MASK_MOD)
 
 /* Is this a mouse key? */
