@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.75 2018/06/22 13:33:30 visa Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.76 2019/07/09 12:23:25 bluhm Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ sys_getgroups(struct proc *p, void *v, register_t *retval)
 		syscallarg(gid_t *) gidset;
 	} */ *uap = v;
 	struct ucred *uc = p->p_ucred;
-	u_int ngrp;
+	int ngrp;
 	int error;
 
 	if ((ngrp = SCARG(uap, gidsetsize)) == 0) {
@@ -870,13 +870,13 @@ sys_setgroups(struct proc *p, void *v, register_t *retval)
 	struct process *pr = p->p_p;
 	struct ucred *pruc, *newcred;
 	gid_t groups[NGROUPS_MAX];
-	u_int ngrp;
+	int ngrp;
 	int error;
 
 	if ((error = suser(p)) != 0)
 		return (error);
 	ngrp = SCARG(uap, gidsetsize);
-	if (ngrp > NGROUPS_MAX)
+	if (ngrp > NGROUPS_MAX || ngrp < 0)
 		return (EINVAL);
 	error = copyin(SCARG(uap, gidset), groups, ngrp * sizeof(gid_t));
 	if (error == 0) {
