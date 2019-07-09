@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.491 2019/07/02 09:04:53 yasuoka Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.492 2019/07/09 11:30:19 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1162,6 +1162,7 @@ struct pfi_kif {
 	int				 pfik_states;
 	int				 pfik_rules;
 	int				 pfik_routes;
+	int				 pfik_srcnodes;
 	TAILQ_HEAD(, pfi_dynaddr)	 pfik_dynaddrs;
 };
 
@@ -1169,7 +1170,8 @@ enum pfi_kif_refs {
 	PFI_KIF_REF_NONE,
 	PFI_KIF_REF_STATE,
 	PFI_KIF_REF_RULE,
-	PFI_KIF_REF_ROUTE
+	PFI_KIF_REF_ROUTE,
+	PFI_KIF_REF_SRCNODE
 };
 
 #define PFI_IFLAG_SKIP		0x0100	/* skip filtering on interface */

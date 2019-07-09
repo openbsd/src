@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.96 2018/12/10 16:48:15 kn Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.97 2019/07/09 11:30:19 yasuoka Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -147,6 +147,9 @@ pfi_kif_ref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	case PFI_KIF_REF_ROUTE:
 		kif->pfik_routes++;
 		break;
+	case PFI_KIF_REF_SRCNODE:
+		kif->pfik_srcnodes++;
+		break;
 	default:
 		panic("pfi_kif_ref with unknown type");
 	}
@@ -185,6 +188,14 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 		}
 		kif->pfik_routes--;
 		break;
+	case PFI_KIF_REF_SRCNODE:
+		if (kif->pfik_srcnodes <= 0) {
+			DPFPRINTF(LOG_ERR,
+			    "pfi_kif_unref: src-node refcount <= 0");
+			return;
+		}
+		kif->pfik_srcnodes--;
+		break;
 	default:
 		panic("pfi_kif_unref with unknown type");
 	}
@@ -192,7 +203,8 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	if (kif->pfik_ifp != NULL || kif->pfik_group != NULL || kif == pfi_all)
 		return;
 
-	if (kif->pfik_rules || kif->pfik_states || kif->pfik_routes)
+	if (kif->pfik_rules || kif->pfik_states || kif->pfik_routes ||
+	    kif->pfik_srcnodes)
 		return;
 
 	RB_REMOVE(pfi_ifhead, &pfi_ifs, kif);
