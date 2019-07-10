@@ -1558,6 +1558,9 @@ cpan/OpenBSD-MkTemp/t/OpenBSD-MkTemp.t	OpenBSD::MkTemp test file
 cpan/OpenBSD-Pledge/lib/OpenBSD/Pledge.pm	OpenBSD::Pledge
 cpan/OpenBSD-Pledge/Pledge.xs	OpenBSD::Pledge
 cpan/OpenBSD-Pledge/t/OpenBSD-Pledge.t	OpenBSD::Pledge test file
+cpan/OpenBSD-Unveil/lib/OpenBSD/Unveil.pm	OpenBSD::Unveil
+cpan/OpenBSD-Unveil/t/OpenBSD-Unveil.t	OpenBSD::Unveil test file
+cpan/OpenBSD-Unveil/Unveil.xs	OpenBSD::Unveil
 cpan/Params-Check/lib/Params/Check.pm	Params::Check
 cpan/Params-Check/t/01_Params-Check.t	Params::Check tests
 cpan/parent/lib/parent.pm			Establish an ISA relationship with base classes at compile time
