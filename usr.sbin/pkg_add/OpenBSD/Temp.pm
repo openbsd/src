@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.33 2019/07/07 12:42:54 espie Exp $
+# $OpenBSD: Temp.pm,v 1.34 2019/07/10 09:34:09 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -41,7 +41,9 @@ my $cleanup = sub {
 };
 
 END {
+	my $r = $?;
 	&$cleanup;
+	$? = $r;
 }
 OpenBSD::Handler->register($cleanup);
 
@@ -58,12 +60,18 @@ sub dir
 	    local $SIG{'KILL'} = $h;
 	    local $SIG{'TERM'} = $h;
 	    $dir = permanent_dir($tempbase, "pkginfo");
-	    $dirs->{$dir} = $$;
+	    if (defined $dir) {
+		    $dirs->{$dir} = $$;
+	    }
 	}
 	if (defined $caught) {
 		kill $caught, $$;
 	}
-	return "$dir/";
+	if (defined $dir) {
+		return "$dir/";
+	} else {
+		return undef;
+	}
 }
 
 sub fh_file
