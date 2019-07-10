@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.676 2019/07/09 14:03:12 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.677 2019/07/10 11:20:10 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2019 $
+.Dd $Mdocdate: July 10 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1162,7 +1162,8 @@ is used, the
 option will not be applied.
 .It Xo Ic refresh-client
 .Op Fl cDlLRSU
-.Op Fl C Ar width,height
+.Op Fl C Ar XxY
+.Op Fl F Ar flags
 .Op Fl t Ar target-client
 .Op Ar adjustment
 .Xc
@@ -1205,7 +1206,13 @@ window, changing the current window in the attached session will reset
 it.
 .Pp
 .Fl C
-sets the width and height of a control client.
+sets the width and height of a control client and
+.Fl F
+sets a comma-separated list of flags.
+Currently the only flag available is
+.Ql no-output
+to disable receiving pane output.
+.Pp
 .Fl l
 requests the clipboard from the client using the
 .Xr xterm 1
