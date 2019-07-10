@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.41 2019/07/09 09:57:57 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.42 2019/07/10 07:56:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -20,6 +20,7 @@
 #include <dev/pci/ppbreg.h>
 #include <sys/event.h>
 #include <sys/filedesc.h>
+#include <sys/kthread.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <linux/dma-buf.h>
@@ -160,6 +161,126 @@ flush_delayed_work(struct delayed_work *dwork)
 
 	taskq_barrier(dwork->tq ? dwork->tq : (struct taskq *)system_wq);
 	return ret;
+}
+
+struct kthread {
+	int (*func)(void *);
+	void *data;
+	struct proc *proc;
+	volatile u_int flags;
+#define KTHREAD_SHOULDSTOP	0x0000001
+#define KTHREAD_STOPPED		0x0000002
+#define KTHREAD_SHOULDPARK	0x0000004
+#define KTHREAD_PARKED		0x0000008
+	LIST_ENTRY(kthread) next;
+};
+
+LIST_HEAD(, kthread) kthread_list = LIST_HEAD_INITIALIZER(kthread_list);
+
+void
+kthread_func(void *arg)
+{
+	struct kthread *thread = arg;
+	int ret;
+
+	ret = thread->func(thread->data);
+	thread->flags |= KTHREAD_STOPPED;
+	kthread_exit(ret);
+}
+
+struct proc *
+kthread_run(int (*func)(void *), void *data, const char *name)
+{
+	struct kthread *thread;
+
+	thread = malloc(sizeof(*thread), M_DRM, M_WAITOK);
+	thread->func = func;
+	thread->data = data;
+	thread->flags = 0;
+	
+	if (kthread_create(kthread_func, thread, &thread->proc, name)) {
+		free(thread, M_DRM, sizeof(*thread));
+		return ERR_PTR(-ENOMEM);
+	}
+
+	LIST_INSERT_HEAD(&kthread_list, thread, next);
+	return thread->proc;
+}
+
+struct kthread *
+kthread_lookup(struct proc *p)
+{
+	struct kthread *thread;
+
+	LIST_FOREACH(thread, &kthread_list, next) {
+		if (thread->proc == p)
+			break;
+	}
+	KASSERT(thread);
+
+	return thread;
+}
+
+int
+kthread_should_park(void)
+{
+	struct kthread *thread = kthread_lookup(curproc);
+	return (thread->flags & KTHREAD_SHOULDPARK);
+}
+
+void
+kthread_parkme(void)
+{
+	struct kthread *thread = kthread_lookup(curproc);
+
+	while (thread->flags & KTHREAD_SHOULDPARK) {
+		thread->flags |= KTHREAD_PARKED;
+		wakeup(thread);
+		tsleep(thread, PPAUSE | PCATCH, "parkme", 0);
+		thread->flags &= ~KTHREAD_PARKED;
+	}
+}
+
+void
+kthread_park(struct proc *p)
+{
+	struct kthread *thread = kthread_lookup(p);
+
+	while ((thread->flags & KTHREAD_PARKED) == 0) {
+		thread->flags |= KTHREAD_SHOULDPARK;
+		wake_up_process(thread->proc);
+		tsleep(thread, PPAUSE | PCATCH, "park", 0);
+	}
+}
+
+void
+kthread_unpark(struct proc *p)
+{
+	struct kthread *thread = kthread_lookup(p);
+
+	thread->flags &= ~KTHREAD_SHOULDPARK;
+	wakeup(thread);
+}
+
+int
+kthread_should_stop(void)
+{
+	struct kthread *thread = kthread_lookup(curproc);
+	return (thread->flags & KTHREAD_SHOULDSTOP);
+}
+
+void
+kthread_stop(struct proc *p)
+{
+	struct kthread *thread = kthread_lookup(p);
+
+	while ((thread->flags & KTHREAD_STOPPED) == 0) {
+		thread->flags |= KTHREAD_SHOULDSTOP;
+		wake_up_process(thread->proc);
+		tsleep(thread, PPAUSE | PCATCH, "stop", 0);
+	}
+	LIST_REMOVE(thread, next);
+	free(thread, M_DRM, sizeof(*thread));
 }
 
 struct timespec

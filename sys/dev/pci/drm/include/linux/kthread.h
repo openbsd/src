@@ -7,11 +7,12 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#define kthread_stop(a)		do { printf("%s: stub\n", __func__); } while(0)
-#define kthread_park(a)		do { printf("%s: stub\n", __func__); } while(0)
-#define kthread_unpark(a)	do { printf("%s: stub\n", __func__); } while(0)
-#define kthread_should_stop()	0
-#define kthread_should_park()	0
-#define kthread_parkme()
+struct proc *kthread_run(int (*)(void *), void *, const char *);
+void 	kthread_park(struct proc *);
+void 	kthread_unpark(struct proc *);
+int	kthread_should_park(void);
+void 	kthread_parkme(void);
+void	kthread_stop(struct proc *);
+int	kthread_should_stop(void);
 
 #endif

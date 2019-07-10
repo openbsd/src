@@ -867,11 +867,7 @@ static bool drm_sched_blocked(struct drm_gpu_scheduler *sched)
  *
  * Returns 0.
  */
-#ifdef __linux__
 static int drm_sched_main(void *param)
-#else
-static void drm_sched_main(void *param)
-#endif
 {
 #ifdef __linux__
 	struct sched_param sparam = {.sched_priority = 1};
@@ -925,11 +921,7 @@ static void drm_sched_main(void *param)
 
 		wake_up(&sched->job_scheduled);
 	}
-#ifdef __linux__
 	return 0;
-#else
-	kthread_exit(0);
-#endif
 }
 
 /**
@@ -957,7 +949,6 @@ int drm_sched_init(struct drm_gpu_scheduler *sched,
 	sched->name = name;
 	sched->timeout = timeout;
 	sched->hang_limit = hang_limit;
-	int r;
 	for (i = DRM_SCHED_PRIORITY_MIN; i < DRM_SCHED_PRIORITY_MAX; i++)
 		drm_sched_rq_init(sched, &sched->sched_rq[i]);
 
@@ -969,19 +960,11 @@ int drm_sched_init(struct drm_gpu_scheduler *sched,
 	atomic64_set(&sched->job_id_count, 0);
 
 	/* Each scheduler will run on a seperate kernel thread */
-#ifdef notyet
 	sched->thread = kthread_run(drm_sched_main, sched, sched->name);
 	if (IS_ERR(sched->thread)) {
 		DRM_ERROR("Failed to create scheduler for %s.\n", name);
 		return PTR_ERR(sched->thread);
 	}
-#else
-	r = kthread_create(drm_sched_main, sched, &sched->thread, sched->name);
-	if (r != 0) {
-		DRM_ERROR("Failed to create scheduler for %s.\n", name);
-		return -r;
-	}
-#endif
 
 	return 0;
 }

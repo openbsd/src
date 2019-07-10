@@ -651,7 +651,7 @@ static void signaler_set_rtpriority(void)
 #endif
 }
 
-static void intel_breadcrumbs_signaler(void *arg)
+static int intel_breadcrumbs_signaler(void *arg)
 {
 	struct intel_engine_cs *engine = arg;
 	struct intel_breadcrumbs *b = &engine->breadcrumbs;
@@ -752,9 +752,8 @@ sleep:
 		}
 	} while (1);
 	__set_current_state(TASK_RUNNING);
-#ifdef __OpenBSD__
-	kthread_exit(0);
-#endif
+
+	return 0;
 }
 
 static void insert_signal(struct intel_breadcrumbs *b,
@@ -884,21 +883,11 @@ int intel_engine_init_breadcrumbs(struct intel_engine_cs *engine)
 
 #else
 
-void
-intel_create_breadcrumbs_thread(void *arg)
-{
-	struct intel_engine_cs *engine = arg;
-	struct intel_breadcrumbs *b = &engine->breadcrumbs;
-	char name[32];
-
-	snprintf(name, sizeof(name), "i915/signal:%d", engine->id);
-	if (kthread_create(intel_breadcrumbs_signaler, engine, &b->signaler, name) != 0)
-		printf("%s: failed to create thread\n", __func__);
-}
-
 int intel_engine_init_breadcrumbs(struct intel_engine_cs *engine)
 {
 	struct intel_breadcrumbs *b = &engine->breadcrumbs;
+	struct proc *tsk;
+	char name[32];
 
 	mtx_init(&b->rb_lock, IPL_TTY);
 	mtx_init(&b->irq_lock, IPL_TTY);
@@ -906,8 +895,9 @@ int intel_engine_init_breadcrumbs(struct intel_engine_cs *engine)
 	timeout_set(&b->fake_irq, intel_breadcrumbs_fake_irq, engine);
 	timeout_set(&b->hangcheck, intel_breadcrumbs_hangcheck, engine);
 
+	snprintf(name, sizeof(name), "i915/signal:%d", engine->id);
+
 	INIT_LIST_HEAD(&b->signals);
-	b->signaler = NULL;
 
 	/* Spawn a thread to provide a common bottom-half for all signals.
 	 * As this is an asynchronous interface we cannot steal the current
@@ -915,7 +905,11 @@ int intel_engine_init_breadcrumbs(struct intel_engine_cs *engine)
 	 * we create a thread to do the coherent seqno dance after the
 	 * interrupt and then signal the waitqueue (via the dma-buf/fence).
 	 */
-	kthread_create_deferred(intel_create_breadcrumbs_thread, engine);
+	tsk = kthread_run(intel_breadcrumbs_signaler, engine, name);
+	if (IS_ERR(tsk))
+		return PTR_ERR(tsk);
+
+	b->signaler = tsk;
 
 	return 0;
 }
