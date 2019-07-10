@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.150 2019/07/03 22:39:33 cheloha Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.151 2019/07/10 15:52:17 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -644,7 +644,7 @@ thrsleep(struct proc *p, struct sys___thrsleep_args *v)
 		void *sleepaddr = &p->p_thrslpid;
 		if (ident == -1)
 			sleepaddr = &globalsleepaddr;
-		error = tsleep(sleepaddr, PUSER | PCATCH, "thrsleep",
+		error = tsleep(sleepaddr, PWAIT|PCATCH, "thrsleep",
 		    (int)to_ticks);
 	}
 
