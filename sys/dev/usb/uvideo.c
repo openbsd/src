@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.199 2018/05/01 18:14:46 landry Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.200 2019/07/10 08:16:10 patrick Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -197,6 +197,8 @@ void		uvideo_dump_desc_input(struct uvideo_softc *,
 void		uvideo_dump_desc_output(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_dump_desc_endpoint(struct uvideo_softc *,
+		    const usb_descriptor_t *);
+void		uvideo_dump_desc_iface_assoc(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 void		uvideo_dump_desc_interface(struct uvideo_softc *,
 		    const usb_descriptor_t *);
@@ -2381,6 +2383,11 @@ uvideo_dump_desc_all(struct uvideo_softc *sc)
 			printf("|\n");
 			uvideo_dump_desc_interface(sc, desc);
 			break;
+		case UDESC_IFACE_ASSOC:
+			printf(" (UDESC_IFACE_ASSOC)\n");
+			printf("|\n");
+			uvideo_dump_desc_iface_assoc(sc, desc);
+			break;
 		default:
 			printf(" (unknown)\n");
 			break;
@@ -2500,6 +2507,24 @@ uvideo_dump_desc_endpoint(struct uvideo_softc *sc,
 		printf(" (UE_INTERRUPT)\n");
 	printf("wMaxPacketSize=%d\n", UGETW(d->wMaxPacketSize));
 	printf("bInterval=0x%02x\n", d->bInterval);
+}
+
+void
+uvideo_dump_desc_iface_assoc(struct uvideo_softc *sc,
+    const usb_descriptor_t *desc)
+{
+	usb_interface_assoc_descriptor_t *d;
+
+	d = (usb_interface_assoc_descriptor_t *)(uint8_t *)desc;
+
+	printf("bLength=%d\n", d->bLength);
+	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
+	printf("bFirstInterface=0x%02x\n", d->bFirstInterface);
+	printf("bInterfaceCount=%d\n", d->bInterfaceCount);
+	printf("bFunctionClass=0x%02x\n", d->bFunctionClass);
+	printf("bFunctionSubClass=0x%02x\n", d->bFunctionSubClass);
+	printf("bFunctionProtocol=0x%02x\n", d->bFunctionProtocol);
+	printf("iFunction=0x%02x\n", d->iFunction);
 }
 
 void
