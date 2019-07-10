@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.122 2018/07/04 20:54:43 kn Exp $
+#	$OpenBSD: RAMDISK,v 1.123 2019/07/10 00:17:53 deraadt Exp $
 
 machine		sparc64
 maxusers	4
@@ -100,6 +100,7 @@ ne*		at pci?			# NE2000-compat ethernet cards
 epic*		at pci?			# SMC EPIC/100 ethernet
 em*		at pci?			# Intel Pro/1000 ethernet
 ix*		at pci?			# Intel 82598EB 10Gb ethernet
+ixl*		at pci?			# Intel 700 Series Ethernet
 bge*		at pci?			# Broadcom BCM570x (aka Tigon3)
 bnx*		at pci?			# Broadcom BCM5706/5708 GigE
 stge*		at pci?			# Sundance TC9021 GigE
