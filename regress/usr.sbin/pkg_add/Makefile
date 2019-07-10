@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.71 2019/07/10 11:53:16 espie Exp $
+# $OpenBSD: Makefile,v 1.72 2019/07/10 11:55:40 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -11,7 +11,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	qttest gstest exotest inter1 manual1 oldlib1 \
 	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug \
 	tying-1 tying-2 tag-delete setsprint temp-error1 \
-	temp-error2 temp-error2-as-root temp-error3
+	temp-error2 temp-error2-as-root temp-error3 temp-error4
 
 REGRESS_ROOT_TARGETS = temp-error2-as-root
 
@@ -797,7 +797,7 @@ temp-error4: rep0/qt-0.tgz rep1/qt-1.tgz
 	@ROOT=${D43} SILENT=1 ${ADD_PKG} rep0/qt-0.tgz
 	@rm -f ${D43}/usr/local/phonon/a
 	@echo zoinx >${D43}/usr/local/phonon/a
-	@{ INJECT=inject-temp4 PKG_PATH=${.OBJDIR}/rep1 SILENT=1 ROOT=${D43} ${ADD_PKG} -Dchecksum -u qt || echo okay; } 2>&1|sed -e 's/ line .*//' >temp4.out
+	@{ INJECT=inject-temp4 PKG_PATH=${.OBJDIR}/rep1 SILENT=1 ROOT=${D43} ${ADD_PKG} -Dchecksum -u qt || echo okay; } 2>&1|${SED_PIPE} >temp4.out
 
 .PHONY: ${REGRESS_TARGETS}
 

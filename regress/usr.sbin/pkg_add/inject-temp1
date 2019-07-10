@@ -1,7 +1,6 @@
 #! /usr/bin/perl
 
-# $OpenBSD: inject-temp1,v 1.1 2019/07/09 13:49:47 espie Exp $
-#use OpenBSD::Temp;
+# $OpenBSD: inject-temp1,v 1.2 2019/07/10 11:55:40 espie Exp $
 use strict;
 use warnings;
 use OpenBSD::Temp;
