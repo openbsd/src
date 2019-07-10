@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.200 2019/07/10 08:16:10 patrick Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.201 2019/07/10 08:21:43 patrick Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -67,6 +67,7 @@ struct uvideo_softc {
 	struct device				*sc_videodev;
 
 	int					 sc_enabled;
+	int					 sc_max_ctrl_size;
 	int					 sc_max_fbuf_size;
 	int					 sc_negotiated_flag;
 	int					 sc_frame_rate;
@@ -681,6 +682,12 @@ uvideo_vc_parse_desc_header(struct uvideo_softc *sc,
 	
 	sc->sc_desc_vc_header.fix = d;
 	sc->sc_desc_vc_header.baInterfaceNr = (uByte *)(d + 1);
+	if (UGETW(d->bcdUVC) < 0x0110)
+		sc->sc_max_ctrl_size = 26;
+	else if (UGETW(d->bcdUVC) < 0x0150)
+		sc->sc_max_ctrl_size = 34;
+	else
+		sc->sc_max_ctrl_size = 48;
 
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -1332,7 +1339,7 @@ uvideo_vs_negotiation(struct uvideo_softc *sc, int commit)
 	struct usb_video_header_desc *hd;
 	struct usb_video_frame_desc *frame;
 	uint8_t *p, *cur;
-	uint8_t probe_data[34];
+	uint8_t probe_data[48];
 	uint32_t frame_ival, nivals, min, max, step, diff;
 	usbd_status error;
 	int i, ival_bytes, changed = 0;
@@ -1516,7 +1523,7 @@ uvideo_vs_set_probe(struct uvideo_softc *sc, uint8_t *probe_data)
 	tmp = tmp << 8;
 	USETW(req.wValue, tmp);
 	USETW(req.wIndex, sc->sc_vs_cur->iface);
-	USETW(req.wLength, 26);
+	USETW(req.wLength, sc->sc_max_ctrl_size);
 
 	pc = (struct usb_video_probe_commit *)probe_data;
 
@@ -1561,7 +1568,7 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 	tmp = tmp << 8;
 	USETW(req.wValue, tmp);
 	USETW(req.wIndex, sc->sc_vs_cur->iface);
-	USETW(req.wLength, 26);
+	USETW(req.wLength, sc->sc_max_ctrl_size);
 
 	pc = (struct usb_video_probe_commit *)probe_data;
 
@@ -1604,7 +1611,7 @@ uvideo_vs_set_commit(struct uvideo_softc *sc, uint8_t *probe_data)
 	tmp = tmp << 8;
 	USETW(req.wValue, tmp);
 	USETW(req.wIndex, sc->sc_vs_cur->iface);
-	USETW(req.wLength, 26);
+	USETW(req.wLength, sc->sc_max_ctrl_size);
 
 	error = usbd_do_request(sc->sc_udev, &req, probe_data);
 	if (error) {
