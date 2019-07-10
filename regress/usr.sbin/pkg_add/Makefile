@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.68 2019/07/09 14:40:43 espie Exp $
+# $OpenBSD: Makefile,v 1.69 2019/07/10 07:21:47 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -11,7 +11,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	qttest gstest exotest inter1 manual1 oldlib1 \
 	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug \
 	tying-1 tying-2 tag-delete setsprint temp-error1 \
-	temp-error2 temp-error2-as-root
+	temp-error2 temp-error2-as-root temp-error3
 
 REGRESS_ROOT_TARGETS = temp-error2-as-root
 
@@ -778,6 +778,12 @@ ${XXXBASE}.ref:
 	@echo " at /usr/libdata/perl5/OpenBSD/PackageRepository.pm" >>$@
 	@echo okay >>$@
 
+temp3.ref:
+	@echo "Fatal error: User `whoami` couldn't create temp file as /nonexistent/pkg.XXXXXXXXXX: No such file or directory" >$@
+	@echo "Fatal error: Installation of d-0 failed, partial installation recorded as partial-d-0" >>$@
+	@echo " at /usr/libdata/perl5/OpenBSD/PkgAdd.pm" >>$@
+	@echo okay >>$@
+
 temp-error1: rep0/a-0.tgz rep0/b-0.tgz temp1.ref
 	@-rm -rf ${D40}
 	@{ INJECT=inject-temp1 ROOT=${D40} SILENT=1 ${ADD_PKG} rep0/a-0.tgz 1>/dev/null|| echo okay ; } 2>&1|sed -e 's/ line .*//' >temp1.out
@@ -791,6 +797,11 @@ temp-error2: ${XXXBASE}.ref
 temp-error2-as-root: 
 	@# XXX thx tedu for not allowing env thru
 	@${SUDO} make -C ${.CURDIR} temp-error2 XXXBASE=temp2bis XXXD=D41
+
+temp-error3: rep1/d-0.tgz temp3.ref
+	@-rm -rf ${D42}
+	@{ INJECT=inject-temp3 ROOT=${D42} SILENT=1 ${ADD_PKG} rep1/d-0.tgz 1>/dev/null|| echo okay; } 2>&1|sed -e 's/ line .*//'>temp3.out
+	@diff -u temp3.out temp3.ref
 
 .PHONY: ${REGRESS_TARGETS}
 
