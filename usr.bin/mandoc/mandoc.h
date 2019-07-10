@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc.h,v 1.204 2018/12/15 23:33:20 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.205 2019/07/10 19:38:56 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012-2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -193,7 +193,6 @@ enum	mandocerr {
 	MANDOCERR_TBLDATA_BLK, /* data block open at end of tbl: macro */
 
 	/* related to document structure and macros */
-	MANDOCERR_FILE, /* cannot open file */
 	MANDOCERR_PROLOG_REP, /* duplicate prologue macro: macro */
 	MANDOCERR_DT_LATE, /* skipping late title macro: Dt args */
 	MANDOCERR_ROFFLOOP, /* input stack limit exceeded, infinite loop? */
@@ -241,6 +240,35 @@ enum	mandocerr {
 	MANDOCERR_TBLOPT_EQN, /* eqn delim option in tbl: arg */
 	MANDOCERR_TBLLAYOUT_MOD, /* unsupported tbl layout modifier: m */
 	MANDOCERR_TBLMACRO, /* ignoring macro in table: macro */
+
+	MANDOCERR_BADARG, /* ===== start of bad invocations ===== */
+
+	MANDOCERR_BADARG_BAD, /* bad argument */
+	MANDOCERR_BADARG_DUPE, /* duplicate argument */
+	MANDOCERR_BADVAL, /* does not take a value */
+	MANDOCERR_BADVAL_MISS, /* missing argument value */
+	MANDOCERR_BADVAL_BAD, /* bad argument value */
+	MANDOCERR_BADVAL_DUPE, /* duplicate argument value */
+	MANDOCERR_TAG, /* no such tag */
+
+	MANDOCERR_SYSERR, /* ===== start of system errors ===== */
+
+	MANDOCERR_DUP,
+	MANDOCERR_EXEC,
+	MANDOCERR_FDOPEN,
+	MANDOCERR_FFLUSH,
+	MANDOCERR_FORK,
+	MANDOCERR_FSTAT,
+	MANDOCERR_GETLINE,
+	MANDOCERR_GLOB,
+	MANDOCERR_GZCLOSE,
+	MANDOCERR_GZDOPEN,
+	MANDOCERR_MKSTEMP,
+	MANDOCERR_OPEN,
+	MANDOCERR_PLEDGE,
+	MANDOCERR_READ,
+	MANDOCERR_WAIT,
+	MANDOCERR_WRITE,
 
 	MANDOCERR_MAX
 };

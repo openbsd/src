@@ -1,7 +1,7 @@
-/*	$OpenBSD: mandoc_msg.c,v 1.4 2019/01/10 06:27:23 schwarze Exp $ */
+/*	$OpenBSD: mandoc_msg.c,v 1.5 2019/07/10 19:38:56 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014,2015,2016,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,8 +27,8 @@ static	const enum mandocerr lowest_type[MANDOCLEVEL_MAX] = {
 	MANDOCERR_WARNING,
 	MANDOCERR_ERROR,
 	MANDOCERR_UNSUPP,
-	MANDOCERR_MAX,
-	MANDOCERR_MAX
+	MANDOCERR_BADARG,
+	MANDOCERR_SYSERR
 };
 
 static	const char *const level_name[MANDOCLEVEL_MAX] = {
@@ -191,7 +191,6 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"data block open at end of tbl",
 
 	/* related to document structure and macros */
-	NULL,
 	"duplicate prologue macro",
 	"skipping late title macro",
 	"input stack limit exceeded, infinite loop?",
@@ -238,11 +237,40 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"eqn delim option in tbl",
 	"unsupported tbl layout modifier",
 	"ignoring macro in table",
+
+	/* bad command line arguments */
+	NULL,
+	"bad command line argument",
+	"duplicate command line argument",
+	"option has a superfluous value",
+	"missing option value",
+	"bad option value",
+	"duplicate option value",
+	"no such tag",
+
+	/* system errors */
+	NULL,
+	"dup",
+	"exec",
+	"fdopen",
+	"fflush",
+	"fork",
+	"fstat",
+	"getline",
+	"glob",
+	"gzclose",
+	"gzdopen",
+	"mkstemp",
+	"open",
+	"pledge",
+	"read",
+	"wait",
+	"write",
 };
 
 static	FILE		*fileptr = NULL;
 static	const char	*filename = NULL;
-static	enum mandocerr	 min_type = MANDOCERR_MAX;
+static	enum mandocerr	 min_type = MANDOCERR_BADARG;
 static	enum mandoclevel rc = MANDOCLEVEL_OK;
 
 
@@ -295,10 +323,10 @@ mandoc_msg(enum mandocerr t, int line, int col, const char *fmt, ...)
 	va_list			 ap;
 	enum mandoclevel	 level;
 
-	if (t < min_type && t != MANDOCERR_FILE)
+	if (t < min_type)
 		return;
 
-	level = MANDOCLEVEL_UNSUPP;
+	level = MANDOCLEVEL_SYSERR;
 	while (t < lowest_type[level])
 		level--;
 	mandoc_msg_setrc(level);

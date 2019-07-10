@@ -1,6 +1,6 @@
-/*	$OpenBSD: manpath.c,v 1.26 2019/05/03 18:38:45 schwarze Exp $ */
+/*	$OpenBSD: manpath.c,v 1.27 2019/07/10 19:38:56 schwarze Exp $ */
 /*
- * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011,2014,2015,2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,13 +19,14 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
-#include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "mandoc_aux.h"
+#include "mandoc.h"
 #include "manconf.h"
 
 #define MAN_CONF_FILE	"/etc/man.conf"
@@ -33,8 +34,8 @@
 #define MANPATH_DEFAULT	"/usr/share/man:/usr/X11R6/man:/usr/local/man"
 
 static	void	 manconf_file(struct manconf *, const char *);
-static	void	 manpath_add(struct manpaths *, const char *, int);
-static	void	 manpath_parseline(struct manpaths *, char *, int);
+static	void	 manpath_add(struct manpaths *, const char *, char);
+static	void	 manpath_parseline(struct manpaths *, char *, char);
 
 
 void
@@ -44,11 +45,11 @@ manconf_parse(struct manconf *conf, const char *file,
 	char		*insert;
 
 	/* Always prepend -m. */
-	manpath_parseline(&conf->manpath, auxp, 1);
+	manpath_parseline(&conf->manpath, auxp, 'm');
 
 	/* If -M is given, it overrides everything else. */
 	if (NULL != defp) {
-		manpath_parseline(&conf->manpath, defp, 1);
+		manpath_parseline(&conf->manpath, defp, 'M');
 		return;
 	}
 
@@ -66,13 +67,13 @@ manconf_parse(struct manconf *conf, const char *file,
 	/* Prepend man.conf(5) to MANPATH. */
 	if (':' == defp[0]) {
 		manconf_file(conf, file);
-		manpath_parseline(&conf->manpath, defp, 0);
+		manpath_parseline(&conf->manpath, defp, '\0');
 		return;
 	}
 
 	/* Append man.conf(5) to MANPATH. */
 	if (':' == defp[strlen(defp) - 1]) {
-		manpath_parseline(&conf->manpath, defp, 0);
+		manpath_parseline(&conf->manpath, defp, '\0');
 		manconf_file(conf, file);
 		return;
 	}
@@ -81,28 +82,28 @@ manconf_parse(struct manconf *conf, const char *file,
 	insert = strstr(defp, "::");
 	if (NULL != insert) {
 		*insert++ = '\0';
-		manpath_parseline(&conf->manpath, defp, 0);
+		manpath_parseline(&conf->manpath, defp, '\0');
 		manconf_file(conf, file);
-		manpath_parseline(&conf->manpath, insert + 1, 0);
+		manpath_parseline(&conf->manpath, insert + 1, '\0');
 		return;
 	}
 
 	/* MANPATH overrides man.conf(5) completely. */
-	manpath_parseline(&conf->manpath, defp, 0);
+	manpath_parseline(&conf->manpath, defp, '\0');
 }
 
 void
 manpath_base(struct manpaths *dirs)
 {
 	char path_base[] = MANPATH_BASE;
-	manpath_parseline(dirs, path_base, 0);
+	manpath_parseline(dirs, path_base, '\0');
 }
 
 /*
  * Parse a FULL pathname from a colon-separated list of arrays.
  */
 static void
-manpath_parseline(struct manpaths *dirs, char *path, int complain)
+manpath_parseline(struct manpaths *dirs, char *path, char option)
 {
 	char	*dir;
 
@@ -110,7 +111,7 @@ manpath_parseline(struct manpaths *dirs, char *path, int complain)
 		return;
 
 	for (dir = strtok(path, ":"); dir; dir = strtok(NULL, ":"))
-		manpath_add(dirs, dir, complain);
+		manpath_add(dirs, dir, option);
 }
 
 /*
@@ -118,33 +119,32 @@ manpath_parseline(struct manpaths *dirs, char *path, int complain)
  * Grow the array one-by-one for simplicity's sake.
  */
 static void
-manpath_add(struct manpaths *dirs, const char *dir, int complain)
+manpath_add(struct manpaths *dirs, const char *dir, char option)
 {
 	char		 buf[PATH_MAX];
 	struct stat	 sb;
 	char		*cp;
 	size_t		 i;
 
-	if (NULL == (cp = realpath(dir, buf))) {
-		if (complain)
-			warn("manpath: %s", dir);
-		return;
-	}
+	if ((cp = realpath(dir, buf)) == NULL)
+		goto fail;
 
 	for (i = 0; i < dirs->sz; i++)
-		if (0 == strcmp(dirs->paths[i], dir))
+		if (strcmp(dirs->paths[i], dir) == 0)
 			return;
 
-	if (stat(cp, &sb) == -1) {
-		if (complain)
-			warn("manpath: %s", dir);
-		return;
-	}
+	if (stat(cp, &sb) == -1)
+		goto fail;
 
 	dirs->paths = mandoc_reallocarray(dirs->paths,
-	    dirs->sz + 1, sizeof(char *));
-
+	    dirs->sz + 1, sizeof(*dirs->paths));
 	dirs->paths[dirs->sz++] = mandoc_strdup(cp);
+	return;
+
+fail:
+	if (option != '\0')
+		mandoc_msg(MANDOCERR_BADARG_BAD, 0, 0,
+		    "-%c %s: %s", option, dir, strerror(errno));
 }
 
 void
@@ -210,7 +210,7 @@ manconf_file(struct manconf *conf, const char *file)
 			*ep = '\0';
 			/* FALLTHROUGH */
 		case 0:  /* manpath */
-			manpath_add(&conf->manpath, cp, 0);
+			manpath_add(&conf->manpath, cp, '\0');
 			*manpath_default = '\0';
 			break;
 		case 1:  /* output */
@@ -225,7 +225,7 @@ manconf_file(struct manconf *conf, const char *file)
 
 out:
 	if (*manpath_default != '\0')
-		manpath_parseline(&conf->manpath, manpath_default, 0);
+		manpath_parseline(&conf->manpath, manpath_default, '\0');
 }
 
 int
@@ -243,7 +243,7 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 
 	for (tok = 0; tok < ntoks; tok++) {
 		len = strlen(toks[tok]);
-		if ( ! strncmp(cp, toks[tok], len) &&
+		if (strncmp(cp, toks[tok], len) == 0 &&
 		    strchr(" =	", cp[len]) != NULL) {
 			cp += len;
 			if (*cp == '=')
@@ -255,11 +255,11 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 	}
 
 	if (tok < 6 && *cp == '\0') {
-		warnx("-O %s=?: Missing argument value", toks[tok]);
+		mandoc_msg(MANDOCERR_BADVAL_MISS, 0, 0, "-O %s=?", toks[tok]);
 		return -1;
 	}
 	if (tok > 6 && tok < ntoks && *cp != '\0') {
-		warnx("-O %s: Does not take a value: %s", toks[tok], cp);
+		mandoc_msg(MANDOCERR_BADVAL, 0, 0, "-O %s=%s", toks[tok], cp);
 		return -1;
 	}
 
@@ -300,7 +300,8 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 		conf->indent = strtonum(cp, 0, 1000, &errstr);
 		if (errstr == NULL)
 			return 0;
-		warnx("-O indent=%s is %s", cp, errstr);
+		mandoc_msg(MANDOCERR_BADVAL_BAD, 0, 0,
+		    "-O indent=%s is %s", cp, errstr);
 		return -1;
 	case 5:
 		if (conf->width) {
@@ -310,7 +311,8 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 		conf->width = strtonum(cp, 1, 1000, &errstr);
 		if (errstr == NULL)
 			return 0;
-		warnx("-O width=%s is %s", cp, errstr);
+		mandoc_msg(MANDOCERR_BADVAL_BAD, 0, 0,
+		    "-O width=%s is %s", cp, errstr);
 		return -1;
 	case 6:
 		if (conf->tag != NULL) {
@@ -332,12 +334,16 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 		conf->toc = 1;
 		return 0;
 	default:
-		warnx("-O %s: Bad argument", cp);
+		mandoc_msg(MANDOCERR_BADARG_BAD, 0, 0, "-O %s", cp);
 		return -1;
 	}
-	if (fromfile == 0)
-		warnx("-O %s=%s: Option already set to %s",
-		    toks[tok], cp, oldval);
-	free(oldval);
-	return -1;
+	if (fromfile) {
+		free(oldval);
+		return 0;
+	} else {
+		mandoc_msg(MANDOCERR_BADVAL_DUPE, 0, 0,
+		    "-O %s=%s: already set to %s", toks[tok], cp, oldval);
+		free(oldval);
+		return -1;
+	}
 }

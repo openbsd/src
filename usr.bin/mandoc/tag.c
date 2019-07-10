@@ -1,6 +1,6 @@
-/*	$OpenBSD: tag.c,v 1.21 2018/11/22 11:30:15 schwarze Exp $ */
+/*	$OpenBSD: tag.c,v 1.22 2019/07/10 19:38:56 schwarze Exp $ */
 /*
- * Copyright (c) 2015, 2016, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2015, 2016, 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  */
 #include <sys/types.h>
 
-#include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <signal.h>
 #include <stddef.h>
@@ -28,6 +28,7 @@
 
 #include "mandoc_aux.h"
 #include "mandoc_ohash.h"
+#include "mandoc.h"
 #include "tag.h"
 
 struct tag_entry {
@@ -79,8 +80,10 @@ tag_init(void)
 
 	/* Save the original standard output for use by the pager. */
 
-	if ((tag_files.ofd = dup(STDOUT_FILENO)) == -1)
+	if ((tag_files.ofd = dup(STDOUT_FILENO)) == -1) {
+		mandoc_msg(MANDOCERR_DUP, 0, 0, "%s", strerror(errno));
 		goto fail;
+	}
 
 	/* Create both temporary output files. */
 
@@ -88,12 +91,20 @@ tag_init(void)
 	    sizeof(tag_files.ofn));
 	(void)strlcpy(tag_files.tfn, "/tmp/man.XXXXXXXXXX",
 	    sizeof(tag_files.tfn));
-	if ((ofd = mkstemp(tag_files.ofn)) == -1)
+	if ((ofd = mkstemp(tag_files.ofn)) == -1) {
+		mandoc_msg(MANDOCERR_MKSTEMP, 0, 0,
+		    "%s: %s", tag_files.ofn, strerror(errno));
 		goto fail;
-	if ((tag_files.tfd = mkstemp(tag_files.tfn)) == -1)
+	}
+	if ((tag_files.tfd = mkstemp(tag_files.tfn)) == -1) {
+		mandoc_msg(MANDOCERR_MKSTEMP, 0, 0,
+		    "%s: %s", tag_files.tfn, strerror(errno));
 		goto fail;
-	if (dup2(ofd, STDOUT_FILENO) == -1)
+	}
+	if (dup2(ofd, STDOUT_FILENO) == -1) {
+		mandoc_msg(MANDOCERR_DUP, 0, 0, "%s", strerror(errno));
 		goto fail;
+	}
 	close(ofd);
 
 	/*
@@ -217,10 +228,11 @@ tag_write(void)
 		return;
 	if (tag_files.tagname != NULL && ohash_find(&tag_data,
             ohash_qlookup(&tag_data, tag_files.tagname)) == NULL) {
-		warnx("%s: no such tag", tag_files.tagname);
+		mandoc_msg(MANDOCERR_TAG, 0, 0, "%s", tag_files.tagname);
 		tag_files.tagname = NULL;
 	}
-	stream = fdopen(tag_files.tfd, "w");
+	if ((stream = fdopen(tag_files.tfd, "w")) == NULL)
+		mandoc_msg(MANDOCERR_FDOPEN, 0, 0, "%s", strerror(errno));
 	entry = ohash_first(&tag_data, &slot);
 	while (entry != NULL) {
 		if (stream != NULL && entry->prio >= 0)
