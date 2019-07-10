@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.69 2019/07/10 07:21:47 espie Exp $
+# $OpenBSD: Makefile,v 1.70 2019/07/10 11:48:36 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -766,42 +766,38 @@ tag-delete: rep1/d-0.tgz
 	echo "@depend graphics/zoinx:zoinx-*:zoinx-2" >> ${D40}/pkgdb/d-0/+CONTENTS
 	@ROOT=${D40} ${DELETE_PKG} d
 
-temp1.ref:
-	@echo "Fatal error: User `whoami` couldn't create temp dir as /nonexistent/pkginfo.XXXXXXXXXX: No such file or directory" >$@
-	@echo " at /usr/libdata/perl5/OpenBSD/PackageLocation.pm" >>$@
-	@echo okay >>$@
+SED_PIPE = sed -e 's/ line .*//' -e s/`whoami`/USER/
+SED_PIPE2 = { u=`whoami`; case $$u in root) u=_pkgfetch;; esac; sed -e 's/ line .*//' -e s/$$u/USER/; }
 
-XXXBASE = temp2
-XXXD = D40
-${XXXBASE}.ref:
-	@u=`whoami`; case $$u in root) u=_pkgfetch;; esac; echo "Fatal error: User $$u couldn't create temp file as /nonexistent/session.XXXXXXXXXX: No such file or directory" >$@
-	@echo " at /usr/libdata/perl5/OpenBSD/PackageRepository.pm" >>$@
-	@echo okay >>$@
 
-temp3.ref:
-	@echo "Fatal error: User `whoami` couldn't create temp file as /nonexistent/pkg.XXXXXXXXXX: No such file or directory" >$@
-	@echo "Fatal error: Installation of d-0 failed, partial installation recorded as partial-d-0" >>$@
-	@echo " at /usr/libdata/perl5/OpenBSD/PkgAdd.pm" >>$@
-	@echo okay >>$@
+XXXD=${D40}
+XXXBASE=temp2
 
 temp-error1: rep0/a-0.tgz rep0/b-0.tgz temp1.ref
 	@-rm -rf ${D40}
-	@{ INJECT=inject-temp1 ROOT=${D40} SILENT=1 ${ADD_PKG} rep0/a-0.tgz 1>/dev/null|| echo okay ; } 2>&1|sed -e 's/ line .*//' >temp1.out
-	@diff -u temp1.out temp1.ref
+	@{ INJECT=inject-temp1 ROOT=${D40} SILENT=1 ${ADD_PKG} rep0/a-0.tgz 1>/dev/null|| echo okay ; } 2>&1|${SED_PIPE} >temp1.out
+	@diff -u temp1.out ${.CURDIR}/temp1.ref
 
-temp-error2: ${XXXBASE}.ref
+temp-error2: 
 	@-rm -rf ${XXXD}
-	@{ INJECT=inject-temp2 ROOT=${XXXD} SILENT=1 PKG_PATH=https://www.google.com/ ${ADD_PKG} rep0/a-0.tgz 1>/dev/null|| echo okay ; } 2>&1|sed -e 's/ line .*//' >${XXXBASE}.out
-	@diff -u ${XXXBASE}.out ${XXXBASE}.ref
+	@{ INJECT=inject-temp2 ROOT=${XXXD} SILENT=1 PKG_PATH=https://www.google.com/ ${ADD_PKG} rep0/a-0.tgz 1>/dev/null|| echo okay ; } 2>&1|${SED_PIPE2} >${XXXBASE}.out
+	@diff -u ${XXXBASE}.out ${.CURDIR}/temp2.ref
 
 temp-error2-as-root: 
 	@# XXX thx tedu for not allowing env thru
-	@${SUDO} make -C ${.CURDIR} temp-error2 XXXBASE=temp2bis XXXD=D41
+	@${SUDO} make -C ${.CURDIR} temp-error2 XXXBASE=temp2bis XXXD=${D41}
 
 temp-error3: rep1/d-0.tgz temp3.ref
 	@-rm -rf ${D42}
-	@{ INJECT=inject-temp3 ROOT=${D42} SILENT=1 ${ADD_PKG} rep1/d-0.tgz 1>/dev/null|| echo okay; } 2>&1|sed -e 's/ line .*//'>temp3.out
-	@diff -u temp3.out temp3.ref
+	@{ INJECT=inject-temp3 ROOT=${D42} SILENT=1 ${ADD_PKG} rep1/d-0.tgz 1>/dev/null|| echo okay; } 2>&1|${SED_PIPE} >temp3.out
+	@diff -u temp3.out ${.CURDIR}/temp3.ref
+
+temp-error4: rep0/qt-0.tgz rep1/qt-1.tgz
+	@-rm -rf ${D43}
+	@ROOT=${D43} SILENT=1 ${ADD_PKG} rep0/qt-0.tgz
+	@rm -f ${D43}/usr/local/phonon/a
+	@echo zoinx >${D43}/usr/local/phonon/a
+	@{ INJECT=inject-temp4 PKG_PATH=${.OBJDIR}/rep1 SILENT=1 ROOT=${D43} ${ADD_PKG} -Dchecksum -u qt || echo okay; } 2>&1|sed -e 's/ line .*//' >temp4.out
 
 .PHONY: ${REGRESS_TARGETS}
 
