@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.51 2019/07/10 14:24:42 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.52 2019/07/10 14:28:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1532,8 +1532,8 @@ slot_new(struct dev *d, struct opt *opt, char *who,
 {
 	char *p;
 	char name[SLOT_NAMEMAX];
-	unsigned int i, unit, umap = 0;
-	unsigned int ser, bestser, bestidx;
+	unsigned int i, ser, bestser, bestidx;
+	struct slot *unit[DEV_NSLOT];
 	struct slot *s;
 
 	/*
@@ -1552,30 +1552,26 @@ slot_new(struct dev *d, struct opt *opt, char *who,
 		strlcpy(name, "noname", SLOT_NAMEMAX);
 
 	/*
-	 * find the first unused "unit" number for this name
+	 * build a unit-to-slot map for this name
 	 */
-	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
-		if (s->ops == NULL)
-			continue;
+	for (i = 0; i < DEV_NSLOT; i++)
+		unit[i] = NULL;
+	for (i = 0; i < DEV_NSLOT; i++) {
+		s = d->slot + i;
 		if (strcmp(s->name, name) == 0)
-			umap |= (1 << s->unit);
-	}
-	for (unit = 0; ; unit++) {
-		if ((umap & (1 << unit)) == 0)
-			break;
+			unit[s->unit] = s;
 	}
 
 	/*
-	 * find a free controller slot with the same name/unit
+	 * find the free slot with the least unit number
 	 */
-	for (i = 0, s = d->slot; i < DEV_NSLOT; i++, s++) {
-		if (s->ops == NULL &&
-		    strcmp(s->name, name) == 0 &&
-		    s->unit == unit) {
+	for (i = 0; i < DEV_NSLOT; i++) {
+		s = unit[i];
+		if (s != NULL && s->ops == NULL) {
 #ifdef DEBUG
 			if (log_level >= 3) {
-				log_puts(name);
-				log_putu(unit);
+				log_puts(s->name);
+				log_putu(s->unit);
 				log_puts(": reused\n");
 			}
 #endif
@@ -1603,11 +1599,13 @@ slot_new(struct dev *d, struct opt *opt, char *who,
 		s->vol = MIDI_MAXCTL;
 		strlcpy(s->name, name, SLOT_NAMEMAX);
 		s->serial = d->serial++;
-		s->unit = unit;
+		for (i = 0; unit[i] != NULL; i++)
+			; /* nothing */
+		s->unit = i;
 #ifdef DEBUG
 		if (log_level >= 3) {
-			log_puts(name);
-			log_putu(unit);
+			log_puts(s->name);
+			log_putu(s->unit);
 			log_puts(": overwritten slot ");
 			log_putu(bestidx);
 			log_puts("\n");
@@ -1617,7 +1615,6 @@ slot_new(struct dev *d, struct opt *opt, char *who,
 	}
 	if (log_level >= 1) {
 		log_puts(name);
-		log_putu(unit);
 		log_puts(": out of sub-device slots\n");
 	}
 	return NULL;
