@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.122 2018/06/21 14:17:23 visa Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.123 2019/07/10 16:43:19 anton Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -2017,7 +2017,7 @@ filt_msdosfsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-	kn->kn_data = dep->de_FileSize - kn->kn_fp->f_offset;
+	kn->kn_data = dep->de_FileSize - foffset_get(kn->kn_fp);
 	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
 		kn->kn_fflags |= NOTE_EOF;
 		return (1);

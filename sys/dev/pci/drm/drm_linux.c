@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.42 2019/07/10 07:56:30 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.43 2019/07/10 16:43:19 anton Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1346,7 +1346,9 @@ dmabuf_seek(struct file *fp, off_t *offset, int whence, struct proc *p)
 	default:
 		return (EINVAL);
 	}
-	fp->f_offset = *offset = newoff;
+	foffset_enter(fp);
+	foffset_leave(fp, newoff, 0);
+	*offset = newoff;
 	return (0);
 }
 

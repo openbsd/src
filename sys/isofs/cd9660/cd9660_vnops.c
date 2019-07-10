@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.76 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.77 2019/07/10 16:43:19 anton Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -1016,7 +1016,7 @@ filt_cd9660read(struct knote *kn, long hint)
 		return (1);
 	}
 
-	kn->kn_data = node->i_size - kn->kn_fp->f_offset;
+	kn->kn_data = node->i_size - foffset_get(kn->kn_fp);
 	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
 		kn->kn_fflags |= NOTE_EOF;
 		return (1);
