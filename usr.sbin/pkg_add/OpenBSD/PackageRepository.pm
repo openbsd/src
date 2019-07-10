@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.163 2019/07/08 11:50:01 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.164 2019/07/10 09:34:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -88,7 +88,9 @@ my $cleanup = sub {
 	}
 };
 END {
+	my $a = $?;
 	&$cleanup;
+	$? = $a;
 }
 
 OpenBSD::Handler->register($cleanup);
