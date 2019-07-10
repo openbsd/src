@@ -1,3 +1,2 @@
 Fatal error: User USER couldn't create temp file as /nonexistent/session.XXXXXXXXXX: No such file or directory
- at /usr/libdata/perl5/OpenBSD/PackageRepository.pm
 okay

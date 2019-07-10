@@ -1,4 +1,2 @@
 Fatal error: User USER couldn't create temp file as /nonexistent/pkg.XXXXXXXXXX: No such file or directory
-Fatal error: Installation of d-0 failed, partial installation recorded as partial-d-0
- at /usr/libdata/perl5/OpenBSD/PkgAdd.pm
 okay

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.70 2019/07/10 11:48:36 espie Exp $
+# $OpenBSD: Makefile,v 1.71 2019/07/10 11:53:16 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -766,8 +766,8 @@ tag-delete: rep1/d-0.tgz
 	echo "@depend graphics/zoinx:zoinx-*:zoinx-2" >> ${D40}/pkgdb/d-0/+CONTENTS
 	@ROOT=${D40} ${DELETE_PKG} d
 
-SED_PIPE = sed -e 's/ line .*//' -e s/`whoami`/USER/
-SED_PIPE2 = { u=`whoami`; case $$u in root) u=_pkgfetch;; esac; sed -e 's/ line .*//' -e s/$$u/USER/; }
+SED_PIPE = sed -n -e s/`whoami`/USER/ -e 1p -e '$$p'
+SED_PIPE2 = { u=`whoami`; case $$u in root) u=_pkgfetch;; esac; sed -n -e s/$$u/USER/ -e 1p -e '$$p'; }
 
 
 XXXD=${D40}
