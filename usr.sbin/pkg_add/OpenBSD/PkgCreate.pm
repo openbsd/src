@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.157 2019/07/08 11:03:47 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.158 2019/07/10 09:18:09 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1398,7 +1398,11 @@ sub create_plist
 		    if defined $state->opt('v');
 		$state->set_status("reading plist");
 	}
-	$plist->set_infodir(OpenBSD::Temp->dir);
+	my $dir = OpenBSD::Temp->dir;
+	if (!$dir) {
+		$state->fatal(OpenBSD::Temp->last_error);
+	}
+	$plist->set_infodir($dir);
 	if (!defined $state->opt('S')) {
 		$self->read_all_fragments($state, $plist);
 	}
@@ -1589,6 +1593,7 @@ sub parse_and_run
 
 	my $regen_package = 0;
 	my $sign_only = 0;
+	my $rc = 0;
 
 	my $state = OpenBSD::PkgCreate::State->new($cmd);
 	$state->handle_options;
@@ -1698,9 +1703,9 @@ sub parse_and_run
 	}
 	}catch {
 		print STDERR "$0: $_\n";
-		return 1;
+		$rc = 1;
 	};
-	return 0;
+	return $rc;
 }
 
 1;
