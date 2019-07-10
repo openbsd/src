@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.48 2019/06/16 13:50:39 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.49 2019/07/10 14:21:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1642,7 +1642,7 @@ found:
 			log_puts(": requested mode not supported\n");
 		}
 		dev_unref(d);
-		return 0;
+		return NULL;
 	}
 	s->dev = d;
 	s->opt = opt;
