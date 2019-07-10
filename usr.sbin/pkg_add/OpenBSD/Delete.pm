@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.158 2019/06/30 14:57:25 espie Exp $
+# $OpenBSD: Delete.pm,v 1.159 2019/07/10 11:56:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -164,8 +164,11 @@ sub rename_file_to_temp
 
 	my $n = $self->realname($state);
 
-	my ($fh, $j) = OpenBSD::Temp::permanent_file(undef, $n);
-	close $fh;
+	my (undef, $j) = OpenBSD::Temp::permanent_file(undef, $n);
+	if (!defined $j) {
+		$state->errsay(OpenBSD::Temp->last_error);
+		return;
+	}
 	if (rename($n, $j)) {
 		$state->say("Renaming old file #1 to #2", $n, $j);
 		if ($self->name !~ m/^\//o && $self->cwd ne '.') {
