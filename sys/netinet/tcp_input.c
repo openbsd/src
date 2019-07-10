@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.359 2018/09/17 14:07:48 friehm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.360 2019/07/10 18:45:31 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2492,6 +2492,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				 * ACKs some data in middle of a hole; need to
 				 * split current hole
 				 */
+				if (tp->snd_numholes >= TCP_SACKHOLE_LIMIT)
+					goto done;
 				temp = (struct sackhole *)
 				    pool_get(&sackhl_pool, PR_NOWAIT);
 				if (temp == NULL)
@@ -2519,6 +2521,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			 * Need to append new hole at end.
 			 * Last hole is p (and it's not NULL).
 			 */
+			if (tp->snd_numholes >= TCP_SACKHOLE_LIMIT)
+				goto done;
 			temp = (struct sackhole *)
 			    pool_get(&sackhl_pool, PR_NOWAIT);
 			if (temp == NULL)

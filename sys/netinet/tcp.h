@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.20 2013/08/12 21:57:16 bluhm Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.21 2019/07/10 18:45:31 bluhm Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -102,7 +102,8 @@ struct tcphdr {
 #define	TCPOPT_SACK_HDR   (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_SACK<<8)
 /* Miscellaneous constants */
 #define	MAX_SACK_BLKS	6	/* Max # SACK blocks stored at sender side */
-#define	TCP_MAX_SACK	3	/* MAX # SACKs sent in any segment */
+#define	TCP_MAX_SACK	3	/* Max # SACKs sent in any segment */
+#define	TCP_SACKHOLE_LIMIT 128	/* Max # SACK holes per connection */
 
 #define	TCP_MAXBURST	4	/* Max # packets after leaving Fast Rxmit */
 
