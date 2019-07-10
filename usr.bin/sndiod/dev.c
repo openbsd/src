@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.52 2019/07/10 14:28:44 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.53 2019/07/10 14:30:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1567,16 +1567,8 @@ slot_new(struct dev *d, struct opt *opt, char *who,
 	 */
 	for (i = 0; i < DEV_NSLOT; i++) {
 		s = unit[i];
-		if (s != NULL && s->ops == NULL) {
-#ifdef DEBUG
-			if (log_level >= 3) {
-				log_puts(s->name);
-				log_putu(s->unit);
-				log_puts(": reused\n");
-			}
-#endif
+		if (s != NULL && s->ops == NULL)
 			goto found;
-		}
 	}
 
 	/*
@@ -1602,17 +1594,9 @@ slot_new(struct dev *d, struct opt *opt, char *who,
 		for (i = 0; unit[i] != NULL; i++)
 			; /* nothing */
 		s->unit = i;
-#ifdef DEBUG
-		if (log_level >= 3) {
-			log_puts(s->name);
-			log_putu(s->unit);
-			log_puts(": overwritten slot ");
-			log_putu(bestidx);
-			log_puts("\n");
-		}
-#endif
 		goto found;
 	}
+
 	if (log_level >= 1) {
 		log_puts(name);
 		log_puts(": out of sub-device slots\n");
