@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.395 2019/07/03 03:24:03 deraadt Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.396 2019/07/10 19:53:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1200,19 +1200,22 @@ smtp_command(struct smtp_session *s, char *line)
 	int				cmd, i;
 
 	log_trace(TRACE_SMTP, "smtp: %p: <<< %s", s, line);
-	report_smtp_protocol_client("smtp-in", s->id, line);
 
 	/*
 	 * These states are special.
 	 */
 	if (s->state == STATE_AUTH_INIT) {
+		report_smtp_protocol_client("smtp-in", s->id, "AUTH PLAIN ********");
 		smtp_rfc4954_auth_plain(s, line);
 		return;
 	}
 	if (s->state == STATE_AUTH_USERNAME || s->state == STATE_AUTH_PASSWORD) {
+		report_smtp_protocol_client("smtp-in", s->id, "********");
 		smtp_rfc4954_auth_login(s, line);
 		return;
 	}
+
+	report_smtp_protocol_client("smtp-in", s->id, line);
 
 	/*
 	 * Unlike other commands, "mail from" and "rcpt to" contain a
