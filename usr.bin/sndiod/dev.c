@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.49 2019/07/10 14:21:34 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.50 2019/07/10 14:22:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1607,8 +1607,7 @@ slot_new(struct dev *d, struct opt *opt, char *who,
 		return NULL;
 	}
 	s = d->slot + bestidx;
-	if (s->name[0] != '\0')
-		s->vol = MIDI_MAXCTL;
+	s->vol = MIDI_MAXCTL;
 	strlcpy(s->name, name, SLOT_NAMEMAX);
 	s->serial = d->serial++;
 	s->unit = unit;
