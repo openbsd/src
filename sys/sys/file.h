@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.55 2019/07/10 16:43:20 anton Exp $	*/
+/*	$OpenBSD: file.h,v 1.56 2019/07/11 06:15:02 anton Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ struct	fileops {
 	int	(*fo_close)(struct file *, struct proc *);
 	int	(*fo_seek)(struct file *, off_t *, int, struct proc *);
 };
-#define FO_POSITION 0x01	/* positioned read/write */
+#define FO_POSITION	0x00000001	/* positioned read/write */
 #define FO_NOUPDATE	0x00000002	/* don't update file offset */
 
 /*
