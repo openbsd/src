@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.86 2019/07/11 07:03:45 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.87 2019/07/11 07:14:23 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -136,7 +136,7 @@ sub framework
 		try {
 			&$do;
 		} catch {
-			$state->errsay("#1: #2", $state->{cmd}, $_);
+			$state->errsay("#1", $_);
 			OpenBSD::Handler->reset;
 			if ($_ =~ m/^Caught SIG(\w+)/o) {
 				kill $1, $$;

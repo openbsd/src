@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.159 2019/07/11 07:03:45 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.160 2019/07/11 07:14:23 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1702,7 +1702,7 @@ sub parse_and_run
 		$self->finish_manpages($state, $plist);
 	}
 	} catch {
-		$state->errsay("#1: #2", $state->{cmd}, $_);
+		$state->errsay("#1", $_);
 		$rc = 1;
 	};
 	return $rc;

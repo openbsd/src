@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.57 2019/07/09 11:24:09 espie Exp $
+# $OpenBSD: State.pm,v 1.58 2019/07/11 07:14:23 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -214,7 +214,7 @@ sub _fatal
 	# the way is to eval { croak @_}; and decide what to do with $@.
 	delete $SIG{__DIE__};
 	$self->sync_display;
-	croak "Fatal error: ", @_, "\n";
+	croak $self->{cmd}, ": ", @_, "\n";
 }
 
 sub fatal
