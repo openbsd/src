@@ -1,4 +1,4 @@
-/*	$OpenBSD: report_smtp.c,v 1.4 2019/01/05 09:43:39 gilles Exp $	*/
+/*	$OpenBSD: report_smtp.c,v 1.5 2019/07/11 20:58:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -101,6 +101,20 @@ report_smtp_link_disconnect(const char *direction, uint64_t qid)
 	gettimeofday(&tv, NULL);
 
 	m_create(p_lka, IMSG_REPORT_SMTP_LINK_DISCONNECT, 0, 0, -1);
+	m_add_string(p_lka, direction);
+	m_add_timeval(p_lka, &tv);
+	m_add_id(p_lka, qid);
+	m_close(p_lka);
+}
+
+void
+report_smtp_link_reset(const char *direction, uint64_t qid)
+{
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
+	m_create(p_lka, IMSG_REPORT_SMTP_LINK_RESET, 0, 0, -1);
 	m_add_string(p_lka, direction);
 	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);

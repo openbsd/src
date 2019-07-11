@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.397 2019/07/11 11:56:52 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.398 2019/07/11 20:58:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1720,6 +1720,8 @@ smtp_proceed_rset(struct smtp_session *s, const char *args)
 			smtp_tx_rollback(s->tx);
 		smtp_tx_free(s->tx);
 	}
+
+	report_smtp_link_reset("smtp-in", s->id);
 
 	smtp_reply(s, "250 %s: Reset state",
 	    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));

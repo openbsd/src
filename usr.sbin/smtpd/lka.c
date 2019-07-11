@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.235 2019/06/27 05:14:49 martijn Exp $	*/
+/*	$OpenBSD: lka.c,v 1.236 2019/07/11 20:58:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -420,6 +420,16 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 
 		lka_report_smtp_link_tls(direction, &tv, reqid, ciphers);
+		return;
+
+	case IMSG_REPORT_SMTP_LINK_RESET:
+		m_msg(&m, imsg);
+		m_get_string(&m, &direction);
+		m_get_timeval(&m, &tv);
+		m_get_id(&m, &reqid);
+		m_end(&m);
+
+		lka_report_smtp_link_reset(direction, &tv, reqid);
 		return;
 
 	case IMSG_REPORT_SMTP_TX_BEGIN:
