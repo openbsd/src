@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.2 2019/07/11 04:26:37 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -19,6 +19,7 @@
 #define _LINUX_BITMAP_H
 
 #include <linux/bitops.h>
+#include <linux/string.h>
 
 #define bitmap_empty(p, n)	(find_first_bit(p, n) == n)
 
