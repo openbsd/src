@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.72 2019/07/10 11:55:40 espie Exp $
+# $OpenBSD: Makefile,v 1.73 2019/07/11 07:15:02 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -775,12 +775,12 @@ XXXBASE=temp2
 
 temp-error1: rep0/a-0.tgz rep0/b-0.tgz temp1.ref
 	@-rm -rf ${D40}
-	@{ INJECT=inject-temp1 ROOT=${D40} SILENT=1 ${ADD_PKG} rep0/a-0.tgz 1>/dev/null|| echo okay ; } 2>&1|${SED_PIPE} >temp1.out
+	@{ INJECT=inject-temp1 ROOT=${D40} SILENT=1 ${ADD_PKG} rep0/a-0.tgz 1>/dev/null|| echo $$? ; } 2>&1|${SED_PIPE} >temp1.out
 	@diff -u temp1.out ${.CURDIR}/temp1.ref
 
 temp-error2: 
 	@-rm -rf ${XXXD}
-	@{ INJECT=inject-temp2 ROOT=${XXXD} SILENT=1 PKG_PATH=https://www.google.com/ ${ADD_PKG} rep0/a-0.tgz 1>/dev/null|| echo okay ; } 2>&1|${SED_PIPE2} >${XXXBASE}.out
+	@{ INJECT=inject-temp2 ROOT=${XXXD} SILENT=1 PKG_PATH=https://www.google.com/ ${ADD_PKG} rep0/a-0.tgz 1>/dev/null|| echo $$? ; } 2>&1|${SED_PIPE2} >${XXXBASE}.out
 	@diff -u ${XXXBASE}.out ${.CURDIR}/temp2.ref
 
 temp-error2-as-root: 
@@ -789,7 +789,7 @@ temp-error2-as-root:
 
 temp-error3: rep1/d-0.tgz temp3.ref
 	@-rm -rf ${D42}
-	@{ INJECT=inject-temp3 ROOT=${D42} SILENT=1 ${ADD_PKG} rep1/d-0.tgz 1>/dev/null|| echo okay; } 2>&1|${SED_PIPE} >temp3.out
+	@{ INJECT=inject-temp3 ROOT=${D42} SILENT=1 ${ADD_PKG} rep1/d-0.tgz 1>/dev/null|| echo $$?; } 2>&1|${SED_PIPE} >temp3.out
 	@diff -u temp3.out ${.CURDIR}/temp3.ref
 
 temp-error4: rep0/qt-0.tgz rep1/qt-1.tgz
@@ -797,7 +797,7 @@ temp-error4: rep0/qt-0.tgz rep1/qt-1.tgz
 	@ROOT=${D43} SILENT=1 ${ADD_PKG} rep0/qt-0.tgz
 	@rm -f ${D43}/usr/local/phonon/a
 	@echo zoinx >${D43}/usr/local/phonon/a
-	@{ INJECT=inject-temp4 PKG_PATH=${.OBJDIR}/rep1 SILENT=1 ROOT=${D43} ${ADD_PKG} -Dchecksum -u qt || echo okay; } 2>&1|${SED_PIPE} >temp4.out
+	@{ INJECT=inject-temp4 PKG_PATH=${.OBJDIR}/rep1 SILENT=1 ROOT=${D43} ${ADD_PKG} -Dchecksum -u qt || echo $$?; } 2>&1|${SED_PIPE} >temp4.out
 
 .PHONY: ${REGRESS_TARGETS}
 
