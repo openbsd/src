@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.19 2019/07/11 20:58:54 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.20 2019/07/11 21:04:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -225,10 +225,11 @@ lka_report_smtp_link_reset(const char *direction, struct timeval *tv, uint64_t r
 }
 
 void
-lka_report_smtp_link_identify(const char *direction, struct timeval *tv, uint64_t reqid, const char *heloname)
+lka_report_smtp_link_identify(const char *direction, struct timeval *tv,
+    uint64_t reqid, const char *method, const char *heloname)
 {
 	report_smtp_broadcast(reqid, direction, tv, "link-identify",
-	    "%016"PRIx64"|%s\n", reqid, heloname);
+	    "%016"PRIx64"|%s|%s\n", reqid, method, heloname);
 }
 
 void

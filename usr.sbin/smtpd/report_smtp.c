@@ -1,4 +1,4 @@
-/*	$OpenBSD: report_smtp.c,v 1.5 2019/07/11 20:58:54 gilles Exp $	*/
+/*	$OpenBSD: report_smtp.c,v 1.6 2019/07/11 21:04:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -64,7 +64,7 @@ report_smtp_link_connect(const char *direction, uint64_t qid, const char *rdns, 
 }
 
 void
-report_smtp_link_identify(const char *direction, uint64_t qid, const char *identity)
+report_smtp_link_identify(const char *direction, uint64_t qid, const char *method, const char *identity)
 {
 	struct timeval	tv;
 
@@ -74,6 +74,7 @@ report_smtp_link_identify(const char *direction, uint64_t qid, const char *ident
 	m_add_string(p_lka, direction);
 	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
+	m_add_string(p_lka, method);
 	m_add_string(p_lka, identity);
 	m_close(p_lka);
 }
