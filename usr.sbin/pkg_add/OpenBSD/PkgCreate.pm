@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.158 2019/07/10 09:18:09 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.159 2019/07/11 07:03:45 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1701,8 +1701,8 @@ sub parse_and_run
 	if (!$state->defines("stub")) {
 		$self->finish_manpages($state, $plist);
 	}
-	}catch {
-		print STDERR "$0: $_\n";
+	} catch {
+		$state->errsay("#1: #2", $state->{cmd}, $_);
 		$rc = 1;
 	};
 	return $rc;

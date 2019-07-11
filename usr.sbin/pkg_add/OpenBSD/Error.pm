@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.32 2017/04/18 15:12:00 espie Exp $
+# $OpenBSD: Error.pm,v 1.33 2019/07/11 07:03:45 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -162,7 +162,7 @@ sub dienow
 			$Line = $3;
 			$FullMessage = $error;
 
-			$handler->exec($error, '', $1, $2, $3);
+			$handler->exec($error, $1, $2, $3);
 		} else {
 			die "Fatal error: can't parse $error";
 		}
@@ -195,7 +195,7 @@ sub catch(&)
 
 sub catchall(&)
 {
-	bless $_[0], "OpenBSD::Error::catchall";
+	bless $_[0], "OpenBSD::Error::catch";
 }
 
 sub rmtree
@@ -211,17 +211,6 @@ sub rmtree
 }
 
 package OpenBSD::Error::catch;
-sub exec
-{
-	my ($self, $full, $e) = @_;
-	if ($e) {
-		&$self;
-	} else {
-		die $full;
-	}
-}
-
-package OpenBSD::Error::catchall;
 sub exec
 {
 	my ($self, $full, $e) = @_;
