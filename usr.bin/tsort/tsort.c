@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.36 2017/05/20 09:31:19 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.37 2019/07/11 17:28:32 mestre Exp $ */
 /* ex:ts=8 sw=4:
  *
  * Copyright (c) 1999-2004 Marc Espie <espie@openbsd.org>
@@ -879,10 +879,6 @@ parse_args(int argc, char *argv[], struct ohash *pairs)
 
 	files[i] = NULL;
 
-/*	if (pledge("stdio rpath", files) == -1) */
-	if (pledge("stdio rpath", NULL) == -1)
-		err(1, "pledge");
-
 	nodes_init(pairs);
 	order = 0;
 		
@@ -910,9 +906,6 @@ parse_args(int argc, char *argv[], struct ohash *pairs)
 		order = read_pairs(stdin, pairs, reverse_flag, "stdin",
 		    order, hints_flag == 2);
 	}
-
-	if (pledge("stdio", NULL) == -1)
-		err(1, "pledge");
 }
 
 static int
@@ -1003,6 +996,10 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	parse_args(argc, argv, &pairs);
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
 	return tsort(&pairs);
 }
 
