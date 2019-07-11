@@ -1,5 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.66 2019/07/05 14:50:59 lum Exp $	*/
-
+/*	$OpenBSD: extend.c,v 1.67 2019/07/11 18:20:18 lum Exp $	*/
 /* This file is in the public domain. */
 
 /*
@@ -8,6 +7,7 @@
 
 #include <sys/queue.h>
 #include <sys/types.h>
+#include <regex.h>
 #include <ctype.h>
 #include <limits.h>
 #include <signal.h>
@@ -693,6 +693,129 @@ load(const char *fname)
 }
 
 /*
+ * Line has a '(' as the first non-white char.
+ */
+static int
+multiarg(char *funstr)
+{
+	regex_t  regex_buff;
+	PF	 funcp;
+	char	 excbuf[128];
+	char	*cmdp, *argp, *fendp, *endp, *p, *s = " ";
+	int	 singlecmd = 0, spc, numparams, numspc;
+	
+	endp = strrchr(funstr, ')');
+	if (endp == NULL) {
+		ewprintf("No closing parenthesis found");
+		return(FALSE);
+	}
+	p = endp + 1;
+	if (*p != '\0')
+		*p = '\0';
+	/* we now know that string starts with '(' and ends with ')' */
+	if (regcomp(&regex_buff, "^[(][\t ]*[)]$", REG_EXTENDED)) {
+		dobeep();
+		ewprintf("Could not compile regex");
+		regfree(&regex_buff);
+		return(FALSE);
+	}
+	if (!regexec(&regex_buff, funstr, 0, NULL, 0)) {
+		dobeep();
+		ewprintf("No command found");
+		regfree(&regex_buff);
+		return(FALSE);
+	}
+	/* currently there are no mg commands that don't have a letter */
+	if (regcomp(&regex_buff, "^[(][\t ]*[A-Za-z-]+[\t ]*[)]$",
+	    REG_EXTENDED)) {
+		dobeep();
+		ewprintf("Could not compile regex");
+		regfree(&regex_buff);
+		return(FALSE);
+	}
+	if (!regexec(&regex_buff, funstr, 0, NULL, 0))
+		singlecmd = 1;
+
+	regfree(&regex_buff);
+	p = funstr + 1;		/* move past first '(' char.	*/
+	cmdp = skipwhite(p);	/* find first char of command.	*/
+
+	if (singlecmd) {
+		/* remove ')', then check for spaces at the end */
+		cmdp[strlen(cmdp) - 1] = '\0'; 
+		if ((fendp = strchr(cmdp, ' ')) != NULL)
+			*fendp = '\0';
+		else if ((fendp = strchr(cmdp, '\t')) != NULL)
+			*fendp = '\0';
+		return(excline(cmdp));
+	}
+	if ((fendp = strchr(cmdp, ' ')) == NULL) 
+		fendp = strchr(cmdp, '\t');
+
+	*fendp = '\0';
+	/*
+	 * If no extant mg command found, line could be a (define of some kind.
+	 * Since no defines exist at the moment, just return.
+	 */
+	if ((funcp = name_function(cmdp)) == NULL) {
+		dobeep();
+		ewprintf("Unknown command: %s", cmdp);
+		return (FALSE);
+	}
+	numparams = numparams_function(funcp);
+	if (numparams == 0) {
+		dobeep();
+		ewprintf("Command takes no arguments: %s", cmdp);
+		return (FALSE);
+	}
+
+	/* now find the first argument */
+	p = fendp + 1;	
+	argp = skipwhite(p);
+	numspc = spc = 1; /* initially fake a space so we find first argument */
+
+	for (p = argp; *p != '\0'; p++) {
+		if (*p == ' ' || *p == '\t' || *p == ')') {
+			if (spc == 1)
+				continue;
+			if (spc == 0 && (numspc % numparams == 0)) {
+				*p = '\0'; 	/* terminate arg string */
+				excbuf[0] = '\0';
+				if (strlcpy(excbuf, cmdp, sizeof(excbuf))
+				     >= sizeof(excbuf)) {
+					dobeep();
+					ewprintf("strlcpy error");
+					return (FALSE);
+				}
+				if (strlcat(excbuf, s, sizeof(excbuf))
+				    >= sizeof(excbuf)) {
+					dobeep();
+					ewprintf("strlcpy error");
+					return (FALSE);
+				}
+				if (strlcat(excbuf, argp, sizeof(excbuf))
+				    >= sizeof(excbuf)) {
+					dobeep();
+					ewprintf("strlcpy error");
+					return (FALSE);
+				}
+				excline(excbuf);
+				*p = ' '; 	/* so 'for' loop can continue */
+			}
+			numspc++;
+			spc = 1;
+		} else {
+			if (spc == 1)
+				if ((numparams == 1) ||
+				    ((numspc + 1) % numparams) == 0)
+					argp = p;
+			spc = 0;
+		}
+	}
+	return (TRUE);
+}
+
+/*
  * excline - run a line from a load file or eval-expression.
  */
 int
@@ -724,6 +847,8 @@ excline(char *line)
 	funcp = skipwhite(line);
 	if (*funcp == '\0')
 		return (TRUE);	/* No error on blank lines */
+	if (*funcp == '(')
+		return (multiarg(funcp));
 	line = parsetoken(funcp);
 	if (*line != '\0') {
 		*line++ = '\0';
@@ -928,7 +1053,7 @@ cleanup:
 static char *
 skipwhite(char *s)
 {
-	while (*s == ' ' || *s == '\t' || *s == ')' || *s == '(')
+	while (*s == ' ' || *s == '\t')
 		s++;
 	if ((*s == ';') || (*s == '#'))
 		*s = '\0';

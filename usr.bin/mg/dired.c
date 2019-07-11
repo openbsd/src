@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.92 2019/07/01 19:36:17 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.93 2019/07/11 18:20:18 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -204,24 +204,24 @@ static struct KEYMAPE (7) diredmap = {
 void
 dired_init(void)
 {
-	funmap_add(dired, "dired");
-	funmap_add(d_create_directory, "dired-create-directory");
-	funmap_add(d_copy, "dired-do-copy");
-	funmap_add(d_expunge, "dired-do-flagged-delete");
-	funmap_add(d_rename, "dired-do-rename");
-	funmap_add(d_findfile, "dired-find-file");
-	funmap_add(d_ffotherwindow, "dired-find-file-other-window");
-	funmap_add(d_del, "dired-flag-file-deletion");
-	funmap_add(d_gotofile, "dired-goto-file");
-	funmap_add(d_forwline, "dired-next-line");
-	funmap_add(d_otherwindow, "dired-other-window");
-	funmap_add(d_backline, "dired-previous-line");
-	funmap_add(d_refreshbuffer, "dired-revert");
-	funmap_add(d_backpage, "dired-scroll-down");
-	funmap_add(d_forwpage, "dired-scroll-up");
-	funmap_add(d_undel, "dired-unmark");
-	funmap_add(d_undelbak, "dired-unmark-backward");
-	funmap_add(d_killbuffer_cmd, "quit-window");
+	funmap_add(dired, "dired", 1);
+	funmap_add(d_create_directory, "dired-create-directory", 1);
+	funmap_add(d_copy, "dired-do-copy", 1);
+	funmap_add(d_expunge, "dired-do-flagged-delete", 0);
+	funmap_add(d_rename, "dired-do-rename", 1);
+	funmap_add(d_findfile, "dired-find-file", 1);
+	funmap_add(d_ffotherwindow, "dired-find-file-other-window", 1);
+	funmap_add(d_del, "dired-flag-file-deletion", 0);
+	funmap_add(d_gotofile, "dired-goto-file", 1);
+	funmap_add(d_forwline, "dired-next-line", 0);
+	funmap_add(d_otherwindow, "dired-other-window", 0);
+	funmap_add(d_backline, "dired-previous-line", 0);
+	funmap_add(d_refreshbuffer, "dired-revert", 0);
+	funmap_add(d_backpage, "dired-scroll-down", 0);
+	funmap_add(d_forwpage, "dired-scroll-up", 0);
+	funmap_add(d_undel, "dired-unmark", 0);
+	funmap_add(d_undelbak, "dired-unmark-backward", 0);
+	funmap_add(d_killbuffer_cmd, "quit-window", 0);
 	maps_add((KEYMAP *)&diredmap, "dired");
 	dobindkey(fundamental_map, "dired", "^Xd");
 }

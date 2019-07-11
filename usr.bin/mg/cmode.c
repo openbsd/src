@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.16 2015/09/26 21:51:58 jasper Exp $ */
+/* $OpenBSD: cmode.c,v 1.17 2019/07/11 18:20:18 lum Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -91,12 +91,12 @@ static struct KEYMAPE (3) cmodemap = {
 void
 cmode_init(void)
 {
-	funmap_add(cmode, "c-mode");
-	funmap_add(cc_char, "c-handle-special-char");
-	funmap_add(cc_brace, "c-handle-special-brace");
-	funmap_add(cc_tab, "c-tab-or-indent");
-	funmap_add(cc_indent, "c-indent");
-	funmap_add(cc_lfindent, "c-indent-and-newline");
+	funmap_add(cmode, "c-mode", 0);
+	funmap_add(cc_char, "c-handle-special-char", 0);
+	funmap_add(cc_brace, "c-handle-special-brace", 0);
+	funmap_add(cc_tab, "c-tab-or-indent", 0);
+	funmap_add(cc_indent, "c-indent", 0);
+	funmap_add(cc_lfindent, "c-indent-and-newline", 0);
 	maps_add((KEYMAP *)&cmodemap, "c");
 }
 
