@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.232 2019/07/04 17:42:17 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.233 2019/07/11 11:57:35 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ solisten(struct socket *so, int backlog)
 	int s, error;
 
 	if (so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING|SS_ISDISCONNECTING))
-		return (EOPNOTSUPP);
+		return (EINVAL);
 #ifdef SOCKET_SPLICE
 	if (isspliced(so) || issplicedback(so))
 		return (EOPNOTSUPP);
@@ -244,7 +244,7 @@ sofree(struct socket *so, int s)
 		/* Reuse splice idle, sounsplice() has been called before. */
 		timeout_set_proc(&so->so_sp->ssp_idleto, soreaper, so);
 		timeout_add(&so->so_sp->ssp_idleto, 0);
-	} else 
+	} else
 #endif /* SOCKET_SPLICE */
 	{
 		pool_put(&socket_pool, so);
@@ -2151,4 +2151,3 @@ so_print(void *v,
 	(*pr)("so_cpid: %d\n", so->so_cpid);
 }
 #endif
-
