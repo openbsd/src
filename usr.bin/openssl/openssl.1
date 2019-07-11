@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.109 2019/07/09 11:19:05 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.110 2019/07/11 10:31:48 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 9 2019 $
+.Dd $Mdocdate: July 11 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3605,10 +3605,12 @@ Verify the input data and output the recovered data.
 .nr nS 1
 .Nm "openssl s_client"
 .Op Fl 4 | 6
+.Op Fl alpn Ar protocols
 .Op Fl bugs
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl cert Ar file
+.Op Fl certform Cm der | pem
 .Op Fl check_ss_sig
 .Op Fl cipher Ar cipherlist
 .Op Fl connect Ar host Ns Op : Ns Ar port
@@ -3616,36 +3618,53 @@ Verify the input data and output the recovered data.
 .Op Fl crl_check_all
 .Op Fl crlf
 .Op Fl debug
+.Op Fl dtls1
 .Op Fl extended_crl
 .Op Fl groups
+.Op Fl host Ar host
 .Op Fl ign_eof
 .Op Fl ignore_critical
 .Op Fl issuer_checks
 .Op Fl key Ar keyfile
+.Op Fl keyform Cm der | pem
+.Op Fl keymatexport Ar label
+.Op Fl keymatexportlen Ar len
+.Op Fl legacy_server_connect
 .Op Fl msg
+.Op Fl mtu Ar mtu
 .Op Fl nbio
 .Op Fl nbio_test
+.Op Fl no_comp
+.Op Fl no_ign_eof
+.Op Fl no_legacy_server_connect
 .Op Fl no_ticket
 .Op Fl no_tls1
 .Op Fl no_tls1_1
 .Op Fl no_tls1_2
+.Op Fl pass Ar arg
 .Op Fl pause
 .Op Fl policy_check
+.Op Fl port Ar port
 .Op Fl prexit
 .Op Fl proxy Ar host : Ns Ar port
-.Op Fl psk Ar key
-.Op Fl psk_identity Ar identity
 .Op Fl quiet
 .Op Fl reconnect
 .Op Fl servername Ar name
+.Op Fl serverpref
+.Op Fl sess_in Ar file
+.Op Fl sess_out Ar file
 .Op Fl showcerts
 .Op Fl starttls Ar protocol
 .Op Fl state
+.Op Fl status
+.Op Fl timeout
 .Op Fl tls1
 .Op Fl tls1_1
 .Op Fl tls1_2
 .Op Fl tlsextdebug
+.Op Fl use_srtp Ar profiles
 .Op Fl verify Ar depth
+.Op Fl verify_return_error
 .Op Fl x509_strict
 .Op Fl xmpphost Ar host
 .nr nS 0
@@ -3674,6 +3693,11 @@ The options are as follows:
 Attempt connections using IPv4 only.
 .It Fl 6
 Attempt connections using IPv6 only.
+.It Fl alpn Ar protocols
+Enable the Application-Layer Protocol Negotiation.
+.Ar protocols
+is a comma-separated list of protocol names that the client should advertise
+support for.
 .It Fl bugs
 Enable various workarounds for buggy implementations.
 .It Fl CAfile Ar file
@@ -3694,6 +3718,10 @@ These are also used when building the client certificate chain.
 .It Fl cert Ar file
 The certificate to use, if one is requested by the server.
 The default is not to use a certificate.
+.It Fl certform Cm der | pem
+The certificate format.
+The default is
+.Cm pem .
 .It Xo
 .Fl check_ss_sig ,
 .Fl crl_check ,
@@ -3731,25 +3759,57 @@ Translate a line feed from the terminal into CR+LF,
 as required by some servers.
 .It Fl debug
 Print extensive debugging information, including a hex dump of all traffic.
+.It Fl dtls1
+Permit only DTLS1.0.
 .It Fl groups Ar ecgroups
 Specify a colon-separated list of permitted EC curve groups.
+.It Fl host Ar host
+The
+.Ar host
+to connect to.
+The default is localhost.
 .It Fl ign_eof
 Inhibit shutting down the connection when end of file is reached in the input.
 .It Fl key Ar keyfile
 The private key to use.
 If not specified, the certificate file will be used.
+.It Fl keyform Cm der | pem
+The private key format.
+The default is
+.Cm pem .
+.It Fl keymatexport Ar label
+Export keying material using label.
+.It Fl keymatexportlen Ar len
+Export len bytes of keying material (default 20).
+.It Fl legacy_server_connect , no_legacy_server_connect
+Allow or disallow initial connection to servers that don't support RI.
 .It Fl msg
 Show all protocol messages with hex dump.
+.It Fl mtu Ar mtu
+Set the link layer MTU.
 .It Fl nbio
 Turn on non-blocking I/O.
 .It Fl nbio_test
 Test non-blocking I/O.
+.It Fl no_ign_eof
+Shut down the connection when end of file is reached in the input.
+Can be used to override the implicit
+.Fl ign_eof
+after
+.Fl quiet .
 .It Fl no_tls1 | no_tls1_1 | no_tls1_2
 Disable the use of TLS1.0, 1.1, and 1.2, respectively.
 .It Fl no_ticket
 Disable RFC 4507 session ticket support.
+.It Fl pass Ar arg
+The private key password source.
 .It Fl pause
 Pause 1 second between each read and write call.
+.It Fl port Ar port
+The
+.Ar port
+to connect to.
+The default is 4433.
 .It Fl prexit
 Print session information when the program exits.
 This will always attempt
@@ -3771,16 +3831,6 @@ argument is given to the proxy.
 If not specified, localhost is used as final destination.
 After that, switch the connection through the proxy to the destination
 to TLS.
-.It Fl psk Ar key
-Use the PSK key
-.Ar key
-when using a PSK cipher suite.
-The key is given as a hexadecimal number without the leading 0x,
-for example -psk 1a2b3c4d.
-.It Fl psk_identity Ar identity
-Use the PSK
-.Ar identity
-when using a PSK cipher suite.
 .It Fl quiet
 Inhibit printing of session and certificate information.
 This implicitly turns on
@@ -3796,6 +3846,13 @@ message, using the specified server
 .It Fl showcerts
 Display the whole server certificate chain: normally only the server
 certificate itself is displayed.
+.It Fl serverpref
+Use the server's cipher preferences.
+.It Fl sess_in Ar file
+Load TLS session from file.
+The client will attempt to resume a connection from this session.
+.It Fl sess_out Ar file
+Output TLS session to file.
 .It Fl starttls Ar protocol
 Send the protocol-specific messages to switch to TLS for communication.
 .Ar protocol
@@ -3809,10 +3866,17 @@ and
 .Qq xmpp .
 .It Fl state
 Print the SSL session states.
+.It Fl status
+Send a certificate status request to the server (OCSP stapling).
+The server response (if any) is printed out.
+.It Fl timeout
+Enable send/receive timeout on DTLS connections.
 .It Fl tls1 | tls1_1 | tls1_2
 Permit only TLS1.0, 1.1, or 1.2, respectively.
 .It Fl tlsextdebug
 Print a hex dump of any TLS extensions received from the server.
+.It Fl use_srtp Ar profiles
+Offer SRTP key management with a colon-separated profile list.
 .It Fl verify Ar depth
 Turn on server certificate verification,
 with a maximum length of
@@ -3821,6 +3885,8 @@ Currently the verify operation continues after errors so all the problems
 with a certificate chain can be seen.
 As a side effect the connection will never fail due to a server
 certificate verify failure.
+.It Fl verify_return_error
+Return verification error.
 .It Fl xmpphost Ar hostname
 When used with
 .Fl starttls Ar xmpp ,
