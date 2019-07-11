@@ -1,4 +1,4 @@
-.\"	$OpenBSD: switchd.conf.5,v 1.9 2018/11/11 00:11:01 akoshibe Exp $
+.\"	$OpenBSD: switchd.conf.5,v 1.10 2019/07/11 09:28:54 sthen Exp $
 .\"
 .\" Copyright (c) 2014, 2015, 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2016 YASUOKA Masahiko <yasuoka@openbsd.org>
@@ -17,7 +17,7 @@
 .\"
 .\" The following requests are required for all man pages.
 .\"
-.Dd $Mdocdate: November 11 2018 $
+.Dd $Mdocdate: July 11 2019 $
 .Dt SWITCHD.CONF 5
 .Os
 .Sh NAME
@@ -110,9 +110,9 @@ uses port 6653 and listen address 0.0.0.0.
 .Sh EXAMPLES
 The following example is a typical one.
 .Bd -literal -offset indent
-listen on 0.0.0.0 port 6633
+listen on 0.0.0.0 port 6653
 .\"device "/dev/switch0"
-.\"device "/dev/switch1" forward to tcp:192.168.0.1:6633
+.\"device "/dev/switch1" forward to tcp:192.168.0.1:6653
 .Ed
 .Sh SEE ALSO
 .Xr switchctl 8 ,
