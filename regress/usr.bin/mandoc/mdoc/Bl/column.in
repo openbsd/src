@@ -1,5 +1,5 @@
-.\" $OpenBSD: column.in,v 1.10 2017/07/04 14:53:24 schwarze Exp $
-.Dd $Mdocdate: July 4 2017 $
+.\" $OpenBSD: column.in,v 1.11 2019/07/11 16:56:52 schwarze Exp $
+.Dd $Mdocdate: July 11 2019 $
 .Dt BL-COLUMN 1
 .Os
 .Sh NAME
@@ -81,7 +81,8 @@
 .\" Mixed tab and Ta
 .Bl -column a b c d
 .It a	b	c	d
-.It a	b	c Ta d
+.It "a	b	c" Ta
+d
 .It a	b Ta c	d
 .It a	b Ta c Ta d
 .It a Ta b	c	d

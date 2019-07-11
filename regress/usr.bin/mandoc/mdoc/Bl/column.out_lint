@@ -4,4 +4,4 @@ mandoc: column.in:75:2: WARNING: skipping empty macro: It
 mandoc: column.in:77:2: WARNING: wrong number of cells: 2 columns, 4 cells
 mandoc: column.in:78:2: WARNING: wrong number of cells: 2 columns, 5 cells
 mandoc: column.in:79:2: WARNING: skipping empty macro: It
-mandoc: column.in:107:18: WARNING: skipping -width argument: Bl -column
+mandoc: column.in:108:18: WARNING: skipping -width argument: Bl -column
