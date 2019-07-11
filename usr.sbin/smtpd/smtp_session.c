@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.399 2019/07/11 21:04:59 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.400 2019/07/11 21:40:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -939,6 +939,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    "result=ok",
 			    s->id, user);
 			s->flags |= SF_AUTHENTICATED;
+			report_smtp_link_auth("smtp-in", s->id, user, "pass");
 			smtp_reply(s, "235 %s: Authentication succeeded",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		}
@@ -947,6 +948,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    "authentication user=%s "
 			    "result=permfail",
 			    s->id, user);
+			report_smtp_link_auth("smtp-in", s->id, user, "fail");
 			smtp_auth_failure_pause(s);
 			return;
 		}
@@ -955,6 +957,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    "authentication user=%s "
 			    "result=tempfail",
 			    s->id, user);
+			report_smtp_link_auth("smtp-in", s->id, user, "error");
 			smtp_reply(s, "421 %s: Temporary failure",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 		}

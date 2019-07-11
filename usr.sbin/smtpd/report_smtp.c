@@ -1,4 +1,4 @@
-/*	$OpenBSD: report_smtp.c,v 1.6 2019/07/11 21:04:59 gilles Exp $	*/
+/*	$OpenBSD: report_smtp.c,v 1.7 2019/07/11 21:40:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -119,6 +119,22 @@ report_smtp_link_reset(const char *direction, uint64_t qid)
 	m_add_string(p_lka, direction);
 	m_add_timeval(p_lka, &tv);
 	m_add_id(p_lka, qid);
+	m_close(p_lka);
+}
+
+void
+report_smtp_link_auth(const char *direction, uint64_t qid, const char *user, const char *result)
+{
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+
+	m_create(p_lka, IMSG_REPORT_SMTP_LINK_AUTH, 0, 0, -1);
+	m_add_string(p_lka, direction);
+	m_add_timeval(p_lka, &tv);
+	m_add_id(p_lka, qid);
+	m_add_string(p_lka, user);
+	m_add_string(p_lka, result);
 	m_close(p_lka);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.20 2019/07/11 21:04:59 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.21 2019/07/11 21:40:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -54,6 +54,7 @@ static struct smtp_events {
 	{ "link-identify" },
 	{ "link-tls" },
 	{ "link-reset" },
+	{ "link-auth" },
 
 	{ "tx-begin" },
 	{ "tx-mail" },
@@ -222,6 +223,14 @@ lka_report_smtp_link_reset(const char *direction, struct timeval *tv, uint64_t r
 {
 	report_smtp_broadcast(reqid, direction, tv, "link-reset",
 	    "%016"PRIx64"\n", reqid);
+}
+
+void
+lka_report_smtp_link_auth(const char *direction, struct timeval *tv, uint64_t reqid,
+    const char *username, const char *result)
+{
+	report_smtp_broadcast(reqid, direction, tv, "link-auth",
+	    "%016"PRIx64"|%s|%s\n", reqid, username, result);
 }
 
 void
