@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.14 2019/04/19 21:09:48 kettenis Exp $
+# $OpenBSD: Makefile.inc,v 1.15 2019/07/11 11:31:09 visa Exp $
 
 LLVM_SRCS?=	${.CURDIR}/../../../llvm
 
@@ -30,6 +30,11 @@ CXXFLAGS+=	-fno-ret-protector
 .endif
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 CXXFLAGS+=	-mno-retpoline
+.endif
+
+# Omit frame pointer to improve performance.
+.if ${MACHINE_ARCH} == "mips64" || ${MACHINE_ARCH} == "mips64el"
+CXXFLAGS+=	-fomit-frame-pointer
 .endif
 
 # Compiling with -fno-pie doesn't work on powerpc.
