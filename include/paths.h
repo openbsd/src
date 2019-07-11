@@ -1,4 +1,4 @@
-/*	$OpenBSD: paths.h,v 1.25 2014/03/13 15:24:41 tedu Exp $	*/
+/*	$OpenBSD: paths.h,v 1.26 2019/07/11 03:54:17 tedu Exp $	*/
 /*	$NetBSD: paths.h,v 1.7 1994/10/26 00:56:12 cgd Exp $	*/
 
 /*
@@ -36,9 +36,9 @@
 #define	_PATHS_H_
 
 /* Default search path. */
-#define	_PATH_DEFPATH	"/usr/bin:/bin:/usr/sbin:/sbin:/usr/X11R6/bin:/usr/local/bin"
+#define	_PATH_DEFPATH	"/usr/bin:/bin:/usr/sbin:/sbin:/usr/X11R6/bin:/usr/local/bin:/usr/local/sbin"
 /* All standard utilities path. */
-#define	_PATH_STDPATH	"/usr/bin:/bin:/usr/sbin:/sbin:/usr/X11R6/bin:/usr/local/bin"
+#define	_PATH_STDPATH	"/usr/bin:/bin:/usr/sbin:/sbin:/usr/X11R6/bin:/usr/local/bin:/usr/local/sbin"
 
 #define	_PATH_BSHELL	"/bin/sh"
 #define	_PATH_CONSOLE	"/dev/console"
