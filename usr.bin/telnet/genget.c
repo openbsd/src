@@ -1,4 +1,4 @@
-/*     $OpenBSD: genget.c,v 1.5 2014/07/20 10:32:23 jsg Exp $  */
+/*     $OpenBSD: genget.c,v 1.6 2019/07/11 05:11:16 deraadt Exp $  */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,6 @@ char **
 genget(char *name, char **table, int stlen)
      /* name to match */
      /* name entry in table */
-	   	      
 {
     char **c, **found;
     int n;
