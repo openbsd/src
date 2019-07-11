@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.35 2016/01/26 18:35:01 mmcc Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.36 2019/07/11 03:54:27 deraadt Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -658,7 +658,7 @@ suboption(void)
 	    name = gettermname();
 	    len = strlen(name) + 4 + 2;
 	    if (len < NETROOM()) {
-		snprintf((char *)temp, sizeof(temp), 
+		snprintf((char *)temp, sizeof(temp),
 			 "%c%c%c%c%s%c%c", IAC, SB, TELOPT_TTYPE,
 			 TELQUAL_IS, name, IAC, SE);
 		ring_supply_data(&netoring, temp, len);
@@ -679,7 +679,7 @@ suboption(void)
 
 	    TerminalSpeeds(&ispeed, &ospeed);
 
-	    snprintf((char *)temp, sizeof(temp), 
+	    snprintf((char *)temp, sizeof(temp),
 		     "%c%c%c%c%ld,%ld%c%c", IAC, SB, TELOPT_TSPEED,
 		     TELQUAL_IS, ospeed, ispeed, IAC, SE);
 	    len = strlen((char *)temp+4) + 4;	/* temp[3] is 0 ... */
