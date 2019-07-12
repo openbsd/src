@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.165 2018/12/18 10:16:24 benno Exp $	*/
+/*	$OpenBSD: inet.c,v 1.166 2019/07/12 19:43:51 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -496,9 +496,9 @@ tcp_stats(char *name)
 		"\t\t%llu segment rexmit%s in SACK recovery episodes\n");
 	p(tcps_sack_rexmit_bytes,
 		"\t\t%llu byte rexmit%s in SACK recovery episodes\n");
-	p(tcps_sack_rcv_opts,
-		"\t%llu SACK option%s received\n");
+	p(tcps_sack_rcv_opts, "\t%llu SACK option%s received\n");
 	p(tcps_sack_snd_opts, "\t%llu SACK option%s sent\n");
+	p(tcps_sack_drop_opts, "\t%llu SACK option%s dropped\n");
 
 #undef p
 #undef p1

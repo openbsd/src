@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.360 2019/07/10 18:45:31 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.361 2019/07/12 19:43:51 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2414,8 +2414,8 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			tp->snd_holes = (struct sackhole *)
 			    pool_get(&sackhl_pool, PR_NOWAIT);
 			if (tp->snd_holes == NULL) {
-				/* ENOBUFS, so ignore SACKed block for now*/
-				goto done;
+				/* ENOBUFS, so ignore SACKed block for now */
+				goto dropped;
 			}
 			cur = tp->snd_holes;
 			cur->start = th->th_ack;
@@ -2493,11 +2493,11 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 				 * split current hole
 				 */
 				if (tp->snd_numholes >= TCP_SACKHOLE_LIMIT)
-					goto done;
+					goto dropped;
 				temp = (struct sackhole *)
 				    pool_get(&sackhl_pool, PR_NOWAIT);
 				if (temp == NULL)
-					goto done; /* ENOBUFS */
+					goto dropped; /* ENOBUFS */
 				temp->next = cur->next;
 				temp->start = sack.end;
 				temp->end = cur->end;
@@ -2522,11 +2522,11 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			 * Last hole is p (and it's not NULL).
 			 */
 			if (tp->snd_numholes >= TCP_SACKHOLE_LIMIT)
-				goto done;
+				goto dropped;
 			temp = (struct sackhole *)
 			    pool_get(&sackhl_pool, PR_NOWAIT);
 			if (temp == NULL)
-				goto done; /* ENOBUFS */
+				goto dropped; /* ENOBUFS */
 			temp->start = tp->rcv_lastsack;
 			temp->end = sack.start;
 			temp->dups = min(tcprexmtthresh,
@@ -2540,8 +2540,9 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 			tp->snd_numholes++;
 		}
 	}
-done:
 	return;
+dropped:
+	tcpstat_inc(tcps_sack_drop_opts);
 }
 
 /*
