@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.110 2019/07/11 10:31:48 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.111 2019/07/12 10:21:08 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 11 2019 $
+.Dd $Mdocdate: July 12 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3899,42 +3899,67 @@ will be used.
 .nr nS 1
 .Nm "openssl s_server"
 .Op Fl accept Ar port
+.Op Fl alpn Ar protocols
 .Op Fl bugs
 .Op Fl CAfile Ar file
 .Op Fl CApath Ar directory
 .Op Fl cert Ar file
+.Op Fl cert2 Ar file
+.Op Fl certform Cm der | pem
 .Op Fl cipher Ar cipherlist
 .Op Fl context Ar id
 .Op Fl crl_check
 .Op Fl crl_check_all
 .Op Fl crlf
 .Op Fl dcert Ar file
+.Op Fl dcertform Cm der | pem
 .Op Fl debug
 .Op Fl dhparam Ar file
 .Op Fl dkey Ar file
-.Op Fl hack
+.Op Fl dkeyform Cm der | pem
+.Op Fl dpass Ar arg
+.Op Fl dtls1
 .Op Fl HTTP
 .Op Fl id_prefix Ar arg
 .Op Fl key Ar keyfile
+.Op Fl key2 Ar keyfile
+.Op Fl keyform Cm der | pem
+.Op Fl keymatexport Ar label
+.Op Fl keymatexportlen Ar len
 .Op Fl msg
+.Op Fl mtu Ar mtu
+.Op Fl named_curve Ar arg
 .Op Fl nbio
 .Op Fl nbio_test
+.Op Fl no_cache
 .Op Fl no_dhe
+.Op Fl no_ecdhe
+.Op Fl no_ticket
 .Op Fl no_tls1
 .Op Fl no_tls1_1
 .Op Fl no_tls1_2
 .Op Fl no_tmp_rsa
 .Op Fl nocert
-.Op Fl psk Ar key
-.Op Fl psk_hint Ar hint
+.Op Fl pass Ar arg
+.Op Fl port Ar port
 .Op Fl quiet
+.Op Fl servername Ar name
+.Op Fl servername_fatal
 .Op Fl serverpref
 .Op Fl state
+.Op Fl status
+.Op Fl status_timeout Ar nsec
+.Op Fl status_url Ar url
+.Op Fl status_verbose
+.Op Fl timeout
 .Op Fl tls1
 .Op Fl tls1_1
 .Op Fl tls1_2
+.Op Fl tlsextdebug
+.Op Fl use_srtp Ar profiles
 .Op Fl Verify Ar depth
 .Op Fl verify Ar depth
+.Op Fl verify_return_error
 .Op Fl WWW
 .Op Fl www
 .nr nS 0
@@ -3969,11 +3994,15 @@ Print out some session cache status information.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl accept Ar port
+.It Fl accept Ar port , Fl port Ar port
 Listen on TCP
 .Ar port
 for connections.
 The default is port 4433.
+.It Fl alpn Ar protocols
+Enable the Application-Layer Protocol Negotiation.
+.Ar protocols
+is a comma-separated list of supported protocol names.
 .It Fl bugs
 Enable various workarounds for buggy implementations.
 .It Fl CAfile Ar file
@@ -4001,6 +4030,12 @@ For example, the DSS cipher suites require a certificate containing a DSS
 If not specified, the file
 .Pa server.pem
 will be used.
+.It Fl cert2 Ar file
+The certificate to use for servername.
+.It Fl certform Cm der | pem
+The certificate format.
+The default is
+.Cm pem .
 .It Fl cipher Ar cipherlist
 Modify the cipher list used by the server.
 This allows the cipher list used by the server to be modified.
@@ -4032,6 +4067,9 @@ options except there is no default if they are not specified
 By using RSA and DSS certificates and keys,
 a server can support clients which only support RSA or DSS cipher suites
 by using an appropriate certificate.
+.It Fl dcertform Cm der | pem , Fl dkeyform Cm der | pem , Fl dpass Ar arg
+Additional certificate and private key format, and private key password source,
+respectively.
 .It Fl debug
 Print extensive debugging information, including a hex dump of all traffic.
 .It Fl dhparam Ar file
@@ -4043,8 +4081,8 @@ load the parameters from the server certificate file.
 If this fails, a static set of parameters hard coded into the
 .Nm s_server
 program will be used.
-.It Fl hack
-Enables a further workaround for some early Netscape SSL code.
+.It Fl dtls1
+Permit only DTLS1.0.
 .It Fl HTTP
 Emulate a simple web server.
 Pages are resolved relative to the current directory.
@@ -4065,14 +4103,34 @@ when each of which might be generating a unique range of session IDs.
 .It Fl key Ar keyfile
 The private key to use.
 If not specified, the certificate file will be used.
+.It Fl key2 Ar keyfile
+The private key to use for servername.
+.It Fl keyform Cm der | pem
+The private key format.
+The default is
+.Cm pem .
+.It Fl keymatexport Ar label
+Export keying material using label.
+.It Fl keymatexportlen Ar len
+Export len bytes of keying material (default 20).
 .It Fl msg
 Show all protocol messages with hex dump.
+.It Fl mtu Ar mtu
+Set the link layer MTU.
+.It Fl named_curve Ar arg
+Specify the elliptic curve name to use for ephemeral ECDH keys.
 .It Fl nbio
 Turn on non-blocking I/O.
 .It Fl nbio_test
 Test non-blocking I/O.
+.It Fl no_cache
+Disable session caching.
 .It Fl no_dhe
 Disable ephemeral DH cipher suites.
+.It Fl no_ecdhe
+Disable ephemeral ECDH cipher suites.
+.It Fl no_ticket
+Disable RFC 4507 session ticket support.
 .It Fl no_tls1 | no_tls1_1 | no_tls1_2
 Disable the use of TLS1.0, 1.1, and 1.2, respectively.
 .It Fl no_tmp_rsa
@@ -4081,24 +4139,42 @@ Disable temporary RSA key generation.
 Do not use a certificate.
 This restricts the cipher suites available to the anonymous ones
 (currently just anonymous DH).
-.It Fl psk Ar key
-Use the PSK key
-.Ar key
-when using a PSK cipher suite.
-The key is given as a hexadecimal number without the leading 0x,
-for example -psk 1a2b3c4d.
-.It Fl psk_hint Ar hint
-Use the PSK identity hint
-.Ar hint
-when using a PSK cipher suite.
+.It Fl pass Ar arg
+The private key password source.
 .It Fl quiet
 Inhibit printing of session and certificate information.
+.It Fl servername Ar name
+Set the TLS Server Name Indication (SNI) extension with
+.Ar name .
+.It Fl servername_fatal
+Send fatal alert if servername does not match.
+The default is warning alert.
 .It Fl serverpref
 Use server's cipher preferences.
 .It Fl state
 Print the SSL session states.
+.It Fl status
+Enables certificate status request support (OCSP stapling).
+.It Fl status_timeout Ar nsec
+Sets the timeout for OCSP response in seconds.
+.It Fl status_url Ar url
+Sets a fallback responder URL to use if no responder URL is present in the
+server certificate.
+Without this option, an error is returned if the server certificate does not
+contain a responder address.
+.It Fl status_verbose
+Enables certificate status request support (OCSP stapling) and gives a verbose
+printout of the OCSP response.
+.It Fl timeout
+Enable send/receive timeout on DTLS connections.
 .It Fl tls1 | tls1_1 | tls1_2
 Permit only TLS1.0, 1.1, or 1.2, respectively.
+.It Fl tlsextdebug
+Print a hex dump of any TLS extensions received from the server.
+.It Fl use_srtp Ar profiles
+Offer SRTP key management with a colon-separated profile list.
+.It Fl verify_return_error
+Return verification error.
 .It Fl WWW
 Emulate a simple web server.
 Pages are resolved relative to the current directory.
