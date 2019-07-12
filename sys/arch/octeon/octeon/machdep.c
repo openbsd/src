@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.113 2019/07/12 03:03:48 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.114 2019/07/12 03:09:23 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -602,7 +602,6 @@ cpu_startup()
 int
 octeon_cpuspeed(int *freq)
 {
-	extern struct boot_info *octeon_boot_info;
 	*freq = octeon_boot_info->eclock / 1000000;
 	return (0);
 }
@@ -610,7 +609,6 @@ octeon_cpuspeed(int *freq)
 int
 octeon_ioclock_speed(void)
 {
-	extern struct boot_info *octeon_boot_info;
 	u_int64_t mio_rst_boot, rst_boot;
 
 	switch (octeon_ver) {
@@ -701,7 +699,6 @@ get_ncpusfound(void)
 static void
 process_bootargs(void)
 {
-	extern struct boot_desc *octeon_boot_desc;
 	const char *cp;
 	int i;
 
