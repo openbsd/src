@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.56 2019/07/11 06:15:02 anton Exp $	*/
+/*	$OpenBSD: file.h,v 1.57 2019/07/12 13:56:28 solene Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -64,7 +64,6 @@ struct	fileops {
 	int	(*fo_seek)(struct file *, off_t *, int, struct proc *);
 };
 #define FO_POSITION	0x00000001	/* positioned read/write */
-#define FO_NOUPDATE	0x00000002	/* don't update file offset */
 
 /*
  * Kernel descriptor table.
@@ -90,9 +89,8 @@ struct file {
 	u_int	f_count;	/* [a] reference count */
 	struct	ucred *f_cred;	/* [I] credentials associated with descriptor */
 	struct	fileops *f_ops; /* [I] file operation pointers */
-	off_t	f_offset;	/* [f] */
+	off_t	f_offset;	/* [k] */
 	void 	*f_data;	/* [I] private data */
-	u_int	f_olock;	/* [f] offset lock */
 	int	f_iflags;	/* [k] internal flags */
 	uint64_t f_rxfer;	/* [f] total number of read transfers */
 	uint64_t f_wxfer;	/* [f] total number of write transfers */
@@ -117,13 +115,6 @@ struct file {
 #define FDUP_MAX_COUNT		(UINT_MAX - 2 * MAXCPUS)
 
 int	fdrop(struct file *, struct proc *);
-
-off_t	foffset_get(struct file *);
-off_t	foffset_enter(struct file *);
-void	foffset_leave(struct file *, off_t, int);
-
-#define FOL_NWAIT	0x7fffffffu	/* number of waiters */
-#define FOL_LOCKED	0x80000000u	/* file offset is locked */
 
 LIST_HEAD(filelist, file);
 extern int maxfiles;			/* kernel limit on number of open files */

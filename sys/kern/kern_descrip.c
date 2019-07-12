@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.189 2019/07/10 16:43:19 anton Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.190 2019/07/12 13:56:27 solene Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -532,14 +532,12 @@ restart:
 			ktrflock(p, &fl);
 #endif
 		if (fl.l_whence == SEEK_CUR) {
-			off_t offset = foffset_get(fp);
-
 			if (fl.l_start == 0 && fl.l_len < 0) {
 				/* lockf(3) compliance hack */
 				fl.l_len = -fl.l_len;
-				fl.l_start = offset - fl.l_len;
+				fl.l_start = fp->f_offset - fl.l_len;
 			} else
-				fl.l_start += offset;
+				fl.l_start += fp->f_offset;
 		}
 		switch (fl.l_type) {
 
@@ -604,14 +602,12 @@ restart:
 		if (error)
 			break;
 		if (fl.l_whence == SEEK_CUR) {
-			off_t offset = foffset_get(fp);
-
 			if (fl.l_start == 0 && fl.l_len < 0) {
 				/* lockf(3) compliance hack */
 				fl.l_len = -fl.l_len;
-				fl.l_start = offset - fl.l_len;
+				fl.l_start = fp->f_offset - fl.l_len;
 			} else
-				fl.l_start += offset;
+				fl.l_start += fp->f_offset;
 		}
 		if (fl.l_type != F_RDLCK &&
 		    fl.l_type != F_WRLCK &&
@@ -1278,73 +1274,6 @@ fdrop(struct file *fp, struct proc *p)
 	pool_put(&file_pool, fp);
 
 	return (error);
-}
-
-/*
- * Get the file offset without keeping the same offset locked upon return.
- */
-off_t
-foffset_get(struct file *fp)
-{
-	off_t offset;
-
-	mtx_enter(&fp->f_mtx);
-	offset = fp->f_offset;
-	mtx_leave(&fp->f_mtx);
-	return (offset);
-}
-
-/*
- * Acquire an exclusive lock of the file offset. The calling thread must call
- * foffset_leave() once done.
- */
-off_t
-foffset_enter(struct file *fp)
-{
-	off_t offset;
-
-	mtx_enter(&fp->f_mtx);
-
-	while (fp->f_olock & FOL_LOCKED) {
-		KASSERT((fp->f_olock & FOL_NWAIT) < FOL_NWAIT);
-		fp->f_olock++;
-		msleep(&fp->f_olock, &fp->f_mtx, PLOCK, "foffset", 0);
-		KASSERT((fp->f_olock & FOL_NWAIT) > 0);
-		fp->f_olock--;
-	}
-	fp->f_olock |= FOL_LOCKED;
-
-	offset = fp->f_offset;
-
-	mtx_leave(&fp->f_mtx);
-
-	return (offset);
-}
-
-/*
- * Write a new file offset and release the lock. The calling thread must already
- * have acquired the lock using foffset_enter().
- * If FO_NOUPDATE is present in flags, only the lock is released and the offset
- * remains unmodified.
- */
-void
-foffset_leave(struct file *fp, off_t offset, int flags)
-{
-	unsigned int nwait;
-
-	mtx_enter(&fp->f_mtx);
-
-	KASSERT(fp->f_olock & FOL_LOCKED);
-
-	if ((flags & FO_NOUPDATE) == 0)
-		fp->f_offset = offset;
-	nwait = fp->f_olock & FOL_NWAIT;
-	fp->f_olock &= ~FOL_LOCKED;
-
-	mtx_leave(&fp->f_mtx);
-
-	if (nwait > 0)
-		wakeup_one(&fp->f_olock);
 }
 
 /*

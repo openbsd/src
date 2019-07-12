@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.34 2019/07/10 16:43:20 anton Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.35 2019/07/12 13:56:28 solene Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -2645,7 +2645,7 @@ filt_tmpfsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-	kn->kn_data = node->tn_size - foffset_get(kn->kn_fp);
+	kn->kn_data = node->tn_size - kn->kn_fp->f_offset;
 	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
 		kn->kn_fflags |= NOTE_EOF;
 		return (1);
