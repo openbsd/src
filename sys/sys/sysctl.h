@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.193 2019/07/03 10:19:45 dlg Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.194 2019/07/12 00:04:59 cheloha Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -187,7 +187,8 @@ struct ctlname {
 #define	KERN_AUDIO		84	/* struct: audio properties */
 #define	KERN_CPUSTATS		85	/* struct: cpu statistics */
 #define	KERN_PFSTATUS		86	/* struct: pf status and stats */
-#define	KERN_MAXID		87	/* number of valid kern ids */
+#define	KERN_TIMEOUT_STATS	87	/* struct: timeout status and stats */
+#define	KERN_MAXID		88	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -277,6 +278,7 @@ struct ctlname {
 	{ "audio", CTLTYPE_STRUCT }, \
 	{ "cpustats", CTLTYPE_STRUCT }, \
 	{ "pfstatus", CTLTYPE_STRUCT }, \
+	{ "timeout_stats", CTLTYPE_STRUCT }, \
 }
 
 /*

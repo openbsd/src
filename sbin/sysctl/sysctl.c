@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.245 2019/07/03 10:32:33 dlg Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.246 2019/07/12 00:04:59 cheloha Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -183,6 +183,7 @@ time_t boottime;
 #define	SENSORS		0x00002000
 #define	SMALLBUF	0x00004000
 #define	HEX		0x00008000
+#define	TIMEOUT		0x00010000
 
 /* prototypes */
 void debuginit(void);
@@ -527,6 +528,9 @@ parse(char *string, int flags)
 				return;
 			warnx("use pfctl to view %s information", string);
 			return;
+		case KERN_TIMEOUT_STATS:
+			special |= TIMEOUT;
+			break;
 		}
 		break;
 
@@ -1025,6 +1029,23 @@ parse(char *string, int flags)
 			print_sensor(s);
 			printf("\n");
 		}
+		return;
+	}
+	if (special & TIMEOUT) {
+		struct timeoutstat *tstat = (struct timeoutstat *)buf;
+
+		if (!nflag)
+			printf("%s%s", string, equ);
+		printf("added = %llu, cancelled = %llu, deleted = %llu, "
+		    "late = %llu, pending = %llu, readded = %llu, "
+		    "rescheduled = %llu, run_softclock = %llu, "
+		    "run_thread = %llu, softclocks = %llu, "
+		    "thread_wakeups = %llu\n",
+		    tstat->tos_added, tstat->tos_cancelled, tstat->tos_deleted,
+		    tstat->tos_late, tstat->tos_pending, tstat->tos_readded,
+		    tstat->tos_rescheduled, tstat->tos_run_softclock,
+		    tstat->tos_run_thread, tstat->tos_softclocks,
+		    tstat->tos_thread_wakeups);
 		return;
 	}
 	switch (type) {

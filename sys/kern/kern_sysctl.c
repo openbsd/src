@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.361 2019/07/10 16:43:19 anton Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.362 2019/07/12 00:04:59 cheloha Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -673,6 +673,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_PFSTATUS:
 		return (pf_sysctl(oldp, oldlenp, newp, newlen));
 #endif
+	case KERN_TIMEOUT_STATS:
+		return (timeout_sysctl(oldp, oldlenp, newp, newlen));
 	default:
 		return (EOPNOTSUPP);
 	}

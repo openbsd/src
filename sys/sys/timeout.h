@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.28 2019/04/14 08:51:31 visa Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.29 2019/07/12 00:04:59 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -72,7 +72,23 @@ struct timeout {
 #define TIMEOUT_INITIALIZED	4	/* timeout is initialized */
 #define TIMEOUT_TRIGGERED	8	/* timeout is running or ran */
 
+struct timeoutstat {
+	uint64_t tos_added;		/* timeout_add*(9) calls */
+	uint64_t tos_cancelled;		/* dequeued during timeout_del*(9) */
+	uint64_t tos_deleted;		/* timeout_del*(9) calls */
+	uint64_t tos_late;		/* run after deadline */
+	uint64_t tos_pending;		/* number currently ONQUEUE */
+	uint64_t tos_readded;		/* timeout_add*(9) + already ONQUEUE */
+	uint64_t tos_rescheduled;	/* requeued from softclock() */
+	uint64_t tos_run_softclock;	/* run from softclock() */
+	uint64_t tos_run_thread;	/* run from softclock_thread() */
+	uint64_t tos_softclocks;	/* softclock() calls */
+	uint64_t tos_thread_wakeups;	/* wakeups in softclock_thread() */
+};
+
 #ifdef _KERNEL
+int timeout_sysctl(void *, size_t *, void *, size_t);
+
 /*
  * special macros
  *
