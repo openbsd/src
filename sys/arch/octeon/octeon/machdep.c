@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.112 2019/06/20 13:59:39 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.113 2019/07/12 03:03:48 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -104,8 +104,6 @@ struct boot_info *octeon_boot_info;
 void		*octeon_fdt;
 unsigned int	 octeon_ver;
 
-char uboot_rootdev[OCTEON_ARGV_MAX];
-
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -136,8 +134,6 @@ int		octeon_cpuspeed(int *);
 void		octeon_tlb_init(void);
 static void	process_bootargs(void);
 static uint64_t	get_ncpusfound(void);
-
-extern void 	parse_uboot_root(void);
 
 cons_decl(cn30xxuart);
 struct consdev uartcons = cons_init(cn30xxuart);
@@ -729,11 +725,8 @@ process_bootargs(void)
 		 * rootdev=ROOTDEV.
 		 */
 		if (strncmp(arg, "rootdev=", 8) == 0) {
-			if (*uboot_rootdev == '\0') {
-				strlcpy(uboot_rootdev, arg,
-					sizeof(uboot_rootdev));
-				parse_uboot_root();
-                        }
+			parse_uboot_root(arg + 8);
+			continue;
 		}
 
 		if (*arg != '-')

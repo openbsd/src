@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.3 2017/07/03 08:17:20 visa Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.4 2019/07/12 03:03:48 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -41,11 +41,13 @@ struct mainbus_attach_args {
 
 extern struct device *bootdv;
 extern char bootdev[];
+extern char uboot_rootdev[];
 extern enum devclass bootdev_class;
 
 #include <mips64/autoconf.h>
 
 void	com_fdt_init_cons(void);
+void	parse_uboot_root(const char *);
 
 extern unsigned int octeon_ver;
 #define OCTEON_1	0
