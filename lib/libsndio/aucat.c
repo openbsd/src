@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.76 2019/06/29 06:05:26 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.77 2019/07/12 06:30:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -486,6 +486,7 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode)
 	hdl->wmsg.u.hello.version = AMSG_VERSION;
 	hdl->wmsg.u.hello.mode = htons(mode);
 	hdl->wmsg.u.hello.devnum = devnum;
+	hdl->wmsg.u.hello.id = htonl(getpid());
 	strlcpy(hdl->wmsg.u.hello.who, __progname,
 	    sizeof(hdl->wmsg.u.hello.who));
 	strlcpy(hdl->wmsg.u.hello.opt, opt,

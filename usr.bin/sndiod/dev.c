@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.53 2019/07/10 14:30:39 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.54 2019/07/12 06:30:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1527,7 +1527,7 @@ slot_freebufs(struct slot *s)
  * allocate a new slot and register the given call-backs
  */
 struct slot *
-slot_new(struct dev *d, struct opt *opt, char *who,
+slot_new(struct dev *d, struct opt *opt, unsigned int id, char *who,
     struct slotops *ops, void *arg, int mode)
 {
 	char *p;
@@ -1563,12 +1563,23 @@ slot_new(struct dev *d, struct opt *opt, char *who,
 	}
 
 	/*
+	 * find the free slot with the least unit number and same id
+	 */
+	for (i = 0; i < DEV_NSLOT; i++) {
+		s = unit[i];
+		if (s != NULL && s->ops == NULL && s->id == id)
+			goto found;
+	}
+
+	/*
 	 * find the free slot with the least unit number
 	 */
 	for (i = 0; i < DEV_NSLOT; i++) {
 		s = unit[i];
-		if (s != NULL && s->ops == NULL)
+		if (s != NULL && s->ops == NULL) {
+			s->id = id;
 			goto found;
+		}
 	}
 
 	/*
@@ -1594,6 +1605,7 @@ slot_new(struct dev *d, struct opt *opt, char *who,
 		for (i = 0; unit[i] != NULL; i++)
 			; /* nothing */
 		s->unit = i;
+		s->id = id;
 		goto found;
 	}
 

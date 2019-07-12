@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.11 2018/07/28 09:07:48 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.12 2019/07/12 06:30:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -99,7 +99,7 @@ struct amsg {
 #define AMSG_VERSION	7
 			uint8_t version;	/* protocol version */
 			uint8_t devnum;		/* device number */
-			uint32_t _reserved[1];	/* for future use */
+			uint32_t id;		/* client id */
 #define AMSG_OPTMAX	12
 			char opt[AMSG_OPTMAX];	/* profile name */
 			char who[12];		/* hint for leases */
