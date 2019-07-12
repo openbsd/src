@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2018/10/06 10:52:24 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.16 2019/07/12 19:31:29 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -49,7 +49,7 @@ CLEANFILES +=		*.pem *.req *.crt *.key *.srl
 # Only do that if necessary to keep visible output short.
 
 .if ${.CURDIR} == ${.OBJDIR}
-PERLINC =
+PERLINC =	-I.
 PERLPATH =
 .else
 PERLINC =	-I${.CURDIR}

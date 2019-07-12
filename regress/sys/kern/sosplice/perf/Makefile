@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2016/08/29 16:25:14 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2019/07/12 19:31:29 bluhm Exp $
 
 PROG ?=		relay
 CFLAGS +=	-Wall -Werror
@@ -24,7 +24,7 @@ remote-setup:
 .for p in tcp udp
 .for r in copy splice
 
-run-regress-$p-$r: $r remote-setup
+run-$p-$r: $r remote-setup
 	@echo '\n======== $@ ========'
 	-pkill -x tcpbench
 .if empty (REMOTE_SSH)
@@ -36,7 +36,7 @@ run-regress-$p-$r: $r remote-setup
 	kill $$rpid ; \
 	pkill -x tcpbench
 .else
-	ssh -f ${REMOTE_SSH} 'cd ${.CURDIR} && make PROG= LOCAL_ADDR=${LOCAL_ADDR} REMOTE_ADDR=${REMOTE_ADDR} remote-regress-$p-$r' ; \
+	ssh -f ${REMOTE_SSH} 'cd ${.CURDIR} && make PROG= LOCAL_ADDR=${LOCAL_ADDR} REMOTE_ADDR=${REMOTE_ADDR} remote-$p-$r' ; \
 	sleep 2 ; \
 	tcpbench ${p:S/tcp//:S/udp/-u/} -t 7 -b ${LOCAL_ADDR} -s -p 12346 & \
 	sleep 1 ; \
@@ -45,7 +45,7 @@ run-regress-$p-$r: $r remote-setup
 .endif
 	sleep 1
 
-remote-regress-$p-$r: $r
+remote-$p-$r: $r
 	-pkill -x $r
 	./$r ${p:S/tcp//:S/udp/-u/} -b ${REMOTE_ADDR} 12345 ${LOCAL_ADDR} 12346 & \
 	rpid=$$! ; \

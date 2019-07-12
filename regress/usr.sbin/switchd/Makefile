@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2019/02/19 16:51:49 bluhm Exp $
+# $OpenBSD: Makefile,v 1.9 2019/07/12 19:31:29 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Net-Pcap		Perl interface for libpcap
@@ -34,7 +34,7 @@ OFP_PERLHEADERS =	${OFP_HEADERS:S/.h/.ph/}
 # Only do that if necessary to keep visible output short.
 
 .if ${.CURDIR} == ${.OBJDIR}
-PERLINC =	-I${.OBJDIR}
+PERLINC =	-I.
 PERLPATH =
 .else
 PERLINC =	-I${.CURDIR} -I${.OBJDIR}

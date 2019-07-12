@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2019/06/04 11:01:33 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.22 2019/07/12 19:31:29 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -90,7 +90,7 @@ TARGETS ?=		\
 	inet-reuse-rip-reply-to-reply-to inet6-reuse-rip-reply-to-reply-to \
 	inet-args-udp-packet-in inet6-args-udp-packet-in \
 	inet-args-udp-packet-out inet6-args-udp-packet-out
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
+REGRESS_TARGETS =	${TARGETS:S/^/run-/}
 CLEANFILES +=		*.log *.port *.ktrace ktrace.out stamp-*
 
 .MAIN: all
@@ -130,13 +130,13 @@ PERLPATH =	${.CURDIR}/
 
 .for  inet addr  in  inet ADDR  inet6 ADDR6
 
-run-regress-${inet}-reuse-rip-to-reply-to:
+run-${inet}-reuse-rip-to-reply-to:
 	@echo '\n======== $@ ========'
 	@echo 'rip to before reply is broken, it does not remove the state.'
 	@echo DISABLED
 
 .for a in ${ARGS}
-run-regress-${inet}-${a:R}: ${a}
+run-${inet}-${a:R}: ${a}
 	@echo '\n======== $@ ========'
 .if ${@:M*-packet-*}
 	time ${SUDO} SUDO=${SUDO} KTRACE=${KTRACE} \
@@ -165,7 +165,7 @@ STATE_EXIST_rip_reply-to =	!
 
 .for  first second  in  to to  to reply  to reply-to  reply to  reply reply  reply reply-to  reply-to to  reply-to reply  reply-to reply-to
 
-run-regress-${inet}-reuse-${proto}-${first}-${second}:
+run-${inet}-reuse-${proto}-${first}-${second}:
 	@echo '\n======== $@ ========'
 	# create state with ${first} divert rule
 	time ${SUDO} SUDO=${SUDO} KTRACE=${KTRACE} \

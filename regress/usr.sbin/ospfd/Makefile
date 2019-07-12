@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2019/02/19 22:34:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.11 2019/07/12 19:31:29 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-AnyEvent		provide framework for multiple event loops
@@ -30,7 +30,7 @@ RTRID ?=		10.188.0.17
 # Automatically generate regress targets from test cases in directory.
 
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
-CLEANFILES +=		*.log ospfd.conf ktrace.out stamp-* opentap
+CLEANFILES +=		*.log ospfd.conf ktrace.out stamp-* opentap opentap.d
 PERLHEADER !=		perl -MConfig -e 'print "$$Config{archlib}/CORE"'
 CLEANFILES +=		PassFd.c PassFd.o PassFd.so
 CFLAGS =		-Wall
@@ -53,7 +53,7 @@ cleanup:
 # Only do that if necessary to keep visible output short.
 
 .if ${.CURDIR} == ${.OBJDIR}
-PERLINC =	-I${.OBJDIR}
+PERLINC =	-I.
 PERLPATH =
 .else
 PERLINC =	-I${.CURDIR} -I${.OBJDIR}
