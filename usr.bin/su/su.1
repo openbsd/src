@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.34 2019/06/27 18:10:06 schwarze Exp $
+.\"	$OpenBSD: su.1,v 1.35 2019/07/12 12:39:10 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)su.1	6.12 (Berkeley) 7/29/91
 .\"
-.Dd $Mdocdate: June 27 2019 $
+.Dd $Mdocdate: July 12 2019 $
 .Dt SU 1
 .Os
 .Sh NAME
@@ -195,11 +195,6 @@ group, it is ignored, and anyone who knows the root password is permitted to
 .Nm
 to
 .Dq root .
-.Pp
-By default (unless the prompt is reset by a startup file) the superuser
-prompt is set to
-.Dq Sy \&#
-to remind one of its awesome power.
 .Sh ENVIRONMENT
 The following list provides the values of environment variables
 in the new shell that is started by
