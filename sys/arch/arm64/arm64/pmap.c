@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.64 2019/07/13 21:16:17 drahn Exp $ */
+/* $OpenBSD: pmap.c,v 1.65 2019/07/13 21:31:59 drahn Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -115,13 +115,11 @@ struct pool_allocator pmap_vp_allocator = {
 	pmap_vp_page_alloc, pmap_vp_page_free, sizeof(struct pmapvp0)
 };
 
-
 void pmap_remove_pted(pmap_t pm, struct pte_desc *pted);
 void pmap_kremove_pg(vaddr_t va);
-void pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa);
-void pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa);
-void pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp3 *l3_va, paddr_t l3_pa);
-
+void pmap_set_l1(struct pmap *, uint64_t, struct pmapvp1 *);
+void pmap_set_l2(struct pmap *, uint64_t, struct pmapvp1 *, struct pmapvp2 *);
+void pmap_set_l3(struct pmap *, uint64_t, struct pmapvp2 *, struct pmapvp3 *);
 
 /* XXX */
 void
@@ -336,7 +334,7 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 					    __func__);
 				return ENOMEM;
 			}
-			pmap_set_l1(pm, va, vp1, 0);
+			pmap_set_l1(pm, va, vp1);
 		}
 	} else {
 		vp1 = pm->pm_vp.l1;
@@ -350,7 +348,7 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 				panic("%s: unable to allocate L2", __func__);
 			return ENOMEM;
 		}
-		pmap_set_l2(pm, va, vp2, 0);
+		pmap_set_l2(pm, va, vp1, vp2);
 	}
 
 	vp3 = vp2->vp[VP_IDX2(va)];
@@ -361,7 +359,7 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 				panic("%s: unable to allocate L3", __func__);
 			return ENOMEM;
 		}
-		pmap_set_l3(pm, va, vp3, 0);
+		pmap_set_l3(pm, va, vp2, vp3);
 	}
 
 	vp3->vp[VP_IDX3(va)] = pted;
@@ -1323,18 +1321,14 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 }
 
 void
-pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa)
+pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va)
 {
 	uint64_t pg_entry;
+	paddr_t l1_pa;
 	int idx0;
 
-	if (l1_pa == 0) {
-		/*
-		 * if this is called from pmap_vp_enter, this is a
-		 * normally mapped page, call pmap_extract to get pa
-		 */
-		pmap_extract(pmap_kernel(), (vaddr_t)l1_va, &l1_pa);
-	}
+	if (pmap_extract(pmap_kernel(), (vaddr_t)l1_va, &l1_pa) == 0)
+		panic("unable to find vp pa mapping %p\n", l1_va);
 
 	if (l1_pa & (Lx_TABLE_ALIGN-1))
 		panic("misaligned L2 table\n");
@@ -1347,64 +1341,43 @@ pmap_set_l1(struct pmap *pm, uint64_t va, struct pmapvp1 *l1_va, paddr_t l1_pa)
 }
 
 void
-pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp2 *l2_va, paddr_t l2_pa)
+pmap_set_l2(struct pmap *pm, uint64_t va, struct pmapvp1 *vp1,
+    struct pmapvp2 *l2_va)
 {
 	uint64_t pg_entry;
-	struct pmapvp1 *vp1;
-	int idx0, idx1;
+	paddr_t l2_pa;
+	int idx1;
 
-	if (l2_pa == 0) {
-		/*
-		 * if this is called from pmap_vp_enter, this is a
-		 * normally mapped page, call pmap_extract to get pa
-		 */
-		pmap_extract(pmap_kernel(), (vaddr_t)l2_va, &l2_pa);
-	}
+	if (pmap_extract(pmap_kernel(), (vaddr_t)l2_va, &l2_pa) == 0)
+		panic("unable to find vp pa mapping %p\n", l2_va);
 
 	if (l2_pa & (Lx_TABLE_ALIGN-1))
 		panic("misaligned L2 table\n");
 
 	pg_entry = VP_Lx(l2_pa);
 
-	idx0 = VP_IDX0(va);
 	idx1 = VP_IDX1(va);
-	if (pm->have_4_level_pt)
-		vp1 = pm->pm_vp.l0->vp[idx0];
-	else
-		vp1 = pm->pm_vp.l1;
 	vp1->vp[idx1] = l2_va;
 	vp1->l1[idx1] = pg_entry;
 }
 
 void
-pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp3 *l3_va, paddr_t l3_pa)
+pmap_set_l3(struct pmap *pm, uint64_t va, struct pmapvp2 *vp2,
+    struct pmapvp3 *l3_va)
 {
 	uint64_t pg_entry;
-	struct pmapvp1 *vp1;
-	struct pmapvp2 *vp2;
-	int idx0, idx1, idx2;
+	paddr_t l3_pa;
+	int idx2;
 
-	if (l3_pa == 0) {
-		/*
-		 * if this is called from pmap_vp_enter, this is a
-		 * normally mapped page, call pmap_extract to get pa
-		 */
-		pmap_extract(pmap_kernel(), (vaddr_t)l3_va, &l3_pa);
-	}
+	if (pmap_extract(pmap_kernel(), (vaddr_t)l3_va, &l3_pa) == 0)
+		panic("unable to find vp pa mapping %p\n", l3_va);
 
 	if (l3_pa & (Lx_TABLE_ALIGN-1))
 		panic("misaligned L2 table\n");
 
 	pg_entry = VP_Lx(l3_pa);
 
-	idx0 = VP_IDX0(va);
-	idx1 = VP_IDX1(va);
 	idx2 = VP_IDX2(va);
-	if (pm->have_4_level_pt)
-		vp1 = pm->pm_vp.l0->vp[idx0];
-	else
-		vp1 = pm->pm_vp.l1;
-	vp2 = vp1->vp[idx1];
 	vp2->vp[idx2] = l3_va;
 	vp2->l2[idx2] = pg_entry;
 }
