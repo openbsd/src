@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.63 2019/06/01 11:45:01 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.64 2019/07/13 21:16:17 drahn Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1497,6 +1497,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			pmap_page_ro(pted->pted_pmap, pted->pted_va, prot);
 		}
 		mtx_leave(&pg->mdpage.pv_mtx);
+		return;
 	}
 
 	mtx_enter(&pg->mdpage.pv_mtx);
