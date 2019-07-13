@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.65 2019/07/13 21:31:59 drahn Exp $ */
+/* $OpenBSD: pmap.c,v 1.66 2019/07/13 21:47:06 drahn Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1668,8 +1668,8 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 		vp1 = pm->pm_vp.l0->vp[VP_IDX0(pted->pted_va)];
 	else
 		vp1 = pm->pm_vp.l1;
-	if (vp1->vp[VP_IDX1(pted->pted_va)] == NULL) {
-		panic("have a pted, but missing the l2 for %lx va pmap %p",
+	if (vp1 == NULL) {
+		panic("have a pted, but missing the l1 for %lx va pmap %p",
 		    pted->pted_va, pm);
 	}
 	vp2 = vp1->vp[VP_IDX1(pted->pted_va)];
@@ -1679,7 +1679,7 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 	}
 	vp3 = vp2->vp[VP_IDX2(pted->pted_va)];
 	if (vp3 == NULL) {
-		panic("have a pted, but missing the l2 for %lx va pmap %p",
+		panic("have a pted, but missing the l3 for %lx va pmap %p",
 		    pted->pted_va, pm);
 	}
 	vp3->l3[VP_IDX3(pted->pted_va)] = 0;
