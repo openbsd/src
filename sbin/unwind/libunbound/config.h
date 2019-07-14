@@ -87,6 +87,10 @@
    if you don't. */
 #define HAVE_DECL_ARC4RANDOM_UNIFORM 1
 
+/* Define to 1 if you have the declaration of `evsignal_assign', and to 0 if
+   you don't. */
+#define HAVE_DECL_EVSIGNAL_ASSIGN 0
+
 /* Define to 1 if you have the declaration of `inet_ntop', and to 0 if you
    don't. */
 #define HAVE_DECL_INET_NTOP 1
@@ -166,6 +170,9 @@
 
 /* Define to 1 if you have the `ERR_load_crypto_strings' function. */
 #define HAVE_ERR_LOAD_CRYPTO_STRINGS 1
+
+/* Define to 1 if you have the `event_assign' function. */
+/* #undef HAVE_EVENT_ASSIGN */
 
 /* Define to 1 if you have the `event_base_free' function. */
 #define HAVE_EVENT_BASE_FREE 1
@@ -407,7 +414,7 @@
 /* Define to 1 if you have the `RAND_cleanup' function. */
 #define HAVE_RAND_CLEANUP 1
 
-/* Define to 1 if you have the `reallocarray' function. */
+/* If we have reallocarray(3) */
 #define HAVE_REALLOCARRAY 1
 
 /* Define to 1 if you have the `recvmsg' function. */
@@ -664,7 +671,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.9.1"
+#define PACKAGE_STRING "unbound 1.9.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -673,7 +680,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.9.1"
+#define PACKAGE_VERSION "1.9.2"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -695,7 +702,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,9,1,0
+#define RSRC_PACKAGE_VERSION 1,9,2,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -966,8 +973,14 @@
 
 
 
+#ifndef _OPENBSD_SOURCE
+#define _OPENBSD_SOURCE 1
+#endif
+
 #ifndef UNBOUND_DEBUG
+# ifndef NDEBUG
 #  define NDEBUG
+# endif
 #endif
 
 /** Use small-ldns codebase */
