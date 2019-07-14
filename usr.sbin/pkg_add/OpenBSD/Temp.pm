@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.34 2019/07/10 09:34:09 espie Exp $
+# $OpenBSD: Temp.pm,v 1.35 2019/07/14 07:27:18 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -26,26 +26,24 @@ use OpenBSD::Error;
 
 our $tempbase = $ENV{'PKG_TMPDIR'} || OpenBSD::Paths->vartmp;
 
+# stuff that should be cleaned up on exit, registered by pid,
+# so that it gets cleaned on exit from the correct process
+
 my $dirs = {};
 my $files = {};
 
 my ($lastname, $lasterror, $lasttype);
 
-my $cleanup = sub {
+OpenBSD::Handler->register(
+    sub {
 	while (my ($name, $pid) = each %$files) {
 		unlink($name) if $pid == $$;
 	}
 	while (my ($dir, $pid) = each %$dirs) {
 		OpenBSD::Error->rmtree([$dir]) if $pid == $$;
 	}
-};
+    });
 
-END {
-	my $r = $?;
-	&$cleanup;
-	$? = $r;
-}
-OpenBSD::Handler->register($cleanup);
 
 sub dir
 {
