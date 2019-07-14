@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: reg.h,v 1.7 2019/07/14 05:08:26 guenther Exp $	*/
 /*	$NetBSD: reg.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -75,8 +75,6 @@
 
 /*
  * Registers accessible to ptrace(2) syscall for debugger use.
- * Same as mcontext.__gregs and struct trapframe, they must
- * remain synced (XXX should use common structure).
  */
 struct reg {
 	int64_t	r_rdi;
