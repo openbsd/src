@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.14 2019/07/09 11:02:52 inoguchi Exp $ */
+/* $OpenBSD: genrsa.c,v 1.15 2019/07/14 03:30:46 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -157,7 +157,7 @@ set_enc(int argc, char **argv, int *argsused)
 	return (0);
 }
 
-static struct option genrsa_options[] = {
+static const struct option genrsa_options[] = {
 	{
 		.name = "3",
 		.desc = "Use 3 for the E value",

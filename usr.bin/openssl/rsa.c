@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.13 2019/02/09 15:49:21 inoguchi Exp $ */
+/* $OpenBSD: rsa.c,v 1.14 2019/07/14 03:30:46 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,7 +109,7 @@ rsa_opt_cipher(int argc, char **argv, int *argsused)
 	return (0);
 }
 
-static struct option rsa_options[] = {
+static const struct option rsa_options[] = {
 	{
 		.name = "check",
 		.desc = "Check consistency of RSA private key",

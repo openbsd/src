@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.9 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: ciphers.c,v 1.10 2019/07/14 03:30:45 guenther Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -29,7 +29,7 @@ struct {
 	int verbose;
 } ciphers_config;
 
-struct option ciphers_options[] = {
+static const struct option ciphers_options[] = {
 	{
 		.name = "h",
 		.type = OPTION_FLAG,

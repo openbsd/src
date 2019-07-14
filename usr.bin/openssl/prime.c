@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.12 2019/01/20 01:59:06 tb Exp $ */
+/* $OpenBSD: prime.c,v 1.13 2019/07/14 03:30:46 guenther Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -64,7 +64,7 @@ struct {
 	int safe;
 } prime_config;
 
-struct option prime_options[] = {
+static const struct option prime_options[] = {
 	{
 		.name = "bits",
 		.argname = "n",

@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs8.c,v 1.13 2018/08/24 22:56:45 jmc Exp $ */
+/* $OpenBSD: pkcs8.c,v 1.14 2019/07/14 03:30:46 guenther Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -103,7 +103,7 @@ pkcs8_opt_v2(char *arg)
 	return (0);
 }
 
-static struct option pkcs8_options[] = {
+static const struct option pkcs8_options[] = {
 	{
 		.name = "in",
 		.argname = "file",

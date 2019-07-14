@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.17 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: ecparam.c,v 1.18 2019/07/14 03:30:45 guenther Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -139,7 +139,7 @@ ecparam_opt_enctype(char *arg)
 	return (0);
 }
 
-struct option ecparam_options[] = {
+static const struct option ecparam_options[] = {
 	{
 		.name = "C",
 		.desc = "Convert the EC parameters into C code",

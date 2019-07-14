@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.9 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.10 2019/07/14 03:30:45 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,7 +126,7 @@ asn1pars_opt_strparse(char *arg)
 	return (0);
 }
 
-static struct option asn1pars_options[] = {
+static const struct option asn1pars_options[] = {
 	{
 		.name = "dump",
 		.desc = "Dump unknown data in hex form",

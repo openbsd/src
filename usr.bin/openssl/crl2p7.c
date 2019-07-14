@@ -1,4 +1,4 @@
-/* $OpenBSD: crl2p7.c,v 1.8 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: crl2p7.c,v 1.9 2019/07/14 03:30:45 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,7 +102,7 @@ crl2p7_opt_certfile(char *arg)
 	return (0);
 }
 
-static struct option crl2p7_options[] = {
+static const struct option crl2p7_options[] = {
 	{
 		.name = "certfile",
 		.argname = "file",

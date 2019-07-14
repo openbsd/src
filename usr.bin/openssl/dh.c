@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.11 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: dh.c,v 1.12 2019/07/14 03:30:45 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,7 +85,7 @@ static struct {
 	int text;
 } dh_config;
 
-static struct option dh_options[] = {
+static const struct option dh_options[] = {
 	{
 		.name = "C",
 		.desc = "Convert DH parameters into C code",

@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.22 2019/02/09 06:27:37 inoguchi Exp $ */
+/* $OpenBSD: apps.h,v 1.23 2019/07/14 03:30:45 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -317,9 +317,9 @@ struct option {
 	const int value;
 };
 
-void options_usage(struct option *opts);
-int options_parse(int argc, char **argv, struct option *opts, char **unnamed,
-    int *argsused);
+void options_usage(const struct option *opts);
+int options_parse(int argc, char **argv, const struct option *opts,
+    char **unnamed, int *argsused);
 
 void show_cipher(const OBJ_NAME *name, void *arg);
 

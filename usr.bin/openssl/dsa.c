@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.c,v 1.14 2019/07/10 10:28:28 inoguchi Exp $ */
+/* $OpenBSD: dsa.c,v 1.15 2019/07/14 03:30:45 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,7 +105,7 @@ dsa_opt_enc(int argc, char **argv, int *argsused)
 	return (1);
 }
 
-static struct option dsa_options[] = {
+static const struct option dsa_options[] = {
 	{
 		.name = "in",
 		.argname = "file",

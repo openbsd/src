@@ -1,4 +1,4 @@
-/* $OpenBSD: spkac.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: spkac.c,v 1.11 2019/07/14 03:30:46 guenther Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999. Based on an original idea by Massimiliano Pala
  * (madwolf@openca.org).
@@ -86,7 +86,7 @@ static struct {
 	int verify;
 } spkac_config;
 
-static struct option spkac_options[] = {
+static const struct option spkac_options[] = {
 	{
 		.name = "challenge",
 		.argname = "string",

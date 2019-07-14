@@ -1,4 +1,4 @@
-/* $OpenBSD: sess_id.c,v 1.9 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: sess_id.c,v 1.10 2019/07/14 03:30:46 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,7 +80,7 @@ static struct {
 	int text;
 } sess_id_config;
 
-static struct option sess_id_options[] = {
+static const struct option sess_id_options[] = {
 	{
 		.name = "cert",
 		.desc = "Output certificate if present in session",

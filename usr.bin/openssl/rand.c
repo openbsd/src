@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.13 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: rand.c,v 1.14 2019/07/14 03:30:46 guenther Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -68,7 +68,7 @@ struct {
 	char *outfile;
 } rand_config;
 
-struct option rand_options[] = {
+static const struct option rand_options[] = {
 	{
 		.name = "base64",
 		.desc = "Perform base64 encoding on output",

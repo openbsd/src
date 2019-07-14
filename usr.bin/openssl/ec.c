@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.c,v 1.13 2019/02/09 15:49:21 inoguchi Exp $ */
+/* $OpenBSD: ec.c,v 1.14 2019/07/14 03:30:45 guenther Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -140,7 +140,7 @@ ec_opt_named(char *arg)
 	return (0);
 }
 
-static struct option ec_options[] = {
+static const struct option ec_options[] = {
 	{
 		.name = "conv_form",
 		.argname = "form",

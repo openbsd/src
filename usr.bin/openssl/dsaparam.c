@@ -1,4 +1,4 @@
-/* $OpenBSD: dsaparam.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: dsaparam.c,v 1.11 2019/07/14 03:30:45 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,7 +90,7 @@ static struct {
 	int text;
 } dsaparam_config;
 
-static struct option dsaparam_options[] = {
+static const struct option dsaparam_options[] = {
 	{
 		.name = "C",
 		.desc = "Convert DSA parameters into C code",

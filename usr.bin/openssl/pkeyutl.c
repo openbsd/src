@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyutl.c,v 1.15 2019/02/17 15:01:08 inoguchi Exp $ */
+/* $OpenBSD: pkeyutl.c,v 1.16 2019/07/14 03:30:46 guenther Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -96,7 +96,7 @@ static int do_keyop(EVP_PKEY_CTX * ctx, int pkey_op,
     unsigned char *out, size_t * poutlen,
     unsigned char *in, size_t inlen);
 
-struct option pkeyutl_options[] = {
+static const struct option pkeyutl_options[] = {
 	{
 		.name = "asn1parse",
 		.desc = "ASN.1 parse the output data",

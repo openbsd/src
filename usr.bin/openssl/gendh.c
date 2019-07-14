@@ -1,4 +1,4 @@
-/* $OpenBSD: gendh.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: gendh.c,v 1.11 2019/07/14 03:30:45 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,7 +91,7 @@ static struct {
 	char *outfile;
 } gendh_config;
 
-static struct option gendh_options[] = {
+static const struct option gendh_options[] = {
 	{
 		.name = "2",
 		.desc = "Generate DH parameters with a generator value of 2 "

@@ -37,7 +37,7 @@ static struct {
 	int verbose;
 } certhash_config;
 
-struct option certhash_options[] = {
+static const struct option certhash_options[] = {
 	{
 		.name = "n",
 		.desc = "Perform a dry-run - do not make any changes",

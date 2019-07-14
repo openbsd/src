@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.14 2019/02/09 15:49:21 inoguchi Exp $ */
+/* $OpenBSD: pkey.c,v 1.15 2019/07/14 03:30:46 guenther Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -97,7 +97,7 @@ pkey_opt_cipher(int argc, char **argv, int *argsused)
 	return (0);
 }
 
-static struct option pkey_options[] = {
+static const struct option pkey_options[] = {
 	{
 		.name = "in",
 		.argname = "file",

@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.12 2019/01/19 21:17:05 jsg Exp $ */
+/* $OpenBSD: crl.c,v 1.13 2019/07/14 03:30:45 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,7 +88,7 @@ static struct {
 	int verify;
 } crl_config;
 
-static struct option crl_options[] = {
+static const struct option crl_options[] = {
 	{
 		.name = "CAfile",
 		.argname = "file",

@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: pkcs7.c,v 1.11 2019/07/14 03:30:46 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,7 +81,7 @@ static struct {
 	int text;
 } pkcs7_config;
 
-static struct option pkcs7_options[] = {
+static const struct option pkcs7_options[] = {
 	{
 		.name = "in",
 		.argname = "file",

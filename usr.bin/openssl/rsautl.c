@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.17 2019/02/04 11:21:05 tb Exp $ */
+/* $OpenBSD: rsautl.c,v 1.18 2019/07/14 03:30:46 guenther Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -89,7 +89,7 @@ struct {
 	int rsa_mode;
 } rsautl_config;
 
-struct option rsautl_options[] = {
+static const struct option rsautl_options[] = {
 	{
 		.name = "asn1parse",
 		.desc = "ASN.1 parse the output data",

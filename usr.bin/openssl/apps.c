@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.53 2019/07/03 03:24:02 deraadt Exp $ */
+/* $OpenBSD: apps.c,v 1.54 2019/07/14 03:30:45 guenther Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2122,7 +2122,7 @@ app_isdir(const char *name)
 #define OPTION_WIDTH 18
 
 void
-options_usage(struct option *opts)
+options_usage(const struct option *opts)
 {
 	const char *p, *q;
 	char optstr[32];
@@ -2149,11 +2149,11 @@ options_usage(struct option *opts)
 }
 
 int
-options_parse(int argc, char **argv, struct option *opts, char **unnamed,
+options_parse(int argc, char **argv, const struct option *opts, char **unnamed,
     int *argsused)
 {
 	const char *errstr;
-	struct option *opt;
+	const struct option *opt;
 	long long val;
 	char *arg, *p;
 	int fmt, used;

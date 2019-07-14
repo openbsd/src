@@ -1,4 +1,4 @@
-/* $OpenBSD: version.c,v 1.8 2015/10/17 15:00:11 doug Exp $ */
+/* $OpenBSD: version.c,v 1.9 2019/07/14 03:30:46 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -157,7 +157,7 @@ version_all_opts(void)
 	return (0);
 }
 
-static struct option version_options[] = {
+static const struct option version_options[] = {
 	{
 		.name = "a",
 		.desc = "All information (same as setting all other flags)",

@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyparam.c,v 1.11 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: pkeyparam.c,v 1.12 2019/07/14 03:30:46 guenther Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -72,7 +72,7 @@ struct {
 	int text;
 } pkeyparam_config;
 
-struct option pkeyparam_options[] = {
+static const struct option pkeyparam_options[] = {
 	{
 		.name = "in",
 		.argname = "file",

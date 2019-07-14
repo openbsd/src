@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.33 2019/07/03 03:24:02 deraadt Exp $ */
+/* $OpenBSD: s_time.c,v 1.34 2019/07/14 03:30:46 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,7 +115,7 @@ struct {
 	char *www_path;
 } s_time_config;
 
-struct option s_time_options[] = {
+static const struct option s_time_options[] = {
 	{
 		.name = "bugs",
 		.desc = "Enable workarounds for known SSL/TLS bugs",
