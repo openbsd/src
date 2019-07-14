@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.515 2019/07/01 06:47:35 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.516 2019/07/14 12:41:33 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 1 2019 $
+.Dd $Mdocdate: July 14 2019 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -4099,7 +4099,7 @@ It is much easier to mirror locally weird distribution files.
 .It Ev FTP_PACKAGES
 User settings.
 Base location where packages suitable for FTP (see
-PERMIT_PACKAGE_FTP) will be placed.
+PERMIT_PACKAGE) will be placed.
 Now hardwired to
 .Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/ftp .
 .It Ev GNU_CONFIGURE
