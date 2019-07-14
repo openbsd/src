@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.89 2019/04/21 04:11:42 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.90 2019/07/14 03:23:12 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -225,7 +225,8 @@ _dl_origin_path(elf_object_t *object, char *origin_path)
 	if (dirname_path == NULL)
 		return -1;
 
-	if (_dl_realpath(dirname_path, origin_path) == NULL)
+	/* syscall in ld.so returns 0/-errno, where libc returns char* */
+	if (_dl___realpath(dirname_path, origin_path) < 0)
 		return -1;
 
 	return 0;

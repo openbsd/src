@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.35 2019/05/10 13:29:21 guenther Exp $	*/
+/*	$OpenBSD: util.h,v 1.36 2019/07/14 03:23:12 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
@@ -64,7 +64,7 @@ void _dl_arc4randombuf(void *, size_t);
 u_int32_t _dl_arc4random(void);
 ssize_t _dl_write(int fd, const char* buf, size_t len);
 char * _dl_dirname(const char *path);
-char *_dl_realpath(const char *path, char *resolved);
+int _dl___realpath(const char *path, char *resolved);
 int _dl_uname(struct utsname *name);
 
 long _dl_strtol(const char *nptr, char **endptr, int base);

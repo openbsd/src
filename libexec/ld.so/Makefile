@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.74 2019/05/10 13:29:21 guenther Exp $
+#	$OpenBSD: Makefile,v 1.75 2019/07/14 03:23:12 guenther Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -18,11 +18,11 @@ VPATH=${.CURDIR}/../../lib/libc/string
 
 SRCS=	ldasm.S boot.c loader.c resolve.c dlfcn.c dl_printf.c rtld_machine.c
 SRCS+=	path.c util.c sod.c strsep.c strtol.c dir.c library_subr.c
-SRCS+=	dl_realpath.c dl_uname.c dl_dirname.c strlcat.c strlen.c trace.c
+SRCS+=	dl_uname.c dl_dirname.c strlcat.c strlen.c trace.c
 SRCS+=	malloc.c reallocarray.c tib.c ffs.c
 
-syscall=__syscall close exit fstat __getcwd getdents getentropy getthrid \
-	issetugid mprotect munmap open pledge read readlink sendsyslog \
+syscall=__syscall close exit fstat getdents getentropy getthrid issetugid \
+	mprotect munmap open pledge read __realpath sendsyslog \
 	__set_tcb sysctl thrkill utrace write
 
 GEN_PREFIX=\t.file "${@:R}.c"\n\#include "SYS.h"
