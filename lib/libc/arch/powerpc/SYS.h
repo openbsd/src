@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.22 2016/05/15 00:15:10 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.23 2019/07/14 03:36:37 guenther Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -113,7 +113,7 @@
 				__END_HIDDEN(_thread_sys_,x)
 #define	PSEUDO(x,y)		ALIAS(_thread_sys_,x) \
 				PSEUDO_HIDDEN(x,y); \
-				__END(_thread_sys_,x)
+				END(x)
 
 #define RSYSCALL(x)		PSEUDO(x,x)
 #define RSYSCALL_HIDDEN(x)	PSEUDO_HIDDEN(x,x)
