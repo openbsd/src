@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc_msg.c,v 1.5 2019/07/10 19:38:56 schwarze Exp $ */
+/*	$OpenBSD: mandoc_msg.c,v 1.6 2019/07/14 18:14:27 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -352,4 +352,13 @@ mandoc_msg(enum mandocerr t, int line, int col, const char *fmt, ...)
 		va_end(ap);
 	}
 	fputc('\n', fileptr);
+}
+
+void
+mandoc_msg_summary(void)
+{
+	if (fileptr != NULL && rc != MANDOCLEVEL_OK)
+		fprintf(fileptr,
+		    "%s: see above the output for %s messages\n",
+		    getprogname(), level_name[rc]);
 }

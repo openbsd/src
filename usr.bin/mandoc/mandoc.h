@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.h,v 1.205 2019/07/10 19:38:56 schwarze Exp $ */
+/*	$OpenBSD: mandoc.h,v 1.206 2019/07/14 18:14:27 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -309,6 +309,7 @@ enum mandoclevel  mandoc_msg_getrc(void);
 void		  mandoc_msg_setrc(enum mandoclevel);
 void		  mandoc_msg(enum mandocerr, int, int, const char *, ...)
 			__attribute__((__format__ (__printf__, 4, 5)));
+void		  mandoc_msg_summary(void);
 void		  mchars_alloc(void);
 void		  mchars_free(void);
 int		  mchars_num2char(const char *, size_t);
