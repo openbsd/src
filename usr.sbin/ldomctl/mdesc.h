@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.h,v 1.7 2018/09/16 12:17:05 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.h,v 1.8 2019/07/14 14:40:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -121,6 +121,8 @@ bool md_get_prop_val(struct md *, struct md_node *, const char *, uint64_t *);
 bool md_set_prop_val(struct md *, struct md_node *, const char *, uint64_t);
 bool md_get_prop_str(struct md *, struct md_node *, const char *,
     const char **);
+bool md_set_prop_data(struct md *, struct md_node *, const char *,
+    const uint8_t *, size_t);
 bool md_get_prop_data(struct md *, struct md_node *, const char *,
     const void **, size_t *);
 
