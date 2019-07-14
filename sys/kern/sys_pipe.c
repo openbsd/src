@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.91 2019/07/13 06:51:59 semarie Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.92 2019/07/14 10:21:11 semarie Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -404,10 +404,10 @@ unlocked_error:
 	--rpipe->pipe_busy;
 
 	/*
-	 * PIPE_WANT processing only makes sense if pipe_busy is 0.
+	 * PIPE_WANTD processing only makes sense if pipe_busy is 0.
 	 */
-	if ((rpipe->pipe_busy == 0) && (rpipe->pipe_state & PIPE_WANT)) {
-		rpipe->pipe_state &= ~(PIPE_WANT|PIPE_WANTW);
+	if ((rpipe->pipe_busy == 0) && (rpipe->pipe_state & PIPE_WANTD)) {
+		rpipe->pipe_state &= ~(PIPE_WANTD|PIPE_WANTW);
 		wakeup(rpipe);
 	} else if (rpipe->pipe_buffer.cnt < MINPIPESIZE) {
 		/*
@@ -475,8 +475,8 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 	if (error) {
 		--wpipe->pipe_busy;
 		if ((wpipe->pipe_busy == 0) &&
-		    (wpipe->pipe_state & PIPE_WANT)) {
-			wpipe->pipe_state &= ~(PIPE_WANT | PIPE_WANTR);
+		    (wpipe->pipe_state & PIPE_WANTD)) {
+			wpipe->pipe_state &= ~(PIPE_WANTD | PIPE_WANTR);
 			wakeup(wpipe);
 		}
 		goto done;
@@ -619,8 +619,8 @@ retrywrite:
 
 	--wpipe->pipe_busy;
 
-	if ((wpipe->pipe_busy == 0) && (wpipe->pipe_state & PIPE_WANT)) {
-		wpipe->pipe_state &= ~(PIPE_WANT | PIPE_WANTR);
+	if ((wpipe->pipe_busy == 0) && (wpipe->pipe_state & PIPE_WANTD)) {
+		wpipe->pipe_state &= ~(PIPE_WANTD | PIPE_WANTR);
 		wakeup(wpipe);
 	} else if (wpipe->pipe_buffer.cnt > 0) {
 		/*
@@ -806,7 +806,7 @@ pipeclose(struct pipe *cpipe)
 		cpipe->pipe_state |= PIPE_EOF;
 		while (cpipe->pipe_busy) {
 			wakeup(cpipe);
-			cpipe->pipe_state |= PIPE_WANT;
+			cpipe->pipe_state |= PIPE_WANTD;
 			tsleep(cpipe, PRIBIO, "pipecl", 0);
 		}
 
