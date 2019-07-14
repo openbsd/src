@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.74 2019/06/17 15:13:08 mpi Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.75 2019/07/14 06:37:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -71,7 +71,7 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	struct enc_softc	*sc;
 	struct ifnet		*ifp;
 	struct ifnet		**new;
-	size_t			 newlen;
+	size_t			 oldlen;
 	int			 error;
 
 	if (unit > ENC_MAX_UNITS)
@@ -125,13 +125,11 @@ enc_clone_create(struct if_clone *ifc, int unit)
 			NET_UNLOCK();
 			return (ENOBUFS);
 		}
-		newlen = sizeof(struct ifnet *) * (unit + 1);
 
 		if (enc_allifps != NULL) {
-			memcpy(new, enc_allifps,
-			    sizeof(struct ifnet *) * (enc_max_unit + 1));
-			free(enc_allifps, M_DEVBUF,
-			    sizeof(struct ifnet *) * (enc_max_unit + 1));
+			oldlen = sizeof(struct ifnet *) * (enc_max_unit + 1);
+			memcpy(new, enc_allifps, oldlen);
+			free(enc_allifps, M_DEVBUF, oldlen);
 		}
 		enc_allifps = new;
 		enc_max_unit = unit;
@@ -253,7 +251,7 @@ int
 enc_setif(struct ifnet *ifp, u_int rdomain)
 {
 	struct ifnet	**new;
-	size_t		 newlen;
+	size_t		 oldlen;
 
 	NET_ASSERT_LOCKED();
 
@@ -275,13 +273,11 @@ enc_setif(struct ifnet *ifp, u_int rdomain)
 		if ((new = mallocarray(rdomain + 1, sizeof(struct ifnet *),
 		    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 			return (ENOBUFS);
-		newlen = sizeof(struct ifnet *) * (rdomain + 1);
 
 		if (enc_ifps != NULL) {
-			memcpy(new, enc_ifps,
-			    sizeof(struct ifnet *) * (enc_max_rdomain + 1));
-			free(enc_ifps, M_DEVBUF,
-			    sizeof(struct ifnet *) * (enc_max_rdomain + 1));
+			oldlen = sizeof(struct ifnet *) * (enc_max_rdomain + 1);
+			memcpy(new, enc_ifps, oldlen);
+			free(enc_ifps, M_DEVBUF, oldlen);
 		}
 		enc_ifps = new;
 		enc_max_rdomain = rdomain;
