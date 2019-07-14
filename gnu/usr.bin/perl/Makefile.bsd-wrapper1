@@ -579,6 +579,7 @@ _quick3p=
     open 3p				lib/open.pm \
     OpenBSD::MkTemp 3p			lib/OpenBSD/MkTemp.pm \
     OpenBSD::Pledge 3p			lib/OpenBSD/Pledge.pm \
+    OpenBSD::Unveil 3p			lib/OpenBSD/Unveil.pm \
     ops 3p				lib/ops.pm \
     overload 3p				lib/overload.pm \
     overloading 3p			lib/overloading.pm \
