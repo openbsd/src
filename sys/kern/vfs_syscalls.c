@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.322 2019/07/15 14:56:45 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.323 2019/07/15 15:05:21 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2083,7 +2083,7 @@ doreadlinkat(struct proc *p, int fd, const char *path, char *buf,
 
 	NDINITAT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_RPATH;
-	nd.ni_unveil = UNVEIL_READ;
+	nd.ni_unveil = UNVEIL_INSPECT;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
