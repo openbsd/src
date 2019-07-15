@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.33 2015/12/31 14:01:26 lum Exp $
+.\"	$OpenBSD: ctags.1,v 1.34 2019/07/15 21:01:53 schwarze Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctags.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: December 31 2015 $
+.Dd $Mdocdate: July 15 2019 $
 .Dt CTAGS 1
 .Os
 .Sh NAME
@@ -92,8 +92,9 @@ file; that is, all
 references to them are regenerated, keeping only the other values in the
 file.
 .It Fl v
-An index of the form expected by vgrind
-is produced on the standard output.
+An index of the form expected by the
+.Pa textproc/vgrind
+port is produced on the standard output.
 This listing contains the object name, file name, and page number (assuming
 64 line pages).
 Since the output will be sorted into lexicographic order,
