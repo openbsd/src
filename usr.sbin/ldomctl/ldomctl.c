@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.21 2018/09/15 13:20:16 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.22 2019/07/15 11:05:10 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -157,10 +157,11 @@ main(int argc, char **argv)
 void
 usage(void)
 {
-	extern char *__progname;
-
-	fprintf(stderr, "usage: %s start|stop|panic domain\n", __progname);
-	fprintf(stderr, "       %s status [domain]\n", __progname);
+	fprintf(stderr, "usage:\t%1$s delete|select configuration\n"
+	    "\t%1$s download directory\n"
+	    "\t%1$s dump|list\n"
+	    "\t%1$s init-system file\n"
+	    "\t%1$s panic|start|status|stop [domain]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
