@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.54 2019/07/08 18:53:18 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.55 2019/07/15 20:44:48 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -61,8 +61,9 @@ int	rrticks_init;		/* # of hardclock ticks per roundrobin() */
 struct __mp_lock sched_lock;
 #endif
 
-void	 schedcpu(void *);
-uint32_t decay_aftersleep(uint32_t, uint32_t);
+void			schedcpu(void *);
+uint32_t		decay_aftersleep(uint32_t, uint32_t);
+static inline void	resched_proc(struct proc *, u_char);
 
 void
 scheduler_start(void)
@@ -442,7 +443,7 @@ mi_switch(void)
 #endif
 }
 
-void
+static inline void
 resched_proc(struct proc *p, u_char pri)
 {
 	struct cpu_info *ci;
