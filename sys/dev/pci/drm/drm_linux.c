@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.45 2019/07/15 00:52:52 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.46 2019/07/15 01:05:01 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -28,6 +28,10 @@
 #include <linux/acpi.h>
 #include <linux/pagevec.h>
 #include <linux/dma-fence-array.h>
+
+#if defined(__amd64__) || defined(__i386__)
+#include "bios.h"
+#endif
 
 void
 tasklet_run(void *arg)
@@ -407,7 +411,7 @@ dmi_first_match(const struct dmi_system_id *sysid)
 	return NULL;
 }
 
-#ifdef CONFIG_DMI
+#if NBIOS > 0
 extern char smbios_bios_date[];
 #endif
 
@@ -415,7 +419,7 @@ const char *
 dmi_get_system_info(int slot)
 {
 	WARN_ON(slot != DMI_BIOS_DATE);
-#ifdef CONFIG_DMI
+#if NBIOS > 0
 	if (slot == DMI_BIOS_DATE)
 		return smbios_bios_date;
 #endif
