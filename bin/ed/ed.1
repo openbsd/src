@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.72 2019/07/12 19:28:48 schwarze Exp $
+.\"	$OpenBSD: ed.1,v 1.73 2019/07/15 17:57:48 schwarze Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 12 2019 $
+.Dd $Mdocdate: July 15 2019 $
 .Dt ED 1
 .Os
 .Sh NAME
@@ -392,14 +392,20 @@ Any commands are allowed, except for
 .Ic v ,
 and
 .Ic V .
-A newline alone in command-list is equivalent to a
+An empty
+.Ar command-list
+is equivalent to a
 .Ic p
 command.
+In this case, the trailing slash can be omitted.
 .Sm off
 .It (1,$) Ic G No / Ar re No /
 .Sm on
 Interactively edits the addressed lines matching a regular expression
 .Ar re .
+The trailing slash after
+.Ar re
+can be omitted.
 For each matching line, the line is printed, the current address is set,
 and the user is prompted to enter a
 .Ar command-list .
@@ -415,11 +421,10 @@ The format of
 .Ar command-list
 is the same as that of the
 .Ic g
-command.
-A newline alone acts as a null command list.
+command, but an empty command list does nothing.
 A single
 .Sq &
-repeats the last non-null command list.
+repeats the last non-empty command list.
 .It Ic H
 Toggles the printing of error explanations.
 By default, explanations are not printed.
