@@ -2962,6 +2962,7 @@
 ./usr/share/man/man9/rt_ifa_add.9
 ./usr/share/man/man9/rt_timer_add.9
 ./usr/share/man/man9/rtable_add.9
+./usr/share/man/man9/rtable_walk.9
 ./usr/share/man/man9/rtalloc.9
 ./usr/share/man/man9/rtlabel_id2name.9
 ./usr/share/man/man9/rtrequest.9
