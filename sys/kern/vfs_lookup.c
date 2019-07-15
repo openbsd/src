@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.78 2019/07/08 09:21:10 bluhm Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.79 2019/07/15 14:56:45 beck Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -577,12 +577,10 @@ dirloop:
 		printf("not found\n");
 #endif
 		/*
-		 * Allow for unveiling or realpath'ing a file in a
-		 * directory where we don't have access to create it
-		 * ourselves
+		 * Allow for unveiling a file in a directory where we
+		 * don't have access to create it ourselves
 		 */
-		if ((ndp->ni_pledge == PLEDGE_UNVEIL ||
-		    (cnp->cn_flags & REALPATH)) && error == EACCES)
+		if (ndp->ni_pledge == PLEDGE_UNVEIL && error == EACCES)
 			error = EJUSTRETURN;
 
 		if (error != EJUSTRETURN)

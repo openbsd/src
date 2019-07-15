@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.321 2019/07/12 13:56:27 solene Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.322 2019/07/15 14:56:45 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -928,7 +928,7 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | REALPATH,
 		    UIO_SYSSPACE, pathname, p);
 	else
-		NDINIT(&nd, CREATE, FOLLOW | LOCKLEAF | LOCKPARENT | SAVENAME |
+		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | LOCKPARENT | SAVENAME |
 		    REALPATH, UIO_SYSSPACE, pathname, p);
 
 	nd.ni_cnd.cn_rpbuf = rpbuf;
@@ -2083,7 +2083,7 @@ doreadlinkat(struct proc *p, int fd, const char *path, char *buf,
 
 	NDINITAT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE, fd, path, p);
 	nd.ni_pledge = PLEDGE_RPATH;
-	nd.ni_unveil = UNVEIL_INSPECT;
+	nd.ni_unveil = UNVEIL_READ;
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
