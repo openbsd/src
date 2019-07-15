@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.21 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: lsack.c,v 1.22 2019/07/15 18:26:39 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -59,7 +59,6 @@ int
 send_ls_ack(struct iface *iface, struct in_addr addr, struct ibuf *buf)
 {
 	struct sockaddr_in	dst;
-	int			ret;
 
 	/* update authentication and calculate checksum */
 	if (auth_gen(buf, iface)) {
@@ -71,8 +70,11 @@ send_ls_ack(struct iface *iface, struct in_addr addr, struct ibuf *buf)
 	dst.sin_len = sizeof(struct sockaddr_in);
 	dst.sin_addr.s_addr = addr.s_addr;
 
-	ret = send_packet(iface, buf, &dst);
-	return (ret);
+	if (send_packet(iface, buf, &dst) == -1) {
+		log_warn("%s", __func__);
+		return (-1);
+	}
+	return (0);
 }
 
 int

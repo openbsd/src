@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.45 2016/12/26 17:38:14 jca Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.46 2019/07/15 18:26:39 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -210,7 +210,6 @@ send_ls_update(struct ibuf *buf, struct iface *iface, struct in_addr addr,
     u_int32_t nlsa)
 {
 	struct sockaddr_in	 dst;
-	int			 ret;
 
 	nlsa = htonl(nlsa);
 	memcpy(ibuf_seek(buf, sizeof(struct ospf_hdr), sizeof(nlsa)),
@@ -224,12 +223,13 @@ send_ls_update(struct ibuf *buf, struct iface *iface, struct in_addr addr,
 	dst.sin_len = sizeof(struct sockaddr_in);
 	dst.sin_addr.s_addr = addr.s_addr;
 
-	ret = send_packet(iface, buf, &dst);
+	if (send_packet(iface, buf, &dst) == -1)
+		goto fail;
 
 	ibuf_free(buf);
-	return (ret);
+	return (0);
 fail:
-	log_warn("send_ls_update");
+	log_warn("%s", __func__);
 	ibuf_free(buf);
 	return (-1);
 }

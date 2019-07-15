@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.20 2013/01/17 09:02:22 markus Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.21 2019/07/15 18:26:39 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -37,7 +37,6 @@ send_ls_req(struct nbr *nbr)
 	struct ls_req_hdr	 ls_req_hdr;
 	struct lsa_entry	*le, *nle;
 	struct ibuf		*buf;
-	int			 ret;
 
 	if ((buf = ibuf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
 		fatal("send_ls_req");
@@ -80,12 +79,13 @@ send_ls_req(struct nbr *nbr)
 	if (auth_gen(buf, nbr->iface))
 		goto fail;
 
-	ret = send_packet(nbr->iface, buf, &dst);
+	if (send_packet(nbr->iface, buf, &dst) == -1)
+		goto fail;
 
 	ibuf_free(buf);
-	return (ret);
+	return (0);
 fail:
-	log_warn("send_ls_req");
+	log_warn("%s", __func__);
 	ibuf_free(buf);
 	return (-1);
 }

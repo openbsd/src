@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.33 2016/02/18 15:33:24 bluhm Exp $ */
+/*	$OpenBSD: database.c,v 1.34 2019/07/15 18:26:39 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -43,7 +43,6 @@ send_db_description(struct nbr *nbr)
 	struct db_dscrp_hdr	 dd_hdr;
 	struct lsa_entry	*le, *nle;
 	struct ibuf		*buf;
-	int			 ret = 0;
 	u_int8_t		 bits = 0;
 
 	if ((buf = ibuf_open(nbr->iface->mtu - sizeof(struct ip))) == NULL)
@@ -66,8 +65,7 @@ send_db_description(struct nbr *nbr)
 		log_debug("send_db_description: neighbor ID %s: "
 		    "cannot send packet in state %s", inet_ntoa(nbr->id),
 		    nbr_state_name(nbr->state));
-		ret = -1;
-		goto done;
+		goto fail;
 	case NBR_STA_XSTRT:
 		bits |= OSPF_DBD_MS | OSPF_DBD_M | OSPF_DBD_I;
 		nbr->dd_more = 1;
@@ -150,12 +148,13 @@ send_db_description(struct nbr *nbr)
 		goto fail;
 
 	/* transmit packet */
-	ret = send_packet(nbr->iface, buf, &dst);
-done:
+	if (send_packet(nbr->iface, buf, &dst) == -1)
+		goto fail;
+
 	ibuf_free(buf);
-	return (ret);
+	return (0);
 fail:
-	log_warn("send_db_description");
+	log_warn("%s", __func__);
 	ibuf_free(buf);
 	return (-1);
 }
