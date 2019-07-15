@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.140 2019/05/24 15:17:29 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.141 2019/07/15 12:28:06 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/mbuf.h>
 #include <sys/task.h>
 #include <sys/pledge.h>
+#include <sys/pool.h>
 
 void	uipc_setaddr(const struct unpcb *, struct mbuf *);
 
@@ -72,6 +73,7 @@ void	unp_mark(struct fdpass *, int);
 void	unp_scan(struct mbuf *, void (*)(struct fdpass *, int));
 int	unp_nam2sun(struct mbuf *, struct sockaddr_un **, size_t *);
 
+struct pool unpcb_pool;
 /* list of sets of files that were sent over sockets that are now closed */
 SLIST_HEAD(,unp_deferral) unp_deferred = SLIST_HEAD_INITIALIZER(unp_deferred);
 
@@ -88,6 +90,13 @@ struct task unp_gc_task = TASK_INITIALIZER(unp_gc, NULL);
  */
 struct	sockaddr sun_noname = { sizeof(sun_noname), AF_UNIX };
 ino_t	unp_ino;			/* prototype for fake inode numbers */
+
+void
+unp_init(void)
+{
+	pool_init(&unpcb_pool, sizeof(struct unpcb), 0,
+	    IPL_NONE, 0, "unpcb", NULL);
+}
 
 void
 uipc_setaddr(const struct unpcb *unp, struct mbuf *nam)
@@ -370,7 +379,7 @@ uipc_attach(struct socket *so, int proto)
 		if (error)
 			return (error);
 	}
-	unp = malloc(sizeof(*unp), M_PCB, M_NOWAIT|M_ZERO);
+	unp = pool_get(&unpcb_pool, PR_NOWAIT|PR_ZERO);
 	if (unp == NULL)
 		return (ENOBUFS);
 	unp->unp_socket = so;
@@ -414,7 +423,7 @@ unp_detach(struct unpcb *unp)
 	soisdisconnected(unp->unp_socket);
 	unp->unp_socket->so_pcb = NULL;
 	m_freem(unp->unp_addr);
-	free(unp, M_PCB, sizeof *unp);
+	pool_put(&unpcb_pool, unp);
 	if (unp_rights)
 		task_add(systq, &unp_gc_task);
 }
@@ -638,7 +647,7 @@ unp_drop(struct unpcb *unp, int errno)
 		 */
 		sofree(so, SL_NOUNLOCK);
 		m_freem(unp->unp_addr);
-		free(unp, M_PCB, sizeof *unp);
+		pool_put(&unpcb_pool, unp);
 	}
 }
 
