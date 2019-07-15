@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.190 2019/07/12 13:56:27 solene Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.191 2019/07/15 04:11:03 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -741,8 +741,10 @@ fdrelease(struct proc *p, int fd)
 	fdpassertlocked(fdp);
 
 	fp = fd_getfile(fdp, fd);
-	if (fp == NULL)
+	if (fp == NULL) {
+		fdpunlock(fdp);
 		return (EBADF);
+	}
 	/* Prevent race with kevent. */
 	KERNEL_LOCK();
 	fdremove(fdp, fd);
@@ -750,8 +752,7 @@ fdrelease(struct proc *p, int fd)
 	fdpunlock(fdp);
 	error = closef(fp, p);
 	KERNEL_UNLOCK();
-	fdplock(fdp);
-	return error;
+	return (error);
 }
 
 /*
@@ -767,8 +768,8 @@ sys_close(struct proc *p, void *v, register_t *retval)
 	struct filedesc *fdp = p->p_fd;
 
 	fdplock(fdp);
+	/* fdrelease unlocks fdp. */
 	error = fdrelease(p, fd);
-	fdpunlock(fdp);
 
 	return (error);
 }
@@ -1426,8 +1427,11 @@ fdcloseexec(struct proc *p)
 	fdplock(fdp);
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
 		fdp->fd_ofileflags[fd] &= ~UF_PLEDGED;
-		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
+		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE) {
+			/* fdrelease() unlocks fdp. */
 			(void) fdrelease(p, fd);
+			fdplock(fdp);
+		}
 	}
 	fdpunlock(fdp);
 }
@@ -1447,8 +1451,11 @@ sys_closefrom(struct proc *p, void *v, register_t *retval)
 		return (EBADF);
 	}
 
-	for (i = startfd; i <= fdp->fd_lastfile; i++)
+	for (i = startfd; i <= fdp->fd_lastfile; i++) {
+		/* fdrelease() unlocks fdp. */
 		fdrelease(p, i);
+		fdplock(fdp);
+	}
 
 	fdpunlock(fdp);
 	return (0);

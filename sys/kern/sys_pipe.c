@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.92 2019/07/14 10:21:11 semarie Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.93 2019/07/15 04:11:03 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -177,15 +177,18 @@ dopipe(struct proc *p, int *ufds, int flags)
 	fdinsert(fdp, fds[1], cloexec, wf);
 
 	error = copyout(fds, ufds, sizeof(fds));
-	if (error != 0) {
+	if (error == 0) {
+		fdpunlock(fdp);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrfds(p, fds, 2);
+#endif
+	} else {
+		/* fdrelease() unlocks fdp. */
 		fdrelease(p, fds[0]);
+		fdplock(fdp);
 		fdrelease(p, fds[1]);
 	}
-#ifdef KTRACE
-	else if (KTRPOINT(p, KTR_STRUCT))
-		ktrfds(p, fds, 2);
-#endif
-	fdpunlock(fdp);
 
 	FRELE(rf, p);
 	FRELE(wf, p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.47 2018/06/18 09:15:05 mpi Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.48 2019/07/15 04:11:03 visa Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -260,8 +260,8 @@ fail:
 	if (epp->ep_flags & EXEC_HASFD) {
 		epp->ep_flags &= ~EXEC_HASFD;
 		fdplock(p->p_fd);
+		/* fdrelease() unlocks p->p_fd. */
 		(void) fdrelease(p, epp->ep_fd);
-		fdpunlock(p->p_fd);
 	} else
 		vn_close(scriptvp, FREAD, p->p_ucred, p);
 

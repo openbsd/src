@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.206 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.207 2019/07/15 04:11:03 visa Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -724,8 +724,8 @@ bad:
 	if (pack.ep_flags & EXEC_HASFD) {
 		pack.ep_flags &= ~EXEC_HASFD;
 		fdplock(p->p_fd);
+		/* fdrelease unlocks p->p_fd. */
 		(void) fdrelease(p, pack.ep_fd);
-		fdpunlock(p->p_fd);
 	}
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);
