@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.120 2018/10/23 17:51:32 kettenis Exp $	*/
+/*	$OpenBSD: bios.c,v 1.121 2019/07/15 00:35:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -139,6 +139,8 @@ const char *smbios_uninfo[] = {
 	"SYS-"
 };
 
+
+char smbios_bios_date[64];
 
 int
 biosprobe(struct device *parent, void *match, void *aux)
@@ -305,8 +307,12 @@ biosattach(struct device *parent, struct device *self, void *aux)
 					printf(" version \"%s\"",
 					    fixstring(scratch));
 				if ((smbios_get_string(&bios, sb->release,
-				    scratch, sizeof(scratch))) != NULL)
+				    scratch, sizeof(scratch))) != NULL) {
+					strlcpy(smbios_bios_date,
+					    fixstring(scratch),
+					    sizeof(smbios_bios_date));
 					printf(" date %s", fixstring(scratch));
+				}
 			}
 			smbios_info(sc->sc_dev.dv_xname);
 
