@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.2 2019/07/15 03:35:23 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -78,6 +78,7 @@ struct pci_dev {
 #define PCI_DEVFN(slot, func)	((slot) << 3 | (func))
 #define PCI_SLOT(devfn)		((devfn) >> 3)
 #define PCI_FUNC(devfn)		((devfn) & 0x7)
+#define PCI_BUS_NUM(devfn)	(((devfn) >> 8) & 0xff)
 
 #define pci_dev_put(x)
 
