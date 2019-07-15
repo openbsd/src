@@ -36,4 +36,8 @@
 #define CONFIG_AGP				1
 #endif
 
+#if defined(__amd64__) || defined(__i386__)
+#define CONFIG_DMI				1
+#endif
+
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.44 2019/07/12 13:56:27 solene Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.45 2019/07/15 00:52:52 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -392,6 +392,34 @@ dmi_found(const struct dmi_system_id *dsi)
 	}
 
 	return true;
+}
+
+const struct dmi_system_id *
+dmi_first_match(const struct dmi_system_id *sysid)
+{
+	const struct dmi_system_id *dsi;
+
+	for (dsi = sysid; dsi->matches[0].slot != 0 ; dsi++) {
+		if (dmi_found(dsi))
+			return dsi;
+	}
+
+	return NULL;
+}
+
+#ifdef CONFIG_DMI
+extern char smbios_bios_date[];
+#endif
+
+const char *
+dmi_get_system_info(int slot)
+{
+	WARN_ON(slot != DMI_BIOS_DATE);
+#ifdef CONFIG_DMI
+	if (slot == DMI_BIOS_DATE)
+		return smbios_bios_date;
+#endif
+	return NULL;
 }
 
 int

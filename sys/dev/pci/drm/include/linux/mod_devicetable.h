@@ -32,9 +32,10 @@ struct dmi_strmatch {
 };
 
 struct dmi_system_id {
-        int (*callback)(const struct dmi_system_id *);
-        const char *ident;
-        struct dmi_strmatch matches[4];
+	int (*callback)(const struct dmi_system_id *);
+	const char *ident;
+	struct dmi_strmatch matches[4];
+	void *driver_data;
 };
 #define	DMI_MATCH(a, b) {(a), (b)}
 #define	DMI_EXACT_MATCH(a, b) {(a), (b)}
