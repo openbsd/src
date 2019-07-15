@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpath3.c,v 1.2 2019/07/09 17:30:39 bluhm Exp $ */
+/*	$OpenBSD: realpath3.c,v 1.3 2019/07/15 16:05:04 bluhm Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -59,6 +59,7 @@ realpath3(const char *path, char *resolved)
 	int serrno, mem_allocated;
 	ssize_t slen;
 	char left[PATH_MAX], next_token[PATH_MAX], symlink[PATH_MAX];
+	struct stat sb;
 
 	if (path == NULL) {
 		errno = EINVAL;
@@ -69,6 +70,12 @@ realpath3(const char *path, char *resolved)
 		errno = ENOENT;
 		return (NULL);
 	}
+
+	/*
+	 * POSIX demands ENOENT for non existing file.
+	 */
+	if (stat(path, &sb) == -1)
+		return (NULL);
 
 	serrno = errno;
 
@@ -229,8 +236,6 @@ realpath3(const char *path, char *resolved)
 	 * POSIX demands ENOTDIR for non directories ending in a "/".
 	 */
 	if (strchr(path, '/') != NULL && path[strlen(path) - 1] == '/') {
-		struct stat sb;
-
 		if (stat(resolved, &sb) != -1 && !S_ISDIR(sb.st_mode)) {
 			errno = ENOTDIR;
 			goto err;

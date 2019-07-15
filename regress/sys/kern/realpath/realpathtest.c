@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpathtest.c,v 1.9 2019/07/09 17:30:39 bluhm Exp $ */
+/*	$OpenBSD: realpathtest.c,v 1.10 2019/07/15 16:05:04 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -100,14 +100,15 @@ main(int argc, char *argv[])
 	char r3[PATH_MAX];
 
 	/* some basics */
-	RP_SHOULD_SUCCEED("/bin/c++", NULL, NULL);
+	RP_SHOULD_FAIL(NULL, NULL, NULL);
+	RP_SHOULD_SUCCEED("/", NULL, NULL);
 	RP_SHOULD_SUCCEED("/tmp", NULL, NULL);
-	RP_SHOULD_SUCCEED("/tmp/noreallydoesntexist", NULL, NULL);
+	RP_SHOULD_FAIL("/tmp/noreallydoesntexist", NULL, NULL);
 	RP_SHOULD_FAIL("/tmp/noreallydoesntexist/stillnope", NULL, NULL);
 	RP_SHOULD_SUCCEED("/bin", NULL, NULL);
-	RP_SHOULD_SUCCEED("/bin/herp", NULL, NULL);
+	RP_SHOULD_FAIL("/bin/herp", NULL, NULL);
 	RP_SHOULD_SUCCEED("////usr/bin", NULL, NULL);
-	RP_SHOULD_SUCCEED("//.//usr/bin/.././../herp", r2, r3);
+	RP_SHOULD_FAIL("//.//usr/bin/.././../herp", r2, r3);
 	RP_SHOULD_SUCCEED("/usr/include/machine/setjmp.h", r2, r3);
 	RP_SHOULD_FAIL("//.//usr/bin/.././../herp/derp", r2, r3);
 	RP_SHOULD_FAIL("/../.../usr/bin", r2, r3);
@@ -119,7 +120,7 @@ main(int argc, char *argv[])
 			err(1, "mkdir");
 	}
 	RP_SHOULD_SUCCEED("hoobla", r2, r3);
-	RP_SHOULD_SUCCEED("hoobla/porkrind", r2, r3); /* XXX posix */
+	RP_SHOULD_FAIL("hoobla/porkrind", r2, r3);
 	RP_SHOULD_FAIL("hoobla/porkrind/peepee", r2, r3);
 
 	/* total size */
@@ -130,7 +131,7 @@ main(int argc, char *argv[])
 	memset(big, 'a', PATH_MAX + 1);
 	big[0] = '/';
 	big[NAME_MAX+1] = '\0';
-	RP_SHOULD_SUCCEED(big, r2, r3);
+	RP_SHOULD_FAIL(big, r2, r3);
 	memset(big, 'a', PATH_MAX + 1);
 	big[0] = '/';
 	big[NAME_MAX+2] = '\0';
@@ -162,7 +163,7 @@ main(int argc, char *argv[])
 	}
 	i-= 3;
 	strlcpy(big+i, "derp", 5);
-	RP_SHOULD_SUCCEED(big, r2, r3);	/* XXX this is wrong by posix */
+	RP_SHOULD_FAIL(big, r2, r3);
 
 	for (i = 0; i < (PATH_MAX - 6); i += 3) {
 		big[i] = '.';
@@ -171,7 +172,7 @@ main(int argc, char *argv[])
 	}
 	i-= 3;
 	strlcpy(big+i, "derp/", 6);
-	RP_SHOULD_FAIL(big, r2, r3);	/* XXX this is correct by posix */
+	RP_SHOULD_FAIL(big, r2, r3);
 
 	for (i = 0; i < (PATH_MAX - 4); i += 3) {
 		big[i] = '.';
@@ -180,7 +181,7 @@ main(int argc, char *argv[])
 	}
 	i-= 3;
 	strlcpy(big+i, "xxx", 4);
-	RP_SHOULD_SUCCEED(big, r2, r3);
+	RP_SHOULD_FAIL(big, r2, r3);
 
 	for (i = 0; i < (PATH_MAX - 8); i += 3) {
 		big[i] = '.';
