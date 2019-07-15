@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.247 2018/10/04 17:33:41 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.248 2019/07/15 12:40:42 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -114,7 +114,6 @@ int ipport_hilastauto = IPPORT_HILASTAUTO;
 struct baddynamicports baddynamicports;
 struct baddynamicports rootonlyports;
 struct pool inpcb_pool;
-int inpcb_pool_initialized = 0;
 
 int in_pcbresize (struct inpcbtable *, int);
 
@@ -123,6 +122,17 @@ int in_pcbresize (struct inpcbtable *, int);
 struct inpcbhead *in_pcbhash(struct inpcbtable *, int,
     const struct in_addr *, u_short, const struct in_addr *, u_short);
 struct inpcbhead *in_pcblhash(struct inpcbtable *, int, u_short);
+
+/*
+ * in_pcb is used for inet and inet6.  in6_pcb only contains special
+ * IPv6 cases.  So the internet initializer is used for both domains.
+ */
+void
+in_init(void)
+{
+	pool_init(&inpcb_pool, sizeof(struct inpcb), 0,
+	    IPL_SOFTNET, 0, "inpcb", NULL);
+}
 
 struct inpcbhead *
 in_pcbhash(struct inpcbtable *table, int rdom,
@@ -218,11 +228,6 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 
 	NET_ASSERT_LOCKED();
 
-	if (inpcb_pool_initialized == 0) {
-		pool_init(&inpcb_pool, sizeof(struct inpcb), 0,
-		    IPL_SOFTNET, 0, "inpcbpl", NULL);
-		inpcb_pool_initialized = 1;
-	}
 	inp = pool_get(&inpcb_pool, PR_NOWAIT|PR_ZERO);
 	if (inp == NULL)
 		return (ENOBUFS);
