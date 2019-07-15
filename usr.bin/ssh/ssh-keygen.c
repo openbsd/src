@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.335 2019/07/05 07:32:01 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.336 2019/07/15 13:16:29 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -140,11 +140,11 @@ static char *key_type_name = NULL;
 /* Load key from this PKCS#11 provider */
 static char *pkcs11provider = NULL;
 
-/* Use new OpenSSH private key format when writing SSH2 keys instead of PEM */
-static int use_new_format = 1;
+/* Format for writing private keys */
+static int private_key_format = SSHKEY_PRIVATE_OPENSSH;
 
 /* Cipher for new-format private keys */
-static char *new_format_cipher = NULL;
+static char *openssh_format_cipher = NULL;
 
 /*
  * Number of KDF rounds to derive new format keys /
@@ -1027,7 +1027,8 @@ do_gen_all_hostkeys(struct passwd *pw)
 		snprintf(comment, sizeof comment, "%s@%s", pw->pw_name,
 		    hostname);
 		if ((r = sshkey_save_private(private, prv_tmp, "",
-		    comment, use_new_format, new_format_cipher, rounds)) != 0) {
+		    comment, private_key_format, openssh_format_cipher,
+		    rounds)) != 0) {
 			error("Saving key \"%s\" failed: %s",
 			    prv_tmp, ssh_err(r));
 			goto failnext;
@@ -1370,7 +1371,7 @@ do_change_passphrase(struct passwd *pw)
 
 	/* Save the file using the new passphrase. */
 	if ((r = sshkey_save_private(private, identity_file, passphrase1,
-	    comment, use_new_format, new_format_cipher, rounds)) != 0) {
+	    comment, private_key_format, openssh_format_cipher, rounds)) != 0) {
 		error("Saving key \"%s\" failed: %s.",
 		    identity_file, ssh_err(r));
 		explicit_bzero(passphrase1, strlen(passphrase1));
@@ -1459,7 +1460,7 @@ do_change_comment(struct passwd *pw, const char *identity_comment)
 	}
 
 	if (private->type != KEY_ED25519 && private->type != KEY_XMSS &&
-	    !use_new_format) {
+	    private_key_format != SSHKEY_PRIVATE_OPENSSH) {
 		error("Comments are only supported for keys stored in "
 		    "the new format (-o).");
 		explicit_bzero(passphrase, strlen(passphrase));
@@ -1493,7 +1494,8 @@ do_change_comment(struct passwd *pw, const char *identity_comment)
 
 	/* Save the file using the new passphrase. */
 	if ((r = sshkey_save_private(private, identity_file, passphrase,
-	    new_comment, use_new_format, new_format_cipher, rounds)) != 0) {
+	    new_comment, private_key_format, openssh_format_cipher,
+	    rounds)) != 0) {
 		error("Saving key \"%s\" failed: %s",
 		    identity_file, ssh_err(r));
 		explicit_bzero(passphrase, strlen(passphrase));
@@ -2503,11 +2505,12 @@ main(int argc, char **argv)
 			}
 			if (strcasecmp(optarg, "PKCS8") == 0) {
 				convert_format = FMT_PKCS8;
+				private_key_format = SSHKEY_PRIVATE_PKCS8;
 				break;
 			}
 			if (strcasecmp(optarg, "PEM") == 0) {
 				convert_format = FMT_PEM;
-				use_new_format = 0;
+				private_key_format = SSHKEY_PRIVATE_PEM;
 				break;
 			}
 			fatal("Unsupported conversion format \"%s\"", optarg);
@@ -2545,7 +2548,7 @@ main(int argc, char **argv)
 			add_cert_option(optarg);
 			break;
 		case 'Z':
-			new_format_cipher = optarg;
+			openssh_format_cipher = optarg;
 			break;
 		case 'C':
 			identity_comment = optarg;
@@ -2892,7 +2895,7 @@ passphrase_again:
 
 	/* Save the key with the given passphrase and comment. */
 	if ((r = sshkey_save_private(private, identity_file, passphrase1,
-	    comment, use_new_format, new_format_cipher, rounds)) != 0) {
+	    comment, private_key_format, openssh_format_cipher, rounds)) != 0) {
 		error("Saving key \"%s\" failed: %s",
 		    identity_file, ssh_err(r));
 		explicit_bzero(passphrase1, strlen(passphrase1));
