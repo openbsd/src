@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.232 2019/07/14 18:14:27 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.233 2019/07/15 21:40:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -698,7 +698,8 @@ out:
 			signum = WSTOPSIG(status);
 		}
 		tag_unlink();
-	} else if (curp.outtype != OUTT_LINT)
+	} else if (curp.outtype != OUTT_LINT &&
+	    (search.argmode == ARG_FILE || sz > 0))
 		mandoc_msg_summary();
 
 	return (int)mandoc_msg_getrc();
