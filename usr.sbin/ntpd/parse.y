@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.72 2019/06/12 05:04:45 otto Exp $ */
+/*	$OpenBSD: parse.y,v 1.73 2019/07/16 14:15:40 otto Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -60,6 +60,7 @@ int		 findeol(void);
 struct ntpd_conf		*conf;
 struct sockaddr_in		 query_addr4;
 struct sockaddr_in6		 query_addr6;
+int				 poolseqnum;
 
 struct opts {
 	int		weight;
@@ -183,7 +184,7 @@ main		: LISTEN ON address listen_opts	{
 				p->query_addr6 = query_addr6;
 				p->addr = h;
 				p->addr_head.a = h;
-				p->addr_head.pool = 1;
+				p->addr_head.pool = ++poolseqnum;
 				p->addr_head.name = strdup($2->name);
 				if (p->addr_head.name == NULL)
 					fatal(NULL);
@@ -256,7 +257,7 @@ main		: LISTEN ON address listen_opts	{
 				p = new_constraint();
 				p->addr = h;
 				p->addr_head.a = h;
-				p->addr_head.pool = 1;
+				p->addr_head.pool = ++poolseqnum;
 				p->addr_head.name = strdup($3->name);
 				p->addr_head.path = strdup($3->path);
 				if (p->addr_head.name == NULL ||

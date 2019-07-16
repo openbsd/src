@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.47 2019/06/28 13:32:49 deraadt Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.48 2019/07/16 14:15:40 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -49,6 +49,7 @@
 #define	X509_DATE	"%Y-%m-%d %T UTC"
 
 int	 constraint_addr_init(struct constraint *);
+void	 constraint_addr_head_clear(struct constraint *);
 struct constraint *
 	 constraint_byid(u_int32_t);
 struct constraint *
@@ -140,6 +141,14 @@ constraint_addr_init(struct constraint *cstr)
 	}
 
 	return (1);
+}
+
+void
+constraint_addr_head_clear(struct constraint *cstr)
+{
+	host_dns_free(cstr->addr_head.a);
+	cstr->addr_head.a = NULL;
+	cstr->addr = NULL;
 }
 
 int
@@ -614,7 +623,10 @@ priv_constraint_dispatch(struct pollfd *pfd)
 		return (0);
 
 	if (((n = imsg_read(&cstr->ibuf)) == -1 && errno != EAGAIN) || n == 0) {
-		priv_constraint_close(pfd->fd, 1);
+		/* there's a race between SIGCHLD delivery and reading imsg
+		   but if we've seen the reply, we're good */
+		priv_constraint_close(pfd->fd, cstr->state !=
+		    STATE_REPLY_RECEIVED);
 		return (1);
 	}
 
@@ -631,6 +643,9 @@ priv_constraint_dispatch(struct pollfd *pfd)
 			 if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(tv))
 				fatalx("invalid IMSG_CONSTRAINT received");
 
+			/* state is maintained by child, but we want to
+			   remember we've seen the result */
+			cstr->state = STATE_REPLY_RECEIVED;
 			/* forward imsg to ntp child, don't parse it here */
 			imsg_compose(ibuf, imsg.hdr.type,
 			    cstr->id, 0, -1, imsg.data, sizeof(tv));
@@ -716,7 +731,7 @@ constraint_msg_dns(u_int32_t id, u_int8_t *data, size_t len)
 	struct ntp_addr		*h;
 
 	if ((cstr = constraint_byid(id)) == NULL) {
-		log_warnx("IMSG_CONSTRAINT_DNS with invalid constraint id");
+		log_debug("IMSG_CONSTRAINT_DNS with invalid constraint id");
 		return;
 	}
 	if (cstr->addr != NULL) {
@@ -731,6 +746,16 @@ constraint_msg_dns(u_int32_t id, u_int8_t *data, size_t len)
 
 	if (len % (sizeof(struct sockaddr_storage) + sizeof(int)) != 0)
 		fatalx("IMSG_CONSTRAINT_DNS len");
+
+	if (cstr->addr_head.pool) {
+		struct constraint *n, *tmp;
+		TAILQ_FOREACH_SAFE(n, &conf->constraints, entry, tmp) {
+			if (cstr->id == n->id)
+				continue;
+			if (cstr->addr_head.pool == n->addr_head.pool)
+				constraint_remove(n);
+		}
+	}
 
 	p = data;
 	do {
@@ -826,6 +851,8 @@ constraint_reset(void)
 		if (cstr->state == STATE_QUERY_SENT)
 			continue;
 		constraint_close(cstr->id);
+		constraint_addr_head_clear(cstr);
+		constraint_init(cstr);
 	}
 	conf->constraint_errors = 0;
 }
@@ -847,7 +874,6 @@ constraint_check(double val)
 	diff = fabs(val - gettime_from_timeval(&tv));
 
 	if (diff > CONSTRAINT_MARGIN) {
-		/* XXX get new constraint if too many errors happened */
 		if (conf->constraint_errors++ >
 		    (CONSTRAINT_ERROR_MARGIN * peer_cnt)) {
 			constraint_reset();

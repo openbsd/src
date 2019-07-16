@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.158 2019/07/07 07:14:57 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.159 2019/07/16 14:15:40 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -453,6 +453,7 @@ ntp_dispatch_imsg(void)
 				log_info("clock is now synced");
 				conf->status.synced = 1;
 				priv_dns(IMSG_SYNCED, NULL, 0);
+				constraint_reset();
 			} else if (n == 0 && conf->status.synced) {
 				log_info("clock is now unsynced");
 				conf->status.synced = 0;
@@ -539,8 +540,8 @@ ntp_dispatch_imsg_dns(void)
 
 				TAILQ_FOREACH_SAFE(npeer, &conf->ntp_peers,
 				    entry, tmp) {
-					if (strcmp(npeer->addr_head.name,
-					    peer->addr_head.name) != 0)
+					if (npeer->addr_head.pool !=
+					    peer->addr_head.pool)
 						continue;
 					peercount++;
 					if (npeer->id == peer->id)
@@ -596,7 +597,8 @@ ntp_dispatch_imsg_dns(void)
 					npeer->addr_head.a = h;
 					npeer->addr_head.name =
 					    peer->addr_head.name;
-					npeer->addr_head.pool = 1;
+					npeer->addr_head.pool =
+					    peer->addr_head.pool;
 					client_peer_init(npeer);
 					npeer->state = STATE_DNS_DONE;
 					peer_add(npeer);
@@ -653,12 +655,7 @@ peer_remove(struct ntp_peer *p)
 void
 peer_addr_head_clear(struct ntp_peer *p)
 {
-	struct ntp_addr *a = p->addr_head.a;
-	while (a) {
-		struct ntp_addr *next = a->next;
-		free(a);
-		a = next;
-	}
+	host_dns_free(p->addr_head.a);
 	p->addr_head.a = NULL;
 	p->addr = NULL;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.145 2019/06/27 15:18:42 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.146 2019/07/16 14:15:40 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -371,6 +371,7 @@ void	set_next(struct ntp_peer *, time_t);
 void	 constraint_add(struct constraint *);
 void	 constraint_remove(struct constraint *);
 void	 constraint_purge(void);
+void	 constraint_reset(void);
 int	 constraint_init(struct constraint *);
 int	 constraint_query(struct constraint *);
 int	 constraint_check(double);
