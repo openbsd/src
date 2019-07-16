@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.141 2019/07/15 12:28:06 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.142 2019/07/16 21:41:37 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -358,7 +358,7 @@ uipc_attach(struct socket *so, int proto)
 {
 	struct unpcb *unp;
 	int error;
-	
+
 	if (so->so_pcb)
 		return EISCONN;
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
@@ -828,7 +828,7 @@ unp_internalize(struct mbuf *control, struct proc *p)
 	/*
 	 * Check for two potential msg_controllen values because
 	 * IETF stuck their nose in a place it does not belong.
-	 */ 
+	 */
 	if (control->m_len < CMSG_LEN(0) || cm->cmsg_len < CMSG_LEN(0))
 		return (EINVAL);
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
