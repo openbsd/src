@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.42 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.43 2019/07/16 17:39:02 bluhm Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -184,17 +184,19 @@ mbpr(void)
 			    mbstat.m_mtypes[i],
 			    plural(mbstat.m_mtypes[i]), i);
 		}
-	totmem = (mbpool.pr_npages * mbpool.pr_pgsize);
-	totpeak = mbpool.pr_hiwat * mbpool.pr_pgsize;
+	totmem = (unsigned long)mbpool.pr_npages * mbpool.pr_pgsize;
+	totpeak = (unsigned long)mbpool.pr_hiwat * mbpool.pr_pgsize;
 	for (i = 0; i < mclp; i++) {
 		printf("%u/%lu mbuf %d byte clusters in use"
 		    " (current/peak)\n",
 		    mclpools[i].pr_nout,
 		    (unsigned long)
-			(mclpools[i].pr_hiwat * mclpools[i].pr_itemsperpage),
+		    mclpools[i].pr_hiwat * mclpools[i].pr_itemsperpage,
 		    mclpools[i].pr_size);
-		totmem += (mclpools[i].pr_npages * mclpools[i].pr_pgsize);
-		totpeak += mclpools[i].pr_hiwat * mclpools[i].pr_pgsize;
+		totmem += (unsigned long)
+		    mclpools[i].pr_npages * mclpools[i].pr_pgsize;
+		totpeak += (unsigned long)
+		    mclpools[i].pr_hiwat * mclpools[i].pr_pgsize;
 	}
 
 	printf("%lu/%lu/%lu Kbytes allocated to network "

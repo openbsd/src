@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.363 2019/07/12 13:56:27 solene Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.364 2019/07/16 17:39:02 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -128,8 +128,6 @@ extern int audio_record_enable;
 #endif
 
 int allowkmem;
-
-extern void nmbclust_update(void);
 
 int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
@@ -590,11 +588,13 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_wdog(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
-	case KERN_MAXCLUSTERS:
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &nmbclust);
-		if (!error)
-			nmbclust_update();
+	case KERN_MAXCLUSTERS: {
+		int val = nmbclust;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
+		if (error == 0 && val != nmbclust)
+			error = nmbclust_update(val);
 		return (error);
+	}
 #ifndef SMALL_KERNEL
 	case KERN_EVCOUNT:
 		return (evcount_sysctl(name + 1, namelen - 1, oldp, oldlenp,

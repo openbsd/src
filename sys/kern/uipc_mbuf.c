@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.269 2019/06/10 23:45:19 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.270 2019/07/16 17:39:02 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -131,12 +131,11 @@ int max_hdr;			/* largest link+protocol header */
 struct	mutex m_extref_mtx = MUTEX_INITIALIZER(IPL_NET);
 
 void	m_extfree(struct mbuf *);
-void	nmbclust_update(void);
 void	m_zero(struct mbuf *);
 
 struct mutex m_pool_mtx = MUTEX_INITIALIZER(IPL_NET);
-unsigned int mbuf_mem_limit; /* how much memory can be allocated */
-unsigned int mbuf_mem_alloc; /* how much memory has been allocated */
+unsigned long mbuf_mem_limit;	/* how much memory can be allocated */
+unsigned long mbuf_mem_alloc;	/* how much memory has been allocated */
 
 void	*m_pool_alloc(struct pool *, int, int *);
 void	m_pool_free(struct pool *, void *);
@@ -161,14 +160,15 @@ static u_int num_extfree_fns;
 void
 mbinit(void)
 {
-	int i;
+	int i, error;
 	unsigned int lowbits;
 
 	CTASSERT(MSIZE == sizeof(struct mbuf));
 
 	m_pool_allocator.pa_pagesz = pool_allocator_multi.pa_pagesz;
 
-	nmbclust_update();
+	error = nmbclust_update(nmbclust);
+	KASSERT(error == 0);
 	mbuf_mem_alloc = 0;
 
 #if DIAGNOSTIC
@@ -214,11 +214,15 @@ mbcpuinit()
 		pool_cache_init(&mclpools[i]);
 }
 
-void
-nmbclust_update(void)
+int
+nmbclust_update(long newval)
 {
+	if (newval < 0 || newval > LONG_MAX / MCLBYTES)
+		return ERANGE;
 	/* update the global mbuf memory limit */
+	nmbclust = newval;
 	mbuf_mem_limit = nmbclust * MCLBYTES;
+	return 0;
 }
 
 /*

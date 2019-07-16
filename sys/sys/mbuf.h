@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.244 2019/06/10 23:45:19 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.245 2019/07/16 17:39:02 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -402,7 +402,7 @@ struct mbuf_queue {
 #ifdef	_KERNEL
 struct pool;
 
-extern	int nmbclust;			/* limit on the # of clusters */
+extern	long nmbclust;			/* limit on the # of clusters */
 extern	int mblowat;			/* mbuf low water mark */
 extern	int mcllowat;			/* mbuf cluster low water mark */
 extern	int max_linkhdr;		/* largest link-level header */
@@ -411,6 +411,7 @@ extern	int max_hdr;			/* largest link+protocol header */
 
 void	mbinit(void);
 void	mbcpuinit(void);
+int	nmbclust_update(long);
 struct	mbuf *m_copym(struct mbuf *, int, int, int);
 struct	mbuf *m_free(struct mbuf *);
 struct	mbuf *m_get(int, int);
