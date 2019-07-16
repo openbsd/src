@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.111 2019/07/12 10:21:08 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.112 2019/07/16 12:14:30 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 12 2019 $
+.Dd $Mdocdate: July 16 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3126,7 +3126,7 @@ option is not used, it will generate a new RSA private
 key using information specified in the configuration file.
 .It Fl newhdr
 Add the word NEW to the PEM file header and footer lines
-on the outputed request.
+on the outputted request.
 Some software and CAs need this.
 .It Fl newkey Ar arg
 Create a new certificate request and a new private key.
@@ -4422,7 +4422,7 @@ debugging purposes.
 .Op Fl inform Cm der | pem | smime
 .Op Fl inkey Ar file
 .Op Fl issuer_checks
-.Op Fl keyform Cm pem
+.Op Fl keyform Cm der | pem
 .Op Fl md Ar digest
 .Op Fl noattr
 .Op Fl nocerts
@@ -4597,8 +4597,10 @@ or
 file.
 When signing,
 this option can be used multiple times to specify successive keys.
-.It Fl keyform Cm pem
+.It Fl keyform Cm der | pem
 Input private key format.
+The default is
+.Cm pem .
 .It Fl md Ar digest
 The digest algorithm to use when signing or resigning.
 If not present then the default digest algorithm for the signing key is used
@@ -5011,7 +5013,7 @@ Either this option or
 .Fl CApath
 must be specified.
 .It Fl CApath Ar trusted_cert_path
-The directory containing the trused CA certificates of the client.
+The directory containing the trusted CA certificates of the client.
 See
 .Nm verify
 for additional details.
