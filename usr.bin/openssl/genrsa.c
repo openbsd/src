@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.15 2019/07/14 03:30:46 guenther Exp $ */
+/* $OpenBSD: genrsa.c,v 1.16 2019/07/16 12:50:30 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -305,12 +305,14 @@ genrsa_main(int argc, char **argv)
 		goto err;
 	}
 
-	if ((numbits != NULL) && ((sscanf(numbits, "%d", &num) == 0) || (num < 0))) {
+	if ((numbits != NULL) &&
+	    ((sscanf(numbits, "%d", &num) == 0) || (num < 0))) {
 		genrsa_usage();
 		goto err;
 	}
 
-	if (!app_passwd(bio_err, NULL, genrsa_config.passargout, NULL, &passout)) {
+	if (!app_passwd(bio_err, NULL, genrsa_config.passargout, NULL,
+	    &passout)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto err;
 	}
@@ -330,7 +332,8 @@ genrsa_main(int argc, char **argv)
 	if (!rsa)
 		goto err;
 
-	if (!BN_set_word(bn, genrsa_config.f4) || !RSA_generate_key_ex(rsa, num, bn, &cb))
+	if (!BN_set_word(bn, genrsa_config.f4) ||
+	    !RSA_generate_key_ex(rsa, num, bn, &cb))
 		goto err;
 
 	/*
@@ -350,8 +353,8 @@ genrsa_main(int argc, char **argv)
 		PW_CB_DATA cb_data;
 		cb_data.password = passout;
 		cb_data.prompt_info = genrsa_config.outfile;
-		if (!PEM_write_bio_RSAPrivateKey(out, rsa, genrsa_config.enc, NULL, 0,
-			password_callback, &cb_data))
+		if (!PEM_write_bio_RSAPrivateKey(out, rsa, genrsa_config.enc,
+		    NULL, 0, password_callback, &cb_data))
 			goto err;
 	}
 
