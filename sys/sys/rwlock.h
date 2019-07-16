@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.25 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.26 2019/07/16 01:40:49 jsg Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -168,7 +168,7 @@ int	rw_enter(struct rwlock *, int);
 void	rw_exit(struct rwlock *);
 int	rw_status(struct rwlock *);
 
-void	_rrw_init_flags(struct rrwlock *, char *, int,
+void	_rrw_init_flags(struct rrwlock *, const char *, int,
 	    const struct lock_type *);
 int	rrw_enter(struct rrwlock *, int);
 void	rrw_exit(struct rrwlock *);
