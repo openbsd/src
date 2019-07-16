@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpath3.c,v 1.3 2019/07/15 16:05:04 bluhm Exp $ */
+/*	$OpenBSD: realpath3.c,v 1.4 2019/07/16 17:48:56 bluhm Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -76,6 +76,15 @@ realpath3(const char *path, char *resolved)
 	 */
 	if (stat(path, &sb) == -1)
 		return (NULL);
+
+	/*
+	 * POSIX demands ENOTDIR for non directories ending in a "/".
+	 */
+	if (!S_ISDIR(sb.st_mode) && strchr(path, '/') != NULL &&
+	    path[strlen(path) - 1] == '/') {
+		errno = ENOTDIR;
+		return (NULL);
+	}
 
 	serrno = errno;
 
@@ -229,16 +238,6 @@ realpath3(const char *path, char *resolved)
 				}
 			}
 			left_len = strlcpy(left, symlink, sizeof(left));
-		}
-	}
-
-	/*
-	 * POSIX demands ENOTDIR for non directories ending in a "/".
-	 */
-	if (strchr(path, '/') != NULL && path[strlen(path) - 1] == '/') {
-		if (stat(resolved, &sb) != -1 && !S_ISDIR(sb.st_mode)) {
-			errno = ENOTDIR;
-			goto err;
 		}
 	}
 
