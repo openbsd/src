@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.94 2019/07/15 09:05:46 semarie Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.95 2019/07/16 12:16:58 semarie Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -97,12 +97,12 @@ static unsigned int amountpipekva;
 struct pool pipe_pool;
 
 int	dopipe(struct proc *, int *, int);
-void	pipeclose(struct pipe *);
-int	pipe_create(struct pipe *);
 int	pipelock(struct pipe *);
 void	pipeunlock(struct pipe *);
 void	pipeselwakeup(struct pipe *);
 
+struct pipe *pipe_create(void);
+void	pipe_destroy(struct pipe *);
 int	pipe_buffer_realloc(struct pipe *, u_int);
 void	pipe_buffer_free(struct pipe *);
 
@@ -144,14 +144,11 @@ dopipe(struct proc *p, int *ufds, int flags)
 
 	cloexec = (flags & O_CLOEXEC) ? UF_EXCLOSE : 0;
 
-	rpipe = pool_get(&pipe_pool, PR_WAITOK | PR_ZERO);
-	error = pipe_create(rpipe);
-	if (error != 0)
+	if (((rpipe = pipe_create()) == NULL) ||
+	    ((wpipe = pipe_create()) == NULL)) {
+		error = ENOMEM;
 		goto free1;
-	wpipe = pool_get(&pipe_pool, PR_WAITOK | PR_ZERO);
-	error = pipe_create(wpipe);
-	if (error != 0)
-		goto free1;
+	}
 
 	fdplock(fdp);
 
@@ -202,8 +199,8 @@ free3:
 free2:
 	fdpunlock(fdp);
 free1:
-	pipeclose(wpipe);
-	pipeclose(rpipe);
+	pipe_destroy(wpipe);
+	pipe_destroy(rpipe);
 	return (error);
 }
 
@@ -247,22 +244,27 @@ pipe_buffer_realloc(struct pipe *cpipe, u_int size)
 /*
  * initialize and allocate VM and memory for pipe
  */
-int
-pipe_create(struct pipe *cpipe)
+struct pipe *
+pipe_create(void)
 {
+	struct pipe *cpipe;
 	int error;
 
-	sigio_init(&cpipe->pipe_sigio);
+	cpipe = pool_get(&pipe_pool, PR_WAITOK | PR_ZERO);
 
 	error = pipe_buffer_realloc(cpipe, PIPE_SIZE);
-	if (error != 0)
-		return (error);
+	if (error != 0) {
+		pool_put(&pipe_pool, cpipe);
+		return (NULL);
+	}
+
+	sigio_init(&cpipe->pipe_sigio);
 
 	getnanotime(&cpipe->pipe_ctime);
 	cpipe->pipe_atime = cpipe->pipe_ctime;
 	cpipe->pipe_mtime = cpipe->pipe_ctime;
 
-	return (0);
+	return (cpipe);
 }
 
 
@@ -768,7 +770,7 @@ pipe_close(struct file *fp, struct proc *p)
 	fp->f_ops = NULL;
 	fp->f_data = NULL;
 	KERNEL_LOCK();
-	pipeclose(cpipe);
+	pipe_destroy(cpipe);
 	KERNEL_UNLOCK();
 	return (0);
 }
@@ -799,44 +801,46 @@ pipe_buffer_free(struct pipe *cpipe)
 }
 
 /*
- * shutdown the pipe
+ * shutdown the pipe, and free resources.
  */
 void
-pipeclose(struct pipe *cpipe)
+pipe_destroy(struct pipe *cpipe)
 {
 	struct pipe *ppipe;
-	if (cpipe) {
-		pipeselwakeup(cpipe);
-		sigio_free(&cpipe->pipe_sigio);
 
-		/*
-		 * If the other side is blocked, wake it up saying that
-		 * we want to close it down.
-		 */
-		cpipe->pipe_state |= PIPE_EOF;
-		while (cpipe->pipe_busy) {
-			wakeup(cpipe);
-			cpipe->pipe_state |= PIPE_WANTD;
-			tsleep(cpipe, PRIBIO, "pipecl", 0);
-		}
+	if (cpipe == NULL)
+		return;
 
-		/*
-		 * Disconnect from peer
-		 */
-		if ((ppipe = cpipe->pipe_peer) != NULL) {
-			pipeselwakeup(ppipe);
+	pipeselwakeup(cpipe);
+	sigio_free(&cpipe->pipe_sigio);
 
-			ppipe->pipe_state |= PIPE_EOF;
-			wakeup(ppipe);
-			ppipe->pipe_peer = NULL;
-		}
-
-		/*
-		 * free resources
-		 */
-		pipe_buffer_free(cpipe);
-		pool_put(&pipe_pool, cpipe);
+	/*
+	 * If the other side is blocked, wake it up saying that
+	 * we want to close it down.
+	 */
+	cpipe->pipe_state |= PIPE_EOF;
+	while (cpipe->pipe_busy) {
+		wakeup(cpipe);
+		cpipe->pipe_state |= PIPE_WANTD;
+		tsleep(cpipe, PRIBIO, "pipecl", 0);
 	}
+
+	/*
+	 * Disconnect from peer
+	 */
+	if ((ppipe = cpipe->pipe_peer) != NULL) {
+		pipeselwakeup(ppipe);
+
+		ppipe->pipe_state |= PIPE_EOF;
+		wakeup(ppipe);
+		ppipe->pipe_peer = NULL;
+	}
+
+	/*
+	 * free resources
+	 */
+	pipe_buffer_free(cpipe);
+	pool_put(&pipe_pool, cpipe);
 }
 
 int
