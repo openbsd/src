@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.643 2019/07/15 11:07:00 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.644 2019/07/16 01:42:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -163,7 +163,7 @@ struct client_lease *packet_to_lease(struct interface_info *,
     struct option_data *);
 void go_daemon(void);
 int rdaemon(int);
-void	take_charge(struct interface_info *, int);
+int take_charge(struct interface_info *, int, char *);
 struct client_lease *get_recorded_lease(struct interface_info *);
 
 #define ROUNDUP(a)	\
@@ -589,12 +589,9 @@ main(int argc, char *argv[])
 	    sizeof(ifi->rdomain)) == -1)
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
-	take_charge(ifi, routefd);
-
-	if ((fd = open(path_lease_db,
-	    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640)) == -1)
-		fatal("open(%s)", path_lease_db);
+	fd = take_charge(ifi, routefd, path_lease_db);
 	read_lease_db(ifi->name, &ifi->lease_db);
+
 	if ((leaseFile = fopen(path_lease_db, "w")) == NULL)
 		fatal("fopen(%s)", path_lease_db);
 	write_lease_db(ifi->name, &ifi->lease_db);
@@ -2421,13 +2418,13 @@ cleanup:
 	return NULL;
 }
 
-void
-take_charge(struct interface_info *ifi, int routefd)
+int
+take_charge(struct interface_info *ifi, int routefd, char *leasespath)
 {
 	struct pollfd		 fds[1];
 	struct rt_msghdr	 rtm;
 	time_t			 cur_time, sent_time, start_time;
-	int			 nfds;
+	int			 fd, nfds;
 
 #define	MAXSECONDS		9
 #define	SENTSECONDS		3
@@ -2458,17 +2455,19 @@ take_charge(struct interface_info *ifi, int routefd)
 	if (write(routefd, &rtm, sizeof(rtm)) == -1)
 		fatal("write(routefd)");
 
-	while ((ifi->flags & IFI_IN_CHARGE) == 0) {
+	for (fd = -1; fd == -1;) {
 		if (time(&cur_time) == -1)
 			fatal("time");
 		if (cur_time - start_time >= MAXSECONDS)
 			fatalx("failed to take charge");
 
-		if ((cur_time - sent_time) >= SENTSECONDS) {
-			sent_time = cur_time;
-			rtm.rtm_seq = ifi->xid = arc4random();
-			if (write(routefd, &rtm, sizeof(rtm)) == -1)
-				fatal("write(routefd)");
+		if ((ifi->flags & IFI_IN_CHARGE) == 0) {
+			if ((cur_time - sent_time) >= SENTSECONDS) {
+				sent_time = cur_time;
+				rtm.rtm_seq = ifi->xid = arc4random();
+				if (write(routefd, &rtm, sizeof(rtm)) == -1)
+					fatal("write(routefd)");
+			}
 		}
 
 		fds[0].fd = routefd;
@@ -2484,7 +2483,16 @@ take_charge(struct interface_info *ifi, int routefd)
 			fatalx("routefd: ERR|HUP|NVAL");
 		if (nfds == 1 && (fds[0].revents & POLLIN) == POLLIN)
 			routefd_handler(ifi, routefd);
+
+		if ((ifi->flags & IFI_IN_CHARGE) == IFI_IN_CHARGE) {
+			fd = open(leasespath,
+			    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640);
+			if (fd == -1)
+				fatal("open(%s)", leasespath);
+		}
 	}
+
+	return fd;
 }
 
 struct client_lease *
