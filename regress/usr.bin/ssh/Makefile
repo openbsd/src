@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.102 2019/07/16 02:09:29 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.103 2019/07/16 03:21:54 dtucker Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -99,8 +99,7 @@ CLEANFILES+=	*.core actual agent-key.* authorized_keys_${USERNAME} \
 		key.rsa-* keys-command-args kh.* known_hosts \
 		known_hosts-cert known_hosts.* krl-* ls.copy modpipe \
 		netcat pidfile putty.rsa2 ready regress.log remote_pid \
-		revoked-* rsa rsa-agent rsa-agent.pub rsa.pub rsa1 \
-		rsa1-agent rsa1-agent.pub rsa1.pub rsa_ssh2_cr.prv \
+		revoked-* rsa rsa-agent rsa-agent.pub rsa.pub rsa_ssh2_cr.prv \
 		rsa_ssh2_crnl.prv scp-ssh-wrapper.exe \
 		scp-ssh-wrapper.scp setuid-allowed sftp-server.log \
 		sftp-server.sh sftp.log ssh-log-wrapper.sh ssh.log \
