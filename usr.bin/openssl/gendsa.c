@@ -1,4 +1,4 @@
-/* $OpenBSD: gendsa.c,v 1.12 2019/07/14 03:30:46 guenther Exp $ */
+/* $OpenBSD: gendsa.c,v 1.13 2019/07/16 12:36:50 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,14 +74,60 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-static int set_enc(int argc, char **argv, int *argsused);
-static const EVP_CIPHER *get_cipher_by_name(char *name);
-
 static struct {
 	const EVP_CIPHER *enc;
 	char *outfile;
 	char *passargout;
 } gendsa_config;
+
+static const EVP_CIPHER *get_cipher_by_name(char *name)
+{
+	if (name == NULL || strcmp(name, "") == 0)
+		return (NULL);
+#ifndef OPENSSL_NO_AES
+	else if (strcmp(name, "aes128") == 0)
+		return EVP_aes_128_cbc();
+	else if (strcmp(name, "aes192") == 0)
+		return EVP_aes_192_cbc();
+	else if (strcmp(name, "aes256") == 0)
+		return EVP_aes_256_cbc();
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	else if (strcmp(name, "camellia128") == 0)
+		return EVP_camellia_128_cbc();
+	else if (strcmp(name, "camellia192") == 0)
+		return EVP_camellia_192_cbc();
+	else if (strcmp(name, "camellia256") == 0)
+		return EVP_camellia_256_cbc();
+#endif
+#ifndef OPENSSL_NO_DES
+	else if (strcmp(name, "des") == 0)
+		return EVP_des_cbc();
+	else if (strcmp(name, "des3") == 0)
+		return EVP_des_ede3_cbc();
+#endif
+#ifndef OPENSSL_NO_IDEA
+	else if (strcmp(name, "idea") == 0)
+		return EVP_idea_cbc();
+#endif
+	else
+		return (NULL);
+}
+
+static int
+set_enc(int argc, char **argv, int *argsused)
+{
+	char *name = argv[0];
+
+	if (*name++ != '-')
+		return (1);
+
+	if ((gendsa_config.enc = get_cipher_by_name(name)) == NULL)
+		return (1);
+
+	*argsused = 1;
+	return (0);
+}
 
 static const struct option gendsa_options[] = {
 #ifndef OPENSSL_NO_AES
@@ -249,53 +295,4 @@ gendsa_main(int argc, char **argv)
 	free(passout);
 
 	return (ret);
-}
-
-static int
-set_enc(int argc, char **argv, int *argsused)
-{
-	char *name = argv[0];
-
-	if (*name++ != '-')
-		return (1);
-
-	if ((gendsa_config.enc = get_cipher_by_name(name)) == NULL)
-		return (1);
-
-	*argsused = 1;
-	return (0);
-}
-
-static const EVP_CIPHER *get_cipher_by_name(char *name)
-{
-	if (name == NULL || strcmp(name, "") == 0)
-		return (NULL);
-#ifndef OPENSSL_NO_AES
-	else if (strcmp(name, "aes128") == 0)
-		return EVP_aes_128_cbc();
-	else if (strcmp(name, "aes192") == 0)
-		return EVP_aes_192_cbc();
-	else if (strcmp(name, "aes256") == 0)
-		return EVP_aes_256_cbc();
-#endif
-#ifndef OPENSSL_NO_CAMELLIA
-	else if (strcmp(name, "camellia128") == 0)
-		return EVP_camellia_128_cbc();
-	else if (strcmp(name, "camellia192") == 0)
-		return EVP_camellia_192_cbc();
-	else if (strcmp(name, "camellia256") == 0)
-		return EVP_camellia_256_cbc();
-#endif
-#ifndef OPENSSL_NO_DES
-	else if (strcmp(name, "des") == 0)
-		return EVP_des_cbc();
-	else if (strcmp(name, "des3") == 0)
-		return EVP_des_ede3_cbc();
-#endif
-#ifndef OPENSSL_NO_IDEA
-	else if (strcmp(name, "idea") == 0)
-		return EVP_idea_cbc();
-#endif
-	else
-		return (NULL);
 }
