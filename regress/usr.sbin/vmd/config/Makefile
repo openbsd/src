@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2018/10/23 14:25:43 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.9 2019/07/16 21:07:08 bluhm Exp $
 
 VMD ?= /usr/sbin/vmd
 
@@ -30,6 +30,12 @@ vmd-fail-${n}:
 	    diff -u ${.CURDIR}/vmd-fail-${n}.ok /dev/stdin
 .endfor
 
+vmd-fail-too-many-disks: disk0.img disk1.img disk2.img disk3.img disk4.img
+vmd-fail-bad-format vmd-fail-missing-format vmd-pass-format-keyword: foo.img
+
+foo.img disk0.img disk1.img disk2.img disk3.img disk4.img:
+	touch $@
+
 PATH_LONG =	some/relativepath/somewhere/abcdefghijklmnopqrstuvwxyz0123456789/abcdefghijklmnopqrstuvwxyz0123456789/abcdefghijklmnopqrstuvwxyz0123456789
 BOOT_PATH_LONG =	${PATH_LONG}/bsd.rd
 DISK_PATH_LONG =	${PATH_LONG}/bsd.img
@@ -42,6 +48,7 @@ ${BOOT_PATH_LONG} ${DISK_PATH_LONG}:
 	touch $@
 
 clean:
+	rm -f -- *.img
 	rm -rf some
 
 .PHONY: ${REGRESS_TARGETS}
