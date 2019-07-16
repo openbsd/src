@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.8 2018/07/01 11:37:11 kettenis Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.9 2019/07/16 19:12:32 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -143,11 +143,6 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	dwiic_acpi_power(sc, 1);
 
 	/* fetch timing parameters */
-	sc->ss_hcnt = dwiic_read(sc, DW_IC_SS_SCL_HCNT);
-	sc->ss_lcnt = dwiic_read(sc, DW_IC_SS_SCL_LCNT);
-	sc->fs_hcnt = dwiic_read(sc, DW_IC_FS_SCL_HCNT);
-	sc->fs_lcnt = dwiic_read(sc, DW_IC_FS_SCL_LCNT);
-	sc->sda_hold_time = dwiic_read(sc, DW_IC_SDA_HOLD);
 	dwiic_acpi_get_params(sc, "SSCN", &sc->ss_hcnt, &sc->ss_lcnt, NULL);
 	dwiic_acpi_get_params(sc, "FMCN", &sc->fs_hcnt, &sc->fs_lcnt,
 	    &sc->sda_hold_time);
