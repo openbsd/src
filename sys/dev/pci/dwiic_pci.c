@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_pci.c,v 1.6 2019/06/14 11:44:17 jsg Exp $ */
+/* $OpenBSD: dwiic_pci.c,v 1.7 2019/07/16 19:00:25 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  * PCI attachment
@@ -197,9 +197,6 @@ dwiic_pci_activate(struct device *self, int act)
 	case DVACT_WAKEUP:
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPSS_RESETS,
 		    (LPSS_RESETS_I2C | LPSS_RESETS_IDMA));
-
-		dwiic_init(sc);
-
 		break;
 	}
 
