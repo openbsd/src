@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.64 2019/06/18 11:08:42 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.65 2019/07/17 17:49:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -121,7 +121,10 @@ cmd_if_shell_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->cmd_else = NULL;
 	memcpy(&cdata->mouse, m, sizeof cdata->mouse);
 
-	cdata->client = item->client;
+	if (!args_has(args, 'b'))
+		cdata->client = item->client;
+	else
+		cdata->client = c;
 	if (cdata->client != NULL)
 		cdata->client->references++;
 
