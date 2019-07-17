@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.50 2019/04/23 13:53:46 visa Exp $
+#	$OpenBSD: files.octeon,v 1.51 2019/07/17 14:36:32 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -164,6 +164,9 @@ file	arch/octeon/dev/octsctl.c			octsctl
 device	octxctl: fdt
 attach	octxctl at fdt
 file	arch/octeon/dev/octxctl.c			octxctl
+
+pseudo-device	octboot
+file	arch/octeon/dev/octboot.c			octboot needs-flag
 
 pseudo-device	openprom
 file	arch/octeon/octeon/openprom.c			openprom needs-flag

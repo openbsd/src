@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.45 2018/04/09 13:46:15 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.46 2019/07/17 14:36:32 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -271,6 +271,13 @@ extern struct boot_info *octeon_boot_info;
 #define BOOTINFO_CFG_FLAG_PCI_TARGET	(1ull << 1)
 #define BOOTINFO_CFG_FLAG_DEBUG		(1ull << 2)
 #define BOOTINFO_CFG_FLAG_NO_MAGIC	(1ull << 3)
+
+#define BOOTMEM_BLOCK_ALIGN		16
+#define BOOTMEM_BLOCK_MASK		(BOOTMEM_BLOCK_ALIGN - 1)
+#define BOOTMEM_BLOCK_MIN_SIZE		16
+
+int	bootmem_alloc_region(paddr_t, size_t);
+void	bootmem_free(paddr_t, size_t);
 
 int	octeon_ioclock_speed(void);
 

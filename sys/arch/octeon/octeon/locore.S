@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 2019/05/06 17:13:22 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.20 2019/07/17 14:36:32 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -37,6 +37,7 @@
 #include <octeon/dev/cn30xxcorereg.h>
 
 #include "assym.h"
+#include "octboot.h"
 
 #define RNG_CONTROL_ADDR	0x9001180040000000
 #define RNG_CONTROL_ENABLE	0x3
@@ -88,6 +89,17 @@ locore_start:
 	nop
 	j	hw_cpu_spinup_trampoline
 	nop
+#elif NOCTBOOT > 0
+	LA	t0, octeon_boot_ready
+1:	lw	t1, (t0)
+	beq	t1, zero, 1b
+	nop
+
+	LA	t0, octeon_boot_entry
+	ld	t0, (t0)			# get entry point
+	cache	1, 0(zero)			# flush and invalidate dcache
+	jr	t0
+	cache	0, 0(zero)			# invalidate icache
 #else
 	/* Halt extra cores on single-processor kernel. */
 1:	wait
