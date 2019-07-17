@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.22 2019/06/27 09:34:06 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.23 2019/07/17 12:06:53 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -277,7 +277,7 @@ function test_key {
 	check_exit_status $?
 	
 	start_message "dsa"
-	$openssl_bin dsa -in $dsaparam512 -text -out $dsaparam512.out
+	$openssl_bin dsa -in $dsaparam512 -text -modulus -out $dsaparam512.out
 	check_exit_status $?
 	
 	start_message "gendsa - Superseded by genpkey and pkey."
@@ -1131,8 +1131,7 @@ function test_server_client {
 	$s_bin s_server -accept $port -CAfile $ca_cert \
 		-cert $server_cert -key $server_key -pass pass:$server_pass \
 		-context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
-		-nextprotoneg "http/1.1,spdy/3" -alpn "http/1.1,spdy/3" -www \
-		-cipher ALL $extra_opts \
+		-alpn "http/1.1,spdy/3" -www -cipher ALL $extra_opts \
 		-msg -tlsextdebug > $s_server_out 2>&1 &
 	check_exit_status $?
 	s_server_pid=$!
@@ -1233,8 +1232,7 @@ function test_server_client {
 	start_message "s_client ... connect to TLS/SSL test server to get session id"
 	sleep $test_pause_sec
 	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-nextprotoneg "spdy/3,http/1.1" -alpn "spdy/3,http/1.1" \
-		-sess_out $sess_dat \
+		-alpn "spdy/3,http/1.1" -sess_out $sess_dat \
 		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
 	check_exit_status $?
 	
