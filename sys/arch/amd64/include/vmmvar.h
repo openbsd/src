@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.66 2019/05/17 19:07:16 guenther Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.67 2019/07/17 05:51:07 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -525,6 +525,20 @@ struct vm_intr_params {
 	uint16_t		vip_intr;
 };
 
+#define VM_RWVMPARAMS_PVCLOCK_SYSTEM_GPA 0x1	/* read/write pvclock gpa */
+#define VM_RWVMPARAMS_PVCLOCK_VERSION	 0x2	/* read/write pvclock version */
+#define VM_RWVMPARAMS_ALL	(VM_RWVMPARAMS_PVCLOCK_SYSTEM_GPA | \
+    VM_RWVMPARAMS_PVCLOCK_VERSION)
+
+struct vm_rwvmparams_params {
+	/* Input parameters to VMM_IOC_READVMPARAMS/VMM_IOC_WRITEVMPARAMS */
+	uint32_t		vpp_vm_id;
+	uint32_t		vpp_vcpu_id;
+	uint32_t		vpp_mask;
+	paddr_t			vpp_pvclock_system_gpa;
+	uint32_t		vpp_pvclock_version;
+};
+
 #define VM_RWREGS_GPRS	0x1	/* read/write GPRs */
 #define VM_RWREGS_SREGS	0x2	/* read/write segment registers */
 #define VM_RWREGS_CRS	0x4	/* read/write CRs */
@@ -553,6 +567,10 @@ struct vm_rwregs_params {
 #define VMM_IOC_INTR _IOW('V', 6, struct vm_intr_params) /* Intr pending */
 #define VMM_IOC_READREGS _IOWR('V', 7, struct vm_rwregs_params) /* Get regs */
 #define VMM_IOC_WRITEREGS _IOW('V', 8, struct vm_rwregs_params) /* Set regs */
+/* Get VM params */
+#define VMM_IOC_READVMPARAMS _IOWR('V', 9, struct vm_rwvmparams_params)
+/* Set VM params */
+#define VMM_IOC_WRITEVMPARAMS _IOW('V', 10, struct vm_rwvmparams_params)
 
 
 /* CPUID masks */

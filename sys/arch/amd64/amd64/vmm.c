@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.248 2019/07/08 19:57:11 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.249 2019/07/17 05:51:07 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -124,6 +124,7 @@ int vm_get_info(struct vm_info_params *);
 int vm_resetcpu(struct vm_resetcpu_params *);
 int vm_intr_pending(struct vm_intr_params *);
 int vm_rwregs(struct vm_rwregs_params *, int);
+int vm_rwvmparams(struct vm_rwvmparams_params *, int);
 int vm_find(uint32_t, struct vm **);
 int vcpu_readregs_vmx(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_readregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
@@ -485,6 +486,13 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VMM_IOC_WRITEREGS:
 		ret = vm_rwregs((struct vm_rwregs_params *)data, 1);
 		break;
+	case VMM_IOC_READVMPARAMS:
+		ret = vm_rwvmparams((struct vm_rwvmparams_params *)data, 0);
+		break;
+	case VMM_IOC_WRITEVMPARAMS:
+		ret = vm_rwvmparams((struct vm_rwvmparams_params *)data, 1);
+		break;
+
 	default:
 		DPRINTF("%s: unknown ioctl code 0x%lx\n", __func__, cmd);
 		ret = ENOTTY;
@@ -516,6 +524,8 @@ pledge_ioctl_vmm(struct proc *p, long com)
 	case VMM_IOC_INTR:
 	case VMM_IOC_READREGS:
 	case VMM_IOC_WRITEREGS:
+	case VMM_IOC_READVMPARAMS:
+	case VMM_IOC_WRITEVMPARAMS:
 		return (0);
 	}
 
@@ -664,6 +674,66 @@ vm_intr_pending(struct vm_intr_params *vip)
 #endif /* MULTIPROCESSOR */
 
 	return (0);
+}
+
+/*
+ * vm_rwvmparams
+ *
+ * IOCTL handler to read/write the current vmm params like pvclock gpa, pvclock
+ * version, etc.
+ *
+ * Parameters:
+ *   vrwp: Describes the VM and VCPU to get/set the params from
+ *   dir: 0 for reading, 1 for writing
+ *
+ * Return values:
+ *  0: if successful
+ *  ENOENT: if the VM/VCPU defined by 'vpp' cannot be found
+ *  EINVAL: if an error occured reading the registers of the guest
+ */
+int
+vm_rwvmparams(struct vm_rwvmparams_params *vpp, int dir) {
+	struct vm *vm;
+	struct vcpu *vcpu;
+	int error;
+
+	/* Find the desired VM */
+	rw_enter_read(&vmm_softc->vm_lock);
+	error = vm_find(vpp->vpp_vm_id, &vm);
+
+	/* Not found? exit. */
+	if (error != 0) {
+		rw_exit_read(&vmm_softc->vm_lock);
+		return (error);
+	}
+
+	rw_enter_read(&vm->vm_vcpu_lock);
+	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
+		if (vcpu->vc_id == vpp->vpp_vcpu_id)
+			break;
+	}
+	rw_exit_read(&vm->vm_vcpu_lock);
+	rw_exit_read(&vmm_softc->vm_lock);
+
+	if (vcpu == NULL)
+		return (ENOENT);
+
+	if (dir == 0) {
+		if (vpp->vpp_mask & VM_RWVMPARAMS_PVCLOCK_VERSION)
+			vpp->vpp_pvclock_version = vcpu->vc_pvclock_version;
+		if (vpp->vpp_mask & VM_RWVMPARAMS_PVCLOCK_SYSTEM_GPA)
+			vpp->vpp_pvclock_system_gpa = \
+			    vcpu->vc_pvclock_system_gpa;
+		return (0);
+	}
+
+	if (vpp->vpp_mask & VM_RWVMPARAMS_PVCLOCK_VERSION)
+		vcpu->vc_pvclock_version = vpp->vpp_pvclock_version;
+	if (vpp->vpp_mask & VM_RWVMPARAMS_PVCLOCK_SYSTEM_GPA) {
+		vmm_init_pvclock(vcpu, vpp->vpp_pvclock_system_gpa);
+	}
+	return (0);
+
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.94 2019/05/11 23:07:46 jasper Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.95 2019/07/17 05:51:07 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -215,7 +215,7 @@ struct vm_dump_header {
 #define VM_DUMP_SIGNATURE	 VMM_HV_SIGNATURE
 	uint8_t			 vmh_pad[3];
 	uint8_t			 vmh_version;
-#define VM_DUMP_VERSION		 6
+#define VM_DUMP_VERSION		 7
 	struct			 vm_dump_header_cpuid
 	    vmh_cpuids[VM_DUMP_HEADER_CPUID_COUNT];
 } __packed;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.50 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: vm.c,v 1.51 2019/07/17 05:51:07 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -90,6 +90,7 @@ int dump_vmr(int , struct vm_mem_range *);
 int dump_mem(int, struct vm_create_params *);
 void restore_vmr(int, struct vm_mem_range *);
 void restore_mem(int, struct vm_create_params *);
+int restore_vm_params(int, struct vm_create_params *);
 void pause_vm(struct vm_create_params *);
 void unpause_vm(struct vm_create_params *);
 
@@ -366,6 +367,8 @@ start_vm(struct vmd_vm *vm, int fd)
 		    vm->vm_disks, vm->vm_cdrom);
 		mc146818_start();
 		restore_mem(vm->vm_receive_fd, vcp);
+		if (restore_vm_params(vm->vm_receive_fd, vcp))
+			fatal("restore vm params failed");
 	}
 
 	if (vmm_pipe(vm, fd, vm_dispatch_vmm) == -1)
@@ -503,6 +506,7 @@ int
 send_vm(int fd, struct vm_create_params *vcp)
 {
 	struct vm_rwregs_params	   vrp;
+	struct vm_rwvmparams_params vpp;
 	struct vmop_create_params *vmc;
 	struct vm_terminate_params vtp;
 	unsigned int		   flags = 0;
@@ -530,6 +534,8 @@ send_vm(int fd, struct vm_create_params *vcp)
 	vmc->vmc_flags = flags;
 	vrp.vrwp_vm_id = vcp->vcp_id;
 	vrp.vrwp_mask = VM_RWREGS_ALL;
+	vpp.vpp_mask = VM_RWVMPARAMS_ALL;
+	vpp.vpp_vm_id = vcp->vcp_id;
 
 	sz = atomicio(vwrite, fd, vmc,sizeof(struct vmop_create_params));
 	if (sz != sizeof(struct vmop_create_params)) {
@@ -569,6 +575,22 @@ send_vm(int fd, struct vm_create_params *vcp)
 		goto err;
 	if ((ret = dump_mem(fd, vcp)))
 		goto err;
+
+	for (i = 0; i < vcp->vcp_ncpus; i++) {
+		vpp.vpp_vcpu_id = i;
+		if ((ret = ioctl(env->vmd_fd, VMM_IOC_READVMPARAMS, &vpp))) {
+			log_warn("%s: readvmparams failed", __func__);
+			goto err;
+		}
+
+		sz = atomicio(vwrite, fd, &vpp,
+		    sizeof(struct vm_rwvmparams_params));
+		if (sz != sizeof(struct vm_rwvmparams_params)) {
+			log_warn("%s: dumping vm params failed", __func__);
+			ret = -1;
+			goto err;
+		}
+	}
 
 	vtp.vtp_vm_id = vcp->vcp_id;
 	if (ioctl(env->vmd_fd, VMM_IOC_TERM, &vtp) == -1) {
@@ -634,6 +656,26 @@ dump_mem(int fd, struct vm_create_params *vcp)
 		ret = dump_vmr(fd, vmr);
 		if (ret)
 			return ret;
+	}
+	return (0);
+}
+
+int
+restore_vm_params(int fd, struct vm_create_params *vcp) {
+	unsigned int			i;
+	struct vm_rwvmparams_params    vpp;
+
+	for (i = 0; i < vcp->vcp_ncpus; i++) {
+		if (atomicio(read, fd, &vpp, sizeof(vpp)) != sizeof(vpp)) {
+			log_warn("%s: error restoring vm params", __func__);
+			return (-1);
+		}
+		vpp.vpp_vm_id = vcp->vcp_id;
+		vpp.vpp_vcpu_id = i;
+		if (ioctl(env->vmd_fd, VMM_IOC_WRITEVMPARAMS, &vpp) < 0) {
+			log_debug("%s: writing vm params failed", __func__);
+			return (-1);
+		}
 	}
 	return (0);
 }
