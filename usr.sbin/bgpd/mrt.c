@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.97 2019/06/25 21:33:55 benno Exp $ */
+/*	$OpenBSD: mrt.c,v 1.98 2019/07/17 10:13:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -512,14 +512,10 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 		goto fail;
 	}
 	nump = 0;
-	LIST_FOREACH(p, &re->prefix_h, rib_l) {
+	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		struct nexthop		*nexthop;
 		struct bgpd_addr	*nh;
 		struct ibuf		*tbuf;
-
-		/* skip pending withdraw in Adj-RIB-Out */
-		if (prefix_aspath(p) == NULL)
-			continue;
 
 		nexthop = prefix_nexthop(p);
 		if (nexthop == NULL) {
@@ -683,10 +679,7 @@ mrt_dump_upcall(struct rib_entry *re, void *ptr)
 	 * dumps the table so we do the same. If only the active route should
 	 * be dumped p should be set to p = pt->active.
 	 */
-	LIST_FOREACH(p, &re->prefix_h, rib_l) {
-		/* skip pending withdraw in Adj-RIB-Out */
-		if (prefix_aspath(p) == NULL)
-			continue;
+	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		if (mrtbuf->type == MRT_TABLE_DUMP)
 			mrt_dump_entry(mrtbuf, p, mrtbuf->seqnum++,
 			    prefix_peer(p));

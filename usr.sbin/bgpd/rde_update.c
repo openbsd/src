@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.119 2019/07/02 12:07:00 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.120 2019/07/17 10:13:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -143,8 +143,7 @@ withdraw:
 
 		/* withdraw prefix */
 		pt_getaddr(old->pt, &addr);
-		if (prefix_withdraw(&ribs[RIB_ADJ_OUT].rib, peer, &addr,
-		    old->pt->prefixlen) == 1)
+		if (prefix_withdraw(peer, &addr, old->pt->prefixlen) == 1)
 			peer->up_wcnt++;
 	} else {
 		switch (up_test_update(peer, new)) {
@@ -165,13 +164,11 @@ withdraw:
 		}
 
 		pt_getaddr(new->pt, &addr);
-		if (path_update(&ribs[RIB_ADJ_OUT].rib, peer, &state, &addr,
-		    new->pt->prefixlen, prefix_vstate(new)) != 2) {
-			/* only send update if path changed */
-			prefix_update(&ribs[RIB_ADJ_OUT].rib, peer, &addr,
-			    new->pt->prefixlen);
+
+		/* only send update if path changed */
+		if (prefix_update(peer, &state, &addr, new->pt->prefixlen,
+		    prefix_vstate(new)) == 1)
 			peer->up_nlricnt++;
-		}
 
 		rde_filterstate_clean(&state);
 	}
@@ -229,11 +226,8 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 		return;
 	}
 
-	if (path_update(&ribs[RIB_ADJ_OUT].rib, peer, &state, &addr, 0,
-	    ROA_NOTFOUND) != 2) {
-		prefix_update(&ribs[RIB_ADJ_OUT].rib, peer, &addr, 0);
+	if (prefix_update(peer, &state, &addr, 0, ROA_NOTFOUND) == 1)
 		peer->up_nlricnt++;
-	}
 
 	/* no longer needed */
 	rde_filterstate_clean(&state);
@@ -576,8 +570,13 @@ up_is_eor(struct rde_peer *peer, u_int8_t aid)
 
 	p = RB_MIN(prefix_tree, &peer->updates[aid]);
 	if (p != NULL && p->eor) {
+		/*
+		 * Need to remove eor from update tree because
+		 * prefix_adjout_destroy() can't handle that.
+		 */
 		RB_REMOVE(prefix_tree, &peer->updates[aid], p);
-		prefix_destroy(p);
+		p->flags &= ~PREFIX_FLAG_MASK;
+		prefix_adjout_destroy(p);
 		return 1;
 	}
 	return 0;
@@ -616,11 +615,11 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 
 		/* prefix sent, remove from list and clear flag */
 		RB_REMOVE(prefix_tree, prefix_head, p);
-		p->flags = 0;
+		p->flags &= ~PREFIX_FLAG_MASK;
 
 		if (withdraw) {
 			/* prefix no longer needed, remove it */
-			prefix_destroy(p);
+			prefix_adjout_destroy(p);
 			peer->up_wcnt--;
 			peer->prefix_sent_withdraw++;
 		} else {

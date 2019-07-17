@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.475 2019/07/01 07:07:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.476 2019/07/17 10:13:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -94,8 +94,8 @@ u_int8_t	 rde_roa_validity(struct rde_prefixset *,
 void		 peer_init(u_int32_t);
 void		 peer_shutdown(void);
 int		 peer_localaddrs(struct rde_peer *, struct bgpd_addr *);
+struct rde_peer *peer_match(struct ctl_neighbor *, u_int32_t);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
-struct rde_peer	*peer_get(u_int32_t);
 void		 peer_up(u_int32_t, struct session_up *);
 void		 peer_down(u_int32_t);
 void		 peer_flush(struct rde_peer *, u_int8_t, time_t);
@@ -133,7 +133,7 @@ int			 softreconfig;
 struct rde_dump_ctx {
 	LIST_ENTRY(rde_dump_ctx)	entry;
 	struct ctl_show_rib_request	req;
-	u_int16_t			rid;
+	u_int32_t			peerid;
 	u_int8_t			throttled;
 };
 
@@ -220,7 +220,6 @@ rde_main(int debug, int verbose)
 
 	/* make sure the default RIBs are setup */
 	rib_new("Adj-RIB-In", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
-	rib_new("Adj-RIB-Out", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
 
 	out_rules = calloc(1, sizeof(struct filter_head));
 	if (out_rules == NULL)
@@ -2242,7 +2241,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	rib.origin = asp->origin;
 	rib.validation_state = p->validation_state;
 	rib.flags = 0;
-	if (p->re->active == p)
+	if (p->re != NULL && p->re->active == p)
 		rib.flags |= F_PREF_ACTIVE;
 	if (!prefix_peer(p)->conf.ebgp)
 		rib.flags |= F_PREF_INTERNAL;
@@ -2305,7 +2304,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 }
 
 static int
-rde_dump_match_peer(struct rde_peer *p, struct ctl_neighbor *n)
+rde_match_peer(struct rde_peer *p, struct ctl_neighbor *n)
 {
 	char *s;
 
@@ -2326,7 +2325,7 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 {
 	struct rde_aspath	*asp;
 
-	if (!rde_dump_match_peer(prefix_peer(p), &req->neighbor))
+	if (!rde_match_peer(prefix_peer(p), &req->neighbor))
 		return;
 
 	asp = prefix_aspath(p);
@@ -2353,10 +2352,10 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 static void
 rde_dump_upcall(struct rib_entry *re, void *ptr)
 {
-	struct prefix		*p;
 	struct rde_dump_ctx	*ctx = ptr;
+	struct prefix		*p;
 
-	LIST_FOREACH(p, &re->prefix_h, rib_l)
+	LIST_FOREACH(p, &re->prefix_h, entry.list.rib)
 		rde_dump_filter(p, &ctx->req);
 }
 
@@ -2375,8 +2374,36 @@ rde_dump_prefix_upcall(struct rib_entry *re, void *ptr)
 	if (ctx->req.prefixlen > pt->prefixlen)
 		return;
 	if (!prefix_compare(&ctx->req.prefix, &addr, ctx->req.prefixlen))
-		LIST_FOREACH(p, &re->prefix_h, rib_l)
+		LIST_FOREACH(p, &re->prefix_h, entry.list.rib)
 			rde_dump_filter(p, &ctx->req);
+}
+
+static void
+rde_dump_adjout_upcall(struct prefix *p, void *ptr)
+{
+	struct rde_dump_ctx	*ctx = ptr;
+
+	if (p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD))
+		return;
+	rde_dump_filter(p, &ctx->req);
+}
+
+static void
+rde_dump_adjout_prefix_upcall(struct prefix *p, void *ptr)
+{
+	struct rde_dump_ctx	*ctx = ptr;
+	struct bgpd_addr	 addr;
+
+	if (p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD))
+		return;
+
+	pt_getaddr(p->pt, &addr);
+	if (addr.aid != ctx->req.prefix.aid)
+		return;
+	if (ctx->req.prefixlen > p->pt->prefixlen)
+		return;
+	if (!prefix_compare(&ctx->req.prefix, &addr, ctx->req.prefixlen))
+		rde_dump_filter(p, &ctx->req);
 }
 
 static int
@@ -2391,11 +2418,45 @@ static void
 rde_dump_done(void *arg, u_int8_t aid)
 {
 	struct rde_dump_ctx	*ctx = arg;
+	struct rde_peer		*peer;
+	u_int			 error;
 
-	imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
-	    -1, NULL, 0);
+	if (ctx->req.flags & F_CTL_ADJ_OUT) {
+		peer = peer_match(&ctx->req.neighbor, ctx->peerid);
+		if (peer == NULL)
+			goto done;
+		ctx->peerid = peer->conf.id;
+		switch (ctx->req.type) {
+		case IMSG_CTL_SHOW_RIB:
+			if (prefix_dump_new(peer, ctx->req.aid,
+			    CTL_MSG_HIGH_MARK, ctx, rde_dump_adjout_upcall,
+			    rde_dump_done, rde_dump_throttled) == -1)
+				goto nomem;
+			break;
+		case IMSG_CTL_SHOW_RIB_PREFIX:
+			if (prefix_dump_new(peer, ctx->req.aid,
+			    CTL_MSG_HIGH_MARK, ctx,
+			    rde_dump_adjout_prefix_upcall,
+			    rde_dump_done, rde_dump_throttled) == -1)
+				goto nomem;
+			break;
+		default:
+			fatalx("%s: unsupported imsg type", __func__);
+		}
+		return;
+	}
+done:
+	imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid, -1, NULL, 0);
 	LIST_REMOVE(ctx, entry);
 	free(ctx);
+	return;
+
+nomem:
+	log_warn(__func__);
+	error = CTL_RES_NOMEM;
+	imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, ctx->req.pid, -1, &error,
+	    sizeof(error));
+	return;
 }
 
 void
@@ -2404,24 +2465,92 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 {
 	struct rde_dump_ctx	*ctx;
 	struct rib_entry	*re;
+	struct prefix		*p;
 	u_int			 error;
 	u_int8_t		 hostplen;
 	u_int16_t		 rid;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
  nomem:
-		log_warn("rde_dump_ctx_new");
+		log_warn(__func__);
 		error = CTL_RES_NOMEM;
 		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1, &error,
 		    sizeof(error));
 		return;
 	}
+
+	memcpy(&ctx->req, req, sizeof(struct ctl_show_rib_request));
+	ctx->req.pid = pid;
+	ctx->req.type = type;
+
 	if (req->flags & (F_CTL_ADJ_IN | F_CTL_INVALID)) {
 		rid = RIB_ADJ_IN;
 	} else if (req->flags & F_CTL_ADJ_OUT) {
-		rid = RIB_ADJ_OUT;
+		struct rde_peer *peer;
+
+		peer = peer_match(&req->neighbor, 0);
+		if (peer == NULL) {
+			log_warnx("%s: no peer found for adj-rib-out",
+			    __func__);
+			error = CTL_RES_NOSUCHPEER;
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1,
+			    &error, sizeof(error));
+			free(ctx);
+			return;
+		}
+		ctx->peerid = peer->conf.id;
+		switch (ctx->req.type) {
+		case IMSG_CTL_SHOW_RIB:
+			if (prefix_dump_new(peer, ctx->req.aid,
+			    CTL_MSG_HIGH_MARK, ctx, rde_dump_adjout_upcall,
+			    rde_dump_done, rde_dump_throttled) == -1)
+				goto nomem;
+			break;
+		case IMSG_CTL_SHOW_RIB_PREFIX:
+			if (req->flags & F_LONGER) {
+				if (prefix_dump_new(peer, ctx->req.aid,
+				    CTL_MSG_HIGH_MARK, ctx,
+				    rde_dump_adjout_prefix_upcall,
+				    rde_dump_done, rde_dump_throttled) == -1)
+					goto nomem;
+				break;
+			}
+			switch (req->prefix.aid) {
+			case AID_INET:
+			case AID_VPN_IPv4:
+				hostplen = 32;
+				break;
+			case AID_INET6:
+			case AID_VPN_IPv6:
+				hostplen = 128;
+				break;
+			default:
+				fatalx("%s: unknown af", __func__);
+			}
+
+			do {
+				if (req->prefixlen == hostplen)
+					p = prefix_match(peer, &req->prefix);
+				else
+					p = prefix_lookup(peer, &req->prefix,
+					    req->prefixlen);
+				if (p)
+					rde_dump_adjout_upcall(p, ctx);
+			} while ((peer = peer_match(&req->neighbor,
+			    peer->conf.id)));
+
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
+			    -1, NULL, 0);
+			free(ctx);
+			return;
+		default:
+			fatalx("%s: unsupported imsg type", __func__);
+		}
+	
+		LIST_INSERT_HEAD(&rde_dump_h, ctx, entry);
+		return;
 	} else if ((rid = rib_find(req->rib)) == RIB_NOTFOUND) {
-		log_warnx("rde_dump_ctx_new: no such rib %s", req->rib);
+		log_warnx("%s: no such rib %s", __func__, req->rib);
 		error = CTL_RES_NOSUCHRIB;
 		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1, &error,
 		    sizeof(error));
@@ -2429,10 +2558,6 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		return;
 	}
 
-	memcpy(&ctx->req, req, sizeof(struct ctl_show_rib_request));
-	ctx->req.pid = pid;
-	ctx->req.type = type;
-	ctx->rid = rid;
 	switch (ctx->req.type) {
 	case IMSG_CTL_SHOW_NETWORK:
 		if (rib_dump_new(rid, ctx->req.aid, CTL_MSG_HIGH_MARK, ctx,
@@ -2463,10 +2588,10 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			hostplen = 128;
 			break;
 		default:
-			fatalx("rde_dump_ctx_new: unknown af");
+			fatalx("%s: unknown af", __func__);
 		}
 		if (req->prefixlen == hostplen)
-			re = rib_lookup(rib_byid(rid), &req->prefix);
+			re = rib_match(rib_byid(rid), &req->prefix);
 		else
 			re = rib_get(rib_byid(rid), &req->prefix,
 			    req->prefixlen);
@@ -2502,21 +2627,7 @@ rde_dump_ctx_terminate(pid_t pid)
 
 	LIST_FOREACH(ctx, &rde_dump_h, entry) {
 		if (ctx->req.pid == pid) {
-			void (*upcall)(struct rib_entry *, void *);
-			switch (ctx->req.type) {
-			case IMSG_CTL_SHOW_NETWORK:
-				upcall = network_dump_upcall;
-				break;
-			case IMSG_CTL_SHOW_RIB:
-				upcall = rde_dump_upcall;
-				break;
-			case IMSG_CTL_SHOW_RIB_PREFIX:
-				upcall = rde_dump_prefix_upcall;
-				break;
-			default:
-				fatalx("%s: unsupported imsg type", __func__);
-			}
-			rib_dump_terminate(ctx->rid, ctx, upcall);
+			rib_dump_terminate(ctx);
 			return;
 		}
 	}
@@ -2697,16 +2808,9 @@ rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 }
 
 static void
-rde_up_flush_upcall(struct rib_entry *re, void *ptr)
+rde_up_flush_upcall(struct prefix *p, void *ptr)
 {
-	struct rde_peer *peer = ptr;
-	struct prefix *p, *np;
-
-	LIST_FOREACH_SAFE(p, &re->prefix_h, rib_l, np) {
-		if (peer != prefix_peer(p))
-			continue;
-		up_generate_updates(out_rules, peer, NULL, p);
-	}
+	up_generate_updates(out_rules, prefix_peer(p), NULL, p);
 }
 
 static void
@@ -3011,18 +3115,16 @@ rde_reload_done(void)
 		peer->reconf_out = 0;
 		peer->reconf_rib = 0;
 		if (peer->loc_rib_id != rib_find(peer->conf.rib)) {
-			char *p = log_fmt_peer(&peer->conf);
-			log_debug("rib change: reloading peer %s", p);
-			free(p);
+			log_peer_info(&peer->conf, "rib change, reloading");
 			peer->loc_rib_id = rib_find(peer->conf.rib);
 			if (peer->loc_rib_id == RIB_NOTFOUND)
 				fatalx("King Bula's peer met an unknown RIB");
 			peer->reconf_rib = 1;
 			softreconfig++;
-			if (rib_dump_new(RIB_ADJ_OUT, AID_UNSPEC,
-			    RDE_RUNNER_ROUNDS, peer, rde_up_flush_upcall,
+			if (prefix_dump_new(peer, AID_UNSPEC,
+			    RDE_RUNNER_ROUNDS, NULL, rde_up_flush_upcall,
 			    rde_softreconfig_in_done, NULL) == -1)
-				fatal("%s: rib_dump_new", __func__);
+				fatal("%s: prefix_dump_new", __func__);
 			log_peer_info(&peer->conf, "flushing Adj-RIB-Out");
 			continue;
 		}
@@ -3197,7 +3299,7 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 
 	pt = re->prefix;
 	pt_getaddr(pt, &prefix);
-	LIST_FOREACH(p, &re->prefix_h, rib_l) {
+	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		asp = prefix_aspath(p);
 		peer = prefix_peer(p);
 		force_eval = 0;
@@ -3358,6 +3460,35 @@ peer_get(u_int32_t id)
 }
 
 struct rde_peer *
+peer_match(struct ctl_neighbor *n, u_int32_t peerid)
+{
+	struct rde_peer_head	*head;
+	struct rde_peer		*peer;
+	u_int32_t		i = 0;
+
+	if (peerid != 0)
+		i = peerid & peertable.peer_hashmask;
+
+	while (i <= peertable.peer_hashmask) {
+		head = &peertable.peer_hashtbl[i];
+		LIST_FOREACH(peer, head, hash_l) {
+			/* skip peers until peerid is found */
+			if (peerid == peer->conf.id) {
+				peerid = 0;
+				continue;
+			}
+			if (peerid != 0)
+				continue;
+
+			if (rde_match_peer(peer, n))
+				return (peer);
+		}
+		i++;
+	}
+	return (NULL);
+}
+
+struct rde_peer *
 peer_add(u_int32_t id, struct peer_config *p_conf)
 {
 	struct rde_peer_head	*head;
@@ -3441,17 +3572,9 @@ peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 }
 
 static void
-peer_adjout_flush_upcall(struct rib_entry *re, void *arg)
+peer_adjout_clear_upcall(struct prefix *p, void *arg)
 {
-	struct rde_peer *peer = arg;
-	struct prefix *p, *np;
-
-	LIST_FOREACH_SAFE(p, &re->prefix_h, rib_l, np) {
-		if (peer != prefix_peer(p))
-			continue;
-		prefix_destroy(p);
-		break;	/* optimization, only one match per peer possible */
-	}
+	prefix_adjout_destroy(p);
 }
 
 void
@@ -3472,9 +3595,9 @@ peer_up(u_int32_t id, struct session_up *sup)
 		 * There is a race condition when doing PEER_ERR -> PEER_DOWN.
 		 * So just do a full reset of the peer here.
 		 */
-		if (rib_dump_new(RIB_ADJ_OUT, AID_UNSPEC, 0, peer,
-		    peer_adjout_flush_upcall, NULL, NULL) == -1)
-			fatal("%s: rib_dump_new", __func__);
+		if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
+		    peer_adjout_clear_upcall, NULL, NULL) == -1)
+			fatal("%s: prefix_dump_new", __func__);
 		peer_flush(peer, AID_UNSPEC, 0);
 		peer->prefix_cnt = 0;
 		peer->state = PEER_DOWN;
@@ -3519,12 +3642,12 @@ peer_down(u_int32_t id)
 	peer->remote_bgpid = 0;
 	peer->state = PEER_DOWN;
 	/* stop all pending dumps which may depend on this peer */
-	rib_dump_terminate(peer->loc_rib_id, peer, rde_up_dump_upcall);
+	rib_dump_terminate(peer);
 
 	/* flush Adj-RIB-Out for this peer */
-	if (rib_dump_new(RIB_ADJ_OUT, AID_UNSPEC, 0, peer,
-	    peer_adjout_flush_upcall, NULL, NULL) == -1)
-		fatal("%s: rib_dump_new", __func__);
+	if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
+	    peer_adjout_clear_upcall, NULL, NULL) == -1)
+		fatal("%s: prefix_dump_new", __func__);
 
 	peer_flush(peer, AID_UNSPEC, 0);
 
@@ -3553,7 +3676,7 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 
 	pt_getaddr(re->prefix, &addr);
 	prefixlen = re->prefix->prefixlen;
-	LIST_FOREACH_SAFE(p, &re->prefix_h, rib_l, np) {
+	LIST_FOREACH_SAFE(p, &re->prefix_h, entry.list.rib, np) {
 		if (peer != prefix_peer(p))
 			continue;
 		if (staletime && p->lastchange > staletime)
@@ -3888,7 +4011,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 	struct bgpd_addr	 addr;
 	struct rde_dump_ctx	*ctx = ptr;
 
-	LIST_FOREACH(p, &re->prefix_h, rib_l) {
+	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		asp = prefix_aspath(p);
 		if (!(asp->flags & F_PREFIX_ANNOUNCED))
 			continue;
@@ -3925,7 +4048,7 @@ network_flush_upcall(struct rib_entry *re, void *ptr)
 
 	pt_getaddr(re->prefix, &addr);
 	prefixlen = re->prefix->prefixlen;
-	LIST_FOREACH_SAFE(p, &re->prefix_h, rib_l, np) {
+	LIST_FOREACH_SAFE(p, &re->prefix_h, entry.list.rib, np) {
 		if (prefix_peer(p) != peer)
 			continue;
 		asp = prefix_aspath(p);
@@ -3965,9 +4088,6 @@ rde_shutdown(void)
 	for (i = 0; i <= peertable.peer_hashmask; i++)
 		while ((p = LIST_FIRST(&peertable.peer_hashtbl[i])) != NULL)
 			peer_down(p->conf.id);
-
-	/* then since decision process is off, kill RIB_ADJ_OUT */
-	rib_free(rib_byid(RIB_ADJ_OUT));
 
 	/* free filters */
 	filterlist_free(out_rules);

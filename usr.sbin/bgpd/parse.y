@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.392 2019/06/22 05:36:40 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.393 2019/07/17 10:13:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3281,8 +3281,6 @@ parse_config(char *filename, struct peer_head *ph)
 	netconf = &conf->networks;
 
 	add_rib("Adj-RIB-In", conf->default_tableid,
-	    F_RIB_NOFIB | F_RIB_NOEVALUATE);
-	add_rib("Adj-RIB-Out", conf->default_tableid,
 	    F_RIB_NOFIB | F_RIB_NOEVALUATE);
 	add_rib("Loc-RIB", conf->default_tableid, F_RIB_LOCAL);
 

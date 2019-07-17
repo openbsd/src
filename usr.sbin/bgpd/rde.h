@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.219 2019/07/01 07:07:08 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.220 2019/07/17 10:13:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -57,8 +57,7 @@ struct rib {
 };
 
 #define RIB_ADJ_IN	0
-#define RIB_ADJ_OUT	1
-#define RIB_LOC_START	2
+#define RIB_LOC_START	1
 #define RIB_NOTFOUND	0xffff
 
 struct rib_desc {
@@ -78,6 +77,7 @@ LIST_HEAD(aspath_list, aspath);
 LIST_HEAD(attr_list, attr);
 LIST_HEAD(aspath_head, rde_aspath);
 RB_HEAD(prefix_tree, prefix);
+RB_HEAD(prefix_index, prefix);
 
 struct rde_peer {
 	LIST_ENTRY(rde_peer)		 hash_l; /* hash list over all peers */
@@ -87,6 +87,7 @@ struct rde_peer {
 	struct bgpd_addr		 local_v4_addr;
 	struct bgpd_addr		 local_v6_addr;
 	struct capabilities		 capa;
+	struct prefix_index		 adj_rib_out;
 	struct prefix_tree		 updates[AID_MAX];
 	struct prefix_tree		 withdraws[AID_MAX];
 	time_t				 staletime[AID_MAX];
@@ -306,8 +307,14 @@ struct pt_entry_vpn6 {
 };
 
 struct prefix {
-	LIST_ENTRY(prefix)		 rib_l, nexthop_l;
-	RB_ENTRY(prefix)		 entry;
+	union {
+		struct {
+			LIST_ENTRY(prefix)	 rib, nexthop;
+		} list;
+		struct {
+			RB_ENTRY(prefix)	 index, update;
+		} tree;
+	}				 entry;
 	struct pt_entry			*pt;
 	struct rib_entry		*re;
 	struct rde_aspath		*aspath;
@@ -317,12 +324,17 @@ struct prefix {
 	time_t				 lastchange;
 	u_int8_t			 validation_state;
 	u_int8_t			 nhflags;
-	u_int8_t			 flags;
 	u_int8_t			 eor;
-#define	PREFIX_FLAG_WITHDRAW	0x01
-#define	PREFIX_FLAG_UPDATE	0x02
+	u_int8_t			 flags;
+#define	PREFIX_FLAG_WITHDRAW	0x01	/* queued for withdraw */
+#define	PREFIX_FLAG_UPDATE	0x02	/* queued for update */
+#define	PREFIX_FLAG_DEAD	0x04	/* locked but removed */
+#define	PREFIX_FLAG_MASK	0x07	/* mask for the three prefix types */
+#define	PREFIX_NEXTHOP_LINKED	0x40	/* prefix is linked onto nexthop list */
+#define	PREFIX_FLAG_LOCKED	0x80	/* locked by rib walker */
 };
 
+/* possible states for nhflags */
 #define	NEXTHOP_SELF		0x01
 #define	NEXTHOP_REJECT		0x02
 #define	NEXTHOP_BLACKHOLE	0x04
@@ -356,6 +368,7 @@ u_int32_t	rde_local_as(void);
 int		rde_noevaluate(void);
 int		rde_decisionflags(void);
 int		rde_as4byte(struct rde_peer *);
+struct rde_peer	*peer_get(u_int32_t);
 
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
@@ -395,6 +408,7 @@ u_char		*aspath_override(struct aspath *, u_int32_t, u_int32_t,
 		    u_int16_t *);
 int		 aspath_lenmatch(struct aspath *, enum aslen_spec, u_int);
 
+/* rde_community.c */
 int	community_match(struct rde_community *, struct community *,
 	    struct rde_peer *);
 int	community_set(struct rde_community *, struct community *,
@@ -499,15 +513,14 @@ struct rib_desc	*rib_desc(struct rib *);
 void		 rib_free(struct rib *);
 void		 rib_shutdown(void);
 struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
-struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
+struct rib_entry *rib_match(struct rib *, struct bgpd_addr *);
 int		 rib_dump_pending(void);
 void		 rib_dump_runner(void);
 int		 rib_dump_new(u_int16_t, u_int8_t, unsigned int, void *,
 		    void (*)(struct rib_entry *, void *),
 		    void (*)(void *, u_int8_t),
 		    int (*)(void *));
-void		 rib_dump_terminate(u_int16_t, void *,
-		    void (*)(struct rib_entry *, void *));
+void		 rib_dump_terminate(void *);
 
 static inline struct rib *
 re_rib(struct rib_entry *re)
@@ -540,13 +553,20 @@ void		 path_put(struct rde_aspath *);
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
 struct prefix	*prefix_get(struct rib *, struct rde_peer *,
 		    struct bgpd_addr *, int);
+struct prefix	*prefix_lookup(struct rde_peer *, struct bgpd_addr *, int);
+struct prefix	*prefix_match(struct rde_peer *, struct bgpd_addr *);
 int		 prefix_remove(struct rib *, struct rde_peer *,
 		    struct bgpd_addr *, int);
 void		 prefix_add_eor(struct rde_peer *, u_int8_t);
-void		 prefix_update(struct rib *, struct rde_peer *,
-		    struct bgpd_addr *, int);
-int		 prefix_withdraw(struct rib *, struct rde_peer *,
-		    struct bgpd_addr *, int);
+int		 prefix_update(struct rde_peer *, struct filterstate *,
+		    struct bgpd_addr *, int, u_int8_t);
+int		 prefix_withdraw(struct rde_peer *, struct bgpd_addr *, int);
+void		 prefix_adjout_destroy(struct prefix *p);
+void		 prefix_adjout_dump(struct rde_peer *, void *,
+		    void (*)(struct prefix *, void *));
+int		 prefix_dump_new(struct rde_peer *, u_int8_t, unsigned int,
+		    void *, void (*)(struct prefix *, void *),
+    		    void (*)(void *, u_int8_t), int (*)(void *));
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t, int);
 int		 prefix_writebuf(struct ibuf *, struct bgpd_addr *, u_int8_t);
 struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *);
