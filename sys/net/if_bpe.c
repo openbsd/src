@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.7 2019/05/21 10:11:10 dlg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.8 2019/07/17 16:46:17 mpi Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -144,10 +144,6 @@ static struct bpe_tree bpe_interfaces = RBT_INITIALIZER();
 static struct rwlock bpe_lock = RWLOCK_INITIALIZER("bpeifs");
 static struct pool bpe_entry_pool;
 
-#define ether_cmp(_a, _b)	memcmp((_a), (_b), ETHER_ADDR_LEN)
-#define ether_is_eq(_a, _b)	(ether_cmp((_a), (_b)) == 0)
-#define ether_is_bcast(_a)	ether_is_eq((_a), etherbroadcastaddr)
-
 void
 bpeattach(int count)
 {
@@ -290,7 +286,7 @@ bpe_start(struct ifnet *ifp)
 
 		beh = mtod(m, struct ether_header *);
 
-		if (ether_is_bcast(ceh->ether_dhost)) {
+		if (ETHER_IS_BROADCAST(ceh->ether_dhost)) {
 			memcpy(beh->ether_dhost, sc->sc_group,
 			    sizeof(beh->ether_dhost));
 		} else {
@@ -839,7 +835,7 @@ bpe_input_map(struct bpe_softc *sc, const uint8_t *ba, const uint8_t *ca)
 		be->be_age = time_uptime; /* only a little bit racy */
 
 		if (be->be_type != BPE_ENTRY_DYNAMIC ||
-		    ether_is_eq(ba, &be->be_b_da))
+		    ETHER_IS_EQ(ba, &be->be_b_da))
 			be = NULL;
 		else
 			refcnt_take(&be->be_refs);

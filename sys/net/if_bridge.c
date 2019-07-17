@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.335 2019/06/09 17:42:16 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.336 2019/07/17 16:46:17 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -944,10 +944,8 @@ bridgeintr_frame(struct ifnet *brifp, struct ifnet *src_if, struct mbuf *m)
 	 * is not broadcast or multicast, record its address.
 	 */
 	if ((bif->bif_flags & IFBIF_LEARNING) &&
-	    (eh.ether_shost[0] & 1) == 0 &&
-	    !(eh.ether_shost[0] == 0 && eh.ether_shost[1] == 0 &&
-	    eh.ether_shost[2] == 0 && eh.ether_shost[3] == 0 &&
-	    eh.ether_shost[4] == 0 && eh.ether_shost[5] == 0))
+	    !ETHER_IS_MULTICAST(eh.ether_shost) &&
+	    !ETHER_IS_ANYADDR(eh.ether_shost))
 		bridge_rtupdate(sc, src, src_if, 0, IFBAF_DYNAMIC, m);
 
 	if ((bif->bif_flags & IFBIF_STP) &&
@@ -972,8 +970,7 @@ bridgeintr_frame(struct ifnet *brifp, struct ifnet *src_if, struct mbuf *m)
 			return;
 		}
 	} else {
-		if (memcmp(etherbroadcastaddr, eh.ether_dhost,
-		    sizeof(etherbroadcastaddr)) == 0)
+		if (ETHER_IS_BROADCAST(eh.ether_dhost))
 			m->m_flags |= M_BCAST;
 		else
 			m->m_flags |= M_MCAST;

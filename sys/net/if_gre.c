@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.150 2019/04/23 11:48:55 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.151 2019/07/17 16:46:17 mpi Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -353,9 +353,6 @@ struct mgre_tree mgre_tree = RBT_INITIALIZER();
 /*
  * Ethernet GRE tunnels
  */
-#define ether_cmp(_a, _b)	memcmp((_a), (_b), ETHER_ADDR_LEN)
-#define ether_isequal(_a, _b)	(ether_cmp((_a), (_b)) == 0)
-#define ether_isbcast(_e)	ether_isequal((_e), etherbroadcastaddr)
 
 static struct mbuf *
 		gre_ether_align(struct mbuf *, int);
@@ -1455,7 +1452,7 @@ nvgre_input_map(struct nvgre_softc *sc, const struct gre_tunnel *key,
 	struct nvgre_entry *nv, nkey;
 	int new = 0;
 
-	if (ether_isbcast(eh->ether_shost) ||
+	if (ETHER_IS_BROADCAST(eh->ether_shost) ||
 	    ETHER_IS_MULTICAST(eh->ether_shost))
 		return;
 
@@ -3863,7 +3860,7 @@ nvgre_start(struct ifnet *ifp)
 #endif
 
 		eh = mtod(m0, struct ether_header *);
-		if (ether_isbcast(eh->ether_dhost))
+		if (ETHER_IS_BROADCAST(eh->ether_dhost))
 			gateway = tunnel->t_dst;
 		else {
 			memcpy(&key.nv_dst, eh->ether_dhost,
