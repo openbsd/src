@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.115 2019/07/17 14:36:32 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.116 2019/07/17 14:47:42 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -252,6 +252,7 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 	int i;
 	struct boot_desc *boot_desc;
 	struct boot_info *boot_info;
+	int32_t *symptr;
 	uint32_t config4;
 
 	extern char start[], end[];
@@ -285,13 +286,14 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 	/*
 	 * Reserve space for the symbol table, if it exists.
 	 */
-	ssym = (char *)(vaddr_t)*(int32_t *)end;
+	symptr = (int32_t *)roundup((vaddr_t)end, BOOTMEM_BLOCK_ALIGN);
+	ssym = (char *)(vaddr_t)symptr[0];
 	if (((long)ssym - (long)end) >= 0 &&
 	    ((long)ssym - (long)end) <= 0x1000 &&
 	    ssym[0] == ELFMAG0 && ssym[1] == ELFMAG1 &&
 	    ssym[2] == ELFMAG2 && ssym[3] == ELFMAG3) {
 		/* Pointers exist directly after kernel. */
-		esym = (char *)(vaddr_t)*((int32_t *)end + 1);
+		esym = (char *)(vaddr_t)symptr[1];
 		ekern = esym;
 	} else {
 		/* Pointers aren't setup either... */
