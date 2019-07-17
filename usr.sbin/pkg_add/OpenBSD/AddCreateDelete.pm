@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.45 2019/07/14 07:27:18 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.46 2019/07/17 19:00:55 sthen Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -185,25 +185,6 @@ sub handle_options
 {
 	my ($self, $opt_string, $state, @usage) = @_;
 	$state->handle_options($opt_string, $self, @usage);
-}
-
-sub try_and_run_command
-{
-	my ($self, $state) = @_;
-	if ($state->defines('debug')) {
-		$self->run_command($state);
-	} else {
-		try {
-			$self->run_command($state);
-		} catch {
-			$state->errsay("#1: #2", $state->{cmd}, $_);
-			OpenBSD::Handler->reset;
-			if ($_ =~ m/^Caught SIG(\w+)/o) {
-				kill $1, $$;
-			}
-			$state->{bad}++;
-		};
-	}
 }
 
 package OpenBSD::InteractiveStub;

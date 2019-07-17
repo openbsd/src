@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.88 2019/07/14 07:27:18 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.89 2019/07/17 19:00:55 sthen Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -63,7 +63,6 @@ use OpenBSD::Error;
 use OpenBSD::Paths;
 use OpenBSD::PackageInfo;
 use OpenBSD::AddCreateDelete;
-our @ISA = qw(OpenBSD::AddCreateDelete);
 
 sub do_the_main_work
 {
@@ -103,32 +102,49 @@ sub handle_end_tags
 	    });
 }
 
-sub run_command
+sub framework
 {
 	my ($self, $state) = @_;
 
-	lock_db($state->{not}, $state) unless $state->defines('nolock');
-	$state->check_root;
-	$self->process_parameters($state);
-	my $dielater = $self->do_the_main_work($state);
-	# cleanup various things
-	$self->handle_end_tags($state);
-	$state->{recorder}->cleanup($state);
-	$state->ldconfig->ensure;
-	OpenBSD::PackingElement->finish($state);
-	$state->progress->clear;
-	$state->log->dump;
-	$self->finish_display($state);
-	if ($state->verbose >= 2 || $state->{size_only} ||
-	    $state->defines('tally')) {
-		$state->vstat->tally;
+	my $do = sub {
+		lock_db($state->{not}, $state) unless $state->defines('nolock');
+		$state->check_root;
+		$self->process_parameters($state);
+		my $dielater = $self->do_the_main_work($state);
+		# cleanup various things
+		$self->handle_end_tags($state);
+		$state->{recorder}->cleanup($state);
+		$state->ldconfig->ensure;
+		OpenBSD::PackingElement->finish($state);
+		$state->progress->clear;
+		$state->log->dump;
+		$self->finish_display($state);
+		if ($state->verbose >= 2 || $state->{size_only} ||
+		    $state->defines('tally')) {
+			$state->vstat->tally;
+		}
+		$state->say("Extracted #1 from #2", 
+		    $state->{stats}{donesize},
+		    $state->{stats}{totsize}) 
+			if defined $state->{stats} and $state->verbose;
+		# show any error, and show why we died...
+		rethrow $dielater;
+	};
+	if ($state->defines('debug')) {
+		&$do;
+	} else {
+		try {
+			&$do;
+		} catch {
+			$state->errsay("#1", $_);
+			OpenBSD::Handler->reset;
+			if ($_ =~ m/^Caught SIG(\w+)/o) {
+				kill $1, $$;
+			}
+			$state->{bad}++;
+		};
 	}
-	$state->say("Extracted #1 from #2", 
-	    $state->{stats}{donesize},
-	    $state->{stats}{totsize}) 
-		if defined $state->{stats} and $state->verbose;
-	# show any error, and show why we died...
-	rethrow $dielater;
+
 }
 
 sub parse_and_run
@@ -158,7 +174,7 @@ sub parse_and_run
 		}
 	}
 
-	$self->try_and_run_command($state);
+	$self->framework($state);
 
 	if (defined $lflag) {
 		$termios->setlflag($lflag);
