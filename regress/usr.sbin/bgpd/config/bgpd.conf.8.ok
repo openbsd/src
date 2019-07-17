@@ -26,6 +26,5 @@ network inet6 rtlabel "LABEL6"
 network inet6 rtlabel "LABEL6" set { community 64512:3008 }
 
 rde rib Adj-RIB-In no evaluate
-rde rib Adj-RIB-Out no evaluate
 rde rib Loc-RIB rtable 0 fib-update yes
 

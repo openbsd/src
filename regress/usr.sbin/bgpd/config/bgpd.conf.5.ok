@@ -30,6 +30,5 @@ vpn "test-full" on mpe3 {
 }
 
 rde rib Adj-RIB-In no evaluate
-rde rib Adj-RIB-Out no evaluate
 rde rib Loc-RIB rtable 0 fib-update yes
 

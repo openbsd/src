@@ -10,7 +10,6 @@ prefix-set "mynetworks" { 192.0.2.0/24  }
 
 
 rde rib Adj-RIB-In no evaluate
-rde rib Adj-RIB-Out no evaluate
 rde rib Loc-RIB rtable 0 fib-update yes
 
 neighbor 10.2.1.1 {

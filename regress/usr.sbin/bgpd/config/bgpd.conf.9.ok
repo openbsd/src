@@ -48,7 +48,6 @@ origin-set "test4" {
 
 
 rde rib Adj-RIB-In no evaluate
-rde rib Adj-RIB-Out no evaluate
 rde rib Loc-RIB rtable 0 fib-update yes
 
 match from any ovs not-found 
