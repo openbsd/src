@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.68 2019/07/17 18:18:37 lum Exp $	*/
+/*	$OpenBSD: extend.c,v 1.69 2019/07/17 18:43:47 lum Exp $	*/
 /* This file is in the public domain. */
 
 /*
@@ -30,6 +30,7 @@ static char	*skipwhite(char *);
 static char	*parsetoken(char *);
 static int	 bindkey(KEYMAP **, const char *, KCHAR *, int);
 
+#define		 BUFSIZE	128
 /*
  * Insert a string, mainly for use from macros (created by selfinsert).
  */
@@ -37,7 +38,7 @@ static int	 bindkey(KEYMAP **, const char *, KCHAR *, int);
 int
 insert(int f, int n)
 {
-	char	 buf[128], *bufp, *cp;
+	char	 buf[BUFSIZE], *bufp, *cp;
 	int	 count, c;
 
 	if (inmacro) {
@@ -574,7 +575,7 @@ extend(int f, int n)
 int
 evalexpr(int f, int n)
 {
-	char	 exbuf[128], *bufp;
+	char	 exbuf[BUFSIZE], *bufp;
 
 	if ((bufp = eread("Eval: ", exbuf, sizeof(exbuf),
 	    EFNEW | EFCR)) == NULL)
@@ -595,10 +596,10 @@ evalbuffer(int f, int n)
 	struct line		*lp;
 	struct buffer		*bp = curbp;
 	int		 s;
-	static char	 excbuf[128];
+	static char	 excbuf[BUFSIZE];
 
 	for (lp = bfirstlp(bp); lp != bp->b_headp; lp = lforw(lp)) {
-		if (llength(lp) >= 128)
+		if (llength(lp) >= BUFSIZE)
 			return (FALSE);
 		(void)strncpy(excbuf, ltext(lp), llength(lp));
 
@@ -636,7 +637,7 @@ load(const char *fname)
 {
 	int	 s = TRUE, line, ret;
 	int	 nbytes = 0;
-	char	 excbuf[128], fncpy[NFILEN];
+	char	 excbuf[BUFSIZE], fncpy[NFILEN];
 	FILE    *ffp;
 
 	if ((fname = adjustname(fname, TRUE)) == NULL)
@@ -679,7 +680,7 @@ multiarg(char *funstr)
 {
 	regex_t  regex_buff;
 	PF	 funcp;
-	char	 excbuf[128];
+	char	 excbuf[BUFSIZE];
 	char	*cmdp, *argp, *fendp, *endp, *p, *s = " ";
 	int	 singlecmd = 0, spc, numparams, numspc;
 	
