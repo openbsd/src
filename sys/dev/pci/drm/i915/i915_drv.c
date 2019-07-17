@@ -1644,7 +1644,9 @@ out_fini:
 	drm_dev_fini(&dev_priv->drm);
 out_free:
 #endif
+#ifdef __linux__
 	kfree(dev_priv);
+#endif
 	pci_set_drvdata(pdev, NULL);
 	return ret;
 }
