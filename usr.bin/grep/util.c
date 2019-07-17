@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.59 2019/01/23 23:00:54 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.60 2019/07/17 04:24:20 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -651,7 +651,8 @@ printline(str_t *line, int sep, regmatch_t *pmatch)
 	if (bflag) {
 		if (n)
 			putchar(sep);
-		printf("%lld", (long long)line->off);
+		printf("%lld", (long long)line->off +
+		    (pmatch ? pmatch->rm_so : 0));
 		++n;
 	}
 	if (n)
