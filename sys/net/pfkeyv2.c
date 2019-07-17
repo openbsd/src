@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.197 2019/02/04 21:40:52 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.198 2019/07/17 18:52:46 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -129,6 +129,7 @@ extern struct pool ipsec_policy_pool;
 
 extern struct radix_node_head **spd_tables;
 
+struct pool pkpcb_pool;
 #define PFKEY_MSG_MAXSZ 4096
 const struct sockaddr pfkey_addr = { 2, PF_KEY, };
 struct domain pfkeydomain;
@@ -251,6 +252,8 @@ pfkey_init(void)
 	srpl_rc_init(&pkptable.pkp_rc, keycb_ref, keycb_unref, NULL);
 	rw_init(&pkptable.pkp_lk, "pfkey");
 	SRPL_INIT(&pkptable.pkp_list);
+	pool_init(&pkpcb_pool, sizeof(struct pkpcb), 0,
+	    IPL_NONE, PR_WAITOK, "pkpcb", NULL);
 }
 
 
@@ -266,13 +269,13 @@ pfkeyv2_attach(struct socket *so, int proto)
 	if ((so->so_state & SS_PRIV) == 0)
 		return EACCES;
 
-	kp = malloc(sizeof(struct pkpcb), M_PCB, M_WAITOK | M_ZERO);
+	kp = pool_get(&pkpcb_pool, PR_WAITOK|PR_ZERO);
 	so->so_pcb = kp;
 	refcnt_init(&kp->kcb_refcnt);
 
 	error = soreserve(so, PFKEYSNDQ, PFKEYRCVQ);
 	if (error) {
-		free(kp, M_PCB, sizeof(struct pkpcb));
+		pool_put(&pkpcb_pool, kp);
 		return (error);
 	}
 
@@ -326,7 +329,7 @@ pfkeyv2_detach(struct socket *so)
 
 	so->so_pcb = NULL;
 	KASSERT((so->so_state & SS_NOFDREF) == 0);
-	free(kp, M_PCB, sizeof(struct pkpcb));
+	pool_put(&pkpcb_pool, kp);
 
 	return (0);
 }
