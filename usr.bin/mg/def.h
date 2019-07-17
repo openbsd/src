@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.162 2019/07/03 18:11:07 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.163 2019/07/17 18:18:37 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -711,6 +711,8 @@ int		 compile(int, int);
 void		 bellinit(void);
 int		 toggleaudiblebell(int, int);
 int		 togglevisiblebell(int, int);
+int		 dobeep_msgs(const char *, const char *);
+int		 dobeep_msg(const char *);
 void		 dobeep(void);
 
 /*

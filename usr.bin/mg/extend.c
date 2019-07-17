@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.67 2019/07/11 18:20:18 lum Exp $	*/
+/*	$OpenBSD: extend.c,v 1.68 2019/07/17 18:18:37 lum Exp $	*/
 /* This file is in the public domain. */
 
 /*
@@ -110,11 +110,9 @@ remap(KEYMAP *curmap, int c, PF funct, KEYMAP *pref_map)
 		if (n1 <= MAPELEDEF && n1 <= n2) {
 			ele--;
 			if ((pfp = calloc(c - ele->k_base + 1,
-			    sizeof(PF))) == NULL) {
-				dobeep();
-				ewprintf("Out of memory");
-				return (FALSE);
-			}
+			    sizeof(PF))) == NULL)
+				return (dobeep_msg("Out of memory"));
+
 			nold = ele->k_num - ele->k_base + 1;
 			for (i = 0; i < nold; i++)
 				pfp[i] = ele->k_funcp[i];
@@ -125,11 +123,9 @@ remap(KEYMAP *curmap, int c, PF funct, KEYMAP *pref_map)
 			ele->k_funcp = pfp;
 		} else if (n2 <= MAPELEDEF) {
 			if ((pfp = calloc(ele->k_num - c + 1,
-			    sizeof(PF))) == NULL) {
-				dobeep();
-				ewprintf("Out of memory");
-				return (FALSE);
-			}
+			    sizeof(PF))) == NULL)
+				return (dobeep_msg("Out of memory"));
+
 			nold = ele->k_num - ele->k_base + 1;
 			for (i = 0; i < nold; i++)
 				pfp[i + n2] = ele->k_funcp[i];
@@ -144,11 +140,9 @@ remap(KEYMAP *curmap, int c, PF funct, KEYMAP *pref_map)
 					return (FALSE);
 				curmap = newmap;
 			}
-			if ((pfp = malloc(sizeof(PF))) == NULL) {
-				dobeep();
-				ewprintf("Out of memory");
-				return (FALSE);
-			}
+			if ((pfp = malloc(sizeof(PF))) == NULL)
+				return (dobeep_msg("Out of memory"));
+
 			pfp[0] = funct;
 			for (mep = &curmap->map_element[curmap->map_num];
 			    mep > ele; mep--) {
@@ -169,8 +163,7 @@ remap(KEYMAP *curmap, int c, PF funct, KEYMAP *pref_map)
 			else {
 				if ((mp = malloc(sizeof(KEYMAP) +
 				    (MAPINIT - 1) * sizeof(struct map_element))) == NULL) {
-					dobeep();
-					ewprintf("Out of memory");
+					(void)dobeep_msg("Out of memory");
 					ele->k_funcp[c - ele->k_base] =
 					    curmap->map_default;
 					return (FALSE);
@@ -199,8 +192,7 @@ remap(KEYMAP *curmap, int c, PF funct, KEYMAP *pref_map)
 					if ((mp = malloc(sizeof(KEYMAP) +
 					    (MAPINIT - 1) *
 					    sizeof(struct map_element))) == NULL) {
-						dobeep();
-						ewprintf("Out of memory");
+						(void)dobeep_msg("Out of memory");
 						ele->k_funcp[c - ele->k_base] =
 						    curmap->map_default;
 						return (FALSE);
@@ -226,11 +218,9 @@ remap(KEYMAP *curmap, int c, PF funct, KEYMAP *pref_map)
 				curmap = newmap;
 			}
 			if ((pfp = calloc(ele->k_num - c + !n2,
-			    sizeof(PF))) == NULL) {
-				dobeep();
-				ewprintf("Out of memory");
-				return (FALSE);
-			}
+			    sizeof(PF))) == NULL)
+				return (dobeep_msg("Out of memory"));
+
 			ele->k_funcp[n1] = NULL;
 			for (i = n1 + n2; i <= ele->k_num - ele->k_base; i++)
 				pfp[i - n1 - n2] = ele->k_funcp[i];
@@ -250,8 +240,7 @@ remap(KEYMAP *curmap, int c, PF funct, KEYMAP *pref_map)
 			if (pref_map == NULL) {
 				if ((mp = malloc(sizeof(KEYMAP) + (MAPINIT - 1)
 				    * sizeof(struct map_element))) == NULL) {
-					dobeep();
-					ewprintf("Out of memory");
+					(void)dobeep_msg("Out of memory");
 					ele->k_funcp[c - ele->k_base] =
 					    curmap->map_default;
 					return (FALSE);
@@ -279,14 +268,12 @@ reallocmap(KEYMAP *curmap)
 	int	 i;
 
 	if (curmap->map_max > SHRT_MAX - MAPGROW) {
-		dobeep();
-		ewprintf("keymap too large");
+		(void)dobeep_msg("keymap too large");
 		return (NULL);
 	}
 	if ((mp = malloc(sizeof(KEYMAP) + (curmap->map_max + (MAPGROW - 1)) *
 	    sizeof(struct map_element))) == NULL) {
-		dobeep();
-		ewprintf("Out of memory");
+		(void)dobeep_msg("Out of memory");
 		return (NULL);
 	}
 	mp->map_num = curmap->map_num;
@@ -343,9 +330,7 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 		 * Keystrokes aren't collected. Not hard, but pretty useless.
 		 * Would not work for function keys in any case.
 		 */
-		dobeep();
-		ewprintf("Can't rebind key in macro");
-		return (FALSE);
+		return (dobeep_msg("Can't rebind key in macro"));
 	}
 	if (inmacro) {
 		for (s = 0; s < maclcur->l_used - 1; s++) {
@@ -383,11 +368,9 @@ dobind(KEYMAP *curmap, const char *p, int unbind)
 		else if (bufp[0] == '\0')
 			return (FALSE);
 		if (((funct = name_function(bprompt)) == NULL) ?
-		    (pref_map = name_map(bprompt)) == NULL : funct == NULL) {
-			dobeep();
-			ewprintf("[No match]");
-			return (FALSE);
-		}
+		    (pref_map = name_map(bprompt)) == NULL : funct == NULL)
+			return (dobeep_msg("[No match]"));
+
 	}
 	return (remap(curmap, c, funct, pref_map));
 }
@@ -512,11 +495,9 @@ redefine_key(int f, int n)
 	else if (bufp[0] == '\0')
 		return (FALSE);
 	(void)strlcat(buf, tmp, sizeof(buf));
-	if ((mp = name_map(tmp)) == NULL) {
-		dobeep();
-		ewprintf("Unknown map %s", tmp);
-		return (FALSE);
-	}
+	if ((mp = name_map(tmp)) == NULL)
+		return (dobeep_msgs("Unknown map ", tmp));
+
 	if (strlcat(buf, "key: ", sizeof(buf)) >= sizeof(buf))
 		return (FALSE);
 
@@ -568,9 +549,7 @@ extend(int f, int n)
 		}
 		return ((*funct)(f, n));
 	}
-	dobeep();
-	ewprintf("[No match]");
-	return (FALSE);
+	return (dobeep_msg("[No match]"));
 }
 
 /*
@@ -714,24 +693,18 @@ multiarg(char *funstr)
 		*p = '\0';
 	/* we now know that string starts with '(' and ends with ')' */
 	if (regcomp(&regex_buff, "^[(][\t ]*[)]$", REG_EXTENDED)) {
-		dobeep();
-		ewprintf("Could not compile regex");
 		regfree(&regex_buff);
-		return(FALSE);
+		return (dobeep_msg("Could not compile regex"));
 	}
 	if (!regexec(&regex_buff, funstr, 0, NULL, 0)) {
-		dobeep();
-		ewprintf("No command found");
 		regfree(&regex_buff);
-		return(FALSE);
+		return (dobeep_msg("No command found"));
 	}
 	/* currently there are no mg commands that don't have a letter */
 	if (regcomp(&regex_buff, "^[(][\t ]*[A-Za-z-]+[\t ]*[)]$",
 	    REG_EXTENDED)) {
-		dobeep();
-		ewprintf("Could not compile regex");
 		regfree(&regex_buff);
-		return(FALSE);
+		return (dobeep_msg("Could not compile regex"));
 	}
 	if (!regexec(&regex_buff, funstr, 0, NULL, 0))
 		singlecmd = 1;
@@ -757,17 +730,12 @@ multiarg(char *funstr)
 	 * If no extant mg command found, line could be a (define of some kind.
 	 * Since no defines exist at the moment, just return.
 	 */
-	if ((funcp = name_function(cmdp)) == NULL) {
-		dobeep();
-		ewprintf("Unknown command: %s", cmdp);
-		return (FALSE);
-	}
+	if ((funcp = name_function(cmdp)) == NULL)
+		return (dobeep_msgs("Unknown command: %s", cmdp));
+
 	numparams = numparams_function(funcp);
-	if (numparams == 0) {
-		dobeep();
-		ewprintf("Command takes no arguments: %s", cmdp);
-		return (FALSE);
-	}
+	if (numparams == 0)
+		return (dobeep_msgs("Command takes no arguments: %s", cmdp));
 
 	/* now find the first argument */
 	p = fendp + 1;	
@@ -782,23 +750,17 @@ multiarg(char *funstr)
 				*p = '\0'; 	/* terminate arg string */
 				excbuf[0] = '\0';
 				if (strlcpy(excbuf, cmdp, sizeof(excbuf))
-				     >= sizeof(excbuf)) {
-					dobeep();
-					ewprintf("strlcpy error");
-					return (FALSE);
-				}
+				     >= sizeof(excbuf))
+					return (dobeep_msg("strlcpy error"));
+
 				if (strlcat(excbuf, s, sizeof(excbuf))
-				    >= sizeof(excbuf)) {
-					dobeep();
-					ewprintf("strlcpy error");
-					return (FALSE);
-				}
+				    >= sizeof(excbuf))
+					return (dobeep_msg("strlcpy error"));
+
 				if (strlcat(excbuf, argp, sizeof(excbuf))
-				    >= sizeof(excbuf)) {
-					dobeep();
-					ewprintf("strlcpy error");
-					return (FALSE);
-				}
+				    >= sizeof(excbuf))
+					return (dobeep_msg("strlcpy error"));
+
 				excline(excbuf);
 				*p = ' '; 	/* so 'for' loop can continue */
 			}
@@ -837,11 +799,9 @@ excline(char *line)
 
 	lp = NULL;
 
-	if (macrodef || inmacro) {
-		dobeep();
-		ewprintf("Not now!");
-		return (FALSE);
-	}
+	if (macrodef || inmacro)
+		return (dobeep_msg("Not now!"));
+
 	f = 0;
 	n = 1;
 	funcp = skipwhite(line);
@@ -867,11 +827,9 @@ excline(char *line)
 			return (FALSE);
 		n = (int)nl;
 	}
-	if ((fp = name_function(funcp)) == NULL) {
-		dobeep();
-		ewprintf("Unknown function: %s", funcp);
-		return (FALSE);
-	}
+	if ((fp = name_function(funcp)) == NULL)
+		return (dobeep_msgs("Unknown function: ", funcp));
+
 	if (fp == bindtokey || fp == unbindtokey) {
 		bind = BINDARG;
 		curmap = fundamental_map;
@@ -997,8 +955,7 @@ excline(char *line)
 		case BINDNEXT:
 			lp->l_text[lp->l_used] = '\0';
 			if ((curmap = name_map(lp->l_text)) == NULL) {
-				dobeep();
-				ewprintf("No such mode: %s", lp->l_text);
+				(void)dobeep_msgs("No such mode: ", lp->l_text);
 				status = FALSE;
 				free(lp);
 				goto cleanup;
@@ -1015,8 +972,7 @@ excline(char *line)
 	}
 	switch (bind) {
 	default:
-		dobeep();
-		ewprintf("Bad args to set key");
+		(void)dobeep_msg("Bad args to set key");
 		status = FALSE;
 		break;
 	case BINDDO:
