@@ -1,0 +1,19 @@
+.\" $OpenBSD: block_empty.in,v 1.1 2019/07/18 14:38:47 schwarze Exp $
+.TH TBL-DATA-BLOCK_EMPTY 1 "July 17, 2019"
+.SH NAME
+tbl-data-block_empty \- empty text block
+.SH DESCRIPTION
+normal text
+.TS
+|l|l|.
+_
+A	test
+_
+table	T{
+T}
+_
+.TE
+.SH AUTHORS
+.MT rea@FreeBSD.org
+Eygene Ryabinkin
+.ME
