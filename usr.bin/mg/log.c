@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.10 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.11 2019/07/18 10:50:24 lum Exp $	*/
 
 /* 
  * This file is in the public domain.
@@ -55,17 +55,18 @@
 
 #include "log.h"
 
-char	*mglogfiles_create(char *);
-int	 mglog_lines(PF);
-int	 mglog_undo(void);
-int	 mglog_window(void);
-int	 mglog_key(KEYMAP *map);
+static char	*mglogfiles_create(char *);
+static int	 mglog_lines(PF);
+static int	 mglog_undo(void);
+static int	 mglog_window(void);
+static int	 mglog_key(KEYMAP *map);
 
 char		*mglogdir;
 extern char	*mglogpath_lines;
 extern char	*mglogpath_undo;
 extern char	*mglogpath_window;
 extern char	*mglogpath_key;
+extern char     *mglogpath_interpreter;
 int		 mgloglevel;
 
 int
@@ -84,7 +85,7 @@ mglog(PF funct, KEYMAP *map)
 }
 
 
-int
+static int
 mglog_key(KEYMAP *map)
 {
 	struct stat      sb;
@@ -127,7 +128,7 @@ mglog_key(KEYMAP *map)
 	return (TRUE);
 }
 
-int
+static int
 mglog_window(void)
 {
 	struct mgwin	*wp;
@@ -169,7 +170,7 @@ mglog_window(void)
 	return (TRUE);
 }
 
-int
+static int
 mglog_undo(void)
 {
 	struct undo_rec	*rec;
@@ -230,7 +231,7 @@ mglog_undo(void)
 	return (TRUE);
 }
 
-int
+static int
 mglog_lines(PF funct)
 {
 	struct line     *lp;
@@ -294,6 +295,70 @@ mglog_lines(PF funct)
 	return (TRUE);
 }
 
+/*
+ * See what the eval variable code is up to.
+ */
+int
+mglog_isvar(
+	const char* const argbuf,
+	const char* const argp,
+	const int 	  sizof
+)
+{
+	FILE		*fd;
+
+	fd = fopen(mglogpath_interpreter, "a");
+
+	if (fprintf(fd, " argbuf:%s,argp:%s,sizof:%d<\n",
+	    argbuf,
+	    argp,
+	    sizof
+	    ) == -1) {
+		fclose(fd);
+		return (FALSE);
+	}
+	fclose(fd);
+	return (TRUE);
+}
+
+/*
+ * See what the eval line code is up to.
+ */
+int
+mglog_execbuf(
+	const char* const pre,
+	const char* const excbuf,
+	const char* const argbuf,
+    	const char* const argp,
+	const int 	  last,
+	const int	  inlist,
+    	const char* const cmdp,
+	const char* const p,
+	const char* const contbuf
+)
+{
+	FILE		*fd;
+
+	fd = fopen(mglogpath_interpreter, "a");
+
+	if (fprintf(fd, "%sexcbuf:%s,argbuf:%s,argp:%s,last:%d,inlist:%d,"\
+	    "cmdp:%s,p:%s,contbuf:%s<\n",
+	    pre,
+	    excbuf,
+	    argbuf,
+	    argp,
+	    last,
+	    inlist,
+	    cmdp,
+	    p,
+	    contbuf
+	    ) == -1) {
+		fclose(fd);
+		return (FALSE);
+	}
+	fclose(fd);
+	return (TRUE);
+}
 
 /*
  * Make sure logging to log files can happen.
@@ -304,13 +369,14 @@ mgloginit(void)
 	struct stat	 sb;
 	mode_t           dir_mode, f_mode, oumask;
 	char		*mglogfile_lines, *mglogfile_undo, *mglogfile_window;
-	char		*mglogfile_key;
+	char		*mglogfile_key, *mglogfile_interpreter;
 
 	mglogdir = "./log/";
 	mglogfile_lines = "line.log";
 	mglogfile_undo = "undo.log";
 	mglogfile_window = "window.log";
 	mglogfile_key = "key.log";
+	mglogfile_interpreter = "interpreter.log";
 
 	/* 
 	 * Change mgloglevel for desired level of logging.
@@ -340,16 +406,19 @@ mgloginit(void)
 	mglogpath_key = mglogfiles_create(mglogfile_key);
 	if (mglogpath_key == NULL)
 		return (FALSE);
+	mglogpath_interpreter = mglogfiles_create(mglogfile_interpreter);
+	if (mglogpath_interpreter == NULL)
+		return (FALSE);
 
 	return (TRUE);
 }	
 
 
-char *
+static char *
 mglogfiles_create(char *mglogfile)
 {
 	struct stat	 sb;
-	char		 tmp[20], *tmp2;
+	char		 tmp[NFILEN], *tmp2;
 	int     	 fd;
 
 	if (strlcpy(tmp, mglogdir, sizeof(tmp)) >
@@ -358,7 +427,7 @@ mglogfiles_create(char *mglogfile)
 	if (strlcat(tmp, mglogfile, sizeof(tmp)) >
 	    sizeof(tmp))
 		return (NULL);
-	if ((tmp2 = strndup(tmp, 20)) == NULL)
+	if ((tmp2 = strndup(tmp, NFILEN)) == NULL)
 		return (NULL);
 
 	if(stat(tmp2, &sb))
