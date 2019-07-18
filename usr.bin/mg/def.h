@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.164 2019/07/18 05:57:48 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.165 2019/07/18 10:55:11 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -444,12 +444,12 @@ int		 diffbuffer(int, int);
 struct buffer	*findbuffer(char *);
 
 /* display.c */
-int		vtresize(int, int, int);
-void		vtinit(void);
-void		vttidy(void);
-void		update(int);
-int		linenotoggle(int, int);
-int		colnotoggle(int, int);
+int		 vtresize(int, int, int);
+void		 vtinit(void);
+void		 vttidy(void);
+void		 update(int);
+int		 linenotoggle(int, int);
+int		 colnotoggle(int, int);
 
 /* echo.c X */
 void		 eerase(void);
@@ -554,19 +554,19 @@ int		 tagsvisit(int, int);
 int		 curtoken(int, int, char *);
 
 /* cscope.c */
-int		cssymbol(int, int);
-int		csdefinition(int, int);
-int		csfuncalled(int, int);
-int		cscallerfuncs(int, int);
-int		csfindtext(int, int);
-int		csegrep(int, int);
-int		csfindfile(int, int);
-int		csfindinc(int, int);
-int		csnextfile(int, int);
-int		csnextmatch(int, int);
-int		csprevfile(int, int);
-int		csprevmatch(int, int);
-int		cscreatelist(int, int);
+int		 cssymbol(int, int);
+int		 csdefinition(int, int);
+int		 csfuncalled(int, int);
+int		 cscallerfuncs(int, int);
+int		 csfindtext(int, int);
+int		 csegrep(int, int);
+int		 csfindfile(int, int);
+int		 csfindinc(int, int);
+int		 csnextfile(int, int);
+int		 csnextmatch(int, int);
+int		 csprevfile(int, int);
+int		 csprevmatch(int, int);
+int		 cscreatelist(int, int);
 
 /* extend.c X */
 int		 insert(int, int);
