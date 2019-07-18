@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgrcv.2,v 1.17 2019/07/18 13:32:40 schwarze Exp $
+.\"	$OpenBSD: msgrcv.2,v 1.18 2019/07/18 13:45:03 schwarze Exp $
 .\"	$NetBSD: msgrcv.2,v 1.2 1997/03/27 08:20:37 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -120,7 +120,7 @@ A message of the requested type becomes available on the message queue.
 The message queue is removed, in which case \-1 will be returned, and
 .Va errno
 set to
-.Er EINVAL .
+.Er EIDRM .
 .It
 A signal is received and caught.
 \-1 is returned, and

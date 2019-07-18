@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgsnd.2,v 1.20 2019/07/18 12:57:12 schwarze Exp $
+.\"	$OpenBSD: msgsnd.2,v 1.21 2019/07/18 13:45:03 schwarze Exp $
 .\"	$NetBSD: msgsnd.2,v 1.2 1997/03/27 08:20:36 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -92,7 +92,7 @@ The message will be sent.
 The message queue is removed, in which case \-1 will be returned, and
 .Va errno
 is set to
-.Er EINVAL .
+.Er EIDRM .
 .It
 The caller catches a signal.
 The call returns with
