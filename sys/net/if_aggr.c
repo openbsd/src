@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.11 2019/07/18 06:14:16 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.12 2019/07/18 07:51:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -1504,7 +1504,7 @@ aggr_input_lacpdu(struct aggr_port *p, struct mbuf *m)
 	m_freem(m);
 }
 
-static int
+static void
 aggr_update_selected(struct aggr_softc *sc, struct aggr_port *p,
     const struct lacp_du *lacpdu)
 {
@@ -1522,10 +1522,9 @@ aggr_update_selected(struct aggr_softc *sc, struct aggr_port *p,
 	    (rpi->lacp_key == lpi->lacp_key) &&
 	    (ISSET(rpi->lacp_state, LACP_STATE_AGGREGATION) ==
 	     ISSET(lpi->lacp_state, LACP_STATE_AGGREGATION)))
-		return (0);
+		return;
 
 	aggr_unselected(p);
-	return (1);
 }
 
 static void
@@ -1783,8 +1782,6 @@ aggr_selection_logic(struct aggr_softc *sc, struct aggr_port *p)
 	}
 
 	aggr_selected(p);
-	DPRINTF(sc, "%s %s: selection logic: selected\n",
-	    ifp->if_xname, p->p_ifp0->if_xname);
 	return;
 
 unselected:
@@ -2276,16 +2273,16 @@ aggr_rxm_ev(struct aggr_softc *sc, struct aggr_port *p,
 		 *     Actor_Oper_Port_State.LACP_Timeout);
 		 * Actor_Oper_Port_State.Expired = FALSE;
 		 */
-		int sync, unselected;
+		int sync;
 
-		unselected = aggr_update_selected(sc, p, lacpdu);
+		aggr_update_selected(sc, p, lacpdu);
 		sync = aggr_update_ntt(p, lacpdu);
 		/* don't support v2 yet */
 		aggr_recordpdu(p, lacpdu, sync);
 		aggr_start_current_while_timer(p, sc->sc_lacp_timeout);
 		CLR(p->p_actor_state, LACP_STATE_EXPIRED);
 
-		if (unselected)
+		if (p->p_selected == AGGR_PORT_UNSELECTED)
 			aggr_selection_logic(sc, p); /* restart */
 
 		}
