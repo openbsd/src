@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.12 2019/07/18 07:51:47 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.13 2019/07/18 08:09:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -190,6 +190,7 @@ enum lacp_rxm_state {
 
 enum lacp_rxm_event {
 	LACP_RXM_E_BEGIN,
+	LACP_RXM_E_UCT,
 	LACP_RXM_E_PORT_MOVED,
 	LACP_RXM_E_NOT_PORT_MOVED,
 	LACP_RXM_E_PORT_ENABLED,
@@ -239,6 +240,7 @@ static const char *lacp_rxm_state_names[] = {
 
 static const char *lacp_rxm_event_names[] = {
 	"BEGIN",
+	"UCT",
 	"port_moved",
 	"!port_moved",
 	"port_enabled",
@@ -2190,6 +2192,7 @@ aggr_rxm_ev(struct aggr_softc *sc, struct aggr_port *p,
 		break;
 	}
 
+uct:
 	if (p->p_rxm_state != nstate) {
 		DPRINTF(sc, "%s %s rxm: %s (%s) -> %s\n",
 		    sc->sc_if.if_xname, p->p_ifp0->if_xname,
@@ -2217,8 +2220,10 @@ aggr_rxm_ev(struct aggr_softc *sc, struct aggr_port *p,
 		aggr_record_default(sc, p);
 		CLR(p->p_actor_state, LACP_STATE_EXPIRED);
 
-		p->p_rxm_state = LACP_RXM_S_PORT_DISABLED; /* UCT */
-		/* FALLTHROUGH */
+		ev = LACP_RXM_E_UCT;
+		nstate = LACP_RXM_S_PORT_DISABLED;
+		goto uct;
+		/* NOTREACHED */
 	case LACP_RXM_S_PORT_DISABLED:
 		/*
 		 * Partner_Oper_Port_State.Synchronization = FALSE;
