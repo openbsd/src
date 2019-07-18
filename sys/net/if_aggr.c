@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.10 2019/07/18 02:50:43 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.11 2019/07/18 06:14:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -293,6 +293,12 @@ enum aggr_port_selected {
 	AGGR_PORT_UNSELECTED,
 	AGGR_PORT_SELECTED,
 	AGGR_PORT_STANDBY,
+};
+
+static const char *aggr_port_selected_names[] = {
+	"UNSELECTED",
+	"SELECTED",
+	"STANDBY",
 };
 
 struct aggr_port {
@@ -1687,7 +1693,13 @@ aggr_set_selected(struct aggr_port *p, enum aggr_port_selected s,
 {
 	struct aggr_softc *sc = p->p_aggr;
 
-	p->p_selected = s;
+	if (p->p_selected != s) {
+		DPRINTF(sc, "%s %s: Selected %s -> %s\n",
+		    sc->sc_if.if_xname, p->p_ifp0->if_xname,
+		    aggr_port_selected_names[p->p_selected],
+		    aggr_port_selected_names[s]);
+		p->p_selected = s;
+	}
 	aggr_mux(sc, p, ev);
 }
 
@@ -1719,18 +1731,30 @@ aggr_selection_logic(struct aggr_softc *sc, struct aggr_port *p)
 	struct ifnet *ifp = &ac->ac_if;
 	const uint8_t *mac;
 
-	if (p->p_rxm_state != LACP_RXM_S_CURRENT)
+	if (p->p_rxm_state != LACP_RXM_S_CURRENT) {
+		DPRINTF(sc, "%s %s: selection logic: unselected (rxm !%s)\n",
+		    ifp->if_xname, p->p_ifp0->if_xname,
+		    lacp_rxm_state_names[LACP_RXM_S_CURRENT]);
 		goto unselected;
+	}
 
 	pi = &p->p_partner;
-	if (pi->lacp_key == htons(0))
+	if (pi->lacp_key == htons(0)) {
+		DPRINTF(sc, "%s %s: selection logic: unselected "
+		    "(partner key == 0)\n",
+		    ifp->if_xname, p->p_ifp0->if_xname);
 		goto unselected;
+	}
 
 	/*
 	 * aggr(4) does not support individual interfaces
 	 */
-	if (!ISSET(pi->lacp_state, LACP_STATE_AGGREGATION))
+	if (!ISSET(pi->lacp_state, LACP_STATE_AGGREGATION)) {
+		DPRINTF(sc, "%s %s: selection logic: unselected "
+		    "(partner state is Individual)\n",
+		    ifp->if_xname, p->p_ifp0->if_xname);
 		goto unselected;
+	}
 
 	/*
 	 * Any pair of Aggregation Ports that are members of the same
@@ -1740,17 +1764,27 @@ aggr_selection_logic(struct aggr_softc *sc, struct aggr_port *p)
 
 	mac = pi->lacp_sysid.lacp_sysid_mac;
 	if (ETHER_IS_EQ(mac, ac->ac_enaddr) &&
-	    pi->lacp_key == htons(ifp->if_index))
+	    pi->lacp_key == htons(ifp->if_index)) {
+		DPRINTF(sc, "%s %s: selection logic: unselected "
+		    "(partner sysid !eq)\n",
+		    ifp->if_xname, p->p_ifp0->if_xname);
 		goto unselected;
+	}
 
 	if (!TAILQ_EMPTY(&sc->sc_muxen)) {
 		/* an aggregation has already been selected */
 		if (!ETHER_IS_EQ(mac, sc->sc_partner_system.lacp_sysid_mac) ||
-		    sc->sc_partner_key != pi->lacp_key)
+		    sc->sc_partner_key != pi->lacp_key) {
+			DPRINTF(sc, "%s %s: selection logic: unselected "
+			    "(partner sysid != selection)\n",
+			    ifp->if_xname, p->p_ifp0->if_xname);
 			goto unselected;
+		}
 	}
 
 	aggr_selected(p);
+	DPRINTF(sc, "%s %s: selection logic: selected\n",
+	    ifp->if_xname, p->p_ifp0->if_xname);
 	return;
 
 unselected:
