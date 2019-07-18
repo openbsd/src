@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.9 2019/07/05 07:18:12 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.10 2019/07/18 02:50:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -472,10 +472,7 @@ static void	aggr_unselected(struct aggr_port *);
 
 static void	aggr_selection_logic(struct aggr_softc *, struct aggr_port *);
 
-#define ether_cmp(_a, _b)	memcmp((_a), (_b), ETHER_ADDR_LEN)
-#define ether_is_eq(_a, _b)	(ether_cmp((_a), (_b)) == 0)
-#define ether_is_slow(_a)	ether_is_eq((_a), lacp_address_slow)
-#define ether_is_zero(_a)	ether_is_eq((_a), etheranyaddr)
+#define ETHER_IS_SLOWADDR(_a)	ETHER_IS_EQ((_a), lacp_address_slow)
 
 static struct if_clone aggr_cloner =
     IF_CLONE_INITIALIZER("aggr", aggr_clone_create, aggr_clone_destroy);
@@ -694,7 +691,7 @@ aggr_start(struct ifqueue *ifq)
 static inline int
 aggr_eh_is_slow(const struct ether_header *eh)
 {
-	return (ether_is_slow(eh->ether_dhost) &&
+	return (ETHER_IS_SLOWADDR(eh->ether_dhost) &&
 	    eh->ether_type == htons(ETHERTYPE_SLOW));
 }
 
@@ -1512,7 +1509,7 @@ aggr_update_selected(struct aggr_softc *sc, struct aggr_port *p,
 	     lpi->lacp_portid.lacp_portid_number) &&
 	    (rpi->lacp_portid.lacp_portid_priority ==
 	     lpi->lacp_portid.lacp_portid_priority) &&
-	    ether_is_eq(rpi->lacp_sysid.lacp_sysid_mac,
+	    ETHER_IS_EQ(rpi->lacp_sysid.lacp_sysid_mac,
 	     lpi->lacp_sysid.lacp_sysid_mac) &&
 	    (rpi->lacp_sysid.lacp_sysid_priority ==
 	     lpi->lacp_sysid.lacp_sysid_priority) &&
@@ -1559,7 +1556,7 @@ aggr_update_default_selected(struct aggr_softc *sc, struct aggr_port *p)
 
 	if ((pi->lacp_portid.lacp_portid_number == htons(0)) &&
 	    (pi->lacp_portid.lacp_portid_priority == htons(0)) &&
-	    ether_is_zero(pi->lacp_sysid.lacp_sysid_mac) &&
+	    ETHER_IS_ANYADDR(pi->lacp_sysid.lacp_sysid_mac) &&
 	    (pi->lacp_sysid.lacp_sysid_priority == htons(0)) &&
 	    (pi->lacp_key == htons(0)) &&
 	    ISSET(pi->lacp_state, LACP_STATE_AGGREGATION))
@@ -1587,7 +1584,7 @@ aggr_update_ntt(struct aggr_port *p, const struct lacp_du *lacpdu)
 	if (pi->lacp_portid.lacp_portid_priority !=
 	     htons(sc->sc_lacp_port_prio))
 		goto ntt;
-	if (!ether_is_eq(pi->lacp_sysid.lacp_sysid_mac, ac->ac_enaddr))
+	if (!ETHER_IS_EQ(pi->lacp_sysid.lacp_sysid_mac, ac->ac_enaddr))
 		goto ntt;
 	if (pi->lacp_sysid.lacp_sysid_priority !=
 	     htons(sc->sc_lacp_prio))
@@ -1742,13 +1739,13 @@ aggr_selection_logic(struct aggr_softc *sc, struct aggr_port *p)
 	 */
 
 	mac = pi->lacp_sysid.lacp_sysid_mac;
-	if (ether_is_eq(mac, ac->ac_enaddr) &&
+	if (ETHER_IS_EQ(mac, ac->ac_enaddr) &&
 	    pi->lacp_key == htons(ifp->if_index))
 		goto unselected;
 
 	if (!TAILQ_EMPTY(&sc->sc_muxen)) {
 		/* an aggregation has already been selected */
-		if (!ether_is_eq(mac, sc->sc_partner_system.lacp_sysid_mac) ||
+		if (!ETHER_IS_EQ(mac, sc->sc_partner_system.lacp_sysid_mac) ||
 		    sc->sc_partner_key != pi->lacp_key)
 			goto unselected;
 	}
@@ -2665,8 +2662,8 @@ static int
 aggr_multi_eq(const struct aggr_multiaddr *ma,
     const uint8_t *addrlo, const uint8_t *addrhi)
 {
-	return (ether_is_eq(ma->m_addrlo, addrlo) &&
-	    ether_is_eq(ma->m_addrhi, addrhi));
+	return (ETHER_IS_EQ(ma->m_addrlo, addrlo) &&
+	    ETHER_IS_EQ(ma->m_addrhi, addrhi));
 }
 
 static int
