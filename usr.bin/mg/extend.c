@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.69 2019/07/17 18:43:47 lum Exp $	*/
+/*	$OpenBSD: extend.c,v 1.70 2019/07/18 05:57:48 lum Exp $	*/
 /* This file is in the public domain. */
 
 /*
@@ -26,11 +26,9 @@ static int	 remap(KEYMAP *, int, PF, KEYMAP *);
 static KEYMAP	*reallocmap(KEYMAP *);
 static void	 fixmap(KEYMAP *, KEYMAP *, KEYMAP *);
 static int	 dobind(KEYMAP *, const char *, int);
-static char	*skipwhite(char *);
 static char	*parsetoken(char *);
 static int	 bindkey(KEYMAP **, const char *, KCHAR *, int);
 
-#define		 BUFSIZE	128
 /*
  * Insert a string, mainly for use from macros (created by selfinsert).
  */
@@ -673,112 +671,6 @@ load(const char *fname)
 }
 
 /*
- * Line has a '(' as the first non-white char.
- */
-static int
-multiarg(char *funstr)
-{
-	regex_t  regex_buff;
-	PF	 funcp;
-	char	 excbuf[BUFSIZE];
-	char	*cmdp, *argp, *fendp, *endp, *p, *s = " ";
-	int	 singlecmd = 0, spc, numparams, numspc;
-	
-	endp = strrchr(funstr, ')');
-	if (endp == NULL) {
-		ewprintf("No closing parenthesis found");
-		return(FALSE);
-	}
-	p = endp + 1;
-	if (*p != '\0')
-		*p = '\0';
-	/* we now know that string starts with '(' and ends with ')' */
-	if (regcomp(&regex_buff, "^[(][\t ]*[)]$", REG_EXTENDED)) {
-		regfree(&regex_buff);
-		return (dobeep_msg("Could not compile regex"));
-	}
-	if (!regexec(&regex_buff, funstr, 0, NULL, 0)) {
-		regfree(&regex_buff);
-		return (dobeep_msg("No command found"));
-	}
-	/* currently there are no mg commands that don't have a letter */
-	if (regcomp(&regex_buff, "^[(][\t ]*[A-Za-z-]+[\t ]*[)]$",
-	    REG_EXTENDED)) {
-		regfree(&regex_buff);
-		return (dobeep_msg("Could not compile regex"));
-	}
-	if (!regexec(&regex_buff, funstr, 0, NULL, 0))
-		singlecmd = 1;
-
-	regfree(&regex_buff);
-	p = funstr + 1;		/* move past first '(' char.	*/
-	cmdp = skipwhite(p);	/* find first char of command.	*/
-
-	if (singlecmd) {
-		/* remove ')', then check for spaces at the end */
-		cmdp[strlen(cmdp) - 1] = '\0'; 
-		if ((fendp = strchr(cmdp, ' ')) != NULL)
-			*fendp = '\0';
-		else if ((fendp = strchr(cmdp, '\t')) != NULL)
-			*fendp = '\0';
-		return(excline(cmdp));
-	}
-	if ((fendp = strchr(cmdp, ' ')) == NULL) 
-		fendp = strchr(cmdp, '\t');
-
-	*fendp = '\0';
-	/*
-	 * If no extant mg command found, line could be a (define of some kind.
-	 * Since no defines exist at the moment, just return.
-	 */
-	if ((funcp = name_function(cmdp)) == NULL)
-		return (dobeep_msgs("Unknown command: %s", cmdp));
-
-	numparams = numparams_function(funcp);
-	if (numparams == 0)
-		return (dobeep_msgs("Command takes no arguments: %s", cmdp));
-
-	/* now find the first argument */
-	p = fendp + 1;	
-	argp = skipwhite(p);
-	numspc = spc = 1; /* initially fake a space so we find first argument */
-
-	for (p = argp; *p != '\0'; p++) {
-		if (*p == ' ' || *p == '\t' || *p == ')') {
-			if (spc == 1)
-				continue;
-			if (spc == 0 && (numspc % numparams == 0)) {
-				*p = '\0'; 	/* terminate arg string */
-				excbuf[0] = '\0';
-				if (strlcpy(excbuf, cmdp, sizeof(excbuf))
-				     >= sizeof(excbuf))
-					return (dobeep_msg("strlcpy error"));
-
-				if (strlcat(excbuf, s, sizeof(excbuf))
-				    >= sizeof(excbuf))
-					return (dobeep_msg("strlcpy error"));
-
-				if (strlcat(excbuf, argp, sizeof(excbuf))
-				    >= sizeof(excbuf))
-					return (dobeep_msg("strlcpy error"));
-
-				excline(excbuf);
-				*p = ' '; 	/* so 'for' loop can continue */
-			}
-			numspc++;
-			spc = 1;
-		} else {
-			if (spc == 1)
-				if ((numparams == 1) ||
-				    ((numspc + 1) % numparams) == 0)
-					argp = p;
-			spc = 0;
-		}
-	}
-	return (TRUE);
-}
-
-/*
  * excline - run a line from a load file or eval-expression.
  */
 int
@@ -809,7 +701,7 @@ excline(char *line)
 	if (*funcp == '\0')
 		return (TRUE);	/* No error on blank lines */
 	if (*funcp == '(')
-		return (multiarg(funcp));
+		return (foundparen(funcp));
 	line = parsetoken(funcp);
 	if (*line != '\0') {
 		*line++ = '\0';
@@ -1007,7 +899,7 @@ cleanup:
 /*
  * a pair of utility functions for the above
  */
-static char *
+char *
 skipwhite(char *s)
 {
 	while (*s == ' ' || *s == '\t')

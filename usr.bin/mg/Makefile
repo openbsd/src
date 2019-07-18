@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.34 2019/06/10 06:52:44 lum Exp $
+# $OpenBSD: Makefile,v 1.35 2019/07/18 05:57:48 lum Exp $
 
 PROG=	mg
 
@@ -22,7 +22,7 @@ SRCS=	autoexec.c basic.c bell.c buffer.c cinfo.c dir.c display.c \
 #
 # More or less standalone extensions.
 #
-SRCS+=	cmode.c cscope.c dired.c grep.c tags.c
+SRCS+=	cmode.c cscope.c dired.c grep.c interpreter.c tags.c
 
 #
 # -DMGLOG source file.
