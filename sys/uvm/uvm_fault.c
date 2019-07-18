@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.95 2019/02/03 05:33:48 visa Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.96 2019/07/18 23:47:33 cheloha Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * the owner of page
 			 */
 			uvmfault_unlockall(ufi, amap, NULL, NULL);
-			UVM_WAIT(pg, 0, "anonget2", 0);
+			tsleep_nsec(pg, PVM, "anonget2", INFSLP);
 			/* ready to relock and try again */
 		} else {
 			/* no page, we must try and bring it in. */

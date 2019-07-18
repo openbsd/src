@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.103 2018/07/16 16:44:09 helg Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.104 2019/07/18 23:47:33 cheloha Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 	/* first get a lock on the uvn. */
 	while (uvn->u_flags & UVM_VNODE_BLOCKED) {
 		uvn->u_flags |= UVM_VNODE_WANTED;
-		UVM_WAIT(uvn, FALSE, "uvn_attach", 0);
+		tsleep_nsec(uvn, PVM, "uvn_attach", INFSLP);
 	}
 
 	/* if we're mapping a BLK device, make sure it is a disk. */
@@ -351,7 +351,7 @@ uvn_detach(struct uvm_object *uobj)
 	/* wait on any outstanding io */
 	while (uobj->uo_npages && uvn->u_flags & UVM_VNODE_RELKILL) {
 		uvn->u_flags |= UVM_VNODE_IOSYNC;
-		UVM_WAIT(&uvn->u_nio, FALSE, "uvn_term", 0);
+		tsleep_nsec(&uvn->u_nio, PVM, "uvn_term", INFSLP);
 	}
 
 	if ((uvn->u_flags & UVM_VNODE_RELKILL) == 0)
@@ -477,7 +477,7 @@ uvm_vnp_terminate(struct vnode *vp)
 		 */
 #endif
 		uvn->u_flags |= UVM_VNODE_IOSYNC;
-		UVM_WAIT(&uvn->u_nio, FALSE, "uvn_term", 0);
+		tsleep_nsec(&uvn->u_nio, PVM, "uvn_term", INFSLP);
 	}
 
 	/*
@@ -667,7 +667,8 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 					atomic_setbits_int(&pp->pg_flags,
 					    PG_WANTED);
 					uvm_unlock_pageq();
-					UVM_WAIT(pp, 0, "uvn_flsh", 0);
+					tsleep_nsec(pp, PVM, "uvn_flsh",
+					    INFSLP);
 					uvm_lock_pageq();
 					curoff -= PAGE_SIZE;
 					continue;
@@ -815,7 +816,7 @@ ReTry:
 	if (need_iosync) {
 		while (uvn->u_nio != 0) {
 			uvn->u_flags |= UVM_VNODE_IOSYNC;
-			UVM_WAIT(&uvn->u_nio, FALSE, "uvn_flush", 0);
+			tsleep_nsec(&uvn->u_nio, PVM, "uvn_flush", INFSLP);
 		}
 		if (uvn->u_flags & UVM_VNODE_IOSYNCWANTED)
 			wakeup(&uvn->u_flags);
@@ -1018,7 +1019,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			/* page is there, see if we need to wait on it */
 			if ((ptmp->pg_flags & PG_BUSY) != 0) {
 				atomic_setbits_int(&ptmp->pg_flags, PG_WANTED);
-				UVM_WAIT(ptmp, FALSE, "uvn_get", 0);
+				tsleep_nsec(ptmp, PVM, "uvn_get", INFSLP);
 				continue;	/* goto top of pps while loop */
 			}
 
@@ -1118,7 +1119,7 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 			return(VM_PAGER_AGAIN);
 		}
 		uvn->u_flags |= UVM_VNODE_IOSYNCWANTED;
-		UVM_WAIT(&uvn->u_flags, FALSE, "uvn_iosync", 0);
+		tsleep_nsec(&uvn->u_flags, PVM, "uvn_iosync", INFSLP);
 	}
 
 	/* check size */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.85 2017/01/31 17:08:51 dhill Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.86 2019/07/18 23:47:33 cheloha Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -874,7 +874,7 @@ uao_detach_locked(struct uvm_object *uobj)
 		if (pg->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
 			uvm_unlock_pageq();
-			UVM_WAIT(pg, 0, "uao_det", 0);
+			tsleep_nsec(pg, PVM, "uao_det", INFSLP);
 			uvm_lock_pageq();
 			continue;
 		}
@@ -942,7 +942,7 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		/* Make sure page is unbusy, else wait for it. */
 		if (pp->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pp->pg_flags, PG_WANTED);
-			UVM_WAIT(pp, 0, "uaoflsh", 0);
+			tsleep_nsec(pp, PVM, "uaoflsh", INFSLP);
 			curoff -= PAGE_SIZE;
 			continue;
 		}
@@ -1166,7 +1166,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			/* page is there, see if we need to wait on it */
 			if ((ptmp->pg_flags & PG_BUSY) != 0) {
 				atomic_setbits_int(&ptmp->pg_flags, PG_WANTED);
-				UVM_WAIT(ptmp, FALSE, "uao_get", 0);
+				tsleep_nsec(ptmp, PVM, "uao_get", INFSLP);
 				continue;	/* goto top of pps while loop */
 			}
 			
