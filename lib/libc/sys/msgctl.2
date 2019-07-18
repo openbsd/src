@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgctl.2,v 1.17 2014/12/10 19:19:00 schwarze Exp $
+.\"	$OpenBSD: msgctl.2,v 1.18 2019/07/18 13:32:40 schwarze Exp $
 .\"	$NetBSD: msgctl.2,v 1.2 1997/03/27 08:20:35 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd $Mdocdate: December 10 2014 $
+.Dd $Mdocdate: July 18 2019 $
 .Dt MSGCTL 2
 .Os
 .Sh NAME
@@ -70,9 +70,9 @@ struct msqid_ds {
 .Ed
 .Pp
 The
-.Fa ipc_perm
+.Vt ipc_perm
 structure used inside the
-.Fa msqid_ds
+.Vt msqid_ds
 structure is defined in
 .In sys/ipc.h
 and looks like this:
@@ -100,11 +100,11 @@ structure pointed to by
 .Fa buf .
 .It Dv IPC_SET
 Set the value of the
-.Va msg_perm.uid ,
-.Va msg_perm.gid ,
-.Va msg_perm.mode
+.Fa msg_perm.uid ,
+.Fa msg_perm.gid ,
+.Fa msg_perm.mode
 and
-.Va msg_qbytes
+.Fa msg_qbytes
 fields in the structure associated with
 .Fa msqid .
 The values are taken from the corresponding fields in the structure
@@ -112,15 +112,15 @@ pointed to by
 .Fa buf .
 This operation can only be executed by the superuser, or a process that
 has an effective user ID equal to either
-.Va msg_perm.cuid
+.Fa msg_perm.cuid
 or
-.Va msg_perm.uid
+.Fa msg_perm.uid
 in the data structure associated with the message queue.
 The value of
-.Va msg_qbytes
+.Fa msg_qbytes
 can only be increased by the superuser.
 Values for
-.Va msg_qbytes
+.Fa msg_qbytes
 that exceed the system limit
 .Pf ( Dv MSGMNB
 from
@@ -131,9 +131,9 @@ Remove the message queue specified by
 .Fa msqid
 and destroy the data associated with it.
 Only the superuser or a process with an effective UID equal to the
-.Va msg_perm.cuid
+.Fa msg_perm.cuid
 or
-.Va msg_perm.uid
+.Fa msg_perm.uid
 values in the data structure associated with the queue can do this.
 .El
 .Pp
@@ -142,19 +142,19 @@ The permission to read from or write to a message queue (see
 and
 .Xr msgrcv 2 )
 is determined by the
-.Va msg_perm.mode
+.Fa msg_perm.mode
 field in the same way as is
 done with files (see
 .Xr chmod 2 ) ,
 but the effective UID can match either the
-.Va msg_perm.cuid
+.Fa msg_perm.cuid
 field or the
-.Va msg_perm.uid
+.Fa msg_perm.uid
 field, and the
 effective GID can match either
-.Va msg_perm.cgid
+.Fa msg_perm.cgid
 or
-.Va msg_perm.gid .
+.Fa msg_perm.gid .
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
@@ -169,13 +169,13 @@ or
 .Dv IPC_RMID
 and the caller is not the superuser, nor does
 the effective UID match either the
-.Va msg_perm.uid
+.Fa msg_perm.uid
 or
-.Va msg_perm.cuid
+.Fa msg_perm.cuid
 fields of the data structure associated with the message queue.
 .Pp
 An attempt is made to increase the value of
-.Va msg_qbytes
+.Fa msg_qbytes
 through
 .Dv IPC_SET
 but the caller is not the superuser.
@@ -187,7 +187,7 @@ and the caller has no read permission for this message queue.
 .Fa msqid
 is not a valid message queue identifier.
 .Pp
-.Va cmd
+.Fa cmd
 is not a valid command.
 .It Bq Er EFAULT
 .Fa buf
@@ -197,6 +197,13 @@ specifies an invalid address.
 .Xr msgget 2 ,
 .Xr msgrcv 2 ,
 .Xr msgsnd 2
+.Sh STANDARDS
+The
+.Fn msgctl
+function conforms to the X/Open System Interfaces option of
+.St -p1003.1-2008 .
 .Sh HISTORY
-Message queues appeared in
-.At V.1 .
+Message queues first appeared in
+.At V.1
+and have been available since
+.Nx 1.0 .
