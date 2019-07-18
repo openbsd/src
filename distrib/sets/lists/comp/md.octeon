@@ -83,6 +83,7 @@
 ./usr/include/octeon/mips_opcode.h
 ./usr/include/octeon/mplock.h
 ./usr/include/octeon/mutex.h
+./usr/include/octeon/octboot.h
 ./usr/include/octeon/octeon_model.h
 ./usr/include/octeon/octeonreg.h
 ./usr/include/octeon/octeonvar.h
