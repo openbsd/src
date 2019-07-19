@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.14 2019/07/19 04:15:47 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.15 2019/07/19 04:35:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -452,6 +452,7 @@ static int	aggr_multi_del(struct aggr_softc *, struct ifreq *);
 
 static void	aggr_map(struct aggr_softc *);
 
+static void	aggr_record_default(struct aggr_softc *, struct aggr_port *);
 static void	aggr_current_while_timer(void *);
 static void	aggr_wait_while_timer(void *);
 static void	aggr_rx(void *);
@@ -1427,6 +1428,7 @@ aggr_p_linkch(void *arg)
 	} else {
 		aggr_rxm(sc, p, LACP_RXM_E_NOT_PORT_ENABLED);
 		aggr_unselected(p);
+		aggr_record_default(sc, p);
 		timeout_del(&p->p_ptm_tx);
 	}
 }
