@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.233 2019/07/15 21:40:28 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.234 2019/07/19 20:25:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -1162,7 +1162,7 @@ spawn_pager(struct tag_files *tag_files)
 	/* For more(1) and less(1), use the tag file. */
 
 	use_ofn = 1;
-	if ((cmdlen = strlen(argv[0])) >= 4) {
+	if (*tag_files->tfn != '\0' && (cmdlen = strlen(argv[0])) >= 4) {
 		cp = argv[0] + cmdlen - 4;
 		if (strcmp(cp, "less") == 0 || strcmp(cp, "more") == 0) {
 			argv[argc++] = mandoc_strdup("-T");

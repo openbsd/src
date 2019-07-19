@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.22 2019/07/10 19:38:56 schwarze Exp $ */
+/*	$OpenBSD: tag.c,v 1.23 2019/07/19 20:25:21 schwarze Exp $ */
 /*
  * Copyright (c) 2015, 2016, 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -223,6 +223,7 @@ tag_write(void)
 	struct tag_entry	*entry;
 	size_t			 i;
 	unsigned int		 slot;
+	int			 empty;
 
 	if (tag_files.tfd <= 0)
 		return;
@@ -233,12 +234,16 @@ tag_write(void)
 	}
 	if ((stream = fdopen(tag_files.tfd, "w")) == NULL)
 		mandoc_msg(MANDOCERR_FDOPEN, 0, 0, "%s", strerror(errno));
+	empty = 1;
 	entry = ohash_first(&tag_data, &slot);
 	while (entry != NULL) {
-		if (stream != NULL && entry->prio >= 0)
-			for (i = 0; i < entry->nlines; i++)
+		if (stream != NULL && entry->prio >= 0) {
+			for (i = 0; i < entry->nlines; i++) {
 				fprintf(stream, "%s %s %zu\n",
 				    entry->s, tag_files.ofn, entry->lines[i]);
+				empty = 0;
+			}
+		}
 		free(entry->lines);
 		free(entry);
 		entry = ohash_next(&tag_data, &slot);
@@ -249,6 +254,10 @@ tag_write(void)
 	else
 		close(tag_files.tfd);
 	tag_files.tfd = -1;
+	if (empty) {
+		unlink(tag_files.tfn);
+		*tag_files.tfn = '\0';
+	}
 }
 
 void
