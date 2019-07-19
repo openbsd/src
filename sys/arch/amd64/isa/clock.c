@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.29 2019/05/23 19:00:52 jasper Exp $	*/
+/*	$OpenBSD: clock.c,v 1.30 2019/07/19 14:50:43 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -187,9 +187,9 @@ rtcintr(void *arg)
 	u_int stat = 0;
 
 	/*
-	* If rtcintr is 'late', next intr may happen immediately.
-	* Get them all. (Also, see comment in cpu_initclocks().)
-	*/
+	 * If rtcintr is 'late', next intr may happen immediately.
+	 * Get them all. (Also, see comment in cpu_initclocks().)
+	 */
 	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF) {
 		statclock(frame);
 		stat = 1;
@@ -242,31 +242,8 @@ i8254_delay(int n)
 	if (n <= 25)
 		n = delaytab[n];
 	else {
-#ifdef __GNUC__
-		/*
-		 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler
-		 * code so we can take advantage of the intermediate 64-bit
-		 * quantity to prevent loss of significance.
-		 */
-		int m;
-		__asm volatile("mul %3"
-				 : "=a" (n), "=d" (m)
-				 : "0" (n), "r" (TIMER_FREQ));
-		__asm volatile("div %4"
-				 : "=a" (n), "=d" (m)
-				 : "0" (n), "1" (m), "r" (1000000));
-#else
-		/*
-		 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating
-		 * point and without any avoidable overflows.
-		 */
-		int sec = n / 1000000,
-		    usec = n % 1000000;
-		n = sec * TIMER_FREQ +
-		    usec * (TIMER_FREQ / 1000000) +
-		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
-		    usec * (TIMER_FREQ % 1000) / 1000000;
-#endif
+		/* Force 64-bit math to avoid 32-bit overflow if possible. */
+		n = (int64_t)n * TIMER_FREQ / 1000000;
 	}
 
 	limit = TIMER_FREQ / hz;
