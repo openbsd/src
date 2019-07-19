@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.30 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.31 2019/07/19 00:17:15 cheloha Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -630,7 +630,7 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 			break;
 
 		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0);
+		    ttopen);
 
 		if (!ZSDIALOUT(dev) && cs->cs_cua && error == EINTR) {
 			error = 0;

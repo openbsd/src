@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.22 2018/12/27 11:09:17 claudio Exp $	*/
+/*	$OpenBSD: spif.c,v 1.23 2019/07/19 00:17:15 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -391,7 +391,7 @@ sttyopen(dev_t dev, int flags, int mode, struct proc *p)
 
 			SET(tp->t_state, TS_WOPEN);
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    "sttycd", 0);
+			    "sttycd");
 			if (error != 0) {
 				splx(s);
 				CLR(tp->t_state, TS_WOPEN);

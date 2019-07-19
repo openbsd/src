@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.15 2018/05/31 10:30:10 kettenis Exp $ */
+/* $OpenBSD: exuart.c,v 1.16 2019/07/19 00:17:15 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -359,7 +359,7 @@ exuart_param(struct tty *tp, struct termios *t)
 		while (ISSET(tp->t_state, TS_BUSY)) {
 			++sc->sc_halt;
 			error = ttysleep(tp, &tp->t_outq,
-			    TTOPRI | PCATCH, "exuartprm", 0);
+			    TTOPRI | PCATCH, "exuartprm");
 			--sc->sc_halt;
 			if (error) {
 				exuart_start(tp);
@@ -667,7 +667,7 @@ exuartopen(dev_t dev, int flag, int mode, struct proc *p)
 				!ISSET(tp->t_state, TS_CARR_ON))) {
 				SET(tp->t_state, TS_WOPEN);
 				error = ttysleep(tp, &tp->t_rawq,
-				    TTIPRI | PCATCH, ttopen, 0);
+				    TTIPRI | PCATCH, ttopen);
 				/*
 				 * If TS_WOPEN has been reset, that means the
 				 * cua device has been closed.  We don't want

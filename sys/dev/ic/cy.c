@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.38 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: cy.c,v 1.39 2019/07/19 00:17:15 cheloha Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -372,7 +372,7 @@ cyopen(dev, flag, mode, p)
 		    !ISSET(tp->t_state, TS_CARR_ON)) {
 			SET(tp->t_state, TS_WOPEN);
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    "cydcd", 0);
+			    "cydcd");
 			if (error != 0) {
 				splx(s);
 				CLR(tp->t_state, TS_WOPEN);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.93 2019/03/11 17:13:31 anton Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.94 2019/07/19 00:17:16 cheloha Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -255,8 +255,7 @@ ptsopen(dev_t dev, int flag, int devtype, struct proc *p)
 		tp->t_state |= TS_WOPEN;
 		if (flag & FNONBLOCK)
 			break;
-		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-				 ttopen, 0);
+		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, ttopen);
 		if (error)
 			return (error);
 	}
@@ -296,8 +295,7 @@ again:
 			    pr->ps_flags & PS_PPWAIT)
 				return (EIO);
 			pgsignal(pr->ps_pgrp, SIGTTIN, 1);
-			error = ttysleep(tp, &lbolt,
-			    TTIPRI | PCATCH, ttybg, 0);
+			error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg);
 			if (error)
 				return (error);
 		}
@@ -305,7 +303,7 @@ again:
 			if (flag & IO_NDELAY)
 				return (EWOULDBLOCK);
 			error = ttysleep(tp, &tp->t_canq,
-			    TTIPRI | PCATCH, ttyin, 0);
+			    TTIPRI | PCATCH, ttyin);
 			if (error)
 				return (error);
 			goto again;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.35 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: sab.c,v 1.36 2019/07/19 00:17:15 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -732,7 +732,7 @@ sabttyopen(dev, flags, mode, p)
 
 			tp->t_state |= TS_WOPEN;
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-			    "sabttycd", 0);
+			    "sabttycd");
 			if (error != 0) {
 				splx(s);
 				tp->t_state &= ~TS_WOPEN;

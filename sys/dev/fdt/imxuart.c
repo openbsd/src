@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.7 2019/06/15 14:15:12 kettenis Exp $ */
+/* $OpenBSD: imxuart.c,v 1.8 2019/07/19 00:17:15 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -301,7 +301,7 @@ imxuart_param(struct tty *tp, struct termios *t)
 		while (ISSET(tp->t_state, TS_BUSY)) {
 			++sc->sc_halt;
 			error = ttysleep(tp, &tp->t_outq,
-			    TTOPRI | PCATCH, "imxuartprm", 0);
+			    TTOPRI | PCATCH, "imxuartprm");
 			--sc->sc_halt;
 			if (error) {
 				imxuart_start(tp);
@@ -598,7 +598,7 @@ imxuartopen(dev_t dev, int flag, int mode, struct proc *p)
 				!ISSET(tp->t_state, TS_CARR_ON))) {
 				SET(tp->t_state, TS_WOPEN);
 				error = ttysleep(tp, &tp->t_rawq,
-				    TTIPRI | PCATCH, ttopen, 0);
+				    TTIPRI | PCATCH, ttopen);
 				/*
 				 * If TS_WOPEN has been reset, that means the
 				 * cua device has been closed.  We don't want

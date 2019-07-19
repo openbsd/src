@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.37 2016/05/24 16:09:07 deraadt Exp $	*/
+/*	$OpenBSD: tty.h,v 1.38 2019/07/19 00:17:16 cheloha Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -292,8 +292,7 @@ int	 ttyoutput(int c, struct tty *tp);
 void	 ttypend(struct tty *tp);
 void	 ttyretype(struct tty *tp);
 void	 ttyrub(int c, struct tty *tp);
-int	 ttysleep(struct tty *tp,
-	    void *chan, int pri, char *wmesg, int timeout);
+int	 ttysleep(struct tty *tp, void *chan, int pri, char *wmesg);
 int	 ttywait(struct tty *tp);
 int	 ttywflush(struct tty *tp);
 void	 ttytstamp(struct tty *tp, int octs, int ncts, int odcd, int ndcd);

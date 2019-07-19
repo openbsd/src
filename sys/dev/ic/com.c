@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.169 2018/05/14 19:25:54 kettenis Exp $	*/
+/*	$OpenBSD: com.c,v 1.170 2019/07/19 00:17:15 cheloha Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -395,7 +395,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 			    (!ISSET(tp->t_cflag, CLOCAL) &&
 				!ISSET(tp->t_state, TS_CARR_ON))) {
 				SET(tp->t_state, TS_WOPEN);
-				error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
+				error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, ttopen);
 				/*
 				 * If TS_WOPEN has been reset, that means the cua device
 				 * has been closed.  We don't want to fail in that case,
@@ -821,7 +821,7 @@ comparam(struct tty *tp, struct termios *t)
 
 				++sc->sc_halt;
 				error = ttysleep(tp, &tp->t_outq,
-				    TTOPRI | PCATCH, "comprm", 0);
+				    TTOPRI | PCATCH, "comprm");
 				--sc->sc_halt;
 				if (error) {
 					comstart(tp);

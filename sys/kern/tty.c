@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.147 2019/07/09 18:59:15 kn Exp $	*/
+/*	$OpenBSD: tty.c,v 1.148 2019/07/19 00:17:15 cheloha Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -742,7 +742,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 				return (EIO);
 			pgsignal(pr->ps_pgrp, SIGTTOU, 1);
 			error = ttysleep(tp, &lbolt, TTOPRI | PCATCH,
-			    ttybg, 0);
+			    ttybg);
 			if (error)
 				return (error);
 		}
@@ -1220,7 +1220,7 @@ ttywait(struct tty *tp)
 		    (ISSET(tp->t_state, TS_CARR_ON) || ISSET(tp->t_cflag, CLOCAL))
 		    && tp->t_oproc) {
 			SET(tp->t_state, TS_ASLEEP);
-			error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout, 0);
+			error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout);
 			if (error)
 				break;
 		} else
@@ -1489,7 +1489,7 @@ loop:	lflag = tp->t_lflag;
 			goto out;
 		}
 		pgsignal(pr->ps_pgrp, SIGTTIN, 1);
-		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg, 0);
+		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg);
 		if (error)
 			goto out;
 		goto loop;
@@ -1559,7 +1559,7 @@ sleep:
 			goto out;
 		}
 		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
-		    carrier ? ttyin : ttopen, 0);
+		    carrier ? ttyin : ttopen);
 		splx(s);
 		if (stime && timeout_triggered(stime))
 			error = EWOULDBLOCK;
@@ -1588,7 +1588,7 @@ read:
 			pgsignal(tp->t_pgrp, SIGTSTP, 1);
 			if (first) {
 				error = ttysleep(tp, &lbolt, TTIPRI | PCATCH,
-				    ttybg, 0);
+				    ttybg);
 				if (error)
 					break;
 				goto loop;
@@ -1717,7 +1717,7 @@ loop:
 		} else {
 			/* Sleep awaiting carrier. */
 			error = ttysleep(tp,
-			    &tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
+			    &tp->t_rawq, TTIPRI | PCATCH, ttopen);
 			splx(s);
 			if (error)
 				goto out;
@@ -1739,7 +1739,7 @@ loop:
 			goto out;
 		}
 		pgsignal(pr->ps_pgrp, SIGTTOU, 1);
-		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg, 0);
+		error = ttysleep(tp, &lbolt, TTIPRI | PCATCH, ttybg);
 		if (error)
 			goto out;
 		goto loop;
@@ -1871,7 +1871,7 @@ ovhiwat:
 		return (uio->uio_resid == cnt ? EWOULDBLOCK : 0);
 	}
 	SET(tp->t_state, TS_ASLEEP);
-	error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout, 0);
+	error = ttysleep(tp, &tp->t_outq, TTOPRI | PCATCH, ttyout);
 	splx(s);
 	if (error)
 		goto out;
@@ -2279,13 +2279,13 @@ tputchar(int c, struct tty *tp)
  * at the start of the call.
  */
 int
-ttysleep(struct tty *tp, void *chan, int pri, char *wmesg, int timo)
+ttysleep(struct tty *tp, void *chan, int pri, char *wmesg)
 {
 	int error;
 	short gen;
 
 	gen = tp->t_gen;
-	if ((error = tsleep(chan, pri, wmesg, timo)) != 0)
+	if ((error = tsleep_nsec(chan, pri, wmesg, INFSLP)) != 0)
 		return (error);
 	return (tp->t_gen == gen ? 0 : ERESTART);
 }

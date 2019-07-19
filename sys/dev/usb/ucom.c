@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.67 2018/02/19 08:59:52 mpi Exp $ */
+/*	$OpenBSD: ucom.c,v 1.68 2019/07/19 00:17:15 cheloha Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -493,7 +493,7 @@ ucom_do_open(dev_t dev, int flag, int mode, struct proc *p)
 			    !ISSET(tp->t_state, TS_CARR_ON))) {
 				SET(tp->t_state, TS_WOPEN);
 				error = ttysleep(tp, &tp->t_rawq,
-				    TTIPRI | PCATCH, ttopen, 0);
+				    TTIPRI | PCATCH, ttopen);
 
 				if (usbd_is_dying(sc->sc_uparent)) {
 					splx(s);

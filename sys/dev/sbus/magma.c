@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.28 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: magma.c,v 1.29 2019/07/19 00:17:15 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -904,7 +904,7 @@ mttyopen(dev_t dev, int flags, int mode, struct proc *p)
 			int error;
 
 			SET(tp->t_state, TS_WOPEN);
-			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, "mttydcd", 0);
+			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, "mttydcd");
 			if (error != 0) {
 				splx(s);
 				CLR(tp->t_state, TS_WOPEN);

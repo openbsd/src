@@ -1,4 +1,4 @@
-/* $OpenBSD: mvuart.c,v 1.1 2019/04/30 20:04:31 patrick Exp $ */
+/* $OpenBSD: mvuart.c,v 1.2 2019/07/19 00:17:15 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -280,7 +280,7 @@ mvuart_param(struct tty *tp, struct termios *t)
 		while (ISSET(tp->t_state, TS_BUSY)) {
 			++sc->sc_halt;
 			error = ttysleep(tp, &tp->t_outq,
-			    TTOPRI | PCATCH, "mvuartprm", 0);
+			    TTOPRI | PCATCH, "mvuartprm");
 			--sc->sc_halt;
 			if (error) {
 				mvuart_start(tp);
@@ -450,7 +450,7 @@ mvuartopen(dev_t dev, int flag, int mode, struct proc *p)
 				!ISSET(tp->t_state, TS_CARR_ON))) {
 				SET(tp->t_state, TS_WOPEN);
 				error = ttysleep(tp, &tp->t_rawq,
-				    TTIPRI | PCATCH, ttopen, 0);
+				    TTIPRI | PCATCH, ttopen);
 				/*
 				 * If TS_WOPEN has been reset, that means the
 				 * cua device has been closed.  We don't want

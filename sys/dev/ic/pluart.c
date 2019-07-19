@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.2 2018/08/12 18:32:18 kettenis Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.3 2019/07/19 00:17:15 cheloha Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -287,7 +287,7 @@ pluart_param(struct tty *tp, struct termios *t)
 		while (ISSET(tp->t_state, TS_BUSY)) {
 			++sc->sc_halt;
 			error = ttysleep(tp, &tp->t_outq,
-			    TTOPRI | PCATCH, "pluartprm", 0);
+			    TTOPRI | PCATCH, "pluartprm");
 			--sc->sc_halt;
 			if (error) {
 				pluart_start(tp);
@@ -576,7 +576,7 @@ pluartopen(dev_t dev, int flag, int mode, struct proc *p)
 				!ISSET(tp->t_state, TS_CARR_ON))) {
 				SET(tp->t_state, TS_WOPEN);
 				error = ttysleep(tp, &tp->t_rawq,
-				    TTIPRI | PCATCH, ttopen, 0);
+				    TTIPRI | PCATCH, ttopen);
 				/*
 				 * If TS_WOPEN has been reset, that means the
 				 * cua device has been closed.  We don't want

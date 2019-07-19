@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.51 2018/11/09 14:14:31 claudio Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.52 2019/07/19 00:17:16 cheloha Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ pppread(struct tty *tp, struct uio *uio, int flag)
 	    splx(s);
 	    return (EWOULDBLOCK);
 	}
-	error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI|PCATCH, ttyin, 0);
+	error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI|PCATCH, ttyin);
 	if (error) {
 	    splx(s);
 	    return error;
