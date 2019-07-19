@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.76 2019/02/10 22:45:58 tedu Exp $	*/
+/*	$OpenBSD: pool.h,v 1.77 2019/07/19 09:03:03 bluhm Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -271,6 +271,7 @@ void		pool_request_init(struct pool_request *,
 		    void (*)(struct pool *, void *, void *), void *);
 void		pool_request(struct pool *, struct pool_request *);
 void		pool_put(struct pool *, void *);
+void		pool_wakeup(struct pool *);
 int		pool_reclaim(struct pool *);
 void		pool_reclaim_all(void);
 int		pool_prime(struct pool *, int);

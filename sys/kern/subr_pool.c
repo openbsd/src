@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.227 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.228 2019/07/19 09:03:03 bluhm Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -815,6 +815,12 @@ pool_put(struct pool *pp, void *v)
 	if (freeph != NULL)
 		pool_p_free(pp, freeph);
 
+	pool_wakeup(pp);
+}
+
+void
+pool_wakeup(struct pool *pp)
+{
 	if (!TAILQ_EMPTY(&pp->pr_requests)) {
 		pl_enter(pp, &pp->pr_requests_lock);
 		pool_runqueue(pp, PR_NOWAIT);

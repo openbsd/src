@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.271 2019/07/16 21:41:37 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.272 2019/07/19 09:03:03 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -167,8 +167,6 @@ mbinit(void)
 
 	m_pool_allocator.pa_pagesz = pool_allocator_multi.pa_pagesz;
 
-	error = nmbclust_update(nmbclust);
-	KASSERT(error == 0);
 	mbuf_mem_alloc = 0;
 
 #if DIAGNOSTIC
@@ -196,6 +194,9 @@ mbinit(void)
 		m_pool_init(&mclpools[i], mclsizes[i], 64, mclnames[i]);
 	}
 
+	error = nmbclust_update(nmbclust);
+	KASSERT(error == 0);
+
 	(void)mextfree_register(m_extfree_pool);
 	KASSERT(num_extfree_fns == 1);
 }
@@ -217,11 +218,18 @@ mbcpuinit()
 int
 nmbclust_update(long newval)
 {
+	int i;
+
 	if (newval < 0 || newval > LONG_MAX / MCLBYTES)
 		return ERANGE;
 	/* update the global mbuf memory limit */
 	nmbclust = newval;
 	mbuf_mem_limit = nmbclust * MCLBYTES;
+
+	pool_wakeup(&mbpool);
+	for (i = 0; i < nitems(mclsizes); i++)
+		pool_wakeup(&mclpools[i]);
+
 	return 0;
 }
 
