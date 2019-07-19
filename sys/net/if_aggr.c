@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.15 2019/07/19 04:35:01 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.16 2019/07/19 05:21:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -474,6 +474,7 @@ static void	aggr_ptm_tx(void *);
 
 static void	aggr_transmit_machine(void *);
 static void	aggr_ntt(struct aggr_port *);
+static void	aggr_ntt_transmit(struct aggr_port *);
 
 static void	aggr_set_selected(struct aggr_port *, enum aggr_port_selected,
 		    enum lacp_mux_event);
@@ -1307,6 +1308,16 @@ aggr_p_ioctl(struct ifnet *ifp0, u_long cmd, caddr_t data)
 		error = EBUSY;
 		break;
 
+	case SIOCSIFFLAGS:
+		if (!ISSET(ifp0->if_flags, IFF_UP) &&
+		    ISSET(ifp0->if_flags, IFF_RUNNING)) {
+			/* port is going down */
+			if (p->p_selected == AGGR_PORT_SELECTED) {
+				aggr_unselected(p);
+				aggr_ntt_transmit(p); /* XXX */
+			}
+		}
+		/* FALLTHROUGH */
 	default:
 		error = (*p->p_ioctl)(ifp0, cmd, data);
 		break;
@@ -1338,12 +1349,16 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	struct ifnet *ifp0 = p->p_ifp0;
 	struct arpcom *ac0 = (struct arpcom *)ifp0;
 	struct aggr_multiaddr *ma;
+	enum aggr_port_selected selected;
 
 	DPRINTF(sc, "%s %s %s: destroying port\n",
 	    ifp->if_xname, ifp0->if_xname, op);
 
+	selected = p->p_selected;
 	aggr_rxm(sc, p, LACP_RXM_E_NOT_PORT_ENABLED);
 	aggr_unselected(p);
+	if (aggr_port_enabled(p) && selected == AGGR_PORT_SELECTED)
+		aggr_ntt_transmit(p);
 
 	timeout_del(&p->p_ptm_tx);
 	timeout_del_barrier(&p->p_txm_ntt); /* XXX */
