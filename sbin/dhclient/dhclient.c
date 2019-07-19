@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.644 2019/07/16 01:42:27 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.645 2019/07/19 14:49:43 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -595,7 +595,6 @@ main(int argc, char *argv[])
 	if ((leaseFile = fopen(path_lease_db, "w")) == NULL)
 		fatal("fopen(%s)", path_lease_db);
 	write_lease_db(ifi->name, &ifi->lease_db);
-	close(fd);
 
 	if (path_option_db != NULL) {
 		/*
@@ -2485,9 +2484,9 @@ take_charge(struct interface_info *ifi, int routefd, char *leasespath)
 			routefd_handler(ifi, routefd);
 
 		if ((ifi->flags & IFI_IN_CHARGE) == IFI_IN_CHARGE) {
-			fd = open(leasespath,
+			fd = open(leasespath, O_NONBLOCK |
 			    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640);
-			if (fd == -1)
+			if (fd == -1 && errno != EWOULDBLOCK)
 				fatal("open(%s)", leasespath);
 		}
 	}
