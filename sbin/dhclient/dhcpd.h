@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.278 2019/05/22 12:56:31 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.279 2019/07/19 20:50:22 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -238,7 +238,7 @@ uint32_t	 wrapsum(uint32_t);
 /* clparse.c */
 void		 init_config(void);
 void		 read_conf(char *, char *, struct ether_addr *);
-void		 read_lease_db(char *, struct client_lease_tq *);
+void		 read_lease_db(struct client_lease_tq *);
 
 /* kroute.c */
 unsigned int	 extract_classless_route(uint8_t *, unsigned int,

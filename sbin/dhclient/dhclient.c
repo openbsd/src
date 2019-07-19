@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.645 2019/07/19 14:49:43 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.646 2019/07/19 20:50:22 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -150,9 +150,9 @@ void make_release(struct interface_info *, struct client_lease *);
 void release_lease(struct interface_info *);
 void propose_release(struct interface_info *);
 
-void write_lease_db(char *, struct client_lease_tq *);
-void write_option_db(char *, struct client_lease *, struct client_lease *);
-char *lease_as_string(char *, char *, struct client_lease *);
+void write_lease_db(struct client_lease_tq *);
+void write_option_db(struct client_lease *, struct client_lease *);
+char *lease_as_string(char *, struct client_lease *);
 struct proposal *lease_as_proposal(struct client_lease *);
 void append_statement(char *, size_t, char *, char *);
 time_t lease_expiry(struct client_lease *);
@@ -590,11 +590,11 @@ main(int argc, char *argv[])
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
 	fd = take_charge(ifi, routefd, path_lease_db);
-	read_lease_db(ifi->name, &ifi->lease_db);
+	read_lease_db(&ifi->lease_db);
 
 	if ((leaseFile = fopen(path_lease_db, "w")) == NULL)
 		fatal("fopen(%s)", path_lease_db);
-	write_lease_db(ifi->name, &ifi->lease_db);
+	write_lease_db(&ifi->lease_db);
 
 	if (path_option_db != NULL) {
 		/*
@@ -992,8 +992,8 @@ newlease:
 	 * the bind process is complete and all related information is in
 	 * place when dhclient(8) goes daemon.
 	 */
-	write_lease_db(ifi->name, &ifi->lease_db);
-	write_option_db(ifi->name, ifi->active, lease);
+	write_lease_db(&ifi->lease_db);
+	write_option_db(ifi->active, lease);
 	write_resolv_conf();
 
 	free_client_lease(lease);
@@ -1779,7 +1779,7 @@ free_client_lease(struct client_lease *lease)
 }
 
 void
-write_lease_db(char *name, struct client_lease_tq *lease_db)
+write_lease_db(struct client_lease_tq *lease_db)
 {
 	struct client_lease	*lp;
 	char			*leasestr;
@@ -1799,7 +1799,7 @@ write_lease_db(char *name, struct client_lease_tq *lease_db)
 	TAILQ_FOREACH_REVERSE(lp, lease_db, client_lease_tq, next) {
 		if (lease_expiry(lp) < cur_time)
 			continue;
-		leasestr = lease_as_string(name, "lease", lp);
+		leasestr = lease_as_string("lease", lp);
 		if (leasestr != NULL)
 			fprintf(leaseFile, "%s", leasestr);
 		else
@@ -1813,8 +1813,7 @@ write_lease_db(char *name, struct client_lease_tq *lease_db)
 }
 
 void
-write_option_db(char *name, struct client_lease *offered,
-    struct client_lease *effective)
+write_option_db(struct client_lease *offered, struct client_lease *effective)
 {
 	char	*leasestr;
 
@@ -1826,14 +1825,14 @@ write_option_db(char *name, struct client_lease *offered,
 		return;
 	}
 
-	leasestr = lease_as_string(name, "offered", offered);
+	leasestr = lease_as_string("offered", offered);
 	if (leasestr == NULL)
 		log_warnx("%s: cannot make offered lease into string",
 		    log_procname);
 	else if (fprintf(optionDB, "%s", leasestr) == -1)
 		log_warn("optionDB 'offered' fprintf()");
 
-	leasestr = lease_as_string(name, "effective", effective);
+	leasestr = lease_as_string("effective", effective);
 	if (leasestr == NULL)
 		log_warnx("%s: cannot make effective lease into string",
 		    log_procname);
@@ -1948,7 +1947,7 @@ lease_as_proposal(struct client_lease *lease)
 }
 
 char *
-lease_as_string(char *ifname, char *type, struct client_lease *lease)
+lease_as_string(char *type, struct client_lease *lease)
 {
 	static char		 string[8192];
 	char			 timebuf[27];	/* 6 2017/04/08 05:47:50 UTC; */
@@ -2675,7 +2674,7 @@ release_lease(struct interface_info *ifi)
 	imsg_flush(unpriv_ibuf);
 
 	TAILQ_REMOVE(&ifi->lease_db, ifi->active, next);
-	write_lease_db(ifi->name, &ifi->lease_db);
+	write_lease_db(&ifi->lease_db);
 
 	if (optionDB != NULL) {
 		ftruncate(fileno(optionDB), 0);

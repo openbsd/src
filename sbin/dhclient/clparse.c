@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.186 2019/06/29 16:39:57 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.187 2019/07/19 20:50:22 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -72,8 +72,8 @@ int	parse_hex_octets(FILE *, unsigned int *, uint8_t **);
 int	parse_domain_list(FILE *, int *, char **);
 int	parse_option_list(FILE *, int *, uint8_t *);
 int	parse_interface(FILE *, char *);
-int	parse_lease(FILE *, char *, struct client_lease **);
-void	parse_lease_decl(FILE *, struct client_lease *, char *);
+int	parse_lease(FILE *, struct client_lease **);
+void	parse_lease_decl(FILE *, struct client_lease *);
 int	parse_option(FILE *, int *, struct option_data *);
 int	parse_reject_statement(FILE *);
 
@@ -183,7 +183,7 @@ read_conf(char *name, char *ignore_list, struct ether_addr *hwaddr)
  *	| leases lease
  */
 void
-read_lease_db(char *name, struct client_lease_tq *lease_db)
+read_lease_db(struct client_lease_tq *lease_db)
 {
 	struct client_lease	*lease, *lp, *nlp;
 	FILE			*cfile;
@@ -198,7 +198,7 @@ read_lease_db(char *name, struct client_lease_tq *lease_db)
 
 	i = DHO_DHCP_CLIENT_IDENTIFIER;
 	while (feof(cfile) == 0) {
-		if (parse_lease(cfile, name, &lease) == 0)
+		if (parse_lease(cfile, &lease) == 0)
 			continue;
 
 		/*
@@ -629,8 +629,7 @@ parse_interface(FILE *cfile, char *name)
  *	| lease-decls lease-decl
  */
 int
-parse_lease(FILE *cfile, char *name,
-    struct client_lease **lp)
+parse_lease(FILE *cfile, struct client_lease **lp)
 {
 	struct client_lease	*lease;
 	int			 token;
@@ -669,7 +668,7 @@ parse_lease(FILE *cfile, char *name,
 			*lp = lease;
 			return 1;
 		}
-		parse_lease_decl(cfile, lease, name);
+		parse_lease_decl(cfile, lease);
 	}
 
 	return 0;
@@ -691,7 +690,7 @@ parse_lease(FILE *cfile, char *name,
  *	| SSID		string SEMI
  */
 void
-parse_lease_decl(FILE *cfile, struct client_lease *lease, char *name)
+parse_lease_decl(FILE *cfile, struct client_lease *lease)
 {
 	char		*val;
 	unsigned int	 len;
