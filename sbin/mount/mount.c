@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.72 2019/06/28 13:32:44 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.73 2019/07/19 15:13:17 millert Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -234,13 +234,13 @@ main(int argc, char * const argv[])
 		if (typelist != NULL)
 			usage();
 
-		if (realpath(*argv, mntpath) == NULL && strpbrk(argv[0], ":@") == NULL)
-			err(1, "realpath %s", *argv);
+		if (realpath(*argv, mntpath) == NULL) 
+			strlcpy(mntpath, *argv, sizeof(mntpath));
 		if (hasopt(options, "update")) {
 			if ((mntbuf = getmntpt(mntpath)) == NULL)
 				errx(1,
 				    "unknown special file or file system %s.",
-				    *argv);
+				    mntpath);
 			if ((mntbuf->f_flags & MNT_ROOTFS) &&
 			    !strcmp(mntbuf->f_mntfromname, "root_device")) {
 				/* Lookup fstab for name of root device. */
@@ -248,7 +248,7 @@ main(int argc, char * const argv[])
 				if (fs == NULL)
 					errx(1,
 					    "can't find fstab entry for %s.",
-					    *argv);
+					    mntpath);
 			} else {
 				if ((fs = malloc(sizeof(*fs))) == NULL)
 					err(1, NULL);
@@ -264,13 +264,12 @@ main(int argc, char * const argv[])
 			mntonname = mntbuf->f_mntonname;
 		} else {
 			if ((fs = getfsfile(mntpath)) == NULL &&
-			    (fs = getfsspec(mntpath)) == NULL &&
-			    (fs = getfsspec(*argv)) == NULL)
+			    (fs = getfsspec(mntpath)) == NULL)
 				errx(1, "can't find fstab entry for %s.",
-				    *argv);
+				    mntpath);
 			if (BADTYPE(fs->fs_type))
 				errx(1, "%s has unknown file system type.",
-				    *argv);
+				    mntpath);
 			mntonname = fs->fs_file;
 		}
 		rval = mountfs(fs->fs_vfstype, fs->fs_spec,
