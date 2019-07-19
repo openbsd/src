@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strptime.3,v 1.29 2019/05/16 13:35:17 schwarze Exp $
+.\"	$OpenBSD: strptime.3,v 1.30 2019/07/19 18:58:03 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 16 2019 $
+.Dd $Mdocdate: July 19 2019 $
 .Dt STRPTIME 3
 .Os
 .Sh NAME
@@ -250,6 +250,7 @@ The
 .Ox
 implementation always uses the C locale and ignores the
 global locale and the thread-specific locale.
+Alternative conversion modifiers have no effect.
 .Pp
 There is no way to specify whether Daylight Saving Time is in effect when
 calling
@@ -291,16 +292,20 @@ Otherwise, a null pointer is returned.
 .Sh STANDARDS
 The
 .Fn strptime
-function conforms to
-.St -xpg4.2 .
+function conforms to the X/Open System Interfaces option of
+.St -p1003.1-2008 ,
+except that flags and field width specifications are not supported.
 .Pp
 The
-.Ql \&%G ,
+.Ql \&%F ,
 .Ql \&%g ,
+.Ql \&%G ,
+.Ql \&%k ,
+.Ql \&%l ,
 .Ql \&%s ,
 .Ql \&%u ,
 .Ql \&%V ,
-.Ql \&%Y ,
+.Ql \&%z ,
 and
 .Ql \&%Z
 conversion specifications are extensions.
