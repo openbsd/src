@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.13 2019/07/18 08:09:25 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.14 2019/07/19 04:15:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -932,6 +932,19 @@ aggr_get_trunk(struct aggr_softc *sc, struct trunk_reqall *ra)
 
 		opreq = &rp.rp_lacpreq;
 		opreq->actor_state = state | p->p_actor_state;
+
+		opreq->partner_prio =
+		    ntohs(p->p_partner.lacp_sysid.lacp_sysid_priority);
+		CTASSERT(sizeof(opreq->partner_mac) ==
+		    sizeof(p->p_partner.lacp_sysid.lacp_sysid_mac));
+		memcpy(opreq->partner_mac,
+		    p->p_partner.lacp_sysid.lacp_sysid_mac,
+		    sizeof(opreq->partner_mac));
+		opreq->partner_key = ntohs(p->p_partner.lacp_key);
+		opreq->partner_portprio =
+		    ntohs(p->p_partner.lacp_portid.lacp_portid_priority);
+		opreq->partner_portno =
+		    ntohs(p->p_partner.lacp_portid.lacp_portid_number);
 		opreq->partner_state = p->p_partner_state;
 
 		error = copyout(&rp, ubuf, sizeof(rp));
