@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.388 2019/06/22 05:36:40 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.389 2019/07/19 07:40:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -48,6 +48,7 @@
 #define	MAX_PKTSIZE			4096
 #define	MIN_HOLDTIME			3
 #define	READ_BUF_SIZE			65535
+#define	MAX_SOCK_BUF			(4 * READ_BUF_SIZE)
 #define	RT_BUF_SIZE			16384
 #define	MAX_RTSOCK_BUF			(2 * 1024 * 1024)
 #define	MAX_COMM_MATCH			3
@@ -110,8 +111,8 @@
  * IMSG_XON message will be sent and the RDE will produce more messages again.
  */
 #define RDE_RUNNER_ROUNDS	100
-#define SESS_MSG_HIGH_MARK	300
-#define SESS_MSG_LOW_MARK	50
+#define SESS_MSG_HIGH_MARK	2000
+#define SESS_MSG_LOW_MARK	500
 #define CTL_MSG_HIGH_MARK	500
 #define CTL_MSG_LOW_MARK	100
 

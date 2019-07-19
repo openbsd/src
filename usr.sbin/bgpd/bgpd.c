@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.219 2019/05/29 08:48:00 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.220 2019/07/19 07:40:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -46,6 +46,7 @@ int		send_filterset(struct imsgbuf *, struct filter_set_head *);
 int		reconfigure(char *, struct bgpd_config *);
 int		dispatch_imsg(struct imsgbuf *, int, struct bgpd_config *);
 int		control_setup(struct bgpd_config *);
+static void	getsockpair(int [2]);
 int		imsg_send_sockets(struct imsgbuf *, struct imsgbuf *);
 
 int			 cflags;
@@ -203,12 +204,8 @@ main(int argc, char *argv[])
 
 	log_info("startup");
 
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	    PF_UNSPEC, pipe_m2s) == -1)
-		fatal("socketpair");
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	    PF_UNSPEC, pipe_m2r) == -1)
-		fatal("socketpair");
+	getsockpair(pipe_m2s);
+	getsockpair(pipe_m2r);
 
 	/* fork children */
 	rde_pid = start_child(PROC_RDE, saved_argv0, pipe_m2r[1], debug,
@@ -1073,18 +1070,51 @@ handle_pollfd(struct pollfd *pfd, struct imsgbuf *i)
 	return (0);
 }
 
+static void
+getsockpair(int pipe[2])
+{
+	int bsize, i;
+
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe) == -1)
+		fatal("socketpair");
+
+	for (i = 0; i < 2; i++) {
+		for (bsize = MAX_SOCK_BUF; bsize >= 16 * 1024; bsize /= 2) {
+			if (setsockopt(pipe[i], SOL_SOCKET, SO_RCVBUF,
+			    &bsize, sizeof(bsize)) == -1) {
+				if (errno != ENOBUFS)
+					fatal("setsockopt(SO_RCVBUF, %d)",
+					    bsize);
+				log_warn("setsockopt(SO_RCVBUF, %d)", bsize);
+				continue;
+			}
+			break;
+		}
+	}
+	for (i = 0; i < 2; i++) {
+		for (bsize = MAX_SOCK_BUF; bsize >= 16 * 1024; bsize /= 2) {
+			if (setsockopt(pipe[i], SOL_SOCKET, SO_SNDBUF,
+			    &bsize, sizeof(bsize)) == -1) {
+				if (errno != ENOBUFS)
+					fatal("setsockopt(SO_SNDBUF, %d)",
+					    bsize);
+				log_warn("setsockopt(SO_SNDBUF, %d)", bsize);
+				continue;
+			}
+			break;
+		}
+	}
+}
+
 int
 imsg_send_sockets(struct imsgbuf *se, struct imsgbuf *rde)
 {
 	int pipe_s2r[2];
 	int pipe_s2r_ctl[2];
 
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	     PF_UNSPEC, pipe_s2r) == -1)
-		return (-1);
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	     PF_UNSPEC, pipe_s2r_ctl) == -1)
-		return (-1);
+	getsockpair(pipe_s2r);
+	getsockpair(pipe_s2r_ctl);
 
 	if (imsg_compose(se, IMSG_SOCKET_CONN, 0, 0, pipe_s2r[0],
 	    NULL, 0) == -1)
