@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_ascii.c,v 1.49 2018/11/28 14:23:02 schwarze Exp $ */
+/*	$OpenBSD: term_ascii.c,v 1.50 2019/07/19 21:45:37 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -33,6 +33,8 @@
 #include "term.h"
 #include "manconf.h"
 #include "main.h"
+
+#define UTF8_LOCALE	"en_US.UTF-8"
 
 static	struct termp	 *ascii_init(enum termenc, const struct manoutput *);
 static	int		  ascii_hspan(const struct termp *,
@@ -90,7 +92,7 @@ ascii_init(enum termenc enc, const struct manoutput *outopts)
 
 		v = enc == TERMENC_LOCALE ?
 		    setlocale(LC_CTYPE, "") :
-		    setlocale(LC_CTYPE, "en_US.UTF-8");
+		    setlocale(LC_CTYPE, UTF8_LOCALE);
 
 		/*
 		 * We only support UTF-8,

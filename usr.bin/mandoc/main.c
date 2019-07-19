@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.234 2019/07/19 20:25:21 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.235 2019/07/19 21:45:37 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -49,6 +49,12 @@
 #include "main.h"
 #include "manconf.h"
 #include "mansearch.h"
+
+#define BINM_APROPOS	"apropos"
+#define BINM_MAN	"man"
+#define BINM_MAKEWHATIS	"makewhatis"
+#define BINM_WHATIS	"whatis"
+#define OSENUM		MANDOC_OS_OPENBSD
 
 enum	outmode {
 	OUTMODE_DEF = 0,
@@ -131,7 +137,7 @@ main(int argc, char *argv[])
 	progname = getprogname();
 	mandoc_msg_setoutfile(stderr);
 	if (strncmp(progname, "mandocdb", 8) == 0 ||
-	    strncmp(progname, "makewhatis", 10) == 0)
+	    strcmp(progname, BINM_MAKEWHATIS) == 0)
 		return mandocdb(argc, argv);
 
 	if (pledge("stdio rpath tmppath tty proc exec", NULL) == -1) {
@@ -149,11 +155,11 @@ main(int argc, char *argv[])
 	search.outkey = "Nd";
 	oarg = NULL;
 
-	if (strcmp(progname, "man") == 0)
+	if (strcmp(progname, BINM_MAN) == 0)
 		search.argmode = ARG_NAME;
-	else if (strncmp(progname, "apropos", 7) == 0)
+	else if (strcmp(progname, BINM_APROPOS) == 0)
 		search.argmode = ARG_EXPR;
-	else if (strncmp(progname, "whatis", 6) == 0)
+	else if (strcmp(progname, BINM_WHATIS) == 0)
 		search.argmode = ARG_WORD;
 	else if (strncmp(progname, "help", 4) == 0)
 		search.argmode = ARG_NAME;
@@ -792,8 +798,8 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	return globres;
 
 found:
-	warnx("outdated mandoc.db lacks %s(%s) entry, run makewhatis %s",
-	    name, sec, paths->paths[ipath]);
+	warnx("outdated mandoc.db lacks %s(%s) entry, run %s %s",
+	    name, sec, BINM_MAKEWHATIS, paths->paths[ipath]);
 	if (res == NULL) {
 		free(file);
 		return 0;
@@ -841,7 +847,7 @@ fs_search(const struct mansearch *cfg, const struct manpaths *paths,
 		if (res != NULL && *ressz == lastsz &&
 		    strchr(*argv, '/') == NULL) {
 			if (cfg->arch != NULL &&
-			    arch_valid(cfg->arch, MANDOC_OS_OPENBSD) == 0)
+			    arch_valid(cfg->arch, OSENUM) == 0)
 				warnx("Unknown architecture \"%s\".",
 				    cfg->arch);
 			else if (cfg->sec == NULL)
