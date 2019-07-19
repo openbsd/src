@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.56 2019/07/12 00:04:59 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.57 2019/07/19 00:11:38 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -612,30 +612,43 @@ void db_show_callout_bucket(struct circq *);
 void
 db_show_callout_bucket(struct circq *bucket)
 {
+	char buf[8];
 	struct timeout *to;
 	struct circq *p;
 	db_expr_t offset;
-	char *name;
+	char *name, *where;
+	int width = sizeof(long) * 2;
 
 	for (p = CIRCQ_FIRST(bucket); p != bucket; p = CIRCQ_FIRST(p)) {
 		to = timeout_from_circq(p);
 		db_find_sym_and_offset((db_addr_t)to->to_func, &name, &offset);
 		name = name ? name : "?";
-		db_printf("%9d %2td/%-4td %p  %s\n", to->to_time - ticks,
-		    (bucket - timeout_wheel) / WHEELSIZE,
-		    bucket - timeout_wheel, to->to_arg, name);
+		if (bucket == &timeout_todo)
+			where = "softint";
+		else if (bucket == &timeout_proc)
+			where = "thread";
+		else {
+			snprintf(buf, sizeof(buf), "%3ld/%1ld",
+			    (bucket - timeout_wheel) % WHEELSIZE,
+			    (bucket - timeout_wheel) / WHEELSIZE);
+			where = buf;
+		}
+		db_printf("%9d  %7s  0x%0*lx  %s\n",
+		    to->to_time - ticks, where, width, (ulong)to->to_arg, name);
 	}
 }
 
 void
 db_show_callout(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
+	int width = sizeof(long) * 2 + 2;
 	int b;
 
 	db_printf("ticks now: %d\n", ticks);
-	db_printf("    ticks  wheel       arg  func\n");
+	db_printf("%9s  %7s  %*s  func\n", "ticks", "wheel", width, "arg");
 
 	db_show_callout_bucket(&timeout_todo);
+	db_show_callout_bucket(&timeout_proc);
 	for (b = 0; b < nitems(timeout_wheel); b++)
 		db_show_callout_bucket(&timeout_wheel[b]);
 }
