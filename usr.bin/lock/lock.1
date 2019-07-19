@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lock.1,v 1.18 2019/07/05 14:11:26 cheloha Exp $
+.\"	$OpenBSD: lock.1,v 1.19 2019/07/19 18:32:19 cheloha Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)lock.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 5 2019 $
+.Dd $Mdocdate: July 19 2019 $
 .Dt LOCK 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd reserve a terminal
 .Sh SYNOPSIS
 .Nm lock
-.Op Fl np
+.Op Fl p
 .Op Fl a Ar style
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
@@ -45,9 +45,6 @@
 requests a password from the user, reads it again for verification
 and then will normally not relinquish the terminal until the password is
 repeated.
-There are two other conditions under which it will terminate: it
-will timeout after some interval of time and it may be killed by someone
-with the appropriate privileges.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -66,12 +63,6 @@ user may enter the name of the
 .Ar style
 to get the standard prompt for that
 .Ar style .
-.It Fl n
-Don't use a timeout value.
-Terminal will be locked forever.
-This option is incompatible with the
-.Fl t
-option.
 .It Fl p
 A password is not requested, instead the user's current login password
 is used.
@@ -85,12 +76,15 @@ The user will then be issued an S/Key
 challenge to which they may respond with a six-word S/Key one-time
 password.
 .It Fl t Ar timeout
-The time limit (default 15 minutes) is changed to
+Unlock the terminal after
 .Ar timeout
 minutes.
-This option is incompatible with the
-.Fl n
-option.
+When used in this manner
+.Nm
+should be invoked so that the user is safely logged out
+if the timeout elapses:
+.Pp
+.Dl $ lock -t 15 || exit
 .El
 .Sh SEE ALSO
 .Xr skey 1 ,
