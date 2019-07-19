@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.180 2019/01/18 13:40:34 bluhm Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.181 2019/07/19 00:54:59 cheloha Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2845,7 +2845,8 @@ nfs_flush(struct vnode *vp, struct ucred *cred, int waitfor, struct proc *p,
 	int i;
 	struct buf *nbp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int s, error = 0, slptimeo = 0, slpflag = 0, retv, bvecpos;
+	uint64_t slptimeo = INFSLP;
+	int s, error = 0, slpflag = 0, retv, bvecpos;
 	int passone = 1;
 	u_quad_t off = (u_quad_t)-1, endoff = 0, toff;
 #ifndef NFS_COMMITBVECSIZ
@@ -2942,15 +2943,15 @@ loop:
 			if (waitfor != MNT_WAIT || passone)
 				continue;
 			bp->b_flags |= B_WANTED;
-			error = tsleep(bp, slpflag | (PRIBIO + 1),
-				"nfsfsync", slptimeo);
+			error = tsleep_nsec(bp, slpflag | (PRIBIO + 1),
+			    "nfsfsync", slptimeo);
 			splx(s);
 			if (error) {
 				if (nfs_sigintr(nmp, NULL, p))
 					return (EINTR);
 				if (slpflag == PCATCH) {
 					slpflag = 0;
-					slptimeo = 2 * hz;
+					slptimeo = SEC_TO_NSEC(2);
 				}
 			}
 			goto loop;
@@ -2985,7 +2986,7 @@ loop:
 				return (EINTR);
 			if (slpflag == PCATCH) {
 				slpflag = 0;
-				slptimeo = 2 * hz;
+				slptimeo = SEC_TO_NSEC(2);
 			}
 			goto loop2;
 		}

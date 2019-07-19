@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.93 2018/12/23 10:46:51 natano Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.94 2019/07/19 00:54:59 cheloha Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -486,7 +486,7 @@ loop:
 		goto loop;
 	}
 	if (ap->a_waitfor == MNT_WAIT) {
-		vwaitforio(vp, 0, "ffs_fsync", 0);
+		vwaitforio(vp, 0, "ffs_fsync", INFSLP);
 
 		/*
 		 * Ensure that any filesystem metadata associated

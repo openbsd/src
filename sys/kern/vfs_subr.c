@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.290 2019/06/28 13:25:09 visa Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.291 2019/07/19 00:54:59 cheloha Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1858,7 +1858,7 @@ fs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  * Manipulates v_numoutput. Must be called at splbio()
  */
 int
-vwaitforio(struct vnode *vp, int slpflag, char *wmesg, int timeo)
+vwaitforio(struct vnode *vp, int slpflag, char *wmesg, uint64_t timeo)
 {
 	int error = 0;
 
@@ -1866,7 +1866,7 @@ vwaitforio(struct vnode *vp, int slpflag, char *wmesg, int timeo)
 
 	while (vp->v_numoutput) {
 		vp->v_bioflag |= VBIOWAIT;
-		error = tsleep(&vp->v_numoutput,
+		error = tsleep_nsec(&vp->v_numoutput,
 		    slpflag | (PRIBIO + 1), wmesg, timeo);
 		if (error)
 			break;
@@ -1914,7 +1914,7 @@ vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p,
 
 	if (flags & V_SAVE) {
 		s = splbio();
-		vwaitforio(vp, 0, "vinvalbuf", 0);
+		vwaitforio(vp, 0, "vinvalbuf", INFSLP);
 		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			splx(s);
 			if ((error = VOP_FSYNC(vp, cred, MNT_WAIT, p)) != 0)
@@ -2026,7 +2026,7 @@ loop:
 		splx(s);
 		return;
 	}
-	vwaitforio(vp, 0, "vflushbuf", 0);
+	vwaitforio(vp, 0, "vflushbuf", INFSLP);
 	if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 		splx(s);
 #ifdef DIAGNOSTIC
