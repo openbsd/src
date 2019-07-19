@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.21 2016/12/02 02:37:30 dlg Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.22 2019/07/19 04:51:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -203,6 +203,7 @@ static const struct eproto _eproto_db[] = {
 	{ "arp", ETHERTYPE_ARP },
 	{ "rarp", ETHERTYPE_REVARP },
 	{ "lldp", ETHERTYPE_LLDP },
+	{ "slow", ETHERTYPE_SLOW },
 	{ "sprite", ETHERTYPE_SPRITE },
 	{ "mopdl", ETHERTYPE_MOPDL },
 	{ "moprc", ETHERTYPE_MOPRC },
