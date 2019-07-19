@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.23 2019/01/17 05:56:29 tedu Exp $	 */
+/* $OpenBSD: engine.c,v 1.24 2019/07/19 15:40:11 solene Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -245,6 +245,7 @@ end_page(void)
 	if (rawmode) {
 		linepos = 0;
 		clear_linebuf();
+		fflush(stdout);
 	} else {
 		move(home_line, 0);
 		print_cmdline();
