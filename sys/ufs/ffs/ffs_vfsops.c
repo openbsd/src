@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.179 2018/09/26 14:51:44 visa Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.180 2019/07/19 00:24:32 cheloha Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1498,7 +1498,7 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 		if (i + fs->fs_frag > blks)
 			size = (blks - i) * fs->fs_fsize;
 		bp = getblk(mp->um_devvp, fsbtodb(fs, fs->fs_csaddr + i),
-			    size, 0, 0);
+		    size, 0, INFSLP);
 		memcpy(bp->b_data, space, size);
 		space += size;
 		if (waitfor != MNT_WAIT)
@@ -1518,7 +1518,7 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 
 	bp = getblk(mp->um_devvp,
 	    fs->fs_sblockloc >> (fs->fs_fshift - fs->fs_fsbtodb),
-	    (int)fs->fs_sbsize, 0, 0);
+	    (int)fs->fs_sbsize, 0, INFSLP);
 	fs->fs_fmod = 0;
 	fs->fs_time = time_second;
 	memcpy(bp->b_data, fs, fs->fs_sbsize);

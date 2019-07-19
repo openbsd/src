@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.111 2019/07/01 05:11:32 kevlo Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.112 2019/07/19 00:24:31 cheloha Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -1035,7 +1035,7 @@ ext2fs_sbupdate(struct ufsmount *mp, int waitfor)
 	struct buf *bp;
 	int error = 0;
 
-	bp = getblk(mp->um_devvp, SBLOCK, SBSIZE, 0, 0);
+	bp = getblk(mp->um_devvp, SBLOCK, SBSIZE, 0, INFSLP);
 	e2fs_sbsave(&fs->e2fs, (struct ext2fs *) bp->b_data);
 	if (waitfor == MNT_WAIT)
 		error = bwrite(bp);
@@ -1055,7 +1055,7 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 	allerror = ext2fs_sbupdate(mp, waitfor);
 	for (i = 0; i < fs->e2fs_ngdb; i++) {
 		bp = getblk(mp->um_devvp, fsbtodb(fs, ((fs->e2fs_bsize>1024)?0:1)+i+1),
-		    fs->e2fs_bsize, 0, 0);
+		    fs->e2fs_bsize, 0, INFSLP);
 		e2fs_cgsave(&fs->e2fs_gd[i* fs->e2fs_bsize / sizeof(struct ext2_gd)], (struct ext2_gd*)bp->b_data, fs->e2fs_bsize);
 		if (waitfor == MNT_WAIT)
 			error = bwrite(bp);

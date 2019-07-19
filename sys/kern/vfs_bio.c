@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.190 2019/05/09 15:09:40 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.191 2019/07/19 00:24:31 cheloha Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -432,7 +432,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 	struct buf *bp;
 	struct mount *mp;
 
-	bp = getblk(vp, blkno, size, 0, 0);
+	bp = getblk(vp, blkno, size, 0, INFSLP);
 
 	/*
 	 * If buffer does not have valid data, start a read.
@@ -966,7 +966,8 @@ incore(struct vnode *vp, daddr_t blkno)
  * cached blocks be of the correct size.
  */
 struct buf *
-getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
+getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag,
+    uint64_t slptimeo)
 {
 	struct buf *bp;
 	struct buf b;
@@ -989,8 +990,8 @@ start:
 	if (bp != NULL) {
 		if (ISSET(bp->b_flags, B_BUSY)) {
 			SET(bp->b_flags, B_WANTED);
-			error = tsleep(bp, slpflag | (PRIBIO + 1), "getblk",
-			    slptimeo);
+			error = tsleep_nsec(bp, slpflag | (PRIBIO + 1),
+			    "getblk", slptimeo);
 			splx(s);
 			if (error)
 				return (NULL);

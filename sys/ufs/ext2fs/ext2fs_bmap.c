@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.26 2015/03/14 03:38:52 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.27 2019/07/19 00:24:31 cheloha Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp,
 			brelse(bp);
 
 		xap->in_exists = 1;
-		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
+		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, INFSLP);
 		if (bp->b_flags & (B_DONE | B_DELWRI)) {
 			;
 		}

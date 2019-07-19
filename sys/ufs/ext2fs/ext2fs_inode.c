@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.60 2019/07/01 05:11:32 kevlo Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.61 2019/07/19 00:24:31 cheloha Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ ext2fs_indirtrunc(struct inode *ip, int32_t lbn, int32_t dbn, int32_t lastbn, in
 	 * explicitly instead of letting bread do everything for us.
 	 */
 	vp = ITOV(ip);
-	bp = getblk(vp, lbn, (int)fs->e2fs_bsize, 0, 0);
+	bp = getblk(vp, lbn, (int)fs->e2fs_bsize, 0, INFSLP);
 	if (!(bp->b_flags & (B_DONE | B_DELWRI))) {
 		curproc->p_ru.ru_inblock++;		/* pay for read */
 		bcstats.pendingreads++;

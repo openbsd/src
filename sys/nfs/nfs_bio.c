@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.82 2017/02/22 11:42:46 mpi Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.83 2019/07/19 00:24:31 cheloha Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -431,14 +431,14 @@ nfs_getcacheblk(struct vnode *vp, daddr_t bn, int size, struct proc *p)
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 	if (nmp->nm_flag & NFSMNT_INT) {
-		bp = getblk(vp, bn, size, PCATCH, 0);
+		bp = getblk(vp, bn, size, PCATCH, INFSLP);
 		while (bp == NULL) {
 			if (nfs_sigintr(nmp, NULL, p))
 				return (NULL);
-			bp = getblk(vp, bn, size, 0, 2 * hz);
+			bp = getblk(vp, bn, size, 0, SEC_TO_NSEC(2));
 		}
 	} else
-		bp = getblk(vp, bn, size, 0, 0);
+		bp = getblk(vp, bn, size, 0, INFSLP);
 	return (bp);
 }
 

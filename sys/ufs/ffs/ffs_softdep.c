@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.143 2018/07/02 20:56:22 bluhm Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.144 2019/07/19 00:24:31 cheloha Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1850,7 +1850,7 @@ setup_allocindir_phase2(struct buf *bp, struct inode *ip,
 				NULL);
 		}
 		newindirdep->ir_savebp =
-		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, 0);
+		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, INFSLP);
 #if 0
 		BUF_KERNPROC(newindirdep->ir_savebp);
 #endif

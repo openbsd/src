@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_balloc.c,v 1.26 2016/06/03 18:00:10 natano Exp $	*/
+/*	$OpenBSD: ext2fs_balloc.c,v 1.27 2019/07/19 00:24:31 cheloha Exp $	*/
 /*	$NetBSD: ext2fs_balloc.c,v 1.10 2001/07/04 21:16:01 chs Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ ext2fs_buf_alloc(struct inode *ip, u_int32_t bn, int size, struct ucred *cred,
 		ip->i_e2fs_last_blk = newb;
 		ip->i_e2fs_blocks[bn] = htole32(newb);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		bp = getblk(vp, bn, fs->e2fs_bsize, 0, 0);
+		bp = getblk(vp, bn, fs->e2fs_bsize, 0, INFSLP);
 		bp->b_blkno = fsbtodb(fs, newb);
 		if (flags & B_CLRBUF)
 			clrbuf(bp);
@@ -129,7 +129,7 @@ ext2fs_buf_alloc(struct inode *ip, u_int32_t bn, int size, struct ucred *cred,
 		nb = newb;
 		*allocblk++ = nb;
 		ip->i_e2fs_last_blk = newb;
-		bp = getblk(vp, indirs[1].in_lbn, fs->e2fs_bsize, 0, 0);
+		bp = getblk(vp, indirs[1].in_lbn, fs->e2fs_bsize, 0, INFSLP);
 		bp->b_blkno = fsbtodb(fs, newb);
 		clrbuf(bp);
 		/*
@@ -170,7 +170,7 @@ ext2fs_buf_alloc(struct inode *ip, u_int32_t bn, int size, struct ucred *cred,
 		nb = newb;
 		*allocblk++ = nb;
 		ip->i_e2fs_last_blk = newb;
-		nbp = getblk(vp, indirs[i].in_lbn, fs->e2fs_bsize, 0, 0);
+		nbp = getblk(vp, indirs[i].in_lbn, fs->e2fs_bsize, 0, INFSLP);
 		nbp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(nbp);
 		/*
@@ -218,7 +218,7 @@ ext2fs_buf_alloc(struct inode *ip, u_int32_t bn, int size, struct ucred *cred,
 		} else {
 			bdwrite(bp);
 		}
-		nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
+		nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, INFSLP);
 		nbp->b_blkno = fsbtodb(fs, nb);
 		if (flags & B_CLRBUF)
 			clrbuf(nbp);
@@ -233,7 +233,7 @@ ext2fs_buf_alloc(struct inode *ip, u_int32_t bn, int size, struct ucred *cred,
 			goto fail;
 		}
 	} else {
-		nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, 0);
+		nbp = getblk(vp, lbn, fs->e2fs_bsize, 0, INFSLP);
 		nbp->b_blkno = fsbtodb(fs, nb);
 	}
 
@@ -269,7 +269,7 @@ fail:
 		}
 		for (i = unwindidx + 1; i <= num; i++) {
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->e2fs_bsize,
-			    0, 0);
+			    0, INFSLP);
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
 		}

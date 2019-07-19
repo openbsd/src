@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.124 2019/07/12 13:56:27 solene Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.125 2019/07/19 00:24:31 cheloha Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -680,7 +680,7 @@ msdosfs_write(void *v)
 			 * or we write the cluster from its start beyond EOF,
 			 * then no need to read data from disk.
 			 */
-			bp = getblk(thisvp, cn, pmp->pm_bpcluster, 0, 0);
+			bp = getblk(thisvp, cn, pmp->pm_bpcluster, 0, INFSLP);
 			clrbuf(bp);
 			/*
 			 * Do the bmap now, since pcbmap needs buffers
@@ -1307,7 +1307,7 @@ msdosfs_mkdir(void *v)
 	 */
 	bn = cntobn(pmp, newcluster);
 	/* always succeeds */
-	bp = getblk(pmp->pm_devvp, bn, pmp->pm_bpcluster, 0, 0);
+	bp = getblk(pmp->pm_devvp, bn, pmp->pm_bpcluster, 0, INFSLP);
 	bzero(bp->b_data, pmp->pm_bpcluster);
 	bcopy(&dosdirtemplate, bp->b_data, sizeof dosdirtemplate);
 	denp = (struct direntry *)bp->b_data;

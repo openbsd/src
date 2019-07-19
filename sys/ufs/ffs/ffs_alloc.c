@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.108 2016/05/23 20:47:49 tb Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.109 2019/07/19 00:24:31 cheloha Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -1191,7 +1191,7 @@ gotit:
 
                 ibp = getblk(ip->i_devvp, fsbtodb(fs,
                     ino_to_fsba(fs, cg * fs->fs_ipg + cgp->cg_initediblk)),
-                    (int)fs->fs_bsize, 0, 0);
+                    (int)fs->fs_bsize, 0, INFSLP);
 
                 memset(ibp->b_data, 0, fs->fs_bsize);
                 dp2 = (struct ufs2_dinode *)(ibp->b_data);

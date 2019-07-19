@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.44 2015/11/28 21:52:02 beck Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.45 2019/07/19 00:24:31 cheloha Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 			if (error)
 				return (error);
 			if (bpp != NULL) {
-				*bpp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+				*bpp = getblk(vp, lbn, fs->fs_bsize, 0, INFSLP);
 				if (nsize < fs->fs_bsize)
 					(*bpp)->b_bcount = nsize;
 				(*bpp)->b_blkno = fsbtodb(fs, newb);
@@ -243,7 +243,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 		nb = newb;
 
 		*allocblk++ = nb;
-		bp = getblk(vp, indirs[1].in_lbn, fs->fs_bsize, 0, 0);
+		bp = getblk(vp, indirs[1].in_lbn, fs->fs_bsize, 0, INFSLP);
 		bp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(bp);
 
@@ -292,7 +292,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 		}
 		nb = newb;
 		*allocblk++ = nb;
-		nbp = getblk(vp, indirs[i].in_lbn, fs->fs_bsize, 0, 0);
+		nbp = getblk(vp, indirs[i].in_lbn, fs->fs_bsize, 0, INFSLP);
 		nbp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(nbp);
 
@@ -337,7 +337,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 		nb = newb;
 		*allocblk++ = nb;
 		if (bpp != NULL) {
-			nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+			nbp = getblk(vp, lbn, fs->fs_bsize, 0, INFSLP);
 			nbp->b_blkno = fsbtodb(fs, nb);
 			if (flags & B_CLRBUF)
 				clrbuf(nbp);
@@ -367,7 +367,7 @@ ffs1_balloc(struct inode *ip, off_t startoffset, int size, struct ucred *cred,
 				goto fail;
 			}
 		} else {
-			nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+			nbp = getblk(vp, lbn, fs->fs_bsize, 0, INFSLP);
 			nbp->b_blkno = fsbtodb(fs, nb);
 		}
 		*bpp = nbp;
@@ -572,7 +572,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 				return (error);
 
 			if (bpp != NULL) {
-				bp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+				bp = getblk(vp, lbn, fs->fs_bsize, 0, INFSLP);
 				if (nsize < fs->fs_bsize)
 					bp->b_bcount = nsize;
 				bp->b_blkno = fsbtodb(fs, newb);
@@ -622,7 +622,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 
 		nb = newb;
 		*allocblk++ = nb;
-		bp = getblk(vp, indirs[1].in_lbn, fs->fs_bsize, 0, 0);
+		bp = getblk(vp, indirs[1].in_lbn, fs->fs_bsize, 0, INFSLP);
 		bp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(bp);
 
@@ -681,7 +681,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 
 		nb = newb;
 		*allocblk++ = nb;
-		nbp = getblk(vp, indirs[i].in_lbn, fs->fs_bsize, 0, 0);
+		nbp = getblk(vp, indirs[i].in_lbn, fs->fs_bsize, 0, INFSLP);
 		nbp->b_blkno = fsbtodb(fs, nb);
 		clrbuf(nbp);
 
@@ -733,7 +733,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 		*allocblk++ = nb;
 
 		if (bpp != NULL) {
-			nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+			nbp = getblk(vp, lbn, fs->fs_bsize, 0, INFSLP);
 			nbp->b_blkno = fsbtodb(fs, nb);
 			if (flags & B_CLRBUF)
 				clrbuf(nbp);
@@ -771,7 +771,7 @@ ffs2_balloc(struct inode *ip, off_t off, int size, struct ucred *cred,
 				goto fail;
 			}
 		} else {
-			nbp = getblk(vp, lbn, fs->fs_bsize, 0, 0);
+			nbp = getblk(vp, lbn, fs->fs_bsize, 0, INFSLP);
 			nbp->b_blkno = fsbtodb(fs, nb);
 			clrbuf(nbp);
 		}
@@ -811,13 +811,13 @@ fail:
 				break;
 
 			bp = getblk(vp, indirs[i].in_lbn, (int) fs->fs_bsize,
-			    0, 0);
+			    0, INFSLP);
 			if (bp->b_flags & B_DELWRI) {
 				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
 				    dbtofsb(fs, bp->b_blkno))));
 				bwrite(bp);
 				bp = getblk(ip->i_devvp, nb,
-				    (int) fs->fs_cgsize, 0, 0);
+				    (int) fs->fs_cgsize, 0, INFSLP);
 				if (bp->b_flags & B_DELWRI)
 					bwrite(bp);
 				else {
@@ -857,7 +857,7 @@ fail:
 
 		for (i = unwindidx + 1; i <= num; i++) {
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
-			    0);
+			    INFSLP);
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
 		}

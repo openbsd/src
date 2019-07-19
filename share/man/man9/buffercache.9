@@ -1,4 +1,4 @@
-.\"	$OpenBSD: buffercache.9,v 1.12 2017/08/22 00:18:56 sf Exp $
+.\"	$OpenBSD: buffercache.9,v 1.13 2019/07/19 00:24:31 cheloha Exp $
 .\"     $NetBSD: buffercache.9,v 1.13 2004/06/25 15:31:37 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
@@ -102,7 +102,7 @@
 .\"
 .\"
 .\" ------------------------------------------------------------
-.Dd $Mdocdate: August 22 2017 $
+.Dd $Mdocdate: July 19 2019 $
 .Dt BUFFERCACHE 9
 .Os
 .Sh NAME
@@ -141,7 +141,7 @@
 .Fn bdwrite "struct buf *bp"
 .Ft struct buf *
 .Fn getblk "struct vnode *vp" "daddr_t blkno" "int size" \
-"int slpflag" "int slptimeo"
+"int slpflag" "uint64_t slptimeo"
 .Ft struct buf *
 .Fn geteblk "size_t size"
 .Ft struct buf *
@@ -316,7 +316,7 @@ needs to sleep,
 and
 .Fa slptimeo
 are used as arguments for
-.Fn tsleep .
+.Xr tsleep_nsec 9 .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn geteblk "size"
 Allocate an empty, disassociated block of a given size
