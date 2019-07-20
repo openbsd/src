@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ed.1,v 1.73 2019/07/15 17:57:48 schwarze Exp $
+.\"	$OpenBSD: ed.1,v 1.74 2019/07/20 15:28:54 schwarze Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Moore, Talke Studio.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 15 2019 $
+.Dd $Mdocdate: July 20 2019 $
 .Dt ED 1
 .Os
 .Sh NAME
@@ -369,15 +369,16 @@ is not specified, then the default unescaped filename is printed.
 .Ar re No / Ar command-list
 .Xc
 .Sm on
-Applies
+Mark each addressed line matching the regular expression
+.Ar re
+for modification.
+The current address is set to each marked line in turn, and then the
 .Ar command-list
-to each of the addressed lines matching a regular expression
-.Ar re .
-The current address is set to the line currently matched before
-command-list is executed.
-At the end of the
-.Ic g
-command, the current address is set to the last line affected by command-list.
+is executed each time.
+The command-list can change the current line number,
+and it is not changed back after the command-list ended.
+When a marked line is changed, it is unmarked
+and the command-list won't be executed for it any more.
 If no lines were matched,
 the current line number remains unchanged.
 .Pp
@@ -396,8 +397,14 @@ An empty
 .Ar command-list
 is equivalent to a
 .Ic p
-command.
-In this case, the trailing slash can be omitted.
+command \(em unlike for the
+.Cm G
+command, where an empty command-list does nothing, and unlike an empty
+command, which is equivalent to the command
+.Cm +p .
+If the
+.Ar command-list
+is empty, the trailing slash can be omitted.
 .Sm off
 .It (1,$) Ic G No / Ar re No /
 .Sm on
@@ -620,24 +627,23 @@ is its own inverse.
 .Pf / Ar command-list
 .Xc
 .Sm on
-Applies
-.Ar command-list
-to each of the addressed lines not matching a regular expression
-.Ar re .
-This is similar to the
+The same as the
 .Ic g
-command.
+command, except that it applies
+.Ar command-list
+to each of the addressed lines not matching the regular expression
+.Ar re .
 .Sm off
 .It Xo
 .Pf (1,$) Ic V No /
 .Ar re No /
 .Xc
 .Sm on
-Interactively edits the addressed lines not matching a regular expression
-.Ar re .
-This is similar to the
+The same as the
 .Ic G
-command.
+command, except that it interactively edits the addressed lines
+not matching the regular expression
+.Ar re .
 .It (1,$) Ns Ic w Ar file
 Writes the addressed lines to
 .Ar file .
