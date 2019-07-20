@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.109 2019/07/09 23:48:08 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.110 2019/07/20 23:03:55 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -569,9 +569,11 @@ for (i = 0; i < errnum; i++) {
 		/* should check for correct byte here or panic */
 #ifdef DDB
 		db_save_regs(frame);
+		db_active++;
 		cnpollc(TRUE);
 		db_trap(T_BREAKPOINT, 0);
 		cnpollc(FALSE);
+		db_active--;
 #else
 		panic("trap EXC_PGM");
 #endif
