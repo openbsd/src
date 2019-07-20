@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.54 2019/05/26 01:16:09 naddy Exp $
+.\"	$OpenBSD: less.1,v 1.55 2019/07/20 13:21:09 schwarze Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 26 2019 $
+.Dd $Mdocdate: July 20 2019 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -499,10 +499,8 @@ each type of control character).
 Thus, various display problems may result,
 such as long lines being split in the wrong place.
 .It Fl S | -chop-long-lines
-Causes lines longer than the screen width to be
-chopped (truncated) rather than wrapped.
-That is, the portion of a long line that does not fit in
-the screen width is not shown.
+Display only the beginning of lines that exceed the screen width.
+The remainder can be shown by scrolling horizontally.
 The default is to wrap long lines; that is, display the remainder
 on the next line.
 .It Fl s | -squeeze-blank-lines
