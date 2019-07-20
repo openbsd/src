@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.28 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: zs.c,v 1.29 2019/07/20 23:06:51 mpi Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -1091,12 +1091,8 @@ zs_abort(struct zs_chanstate *channel)
 	} while (rr0 & ZSRR0_BREAK);
 
 #if defined(DDB)
-	{
-		extern int db_active;
-
-		if (!db_active)
-			db_enter();
-	}
+	if (!db_active)
+		db_enter();
 #endif
 }
 

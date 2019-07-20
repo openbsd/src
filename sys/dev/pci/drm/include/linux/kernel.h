@@ -9,8 +9,6 @@
 #include <sys/stdarg.h>
 #include <sys/malloc.h>
 
-#include <ddb/db_var.h>
-
 #include <linux/types.h>
 #include <linux/compiler.h>
 #include <linux/bitops.h>
@@ -119,7 +117,7 @@ static inline int
 _in_dbg_master(void)
 {
 #ifdef DDB
-	return (db_is_active);
+	return (db_active);
 #endif
 	return (0);
 }

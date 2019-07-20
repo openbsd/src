@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.17 2017/12/03 10:55:50 mpi Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.18 2019/07/20 23:06:51 mpi Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.8 2006/10/07 18:11:36 rjs Exp $ */
 
 /*-
@@ -38,8 +38,6 @@
 #include <machine/hypervisor.h>
 #include <machine/pmap.h>
 #include <machine/sparc64.h>
-
-extern int db_active;
 
 #define SPARC64_IPI_RETRIES	10000
 

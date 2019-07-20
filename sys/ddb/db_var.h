@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_var.h,v 1.12 2016/09/04 09:22:29 mpi Exp $	*/
+/*	$OpenBSD: db_var.h,v 1.13 2019/07/20 23:06:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -67,7 +67,6 @@ extern int	db_max_line;
 extern int	db_panic;
 extern int	db_console;
 extern int	db_log;
-extern int	db_is_active;
 extern int	db_profile;
 
 int	ddb_sysctl(int *, u_int, void *, size_t *, void *, size_t,
