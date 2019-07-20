@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.4 2019/07/20 06:00:16 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.5 2019/07/20 11:06:33 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -207,6 +207,7 @@ multiarg(char *funstr)
 					if (contbuf != NULL) {
 						(void)strlcpy(argbuf, contbuf,
 						    sizeof(argbuf));
+						free(contbuf);
 						contbuf = NULL;
 						p = argp = argbuf;
 						foundlst = 1;
