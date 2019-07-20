@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.3 2019/07/19 16:00:08 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.4 2019/07/20 06:00:16 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -20,7 +20,7 @@
  * like:
  * 
  * 1. Give multiple arguments to a function that usually would accept only one:
- * (find-fine a.txt b.txt. c.txt)
+ * (find-file a.txt b.txt. c.txt)
  *
  * 2. Define a list:
  * (define myfiles(list d.txt e.txt))
@@ -172,12 +172,12 @@ multiarg(char *funstr)
 				excbuf[0] = '\0';
 				/* Is arg a var? */
 				if (!inlist) {
-					if ((contbuf = strndup(endp, BUFSIZE))
-					    == NULL)
-						return(FALSE);
 					sizof = sizeof(tmpbuf);
 					t = tmpbuf;
 					if (isvar(&argp, &t, sizof)) {
+						if ((contbuf = strndup(endp,
+						    BUFSIZE)) == NULL)
+							return(FALSE);
 						*p = ' ';
 						(void)(strlcpy(argbuf, tmpbuf,
 						    sizof) >= sizof);
