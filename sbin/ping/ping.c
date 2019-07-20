@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.236 2019/06/28 13:32:45 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.237 2019/07/20 00:49:54 cheloha Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -343,11 +343,6 @@ main(int argc, char *argv[])
 			    (long)((intval - interval.tv_sec) * 1000000);
 			if (interval.tv_sec < 0)
 				errx(1, "illegal timing interval %s", optarg);
-			/* less than 1/Hz does not make sense */
-			if (interval.tv_sec == 0 && interval.tv_usec < 10000) {
-				warnx("too small interval, raised to 0.01");
-				interval.tv_usec = 10000;
-			}
 			options |= F_INTERVAL;
 			break;
 		case 'L':
