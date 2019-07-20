@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.16 2019/07/19 05:21:25 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.17 2019/07/20 04:53:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -596,14 +596,8 @@ aggr_port_enabled(struct aggr_port *p)
 	if (!ISSET(ifp0->if_flags, IFF_RUNNING))
 		return (0);
 
-	switch (ifp0->if_link_state) {
-	case LINK_STATE_UNKNOWN:
-	case LINK_STATE_UP:
-	case LINK_STATE_FULL_DUPLEX:
-		break;
-	default:
+	if (!LINK_STATE_IS_UP(ifp0->if_link_state))
 		return (0);
-	}
 
 	return (1);
 }
