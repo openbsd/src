@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.81 2019/07/21 15:47:02 krw Exp $	*/
+/*	$OpenBSD: parse.c,v 1.82 2019/07/21 15:59:51 krw Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -111,12 +111,13 @@ parse_semi(FILE *cfile)
 	int token;
 
 	token = next_token(NULL, cfile);
-	if (token != ';') {
-		parse_warn("expecting semicolon.");
-		skip_to_semi(cfile);
-		return 0;
-	}
-	return 1;
+	if (token == ';')
+		return 1;
+
+	parse_warn("expecting semicolon.");
+	skip_to_semi(cfile);
+
+	return 0;
 }
 
 int
