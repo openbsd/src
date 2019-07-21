@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.189 2019/07/20 17:14:15 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.190 2019/07/21 15:47:02 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -284,7 +284,7 @@ parse_conf_decl(FILE *cfile, char *name)
 		config->default_actions[i] = ACTION_DEFAULT;
 		break;
 	case TOK_FILENAME:
-		if (parse_string(cfile, NULL, &val) == 0)
+		if (parse_string(cfile, &val) == 0)
 			return;
 		free(config->filename);
 		config->filename = val;
@@ -367,7 +367,7 @@ parse_conf_decl(FILE *cfile, char *name)
 			return;
 		break;
 	case TOK_SERVER_NAME:
-		if (parse_string(cfile, NULL, &val) == 0)
+		if (parse_string(cfile, &val) == 0)
 			return;
 		free(config->server_name);
 		config->server_name = val;
@@ -466,7 +466,7 @@ parse_domain_list(FILE *cfile, int *len, char **dp)
 	count = 0;
 
 	do {
-		if (parse_string(cfile, NULL, &domain) == 0)
+		if (parse_string(cfile, &domain) == 0)
 			return 0;
 
 		count++;
@@ -696,7 +696,7 @@ parse_lease_decl(FILE *cfile, struct client_lease *lease)
 		skip_to_semi(cfile);
 		return;
 	case TOK_FILENAME:
-		if (parse_string(cfile, NULL, &val) == 0)
+		if (parse_string(cfile, &val) == 0)
 			return;
 		free(lease->filename);
 		lease->filename = val;
@@ -723,14 +723,15 @@ parse_lease_decl(FILE *cfile, struct client_lease *lease)
 		skip_to_semi(cfile);
 		return;
 	case TOK_SERVER_NAME:
-		if (parse_string(cfile, NULL, &val) == 0)
+		if (parse_string(cfile, &val) == 0)
 			return;
 		free(lease->server_name);
 		lease->server_name = val;
 		break;
 	case TOK_SSID:
-		if (parse_string(cfile, &len, &val) == 0)
+		if (parse_string(cfile, &val) == 0)
 			return;
+		len = strlen(val);
 		if (len > sizeof(lease->ssid)) {
 			free(val);
 			parse_warn("ssid > 32 bytes");
@@ -797,18 +798,19 @@ parse_option(FILE *cfile, int *code, struct option_data *options)
 			switch (*fmt) {
 			case 'X':
 				if (peek_token(NULL, cfile) == TOK_STRING) {
-					if (parse_string(cfile, &len,
-					    (char **)&dp) == 0)
+					if (parse_string(cfile, (char **)&dp)
+					    == 0)
 						return 0;
+					len = strlen(dp);
 				} else if (parse_hex_octets(cfile, &len, &dp)
 				    == 0)
 					return 0;
 				freedp = 1;
 				break;
 			case 't': /* Text string. */
-				if (parse_string(cfile, &len, (char **)&dp)
-				    == 0)
+				if (parse_string(cfile, (char **)&dp) == 0)
 					return 0;
+				len = strlen(dp);
 				freedp = 1;
 				break;
 			case 'I': /* IP address. */
