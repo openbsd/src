@@ -146,6 +146,12 @@ static const struct dmi_system_id orientation_data[] = {
 		  DMI_EXACT_MATCH(DMI_BOARD_NAME, "TW891"),
 		},
 		.driver_data = (void *)&itworks_tw891,
+	}, {	/* Kogan Atlas 2-in-1 D300 */
+		.matches = {
+		  DMI_EXACT_MATCH(DMI_SYS_VENDOR, "Kogan"),
+		  DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "KALAP10D300EA"),
+		},
+		.driver_data = (void *)&lcd800x1280_rightside_up,
 	}, {	/*
 		 * Lenovo Ideapad Miix 310 laptop, only some production batches
 		 * have a portrait screen, the resolution checks makes the quirk
