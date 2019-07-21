@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.102 2018/10/22 01:59:08 guenther Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.103 2019/07/21 03:54:16 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -526,12 +526,6 @@ _dl_show_objects(void)
 		}
 		_dl_tracefmt(outputfd, object, fmt1, fmt2, objtypename);
 	}
-
-	if (_dl_symcachestat_lookups != 0)
-		DL_DEB(("symcache lookups %d hits %d ratio %d% hits\n",
-		    _dl_symcachestat_lookups, _dl_symcachestat_hits,
-		    (_dl_symcachestat_hits * 100) /
-		    _dl_symcachestat_lookups));
 }
 
 lock_cb *

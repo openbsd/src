@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.92 2019/05/11 21:02:35 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.93 2019/07/21 03:54:16 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -368,9 +368,6 @@ typedef struct sym_cache {
 	int flags;
 } sym_cache;
 
-extern sym_cache *_dl_symcache;
-extern int _dl_symcachestat_hits;
-extern int _dl_symcachestat_lookups;
 TAILQ_HEAD(dlochld, dep_node);
 extern struct dlochld _dlopened_child_list;
 __END_HIDDEN_DECLS
