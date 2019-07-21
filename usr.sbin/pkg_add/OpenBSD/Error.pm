@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.36 2019/07/21 14:18:55 espie Exp $
+# $OpenBSD: Error.pm,v 1.37 2019/07/21 15:31:39 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -17,6 +17,8 @@
 use strict;
 use warnings;
 
+# this is a set of common classes related to error handling in pkg land
+
 package OpenBSD::Auto;
 sub cache(*&)
 {
@@ -30,32 +32,55 @@ sub cache(*&)
 	*{$callpkg."::$sym"} = $actual;
 }
 
+# a bunch of other modules create persistent state that must be cleaned up
+# on exit (temporary files, network connections to abort properly...)
+# END blocks would do that (but see below...) but sig handling bypasses that,
+# so we MUST install SIG handlers.
+
+# note that END will be run for *each* process, so beware!
+# (temp files are registered per pid, for instance, so they only
+# get cleaned when the proper pid is used)
 package OpenBSD::Handler;
 
-my $list = [];
+# hash of code to run on ANY exit
+my $cleanup = {};
 
+sub cleanup
+{
+	my ($class, $sig) = @_;
+	# XXX note that order of cleanup is "unpredictable"
+	for my $v (values %$cleanup) {
+		&$v($sig);
+	}
+}
+
+#END {
+#	# XXX localize $? so that cleanup doesn't fuck up our exit code
+#	local $?;
+#	cleanup();
+#}
+
+# register each code block "by name" so that we can re-register each
+# block several times
 sub register
 {
 	my ($class, $code) = @_;
-	push(@$list, $code);
+	$cleanup->{$code} = $code;
 }
 
 my $handler = sub {
 	my $sig = shift;
-	for my $c (@$list) {
-		&$c($sig);
-	}
+	__PACKAGE__->cleanup($sig);
+	# after cleanup, just propagate the signal
 	$SIG{$sig} = 'DEFAULT';
 	kill $sig, $$;
 };
 
 sub reset
 {
-	$SIG{'INT'} = $handler;
-	$SIG{'QUIT'} = $handler;
-	$SIG{'HUP'} = $handler;
-	$SIG{'KILL'} = $handler;
-	$SIG{'TERM'} = $handler;
+	for my $sig (qw(INT QUIT HUP KILL TERM)) {
+		$SIG{$sig} = $handler;
+	}
 }
 
 __PACKAGE__->reset;
