@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.43 2019/07/19 18:32:19 cheloha Exp $	*/
+/*	$OpenBSD: lock.c,v 1.44 2019/07/21 14:39:32 jca Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -34,8 +34,8 @@
  */
 
 /*
- * Lock a terminal up until the given key is entered, until the root
- * password is entered, or the given interval times out.
+ * Lock a terminal up until the given key or user password is entered,
+ * or the given interval times out.
  */
 
 #include <sys/stat.h>
