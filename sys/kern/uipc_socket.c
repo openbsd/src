@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.233 2019/07/11 11:57:35 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.234 2019/07/22 15:34:07 robert Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1866,6 +1866,14 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 		case SO_ERROR:
 			*mtod(m, int *) = so->so_error;
 			so->so_error = 0;
+			break;
+
+		case SO_DOMAIN:
+			*mtod(m, int *) = so->so_proto->pr_domain->dom_family;
+			break;
+
+		case SO_PROTOCOL:
+			*mtod(m, int *) = so->so_proto->pr_protocol;
 			break;
 
 		case SO_SNDBUF:

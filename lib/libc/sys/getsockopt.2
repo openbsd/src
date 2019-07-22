@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.55 2019/02/13 11:55:21 martijn Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.56 2019/07/22 15:34:07 robert Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 13 2019 $
+.Dd $Mdocdate: July 22 2019 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -174,6 +174,10 @@ clear all memory containing user supplied data
 get the type of the socket (get only)
 .It Dv SO_ERROR
 get and clear error on the socket (get only)
+.It Dv SO_DOMAIN
+get the domain of the socket (get only)
+.It Dv SO_PROTOCOL
+get the protocol of the socket (get only)
 .El
 .Pp
 .Dv SO_DEBUG
@@ -451,7 +455,9 @@ If
 is set, overwrite kernel memory after sending data.
 .Pp
 Finally,
-.Dv SO_TYPE
+.Dv SO_TYPE ,
+.Dv SO_DOMAIN ,
+.Dv SO_PROTOCOL
 and
 .Dv SO_ERROR
 are options used only with
@@ -460,6 +466,12 @@ are options used only with
 returns the type of the socket, such as
 .Dv SOCK_STREAM ;
 it is useful for servers that inherit sockets on startup.
+.Dv SO_DOMAIN
+returns the domain of the socket, such as
+.Dv AF_INET .
+.Dv SO_PROTOCOL
+returns the protocol of the socket such as
+.Dv IPPROTO_TCP .
 .Dv SO_ERROR
 returns any pending error on the socket and clears the error status.
 It may be used to check for asynchronous errors on connected

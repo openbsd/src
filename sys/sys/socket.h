@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.97 2019/07/03 10:08:10 dlg Exp $	*/
+/*	$OpenBSD: socket.h,v 1.98 2019/07/22 15:34:07 robert Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -113,6 +113,8 @@ typedef	__sa_family_t	sa_family_t;	/* sockaddr address family type */
 #define	SO_RTABLE	0x1021		/* routing table to be used */
 #define	SO_PEERCRED	0x1022		/* get connect-time credentials */
 #define	SO_SPLICE	0x1023		/* splice data to other socket */
+#define	SO_DOMAIN	0x1024		/* get socket domain */
+#define	SO_PROTOCOL	0x1025		/* get socket protocol */
 
 /*
  * Structure used for manipulating linger option.
