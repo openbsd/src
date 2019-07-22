@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.29 2017/11/10 18:25:48 martijn Exp $	*/
+/*	$OpenBSD: recover.c,v 1.30 2019/07/22 12:39:02 schwarze Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -820,6 +820,15 @@ rcv_email(SCR *sp, int fd)
 {
 	struct stat sb;
 	pid_t pid;
+
+	/*
+	 * In secure mode, our pledge(2) includes neither "proc"
+	 * nor "exec".  So simply skip sending the mail.
+	 * Later vi -r still works because rcv_mailfile()
+	 * already did all the necessary setup.
+	 */
+	if (O_ISSET(sp, O_SECURE))
+		return;
 
 	if (_PATH_SENDMAIL[0] != '/' || stat(_PATH_SENDMAIL, &sb) == -1)
 		msgq_str(sp, M_SYSERR,
