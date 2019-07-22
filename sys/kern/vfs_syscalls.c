@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.324 2019/07/22 16:39:29 anton Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.325 2019/07/22 16:43:10 anton Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -3004,7 +3004,7 @@ sys_getdents(struct proc *p, void *v, register_t *retval)
 	buflen = SCARG(uap, buflen);
 
 	if (buflen > INT_MAX)
-		return EINVAL;
+		return (EINVAL);
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
