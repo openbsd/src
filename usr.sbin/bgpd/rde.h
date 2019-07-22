@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.220 2019/07/17 10:13:26 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.221 2019/07/22 07:32:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -627,9 +627,6 @@ int		 nexthop_compare(struct nexthop *, struct nexthop *);
 
 /* rde_update.c */
 void		 up_init(struct rde_peer *);
-int		 up_rib_remove(struct rde_peer *, struct rib_entry *);
-void		 up_rib_add(struct rde_peer *, struct rib_entry *);
-void		 up_withdraw_all(struct rde_peer *);
 void		 up_generate_updates(struct filter_head *, struct rde_peer *,
 		     struct prefix *, struct prefix *);
 void		 up_generate_default(struct filter_head *, struct rde_peer *,
