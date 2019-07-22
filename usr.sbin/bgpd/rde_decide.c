@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.75 2019/07/17 10:13:26 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.76 2019/07/22 07:34:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -246,8 +246,7 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 		/* decision process is turned off */
 		if (p != NULL)
 			LIST_INSERT_HEAD(&re->prefix_h, p, entry.list.rib);
-		if (re->active != NULL)
-			re->active = NULL;
+		re->active = NULL;
 		return;
 	}
 
