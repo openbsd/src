@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.37 2019/07/21 15:31:39 espie Exp $
+# $OpenBSD: Error.pm,v 1.38 2019/07/22 06:59:41 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -43,6 +43,8 @@ sub cache(*&)
 package OpenBSD::Handler;
 
 # hash of code to run on ANY exit
+my $atend = {};
+# hash of code to run on fatal signals
 my $cleanup = {};
 
 sub cleanup
@@ -54,11 +56,13 @@ sub cleanup
 	}
 }
 
-#END {
-#	# XXX localize $? so that cleanup doesn't fuck up our exit code
-#	local $?;
-#	cleanup();
-#}
+END {
+	# XXX localize $? so that cleanup doesn't fuck up our exit code
+	local $?;
+	for my $v (values %$atend) {
+		&$v();
+	}
+}
 
 # register each code block "by name" so that we can re-register each
 # block several times
@@ -66,6 +70,13 @@ sub register
 {
 	my ($class, $code) = @_;
 	$cleanup->{$code} = $code;
+}
+
+sub atend
+{
+	my ($class, $code) = @_;
+	$cleanup->{$code} = $code;
+	$atend->{$code} = $code;
 }
 
 my $handler = sub {
