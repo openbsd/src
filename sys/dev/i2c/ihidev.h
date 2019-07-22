@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.h,v 1.6 2018/08/25 18:32:05 jcs Exp $ */
+/* $OpenBSD: ihidev.h,v 1.7 2019/07/22 14:37:06 jcs Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -89,8 +89,10 @@ struct ihidev_softc {
 	int		sc_refcnt;
 
 	int		sc_poll;
+	int		sc_frompoll;
 	int		sc_fastpoll;
 	struct timeout	sc_timer;
+	int		sc_dying;
 };
 
 struct ihidev {
