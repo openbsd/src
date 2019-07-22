@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.35 2018/12/30 23:09:58 guenther Exp $	*/
+/*	$OpenBSD: to.c,v 1.36 2019/07/22 23:01:48 kn Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -385,7 +385,7 @@ text_to_relayhost(struct relayhost *relay, const char *s)
 	/* finally, we extract the port */
 	p = beg + len;
 	if (*p == ':') {
-		relay->port = strtonum(p+1, 1, 0xffff, &errstr);
+		relay->port = strtonum(p+1, 1, IPPORT_HILASTAUTO, &errstr);
 		if (errstr)
 			return 0;
 	}
