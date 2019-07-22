@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.13 2019/04/10 04:17:34 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.14 2019/07/22 11:51:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -27,10 +27,111 @@
 #include <efi.h>
 #include <stand/boot/cmd.h>
 
+#include <arm/armreg.h>
+
 #include "efiboot.h"
 #include "libsa.h"
 
 typedef void (*startfuncp)(void *, void *, void *) __attribute__ ((noreturn));
+
+#define CLIDR_LOC(x)		((x >> 24) & 0x7)
+#define CLIDR_CTYPE(x, n)	((x >> (n * 3)) & 0x7)
+#define CLIDR_CTYPE_NOCACHE	0x0
+#define CLIDR_CTYPE_ICACHE	0x1
+#define CLIDR_CTYPE_DCACHE	0x2
+#define CLIDR_CTYPE_SEP_CACHE	0x3
+#define CLIDR_CTYPE_UNI_CACHE	0x4
+#define CCSIDR_NUMSETS(x)	((x >> 13) & 0x7fff)
+#define CCSIDR_ASSOCIATIVITY(x)	((x >> 3) & 0x3ff)
+#define CCSIDR_LINESZ(x)	(x & 0x7)
+
+void
+dcache_wbinv_all(void)
+{
+	uint32_t clidr;
+	uint32_t ccsidr;
+	uint32_t val;
+	int nways, nsets;
+	int wshift, sshift;
+	int way, set;
+	int level;
+	
+	__asm volatile("mrc p15, 1, %0, c0, c0, 1" : "=r"(clidr));
+	for (level = 0; level < CLIDR_LOC(clidr); level++) {
+		if (CLIDR_CTYPE(clidr, level) == CLIDR_CTYPE_NOCACHE)
+			break;
+		if (CLIDR_CTYPE(clidr, level) == CLIDR_CTYPE_ICACHE)
+			continue;
+
+		__asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r"(level << 1));
+		__asm volatile("isb");
+		__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r"(ccsidr));
+
+		nways = CCSIDR_ASSOCIATIVITY(ccsidr) + 1;
+		nsets = CCSIDR_NUMSETS(ccsidr) + 1;
+
+		sshift = CCSIDR_LINESZ(ccsidr) + 4;
+		wshift = __builtin_clz(CCSIDR_ASSOCIATIVITY(ccsidr));
+
+		for (way = 0; way < nways; way++) {
+			for (set = 0; set < nsets; set++) {
+				val = (way << wshift) | (set << sshift) |
+				    (level << 1);
+				__asm volatile("mcr p15, 0, %0, c7, c14, 2"
+				    :: "r"(val));
+			}
+		}
+	}
+
+	__asm volatile("dsb");
+}
+
+void
+icache_inv_all(void)
+{
+	__asm volatile("mcr p15, 0, r0, c7, c5, 0"); /* ICIALLU */
+	__asm volatile("dsb");
+	__asm volatile("isb");
+}
+
+void
+dcache_disable(void)
+{
+	uint32_t sctlr;
+
+	__asm volatile("mrc p15, 0, %0, c1, c0, 0" : "=r"(sctlr));
+	sctlr &= ~CPU_CONTROL_DC_ENABLE;
+	__asm volatile("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
+	__asm volatile("dsb");
+	__asm volatile("isb");
+}
+
+void
+icache_disable(void)
+{
+	uint32_t sctlr;
+
+	__asm volatile("mrc p15, 0, %0, c1, c0, 0" : "=r"(sctlr));
+	sctlr &= ~CPU_CONTROL_IC_ENABLE;
+	__asm volatile("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
+	__asm volatile("dsb");
+	__asm volatile("isb");
+}
+
+void
+mmu_disable(void)
+{
+	uint32_t sctlr;
+
+	__asm volatile("mrc p15, 0, %0, c1, c0, 0" : "=r"(sctlr));
+	sctlr &= ~CPU_CONTROL_MMU_ENABLE;
+	__asm volatile("mcr p15, 0, %0, c1, c0, 0" :: "r"(sctlr));
+
+	__asm volatile("mcr p15, 0, r0, c8, c7, 0"); /* TLBIALL */
+	__asm volatile("mcr p15, 0, r0, c7, c5, 6"); /* BPIALL */
+	__asm volatile("dsb");
+	__asm volatile("isb");
+}
 
 void
 run_loadfile(uint64_t *marks, int howto)
@@ -81,6 +182,12 @@ run_loadfile(uint64_t *marks, int howto)
 	fdt = efi_makebootargs(args, &board_id);
 
 	efi_cleanup();
+
+	dcache_disable();
+	dcache_wbinv_all();
+	icache_disable();
+	icache_inv_all();
+	mmu_disable();
 
 	(*(startfuncp)(marks[MARK_ENTRY]))((void *)esym, (void *)board_id, fdt);
 
