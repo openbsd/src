@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.85 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.86 2019/07/22 08:06:52 kn Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -56,9 +56,6 @@
 
 #define AUTO_SUSPEND 1
 #define AUTO_HIBERNATE 2
-
-const char apmdev[] = _PATH_APM_CTLDEV;
-const char sockfile[] = _PATH_APM_SOCKET;
 
 int debug = 0;
 
@@ -375,7 +372,7 @@ resumed(int ctl_fd)
 int
 main(int argc, char *argv[])
 {
-	const char *fname = apmdev;
+	const char *fname = _PATH_APM_CTLDEV;
 	int ctl_fd, sock_fd, ch, suspends, standbys, hibernates, resumes;
 	int autoaction = 0;
 	int autolimit = 0;
@@ -385,7 +382,7 @@ main(int argc, char *argv[])
 	struct timespec ts = {TIMO, 0}, sts = {0, 0};
 	struct apm_power_info pinfo;
 	time_t apmtimeout = 0;
-	const char *sockname = sockfile;
+	const char *sockname = _PATH_APM_SOCKET;
 	const char *errstr;
 	int kq, nchanges;
 	struct kevent ev[2];
