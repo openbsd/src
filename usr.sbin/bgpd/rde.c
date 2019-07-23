@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.477 2019/07/23 06:26:44 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.478 2019/07/23 13:07:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -259,6 +259,8 @@ rde_main(int debug, int verbose)
 		for (mctx = LIST_FIRST(&rde_mrts); mctx != 0; mctx = xmctx) {
 			xmctx = LIST_NEXT(mctx, entry);
 
+			if (i >= pfd_elms)
+				fatalx("poll pfd too small");
 			if (mctx->mrt.wbuf.queued) {
 				pfd[i].fd = mctx->mrt.wbuf.fd;
 				pfd[i].events = POLLOUT;
