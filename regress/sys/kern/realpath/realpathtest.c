@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpathtest.c,v 1.10 2019/07/15 16:05:04 bluhm Exp $ */
+/*	$OpenBSD: realpathtest.c,v 1.11 2019/07/23 11:01:32 stsp Exp $ */
 
 /*
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -101,6 +101,7 @@ main(int argc, char *argv[])
 
 	/* some basics */
 	RP_SHOULD_FAIL(NULL, NULL, NULL);
+	RP_SHOULD_FAIL("", NULL, NULL);
 	RP_SHOULD_SUCCEED("/", NULL, NULL);
 	RP_SHOULD_SUCCEED("/tmp", NULL, NULL);
 	RP_SHOULD_FAIL("/tmp/noreallydoesntexist", NULL, NULL);

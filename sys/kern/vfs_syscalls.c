@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.325 2019/07/22 16:43:10 anton Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.326 2019/07/23 11:01:32 stsp Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -890,6 +890,10 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 	    &pathlen)))
 		goto end;
 
+	if (pathlen == 1) { /* empty string "" */
+		error = ENOENT;
+		goto end;
+	}
 	if (pathlen < 2) {
 		error = EINVAL;
 		goto end;
