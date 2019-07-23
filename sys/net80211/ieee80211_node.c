@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.168 2019/06/10 16:33:02 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.169 2019/07/23 18:56:23 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2074,7 +2074,7 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 		if ((htop1 & IEEE80211_HTOP1_PROT_MASK) != htprot) {
 			htop1 &= ~IEEE80211_HTOP1_PROT_MASK;
 			htop1 |= htprot;
-			ic->ic_bss->ni_htop1 |= htop1;
+			ic->ic_bss->ni_htop1 = htop1;
 			ic->ic_protmode = protmode;
 			if (ic->ic_update_htprot)
 				ic->ic_update_htprot(ic, ic->ic_bss);
