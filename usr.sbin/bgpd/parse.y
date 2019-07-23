@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.393 2019/07/17 10:13:26 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.394 2019/07/23 06:26:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3902,7 +3902,7 @@ add_rib(char *name, u_int rtableid, u_int16_t flags)
 		return (-1);
 	}
 	rr->flags |= flags;
-	if ((rr->flags & F_RIB_HASNOFIB) == 0) {
+	if ((rr->flags & (F_RIB_NOFIB | F_RIB_NOEVALUATE)) == 0) {
 		if (ktable_exists(rtableid, &rdom) != 1) {
 			yyerror("rtable id %u does not exist", rtableid);
 			free(rr);

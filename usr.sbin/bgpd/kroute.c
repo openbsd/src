@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.236 2019/05/06 09:49:26 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.237 2019/07/23 06:26:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -311,7 +311,8 @@ ktable_new(u_int rtableid, u_int rdomid, char *name, int fs, u_int8_t fib_prio)
 
 	/* everything is up and running */
 	kt->state = RECONF_REINIT;
-	log_debug("%s: %s for rtableid %d", __func__, name, rtableid);
+	log_debug("%s: %s with rtableid %d rdomain %d", __func__, name,
+	    rtableid, rdomid);
 	return (0);
 }
 
@@ -351,7 +352,9 @@ ktable_destroy(struct ktable *kt, u_int8_t fib_prio)
 
 	log_debug("%s: freeing ktable %s rtableid %u", __func__, kt->descr,
 	    kt->rtableid);
-	knexthop_clear(kt);
+	/* only clear nexthop table if it is the main rdomain table */
+	if (kt->rtableid == kt->nhtableid)
+		knexthop_clear(kt);
 	kroute_clear(kt);
 	kroute6_clear(kt);
 	kr_net_clear(kt);
@@ -395,7 +398,7 @@ ktable_update(u_int rtableid, char *name, int flags, u_int8_t fib_prio)
 		}
 	}
 
-	if (flags & F_RIB_HASNOFIB)
+	if (flags & (F_RIB_NOFIB | F_RIB_NOEVALUATE))
 		/* only rdomain table must exist */
 		return (0);
 
@@ -755,6 +758,42 @@ kr_delete(u_int rtableid, struct kroute_full *kl, u_int8_t fib_prio)
 	}
 	log_warnx("%s: not handled AID", __func__);
 	return (-1);
+}
+
+int
+kr_flush(u_int rtableid)
+{
+	struct ktable		*kt;
+	struct kroute_node	*kr, *next;
+	struct kroute6_node	*kr6, *next6;
+
+	if ((kt = ktable_get(rtableid)) == NULL)
+		/* too noisy during reloads, just ignore */
+		return (0);
+
+	RB_FOREACH_SAFE(kr, kroute_tree, &kt->krt, next)
+		if ((kr->r.flags & F_BGPD_INSERTED)) {
+			if (kt->fib_sync)	/* coupled */
+				send_rtmsg(kr_state.fd, RTM_DELETE, kt,
+				    &kr->r, kr->r.priority);
+			rtlabel_unref(kr->r.labelid);
+
+			if (kroute_remove(kt, kr) == -1)
+				return (-1);
+		}
+	RB_FOREACH_SAFE(kr6, kroute6_tree, &kt->krt6, next6)
+		if ((kr6->r.flags & F_BGPD_INSERTED)) {
+			if (kt->fib_sync)	/* coupled */
+				send_rt6msg(kr_state.fd, RTM_DELETE, kt,
+				    &kr6->r, kr6->r.priority);
+			rtlabel_unref(kr6->r.labelid);
+
+			if (kroute6_remove(kt, kr6) == -1)
+				return (-1);
+		}
+
+	kt->fib_sync = 0;
+	return (0);
 }
 
 int
@@ -1543,8 +1582,10 @@ kr_reload(void)
 		if ((kt = ktable_get(rid)) == NULL)
 			continue;
 
-		RB_FOREACH(nh, knexthop_tree, KT2KNT(kt))
-			knexthop_validate(kt, nh);
+		/* if this is the main nexthop table revalidate nexthops */
+		if (kt->rtableid == kt->nhtableid)
+			RB_FOREACH(nh, knexthop_tree, KT2KNT(kt))
+				knexthop_validate(kt, nh);
 
 		TAILQ_FOREACH(n, &kt->krn, entry)
 			if (n->net.type == NETWORK_DEFAULT) {
@@ -2372,6 +2413,9 @@ knexthop_validate(struct ktable *kt, struct knexthop_node *kn)
 	oldk = kn->kroute;
 	kroute_detach_nexthop(kt, kn);
 
+	if ((kt = ktable_get(kt->nhtableid)) == NULL)
+		fatalx("%s: lost nexthop routing table", __func__);
+
 	switch (kn->nexthop.aid) {
 	case AID_INET:
 		kr = kroute_match(kt, kn->nexthop.v4.s_addr, 0);
@@ -2474,14 +2518,14 @@ kroute_match(struct ktable *kt, in_addr_t key, int matchall)
 
 	ina = ntohl(key);
 
-	/* we will never match the default route */
+	/* this will never match the default route */
 	for (i = 32; i > 0; i--)
 		if ((kr = kroute_find(kt, htonl(ina & prefixlen2mask(i)), i,
 		    RTP_ANY)) != NULL)
 			if (matchall || bgpd_filternexthop(&kr->r, NULL) == 0)
 			    return (kr);
 
-	/* if we don't have a match yet, try to find a default route */
+	/* so if there is no match yet, lookup the default route */
 	if ((kr = kroute_find(kt, 0, 0, RTP_ANY)) != NULL)
 		if (matchall || bgpd_filternexthop(&kr->r, NULL) == 0)
 			return (kr);
@@ -2496,7 +2540,7 @@ kroute6_match(struct ktable *kt, struct in6_addr *key, int matchall)
 	struct kroute6_node	*kr6;
 	struct in6_addr		 ina;
 
-	/* we will never match the default route */
+	/* this will never match the default route */
 	for (i = 128; i > 0; i--) {
 		inet6applymask(&ina, key, i);
 		if ((kr6 = kroute6_find(kt, &ina, i, RTP_ANY)) != NULL)
@@ -2504,7 +2548,7 @@ kroute6_match(struct ktable *kt, struct in6_addr *key, int matchall)
 				return (kr6);
 	}
 
-	/* if we don't have a match yet, try to find a default route */
+	/* so if there is no match yet, lookup the default route */
 	if ((kr6 = kroute6_find(kt, &in6addr_any, 0, RTP_ANY)) != NULL)
 		if (matchall || bgpd_filternexthop(NULL, &kr6->r) == 0)
 			return (kr6);

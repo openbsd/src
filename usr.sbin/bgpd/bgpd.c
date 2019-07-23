@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.220 2019/07/19 07:40:41 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.221 2019/07/23 06:26:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -738,6 +738,14 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 				log_warnx("wrong imsg len");
 			else if (kr_delete(imsg.hdr.peerid, imsg.data,
 			    conf->fib_priority))
+				rv = -1;
+			break;
+		case IMSG_KROUTE_FLUSH:
+			if (idx != PFD_PIPE_ROUTE)
+				log_warnx("route request not from RDE");
+			else if (imsg.hdr.len != IMSG_HEADER_SIZE)
+				log_warnx("wrong imsg len");
+			else if (kr_flush(imsg.hdr.peerid))
 				rv = -1;
 			break;
 		case IMSG_NEXTHOP_ADD:
