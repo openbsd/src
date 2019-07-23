@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.192 2019/07/22 17:20:06 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.193 2019/07/23 14:09:47 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -821,22 +821,25 @@ parse_option(FILE *cfile, int *code, struct option_data *options)
 				if (parse_number(cfile, &number, INT32_MIN,
 				    INT32_MAX) == 0)
 					return 0;
-				*(int32_t *)buf = htobe32((int32_t)number);
+				number = htobe64(number);
 				len = sizeof(int32_t);
+				memcpy(buf, (char *)&number + (sizeof(number) - len), len);
 				dp = buf;
 				break;
 			case 'L':	/* Unsigned 32-bit integer. */
 				if (parse_number(cfile, &number, 0, UINT32_MAX) == 0)
 					return 0;
-				*(uint32_t *)buf = htobe32((uint32_t)number);
+				number = htobe64(number);
 				len = sizeof(uint32_t);
+				memcpy(buf, (char *)&number + (sizeof(number) - len), len);
 				dp = buf;
 				break;
 			case 'S':	/* Unsigned 16-bit integer. */
 				if (parse_number(cfile, &number, 0, UINT16_MAX) == 0)
 					return 0;
-				*(uint16_t *)buf = htobe16((uint16_t)number);
+				number = htobe64(number);
 				len = sizeof(uint16_t);
+				memcpy(buf, (char *)&number + (sizeof(number) - len), len);
 				dp = buf;
 				break;
 			case 'B':	/* Unsigned 8-bit integer. */
