@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_term.c,v 1.184 2019/07/22 03:20:55 schwarze Exp $ */
+/*	$OpenBSD: man_term.c,v 1.185 2019/07/23 17:42:14 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -618,6 +618,18 @@ pre_TP(DECL_ARGS)
 		nn = n->child;
 		while (nn != NULL && (nn->flags & NODE_LINE) == 0)
 			nn = nn->next;
+
+		if (nn == NULL)
+			return 0;
+
+		if (nn->type == ROFFT_TEXT)
+			tag_man(p, nn);
+		else if (nn->child != NULL &&
+		    nn->child->type == ROFFT_TEXT &&
+		    (nn->tok == MAN_B || nn->tok == MAN_BI ||
+		     nn->tok == MAN_BR || nn->tok == MAN_I ||
+		     nn->tok == MAN_IB || nn->tok == MAN_IR))
+			tag_man(p, nn->child);
 
 		while (nn != NULL) {
 			print_man_node(p, mt, nn, meta);
