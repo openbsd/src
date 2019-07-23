@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.199 2019/07/17 10:13:26 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.200 2019/07/23 14:19:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1367,7 +1367,7 @@ int
 prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen,
     int withdraw)
 {
-	int	totlen;
+	int	totlen, psize;
 
 	switch (prefix->aid) {
 	case AID_INET:
@@ -1381,6 +1381,7 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen,
 		return (totlen);
 	case AID_VPN_IPv4:
 		totlen = PREFIX_SIZE(plen) + sizeof(prefix->vpn4.rd);
+		psize = PREFIX_SIZE(plen) - 1;
 		plen += sizeof(prefix->vpn4.rd) * 8;
 		if (withdraw) {
 			/* withdraw have one compat label as placeholder */
@@ -1406,10 +1407,11 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen,
 		}
 		memcpy(buf, &prefix->vpn4.rd, sizeof(prefix->vpn4.rd));
 		buf += sizeof(prefix->vpn4.rd);
-		memcpy(buf, &prefix->vpn4.addr, PREFIX_SIZE(plen) - 1);
+		memcpy(buf, &prefix->vpn4.addr, psize);
 		return (totlen);
 	case AID_VPN_IPv6:
 		totlen = PREFIX_SIZE(plen) + sizeof(prefix->vpn6.rd);
+		psize = PREFIX_SIZE(plen) - 1;
 		plen += sizeof(prefix->vpn6.rd) * 8;
 		if (withdraw) {
 			/* withdraw have one compat label as placeholder */
@@ -1434,7 +1436,7 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen,
 		}
 		memcpy(buf, &prefix->vpn6.rd, sizeof(prefix->vpn6.rd));
 		buf += sizeof(prefix->vpn6.rd);
-		memcpy(buf, &prefix->vpn6.addr, PREFIX_SIZE(plen) - 1);
+		memcpy(buf, &prefix->vpn6.addr, psize);
 		return (totlen);
 	default:
 		return (-1);
