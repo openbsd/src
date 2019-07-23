@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.102 2019/07/21 08:30:34 anton Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.103 2019/07/23 19:07:31 anton Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -345,12 +345,10 @@ vn_read(struct file *fp, struct uio *uio, int fflags)
 
 	KERNEL_LOCK();
 
-	/*
-	 * Check below can race.  We can block on the vnode lock
-	 * and resume with a different `fp->f_offset' value.
-	 */
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
 	if ((fflags & FO_POSITION) == 0)
-		offset = fp->f_offset;
+		offset = uio->uio_offset = fp->f_offset;
 	else
 		offset = uio->uio_offset;
 
@@ -365,15 +363,12 @@ vn_read(struct file *fp, struct uio *uio, int fflags)
 		goto done;
 	}
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if ((fflags & FO_POSITION) == 0)
-		uio->uio_offset = fp->f_offset;
 	error = VOP_READ(vp, uio, (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0,
 	    cred);
 	if ((fflags & FO_POSITION) == 0)
 		fp->f_offset += count - uio->uio_resid;
-	VOP_UNLOCK(vp);
 done:
+	VOP_UNLOCK(vp);
 	KERNEL_UNLOCK();
 	return (error);
 }
