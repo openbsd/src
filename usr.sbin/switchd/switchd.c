@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchd.c,v 1.17 2019/07/22 09:19:52 mestre Exp $	*/
+/*	$OpenBSD: switchd.c,v 1.18 2019/07/23 00:31:31 schwarze Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -62,7 +62,7 @@ __dead void
 usage(void)
 {
 	extern const char	*__progname;
-	fprintf(stderr, "usage: %s [-dnv] [-c cachesize]  [-D macro=value] "
+	fprintf(stderr, "usage: %s [-dnv] [-c cachesize] [-D macro=value] "
 	    "[-f file] [-t timeout]\n",
 	    __progname);
 	exit(1);
