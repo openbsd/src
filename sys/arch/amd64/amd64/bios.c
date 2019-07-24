@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.38 2019/07/15 00:35:10 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.39 2019/07/24 04:04:44 jsg Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -92,6 +92,7 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 	u_int8_t *p;
 	int smbiosrev = 0;
 	struct smbhdr *hdr = NULL;
+	char *sminfop;
 
 	if (bios_efiinfo != NULL && bios_efiinfo->config_smbios != 0)
 		hdr = smbios_find(PMAP_DIRECT_MAP(
@@ -144,9 +145,13 @@ bios_attach(struct device *parent, struct device *self, void *aux)
 				    fixstring(scratch));
 			if ((smbios_get_string(&bios, sb->release,
 			    scratch, sizeof(scratch))) != NULL) {
-				strlcpy(smbios_bios_date, fixstring(scratch),
-				    sizeof(smbios_bios_date));
-				printf(" date %s", fixstring(scratch));
+				sminfop = fixstring(scratch);
+				if (sminfop != NULL) {
+					strlcpy(smbios_bios_date,
+					    sminfop,
+					    sizeof(smbios_bios_date));
+					printf(" date %s", sminfop);
+				}
 			}
 		}
 
