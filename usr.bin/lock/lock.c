@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.45 2019/07/21 22:44:44 jca Exp $	*/
+/*	$OpenBSD: lock.c,v 1.46 2019/07/24 20:23:09 schwarze Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ void bye(int);
 void hi(int);
 void usage(void);
 
-int	no_timeout = 1;			/* lock terminal forever */
+int	no_timeout = 0;			/* lock terminal forever */
 
 int
 main(int argc, char *argv[])
@@ -77,6 +77,7 @@ main(int argc, char *argv[])
 	time_t curtime;
 	login_cap_t *lc;
 
+	sectimeout = 0;
 	style = NULL;
 	usemine = 0;
 	memset(&timeout, 0, sizeof(timeout));
@@ -113,18 +114,19 @@ main(int argc, char *argv[])
 			sectimeout = strtonum(optarg, 1, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "timeout %s: %s", errstr, optarg);
-			no_timeout = 0;
 			break;
 		case 'p':
 			usemine = 1;
 			break;
 		case 'n':
-			/* backward compatibility, -n meant "lock forever" */
+			no_timeout = 1;
 			break;
 		default:
 			usage();
 		}
 	}
+	if (sectimeout == 0)
+		no_timeout = 1;
 
 	gethostname(hostname, sizeof(hostname));
 	if (usemine && lc == NULL)
@@ -249,7 +251,7 @@ bye(int signo)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-p] [-a style] [-t timeout]\n",
+	fprintf(stderr, "usage: %s [-np] [-a style] [-t timeout]\n",
 	    getprogname());
 	exit(1);
 }
