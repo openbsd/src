@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.646 2019/07/19 20:50:22 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.647 2019/07/24 17:53:33 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -358,7 +358,8 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 			} else if ((ifi->flags & IFI_IN_CHARGE) != 0) {
 				log_debug("%s: yielding responsibility",
 				    log_procname);
-				exit(0);
+				ifi->state = S_PREBOOT;
+				quit = TERMINATE;
 			}
 		} else if ((rtm->rtm_flags & RTF_PROTO2) != 0) {
 			release_lease(ifi); /* OK even if we sent it. */
@@ -590,6 +591,9 @@ main(int argc, char *argv[])
 		fatal("setsockopt(ROUTE_TABLEFILTER)");
 
 	fd = take_charge(ifi, routefd, path_lease_db);
+	if (fd == -1)
+		fatalx("failed to take charge");
+
 	read_lease_db(&ifi->lease_db);
 
 	if ((leaseFile = fopen(path_lease_db, "w")) == NULL)
@@ -643,7 +647,6 @@ main(int argc, char *argv[])
 	quit = RESTART;
 	dispatch(ifi, routefd);
 
-	/* not reached */
 	return 0;
 }
 
@@ -2453,11 +2456,11 @@ take_charge(struct interface_info *ifi, int routefd, char *leasespath)
 	if (write(routefd, &rtm, sizeof(rtm)) == -1)
 		fatal("write(routefd)");
 
-	for (fd = -1; fd == -1;) {
+	for (fd = -1; fd == -1 && quit != TERMINATE;) {
 		if (time(&cur_time) == -1)
 			fatal("time");
 		if (cur_time - start_time >= MAXSECONDS)
-			fatalx("failed to take charge");
+			break;
 
 		if ((ifi->flags & IFI_IN_CHARGE) == 0) {
 			if ((cur_time - sent_time) >= SENTSECONDS) {
