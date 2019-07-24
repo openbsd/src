@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.16 2019/07/16 12:50:30 inoguchi Exp $ */
+/* $OpenBSD: genrsa.c,v 1.17 2019/07/24 14:23:25 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -179,19 +179,19 @@ static const struct option genrsa_options[] = {
 #ifndef OPENSSL_NO_AES
 	{
 		.name = "aes128",
-		.desc = "Encrypt PEM output with cbc aes",
+		.desc = "Encrypt PEM output with CBC AES",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = set_enc,
 	},
 	{
 		.name = "aes192",
-		.desc = "Encrypt PEM output with cbc aes",
+		.desc = "Encrypt PEM output with CBC AES",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = set_enc,
 	},
 	{
 		.name = "aes256",
-		.desc = "Encrypt PEM output with cbc aes",
+		.desc = "Encrypt PEM output with CBC AES",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = set_enc,
 	},
@@ -199,19 +199,19 @@ static const struct option genrsa_options[] = {
 #ifndef OPENSSL_NO_CAMELLIA
 	{
 		.name = "camellia128",
-		.desc = "Encrypt PEM output with cbc camellia",
+		.desc = "Encrypt PEM output with CBC Camellia",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = set_enc,
 	},
 	{
 		.name = "camellia192",
-		.desc = "Encrypt PEM output with cbc camellia",
+		.desc = "Encrypt PEM output with CBC Camellia",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = set_enc,
 	},
 	{
 		.name = "camellia256",
-		.desc = "Encrypt PEM output with cbc camellia",
+		.desc = "Encrypt PEM output with CBC Camellia",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = set_enc,
 	},
@@ -219,13 +219,13 @@ static const struct option genrsa_options[] = {
 #ifndef OPENSSL_NO_DES
 	{
 		.name = "des",
-		.desc = "Encrypt the generated key with DES in cbc mode",
+		.desc = "Encrypt the generated key with DES in CBC mode",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = set_enc,
 	},
 	{
 		.name = "des3",
-		.desc = "Encrypt the generated key with DES in ede cbc mode (168 bit key)",
+		.desc = "Encrypt the generated key with DES in EDE CBC mode (168 bit key)",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = set_enc,
 	},
@@ -233,7 +233,7 @@ static const struct option genrsa_options[] = {
 #ifndef OPENSSL_NO_IDEA
 	{
 		.name = "idea",
-		.desc = "Encrypt the generated key with IDEA in cbc mode",
+		.desc = "Encrypt the generated key with IDEA in CBC mode",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = set_enc,
 	},
