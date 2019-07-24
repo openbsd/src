@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.86 2019/07/22 08:06:52 kn Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.87 2019/07/24 19:40:04 kn Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -683,7 +683,7 @@ do_etc_file(const char *file)
 	case 0:
 		/* We are the child. */
 		execl(file, prog, (char *)NULL);
-		logmsg(LOG_ERR, "failed to exec %s: %m", file, strerror(errno));
+		logmsg(LOG_ERR, "failed to exec %s: %s", file, strerror(errno));
 		_exit(1);
 		/* NOTREACHED */
 	default:
