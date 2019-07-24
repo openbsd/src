@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.210 2018/12/22 08:54:02 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.211 2019/07/24 15:31:53 kmos Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 22 2018 $
+.Dd $Mdocdate: July 24 2019 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -871,12 +871,12 @@ table secrets file:/etc/mail/secrets
 
 listen on lo0
 
-action "local" mbox alias <aliases>
-action "relay" relay host smtp+tls://bob@smtp.example.com \e
+action "local_mail" mbox alias <aliases>
+action "outbound" relay host smtp+tls://bob@smtp.example.com \e
 	auth <secrets>
 
-match for local action "local"
-match for any action "relay"
+match for local action "local_mail"
+match for any action "outbound"
 .Ed
 .Pp
 In this second example,
@@ -908,12 +908,12 @@ listen on egress tls pki mail.example.com auth
 
 action mda_with_aliases mda "/path/to/mda \-f \-" alias <aliases>
 action mda_without_aliases mda "/path/to/mda \-f \-"
-action "relay" relay
+action "outbound" relay
 
 match for local action mda_with_aliases
 match from any for domain example.com action mda_without_aliases
-match for any action "relay"
-match auth from any for any action "relay"
+match for any action "outbound"
+match auth from any for any action "outbound"
 .Ed
 .Pp
 For sites that wish to sign messages using DKIM, the
@@ -929,13 +929,13 @@ table aliases file:/etc/mail/aliases
 listen on lo0
 listen on lo0 port 10028 tag DKIM
 
-action "mbox" mbox alias <aliases>
-action "relay" relay
-action relay_dkim relay host smtp://127.0.0.1:10027
+action "local_mail" mbox alias <aliases>
+action "outbound" relay
+action "relay_dkim" relay host smtp://127.0.0.1:10027
 
-match for local action "mbox"
-match tag DKIM for any action "relay"
-match for any action relay_dkim
+match for local action "local_mail"
+match tag DKIM for any action "outbound"
+match for any action "relay_dkim"
 .Ed
 .Pp
 Sites that accept non-local messages may be able to cut down on the
@@ -952,14 +952,14 @@ table other-relays file:/etc/mail/other-relays
 listen on lo0
 listen on egress
 
-action "mbox" mbox alias <aliases>
-action "relay" relay
+action "local_mail" mbox alias <aliases>
+action "outbound" relay
 
-match for local action "mbox"
-match for any action "relay"
+match for local action "local_mail"
+match for any action "outbound"
 match !from src <other-relays> mail\-from "@example.com" for any \e
       reject
-match from any for domain example.com action "mbox"
+match from any for domain example.com action "local_mail"
 .Ed
 .Sh SEE ALSO
 .Xr mailer.conf 5 ,
