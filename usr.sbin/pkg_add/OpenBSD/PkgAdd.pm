@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.113 2019/06/09 18:58:06 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.114 2019/07/24 18:05:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -704,7 +704,7 @@ sub delete_old_packages
 		require OpenBSD::Delete;
 		try {
 			OpenBSD::Delete::delete_handle($o, $state);
-		} catchall {
+		} catch {
 			$state->errsay($_);
 			$state->fatal(partial_install(
 			    "Deinstallation of $oldname failed",
@@ -787,7 +787,7 @@ sub really_add
 
 		try {
 			OpenBSD::Add::perform_extraction($handle, $state);
-		} catchall {
+		} catch {
 			unless ($state->{interrupted}) {
 				$state->errsay($_);
 				$errors++;
@@ -816,7 +816,7 @@ sub really_add
 
 		try {
 			OpenBSD::Add::perform_installation($handle, $state);
-		} catchall {
+		} catch {
 			unless ($state->{interrupted}) {
 				$state->errsay($_);
 				$errors++;

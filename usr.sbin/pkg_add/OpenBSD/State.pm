@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.61 2019/07/21 14:05:30 espie Exp $
+# $OpenBSD: State.pm,v 1.62 2019/07/24 18:05:26 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -291,7 +291,7 @@ sub do_options
 
 	try {
 		&$sub;
-	} catchall {
+	} catch {
 		$state->usage("#1", $_);
 	};
 }

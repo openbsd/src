@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.39 2019/07/24 09:03:12 espie Exp $
+# $OpenBSD: Error.pm,v 1.40 2019/07/24 18:05:26 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -32,14 +32,50 @@ sub cache(*&)
 	*{$callpkg."::$sym"} = $actual;
 }
 
-# a bunch of other modules create persistent state that must be cleaned up
-# on exit (temporary files, network connections to abort properly...)
-# END blocks would do that (but see below...) but sig handling bypasses that,
-# so we MUST install SIG handlers.
+package OpenBSD::SigHandler;
 
-# note that END will be run for *each* process, so beware!
-# (temp files are registered per pid, for instance, so they only
-# get cleaned when the proper pid is used)
+# instead of "local" sighandlers, let's do objects that revert
+# to their former state afterwards
+sub new
+{
+	my $class = shift;
+	# keep previous state
+	bless {}, $class;
+}
+
+
+sub DESTROY
+{
+	my $self = shift;
+	while (my ($s, $v) = each %$self) {
+		$SIG{$s} = $v;
+	}
+}
+
+sub set
+{
+	my $self = shift;
+	my $v = pop;
+	for my $s (@_) {
+		$self->{$s} = $SIG{$s};
+		$SIG{$s} = $v;
+	}
+	return $self;
+}
+
+sub intercept
+{
+	my $self = shift;
+	my $v = pop;
+	return $self->set(@_, 
+	    sub { 
+		my $sig = shift; 
+		&$v($sig); 
+		$SIG{$sig} = $self->{$sig}; 
+		kill -$sig, $$; 
+	    });
+}
+
 package OpenBSD::Handler;
 
 # a bunch of other modules create persistent state that must be cleaned up
@@ -109,9 +145,12 @@ __PACKAGE__->reset;
 package OpenBSD::Error;
 require Exporter;
 our @ISA=qw(Exporter);
-our @EXPORT=qw(try throw catch catchall rethrow);
+our @EXPORT=qw(try throw catch rethrow INTetc);
+
 
 our ($FileName, $Line, $FullMessage);
+
+our @INTetc = (qw(INT QUIT HUP TERM));
 
 use Carp;
 sub dienow
@@ -153,11 +192,6 @@ sub rethrow
 sub catch(&)
 {
 		bless $_[0], "OpenBSD::Error::catch";
-}
-
-sub catchall(&)
-{
-	bless $_[0], "OpenBSD::Error::catch";
 }
 
 sub rmtree
