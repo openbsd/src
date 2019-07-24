@@ -1,4 +1,4 @@
-#	$OpenBSD: Pledge.pm,v 1.3 2017/09/09 14:53:57 afresh1 Exp $	#
+#	$OpenBSD: Pledge.pm,v 1.4 2019/07/24 22:22:59 afresh1 Exp $	#
 package OpenBSD::Pledge;
 
 use 5.020002;
@@ -78,8 +78,6 @@ Returns true on success, returns false and sets $! on failure
 =head2 pledgenames
 
 Returns a list of the possible promises you can pass to L</pledge>.
-
-=back
 
 =head1 BUGS AND LIMITATIONS
 
