@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.400 2019/07/11 21:40:03 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.401 2019/07/24 19:50:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -715,7 +715,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			break;
 		case LKA_TEMPFAIL:
 			smtp_tx_free(s->tx);
-			smtp_reply(s, "421 %s: Temporary Error",
+			smtp_reply(s, "421 %s Temporary Error",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			break;
 		}
@@ -775,11 +775,11 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			s->tx->evp.id = msgid_to_evpid(msgid);
 			s->tx->rcptcount = 0;
 			report_smtp_tx_begin("smtp-in", s->id, s->tx->msgid);
-			smtp_reply(s, "250 %s: Ok",
+			smtp_reply(s, "250 %s Ok",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		} else {
 			smtp_tx_free(s->tx);
-			smtp_reply(s, "421 %s: Temporary Error",
+			smtp_reply(s, "421 %s Temporary Error",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
 		}
@@ -796,7 +796,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (!success || imsg->fd == -1) {
 			if (imsg->fd != -1)
 				close(imsg->fd);
-			smtp_reply(s, "421 %s: Temporary Error",
+			smtp_reply(s, "421 %s Temporary Error",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
 			return;
@@ -822,7 +822,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		if (!success || imsg->fd == -1) {
 			if (imsg->fd != -1)
 				close(imsg->fd);
-			smtp_reply(s, "421 %s: Temporary Error",
+			smtp_reply(s, "421 %s Temporary Error",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
 			return;
@@ -864,7 +864,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			 * RCPT only so we must cancel the whole transaction
 			 * and close the connection.
 			 */
-			smtp_reply(s, "421 %s: Temporary failure",
+			smtp_reply(s, "421 %s Temporary failure",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
 		}
@@ -891,13 +891,13 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 		s = tree_xpop(&wait_queue_commit, reqid);
 		if (!success) {
 			smtp_tx_free(s->tx);
-			smtp_reply(s, "421 %s: Temporary failure",
+			smtp_reply(s, "421 %s Temporary failure",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
 			return;
 		}
 
-		smtp_reply(s, "250 %s: %08x Message accepted for delivery",
+		smtp_reply(s, "250 %s %08x Message accepted for delivery",
 		    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS),
 		    s->tx->msgid);
 
@@ -940,7 +940,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    s->id, user);
 			s->flags |= SF_AUTHENTICATED;
 			report_smtp_link_auth("smtp-in", s->id, user, "pass");
-			smtp_reply(s, "235 %s: Authentication succeeded",
+			smtp_reply(s, "235 %s Authentication succeeded",
 			    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 		}
 		else if (success == LKA_PERMFAIL) {
@@ -958,7 +958,7 @@ smtp_session_imsg(struct mproc *p, struct imsg *imsg)
 			    "result=tempfail",
 			    s->id, user);
 			report_smtp_link_auth("smtp-in", s->id, user, "error");
-			smtp_reply(s, "421 %s: Temporary failure",
+			smtp_reply(s, "421 %s Temporary failure",
 			    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 		}
 		else
@@ -1085,7 +1085,7 @@ smtp_io(struct io *io, int evt, void *arg)
 		if ((line == NULL && io_datalen(s->io) >= SMTP_LINE_MAX) ||
 		    (line && len >= SMTP_LINE_MAX)) {
 			s->flags |= SF_BADINPUT;
-			smtp_reply(s, "500 %s: Line too long",
+			smtp_reply(s, "500 %s Line too long",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
 			io_set_write(io);
@@ -1098,7 +1098,7 @@ smtp_io(struct io *io, int evt, void *arg)
 
 		if (strchr(line, '\r')) {
 			s->flags |= SF_BADINPUT;
-			smtp_reply(s, "500 %s: <CR> is only allowed before <LF>",
+			smtp_reply(s, "500 %s <CR> is only allowed before <LF>",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
 			io_set_write(io);
@@ -1141,7 +1141,7 @@ smtp_io(struct io *io, int evt, void *arg)
 		/* Must be a command */
 		if (strlcpy(s->cmd, line, sizeof(s->cmd)) >= sizeof(s->cmd)) {
 			s->flags |= SF_BADINPUT;
-			smtp_reply(s, "500 %s: Command line too long",
+			smtp_reply(s, "500 %s Command line too long",
 			    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_STATUS));
 			smtp_enter_state(s, STATE_QUIT);
 			io_set_write(io);
@@ -1536,7 +1536,7 @@ smtp_check_mail_from(struct smtp_session *s, const char *args)
 	}
 
 	if (!smtp_tx(s)) {
-		smtp_reply(s, "421 %s: Temporary Error",
+		smtp_reply(s, "421 %s Temporary Error",
 		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 		smtp_enter_state(s, STATE_QUIT);
 		return 0;
@@ -1544,7 +1544,7 @@ smtp_check_mail_from(struct smtp_session *s, const char *args)
 
 	if (smtp_mailaddr(&s->tx->evp.sender, copy, 1, &copy,
 		s->tx->session->smtpname) == 0) {
-		smtp_reply(s, "553 %s: Sender address syntax error",
+		smtp_reply(s, "553 %s Sender address syntax error",
 		    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_ADDRESS_STATUS));
 		smtp_tx_free(s->tx);
 		return 0;
@@ -1579,7 +1579,7 @@ smtp_check_rcpt_to(struct smtp_session *s, const char *args)
 	if (smtp_mailaddr(&s->tx->evp.rcpt, copy, 0, &copy,
 		s->tx->session->smtpname) == 0) {
 		smtp_reply(s->tx->session,
-		    "501 %s: Recipient address syntax error",
+		    "501 %s Recipient address syntax error",
 		    esc_code(ESC_STATUS_PERMFAIL,
 		        ESC_BAD_DESTINATION_MAILBOX_ADDRESS_SYNTAX));
 		return 0;
@@ -1726,7 +1726,7 @@ smtp_proceed_rset(struct smtp_session *s, const char *args)
 
 	report_smtp_link_reset("smtp-in", s->id);
 
-	smtp_reply(s, "250 %s: Reset state",
+	smtp_reply(s, "250 %s Reset state",
 	    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 }
 
@@ -1801,7 +1801,7 @@ smtp_proceed_auth(struct smtp_session *s, const char *args)
 static void
 smtp_proceed_starttls(struct smtp_session *s, const char *args)
 {
-	smtp_reply(s, "220 %s: Ready to start TLS",
+	smtp_reply(s, "220 %s Ready to start TLS",
 	    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 	smtp_enter_state(s, STATE_TLS);
 }
@@ -1827,7 +1827,7 @@ smtp_proceed_data(struct smtp_session *s, const char *args)
 static void
 smtp_proceed_quit(struct smtp_session *s, const char *args)
 {
-	smtp_reply(s, "221 %s: Bye",
+	smtp_reply(s, "221 %s Bye",
 	    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 	smtp_enter_state(s, STATE_QUIT);
 }
@@ -1835,19 +1835,20 @@ smtp_proceed_quit(struct smtp_session *s, const char *args)
 static void
 smtp_proceed_noop(struct smtp_session *s, const char *args)
 {
-	smtp_reply(s, "250 %s: Ok",
+	smtp_reply(s, "250 %s Ok",
 	    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 }
 
 static void
 smtp_proceed_help(struct smtp_session *s, const char *args)
 {
-	smtp_reply(s, "214- This is " SMTPD_NAME);
-	smtp_reply(s, "214- To report bugs in the implementation, "
-	    "please contact bugs@openbsd.org");
-	smtp_reply(s, "214- with full details");
-	smtp_reply(s, "214 %s: End of HELP info",
-	    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
+	const char *code = esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS);
+
+	smtp_reply(s, "214-%s This is " SMTPD_NAME, code);
+	smtp_reply(s, "214-%s To report bugs in the implementation, "
+	    "please contact bugs@openbsd.org", code);
+	smtp_reply(s, "214-%s with full details", code);
+	smtp_reply(s, "214 %s End of HELP info", code);
 }
 
 static void
@@ -2398,7 +2399,7 @@ smtp_tx_mail_from(struct smtp_tx *tx, const char *line)
 
 	if (smtp_mailaddr(&tx->evp.sender, copy, 1, &copy,
 		tx->session->smtpname) == 0) {
-		smtp_reply(tx->session, "553 %s: Sender address syntax error",
+		smtp_reply(tx->session, "553 %s Sender address syntax error",
 		    esc_code(ESC_STATUS_PERMFAIL, ESC_OTHER_ADDRESS_STATUS));
 		smtp_tx_free(tx);
 		return;
@@ -2487,7 +2488,7 @@ smtp_tx_rcpt_to(struct smtp_tx *tx, const char *line)
 	if (smtp_mailaddr(&tx->evp.rcpt, copy, 0, &copy,
 	    tx->session->smtpname) == 0) {
 		smtp_reply(tx->session,
-		    "501 %s: Recipient address syntax error",
+		    "501 %s Recipient address syntax error",
 		    esc_code(ESC_STATUS_PERMFAIL,
 		        ESC_BAD_DESTINATION_MAILBOX_ADDRESS_SYNTAX));
 		return;
@@ -2727,7 +2728,7 @@ smtp_message_fd(struct smtp_tx *tx, int fd)
 
 	if ((tx->ofile = fdopen(fd, "w")) == NULL) {
 		close(fd);
-		smtp_reply(s, "421 %s: Temporary Error",
+		smtp_reply(s, "421 %s Temporary Error",
 		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 		smtp_enter_state(s, STATE_QUIT);
 		return 0;
@@ -2874,7 +2875,7 @@ smtp_message_end(struct smtp_tx *tx)
 
 	case TX_ERROR_IO:
 	case TX_ERROR_RESOURCES:
-		smtp_reply(s, "421 %s: Temporary Error",
+		smtp_reply(s, "421 %s Temporary Error",
 		    esc_code(ESC_STATUS_TEMPFAIL, ESC_OTHER_MAIL_SYSTEM_STATUS));
 		break;
 
