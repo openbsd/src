@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008reg.h,v 1.5 2017/11/28 04:33:03 stsp Exp $	*/
+/*	$OpenBSD: ar5008reg.h,v 1.6 2019/07/24 07:53:57 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -808,6 +808,18 @@ struct ar_tx_desc {
 	(AR_TXC7_2040_0 | AR_TXC7_2040_1 | AR_TXC7_2040_2 | AR_TXC7_2040_3)
 #define AR_TXC7_GI0123		\
 	(AR_TXC7_GI0 | AR_TXC7_GI1 | AR_TXC7_GI2 | AR_TXC7_GI3)
+
+/* Bits for ds_ctl9. */
+#define AR_TXC9_XMIT_POWER1_M		0x3f000000
+#define AR_TXC9_XMIT_POWER1_S		24
+
+/* Bits for ds_ctl10. */
+#define AR_TXC10_XMIT_POWER2_M		0x3f000000
+#define AR_TXC10_XMIT_POWER2_S		24
+
+/* Bits for ds_ctl11. */
+#define AR_TXC11_XMIT_POWER3_M		0x3f000000
+#define AR_TXC11_XMIT_POWER3_S		24
 
 /* Bits for ds_status0. */
 #define AR_TXS0_RSSI_ANT0(i)		(((x) >> ((i) * 8)) & 0xff)

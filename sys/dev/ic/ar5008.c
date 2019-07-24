@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.50 2019/07/24 07:53:05 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.51 2019/07/24 07:53:57 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1599,6 +1599,11 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	if (ic->ic_flags & IEEE80211_F_CBW40)
 		ds->ds_ctl7 |= AR_TXC7_2040_0123;
 #endif
+
+	/* Set Tx power for series 1 - 3 */
+	ds->ds_ctl9 = SM(AR_TXC9_XMIT_POWER1, txpower);
+	ds->ds_ctl10 = SM(AR_TXC10_XMIT_POWER2, txpower);
+	ds->ds_ctl11 = SM(AR_TXC11_XMIT_POWER3, txpower);
 
 	if (ds->ds_ctl0 & (AR_TXC0_RTS_ENABLE | AR_TXC0_CTS_ENABLE)) {
 		uint8_t protridx, hwrate;
