@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.395 2019/07/24 09:00:03 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.396 2019/07/24 20:25:27 benno Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,7 +44,6 @@
 #include <syslog.h>
 
 #include "bgpd.h"
-#include "mrt.h"
 #include "session.h"
 #include "rde.h"
 #include "log.h"

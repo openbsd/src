@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.137 2019/06/17 13:35:43 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.138 2019/07/24 20:25:27 benno Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "bgpd.h"
-#include "mrt.h"
 #include "session.h"
 #include "rde.h"
 #include "log.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.478 2019/07/23 13:07:32 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.479 2019/07/24 20:25:27 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,6 @@
 #include <err.h>
 
 #include "bgpd.h"
-#include "mrt.h"
 #include "rde.h"
 #include "session.h"
 #include "log.h"

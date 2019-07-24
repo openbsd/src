@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.221 2019/07/23 06:26:44 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.222 2019/07/24 20:25:27 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,7 +34,6 @@
 #include <unistd.h>
 
 #include "bgpd.h"
-#include "mrt.h"
 #include "session.h"
 #include "log.h"
 

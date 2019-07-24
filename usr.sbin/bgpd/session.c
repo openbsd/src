@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.387 2019/06/28 09:14:36 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.388 2019/07/24 20:25:27 benno Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -43,7 +43,6 @@
 #include <unistd.h>
 
 #include "bgpd.h"
-#include "mrt.h"
 #include "session.h"
 #include "log.h"
 
