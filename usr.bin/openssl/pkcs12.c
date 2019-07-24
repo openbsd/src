@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.11 2019/07/23 10:18:32 inoguchi Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.12 2019/07/24 13:49:24 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -119,14 +119,418 @@ static struct {
 	int twopass;
 } pkcs12_config;
 
+static int
+pkcs12_opt_canames(char *arg)
+{
+	if (pkcs12_config.canames == NULL &&
+	    (pkcs12_config.canames = sk_OPENSSL_STRING_new_null()) == NULL)
+		return (1);
+
+	if (!sk_OPENSSL_STRING_push(pkcs12_config.canames, arg))
+		return (1);
+
+	return (0);
+}
+
+static int
+pkcs12_opt_cert_pbe(char *arg)
+{
+	return (!set_pbe(bio_err, &pkcs12_config.cert_pbe, arg));
+}
+
+static int
+pkcs12_opt_key_pbe(char *arg)
+{
+	return (!set_pbe(bio_err, &pkcs12_config.key_pbe, arg));
+}
+
+static int
+pkcs12_opt_passarg(char *arg)
+{
+	pkcs12_config.passarg = arg;
+	pkcs12_config.noprompt = 1;
+	return (0);
+}
+
+static const EVP_CIPHER *get_cipher_by_name(char *name)
+{
+	if (name == NULL || strcmp(name, "") == 0)
+		return (NULL);
+#ifndef OPENSSL_NO_AES
+	else if (strcmp(name, "aes128") == 0)
+		return EVP_aes_128_cbc();
+	else if (strcmp(name, "aes192") == 0)
+		return EVP_aes_192_cbc();
+	else if (strcmp(name, "aes256") == 0)
+		return EVP_aes_256_cbc();
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	else if (strcmp(name, "camellia128") == 0)
+		return EVP_camellia_128_cbc();
+	else if (strcmp(name, "camellia192") == 0)
+		return EVP_camellia_192_cbc();
+	else if (strcmp(name, "camellia256") == 0)
+		return EVP_camellia_256_cbc();
+#endif
+#ifndef OPENSSL_NO_DES
+	else if (strcmp(name, "des") == 0)
+		return EVP_des_cbc();
+	else if (strcmp(name, "des3") == 0)
+		return EVP_des_ede3_cbc();
+#endif
+#ifndef OPENSSL_NO_IDEA
+	else if (strcmp(name, "idea") == 0)
+		return EVP_idea_cbc();
+#endif
+	else
+		return (NULL);
+}
+
+static int
+pkcs12_opt_enc(int argc, char **argv, int *argsused)
+{
+	char *name = argv[0];
+
+	if (*name++ != '-')
+		return (1);
+
+	if (strcmp(name, "nodes") == 0)
+		pkcs12_config.enc = NULL;
+	else if ((pkcs12_config.enc = get_cipher_by_name(name)) == NULL)
+		return (1);
+
+	*argsused = 1;
+	return (0);
+}
+
+static const struct option pkcs12_options[] = {
+#ifndef OPENSSL_NO_AES
+	{
+		.name = "aes128",
+		.desc = "Encrypt PEM output with CBC AES",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = pkcs12_opt_enc,
+	},
+	{
+		.name = "aes192",
+		.desc = "Encrypt PEM output with CBC AES",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = pkcs12_opt_enc,
+	},
+	{
+		.name = "aes256",
+		.desc = "Encrypt PEM output with CBC AES",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = pkcs12_opt_enc,
+	},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{
+		.name = "camellia128",
+		.desc = "Encrypt PEM output with CBC Camellia",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = pkcs12_opt_enc,
+	},
+	{
+		.name = "camellia192",
+		.desc = "Encrypt PEM output with CBC Camellia",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = pkcs12_opt_enc,
+	},
+	{
+		.name = "camellia256",
+		.desc = "Encrypt PEM output with CBC Camellia",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = pkcs12_opt_enc,
+	},
+#endif
+	{
+		.name = "des",
+		.desc = "Encrypt private keys with DES",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = pkcs12_opt_enc,
+	},
+	{
+		.name = "des3",
+		.desc = "Encrypt private keys with triple DES (default)",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = pkcs12_opt_enc,
+	},
+#ifndef OPENSSL_NO_IDEA
+	{
+		.name = "idea",
+		.desc = "Encrypt private keys with IDEA",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = pkcs12_opt_enc,
+	},
+#endif
+	{
+		.name = "cacerts",
+		.desc = "Only output CA certificates",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &pkcs12_config.options,
+		.value = CACERTS,
+	},
+	{
+		.name = "CAfile",
+		.argname = "file",
+		.desc = "PEM format file of CA certificates",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.CAfile,
+	},
+	{
+		.name = "caname",
+		.argname = "name",
+		.desc = "Use name as CA friendly name (can be used more than once)",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = pkcs12_opt_canames,
+	},
+	{
+		.name = "CApath",
+		.argname = "directory",
+		.desc = "PEM format directory of CA certificates",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.CApath,
+	},
+	{
+		.name = "certfile",
+		.argname = "file",
+		.desc = "Add all certs in file",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.certfile,
+	},
+	{
+		.name = "certpbe",
+		.argname = "alg",
+		.desc = "Specify certificate PBE algorithm (default RC2-40)",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = pkcs12_opt_cert_pbe,
+	},
+	{
+		.name = "chain",
+		.desc = "Add certificate chain",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkcs12_config.chain,
+	},
+	{
+		.name = "clcerts",
+		.desc = "Only output client certificates",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &pkcs12_config.options,
+		.value = CLCERTS,
+	},
+	{
+		.name = "CSP",
+		.argname = "name",
+		.desc = "Microsoft CSP name",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.csp_name,
+	},
+	{
+		.name = "descert",
+		.desc = "Encrypt PKCS#12 certificates with triple DES (default RC2-40)",
+		.type = OPTION_VALUE,
+		.opt.value = &pkcs12_config.cert_pbe,
+		.value = NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+	},
+	{
+		.name = "export",
+		.desc = "Output PKCS#12 file",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkcs12_config.export_cert,
+	},
+	{
+		.name = "in",
+		.argname = "file",
+		.desc = "Input filename",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.infile,
+	},
+	{
+		.name = "info",
+		.desc = "Give info about PKCS#12 structure",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &pkcs12_config.options,
+		.value = INFO,
+	},
+	{
+		.name = "inkey",
+		.argname = "file",
+		.desc = "Private key if not infile",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.keyname,
+	},
+	{
+		.name = "keyex",
+		.desc = "Set MS key exchange type",
+		.type = OPTION_VALUE,
+		.opt.value = &pkcs12_config.keytype,
+		.value = KEY_EX,
+	},
+	{
+		.name = "keypbe",
+		.argname = "alg",
+		.desc = "Specify private key PBE algorithm (default 3DES)",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = pkcs12_opt_key_pbe,
+	},
+	{
+		.name = "keysig",
+		.desc = "Set MS key signature type",
+		.type = OPTION_VALUE,
+		.opt.value = &pkcs12_config.keytype,
+		.value = KEY_SIG,
+	},
+	{
+		.name = "LMK",
+		.desc = "Add local machine keyset attribute to private key",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkcs12_config.add_lmk,
+	},
+	{
+		.name = "macalg",
+		.argname = "alg",
+		.desc = "Digest algorithm used in MAC (default SHA1)",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.macalg,
+	},
+	{
+		.name = "maciter",
+		.desc = "Use MAC iteration",
+		.type = OPTION_VALUE,
+		.opt.value = &pkcs12_config.maciter,
+		.value = PKCS12_DEFAULT_ITER,
+	},
+	{
+		.name = "name",
+		.argname = "name",
+		.desc = "Use name as friendly name",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.name,
+	},
+	{
+		.name = "nocerts",
+		.desc = "Don't output certificates",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &pkcs12_config.options,
+		.value = NOCERTS,
+	},
+	{
+		.name = "nodes",
+		.desc = "Don't encrypt private keys",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = pkcs12_opt_enc,
+	},
+	{
+		.name = "noiter",
+		.desc = "Don't use encryption iteration",
+		.type = OPTION_VALUE,
+		.opt.value = &pkcs12_config.iter,
+		.value = 1,
+	},
+	{
+		.name = "nokeys",
+		.desc = "Don't output private keys",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &pkcs12_config.options,
+		.value = NOKEYS,
+	},
+	{
+		.name = "nomac",
+		.desc = "Don't generate MAC",
+		.type = OPTION_VALUE,
+		.opt.value = &pkcs12_config.maciter,
+		.value = -1,
+	},
+	{
+		.name = "nomaciter",
+		.desc = "Don't use MAC iteration",
+		.type = OPTION_VALUE,
+		.opt.value = &pkcs12_config.maciter,
+		.value = 1,
+	},
+	{
+		.name = "nomacver",
+		.desc = "Don't verify MAC",
+		.type = OPTION_VALUE,
+		.opt.value = &pkcs12_config.macver,
+		.value = 0,
+	},
+	{
+		.name = "noout",
+		.desc = "Don't output anything, just verify",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &pkcs12_config.options,
+		.value = (NOKEYS | NOCERTS),
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output filename",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.outfile,
+	},
+	{
+		.name = "passin",
+		.argname = "arg",
+		.desc = "Input file passphrase source",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.passargin,
+	},
+	{
+		.name = "passout",
+		.argname = "arg",
+		.desc = "Output file passphrase source",
+		.type = OPTION_ARG,
+		.opt.arg = &pkcs12_config.passargout,
+	},
+	{
+		.name = "password",
+		.argname = "arg",
+		.desc = "Set import/export password source",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = pkcs12_opt_passarg,
+	},
+	{
+		.name = "twopass",
+		.desc = "Separate MAC, encryption passwords",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkcs12_config.twopass,
+	},
+	{ NULL },
+};
+
+static void
+pkcs12_usage(void)
+{
+	fprintf(stderr, "usage: pkcs12 [-aes128 | -aes192 | -aes256 |");
+	fprintf(stderr, " -camellia128 |\n");
+	fprintf(stderr, "    -camellia192 | -camellia256 | -des | -des3 |");
+	fprintf(stderr, " -idea]\n");
+	fprintf(stderr, "    [-cacerts] [-CAfile file] [-caname name]\n");
+	fprintf(stderr, "    [-CApath directory] [-certfile file]");
+	fprintf(stderr, " [-certpbe alg]\n");
+	fprintf(stderr, "    [-chain] [-clcerts] [-CSP name] [-descert]");
+	fprintf(stderr, " [-export]\n");
+	fprintf(stderr, "    [-in file] [-info] [-inkey file] [-keyex]");
+	fprintf(stderr, " [-keypbe alg]\n");
+	fprintf(stderr, "    [-keysig] [-LMK] [-macalg alg] [-maciter]");
+	fprintf(stderr, " [-name name]\n");
+	fprintf(stderr, "    [-nocerts] [-nodes] [-noiter] [-nokeys]");
+	fprintf(stderr, " [-nomac]\n");
+	fprintf(stderr, "    [-nomaciter] [-nomacver] [-noout] [-out file]\n");
+	fprintf(stderr, "    [-passin arg] [-passout arg] [-password arg]");
+	fprintf(stderr, " [-twopass]\n\n");
+	options_usage(pkcs12_options);
+	fprintf(stderr, "\n");
+}
+
 int
 pkcs12_main(int argc, char **argv)
 {
 	BIO *in = NULL, *out = NULL;
-	char **args;
 	PKCS12 *p12 = NULL;
 	char pass[50], macpass[50];
-	int badarg = 0;
 	int ret = 1;
 	char *cpass = NULL, *mpass = NULL;
 	char *passin = NULL, *passout = NULL;
@@ -146,217 +550,8 @@ pkcs12_main(int argc, char **argv)
 	pkcs12_config.maciter = PKCS12_DEFAULT_ITER;
 	pkcs12_config.macver = 1;
 
-	args = argv + 1;
-
-	while (*args) {
-		if (*args[0] == '-') {
-			if (!strcmp(*args, "-nokeys"))
-				pkcs12_config.options |= NOKEYS;
-			else if (!strcmp(*args, "-keyex"))
-				pkcs12_config.keytype = KEY_EX;
-			else if (!strcmp(*args, "-keysig"))
-				pkcs12_config.keytype = KEY_SIG;
-			else if (!strcmp(*args, "-nocerts"))
-				pkcs12_config.options |= NOCERTS;
-			else if (!strcmp(*args, "-clcerts"))
-				pkcs12_config.options |= CLCERTS;
-			else if (!strcmp(*args, "-cacerts"))
-				pkcs12_config.options |= CACERTS;
-			else if (!strcmp(*args, "-noout"))
-				pkcs12_config.options |= (NOKEYS | NOCERTS);
-			else if (!strcmp(*args, "-info"))
-				pkcs12_config.options |= INFO;
-			else if (!strcmp(*args, "-chain"))
-				pkcs12_config.chain = 1;
-			else if (!strcmp(*args, "-twopass"))
-				pkcs12_config.twopass = 1;
-			else if (!strcmp(*args, "-nomacver"))
-				pkcs12_config.macver = 0;
-			else if (!strcmp(*args, "-descert"))
-				pkcs12_config.cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-			else if (!strcmp(*args, "-export"))
-				pkcs12_config.export_cert = 1;
-			else if (!strcmp(*args, "-des"))
-				pkcs12_config.enc = EVP_des_cbc();
-			else if (!strcmp(*args, "-des3"))
-				pkcs12_config.enc = EVP_des_ede3_cbc();
-#ifndef OPENSSL_NO_IDEA
-			else if (!strcmp(*args, "-idea"))
-				pkcs12_config.enc = EVP_idea_cbc();
-#endif
-#ifndef OPENSSL_NO_AES
-			else if (!strcmp(*args, "-aes128"))
-				pkcs12_config.enc = EVP_aes_128_cbc();
-			else if (!strcmp(*args, "-aes192"))
-				pkcs12_config.enc = EVP_aes_192_cbc();
-			else if (!strcmp(*args, "-aes256"))
-				pkcs12_config.enc = EVP_aes_256_cbc();
-#endif
-#ifndef OPENSSL_NO_CAMELLIA
-			else if (!strcmp(*args, "-camellia128"))
-				pkcs12_config.enc = EVP_camellia_128_cbc();
-			else if (!strcmp(*args, "-camellia192"))
-				pkcs12_config.enc = EVP_camellia_192_cbc();
-			else if (!strcmp(*args, "-camellia256"))
-				pkcs12_config.enc = EVP_camellia_256_cbc();
-#endif
-			else if (!strcmp(*args, "-noiter"))
-				pkcs12_config.iter = 1;
-			else if (!strcmp(*args, "-maciter"))
-				pkcs12_config.maciter = PKCS12_DEFAULT_ITER;
-			else if (!strcmp(*args, "-nomaciter"))
-				pkcs12_config.maciter = 1;
-			else if (!strcmp(*args, "-nomac"))
-				pkcs12_config.maciter = -1;
-			else if (!strcmp(*args, "-macalg"))
-				if (args[1]) {
-					args++;
-					pkcs12_config.macalg = *args;
-				} else
-					badarg = 1;
-			else if (!strcmp(*args, "-nodes"))
-				pkcs12_config.enc = NULL;
-			else if (!strcmp(*args, "-certpbe")) {
-				if (!set_pbe(bio_err, &pkcs12_config.cert_pbe, *++args))
-					badarg = 1;
-			} else if (!strcmp(*args, "-keypbe")) {
-				if (!set_pbe(bio_err, &pkcs12_config.key_pbe, *++args))
-					badarg = 1;
-			} else if (!strcmp(*args, "-inkey")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.keyname = *args;
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-certfile")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.certfile = *args;
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-name")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.name = *args;
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-LMK"))
-				pkcs12_config.add_lmk = 1;
-			else if (!strcmp(*args, "-CSP")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.csp_name = *args;
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-caname")) {
-				if (args[1]) {
-					args++;
-					if (!pkcs12_config.canames)
-						pkcs12_config.canames = sk_OPENSSL_STRING_new_null();
-					sk_OPENSSL_STRING_push(pkcs12_config.canames, *args);
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-in")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.infile = *args;
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-out")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.outfile = *args;
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-passin")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.passargin = *args;
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-passout")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.passargout = *args;
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-password")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.passarg = *args;
-					pkcs12_config.noprompt = 1;
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-CApath")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.CApath = *args;
-				} else
-					badarg = 1;
-			} else if (!strcmp(*args, "-CAfile")) {
-				if (args[1]) {
-					args++;
-					pkcs12_config.CAfile = *args;
-				} else
-					badarg = 1;
-			} else
-				badarg = 1;
-
-		} else
-			badarg = 1;
-		args++;
-	}
-
-	if (badarg) {
-		BIO_printf(bio_err, "Usage: pkcs12 [options]\n");
-		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, "-export       output PKCS12 file\n");
-		BIO_printf(bio_err, "-chain        add certificate chain\n");
-		BIO_printf(bio_err, "-inkey file   private key if not infile\n");
-		BIO_printf(bio_err, "-certfile f   add all certs in f\n");
-		BIO_printf(bio_err, "-CApath arg   - PEM format directory of CA's\n");
-		BIO_printf(bio_err, "-CAfile arg   - PEM format file of CA's\n");
-		BIO_printf(bio_err, "-name \"name\"  use name as friendly name\n");
-		BIO_printf(bio_err, "-caname \"nm\"  use nm as CA friendly name (can be used more than once).\n");
-		BIO_printf(bio_err, "-in  infile   input filename\n");
-		BIO_printf(bio_err, "-out outfile  output filename\n");
-		BIO_printf(bio_err, "-noout        don't output anything, just verify.\n");
-		BIO_printf(bio_err, "-nomacver     don't verify MAC.\n");
-		BIO_printf(bio_err, "-nocerts      don't output certificates.\n");
-		BIO_printf(bio_err, "-clcerts      only output client certificates.\n");
-		BIO_printf(bio_err, "-cacerts      only output CA certificates.\n");
-		BIO_printf(bio_err, "-nokeys       don't output private keys.\n");
-		BIO_printf(bio_err, "-info         give info about PKCS#12 structure.\n");
-		BIO_printf(bio_err, "-des          encrypt private keys with DES\n");
-		BIO_printf(bio_err, "-des3         encrypt private keys with triple DES (default)\n");
-#ifndef OPENSSL_NO_IDEA
-		BIO_printf(bio_err, "-idea         encrypt private keys with idea\n");
-#endif
-#ifndef OPENSSL_NO_AES
-		BIO_printf(bio_err, "-aes128, -aes192, -aes256\n");
-		BIO_printf(bio_err, "              encrypt PEM output with cbc aes\n");
-#endif
-#ifndef OPENSSL_NO_CAMELLIA
-		BIO_printf(bio_err, "-camellia128, -camellia192, -camellia256\n");
-		BIO_printf(bio_err, "              encrypt PEM output with cbc camellia\n");
-#endif
-		BIO_printf(bio_err, "-nodes        don't encrypt private keys\n");
-		BIO_printf(bio_err, "-noiter       don't use encryption iteration\n");
-		BIO_printf(bio_err, "-nomaciter    don't use MAC iteration\n");
-		BIO_printf(bio_err, "-maciter      use MAC iteration\n");
-		BIO_printf(bio_err, "-nomac        don't generate MAC\n");
-		BIO_printf(bio_err, "-twopass      separate MAC, encryption passwords\n");
-		BIO_printf(bio_err, "-descert      encrypt PKCS#12 certificates with triple DES (default RC2-40)\n");
-		BIO_printf(bio_err, "-certpbe alg  specify certificate PBE algorithm (default RC2-40)\n");
-		BIO_printf(bio_err, "-keypbe alg   specify private key PBE algorithm (default 3DES)\n");
-		BIO_printf(bio_err, "-macalg alg   digest algorithm used in MAC (default SHA1)\n");
-		BIO_printf(bio_err, "-keyex        set MS key exchange type\n");
-		BIO_printf(bio_err, "-keysig       set MS key signature type\n");
-		BIO_printf(bio_err, "-password p   set import/export password source\n");
-		BIO_printf(bio_err, "-passin p     input file pass phrase source\n");
-		BIO_printf(bio_err, "-passout p    output file pass phrase source\n");
-		BIO_printf(bio_err, "-CSP name     Microsoft CSP name\n");
-		BIO_printf(bio_err, "-LMK          Add local machine keyset attribute to private key\n");
+	if (options_parse(argc, argv, pkcs12_options, NULL, NULL) != 0) {
+		pkcs12_usage();
 		goto end;
 	}
 
