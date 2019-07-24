@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.38 2019/07/22 06:59:41 espie Exp $
+# $OpenBSD: Error.pm,v 1.39 2019/07/24 09:03:12 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -41,6 +41,16 @@ sub cache(*&)
 # (temp files are registered per pid, for instance, so they only
 # get cleaned when the proper pid is used)
 package OpenBSD::Handler;
+
+# a bunch of other modules create persistent state that must be cleaned up
+# on exit (temporary files, network connections to abort properly...)
+# END blocks would do that (but see below...) but sig handling bypasses that,
+# so we MUST install SIG handlers.
+
+# note that END will be run for *each* process, so beware!
+# (temp files are registered per pid, for instance, so they only
+# get cleaned when the proper pid is used)
+# hash of code to run on ANY exit
 
 # hash of code to run on ANY exit
 my $atend = {};
