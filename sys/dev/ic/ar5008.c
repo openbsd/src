@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.49 2019/02/27 04:10:35 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.50 2019/07/24 07:53:05 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1550,12 +1550,11 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		    ridx[i] != ATHN_RIDX_CCK1 &&
 		    (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
 			series[i].hwrate |= 0x04;
-		series[i].dur = 0;
-	}
-	if (!(ds->ds_ctl1 & AR_TXC1_NO_ACK)) {
 		/* Compute duration for each series. */
-		for (i = 0; i < 4; i++) {
-			series[i].dur = athn_txtime(sc, IEEE80211_ACK_LEN,
+		series[i].dur = athn_txtime(sc, totlen, ridx[i], ic->ic_flags);
+		if (!(ds->ds_ctl1 & AR_TXC1_NO_ACK)) {
+			/* Account for ACK duration. */
+			series[i].dur += athn_txtime(sc, IEEE80211_ACK_LEN,
 			    athn_rates[ridx[i]].rspridx, ic->ic_flags);
 		}
 	}
