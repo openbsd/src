@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.98 2019/07/17 10:13:26 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.99 2019/07/24 08:58:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -217,8 +217,8 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct rde_community *c,
 		case AID_INET6:
 			DUMP_BYTE(nhbuf, sizeof(struct in6_addr));
 			if (ibuf_add(nhbuf, &nexthop->v6,
-			    sizeof(struct in6_addr)) == -1) {
-			}
+			    sizeof(struct in6_addr)) == -1)
+				goto fail;
 			break;
 		case AID_VPN_IPv4:
 			DUMP_BYTE(nhbuf, sizeof(u_int64_t) +
@@ -233,8 +233,8 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct rde_community *c,
 			DUMP_NLONG(nhbuf, 0);	/* set RD to 0 */
 			DUMP_NLONG(nhbuf, 0);
 			if (ibuf_add(nhbuf, &nexthop->v6,
-			    sizeof(struct in6_addr)) == -1) {
-			}
+			    sizeof(struct in6_addr)) == -1) 
+				goto fail;
 			break;
 		}
 		if (!v2)
@@ -300,11 +300,13 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 	     peer->remote_addr.aid;
 	switch (aid) {
 	case AID_INET:
+	case AID_VPN_IPv4:
 		DUMP_SHORT(h2buf, AFI_IPv4);
 		DUMP_NLONG(h2buf, peer->local_v4_addr.v4.s_addr);
 		DUMP_NLONG(h2buf, peer->remote_addr.v4.s_addr);
 		break;
 	case AID_INET6:
+	case AID_VPN_IPv6:
 		DUMP_SHORT(h2buf, AFI_IPv6);
 		if (ibuf_add(h2buf, &peer->local_v6_addr.v6,
 		    sizeof(struct in6_addr)) == -1 ||
@@ -315,7 +317,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		}
 		break;
 	default:
-		log_warnx("king bula found new AF in mrt_dump_entry_mp");
+		log_warnx("king bula found new AF %d in %s", aid, __func__);
 		goto fail;
 	}
 
@@ -349,13 +351,32 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 			goto fail;
 		}
 		break;
+	case AID_VPN_IPv4:
+		DUMP_SHORT(h2buf, AFI_IPv4);	/* afi */
+		DUMP_BYTE(h2buf, SAFI_MPLSVPN);	/* safi */
+		DUMP_BYTE(h2buf, sizeof(u_int64_t) + sizeof(struct in_addr));
+		DUMP_NLONG(h2buf, 0);	/* set RD to 0 */
+		DUMP_NLONG(h2buf, 0);
+		DUMP_NLONG(h2buf, nh->v4.s_addr);	/* nexthop */
+		break;
+	case AID_VPN_IPv6:
+		DUMP_SHORT(h2buf, AFI_IPv6);	/* afi */
+		DUMP_BYTE(h2buf, SAFI_MPLSVPN);	/* safi */
+		DUMP_BYTE(h2buf, sizeof(u_int64_t) + sizeof(struct in6_addr));
+		DUMP_NLONG(h2buf, 0);	/* set RD to 0 */
+		DUMP_NLONG(h2buf, 0);
+		if (ibuf_add(h2buf, &nh->v6, sizeof(struct in6_addr)) == -1) {
+			log_warn("mrt_dump_entry_mp: ibuf_add error");
+			goto fail;
+		}
+		break;
 	default:
-		log_warnx("king bula found new AF in mrt_dump_entry_mp");
+		log_warnx("king bula found new AF in %s", __func__);
 		goto fail;
 	}
 
 	if (prefix_writebuf(h2buf, &addr, p->pt->prefixlen) == -1) {
-		log_warn("mrt_dump_entry_mp: prefix_writebuf error");
+		log_warnx("%s: prefix_writebuf error", __func__);
 		goto fail;
 	}
 
@@ -502,7 +523,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 		DUMP_BYTE(buf, safi);
 	}
 	if (prefix_writebuf(buf, &addr, re->prefix->prefixlen) == -1) {
-		log_warn("%s: prefix_writebuf error", __func__);
+		log_warnx("%s: prefix_writebuf error", __func__);
 		goto fail;
 	}
 
@@ -530,20 +551,20 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 
 		if ((tbuf = ibuf_dynamic(0, MAX_PKTSIZE)) == NULL) {
 			log_warn("%s: ibuf_dynamic", __func__);
-			return (-1);
+			goto fail;
 		}
 		if (mrt_attr_dump(tbuf, prefix_aspath(p), prefix_communities(p),
 		    nh, 1) == -1) {
 			log_warnx("%s: mrt_attr_dump error", __func__);
-			ibuf_free(buf);
-			return (-1);
+			ibuf_free(tbuf);
+			goto fail;
 		}
 		len = ibuf_size(tbuf);
 		DUMP_SHORT(buf, (u_int16_t)len);
-		if (ibuf_add(buf, tbuf->buf, ibuf_size(tbuf)) == -1) {
+		if (ibuf_add(buf, tbuf->buf, len) == -1) {
 			log_warn("%s: ibuf_add error", __func__);
 			ibuf_free(tbuf);
-			return (-1);
+			goto fail;
 		}
 		ibuf_free(tbuf);
 		nump++;
@@ -649,7 +670,7 @@ mrt_dump_peer(struct ibuf *buf, struct rde_peer *peer)
 		DUMP_NLONG(buf, 0);
 		break;
 	default:
-		log_warnx("king bula found new AF in mrt_dump_entry_mp");
+		log_warnx("king bula found new AF in %s", __func__);
 		goto fail;
 	}
 
@@ -731,7 +752,7 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 	case 0:
 		goto fail;
 	default:
-		log_warnx("king bula found new AF in mrt_dump_hdr_se");
+		log_warnx("king bula found new AF in %s", __func__);
 		goto fail;
 	}
 
@@ -836,6 +857,7 @@ mrt_dump_hdr_rde(struct ibuf **bp, u_int16_t type, u_int16_t subtype,
 
 fail:
 	ibuf_free(*bp);
+	*bp = NULL;
 	return (-1);
 }
 
