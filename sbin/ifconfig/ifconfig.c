@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.404 2019/07/03 03:24:01 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.405 2019/07/24 01:48:53 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4514,11 +4514,29 @@ trunk_status(void)
 				printb_status(lp->actor_state,
 				    LACP_STATE_BITS);
 				putchar('\n');
+				printf("\t\ttrunkport %s lacp_state actor "
+				    "system pri 0x%x mac %s, key 0x%x, "
+				    "port pri 0x%x number 0x%x\n",
+				    rpbuf[i].rp_portname,
+				    lp->actor_prio,
+				    ether_ntoa((struct ether_addr*)
+				     lp->actor_mac),
+				    lp->actor_key,
+				    lp->actor_portprio, lp->actor_portno);
 				printf("\t\ttrunkport %s lacp_state partner ",
 				    rpbuf[i].rp_portname);
 				printb_status(lp->partner_state,
 				    LACP_STATE_BITS);
 				putchar('\n');
+				printf("\t\ttrunkport %s lacp_state partner "
+				    "system pri 0x%x mac %s, key 0x%x, "
+				    "port pri 0x%x number 0x%x\n",
+				    rpbuf[i].rp_portname,
+				    lp->partner_prio,
+				    ether_ntoa((struct ether_addr*)
+				     lp->partner_mac),
+				    lp->partner_key,
+				    lp->partner_portprio, lp->partner_portno);
 			}
 
 			printf("\t\ttrunkport %s ", rpbuf[i].rp_portname);
