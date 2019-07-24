@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.134 2017/04/02 18:14:34 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.135 2019/07/24 18:41:05 mestre Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 2 2017 $
+.Dd $Mdocdate: July 24 2019 $
 .Dt SPAMD 8
 .Os
 .Sh NAME
@@ -607,17 +607,3 @@ The
 .Nm
 command first appeared in
 .Ox 3.3 .
-.Sh BUGS
-.Nm
-currently uses the user
-.Dq _spamd
-outside a chroot jail when running in default mode, and requires
-the greylisting database in
-.Pa /var/db/spamd
-to be owned by the
-.Dq _spamd
-user.
-This is wrong and should change to a distinct user from the
-one used by the chrooted
-.Nm
-process.
