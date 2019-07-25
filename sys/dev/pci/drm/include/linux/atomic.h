@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.3 2019/07/25 01:49:55 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.4 2019/07/25 02:42:44 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -369,54 +369,58 @@ find_next_bit(volatile void *p, int max, int b)
 	     (b) < (max);					\
 	     (b) = find_next_zero_bit((p), (max), (b) + 1))
 
-/* DRM_READMEMORYBARRIER() prevents reordering of reads.
- * DRM_WRITEMEMORYBARRIER() prevents reordering of writes.
- * DRM_MEMORYBARRIER() prevents reordering of reads and writes.
- */
 #if defined(__i386__)
-#define DRM_READMEMORYBARRIER()		__asm __volatile( \
-					"lock; addl $0,0(%%esp)" : : : "memory");
-#define DRM_WRITEMEMORYBARRIER()	__asm __volatile("" : : : "memory");
-#define DRM_MEMORYBARRIER()		__asm __volatile( \
-					"lock; addl $0,0(%%esp)" : : : "memory");
+#define rmb()	__asm __volatile("lock; addl $0,0(%%esp)" : : : "memory");
+#define wmb()	__asm __volatile("" : : : "memory");
+#define mb()	__asm __volatile("lock; addl $0,0(%%esp)" : : : "memory");
 #elif defined(__alpha__)
-#define DRM_READMEMORYBARRIER()		alpha_mb();
-#define DRM_WRITEMEMORYBARRIER()	alpha_wmb();
-#define DRM_MEMORYBARRIER()		alpha_mb();
+#define rmb()	alpha_mb();
+#define wmb()	alpha_wmb();
+#define mb()	alpha_mb();
 #elif defined(__amd64__)
-#define DRM_READMEMORYBARRIER()		__asm __volatile( \
-					"lock; addl $0,0(%%rsp)" : : : "memory");
-#define DRM_WRITEMEMORYBARRIER()	__asm __volatile("" : : : "memory");
-#define DRM_MEMORYBARRIER()		__asm __volatile( \
-					"lock; addl $0,0(%%rsp)" : : : "memory");
+#define rmb()	__asm __volatile("lock; addl $0,0(%%rsp)" : : : "memory");
+#define wmb()	__asm __volatile("" : : : "memory");
+#define mb()	__asm __volatile("lock; addl $0,0(%%rsp)" : : : "memory");
 #elif defined(__aarch64__)
-#define DRM_READMEMORYBARRIER()		__membar("dsb ld")
-#define DRM_WRITEMEMORYBARRIER()	__membar("dsb st")
-#define DRM_MEMORYBARRIER()		__membar("dsb sy")
+#define rmb()	__membar("dsb ld")
+#define wmb()	__membar("dsb st")
+#define mb()	__membar("dsb sy")
 #elif defined(__mips64__)
-#define DRM_READMEMORYBARRIER()		DRM_MEMORYBARRIER() 
-#define DRM_WRITEMEMORYBARRIER()	DRM_MEMORYBARRIER()
-#define DRM_MEMORYBARRIER()		mips_sync()
+#define rmb()	mips_sync() 
+#define wmb()	mips_sync()
+#define mb()	mips_sync()
 #elif defined(__powerpc__)
-#define DRM_READMEMORYBARRIER()		DRM_MEMORYBARRIER() 
-#define DRM_WRITEMEMORYBARRIER()	DRM_MEMORYBARRIER()
-#define DRM_MEMORYBARRIER()		__asm __volatile("sync" : : : "memory");
+#define rmb()	__asm __volatile("sync" : : : "memory");
+#define wmb()	__asm __volatile("sync" : : : "memory");
+#define mb()	__asm __volatile("sync" : : : "memory");
 #elif defined(__sparc64__)
-#define DRM_READMEMORYBARRIER()		DRM_MEMORYBARRIER() 
-#define DRM_WRITEMEMORYBARRIER()	DRM_MEMORYBARRIER()
-#define DRM_MEMORYBARRIER()		membar_sync()
+#define rmb()	membar_sync()
+#define wmb()	membar_sync()
+#define mb()	membar_sync()
 #endif
 
-#define smp_mb__before_atomic()		DRM_MEMORYBARRIER()
-#define smp_mb__after_atomic()		DRM_MEMORYBARRIER()
+#ifndef smp_rmb
+#define smp_rmb()	rmb()
+#endif
 
-#define smp_store_mb(x, v)		do { x = v; DRM_MEMORYBARRIER(); } while (0)
+#ifndef smp_wmb
+#define smp_wmb()	wmb()
+#endif
 
-#define mb()				DRM_MEMORYBARRIER()
-#define rmb()				DRM_READMEMORYBARRIER()
-#define wmb()				DRM_WRITEMEMORYBARRIER()
-#define smp_rmb()			DRM_READMEMORYBARRIER()
-#define smp_wmb()			DRM_WRITEMEMORYBARRIER()
-#define mmiowb()			DRM_WRITEMEMORYBARRIER()
+#ifndef mmiowb
+#define mmiowb()	wmb()
+#endif
+
+#ifndef smp_mb__before_atomic
+#define smp_mb__before_atomic()	mb()
+#endif
+
+#ifndef smp_mb__after_atomic
+#define smp_mb__after_atomic()	mb()
+#endif
+
+#ifndef smp_store_mb
+#define smp_store_mb(x, v)	do { x = v; mb(); } while (0)
+#endif
 
 #endif
