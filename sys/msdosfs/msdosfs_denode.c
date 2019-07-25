@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.63 2018/05/27 06:02:14 visa Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.64 2019/07/25 01:43:21 cheloha Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -476,7 +476,7 @@ detrunc(struct denode *dep, uint32_t length, int flags, struct ucred *cred,
 	if (!isadir)
 		dep->de_flag |= DE_UPDATE|DE_MODIFIED;
 	vflags = (length > 0 ? V_SAVE : 0) | V_SAVEMETA;
-	vinvalbuf(DETOV(dep), vflags, cred, p, 0, 0);
+	vinvalbuf(DETOV(dep), vflags, cred, p, 0, INFSLP);
 	allerror = deupdat(dep, 1);
 #ifdef MSDOSFS_DEBUG
 	printf("detrunc(): allerror %d, eofentry %d\n",

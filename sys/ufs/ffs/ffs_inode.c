@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.79 2019/07/19 00:24:31 cheloha Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.80 2019/07/25 01:43:21 cheloha Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 			(void)ufs_quota_free_blocks(oip, DIP(oip, blocks),
 			    NOCRED);
 			softdep_setup_freeblocks(oip, length);
-			(void) vinvalbuf(ovp, 0, cred, curproc, 0, 0);
+			vinvalbuf(ovp, 0, cred, curproc, 0, INFSLP);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
 			return (UFS_UPDATE(oip, 0));
 		}
@@ -323,7 +323,7 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 
 	DIP_ASSIGN(oip, size, osize);
 	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
-	allerror = vinvalbuf(ovp, vflags, cred, curproc, 0, 0);
+	allerror = vinvalbuf(ovp, vflags, cred, curproc, 0, INFSLP);
 
 	/*
 	 * Indirect blocks first.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.291 2019/07/19 00:54:59 cheloha Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.292 2019/07/25 01:43:21 cheloha Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1011,7 +1011,7 @@ vclean(struct vnode *vp, int flags, struct proc *p)
 	 * Clean out any buffers associated with the vnode.
 	 */
 	if (flags & DOCLOSE)
-		vinvalbuf(vp, V_SAVE, NOCRED, p, 0, 0);
+		vinvalbuf(vp, V_SAVE, NOCRED, p, 0, INFSLP);
 	/*
 	 * If purging an active vnode, it must be closed and
 	 * deactivated before being reclaimed. Note that the
@@ -1901,7 +1901,7 @@ vwakeup(struct vnode *vp)
  */
 int
 vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p,
-    int slpflag, int slptimeo)
+    int slpflag, uint64_t slptimeo)
 {
 	struct buf *bp;
 	struct buf *nbp, *blist;
@@ -1948,7 +1948,7 @@ loop:
 				continue;
 			if (bp->b_flags & B_BUSY) {
 				bp->b_flags |= B_WANTED;
-				error = tsleep(bp, slpflag | (PRIBIO + 1),
+				error = tsleep_nsec(bp, slpflag | (PRIBIO + 1),
 				    "vinvalbuf", slptimeo);
 				if (error) {
 					splx(s);

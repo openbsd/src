@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.61 2019/07/19 00:24:31 cheloha Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.62 2019/07/25 01:43:21 cheloha Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -341,7 +341,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	memcpy(&oip->i_e2fs_blocks[0], oldblks, sizeof(oldblks));
 	(void)ext2fs_setsize(oip, osize);
 	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
-	allerror = vinvalbuf(ovp, vflags, cred, curproc, 0, 0);
+	allerror = vinvalbuf(ovp, vflags, cred, curproc, 0, INFSLP);
 
 	/*
 	 * Indirect blocks first.

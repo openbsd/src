@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.326 2019/07/23 11:01:32 stsp Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.327 2019/07/25 01:43:21 cheloha Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ sys_mount(struct proc *p, void *v, register_t *retval)
 		error = EPERM;
 		goto fail;
 	}
-	if ((error = vinvalbuf(vp, V_SAVE, p->p_ucred, p, 0, 0)) != 0) {
+	if ((error = vinvalbuf(vp, V_SAVE, p->p_ucred, p, 0, INFSLP)) != 0) {
 		vput(vp);
 		goto fail;
 	}

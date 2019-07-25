@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.112 2019/07/19 00:24:31 cheloha Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.113 2019/07/25 01:43:21 cheloha Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -319,7 +319,7 @@ ext2fs_reload_vnode(struct vnode *vp, void *args)
 	if (vget(vp, LK_EXCLUSIVE))
 		return (0);
 
-	if (vinvalbuf(vp, 0, era->cred, era->p, 0, 0))
+	if (vinvalbuf(vp, 0, era->cred, era->p, 0, INFSLP))
 		panic("ext2fs_reload: dirty2");
 	/*
 	 * Step 6: re-read inode data for all active vnodes.
@@ -442,7 +442,7 @@ ext2fs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	 */
 	devvp = VFSTOUFS(mountp)->um_devvp;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
+	error = vinvalbuf(devvp, 0, cred, p, 0, INFSLP);
 	VOP_UNLOCK(devvp);
 	if (error != 0)
 		panic("ext2fs_reload: dirty1");
@@ -507,7 +507,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
+	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, INFSLP);
 	VOP_UNLOCK(devvp);
 	if (error != 0)
 		return (error);

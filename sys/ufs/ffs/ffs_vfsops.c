@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.180 2019/07/19 00:24:32 cheloha Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.181 2019/07/25 01:43:21 cheloha Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ ffs_reload_vnode(struct vnode *vp, void *args)
 	if (vget(vp, LK_EXCLUSIVE))
 		return (0);
 
-	if (vinvalbuf(vp, 0, fra->cred, fra->p, 0, 0))
+	if (vinvalbuf(vp, 0, fra->cred, fra->p, 0, INFSLP))
 		panic("ffs_reload: dirty2");
 
 	/*
@@ -572,7 +572,7 @@ ffs_reload(struct mount *mountp, struct ucred *cred, struct proc *p)
 	 */
 	devvp = VFSTOUFS(mountp)->um_devvp;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = vinvalbuf(devvp, 0, cred, p, 0, 0);
+	error = vinvalbuf(devvp, 0, cred, p, 0, INFSLP);
 	VOP_UNLOCK(devvp);
 	if (error)
 		panic("ffs_reload: dirty1");
@@ -718,7 +718,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
+	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, INFSLP);
 	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
@@ -1060,7 +1060,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	ump->um_devvp->v_specmountpoint = NULL;
 
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-	vinvalbuf(ump->um_devvp, V_SAVE, NOCRED, p, 0, 0);
+	vinvalbuf(ump->um_devvp, V_SAVE, NOCRED, p, 0, INFSLP);
 	(void)VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 	    NOCRED, p);
 	vput(ump->um_devvp);

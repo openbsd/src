@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.51 2018/04/28 03:13:05 visa Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.52 2019/07/25 01:43:21 cheloha Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -193,7 +193,8 @@ mfs_close(void *v)
 	 * On last close of a memory filesystem we must invalidate any in
 	 * core blocks, so that we can free up its vnode.
 	 */
-	if ((error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, 0)) != 0)
+	error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, INFSLP);
+	if (error != 0)
 		return (error);
 
 #ifdef DIAGNOSTIC

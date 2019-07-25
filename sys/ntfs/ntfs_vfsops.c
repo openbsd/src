@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.61 2018/05/27 06:02:15 visa Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.62 2019/07/25 01:43:21 cheloha Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -279,7 +279,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp,
 	if (ncount > 1 && devvp != rootvp)
 		return (EBUSY);
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
+	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, INFSLP);
 	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
@@ -503,7 +503,7 @@ ntfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 
 	/* lock the device vnode before calling VOP_CLOSE() */
 	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
-	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
+	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, INFSLP);
 	(void)VOP_CLOSE(ntmp->ntm_devvp, FREAD, NOCRED, p);
 	vput(ntmp->ntm_devvp);
 

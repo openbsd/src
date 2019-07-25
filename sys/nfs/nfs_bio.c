@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.83 2019/07/19 00:24:31 cheloha Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.84 2019/07/25 01:43:21 cheloha Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -451,26 +451,29 @@ nfs_vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p)
 {
 	struct nfsmount		*nmp= VFSTONFS(vp->v_mount);
 	struct nfsnode		*np = VTONFS(vp);
-	int			 error, sintr, stimeo;
+	uint64_t		 stimeo;
+	int			 error, sintr;
 
-	error = sintr = stimeo = 0;
+	stimeo = INFSLP;
+	error = sintr = 0;
 
 	if (ISSET(nmp->nm_flag, NFSMNT_INT)) {
 		sintr = PCATCH;
-		stimeo = 2 * hz;
+		stimeo = SEC_TO_NSEC(2);
 	}
 
 	/* First wait for any other process doing a flush to complete. */
 	while (np->n_flag & NFLUSHINPROG) {
 		np->n_flag |= NFLUSHWANT;
-		error = tsleep(&np->n_flag, PRIBIO|sintr, "nfsvinval", stimeo);
+		error = tsleep_nsec(&np->n_flag, PRIBIO|sintr, "nfsvinval",
+		    stimeo);
 		if (error && sintr && nfs_sigintr(nmp, NULL, p))
 			return (EINTR);
 	}
 
 	/* Now, flush as required. */
 	np->n_flag |= NFLUSHINPROG;
-	error = vinvalbuf(vp, flags, cred, p, sintr, 0);
+	error = vinvalbuf(vp, flags, cred, p, sintr, INFSLP);
 	while (error) {
 		if (sintr && nfs_sigintr(nmp, NULL, p)) {
 			np->n_flag &= ~NFLUSHINPROG;
@@ -505,7 +508,7 @@ nfs_asyncio(struct buf *bp, int readahead)
 		if (readahead)
 			goto out;
 		else
-			tsleep(&nfs_bufqlen, PRIBIO, "nfs_bufq", 0);
+			tsleep_nsec(&nfs_bufqlen, PRIBIO, "nfs_bufq", INFSLP);
 
 	if ((bp->b_flags & B_READ) == 0) {
 		bp->b_flags |= B_WRITEINPROG;
