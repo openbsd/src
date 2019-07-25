@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.2 2019/05/08 22:01:19 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.3 2019/07/25 01:49:55 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -409,10 +409,6 @@ find_next_bit(volatile void *p, int max, int b)
 
 #define smp_mb__before_atomic()		DRM_MEMORYBARRIER()
 #define smp_mb__after_atomic()		DRM_MEMORYBARRIER()
-#define smp_mb__before_atomic_dec()	DRM_MEMORYBARRIER()
-#define smp_mb__after_atomic_dec()	DRM_MEMORYBARRIER()
-#define smp_mb__before_atomic_inc()	DRM_MEMORYBARRIER()
-#define smp_mb__after_atomic_inc()	DRM_MEMORYBARRIER()
 
 #define smp_store_mb(x, v)		do { x = v; DRM_MEMORYBARRIER(); } while (0)
 
