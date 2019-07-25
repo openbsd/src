@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.120 2019/07/02 14:54:36 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.121 2019/07/25 15:13:52 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -668,45 +668,32 @@ itimerround(struct timeval *tv)
 }
 
 /*
- * Decrement an interval timer by a specified number
- * of microseconds, which must be less than a second,
- * i.e. < 1000000.  If the timer expires, then reload
- * it.  In this case, carry over (usec - old value) to
- * reduce the value reloaded into the timer so that
- * the timer does not drift.  This routine assumes
- * that it is called in a context where the timers
- * on which it is operating cannot change in value.
+ * Decrement an interval timer by the given number of microseconds.
+ * If the timer expires and it is periodic then reload it.  When reloading
+ * the timer we subtract any overrun from the next period so that the timer
+ * does not drift.
  */
 int
 itimerdecr(struct itimerval *itp, int usec)
 {
+	struct timeval decrement;
+
+	decrement.tv_sec = usec / 1000000;
+	decrement.tv_usec = usec % 1000000;
+
 	mtx_enter(&itimer_mtx);
-	if (itp->it_value.tv_usec < usec) {
-		if (itp->it_value.tv_sec == 0) {
-			/* expired, and already in next interval */
-			usec -= itp->it_value.tv_usec;
-			goto expire;
-		}
-		itp->it_value.tv_usec += 1000000;
-		itp->it_value.tv_sec--;
-	}
-	itp->it_value.tv_usec -= usec;
-	usec = 0;
-	if (timerisset(&itp->it_value)) {
+	timersub(&itp->it_value, &decrement, &itp->it_value);
+	if (itp->it_value.tv_sec >= 0 && timerisset(&itp->it_value)) {
 		mtx_leave(&itimer_mtx);
 		return (1);
 	}
-	/* expired, exactly at end of interval */
-expire:
-	if (timerisset(&itp->it_interval)) {
-		itp->it_value = itp->it_interval;
-		itp->it_value.tv_usec -= usec;
-		if (itp->it_value.tv_usec < 0) {
-			itp->it_value.tv_usec += 1000000;
-			itp->it_value.tv_sec--;
-		}
-	} else
-		itp->it_value.tv_usec = 0;		/* sec is already 0 */
+	if (!timerisset(&itp->it_interval)) {
+		timerclear(&itp->it_value);
+		mtx_leave(&itimer_mtx);
+		return (0);
+	}
+	while (itp->it_value.tv_sec < 0 || !timerisset(&itp->it_value))
+		timeradd(&itp->it_value, &itp->it_interval, &itp->it_value);
 	mtx_leave(&itimer_mtx);
 	return (0);
 }
