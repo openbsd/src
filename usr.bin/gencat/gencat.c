@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.19 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.20 2019/07/25 13:53:57 schwarze Exp $	*/
 /*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
@@ -405,11 +405,12 @@ void
 MCParse(int fd)
 {
 	char   *cptr, *str;
-	int     setid, msgid = 0;
+	int     setid, msgid;
 	char    quote = 0;
 
 	/* XXX: init sethead? */
 
+	setid = 0;
 	while ((cptr = get_line(fd))) {
 		if (*cptr == '$') {
 			++cptr;
@@ -418,7 +419,6 @@ MCParse(int fd)
 				cptr = wskip(cptr);
 				setid = atoi(cptr);
 				MCAddSet(setid);
-				msgid = 0;
 			} else if (strncmp(cptr, "delset", 6) == 0) {
 				cptr += 6;
 				cptr = wskip(cptr);
@@ -462,6 +462,10 @@ MCParse(int fd)
 			} else {
 				warning(cptr, "neither blank line nor start of a message id");
 				continue;
+			}
+			if (setid == 0) {
+				setid = NL_SETD;
+				MCAddSet(setid);
 			}
 			/*
 			 * If we have a message ID, but no message,
