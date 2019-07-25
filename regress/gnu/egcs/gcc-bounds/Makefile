@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2019/02/12 21:31:16 bluhm Exp $
+# $OpenBSD: Makefile,v 1.18 2019/07/25 14:17:11 bluhm Exp $
 
 C_MODULES?=	strlcpy strlcat getcwd memcpy fread memcpy declare \
 		sscanf vararray md builtins
@@ -53,6 +53,11 @@ generate:
 NOOBJ= Yes
 
 .include <bsd.own.mk>
+
+.if ${LINKER_VERSION} == "lld"
+# llvm linker does not support gcc warnings about insecure functions
+REGRESS_EXPECTED_FAILURES=	c-getcwd-1
+.endif
 
 .if ${BUILD_GCC3:L} == "yes" 
 EXP=		.exp.gcc3
