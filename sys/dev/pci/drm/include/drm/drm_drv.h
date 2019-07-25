@@ -247,6 +247,8 @@ struct drm_driver {
 
 };
 
+extern unsigned int drm_debug;
+
 static inline void
 drm_dev_get(struct drm_device *dev)
 {
