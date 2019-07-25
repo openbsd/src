@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.61 2019/07/25 14:53:21 brynet Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.62 2019/07/25 17:32:33 brynet Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -254,6 +254,7 @@ pflog_read_live(const char *source, int slen, int promisc, int to_ms,
 		if (ioctl(p->fd, BIOCSRTIMEOUT, &to) == -1) {
 			snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCSRTIMEOUT: %s",
 			    pcap_strerror(errno));
+			goto bad;
 		}
 	}
 	if (promisc)
