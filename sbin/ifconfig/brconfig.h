@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.h,v 1.14 2018/02/10 05:55:26 florian Exp $	*/
+/*	$OpenBSD: brconfig.h,v 1.15 2019/07/25 13:56:23 krw Exp $	*/
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -75,7 +75,8 @@ void switch_portno(const char *, const char *);
 	"\024\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6STATICARP" \
 	"\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX"	\
 	"\15LINK0\16LINK1\17LINK2\20MULTICAST"	\
-	"\23INET6_NOPRIVACY\24MPLS\25WOL\26AUTOCONF6\27INET6_NOSOII"
+	"\23INET6_NOPRIVACY\24MPLS\25WOL\26AUTOCONF6\27INET6_NOSOII" \
+	"\30AUTOCONF4"
 
 void printb(char *, unsigned int, unsigned char *);
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.337 2019/05/31 16:13:55 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.338 2019/07/25 13:56:23 krw Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 31 2019 $
+.Dd $Mdocdate: July 25 2019 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -149,6 +149,24 @@ in mapping
 between network level addresses and link level addresses (default).
 .It Cm -arp
 Disable the use of ARP.
+.It Cm autoconf
+Set the
+.Sy AUTOCONF4
+or
+.Sy AUTOCONF6
+flag on the interface, depending on
+.Ar address family .
+.Xr slaacd 8
+automatically configures IPv6 addresses for interfaces with
+.Sy AUTOCONF6
+set.
+.It Cm -autoconf
+Unset the
+.Sy AUTOCONF4
+or
+.Sy AUTOCONF6
+flag on the interface, depending on
+.Ar address family .
 .It Cm broadcast Ar addr
 (inet only)
 Specify the address to use to represent broadcasts to the
@@ -1201,7 +1219,6 @@ protocol when supported by the access point.
 .Ar interface
 .Cm inet6
 .Op Oo Fl Oc Ns Cm anycast
-.Op Oo Fl Oc Ns Cm autoconf
 .Op Oo Fl Oc Ns Cm autoconfprivacy
 .Op Cm eui64
 .Op Cm pltime Ar n
@@ -1219,17 +1236,6 @@ interface:
 Set the IPv6 anycast address bit.
 .It Cm -anycast
 Clear the IPv6 anycast address bit.
-.It Cm autoconf
-Set the
-.Sy AUTOCONF6
-flag on the interface.
-The address autoconfiguration daemon
-.Xr slaacd 8
-automatically configures IPv6 addresses for interfaces with this flag.
-.It Cm -autoconf
-Unset the
-.Sy AUTOCONF6
-flag on the interface.
 .It Cm autoconfprivacy
 Enable privacy extensions for stateless IPv6 address autoconfiguration
 (RFC 4941) on the interface.
