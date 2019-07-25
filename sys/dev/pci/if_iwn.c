@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.210 2019/04/29 09:00:16 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.211 2019/07/25 01:46:15 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3470,7 +3470,7 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
 	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, ring->qid << 8 | ring->cur);
 
-	return async ? 0 : tsleep(desc, PCATCH, "iwncmd", hz);
+	return async ? 0 : tsleep_nsec(desc, PCATCH, "iwncmd", SEC_TO_NSEC(1));
 }
 
 int
@@ -5542,7 +5542,7 @@ iwn5000_query_calibration(struct iwn_softc *sc)
 
 	/* Wait at most two seconds for calibration to complete. */
 	if (!(sc->sc_flags & IWN_FLAG_CALIB_DONE))
-		error = tsleep(sc, PCATCH, "iwncal", 2 * hz);
+		error = tsleep_nsec(sc, PCATCH, "iwncal", SEC_TO_NSEC(2));
 	return error;
 }
 
@@ -5879,7 +5879,7 @@ iwn4965_load_firmware(struct iwn_softc *sc)
 	IWN_WRITE(sc, IWN_RESET, 0);
 
 	/* Wait at most one second for first alive notification. */
-	if ((error = tsleep(sc, PCATCH, "iwninit", hz)) != 0) {
+	if ((error = tsleep_nsec(sc, PCATCH, "iwninit", SEC_TO_NSEC(1))) != 0) {
 		printf("%s: timeout waiting for adapter to initialize\n",
 		    sc->sc_dev.dv_xname);
 		return error;
@@ -5946,7 +5946,7 @@ iwn5000_load_firmware_section(struct iwn_softc *sc, uint32_t dst,
 	iwn_nic_unlock(sc);
 
 	/* Wait at most five seconds for FH DMA transfer to complete. */
-	return tsleep(sc, PCATCH, "iwninit", 5 * hz);
+	return tsleep_nsec(sc, PCATCH, "iwninit", SEC_TO_NSEC(5));
 }
 
 int
@@ -6508,7 +6508,7 @@ iwn_hw_init(struct iwn_softc *sc)
 		return error;
 	}
 	/* Wait at most one second for firmware alive notification. */
-	if ((error = tsleep(sc, PCATCH, "iwninit", hz)) != 0) {
+	if ((error = tsleep_nsec(sc, PCATCH, "iwninit", SEC_TO_NSEC(1))) != 0) {
 		printf("%s: timeout waiting for adapter to initialize\n",
 		    sc->sc_dev.dv_xname);
 		return error;

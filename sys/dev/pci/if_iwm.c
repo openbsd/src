@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.242 2019/06/26 21:01:20 kn Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.243 2019/07/25 01:46:14 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -594,7 +594,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 		return 0;
 
 	while (fw->fw_status == IWM_FW_STATUS_INPROGRESS)
-		tsleep(&sc->sc_fw, 0, "iwmfwp", 0);
+		tsleep_nsec(&sc->sc_fw, 0, "iwmfwp", INFSLP);
 	fw->fw_status = IWM_FW_STATUS_INPROGRESS;
 
 	if (fw->fw_rawdata != NULL)
@@ -2970,7 +2970,7 @@ iwm_firmware_load_chunk(struct iwm_softc *sc, uint32_t dst_addr,
 	/* Wait for this segment to load. */
 	err = 0;
 	while (!sc->sc_fw_chunk_done) {
-		err = tsleep(&sc->sc_fw, 0, "iwmfw", hz);
+		err = tsleep_nsec(&sc->sc_fw, 0, "iwmfw", SEC_TO_NSEC(1));
 		if (err)
 			break;
 	}
@@ -3139,7 +3139,7 @@ iwm_load_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 
 	/* wait for the firmware to load */
 	for (w = 0; !sc->sc_uc.uc_intr && w < 10; w++) {
-		err = tsleep(&sc->sc_uc, 0, "iwmuc", hz/10);
+		err = tsleep_nsec(&sc->sc_uc, 0, "iwmuc", MSEC_TO_NSEC(100));
 	}
 	if (err || !sc->sc_uc.uc_ok)
 		printf("%s: could not load firmware\n", DEVNAME(sc));
@@ -3284,7 +3284,8 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 	 * notifications from the firmware.
 	 */
 	while ((sc->sc_init_complete & wait_flags) != wait_flags) {
-		err = tsleep(&sc->sc_init_complete, 0, "iwminit", 2*hz);
+		err = tsleep_nsec(&sc->sc_init_complete, 0, "iwminit",
+		    SEC_TO_NSEC(2));
 		if (err)
 			break;
 	}
@@ -3981,7 +3982,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	IWM_WRITE(sc, IWM_HBUS_TARG_WRPTR, ring->qid << 8 | ring->cur);
 
 	if (!async) {
-		err = tsleep(desc, PCATCH, "iwmcmd", hz);
+		err = tsleep_nsec(desc, PCATCH, "iwmcmd", SEC_TO_NSEC(1));
 		if (err == 0) {
 			/* if hardware is no longer up, return error */
 			if (generation != sc->sc_generation) {
@@ -6524,7 +6525,8 @@ iwm_init(struct ifnet *ifp)
 	 * Wait until the transition to SCAN state has completed.
 	 */
 	do {
-		err = tsleep(&ic->ic_state, PCATCH, "iwminit", hz);
+		err = tsleep_nsec(&ic->ic_state, PCATCH, "iwminit",
+		    SEC_TO_NSEC(1));
 		if (generation != sc->sc_generation)
 			return ENXIO;
 		if (err)

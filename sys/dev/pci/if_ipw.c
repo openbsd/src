@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.122 2018/04/26 12:50:07 pirofti Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.123 2019/07/25 01:46:14 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1113,7 +1113,7 @@ ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 	DPRINTFN(2, ("sending command type=%u,len=%u\n", type, len));
 
 	/* wait at most one second for command to complete */
-	error = tsleep(&sc->cmd, 0, "ipwcmd", hz);
+	error = tsleep_nsec(&sc->cmd, 0, "ipwcmd", SEC_TO_NSEC(1));
 	splx(s);
 
 	return error;
@@ -1577,7 +1577,7 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 	CSR_WRITE_4(sc, IPW_CSR_CTL, tmp | IPW_CTL_ALLOW_STANDBY);
 
 	/* wait at most one second for firmware initialization to complete */
-	if ((error = tsleep(sc, 0, "ipwinit", hz)) != 0) {
+	if ((error = tsleep_nsec(sc, 0, "ipwinit", SEC_TO_NSEC(1))) != 0) {
 		printf("%s: timeout waiting for firmware initialization to "
 		    "complete\n", sc->sc_dev.dv_xname);
 		return error;
@@ -1704,7 +1704,7 @@ ipw_auth_and_assoc(void *arg1)
 #if 1
 	/* wait at most one second for card to be disabled */
 	s = splnet();
-	error = tsleep(sc, 0, "ipwdis", hz);
+	error = tsleep_nsec(sc, 0, "ipwdis", SEC_TO_NSEC(1));
 	splx(s);
 	if (error != 0) {
 		printf("%s: timeout waiting for disabled state\n",

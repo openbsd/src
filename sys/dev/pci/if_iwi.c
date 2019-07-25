@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.139 2019/04/25 01:52:13 kevlo Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.140 2019/07/25 01:46:14 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1228,7 +1228,7 @@ iwi_cmd(struct iwi_softc *sc, uint8_t type, void *data, uint8_t len, int async)
 		CSR_WRITE_4(sc, IWI_CSR_CMD_WIDX, sc->cmdq.next);
 	}
 
-	return async ? 0 : tsleep(sc, PCATCH, "iwicmd", hz);
+	return async ? 0 : tsleep_nsec(sc, PCATCH, "iwicmd", SEC_TO_NSEC(1));
 }
 
 /* ARGSUSED */
@@ -1748,7 +1748,7 @@ iwi_load_firmware(struct iwi_softc *sc, const char *data, int size)
 	CSR_WRITE_4(sc, IWI_CSR_CTL, tmp | IWI_CTL_ALLOW_STANDBY);
 
 	/* wait at most one second for firmware initialization to complete */
-	if ((error = tsleep(sc, PCATCH, "iwiinit", hz)) != 0) {
+	if ((error = tsleep_nsec(sc, PCATCH, "iwiinit", SEC_TO_NSEC(1))) != 0) {
 		printf("%s: timeout waiting for firmware initialization to "
 		    "complete\n", sc->sc_dev.dv_xname);
 		goto fail5;

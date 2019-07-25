@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.144 2018/04/28 16:05:56 phessler Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.145 2019/07/25 01:46:15 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -2100,7 +2100,7 @@ wpi_cmd(struct wpi_softc *sc, int code, const void *buf, int size, int async)
 	ring->cur = (ring->cur + 1) % WPI_TX_RING_COUNT;
 	WPI_WRITE(sc, WPI_HBUS_TARG_WRPTR, ring->qid << 8 | ring->cur);
 
-	return async ? 0 : tsleep(cmd, PCATCH, "wpicmd", hz);
+	return async ? 0 : tsleep_nsec(cmd, PCATCH, "wpicmd", SEC_TO_NSEC(1));
 }
 
 /*
@@ -2917,7 +2917,7 @@ wpi_load_firmware(struct wpi_softc *sc)
 	WPI_WRITE(sc, WPI_RESET, 0);
 
 	/* Wait at most one second for first alive notification. */
-	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
+	if ((error = tsleep_nsec(sc, PCATCH, "wpiinit", SEC_TO_NSEC(1))) != 0) {
 		printf("%s: timeout waiting for adapter to initialize\n",
 		    sc->sc_dev.dv_xname);
 		return error;
@@ -3199,7 +3199,7 @@ wpi_hw_init(struct wpi_softc *sc)
 		return error;
 	}
 	/* Wait at most one second for firmware alive notification. */
-	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
+	if ((error = tsleep_nsec(sc, PCATCH, "wpiinit", SEC_TO_NSEC(1))) != 0) {
 		printf("%s: timeout waiting for adapter to initialize\n",
 		    sc->sc_dev.dv_xname);
 		return error;
