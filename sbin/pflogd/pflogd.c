@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.60 2019/06/28 13:32:45 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.61 2019/07/25 14:53:21 brynet Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -73,6 +73,7 @@ void  dump_packet(u_char *, const struct pcap_pkthdr *, const u_char *);
 void  dump_packet_nobuf(u_char *, const struct pcap_pkthdr *, const u_char *);
 int   flush_buffer(FILE *);
 int   if_exists(char *);
+pcap_t *pflog_read_live(const char *, int, int, int, char *);
 void  logmsg(int, const char *, ...);
 void  purge_buffer(void);
 int   reset_dump(void);
@@ -194,10 +195,95 @@ if_exists(char *ifname)
 	return (if_nametoindex(ifname) != 0);
 }
 
+pcap_t *
+pflog_read_live(const char *source, int slen, int promisc, int to_ms,
+    char *ebuf)
+{
+	int		fd;
+	struct bpf_version bv;
+	struct ifreq	ifr;
+	u_int		v, dlt = DLT_PFLOG;
+	pcap_t		*p;
+
+	if (source == NULL || slen <= 0)
+		return (NULL);
+
+	p = pcap_create(source, ebuf);
+	if (p == NULL)
+		return (NULL);
+
+	/* Open bpf(4) read only */
+	if ((fd = open("/dev/bpf", O_RDONLY)) == -1)
+		return (NULL);
+
+	if (ioctl(fd, BIOCVERSION, &bv) == -1) {
+		snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCVERSION: %s",
+		    pcap_strerror(errno));
+		goto bad;
+	}
+
+	if (bv.bv_major != BPF_MAJOR_VERSION ||
+	    bv.bv_minor < BPF_MINOR_VERSION) {
+		snprintf(ebuf, PCAP_ERRBUF_SIZE,
+		    "kernel bpf filter out of date");
+		goto bad;
+	}
+
+	strlcpy(ifr.ifr_name, source, sizeof(ifr.ifr_name));
+	if (ioctl(fd, BIOCSETIF, &ifr) == -1) {
+		snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCSETIF: %s",
+		    pcap_strerror(errno));
+		goto bad;
+	}
+
+	if (dlt != (u_int) -1 && ioctl(fd, BIOCSDLT, &dlt)) {
+		snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCSDLT: %s",
+		    pcap_strerror(errno));
+		goto bad;
+	}
+
+	p->fd = fd;
+	p->snapshot = slen;
+	p->linktype = dlt;
+
+	/* set timeout */
+	if (to_ms != 0) {
+		struct timeval to;
+		to.tv_sec = to_ms / 1000;
+		to.tv_usec = (to_ms * 1000) % 1000000;
+		if (ioctl(p->fd, BIOCSRTIMEOUT, &to) == -1) {
+			snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCSRTIMEOUT: %s",
+			    pcap_strerror(errno));
+		}
+	}
+	if (promisc)
+		/* this is allowed to fail */
+		ioctl(fd, BIOCPROMISC, NULL);
+
+	if (ioctl(fd, BIOCGBLEN, &v) == -1) {
+		snprintf(ebuf, PCAP_ERRBUF_SIZE, "BIOCGBLEN: %s",
+		    pcap_strerror(errno));
+		goto bad;
+	}
+	p->bufsize = v;
+	p->buffer = malloc(p->bufsize);
+	if (p->buffer == NULL) {
+		snprintf(ebuf, PCAP_ERRBUF_SIZE, "malloc: %s",
+		    pcap_strerror(errno));
+		goto bad;
+	}
+	p->activated = 1;
+	return (p);
+
+bad:
+	pcap_close(p);
+	return (NULL);
+}
+
 int
 init_pcap(void)
 {
-	hpcap = pcap_open_live(interface, snaplen, 1, PCAP_TO_MS, errbuf);
+	hpcap = pflog_read_live(interface, snaplen, 1, PCAP_TO_MS, errbuf);
 	if (hpcap == NULL) {
 		logmsg(LOG_ERR, "Failed to initialize: %s", errbuf);
 		return (-1);
