@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.91 2018/02/06 19:57:37 tb Exp $
+#	$OpenBSD: daily,v 1.92 2019/07/25 13:13:53 bluhm Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -74,7 +74,7 @@ if [ -f /var/account/acct ]; then
 		mv -f /var/account/acct.0 /var/account/acct.1
 	cp -f /var/account/acct /var/account/acct.0
 	sa -sq
-	lastcomm -f /var/account/acct.0 | grep -e ' -[A-Z]*[PT]'
+	lastcomm -f /var/account/acct.0 | grep -e ' -[A-Z]*[PTU]'
 fi
 
 # If ROOTBACKUP is set to 1 in the environment, and
