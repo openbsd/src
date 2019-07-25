@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.55 2019/01/21 20:10:12 landry Exp $
+.\" $OpenBSD: pledge.2,v 1.56 2019/07/25 14:18:01 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2019 $
+.Dd $Mdocdate: July 25 2019 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -26,7 +26,7 @@
 .Fn pledge "const char *promises" "const char *execpromises"
 .Sh DESCRIPTION
 The
-.Nm pledge
+.Fn pledge
 system call forces the current process into a restricted-service operating mode.
 A few subsets are available, roughly described as computation, memory
 management, read-write operations on file descriptors, opening of files,
@@ -38,11 +38,11 @@ or
 .Ar execpromises .
 .Pp
 Use of
-.Nm pledge
+.Fn pledge
 in an application will require at least some study and understanding
 of the interfaces called.
 Subsequent calls to
-.Nm pledge
+.Fn pledge
 can reduce the abilities further, but abilities can never be regained.
 .Pp
 A process which attempts a restricted operation is killed with an uncatchable
@@ -61,7 +61,9 @@ flag.
 .Pp
 A
 .Ar promises
-value of "" restricts the process to the
+value of
+.Qq \&
+restricts the process to the
 .Xr _exit 2
 system call.
 This can be used for pure computation operating on memory shared
@@ -131,7 +133,7 @@ May open
 .Pa /etc/localtime
 and any files below
 .Pa /usr/share/zoneinfo .
-.It Nm pledge :
+.It Fn pledge :
 Can only reduce permissions for
 .Ar promises
 and
@@ -326,7 +328,7 @@ for operating on multicast sockets.
 .It Va fattr
 The following system calls are allowed to make explicit changes
 to fields in
-.Va struct stat
+.Vt struct stat
 relating to a file:
 .Pp
 .Xr utimes 2 ,
@@ -584,7 +586,7 @@ Rather than killing the process upon violation, indicate error with
 .Er ENOSYS .
 .Pp
 Also when
-.Nm pledge
+.Fn pledge
 is called with higher
 .Ar promises
 or
@@ -597,7 +599,7 @@ but an execve'd child has a different idea.
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
-.Nm pledge
+.Fn pledge
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EFAULT
@@ -613,6 +615,6 @@ This process is attempting to increase permissions.
 .El
 .Sh HISTORY
 The
-.Nm pledge
+.Fn pledge
 system call first appeared in
 .Ox 5.9 .
