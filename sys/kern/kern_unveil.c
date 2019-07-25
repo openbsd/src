@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.27 2019/07/14 03:26:02 guenther Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.28 2019/07/25 09:37:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/param.h>
 
+#include <sys/acct.h>
 #include <sys/mount.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>
@@ -823,6 +824,7 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 			    " vnode %p\n",
 			    p->p_p->ps_comm, p->p_p->ps_pid, ni->ni_vp);
 #endif
+			p->p_p->ps_acflag |= AUNVEIL;
 			if (uv->uv_flags & UNVEIL_USERSET)
 				return EACCES;
 			else
@@ -865,10 +867,11 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 			 * EACCESS. Otherwise, use any covering match
 			 * that we found above this dir.
 			 */
-			if (uv->uv_flags & UNVEIL_USERSET)
+			if (uv->uv_flags & UNVEIL_USERSET) {
+				p->p_p->ps_acflag |= AUNVEIL;
 				return EACCES;
-			else
-				goto done;
+			}
+			goto done;
 		}
 		/* directory flags match, update match */
 		if (uv->uv_flags & UNVEIL_USERSET)
@@ -881,6 +884,7 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 		printf("unveil: %s(%d) flag mismatch for terminal '%s'\n",
 		    p->p_p->ps_comm, p->p_p->ps_pid, tname->un_name);
 #endif
+		p->p_p->ps_acflag |= AUNVEIL;
 		return EACCES;
 	}
 	/* name and flags match in this dir. update match*/
@@ -903,8 +907,10 @@ done:
 		    p->p_p->ps_comm, p->p_p->ps_pid, ni->ni_cnd.cn_nameptr,
 		    ni->ni_unveil_match->uv_vp);
 #endif
+		p->p_p->ps_acflag |= AUNVEIL;
 		return EACCES;
 	}
+	p->p_p->ps_acflag |= AUNVEIL;
 	return ENOENT;
 }
 
