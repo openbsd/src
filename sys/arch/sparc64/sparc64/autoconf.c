@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.131 2018/01/27 22:55:23 naddy Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.132 2019/07/25 22:45:53 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -172,6 +172,7 @@ char sun4v_soft_state_booting[] __align32 = "OpenBSD booting";
 char sun4v_soft_state_running[] __align32 = "OpenBSD running";
 
 void	sun4v_interrupt_init(void);
+void	sun4v_sdio_init(void);
 #endif
 
 #ifdef DEBUG
@@ -439,6 +440,7 @@ bootstrap(int nctx)
 		sun4v_soft_state_init();
 		sun4v_set_soft_state(SIS_TRANSITION, sun4v_soft_state_booting);
 		sun4v_interrupt_init();
+		sun4v_sdio_init();
 	}
 #endif
 }
@@ -736,8 +738,9 @@ cpu_configure(void)
 
 #ifdef SUN4V
 
-#define HSVC_GROUP_INTERRUPT  0x002
-#define HSVC_GROUP_SOFT_STATE 0x003
+#define HSVC_GROUP_INTERRUPT	0x002
+#define HSVC_GROUP_SOFT_STATE	0x003
+#define HSVC_GROUP_SDIO		0x108
 
 int sun4v_soft_state_initialized = 0;
 
@@ -777,8 +780,19 @@ sun4v_interrupt_init(void)
 
 	if (prom_set_sun4v_api_version(HSVC_GROUP_INTERRUPT, 3, 0, &minor))
 		return;
-	
+
 	sun4v_group_interrupt_major = 3;
+}
+
+void
+sun4v_sdio_init(void)
+{
+	uint64_t minor;
+
+	if (prom_set_sun4v_api_version(HSVC_GROUP_SDIO, 1, 0, &minor))
+		return;
+
+	sun4v_group_sdio_major = 1;
 }
 
 #endif

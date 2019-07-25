@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.27 2019/07/25 21:11:24 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.28 2019/07/25 22:45:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -90,6 +90,8 @@ struct vpci_softc {
 	int sc_node;
 };
 
+uint64_t sun4v_group_sdio_major;
+
 int vpci_match(struct device *, void *, void *);
 void vpci_attach(struct device *, struct device *, void *);
 void vpci_init_iommu(struct vpci_softc *, struct vpci_pbm *);
@@ -152,6 +154,7 @@ vpci_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	struct vpci_pbm *pbm;
 	int *busranges = NULL, nranges;
+	int virtual;
 
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bust = ma->ma_bustag;
@@ -201,6 +204,22 @@ vpci_attach(struct device *parent, struct device *self, void *aux)
 	free(busranges, M_DEVBUF, 0);
 
 	config_found(&sc->sc_dv, &pba, vpci_print);
+
+	/* 
+	 * Signal that we're ready to share this root complex with our
+	 * guests.
+	 */
+	virtual = (OF_getproplen(ma->ma_node, "virtual-root-complex") == 0);
+	if (sun4v_group_sdio_major > 0 && !virtual) {
+		int err;
+
+		err = hv_pci_iov_root_configured(pbm->vp_devhandle);
+		if (err != H_EOK) {
+			printf("%s: pci_iov_root_configured: err %x\n",
+			       sc->sc_dv.dv_xname, err);
+		}
+			       
+	}
 }
 
 void

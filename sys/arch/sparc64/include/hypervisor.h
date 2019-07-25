@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.18 2019/07/25 18:30:40 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.19 2019/07/25 22:45:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -339,6 +339,7 @@ int64_t	hv_rng_data_read(paddr_t raddr, uint64_t *delta);
 #define H_ECHANNEL	16
 
 extern uint64_t sun4v_group_interrupt_major;
+extern uint64_t sun4v_group_sdio_major;
 
 int64_t sun4v_intr_devino_to_sysino(uint64_t, uint64_t, uint64_t *);
 int64_t sun4v_intr_setcookie(uint64_t, uint64_t, uint64_t);
