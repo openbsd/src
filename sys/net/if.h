@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.202 2019/07/25 13:56:23 krw Exp $	*/
+/*	$OpenBSD: if.h,v 1.203 2019/07/25 15:23:39 krw Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ struct if_status_description {
 #define	IFXF_WOL		0x10	/* [N] wake on lan enabled */
 #define	IFXF_AUTOCONF6		0x20	/* [N] v6 autoconf enabled */
 #define IFXF_INET6_NOSOII	0x40	/* [N] don't do RFC 7217 */
-#define	IFXF_AUTOCONF4		0x80	/* [N] v4 autoconf (a.k.a. dhcp) enabled */
+#define	IFXF_AUTOCONF4		0x80	/* [N] v4 autoconf (aka dhcp) enabled */
 
 #define	IFXF_CANTCHANGE \
 	(IFXF_MPSAFE|IFXF_CLONED)
