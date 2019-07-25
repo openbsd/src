@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.21 2019/07/14 03:30:45 guenther Exp $ */
+/* $OpenBSD: enc.c,v 1.22 2019/07/25 11:41:03 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -632,7 +632,9 @@ enc_main(int argc, char **argv)
 				}
 				/* split and move data back to global buffer */
 				memcpy(key, tmpkeyiv, iklen);
-				memcpy(iv, tmpkeyiv+iklen, ivlen);
+				memcpy(iv, tmpkeyiv + iklen, ivlen);
+				/* zero the tmpkeyiv buffer */
+				explicit_bzero(tmpkeyiv, sizeof tmpkeyiv);
 			} else {
 				EVP_BytesToKey(enc_config.cipher, dgst, sptr,
 				    (unsigned char *)enc_config.keystr,
