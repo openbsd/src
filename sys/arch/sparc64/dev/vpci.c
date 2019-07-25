@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.26 2019/07/05 19:06:50 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.27 2019/07/25 21:11:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -76,6 +76,7 @@ struct vpci_pbm {
 
 	struct msi_eq *vp_meq;
 	bus_addr_t vp_msiaddr;
+	int vp_msibase;
 	int vp_msinum;
 	struct intrhand **vp_msi;
 
@@ -139,7 +140,8 @@ vpci_match(struct device *parent, void *match, void *aux)
 	if (strcmp(ma->ma_name, "pci") != 0)
 		return (0);
 
-	return OF_is_compatible(ma->ma_node, "SUNW,sun4v-pci");
+	return (OF_is_compatible(ma->ma_node, "SUNW,sun4v-pci") ||
+	    OF_is_compatible(ma->ma_node, "SUNW,sun4v-vpci"));
 }
 
 void
@@ -223,6 +225,7 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 {
 	u_int32_t msi_addr_range[3];
 	u_int32_t msi_eq_devino[3] = { 0, 36, 24 };
+	u_int32_t msi_range[2];
 	uint64_t sysino;
 	int msis, msi_eq_size;
 	int err;
@@ -243,6 +246,11 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	pbm->vp_meq = msi_eq_alloc(sc->sc_dmat, msi_eq_size);
 	if (pbm->vp_meq == NULL)
 		goto free_table;
+
+	if (OF_getprop(sc->sc_node, "msi-ranges",
+	    msi_range, sizeof(msi_range)) <= 0)
+		goto free_table;
+	pbm->vp_msibase = msi_range[0];
 
 	err = hv_pci_msiq_conf(pbm->vp_devhandle, 0,
 	    pbm->vp_meq->meq_map->dm_segs[0].ds_addr,
@@ -529,6 +537,7 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		pci_chipset_tag_t pc = pbm->vp_pc;
 		pcitag_t tag = PCI_INTR_TAG(ihandle);
 		int msinum = pbm->vp_msinum++;
+		int msi = pbm->vp_msibase + msinum;
 
 		evcount_attach(&ih->ih_count, ih->ih_name, NULL);
 
@@ -539,27 +548,27 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 
 		switch (PCI_INTR_TYPE(ihandle)) {
 		case PCI_INTR_MSI:
-			pci_msi_enable(pc, tag, pbm->vp_msiaddr, msinum);
+			pci_msi_enable(pc, tag, pbm->vp_msiaddr, msi);
 			break;
 		case PCI_INTR_MSIX:
 			pci_msix_enable(pc, tag, pbm->vp_memt,
-			    PCI_INTR_VEC(ihandle), pbm->vp_msiaddr, msinum);
+			    PCI_INTR_VEC(ihandle), pbm->vp_msiaddr, msi);
 			break;
 		}
 
-		err = hv_pci_msi_setmsiq(pbm->vp_devhandle, msinum, 0, 0);
+		err = hv_pci_msi_setmsiq(devhandle, msi, 0, 0);
 		if (err != H_EOK) {
 			printf("%s: pci_msi_setmsiq: err %d\n", __func__, err);
 			return (NULL);
 		}
 
-		err = hv_pci_msi_setvalid(pbm->vp_devhandle, msinum, PCI_MSI_VALID);
+		err = hv_pci_msi_setvalid(devhandle, msi, PCI_MSI_VALID);
 		if (err != H_EOK) {
 			printf("%s: pci_msi_setvalid: err %d\n", __func__, err);
 			return (NULL);
 		}
 
-		err = hv_pci_msi_setstate(pbm->vp_devhandle, msinum, PCI_MSISTATE_IDLE);
+		err = hv_pci_msi_setstate(devhandle, msi, PCI_MSISTATE_IDLE);
 		if (err != H_EOK) {
 			printf("%s: pci_msi_setstate: err %d\n", __func__, err);
 			return (NULL);
@@ -613,16 +622,17 @@ vpci_msi_eq_intr(void *arg)
 	struct vpci_pbm *pbm = arg;
 	struct msi_eq *meq = pbm->vp_meq;
 	struct vpci_msi_msg *msg;
+	uint64_t devhandle = pbm->vp_devhandle;
 	uint64_t head, tail;
 	struct intrhand *ih;
-	int msinum;
+	int msinum, msi;
 	int err;
 
-	err = hv_pci_msiq_gethead(pbm->vp_devhandle, 0, &head);
+	err = hv_pci_msiq_gethead(devhandle, 0, &head);
 	if (err != H_EOK)
 		printf("%s: pci_msiq_gethead: %d\n", __func__, err);
 
-	err = hv_pci_msiq_gettail(pbm->vp_devhandle, 0, &tail);
+	err = hv_pci_msiq_gettail(devhandle, 0, &tail);
 	if (err != H_EOK)
 		printf("%s: pci_msiq_gettail: %d\n", __func__, err);
 
@@ -636,10 +646,10 @@ vpci_msi_eq_intr(void *arg)
 			break;
 		msg->mm_type = 0;
 
-		msinum = msg->mm_data;
+		msi = msg->mm_data;
+		msinum = msi - pbm->vp_msibase;
 		ih = pbm->vp_msi[msinum];
-		err = hv_pci_msi_setstate(pbm->vp_devhandle,
-		    msinum, PCI_MSISTATE_IDLE);
+		err = hv_pci_msi_setstate(devhandle, msi, PCI_MSISTATE_IDLE);
 		if (err != H_EOK)
 			printf("%s: pci_msi_setstate: %d\n", __func__, err);
 
@@ -649,7 +659,7 @@ vpci_msi_eq_intr(void *arg)
 		head &= ((meq->meq_nentries * sizeof(struct vpci_msi_msg)) - 1);
 	}
 
-	err = hv_pci_msiq_sethead(pbm->vp_devhandle, 0, head);
+	err = hv_pci_msiq_sethead(devhandle, 0, head);
 	if (err != H_EOK)
 		printf("%s: pci_msiq_sethead: %d\n", __func__, err);
 
