@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.87 2019/07/24 19:40:04 kn Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.88 2019/07/25 07:29:44 kn Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -201,7 +201,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 		if (pinfo)
 			*pinfo = bstate;
 	} else
-		logmsg(LOG_ERR, "cannot fetch power status: %m");
+		logmsg(LOG_ERR, "cannot fetch power status: %s", strerror(errno));
 
 	return acon;
 }
