@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.10 2011/06/25 20:45:00 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.11 2019/07/25 18:30:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -126,6 +126,11 @@
 #define LDC_MAPIN		0xed
 #define LDC_UNMAP		0xee
 #define LDC_REVOKE		0xef
+
+#define PCI_IOV_ROOT_CONFIGURED	0xf8
+#define PCI_REAL_CONFIG_GET	0xf9
+#define PCI_REAL_CONFIG_PUT	0xfa
+#define PCI_ERROR_SEND		0xff
 
 #define RNG_GET_DIAG_CONTROL	0x130
 #define RNG_CTL_READ		0x131
@@ -652,6 +657,33 @@ ENTRY(hv_ldc_unmap)
 	ta	FAST_TRAP
 	retl
 	 stx	%o1, [%o2]
+
+ENTRY(hv_pci_iov_root_configured)
+	mov	PCI_IOV_ROOT_CONFIGURED, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_pci_real_config_get)
+	mov	%o5, %g5
+	mov	PCI_REAL_CONFIG_GET, %o5
+	ta	FAST_TRAP
+	stx	%o1, [%o4]
+	retl
+	 stx	%o2, [%g5]
+
+ENTRY(hv_pci_real_config_put)
+	mov	%o5, %g5
+	mov	PCI_REAL_CONFIG_PUT, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%g5]
+
+ENTRY(hv_pci_error_send)
+	mov	PCI_ERROR_SEND, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
 
 ENTRY(hv_rng_get_diag_control)
 	mov	RNG_GET_DIAG_CONTROL, %o5
