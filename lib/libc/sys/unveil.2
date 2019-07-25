@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.18 2019/07/25 13:13:53 bluhm Exp $
+.\" $OpenBSD: unveil.2,v 1.19 2019/07/25 13:47:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -26,7 +26,7 @@
 .Fn unveil "const char *path" "const char *permissions"
 .Sh DESCRIPTION
 The first call to
-.Nm
+.Fn unveil
 removes visibility of the entire filesystem from all other
 filesystem-related system calls (such as
 .Xr open 2 ,
@@ -34,30 +34,30 @@ filesystem-related system calls (such as
 and
 .Xr rename 2 ) ,
 except for the specified
-.Ar path
+.Fa path
 and
-.Ar permissions .
+.Fa permissions .
 .Pp
 The
-.Nm
+.Fn unveil
 system call remains capable of traversing to any
-.Ar path
+.Fa path
 in the filesystem, so additional calls can set permissions at other
 points in the filesystem hierarchy.
 .Pp
 After establishing a collection of
-.Ar path
+.Fa path
 and
-.Ar permissions
+.Fa permissions
 rules, future calls to
-.Nm
+.Fn unveil
 can be disabled by passing two
-.Ar NULL
+.Dv NULL
 arguments.
 Alternatively,
 .Xr pledge 2
 may be used to remove the
-.Va unveil
+.Qq unveil
 promise.
 .Pp
 The
@@ -65,42 +65,42 @@ The
 argument points to a string consisting of the following characters:
 .Pp
 .Bl -tag -width "XXXX" -offset indent -compact
-.It Dv r
+.It Cm r
 Make
-.Ar path
+.Fa path
 available for read operations, corresponding to the
 .Xr pledge 2
 promise
-.Ar rpath .
-.It Dv w
+.Qq rpath .
+.It Cm w
 Make
-.Ar path
+.Fa path
 available for write operations, corresponding to the
 .Xr pledge 2
 promise
-.Ar wpath .
-.It Dv x
+.Qq wpath .
+.It Cm x
 Make
-.Ar path
+.Fa path
 available for execute operations, corresponding to the
 .Xr pledge 2
 promise
-.Ar exec .
-.It Dv c
+.Qq exec .
+.It Cm c
 Allow
-.Ar path
+.Fa path
 to be created and removed, corresponding to the
 .Xr pledge 2
 promise
-.Ar cpath .
+.Qq cpath .
 .El
 .Pp
 A
-.Ar path
+.Fa path
 that is a directory will enable all filesystem access underneath
-.Ar path
+.Fa path
 using
-.Ar permissions
+.Fa permissions
 if and only if no more specific matching
 .Fn unveil
 exists at a lower level.
@@ -116,15 +116,15 @@ directory, and so may be created, removed, or re-created after a call to
 and still appear to exist.
 .Pp
 Attempts to access paths not allowed by
-.Nm
+.Fn unveil
 will result in an error of
-.Ar EACCES
+.Er EACCES
 when the
-.Ar permissions
+.Fa permissions
 argument does not match the attempted operation.
-.Ar ENOENT
+.Er ENOENT
 is returned for paths for which no
-.Nm
+.Fn unveil
 permissions qualify.
 After a process has terminated,
 .Xr lastcomm 1
@@ -142,23 +142,23 @@ application makes use of files.
 .Rv -std
 .Sh ERRORS
 .Bl -tag -width Er
-.It E2BIG
+.It Er E2BIG
 The addition of
-.Ar path
+.Fa path
 would exceed the per-process limit for unveiled paths.
-.It ENOENT
+.It Er ENOENT
 A directory in
-.Ar path
+.Fa path
 did not exist.
-.It EINVAL
+.It Er EINVAL
 An invalid value of
-.Ar permissions
+.Fa permissions
 was used.
-.It EPERM
+.It Er EPERM
 An attempt to increase permissions was made, or the
-.Ar path
+.Fa path
 was not accessible, or
-.Nm
+.Fn unveil
 was called after locking.
 .El
 .Sh HISTORY
@@ -169,7 +169,7 @@ system call first appeared in
 .Sh BUGS
 .Xr readlink 2
 partially bypasses
-.Nm
+.Fn unveil
 restrictions required by
 .Xr realpath 3 .
 Future changes intend to repair this problem.
