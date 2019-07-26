@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82489reg.h,v 1.4 2015/07/21 04:48:33 uebayasi Exp $	*/
+/*	$OpenBSD: i82489reg.h,v 1.5 2019/07/26 04:35:38 kevlo Exp $	*/
 /*	$NetBSD: i82489reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -105,8 +105,6 @@
 
 
 #define LAPIC_ICRHI	0x310			/* Int. cmd. RW */
-#	define LAPIC_ID_MASK		0x0f000000
-#	define LAPIC_ID_SHIFT		24
 
 #define LAPIC_LVTT	0x320			/* Loc.vec.(timer) RW */
 #	define LAPIC_LVTT_VEC_MASK	0x000000ff
