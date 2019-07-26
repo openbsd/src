@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.12 2019/07/24 13:49:24 inoguchi Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.13 2019/07/26 11:52:51 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -747,12 +747,9 @@ pkcs12_main(int argc, char **argv)
 
 export_end:
 
-		if (key)
-			EVP_PKEY_free(key);
-		if (certs)
-			sk_X509_pop_free(certs, X509_free);
-		if (ucert)
-			X509_free(ucert);
+		EVP_PKEY_free(key);
+		sk_X509_pop_free(certs, X509_free);
+		X509_free(ucert);
 
 		goto end;
 
@@ -791,12 +788,10 @@ export_end:
 	}
 	ret = 0;
  end:
-	if (p12)
-		PKCS12_free(p12);
+	PKCS12_free(p12);
 	BIO_free(in);
 	BIO_free_all(out);
-	if (pkcs12_config.canames)
-		sk_OPENSSL_STRING_free(pkcs12_config.canames);
+	sk_OPENSSL_STRING_free(pkcs12_config.canames);
 	free(passin);
 	free(passout);
 
@@ -844,9 +839,7 @@ dump_certs_keys_p12(BIO * out, PKCS12 * p12, char *pass,
 	ret = 1;
 
  err:
-
-	if (asafes)
-		sk_PKCS7_pop_free(asafes, PKCS7_free);
+	sk_PKCS7_pop_free(asafes, PKCS7_free);
 	return ret;
 }
 
