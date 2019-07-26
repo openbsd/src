@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.236 2019/07/26 18:01:21 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.237 2019/07/26 21:03:16 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -78,12 +78,9 @@ enum	outt {
 };
 
 struct	curparse {
-	struct mparse	 *mp;
 	struct manoutput *outopts;	/* output options */
 	void		 *outdata;	/* data for output */
-	char		 *os_s;		/* operating system for display */
 	int		  wstop;	/* stop after a file with a warning */
-	enum mandoc_os	  os_e;		/* check base system conventions */
 	enum outt	  outtype;	/* which output to use */
 };
 
@@ -99,12 +96,13 @@ static	int		  fs_search(const struct mansearch *,
 				const struct manpaths *, int, char**,
 				struct manpage **, size_t *);
 static	void		  outdata_alloc(struct curparse *);
-static	void		  parse(struct curparse *, int, const char *);
+static	void		  parse(struct mparse *, int, const char *,
+				struct curparse *);
 static	void		  passthrough(int, int);
 static	void		  run_pager(struct tag_files *);
 static	pid_t		  spawn_pager(struct tag_files *);
 static	void		  usage(enum argmode) __attribute__((__noreturn__));
-static	int		  woptions(struct curparse *, char *);
+static	int		  woptions(char *, enum mandoc_os *, int *);
 
 static	const int sec_prios[] = {1, 4, 5, 8, 6, 3, 7, 2, 9};
 static	char		  help_arg[] = "help";
@@ -114,24 +112,31 @@ static	char		 *help_argv[] = {help_arg, NULL};
 int
 main(int argc, char *argv[])
 {
-	struct manconf	 conf;
-	struct mansearch search;
+	struct manconf	 conf;		/* Manpaths and output options. */
 	struct curparse	 curp;
-	struct winsize	 ws;
-	struct tag_files *tag_files;
-	struct manpage	*res, *resp;
+	struct winsize	 ws;		/* Result of ioctl(TIOCGWINSZ). */
+	struct mansearch search;	/* Search options. */
+	struct manpage	*res, *resp;	/* Search results. */
+	struct mparse	*mp;		/* Opaque parser object. */
+	struct tag_files *tag_files;	/* Tagging state variables. */
+	const char	*conf_file;	/* -C: alternate config file. */
+	const char	*os_s;		/* -I: Operating system for display. */
 	const char	*progname, *sec, *thisarg;
-	char		*conf_file, *defpaths, *auxpaths;
-	char		*oarg, *tagarg;
+	char		*defpaths;	/* -M: override manpaths. */
+	char		*auxpaths;	/* -m: additional manpaths. */
+	char		*oarg;		/* -O: output option string. */
+	char		*tagarg;	/* -O tag: default value. */
 	unsigned char	*uc;
-	size_t		 i, sz, ssz;
+	size_t		 sz;		/* Number of elements in res[]. */
+	size_t		 i, ssz;
+	int		 options;	/* Parser options. */
+	int		 show_usage;	/* Invalid argument: give up. */
+	int		 use_pager;	/* According to command line. */
 	int		 prio, best_prio;
-	enum outmode	 outmode;
 	int		 fd, startdir;
-	int		 show_usage;
-	int		 options;
-	int		 use_pager;
 	int		 c;
+	enum mandoc_os	 os_e;		/* Check base system conventions. */
+	enum outmode	 outmode;	/* According to command line. */
 
 	progname = getprogname();
 	mandoc_msg_setoutfile(stderr);
@@ -147,8 +152,8 @@ main(int argc, char *argv[])
 	/* Search options. */
 
 	memset(&conf, 0, sizeof(conf));
-	conf_file = defpaths = NULL;
-	auxpaths = NULL;
+	conf_file = NULL;
+	defpaths = auxpaths = NULL;
 
 	memset(&search, 0, sizeof(struct mansearch));
 	search.outkey = "Nd";
@@ -167,6 +172,8 @@ main(int argc, char *argv[])
 
 	/* Parser and formatter options. */
 
+	os_e = MANDOC_OS_OTHER;
+	os_s = NULL;
 	memset(&curp, 0, sizeof(struct curparse));
 	curp.outtype = OUTT_LOCALE;
 	curp.outopts = &conf.output;
@@ -207,12 +214,12 @@ main(int argc, char *argv[])
 				    "-I %s", optarg);
 				return mandoc_msg_getrc();
 			}
-			if (curp.os_s != NULL) {
+			if (os_s != NULL) {
 				mandoc_msg(MANDOCERR_BADARG_DUPE, 0, 0,
 				    "-I %s", optarg);
 				return mandoc_msg_getrc();
 			}
-			curp.os_s = mandoc_strdup(optarg + 3);
+			os_s = optarg + 3;
 			break;
 		case 'K':
 			options &= ~(MPARSE_UTF8 | MPARSE_LATIN1);
@@ -278,7 +285,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'W':
-			if (woptions(&curp, optarg) == -1)
+			if (woptions(optarg, &os_e, &curp.wstop) == -1)
 				return mandoc_msg_getrc();
 			break;
 		case 'w':
@@ -525,7 +532,7 @@ main(int argc, char *argv[])
 	}
 
 	mchars_alloc();
-	curp.mp = mparse_alloc(options, curp.os_e, curp.os_s);
+	mp = mparse_alloc(options, os_e, os_s);
 
 	if (argc < 1) {
 		if (use_pager) {
@@ -535,7 +542,7 @@ main(int argc, char *argv[])
 		}
 		thisarg = "<stdin>";
 		mandoc_msg_setinfilename(thisarg);
-		parse(&curp, STDIN_FILENO, thisarg);
+		parse(mp, STDIN_FILENO, thisarg, &curp);
 		mandoc_msg_setinfilename(NULL);
 	}
 
@@ -565,7 +572,7 @@ main(int argc, char *argv[])
 			thisarg = *argv;
 
 		mandoc_msg_setinfilename(thisarg);
-		fd = mparse_open(curp.mp, thisarg);
+		fd = mparse_open(mp, thisarg);
 		if (fd != -1) {
 			if (use_pager) {
 				use_pager = 0;
@@ -575,7 +582,7 @@ main(int argc, char *argv[])
 			}
 
 			if (resp == NULL || resp->form == FORM_SRC)
-				parse(&curp, fd, thisarg);
+				parse(mp, fd, thisarg, &curp);
 			else
 				passthrough(fd, conf.output.synopsisonly);
 
@@ -611,7 +618,7 @@ main(int argc, char *argv[])
 		else
 			argv++;
 		if (--argc)
-			mparse_reset(curp.mp);
+			mparse_reset(mp);
 	}
 	if (startdir != -1) {
 		(void)fchdir(startdir);
@@ -637,7 +644,7 @@ main(int argc, char *argv[])
 		}
 	}
 	mandoc_xr_free();
-	mparse_free(curp.mp);
+	mparse_free(mp);
 	mchars_free();
 
 out:
@@ -645,7 +652,6 @@ out:
 		manconf_free(&conf);
 		mansearch_free(res, sz);
 	}
-	free(curp.os_s);
 
 	if (tag_files != NULL) {
 		fclose(stdout);
@@ -813,7 +819,7 @@ fs_search(const struct mansearch *cfg, const struct manpaths *paths,
 }
 
 static void
-parse(struct curparse *curp, int fd, const char *file)
+parse(struct mparse *mp, int fd, const char *file, struct curparse *curp)
 {
 	struct roff_meta *meta;
 
@@ -822,7 +828,7 @@ parse(struct curparse *curp, int fd, const char *file)
 	assert(file);
 	assert(fd >= 0);
 
-	mparse_readfd(curp->mp, fd, file);
+	mparse_readfd(mp, fd, file);
 	if (fd != STDIN_FILENO)
 		close(fd);
 
@@ -840,7 +846,7 @@ parse(struct curparse *curp, int fd, const char *file)
 		html_reset(curp);
 
 	mandoc_xr_reset();
-	meta = mparse_result(curp->mp);
+	meta = mparse_result(mp);
 
 	/* Execute the out device, if it exists. */
 
@@ -878,7 +884,7 @@ parse(struct curparse *curp, int fd, const char *file)
 			tree_man(curp->outdata, meta);
 			break;
 		case OUTT_MAN:
-			mparse_copy(curp->mp);
+			mparse_copy(mp);
 			break;
 		case OUTT_PDF:
 		case OUTT_ASCII:
@@ -1018,7 +1024,7 @@ done:
 }
 
 static int
-woptions(struct curparse *curp, char *arg)
+woptions(char *arg, enum mandoc_os *os_e, int *wstop)
 {
 	char		*v, *o;
 	const char	*toks[11];
@@ -1039,7 +1045,7 @@ woptions(struct curparse *curp, char *arg)
 		o = arg;
 		switch (getsubopt(&arg, (char * const *)toks, &v)) {
 		case 0:
-			curp->wstop = 1;
+			*wstop = 1;
 			break;
 		case 1:
 		case 2:
@@ -1062,11 +1068,11 @@ woptions(struct curparse *curp, char *arg)
 			break;
 		case 8:
 			mandoc_msg_setmin(MANDOCERR_BASE);
-			curp->os_e = MANDOC_OS_OPENBSD;
+			*os_e = MANDOC_OS_OPENBSD;
 			break;
 		case 9:
 			mandoc_msg_setmin(MANDOCERR_BASE);
-			curp->os_e = MANDOC_OS_NETBSD;
+			*os_e = MANDOC_OS_NETBSD;
 			break;
 		default:
 			mandoc_msg(MANDOCERR_BADARG_BAD, 0, 0, "-W %s", o);
