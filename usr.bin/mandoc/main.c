@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.235 2019/07/19 21:45:37 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.236 2019/07/26 18:01:21 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -101,6 +101,7 @@ static	int		  fs_search(const struct mansearch *,
 static	void		  outdata_alloc(struct curparse *);
 static	void		  parse(struct curparse *, int, const char *);
 static	void		  passthrough(int, int);
+static	void		  run_pager(struct tag_files *);
 static	pid_t		  spawn_pager(struct tag_files *);
 static	void		  usage(enum argmode) __attribute__((__noreturn__));
 static	int		  woptions(struct curparse *, char *);
@@ -130,9 +131,7 @@ main(int argc, char *argv[])
 	int		 show_usage;
 	int		 options;
 	int		 use_pager;
-	int		 status, signum;
 	int		 c;
-	pid_t		 pager_pid, tc_pgid, man_pgid, pid;
 
 	progname = getprogname();
 	mandoc_msg_setoutfile(stderr);
@@ -646,63 +645,12 @@ out:
 		manconf_free(&conf);
 		mansearch_free(res, sz);
 	}
-
 	free(curp.os_s);
-
-	/*
-	 * When using a pager, finish writing both temporary files,
-	 * fork it, wait for the user to close it, and clean up.
-	 */
 
 	if (tag_files != NULL) {
 		fclose(stdout);
 		tag_write();
-		man_pgid = getpgid(0);
-		tag_files->tcpgid = man_pgid == getpid() ?
-		    getpgid(getppid()) : man_pgid;
-		pager_pid = 0;
-		signum = SIGSTOP;
-		for (;;) {
-
-			/* Stop here until moved to the foreground. */
-
-			tc_pgid = tcgetpgrp(tag_files->ofd);
-			if (tc_pgid != man_pgid) {
-				if (tc_pgid == pager_pid) {
-					(void)tcsetpgrp(tag_files->ofd,
-					    man_pgid);
-					if (signum == SIGTTIN)
-						continue;
-				} else
-					tag_files->tcpgid = tc_pgid;
-				kill(0, signum);
-				continue;
-			}
-
-			/* Once in the foreground, activate the pager. */
-
-			if (pager_pid) {
-				(void)tcsetpgrp(tag_files->ofd, pager_pid);
-				kill(pager_pid, SIGCONT);
-			} else
-				pager_pid = spawn_pager(tag_files);
-
-			/* Wait for the pager to stop or exit. */
-
-			while ((pid = waitpid(pager_pid, &status,
-			    WUNTRACED)) == -1 && errno == EINTR)
-				continue;
-
-			if (pid == -1) {
-				mandoc_msg(MANDOCERR_WAIT, 0, 0,
-				    "%s", strerror(errno));
-				break;
-			}
-			if (!WIFSTOPPED(status))
-				break;
-
-			signum = WSTOPSIG(status);
-		}
+		run_pager(tag_files);
 		tag_unlink();
 	} else if (curp.outtype != OUTT_LINT &&
 	    (search.argmode == ARG_FILE || sz > 0))
@@ -1126,6 +1074,64 @@ woptions(struct curparse *curp, char *arg)
 		}
 	}
 	return 0;
+}
+
+/*
+ * Wait until moved to the foreground,
+ * then fork the pager and wait for the user to close it.
+ */
+static void
+run_pager(struct tag_files *tag_files)
+{
+	int	 signum, status;
+	pid_t	 man_pgid, tc_pgid;
+	pid_t	 pager_pid, wait_pid;
+
+	man_pgid = getpgid(0);
+	tag_files->tcpgid = man_pgid == getpid() ? getpgid(getppid()) :
+	    man_pgid;
+	pager_pid = 0;
+	signum = SIGSTOP;
+
+	for (;;) {
+		/* Stop here until moved to the foreground. */
+
+		tc_pgid = tcgetpgrp(tag_files->ofd);
+		if (tc_pgid != man_pgid) {
+			if (tc_pgid == pager_pid) {
+				(void)tcsetpgrp(tag_files->ofd, man_pgid);
+				if (signum == SIGTTIN)
+					continue;
+			} else
+				tag_files->tcpgid = tc_pgid;
+			kill(0, signum);
+			continue;
+		}
+
+		/* Once in the foreground, activate the pager. */
+
+		if (pager_pid) {
+			(void)tcsetpgrp(tag_files->ofd, pager_pid);
+			kill(pager_pid, SIGCONT);
+		} else
+			pager_pid = spawn_pager(tag_files);
+
+		/* Wait for the pager to stop or exit. */
+
+		while ((wait_pid = waitpid(pager_pid, &status,
+		    WUNTRACED)) == -1 && errno == EINTR)
+			continue;
+
+		if (wait_pid == -1) {
+			mandoc_msg(MANDOCERR_WAIT, 0, 0,
+			    "%s", strerror(errno));
+			break;
+		}
+		if (!WIFSTOPPED(status))
+			break;
+
+		signum = WSTOPSIG(status);
+	}
 }
 
 static pid_t
