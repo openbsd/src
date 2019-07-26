@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.164 2019/06/30 19:19:08 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.165 2019/07/26 14:36:26 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -936,9 +936,10 @@ priv_propose(char *name, int ioctlfd, struct imsg_propose *imsg,
 
 	set_address(name, ioctlfd, proposal->ifa, proposal->netmask);
 
-	set_routes(name, index, rdomain, routefd, proposal->ifa, proposal->netmask,
-	    proposal->rtstatic, proposal->rtstatic_len);
+	set_routes(name, index, rdomain, routefd, proposal->ifa,
+	    proposal->netmask, proposal->rtstatic, proposal->rtstatic_len);
 }
+
 /*
  * [priv_]revoke_proposal de-configures a proposal.
  */
