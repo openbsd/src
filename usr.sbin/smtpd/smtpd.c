@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.323 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.324 2019/07/26 07:08:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2040,6 +2040,7 @@ imsg_to_str(int type)
 	CASE(IMSG_REPORT_SMTP_LINK_DISCONNECT);
 	CASE(IMSG_REPORT_SMTP_LINK_TLS);
 
+	CASE(IMSG_REPORT_SMTP_TX_RESET);
 	CASE(IMSG_REPORT_SMTP_TX_BEGIN);
 	CASE(IMSG_REPORT_SMTP_TX_ENVELOPE);
 	CASE(IMSG_REPORT_SMTP_TX_COMMIT);
