@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.130 2019/06/28 13:35:05 deraadt Exp $ */
+/* $OpenBSD: client.c,v 1.131 2019/07/26 20:08:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -202,7 +202,7 @@ client_exit_message(void)
 	case CLIENT_EXIT_TERMINATED:
 		return ("terminated");
 	case CLIENT_EXIT_LOST_SERVER:
-		return ("lost server");
+		return ("server exited unexpectedly");
 	case CLIENT_EXIT_EXITED:
 		return ("exited");
 	case CLIENT_EXIT_SERVER_EXITED:
