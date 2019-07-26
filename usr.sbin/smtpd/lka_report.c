@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_report.c,v 1.21 2019/07/11 21:40:03 gilles Exp $	*/
+/*	$OpenBSD: lka_report.c,v 1.22 2019/07/26 06:30:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -53,9 +53,9 @@ static struct smtp_events {
 	{ "link-disconnect" },
 	{ "link-identify" },
 	{ "link-tls" },
-	{ "link-reset" },
 	{ "link-auth" },
 
+	{ "tx-reset" },
 	{ "tx-begin" },
 	{ "tx-mail" },
 	{ "tx-rcpt" },
@@ -219,13 +219,6 @@ lka_report_smtp_link_disconnect(const char *direction, struct timeval *tv, uint6
 }
 
 void
-lka_report_smtp_link_reset(const char *direction, struct timeval *tv, uint64_t reqid)
-{
-	report_smtp_broadcast(reqid, direction, tv, "link-reset",
-	    "%016"PRIx64"\n", reqid);
-}
-
-void
 lka_report_smtp_link_auth(const char *direction, struct timeval *tv, uint64_t reqid,
     const char *username, const char *result)
 {
@@ -246,6 +239,13 @@ lka_report_smtp_link_tls(const char *direction, struct timeval *tv, uint64_t req
 {
 	report_smtp_broadcast(reqid, direction, tv, "link-tls",
 	    "%016"PRIx64"|%s\n", reqid, ciphers);
+}
+
+void
+lka_report_smtp_tx_reset(const char *direction, struct timeval *tv, uint64_t reqid, uint32_t msgid)
+{
+	report_smtp_broadcast(reqid, direction, tv, "tx-reset",
+	    "%016"PRIx64"|%08x\n", reqid, msgid);
 }
 
 void

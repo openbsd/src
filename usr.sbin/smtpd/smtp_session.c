@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.401 2019/07/24 19:50:10 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.402 2019/07/26 06:30:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1724,8 +1724,6 @@ smtp_proceed_rset(struct smtp_session *s, const char *args)
 		smtp_tx_free(s->tx);
 	}
 
-	report_smtp_link_reset("smtp-in", s->id);
-
 	smtp_reply(s, "250 %s Reset state",
 	    esc_code(ESC_STATUS_OK, ESC_OTHER_STATUS));
 }
@@ -2558,6 +2556,7 @@ smtp_tx_commit(struct smtp_tx *tx)
 	m_close(p_queue);
 	tree_xset(&wait_queue_commit, tx->session->id, tx->session);
 	report_smtp_tx_commit("smtp-in", tx->session->id, tx->msgid, tx->odatalen);
+	report_smtp_tx_reset("smtp-in", tx->session->id, tx->msgid);
 	smtp_filter_data_end(tx->session);
 }
 
@@ -2568,6 +2567,7 @@ smtp_tx_rollback(struct smtp_tx *tx)
 	m_add_msgid(p_queue, tx->msgid);
 	m_close(p_queue);
 	report_smtp_tx_rollback("smtp-in", tx->session->id, tx->msgid);
+	report_smtp_tx_reset("smtp-in", tx->session->id, tx->msgid);
 	smtp_filter_data_end(tx->session);
 }
 

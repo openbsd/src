@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.238 2019/07/11 21:40:03 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.239 2019/07/26 06:30:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -426,16 +426,6 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		lka_report_smtp_link_tls(direction, &tv, reqid, ciphers);
 		return;
 
-	case IMSG_REPORT_SMTP_LINK_RESET:
-		m_msg(&m, imsg);
-		m_get_string(&m, &direction);
-		m_get_timeval(&m, &tv);
-		m_get_id(&m, &reqid);
-		m_end(&m);
-
-		lka_report_smtp_link_reset(direction, &tv, reqid);
-		return;
-
 	case IMSG_REPORT_SMTP_LINK_AUTH:
 		m_msg(&m, imsg);
 		m_get_string(&m, &direction);
@@ -446,6 +436,17 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 		m_end(&m);
 
 		lka_report_smtp_link_auth(direction, &tv, reqid, username, result);
+		return;
+
+	case IMSG_REPORT_SMTP_TX_RESET:
+		m_msg(&m, imsg);
+		m_get_string(&m, &direction);
+		m_get_timeval(&m, &tv);
+		m_get_id(&m, &reqid);
+		m_get_u32(&m, &msgid);
+		m_end(&m);
+
+		lka_report_smtp_tx_reset(direction, &tv, reqid, msgid);
 		return;
 
 	case IMSG_REPORT_SMTP_TX_BEGIN:
