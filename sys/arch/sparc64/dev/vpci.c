@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.28 2019/07/25 22:45:53 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.29 2019/07/26 11:33:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -111,6 +111,7 @@ pcireg_t vpci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void vpci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 
 int vpci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int vpci_intr_nomap(struct pci_attach_args *, pci_intr_handle_t *);
 int vpci_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
 paddr_t vpci_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
@@ -154,7 +155,7 @@ vpci_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	struct vpci_pbm *pbm;
 	int *busranges = NULL, nranges;
-	int virtual;
+	int virtual, intx;
 
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bust = ma->ma_bustag;
@@ -176,6 +177,9 @@ vpci_attach(struct device *parent, struct device *self, void *aux)
 		panic("vpci: can't get bus-range");
 
 	printf(": bus %d to %d, ", busranges[0], busranges[1]);
+
+	virtual = (OF_getproplen(ma->ma_node, "virtual-root-complex") == 0);
+	intx = (OF_getproplen(ma->ma_node, "pci-intx-not-supported") != 0);
 
 	pbm->vp_memt = vpci_alloc_mem_tag(pbm);
 	pbm->vp_iot = vpci_alloc_io_tag(pbm);
@@ -199,7 +203,7 @@ vpci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc->conf_size = vpci_conf_size;
 	pba.pba_pc->conf_read = vpci_conf_read;
 	pba.pba_pc->conf_write = vpci_conf_write;
-	pba.pba_pc->intr_map = vpci_intr_map;
+	pba.pba_pc->intr_map = (intx ? vpci_intr_map : vpci_intr_nomap);
 
 	free(busranges, M_DEVBUF, 0);
 
@@ -209,7 +213,6 @@ vpci_attach(struct device *parent, struct device *self, void *aux)
 	 * Signal that we're ready to share this root complex with our
 	 * guests.
 	 */
-	virtual = (OF_getproplen(ma->ma_node, "virtual-root-complex") == 0);
 	if (sun4v_group_sdio_major > 0 && !virtual) {
 		int err;
 
@@ -368,6 +371,12 @@ vpci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		return (0);
 	}
 
+	return (-1);
+}
+
+int
+vpci_intr_nomap(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
 	return (-1);
 }
 
