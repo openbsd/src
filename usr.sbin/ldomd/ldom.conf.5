@@ -1,0 +1,94 @@
+.\" $OpenBSD: ldom.conf.5,v 1.1 2019/07/27 09:55:46 kn Exp $
+.\"
+.\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 27 2019 $
+.Dt LDOM.CONF 5 sparc64
+.Os
+.Sh NAME
+.Nm ldom.conf
+.Nd Logical Domain configuration
+.Sh DESCRIPTION
+.Nm
+is the configuration file to configure logical domains.
+.Pp
+Domains are defined in following format:
+.Bl -tag -width Ds
+.It Ic domain Ar name Brq ...
+Declares a scope for resources assigned to the specified domain.
+The scope must be opened and closed with curly braces and contains
+one or more of the following keywords, each on a separate line.
+A scope with
+.Ar name
+"primary" configures resources for the primary domain.
+If no configuration for the primary domain exists it is assigned
+all CPU and memory resources not used by any guest domains.
+.It Ic vcpu Ar number
+Declares the number of virtual CPUs assigned to a domain.
+.It Ic memory Ar number Ns Op Ar unit
+Declares the amount of memory assigned to a domain, in bytes.
+Optionally, the units 'K', 'M', or 'G', for kilo-, mega-, and gigabytes
+can be used.
+.It Ic variable Ar name Ns = Ns Ar value
+Sets the specified NVRAM variable for the domain.
+.It Ic vdisk Ar file
+The specified file is used to back a virtual disk of the guest
+domain.
+.Ar file
+can be a block device node or a disk image file created with
+.Xr dd 1 .
+This keyword can be used multiple times.
+.It Ic vnet Op Brq Ar keyword Ns = Ns Ar value ...
+Assign a
+.Xr vnet 4
+network interface to the guest domain.
+This keyword can be used multiple times.
+The curly braces are optional and can contain the following keywords:
+.Bl -tag -width Ds
+.It Ic mac-addr Ar address
+Configures the MAC address of the interface.
+.It Ic mtu Ar number
+Configures the MTU of the interface.
+.El
+.El
+.Sh EXAMPLES
+Define a domain with 12 virtual cores, 1GB memory, two file based virtual disks
+and one virtual network interface:
+.Bd -literal -offset indent
+domain "puffy" {
+	vcpu 12
+	memory 4G
+	vdisk "/home/puffy/vdisk0"
+	vdisk "/home/puffy/vdisk1"
+	vnet
+}
+.Ed
+.Pp
+Define another one with slightly less resources:
+.Bd -literal -offset indent
+domain "salmah" {
+	vcpu 8
+	memory 2G
+	vdisk "/home/salmah/vdisk0"
+	vdisk "/home/salmah/vdisk1"
+	vnet
+}
+.Ed
+.Pp
+On a machine with 32 cores and 64GB physical memory, this leaves 12 cores and
+58GB memory to the primary domain.
+.Sh SEE ALSO
+.Xr ldomctl 8 ,
+.Xr ldomd 8

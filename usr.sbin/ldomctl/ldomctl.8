@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.11 2018/09/16 14:27:32 kettenis Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.12 2019/07/27 09:55:46 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 16 2018 $
+.Dd $Mdocdate: July 27 2019 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -50,50 +50,11 @@ The download is aborted if a configuration with the same name already exists.
 Dump the current configuration from non-volatile storage into the current
 working directory.
 .It Cm init-system Ar file
-Generates files describing a logical domain configuration.
-The generated files are written to the current working directory.
-The provided
+Generate files in the current working directory for a logical domain
+configuration
 .Ar file
-describes resources assigned to logical domains in a plain text format
-with the following syntax:
-.Bl -tag -width Ds
-.It Ic domain Ar name Ic \&{ Ar resource ... Ic \&}
-Declares a scope for resources assigned to the specified domain.
-The scope must be opened and closed with curly braces and contains
-one or more of the following keywords, each on a separate line.
-A scope with
-.Ar name
-"primary" configures resources for the primary domain.
-If no configuration for the primary domain exists it is assigned
-all CPU and memory resources not used by any guest domains.
-.It Ic vcpu Ar number
-Declares the number of virtual CPUs assigned to a domain.
-.It Ic memory Ar number Ns Op Ar unit
-Declares the amount of memory assigned to a domain, in bytes.
-Optionally, the units 'K', 'M', or 'G', for kilo-, mega-, and gigabytes
-can be used.
-.It Ic variable Ar name Ic = Ar value
-Sets the specified NVRAM variable for the domain.
-.It Ic vdisk Ar file
-The specified file is used to back a virtual disk of the guest
-domain.
-.Ar file
-can be a block device node or a disk image file created with
-.Xr dd 1 .
-This keyword can be used multiple times.
-.It Ic vnet Op Ic \&{ Ar keyword Ic = Ar value ... Ic \&}
-Assign a
-.Xr vnet 4
-network interface to the guest domain.
-This keyword can be used multiple times.
-The curly braces are optional and can contain the following keywords:
-.Bl -tag -width Ds
-.It Ic mac-addr Ar address
-Configures the MAC address of the interface.
-.It Ic mtu Ar number
-Configures the MTU of the interface.
-.El
-.El
+as described in
+.Xr ldom.conf 5 .
 .It Cm list
 List configurations stored in non-volatile storage.
 Indicate the currently running configuration,
@@ -135,25 +96,8 @@ Create a new configuration based on the defaults:
 # cd openbsd
 .Ed
 .Pp
-A file describing the desired configuration must be created:
-.Bd -literal -offset indent
-# cat ldom.conf
-domain puffy {
-	vcpu 12
-	memory 4G
-	vdisk "/home/puffy/vdisk0"
-	vdisk "/home/puffy/vdisk1"
-	vnet
-}
-
-domain salmah {
-	vcpu 8
-	memory 2G
-	vdisk "/home/salmah/vdisk0"
-	vdisk "/home/salmah/vdisk1"
-	vnet
-}
-.Ed
+A file describing the desired configuration must be created, see
+Xr. ldom.conf 5 .
 .Pp
 Generate a set of configuration files and download to non-volatile storage.
 If a configuration with the same name already exists, it must be removed first:
@@ -223,6 +167,7 @@ ok boot disk1
 .Xr dd 1 ,
 .Xr ddb 4 ,
 .Xr vnet 4 ,
+.Xr ldom.conf 5 ,
 .Xr ldomd 8
 .Sh HISTORY
 The
