@@ -2142,6 +2142,7 @@
 ./usr/share/man/man5/smtpd.conf.5
 ./usr/share/man/man5/snmpd.conf.5
 ./usr/share/man/man5/spamd.conf.5
+./usr/share/man/man5/sparc64/ldomctl.5
 ./usr/share/man/man5/ssh_config.5
 ./usr/share/man/man5/sshd_config.5
 ./usr/share/man/man5/switchd.conf.5
