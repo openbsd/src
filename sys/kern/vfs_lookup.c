@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.80 2019/07/18 18:06:17 kn Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.81 2019/07/27 21:15:35 bluhm Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -56,10 +56,6 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-
-void unveil_start_relative(struct proc *p, struct nameidata *ni);
-void unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp );
-int unveil_check_final(struct proc *p, struct nameidata *ni);
 
 int
 component_push(struct componentname *cnp, char *component, size_t len)
