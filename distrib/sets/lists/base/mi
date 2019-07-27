@@ -2757,6 +2757,7 @@
 ./usr/share/man/man4/sgi
 ./usr/share/man/man4/sparc64
 ./usr/share/man/man5
+./usr/share/man/man5/sparc64
 ./usr/share/man/man6
 ./usr/share/man/man7
 ./usr/share/man/man7/packages.7
