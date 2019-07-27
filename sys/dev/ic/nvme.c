@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.62 2019/05/08 15:32:53 tedu Exp $ */
+/*	$OpenBSD: nvme.c,v 1.63 2019/07/27 13:20:12 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -365,14 +365,14 @@ nvme_attach(struct nvme_softc *sc)
 
 	nvme_write4(sc, NVME_INTMC, 1);
 
-	sc->sc_namespaces = mallocarray(sc->sc_nn, sizeof(*sc->sc_namespaces),
-	    M_DEVBUF, M_WAITOK|M_ZERO);
+	sc->sc_namespaces = mallocarray(sc->sc_nn + 1,
+	    sizeof(*sc->sc_namespaces), M_DEVBUF, M_WAITOK|M_ZERO);
 
 	sc->sc_link.adapter = &nvme_switch;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_buswidth = sc->sc_nn;
+	sc->sc_link.adapter_buswidth = sc->sc_nn + 1;
 	sc->sc_link.luns = 1;
-	sc->sc_link.adapter_target = sc->sc_nn;
+	sc->sc_link.adapter_target = 0;
 	sc->sc_link.openings = 64;
 	sc->sc_link.pool = &sc->sc_iopool;
 
@@ -456,7 +456,7 @@ nvme_scsi_probe(struct scsi_link *link)
 
 	memset(&sqe, 0, sizeof(sqe));
 	sqe.opcode = NVM_ADMIN_IDENTIFY;
-	htolem32(&sqe.nsid, link->target + 1);
+	htolem32(&sqe.nsid, link->target);
 	htolem64(&sqe.entry.prp[0], NVME_DMA_DVA(mem));
 	htolem32(&sqe.cdw10, 0);
 
@@ -654,7 +654,7 @@ nvme_scsi_io_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
 
 	sqe->opcode = ISSET(xs->flags, SCSI_DATA_IN) ?
 	    NVM_CMD_READ : NVM_CMD_WRITE;
-	htolem32(&sqe->nsid, link->target + 1);
+	htolem32(&sqe->nsid, link->target);
 
 	htolem64(&sqe->entry.prp[0], dmap->dm_segs[0].ds_addr);
 	switch (dmap->dm_nsegs) {
@@ -730,7 +730,7 @@ nvme_scsi_sync_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
 	struct scsi_link *link = xs->sc_link;
 
 	sqe->opcode = NVM_CMD_FLUSH;
-	htolem32(&sqe->nsid, link->target + 1);
+	htolem32(&sqe->nsid, link->target);
 }
 
 void
@@ -1066,7 +1066,7 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 	 * At least one Apple NVMe device presents a second, bogus disk that is
 	 * inaccessible, so cap targets at 1.
 	 *
-	 * sd1 at scsibus1 targ 1 lun 0: <NVMe, APPLE SSD AP0512, 16.1> [..]
+	 * sd1 at scsibus1 targ 2 lun 0: <NVMe, APPLE SSD AP0512, 16.1> [..]
 	 * sd1: 0MB, 4096 bytes/sector, 2 sectors
 	 */
 	if (sc->sc_nn > 1 &&
@@ -1515,7 +1515,7 @@ nvme_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		bus_sc = (struct scsibus_softc *)scsibus;
 		SLIST_FOREACH(link, &bus_sc->sc_link_list, bus_list) {
 			if (link->device_softc == disk) {
-				my->nsid = link->target + 1;
+				my->nsid = link->target;
 				break;
 			}
 		}
