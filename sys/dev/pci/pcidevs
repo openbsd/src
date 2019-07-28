@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1891 2019/07/25 21:08:59 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1892 2019/07/28 11:01:10 jmatthew Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3757,6 +3757,7 @@ product INTEL CORE5G_D_GT3_1	0x162a	Iris Pro Graphics P6300
 product INTEL CORE5G_M_GT3_28W	0x162b	Iris Graphics 6100
 product INTEL CORE5G_D_GT3_2	0x162d	HD Graphics
 product INTEL CORE5G_M_GT3_4	0x162e	HD Graphics
+product INTEL ADAPTIVE_VF	0x1889	Adaptive VF
 product INTEL CORE6G_H_HB_D	0x1900	Core 6G Host
 product INTEL CORE6G_H_PCIE_X16	0x1901	Core 6G PCIE
 product INTEL CORE6G_S_GT1	0x1902	HD Graphics 510
@@ -4657,6 +4658,7 @@ product INTEL 7300_MISC		0x360e	7300 Misc
 product INTEL 7300_FBD_0	0x360f	7300 FBD
 product INTEL 7300_FBD_1	0x3610	7300 FBD
 product INTEL X722_10G_KX	0x37ce	X722 KX
+product INTEL X722_VF		0x37cd	X722 VF
 product INTEL X722_10G_QSFP	0x37cf	X722 QSFP+
 product INTEL X722_10G_SFP_1	0x37d0	X722 SFP+
 product INTEL X722_1G		0x37d1	X722 1GbE
