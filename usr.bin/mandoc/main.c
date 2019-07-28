@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.241 2019/07/28 18:22:35 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.242 2019/07/28 18:35:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -521,20 +521,6 @@ main(int argc, char *argv[])
 		goto out;
 	default:
 		break;
-	}
-
-	if (outst.use_pager) {
-		if (pledge("stdio rpath tmppath tty proc exec", NULL) == -1) {
-			mandoc_msg(MANDOCERR_PLEDGE, 0, 0,
-			    "%s", strerror(errno));
-			return mandoc_msg_getrc();
-		}
-	} else {
-		if (pledge("stdio rpath", NULL) == -1) {
-			mandoc_msg(MANDOCERR_PLEDGE, 0, 0,
-			    "%s", strerror(errno));
-			return mandoc_msg_getrc();
-		}
 	}
 
 	if (search.argmode == ARG_FILE && auxpaths != NULL) {
