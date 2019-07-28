@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.17 2018/12/21 14:33:43 visa Exp $
+dnl	$OpenBSD: install,v 1.18 2019/07/28 16:09:07 visa Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -46,8 +46,7 @@ OpenBSDCommonInstall
 
 OpenBSDInstallWrapup
 
-OpenBSD/MACHINE currently lacks a real bootloader. It is possible however to
-boot into OpenBSD upon powering on the machine.
+U-Boot has to be configured to load the OpenBSD/octeon bootloader.
 
 From the U-Boot commandline, make a copy of the current ${bootcmd} so you can
 restore it later if needed:
@@ -55,11 +54,11 @@ restore it later if needed:
 	# setenv old_bootcmd "${bootcmd}"
 
 ${bootcmd} is run by U-Boot when ${autoload} is enabled. Now create a new
-${bootcmd} which will load an ELF file called 'bsd' from the first active FAT
+${bootcmd} which will load an ELF file called 'boot' from the first active FAT
 partition on the first CF card. The FAT partition has been created by the
 installer.
 
-	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} bsd;bootoctlinux rootdev=/dev/octcf0'
+	# setenv bootcmd 'fatload ide 0:1 ${loadaddr} boot;bootoctlinux rootdev=octcf0'
 	# setenv bootdelay 5
 	# saveenv
 	Saving Environment to Flash...
@@ -74,7 +73,7 @@ installer.
 If you have installed onto SD/MMC, SATA or USB, use the following
 bootcmd instead:
 
-  fatload <bootdev> 0 ${loadaddr} bsd; bootoctlinux rootdev=sd0
+  fatload <bootdev> 0 ${loadaddr} boot; bootoctlinux rootdev=sd0
 
 Replace ``<bootdev>'' with ``mmc'', ``sata'' or ``usb'' as appropriate.
 
@@ -84,12 +83,12 @@ disklabel(8) UID (DUID) as the value of the rootdev parameter.
 On multi-core systems, the numcores parameter enables the secondary CPUs.
 Use the total number of cores on your system as the value of the parameter.
 
-  fatload usb 0 ${loadaddr} bsd; bootoctlinux rootdev=sd0 numcores=2
+  fatload usb 0 ${loadaddr} boot; bootoctlinux rootdev=sd0 numcores=2
 
 On the EdgeRouter Lite, bootcmd may also reset the USB controller for
 more reliable USB device detection:
 
-  usb reset; fatload usb 0 ${loadaddr} bsd; bootoctlinux rootdev=sd0 numcores=2
+  usb reset; fatload usb 0 ${loadaddr} boot; bootoctlinux rootdev=sd0 numcores=2
 
 OpenBSDCongratulations
 
