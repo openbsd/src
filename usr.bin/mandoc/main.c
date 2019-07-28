@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.239 2019/07/27 13:40:42 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.240 2019/07/28 13:12:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -82,6 +82,7 @@ struct	outstate {
 	void		 *outdata;	/* data for output */
 	int		  use_pager;
 	int		  wstop;	/* stop after a file with a warning */
+	int		  had_output;	/* Some output was generated. */
 	enum outt	  outtype;	/* which output to use */
 };
 
@@ -100,6 +101,8 @@ static	void		  outdata_alloc(struct outstate *, struct manoutput *);
 static	void		  parse(struct mparse *, int, const char *,
 				struct outstate *, struct manoutput *);
 static	void		  passthrough(int, int);
+static	void		  process_onefile(struct mparse *, struct manpage *,
+				int, struct outstate *, struct manconf *);
 static	void		  run_pager(struct tag_files *);
 static	pid_t		  spawn_pager(struct tag_files *);
 static	void		  usage(enum argmode) __attribute__((__noreturn__));
@@ -121,7 +124,7 @@ main(int argc, char *argv[])
 	struct mparse	*mp;		/* Opaque parser object. */
 	const char	*conf_file;	/* -C: alternate config file. */
 	const char	*os_s;		/* -I: Operating system for display. */
-	const char	*progname, *sec, *thisarg;
+	const char	*progname, *sec;
 	char		*defpaths;	/* -M: override manpaths. */
 	char		*auxpaths;	/* -m: additional manpaths. */
 	char		*oarg;		/* -O: output option string. */
@@ -132,7 +135,7 @@ main(int argc, char *argv[])
 	int		 options;	/* Parser options. */
 	int		 show_usage;	/* Invalid argument: give up. */
 	int		 prio, best_prio;
-	int		 fd, startdir;
+	int		 startdir;
 	int		 c;
 	enum mandoc_os	 os_e;		/* Check base system conventions. */
 	enum outmode	 outmode;	/* According to command line. */
@@ -507,6 +510,17 @@ main(int argc, char *argv[])
 
 		if (outmode == OUTMODE_FLN || outmode == OUTMODE_LST)
 			goto out;
+	} else {
+		sz = argc > 0 ? argc : 1;
+		resp = res = mandoc_recallocarray(NULL, 0, sz, sizeof(*res));
+		for (i = 0; i < sz; i++) {
+			if (argc > 0)
+				res[i].file = mandoc_strdup(argv[i]);
+			res[i].ipath = SIZE_MAX;
+			res[i].form = FORM_SRC;
+		}
+		if (argc < 1)
+			argc = 1;
 	}
 
 	/* mandoc(1) */
@@ -535,15 +549,6 @@ main(int argc, char *argv[])
 	mchars_alloc();
 	mp = mparse_alloc(options, os_e, os_s);
 
-	if (argc < 1) {
-		if (outst.use_pager)
-			outst.tag_files = tag_init(conf.output.tag);
-		thisarg = "<stdin>";
-		mandoc_msg_setinfilename(thisarg);
-		parse(mp, STDIN_FILENO, thisarg, &outst, &conf.output);
-		mandoc_msg_setinfilename(NULL);
-	}
-
 	/*
 	 * Remember the original working directory, if possible.
 	 * This will be needed if some names on the command line
@@ -553,68 +558,10 @@ main(int argc, char *argv[])
 	 */
 	startdir = open(".", O_RDONLY | O_DIRECTORY);
 
-	while (argc > 0) {
-
-		/*
-		 * Changing directories is not needed in ARG_FILE mode.
-		 * Do it on a best-effort basis.  Even in case of
-		 * failure, some functionality may still work.
-		 */
-		if (resp != NULL) {
-			if (resp->ipath != SIZE_MAX)
-				(void)chdir(conf.manpath.paths[resp->ipath]);
-			else if (startdir != -1)
-				(void)fchdir(startdir);
-			thisarg = resp->file;
-		} else
-			thisarg = *argv;
-
-		mandoc_msg_setinfilename(thisarg);
-		fd = mparse_open(mp, thisarg);
-		if (fd != -1) {
-			if (outst.use_pager) {
-				outst.use_pager = 0;
-				outst.tag_files = tag_init(conf.output.tag);
-			}
-
-			if (resp == NULL || resp->form == FORM_SRC)
-				parse(mp, fd, thisarg, &outst, &conf.output);
-			else
-				passthrough(fd, conf.output.synopsisonly);
-
-			if (ferror(stdout)) {
-				if (outst.tag_files != NULL) {
-					mandoc_msg(MANDOCERR_WRITE, 0, 0,
-					    "%s: %s", outst.tag_files->ofn,
-					    strerror(errno));
-					tag_unlink();
-					outst.tag_files = NULL;
-				} else
-					mandoc_msg(MANDOCERR_WRITE, 0, 0,
-					    "%s", strerror(errno));
-				break;
-			}
-
-			if (argc > 1 && outst.outtype <= OUTT_UTF8) {
-				if (outst.outdata == NULL)
-					outdata_alloc(&outst, &conf.output);
-				terminal_sepline(outst.outdata);
-			}
-		} else
-			mandoc_msg(resp == NULL ? MANDOCERR_BADARG_BAD :
-			    MANDOCERR_OPEN, 0, 0, "%s", strerror(errno));
-
-		mandoc_msg_setinfilename(NULL);
-
+	while (argc-- > 0) {
+		process_onefile(mp, resp++, startdir, &outst, &conf);
 		if (outst.wstop && mandoc_msg_getrc() != MANDOCLEVEL_OK)
 			break;
-
-		if (resp != NULL)
-			resp++;
-		else
-			argv++;
-		if (--argc)
-			mparse_reset(mp);
 	}
 	if (startdir != -1) {
 		(void)fchdir(startdir);
@@ -644,18 +591,16 @@ main(int argc, char *argv[])
 	mchars_free();
 
 out:
-	if (search.argmode != ARG_FILE) {
+	mansearch_free(res, sz);
+	if (search.argmode != ARG_FILE)
 		manconf_free(&conf);
-		mansearch_free(res, sz);
-	}
 
 	if (outst.tag_files != NULL) {
 		fclose(stdout);
 		tag_write();
 		run_pager(outst.tag_files);
 		tag_unlink();
-	} else if (outst.outtype != OUTT_LINT &&
-	    (search.argmode == ARG_FILE || sz > 0))
+	} else if (outst.had_output && outst.outtype != OUTT_LINT)
 		mandoc_msg_summary();
 
 	return (int)mandoc_msg_getrc();
@@ -815,15 +760,79 @@ fs_search(const struct mansearch *cfg, const struct manpaths *paths,
 }
 
 static void
+process_onefile(struct mparse *mp, struct manpage *resp, int startdir,
+    struct outstate *outst, struct manconf *conf)
+{
+	int	 fd;
+
+	/*
+	 * Changing directories is not needed in ARG_FILE mode.
+	 * Do it on a best-effort basis.  Even in case of
+	 * failure, some functionality may still work.
+	 */
+	if (resp->ipath != SIZE_MAX)
+		(void)chdir(conf->manpath.paths[resp->ipath]);
+	else if (startdir != -1)
+		(void)fchdir(startdir);
+
+	mandoc_msg_setinfilename(resp->file);
+	if (resp->file != NULL) {
+		if ((fd = mparse_open(mp, resp->file)) == -1) {
+			mandoc_msg(resp->ipath == SIZE_MAX ?
+			    MANDOCERR_BADARG_BAD : MANDOCERR_OPEN,
+			    0, 0, "%s", strerror(errno));
+			mandoc_msg_setinfilename(NULL);
+			return;
+		}
+	} else
+		fd = STDIN_FILENO;
+
+	if (outst->use_pager) {
+		outst->use_pager = 0;
+		outst->tag_files = tag_init(conf->output.tag);
+	}
+
+	if (outst->had_output && outst->outtype <= OUTT_UTF8) {
+		if (outst->outdata == NULL)
+			outdata_alloc(outst, &conf->output);
+		terminal_sepline(outst->outdata);
+	}
+
+	if (resp->form == FORM_SRC)
+		parse(mp, fd, resp->file, outst, &conf->output);
+	else {
+		passthrough(fd, conf->output.synopsisonly);
+		outst->had_output = 1;
+	}
+
+	if (ferror(stdout)) {
+		if (outst->tag_files != NULL) {
+			mandoc_msg(MANDOCERR_WRITE, 0, 0, "%s: %s",
+			    outst->tag_files->ofn, strerror(errno));
+			tag_unlink();
+			outst->tag_files = NULL;
+		} else
+			mandoc_msg(MANDOCERR_WRITE, 0, 0, "%s",
+			    strerror(errno));
+	}
+	mandoc_msg_setinfilename(NULL);
+}
+
+static void
 parse(struct mparse *mp, int fd, const char *file,
     struct outstate *outst, struct manoutput *outconf)
 {
-	struct roff_meta *meta;
+	static int		 previous;
+	struct roff_meta	*meta;
 
-	/* Begin by parsing the file itself. */
-
-	assert(file);
 	assert(fd >= 0);
+	if (file == NULL)
+		file = "<stdin>";
+
+	if (previous)
+		mparse_reset(mp);
+	else
+		previous = 1;
 
 	mparse_readfd(mp, fd, file);
 	if (fd != STDIN_FILENO)
@@ -847,6 +856,7 @@ parse(struct mparse *mp, int fd, const char *file,
 
 	/* Execute the out device, if it exists. */
 
+	outst->had_output = 1;
 	if (meta->macroset == MACROSET_MDOC) {
 		switch (outst->outtype) {
 		case OUTT_HTML:
