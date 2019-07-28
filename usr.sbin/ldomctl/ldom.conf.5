@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.4 2019/07/28 18:50:01 kettenis Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.5 2019/07/28 20:41:03 schwarze Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -32,7 +32,7 @@ The scope must be opened and closed with curly braces and contains
 one or more of the following keywords, each on a separate line.
 A scope with
 .Ar name
-.Dq primary
+.Cm primary
 configures resources for the primary domain.
 If no configuration for the primary domain exists it is assigned
 all CPU and memory resources not used by any guest domains.
@@ -64,14 +64,14 @@ network interface to the guest domain.
 This keyword can be used multiple times.
 The curly braces are optional and can contain the following keywords:
 .Bl -tag -width Ds
-.It Ic mac-addr Ar address
+.It Ic mac-addr Ns = Ns Ar address
 Configure the MAC address of the interface.
-.It Ic mtu Ar number
+.It Ic mtu Ns = Ns Ar number
 Configure the MTU of the interface.
 .El
 .El
 .Sh EXAMPLES
-Define a domain with 12 virtual cores, 1GB memory, two file based virtual disks
+Define a domain with 12 virtual cores, 4GB memory, two file based virtual disks
 and one virtual network interface:
 .Bd -literal -offset indent
 domain "puffy" {
