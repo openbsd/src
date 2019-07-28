@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.25 2019/07/28 14:51:07 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.26 2019/07/28 14:55:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -2817,8 +2817,10 @@ build_config(const char *filename)
 			primary->endpoint_id = endpoint->channel + 1;
 	}
 
-	for (i = primary_num_cpus; i < max_cpus; i++)
+	for (i = 0; i < max_cpus; i++)
 		guest_delete_cpu(primary, i);
+	for (i = 0; i < primary_num_cpus; i++)
+		guest_add_cpu(primary);
 	guest_delete_memory(primary);
 	guest_add_memory(primary, -1, primary_memory);
 
