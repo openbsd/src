@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.242 2019/07/28 18:35:09 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.243 2019/07/28 19:41:01 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -95,7 +95,7 @@ static	int		  fs_lookup(const struct manpaths *,
 				const char *, const char *,
 				struct manpage **, size_t *);
 static	int		  fs_search(const struct mansearch *,
-				const struct manpaths *, int, char**,
+				const struct manpaths *, const char *,
 				struct manpage **, size_t *);
 static	void		  outdata_alloc(struct outstate *, struct manoutput *);
 static	void		  parse(struct mparse *, int, const char *,
@@ -422,12 +422,23 @@ main(int argc, char *argv[])
 			    1, argv, &resn, &resnsz);
 			if (resnsz == 0)
 				(void)fs_search(&search, &conf.manpath,
-				    1, argv, &resn, &resnsz);
+				    *argv, &resn, &resnsz);
+			if (resnsz == 0 && strchr(*argv, '/') == NULL) {
+				if (search.arch != NULL &&
+				    arch_valid(search.arch, OSENUM) == 0)
+					warnx("Unknown architecture \"%s\".",
+					    search.arch);
+				else if (search.sec != NULL)
+					warnx("No entry for %s in "
+					    "section %s of the manual.",
+					    *argv, search.sec);
+				else
+					warnx("No entry for %s in "
+					    "the manual.", *argv);
+				mandoc_msg_setrc(MANDOCLEVEL_BADARG);
+				continue;
+			}
 			if (resnsz == 0) {
-				if (strchr(*argv, '/') == NULL) {
-					mandoc_msg_setrc(MANDOCLEVEL_BADARG);
-					continue;
-				}
 				if (access(*argv, R_OK) == -1) {
 					mandoc_msg_setinfilename(*argv);
 					mandoc_msg(MANDOCERR_BADARG_BAD,
@@ -697,48 +708,30 @@ found:
 
 static int
 fs_search(const struct mansearch *cfg, const struct manpaths *paths,
-	int argc, char **argv, struct manpage **res, size_t *ressz)
+	const char *name, struct manpage **res, size_t *ressz)
 {
 	const char *const sections[] =
 	    {"1", "8", "6", "2", "3", "5", "7", "4", "9", "3p"};
 	const size_t nsec = sizeof(sections)/sizeof(sections[0]);
 
-	size_t		 ipath, isec, lastsz;
+	size_t		 ipath, isec;
 
 	assert(cfg->argmode == ARG_NAME);
-
 	if (res != NULL)
 		*res = NULL;
-	*ressz = lastsz = 0;
-	while (argc) {
-		for (ipath = 0; ipath < paths->sz; ipath++) {
-			if (cfg->sec != NULL) {
-				if (fs_lookup(paths, ipath, cfg->sec,
-				    cfg->arch, *argv, res, ressz) != -1 &&
-				    cfg->firstmatch)
-					return 0;
-			} else for (isec = 0; isec < nsec; isec++)
+	*ressz = 0;
+	for (ipath = 0; ipath < paths->sz; ipath++) {
+		if (cfg->sec != NULL) {
+			if (fs_lookup(paths, ipath, cfg->sec, cfg->arch,
+			    name, res, ressz) != -1 && cfg->firstmatch)
+				return 0;
+		} else {
+			for (isec = 0; isec < nsec; isec++)
 				if (fs_lookup(paths, ipath, sections[isec],
-				    cfg->arch, *argv, res, ressz) != -1 &&
+				    cfg->arch, name, res, ressz) != -1 &&
 				    cfg->firstmatch)
 					return 0;
 		}
-		if (res != NULL && *ressz == lastsz &&
-		    strchr(*argv, '/') == NULL) {
-			if (cfg->arch != NULL &&
-			    arch_valid(cfg->arch, OSENUM) == 0)
-				warnx("Unknown architecture \"%s\".",
-				    cfg->arch);
-			else if (cfg->sec == NULL)
-				warnx("No entry for %s in the manual.",
-				    *argv);
-			else
-				warnx("No entry for %s in section %s "
-				    "of the manual.", *argv, cfg->sec);
-		}
-		lastsz = *ressz;
-		argv++;
-		argc--;
 	}
 	return -1;
 }
@@ -913,7 +906,7 @@ check_xr(void)
 		search.firstmatch = 1;
 		if (mansearch(&search, &paths, 1, &xr->name, NULL, &sz))
 			continue;
-		if (fs_search(&search, &paths, 1, &xr->name, NULL, &sz) != -1)
+		if (fs_search(&search, &paths, xr->name, NULL, &sz) != -1)
 			continue;
 		if (xr->count == 1)
 			mandoc_msg(MANDOCERR_XR_BAD, xr->line,
