@@ -3367,7 +3367,7 @@ bool MipsAsmParser::expandLoadImmReal(MCInst &Inst, bool IsSingle, bool IsGPR,
   if (IsGPR) {
     if (LoImmOp64 == 0) {
       if(isABI_N32() || isABI_N64()) {
-        if (loadImmediate(HiImmOp64, FirstReg, Mips::NoRegister, false, true,
+        if (loadImmediate(ImmOp64, FirstReg, Mips::NoRegister, false, true,
                           IDLoc, Out, STI))
           return true;
         return false;
@@ -3395,8 +3395,8 @@ bool MipsAsmParser::expandLoadImmReal(MCInst &Inst, bool IsSingle, bool IsGPR,
 
     getStreamer().SwitchSection(ReadOnlySection);
     getStreamer().EmitLabel(Sym, IDLoc);
-    getStreamer().EmitIntValue(HiImmOp64, 4);
-    getStreamer().EmitIntValue(LoImmOp64, 4);
+    getStreamer().EmitValueToAlignment(8);
+    getStreamer().EmitIntValue(ImmOp64, 8);
     getStreamer().SwitchSection(CS);
 
     if(emitPartialAddress(TOut, IDLoc, Sym))
@@ -3420,12 +3420,19 @@ bool MipsAsmParser::expandLoadImmReal(MCInst &Inst, bool IsSingle, bool IsGPR,
         !((HiImmOp64 & 0xffff0000) && (HiImmOp64 & 0x0000ffff))) {
       // FIXME: In the case where the constant is zero, we can load the
       // register directly from the zero register.
+
+      if (isABI_N32() || isABI_N64()) {
+        if (loadImmediate(ImmOp64, ATReg, Mips::NoRegister, false, true, IDLoc,
+                          Out, STI))
+          return true;
+        TOut.emitRR(Mips::DMTC1, FirstReg, ATReg, IDLoc, STI);
+        return false;
+      }
+
       if (loadImmediate(HiImmOp64, ATReg, Mips::NoRegister, true, true, IDLoc,
                         Out, STI))
         return true;
-      if (isABI_N32() || isABI_N64())
-        TOut.emitRR(Mips::DMTC1, FirstReg, ATReg, IDLoc, STI);
-      else if (hasMips32r2()) {
+      if (hasMips32r2()) {
         TOut.emitRR(Mips::MTC1, FirstReg, Mips::ZERO, IDLoc, STI);
         TOut.emitRRR(Mips::MTHC1_D32, FirstReg, FirstReg, ATReg, IDLoc, STI);
       } else {
@@ -3449,8 +3456,8 @@ bool MipsAsmParser::expandLoadImmReal(MCInst &Inst, bool IsSingle, bool IsGPR,
 
     getStreamer().SwitchSection(ReadOnlySection);
     getStreamer().EmitLabel(Sym, IDLoc);
-    getStreamer().EmitIntValue(HiImmOp64, 4);
-    getStreamer().EmitIntValue(LoImmOp64, 4);
+    getStreamer().EmitValueToAlignment(8);
+    getStreamer().EmitIntValue(ImmOp64, 8);
     getStreamer().SwitchSection(CS);
 
     if(emitPartialAddress(TOut, IDLoc, Sym))
