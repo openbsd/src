@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.1 2019/07/17 14:36:32 visa Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.2 2019/07/28 12:47:56 visa Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -251,6 +251,7 @@ readline(char *buf, size_t n, int to)
 	struct termios saved_tio, tio;
 	struct timeval tv;
 	fd_set fdset;
+	char *p;
 	int timed_out = 0;
 #ifdef DEBUG
 	extern int debug;
@@ -288,7 +289,9 @@ readline(char *buf, size_t n, int to)
 		return 0;
 
 	/* Strip trailing newline. */
-	strtok(buf, "\n");
+	p = strchr(buf, '\n');
+	if (p != NULL)
+		*p = '\0';
 
 	return strlen(buf);
 }
