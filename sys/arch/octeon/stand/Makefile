@@ -1,9 +1,5 @@
-#	$OpenBSD: Makefile,v 1.2 2013/06/05 01:32:10 jasper Exp $
+#	$OpenBSD: Makefile,v 1.3 2019/07/28 15:45:30 visa Exp $
 
-.if ${MACHINE} == "octeon"
-SUBDIR +=	libsa
-.endif
-
-SUBDIR +=	boot
+SUBDIR +=	rdboot
 
 .include <bsd.subdir.mk>

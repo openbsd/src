@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2017/01/22 03:27:31 tb Exp $
+#	$OpenBSD: Makefile,v 1.9 2019/07/28 15:45:30 visa Exp $
 
 .include <bsd.own.mk>    # for KEEPKERNELS
 
@@ -13,6 +13,7 @@ TAGS=	${.CURDIR}/tags
 NOPROG=
 NOMAN=
 NOOBJ=
+SUBDIR=	stand
 .if !defined(KEEPKERNELS) || !(make(clean) || make(cleandir))
 SUBDIR+=compile
 .endif
