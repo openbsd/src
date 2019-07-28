@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.24 2018/09/16 14:27:32 kettenis Exp $	*/
+/*	$OpenBSD: config.c,v 1.25 2019/07/28 14:51:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -46,6 +46,27 @@ struct core {
 
 TAILQ_HEAD(, core) cores;
 
+struct component {
+	const char *path;
+	int assigned;
+
+	struct md_node *hv_node;
+	TAILQ_ENTRY(component) link;
+};
+
+TAILQ_HEAD(, component) components;
+
+struct hostbridge {
+	const char *path;
+
+	uint64_t num_msi_eqs;
+	uint64_t num_msis;
+	uint64_t max_vpcis;
+	TAILQ_ENTRY(hostbridge) link;
+};
+
+TAILQ_HEAD(, hostbridge) hostbridges;
+
 struct frag {
 	TAILQ_ENTRY(frag) link;
 	uint64_t base;
@@ -59,6 +80,8 @@ struct device **network_devices;
 struct mblock **mblocks;
 struct ldc_endpoint **ldc_endpoints;
 
+TAILQ_HEAD(, rootcomplex) rootcomplexes;
+
 uint64_t max_cpus;
 bool have_cwqs;
 bool have_rngs;
@@ -69,6 +92,7 @@ uint64_t max_guest_ldcs;
 uint64_t md_maxsize;
 uint64_t md_elbow_room;
 uint64_t max_mblocks;
+uint64_t directio_capability;
 
 uint64_t max_devices = 16;
 
@@ -90,6 +114,10 @@ struct md *hvmd;
 struct md *protomd;
 
 struct guest *guest_lookup(const char *);
+void guest_prune_phys_io(struct guest *);
+void guest_prune_pcie(struct guest *, struct md_node *, const char *);
+void guest_add_vpcie(struct guest *, uint64_t);
+void guest_fixup_phys_io(struct guest *);
 
 TAILQ_HEAD(, frag) free_frags = TAILQ_HEAD_INITIALIZER(free_frags);
 TAILQ_HEAD(, cpu) free_cpus = TAILQ_HEAD_INITIALIZER(free_cpus);
@@ -164,6 +192,88 @@ pri_init_cores(struct md *md)
 		    md_get_prop_data(md, node, "type", &type, &len) &&
 		    strcmp(type, "data") == 0) {
 			pri_add_core(md, node);
+		}
+	}
+}
+
+void
+pri_add_hostbridge(struct md *md, struct md_node *node)
+{
+	struct hostbridge *hostbridge;
+
+	hostbridge = xzalloc(sizeof(*hostbridge));
+	md_get_prop_str(md, node, "path", &hostbridge->path);
+	md_get_prop_val(md, node, "#msi-eqs", &hostbridge->num_msi_eqs);
+	md_get_prop_val(md, node, "#msi", &hostbridge->num_msis);
+	if (!md_get_prop_val(md, node, "#max-vpcis", &hostbridge->max_vpcis))
+		hostbridge->max_vpcis = 10;
+	TAILQ_INSERT_TAIL(&hostbridges, hostbridge, link);
+}
+
+void
+pri_init_components(struct md *md)
+{
+	struct component *component;
+	struct md_node *node;
+	const char *path;
+	const char *type;
+
+	TAILQ_INIT(&components);
+	TAILQ_INIT(&hostbridges);
+
+	TAILQ_FOREACH(node, &md->node_list, link) {
+		if (strcmp(node->name->str, "component") != 0)
+			continue;
+
+		if (md_get_prop_str(md, node, "assignable-path", &path)) {
+			component = xzalloc(sizeof(*component));
+			component->path = path;
+			TAILQ_INSERT_TAIL(&components, component, link);
+		}
+
+		if (md_get_prop_str(md, node, "type", &type) &&
+		    strcmp(type, "hostbridge") == 0)
+			pri_add_hostbridge(md, node);
+	}
+}
+
+void
+pri_init_phys_io(struct md *md)
+{
+	struct md_node *node;
+	const char *device_type;
+	uint64_t cfg_handle;
+	struct rootcomplex *rootcomplex;
+	char *path;
+	size_t len;
+
+	TAILQ_INIT(&rootcomplexes);
+
+	TAILQ_FOREACH(node, &md->node_list, link) {
+		if (strcmp(node->name->str, "iodevice") == 0 &&
+		    md_get_prop_str(md, node, "device-type", &device_type) &&
+		    strcmp(device_type, "pciex") == 0) {
+			if (!md_get_prop_val(md, node, "cfg-handle",
+					     &cfg_handle))
+				continue;
+
+			rootcomplex = xzalloc(sizeof(*rootcomplex));
+			md_get_prop_val(md, node, "#msi-eqs",
+			    &rootcomplex->num_msi_eqs);
+			md_get_prop_val(md, node, "#msi",
+			    &rootcomplex->num_msis);
+			md_get_prop_data(md, node, "msi-ranges",
+			    &rootcomplex->msi_ranges, &len);
+			rootcomplex->num_msi_ranges =
+			    len / (2 * sizeof(uint64_t));
+			md_get_prop_data(md, node, "virtual-dma",
+			    &rootcomplex->vdma_ranges, &len);
+			rootcomplex->num_vdma_ranges =
+			    len / (2 * sizeof(uint64_t));
+			rootcomplex->cfghandle = cfg_handle;
+			xasprintf(&path, "/@%llx", cfg_handle);
+			rootcomplex->path = path;
+			TAILQ_INSERT_TAIL(&rootcomplexes, rootcomplex, link);
 		}
 	}
 }
@@ -324,6 +434,7 @@ pri_init(struct md *md)
 	md_get_prop_val(md, node, "max_guest_ldcs", &max_guest_ldcs);
 	md_get_prop_val(md, node, "md_elbow_room", &md_elbow_room);
 	md_get_prop_val(md, node, "max_mblocks", &max_mblocks);
+	md_get_prop_val(md, node, "directio_capability", &directio_capability);
 
 	node = md_find_node(md, "read_only_memory");
 	if (node == NULL)
@@ -390,6 +501,8 @@ pri_init(struct md *md)
 	}
 
 	pri_init_cores(md);
+	pri_init_components(md);
+	pri_init_phys_io(md);
 }
 
 void
@@ -564,10 +677,12 @@ hvmd_init_cpu(struct md *md, struct md_node *node)
 void
 hvmd_init_device(struct md *md, struct md_node *node)
 {
+	struct hostbridge *hostbridge;
 	struct device *device;
 	uint64_t resource_id;
 	struct md_node *node2;
 	struct md_prop *prop;
+	char *path;
 
 	if (strcmp(node->name->str, "pcie_bus") != 0 &&
 	    strcmp(node->name->str, "network_device") != 0)
@@ -599,6 +714,28 @@ hvmd_init_device(struct md *md, struct md_node *node)
 				hvmd_fixup_guest(md, node2, node);
 		}
 	}
+
+	xasprintf(&path, "/@%llx", device->cfghandle);
+	TAILQ_FOREACH(hostbridge, &hostbridges, link) {
+		if (strcmp(hostbridge->path, path) == 0)
+			break;
+	}
+	free(path);
+	if (hostbridge == NULL)
+		return;
+
+	device->msi_eqs_per_vpci =
+	    hostbridge->num_msi_eqs / hostbridge->max_vpcis;
+	device->msis_per_vpci =
+	    hostbridge->num_msis / hostbridge->max_vpcis;
+	device->msi_base = hostbridge->num_msis;
+
+	device->num_msi_eqs = device->msi_eqs_per_vpci +
+	    hostbridge->num_msi_eqs % hostbridge->max_vpcis;
+	device->num_msis = device->msis_per_vpci +
+	    hostbridge->num_msis % hostbridge->max_vpcis;
+	device->msi_ranges[0] = 0;
+	device->msi_ranges[1] = device->num_msis;
 }
 
 void
@@ -662,6 +799,7 @@ hvmd_init_guest(struct md *md, struct md_node *node)
 	guest = xzalloc(sizeof(*guest));
 	TAILQ_INIT(&guest->cpu_list);
 	TAILQ_INIT(&guest->device_list);
+	TAILQ_INIT(&guest->subdevice_list);
 	TAILQ_INIT(&guest->mblock_list);
 	TAILQ_INIT(&guest->endpoint_list);
 	md_get_prop_str(md, node, "name", &guest->name);
@@ -932,6 +1070,82 @@ hvmd_finalize_device(struct md *md, struct device *device, const char *name)
 }
 
 void
+hvmd_finalize_pcie_device(struct md *md, struct device *device)
+{
+	struct rootcomplex *rootcomplex;
+	struct md_node *node, *child, *parent;;
+	struct component *component;
+	struct subdevice *subdevice;
+	uint64_t resource_id = 0;
+	char *path;
+
+	hvmd_finalize_device(md, device,
+	    device->virtual ? "virtual_pcie_bus" : "pcie_bus");
+	node = device->hv_node;
+
+	if (!directio_capability)
+		return;
+
+	TAILQ_FOREACH(rootcomplex, &rootcomplexes, link) {
+		if (rootcomplex->cfghandle == device->cfghandle)
+			break;
+	}
+	if (rootcomplex == NULL)
+		return;
+
+	md_add_prop_val(md, node, "allow_bypass", 0);
+
+	md_add_prop_val(md, node, "#msi-eqs", device->num_msi_eqs);
+	md_add_prop_val(md, node, "#msi", device->num_msis);
+	md_add_prop_data(md, node, "msi-ranges", (void *)device->msi_ranges,
+	    sizeof(device->msi_ranges));
+	md_add_prop_data(md, node, "virtual-dma", rootcomplex->vdma_ranges,
+	    rootcomplex->num_vdma_ranges * 2 * sizeof(uint64_t));
+
+	xasprintf(&path, "/@%llx", device->cfghandle);
+
+	if (!device->virtual) {
+		parent = md_add_node(md, "pcie_assignable_devices");
+		md_link_node(md, node, parent);
+
+		TAILQ_FOREACH(component, &components, link) {
+			const char *path2 = component->path;
+
+			if (strncmp(path, path2, strlen(path)) != 0)
+				continue;
+
+			path2 = strchr(path2, '/');
+			if (path2 == NULL || *path2++ == 0)
+				continue;
+			path2 = strchr(path2, '/');
+			if (path2 == NULL || *path2++ == 0)
+				continue;
+
+			child = md_add_node(md, "pcie_device");
+			md_link_node(md, parent, child);
+
+			md_add_prop_str(md, child, "path", path2);
+			md_add_prop_val(md, child, "resource_id", resource_id);
+			resource_id++;
+
+			component->hv_node = child;
+		}
+	}
+
+	parent = md_add_node(md, "pcie_assigned_devices");
+	md_link_node(md, node, parent);
+
+	TAILQ_FOREACH(subdevice, &device->guest->subdevice_list, link) {
+		TAILQ_FOREACH(component, &components, link) {
+			if (strcmp(subdevice->path, component->path) == 0)
+				md_link_node(md, parent, component->hv_node);
+		}
+	}
+
+	free(path);
+}
+
+void
 hvmd_finalize_devices(struct md *md)
 {
 	struct md_node *parent;
@@ -946,8 +1160,7 @@ hvmd_finalize_devices(struct md *md)
 
 	for (resource_id = 0; resource_id < max_devices; resource_id++) {
 		if (pcie_busses[resource_id])
-			hvmd_finalize_device(md, pcie_busses[resource_id],
-			    "pcie_bus");
+			hvmd_finalize_pcie_device(md, pcie_busses[resource_id]);
 	}
 	for (resource_id = 0; resource_id < max_devices; resource_id++) {
 		if (network_devices[resource_id])
@@ -1369,6 +1582,7 @@ hvmd_add_guest(const char *name)
 	guest = xzalloc(sizeof(*guest));
 	TAILQ_INIT(&guest->cpu_list);
 	TAILQ_INIT(&guest->device_list);
+	TAILQ_INIT(&guest->subdevice_list);
 	TAILQ_INIT(&guest->mblock_list);
 	TAILQ_INIT(&guest->endpoint_list);
 	guests[resource_id] = guest;
@@ -1945,7 +2159,6 @@ guest_create(const char *name)
 
 	md_find_delete_node(guest->md, "dimm_configuration");
 	md_find_delete_node(guest->md, "platform_services");
-	md_find_delete_node(guest->md, "phys_io");
 	md_collect_garbage(guest->md);
 
 	guest_set_domaining_enabled(guest);
@@ -1966,6 +2179,191 @@ guest_create(const char *name)
 	md_add_prop_val(guest->md, node, "reset-reason", 0);
 
 	return guest;
+}
+
+int
+guest_match_path(struct guest *guest, const char *path)
+{
+	struct subdevice *subdevice;
+	size_t len = strlen(path);
+
+	TAILQ_FOREACH(subdevice, &guest->subdevice_list, link) {
+		const char *path2 = subdevice->path;
+		size_t len2 = strlen(path2);
+		
+		if (strncmp(path, path2, len < len2 ? len : len2) == 0)
+			return 1;
+	}
+
+	return 0;
+}
+
+void
+guest_prune_phys_io(struct guest *guest)
+{
+	const char compatible[] = "SUNW,sun4v-vpci";
+	struct md *md = guest->md;
+	struct md_node *node, *node2;
+	struct md_prop *prop, *prop2;
+	const char *device_type;
+	uint64_t cfg_handle;
+	char *path;
+
+	node = md_find_node(guest->md, "phys_io");
+	TAILQ_FOREACH_SAFE(prop, &node->prop_list, link, prop2) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0) {
+			node2 = prop->d.arc.node;
+			if (!md_get_prop_str(md, node2, "device-type",
+			    &device_type))
+				device_type = "unknown";
+			if (strcmp(device_type, "pciex") != 0) {
+				md_delete_node(md, node2);
+				continue;
+			}
+
+			if (!md_get_prop_val(md, node2, "cfg-handle",
+			    &cfg_handle)) {
+				md_delete_node(md, node2);
+				continue;
+			}
+
+			xasprintf(&path, "/@%llx", cfg_handle);
+			if (!guest_match_path(guest, path)) {
+				md_delete_node(md, node2);
+				continue;
+			}
+
+			md_set_prop_data(md, node2, "compatible",
+			    compatible, sizeof(compatible));
+			md_add_prop_val(md, node2, "virtual-root-complex", 1);
+			guest_prune_pcie(guest, node2, path);
+			free(path);
+
+			guest_add_vpcie(guest, cfg_handle);
+		}
+	}
+}
+
+void
+guest_prune_pcie(struct guest *guest, struct md_node *node, const char *path)
+{
+	struct md *md = guest->md;
+	struct md_node *node2;
+	struct md_prop *prop, *prop2;
+	uint64_t device_number;
+	char *path2;
+
+	TAILQ_FOREACH_SAFE(prop, &node->prop_list, link, prop2) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0) {
+			node2 = prop->d.arc.node;
+			if (strcmp(node2->name->str, "wart") == 0) {
+				md_delete_node(md, node2);
+				continue;
+			}
+			if (!md_get_prop_val(md, node2, "device-number",
+			    &device_number))
+				continue;
+			xasprintf(&path2, "%s/@%llx", path, device_number);
+			if (guest_match_path(guest, path2))
+				guest_prune_pcie(guest, node2, path2);
+			else
+				md_delete_node(md, node2);
+			free(path2);
+		}
+	}
+}
+
+void
+guest_add_vpcie(struct guest *guest, uint64_t cfghandle)
+{
+	struct device *device, *phys_device = NULL;
+	uint64_t resource_id;
+
+	for (resource_id = 0; resource_id < max_devices; resource_id++) {
+		if (pcie_busses[resource_id] &&
+		    pcie_busses[resource_id]->cfghandle == cfghandle) {
+			phys_device = pcie_busses[resource_id];
+			break;
+		}
+	}
+	if (phys_device == NULL)
+		errx(1, "no matching physical device");
+			
+	for (resource_id = 0; resource_id < max_devices; resource_id++) {
+		if (pcie_busses[resource_id] == NULL)
+			break;
+	}
+	if (resource_id >= max_devices)
+		errx(1, "no available resource_id");
+
+	device = xzalloc(sizeof(*device));
+	device->gid = guest->gid;
+	device->cfghandle = cfghandle;
+	device->resource_id = resource_id;
+	device->rcid = phys_device->rcid;
+	device->virtual = 1;
+	device->guest = guest;
+
+	device->num_msi_eqs = phys_device->msi_eqs_per_vpci;
+	device->num_msis = phys_device->msis_per_vpci;
+	phys_device->msi_base -= phys_device->msis_per_vpci;
+	device->msi_ranges[0] = phys_device->msi_base;
+	device->msi_ranges[1] = device->num_msis;
+
+	pcie_busses[resource_id] = device;
+	TAILQ_INSERT_TAIL(&guest->device_list, device, link);
+}
+
+void
+guest_fixup_phys_io(struct guest *guest)
+{
+	struct md *md = guest->md;
+	struct md_node *node, *node2;
+	struct md_prop *prop, *prop2;
+	struct device *device;
+	uint64_t cfg_handle;
+	uint64_t mapping[3];
+	const void *buf;
+	size_t len;
+
+	if (!directio_capability)
+		return;
+
+	node = md_find_node(guest->md, "phys_io");
+	TAILQ_FOREACH_SAFE(prop, &node->prop_list, link, prop2) {
+		if (prop->tag == MD_PROP_ARC &&
+		    strcmp(prop->name->str, "fwd") == 0) {
+			node2 = prop->d.arc.node;
+
+			if (!md_get_prop_val(md, node2, "cfg-handle",
+			    &cfg_handle))
+				continue;
+
+			TAILQ_FOREACH(device, &guest->device_list, link) {
+				if (device->cfghandle == cfg_handle)
+					break;
+			}
+			if (device == NULL)
+				continue;
+
+			md_set_prop_val(md, node2, "#msi-eqs",
+			    device->num_msi_eqs);
+			md_set_prop_val(md, node2, "#msi",
+			    device->num_msis);
+			md_set_prop_data(md, node2, "msi-ranges",
+			    (void *)device->msi_ranges,
+			    sizeof(device->msi_ranges));
+
+			md_get_prop_data(md, node2, "msi-eq-to-devino",
+			    &buf, &len);
+			memcpy(mapping, buf, sizeof(mapping));
+			mapping[1] = device->num_msi_eqs;
+			md_set_prop_data(md, node2, "msi-eq-to-devino",
+			    (void *)mapping, sizeof(mapping));
+		}
+	}
 }
 
 struct guest *
@@ -2225,6 +2623,31 @@ guest_add_variable(struct guest *guest, const char *name, const char *str)
 	md_add_prop_str(md, node, name, str);
 }
 
+void
+guest_add_iodev(struct guest *guest, const char *path)
+{
+	struct component *component;
+	struct subdevice *subdevice;
+
+	if (!directio_capability)
+		errx(1, "direct I/O not supported by hypervisor");
+
+	TAILQ_FOREACH(component, &components, link) {
+		if (strcmp(component->path, path) == 0)
+			break;
+	}
+
+	if (component == NULL)
+		errx(1, "incorrect device path %s", path);
+	if (component->assigned)
+		errx(1, "device path %s already assigned", path);
+
+	subdevice = xzalloc(sizeof(*subdevice));
+	subdevice->path = path;
+	TAILQ_INSERT_TAIL(&guest->subdevice_list, subdevice, link);
+	component->assigned = 1;
+}
+
 struct cpu *
 guest_find_cpu(struct guest *guest, uint64_t pid)
 {
@@ -2296,6 +2719,10 @@ guest_finalize(struct guest *guest)
 		}
 	}
 
+	if (strcmp(guest->name, "primary") != 0)
+		guest_prune_phys_io(guest);
+	guest_fixup_phys_io(guest);
+
 	md_collect_garbage(md);
 
 	parent = md_find_node(md, "memory");
@@ -2330,6 +2757,7 @@ build_config(const char *filename)
 	struct guest *primary;
 	struct guest *guest;
 	struct ldc_endpoint *endpoint;
+	struct component *component;
 	uint64_t resource_id;
 	int i;
 
@@ -2338,6 +2766,7 @@ build_config(const char *filename)
 	struct vdisk *vdisk;
 	struct vnet *vnet;
 	struct var *var;
+	struct iodev *iodev;
 	uint64_t num_cpus, primary_num_cpus;
 	uint64_t memory, primary_memory;
 
@@ -2416,8 +2845,16 @@ build_config(const char *filename)
 			    vnet->mtu);
 		SIMPLEQ_FOREACH(var, &domain->var_list, entry)
 			guest_add_variable(guest, var->name, var->str);
+		SIMPLEQ_FOREACH(iodev, &domain->iodev_list, entry)
+			guest_add_iodev(guest, iodev->path);
 
 		guest_finalize(guest);
+	}
+
+	TAILQ_FOREACH(component, &components, link) {
+		if (component->assigned)
+			continue;
+		guest_add_iodev(primary, component->path);
 	}
 
 	guest_finalize(primary);

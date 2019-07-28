@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2019/02/13 22:57:08 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2019/07/28 14:51:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -82,7 +82,7 @@ typedef struct {
 %}
 
 %token	DOMAIN
-%token	VCPU MEMORY VDISK VNET VARIABLE
+%token	VCPU MEMORY VDISK VNET VARIABLE IODEVICE
 %token	MAC_ADDR MTU
 %token	ERROR
 %token	<v.string>		STRING
@@ -105,6 +105,7 @@ domain		: DOMAIN STRING optnl '{' optnl	{
 			SIMPLEQ_INIT(&domain->vdisk_list);
 			SIMPLEQ_INIT(&domain->vnet_list);
 			SIMPLEQ_INIT(&domain->var_list);
+			SIMPLEQ_INIT(&domain->iodev_list);
 		}
 		    domainopts_l '}' {
 			/* domain names need to be unique. */
@@ -149,6 +150,11 @@ domainopts	: VCPU NUMBER {
 			var->str = $4;
 			SIMPLEQ_INSERT_TAIL(&domain->var_list, var, entry);
 		}
+		| IODEVICE STRING {
+			struct iodev *iodev = xmalloc(sizeof(struct iodev));
+			iodev->path = $2;
+			SIMPLEQ_INSERT_TAIL(&domain->iodev_list, iodev, entry);
+		    }
 		;
 
 vnet_opts	:	{ opts_default(); }
@@ -257,6 +263,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "domain",		DOMAIN},
+		{ "iodevice",		IODEVICE},
 		{ "mac-addr",		MAC_ADDR},
 		{ "memory",		MEMORY},
 		{ "mtu",		MTU},

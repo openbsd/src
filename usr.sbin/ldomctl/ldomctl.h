@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.h,v 1.7 2018/09/16 14:27:32 kettenis Exp $	*/
+/*	$OpenBSD: ldomctl.h,v 1.8 2019/07/28 14:51:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -47,9 +47,37 @@ struct device {
 	uint64_t resource_id;
 	uint64_t rcid;
 
+	int virtual;
+
+	uint64_t num_msi_eqs;
+	uint64_t num_msis;
+	uint64_t msi_ranges[2];
+	uint64_t num_vpci;
+
+	uint64_t msi_eqs_per_vpci;
+	uint64_t msis_per_vpci;
+	uint64_t msi_base;
+
 	struct guest *guest;
 	struct md_node *hv_node;
 	TAILQ_ENTRY(device) link;
+};
+
+struct subdevice {
+	const char *path;
+	TAILQ_ENTRY(subdevice) link;
+};
+
+struct rootcomplex {
+	uint64_t num_msi_eqs;
+	uint64_t num_msis;
+	const void *msi_ranges;
+	int num_msi_ranges;
+	const void *vdma_ranges;
+	int num_vdma_ranges;
+	uint64_t cfghandle;
+	const char *path;
+	TAILQ_ENTRY(rootcomplex) link;
 };
 
 struct mblock {
@@ -105,6 +133,7 @@ struct guest {
 	TAILQ_HEAD(, cpu) cpu_list;
 	int num_cpus;
 	TAILQ_HEAD(, device) device_list;
+	TAILQ_HEAD(, subdevice) subdevice_list;
 	TAILQ_HEAD(, mblock) mblock_list;
 	TAILQ_HEAD(, ldc_endpoint) endpoint_list;
 
@@ -141,6 +170,11 @@ struct var {
 	const char		*str;
 };
 
+struct iodev {
+	SIMPLEQ_ENTRY(iodev)	entry;
+	const char		*path;
+};
+
 struct domain {
 	SIMPLEQ_ENTRY(domain)	entry;
 	const char *name;
@@ -149,6 +183,7 @@ struct domain {
 	SIMPLEQ_HEAD(, vdisk) vdisk_list;
 	SIMPLEQ_HEAD(, vnet) vnet_list;
 	SIMPLEQ_HEAD(, var) var_list;
+	SIMPLEQ_HEAD(, iodev) iodev_list;
 } *domain;
 
 struct ldom_config {
