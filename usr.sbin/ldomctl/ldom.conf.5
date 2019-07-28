@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.3 2019/07/28 17:37:40 kn Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.4 2019/07/28 18:50:01 kettenis Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -42,6 +42,9 @@ Declare the number of virtual CPUs assigned to a domain.
 Declare the amount of memory assigned to a domain, in bytes.
 Optionally, the units 'K', 'M', or 'G', for kilo-, mega-, and gigabytes
 can be used.
+.It Ic iodevice Ar path
+Assign the specified PCIe device to the guest domain.
+This keyword can be used multiple times.
 .It Ic variable Ar name Ns = Ns Ar value
 Set the specified NVRAM variable for the domain.
 See
