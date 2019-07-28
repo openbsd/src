@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.240 2019/07/28 13:12:58 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.241 2019/07/28 18:22:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -120,7 +120,8 @@ main(int argc, char *argv[])
 	struct outstate	 outst;		/* Output state. */
 	struct winsize	 ws;		/* Result of ioctl(TIOCGWINSZ). */
 	struct mansearch search;	/* Search options. */
-	struct manpage	*res, *resp;	/* Search results. */
+	struct manpage	*res;		/* Complete list of search results. */
+	struct manpage	*resn;		/* Search results for one name. */
 	struct mparse	*mp;		/* Opaque parser object. */
 	const char	*conf_file;	/* -C: alternate config file. */
 	const char	*os_s;		/* -I: Operating system for display. */
@@ -130,8 +131,9 @@ main(int argc, char *argv[])
 	char		*oarg;		/* -O: output option string. */
 	char		*tagarg;	/* -O tag: default value. */
 	unsigned char	*uc;
-	size_t		 sz;		/* Number of elements in res[]. */
-	size_t		 i, ssz;
+	size_t		 ressz;		/* Number of elements in res[]. */
+	size_t		 resnsz;	/* Number of elements in resn[]. */
+	size_t		 i, ib, ssz;
 	int		 options;	/* Parser options. */
 	int		 show_usage;	/* Invalid argument: give up. */
 	int		 prio, best_prio;
@@ -365,11 +367,10 @@ main(int argc, char *argv[])
 		argc -= optind;
 		argv += optind;
 	}
-	resp = NULL;
 
 	/*
-	 * Quirks for help(1)
-	 * and for a man(1) section argument without -s.
+	 * Quirks for help(1) and man(1),
+	 * in particular for a section argument without -s.
 	 */
 
 	if (search.argmode == ARG_NAME) {
@@ -391,6 +392,8 @@ main(int argc, char *argv[])
 			search.arch = getenv("MACHINE");
 		if (search.arch == NULL)
 			search.arch = MACHINE;
+		if (outmode == OUTMODE_ONE)
+			search.firstmatch = 1;
 	}
 
 	/*
@@ -404,80 +407,54 @@ main(int argc, char *argv[])
 		conf.output.tag = tagarg == NULL ? *argv : tagarg + 1;
 	}
 
-	/* man(1), whatis(1), apropos(1) */
+	/* Read the configuration file. */
 
-	if (search.argmode != ARG_FILE) {
-		if (search.argmode == ARG_NAME &&
-		    outmode == OUTMODE_ONE)
-			search.firstmatch = 1;
-
-		/* Access the mandoc database. */
-
+	if (search.argmode != ARG_FILE)
 		manconf_parse(&conf, conf_file, defpaths, auxpaths);
-		if ( ! mansearch(&search, &conf.manpath,
-		    argc, argv, &res, &sz))
-			usage(search.argmode);
 
-		if (sz == 0 && search.argmode == ARG_NAME)
-			(void)fs_search(&search, &conf.manpath,
-			    argc, argv, &res, &sz);
+	/* man(1): Resolve each name individually. */
 
-		if (search.argmode == ARG_NAME) {
-			for (c = 0; c < argc; c++) {
-				if (strchr(argv[c], '/') == NULL)
+	if (search.argmode == ARG_NAME) {
+		if (argc < 1)
+			usage(ARG_NAME);
+		for (res = NULL, ressz = 0; argc > 0; argc--, argv++) {
+			(void)mansearch(&search, &conf.manpath,
+			    1, argv, &resn, &resnsz);
+			if (resnsz == 0)
+				(void)fs_search(&search, &conf.manpath,
+				    1, argv, &resn, &resnsz);
+			if (resnsz == 0) {
+				if (strchr(*argv, '/') == NULL) {
+					mandoc_msg_setrc(MANDOCLEVEL_BADARG);
 					continue;
-				if (access(argv[c], R_OK) == -1) {
-					mandoc_msg_setinfilename(argv[c]);
+				}
+				if (access(*argv, R_OK) == -1) {
+					mandoc_msg_setinfilename(*argv);
 					mandoc_msg(MANDOCERR_BADARG_BAD,
 					    0, 0, "%s", strerror(errno));
 					mandoc_msg_setinfilename(NULL);
 					continue;
 				}
-				res = mandoc_reallocarray(res,
-				    sz + 1, sizeof(*res));
-				res[sz].file = mandoc_strdup(argv[c]);
-				res[sz].names = NULL;
-				res[sz].output = NULL;
-				res[sz].bits = 0;
-				res[sz].ipath = SIZE_MAX;
-				res[sz].sec = 10;
-				res[sz].form = FORM_SRC;
-				sz++;
+				resnsz = 1;
+				resn = mandoc_calloc(resnsz, sizeof(*res));
+				resn->file = mandoc_strdup(*argv);
+				resn->ipath = SIZE_MAX;
+				resn->form = FORM_SRC;
 			}
-		}
+			if (outmode != OUTMODE_ONE || resnsz == 1) {
+				res = mandoc_reallocarray(res,
+				    ressz + resnsz, sizeof(*res));
+				memcpy(res + ressz, resn,
+				    sizeof(*resn) * resnsz);
+				ressz += resnsz;
+				continue;
+			}
 
-		if (sz == 0) {
-			if (search.argmode != ARG_NAME)
-				warnx("nothing appropriate");
-			mandoc_msg_setrc(MANDOCLEVEL_BADARG);
-			goto out;
-		}
+			/* Search for the best section. */
 
-		/*
-		 * For standard man(1) and -a output mode,
-		 * prepare for copying filename pointers
-		 * into the program parameter array.
-		 */
-
-		if (outmode == OUTMODE_ONE) {
-			argc = 1;
 			best_prio = 40;
-		} else if (outmode == OUTMODE_ALL)
-			argc = (int)sz;
-
-		/* Iterate all matching manuals. */
-
-		resp = res;
-		for (i = 0; i < sz; i++) {
-			if (outmode == OUTMODE_FLN)
-				puts(res[i].file);
-			else if (outmode == OUTMODE_LST)
-				printf("%s - %s\n", res[i].names,
-				    res[i].output == NULL ? "" :
-				    res[i].output);
-			else if (outmode == OUTMODE_ONE) {
-				/* Search for the best section. */
-				sec = res[i].file;
+			for (ib = i = 0; i < resnsz; i++) {
+				sec = resn[i].file;
 				sec += strcspn(sec, "123456789");
 				if (sec[0] == '\0')
 					continue; /* No section at all. */
@@ -498,32 +475,53 @@ main(int argc, char *argv[])
 				if (prio >= best_prio)
 					continue;
 				best_prio = prio;
-				resp = res + i;
+				ib = i;
 			}
+			res = mandoc_reallocarray(res, ressz + 1,
+			    sizeof(*res));
+			memcpy(res + ressz++, resn + ib, sizeof(*resn));
 		}
 
-		/*
-		 * For man(1), -a and -i output mode, fall through
-		 * to the main mandoc(1) code iterating files
-		 * and running the parsers on each of them.
-		 */
+	/* apropos(1), whatis(1): Process the full search expression. */
 
-		if (outmode == OUTMODE_FLN || outmode == OUTMODE_LST)
+	} else if (search.argmode != ARG_FILE) {
+		if (mansearch(&search, &conf.manpath,
+		    argc, argv, &res, &ressz) == 0)
+			usage(search.argmode);
+
+		if (ressz == 0) {
+			warnx("nothing appropriate");
+			mandoc_msg_setrc(MANDOCLEVEL_BADARG);
 			goto out;
+		}
+
+	/* mandoc(1): Take command line arguments as file names. */
+
 	} else {
-		sz = argc > 0 ? argc : 1;
-		resp = res = mandoc_recallocarray(NULL, 0, sz, sizeof(*res));
-		for (i = 0; i < sz; i++) {
+		ressz = argc > 0 ? argc : 1;
+		res = mandoc_calloc(ressz, sizeof(*res));
+		for (i = 0; i < ressz; i++) {
 			if (argc > 0)
 				res[i].file = mandoc_strdup(argv[i]);
 			res[i].ipath = SIZE_MAX;
 			res[i].form = FORM_SRC;
 		}
-		if (argc < 1)
-			argc = 1;
 	}
 
-	/* mandoc(1) */
+	switch (outmode) {
+	case OUTMODE_FLN:
+		for (i = 0; i < ressz; i++)
+			puts(res[i].file);
+		goto out;
+	case OUTMODE_LST:
+		for (i = 0; i < ressz; i++)
+			printf("%s - %s\n", res[i].names,
+			    res[i].output == NULL ? "" :
+			    res[i].output);
+		goto out;
+	default:
+		break;
+	}
 
 	if (outst.use_pager) {
 		if (pledge("stdio rpath tmppath tty proc exec", NULL) == -1) {
@@ -558,8 +556,8 @@ main(int argc, char *argv[])
 	 */
 	startdir = open(".", O_RDONLY | O_DIRECTORY);
 
-	while (argc-- > 0) {
-		process_onefile(mp, resp++, startdir, &outst, &conf);
+	for (i = 0; i < ressz; i++) {
+		process_onefile(mp, res + i, startdir, &outst, &conf);
 		if (outst.wstop && mandoc_msg_getrc() != MANDOCLEVEL_OK)
 			break;
 	}
@@ -591,7 +589,7 @@ main(int argc, char *argv[])
 	mchars_free();
 
 out:
-	mansearch_free(res, sz);
+	mansearch_free(res, ressz);
 	if (search.argmode != ARG_FILE)
 		manconf_free(&conf);
 
