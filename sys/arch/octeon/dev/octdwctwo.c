@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.11 2017/02/15 14:44:20 visa Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.12 2019/07/28 12:57:09 visa Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -51,6 +51,7 @@ struct octdwctwo_softc {
 int			octdwctwo_match(struct device *, void *, void *);
 void			octdwctwo_attach(struct device *, struct device *,
 			    void *);
+int			octdwctwo_activate(struct device *, int);
 int			octdwctwo_set_dma_addr(void *, dma_addr_t, int);
 u_int64_t		octdwctwo_reg2_rd(struct octdwctwo_softc *, bus_size_t);
 void			octdwctwo_reg2_wr(struct octdwctwo_softc *, bus_size_t,
@@ -67,6 +68,7 @@ void			octdwctwo_write_4(bus_space_tag_t, bus_space_handle_t,
 
 const struct cfattach octdwctwo_ca = {
 	sizeof(struct octdwctwo_softc), octdwctwo_match, octdwctwo_attach,
+	NULL, octdwctwo_activate
 };
 
 struct cfdriver dwctwo_cd = {
@@ -229,6 +231,41 @@ octdwctwo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB | IPL_MPSAFE,
 	    dwc2_intr, (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
 	KASSERT(sc->sc_ih != NULL);
+}
+
+int
+octdwctwo_activate(struct device *self, int act)
+{
+	struct octdwctwo_softc *sc = (struct octdwctwo_softc *)self;
+	uint64_t clk;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		/*
+		 * Put the controller into reset mode.
+		 * It appears necessary to hold this state for a moment.
+		 * Otherwise subsequent attempts to reinitialize the controller
+		 * may fail because of hanging or trapping access
+		 * of DWC2 core registers.
+		 */
+		clk = bus_space_read_8(sc->sc_bust, sc->sc_regh,
+		    USBN_CLK_CTL_OFFSET);
+		clk |= USBN_CLK_CTL_POR;
+		clk |= USBN_CLK_CTL_HCLK_RST;
+		clk |= USBN_CLK_CTL_ENABLE;
+		clk &= ~USBN_CLK_CTL_HRST;
+		clk &= ~USBN_CLK_CTL_PRST;
+		bus_space_write_8(sc->sc_bust, sc->sc_regh,
+		    USBN_CLK_CTL_OFFSET, clk);
+		(void)bus_space_read_8(sc->sc_bust, sc->sc_regh,
+		    USBN_CLK_CTL_OFFSET);
+		delay(50000);
+		break;
+	default:
+		break;
+	}
+	return rv;
 }
 
 int
