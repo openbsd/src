@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iavf.c,v 1.1 2019/07/29 00:40:49 jmatthew Exp $	*/
+/*	$OpenBSD: if_iavf.c,v 1.2 2019/07/29 12:04:31 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -712,6 +712,7 @@ static const struct iavf_aq_regs iavf_aq_regs = {
 	iavf_wr((_s), I40E_VFINT_ICR0_ENA1, I40E_VFINT_ICR0_ENA1_ADMINQ_MASK)
 
 #define iavf_nqueues(_sc)	(1 << (_sc)->sc_nqueues)
+#define iavf_allqueues(_sc)	((1 << ((_sc)->sc_nqueues+1)) - 1)
 
 #ifdef __LP64__
 #define iavf_dmamem_hi(_ixm)	(uint32_t)(IAVF_DMA_DVA(_ixm) >> 32)
@@ -1156,7 +1157,7 @@ iavf_config_hena(struct iavf_softc *sc)
 }
 
 static int
-iavf_enable_queues(struct iavf_softc *sc)
+iavf_queue_select(struct iavf_softc *sc, int opcode)
 {
 	struct iavf_aq_desc iaq;
 	struct iavf_vc_queue_select *qsel;
@@ -1165,14 +1166,14 @@ iavf_enable_queues(struct iavf_softc *sc)
 	memset(&iaq, 0, sizeof(iaq));
 	iaq.iaq_flags = htole16(IAVF_AQ_BUF | IAVF_AQ_RD);
 	iaq.iaq_opcode = htole16(IAVF_AQ_OP_SEND_TO_PF);
-	iaq.iaq_vc_opcode = htole32(IAVF_VC_OP_ENABLE_QUEUES);
+	iaq.iaq_vc_opcode = htole32(opcode);
 	iaq.iaq_datalen = htole16(sizeof(*qsel));
 	iavf_aq_dva(&iaq, IAVF_DMA_DVA(&sc->sc_scratch));
 
 	qsel = IAVF_DMA_KVA(&sc->sc_scratch);
 	qsel->vsi_id = htole16(sc->sc_vsi_id);
-	qsel->rx_queues = htole32(1);
-	qsel->tx_queues = htole32(1);
+	qsel->rx_queues = htole32(iavf_allqueues(sc));
+	qsel->tx_queues = htole32(iavf_allqueues(sc));
 
 	bus_dmamap_sync(sc->sc_dmat, IAVF_DMA_MAP(&sc->sc_scratch), 0,
 	    IAVF_DMA_LEN(&sc->sc_scratch),
@@ -1181,7 +1182,7 @@ iavf_enable_queues(struct iavf_softc *sc)
 	iavf_atq_post(sc, &iaq);
 	rv = iavf_arq_wait(sc, 250);
 	if (rv != IAVF_VC_RC_SUCCESS) {
-		printf("%s: ENABLE_QUEUES failed: %d\n", DEVNAME(sc), rv);
+		printf("%s: queue op %d failed: %d\n", DEVNAME(sc), opcode, rv);
 		return (1);
 	}
 
@@ -1229,7 +1230,7 @@ iavf_up(struct iavf_softc *sc)
 	if (iavf_config_hena(sc) != 0)
 		goto down;
 
-	if (iavf_enable_queues(sc) != 0)
+	if (iavf_queue_select(sc, IAVF_VC_OP_ENABLE_QUEUES) != 0)
 		goto down;
 
 	SET(ifp->if_flags, IFF_RUNNING);
@@ -1373,7 +1374,7 @@ iavf_down(struct iavf_softc *sc)
 	struct iavf_rx_ring *rxr;
 	struct iavf_tx_ring *txr;
 	unsigned int nqueues, i;
-	//uint32_t reg;
+	uint32_t reg;
 	int error = 0;
 
 	nqueues = iavf_nqueues(sc);
@@ -1384,22 +1385,17 @@ iavf_down(struct iavf_softc *sc)
 
 	NET_UNLOCK();
 
-	/* mask interrupts */
-	/*
-	reg = iavf_rd(sc, I40E_QINT_RQCTL(I40E_INTR_NOTX_QUEUE));
-	CLR(reg, I40E_QINT_RQCTL_CAUSE_ENA_MASK);
-	iavf_wr(sc, I40E_QINT_RQCTL(I40E_INTR_NOTX_QUEUE), reg);
-
-	reg = iavf_rd(sc, I40E_QINT_TQCTL(I40E_INTR_NOTX_QUEUE));
-	CLR(reg, I40E_QINT_TQCTL_CAUSE_ENA_MASK);
-	iavf_wr(sc, I40E_QINT_TQCTL(I40E_INTR_NOTX_QUEUE), reg);
-
-	iavf_wr(sc, I40E_PFINT_LNKLST0, I40E_QUEUE_TYPE_EOL);
-	*/
-
 	/* disable queues */
+	if (iavf_queue_select(sc, IAVF_VC_OP_DISABLE_QUEUES) != 0)
+		goto die;
 
-	/* make sure the no hw generated work is still in flight */
+	/* mask interrupts */
+	reg = iavf_rd(sc, I40E_VFINT_DYN_CTL01);
+	reg |= I40E_VFINT_DYN_CTL0_INTENA_MSK_MASK |
+	    (IAVF_NOITR << I40E_VFINT_DYN_CTL0_ITR_INDX_SHIFT);
+	iavf_wr(sc, I40E_VFINT_DYN_CTL01, reg);
+
+	/* make sure no hw generated work is still in flight */
 	intr_barrier(sc->sc_ihc);
 	for (i = 0; i < nqueues; i++) {
 		rxr = ifp->if_iqs[i]->ifiq_softc;
@@ -1424,11 +1420,16 @@ iavf_down(struct iavf_softc *sc)
 		ifp->if_ifqs[i]->ifq_softc =  NULL;
 	}
 
+	/* unmask */
+	reg = iavf_rd(sc, I40E_VFINT_DYN_CTL01);
+	reg |= (IAVF_NOITR << I40E_VFINT_DYN_CTL0_ITR_INDX_SHIFT);
+	iavf_wr(sc, I40E_VFINT_DYN_CTL01, reg);
+
 out:
 	rw_exit_write(&sc->sc_cfg_lock);
 	NET_LOCK();
 	return (error);
-//die:
+die:
 	sc->sc_dead = 1;
 	log(LOG_CRIT, "%s: failed to shut down rings", DEVNAME(sc));
 	error = ETIMEDOUT;
@@ -2387,8 +2388,8 @@ iavf_config_irq_map(struct iavf_softc *sc)
 	vec = map->vecmap;
 	vec[0].vsi_id = letoh16(sc->sc_vsi_id);
 	vec[0].vector_id = 0;
-	vec[0].rxq_map = letoh16((1 << (iavf_nqueues(sc) + 1)) - 1);
-	vec[0].txq_map = letoh16((1 << (iavf_nqueues(sc) + 1)) - 1);
+	vec[0].rxq_map = letoh16(iavf_allqueues(sc));
+	vec[0].txq_map = letoh16(iavf_allqueues(sc));
 	vec[0].rxitr_idx = IAVF_NOITR;
 	vec[0].txitr_idx = IAVF_NOITR;
 
@@ -2558,6 +2559,8 @@ iavf_arq_wait(struct iavf_softc *sc, int msec)
 	timeout_add_msec(&sc->sc_admin_timeout, msec);
 
 	cond_wait(&sc->sc_admin_cond, "iavfarq");
+	timeout_del(&sc->sc_admin_timeout);
+
 	return sc->sc_admin_result;
 }
 
