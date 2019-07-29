@@ -32,8 +32,8 @@
  * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
  */
 
-#include <linux/ww_mutex.h>
 #include <linux/reservation.h>
+#include <linux/export.h>
 
 /**
  * DOC: Reservation Object Overview
