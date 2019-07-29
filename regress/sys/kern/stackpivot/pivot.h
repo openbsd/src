@@ -6,6 +6,8 @@ static void pivot(size_t *newstack) {
     asm("mov %0, %%rsp; retq;" ::"r"(newstack));
 #elif defined(__i386__)
     asm("mov %0, %%esp; retl;" ::"r"(newstack));
+#elif defined(__mips64__)
+    asm("move $sp, %0; ld $ra, 0($sp); jr $ra;" ::"r"(newstack));
 #endif
 }
 
