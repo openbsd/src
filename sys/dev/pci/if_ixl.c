@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.40 2019/07/21 06:22:27 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.41 2019/07/29 05:00:13 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1313,28 +1313,6 @@ static const struct ixl_aq_regs ixl_pf_aq_regs = {
 	.arq_len_enable	= I40E_PF_ARQLEN_ARQENABLE_MASK,
 };
 
-#ifdef notyet
-static const struct ixl_aq_regs ixl_vf_aq_regs = {
-	.atq_tail	= I40E_VF_ATQT1,
-	.atq_tail_mask	= I40E_VF_ATQT1_ATQT_MASK;
-	.atq_head	= I40E_VF_ATQH1,
-	.atq_head_mask	= I40E_VF_ARQH1_ARQH_MASK;
-	.atq_len	= I40E_VF_ATQLEN1,
-	.atq_bal	= I40E_VF_ATQBAL1,
-	.atq_bah	= I40E_VF_ATQBAH1,
-	.atq_len_enable	= I40E_VF_ATQLEN1_ATQENABLE_MASK,
-
-	.arq_tail	= I40E_VF_ARQT1,
-	.arq_tail_mask	= I40E_VF_ARQT1_ARQT_MASK;
-	.arq_head	= I40E_VF_ARQH1,
-	.arq_head_mask	= I40E_VF_ARQH1_ARQH_MASK;
-	.arq_len	= I40E_VF_ARQLEN1,
-	.arq_bal	= I40E_VF_ARQBAL1,
-	.arq_bah	= I40E_VF_ARQBAH1,
-	.arq_len_enable	= I40E_VF_ARQLEN1_ARQENABLE_MASK,
-};
-#endif
-
 #define ixl_rd(_s, _r) \
 	bus_space_read_4((_s)->sc_memt, (_s)->sc_memh, (_r))
 #define ixl_wr(_s, _r, _v) \
@@ -1376,10 +1354,6 @@ ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
 static struct rwlock ixl_sff_lock = RWLOCK_INITIALIZER("ixlsff");
 
 static const struct pci_matchid ixl_devices[] = {
-#ifdef notyet
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XL710_VF },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XL710_VF_HV },
-#endif
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X710_10G_SFP },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_XL710_40G_BP },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_X710_10G_BP },
@@ -1422,7 +1396,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
-	sc->sc_aq_regs = &ixl_pf_aq_regs; /* VF? */
+	sc->sc_aq_regs = &ixl_pf_aq_regs;
 
 	sc->sc_nqueues = 0; /* 1 << 0 is 1 queue */
 	sc->sc_tx_ring_ndescs = 1024;
