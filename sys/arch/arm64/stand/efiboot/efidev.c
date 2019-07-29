@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.4 2019/01/31 14:35:06 patrick Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.5 2019/07/29 22:33:26 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -100,8 +100,12 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 	case F_WRITE:
 		if (ed->blkio->Media->ReadOnly)
 			goto on_eio;
-		/* XXX not yet */
-		goto on_eio;
+		memcpy(data, buf, nsect * DEV_BSIZE);
+		status = EFI_CALL(ed->blkio->WriteBlocks,
+		    ed->blkio, ed->mediaid, off,
+		    nsect * DEV_BSIZE, data);
+		if (EFI_ERROR(status))
+			goto on_eio;
 		break;
 	}
 	return (EFI_SUCCESS);
