@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.5,v 1.17 2019/07/29 17:26:00 mestre Exp $
+.\"	$OpenBSD: acct.5,v 1.18 2019/07/29 21:44:26 millert Exp $
 .\"	$NetBSD: acct.5,v 1.4 1995/10/22 01:40:10 ghudson Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -86,6 +86,7 @@ struct acct {
 
 #ifdef _KERNEL
 int	acct_process(struct proc *p);
+int	acct_shutdown(void);
 #endif
 .Ed
 .Pp
@@ -96,16 +97,46 @@ is saved in the field
 .Fa ac_comm
 and its status is saved by setting one or more of the following flags in
 .Fa ac_flag :
-.Dv AFORK ,
-.Dv ASU ,
-.Dv ACOMPAT ,
-.Dv ACORE ,
-and
-.Dv AXSIG .
+.Pp
+.Bl -tag -width "AUNVEIL"
+.It Dv AFORK
+A new process was created via
+.Xr fork 2
+that was not followed by a call to
+.Xr execve 2 .
+.It Dv ASU
+The process used super-user permissions.
+This flag is never set and is provided for source compatibility only.
+.It Dv ACOMPAT
+On VAX, this indicated that the process executed in PDP/11 compatibility mode.
+This flag is never set and is provided for source compatibility only.
+.It Dv ACORE
+The process terminated abnormally due to a signal and dumped
+.Xr core 5 .
+.It Dv AXSIG
+The process was killed by a
+.Xr signal 3 .
+.It Dv APLEDGE
+The process was killed due to a
+.Xr pledge 2
+violation.
+.It Dv ATRAP
+The process was killed due to a memory access violation
+detected by a processor trap.
+.It Dv AUNVEIL
+The process attempted a file access that was prevented by
+.Xr unveil 2
+restrictions.
+Note that this does not cause the process to terminate.
+.El
 .Sh SEE ALSO
 .Xr lastcomm 1 ,
 .Xr acct 2 ,
 .Xr execve 2 ,
+.Xr pledge 2 ,
+.Xr unveil 2 ,
+.Xr signal 3 ,
+.Xr core 5 ,
 .Xr accton 8 ,
 .Xr sa 8
 .Sh HISTORY
