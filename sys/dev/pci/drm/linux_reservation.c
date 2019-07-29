@@ -420,6 +420,10 @@ int reservation_object_get_fences_rcu(struct reservation_object *obj,
 			kfree(shared);
 			if (!nshared) {
 				rcu_read_unlock();
+
+				dma_fence_put(fence_excl);
+				fence_excl = NULL;
+
 				nshared = kmalloc(sz, GFP_KERNEL);
 				if (nshared != NULL && shared != NULL)
 					memcpy(nshared, shared, sz);
