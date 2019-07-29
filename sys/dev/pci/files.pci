@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.336 2019/05/04 06:40:33 jmatthew Exp $
+#	$OpenBSD: files.pci,v 1.337 2019/07/29 00:40:49 jmatthew Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -832,6 +832,11 @@ file	dev/pci/if_bnxt.c		bnxt
 device  mcx: ether, ifnet, ifmedia
 attach  mcx at pci
 file    dev/pci/if_mcx.c                mcx
+
+# Intel Adaptive Virtual Function
+device	iavf: ether, ifnet, ifmedia
+attach	iavf at pci
+file	dev/pci/if_iavf.c		iavf
 
 include "dev/pci/files.agp"
 include "dev/pci/drm/files.drm"
