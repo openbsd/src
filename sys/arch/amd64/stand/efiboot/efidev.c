@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.30 2018/08/10 16:41:35 jsing Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.31 2019/07/29 14:51:39 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -104,19 +104,19 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 
 	lba = (off + i_lblks) / blks;
 
+	/* allocate the space for reading unaligned blocks */
+	if (ed->blkio->Media->BlockSize != DEV_BSIZE) {
+		if (iblk && iblksz < ed->blkio->Media->BlockSize) {
+			free(iblk, iblksz);
+			iblk = NULL;
+		}
+		if (iblk == NULL) {
+			iblk = alloc(ed->blkio->Media->BlockSize);
+			iblksz = ed->blkio->Media->BlockSize;
+		}
+	}
 	switch (rw) {
 	case F_READ:
-		/* allocate the space for reading unaligned blocks */
-		if (ed->blkio->Media->BlockSize != DEV_BSIZE) {
-			if (iblk && iblksz < ed->blkio->Media->BlockSize) {
-				free(iblk, iblksz);
-				iblk = NULL;
-			}
-			if (iblk == NULL) {
-				iblk = alloc(ed->blkio->Media->BlockSize);
-				iblksz = ed->blkio->Media->BlockSize;
-			}
-		}
 		if (i_lblks > 0) {
 			status = EFI_CALL(ed->blkio->ReadBlocks,
 			    ed->blkio, ed->mediaid, lba - 1,
@@ -147,8 +147,38 @@ efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
 	case F_WRITE:
 		if (ed->blkio->Media->ReadOnly)
 			goto on_eio;
-		/* XXX not yet */
-		goto on_eio;
+		if (i_lblks > 0) {
+			status = EFI_CALL(ed->blkio->ReadBlocks,
+			    ed->blkio, ed->mediaid, lba - 1,
+			    ed->blkio->Media->BlockSize, iblk);
+			if (EFI_ERROR(status))
+				goto on_eio;
+			memcpy(iblk + (blks - i_lblks) * DEV_BSIZE, buf,
+			    min(nsect, i_lblks) * DEV_BSIZE);
+			status = EFI_CALL(ed->blkio->WriteBlocks,
+			    ed->blkio, ed->mediaid, lba - 1,
+			    ed->blkio->Media->BlockSize, iblk);
+		}
+		if (i_nblks > 0) {
+			status = EFI_CALL(ed->blkio->WriteBlocks,
+			    ed->blkio, ed->mediaid, lba,
+			    ed->blkio->Media->BlockSize * (i_nblks / blks),
+			    buf + (i_lblks * DEV_BSIZE));
+			if (EFI_ERROR(status))
+				goto on_eio;
+		}
+		if (i_tblks > 0) {
+			status = EFI_CALL(ed->blkio->ReadBlocks,
+			    ed->blkio, ed->mediaid, lba + (i_nblks / blks),
+			    ed->blkio->Media->BlockSize, iblk);
+			if (EFI_ERROR(status))
+				goto on_eio;
+			memcpy(iblk, buf + (i_lblks + i_nblks) * DEV_BSIZE,
+			    i_tblks * DEV_BSIZE);
+			status = EFI_CALL(ed->blkio->WriteBlocks,
+			    ed->blkio, ed->mediaid, lba + (i_nblks / blks),
+			    ed->blkio->Media->BlockSize, iblk);
+		}
 		break;
 	}
 	return (EFI_SUCCESS);
