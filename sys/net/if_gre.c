@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.151 2019/07/17 16:46:17 mpi Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.152 2019/07/29 16:28:25 bluhm Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1930,8 +1930,10 @@ mgre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dest,
 	}
 
 	m = gre_l3_encap_dst(&sc->sc_tunnel, addr, m, dest->sa_family);
-	if (m == NULL)
+	if (m == NULL) {
+		ifp->if_oerrors++;
 		return (ENOBUFS);
+	}
 
 	m->m_pkthdr.ph_family = dest->sa_family;
 
@@ -2142,6 +2144,10 @@ gre_encap_dst_ip(const struct gre_tunnel *tunnel, const union gre_addr *dst,
     struct mbuf *m, uint8_t ttl, uint8_t tos)
 {
 	switch (tunnel->t_af) {
+	case AF_UNSPEC:
+		/* packets may arrive before tunnel is set up */
+		m_freem(m);
+		return (NULL);
 	case AF_INET: {
 		struct ip *ip;
 
@@ -2188,8 +2194,7 @@ gre_encap_dst_ip(const struct gre_tunnel *tunnel, const union gre_addr *dst,
 	}
 #endif /* INET6 */
 	default:
-		panic("%s: unsupported af %d in %p", __func__, tunnel->t_af,
-		    tunnel);
+		unhandled_af(tunnel->t_af);
 	}
 
 	return (m);
@@ -2215,8 +2220,7 @@ gre_ip_output(const struct gre_tunnel *tunnel, struct mbuf *m)
 		break;
 #endif
 	default:
-		panic("%s: unsupported af %d in %p", __func__, tunnel->t_af,
-		    tunnel);
+		unhandled_af(tunnel->t_af);
 	}
 
 	return (0);
@@ -4286,7 +4290,7 @@ gre_ip_cmp(int af, const union gre_addr *a, const union gre_addr *b)
 	case AF_INET:
 		return (memcmp(&a->in4, &b->in4, sizeof(a->in4)));
 	default:
-		panic("%s: unsupported af %d\n", __func__, af);
+		unhandled_af(af);
 	}
 
 	return (0);
