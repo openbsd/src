@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.28 2019/07/03 03:24:02 deraadt Exp $	*/
+/*	$OpenBSD: socks.c,v 1.29 2019/07/29 15:19:03 benno Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -373,7 +373,8 @@ socks_connect(const char *host, const char *port,
 		/* Read status reply */
 		proxy_read_line(proxyfd, buf, sizeof(buf));
 		if (proxyuser != NULL &&
-		    strncmp(buf, "HTTP/1.0 407 ", 12) == 0) {
+		    (strncmp(buf, "HTTP/1.0 407 ", 12) == 0 ||
+		    strncmp(buf, "HTTP/1.1 407 ", 12) == 0)) {
 			if (authretry > 1) {
 				fprintf(stderr, "Proxy authentication "
 				    "failed\n");
