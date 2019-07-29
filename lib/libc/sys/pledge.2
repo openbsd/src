@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.56 2019/07/25 14:18:01 schwarze Exp $
+.\" $OpenBSD: pledge.2,v 1.57 2019/07/29 23:14:06 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 25 2019 $
+.Dd $Mdocdate: July 29 2019 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -466,7 +466,7 @@ If
 .Ar execpromises
 has been previously set the new program begins with those promises,
 unless setuid/setgid bits are set in which case execution is blocked with
-.Er EACCESS .
+.Er EACCES .
 Otherwise the new program starts running without pledge active,
 and hopefully makes a new pledge soon.
 .It Va prot_exec
