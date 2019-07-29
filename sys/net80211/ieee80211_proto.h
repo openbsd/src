@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.44 2018/02/05 08:44:13 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.45 2019/07/29 10:50:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -76,12 +76,16 @@ extern	int ieee80211_send_mgmt(struct ieee80211com *, struct ieee80211_node *,
 		int, int, int);
 extern	void ieee80211_eapol_key_input(struct ieee80211com *, struct mbuf *,
 		struct ieee80211_node *);
+extern	void ieee80211_tx_compressed_bar(struct ieee80211com *,
+		struct ieee80211_node *, int, uint16_t);
 extern	struct mbuf *ieee80211_encap(struct ifnet *, struct mbuf *,
 		struct ieee80211_node **);
 extern	struct mbuf *ieee80211_get_rts(struct ieee80211com *,
 		const struct ieee80211_frame *, u_int16_t);
 extern	struct mbuf *ieee80211_get_cts_to_self(struct ieee80211com *,
 		u_int16_t);
+extern	struct mbuf *ieee80211_get_compressed_bar(struct ieee80211com *,
+		struct ieee80211_node *, int, uint16_t);
 extern	struct mbuf *ieee80211_beacon_alloc(struct ieee80211com *,
 		struct ieee80211_node *);
 extern int ieee80211_save_ie(const u_int8_t *, u_int8_t **);
@@ -149,6 +153,8 @@ extern	void ieee80211_auth_open_confirm(struct ieee80211com *,
 extern	void ieee80211_auth_open(struct ieee80211com *,
 	    const struct ieee80211_frame *, struct ieee80211_node *,
 	    struct ieee80211_rxinfo *rs, u_int16_t, u_int16_t);
+extern	void ieee80211_stop_ampdu_tx(struct ieee80211com *,
+	    struct ieee80211_node *, int);
 extern	void ieee80211_gtk_rekey_timeout(void *);
 extern	int ieee80211_keyrun(struct ieee80211com *, u_int8_t *);
 extern	void ieee80211_setkeys(struct ieee80211com *);
@@ -168,6 +174,15 @@ extern	void ieee80211_addba_req_accept(struct ieee80211com *,
 	    struct ieee80211_node *, uint8_t);
 extern	void ieee80211_addba_req_refuse(struct ieee80211com *,
 	    struct ieee80211_node *, uint8_t);
-
+extern	void ieee80211_addba_resp_accept(struct ieee80211com *,
+	    struct ieee80211_node *, uint8_t);
+extern	void ieee80211_addba_resp_refuse(struct ieee80211com *,
+	    struct ieee80211_node *, uint8_t, uint16_t);
+extern	void ieee80211_output_ba_move_window(struct ieee80211com *,
+	    struct ieee80211_node *, uint8_t, uint16_t);
+extern	void ieee80211_output_ba_move_window_to_first_unacked(
+	    struct ieee80211com *, struct ieee80211_node *, uint8_t, uint16_t);
+extern	void ieee80211_output_ba_record_ack(struct ieee80211com *,
+	    struct ieee80211_node *, uint8_t, uint16_t);
 
 #endif /* _NET80211_IEEE80211_PROTO_H_ */

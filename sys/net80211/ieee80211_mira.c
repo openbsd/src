@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.15 2019/06/18 21:04:52 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.16 2019/07/29 10:50:09 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -508,7 +508,7 @@ ieee80211_mira_reset_driver_stats(struct ieee80211_mira_node *mn)
 #define IEEE80211_MIRA_MIN_PROBE_FRAMES	4
 
 /* Number of bytes which, alternatively, render a probe valid. */
-#define IEEE80211_MIRA_MIN_PROBE_BYTES IEEE80211_MAX_LEN
+#define IEEE80211_MIRA_MIN_PROBE_BYTES (2 * IEEE80211_MAX_LEN)
 
 /* Number of Tx failures which, alternatively, render a probe valid. */
 #define IEEE80211_MIRA_MAX_PROBE_TXFAIL 1

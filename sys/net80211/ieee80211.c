@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.76 2019/06/10 16:33:02 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.77 2019/07/29 10:50:08 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@ int ieee80211_cache_size = IEEE80211_CACHE_SIZE;
 
 void ieee80211_setbasicrates(struct ieee80211com *);
 int ieee80211_findrate(struct ieee80211com *, enum ieee80211_phymode, int);
+void ieee80211_configure_ampdu_tx(struct ieee80211com *, int);
 
 void
 ieee80211_begin_bgscan(struct ifnet *ifp)
@@ -74,7 +75,7 @@ ieee80211_begin_bgscan(struct ifnet *ifp)
 	struct ieee80211com *ic = (void *)ifp;
 
 	if ((ic->ic_flags & IEEE80211_F_BGSCAN) ||
-	    ic->ic_state != IEEE80211_S_RUN)
+	    ic->ic_state != IEEE80211_S_RUN || ic->ic_mgt_timer != 0)
 		return;
 
 	if (ic->ic_bgscan_start != NULL && ic->ic_bgscan_start(ic) == 0) {
@@ -274,6 +275,22 @@ ieee80211_ieee2mhz(u_int chan, u_int flags)
 	}
 }
 
+void
+ieee80211_configure_ampdu_tx(struct ieee80211com *ic, int enable)
+{
+	if ((ic->ic_caps & IEEE80211_C_TX_AMPDU) == 0)
+		return;
+
+	/* Sending AMPDUs requires QoS support. */
+	if ((ic->ic_caps & IEEE80211_C_QOS) == 0)
+		return;
+
+	if (enable)
+		ic->ic_flags |= IEEE80211_F_QOS;
+	else
+		ic->ic_flags &= ~IEEE80211_F_QOS;
+}
+
 /*
  * Setup the media data structures according to the channel and
  * rate tables.  This must be called by the driver after
@@ -409,6 +426,7 @@ ieee80211_media_init(struct ifnet *ifp,
 				    mopt | IFM_IEEE80211_MONITOR);
 		}
 		ic->ic_flags |= IEEE80211_F_HTON; /* enable 11n by default */
+		ieee80211_configure_ampdu_tx(ic, 1);
 	}
 
 	if (ic->ic_modecaps & (1 << IEEE80211_MODE_11AC)) {
@@ -443,6 +461,8 @@ ieee80211_media_init(struct ifnet *ifp,
 		}
 #if 0
 		ic->ic_flags |= IEEE80211_F_VHTON; /* enable 11ac by default */
+		if (ic->ic_caps & IEEE80211_C_QOS)
+			ic->ic_flags |= IEEE80211_F_QOS;
 #endif
 	}
 
@@ -625,14 +645,18 @@ ieee80211_media_change(struct ifnet *ifp)
 	 * Committed to changes, install the MCS/rate setting.
 	 */
 	ic->ic_flags &= ~(IEEE80211_F_HTON | IEEE80211_F_VHTON);
+	ieee80211_configure_ampdu_tx(ic, 0);
 	if ((ic->ic_modecaps & (1 << IEEE80211_MODE_11AC)) &&
 	    (newphymode == IEEE80211_MODE_AUTO ||
-	    newphymode == IEEE80211_MODE_11AC))
+	    newphymode == IEEE80211_MODE_11AC)) {
 		ic->ic_flags |= IEEE80211_F_VHTON;
-	else if ((ic->ic_modecaps & (1 << IEEE80211_MODE_11N)) &&
+		ieee80211_configure_ampdu_tx(ic, 1);
+	} else if ((ic->ic_modecaps & (1 << IEEE80211_MODE_11N)) &&
 	    (newphymode == IEEE80211_MODE_AUTO ||
-	    newphymode == IEEE80211_MODE_11N))
+	    newphymode == IEEE80211_MODE_11N)) {
 		ic->ic_flags |= IEEE80211_F_HTON;
+		ieee80211_configure_ampdu_tx(ic, 1);
+	}
 	if ((ic->ic_flags & (IEEE80211_F_HTON | IEEE80211_F_VHTON)) == 0) {
 		ic->ic_fixed_mcs = -1;
 	    	if (ic->ic_fixed_rate != i) {

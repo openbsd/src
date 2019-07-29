@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.80 2019/03/01 08:13:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.81 2019/07/29 10:50:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -204,6 +204,9 @@ struct ieee80211_tx_ba {
 #define IEEE80211_BA_MAX_WINSZ	64	/* corresponds to maximum ADDBA BUFSZ */
 
 	u_int8_t		ba_token;
+
+	/* Bitmap for ACK'd frames in the current BA window. */
+	uint64_t		ba_bitmap;
 };
 
 struct ieee80211_rx_ba {
@@ -329,6 +332,11 @@ struct ieee80211_node {
 	uint16_t		ni_htop1;
 	uint16_t		ni_htop2;
 	uint8_t			ni_basic_mcs[howmany(128,NBBY)];
+
+	/* Timeout handlers which trigger Tx Block Ack negotiation. */
+	struct timeout		ni_addba_req_to[IEEE80211_NUM_TID];
+	int			ni_addba_req_intval[IEEE80211_NUM_TID];
+#define IEEE80211_ADDBA_REQ_INTVAL_MAX 30	/* in seconds */
 
 	/* Block Ack records */
 	struct ieee80211_tx_ba	ni_tx_ba[IEEE80211_NUM_TID];
@@ -472,6 +480,7 @@ struct ieee80211_node *ieee80211_dup_bss(struct ieee80211com *,
 		const u_int8_t *);
 struct ieee80211_node *ieee80211_find_node(struct ieee80211com *,
 		const u_int8_t *);
+void ieee80211_ba_del(struct ieee80211_node *);
 struct ieee80211_node *ieee80211_find_rxnode(struct ieee80211com *,
 		const struct ieee80211_frame *);
 struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
@@ -494,6 +503,7 @@ int ieee80211_setup_htop(struct ieee80211_node *, const uint8_t *,
     uint8_t, int);
 int ieee80211_setup_rates(struct ieee80211com *,
 	    struct ieee80211_node *, const u_int8_t *, const u_int8_t *, int);
+void ieee80211_node_trigger_addba_req(struct ieee80211_node *, int);
 int ieee80211_iserp_sta(const struct ieee80211_node *);
 void ieee80211_count_longslotsta(void *, struct ieee80211_node *);
 void ieee80211_count_nonerpsta(void *, struct ieee80211_node *);

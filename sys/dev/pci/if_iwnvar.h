@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.34 2018/02/25 12:40:06 stsp Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.35 2019/07/29 10:50:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -78,6 +78,7 @@ struct iwn_tx_ring {
 	int			qid;
 	int			queued;
 	int			cur;
+	int			read;
 };
 
 struct iwn_softc;
@@ -163,6 +164,7 @@ struct iwn_ops {
 	void		(*read_eeprom)(struct iwn_softc *);
 	int		(*post_alive)(struct iwn_softc *);
 	int		(*nic_config)(struct iwn_softc *);
+	void		(*reset_sched)(struct iwn_softc *, int, int);
 	void		(*update_sched)(struct iwn_softc *, int, int, uint8_t,
 			    uint16_t);
 	int		(*get_temperature)(struct iwn_softc *);
@@ -178,6 +180,10 @@ struct iwn_ops {
 			    struct ieee80211_node *, uint8_t, uint16_t);
 	void		(*ampdu_tx_stop)(struct iwn_softc *, uint8_t,
 			    uint16_t);
+};
+
+struct iwn_tx_ba {
+	struct iwn_node *	wn;
 };
 
 struct iwn_softc {
@@ -212,6 +218,8 @@ struct iwn_softc {
 	const struct iwn_sensitivity_limits
 				*limits;
 	int			ntxqs;
+	int			first_agg_txq;
+	int			agg_queue_mask;
 	int			ndmachnls;
 	uint8_t			broadcast_id;
 	int			rxonsz;
@@ -301,6 +309,8 @@ struct iwn_softc {
 	uint8_t			chainmask;
 
 	int			sc_tx_timer;
+
+	struct iwn_tx_ba	sc_tx_ba[IEEE80211_NUM_TID];
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;

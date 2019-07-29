@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.169 2019/07/23 18:56:23 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.170 2019/07/29 10:50:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -69,13 +69,18 @@ int ieee80211_node_checkrssi(struct ieee80211com *,
     const struct ieee80211_node *);
 int ieee80211_ess_is_better(struct ieee80211com *ic, struct ieee80211_node *,
     struct ieee80211_node *);
+void ieee80211_node_set_timeouts(struct ieee80211_node *);
 void ieee80211_setup_node(struct ieee80211com *, struct ieee80211_node *,
     const u_int8_t *);
 void ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
-void ieee80211_ba_del(struct ieee80211_node *);
 struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
 void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_switch_bss(struct ieee80211com *, struct ieee80211_node *);
+void ieee80211_node_addba_request(struct ieee80211_node *, int);
+void ieee80211_node_addba_request_ac_be_to(void *);
+void ieee80211_node_addba_request_ac_bk_to(void *);
+void ieee80211_node_addba_request_ac_vi_to(void *);
+void ieee80211_node_addba_request_ac_vo_to(void *);
 void ieee80211_needs_auth(struct ieee80211com *, struct ieee80211_node *);
 #ifndef IEEE80211_STA_ONLY
 void ieee80211_node_join_ht(struct ieee80211com *, struct ieee80211_node *);
@@ -1386,9 +1391,11 @@ ieee80211_end_scan(struct ifnet *ifp)
 		ic->ic_bgscan_fail = 0;
 
 		/* 
-		 * We are going to switch APs.
-		 * Queue a de-auth frame addressed to our current AP.
+		 * We are going to switch APs. Stop A-MPDU Tx and
+		 * queue a de-auth frame addressed to our current AP.
 		 */
+		 ieee80211_stop_ampdu_tx(ic, ic->ic_bss,
+		    IEEE80211_FC0_SUBTYPE_DEAUTH); 
 		if (IEEE80211_SEND_MGMT(ic, ic->ic_bss,
 		    IEEE80211_FC0_SUBTYPE_DEAUTH,
 		    IEEE80211_REASON_AUTH_LEAVE) != 0) {
@@ -1528,6 +1535,10 @@ ieee80211_node_copy(struct ieee80211com *ic,
 	dst->ni_rsnie = NULL;
 	if (src->ni_rsnie != NULL)
 		ieee80211_save_ie(src->ni_rsnie, &dst->ni_rsnie);
+	ieee80211_node_set_timeouts(dst);
+#ifndef IEEE80211_STA_ONLY
+	mq_init(&dst->ni_savedq, IEEE80211_PS_MAX_QUEUE, IPL_NET);
+#endif
 }
 
 u_int8_t
@@ -1560,6 +1571,27 @@ ieee80211_node_checkrssi(struct ieee80211com *ic,
 }
 
 void
+ieee80211_node_set_timeouts(struct ieee80211_node *ni)
+{
+	int i;
+
+#ifndef IEEE80211_STA_ONLY
+	timeout_set(&ni->ni_eapol_to, ieee80211_eapol_timeout, ni);
+	timeout_set(&ni->ni_sa_query_to, ieee80211_sa_query_timeout, ni);
+#endif
+	timeout_set(&ni->ni_addba_req_to[EDCA_AC_BE],
+	    ieee80211_node_addba_request_ac_be_to, ni);
+	timeout_set(&ni->ni_addba_req_to[EDCA_AC_BK],
+	    ieee80211_node_addba_request_ac_bk_to, ni);
+	timeout_set(&ni->ni_addba_req_to[EDCA_AC_VI],
+	    ieee80211_node_addba_request_ac_vi_to, ni);
+	timeout_set(&ni->ni_addba_req_to[EDCA_AC_VO],
+	    ieee80211_node_addba_request_ac_vo_to, ni);
+	for (i = 0; i < nitems(ni->ni_addba_req_intval); i++)
+		ni->ni_addba_req_intval[i] = 1;
+}
+
+void
 ieee80211_setup_node(struct ieee80211com *ic,
 	struct ieee80211_node *ni, const u_int8_t *macaddr)
 {
@@ -1576,9 +1608,9 @@ ieee80211_setup_node(struct ieee80211com *ic,
 		ni->ni_qos_rxseqs[i] = 0xffffU;
 #ifndef IEEE80211_STA_ONLY
 	mq_init(&ni->ni_savedq, IEEE80211_PS_MAX_QUEUE, IPL_NET);
-	timeout_set(&ni->ni_eapol_to, ieee80211_eapol_timeout, ni);
-	timeout_set(&ni->ni_sa_query_to, ieee80211_sa_query_timeout, ni);
 #endif
+	ieee80211_node_set_timeouts(ni);
+
 	s = splnet();
 	RBT_INSERT(ieee80211_tree, &ic->ic_tree, ni);
 	ic->ic_nnodes++;
@@ -1868,6 +1900,11 @@ ieee80211_ba_del(struct ieee80211_node *ni)
 			ba->ba_state = IEEE80211_BA_INIT;
 		}
 	}
+
+	timeout_del(&ni->ni_addba_req_to[EDCA_AC_BE]);
+	timeout_del(&ni->ni_addba_req_to[EDCA_AC_BK]);
+	timeout_del(&ni->ni_addba_req_to[EDCA_AC_VI]);
+	timeout_del(&ni->ni_addba_req_to[EDCA_AC_VO]);
 }
 
 void
@@ -2223,6 +2260,53 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 		rs->rs_nrates += nxrates;
 	}
 	return ieee80211_fix_rate(ic, ni, flags);
+}
+
+void
+ieee80211_node_trigger_addba_req(struct ieee80211_node *ni, int tid)
+{
+	if (ni->ni_tx_ba[tid].ba_state == IEEE80211_BA_INIT &&
+	    !timeout_pending(&ni->ni_addba_req_to[tid])) {
+		timeout_add_sec(&ni->ni_addba_req_to[tid],
+		    ni->ni_addba_req_intval[tid]);
+	}
+}
+
+void
+ieee80211_node_addba_request(struct ieee80211_node *ni, int tid)
+{
+	struct ieee80211com *ic = ni->ni_ic;
+	uint16_t ssn = ni->ni_qos_txseqs[tid];
+
+	ieee80211_addba_request(ic, ni, ssn, tid);
+}
+
+void
+ieee80211_node_addba_request_ac_be_to(void *arg)
+{
+	struct ieee80211_node *ni = arg;
+	ieee80211_node_addba_request(ni, EDCA_AC_BE);
+}
+
+void
+ieee80211_node_addba_request_ac_bk_to(void *arg)
+{
+	struct ieee80211_node *ni = arg;
+	ieee80211_node_addba_request(ni, EDCA_AC_BK);
+}
+
+void
+ieee80211_node_addba_request_ac_vi_to(void *arg)
+{
+	struct ieee80211_node *ni = arg;
+	ieee80211_node_addba_request(ni, EDCA_AC_VI);
+}
+
+void
+ieee80211_node_addba_request_ac_vo_to(void *arg)
+{
+	struct ieee80211_node *ni = arg;
+	ieee80211_node_addba_request(ni, EDCA_AC_VO);
 }
 
 #ifndef IEEE80211_STA_ONLY

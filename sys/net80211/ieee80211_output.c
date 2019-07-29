@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.125 2019/05/12 18:12:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.126 2019/07/29 10:50:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -65,6 +65,8 @@
 
 int	ieee80211_mgmt_output(struct ifnet *, struct ieee80211_node *,
 	    struct mbuf *, int);
+int	ieee80211_can_use_ampdu(struct ieee80211com *,
+	    struct ieee80211_node *);
 u_int8_t *ieee80211_add_rsn_body(u_int8_t *, struct ieee80211com *,
 	    const struct ieee80211_node *, int);
 struct	mbuf *ieee80211_getmgmt(int, int, u_int);
@@ -426,21 +428,56 @@ ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 	 */
 	switch (ds_field & 0xfc) {
 	case IPTOS_PREC_PRIORITY:
-		return 2;
+		return EDCA_AC_VI;
 	case IPTOS_PREC_IMMEDIATE:
-		return 1;
+		return EDCA_AC_BK;
 	case IPTOS_PREC_FLASH:
-		return 3;
 	case IPTOS_PREC_FLASHOVERRIDE:
-		return 4;
 	case IPTOS_PREC_CRITIC_ECP:
-		return 5;
 	case IPTOS_PREC_INTERNETCONTROL:
-		return 6;
 	case IPTOS_PREC_NETCONTROL:
-		return 7;
+		return EDCA_AC_VO;
+	default:
+		return EDCA_AC_BE;
 	}
-	return 0;	/* default to Best-Effort */
+}
+
+int
+ieee80211_can_use_ampdu(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	return (ni->ni_flags & IEEE80211_NODE_HT) &&
+	    (ic->ic_caps & IEEE80211_C_TX_AMPDU) &&
+	    !(ic->ic_opmode == IEEE80211_M_STA && ni != ic->ic_bss) &&
+	    /*
+	     * Don't use A-MPDU on non-encrypted networks. There are devices
+	     * with buggy firmware which allow an attacker to inject 802.11
+	     * frames into a wifi network by embedding rouge A-MPDU subframes
+	     * in an arbitrary data payload (e.g. PNG images) which may end
+	     * up appearing as actual frames after de-aggregation by a buggy
+	     * device; see https://github.com/rpp0/aggr-inject for details.
+	     * WPA2 prevents this injection attack since the attacker would
+	     * need to inject frames which get decrypted correctly.
+	     */
+	    ((ic->ic_flags & IEEE80211_F_RSNON) &&
+	      (ni->ni_rsnprotos & IEEE80211_PROTO_RSN));
+}
+
+void
+ieee80211_tx_compressed_bar(struct ieee80211com *ic, struct ieee80211_node *ni,
+    int tid, uint16_t ssn)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	struct mbuf *m;
+
+	m = ieee80211_get_compressed_bar(ic, ni, tid, ssn);
+	if (m == NULL)
+		return;
+
+	ieee80211_ref_node(ni);
+	if (mq_enqueue(&ic->ic_mgtq, m) == 0)
+		if_start(ifp);
+	else
+		ieee80211_release_node(ic, ni);
 }
 
 /*
@@ -539,9 +576,20 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	    (ni->ni_flags & IEEE80211_NODE_QOS) &&
 	    /* do not QoS-encapsulate EAPOL frames */
 	    eh.ether_type != htons(ETHERTYPE_PAE)) {
+		struct ieee80211_tx_ba *ba;
 		tid = ieee80211_classify(ic, m);
-		hdrlen = sizeof(struct ieee80211_qosframe);
-		addqos = 1;
+		ba = &ni->ni_tx_ba[tid];
+		/*
+		 * Don't use TID's sequence number space while an ADDBA
+		 * request is in progress.
+		 */
+		if (ba->ba_state == IEEE80211_BA_REQUESTED) {
+			hdrlen = sizeof(struct ieee80211_frame);
+			addqos = 0;
+		} else {
+			hdrlen = sizeof(struct ieee80211_qosframe);
+			addqos = 1;
+		}
 	} else {
 		hdrlen = sizeof(struct ieee80211_frame);
 		addqos = 0;
@@ -566,11 +614,15 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		struct ieee80211_qosframe *qwh =
 		    (struct ieee80211_qosframe *)wh;
 		u_int16_t qos = tid;
+		struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
 
 		if (ic->ic_tid_noack & (1 << tid))
 			qos |= IEEE80211_QOS_ACK_POLICY_NOACK;
-		else if (ni->ni_tx_ba[tid].ba_state == IEEE80211_BA_AGREED)
-			qos |= IEEE80211_QOS_ACK_POLICY_BA;
+		else if (ba->ba_state == IEEE80211_BA_AGREED) {
+			/* Use HT immediate block-ack. */
+			qos |= IEEE80211_QOS_ACK_POLICY_NORMAL;
+		} else if (ieee80211_can_use_ampdu(ic, ni))
+			ieee80211_node_trigger_addba_req(ni, tid);
 		qwh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_QOS;
 		*(u_int16_t *)qwh->i_qos = htole16(qos);
 		*(u_int16_t *)qwh->i_seq =
@@ -1482,11 +1534,75 @@ ieee80211_get_addba_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	*frm++ = ba->ba_token;
 	LE_WRITE_2(frm, ba->ba_params); frm += 2;
 	LE_WRITE_2(frm, ba->ba_timeout_val / IEEE80211_DUR_TU); frm += 2;
-	LE_WRITE_2(frm, ba->ba_winstart); frm += 2;
+	LE_WRITE_2(frm, ba->ba_winstart << IEEE80211_SEQ_SEQ_SHIFT); frm += 2;
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
 	return m;
+}
+
+/* Move Tx BA window forward to the specified SSN. */
+void
+ieee80211_output_ba_move_window(struct ieee80211com *ic,
+    struct ieee80211_node *ni, uint8_t tid, uint16_t ssn)
+{
+	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
+	uint16_t s = ba->ba_winstart;
+
+	while (SEQ_LT(s, ssn) && ba->ba_bitmap) {
+		s = (s + 1) % 0xfff;
+		ba->ba_bitmap >>= 1;
+	}
+
+	ba->ba_winstart = (ssn & 0xfff);
+	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
+}
+
+/*
+ * Move Tx BA window forward up to the first hole in the bitmap
+ * or up to the specified SSN, whichever comes first.
+ * After calling this function, frames before the start of the
+ * potentially changed BA window should be discarded.
+ */
+void
+ieee80211_output_ba_move_window_to_first_unacked(struct ieee80211com *ic,
+    struct ieee80211_node *ni, uint8_t tid, uint16_t ssn)
+{
+	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
+	uint16_t s = ba->ba_winstart;
+	uint64_t bitmap = ba->ba_bitmap;
+	int can_move_window = 0;
+
+	while (bitmap && SEQ_LT(s, ssn)) {
+		if ((bitmap & 1) == 0)
+			break;
+		s = (s + 1) % 0xfff;
+		bitmap >>= 1;
+		can_move_window = 1;
+	}
+
+	if (can_move_window)
+		ieee80211_output_ba_move_window(ic, ni, tid, s);
+}
+
+/* Record an ACK for a frame with a given SSN within the Tx BA window. */
+void
+ieee80211_output_ba_record_ack(struct ieee80211com *ic,
+    struct ieee80211_node *ni, uint8_t tid, uint16_t ssn)
+{
+	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
+	int i = 0;
+	uint16_t s = ba->ba_winstart;
+
+	KASSERT(!SEQ_LT(ssn, ba->ba_winstart));
+	KASSERT(!SEQ_LT(ba->ba_winend, ssn));
+
+	while (SEQ_LT(s, ssn)) {
+		s = (s + 1) % 0xfff;
+		i++;
+	}
+	if (i < ba->ba_winsize)
+		ba->ba_bitmap |= (1 << i);
 }
 
 /*-
@@ -1787,6 +1903,47 @@ ieee80211_get_cts_to_self(struct ieee80211com *ic, u_int16_t dur)
 	cts->i_fc[1] = IEEE80211_FC1_DIR_NODS;
 	*(u_int16_t *)cts->i_dur = htole16(dur);
 	IEEE80211_ADDR_COPY(cts->i_ra, ic->ic_myaddr);
+
+	return m;
+}
+
+/*
+ * Build a compressed Block Ack Request control frame.
+ */
+struct mbuf *
+ieee80211_get_compressed_bar(struct ieee80211com *ic,
+    struct ieee80211_node *ni, int tid, uint16_t ssn)
+{
+	struct ieee80211_frame_min *wh;
+	uint8_t *frm;
+	uint16_t ctl;
+	struct mbuf *m;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return NULL;
+
+	m->m_pkthdr.len = m->m_len = sizeof(struct ieee80211_frame_min) +
+	    sizeof(ctl) + sizeof(ssn);
+
+	wh = mtod(m, struct ieee80211_frame_min *);
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_CTL |
+	    IEEE80211_FC0_SUBTYPE_BAR;
+	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
+	*(u_int16_t *)wh->i_dur = 0;
+	IEEE80211_ADDR_COPY(wh->i_addr1, ni->ni_macaddr);
+	IEEE80211_ADDR_COPY(wh->i_addr2, ic->ic_myaddr);
+	frm = (uint8_t *)&wh[1];
+
+	ctl = IEEE80211_BA_COMPRESSED | (tid << IEEE80211_BA_TID_INFO_SHIFT);
+	LE_WRITE_2(frm, ctl);
+	frm += 2;
+
+	LE_WRITE_2(frm, ssn << IEEE80211_SEQ_SEQ_SHIFT);
+	frm += 2;
+
+	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
+	m->m_pkthdr.ph_cookie = ni;
 
 	return m;
 }

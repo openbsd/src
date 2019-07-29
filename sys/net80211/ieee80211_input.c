@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.206 2019/05/12 18:12:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.207 2019/07/29 10:50:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1915,7 +1915,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 {
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *ssid, *rates, *xrates, *rsnie, *wpaie, *htcaps;
+	const u_int8_t *ssid, *rates, *xrates, *rsnie, *wpaie, *wmeie, *htcaps;
 	u_int16_t capinfo, bintval;
 	int resp, status = 0;
 	struct ieee80211_rsnparams rsn;
@@ -1949,7 +1949,7 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 	} else
 		resp = IEEE80211_FC0_SUBTYPE_ASSOC_RESP;
 
-	ssid = rates = xrates = rsnie = wpaie = htcaps = NULL;
+	ssid = rates = xrates = rsnie = wpaie = wmeie = htcaps = NULL;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm) {
 			ic->ic_stats.is_rx_elem_toosmall++;
@@ -1981,6 +1981,9 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 			if (memcmp(frm + 2, MICROSOFT_OUI, 3) == 0) {
 				if (frm[5] == 1)
 					wpaie = frm;
+				/* WME info IE: len=7 type=2 subtype=0 */
+				if (frm[1] == 7 && frm[5] == 2 && frm[6] == 0)
+					wmeie = frm;
 			}
 			break;
 		}
@@ -2093,6 +2096,13 @@ ieee80211_recv_assoc_req(struct ieee80211com *ic, struct mbuf *m,
 			ni->ni_rsnprotos = IEEE80211_PROTO_WPA;
 			saveie = wpaie;
 		}
+	}
+
+	if (ic->ic_flags & IEEE80211_F_QOS) {
+		if (wmeie != NULL)
+			ni->ni_flags |= IEEE80211_NODE_QOS;
+		else	/* for Reassociation */
+			ni->ni_flags &= ~IEEE80211_NODE_QOS;
 	}
 
 	if (ic->ic_flags & IEEE80211_F_RSNON) {
@@ -2588,7 +2598,16 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 		ba->ba_winsize = IEEE80211_BA_MAX_WINSZ;
 	ba->ba_params = (params & IEEE80211_ADDBA_BA_POLICY);
 	ba->ba_params |= ((ba->ba_winsize << IEEE80211_ADDBA_BUFSZ_SHIFT) |
-	    (tid << IEEE80211_ADDBA_TID_SHIFT) | IEEE80211_ADDBA_AMSDU);
+	    (tid << IEEE80211_ADDBA_TID_SHIFT));
+#if 0
+	/*
+	 * XXX A-MSDUs inside A-MPDUs expose a problem with bad TCP connection
+	 * sharing behaviour. One connection eats all available bandwidth
+	 * while others stall. Leave this disabled for now to give packets
+	 * from disparate connections better chances of interleaving.
+	 */
+	ba->ba_params |= IEEE80211_ADDBA_AMSDU;
+#endif
 	ba->ba_winstart = ssn;
 	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
 	/* allocate and setup our reordering buffer */
@@ -2671,6 +2690,7 @@ ieee80211_recv_addba_resp(struct ieee80211com *ic, struct mbuf *m,
 	struct ieee80211_tx_ba *ba;
 	u_int16_t status, params, bufsz, timeout;
 	u_int8_t token, tid;
+	int err = 0;
 
 	if (m->m_len < sizeof(*wh) + 9) {
 		DPRINTF(("frame too short\n"));
@@ -2707,21 +2727,63 @@ ieee80211_recv_addba_resp(struct ieee80211com *ic, struct mbuf *m,
 	timeout_del(&ba->ba_to);
 
 	if (status != IEEE80211_STATUS_SUCCESS) {
-		/* MLME-ADDBA.confirm(Failure) */
-		ba->ba_state = IEEE80211_BA_INIT;
+		if (ni->ni_addba_req_intval[tid] <
+		    IEEE80211_ADDBA_REQ_INTVAL_MAX)
+			ni->ni_addba_req_intval[tid]++;
+
+		ieee80211_addba_resp_refuse(ic, ni, tid, status);
+
+		/*
+		 * In case the peer believes there is an existing
+		 * block ack agreement with us, try to delete it.
+		 */
+		IEEE80211_SEND_ACTION(ic, ni, IEEE80211_CATEG_BA,
+		    IEEE80211_ACTION_DELBA,
+		    IEEE80211_REASON_SETUP_REQUIRED << 16 | 1 << 8 | tid);
 		return;
 	}
+
+	/* notify drivers of this new Block Ack agreement */
+	if (ic->ic_ampdu_tx_start != NULL)
+		err = ic->ic_ampdu_tx_start(ic, ni, tid);
+
+	if (err == EBUSY) {
+		/* driver will accept or refuse agreement when done */
+		return;
+	} else if (err) {
+		/* driver failed to setup, rollback */
+		ieee80211_addba_resp_refuse(ic, ni, tid,
+		    IEEE80211_STATUS_UNSPECIFIED);
+	} else
+		ieee80211_addba_resp_accept(ic, ni, tid);
+}
+
+void
+ieee80211_addba_resp_accept(struct ieee80211com *ic,
+    struct ieee80211_node *ni, uint8_t tid)
+{
+	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
+
 	/* MLME-ADDBA.confirm(Success) */
 	ba->ba_state = IEEE80211_BA_AGREED;
 	ic->ic_stats.is_ht_tx_ba_agreements++;
 
-	/* notify drivers of this new Block Ack agreement */
-	if (ic->ic_ampdu_tx_start != NULL)
-		(void)ic->ic_ampdu_tx_start(ic, ni, tid);
+	/* Reset ADDBA request interval. */
+	ni->ni_addba_req_intval[tid] = 1;
 
 	/* start Block Ack inactivity timeout */
 	if (ba->ba_timeout_val != 0)
 		timeout_add_usec(&ba->ba_to, ba->ba_timeout_val);
+}
+
+void
+ieee80211_addba_resp_refuse(struct ieee80211com *ic,
+    struct ieee80211_node *ni, uint8_t tid, uint16_t status)
+{
+	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
+
+	/* MLME-ADDBA.confirm(Failure) */
+	ba->ba_state = IEEE80211_BA_INIT;
 }
 
 /*-

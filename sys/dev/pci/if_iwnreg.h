@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.55 2017/12/14 14:21:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.56 2019/07/29 10:50:08 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -23,8 +23,10 @@
 #define IWN_RX_RING_COUNT_LOG	6
 #define IWN_RX_RING_COUNT	(1 << IWN_RX_RING_COUNT_LOG)
 
-#define IWN4965_NTXQUEUES	16
-#define IWN5000_NTXQUEUES	20
+#define IWN4965_NTXQUEUES		16
+#define IWN4965_FIRST_AGG_TXQUEUE	7
+#define IWN5000_NTXQUEUES		20
+#define IWN5000_FIRST_AGG_TXQUEUE	10
 
 #define IWN4965_NDMACHNLS	7
 #define IWN5000_NDMACHNLS	8
@@ -123,6 +125,7 @@
 #define IWN4965_SCHED_QUEUE_STATUS(qid)	(IWN_SCHED_BASE + 0x104 + (qid) * 4)
 #define IWN5000_SCHED_INTR_MASK		(IWN_SCHED_BASE + 0x108)
 #define IWN5000_SCHED_QUEUE_STATUS(qid)	(IWN_SCHED_BASE + 0x10c + (qid) * 4)
+#define IWN5000_SCHED_CHAINEXT_EN	(IWN_SCHED_BASE + 0x244)
 #define IWN5000_SCHED_AGGR_SEL		(IWN_SCHED_BASE + 0x248)
 
 /*
@@ -685,6 +688,7 @@ struct iwn_cmd_data {
 #define IWN_TX_MORE_FRAG	(1 << 14)
 #define IWN_TX_INSERT_TSTAMP	(1 << 16)
 #define IWN_TX_NEED_PADDING	(1 << 20)
+#define IWN_TX_AMPDU_CCMP	(1 << 22)
 
 	uint32_t	scratch;
 	uint8_t		plcp;
@@ -1188,6 +1192,62 @@ struct iwn_ucode_info {
 } __packed;
 
 /* Structures for IWN_TX_DONE notification. */
+
+/* Tx status for aggregated frames (A-MPDU). */
+struct iwn_txagg_status {
+	uint16_t status;
+#define IWN_AGG_TX_STATE_TRANSMITTED		0x0000
+#define IWN_AGG_TX_STATE_UNDERRUN		0x0001
+#define IWN_AGG_TX_STATE_BT_PRIO		0x0002
+#define IWN_AGG_TX_STATE_FEW_BYTES		0x0004
+#define IWN_AGG_TX_STATE_ABORT			0x0008
+#define IWN_AGG_TX_STATE_LAST_SENT_TTL		0x0010
+#define IWN_AGG_TX_STATE_LAST_SENT_TRY_CNT	0x0020
+#define IWN_AGG_TX_STATE_LAST_SENT_BT_KILL	0x0040
+#define IWN_AGG_TX_STATE_SCD_QUERY		0x0080
+#define IWN_AGG_TX_STATE_TEST_BAD_CRC32		0x0100
+#define IWN_AGG_TX_STATE_RESPONSE_MASK		0x01ff
+#define IWN_AGG_TX_STATE_DUMP_TX		0x0200
+#define IWN_AGG_TX_STATE_DELAY_TX		0x0400
+#define IWN_AGG_TX_STATUS_MASK			0x0fff
+/* Number of TX attempts for first frame in aggregation: */
+#define IWN_AGG_TX_TRY				0xf000
+#define IWN_AGG_TX_TRY_SHIFT			12
+
+	/* Copied from Tx command we have sent to the firmware. */
+	uint8_t	idx;
+	uint8_t	qid;
+} __packed;
+
+/* For aggregation queues, index must be aligned to frame sequence number. */
+#define IWN_AGG_SSN_TO_TXQ_IDX(x)	((x) & (IWN_TX_RING_COUNT - 1))
+
+/* Tx status codes for non-aggregated frames. */
+#define IWN_TX_STATUS_SUCCESS			0x01
+#define IWN_TX_STATUS_DIRECT_DONE		0x02
+#define IWN_TX_STATUS_POSTPONE_DELAY		0x40
+#define IWN_TX_STATUS_POSTPONE_FEW_BYTES	0x41
+#define IWN_TX_STATUS_POSTPONE_BT_PRIO		0x42
+#define IWN_TX_STATUS_POSTPONE_QUIET_PERIOD	0x43
+#define IWN_TX_STATUS_POSTPONE_CALC_TTAK	0x44
+#define IWN_TX_STATUS_FAIL_CROSSED_RETRY	0x81
+#define IWN_TX_STATUS_FAIL_SHORT_LIMIT		0x82
+#define IWN_TX_STATUS_FAIL_LONG_LIMIT		0x83
+#define IWN_TX_STATUS_FAIL_FIFO_UNDERRUN	0x84
+#define IWN_TX_STATUS_FAIL_DRAIN_FLOW		0x85
+#define IWN_TX_STATUS_FAIL_RFKILL_FLUSH		0x86
+#define IWN_TX_STATUS_FAIL_LIFE_EXPIRE		0x87
+#define IWN_TX_STATUS_FAIL_DEST_PS		0x88
+#define IWN_TX_STATUS_FAIL_HOST_ABORTED		0x89
+#define IWN_TX_STATUS_FAIL_BT_RETRY		0x8a
+#define IWN_TX_STATUS_FAIL_STA_INVALID		0x8b
+#define IWN_TX_STATUS_FAIL_FRAG_DROPPED		0x8c
+#define IWN_TX_STATUS_FAIL_TID_DISABLE		0x8d
+#define IWN_TX_STATUS_FAIL_FIFO_FLUSHED		0x8e
+#define IWN_TX_STATUS_FAIL_INSUFFICIENT_CF_POLL	0x8f
+#define IWN_TX_STATUS_FAIL_PASSIVE_NO_RX	0x90
+#define IWN_TX_STATUS_FAIL_NO_BEACON_ON_RADAR	0x91
+
 struct iwn4965_tx_stat {
 	uint8_t		nframes;
 	uint8_t		btkillcnt;
@@ -1199,7 +1259,11 @@ struct iwn4965_tx_stat {
 	uint16_t	duration;
 	uint16_t	reserved;
 	uint32_t	power[2];
-	uint32_t	status;
+	union {
+		uint32_t		status;		/* if nframes == 1 */
+		struct iwn_txagg_status agg_status[0];	/* nframes elements */
+	} stat;
+	/* Followed by current scheduler SSN (uint32_t). */
 } __packed;
 
 struct iwn5000_tx_stat {
@@ -1218,9 +1282,16 @@ struct iwn5000_tx_stat {
 	uint16_t	len;
 	uint8_t		tlc;
 	uint8_t		ratid;
+#define IWN_TX_RES_TID_SHIFT	0
+#define IWN_TX_RES_TID		0x0f
+#define IWN_TX_RES_RA_SHIFT	4
+#define IWN_TX_RES_RA		0xf0
 	uint8_t		fc[2];
-	uint16_t	status;
-	uint16_t	sequence;
+	union {
+		uint32_t		status;		/* if nframes == 1 */
+		struct iwn_txagg_status agg_status[0];	/* nframes elements */
+	} stat;
+	/* Followed by current scheduler SSN (uint32_t). */
 } __packed;
 
 /* Structure for IWN_BEACON_MISSED notification. */
@@ -1288,6 +1359,9 @@ struct iwn_compressed_ba {
 	uint64_t	bitmap;
 	uint16_t	qid;
 	uint16_t	ssn;
+	uint8_t		nframes_sent;
+	uint8_t		nframes_acked;
+	uint16_t	reserved2;
 } __packed;
 
 /* Structure for IWN_START_SCAN notification. */
@@ -1926,8 +2000,15 @@ static const struct iwn_sensitivity_limits iwn2000_sensitivity_limits = {
 };
 
 /* Map TID to TX scheduler's FIFO. */
-static const uint8_t iwn_tid2fifo[] = {
-	1, 0, 0, 1, 2, 2, 3, 3, 7, 7, 7, 7, 7, 7, 7, 7, 3
+#define IWN_NUM_AMPDU_TID	8
+#define IWN_NONQOS_TID	IWN_NUM_AMPDU_TID
+#define IWN_TX_FIFO_BK	0
+#define IWN_TX_FIFO_BE	1
+#define IWN_TX_FIFO_VI	2
+#define IWN_TX_FIFO_VO	3
+static const uint8_t iwn_tid2fifo[IWN_NUM_AMPDU_TID] = {
+	IWN_TX_FIFO_VO, IWN_TX_FIFO_VI, IWN_TX_FIFO_BE, IWN_TX_FIFO_BK,
+	IWN_TX_FIFO_VO, IWN_TX_FIFO_VI, IWN_TX_FIFO_BE, IWN_TX_FIFO_BK
 };
 
 /* WiFi/WiMAX coexist event priority table for 6050. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.96 2019/05/12 18:12:38 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.97 2019/07/29 10:50:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -417,6 +417,7 @@ struct ieee80211_ess {
 #define IEEE80211_C_MFP		0x00002000	/* CAPABILITY: MFP avail */
 #define IEEE80211_C_RAWCTL	0x00004000	/* CAPABILITY: raw ctl */
 #define IEEE80211_C_SCANALLBAND	0x00008000	/* CAPABILITY: scan all bands */
+#define IEEE80211_C_TX_AMPDU	0x00010000	/* CAPABILITY: send A-MPDU */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
