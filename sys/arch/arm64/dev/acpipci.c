@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.10 2019/06/02 18:40:58 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.11 2019/07/30 19:03:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -447,6 +447,7 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 
 		/* Map Requester ID through IORT to get sideband data. */
 		data = acpipci_iort_map_msi(ih.ih_pc, ih.ih_tag);
+		printf("MSI data 0x%08llx\n", data);
 		cookie = ic->ic_establish_msi(ic->ic_cookie, &addr,
 		    &data, level, func, arg, name);
 		if (cookie == NULL)
@@ -598,7 +599,8 @@ acpipci_iort_map_node(struct acpi_iort_node *node, uint32_t id, uint32_t referen
 	struct acpi_iort_mapping *map =
 	    (struct acpi_iort_mapping *)((char *)node + node->mapping_offset);
 	int i;
-	
+
+	printf("%s: reference 0x%x\n", __func__, reference);
 	for (i = 0; i < node->number_of_mappings; i++) {
 		if (map[i].output_reference != reference)
 			continue;
@@ -660,6 +662,7 @@ acpipci_iort_map_msi(pci_chipset_tag_t pc, pcitag_t tag)
 		node = (struct acpi_iort_node *)((char *)iort + offset);
 		switch (node->type) {
 		case ACPI_IORT_ROOT_COMPLEX:
+			printf("%s: node seg %d sc seg %d\n", __func__, node->segment, sc->sc_seg);
 			if (node->segment == sc->sc_seg)
 				return acpipci_iort_map_node(node, rid, its);
 			break;

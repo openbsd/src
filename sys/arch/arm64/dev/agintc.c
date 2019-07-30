@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.20 2019/06/23 15:41:00 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.21 2019/07/30 19:03:58 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -325,16 +325,21 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	 * If the system supports two security states and SCR_EL3.FIQ
 	 * is zero, the non-secure shifted view applies.  We detect
 	 * this by checking whether the number of writable bits
-	 * matches the number of implemented priority bits.  In that
-	 * case we will need to adjust the priorities that we write
-	 * into ICC_PMR_EL1 accordingly.
+	 * matches the number of implemented priority bits.  If that
+	 * is the case we will need to adjust the priorities that we
+	 * write into ICC_PMR_EL1 accordingly.
+	 *
+	 * On Ampere eMAG it appears as if there are five writable
+	 * bits when we write 0xff.  But for higher priorities
+	 * (smaller values) only the top 4 bits stick.  So we use 0xbf
+	 * instead to determine the number of writable bits.
 	 */
 	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_CTLR);
 	if ((ctrl & GICD_CTLR_DS) == 0) {
 		__asm volatile("mrs %x0, "STR(ICC_CTLR_EL1) : "=r"(ctrl));
 		nbits = ICC_CTLR_EL1_PRIBITS(ctrl) + 1;
 		__asm volatile("mrs %x0, "STR(ICC_PMR) : "=r"(oldpmr));
-		__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(0xff));
+		__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(0xbf));
 		__asm volatile("mrs %x0, "STR(ICC_PMR) : "=r"(pmr));
 		__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(oldpmr));
 		if (nbits == 8 - (ffs(pmr) - 1))
