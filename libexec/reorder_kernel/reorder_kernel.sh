@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: reorder_kernel.sh,v 1.7 2019/06/20 20:53:56 deraadt Exp $
+# $OpenBSD: reorder_kernel.sh,v 1.8 2019/07/30 13:44:00 deraadt Exp $
 #
 # Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 #
@@ -37,7 +37,7 @@ exec 2>&1
 
 # Install trap handlers to inform about success or failure via syslog.
 trap 'trap - EXIT; logger -st $PROGNAME \
-	"kernel relinking failed; see $LOGFILE" >>/dev/console 2>&1' ERR
+	"failed -- see $LOGFILE" >>/dev/console 2>&1' ERR
 trap 'logger -t $PROGNAME "kernel relinking done"' EXIT
 
 if [[ -f $KERNEL_DIR.tgz ]]; then
