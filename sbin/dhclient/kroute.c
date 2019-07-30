@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.165 2019/07/26 14:36:26 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.166 2019/07/30 12:48:27 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -919,6 +919,14 @@ priv_propose(char *name, int ioctlfd, struct imsg_propose *imsg,
     char **resolv_conf, int routefd, int rdomain, int index)
 {
 	struct proposal		*proposal = &imsg->proposal;
+	struct ifreq		 ifr;
+
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(ioctlfd, SIOCGIFXFLAGS, (caddr_t)&ifr) < 0)
+		fatal("SIOGIFXFLAGS");
+	if ((ifr.ifr_flags & IFXF_AUTOCONF4) == 0)
+		return;
 
 	*resolv_conf = set_resolv_conf(name,
 	    proposal->rtsearch,

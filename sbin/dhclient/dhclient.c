@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.647 2019/07/24 17:53:33 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.648 2019/07/30 12:48:27 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -379,6 +379,15 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		if ((rtm->rtm_flags & RTF_UP) == 0)
 			fatalx("down");
 
+ 		if ((ifm->ifm_xflags & IFXF_AUTOCONF4) == 0)
+ 			ifi->flags &= ~IFI_AUTOCONF;
+		else if ((ifi->flags & IFI_AUTOCONF) == 0) {
+			/* Get new lease when AUTOCONF4 gets set. */
+			ifi->flags |= IFI_AUTOCONF;
+			quit = RESTART;
+			break;
+		}
+
 		oldmtu = ifi->mtu;
 		interface_state(ifi);
 		if (oldmtu == ifi->mtu)
@@ -573,6 +582,19 @@ main(int argc, char *argv[])
 	interface_state(ifi);
 	if (!LINK_STATE_IS_UP(ifi->link_state))
 		interface_link_forceup(ifi->name, ioctlfd);
+
+	/* Running dhclient(8) means this interface is AUTOCONF4. */
+	ifi->flags |= IFI_AUTOCONF;
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, ifi->name, sizeof(ifr.ifr_name));
+	if (ioctl(ioctlfd, SIOCGIFXFLAGS, (caddr_t)&ifr) < 0)
+		fatal("SIOGIFXFLAGS");
+	if ((ifr.ifr_flags & IFXF_AUTOCONF4) == 0) {
+		ifr.ifr_flags |= IFXF_AUTOCONF4;
+		if (ioctl(ioctlfd, SIOCSIFXFLAGS, (caddr_t)&ifr) == -1)
+			fatal("SIOCSIFXFLAGS");
+	}
+
 	close(ioctlfd);
 	ioctlfd = -1;
 
@@ -958,7 +980,7 @@ bind_lease(struct interface_info *ifi)
 	effective_proposal = NULL;
 
 	propose(ifi->configured);
-	rslt = asprintf(&msg, "bound to %s from %s",
+	rslt = asprintf(&msg, "%s lease accepted from %s",
 	    inet_ntoa(ifi->active->address),
 	    (ifi->offer_src == NULL) ? "<unknown>" : ifi->offer_src);
 	if (rslt == -1)

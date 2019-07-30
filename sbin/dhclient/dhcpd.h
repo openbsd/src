@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.281 2019/07/22 17:20:06 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.282 2019/07/30 12:48:27 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -129,6 +129,7 @@ struct interface_info {
 	int			 rdomain;
 	int			 flags;
 #define IFI_IN_CHARGE		0x01
+#define IFI_AUTOCONF		0x02
 	uint32_t		 mtu;
 	struct dhcp_packet	 recv_packet;
 	struct dhcp_packet	 sent_packet;

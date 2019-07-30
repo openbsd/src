@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.40 2019/07/15 11:07:00 krw Exp $
+.\" $OpenBSD: dhclient.8,v 1.41 2019/07/30 12:48:27 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.Dd $Mdocdate: July 15 2019 $
+.Dd $Mdocdate: July 30 2019 $
 .Dt DHCLIENT 8
 .Os
 .Sh NAME
@@ -49,36 +49,32 @@
 .Op Fl L Ar file
 .Ar interface
 .Sh DESCRIPTION
-The Dynamic Host Configuration Protocol (DHCP) allows hosts on a TCP/IP network
-to configure one or more network interfaces based on information collected from
-a DHCP server.
-DHCP is often used, for example, by cable modem and DSL network
-providers to automate network configuration for their customers.
-.Pp
+.Nm
+uses the Dynamic Host Configuration Protocol (DHCP), or its
+predecessor BOOTP, to configure a network interface.
 Information typically provided via DHCP includes
-address and subnet mask for the interface,
-default route,
+IPv4 address and subnet mask, default route,
 and domain name server.
 .Pp
-To have
-.Ox
-configure an interface using DHCP
-(or its predecessor, BOOTP)
-the
 .Nm
-utility is used.
+can be run on the command line, or at boot time by specifying
+.Sq dhcp
+in the appropriate
+.Xr hostname.if 5
+file.
+.Pp
 .Nm
-is run on the command line with the name of the
-.Ar interface
-to be configured.
+sets the
+.Sy AUTOCONF4
+flag on
+.Ar interface.
+If the flag is later cleared by
+.Xr ifconfig 8
 .Nm
-can also be run at boot time from
-.Xr hostname.if 5 ,
-in which case
-.Xr netstart 8
-reads the hostname files and runs
-.Nm
-for each interface that is to be configured via DHCP.
+will continue to obtain leases normally but it will not apply any
+changes to the interface or the host until
+.Xr ifconfig 8
+restores the flag.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -270,7 +266,8 @@ database of acquired leases
 .Xr dhclient.leases 5 ,
 .Xr hostname.if 5 ,
 .Xr dhcpd 8 ,
-.Xr dhcrelay 8
+.Xr dhcrelay 8 ,
+.Xr ifconfig 8
 .Sh STANDARDS
 .Rs
 .%A R. Droms
